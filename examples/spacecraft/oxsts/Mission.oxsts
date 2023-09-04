@@ -1,0 +1,11 @@
+type Mission : SynchronousComponent {
+	ports += control : StationControl
+
+	components += satellite : Spacecraft;
+	components += station : GroundStation(control)
+
+	channels += Channel {
+		from := satellite.connection;
+		to := station.connection;
+	}
+}
