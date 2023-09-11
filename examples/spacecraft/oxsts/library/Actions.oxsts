@@ -1,0 +1,7 @@
+operator ':='(): Action {
+
+}
+
+abstract type Action {
+    abstract tran execute()
+}

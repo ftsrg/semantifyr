@@ -1,0 +1,62 @@
+type Statechart : AtomicComponent {
+    feature regions : Region[0..*]
+    feature transitions : Transition[0..*]
+}
+
+type Region {
+    primitive type ActiveStateType : Enum
+    var activeStateVariable : ActiveStateType
+    reference activeState : State // dynamic enum literal setting?
+
+    feature states : State[0..*]
+    feature entryState :> states : State
+
+    init {
+        #ActiveStateType.literals += "NONE"
+        #for (state in states) {
+            #ActiveStateType.literals += state.name
+        }
+    }
+
+    tran setState(state : State) {
+
+    }
+}
+
+type State {
+    feature entryActions : Action[0..*]
+    feature exitActions : Action[0..*]
+    feature regions : Region[0..*]
+}
+
+abstract type Transition {
+    reference from : State
+    reference to : State
+
+    feature actions : Action[0..*]
+}
+
+type EntryTransition : Transition {
+    feature :> from : EntryState
+}
+
+type TriggeredTransition : Transition {
+    feature trigger : Trigger
+
+    seq execute() {
+        // assume this can be executed, and upper transitions can not
+        // exit from up to common region
+        // execute action
+        // enter to from common region
+
+        inline assumeEnabled()
+        inline exit()
+        inline action()
+        inline enter()
+    }
+
+    tran assumeEnabled() {
+        inline from.assumeActive()
+        assume(...)
+    }
+}
