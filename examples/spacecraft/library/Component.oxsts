@@ -1,4 +1,6 @@
-abstract type Component
+abstract type Component {
+    abstract tran execute()
+}
 
 type AtomicComponent : Component {
     feature ports : Port[0..*]
@@ -9,4 +11,18 @@ type SyncComponent : Component {
     feature ports : Port[0..*]
     feature channels : Channel[0..*]
     feature components : Component[0..*]
+
+    override seq execute() {
+        #ort components.execute() // set operator
+        #ort channels.execute()
+
+        /*
+        inline for (component in components) { // actually ort
+            component.execute()
+        }
+        inline for (channel in channels) { // actually ort
+            channel.execute()
+        }
+        */
+    }
 }

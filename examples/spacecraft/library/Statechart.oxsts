@@ -1,6 +1,12 @@
 type Statechart : AtomicComponent {
     feature regions : Region[0..*]
     feature transitions : Transition[0..*]
+
+    override tran execute() {
+        // order transitions by priority
+
+        #par transitions.execute // par
+    }
 }
 
 type Region {
@@ -22,9 +28,17 @@ abstract type Transition {
 
     feature actions : Action[0..*]
 
-    main tran(region : Region) {
+    tran exec(region : Region) {
         inline from.deactivateTo(region)
         inline to.activateFrom(region)
+    }
+
+    protected tran executeTransition() {
+
+    }
+
+    abstract isEnabled(): Boolean {
+        return from.isActive and not parent.isEnabled
     }
 }
 
@@ -34,4 +48,12 @@ type EntryTransition : Transition {
 
 type TriggeredTransition : Transition {
     feature trigger : Trigger
+
+    tran {
+        if (trigger.triggered) {
+            trigger.reset()
+
+            executeTransition()
+        }
+    }
 }

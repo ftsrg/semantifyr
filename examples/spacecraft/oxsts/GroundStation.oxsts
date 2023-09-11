@@ -1,6 +1,6 @@
 type GroundStation : Statechart {
-	ports += connection : DataSource // requires
-	ports += control : StationControl // requires
+	ports += connection : DataSource_Conjugated // requires
+	ports += control : StationControl_Conjugated // requires
 
 	triggers += pingTimeout : TimeoutTrigger
 	triggers += autoStart : TimeoutTrigger
