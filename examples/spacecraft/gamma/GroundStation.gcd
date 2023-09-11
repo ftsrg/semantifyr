@@ -4,6 +4,7 @@ statechart GroundStation [
 ] {
 	timeout pingTimeout
 	timeout autoStart
+
 	region Main {
 		initial Entry1
 		state Idle {
@@ -17,11 +18,16 @@ statechart GroundStation [
 			}
 		}
 	}
+
 	transition from Entry1 to Idle
+
 	transition from Idle to Operation when control.start
 	transition from Idle to Operation when timeout autoStart
+
 	transition from Operation to Operation when timeout pingTimeout
 	transition from Operation to Idle when control.shutdown
+
 	transition from Entry2 to Waiting
+
 	transition from Waiting to Waiting when connection.data
 }

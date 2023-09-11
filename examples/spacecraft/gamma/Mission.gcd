@@ -1,4 +1,4 @@
-sync Mission [
+cascade Mission [
 	port control : requires StationControl
 ] {
 	component station : GroundStation

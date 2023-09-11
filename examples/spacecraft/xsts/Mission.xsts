@@ -1,0 +1,169 @@
+type Main_GroundStation : { __Inactive__, Idle, Operation }
+type ReceiveData_GroundStation : { __Inactive__, Waiting }
+type Battery_Spacecraft : { __Inactive__, NotRecharging, Recharging }
+type Communication_Spacecraft : { __Inactive__, WaitingPing, Transmitting }
+type SendData_Spacecraft : { __Inactive__, Sending }
+type ConsumePower_Spacecraft : { __Inactive__, Consuming }
+var control_shutdown_In_station : boolean = false
+var control_start_In_station : boolean = false
+var connection_data_In_station : boolean = false
+ctrl var main_station : Main_GroundStation = __Inactive__
+ctrl var receiveData_station : ReceiveData_GroundStation = __Inactive__
+ctrl var pingTimeout_station : integer = 0
+var connection_ping_In_satellite : boolean = false
+ctrl var battery_satellite : Battery_Spacecraft = __Inactive__
+ctrl var communication_satellite : Communication_Spacecraft = __Inactive__
+ctrl var sendData_satellite : SendData_Spacecraft = __Inactive__
+ctrl var consumePower_satellite : ConsumePower_Spacecraft = __Inactive__
+var batteryVariable_satellite : integer = 0
+var data_satellite : integer = 0
+var recharging_satellite : boolean = false
+ctrl var consumeTimeout_satellite : integer = 0
+ctrl var rechargeTimeout_satellite : integer = 0
+ctrl var transmitTimeout_satellite : integer = 0
+
+trans {
+	// TRACK ELAPSED TIME
+
+	pingTimeout_station := (if (pingTimeout_station < 15000) then (pingTimeout_station + 1501) else pingTimeout_station);
+	consumeTimeout_satellite := (if (consumeTimeout_satellite < 1000) then (consumeTimeout_satellite + 1501) else consumeTimeout_satellite);
+	rechargeTimeout_satellite := (if (rechargeTimeout_satellite < 10000) then (rechargeTimeout_satellite + 1501) else rechargeTimeout_satellite);
+	transmitTimeout_satellite := (if (transmitTimeout_satellite < 1500) then (transmitTimeout_satellite + 1501) else transmitTimeout_satellite);
+
+	// EXECUTE GROUND STATION
+
+	choice { // transition from Idle to Operation when control.start
+		assume ((main_station == Idle) && control_start_In_station);
+		main_station := Operation;
+		receiveData_station := Waiting;
+		connection_ping_In_satellite := true;
+		pingTimeout_station := 0;
+	} or { // transition from Idle to Operation when timeout autoStart
+		assume ((main_station == Idle) && ((15 * 1000) <= pingTimeout_station));
+		main_station := Operation;
+		receiveData_station := Waiting;
+		connection_ping_In_satellite := true;
+		pingTimeout_station := 0;
+	} or { // transition from Operation to Operation when timeout pingTimeout
+		assume ((main_station == Operation) && ((10 * 1000) <= pingTimeout_station));
+		main_station := Operation;
+		receiveData_station := Waiting;
+		connection_ping_In_satellite := true;
+		pingTimeout_station := 0;
+	} or { // transition from Operation to Idle when control.shutdown
+		assume ((main_station == Operation) && control_shutdown_In_station);
+		receiveData_station := __Inactive__;
+		main_station := Idle;
+		pingTimeout_station := 0;
+	} or {
+	    // assume (default) ??
+		assume (!((((main_station == Idle) && control_start_In_station) || ((main_station == Idle) && ((15 * 1000) <= pingTimeout_station)) || ((main_station == Operation) && ((10 * 1000) <= pingTimeout_station)) || ((main_station == Operation) && control_shutdown_In_station))));
+
+		if (((receiveData_station == Waiting) && connection_data_In_station)) { // transition from Waiting to Waiting when connection.data
+			receiveData_station := Waiting;
+		}
+	}
+
+	// RESETING INPUT PORTS
+	connection_data_In_station := false;
+
+	// EXECUTE SPACECRAFT
+
+	// REGION COMMUNICATION
+
+    choice { // transition from WaitingPing to Transmitting when connection.ping [recharging = false]
+        assume ((communication_satellite == WaitingPing) && connection_ping_In_satellite && (recharging_satellite == false));
+        communication_satellite := Transmitting;
+        sendData_satellite := Sending;
+        consumePower_satellite := Consuming;
+        transmitTimeout_satellite := 0;
+        consumeTimeout_satellite := 0;
+    } or { // transition from Transmitting to WaitingPing when timeout consumeTimeout [batteryVariable < 40]
+        assume ((communication_satellite == Transmitting) && ((1 * 1000) <= consumeTimeout_satellite) && (batteryVariable_satellite < 40));
+        sendData_satellite := __Inactive__;
+        consumePower_satellite := __Inactive__;
+        communication_satellite := WaitingPing;
+    } or { // transition from Transmitting to WaitingPing when timeout transmitTimeout [data <= 1 or batteryVariable < 40]
+        assume ((communication_satellite == Transmitting) && (1500 <= transmitTimeout_satellite) && ((data_satellite <= 1) || (batteryVariable_satellite < 40)));
+        sendData_satellite := __Inactive__;
+        consumePower_satellite := __Inactive__;
+        communication_satellite := WaitingPing;
+    } or {
+        // assume (default) ??
+        assume (!((((communication_satellite == WaitingPing) && connection_ping_In_satellite && (recharging_satellite == false)) || ((communication_satellite == Transmitting) && ((1 * 1000) <= consumeTimeout_satellite) && (batteryVariable_satellite < 40)) || ((communication_satellite == Transmitting) && (1500 <= transmitTimeout_satellite) && ((data_satellite <= 1) || (batteryVariable_satellite < 40))))));
+
+        // transition from Sending to Sending when timeout transmitTimeout [data > 1 and batteryVariable >= 40] / data := data - 1; raise connection.data;
+        if (((sendData_satellite == Sending) && (1500 <= transmitTimeout_satellite) && (data_satellite > 1) && (batteryVariable_satellite >= 40))) {
+            data_satellite := (data_satellite - 1);
+            connection_data_In_station := true;
+            sendData_satellite := Sending;
+            transmitTimeout_satellite := 0;
+        }
+
+        // transition from Consuming to Consuming when timeout consumeTimeout [batteryVariable >= 40] / batteryVariable := batteryVariable - 1;
+        if (((consumePower_satellite == Consuming) && ((1 * 1000) <= consumeTimeout_satellite) && (batteryVariable_satellite >= 40))) {
+            batteryVariable_satellite := (batteryVariable_satellite - 1);
+            consumePower_satellite := Consuming;
+            consumeTimeout_satellite := 0;
+        }
+    }
+
+	// REGION BATTERY
+
+	choice { // transition from NotRecharging to Recharging when timeout consumeTimeout [batteryVariable < 80]
+		assume ((battery_satellite == NotRecharging) && ((1 * 1000) <= consumeTimeout_satellite) && (batteryVariable_satellite < 80));
+		battery_satellite := Recharging;
+		recharging_satellite := true;
+		rechargeTimeout_satellite := 0;
+	} or { // transition from Recharging to Recharging when timeout rechargeTimeout [batteryVariable < 100] / batteryVariable := batteryVariable + 1;
+		assume ((battery_satellite == Recharging) && ((10 * 1000) <= rechargeTimeout_satellite) && (batteryVariable_satellite < 100));
+		batteryVariable_satellite := (batteryVariable_satellite + 1);
+		battery_satellite := Recharging;
+		recharging_satellite := true;
+		rechargeTimeout_satellite := 0;
+	} or { // transition from Recharging to NotRecharging when timeout rechargeTimeout [batteryVariable = 100]
+		assume ((battery_satellite == Recharging) && ((10 * 1000) <= rechargeTimeout_satellite) && (batteryVariable_satellite == 100));
+		battery_satellite := NotRecharging;
+		recharging_satellite := false;
+	} or {
+        // assume (default) ??
+        // NO-OP
+		assume (!((((battery_satellite == NotRecharging) && ((1 * 1000) <= consumeTimeout_satellite) && (batteryVariable_satellite < 80)) || ((battery_satellite == Recharging) && ((10 * 1000) <= rechargeTimeout_satellite) && (batteryVariable_satellite < 100)) || ((battery_satellite == Recharging) && ((10 * 1000) <= rechargeTimeout_satellite) && (batteryVariable_satellite == 100)))));
+	}
+
+	// RESET PORTS
+
+	connection_ping_In_satellite := false;
+	control_shutdown_In_station := false;
+	control_start_In_station := false;
+}
+
+init {
+	pingTimeout_station := (15 * 1000);
+	main_station := __Inactive__;
+	receiveData_station := __Inactive__;
+	control_shutdown_In_station := false;
+	control_start_In_station := false;
+	batteryVariable_satellite := 100;
+	recharging_satellite := false;
+	data_satellite := 100;
+	rechargeTimeout_satellite := (10 * 1000);
+	consumeTimeout_satellite := (1 * 1000);
+	transmitTimeout_satellite := 1500;
+	battery_satellite := __Inactive__;
+	communication_satellite := __Inactive__;
+	sendData_satellite := __Inactive__;
+	consumePower_satellite := __Inactive__;
+	connection_ping_In_satellite := false;
+	connection_data_In_station := false;
+	main_station := Idle;
+	communication_satellite := WaitingPing;
+	battery_satellite := NotRecharging;
+	pingTimeout_station := 0;
+	recharging_satellite := false;
+}
+
+env {
+	havoc control_start_In_station;
+	havoc control_shutdown_In_station;
+}
