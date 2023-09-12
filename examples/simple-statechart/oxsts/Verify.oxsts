@@ -1,0 +1,18 @@
+type VerifyMissionEnvironment {
+    feature statechart := SimpleStatechart()
+
+    init {
+        inline statechart.init()
+    }
+
+    tran {
+        inline statechart.control.havoc()
+        inline statechart.execute()
+    }
+
+    prop {
+        statechart.Operation.isActive
+    }
+}
+
+// compile Verify.oxsts -env VerifyMissionEnvironment -o verify.xsts
