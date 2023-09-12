@@ -1,0 +1,41 @@
+abstract type AbstractPort {
+    feature events : Event[0..*]
+
+    tran havoc() {
+        seq inline events Event::havoc
+    }
+
+    tran reset() {
+        seq inline events Event::reset
+    }
+}
+
+type Port : AbstractPort {
+
+}
+
+type ConjugatedPort : AbstractPort {
+
+}
+
+type Event {
+    var isActive: Boolean := false
+
+    tran havoc() {
+        havoc (isActive)
+    }
+
+    tran reset() {
+        isActive = false
+    }
+}
+
+abstract type Trigger
+
+type EventTrigger(
+    reference event : Event
+) : Trigger {
+    expression isTriggered : Boolean {
+        event.isActive
+    }
+}

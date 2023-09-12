@@ -1,0 +1,13 @@
+statechart GroundStation [
+	port control : provides Controller
+] {
+	region Main {
+		initial Entry
+		state Idle;
+		state Operation;
+	}
+
+	transition from Entry to Idle
+
+	transition from Idle to Operation when control.start
+}
