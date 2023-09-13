@@ -1,0 +1,125 @@
+type Statechart : AtomicComponent {
+    feature ports : Port[0..*]
+    feature region : Region
+    feature transitions : Transition[0..*]
+
+    derived feature entryTransitions :> transitions : EntryTransition[0..*]
+
+    init {
+        seq inline entryTransitions Transition::execute
+    }
+
+    tran execute() {
+        choice inline transitions Transition::execute with-default // add a default branch with NO-OP
+
+        seq inline ports Port::reset
+    }
+}
+
+type Region {
+    feature abstractStates : AbstractState[0..*]
+    feature states :> abstractStates : State[0..*]
+    feature entryStates :> abstractStates : EntryState[0..*]
+
+    var reference activeState :> states : State[0..1] := Nothing
+}
+
+abstract type AbstractState {
+    reference parentRegion: Region
+    reference parentState: State[0..1]
+
+    tran exit(region: Region) {
+        parentRegion.activeState := Nothing
+
+        if (parentRegion != region) {
+            inline parentState.exit(region)
+        }
+    }
+    tran enter(region: Region) {
+        if (parentRegion != region) {
+            inline parentState.enter(region)
+        }
+
+        parentRegion.activeState := Self
+    }
+
+    expression isActive : Boolean {
+        parentRegion.activeState == Self
+    }
+
+    evaluate {
+        vql Region.states(parentRegion, Self);
+        vql State.region(parentState, parentRegion);
+    }
+}
+
+type State : AbstractState {
+    feature region : Region
+}
+type EntryState : AbstractState
+
+pattern lowestCommonAncestorRegion(region : Region, state1 : State, state2 : State) {
+    find commonAncestorRegion(region, state1, state2);
+    not find hasLowerCommonAncestorRegion(region, state1, state2);
+}
+
+pattern hasLowerCommonAncestorRegion(region : Region, state1 : State, state2 : State) {
+    find subregion(region, subregion);
+    find commonAncestorRegion(subregion, state1, state2);
+}
+
+pattern commonAncestorRegion(region : Region, state1 : State, state2 : State) {
+    state1 != state2;
+    find substate(region, state1);
+    find substate(region, state2);
+}
+
+pattern subregion(region: Region, subregion: Region) {
+    Region.states(region, substate);
+    State.region(substate, subregion);
+}
+
+pattern substate(region: Region, substate: State) {
+    Region.states(region, substate);
+} or {
+    Region.states(region, state);
+    find substate+(state, substate)
+}
+
+pattern substate(state: State, substate: State) {
+    State.region(state, region);
+    Region.states(region, substate);
+}
+
+abstract type Transition {
+    reference commonAncestor : Region
+
+    reference from : State
+    reference to : State
+
+    abstract tran execute()
+
+    evaluate {
+        vql lowestCommonAncestorRegion(commonAncestor, from, to) // error if multiple ..
+        // could be Viatra, or some other query language
+    }
+}
+
+type EntryTransition : Transition {
+    reference :> from : EntryState
+
+    override tran execute() {
+        inline to.enter(commonAncestor)
+    }
+}
+
+type TriggeredTransition : Transition {
+    feature trigger : Boolean
+
+    override tran execute() {
+        assume (trigger.isTriggered)
+
+        inline from.exit(commonAncestor)
+        inline to.enter(commonAncestor)
+    }
+}
