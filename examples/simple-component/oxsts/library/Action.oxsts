@@ -1,0 +1,11 @@
+abstract type Action {
+
+}
+
+type RaiseEventAction : Action {
+    reference event : Event // OutEvent ??
+
+    tran execute() {
+        inline event.set()
+    }
+}

@@ -1,0 +1,27 @@
+type Timeout(
+    reference deltaTime : Integer := 1
+) {
+    var counter : Integer := 0
+
+    tran set(amount: Integer, unit: TimeUnit) {
+        counter := amount * unit.multiplier
+    }
+
+    tran {
+        counter -= deltaTime;
+    }
+
+    tran assumeOver() {
+        assume (counter == 0)
+    }
+}
+
+enum type TimeUnit(
+    feature multiplier : Integer
+) {
+    Milliseconds(1)
+    Seconds(1 * 1000)
+    Minutes(1 * 1000 * 60)
+    Hours(1 * 1000 * 60 * 60)
+    Days(1 * 1000 * 60 * 60 * 24)
+}

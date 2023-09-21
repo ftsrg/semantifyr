@@ -1,4 +1,4 @@
-type Statechart : AtomicComponent {
+type Statechart {
     feature ports : Port[0..*]
     feature region : Region
     feature transitions : Transition[0..*]
@@ -10,18 +10,18 @@ type Statechart : AtomicComponent {
     }
 
     tran execute() {
-        choice inline transitions Transition::execute with-default // add a default branch with NO-OP
+        choice inline transitions Transition::execute else { }
 
         seq inline ports Port::reset
     }
 }
 
 type Region {
-    feature abstractStates : AbstractState[0..*]
+    derived feature abstractStates : AbstractState[0..*] // make this more emphasized, add derived as ... ocl or viatra
     feature states :> abstractStates : State[0..*]
     feature entryStates :> abstractStates : EntryState[0..*]
 
-    var reference activeState :> states : State[0..1] := Nothing
+    var activeState : states[0..1] := Nothing
 }
 
 abstract type AbstractState(
@@ -34,8 +34,8 @@ abstract type AbstractState(
         parent.activeState := Self
     }
 
-    expression isActive : Boolean {
-        parent.activeState == Self
+    tran assumeActive : Boolean {
+        assume(parent.activeState == Self)
     }
 }
 
@@ -52,7 +52,7 @@ abstract type Transition {
 type EntryTransition : Transition {
     reference :> from : EntryState
 
-    override tran execute() {
+    tran execute() {
         inline to.enter()
     }
 }
@@ -60,8 +60,8 @@ type EntryTransition : Transition {
 type TriggeredTransition : Transition {
     feature trigger : Boolean
 
-    override tran execute() {
-        assume (trigger.isTriggered)
+    tran execute() {
+        inline trigger.assumeTriggered()
 
         inline from.exit()
         inline to.enter()

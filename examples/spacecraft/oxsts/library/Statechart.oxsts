@@ -1,62 +1,134 @@
 type Statechart : AtomicComponent {
-    feature regions : Region[0..*]
+    feature ports : Port[0..*]
+    feature region : Region
     feature transitions : Transition[0..*]
+    feature timeouts : Timeout[0..*]
+
+    derived feature entryTransitions :> transitions : EntryTransition[0..*]
+
+    init {
+        seq inline entryTransitions // execute
+    }
+
+    tran {
+        choice inline transitions /*execute*/ else { }
+
+        seq inline ports Port::reset
+    }
 }
 
 type Region {
-    primitive type ActiveStateType : Enum
-    var activeStateVariable : ActiveStateType
-    reference activeState : State // dynamic enum literal setting?
+    feature abstractStates : AbstractState[0..*] // derived?
+    feature states :> abstractStates : State[0..*]
+    feature entryStates :> abstractStates : EntryState[0..*]
 
-    feature states : State[0..*]
-    feature entryState :> states : State
+    var activeState : states[0..1] := Nothing
+}
 
-    init {
-        #ActiveStateType.literals += "NONE"
-        #for (state in states) {
-            #ActiveStateType.literals += state.name
+abstract type AbstractState {
+    derived reference parentRegion: Region
+    derived reference parentState: State[0..1] := Nothing
+
+    tran exit(commonAncestor: Region) {
+        parentRegion.activeState := Nothing
+
+        inline if (parentRegion != commonAncestor) {
+            inline parentState.exit(commonAncestor)
         }
     }
+    tran enter(commonAncestor: Region) {
+        inline if (parentRegion != commonAncestor) {
+            inline parentState.enter(commonAncestor)
+        }
 
-    tran setState(state : State) {
+        parentRegion.activeState := Self
+    }
 
+    tran assumeActive() {
+        assume (parentRegion.activeState == Self)
+    }
+
+    evaluate pattern {
+        Region.states(parentRegion, Self);
+    }
+
+    evaluate pattern {
+        State.region(parentState, parentRegion);
     }
 }
 
-type State {
-    feature entryActions : Action[0..*]
-    feature exitActions : Action[0..*]
-    feature regions : Region[0..*]
+type State : AbstractState {
+    feature region : Region
 }
+type EntryState : AbstractState
+
+pattern hasLowerCommonAncestorRegion(region : Region, state1 : State, state2 : State) {
+    find subregion(region, subregion);
+    find commonAncestorRegion(subregion, state1, state2);
+}
+
+pattern commonAncestorRegion(region : Region, state1 : State, state2 : State) {
+    state1 != state2;
+    find substate(region, state1);
+    find substate(region, state2);
+}
+
+pattern subregion(region: Region, subregion: Region) {
+    Region.states(region, substate);
+    State.region(substate, subregion);
+}
+
+pattern substate(region: Region, substate: State) {
+    Region.states(region, substate);
+} or {
+    Region.states(region, state);
+    find substate+(state, substate)
+}
+
+pattern substate(state: State, substate: State) {
+    State.region(state, region);
+    Region.states(region, substate);
+}
+
+// lehetne használni ocl szerű subsetet, mondjuk valami egyszerűbb függvényeket
+// kerml-t használni saját nyelv helyett? mivel kéne kiegészíteni a kerml-t?
+// függvény hívás, egyéb fordításidőben processzálás
+//
+// vql-ből lehetne származni, és a különböző expression-öket ki lehet egészíteni a saját típusokkal, amit aztán postprocessinggel kijavítani és futtatni
+//
+// typon belül vql írása?
+//
+// minden type, reference-re vagy feature-re is lehet type-ként hivatkozni, ilyenkor rá, mint enumra hivatkozunk
+// var state[0..1]: state
 
 abstract type Transition {
     reference from : State
     reference to : State
 
-    feature actions : Action[0..*]
+    derived reference commonAncestor : Region // as vql
+    // derived reference commonAncestor : Region := Region::lowestCommonAncestor(from, to) // this could be an ocl-like expression
+
+    evaluate pattern {
+        find commonAncestorRegion(commonAncestor, from, to);
+        not find hasLowerCommonAncestorRegion(commonAncestor, from, to);
+    }
 }
 
 type EntryTransition : Transition {
-    feature :> from : EntryState
+    reference :> from : EntryState
+
+    tran {
+        inline to.enter(commonAncestor)
+    }
 }
 
 type TriggeredTransition : Transition {
-    feature trigger : Trigger
+    feature trigger : Boolean
 
-    seq execute() {
-        // assume this can be executed, and upper transitions can not
-        // exit from up to common region
-        // execute action
-        // enter to from common region
+    tran {
+        inline trigger.assumeTriggered()
 
-        inline assumeEnabled()
-        inline exit()
-        inline action()
-        inline enter()
-    }
-
-    tran assumeEnabled() {
-        inline from.assumeActive()
-        assume(...)
+        inline from.exit(commonAncestor)
+        inline to.enter(commonAncestor)
     }
 }

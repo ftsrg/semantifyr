@@ -1,0 +1,17 @@
+abstract type Trigger
+
+type EventTrigger(
+    reference event : Event
+) : Trigger {
+    tran assumeTriggered() { // assume { ?
+        assume (event.isActive)
+    }
+}
+
+type TimeoutTrigger(
+    reference timeout : Timeout
+) : Trigger {
+    tran assumeTriggered() { // assume { ?
+        inline timeout.assumeOver()
+    }
+}

@@ -1,0 +1,7 @@
+interface Controller {
+	out event start
+}
+
+interface Communication {
+    out event message
+}

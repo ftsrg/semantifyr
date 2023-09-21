@@ -1,19 +1,13 @@
-type Mission : SynchronousComponent {
+type Mission : CascadeComponent {
 	ports += control : StationControl_Conjugated // requires
 
 	components += satellite : Spacecraft
 	components += station : GroundStation
 
-	station.control = control
+	station.control = control // bind
 
 	channels += Channel {
 		from := satellite.connection
 		to := station.connection
 	}
 }
-
-// execution environment modeling the various input events?
-
-
-var mission = Mission()
-mission.execute()

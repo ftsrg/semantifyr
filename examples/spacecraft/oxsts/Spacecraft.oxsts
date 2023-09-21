@@ -5,9 +5,9 @@ type Spacecraft : Statechart {
 	var recharging : Boolean := false
 	var data : Integer := 100
 
-	triggers += rechargeTimeout : TimeoutTrigger
-	triggers += consumeTimeout : TimeoutTrigger
-	triggers += transmitTimeout : TimeoutTrigger
+	timeouts += rechargeTimeout : Timeout
+	timeouts += consumeTimeout : Timeout
+	timeouts += transmitTimeout : Timeout
 
 	regions += Communication : Region {
 		initial := Entry1 : State
@@ -16,13 +16,13 @@ type Spacecraft : Statechart {
 		states += Transmitting : State {
 			regions += SendData : Region {
 				initial := entry3 : State
-				states := sending : State {
+				states += sending : State {
 					entryAction += transmitTimeout.set(1500, TimeUnits.Milliseconds)
 				}
 			}
 			regions += ConsumePower : Region {
 				initial := entry4 : State
-				states := consuming : State {
+				states += consuming : State {
 					entryAction += consumeTimeout.set(1, TimeUnits.Seconds)
 				}
 			}
@@ -36,29 +36,29 @@ type Spacecraft : Statechart {
 			entryAction := recharging.set(false)
 		}
 		states += Recharging : State {
-			entryAction += [_recharging] := true
-			entryAction += rechargeTimeout.set(10, TimeUnits.Seconds)
+			entryAction += [recharging] := true
+			entryAction += SetTimeoutAction(rechargeTimeout, 10, TimeUnits.Seconds)
 		}
 	}
 
 	transitions += EntryTransition {
-		from := Entry1;
-		to := WaitingPing;
+		from := Entry1
+		to := WaitingPing
 	}
 	transitions += TriggeredTransition {
-		from := WaitingPing;
-		to := Transmitting;
-		trigger := connection.ping;
+		from := WaitingPing
+		to := Transmitting
+		trigger := EventTrigger(connection.ping)
 		guard := [recharging] == false
 	}
 	transitions += EntryTransition {
-		from := Entry3;
-		to := Sending;
+		from := Entry3
+		to := Sending
 	}
 	transitions += TriggeredTransition {
-		from := Sending;
-		to := Sending;
-		trigger := transmitTimeout;
+		from := Sending
+		to := Sending
+		trigger := TimeoutTrigger(transmitTimeout)
 		guard := [data] > 1 and [batteryVariable] >= 40
 		actions += [data] := [data] - 1
 		actions += RaiseEventAction(connection.data) // connection.data.raise
@@ -70,20 +70,20 @@ type Spacecraft : Statechart {
 	transitions += TriggeredTransition {
 		from := Consuming;
 		to := Consuming;
-		trigger := consumeTimeout
+		trigger := TimeoutTrigger(consumeTimeout)
 		guard := [batteryVariable] >= 40
 		actions += [batteryVariable] := [batteryVariable] - 1
 	}
 	transitions += TriggeredTransition {
 		from := Transmitting;
 		to := WaitingPing;
-		trigger := consumeTimeout
+		trigger := TimeoutTrigger(consumeTimeout)
 		guard := [batteryVariable] < 40
 	}
 	transitions += TriggeredTransition {
 		from := Transmitting;
 		to := WaitingPing;
-		trigger := transmitTimeout
+		trigger := TimeoutTrigger(transmitTimeout)
 		guard := [data] <= 1 or [batteryVariable] < 40
 	}
 	transitions += EntryTransition {
@@ -93,20 +93,20 @@ type Spacecraft : Statechart {
 	transitions += TriggeredTransition {
 		from := NotRecharging;
 		to := Recharging;
-		trigger := consumeTimeout
+		trigger := TimeoutTrigger(consumeTimeout)
 		guard := [batteryVariable] < 80
 	}
 	transitions += TriggeredTransition {
 		from := Recharging;
 		to := Recharging;
-		trigger := rechargeTimeout
+		trigger := TimeoutTrigger(rechargeTimeout)
 		guard := [batteryVariable] < 100
 		actions += [batteryVariable] := [batteryVariable] + 1;
     }
 	transitions += TriggeredTransition {
 		from := Recharging;
 		to := NotRecharging;
-		trigger := rechargeTimeout
+		trigger := TimeoutTrigger(rechargeTimeout)
 		guard := [batteryVariable] == 100
 	}
 }

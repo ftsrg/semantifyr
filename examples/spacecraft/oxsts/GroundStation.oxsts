@@ -2,8 +2,8 @@ type GroundStation : Statechart {
 	ports += connection : DataSource_Conjugated // requires
 	ports += control : StationControl_Conjugated // requires
 
-	triggers += pingTimeout : TimeoutTrigger
-	triggers += autoStart : TimeoutTrigger
+	timeout += pingTimeout : Timeout
+	timeout += autoStart : Timeout
 
 	regions += Main : Region {
 		initial := Entry1 : State();
@@ -22,36 +22,36 @@ type GroundStation : Statechart {
 	}
 
 	transitions += EntryTransition {
-		from := Entry1;
-		to := Idle;
+		from := Entry1
+		to := Idle
 	}
 	transitions += TriggeredTransition {
-		from := Idle;
-		to := Operation;
-		trigger := control.start;
+		from := Idle
+		to := Operation
+		trigger := EventTrigger(control.start)
 	}
 	transitions += TriggeredTransition {
-		from := Idle;
-		to := Operation;
-		trigger := autoStart;
+		from := Idle
+		to := Operation
+		trigger := TimeoutTrigger(autoStart)
 	}
 	transitions += TriggeredTransition {
-		from := Operation;
-		to := Operation;
-		trigger := pingTimeout;
+		from := Operation
+		to := Operation
+		trigger := TimeoutTrigger(pingTimeout)
 	}
 	transitions += TriggeredTransition {
-		from := Operation;
-		to := Idle;
-		trigger := control.shutdown;
+		from := Operation
+		to := Idle
+		trigger := EventTrigger(control.shutdown)
 	}
 	transitions += EntryTransition {
-		from := Entry2;
-		to := Waiting;
+		from := Entry2
+		to := Waiting
 	}
 	transitions += TriggeredTransition {
-		from := Waiting;
-		to := Waiting;
-		trigger := connection.data;
+		from := Waiting
+		to := Waiting
+		trigger := EventTrigger(connection.data)
 	}
 }

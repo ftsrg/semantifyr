@@ -1,17 +1,17 @@
 type VerifyMissionEnvironment {
-    feature statechart := CompositeStatechart()
+    feature component := SimpleComponent()
 
     init {
-        inline statechart.init()
+        inline component.init()
     }
 
     tran {
         havoc (statechart.control)
-        inline statechart.execute()
+        inline component.execute()
     }
 
     prop {
-        statechart.B.Operation.isActive
+        component.client.Operation.isActive
     }
 }
 

@@ -2,7 +2,7 @@ abstract type AbstractPort {
     feature events : Event[0..*]
 
     havoc {
-        seq inline events havoc
+        seq inline events havoc // auto havoc?
     }
 
     tran reset() {
@@ -26,16 +26,10 @@ type Event {
     }
 
     tran reset() {
-        isActive = false
+        isActive := false
     }
-}
 
-abstract type Trigger
-
-type EventTrigger(
-    reference event : Event
-) : Trigger {
-    tran assumeTriggered() {
-        assume(event.isActive)
+    tran set() {
+        isActive := true
     }
 }

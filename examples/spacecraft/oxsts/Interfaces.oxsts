@@ -1,3 +1,11 @@
 type DataSource : Port {
 
 }
+
+type ConjugatedDataSource : Port {
+
+}
+
+type ConjugatedStationControl : Port {
+
+}

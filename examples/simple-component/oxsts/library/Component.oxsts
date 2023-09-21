@@ -3,6 +3,7 @@ abstract type Component {
 }
 
 type AtomicComponent : Component {
+
 }
 
 type CompositeComponent : Component {
@@ -11,10 +12,10 @@ type CompositeComponent : Component {
 }
 
 type CascadeComponent : CompositeComponent {
-    tran {
+    tran execute() {
         inline for (component in components) {
-            inline component //.execute()
-            seq inline channels //Channel::execute
+            inline component.execute()
+            seq inline channels Channel::execute
         }
 
         seq inline ports Port::reset // should be output ports ..
@@ -25,13 +26,13 @@ type Channel {
     feature from : Port
     feature to : ConjugatedPort
 
-    tran {
+    tran execute() {
         inline from.forwardTo(to)
     }
 }
 
 type RendezvousChannel : Channel { // basically a BufferedChannel with 0 capacity
-    tran {
+    tran execute() {
         // forward events from -> to
     }
 }
@@ -41,7 +42,7 @@ type BufferedChannel<T : Port>(
 ) : Channel {
     // how to know which events to store? generic type?
 
-    tran {
+    tran execute() {
         // forward events from -> buffer -> to
     }
 }

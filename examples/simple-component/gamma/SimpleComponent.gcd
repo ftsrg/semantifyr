@@ -1,0 +1,39 @@
+statechart Server [
+	port control : requires Controller
+	port connection : provides Communication
+] {
+	region Main {
+		initial Entry
+		state Idle;
+		state Operation;
+	}
+
+	transition from Entry to Idle
+
+	transition from Idle to Operation when control.start / raise connection.message
+}
+
+statechart Client[
+    port connection : requires Communication
+] {
+    region Main {
+        initial Entry
+        state Idle;
+        state Operation;
+    }
+
+    transition from Entry to Idle
+
+    transition from Idle to Operation when connection.message
+}
+
+cascade SimpleComponent[
+    port control : requires Controller
+] {
+    component server : Server
+    component client : Client
+
+    bind control -> server.control
+
+    channel [ server.connection ] -o)- [ client.connection ]
+}

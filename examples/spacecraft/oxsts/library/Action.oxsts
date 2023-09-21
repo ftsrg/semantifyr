@@ -1,0 +1,21 @@
+abstract type Action {
+
+}
+
+type RaiseEventAction(
+    reference event : Event // OutEvent ??
+) : Action {
+    tran {
+        inline event.set()
+    }
+}
+
+type SetTimeoutAction(
+    reference timeout : Timeout
+    reference amount : Integer
+    reference unit : TimeUnit
+) : Action {
+    tran {
+        inline timeout.set(amount, unit)
+    }
+}

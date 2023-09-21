@@ -1,0 +1,22 @@
+type SimpleStatechart : Statechart {
+	ports += control : ConjugatedController // requires
+	ports += connection : Communication // provides
+
+	region := Main : Region {
+		entryStates += Entry(Main) : EntryState
+
+		states += Idle(Main) : State
+		states += Operation(Main) : State
+	}
+
+	transitions += EntryTransition {
+		from := Entry
+		to := Idle
+	}
+	transitions += TriggeredTransition {
+		from := Idle
+		to := Operation
+		trigger := EventTrigger(control.start)
+		action := RaiseEventAction(connection.message)
+	}
+}

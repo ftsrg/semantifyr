@@ -6,7 +6,7 @@ type VerifyMissionEnvironment {
     }
 
     tran {
-        inline statechart.control.havoc()
+        havoc (statechart.control)
         inline statechart.execute()
     }
 
@@ -15,4 +15,4 @@ type VerifyMissionEnvironment {
     }
 }
 
-// compile Verify.oxsts -env VerifyMissionEnvironment -o verify.xsts
+// compile Verify.oxsts VerifyMissionEnvironment -o verify.xsts

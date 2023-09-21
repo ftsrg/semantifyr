@@ -1,0 +1,18 @@
+type VerifyMissionEnvironment {
+    feature mission := Mission()
+
+    init {
+        inline mission.init()
+    }
+
+    tran {
+        havoc (mission.control)
+        inline mission.execute()
+    }
+
+    prop {
+        mission.satellite.batteryVariable <= 40
+    }
+}
+
+// compile Verify.oxsts -env VerifyMissionEnvironment -o verify.xsts

@@ -1,0 +1,15 @@
+type Controller: Port {
+    outputEvents += start : Event
+}
+
+type ConjugatedController: ConjugatedPort {
+    inputEvents += start : Event
+}
+
+type Communication: Port {
+    outputEvents += message : Event
+}
+
+type ConjugatedCommunication: ConjugatedPort {
+    inputEvents += message : Event
+}
