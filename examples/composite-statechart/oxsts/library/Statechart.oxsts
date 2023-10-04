@@ -31,12 +31,12 @@ abstract type AbstractState {
     tran exit(region: Region) {
         parentRegion.activeState := Nothing
 
-        if (parentRegion != region) {
+        inline if (parentRegion != region) {
             inline parentState.exit(region)
         }
     }
     tran enter(region: Region) {
-        if (parentRegion != region) {
+        inline if (parentRegion != region) {
             inline parentState.enter(region)
         }
 

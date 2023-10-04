@@ -1,57 +1,70 @@
 type GroundStation : Statechart {
-	ports += connection : DataSource_Conjugated // requires
-	ports += control : StationControl_Conjugated // requires
+    feature connection :> ports : DataSource_Conjugated
+    feature control :> ports : StationControl_Conjugated
 
-	timeout += pingTimeout : Timeout
-	timeout += autoStart : Timeout
+    feature pingTimeout :> timeout : Timeout
+    feature autoStart :> timeout : Timeout
 
-	regions += Main : Region {
-		initial := Entry1 : State();
+    feature main :> regions : Region
+		feature entry :> initial : EntryState
 
-		states += Idle : State {
-			entryAction := SetTimeoutAction(autoStart, 15, TimeUnits.Seconds) // autoStart.set(15, TimeUnits.Seconds)
-		}
-		states += Operation : State {
-			entryAction += RaiseEventAction(connection.ping) // connection.ping.raise
-			entryAction += SetTimeoutAction(pingTimeout, 10, TimeUnits.Seconds) // pingTimeout.set(10, TimeUnits.Seconds)
-			regions += ReceiveData : Region {
-				initial := Entry2 : State
-				states := Waiting : State
+        feature idle :> states : State {
+            feature :> entryAction : SetTimeoutAction {
+                ref feature :> timeout = autoStart
+                amount = 15
+                units = TimeUnits.Seconds
+            }
+        }
+		feature operation :> states : State {
+            feature :> entryAction : RaiseEventAction {
+                ref feature :> event = connection.ping
+            }
+            feature :> entryAction : SetTimeoutAction {
+                ref feature :> timeout = autoStart
+                amount = 15
+                units = TimeUnits.Seconds
+            }
+
+			feature receiveData :> regions {
+			    feature entry :> initial : EntryState
+			    feature waiting :> states : State
 			}
 		}
 	}
 
-	transitions += EntryTransition {
-		from := Entry1
-		to := Idle
+	feature :> transitions : EntryTransition {
+		ref feature :> from = main.entry
+		ref feature :> to = main.idle
 	}
-	transitions += TriggeredTransition {
-		from := Idle
-		to := Operation
-		trigger := EventTrigger(control.start)
+	feature :> transitions : TriggeredTransition {
+		ref feature :> from = main.idle
+		ref feature :> to = main.operation
+		feature :> trigger : EventTrigger {
+		    ref feature :> event = control.start
+        }
 	}
-	transitions += TriggeredTransition {
-		from := Idle
-		to := Operation
-		trigger := TimeoutTrigger(autoStart)
+	feature :> transitions : TriggeredTransition {
+		ref feature :> from := Idle
+		ref feature :> to := Operation
+		ref feature :> trigger := TimeoutTrigger(autoStart)
 	}
-	transitions += TriggeredTransition {
-		from := Operation
-		to := Operation
-		trigger := TimeoutTrigger(pingTimeout)
+	feature :> transitions : TriggeredTransition {
+		ref feature :> from := Operation
+		ref feature :> to := Operation
+		ref feature :> trigger := TimeoutTrigger(pingTimeout)
 	}
-	transitions += TriggeredTransition {
-		from := Operation
-		to := Idle
-		trigger := EventTrigger(control.shutdown)
+	feature :> transitions : TriggeredTransition {
+		ref feature :> from := Operation
+		ref feature :> to := Idle
+		ref feature :> trigger := EventTrigger(control.shutdown)
 	}
-	transitions += EntryTransition {
-		from := Entry2
-		to := Waiting
+	feature :> transitions : EntryTransition {
+		ref feature :> from := Entry2
+		ref feature :> to := Waiting
 	}
-	transitions += TriggeredTransition {
-		from := Waiting
-		to := Waiting
-		trigger := EventTrigger(connection.data)
+	feature :> transitions : TriggeredTransition {
+		ref feature :> from := Waiting
+		ref feature :> to := Waiting
+		ref feature :> trigger := EventTrigger(connection.data)
 	}
 }

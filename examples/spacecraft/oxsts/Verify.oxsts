@@ -1,5 +1,5 @@
 type VerifyMissionEnvironment {
-    feature mission := Mission()
+    feature mission : Mission := Mission()
 
     init {
         inline mission.init()

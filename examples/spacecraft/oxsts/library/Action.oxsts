@@ -2,19 +2,19 @@ abstract type Action {
 
 }
 
-type RaiseEventAction(
-    reference event : Event // OutEvent ??
-) : Action {
+type RaiseEventAction : Action {
+    reference event : Event
+
     tran {
         inline event.set()
     }
 }
 
-type SetTimeoutAction(
+type SetTimeoutAction : Action {
     reference timeout : Timeout
-    reference amount : Integer
-    reference unit : TimeUnit
-) : Action {
+    var amount : Integer
+    var unit : TimeUnit
+
     tran {
         inline timeout.set(amount, unit)
     }

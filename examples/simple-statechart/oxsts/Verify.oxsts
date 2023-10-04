@@ -11,7 +11,7 @@ type VerifyMissionEnvironment {
     }
 
     prop {
-        statechart.Operation.isActive
+        !statechart.Operation.isActive
     }
 }
 

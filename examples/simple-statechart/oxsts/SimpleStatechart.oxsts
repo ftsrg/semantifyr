@@ -1,8 +1,11 @@
 type SimpleStatechart : Statechart {
 	ports += control : Controller // provides
 
-	region := Main : Region {
-		entryStates += Entry(Main) : EntryState
+    feature main :> region : Region {
+        feature entry :> entryStates : EntryState {
+
+        }
+		entryStates <: entry
 
 		states += Idle(Main) : State
 		states += Operation(Main) : State

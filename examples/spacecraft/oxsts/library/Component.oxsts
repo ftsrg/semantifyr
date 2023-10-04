@@ -22,8 +22,8 @@ type CascadeComponent : CompositeComponent {
 }
 
 type Channel {
-    feature from : Port
-    feature to : ConjugatedPort
+    feature from : Port<T>
+    feature to : ConjugatedPort<T>
 
     tran {
         inline from.forwardTo(to)
@@ -39,6 +39,7 @@ type RendezvousChannel : Channel { // basically a BufferedChannel with 0 capacit
 type BufferedChannel<T : Port>(
     val capacity : Int
 ) : Channel {
+    var buffer : T[capacity]
     // how to know which events to store? generic type?
 
     tran {

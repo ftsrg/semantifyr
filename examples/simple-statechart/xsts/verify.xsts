@@ -49,8 +49,7 @@ trans {
 
         vfm_statechart_Main_activeState_Value := __Nothing__;
         vfm_statechart_Main_activeState_Value := Operation;
-    } or {
-        assume (default);
+    } else {
         // NO_OP
     }
 
@@ -62,5 +61,5 @@ env { } // required
 prop {
 //    statechart.Operation.isActive
 //    vfm_statechart_Main.activeState == Self
-    vfm_statechart_Main_activeState_Value == Operation;
+    !vfm_statechart_Main_activeState_Value == Operation;
 }

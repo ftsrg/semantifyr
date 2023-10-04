@@ -9,3 +9,17 @@ type ConjugatedDataSource : Port {
 type ConjugatedStationControl : Port {
 
 }
+
+type Interface {
+    feature events : Event[0..*]
+}
+
+type StationControl : Interface {
+    event :> events : Event {
+
+    }
+}
+
+type StatationControlPort : Port {
+    interface := StatationControl
+}

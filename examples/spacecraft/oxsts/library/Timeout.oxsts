@@ -1,6 +1,5 @@
-type Timeout(
+type Timeout {
     reference deltaTime : Integer := 1
-) {
     var counter : Integer := 0
 
     tran set(amount: Integer, unit: TimeUnit) {
@@ -17,7 +16,7 @@ type Timeout(
 }
 
 enum type TimeUnit(
-    feature multiplier : Integer
+    var multiplier : Integer
 ) {
     Milliseconds(1)
     Seconds(1 * 1000)

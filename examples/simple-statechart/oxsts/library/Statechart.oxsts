@@ -6,11 +6,11 @@ type Statechart {
     derived feature entryTransitions :> transitions : EntryTransition[0..*]
 
     init {
-        seq inline entryTransitions Transition::execute
+        seq inline entryTransitions->execute
     }
 
     tran execute() {
-        choice inline transitions Transition::execute else { }
+        seq inline transitions::execute else { }
 
         seq inline ports Port::reset
     }
@@ -34,8 +34,8 @@ abstract type AbstractState(
         parent.activeState := Self
     }
 
-    tran assumeActive : Boolean {
-        assume(parent.activeState == Self)
+    tran assumeActive() {
+        assume (parent.activeState == Self)
     }
 }
 

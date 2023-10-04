@@ -1,0 +1,15 @@
+package Test
+
+type A {
+	var b : Boolean := false
+}
+
+type Composite {
+	feature f : A
+
+	init {
+		inline if (f.b) {
+			f.b := false
+		}
+	}
+}

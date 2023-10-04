@@ -1,17 +1,16 @@
 abstract type Trigger
 
-type EventTrigger(
+type EventTrigger : Trigger {
     reference event : Event
-) : Trigger {
-    tran assumeTriggered() { // assume { ?
+    tran assumeTriggered() {
         assume (event.isActive)
     }
 }
 
-type TimeoutTrigger(
+type TimeoutTrigger : Trigger {
     reference timeout : Timeout
-) : Trigger {
-    tran assumeTriggered() { // assume { ?
+
+    tran assumeTriggered() {
         inline timeout.assumeOver()
     }
 }

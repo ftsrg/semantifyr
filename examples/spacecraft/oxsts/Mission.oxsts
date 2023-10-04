@@ -1,12 +1,10 @@
 type Mission : CascadeComponent {
-	ports += control : StationControl_Conjugated // requires
+	feature satellite :> components : Spacecraft
+	feature station :> components : GroundStation
 
-	components += satellite : Spacecraft
-	components += station : GroundStation
+	feature control :> ports : StatationControlPort
 
-	station.control = control // bind
-
-	channels += Channel {
+	feature :> channels : Channel {
 		from := satellite.connection
 		to := station.connection
 	}

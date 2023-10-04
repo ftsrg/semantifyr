@@ -1,10 +1,8 @@
 type SimpleComponent : CascadeComponent {
-	ports += control : ConjugatedController // requires
-
 	components += server : Server
 	components += client : Client
 
-	control = server.control
+	ports += server.control
 
     channels += Channel {
         from := server.connection
