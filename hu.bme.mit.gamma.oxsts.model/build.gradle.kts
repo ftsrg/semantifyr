@@ -2,7 +2,9 @@ plugins {
     id("hu.bme.mit.gamma.gradle.conventions.jvm")
     id("hu.bme.mit.gamma.gradle.mwe2")
     id("hu.bme.mit.gamma.gradle.xtext-generated")
+    id("hu.bme.mit.gamma.gradle.eclipse")
 }
+
 dependencies {
     api(libs.ecore)
     api(libs.ecore.xmi)

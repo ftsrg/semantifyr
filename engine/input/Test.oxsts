@@ -1,15 +1,44 @@
 package Test
 
-type A {
-	var b : Boolean := false
+enum TimeUnit {
+    Seconds, Minutes, Hours, Days
 }
 
-type Composite {
-	feature f : A
+type A {
+    var x : Integer := 10
+}
 
-	init {
-		inline if (f.b) {
-			f.b := false
-		}
-	}
+type Simple {
+    var y : Integer := 0
+
+    feature containment : A
+    instance a :> containment : A
+
+    tran asdf {
+        y := 10
+    }
+}
+
+target Mission {
+    var x : Integer := 10
+    var xx : Integer := x + x
+    var y : Boolean := false
+
+    var unit : TimeUnit
+
+    instance a : A
+
+    init {
+        x := 2
+    }
+
+    tran {
+        x := x - 1
+        y := x = 10
+        xx := x + x
+    }
+
+    prop {
+        x = 10
+    }
 }

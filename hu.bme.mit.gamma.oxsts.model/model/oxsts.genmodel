@@ -16,6 +16,8 @@
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//Package">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Package/types"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Package/enums"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Package/target"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//Transition">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Transition/operation"/>
@@ -25,6 +27,7 @@
     <genClasses ecoreClass="oxsts.ecore#//Variable">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Variable/typing"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Variable/expression"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute oxsts.ecore#//Variable/isOptional"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//HavocOperation">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//HavocOperation/referenceExpression"/>
@@ -51,7 +54,7 @@
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Type/initTransition"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute oxsts.ecore#//Type/isAbstract"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Type/transitions"/>
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Type/invariant"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Type/properties"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//InlineCall">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlineCall/reference"/>
@@ -87,8 +90,8 @@
     <genClasses ecoreClass="oxsts.ecore#//Multiplicity"/>
     <genClasses ecoreClass="oxsts.ecore#//VariableTyping"/>
     <genClasses ecoreClass="oxsts.ecore#//DataType"/>
-    <genClasses ecoreClass="oxsts.ecore#//EnumType">
-      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//EnumType/feature"/>
+    <genClasses ecoreClass="oxsts.ecore#//VariableTypeReference">
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//VariableTypeReference/reference"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//IntegerType"/>
     <genClasses ecoreClass="oxsts.ecore#//BooleanType"/>
@@ -101,8 +104,8 @@
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//DeclarationReferenceExpression/element"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//Instance">
-      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//Instance/type"/>
-      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//Instance/feature"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Instance/instances"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Instance/bindings"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//InlineOperation"/>
     <genClasses ecoreClass="oxsts.ecore#//InlineSeq"/>
@@ -120,10 +123,6 @@
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InstanceBinding/feature"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InstanceBinding/instance"/>
     </genClasses>
-    <genClasses ecoreClass="oxsts.ecore#//InstanceHolder">
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InstanceHolder/bindings"/>
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InstanceHolder/instances"/>
-    </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//MainTransitionExpression"/>
     <genClasses ecoreClass="oxsts.ecore#//HavocTransitionExpression"/>
     <genClasses ecoreClass="oxsts.ecore#//ChainingExpression">
@@ -139,6 +138,28 @@
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlineIfOperation/guard"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlineIfOperation/body"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlineIfOperation/else"/>
+    </genClasses>
+    <genClasses ecoreClass="oxsts.ecore#//EnumLiteral"/>
+    <genClasses ecoreClass="oxsts.ecore#//Enum">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Enum/literals"/>
+    </genClasses>
+    <genClasses ecoreClass="oxsts.ecore#//VariableType"/>
+    <genClasses ecoreClass="oxsts.ecore#//Target">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Target/init"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Target/transition"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Target/instances"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Target/property"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Target/variables"/>
+    </genClasses>
+    <genClasses ecoreClass="oxsts.ecore#//Property">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Property/invariant"/>
+    </genClasses>
+    <genClasses ecoreClass="oxsts.ecore#//XSTS">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//XSTS/enums"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//XSTS/transition"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//XSTS/init"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//XSTS/variables"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//XSTS/property"/>
     </genClasses>
   </genPackages>
 </genmodel:GenModel>

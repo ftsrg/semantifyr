@@ -13,8 +13,6 @@ Workflow {
 				baseName = "hu.bme.mit.gamma.oxsts.lang"
 				rootPath = rootPath
 				runtime = {
-					// Do not generate new files into src/main/java
-					src = null
 				}
 				runtimeTest = {
 					enabled = false
@@ -22,10 +20,11 @@ Workflow {
 					root = null
 					srcGen = '${rootPath}/language/src/testFixtures/xtext-gen'
 				}
-				eclipsePlugin = {
+				genericIde = {
 					enabled = true
-				}
-				createEclipseMetaData = true
+					root = null
+                    srcGen = "${rootPath}/hu.bme.mit.gamma.oxsts.lang/build/generated/sources/xtext/ide"
+                }
 				mavenLayout = true
 			}
 			code = {

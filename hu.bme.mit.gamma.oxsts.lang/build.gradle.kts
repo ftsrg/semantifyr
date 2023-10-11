@@ -2,6 +2,7 @@ plugins {
     id("hu.bme.mit.gamma.gradle.conventions.jvm")
     id("hu.bme.mit.gamma.gradle.mwe2")
     id("hu.bme.mit.gamma.gradle.xtext-generated")
+    id("hu.bme.mit.gamma.gradle.eclipse")
 }
 
 val generatedIdeSources: Configuration by configurations.creating {

@@ -1,21 +1,17 @@
 package hu.bme.mit.gamma.oxsts.engine
 
 import hu.bme.mit.gamma.oxsts.engine.reader.OxstsReader
-import hu.bme.mit.gamma.oxsts.engine.serialization.FileSerializer
-import hu.bme.mit.gamma.oxsts.model.oxsts.Element
-import hu.bme.mit.gamma.oxsts.model.oxsts.OxstsPackage
-import hu.bme.mit.gamma.oxsts.model.oxsts.Type
+import hu.bme.mit.gamma.oxsts.engine.serialization.Serializer
+import hu.bme.mit.gamma.oxsts.engine.transformation.XstsTransformer
+import hu.bme.mit.gamma.oxsts.model.oxsts.Target
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
-import org.eclipse.emf.common.util.URI
-import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
-import org.eclipse.xtext.resource.XtextResource
 import java.io.File
 
 fun main(args: Array<String>) {
     val parser = ArgParser("oxsts")
     val inputDirectory by parser.argument(ArgType.String, "input")
-    val rootType by parser.argument(ArgType.String, "root")
+    val targetName by parser.argument(ArgType.String, "target")
     val outputFile by parser.argument(ArgType.String, "output")
 
     parser.parse(args)
@@ -24,16 +20,21 @@ fun main(args: Array<String>) {
 
     reader.read()
 
-    val type = reader.rootElements.flatMap {
+    val target = reader.rootElements.flatMap {
         it.eAllContents().asSequence()
     }.map {
-        it as? Element
+        it as? Target
     }.firstOrNull {
-        it?.name == rootType
-    } as Type?
+        it?.name == targetName
+    }
 
-    requireNotNull(type) { "No type found!" }
+    requireNotNull(target) { "Target not found!" }
 
-    val fileSerializer = FileSerializer(outputFile)
-    fileSerializer.serialize(type)
+    val transformer = XstsTransformer()
+    val xsts = transformer.transform(target)
+
+    val xstsString = Serializer.serialize(xsts)
+
+    File(outputFile).writeText(xstsString)
+
 }

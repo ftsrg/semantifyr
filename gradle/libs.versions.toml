@@ -6,6 +6,7 @@ mwe2 = "2.15.0"
 slf4j = "2.0.9"
 xtext = "2.32.0"
 kotlin = '1.9.10'
+gamma = '2.9.0'
 
 [libraries]
 ecore = { group = "org.eclipse.emf", name = "org.eclipse.emf.ecore", version.ref = "ecore" }
