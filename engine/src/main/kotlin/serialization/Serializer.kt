@@ -92,7 +92,7 @@ object Serializer {
 
     fun IndentationAwareStringWriter.append(transition: Transition, kind: String) {
         append(kind)
-        if (transition.operation.size == 1) {
+        if (transition.operation.size >= 1) {
             append(transition.operation.first())
         }
         for (operation in transition.operation.drop(1)) {
@@ -166,10 +166,30 @@ object Serializer {
     fun Operation.serialize(): String = when (this) {
         is SequenceOperation -> operation.map { it.serialize() }.joinToString("\n")
         is AssignmentOperation -> "${reference.serialize()} := ${expression.serialize()}"
-        is AssumptionOperation -> "assume (${expression.serialize()}"
+        is AssumptionOperation -> "assume (${expression.serialize()})"
         is HavocOperation -> "havoc (${referenceExpression.serialize()}"
         is IfOperation -> ""
-        is ChoiceOperation -> ""
+        is ChoiceOperation -> {
+            var result = "choice "
+
+            if (operation.size >= 1) {
+                result += """
+                    {
+                        ${operation.first().serialize()}
+                    }
+                """.trimIndent()
+            }
+
+            for (operation in operation.drop(1)) {
+                result += """
+                     or {
+                        ${operation.serialize()}
+                    }
+                """.trimIndent()
+            }
+
+            result
+        }
         else -> "UNKNOWN_OPERATION$$$"
     }
 }
