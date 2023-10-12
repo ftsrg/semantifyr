@@ -4,27 +4,22 @@
 package hu.bme.mit.gamma.oxsts.lang.scoping;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
-import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.scoping.IScope;
 import org.eclipse.xtext.scoping.Scopes;
 
-import com.google.common.collect.Lists;
-
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression;
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression;
 import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression;
-import hu.bme.mit.gamma.oxsts.model.oxsts.DirectReferenceExpression;
 import hu.bme.mit.gamma.oxsts.model.oxsts.Element;
-import hu.bme.mit.gamma.oxsts.model.oxsts.Expression;
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature;
 import hu.bme.mit.gamma.oxsts.model.oxsts.InlineComposite;
 import hu.bme.mit.gamma.oxsts.model.oxsts.Instance;
-import hu.bme.mit.gamma.oxsts.model.oxsts.Namespace;
 import hu.bme.mit.gamma.oxsts.model.oxsts.OxstsPackage;
 import hu.bme.mit.gamma.oxsts.model.oxsts.Type;
 import hu.bme.mit.gamma.oxsts.model.oxsts.Package;
@@ -37,23 +32,22 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression;
  * on how and when to use it.
  */
 public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
+
+	private boolean isTypeReference(EReference reference) {
+		return reference == OxstsPackage.Literals.TYPE__SUPERTYPE ||
+			reference == OxstsPackage.Literals.FEATURE__TYPE ||
+			reference == OxstsPackage.Literals.VARIABLE_TYPE_REFERENCE__REFERENCE;
+	}
 	
 	@Override
-	public IScope getScope(EObject context, EReference reference) {	
-		if (context instanceof ChainingExpression chain) {
-			return calculateChainScope(chain, reference);
-		}
-		
-		/*if (context instanceof Element element) {
-			return scopeElement(element, reference);
-		}*/
-		
-		if (
-				reference == OxstsPackage.Literals.TYPE__SUPERTYPE ||
-				reference == OxstsPackage.Literals.FEATURE__TYPE
-				) {
+	public IScope getScope(EObject context, EReference reference) {
+		if (isTypeReference(reference)) {
 			var _package = EcoreUtil2.getContainerOfType(context, Package.class);
 			return Scopes.scopeFor(_package.getTypes(), super.getScope(context, reference));
+		}
+
+		if (context instanceof ChainingExpression chain) {
+			return calculateChainScope(chain, reference);
 		}
 				
 		return scopeElement(context, reference);
@@ -74,17 +68,16 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 	}
 	
 	protected IScope scopeElement(EObject element, EReference reference) {
-		return Scopes.scopeFor(getElements(element), super.getScope(element, reference));
+		return Scopes.scopeFor(getAccessibleElements(element), super.getScope(element, reference));
 	}
 	
-	protected List<Element> getElements(EObject element) {
+	protected List<Element> getAccessibleElements(EObject element) {
 		if (element == null) {
-			return List.of();
+			return Collections.emptyList();
 		}
 
 		var parent = element.eContainer();
-		var elements = new ArrayList<Element>();
-		elements.addAll(getElements(parent));
+        var elements = new ArrayList<>(getAccessibleElements(parent));
 				
 		if (element instanceof Package _package) {
 			elements.addAll(_package.getTypes().stream().map(it -> (Element)it).toList());
@@ -97,7 +90,7 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 		} else if (element instanceof InlineComposite inlineComposite) {
 			var featureReference = inlineComposite.getFeature();
 			var feature = getReferredElement(featureReference);
-			elements.addAll(getElements(feature));
+			elements.addAll(getAccessibleElements(feature));
 		}
 
 		return elements;
@@ -107,9 +100,17 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 		if (type == null) {
 			return List.of();
 		}
-		var elements = EcoreUtil2.eAllOfType(type, Element.class);
+
 		var supertype = type.getSupertype();
-		elements.addAll(getInheritedElements(supertype));
+		var elements = new ArrayList<>(getInheritedElements(supertype));
+
+		elements.addAll(type.getFeatures());
+		elements.addAll(type.getVariables());
+		elements.addAll(type.getProperties());
+		elements.addAll(type.getTransitions());
+		elements.addAll(type.getInitTransition());
+		elements.addAll(type.getHavocTransition());
+		elements.addAll(type.getMainTransition());
 
 		return elements;		
 	}

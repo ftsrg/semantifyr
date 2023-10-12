@@ -294,7 +294,7 @@ UnaryOperator returns Expression:
 ;
 
 NotOperator returns NotOperator: 
-	{NotOperator} => ('not' | '!') operands+=PrimaryExpression
+	{NotOperator} => ('not' | '!') operands+=NotOperator
 ;
 
 // Reference expressions

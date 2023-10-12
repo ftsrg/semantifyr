@@ -4,41 +4,34 @@ enum TimeUnit {
     Seconds, Minutes, Hours, Days
 }
 
-type A {
-    var x : Integer := 10
+type Component {
+    tran compon {
+        assume (false)
+    }
 }
 
-type Simple {
-    var y : Integer := 0
+type Holder {
+    feature components : Component
 
-    feature containment : A
-    instance a :> containment : A
+    instance c :> components : Component
 
-    tran asdf {
-        y := 10
+    tran transition {
+        inline components.compon()
     }
 }
 
 target Mission {
-    var x : Integer := 10
-    var xx : Integer := x + x
-    var y : Boolean := false
-
-    var unit : TimeUnit
-
-    instance a : A
+    instance holder : Holder
 
     init {
-        x := 2
+        assume (true)
     }
 
     tran {
-        x := x - 1
-        y := x = 10
-        xx := x + x
+        inline holder.transition()
     }
 
     prop {
-        x = 10
+        false
     }
 }
