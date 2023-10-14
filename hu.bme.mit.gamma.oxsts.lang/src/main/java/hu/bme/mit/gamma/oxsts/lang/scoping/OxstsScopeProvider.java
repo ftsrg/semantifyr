@@ -55,16 +55,26 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 	
 	protected IScope calculateChainScope(ChainingExpression expression, EReference reference) {
 		var chain = EcoreUtil2.getContainerOfType(expression, ChainReferenceExpression.class);
-		var index = chain.getChains().indexOf(expression);
-		
-		if (index <= 0) {
-			return scopeElement(chain, reference);
-		}
 
-		var lastExpression = chain.getChains().get(index - 1);
-		var referencedElement = lastExpression.getElement();
-		
-		return scopeElement(referencedElement, reference);
+        var inlineComposite = EcoreUtil2.getContainerOfType(expression, InlineComposite.class);
+
+        var index = chain.getChains().indexOf(expression);
+
+        if (inlineComposite != null && inlineComposite.getTransition() == chain) {
+            // calculate reference pretending to be from the feature's poing of view
+            if (index <= 0) {
+                return scopeElement(getReferredElement(inlineComposite.getFeature()), reference);
+            }
+        }
+
+        if (index <= 0) {
+            return scopeElement(chain, reference);
+        }
+
+        var lastExpression = chain.getChains().get(index - 1);
+        var referencedElement = getReferredElement(lastExpression);
+
+        return scopeElement(referencedElement, reference);
 	}
 	
 	protected IScope scopeElement(EObject element, EReference reference) {
@@ -87,10 +97,6 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 			elements.addAll(getInheritedElements(instance.getType()));
 		} else if (element instanceof Feature feature) {
 			elements.addAll(getInheritedElements(feature.getType()));
-		} else if (element instanceof InlineComposite inlineComposite) {
-			var featureReference = inlineComposite.getFeature();
-			var feature = getReferredElement(featureReference);
-			elements.addAll(getAccessibleElements(feature));
 		}
 
 		return elements;
@@ -119,10 +125,18 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 		if (expression instanceof DeclarationReferenceExpression declarationReference) {
 			return declarationReference.getElement();
 		} else if (expression instanceof ChainReferenceExpression chainReference) {
-			return chainReference.getChains().get(chainReference.getChains().size() - 1).getElement();
+			return getReferredElement(chainReference.getChains().get(chainReference.getChains().size() - 1));
 		} else {
 			return null;
 		}
 	}
+
+    protected Element getReferredElement(ChainingExpression expression) {
+        if (expression instanceof DeclarationReferenceExpression declarationReferenceExpression) {
+            return declarationReferenceExpression.getElement();
+        }
+
+        throw new IllegalStateException("");
+    }
 	
 }
