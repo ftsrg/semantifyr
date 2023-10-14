@@ -69,7 +69,6 @@
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//LiteralNothing"/>
     <genClasses ecoreClass="oxsts.ecore#//ReferenceExpression"/>
-    <genClasses ecoreClass="oxsts.ecore#//DirectReferenceExpression"/>
     <genClasses ecoreClass="oxsts.ecore#//AndOperator"/>
     <genClasses ecoreClass="oxsts.ecore#//OrOperator"/>
     <genClasses ecoreClass="oxsts.ecore#//NotOperator"/>
@@ -125,9 +124,7 @@
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//MainTransitionExpression"/>
     <genClasses ecoreClass="oxsts.ecore#//HavocTransitionExpression"/>
-    <genClasses ecoreClass="oxsts.ecore#//ChainingExpression">
-      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//ChainingExpression/element"/>
-    </genClasses>
+    <genClasses ecoreClass="oxsts.ecore#//ChainingExpression"/>
     <genClasses ecoreClass="oxsts.ecore#//Namespace"/>
     <genClasses ecoreClass="oxsts.ecore#//IfOperation">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//IfOperation/guard"/>

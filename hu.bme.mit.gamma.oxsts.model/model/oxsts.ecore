@@ -79,8 +79,6 @@
   <eClassifiers xsi:type="ecore:EClass" name="LiteralNothing" eSuperTypes="#//LiteralExpression"/>
   <eClassifiers xsi:type="ecore:EClass" name="ReferenceExpression" abstract="true"
       eSuperTypes="#//Expression"/>
-  <eClassifiers xsi:type="ecore:EClass" name="DirectReferenceExpression" abstract="true"
-      eSuperTypes="#//ReferenceExpression"/>
   <eClassifiers xsi:type="ecore:EClass" name="AndOperator" eSuperTypes="#//OperatorExpression"/>
   <eClassifiers xsi:type="ecore:EClass" name="OrOperator" eSuperTypes="#//OperatorExpression"/>
   <eClassifiers xsi:type="ecore:EClass" name="NotOperator" eSuperTypes="#//OperatorExpression"/>
@@ -115,11 +113,11 @@
   <eClassifiers xsi:type="ecore:EClass" name="BooleanType" eSuperTypes="#//DataType"/>
   <eClassifiers xsi:type="ecore:EClass" name="LiteralSelf" eSuperTypes="#//LiteralExpression"/>
   <eClassifiers xsi:type="ecore:EClass" name="ImplicitTransitionExpression" abstract="true"
-      eSuperTypes="#//DirectReferenceExpression"/>
+      eSuperTypes="#//ChainingExpression"/>
   <eClassifiers xsi:type="ecore:EClass" name="InitTransitionExpression" eSuperTypes="#//ImplicitTransitionExpression"/>
   <eClassifiers xsi:type="ecore:EClass" name="EqualityOperator" eSuperTypes="#//OperatorExpression"/>
   <eClassifiers xsi:type="ecore:EClass" name="InequalityOperator" eSuperTypes="#//OperatorExpression"/>
-  <eClassifiers xsi:type="ecore:EClass" name="DeclarationReferenceExpression" eSuperTypes="#//DirectReferenceExpression">
+  <eClassifiers xsi:type="ecore:EClass" name="DeclarationReferenceExpression" eSuperTypes="#//ChainingExpression">
     <eStructuralFeatures xsi:type="ecore:EReference" name="element" lowerBound="1"
         eType="#//Element"/>
   </eClassifiers>
@@ -152,10 +150,7 @@
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="MainTransitionExpression" eSuperTypes="#//ImplicitTransitionExpression"/>
   <eClassifiers xsi:type="ecore:EClass" name="HavocTransitionExpression" eSuperTypes="#//ImplicitTransitionExpression"/>
-  <eClassifiers xsi:type="ecore:EClass" name="ChainingExpression">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="element" lowerBound="1"
-        eType="#//Element"/>
-  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ChainingExpression" abstract="true"/>
   <eClassifiers xsi:type="ecore:EClass" name="Namespace" eSuperTypes="#//Element"/>
   <eClassifiers xsi:type="ecore:EClass" name="IfOperation" eSuperTypes="#//Operation">
     <eStructuralFeatures xsi:type="ecore:EReference" name="guard" lowerBound="1" eType="#//Expression"

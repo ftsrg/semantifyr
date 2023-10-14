@@ -49,11 +49,10 @@ Enum:
 ;
 
 EnumLiteral:
-	{EnumLiteral} name=ID
+	name=ID
 ;
 
 Type:
-	{Type}
 	(isAbstract?='abstract')? 'type' name=ID (':' supertype=[Type])? ('{'
 		(
 			variables+=Variable
@@ -306,23 +305,30 @@ PrimaryExpression returns Expression:
 ;
 
 ReferenceExpression returns ReferenceExpression: 
-	  DirectReferenceExpression
-	| ChainReferenceExpression
+	ChainReferenceExpression
 ;
 
-DirectReferenceExpression: 
+ChainReferenceExpression: 
+	chains+=ChainingExpression
+	(
+		'.' chains+=ChainingExpression
+	)+
+;
+
+/*DirectReferenceExpression: 
 	DeclarationReferenceExpression
 	| ImplicitTransitionExpression
+;*/
+
+ChainingExpression: 
+	ImplicitTransitionExpression
+	| DeclarationReferenceExpression
 ;
 
 ImplicitTransitionExpression: 
 	InitTransitionExpression
 	| HavocTransitionExpression
 	| MainTransitionExpression
-;
-
-DeclarationReferenceExpression: 
-	element=[Element]
 ;
 
 InitTransitionExpression: 
@@ -337,14 +343,7 @@ MainTransitionExpression:
 	{MainTransitionExpression} 'main'
 ;
 
-ChainReferenceExpression: 
-	chains+=ChainingExpression
-	(
-		'.' chains+=ChainingExpression
-	)+
-;
-
-ChainingExpression: 
+DeclarationReferenceExpression: 
 	element=[Element]
 ;
 
