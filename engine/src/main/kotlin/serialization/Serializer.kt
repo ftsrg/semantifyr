@@ -2,7 +2,6 @@ package hu.bme.mit.gamma.oxsts.engine.serialization
 
 import hu.bme.mit.gamma.oxsts.model.oxsts.*
 import hu.bme.mit.gamma.oxsts.model.oxsts.Enum
-import hu.bme.mit.gamma.oxsts.model.oxsts.Target
 
 class IndentationAwareStringWriter(
     private val indentation: String
@@ -64,9 +63,17 @@ object Serializer {
 
             appendLine()
 
-            append(xsts.transition, "tran")
-
             append(xsts.init, "init")
+
+            appendLine()
+
+            append(xsts.transition, "trans")
+
+            appendLine()
+
+            appendLine("env {}")
+
+            appendLine()
 
             append(xsts.property)
         }
@@ -75,9 +82,9 @@ object Serializer {
     }
 
     fun IndentationAwareStringWriter.append(variable: Variable) {
-        append("var ${variable.name} : ${variable.typing.name} ")
+        append("var ${variable.name} : ${variable.typing.name}")
         if (variable.expression != null) {
-            append(":= ${variable.expression.serialize()}")
+            append(" := ${variable.expression.serialize()}")
         }
         appendLine(";")
     }
@@ -93,29 +100,70 @@ object Serializer {
     fun IndentationAwareStringWriter.append(transition: Transition, kind: String) {
         append(kind)
         if (transition.operation.size >= 1) {
-            append(transition.operation.first())
+            appendLine(" {")
+            indent {
+                append(transition.operation.first())
+            }
         }
         for (operation in transition.operation.drop(1)) {
-            append(" or")
-            append(operation)
+            appendLine("} or {")
+            indent {
+                append(operation)
+            }
         }
-        appendLine()
+        appendLine("}")
     }
 
     fun IndentationAwareStringWriter.append(property: Property) {
         appendLine("prop {")
         indent {
-            appendLine(property.invariant.serialize())
+            appendLine(property.invariant.serialize() + ";")
         }
         appendLine("}")
     }
 
     fun IndentationAwareStringWriter.append(operation: Operation) {
-        appendLine(" {")
-        indent {
-            appendLine(operation.serialize())
+        when (operation) {
+            is SequenceOperation -> {
+                for (seqOp in operation.operation) {
+                    append(seqOp)
+                }
+            }
+            is AssignmentOperation -> appendLine("${operation.reference.serialize()} := ${operation.expression.serialize()};")
+            is AssumptionOperation -> appendLine("assume (${operation.expression.serialize()});")
+            is HavocOperation -> appendLine("havoc (${operation.referenceExpression.serialize()};")
+            is IfOperation -> {
+                appendLine("if (${operation.guard.serialize()}) {")
+                indent {
+                    append(operation.body)
+                }
+                if (operation.`else` != null) {
+                    appendLine("} else {")
+                    indent {
+                        append(operation.`else`)
+                    }
+                }
+                appendLine("}")
+            }
+            is ChoiceOperation -> {
+                appendLine("choice {")
+
+                if (operation.operation.size >= 1) {
+                    indent {
+                        append(operation.operation.first())
+                    }
+                }
+
+                for (choiceOp in operation.operation.drop(1)) {
+                    appendLine("} or {")
+                    indent {
+                        append(operation.operation.first())
+                    }
+                }
+
+                appendLine("}")
+            }
         }
-        appendLine("}")
     }
 
     val VariableTyping.name: String
@@ -153,43 +201,16 @@ object Serializer {
 
     fun LiteralExpression.serialize(): String = when(this) {
         is LiteralNothing -> "__NOTHING__"
-        is LiteralBoolean -> if (isValue) "true" else "false"
+        is LiteralBoolean -> isValue.toString()
         is LiteralInteger -> value.toString()
         else -> "UNKNOWN_EXPRESSION$$$"
     }
 
     fun ReferenceExpression.serialize(): String = when (this) {
-        is DeclarationReferenceExpression -> element.name
+        is ChainReferenceExpression -> {
+            chains.map { it as DeclarationReferenceExpression }.map { it.element.name }.joinToString(".")
+        }
         else -> "UNKNOWN_EXPRESSION$$$"
     }
 
-    fun Operation.serialize(): String = when (this) {
-        is SequenceOperation -> operation.map { it.serialize() }.joinToString("\n")
-        is AssignmentOperation -> "${reference.serialize()} := ${expression.serialize()}"
-        is AssumptionOperation -> "assume (${expression.serialize()})"
-        is HavocOperation -> "havoc (${referenceExpression.serialize()}"
-        is IfOperation -> ""
-        is ChoiceOperation -> {
-            var result = "choice "
-
-            if (operation.size >= 1) {
-                result += """
-                    {
-                        ${operation.first().serialize()}
-                    }
-                """.trimIndent()
-            }
-
-            for (operation in operation.drop(1)) {
-                result += """
-                     or {
-                        ${operation.serialize()}
-                    }
-                """.trimIndent()
-            }
-
-            result
-        }
-        else -> "UNKNOWN_OPERATION$$$"
-    }
 }
