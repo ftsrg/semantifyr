@@ -15,6 +15,7 @@ class XstsTransformer {
         val instantiator = Instantiator()
         val rootInstance = instantiator.instantiate(target)
 
+        target.init.inlineOperations(rootInstance)
         target.transition.inlineOperations(rootInstance)
 
         val xsts = OxstsFactory.createXSTS()
@@ -25,8 +26,8 @@ class XstsTransformer {
             it.reference
         }.filterIsInstance<Enum>()
 
-        xsts.enums.addAll(enums)
-        xsts.variables.addAll(target.variables.map{ it.copy() })
+        xsts.enums.addAll(enums.copy())
+        xsts.variables.addAll(target.variables.copy())
         xsts.init = target.init.copy()
         xsts.transition = target.transition.copy()
         xsts.property = target.property.copy()

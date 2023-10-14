@@ -7,9 +7,17 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.Type
 import java.util.*
 
 open class InstanceObject(
-    val instance: Instance?
+    val instance: Instance?,
+    val parent: InstanceObject?,
 ) {
-    val featureMap = mutableMapOf<Feature, InstanceObject>()
+    val featureMap = mutableMapOf<Feature, MutableList<InstanceObject>>()
+
+    fun addInstanceObject(feature: Feature, instanceObject: InstanceObject) {
+        val list = featureMap.computeIfAbsent(feature) {
+            mutableListOf()
+        }
+        list.add(instanceObject)
+    }
 
     val expressionEvaluator = ExpressionEvaluator(this)
     val operationEvaluator = InlineOperationEvaluator(this)
@@ -38,13 +46,13 @@ val Type.allInstances: List<Instance>
         return list
     }
 
-object NothingInstance : InstanceObject(null)
+object NothingInstance : InstanceObject(null, null)
 
 class Instantiator {
     val instanceQueue = LinkedList<InstanceObject>()
 
     fun instantiate(target: Target): InstanceObject {
-        val rootInstanceObject = InstanceObject(null)
+        val rootInstanceObject = InstanceObject(null, null)
 
         rootInstanceObject.instanciateInstances(target.instances)
 
@@ -59,19 +67,14 @@ class Instantiator {
 
     fun InstanceObject.instanciateInstances(instances: List<Instance>) {
         for (instance in instances) {
-            val instanceObject = instance.createInstanceObject()
+            val instanceObject = InstanceObject(instance, this)
+            instanceQueue.add(instanceObject)
             place(instance, instanceObject)
         }
     }
 
-    fun Instance.createInstanceObject(): InstanceObject {
-        val instanceObject = InstanceObject(this)
-        instanceQueue.add(instanceObject)
-        return instanceObject
-    }
-
     fun InstanceObject.place(feature: Feature, instanceObject: InstanceObject) {
-        featureMap[feature] = instanceObject
+        addInstanceObject(feature, instanceObject)
         if (feature.subsets != null) {
             place(feature.subsets, instanceObject)
         }

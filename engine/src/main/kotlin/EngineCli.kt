@@ -2,8 +2,10 @@ package hu.bme.mit.gamma.oxsts.engine
 
 import hu.bme.mit.gamma.oxsts.engine.reader.OxstsReader
 import hu.bme.mit.gamma.oxsts.engine.serialization.Serializer
+import hu.bme.mit.gamma.oxsts.engine.transformation.ImplicitExpressionRewriter
 import hu.bme.mit.gamma.oxsts.engine.transformation.XstsTransformer
 import hu.bme.mit.gamma.oxsts.model.oxsts.Target
+import hu.bme.mit.gamma.oxsts.model.oxsts.Type
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import java.io.File
@@ -22,13 +24,17 @@ fun main(args: Array<String>) {
 
     val target = reader.rootElements.flatMap {
         it.eAllContents().asSequence()
-    }.map {
-        it as? Target
-    }.firstOrNull {
-        it?.name == targetName
+    }.filterIsInstance<Target>().firstOrNull {
+        it.name == targetName
     }
 
     requireNotNull(target) { "Target not found!" }
+
+    val types = reader.rootElements.flatMap { it.eAllContents().asSequence() }.filterIsInstance<Type>()
+    for (type in types) {
+        ImplicitExpressionRewriter.rewriteExpressions(type)
+    }
+    ImplicitExpressionRewriter.rewriteExpressions(target)
 
     val transformer = XstsTransformer()
     val xsts = transformer.transform(target)

@@ -19,93 +19,103 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.OrOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
 
 /**
- * This class evaluates compile-time evaluatable expressions only!
+ * This class evaluates compile-time evaluable expressions only!
  */
 class ExpressionEvaluator(
-    val context: InstanceObject
+    private val context: InstanceObject
 ) {
-
     fun evaluateBoolean(expression: Expression): Boolean = when (expression) {
-        is OperatorExpression -> evaluateOperator(expression)
-        is LiteralExpression -> evaluateLiteral(expression)
-        else -> error("Expression is not of known type: $expression") // FIXME
+        is OperatorExpression -> evaluateBooleanOperator(expression)
+        is LiteralExpression -> evaluateBooleanLiteral(expression)
+        else -> error("Unknown type of expression: $expression")
     }
 
-    fun evaluateInstanceObject(expression: Expression): InstanceObject = when (expression) {
-        is LiteralExpression -> evaluateLiteralToInstanceObject(expression)
-        is ReferenceExpression -> evaluateReferenceToInstanceObject(expression)
-        else -> error("Expression is not of known type: $expression") // FIXME
+    fun evaluateInstanceObject(expression: Expression) = evaluateInstanceObjectSet(expression).single()
+
+    fun evaluateInstanceObjectSet(expression: Expression): List<InstanceObject> = when (expression) {
+        is LiteralExpression -> listOf(evaluateLiteralToInstanceObject(expression))
+        is ReferenceExpression -> evaluateReferenceToInstanceObjectSet(expression)
+        else -> error("Unknown type of expression: $expression")
     }
 
-    fun evaluateOperator(operator: OperatorExpression): Boolean = when(operator) {
+    private fun evaluateBooleanOperator(operator: OperatorExpression): Boolean = when(operator) {
         is AndOperator -> evaluateBoolean(operator.operands[0]) && evaluateBoolean(operator.operands[1])
         is OrOperator -> evaluateBoolean(operator.operands[0]) || evaluateBoolean(operator.operands[1])
         is NotOperator -> !evaluateBoolean(operator.operands[0])
         is EqualityOperator -> evaluateInstanceObject(operator.operands[0]) == evaluateInstanceObject(operator.operands[1])
         is InequalityOperator -> evaluateInstanceObject(operator.operands[0]) != evaluateInstanceObject(operator.operands[1])
-        else -> error("Operator is not of known type: $operator") // FIXME
+        else -> error("Unknown type of literal: $operator")
     }
 
-    fun evaluateLiteral(literal: LiteralExpression): Boolean = when(literal) {
+    private fun evaluateBooleanLiteral(literal: LiteralExpression): Boolean = when(literal) {
         is LiteralBoolean -> literal.isValue
-        else -> error("Operator is not of known type: $literal") // FIXME
+        else -> error("Unknown boolean type of literal: $literal")
     }
 
-
-    fun evaluateLiteralToInstanceObject(literal: LiteralExpression): InstanceObject = when (literal) {
+    private fun evaluateLiteralToInstanceObject(literal: LiteralExpression): InstanceObject = when (literal) {
         is LiteralNothing -> NothingInstance
         is LiteralSelf -> context
-        else-> error("Literal is not of known type: $literal") // FIXME
+        else -> error("Unknown type of literal: $literal")
     }
 
     inline fun <reified T : Element> evaluateTypedReference(reference: ReferenceExpression): T {
-        return evaluateReference(reference) as? T ?: error("Reference must point to element of type ${T::class.qualifiedName}")
+        val element = evaluateReference(reference)
+
+        check(element is T) {
+            "Reference must point to element of type ${T::class.qualifiedName}"
+        }
+
+        return element
     }
 
-    fun evaluateReference(reference: ReferenceExpression): Element = when(reference) {
-        is ChainReferenceExpression -> {
-            var localContext = context
+    fun evaluateReference(reference: ReferenceExpression): Element {
+        require(reference is ChainReferenceExpression)
 
-            for (chain in reference.chains.dropLast(1)) {
-                with(localContext.expressionEvaluator) {
-                    localContext = chain.evaluateToInstanceObject()
-                }
-            }
+        var localContext = context
 
+        for (chain in reference.chains.dropLast(1)) {
             with(localContext.expressionEvaluator) {
-                reference.chains.last().element
+                localContext = chain.evaluateToInstanceObjectSet().single()
             }
         }
-        is DeclarationReferenceExpression -> reference.element
-        is ChainingExpression -> reference.element
-        else -> error("Reference is not of known type: $reference") // FIXME
+
+        return with(localContext.expressionEvaluator) {
+            reference.chains.last().evaluateReference()
+        }
     }
 
-    fun evaluateReferenceToInstanceObject(reference: ReferenceExpression): InstanceObject = when (reference) {
-        is ChainReferenceExpression -> {
-            var localContext = context
-            for (chain in reference.chains) {
-                with(localContext.expressionEvaluator) {
-                    localContext = chain.evaluateToInstanceObject()
-                }
+    private fun ChainingExpression.evaluateReference(): Element {
+        require(this is DeclarationReferenceExpression) {
+            "Expression must be DeclarationReferenceExpression"
+        }
+
+        return element
+    }
+
+    private fun evaluateReferenceToInstanceObjectSet(reference: ReferenceExpression): List<InstanceObject> {
+        require(reference is ChainReferenceExpression) {
+            "Expression must be ChainReferenceExpression"
+        }
+
+        var localContext = listOf(context)
+        for (chain in reference.chains) {
+            with(localContext.single().expressionEvaluator) {
+                localContext = chain.evaluateToInstanceObjectSet()
             }
-            localContext
         }
-        is DeclarationReferenceExpression -> reference.evaluateToInstanceObject()
-        is ChainingExpression -> reference.evaluateToInstanceObject()
-        else -> error("Reference is not of known type: $reference")
+        return localContext
     }
 
-    private fun ChainingExpression.evaluateToInstanceObject(): InstanceObject {
-        if (element !is Feature) {
-            error("Expression must refer to a feature!")
+    private fun ChainingExpression.evaluateToInstanceObjectSet(): List<InstanceObject> {
+        require(this is DeclarationReferenceExpression) {
+            error("Expression must be a DeclarationReferenceExpression!")
         }
 
-        return context.featureMap[element as Feature] ?: error("No instance for feature!")
+        return evaluateToInstanceObjectSet()
     }
 
-    private fun DeclarationReferenceExpression.evaluateToInstanceObject(): InstanceObject {
-        if (element !is Feature) {
+    private fun DeclarationReferenceExpression.evaluateToInstanceObjectSet(): List<InstanceObject> {
+        require(element is Feature) {
             error("Expression must refer to a feature!")
         }
 
