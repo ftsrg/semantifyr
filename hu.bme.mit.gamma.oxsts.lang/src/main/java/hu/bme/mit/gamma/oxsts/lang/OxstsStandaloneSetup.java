@@ -9,7 +9,7 @@ package hu.bme.mit.gamma.oxsts.lang;
  */
 public class OxstsStandaloneSetup extends OxstsStandaloneSetupGenerated {
 
-	public static void doSetup() {
-		new OxstsStandaloneSetup().createInjectorAndDoEMFRegistration();
-	}
+    public static void doSetup() {
+        new OxstsStandaloneSetup().createInjectorAndDoEMFRegistration();
+    }
 }

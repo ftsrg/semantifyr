@@ -19,7 +19,7 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
 import hu.bme.mit.gamma.oxsts.model.oxsts.VariableTypeReference
 import hu.bme.mit.gamma.oxsts.model.oxsts.XSTS
 import org.eclipse.xtext.EcoreUtil2
-import java.util.LinkedList
+import java.util.*
 
 class XstsTransformer {
     fun transform(target: Target): XSTS {
@@ -63,6 +63,7 @@ class XstsTransformer {
                     EcoreUtil2.replace(operation, inlined)
                     processorQueue += inlined
                 }
+
                 is CompositeOperation -> {
                     processorQueue += operation.operation
                 }
@@ -112,6 +113,7 @@ class XstsTransformer {
                     OxstsFactory.createAndOperator(lhs, rhs)
                 }
             }
+
             is ChoiceOperation -> {
                 operation.map {
                     it.calculateAssumption()
@@ -119,6 +121,7 @@ class XstsTransformer {
                     OxstsFactory.createOrOperator(lhs, rhs)
                 }
             }
+
             is IfOperation -> {
                 val guardAssumption = guard.copy()
                 val notGuardAssumption = OxstsFactory.createNotOperator(guard.copy())
@@ -130,6 +133,7 @@ class XstsTransformer {
                     OxstsFactory.createAndOperator(notGuardAssumption, elseAssumption),
                 )
             }
+
             else -> error("Unsupported operation!")
         }
     }

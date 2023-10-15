@@ -5,12 +5,12 @@ package hu.bme.mit.gamma.oxsts.lang.validation;
 
 
 /**
- * This class contains custom validation rules. 
- *
+ * This class contains custom validation rules.
+ * <p>
  * See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#validation
  */
 public class OxstsValidator extends AbstractOxstsValidator {
-	
+
 //	public static final String INVALID_NAME = "invalidName";
 //
 //	@Check
@@ -21,5 +21,5 @@ public class OxstsValidator extends AbstractOxstsValidator {
 //					INVALID_NAME);
 //		}
 //	}
-	
+
 }

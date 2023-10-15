@@ -1,14 +1,14 @@
 plugins {
-	`kotlin-dsl`
-	alias(libs.plugins.versions)
+    `kotlin-dsl`
+    alias(libs.plugins.versions)
 }
 
 repositories {
-	gradlePluginPortal()
-	mavenCentral()
+    gradlePluginPortal()
+    mavenCentral()
 }
 
 dependencies {
-	// https://github.com/gradle/gradle/issues/15383
-	implementation(files(libs.javaClass.superclass.protectionDomain.codeSource.location))
+    // https://github.com/gradle/gradle/issues/15383
+    implementation(files(libs.javaClass.superclass.protectionDomain.codeSource.location))
 }

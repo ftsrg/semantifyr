@@ -1,7 +1,37 @@
 package hu.bme.mit.gamma.oxsts.engine.serialization
 
-import hu.bme.mit.gamma.oxsts.model.oxsts.*
+import hu.bme.mit.gamma.oxsts.model.oxsts.AndOperator
+import hu.bme.mit.gamma.oxsts.model.oxsts.AssignmentOperation
+import hu.bme.mit.gamma.oxsts.model.oxsts.AssumptionOperation
+import hu.bme.mit.gamma.oxsts.model.oxsts.BooleanType
+import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.ChoiceOperation
+import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Enum
+import hu.bme.mit.gamma.oxsts.model.oxsts.EqualityOperator
+import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
+import hu.bme.mit.gamma.oxsts.model.oxsts.HavocOperation
+import hu.bme.mit.gamma.oxsts.model.oxsts.IfOperation
+import hu.bme.mit.gamma.oxsts.model.oxsts.InequalityOperator
+import hu.bme.mit.gamma.oxsts.model.oxsts.IntegerType
+import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralBoolean
+import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralInteger
+import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralNothing
+import hu.bme.mit.gamma.oxsts.model.oxsts.MinusOperator
+import hu.bme.mit.gamma.oxsts.model.oxsts.NotOperator
+import hu.bme.mit.gamma.oxsts.model.oxsts.Operation
+import hu.bme.mit.gamma.oxsts.model.oxsts.OperatorExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.OrOperator
+import hu.bme.mit.gamma.oxsts.model.oxsts.PlusOperator
+import hu.bme.mit.gamma.oxsts.model.oxsts.Property
+import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.SequenceOperation
+import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
+import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
+import hu.bme.mit.gamma.oxsts.model.oxsts.VariableTypeReference
+import hu.bme.mit.gamma.oxsts.model.oxsts.VariableTyping
+import hu.bme.mit.gamma.oxsts.model.oxsts.XSTS
 
 class IndentationAwareStringWriter(
     private val indentation: String
@@ -129,6 +159,7 @@ object Serializer {
                     append(seqOp)
                 }
             }
+
             is AssignmentOperation -> appendLine("${operation.reference.serialize()} := ${operation.expression.serialize()};")
             is AssumptionOperation -> appendLine("assume (${operation.expression.serialize()});")
             is HavocOperation -> appendLine("havoc (${operation.referenceExpression.serialize()};")
@@ -145,6 +176,7 @@ object Serializer {
                 }
                 appendLine("}")
             }
+
             is ChoiceOperation -> {
                 appendLine("choice {")
 
@@ -168,18 +200,19 @@ object Serializer {
 
     val VariableTyping.name: String
         get() = when (this) {
-        is IntegerType -> "Integer"
-        is BooleanType -> "Boolean"
-        is VariableTypeReference -> {
-            val reference = this.reference
+            is IntegerType -> "Integer"
+            is BooleanType -> "Boolean"
+            is VariableTypeReference -> {
+                val reference = this.reference
 
-            when (reference) {
-                is Enum -> reference.name
-                else -> "UNKNOWN_TYPE$$$"
+                when (reference) {
+                    is Enum -> reference.name
+                    else -> "UNKNOWN_TYPE$$$"
+                }
             }
+
+            else -> "UNKNOWN_TYPE$$$"
         }
-        else -> "UNKNOWN_TYPE$$$"
-    }
 
     fun Expression.serialize(): String = when (this) {
         is OperatorExpression -> serialize()
@@ -199,7 +232,7 @@ object Serializer {
         else -> "UNKNOWN_EXPRESSION$$$"
     }
 
-    fun LiteralExpression.serialize(): String = when(this) {
+    fun LiteralExpression.serialize(): String = when (this) {
         is LiteralNothing -> "__NOTHING__"
         is LiteralBoolean -> isValue.toString()
         is LiteralInteger -> value.toString()
@@ -210,6 +243,7 @@ object Serializer {
         is ChainReferenceExpression -> {
             chains.map { it as DeclarationReferenceExpression }.map { it.element.name }.joinToString(".")
         }
+
         else -> "UNKNOWN_EXPRESSION$$$"
     }
 

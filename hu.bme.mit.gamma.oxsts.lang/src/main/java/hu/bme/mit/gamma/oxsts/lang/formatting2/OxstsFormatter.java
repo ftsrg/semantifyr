@@ -11,25 +11,25 @@ import org.eclipse.xtext.formatting2.IFormattableDocument;
 
 public class OxstsFormatter extends AbstractJavaFormatter {
 
-	protected void format(hu.bme.mit.gamma.oxsts.model.oxsts.Package _package, IFormattableDocument doc) {
-		// TODO: format HiddenRegions around keywords, attributes, cross references, etc. 
-		for (Type type : _package.getTypes()) {
-			doc.format(type);
-		}
-		for (hu.bme.mit.gamma.oxsts.model.oxsts.Enum _enum : _package.getEnums()) {
-			doc.format(_enum);
-		}
-		for (Target target : _package.getTarget()) {
-			doc.format(target);
-		}
-	}
+    protected void format(hu.bme.mit.gamma.oxsts.model.oxsts.Package _package, IFormattableDocument doc) {
+        // TODO: format HiddenRegions around keywords, attributes, cross references, etc.
+        for (Type type : _package.getTypes()) {
+            doc.format(type);
+        }
+        for (hu.bme.mit.gamma.oxsts.model.oxsts.Enum _enum : _package.getEnums()) {
+            doc.format(_enum);
+        }
+        for (Target target : _package.getTarget()) {
+            doc.format(target);
+        }
+    }
 
-	protected void format(hu.bme.mit.gamma.oxsts.model.oxsts.Enum _enum, IFormattableDocument doc) {
-		// TODO: format HiddenRegions around keywords, attributes, cross references, etc. 
-		for (EnumLiteral enumLiteral : _enum.getLiterals()) {
-			doc.format(enumLiteral);
-		}
-	}
-	
-	// TODO: implement for Type, Transition, SequenceOperation, HavocOperation, ChoiceOperation, AssumptionOperation, IfOperation, InlineChoice, InlineSeq, InlineCall, InlineIfOperation, AssignmentOperation, Variable, Feature, Instance, InstanceBinding, OrOperator, AndOperator, PlusOperator, MinusOperator, EqualityOperator, InequalityOperator, NotOperator, ChainReferenceExpression
+    protected void format(hu.bme.mit.gamma.oxsts.model.oxsts.Enum _enum, IFormattableDocument doc) {
+        // TODO: format HiddenRegions around keywords, attributes, cross references, etc.
+        for (EnumLiteral enumLiteral : _enum.getLiterals()) {
+            doc.format(enumLiteral);
+        }
+    }
+
+    // TODO: implement for Type, Transition, SequenceOperation, HavocOperation, ChoiceOperation, AssumptionOperation, IfOperation, InlineChoice, InlineSeq, InlineCall, InlineIfOperation, AssignmentOperation, Variable, Feature, Instance, InstanceBinding, OrOperator, AndOperator, PlusOperator, MinusOperator, EqualityOperator, InequalityOperator, NotOperator, ChainReferenceExpression
 }

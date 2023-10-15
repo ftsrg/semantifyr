@@ -38,7 +38,7 @@ class ExpressionEvaluator(
         else -> error("Unknown type of expression: $expression")
     }
 
-    private fun evaluateBooleanOperator(operator: OperatorExpression): Boolean = when(operator) {
+    private fun evaluateBooleanOperator(operator: OperatorExpression): Boolean = when (operator) {
         is AndOperator -> evaluateBoolean(operator.operands[0]) && evaluateBoolean(operator.operands[1])
         is OrOperator -> evaluateBoolean(operator.operands[0]) || evaluateBoolean(operator.operands[1])
         is NotOperator -> !evaluateBoolean(operator.operands[0])
@@ -47,7 +47,7 @@ class ExpressionEvaluator(
         else -> error("Unknown type of literal: $operator")
     }
 
-    private fun evaluateBooleanLiteral(literal: LiteralExpression): Boolean = when(literal) {
+    private fun evaluateBooleanLiteral(literal: LiteralExpression): Boolean = when (literal) {
         is LiteralBoolean -> literal.isValue
         else -> error("Unknown boolean type of literal: $literal")
     }

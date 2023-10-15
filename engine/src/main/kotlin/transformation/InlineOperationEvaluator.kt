@@ -1,6 +1,18 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
-import hu.bme.mit.gamma.oxsts.model.oxsts.*
+import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.InlineCall
+import hu.bme.mit.gamma.oxsts.model.oxsts.InlineChoice
+import hu.bme.mit.gamma.oxsts.model.oxsts.InlineComposite
+import hu.bme.mit.gamma.oxsts.model.oxsts.InlineIfOperation
+import hu.bme.mit.gamma.oxsts.model.oxsts.InlineOperation
+import hu.bme.mit.gamma.oxsts.model.oxsts.InlineSeq
+import hu.bme.mit.gamma.oxsts.model.oxsts.Operation
+import hu.bme.mit.gamma.oxsts.model.oxsts.Parameter
+import hu.bme.mit.gamma.oxsts.model.oxsts.ParameterBinding
+import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
 
@@ -22,6 +34,7 @@ class InlineOperationEvaluator(
                     }
                 }
             }
+
             is InlineIfOperation -> {
                 if (context.expressionEvaluator.evaluateBoolean(operation.guard)) {
                     operation.body.copy()
@@ -29,6 +42,7 @@ class InlineOperationEvaluator(
                     operation.`else`?.copy() ?: OxstsFactory.createEmptyOperation()
                 }
             }
+
             is InlineSeq -> {
                 val inlineCalls = inlineCallsFromComposite(operation)
 
@@ -36,6 +50,7 @@ class InlineOperationEvaluator(
                     it.operation += inlineCalls
                 }
             }
+
             is InlineChoice -> {
                 val inlineCalls = inlineCallsFromComposite(operation)
 
@@ -47,6 +62,7 @@ class InlineOperationEvaluator(
                     }
                 }
             }
+
             else -> error("Operation is not of known type: $operation")
         }
     }
