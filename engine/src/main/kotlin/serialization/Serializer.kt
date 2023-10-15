@@ -157,7 +157,7 @@ object Serializer {
                 for (choiceOp in operation.operation.drop(1)) {
                     appendLine("} or {")
                     indent {
-                        append(operation.operation.first())
+                        append(choiceOp)
                     }
                 }
 
@@ -189,13 +189,13 @@ object Serializer {
     }
 
     fun OperatorExpression.serialize(): String = when (this) {
-        is AndOperator -> "${operands[0].serialize()} && ${operands[1].serialize()}"
-        is OrOperator -> "${operands[0].serialize()} || ${operands[1].serialize()}"
-        is PlusOperator -> "${operands[0].serialize()} + ${operands[1].serialize()}"
-        is MinusOperator -> "${operands[0].serialize()} - ${operands[1].serialize()}"
-        is EqualityOperator -> "${operands[0].serialize()} == ${operands[1].serialize()}"
-        is InequalityOperator -> "${operands[0].serialize()} != ${operands[1].serialize()}"
-        is NotOperator -> "! ${operands[0].serialize()}"
+        is AndOperator -> "(${operands[0].serialize()} && ${operands[1].serialize()})"
+        is OrOperator -> "(${operands[0].serialize()} || ${operands[1].serialize()})"
+        is PlusOperator -> "(${operands[0].serialize()} + ${operands[1].serialize()})"
+        is MinusOperator -> "(${operands[0].serialize()} - ${operands[1].serialize()})"
+        is EqualityOperator -> "(${operands[0].serialize()} == ${operands[1].serialize()})"
+        is InequalityOperator -> "(${operands[0].serialize()} != ${operands[1].serialize()})"
+        is NotOperator -> "! (${operands[0].serialize()})"
         else -> "UNKNOWN_EXPRESSION$$$"
     }
 
