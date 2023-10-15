@@ -7,23 +7,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import hu.bme.mit.gamma.oxsts.model.oxsts.*;
+import hu.bme.mit.gamma.oxsts.model.oxsts.Package;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.scoping.IScope;
 import org.eclipse.xtext.scoping.Scopes;
-
-import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression;
-import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression;
-import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression;
-import hu.bme.mit.gamma.oxsts.model.oxsts.Element;
-import hu.bme.mit.gamma.oxsts.model.oxsts.Feature;
-import hu.bme.mit.gamma.oxsts.model.oxsts.InlineComposite;
-import hu.bme.mit.gamma.oxsts.model.oxsts.Instance;
-import hu.bme.mit.gamma.oxsts.model.oxsts.OxstsPackage;
-import hu.bme.mit.gamma.oxsts.model.oxsts.Type;
-import hu.bme.mit.gamma.oxsts.model.oxsts.Package;
-import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression;
 
 /**
  * This class contains custom scoping description.
@@ -36,7 +26,8 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 	private boolean isTypeReference(EReference reference) {
 		return reference == OxstsPackage.Literals.TYPE__SUPERTYPE ||
 			reference == OxstsPackage.Literals.FEATURE__TYPE ||
-			reference == OxstsPackage.Literals.VARIABLE_TYPE_REFERENCE__REFERENCE;
+			reference == OxstsPackage.Literals.VARIABLE_TYPE_REFERENCE__REFERENCE ||
+            reference == OxstsPackage.Literals.PARAMETER__TYPE;
 	}
 	
 	@Override
@@ -97,7 +88,9 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 			elements.addAll(getInheritedElements(instance.getType()));
 		} else if (element instanceof Feature feature) {
 			elements.addAll(getInheritedElements(feature.getType()));
-		}
+		} else if (element instanceof Parameter parameter) {
+            elements.addAll(getInheritedElements(parameter.getType()));
+        }
 
 		return elements;
 	}

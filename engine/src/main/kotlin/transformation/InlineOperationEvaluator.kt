@@ -10,15 +10,15 @@ class InlineOperationEvaluator(
     fun inlineTransition(operation: InlineOperation): Operation {
         return when (operation) {
             is InlineCall -> {
-                val containerInstance = context.expressionEvaluator.evaluateInstanceObject(operation.reference.asChainReferenceExpression().exceptLast())
+                val containerInstance = context.expressionEvaluator.evaluateInstanceObject(operation.reference.asChainReferenceExpression().dropLast(1))
                 val transition = context.expressionEvaluator.evaluateTypedReference<Transition>(operation.reference)
 
                 OxstsFactory.createChoiceOperation().apply {
                     for (currentOperation in transition.operation) {
                         this.operation += currentOperation
                             .copy()
+                            .rewriteToContext(containerInstance, transition.parameters)
                             .rewriteToParameters(transition.parameters, operation.parameterBindings)
-                            .rewriteToContext(containerInstance)
                     }
                 }
             }
@@ -54,7 +54,7 @@ class InlineOperationEvaluator(
     private fun inlineCallsFromComposite(inlineComposite: InlineComposite): List<InlineCall> {
         val instanceSet = context.expressionEvaluator.evaluateInstanceObjectSet(inlineComposite.feature)
 
-        val baseFeature = inlineComposite.feature.asChainReferenceExpression().exceptLast()
+        val baseFeature = inlineComposite.feature.asChainReferenceExpression().dropLast(1)
         val transitionReference = inlineComposite.transition.asChainReferenceExpression()
 
         val list = mutableListOf<InlineCall>()
@@ -71,21 +71,25 @@ class InlineOperationEvaluator(
 
     private fun Operation.rewriteToParameters(parameters: List<Parameter>, bindings: List<ParameterBinding>): Operation {
         val references = EcoreUtil2.getAllContents<EObject>(this, true).asSequence().filterIsInstance<ChainReferenceExpression>().filter {
-            it.chains.size == 1 && parameters.contains(it.chains.last().element)
+            parameters.contains(it.chains.first().element)
         }.toList()
 
         for (reference in references) {
-            val parameter = reference.chains.last().element
+            val parameter = reference.chains.first().element
             val parameterIndex = parameters.indexOf(parameter)
             val binding = bindings[parameterIndex] // TODO is index based stable?
-            EcoreUtil2.replace(reference, binding.expression.copy())
+            val chain = binding.expression as ChainReferenceExpression
+            val newExpression = chain.copy().appendWith(reference.drop(1))
+            EcoreUtil2.replace(reference, newExpression)
         }
 
         return this
     }
 
-    private fun Operation.rewriteToContext(localContext: InstanceObject): Operation {
-        val references = EcoreUtil2.getAllContents<EObject>(this, true).asSequence().filterIsInstance<ReferenceExpression>().toList()
+    private fun Operation.rewriteToContext(localContext: InstanceObject, parameters: List<Parameter>): Operation {
+        val references = EcoreUtil2.getAllContents<EObject>(this, true).asSequence().filterIsInstance<ChainReferenceExpression>().filterNot {
+            parameters.contains(it.chains.first().element)
+        }.toList()
 
         for (reference in references) {
             reference.rewriteToContext(localContext)

@@ -141,7 +141,7 @@ class XstsTransformer {
         }
 
         for (expression in expressions) {
-            val instanceObject = rootInstance.expressionEvaluator.evaluateInstanceObject(expression.exceptLast())
+            val instanceObject = rootInstance.expressionEvaluator.evaluateInstanceObject(expression.dropLast(1))
             val reference = expression.chains.last() as DeclarationReferenceExpression
             val variable = reference.element as Variable
             val newExpression = OxstsFactory.createChainReferenceExpression(instanceObject.variableMap[variable]!!)

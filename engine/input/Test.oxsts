@@ -1,37 +1,84 @@
 package Test
 
-enum TimeUnit {
-    Seconds, Minutes, Hours, Days
+enum Kind {
+    None, Asd
 }
 
-type Component {
-    tran compon {
-        assume (false)
+type AType {
+    var x : Integer
+}
+
+type Adder {
+    var x : Integer := 1
+    var y : Kind
+
+    init {
+        x := 0
+    }
+
+    tran sequential {
+        x := 200
+        assume (x = 20)
+    }
+
+    tran choiceial {
+        x := 100
+        assume (x = 10)
+    }
+
+    tran {
+        x := x + 1
     }
 }
 
 type Holder {
-    feature components : Component
+    feature adder : Adder[0..*]
 
-    instance c :> components : Component
+    instance a :> adder : Adder
+    instance b :> adder : Adder
 
-    tran transition {
-        inline components.compon()
+    var h : Boolean := false
+
+    tran {
+        inline seq adder -> sequential
+    }
+
+    tran test(aInstance: AType) {
+        aInstance.x := 10
+    }
+
+    init {
+        inline seq adder -> sequential
+
+        inline choice adder -> choiceial else {
+            h := true
+        }
     }
 }
 
 target Mission {
+    var c : Integer
+
     instance holder : Holder
 
+    instance aType : AType
+
     init {
-        assume (true)
+        //inline holder.init()
+        assume (false)
     }
 
     tran {
-        inline holder.transition()
-    }
+        inline holder.test(aType)
+    } /*or {
+        inline holder.main()
+    }*/
 
     prop {
-        false
+        holder.a.x = 10
     }
+}
+
+target SpecificMission : Mission {
+
 }

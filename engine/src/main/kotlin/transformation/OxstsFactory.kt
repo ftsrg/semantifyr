@@ -82,9 +82,15 @@ fun ReferenceExpression.asChainReferenceExpression(): ChainReferenceExpression {
     return this
 }
 
-fun ChainReferenceExpression.exceptLast(): ChainReferenceExpression {
-    return copy().also {
-        it.chains.removeLast()
+fun ChainReferenceExpression.drop(n: Int): ChainReferenceExpression {
+    return OxstsFactory.createChainReferenceExpression().also {
+        it.chains += chains.copy().drop(n)
+    }
+}
+
+fun ChainReferenceExpression.dropLast(n: Int): ChainReferenceExpression {
+    return OxstsFactory.createChainReferenceExpression().also {
+        it.chains += chains.copy().dropLast(n)
     }
 }
 
