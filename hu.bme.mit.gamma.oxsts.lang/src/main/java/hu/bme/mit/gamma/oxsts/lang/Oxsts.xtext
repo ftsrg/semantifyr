@@ -67,7 +67,7 @@ Type:
 ;
 
 NamedTransition returns Transition:
-	name=ID ('('')')? TransitionBody
+	name=ID TransitionBody
 ;
 
 fragment NamelessTransition returns Transition:
@@ -87,11 +87,20 @@ InitTransition returns Transition:
 ;
 
 fragment TransitionBody returns Transition:
+	('('
+		parameters+=Parameter
+		(',' parameters+=Parameter)* (',')?
+	')')? 
 	operation+=SequenceOperation
 	(
 		'or' operation+=SequenceOperation
 	)*
 ;
+
+Parameter: 
+	name=ID ':' type=[Type]
+;
+
 
 Operation:
 	   HavocOperation
@@ -156,8 +165,16 @@ InlineSeq:
 ;
 
 InlineCall: 
-	'inline' reference=ReferenceExpression '(' ')'
+	'inline' reference=ReferenceExpression '('
+		parameterBindings+=ParameterBinding
+		(',' parameterBindings+=ParameterBinding)* (',')?
+	')'
 ;
+
+ParameterBinding: 
+	expression=Expression
+;
+
 
 InlineIfOperation: 
 	'inline' 'if' '(' guard=Expression ')'

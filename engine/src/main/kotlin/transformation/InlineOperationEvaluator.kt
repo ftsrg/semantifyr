@@ -15,29 +15,36 @@ class InlineOperationEvaluator(
 
                 OxstsFactory.createChoiceOperation().apply {
                     for (currentOperation in transition.operation) {
-                        this.operation.add(currentOperation.copyAndRewrite(containerInstance))
+                        this.operation += currentOperation
+                            .copy()
+                            .rewriteToParameters(transition.parameters, operation.parameterBindings)
+                            .rewriteToContext(containerInstance)
                     }
                 }
             }
             is InlineIfOperation -> {
                 if (context.expressionEvaluator.evaluateBoolean(operation.guard)) {
-                    operation.body.copyAndRewrite(context)
+                    operation.body.copy()
                 } else {
-                    operation.`else`?.copyAndRewrite(context) ?: OxstsFactory.createEmptyOperation()
+                    operation.`else`?.copy() ?: OxstsFactory.createEmptyOperation()
                 }
             }
             is InlineSeq -> {
                 val inlineCalls = inlineCallsFromComposite(operation)
 
                 OxstsFactory.createSequenceOperation().also {
-                    it.operation.addAll(inlineCalls)
+                    it.operation += inlineCalls
                 }
             }
             is InlineChoice -> {
                 val inlineCalls = inlineCallsFromComposite(operation)
 
                 OxstsFactory.createChoiceOperation().also {
-                    it.operation.addAll(inlineCalls)
+                    it.operation += inlineCalls
+
+                    if (operation.`else` != null) {
+                        it.`else` = operation.`else`.copy()
+                    }
                 }
             }
             else -> error("Operation is not of known type: $operation")
@@ -56,25 +63,38 @@ class InlineOperationEvaluator(
             val instanceReference = OxstsFactory.createChainReferenceExpression(instance.instance!!)
             val inlineCall = OxstsFactory.createInlineCall(baseFeature.appendWith(instanceReference).appendWith(transitionReference))
 
-            list.add(inlineCall)
+            list += inlineCall
         }
 
         return list
     }
 
-    private fun Operation.copyAndRewrite(localContext: InstanceObject): Operation {
-        val operation = copy()
-
-        val references = EcoreUtil2.getAllContents<EObject>(operation, true).asSequence().filterIsInstance<ReferenceExpression>().toList()
+    private fun Operation.rewriteToParameters(parameters: List<Parameter>, bindings: List<ParameterBinding>): Operation {
+        val references = EcoreUtil2.getAllContents<EObject>(this, true).asSequence().filterIsInstance<ChainReferenceExpression>().filter {
+            it.chains.size == 1 && parameters.contains(it.chains.last().element)
+        }.toList()
 
         for (reference in references) {
-            reference.rewrite(localContext)
+            val parameter = reference.chains.last().element
+            val parameterIndex = parameters.indexOf(parameter)
+            val binding = bindings[parameterIndex] // TODO is index based stable?
+            EcoreUtil2.replace(reference, binding.expression.copy())
         }
 
-        return operation
+        return this
     }
 
-    private fun ReferenceExpression.rewrite(localContext: InstanceObject) {
+    private fun Operation.rewriteToContext(localContext: InstanceObject): Operation {
+        val references = EcoreUtil2.getAllContents<EObject>(this, true).asSequence().filterIsInstance<ReferenceExpression>().toList()
+
+        for (reference in references) {
+            reference.rewriteToContext(localContext)
+        }
+
+        return this
+    }
+
+    private fun ReferenceExpression.rewriteToContext(localContext: InstanceObject) {
         require(this is ChainReferenceExpression)
 
         val inlineComposite = EcoreUtil2.getContainerOfType(this, InlineComposite::class.java)
@@ -95,7 +115,7 @@ class InlineOperationEvaluator(
 
         createReferenceToContext(parent, context)
 
-        context.add(OxstsFactory.createChainingExpression(instance))
+        context += OxstsFactory.createChainingExpression(instance)
 
         return context
     }
