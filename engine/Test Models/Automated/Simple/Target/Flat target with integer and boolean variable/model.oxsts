@@ -1,0 +1,20 @@
+package Test
+
+target Mission {
+    var x : Integer
+    var y : Boolean
+
+    init {
+        x := 0
+        y := false
+    }
+
+    tran {
+        x := x + 1
+        y := x = 10
+    }
+
+    prop {
+        y = false
+    }
+}

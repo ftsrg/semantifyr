@@ -28,10 +28,6 @@ tasks {
         inputs.file("./GenerateModel.mwe2")
         inputs.file("model/oxsts.ecore")
         inputs.file("model/oxsts.genmodel")
-        outputs.file("build.properties")
-        outputs.file("META-INF/MANIFEST.MF")
-        outputs.file("plugin.xml")
-        outputs.file("plugin.properties")
         outputs.dir("src/main/emf-gen")
         args("./GenerateModel.mwe2", "-p", "rootPath=/$projectDir")
     }

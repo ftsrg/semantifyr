@@ -19,7 +19,7 @@ import org.eclipse.xtext.EcoreUtil2
 
 object OxstsFactory : OxstsFactoryImpl() {
     fun createEmptyOperation(): Operation {
-        return createSequenceOperation()
+        return createAssumptionOperation(createLiteralBoolean(true))
     }
 
     fun createChainingExpression(element: Element): ChainingExpression {

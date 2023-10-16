@@ -1,0 +1,21 @@
+type TimeUnit : {
+    Seconds, 
+    Minutes, 
+    Hours
+}
+
+var unit : TimeUnit;
+
+init {
+    __Mission__unit := TimeUnit.Seconds;
+}
+
+trans {
+    __Mission__unit := TimeUnit.Minutes;
+}
+
+env {}
+
+prop {
+    (__Mission__unit == TimeUnit.Seconds);
+}

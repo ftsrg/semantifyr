@@ -1,0 +1,21 @@
+package Test
+
+type Simple {
+    var x : Integer
+}
+
+target Mission {
+    instance simple : Simple
+
+    init {
+        simple.x := 0
+    }
+
+    tran {
+        simple.x := simple.x + 1
+    }
+
+    prop {
+        simple.x != 10
+    }
+}

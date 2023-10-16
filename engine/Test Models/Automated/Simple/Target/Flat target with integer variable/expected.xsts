@@ -1,0 +1,16 @@
+
+var x : Integer;
+
+init {
+    __Mission__x := 0;
+}
+
+trans {
+    __Mission__x := (__Mission__x + 1);
+}
+
+env {}
+
+prop {
+    (__Mission__x != 10);
+}

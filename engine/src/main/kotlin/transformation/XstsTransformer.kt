@@ -12,9 +12,11 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.InlineOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.Operation
+import hu.bme.mit.gamma.oxsts.model.oxsts.Package
 import hu.bme.mit.gamma.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.Target
 import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
+import hu.bme.mit.gamma.oxsts.model.oxsts.Type
 import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
 import hu.bme.mit.gamma.oxsts.model.oxsts.VariableTypeReference
 import hu.bme.mit.gamma.oxsts.model.oxsts.XSTS
@@ -22,6 +24,29 @@ import org.eclipse.xtext.EcoreUtil2
 import java.util.*
 
 class XstsTransformer {
+
+    fun transform(rootElements: List<Package>, targetName: String): XSTS {
+        prepare(rootElements)
+
+        val target = rootElements.flatMap { it.target }.first {
+            it.name == targetName
+        }
+
+        return transform(target)
+    }
+
+    fun prepare(rootElements: List<Package>) {
+        val types = rootElements.flatMap { it.eAllContents().asSequence() }.filterIsInstance<Type>()
+        for (type in types) {
+            ImplicitExpressionRewriter.rewriteExpressions(type)
+        }
+
+        val targets = rootElements.flatMap { it.eAllContents().asSequence() }.filterIsInstance<Target>()
+        for (target in targets) {
+            ImplicitExpressionRewriter.rewriteExpressions(target)
+        }
+    }
+
     fun transform(target: Target): XSTS {
         val instantiator = Instantiator()
         val rootInstance = instantiator.instantiate(target)

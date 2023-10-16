@@ -4,16 +4,23 @@ plugins {
     id("hu.bme.mit.gamma.gradle.conventions.jvm")
 }
 
-val xtextGenPath = "src/main/xtext-gen"
-
 val xtextGenerated: Configuration by configurations.creating {
     isCanBeConsumed = false
     isCanBeResolved = true
 }
 
-sourceSets.main {
-    java.srcDir(xtextGenPath)
-    resources.srcDir(xtextGenPath)
+val xtextGenPath = "src/main/xtext-gen"
+val xtextTestFixtureGenPath = "src/testFixtures/xtext-gen"
+
+sourceSets {
+    main {
+        java.srcDir(xtextGenPath)
+        resources.srcDir(xtextGenPath)
+    }
+    testFixtures {
+        java.srcDir(xtextTestFixtureGenPath)
+        resources.srcDir(xtextTestFixtureGenPath)
+    }
 }
 
 tasks {

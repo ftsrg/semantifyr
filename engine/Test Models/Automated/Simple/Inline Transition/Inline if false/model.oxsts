@@ -1,0 +1,20 @@
+package Test
+
+target Mission {
+    var x : Integer
+
+    init {
+        x := 0
+    }
+
+    tran {
+        inline if (false) {
+            x := x + 1
+        }
+        assume (x != 0)
+    }
+
+    prop {
+        x != 10
+    }
+}

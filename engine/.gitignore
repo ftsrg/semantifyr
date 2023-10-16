@@ -1,2 +1,5 @@
 gamma.*.zip
 gamma-libs/
+Test Models/**/model.xsts
+input/
+output/

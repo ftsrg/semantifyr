@@ -1,0 +1,21 @@
+package Test
+
+enum TimeUnit {
+    Seconds, Minutes, Hours
+}
+
+target Mission {
+    var unit : TimeUnit
+
+    init {
+        unit := TimeUnit.Seconds
+    }
+
+    tran {
+        unit := TimeUnit.Minutes
+    }
+
+    prop {
+        unit = TimeUnit.Seconds
+    }
+}

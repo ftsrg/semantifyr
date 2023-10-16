@@ -1,0 +1,34 @@
+
+var __Mission__a__x : Integer;
+var __Mission__a__b__x : Integer;
+var __Mission__a__b__c__x : Integer;
+var __Mission__a__b__c__d__x : Integer;
+var __Mission__a__b__c__d__e__x : Integer;
+var __Mission__a__b__c__d__e__f__x : Integer;
+
+init {
+    choice {
+        __Mission__a__x := 0;
+    }
+}
+
+trans {
+    choice {
+        __Mission__a__x := 1;
+        choice {
+            __Mission__a__b__x := 1;
+            choice {
+                __Mission__a__b__c__x := 1;
+                choice {
+                    assume (true);
+                }
+            }
+        }
+    }
+}
+
+env {}
+
+prop {
+    false;
+}

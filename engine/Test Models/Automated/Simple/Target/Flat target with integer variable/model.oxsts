@@ -1,0 +1,17 @@
+package Test
+
+target Mission {
+    var x : Integer
+
+    init {
+        x := 0
+    }
+
+    tran {
+        x := x + 1
+    }
+
+    prop {
+        x != 10
+    }
+}

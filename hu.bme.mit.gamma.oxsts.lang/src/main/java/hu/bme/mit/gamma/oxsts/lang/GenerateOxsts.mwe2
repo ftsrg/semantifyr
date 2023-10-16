@@ -13,12 +13,13 @@ Workflow {
 				baseName = "hu.bme.mit.gamma.oxsts.lang"
 				rootPath = rootPath
 				runtime = {
+					src = null
 				}
 				runtimeTest = {
-					enabled = false
+					enabled = true
 					// Only generate the xtext-gen files and leave the rest of the project alone
 					root = null
-					srcGen = '${rootPath}/language/src/testFixtures/xtext-gen'
+					srcGen = '${rootPath}/hu.bme.mit.gamma.oxsts.lang/src/testFixtures/xtext-gen'
 				}
 				genericIde = {
 					enabled = true
@@ -47,17 +48,16 @@ Workflow {
 			formatter = {
 				generateStub = true
 			}
-
 			validator = {
-				// composedCheck = "org.eclipse.xtext.validation.NamesAreUniqueValidator"
-				// Generates checks for @Deprecated grammar annotations, an IssueProvider and a corresponding PropertyPage
 				generateDeprecationValidation = true
 			}
 			generator = {
 				generateXtendStub = false
 			}
 			junitSupport = {
-				junitVersion = "5"
+				generateStub = false
+				skipXbaseTestingPackage = true
+				junitVersion = '5'
 			}
 		}
 	}

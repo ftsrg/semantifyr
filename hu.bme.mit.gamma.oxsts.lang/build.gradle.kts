@@ -16,6 +16,7 @@ dependencies {
     api(libs.xtext.core)
     api(libs.xtext.xbase)
     api(project(":hu.bme.mit.gamma.oxsts.model"))
+    testFixturesApi(libs.xtext.testing)
     mwe2(libs.xtext.generator)
     mwe2(libs.xtext.generator.antlr)
 }
@@ -35,6 +36,8 @@ val generateXtextLanguage by tasks.registering(JavaExec::class) {
     inputs.file("../hu.bme.mit.gamma.oxsts.model/model/oxsts.ecore")
     inputs.file("../hu.bme.mit.gamma.oxsts.model/model/oxsts.genmodel")
     outputs.dir("src/main/xtext-gen")
+    outputs.dir("src/test/java")
+    outputs.dir("src/testFixtures/xtext-gen")
     outputs.dir(layout.buildDirectory.dir("generated/sources/xtext/ide"))
     args("src/main/java/hu/bme/mit/gamma/oxsts/lang/GenerateOxsts.mwe2", "-p", "rootPath=/$projectDir/..")
 }
@@ -54,7 +57,7 @@ tasks {
         enabled = false
     }
 
-    for (taskName in listOf("compileJava", "processResources", "generateEclipseSourceFolders")) {
+    for (taskName in listOf("compileJava", "processResources", "generateEclipseSourceFolders", "processTestFixturesResources")) {
         named(taskName) {
             dependsOn(generateXtextLanguage)
         }

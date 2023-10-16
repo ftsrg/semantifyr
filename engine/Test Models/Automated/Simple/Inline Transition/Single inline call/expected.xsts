@@ -1,0 +1,20 @@
+
+var __Mission__a__x : Integer;
+
+init {
+    choice {
+        __Mission__a__x := 0;
+    }
+}
+
+trans {
+    choice {
+        __Mission__a__x := (__Mission__a__x + 1);
+    }
+}
+
+env {}
+
+prop {
+    (__Mission__a__x != 10);
+}

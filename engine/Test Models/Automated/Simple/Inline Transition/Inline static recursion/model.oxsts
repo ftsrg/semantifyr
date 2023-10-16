@@ -1,0 +1,44 @@
+package Test
+
+type Thing {
+    var x : Integer
+
+    feature innerThing : Thing
+
+    init {
+        x := 0
+    }
+
+    tran recursion(thing: Thing) {
+        inline if (innerThing != thing) {
+            x := 1
+            inline innerThing.recursion(thing)
+        }
+    }
+}
+
+target Mission {
+    instance a : Thing {
+        instance b :> innerThing : Thing {
+            instance c :> innerThing : Thing {
+                instance d :> innerThing : Thing {
+                    instance e :> innerThing : Thing {
+                        instance f :> innerThing : Thing
+                    }
+                }
+            }
+        }
+    }
+
+    init {
+        inline a.init()
+    }
+
+    tran {
+        inline a.recursion(a.b.c.d.e)
+    }
+
+    prop {
+        false
+    }
+}

@@ -4,6 +4,7 @@ import org.gradle.accessors.dm.LibrariesForLibs
 
 plugins {
     `java-library`
+    `java-test-fixtures`
     jacoco
     java
     id("hu.bme.mit.gamma.gradle.eclipse")

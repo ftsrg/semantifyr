@@ -1,0 +1,27 @@
+
+var __Mission__a__x : Integer;
+var __Mission__b__x : Integer;
+
+init {
+    choice {
+        __Mission__a__x := 0;
+    }
+    choice {
+        __Mission__b__x := 0;
+    }
+}
+
+trans {
+    choice {
+        __Mission__a__x := (__Mission__a__x + 1);
+    }
+    choice {
+        __Mission__b__x := (__Mission__b__x + 1);
+    }
+}
+
+env {}
+
+prop {
+    (__Mission__a__x != __Mission__b__x);
+}

@@ -1,0 +1,36 @@
+package Test
+
+type Simple {
+    var x : Integer
+
+    tran {
+        x := x + 1
+    }
+}
+
+type Composite {
+    feature simples : Simple[0..*]
+
+    instance a :> simples : Simple
+    instance b :> simples : Simple
+
+    tran {
+        inline choice simples -> main
+    }
+}
+
+target Mission {
+    instance composite : Composite
+
+    init {
+        assume (false)
+    }
+
+    tran {
+        inline composite.main()
+    }
+
+    prop {
+        false
+    }
+}

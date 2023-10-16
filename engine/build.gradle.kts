@@ -34,5 +34,9 @@ dependencies {
 
     implementation(libs.kotlinx.cli)
 
+    testImplementation("commons-io:commons-io:2.14.0")
+    testImplementation(project(":hu.bme.mit.gamma.oxsts.lang"))
+    testImplementation(testFixtures(project(":hu.bme.mit.gamma.oxsts.lang")))
+
 //    implementation(fileTree("gamma-libs"))
 }
