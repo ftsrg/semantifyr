@@ -1,5 +1,6 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
+import hu.bme.mit.gamma.oxsts.engine.transformation.ImplicitExpressionRewriter.referencedType
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
@@ -8,6 +9,7 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
 import hu.bme.mit.gamma.oxsts.model.oxsts.HavocTransitionExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ImplicitTransitionExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.InitTransitionExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.InlineComposite
 import hu.bme.mit.gamma.oxsts.model.oxsts.MainTransitionExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Type
 import org.eclipse.xtext.EcoreUtil2
@@ -43,7 +45,25 @@ object ImplicitExpressionRewriter {
 
     private fun ChainingExpression.referencedType(): Type {
         val chainReferenceExpression = EcoreUtil2.getContainerOfType(this, ChainReferenceExpression::class.java)
+        val inlineComposite = EcoreUtil2.getContainerOfType(this, InlineComposite::class.java)
+
         val myIndex = chainReferenceExpression.chains.indexOf(this)
+
+
+        if (inlineComposite?.transition === chainReferenceExpression) {
+            // calculate reference pretending to be from the feature's poing of view
+            if (myIndex == 0) {
+                val featureReference = inlineComposite.feature.asChainReferenceExpression()
+
+                val feature = featureReference.chains.last().evaluateReference()
+
+                check(feature is Feature) {
+                    "Expression must refer to a feature!"
+                }
+
+                return feature.type
+            }
+        }
 
         if (myIndex == 0) {
             return EcoreUtil2.getContainerOfType(this, Type::class.java)
