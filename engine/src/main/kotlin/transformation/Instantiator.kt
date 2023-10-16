@@ -2,17 +2,24 @@ package hu.bme.mit.gamma.oxsts.engine.transformation
 
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
 import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
+import hu.bme.mit.gamma.oxsts.model.oxsts.InstanceHolder
 import hu.bme.mit.gamma.oxsts.model.oxsts.Target
 import hu.bme.mit.gamma.oxsts.model.oxsts.Type
 import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
 import java.util.*
 
 open class InstanceObject(
-    val instance: Instance?,
+    val instanceHolder: InstanceHolder?,
     val parent: InstanceObject?,
 ) {
     val featureMap = mutableMapOf<Feature, MutableList<InstanceObject>>()
     val variableMap = mutableMapOf<Variable, Variable>()
+
+    val expressionEvaluator = ExpressionEvaluator(this)
+    val operationEvaluator = InlineOperationEvaluator(this)
+
+    val allInstances = instanceHolder?.allInstances ?: emptyList()
+    val allVariables = instanceHolder?.allVariables ?: emptyList()
 
     fun addInstanceObject(feature: Feature, instanceObject: InstanceObject) {
         val list = featureMap.computeIfAbsent(feature) {
@@ -21,20 +28,8 @@ open class InstanceObject(
         list += instanceObject
     }
 
-    val expressionEvaluator = ExpressionEvaluator(this)
-    val operationEvaluator = InlineOperationEvaluator(this)
-
-    val allInstances: List<Instance>
-        get() = instance?.allInstances ?: emptyList()
-
-    val allVariables: List<Variable>
-        get() = instance?.allVariables ?: emptyList()
-
-
     fun flattenVariables(): List<Variable> {
-        val variables = allVariables
-
-        for (variable in variables) {
+        for (variable in allVariables) {
             val newVariable = variable.copy()
             newVariable.name = "${fullyQualifiedName}__${variable.name}"
             variableMap[variable] = newVariable
@@ -44,7 +39,7 @@ open class InstanceObject(
     }
 
     val name by lazy {
-        instance?.name ?: "root"
+        instanceHolder?.name ?: "Nothing"
     }
 
     val fullyQualifiedName: String by lazy {
@@ -53,6 +48,20 @@ open class InstanceObject(
         "${parentName}__${name}"
     }
 }
+
+val InstanceHolder.allInstances: List<Instance>
+    get() = when (this) {
+        is Instance -> allInstances
+        is Target -> instances
+        else -> error("Unknown instance holder type")
+    }
+
+val InstanceHolder.allVariables: List<Variable>
+    get() = when (this) {
+        is Instance -> allVariables
+        is Target -> variables
+        else -> error("Unknown instance holder type")
+    }
 
 val Instance.allInstances: List<Instance>
     get() {
@@ -91,9 +100,10 @@ class Instantiator {
     val instanceQueue = LinkedList<InstanceObject>()
 
     fun instantiate(target: Target): InstanceObject {
-        val rootInstanceObject = InstanceObject(null, null)
+        val rootInstanceObject = InstanceObject(target, null)
 
         rootInstanceObject.instanciateInstances(target.instances)
+        rootInstanceObject.flattenVariables()
 
         while (instanceQueue.any()) {
             val next = instanceQueue.removeFirst()

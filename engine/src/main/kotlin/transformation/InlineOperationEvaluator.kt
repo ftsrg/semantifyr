@@ -76,7 +76,7 @@ class InlineOperationEvaluator(
         val list = mutableListOf<InlineCall>()
 
         for (instance in instanceSet) {
-            val instanceReference = OxstsFactory.createChainReferenceExpression(instance.instance!!)
+            val instanceReference = OxstsFactory.createChainReferenceExpression(instance.instanceHolder!!)
             val inlineCall = OxstsFactory.createInlineCall(baseFeature.appendWith(instanceReference).appendWith(transitionReference))
 
             list += inlineCall
@@ -130,8 +130,8 @@ class InlineOperationEvaluator(
         localContext: InstanceObject,
         context: MutableList<ChainingExpression> = mutableListOf()
     ): List<ChainingExpression> {
-        val instance = localContext.instance ?: return emptyList()
-        val parent = localContext.parent ?: error("Has instance, but no parent? Bug!")
+        val instance = localContext.instanceHolder ?: return emptyList()
+        val parent = localContext.parent ?: return emptyList()
 
         createReferenceToContext(parent, context)
 
