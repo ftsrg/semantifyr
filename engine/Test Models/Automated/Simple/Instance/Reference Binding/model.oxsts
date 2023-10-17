@@ -1,17 +1,29 @@
 package Test
 
 type Simple {
-    var x : Integer
+    var x : Integer := 0
+
+    tran {
+        x := x + 1
+    }
 }
 
 type Composite {
     feature simples : Simple[0..*]
+
+    reference mainSimple :> simples : Simple
+
+    tran {
+        inline mainSimple.main()
+    }
 }
 
 target Mission {
     instance composite : Composite {
         instance a :> simples : Simple
         instance b :> simples : Simple
+
+        reference mainSimple <- b
     }
 
     init {
@@ -19,7 +31,7 @@ target Mission {
     }
 
     tran {
-        assume (false)
+        inline composite.main()
     }
 
     prop {

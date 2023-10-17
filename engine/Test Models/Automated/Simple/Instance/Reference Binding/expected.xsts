@@ -1,0 +1,21 @@
+
+var __Mission__composite__a__x : Integer := 0;
+var __Mission__composite__b__x : Integer := 0;
+
+init {
+    assume (false);
+}
+
+trans {
+    choice {
+        choice {
+            __Mission__composite__b__x := (__Mission__composite__b__x + 1);
+        }
+    }
+}
+
+env {}
+
+prop {
+    false;
+}

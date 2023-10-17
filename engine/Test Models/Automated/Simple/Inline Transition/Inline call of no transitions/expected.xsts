@@ -1,0 +1,17 @@
+
+
+init {
+    assume (false);
+}
+
+trans {
+    choice {
+        assume (true);
+    }
+}
+
+env {}
+
+prop {
+    true;
+}

@@ -1,0 +1,43 @@
+package Test
+
+type Simple {
+    var x : Integer := 0
+
+    tran {
+        x := x + 1
+    }
+}
+
+type Composite {
+    feature simples : Simple[0..*]
+    reference mainSimple : Simple[1..1]
+
+    tran {
+        inline seq mainSimple -> main
+    }
+}
+
+target Mission {
+    instance composite : Composite {
+        instance a :> simples : Simple
+        instance b :> simples : Simple
+        instance c :> simples : Simple
+        instance d :> simples : Simple
+
+        reference mainSimple <- a
+        reference mainSimple <- b
+        reference mainSimple <- d
+    }
+
+    init {
+        assume (false)
+    }
+
+    tran {
+        inline composite.main()
+    }
+
+    prop {
+        false
+    }
+}

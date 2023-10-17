@@ -1,0 +1,18 @@
+
+var __Mission__child__x : Integer;
+
+init {
+    assume (true);
+}
+
+trans {
+    choice {
+        __Mission__child__x := 0;
+    }
+}
+
+env {}
+
+prop {
+    true;
+}

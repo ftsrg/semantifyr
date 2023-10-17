@@ -1,0 +1,31 @@
+package Test
+
+type Simple {
+    tran {
+        assume (false)
+    }
+}
+
+type Holder {
+    feature simple : Simple
+
+    tran {
+        inline choice simple -> main
+    }
+}
+
+target Mission {
+    instance holder : Holder
+
+    init {
+        assume (false)
+    }
+
+    tran {
+        inline holder.main()
+    }
+
+    prop {
+        true
+    }
+}

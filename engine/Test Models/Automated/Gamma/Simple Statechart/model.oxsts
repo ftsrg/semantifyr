@@ -1,0 +1,85 @@
+package Test
+
+type Statechart {
+    feature region : Region
+    feature transitions : Transition[0..*]
+
+    feature entryTransitions :> transitions : EntryTransition[0..*]
+
+    init {
+        inline seq entryTransitions -> execute
+    }
+
+    tran execute() {
+        inline choice transitions -> execute else { }
+    }
+}
+
+type Region {
+    feature abstractStates : AbstractState[0..*]
+    feature states :> abstractStates : State[0..*]
+    feature entryStates :> abstractStates : EntryState[0..*]
+
+    var activeState : states[0..1] := Nothing
+}
+
+type AbstractState {
+    reference parent : Region
+    var isActive: Boolean := false
+
+    tran exit() {
+        parent.activeState := Nothing
+        isActive := false
+    }
+    tran enter() {
+        parent.activeState := Self
+        isActive := true
+    }
+}
+
+type State : AbstractState { }
+type EntryState : AbstractState { }
+
+type Transition {
+    reference from : AbstractState
+    reference to : AbstractState
+
+    tran execute() {
+        inline from.exit()
+        inline to.enter()
+    }
+}
+
+type EntryTransition : Transition { }
+
+type SimpleStatechart : Statechart {
+    instance Main :> region : Region {
+        instance Entry :> entryStates : EntryState {
+            reference region <- Main
+        }
+        instance Idle :> states : State {
+            reference region <- Main
+        }
+    }
+
+    instance t1 :> entryTransitions : EntryTransition {
+        reference from <- Main.Entry
+        reference to <- Main.Idle
+    }
+}
+
+target Mission {
+    instance statechart : SimpleStatechart
+
+    init {
+        inline statechart.init()
+    }
+
+    tran {
+        inline statechart.execute()
+    }
+
+    prop {
+        statechart.Operation.isActive = false
+    }
+}

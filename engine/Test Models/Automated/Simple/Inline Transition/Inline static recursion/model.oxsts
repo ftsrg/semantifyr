@@ -3,7 +3,7 @@ package Test
 type Thing {
     var x : Integer
 
-    feature innerThing : Thing
+    feature innerThing : Thing[0..1]
 
     init {
         x := 0
@@ -40,5 +40,17 @@ target Mission {
 
     prop {
         false
+    }
+}
+
+target GenericVerification {
+    tran {
+
+    }
+}
+
+target SpecificVerification : GenericVerification {
+    override tran {
+
     }
 }

@@ -1,0 +1,45 @@
+package Test
+
+type Base {
+    var x : Integer
+
+    tran {
+        x := 0
+    }
+}
+
+type ChildA : Base {
+
+}
+
+type ChildB : ChildA {
+
+}
+
+type ChildC : ChildB {
+
+}
+
+type ChildD : ChildC {
+
+}
+
+type Child : ChildD {
+
+}
+
+target Mission {
+    instance child : Child
+
+    init {
+        assume (true)
+    }
+
+    tran {
+        inline child.main()
+    }
+
+    prop {
+        true
+    }
+}

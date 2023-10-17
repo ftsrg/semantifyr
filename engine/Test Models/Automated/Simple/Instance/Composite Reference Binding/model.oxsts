@@ -1,0 +1,51 @@
+package Test
+
+type Atom {
+    var x : Integer
+
+    tran {
+        x := 1
+    }
+}
+
+type Simple {
+    reference atom : Atom
+
+    tran {
+        inline atom.main()
+    }
+}
+
+type Composite {
+    feature simples : Simple[0..*]
+
+    tran {
+        inline seq simples -> main
+    }
+}
+
+target Mission {
+    instance a1 : Atom
+    instance a2 : Atom
+
+    instance composite : Composite {
+        instance s1 :> simples : Simple {
+            reference atom <- a1
+        }
+        instance s2 :> simples : Simple {
+            reference atom <- a2
+        }
+    }
+
+    init {
+        assume (false)
+    }
+
+    tran {
+        inline composite.main()
+    }
+
+    prop {
+        false
+    }
+}

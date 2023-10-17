@@ -1,0 +1,39 @@
+package Test
+
+type Base {
+    var x : Integer
+
+    tran {
+        x := 0
+    }
+}
+
+type Child : Base {
+
+}
+
+type Holder {
+    feature base : Base
+
+    instance child :> base : Child
+
+    tran {
+        inline child.main()
+    }
+}
+
+target Mission {
+    instance holder : Holder
+
+    init {
+        assume (true)
+    }
+
+    tran {
+        inline holder.main()
+    }
+
+    prop {
+        true
+    }
+}
