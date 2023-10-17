@@ -36,20 +36,20 @@ class XstsTransformer {
     }
 
     fun prepare(rootElements: List<Package>) {
-        val types = rootElements.flatMap { it.eAllContents().asSequence() }.filterIsInstance<Type>()
-        for (type in types) {
-            ImplicitExpressionRewriter.rewriteExpressions(type)
-        }
-
-        val targets = rootElements.flatMap { it.eAllContents().asSequence() }.filterIsInstance<Target>()
-        for (target in targets) {
-            ImplicitExpressionRewriter.rewriteExpressions(target)
-        }
+//        val types = rootElements.flatMap { it.eAllContents().asSequence() }.filterIsInstance<Type>()
+//        for (type in types) {
+//            ImplicitExpressionRewriter.rewriteExpressions(type)
+//        }
+//
+//        val targets = rootElements.flatMap { it.eAllContents().asSequence() }.filterIsInstance<Target>()
+//        for (target in targets) {
+//            ImplicitExpressionRewriter.rewriteExpressions(target)
+//        }
     }
 
     fun transform(target: Target): XSTS {
         val instantiator = Instantiator()
-        val rootInstance = instantiator.instantiate(target)
+        val rootInstance = instantiator.instantiateInstances(target)
 
         target.init.inlineOperations(rootInstance)
         target.init.rewriteChoiceElse()

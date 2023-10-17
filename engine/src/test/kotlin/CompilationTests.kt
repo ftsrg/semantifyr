@@ -57,14 +57,6 @@ class CompilationTests {
         assertModelEqualsExpected(directory)
     }
 
-    @Test
-    fun test() {
-        val directory = "$automatedDirectory/Simple/Inline Transition/Inline static recursion"
-
-        simpleReadTransformWrite(directory)
-        assertModelEqualsExpected(directory)
-    }
-
     private fun simpleReadTransformWrite(directory: String) {
         val reader = OxstsReader(directory)
         reader.read()

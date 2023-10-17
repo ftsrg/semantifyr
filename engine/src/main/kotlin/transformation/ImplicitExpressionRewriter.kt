@@ -35,7 +35,7 @@ object ImplicitExpressionRewriter {
     private fun ImplicitTransitionExpression.resolve(): Element {
         val type = referencedType()
 
-        return when (this) {
+        return when (this) { // TODO Handle inheritance and override!
             is HavocTransitionExpression -> type.havocTransition.single()
             is InitTransitionExpression -> type.initTransition.single()
             is MainTransitionExpression -> type.mainTransition.single()

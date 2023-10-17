@@ -17,6 +17,7 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.NotOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.OperatorExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.OrOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
 
 /**
  * This class evaluates compile-time evaluable expressions only!
@@ -30,7 +31,26 @@ class ExpressionEvaluator(
         else -> error("Unknown type of expression: $expression")
     }
 
-    fun evaluateInstanceObject(expression: Expression) = evaluateInstanceObjectSet(expression).single()
+    fun evaluateTransition(expression: Expression): Transition {
+        require(expression is ChainReferenceExpression)
+
+        val instanceObject = evaluateInstanceObject(expression.dropLast(1))
+        return instanceObject.transitionEvaluator.evaluateTransition(expression.last())
+    }
+
+    fun evaluateInstanceObject(expression: Expression): InstanceObject {
+        return evaluateInstanceObjectOrNull(expression) ?: error("Expression $expression feature has no instances!")
+    }
+
+    fun evaluateInstanceObjectOrNull(expression: Expression): InstanceObject? {
+        val instanceSet = evaluateInstanceObjectSet(expression)
+
+        check(instanceSet.size <= 1) {
+            "Expression $expression must refer to a singular feature!"
+        }
+
+        return instanceSet.singleOrNull()
+    }
 
     fun evaluateInstanceObjectSet(expression: Expression): List<InstanceObject> = when (expression) {
         is LiteralExpression -> listOf(evaluateLiteralToInstanceObject(expression))
@@ -62,7 +82,7 @@ class ExpressionEvaluator(
         val element = evaluateReference(reference)
 
         check(element is T) {
-            "Reference must point to element of type ${T::class.qualifiedName}"
+            "Reference $reference must point to element of type ${T::class.qualifiedName}"
         }
 
         return element
@@ -86,7 +106,7 @@ class ExpressionEvaluator(
 
     private fun ChainingExpression.evaluateReference(): Element {
         require(this is DeclarationReferenceExpression) {
-            "Expression must be DeclarationReferenceExpression"
+            "Expression $this must be DeclarationReferenceExpression"
         }
 
         return element
@@ -94,7 +114,7 @@ class ExpressionEvaluator(
 
     private fun evaluateReferenceToInstanceObjectSet(reference: ReferenceExpression): List<InstanceObject> {
         require(reference is ChainReferenceExpression) {
-            "Expression must be ChainReferenceExpression"
+            "Expression $this must be ChainReferenceExpression"
         }
 
         var localContext = listOf(context)
@@ -108,7 +128,7 @@ class ExpressionEvaluator(
 
     private fun ChainingExpression.evaluateToInstanceObjectSet(): List<InstanceObject> {
         require(this is DeclarationReferenceExpression) {
-            error("Expression must be a DeclarationReferenceExpression!")
+            error("Expression $this must be a DeclarationReferenceExpression!")
         }
 
         return evaluateToInstanceObjectSet()
@@ -116,10 +136,10 @@ class ExpressionEvaluator(
 
     private fun DeclarationReferenceExpression.evaluateToInstanceObjectSet(): List<InstanceObject> {
         require(element is Feature) {
-            error("Expression must refer to a feature!")
+            error("Expression $this must refer to a feature!")
         }
 
-        return context.featureMap[element as Feature] ?: error("No instance for feature!")
+        return context.featureMap[element] ?: emptyList()// error("No instance for feature $element!")
     }
 
 }

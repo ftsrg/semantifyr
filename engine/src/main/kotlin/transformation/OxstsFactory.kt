@@ -94,6 +94,12 @@ fun ChainReferenceExpression.dropLast(n: Int): ChainReferenceExpression {
     }
 }
 
+fun ChainReferenceExpression.last(): ChainReferenceExpression {
+    return OxstsFactory.createChainReferenceExpression().also {
+        it.chains += chains.last()
+    }
+}
+
 fun ChainReferenceExpression.appendWith(chainReferenceExpression: ChainReferenceExpression): ChainReferenceExpression {
     return OxstsFactory.createChainReferenceExpression().also {
         it.chains += chains.copy()
@@ -102,7 +108,7 @@ fun ChainReferenceExpression.appendWith(chainReferenceExpression: ChainReference
 }
 
 val ChainingExpression.element
-    get() = (this as DeclarationReferenceExpression).element
+    get() = (this as? DeclarationReferenceExpression)?.element
 
 fun <T : EObject> T.copy() = EcoreUtil2.copy(this)
 fun <T : EObject> Collection<T>.copy() = map { it.copy() }

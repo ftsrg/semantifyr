@@ -22,8 +22,13 @@ class InlineOperationEvaluator(
     fun inlineTransition(operation: InlineOperation): Operation {
         return when (operation) {
             is InlineCall -> {
-                val containerInstance = context.expressionEvaluator.evaluateInstanceObject(operation.reference.asChainReferenceExpression().dropLast(1))
-                val transition = context.expressionEvaluator.evaluateTypedReference<Transition>(operation.reference)
+                val containerInstance = context.expressionEvaluator.evaluateInstanceObjectOrNull(operation.reference.asChainReferenceExpression().dropLast(1))
+
+                if (containerInstance == null) {
+                    return OxstsFactory.createEmptyOperation()
+                }
+
+                val transition = context.expressionEvaluator.evaluateTransition(operation.reference)
 
                 OxstsFactory.createChoiceOperation().apply {
                     for (currentOperation in transition.operation) {

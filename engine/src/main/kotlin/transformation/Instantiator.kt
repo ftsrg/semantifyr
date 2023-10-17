@@ -17,6 +17,7 @@ open class InstanceObject(
 
     val expressionEvaluator = ExpressionEvaluator(this)
     val operationEvaluator = InlineOperationEvaluator(this)
+    val transitionEvaluator = TransitionEvaluator(this)
 
     val allInstances = instanceHolder?.allInstances ?: emptyList()
     val allVariables = instanceHolder?.allVariables ?: emptyList()
@@ -38,9 +39,7 @@ open class InstanceObject(
         return variableMap.values.toList()
     }
 
-    val name by lazy {
-        instanceHolder?.name ?: "Nothing"
-    }
+    val name = instanceHolder?.name ?: "Nothing"
 
     val fullyQualifiedName: String by lazy {
         val parentName = parent?.fullyQualifiedName ?: ""
@@ -98,12 +97,13 @@ object NothingInstance : InstanceObject(null, null)
 
 class Instantiator {
     val instanceQueue = LinkedList<InstanceObject>()
+    val referenceQueue = LinkedList<InstanceObject>()
 
-    fun instantiate(target: Target): InstanceObject {
+    fun instantiateInstances(target: Target): InstanceObject {
         val rootInstanceObject = InstanceObject(target, null)
 
         rootInstanceObject.instanciateInstances(target.instances)
-        rootInstanceObject.flattenVariables()
+        rootInstanceObject.flattenVariables() // variables already present in target
 
         while (instanceQueue.any()) {
             val next = instanceQueue.removeFirst()
@@ -113,14 +113,41 @@ class Instantiator {
             target.variables += next.flattenVariables()
         }
 
+        setReferenceBindings()
+
         return rootInstanceObject
     }
 
-    fun InstanceObject.instanciateInstances(instances: List<Instance>) {
+    private fun InstanceObject.instanciateInstances(instances: List<Instance>) {
         for (instance in instances) {
-            val instanceObject = InstanceObject(instance, this)
-            instanceQueue += instanceObject
-            place(instance, instanceObject)
+            instantiateInstances(instance)
+        }
+    }
+
+    private fun InstanceObject.instantiateInstances(instance: Instance) {
+        val instanceObject = InstanceObject(instance, this)
+        instanceQueue += instanceObject
+        referenceQueue += instanceObject
+        place(instance, instanceObject)
+    }
+
+    private fun setReferenceBindings() {
+        for (instanceObject in referenceQueue) {
+            val instances = instanceObject.instanceHolder?.instances ?: emptyList()
+            for (instance in instances) {
+                instanceObject.setReferenceBindings(instance)
+            }
+        }
+    }
+
+    fun InstanceObject.setReferenceBindings(instance: Instance) {
+        val instanceObject = expressionEvaluator.evaluateInstanceObject(OxstsFactory.createChainReferenceExpression(instance))
+
+        for (binding in instance.bindings) {
+            val holder = instanceObject.expressionEvaluator.evaluateInstanceObject(binding.feature.asChainReferenceExpression().dropLast(1))
+            val feature = instanceObject.expressionEvaluator.evaluateTypedReference<Feature>(binding.feature.asChainReferenceExpression())
+            val held = instanceObject.expressionEvaluator.evaluateInstanceObject(binding.instance)
+            holder.place(feature, held)
         }
     }
 
