@@ -5,7 +5,6 @@ import "http://www.bme.hu/mit/2023/oxsts"
 import "http://www.eclipse.org/emf/2002/Ecore" as Ecore
 
 Package:
-	{Package}
 	'package' name=ID
 	(
 		  types += Type
@@ -223,7 +222,7 @@ Instance:
 ;
 
 InstanceBinding:
-	'reference' feature=ReferenceExpression '=' instance=ReferenceExpression
+	'reference' feature=ReferenceExpression '<-' instance=ReferenceExpression
 ;
 
 Multiplicity: 
