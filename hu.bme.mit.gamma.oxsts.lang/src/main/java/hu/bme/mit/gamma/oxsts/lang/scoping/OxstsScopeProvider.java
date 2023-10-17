@@ -78,7 +78,7 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
         }
 
         var parent = element.eContainer();
-        var elements = new ArrayList<>(getAccessibleElements(parent));
+        var elements = new ArrayList<Element>();
 
         if (element instanceof Package _package) {
             elements.addAll(_package.getTypes().stream().map(it -> (Element) it).toList());
@@ -91,6 +91,8 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
         } else if (element instanceof Parameter parameter) {
             elements.addAll(getInheritedElements(parameter.getType()));
         }
+
+        elements.addAll(getAccessibleElements(parent));
 
         return elements;
     }
