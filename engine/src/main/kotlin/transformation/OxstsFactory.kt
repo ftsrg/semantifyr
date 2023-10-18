@@ -22,7 +22,7 @@ object OxstsFactory : OxstsFactoryImpl() {
         return createAssumptionOperation(createLiteralBoolean(true))
     }
 
-    fun createChainingExpression(element: Element): ChainingExpression {
+    fun createDeclarationReference(element: Element): ChainingExpression {
         return createDeclarationReferenceExpression().apply {
             this.element = element
         }
@@ -30,7 +30,7 @@ object OxstsFactory : OxstsFactoryImpl() {
 
     fun createChainReferenceExpression(element: Element): ChainReferenceExpression {
         return createChainReferenceExpression().apply {
-            chains += createChainingExpression(element)
+            chains += createDeclarationReference(element)
         }
     }
 

@@ -11,13 +11,14 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
 import hu.bme.mit.gamma.oxsts.model.oxsts.InequalityOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralNothing
-import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralSelf
 import hu.bme.mit.gamma.oxsts.model.oxsts.NotOperator
+import hu.bme.mit.gamma.oxsts.model.oxsts.NothingReference
 import hu.bme.mit.gamma.oxsts.model.oxsts.OperatorExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.OrOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.SelfReference
 import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
+import java.lang.IllegalStateException
 
 /**
  * This class evaluates compile-time evaluable expressions only!
@@ -38,11 +39,24 @@ class ExpressionEvaluator(
         return instanceObject.transitionEvaluator.evaluateTransition(expression.last())
     }
 
-    fun evaluateInstanceObject(expression: Expression): InstanceObject {
-        return evaluateInstanceObjectOrNull(expression) ?: error("Expression $expression feature has no instances!")
+    fun evaluateInstanceObjectBottomUp(expression: Expression): InstanceObject {
+        return try {
+            evaluateInstanceObject(expression)
+        } catch (e: RuntimeException) {
+            require(context.parent != null) {
+                "Expression $expression could not be found in the Context tree!"
+            }
+
+            context.parent.expressionEvaluator.evaluateInstanceObjectBottomUp(expression)
+        }
     }
 
-    fun evaluateInstanceObjectOrNull(expression: Expression): InstanceObject? {
+    fun evaluateInstanceObject(expression: Expression): InstanceObject {
+        return evaluateInstanceObjectOrNull(expression) ?:
+        error("Expression $expression feature has no instances!")
+    }
+
+    private fun evaluateInstanceObjectOrNull(expression: Expression): InstanceObject? {
         val instanceSet = evaluateInstanceObjectSet(expression)
 
         check(instanceSet.size <= 1) {
@@ -53,7 +67,6 @@ class ExpressionEvaluator(
     }
 
     fun evaluateInstanceObjectSet(expression: Expression): List<InstanceObject> = when (expression) {
-        is LiteralExpression -> listOf(evaluateLiteralToInstanceObject(expression))
         is ReferenceExpression -> evaluateReferenceToInstanceObjectSet(expression)
         else -> error("Unknown type of expression: $expression")
     }
@@ -70,12 +83,6 @@ class ExpressionEvaluator(
     private fun evaluateBooleanLiteral(literal: LiteralExpression): Boolean = when (literal) {
         is LiteralBoolean -> literal.isValue
         else -> error("Unknown boolean type of literal: $literal")
-    }
-
-    private fun evaluateLiteralToInstanceObject(literal: LiteralExpression): InstanceObject = when (literal) {
-        is LiteralNothing -> NothingInstance
-        is LiteralSelf -> context
-        else -> error("Unknown type of literal: $literal")
     }
 
     inline fun <reified T : Element> evaluateTypedReference(reference: ReferenceExpression): T {
@@ -119,6 +126,10 @@ class ExpressionEvaluator(
 
         var localContext = listOf(context)
         for (chain in reference.chains) {
+            check(localContext.size == 1) {
+                "Feature for $chain has ${localContext.size} elements!"
+            }
+
             with(localContext.single().expressionEvaluator) {
                 localContext = chain.evaluateToInstanceObjectSet()
             }
@@ -127,11 +138,12 @@ class ExpressionEvaluator(
     }
 
     private fun ChainingExpression.evaluateToInstanceObjectSet(): List<InstanceObject> {
-        require(this is DeclarationReferenceExpression) {
-            error("Expression $this must be a DeclarationReferenceExpression!")
+        return when (this) {
+            is NothingReference -> listOf(NothingInstance)
+            is SelfReference -> listOf(context)
+            is DeclarationReferenceExpression -> evaluateToInstanceObjectSet()
+            else -> error("Expression $this must be a DeclarationReferenceExpression!")
         }
-
-        return evaluateToInstanceObjectSet()
     }
 
     private fun DeclarationReferenceExpression.evaluateToInstanceObjectSet(): List<InstanceObject> {

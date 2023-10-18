@@ -1,0 +1,58 @@
+package Test
+
+type Atom {
+    var x : Integer
+
+    reference parent : Composite
+
+    tran {
+        inline parent.functor(Self)
+    }
+}
+
+type Holder {
+    feature atom : Atom
+
+    tran {
+        inline atom.main()
+    }
+}
+
+type Composite {
+    feature holders : Holder[0..*]
+
+    tran {
+        inline seq holders -> main
+    }
+
+    tran functor(atom: Atom) {
+        atom.x := 10
+    }
+}
+
+target Mission {
+    instance composite : Composite {
+        instance a :> holders : Holder {
+            instance aAtom :> atom : Atom {
+                reference parent <- composite
+            }
+        }
+        instance b :> holders : Holder {
+            instance bAtom :> atom : Atom {
+                reference parent <- composite
+            }
+        }
+    }
+
+    init {
+        assume (false)
+    }
+
+    tran {
+        inline composite.main()
+    }
+
+    prop {
+        false
+    }
+}

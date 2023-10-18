@@ -17,7 +17,6 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.IntegerType
 import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralInteger
-import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralNothing
 import hu.bme.mit.gamma.oxsts.model.oxsts.MinusOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.NotOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.Operation
@@ -233,7 +232,6 @@ object Serializer {
     }
 
     fun LiteralExpression.serialize(): String = when (this) {
-        is LiteralNothing -> "__NOTHING__"
         is LiteralBoolean -> isValue.toString()
         is LiteralInteger -> value.toString()
         else -> "UNKNOWN_EXPRESSION$$$"

@@ -5,14 +5,17 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.CompositeOperation
+import hu.bme.mit.gamma.oxsts.model.oxsts.ContextDependentReference
 import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Enum
 import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
 import hu.bme.mit.gamma.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.InlineOperation
+import hu.bme.mit.gamma.oxsts.model.oxsts.NothingReference
 import hu.bme.mit.gamma.oxsts.model.oxsts.Operation
 import hu.bme.mit.gamma.oxsts.model.oxsts.Package
+import hu.bme.mit.gamma.oxsts.model.oxsts.SelfReference
 import hu.bme.mit.gamma.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.Target
 import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
@@ -35,7 +38,7 @@ class XstsTransformer {
         return transform(target)
     }
 
-    fun prepare(rootElements: List<Package>) {
+    private fun prepare(rootElements: List<Package>) {
 //        val types = rootElements.flatMap { it.eAllContents().asSequence() }.filterIsInstance<Type>()
 //        for (type in types) {
 //            ImplicitExpressionRewriter.rewriteExpressions(type)
@@ -47,7 +50,7 @@ class XstsTransformer {
 //        }
     }
 
-    fun transform(target: Target): XSTS {
+    private fun transform(target: Target): XSTS {
         val instantiator = Instantiator()
         val rootInstance = instantiator.instantiateInstances(target)
 
@@ -76,7 +79,7 @@ class XstsTransformer {
         return xsts
     }
 
-    fun Transition.inlineOperations(rootInstance: InstanceObject) {
+    private fun Transition.inlineOperations(rootInstance: InstanceObject) {
         val processorQueue = LinkedList(operation)
 
         while (processorQueue.any()) {
@@ -109,7 +112,7 @@ class XstsTransformer {
      * always behave correctly, although it is hard to calculate and would most likely reduce
      * performance on the theta side (without optimizations).
      */
-    fun Transition.rewriteChoiceElse() {
+    private fun Transition.rewriteChoiceElse() {
         val choices = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).filter {
             it.`else` != null
         }
@@ -126,7 +129,7 @@ class XstsTransformer {
         }
     }
 
-    fun Operation.calculateAssumption(): Expression {
+    private fun Operation.calculateAssumption(): Expression {
         return when (this) {
             is AssumptionOperation -> expression.copy()
             is AssignmentOperation -> OxstsFactory.createLiteralBoolean(true)
@@ -163,10 +166,10 @@ class XstsTransformer {
         }
     }
 
-    fun Target.rewriteVariableExpressions(rootInstance: InstanceObject) {
+    private fun Target.rewriteVariableExpressions(rootInstance: InstanceObject) {
         val expressions = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).filter {
-            val declaration = it.chains.last() as DeclarationReferenceExpression
-            declaration.element is Variable
+            val declaration = it.chains.last() as? DeclarationReferenceExpression
+            declaration?.element is Variable
         }
 
         for (expression in expressions) {

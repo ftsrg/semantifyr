@@ -1,6 +1,5 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
-import hu.bme.mit.gamma.oxsts.engine.transformation.ImplicitExpressionRewriter.referencedType
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
@@ -27,7 +26,7 @@ object ImplicitExpressionRewriter {
 
         for (expression in expressions) {
             val referredElement = expression.resolve()
-            val declarationReferenceExpression = OxstsFactory.createChainingExpression(referredElement)
+            val declarationReferenceExpression = OxstsFactory.createDeclarationReference(referredElement)
             EcoreUtil2.replace(expression, declarationReferenceExpression)
         }
     }

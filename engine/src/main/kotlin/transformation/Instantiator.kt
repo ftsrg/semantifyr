@@ -133,20 +133,18 @@ class Instantiator {
 
     private fun setReferenceBindings() {
         for (instanceObject in referenceQueue) {
-            val instances = instanceObject.instanceHolder?.instances ?: emptyList()
-            for (instance in instances) {
-                instanceObject.setReferenceBindings(instance)
-            }
+            instanceObject.setReferenceBindings()
         }
     }
 
-    fun InstanceObject.setReferenceBindings(instance: Instance) {
-        val instanceObject = expressionEvaluator.evaluateInstanceObject(OxstsFactory.createChainReferenceExpression(instance))
+    private fun InstanceObject.setReferenceBindings() {
+        require(instanceHolder is Instance)
 
-        for (binding in instance.bindings) {
-            val holder = instanceObject.expressionEvaluator.evaluateInstanceObject(binding.feature.asChainReferenceExpression().dropLast(1))
-            val feature = instanceObject.expressionEvaluator.evaluateTypedReference<Feature>(binding.feature.asChainReferenceExpression())
-            val held = instanceObject.expressionEvaluator.evaluateInstanceObject(binding.instance)
+        for (binding in instanceHolder.bindings) {
+            val holder = expressionEvaluator.evaluateInstanceObject(binding.feature.asChainReferenceExpression().dropLast(1))
+            val feature = expressionEvaluator.evaluateTypedReference<Feature>(binding.feature.asChainReferenceExpression())
+            val held = expressionEvaluator.evaluateInstanceObjectBottomUp(binding.instance)
+
             holder.place(feature, held)
         }
     }

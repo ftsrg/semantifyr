@@ -80,7 +80,7 @@
   <eClassifiers xsi:type="ecore:EClass" name="LiteralBoolean" eSuperTypes="#//LiteralExpression">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="value" eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//Boolean"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="LiteralNothing" eSuperTypes="#//LiteralExpression"/>
+  <eClassifiers xsi:type="ecore:EClass" name="NothingReference" eSuperTypes="#//ContextDependentReference"/>
   <eClassifiers xsi:type="ecore:EClass" name="ReferenceExpression" abstract="true"
       eSuperTypes="#//Expression"/>
   <eClassifiers xsi:type="ecore:EClass" name="AndOperator" eSuperTypes="#//OperatorExpression"/>
@@ -115,7 +115,7 @@
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="IntegerType" eSuperTypes="#//DataType"/>
   <eClassifiers xsi:type="ecore:EClass" name="BooleanType" eSuperTypes="#//DataType"/>
-  <eClassifiers xsi:type="ecore:EClass" name="LiteralSelf" eSuperTypes="#//LiteralExpression"/>
+  <eClassifiers xsi:type="ecore:EClass" name="SelfReference" eSuperTypes="#//ContextDependentReference"/>
   <eClassifiers xsi:type="ecore:EClass" name="ImplicitTransitionExpression" abstract="true"
       eSuperTypes="#//ChainingExpression"/>
   <eClassifiers xsi:type="ecore:EClass" name="InitTransitionExpression" eSuperTypes="#//ImplicitTransitionExpression"/>
@@ -213,4 +213,6 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="instances" upperBound="-1"
         eType="#//Instance" containment="true"/>
   </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ContextDependentReference" abstract="true"
+      eSuperTypes="#//ChainingExpression"/>
 </ecore:EPackage>

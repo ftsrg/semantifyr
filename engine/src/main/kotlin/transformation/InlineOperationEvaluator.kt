@@ -2,17 +2,19 @@ package hu.bme.mit.gamma.oxsts.engine.transformation
 
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.ContextDependentReference
 import hu.bme.mit.gamma.oxsts.model.oxsts.InlineCall
 import hu.bme.mit.gamma.oxsts.model.oxsts.InlineChoice
 import hu.bme.mit.gamma.oxsts.model.oxsts.InlineComposite
 import hu.bme.mit.gamma.oxsts.model.oxsts.InlineIfOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.InlineOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.InlineSeq
+import hu.bme.mit.gamma.oxsts.model.oxsts.NothingReference
 import hu.bme.mit.gamma.oxsts.model.oxsts.Operation
 import hu.bme.mit.gamma.oxsts.model.oxsts.Parameter
 import hu.bme.mit.gamma.oxsts.model.oxsts.ParameterBinding
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
+import hu.bme.mit.gamma.oxsts.model.oxsts.SelfReference
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
 
@@ -22,9 +24,9 @@ class InlineOperationEvaluator(
     fun inlineTransition(operation: InlineOperation): Operation {
         return when (operation) {
             is InlineCall -> {
-                val containerInstance = context.expressionEvaluator.evaluateInstanceObjectOrNull(operation.reference.asChainReferenceExpression().dropLast(1))
-
-                if (containerInstance == null) {
+                val containerInstance = try {
+                    context.expressionEvaluator.evaluateInstanceObject(operation.reference.asChainReferenceExpression().dropLast(1))
+                } catch (e: IllegalStateException) {
                     return OxstsFactory.createEmptyOperation()
                 }
 
@@ -34,6 +36,7 @@ class InlineOperationEvaluator(
                     for (currentOperation in transition.operation) {
                         this.operation += currentOperation
                             .copy()
+                            .rewriteContextDependentReferences(containerInstance)
                             .rewriteToContext(containerInstance, transition.parameters)
                             .rewriteToParameters(transition.parameters, operation.parameterBindings)
                     }
@@ -107,9 +110,25 @@ class InlineOperationEvaluator(
         return this
     }
 
+    private fun Operation.rewriteContextDependentReferences(localContext: InstanceObject): Operation {
+        val references = EcoreUtil2.getAllContentsOfType(this, ContextDependentReference::class.java)
+
+        for (reference in references) {
+            when (reference) {
+                is SelfReference -> {
+                    EcoreUtil2.delete(reference)
+                }
+                is NothingReference -> error("TODO Nothing!")
+                else -> error("")
+            }
+        }
+
+        return this
+    }
+
     private fun Operation.rewriteToContext(localContext: InstanceObject, parameters: List<Parameter>): Operation {
-        val references = EcoreUtil2.getAllContents<EObject>(this, true).asSequence().filterIsInstance<ChainReferenceExpression>().filterNot {
-            parameters.contains(it.chains.first().element)
+        val references = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).asSequence().filterNot {
+            parameters.contains(it.chains.firstOrNull()?.element)
         }.toList()
 
         for (reference in references) {
@@ -140,7 +159,7 @@ class InlineOperationEvaluator(
 
         createReferenceToContext(parent, context)
 
-        context += OxstsFactory.createChainingExpression(instance)
+        context += OxstsFactory.createDeclarationReference(instance)
 
         return context
     }

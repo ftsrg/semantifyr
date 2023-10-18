@@ -69,7 +69,7 @@
     <genClasses ecoreClass="oxsts.ecore#//LiteralBoolean">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute oxsts.ecore#//LiteralBoolean/value"/>
     </genClasses>
-    <genClasses ecoreClass="oxsts.ecore#//LiteralNothing"/>
+    <genClasses ecoreClass="oxsts.ecore#//NothingReference"/>
     <genClasses ecoreClass="oxsts.ecore#//ReferenceExpression"/>
     <genClasses ecoreClass="oxsts.ecore#//AndOperator"/>
     <genClasses ecoreClass="oxsts.ecore#//OrOperator"/>
@@ -96,7 +96,7 @@
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//IntegerType"/>
     <genClasses ecoreClass="oxsts.ecore#//BooleanType"/>
-    <genClasses ecoreClass="oxsts.ecore#//LiteralSelf"/>
+    <genClasses ecoreClass="oxsts.ecore#//SelfReference"/>
     <genClasses ecoreClass="oxsts.ecore#//ImplicitTransitionExpression"/>
     <genClasses ecoreClass="oxsts.ecore#//InitTransitionExpression"/>
     <genClasses ecoreClass="oxsts.ecore#//EqualityOperator"/>
@@ -167,5 +167,6 @@
     <genClasses ecoreClass="oxsts.ecore#//InstanceHolder">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InstanceHolder/instances"/>
     </genClasses>
+    <genClasses ecoreClass="oxsts.ecore#//ContextDependentReference"/>
   </genPackages>
 </genmodel:GenModel>

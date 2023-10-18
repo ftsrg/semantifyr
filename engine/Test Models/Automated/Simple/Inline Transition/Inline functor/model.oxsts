@@ -1,0 +1,32 @@
+package Test
+
+type Callable {
+    var x : Integer
+
+    tran {
+        x := 0
+    }
+}
+
+type Component {
+    tran execute(callable: Callable) {
+        inline callable.main()
+    }
+}
+
+target Mission {
+    instance component : Component
+    instance callable : Callable
+
+    init {
+        assume (false)
+    }
+
+    tran {
+        inline component.execute(callable)
+    }
+
+    prop {
+        false
+    }
+}

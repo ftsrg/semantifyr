@@ -24,7 +24,7 @@ type Region {
 }
 
 type AbstractState {
-    reference parent : Region
+    reference region : Region
     var isActive: Boolean := false
 
     tran exit() {

@@ -1,6 +1,6 @@
 
-var __Mission__composite__a__x : Integer := 0;
-var __Mission__composite__b__x : Integer := 0;
+var __Mission__a1__x : Integer;
+var __Mission__a2__x : Integer;
 
 init {
     assume (false);
@@ -9,7 +9,14 @@ init {
 trans {
     choice {
         choice {
-            __Mission__composite__b__x := (__Mission__composite__b__x + 1);
+            choice {
+                __Mission__a1__x := 1;
+            }
+        }
+        choice {
+            choice {
+                __Mission__a2__x := 1;
+            }
         }
     }
 }

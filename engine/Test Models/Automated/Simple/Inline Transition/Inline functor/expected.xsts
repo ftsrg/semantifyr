@@ -1,0 +1,20 @@
+
+var __Mission__callable__x : Integer;
+
+init {
+    assume (false);
+}
+
+trans {
+    choice {
+        choice {
+            __Mission__callable__x := 0;
+        }
+    }
+}
+
+env {}
+
+prop {
+    false;
+}

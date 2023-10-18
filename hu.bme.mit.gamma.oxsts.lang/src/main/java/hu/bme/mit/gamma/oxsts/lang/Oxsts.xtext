@@ -339,7 +339,18 @@ ChainReferenceExpression:
 ChainingExpression: 
 	ImplicitTransitionExpression
 	| DeclarationReferenceExpression
+	| SelfReference
+	| NothingReference
 ;
+
+SelfReference:
+	{SelfReference} 'Self'
+;
+
+NothingReference:
+	{NothingReference} 'Nothing'
+;
+
 
 ImplicitTransitionExpression: 
 	InitTransitionExpression
@@ -368,8 +379,6 @@ DeclarationReferenceExpression:
 LiteralExpression:
 	   LiteralBoolean
 	 | LiteralInteger
-	 | LiteralNothing
-	 | LiteralSelf
 ;
 
 LiteralBoolean:
@@ -379,15 +388,6 @@ LiteralBoolean:
 LiteralInteger:
 	value = INT
 ;
-
-LiteralNothing:
-	{LiteralNothing} 'Nothing'
-;
-
-LiteralSelf: 
-	{LiteralSelf} 'Self'
-;
-
 
 BooleanValue returns Ecore::EBoolean:
 	'true' | 'false'
