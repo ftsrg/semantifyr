@@ -1,0 +1,136 @@
+package Test
+
+type Statechart {
+    feature region : Region
+    feature abstractTransitions : AbstractTransition[0..*]
+
+    feature transitions :> abstractTransitions : Transition[0..*]
+    feature entryTransitions :> abstractTransitions : EntryTransition[0..*]
+
+    init {
+        inline seq entryTransitions -> main
+    }
+
+    tran {
+        inline choice transitions -> main else { }
+    }
+}
+
+type Region {
+    feature abstractStates : AbstractState[0..*]
+    feature states :> abstractStates : State[0..*]
+    feature entryStates :> abstractStates : EntryState[0..*]
+
+    var activeState : states[0..1]
+}
+
+type AbstractState {
+    reference parent : Region
+    reference parentState : State
+
+    tran exit(commonRegion : Region) {
+        parent.activeState := Nothing
+
+        inline if (commonRegion != parent) {
+            inline parentState.exit(commonRegion)
+        }
+    }
+    tran enter(commonRegion : Region) {
+        inline if (commonRegion != parent) {
+            inline parentState.enter(commonRegion)
+        }
+
+        parent.activeState := Self
+    }
+}
+
+type State : AbstractState {
+    feature region : Region
+}
+type EntryState : AbstractState { }
+
+type AbstractTransition {
+    reference commonRegion : Region
+    reference from : AbstractState
+    reference to : AbstractState
+
+    virtual tran {
+        assume (true)
+    }
+}
+
+type Transition : AbstractTransition {
+    override tran {
+        inline from.exit(commonRegion)
+        inline to.enter(commonRegion)
+    }
+}
+
+type EntryTransition : Transition {
+    override tran {
+        inline to.enter(commonRegion)
+    }
+}
+
+type SimpleStatechart : Statechart {
+    instance Main :> region : Region {
+        instance Entry :> entryStates : EntryState {
+            reference parent <- Main
+        }
+        instance A :> states : State {
+            reference parent <- Main
+
+            instance ARegion :> region : Region {
+                instance AEntry :> entryStates : EntryState {
+                    reference parent <- ARegion
+                }
+                instance Idle :> states : State {
+                    reference parent <- ARegion
+                    reference parentState <- A
+                }
+            }
+        }
+
+        instance B :> states : State {
+            reference parent <- Main
+
+            instance BRegion :> region : Region {
+                instance BEntry :> entryStates : EntryState {
+                    reference parent <- BRegion
+                }
+                instance Operation :> states : State {
+                    reference parent <- BRegion
+                    reference parentState <- B
+                }
+            }
+        }
+    }
+
+    instance et1 :> entryTransitions : EntryTransition {
+        reference commonRegion <- Main
+        reference from <- Main.Entry
+        reference to <- Main.A.ARegion.Idle
+    }
+
+    instance t1 :> transitions : Transition {
+        reference commonRegion <- Main
+        reference from <- Main.A.ARegion.Idle
+        reference to <- Main.B.BRegion.Operation
+    }
+}
+
+target Mission {
+    instance statechart : SimpleStatechart
+
+    init {
+        inline statechart.init()
+    }
+
+    tran {
+        inline statechart.main()
+    }
+
+    prop {
+        statechart.Main.B.BRegion.activeState != statechart.Main.B.BRegion.Operation
+    }
+}

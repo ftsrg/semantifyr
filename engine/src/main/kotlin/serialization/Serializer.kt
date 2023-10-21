@@ -121,7 +121,7 @@ object Serializer {
     fun IndentationAwareStringWriter.append(enum: Enum) {
         appendLine("type ${enum.name} : {")
         indent {
-            appendLine(enum.literals.map { it.name }.joinToString(", \n"))
+            appendLine(enum.literals.map { it.name }.joinToString(",\n"))
         }
         appendLine("}")
     }

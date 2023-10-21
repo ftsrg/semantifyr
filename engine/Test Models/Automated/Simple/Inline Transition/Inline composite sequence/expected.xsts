@@ -7,14 +7,8 @@ init {
 }
 
 trans {
-    choice {
-        choice {
-            __Mission__composite__a__x := (__Mission__composite__a__x + 1);
-        }
-        choice {
-            __Mission__composite__b__x := (__Mission__composite__b__x + 1);
-        }
-    }
+    __Mission__composite__a__x := (__Mission__composite__a__x + 1);
+    __Mission__composite__b__x := (__Mission__composite__b__x + 1);
 }
 
 env {}

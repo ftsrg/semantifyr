@@ -1,6 +1,6 @@
 
-var x : Integer;
-var y : Boolean;
+var __Mission__x : Integer;
+var __Mission__y : Boolean;
 
 init {
     __Mission__x := 0;

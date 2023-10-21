@@ -36,7 +36,7 @@ class ExpressionEvaluator(
         require(expression is ChainReferenceExpression)
 
         val instanceObject = evaluateInstanceObject(expression.dropLast(1))
-        return instanceObject.transitionEvaluator.evaluateTransition(expression.last())
+        return instanceObject.transitionEvaluator.evaluateTransition(expression)
     }
 
     fun evaluateInstanceObjectBottomUp(expression: Expression): InstanceObject {
@@ -52,8 +52,7 @@ class ExpressionEvaluator(
     }
 
     fun evaluateInstanceObject(expression: Expression): InstanceObject {
-        return evaluateInstanceObjectOrNull(expression) ?:
-        error("Expression $expression feature has no instances!")
+        return evaluateInstanceObjectOrNull(expression) ?: error("Expression $expression feature has no instances!")
     }
 
     private fun evaluateInstanceObjectOrNull(expression: Expression): InstanceObject? {

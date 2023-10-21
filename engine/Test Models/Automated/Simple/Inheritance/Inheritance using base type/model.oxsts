@@ -14,8 +14,7 @@ type Child : Base {
 
 type Holder {
     feature base : Base
-
-    instance child :> base : Child
+    instance child :> base : Base
 
     tran {
         inline base.main()

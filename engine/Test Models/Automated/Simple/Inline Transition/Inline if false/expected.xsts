@@ -1,12 +1,11 @@
 
-var x : Integer;
+var __Mission__x : Integer;
 
 init {
     __Mission__x := 0;
 }
 
 trans {
-    assume (true);
     assume ((__Mission__x != 0));
 }
 

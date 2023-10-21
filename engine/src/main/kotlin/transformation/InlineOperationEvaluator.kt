@@ -118,7 +118,7 @@ class InlineOperationEvaluator(
                 is SelfReference -> {
                     EcoreUtil2.delete(reference)
                 }
-                is NothingReference -> error("TODO Nothing!")
+                is NothingReference -> {}
                 else -> error("")
             }
         }
@@ -143,7 +143,7 @@ class InlineOperationEvaluator(
 
         val inlineComposite = EcoreUtil2.getContainerOfType(this, InlineComposite::class.java)
 
-        if (inlineComposite != null && inlineComposite.transition == this) {
+        if (inlineComposite?.transition == this) {
             return
         }
 

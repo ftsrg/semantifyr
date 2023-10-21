@@ -2,16 +2,17 @@ package Test
 
 type Statechart {
     feature region : Region
-    feature transitions : Transition[0..*]
+    feature abstractTransitions : AbstractTransition[0..*]
 
-    feature entryTransitions :> transitions : EntryTransition[0..*]
+    feature transitions :> abstractTransitions : Transition[0..*]
+    feature entryTransitions :> abstractTransitions : EntryTransition[0..*]
 
     init {
-        inline seq entryTransitions -> execute
+        inline seq entryTransitions -> main
     }
 
-    tran execute() {
-        inline choice transitions -> execute else { }
+    tran {
+        inline choice transitions -> main else { }
     }
 }
 
@@ -20,37 +21,44 @@ type Region {
     feature states :> abstractStates : State[0..*]
     feature entryStates :> abstractStates : EntryState[0..*]
 
-    var activeState : states[0..1] := Nothing
+    var activeState : states[0..1]
 }
 
 type AbstractState {
     reference region : Region
-    var isActive: Boolean := false
 
     tran exit() {
-        parent.activeState := Nothing
-        isActive := false
+        region.activeState := Nothing
     }
     tran enter() {
-        parent.activeState := Self
-        isActive := true
+        region.activeState := Self
     }
 }
 
 type State : AbstractState { }
 type EntryState : AbstractState { }
 
-type Transition {
+type AbstractTransition {
     reference from : AbstractState
     reference to : AbstractState
 
-    tran execute() {
+    virtual tran {
+        assume (true)
+    }
+}
+
+type Transition : AbstractTransition {
+    override tran {
         inline from.exit()
         inline to.enter()
     }
 }
 
-type EntryTransition : Transition { }
+type EntryTransition : Transition {
+    override tran {
+        inline to.enter()
+    }
+}
 
 type SimpleStatechart : Statechart {
     instance Main :> region : Region {
@@ -76,10 +84,10 @@ target Mission {
     }
 
     tran {
-        inline statechart.execute()
+        inline statechart.main()
     }
 
     prop {
-        statechart.Operation.isActive = false
+        statechart.Main.activeState != statechart.Main.Idle
     }
 }

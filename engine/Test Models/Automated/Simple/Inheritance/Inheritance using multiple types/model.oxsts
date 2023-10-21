@@ -28,15 +28,24 @@ type Child : ChildD {
 
 }
 
+type Holder {
+    feature base : Base
+    instance child :> base : Child
+
+    tran {
+        inline base.main()
+    }
+}
+
 target Mission {
-    instance child : Child
+    instance holder : Holder
 
     init {
         assume (true)
     }
 
     tran {
-        inline child.main()
+        inline holder.main()
     }
 
     prop {

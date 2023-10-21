@@ -1,11 +1,13 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
+import hu.bme.mit.gamma.oxsts.model.oxsts.Enum
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
 import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
 import hu.bme.mit.gamma.oxsts.model.oxsts.InstanceHolder
 import hu.bme.mit.gamma.oxsts.model.oxsts.Target
 import hu.bme.mit.gamma.oxsts.model.oxsts.Type
 import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
+import org.eclipse.xtext.EcoreUtil2
 import java.util.*
 
 open class InstanceObject(
@@ -14,10 +16,12 @@ open class InstanceObject(
 ) {
     val featureMap = mutableMapOf<Feature, MutableList<InstanceObject>>()
     val variableMap = mutableMapOf<Variable, Variable>()
+    val featureEnumMap = mutableMapOf<Feature, EnumMapping>()
 
     val expressionEvaluator = ExpressionEvaluator(this)
     val operationEvaluator = InlineOperationEvaluator(this)
     val transitionEvaluator = TransitionEvaluator(this)
+    val variableTransformer = VariableTransformer(this)
 
     val allInstances = instanceHolder?.allInstances ?: emptyList()
     val allVariables = instanceHolder?.allVariables ?: emptyList()
@@ -29,10 +33,9 @@ open class InstanceObject(
         list += instanceObject
     }
 
-    fun flattenVariables(): List<Variable> {
+    fun transformVariables(): List<Variable> {
         for (variable in allVariables) {
-            val newVariable = variable.copy()
-            newVariable.name = "${fullyQualifiedName}__${variable.name}"
+            val newVariable = variableTransformer.transform(variable)
             variableMap[variable] = newVariable
         }
 
@@ -46,6 +49,13 @@ open class InstanceObject(
 
         "${parentName}__${name}"
     }
+
+    val type: Type
+        get() = when (instanceHolder) {
+            is Target -> instanceHolder
+            is Instance -> instanceHolder.type
+            else -> error("Should not happen")
+        }
 }
 
 val InstanceHolder.allInstances: List<Instance>
@@ -96,43 +106,56 @@ val Type.allVariables: List<Variable>
 object NothingInstance : InstanceObject(null, null)
 
 class Instantiator {
-    val instanceQueue = LinkedList<InstanceObject>()
-    val referenceQueue = LinkedList<InstanceObject>()
+    private val instanceQueue = LinkedList<InstanceObject>()
+    private val processedInstances = mutableListOf<InstanceObject>()
 
     fun instantiateInstances(target: Target): InstanceObject {
         val rootInstanceObject = InstanceObject(target, null)
 
-        rootInstanceObject.instanciateInstances(target.instances)
-        rootInstanceObject.flattenVariables() // variables already present in target
+        val targetVariables = rootInstanceObject.transformVariables()
+//        target.variables += targetVariables
+        // TODO target variables mapped, but need to keep until the end of the transformation!
+
+        for ((targetVariable, newVariable) in target.variables.zip(targetVariables)) {
+            EcoreUtil2.replace(targetVariable, newVariable)
+        }
+
+        rootInstanceObject.instantiateInstances(target.instances)
 
         while (instanceQueue.any()) {
             val next = instanceQueue.removeFirst()
 
-            next.instanciateInstances(next.allInstances)
-
-            target.variables += next.flattenVariables()
+            next.instantiateInstances(next.allInstances)
         }
 
         setReferenceBindings()
 
+        transformVariables(target)
+
         return rootInstanceObject
     }
 
-    private fun InstanceObject.instanciateInstances(instances: List<Instance>) {
+    private fun transformVariables(target: Target) {
+        for (instanceObject in processedInstances) {
+            target.variables += instanceObject.transformVariables()
+        }
+    }
+
+    private fun InstanceObject.instantiateInstances(instances: List<Instance>) {
         for (instance in instances) {
-            instantiateInstances(instance)
+            this.instantiateInstances(instance)
         }
     }
 
     private fun InstanceObject.instantiateInstances(instance: Instance) {
         val instanceObject = InstanceObject(instance, this)
         instanceQueue += instanceObject
-        referenceQueue += instanceObject
+        processedInstances += instanceObject
         place(instance, instanceObject)
     }
 
     private fun setReferenceBindings() {
-        for (instanceObject in referenceQueue) {
+        for (instanceObject in processedInstances) {
             instanceObject.setReferenceBindings()
         }
     }
@@ -149,7 +172,7 @@ class Instantiator {
         }
     }
 
-    fun InstanceObject.place(feature: Feature, instanceObject: InstanceObject) {
+    private fun InstanceObject.place(feature: Feature, instanceObject: InstanceObject) {
         addInstanceObject(feature, instanceObject)
         if (feature.subsets != null) {
             place(feature.subsets, instanceObject)

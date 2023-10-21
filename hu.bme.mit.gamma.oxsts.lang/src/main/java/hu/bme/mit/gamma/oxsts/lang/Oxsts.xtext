@@ -14,14 +14,18 @@ Package:
 ;
 
 Target:
-	'target' name=ID '{'
-		(variables+=Variable)*
-		(instances+=TargetInstance)*
-		 
-	 	init=InitTransition
-	 	transition=MainTransition
-	 	property=NamelessProperty
-	'}'
+	(abstract?='abstract')? 'target' name=ID (':' supertype=[Type])? ('{'
+        (
+            variables+=Variable
+            | instances+=TargetInstance
+//            | features+=FeatureLike
+            | initTransition+=InitTransition
+            | 'tran' transitions+=NamedTransition
+            | mainTransition+=MainTransition
+//            | havocTransition+=HavocTransition
+            | properties+=Property
+        )*
+    '}')?
 ;
 
 Property:
@@ -52,7 +56,7 @@ EnumLiteral:
 ;
 
 Type:
-	(isAbstract?='abstract')? 'type' name=ID (':' supertype=[Type])? ('{'
+	(abstract?='abstract')? 'type' name=ID (':' supertype=[Type])? ('{'
 		(
 			variables+=Variable
 			| features+=FeatureLike
@@ -66,7 +70,7 @@ Type:
 ;
 
 NamedTransition returns Transition:
-	name=ID TransitionBody
+	TransitionModifier name=ID TransitionBody
 ;
 
 fragment NamelessTransition returns Transition:
@@ -74,15 +78,19 @@ fragment NamelessTransition returns Transition:
 ;
 
 HavocTransition returns Transition:
-	'havoc' NamelessTransition
+	TransitionModifier 'havoc' NamelessTransition
 ;
 
 MainTransition returns Transition:
-	'tran' NamelessTransition
+	TransitionModifier 'tran' NamelessTransition
 ;
 
 InitTransition returns Transition:
-	'init' NamelessTransition
+	TransitionModifier 'init' NamelessTransition
+;
+
+fragment TransitionModifier returns Transition:
+	(virtual?='virtual' | override?='override')?
 ;
 
 fragment TransitionBody returns Transition:
@@ -191,7 +199,7 @@ AssignmentOperation:
 
 
 Variable:
-	'var' name=ID ':' typing=VariableTyping (isOptional?='[0..1]' | '[1..1]')? (':=' expression=Expression)? 
+	'var' name=ID ':' typing=VariableTyping (':=' expression=Expression)?
 ;
 
 FeatureLike returns Feature:
@@ -200,7 +208,7 @@ FeatureLike returns Feature:
 ;
 
 Feature:
-	(isReference?='reference' | 'feature') name=ID (':>' subsets=[Feature])? ':' type=[Type] (multiplicity=Multiplicity)?
+	(reference?='reference' | 'feature') name=ID (':>' subsets=[Feature])? ':' type=[Type] (multiplicity=Multiplicity)?
 ;
 
 TargetInstance returns Instance:
@@ -250,7 +258,7 @@ VariableTyping:
 ;
 
 VariableTypeReference: 
-	reference=[VariableType]
+	reference=[VariableType] (optional?='[0..1]' | '[1..1]')?
 ;
 
 DataType: 

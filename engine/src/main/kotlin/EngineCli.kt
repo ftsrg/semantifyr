@@ -18,11 +18,14 @@ fun main(args: Array<String>) {
     val outputFile by parser.argument(ArgType.String, "output")
 
     parser.parse(args)
+
     prepareOxsts()
+
     val reader = OxstsReader(inputDirectory)
     reader.read()
 
     val transformer = XstsTransformer()
+
     val xsts = transformer.transform(reader.rootElements, targetName)
     val xstsString = Serializer.serialize(xsts)
 

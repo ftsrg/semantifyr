@@ -2,15 +2,10 @@
 var __Mission__holder__child__x : Integer;
 
 init {
-    assume (true);
 }
 
 trans {
-    choice {
-        choice {
-            __Mission__holder__child__x := 0;
-        }
-    }
+    __Mission__holder__child__x := 0;
 }
 
 env {}

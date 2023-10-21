@@ -57,6 +57,14 @@ class CompilationTests {
         assertModelEqualsExpected(directory)
     }
 
+    @Test
+    fun customTest() {
+        val directory = "$automatedDirectory/Simple/Variable/Variable Feature Typing"
+
+        simpleReadTransformWrite(directory)
+        assertModelEqualsExpected(directory)
+    }
+
     private fun simpleReadTransformWrite(directory: String) {
         val reader = OxstsReader(directory)
         reader.read()

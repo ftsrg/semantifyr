@@ -5,8 +5,6 @@ init {
 }
 
 trans {
-    choice {
-    }
 }
 
 env {}

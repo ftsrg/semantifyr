@@ -6,11 +6,7 @@ init {
 }
 
 trans {
-    choice {
-        choice {
-            __Mission__callable__x := 0;
-        }
-    }
+    __Mission__callable__x := 0;
 }
 
 env {}

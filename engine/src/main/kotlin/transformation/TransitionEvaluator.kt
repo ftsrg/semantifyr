@@ -1,8 +1,10 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
+import hu.bme.mit.gamma.oxsts.engine.main
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
 import hu.bme.mit.gamma.oxsts.model.oxsts.HavocTransitionExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.InitTransitionExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
@@ -13,46 +15,40 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
 import hu.bme.mit.gamma.oxsts.model.oxsts.Type
 
 class TransitionEvaluator(
-    val instanceObject: InstanceObject
+    private val instanceObject: InstanceObject
 ) {
-
-
 
     fun evaluateTransition(referenceExpression: ReferenceExpression): Transition {
         require(referenceExpression is ChainReferenceExpression)
 
+        val type = getReferencedType(referenceExpression)
+
         val reference = referenceExpression.chains.last()
 
-        val holder = instanceObject.instanceHolder
+        val transition = type.findTransitionUpwards(reference)
 
-        val transition = when (holder) {
-            is Target -> holder.findUpperMostTransition(reference)
-            is Instance -> holder.type.findUpperMostTransition(reference)
-            else -> error("Should not happen")
-        }
-
-        if (false) { // transition.isVirtual
-            //return findLastOverride(transition)
+        if (transition.isVirtual || transition.isOverride) {
+            return instanceObject.type.findTransitionUpwards(reference)
         }
 
         return transition
     }
 
-    private fun Target.findUpperMostTransition(chain: ChainingExpression): Transition {
-        return getTransition(chain)
-    }
+    fun getReferencedType(referenceExpression: ReferenceExpression): Type {
+        require(referenceExpression is ChainReferenceExpression)
 
-    private fun Target.getTransition(chain: ChainingExpression): Transition {
-        return when (chain) {
-            is InitTransitionExpression -> init
-            is MainTransitionExpression -> transition
-            is HavocTransitionExpression -> error("Targets may not have havoc transitions!")
-            else -> error("Targets may not have named transitions!")
+        return if (referenceExpression.chains.size > 1) {
+            // feature based
+
+            val feature = referenceExpression.chains.dropLast(1).last().element as? Feature
+            feature?.type ?: error("")
+        } else {
+            instanceObject.type
         }
     }
 
-    private fun Type.findUpperMostTransition(chain: ChainingExpression): Transition {
-        val transition = getTransition(chain) ?: supertype?.findUpperMostTransition(chain)
+    private fun Type.findTransitionUpwards(chain: ChainingExpression): Transition {
+        val transition = getTransition(chain) ?: supertype?.findTransitionUpwards(chain)
 
         check(transition != null) {
             "Transition $chain could not be found in the type hierarchy!"
@@ -66,13 +62,16 @@ class TransitionEvaluator(
             is HavocTransitionExpression -> havocTransition.singleOrNull()
             is InitTransitionExpression -> initTransition.singleOrNull()
             is MainTransitionExpression -> mainTransition.singleOrNull()
-            is DeclarationReferenceExpression -> chain.element as? Transition
+            is DeclarationReferenceExpression -> {
+                val reference = chain.element as Transition
+
+                transitions.firstOrNull {
+                    it.name == reference.name
+                }
+            }
+
             else -> null
         }
-    }
-
-    fun findLastOverride(transition: Transition): Transition {
-        return transition // TODO
     }
 
 }

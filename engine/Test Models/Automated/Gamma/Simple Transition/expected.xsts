@@ -1,0 +1,22 @@
+type __Mission__statechart__Main__states__type : {
+    __Mission__statechart__Main__Idle__literal,
+    __Mission__statechart__Main__Operation__literal,
+    __Nothing__literal
+}
+
+var __Mission__statechart__Main__activeState : __Mission__statechart__Main__states__type;
+
+init {
+    __Mission__statechart__Main__activeState := __Mission__statechart__Main__Idle__literal;
+}
+
+trans {
+    __Mission__statechart__Main__activeState := __Nothing__literal;
+    __Mission__statechart__Main__activeState := __Mission__statechart__Main__Operation__literal;
+}
+
+env {}
+
+prop {
+    (__Mission__statechart__Main__activeState != __Mission__statechart__Main__Idle__literal);
+}

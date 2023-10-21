@@ -6,6 +6,7 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Element
+import hu.bme.mit.gamma.oxsts.model.oxsts.EnumLiteral
 import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
 import hu.bme.mit.gamma.oxsts.model.oxsts.InlineCall
 import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralBoolean
@@ -20,6 +21,12 @@ import org.eclipse.xtext.EcoreUtil2
 object OxstsFactory : OxstsFactoryImpl() {
     fun createEmptyOperation(): Operation {
         return createAssumptionOperation(createLiteralBoolean(true))
+    }
+
+    fun createEnumLiteral(name: String): EnumLiteral {
+        return createEnumLiteral().also {
+            it.name = name
+        }
     }
 
     fun createDeclarationReference(element: Element): ChainingExpression {
