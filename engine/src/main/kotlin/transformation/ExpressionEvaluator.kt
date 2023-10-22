@@ -52,7 +52,7 @@ class ExpressionEvaluator(
     }
 
     fun evaluateInstanceObject(expression: Expression): InstanceObject {
-        return evaluateInstanceObjectOrNull(expression) ?: error("Expression $expression feature has no instances!")
+        return evaluateInstanceObjectOrNull(expression) ?: error("Expression $expression feature in $context has no instances!")
     }
 
     fun evaluateInstanceObjectOrNull(expression: Expression): InstanceObject? {

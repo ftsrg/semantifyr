@@ -35,6 +35,9 @@ class OxstsReader(
             if (resource.errors.any()) {
                 println(resource.errors)
             }
+            if (resource.warnings.any()) {
+                println(resource.warnings)
+            }
         }
     }
 }

@@ -10,7 +10,6 @@ import org.eclipse.xtext.testing.extensions.InjectionExtension
 import org.eclipse.xtext.testing.util.ParseHelper
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
@@ -59,7 +58,7 @@ class CompilationTests {
 
     @Test
     fun customTest() {
-        val directory = "$automatedDirectory/Simple/Variable/Variable Feature Typing"
+        val directory = "$automatedDirectory/Simple/Target/Flat target with enum"
 
         simpleReadTransformWrite(directory)
         assertModelEqualsExpected(directory)
