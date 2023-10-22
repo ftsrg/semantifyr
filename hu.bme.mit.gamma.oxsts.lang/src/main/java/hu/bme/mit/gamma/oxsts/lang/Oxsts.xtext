@@ -61,7 +61,7 @@ Type:
 			variables+=Variable
 			| features+=FeatureLike
 			| initTransition+=InitTransition
-			| 'tran' transitions+=NamedTransition
+			| transitions+=NamedTransition
 			| mainTransition+=MainTransition
 			| havocTransition+=HavocTransition
 			| properties+=Property
@@ -70,7 +70,7 @@ Type:
 ;
 
 NamedTransition returns Transition:
-	TransitionModifier name=ID TransitionBody
+	TransitionModifier 'tran' name=ID TransitionBody
 ;
 
 fragment NamelessTransition returns Transition:
@@ -120,8 +120,9 @@ Operation:
 ;
 
 SequenceOperation:
+    {SequenceOperation}
 	'{'
-		(operation+=Operation)+
+		(operation+=Operation)*
 	'}'
 ;
 
@@ -135,7 +136,6 @@ ChoiceOperation:
 		'or' operation+=SequenceOperation
 	)*
 	(
-		'else' '{' '}' |
 		'else' else=SequenceOperation
 	)?
 ;
@@ -162,7 +162,6 @@ InlineOperation:
 InlineChoice: 
 	'inline' 'choice' feature=ReferenceExpression '->' transition=ReferenceExpression 
 	(
-		'else' '{' '}' |
 		'else' else=SequenceOperation
 	)?
 ;
