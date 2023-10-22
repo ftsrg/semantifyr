@@ -74,8 +74,18 @@ class ExpressionEvaluator(
         is AndOperator -> evaluateBoolean(operator.operands[0]) && evaluateBoolean(operator.operands[1])
         is OrOperator -> evaluateBoolean(operator.operands[0]) || evaluateBoolean(operator.operands[1])
         is NotOperator -> !evaluateBoolean(operator.operands[0])
-        is EqualityOperator -> evaluateInstanceObject(operator.operands[0]) == evaluateInstanceObject(operator.operands[1])
-        is InequalityOperator -> evaluateInstanceObject(operator.operands[0]) != evaluateInstanceObject(operator.operands[1])
+        is EqualityOperator -> {
+            val left = evaluateInstanceObjectOrNull(operator.operands[0])
+            val right = evaluateInstanceObjectOrNull(operator.operands[1])
+
+            left == right && left != null
+        }
+        is InequalityOperator -> {
+            val left = evaluateInstanceObjectOrNull(operator.operands[0])
+            val right = evaluateInstanceObjectOrNull(operator.operands[1])
+
+            left != right
+        }
         else -> error("Unknown type of literal: $operator")
     }
 
