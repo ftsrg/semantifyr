@@ -192,6 +192,13 @@ object Serializer {
                     }
                 }
 
+                if (operation.`else` != null) {
+                    appendLine("} else {")
+                    indent {
+                        append(operation.`else`)
+                    }
+                }
+
                 appendLine("}")
             }
         }
