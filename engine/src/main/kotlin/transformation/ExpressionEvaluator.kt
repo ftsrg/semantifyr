@@ -1,5 +1,6 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
+import hu.bme.mit.gamma.oxsts.engine.utils.dropLast
 import hu.bme.mit.gamma.oxsts.model.oxsts.AndOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
@@ -18,7 +19,6 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.OrOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.SelfReference
 import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
-import java.lang.IllegalStateException
 
 /**
  * This class evaluates compile-time evaluable expressions only!
@@ -55,7 +55,7 @@ class ExpressionEvaluator(
         return evaluateInstanceObjectOrNull(expression) ?: error("Expression $expression feature has no instances!")
     }
 
-    private fun evaluateInstanceObjectOrNull(expression: Expression): InstanceObject? {
+    fun evaluateInstanceObjectOrNull(expression: Expression): InstanceObject? {
         val instanceSet = evaluateInstanceObjectSet(expression)
 
         check(instanceSet.size <= 1) {

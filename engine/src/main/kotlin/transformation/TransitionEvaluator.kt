@@ -1,16 +1,14 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
-import hu.bme.mit.gamma.oxsts.engine.main
+import hu.bme.mit.gamma.oxsts.engine.utils.element
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
 import hu.bme.mit.gamma.oxsts.model.oxsts.HavocTransitionExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.InitTransitionExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
 import hu.bme.mit.gamma.oxsts.model.oxsts.MainTransitionExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.Target
 import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
 import hu.bme.mit.gamma.oxsts.model.oxsts.Type
 
@@ -34,12 +32,10 @@ class TransitionEvaluator(
         return transition
     }
 
-    fun getReferencedType(referenceExpression: ReferenceExpression): Type {
+    private fun getReferencedType(referenceExpression: ReferenceExpression): Type {
         require(referenceExpression is ChainReferenceExpression)
 
         return if (referenceExpression.chains.size > 1) {
-            // feature based
-
             val feature = referenceExpression.chains.dropLast(1).last().element as? Feature
             feature?.type ?: error("")
         } else {

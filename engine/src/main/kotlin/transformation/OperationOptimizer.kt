@@ -16,7 +16,7 @@ object OperationOptimizer {
         }
     }
 
-    fun optimize(operation: Operation) {
+    private fun optimize(operation: Operation) {
         var optimized: Boolean
 
         do {
@@ -73,7 +73,7 @@ object OperationOptimizer {
             EcoreUtil2.remove(empty)
         }
 
-        return false
+        return true
     }
 
 }

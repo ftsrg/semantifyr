@@ -1,22 +1,21 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
+import hu.bme.mit.gamma.oxsts.engine.utils.copy
+import hu.bme.mit.gamma.oxsts.engine.utils.dropLast
+import hu.bme.mit.gamma.oxsts.engine.utils.element
+import hu.bme.mit.gamma.oxsts.engine.utils.isFeatureTyped
+import hu.bme.mit.gamma.oxsts.engine.utils.lastChain
 import hu.bme.mit.gamma.oxsts.model.oxsts.AssignmentOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.CompositeOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Enum
 import hu.bme.mit.gamma.oxsts.model.oxsts.EqualityOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
-import hu.bme.mit.gamma.oxsts.model.oxsts.HavocOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.InequalityOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.InlineOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.Operation
 import hu.bme.mit.gamma.oxsts.model.oxsts.Package
-import hu.bme.mit.gamma.oxsts.model.oxsts.SequenceOperation
+import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Target
 import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
 import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
@@ -32,34 +31,30 @@ class XstsTransformer {
             it.name == targetName
         }
 
-        return target.transform()
+        return transform(target)
     }
 
-    private fun Target.transform(): XSTS {
-        val instantiator = Instantiator()
-        val rootInstance = instantiator.instantiateInstances(this)
-
-        initTransition.single().inlineOperations(rootInstance)
-        initTransition.single().rewriteChoiceElse()
-
-        mainTransition.single().inlineOperations(rootInstance)
-        mainTransition.single().rewriteChoiceElse()
-
-        rewriteVariableExpressions(rootInstance)
+    private fun transform(target: Target): XSTS {
+        val rootInstance = Instantiator.instantiateInstances(target)
 
         val xsts = OxstsFactory.createXSTS()
 
-        val enums = variables.map {
+        xsts.variables += Instantiator.instantiateVariables(rootInstance)
+        xsts.init = target.initTransition.single().copy() // TODO handle multiple inits?
+        xsts.transition = target.mainTransition.single().copy() // TODO handle multiple trans?
+        xsts.property = target.properties.single().copy() // TODO handle multiple props?
+
+        xsts.init.inlineOperations(rootInstance)
+        xsts.transition.inlineOperations(rootInstance)
+
+        xsts.rewriteFeatureTypingVariableExpression(rootInstance)
+        xsts.rewriteVariableAccesses(rootInstance)
+
+        xsts.enums += xsts.variables.asSequence().map {
             it.typing
         }.filterIsInstance<VariableTypeReference>().map {
             it.reference
         }.filterIsInstance<Enum>().toSet()
-
-        xsts.enums += enums
-        xsts.variables += variables
-        xsts.init = initTransition.single()
-        xsts.transition = mainTransition.single()
-        xsts.property = properties.single()
 
         OperationOptimizer.optimize(xsts.init)
         OperationOptimizer.optimize(xsts.transition)
@@ -75,7 +70,7 @@ class XstsTransformer {
 
             when (operation) {
                 is InlineOperation -> {
-                    val inlined = rootInstance.operationEvaluator.inlineTransition(operation)
+                    val inlined = rootInstance.operationEvaluator.inlineOperation(operation)
                     EcoreUtil2.replace(operation, inlined)
                     processorQueue += inlined
                 }
@@ -87,140 +82,135 @@ class XstsTransformer {
         }
     }
 
-    /**
-     * TODO
-     *
-     * Else branches cannot be mapped simply like this.
-     * This only works when the assume (...) operation is the first in a sequence, since otherwise
-     * we must evaluate all preceding operations first, and THEN the guard expression -> hence
-     * the simple inlining will not work.
-     *
-     * Other way: create "simulation" operations, meaning replace all real variable calls with
-     * local variables, negate all assumptions and inline them in the else branch. This will
-     * always behave correctly, although it is hard to calculate and would most likely reduce
-     * performance on the theta side (without optimizations).
-     */
-    private fun Transition.rewriteChoiceElse() {
-        val choices = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).filter {
-            it.`else` != null
-        }
+//    /**
+//     * TODO
+//     *
+//     * Else branches cannot be mapped simply like this.
+//     * This only works when the assume (...) operation is the first in a sequence, since otherwise
+//     * we must evaluate all preceding operations first, and THEN the guard expression -> hence
+//     * the simple inlining will not work.
+//     *
+//     * Other way: create "simulation" operations, meaning replace all real variable calls with
+//     * local variables, negate all assumptions and inline them in the else branch. This will
+//     * always behave correctly, although it is hard to calculate and would most likely reduce
+//     * performance on the theta side (without optimizations).
+//     */
+//    private fun Transition.rewriteChoiceElse() {
+//        val choices = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).filter {
+//            it.`else` != null
+//        }
+//
+//        for (choice in choices) {
+//            val assumption = choice.calculateAssumption()
+//            val assume = OxstsFactory.createAssumptionOperation(OxstsFactory.createNotOperator(assumption))
+//            val branch = OxstsFactory.createSequenceOperation().also {
+//                it.operation += assume
+//                it.operation += choice.`else`
+//            }
+//
+//            choice.operation += branch
+//        }
+//    }
+//
+//    private fun Operation.calculateAssumption(): Expression {
+//        return when (this) {
+//            is AssumptionOperation -> expression.copy()
+//            is AssignmentOperation -> OxstsFactory.createLiteralBoolean(true)
+//            is HavocOperation -> OxstsFactory.createLiteralBoolean(true)
+//            is SequenceOperation -> {
+//                operation.map {
+//                    it.calculateAssumption()
+//                }.reduce { lhs, rhs ->
+//                    OxstsFactory.createAndOperator(lhs, rhs)
+//                }
+//            }
+//
+//            is ChoiceOperation -> {
+//                operation.map {
+//                    it.calculateAssumption()
+//                }.reduce { lhs, rhs ->
+//                    OxstsFactory.createOrOperator(lhs, rhs)
+//                }
+//            }
+//
+//            is IfOperation -> {
+//                val guardAssumption = guard.copy()
+//                val notGuardAssumption = OxstsFactory.createNotOperator(guard.copy())
+//                val bodyAssumption = body.calculateAssumption()
+//                val elseAssumption = `else`?.calculateAssumption() ?: OxstsFactory.createLiteralBoolean(true)
+//
+//                OxstsFactory.createOrOperator(
+//                    OxstsFactory.createAndOperator(guardAssumption, bodyAssumption),
+//                    OxstsFactory.createAndOperator(notGuardAssumption, elseAssumption),
+//                )
+//            }
+//
+//            else -> error("Unsupported operation!")
+//        }
+//    }
 
-        for (choice in choices) {
-            val assumption = choice.calculateAssumption()
-            val assume = OxstsFactory.createAssumptionOperation(OxstsFactory.createNotOperator(assumption))
-            val branch = OxstsFactory.createSequenceOperation().also {
-                it.operation += assume
-                it.operation += choice.`else`
-            }
-
-            choice.operation += branch
-        }
-    }
-
-    private fun Operation.calculateAssumption(): Expression {
-        return when (this) {
-            is AssumptionOperation -> expression.copy()
-            is AssignmentOperation -> OxstsFactory.createLiteralBoolean(true)
-            is HavocOperation -> OxstsFactory.createLiteralBoolean(true)
-            is SequenceOperation -> {
-                operation.map {
-                    it.calculateAssumption()
-                }.reduce { lhs, rhs ->
-                    OxstsFactory.createAndOperator(lhs, rhs)
-                }
-            }
-
-            is ChoiceOperation -> {
-                operation.map {
-                    it.calculateAssumption()
-                }.reduce { lhs, rhs ->
-                    OxstsFactory.createOrOperator(lhs, rhs)
-                }
-            }
-
-            is IfOperation -> {
-                val guardAssumption = guard.copy()
-                val notGuardAssumption = OxstsFactory.createNotOperator(guard.copy())
-                val bodyAssumption = body.calculateAssumption()
-                val elseAssumption = `else`?.calculateAssumption() ?: OxstsFactory.createLiteralBoolean(true)
-
-                OxstsFactory.createOrOperator(
-                    OxstsFactory.createAndOperator(guardAssumption, bodyAssumption),
-                    OxstsFactory.createAndOperator(notGuardAssumption, elseAssumption),
-                )
-            }
-
-            else -> error("Unsupported operation!")
-        }
-    }
-
-    private fun Target.rewriteVariableExpressions(rootInstance: InstanceObject) {
+    private fun XSTS.rewriteVariableAccesses(rootInstance: InstanceObject) {
         val referenceExpressions = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).filter {
             val declaration = it.chains.last() as? DeclarationReferenceExpression
             declaration?.element is Variable
         }
 
         for (referenceExpression in referenceExpressions) {
-            val instanceObject = rootInstance.expressionEvaluator.evaluateInstanceObject(referenceExpression.dropLast(1))
             val reference = referenceExpression.chains.last() as DeclarationReferenceExpression
             val oldVariable = reference.element as Variable
+
+            val instanceObject = rootInstance.expressionEvaluator.evaluateInstanceObject(referenceExpression.dropLast(1))
             val transformedVariable = instanceObject.variableMap[oldVariable]!!
 
             val newExpression = OxstsFactory.createChainReferenceExpression(transformedVariable)
             EcoreUtil2.replace(referenceExpression, newExpression)
-
-            if (oldVariable.typing is VariableTypeReference && (oldVariable.typing as VariableTypeReference).reference is Feature) {
-                rewriteFeatureTypingAccess(instanceObject, (oldVariable.typing as VariableTypeReference).reference as Feature, newExpression, rootInstance)
-            }
         }
     }
 
-    private fun rewriteFeatureTypingAccess(instanceObject: InstanceObject, feature: Feature, referenceExpression: ChainReferenceExpression, rootInstance: InstanceObject) {
-        val enumMapping = instanceObject.featureEnumMap[feature]
-        if (enumMapping != null) {
-            // transformed enum typing
-            val parent = referenceExpression.eContainer()
+    private fun XSTS.rewriteFeatureTypingVariableExpression(rootInstance: InstanceObject) {
+        val expressions = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).filter {
+            (it.lastChain().element as? Variable)?.isFeatureTyped == true
+        }
 
-            when (parent) {
-                is AssignmentOperation -> {
-                    if (parent.reference != referenceExpression) return
+        for (expression in expressions) {
+            val oldVariable = expression.lastChain().element!! as Variable
 
-                    val assignementExpression = parent.expression
-                    val assignedInstance = rootInstance.expressionEvaluator.evaluateInstanceObject(assignementExpression)
-                    val assignedLiteral = enumMapping.literalMapping[assignedInstance]!!
+            rewriteFeatureTypingVariableExpression(oldVariable, expression, rootInstance)
+        }
+    }
 
-                    val newAssignmentExpression = OxstsFactory.createChainReferenceExpression(assignedLiteral)
-                    EcoreUtil2.replace(assignementExpression, newAssignmentExpression)
-                }
-                is EqualityOperator -> {
-                    val operandIndex = parent.operands.indexOf(referenceExpression)
+    private fun rewriteFeatureTypingVariableExpression(variable: Variable, referenceExpression: ChainReferenceExpression, rootInstance: InstanceObject) {
+        val parent = referenceExpression.eContainer()
 
-                    val otherOperandIndex = if (operandIndex == 0) 1 else 0
-                    val otherOperand = parent.operands[otherOperandIndex]
+        when (parent) {
+            is AssignmentOperation -> {
+                if (parent.reference != referenceExpression) return
 
-                    val assignementExpression = otherOperand
-                    val assignedInstance = rootInstance.expressionEvaluator.evaluateInstanceObject(assignementExpression)
-                    val assignedLiteral = enumMapping.literalMapping[assignedInstance]!!
+                val newExpression = rootInstance.variableTransformer.transformExpression(parent.reference, parent.expression as ReferenceExpression, variable)
 
-                    val newAssignmentExpression = OxstsFactory.createChainReferenceExpression(assignedLiteral)
-                    EcoreUtil2.replace(assignementExpression, newAssignmentExpression)
-                }
-                is InequalityOperator -> {
-                    val operandIndex = parent.operands.indexOf(referenceExpression)
-
-                    val otherOperandIndex = if (operandIndex == 0) 1 else 0
-                    val otherOperand = parent.operands[otherOperandIndex]
-
-                    val assignementExpression = otherOperand
-                    val assignedInstance = rootInstance.expressionEvaluator.evaluateInstanceObject(assignementExpression)
-                    val assignedLiteral = enumMapping.literalMapping[assignedInstance]!!
-
-                    val newAssignmentExpression = OxstsFactory.createChainReferenceExpression(assignedLiteral)
-                    EcoreUtil2.replace(assignementExpression, newAssignmentExpression)
-                }
-                else -> error("Unknown reference: $parent")
+                EcoreUtil2.replace(parent.expression, newExpression)
             }
+            is EqualityOperator -> {
+                val operandIndex = parent.operands.indexOf(referenceExpression)
 
+                val otherOperandIndex = if (operandIndex == 0) 1 else 0
+                val otherOperand = parent.operands[otherOperandIndex]!! as ReferenceExpression
+
+                val newExpression = rootInstance.variableTransformer.transformExpression(referenceExpression, otherOperand, variable)
+
+                EcoreUtil2.replace(otherOperand, newExpression)
+            }
+            is InequalityOperator -> {
+                val operandIndex = parent.operands.indexOf(referenceExpression)
+
+                val otherOperandIndex = if (operandIndex == 0) 1 else 0
+                val otherOperand = parent.operands[otherOperandIndex]!! as ReferenceExpression
+
+                val newExpression = rootInstance.variableTransformer.transformExpression(referenceExpression, otherOperand, variable)
+
+                EcoreUtil2.replace(otherOperand, newExpression)
+            }
+            else -> error("Unknown reference: $parent")
         }
     }
 

@@ -4,10 +4,8 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.OxstsPackage
 import hu.bme.mit.gamma.oxsts.model.oxsts.Package
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
-import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.resource.XtextResource
 import java.io.File
-import java.lang.IllegalStateException
 
 fun File.walkFiles() = walkTopDown().filter { it.isFile }
 
@@ -35,7 +33,7 @@ class OxstsReader(
             val resource = resourceSet.getResource(URI.createURI(file.path), true)
             //resource.load(emptyMap<Any, Any>())
             if (resource.errors.any()) {
-                //throw IllegalStateException(resource.errors.toString())
+                println(resource.errors)
             }
         }
     }

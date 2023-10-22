@@ -1,8 +1,14 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
+import hu.bme.mit.gamma.oxsts.engine.utils.asChainReferenceExpression
+import hu.bme.mit.gamma.oxsts.engine.utils.copy
+import hu.bme.mit.gamma.oxsts.engine.utils.dropLast
+import hu.bme.mit.gamma.oxsts.engine.utils.isFeatureTyped
 import hu.bme.mit.gamma.oxsts.model.oxsts.Enum
 import hu.bme.mit.gamma.oxsts.model.oxsts.EnumLiteral
+import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
+import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
 import hu.bme.mit.gamma.oxsts.model.oxsts.VariableTypeReference
 
@@ -22,9 +28,28 @@ class VariableTransformer(
         val typing = variable.typing
         if (typing is VariableTypeReference) {
             newVariable.typing = typing.transform()
+            if (variable.expression != null) {
+                newVariable.expression = transformExpression(OxstsFactory.createChainReferenceExpression(variable), variable.expression as ReferenceExpression, variable)
+            }
         }
 
         return newVariable
+    }
+
+    fun transformExpression(variableExpression: ReferenceExpression, expression: ReferenceExpression, typedVariable: Variable): Expression {
+        require(typedVariable.isFeatureTyped) {
+            "$typedVariable is not a feature typed variable!"
+        }
+
+        val feature = (typedVariable.typing as VariableTypeReference).reference as Feature
+
+        val variableHolder = instanceObject.expressionEvaluator.evaluateInstanceObject(variableExpression.asChainReferenceExpression().dropLast(1))
+        val enumMapping = variableHolder.featureEnumMap[feature] ?: error("There is no enum mapping for $feature in $variableHolder")
+
+        val instanceObject = instanceObject.expressionEvaluator.evaluateInstanceObject(expression)
+        val literal = enumMapping.literalMapping[instanceObject] ?: error("Referenced instance object $instanceObject is not in referenced feature $feature in $variableHolder")
+
+        return OxstsFactory.createChainReferenceExpression(literal)
     }
 
     private fun VariableTypeReference.transform(): VariableTypeReference {
