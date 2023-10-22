@@ -20,7 +20,7 @@ Target:
             | instances+=TargetInstance
 //            | features+=FeatureLike
             | initTransition+=InitTransition
-            | 'tran' transitions+=NamedTransition
+            | transitions+=NamedTransition
             | mainTransition+=MainTransition
 //            | havocTransition+=HavocTransition
             | properties+=Property
