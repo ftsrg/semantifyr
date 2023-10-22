@@ -339,11 +339,6 @@ ChainReferenceExpression:
 	)+
 ;
 
-/*DirectReferenceExpression: 
-	DeclarationReferenceExpression
-	| ImplicitTransitionExpression
-;*/
-
 ChainingExpression: 
 	ImplicitTransitionExpression
 	| DeclarationReferenceExpression
@@ -379,7 +374,11 @@ MainTransitionExpression:
 ;
 
 DeclarationReferenceExpression: 
-	element=[Element]
+	element=[Element|FQN]
+;
+
+FQN:
+    ID ('::' ID)*
 ;
 
 // Literal expressions

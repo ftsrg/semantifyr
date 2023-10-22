@@ -8,14 +8,14 @@ target Mission {
     var unit : TimeUnit
 
     init {
-        unit := TimeUnit.Seconds
+        unit := TimeUnit::Seconds
     }
 
     tran {
-        unit := TimeUnit.Minutes
+        unit := TimeUnit::Minutes
     }
 
     prop {
-        unit = TimeUnit.Seconds
+        unit = TimeUnit::Seconds
     }
 }
