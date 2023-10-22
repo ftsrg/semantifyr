@@ -3,19 +3,19 @@ package Test
 type Base {
     var x : Integer
 
-    virtual tran {
+    tran {
         x := 0
     }
 }
 
-type Child : Base {
-    override tran {
-        x := 10
-    }
-}
+type ChildA : Base
+type ChildB : ChildA
+type ChildC : ChildB
+type ChildD : ChildC
+type Child : ChildD
 
 type Holder {
-    feature base : Base
+    feature base : Child
     instance child :> base : Child
 
     tran {

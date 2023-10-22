@@ -1,0 +1,17 @@
+package Test
+
+target Mission {
+    var y : Boolean
+
+    init {
+        y := false
+    }
+
+    tran {
+        havoc (y)
+    }
+
+    prop {
+        y = false
+    }
+}

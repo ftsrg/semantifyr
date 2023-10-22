@@ -1,0 +1,23 @@
+package Test
+
+target Mission {
+    var y : Boolean
+    var x : Integer
+
+    init {
+        y := false
+    }
+
+    tran {
+        y := true
+        if (y) {
+            x := 10
+        } else {
+            x := 0
+        }
+    }
+
+    prop {
+        y = false
+    }
+}

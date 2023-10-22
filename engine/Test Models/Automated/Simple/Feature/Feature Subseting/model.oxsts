@@ -1,0 +1,35 @@
+package Test
+
+type Atom
+
+type Holder {
+    feature atom : Atom
+    feature subAtom :> atom : Atom
+    feature subSubAtom :> subAtom : Atom
+    feature subSubSubAtom :> subSubAtom : Atom
+    feature subSubSubSubAtom :> subSubSubAtom : Atom
+}
+
+target Mission {
+    var x : Boolean
+
+    instance holder : Holder {
+        instance a :> subSubSubSubAtom : Atom
+    }
+
+    init {
+        assume (true)
+    }
+
+    tran {
+        inline if (holder.atom = holder.subSubSubSubAtom) {
+            x := true
+        } else {
+            x := false
+        }
+    }
+
+    prop {
+        true
+    }
+}

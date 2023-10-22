@@ -11,16 +11,16 @@ type Simple {
 type Composite {
     feature simples : Simple[0..*]
 
-    instance a :> simples : Simple
-    instance b :> simples : Simple
-
     tran {
         inline seq simples -> main
     }
 }
 
 target Mission {
-    instance composite : Composite
+    instance composite : Composite {
+        instance a :> simples : Simple
+        instance b :> simples : Simple
+    }
 
     init {
         assume (false)

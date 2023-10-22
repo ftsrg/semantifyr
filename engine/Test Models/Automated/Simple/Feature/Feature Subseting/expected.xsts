@@ -1,0 +1,15 @@
+
+var __Mission__x : Boolean;
+
+init {
+}
+
+trans {
+    __Mission__x := true;
+}
+
+env {}
+
+prop {
+    true;
+}

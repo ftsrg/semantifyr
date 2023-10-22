@@ -15,15 +15,18 @@ type Simple {
 target Mission {
     instance a : Simple
     instance b : Simple
+    instance c : Simple
 
     init {
         inline a.init()
         inline b.init()
+        inline c.init()
     }
 
     tran {
         inline a.main()
         inline b.main()
+        inline c.main()
     }
 
     prop {

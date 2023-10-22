@@ -1,0 +1,48 @@
+package Test
+
+type Composite {
+    var x : Integer
+    feature composites : Composite[0..*]
+
+    tran {
+        x := 0
+        inline seq composites -> main
+    }
+}
+
+target Mission {
+    instance composite : Composite {
+        instance a :> composites : Composite {
+            instance a :> composites : Composite {
+                instance a :> composites : Composite
+                instance b :> composites : Composite
+            }
+            instance b :> composites : Composite {
+                instance a :> composites : Composite
+                instance b :> composites : Composite
+            }
+        }
+        instance b :> composites : Composite {
+            instance a :> composites : Composite {
+                instance a :> composites : Composite
+                instance b :> composites : Composite
+            }
+            instance b :> composites : Composite {
+                instance a :> composites : Composite
+                instance b :> composites : Composite
+            }
+        }
+    }
+
+    init {
+        assume (false)
+    }
+
+    tran {
+        inline composite.main()
+    }
+
+    prop {
+        false
+    }
+}

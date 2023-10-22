@@ -1,0 +1,31 @@
+
+var __Mission__composite__x : Integer;
+var __Mission__composite__a__x : Integer;
+var __Mission__composite__b__x : Integer;
+var __Mission__composite__a__a__x : Integer;
+var __Mission__composite__a__b__x : Integer;
+var __Mission__composite__b__a__x : Integer;
+var __Mission__composite__b__b__x : Integer;
+var __Mission__composite__a__a__a__x : Integer;
+var __Mission__composite__a__a__b__x : Integer;
+var __Mission__composite__a__b__a__x : Integer;
+var __Mission__composite__a__b__b__x : Integer;
+var __Mission__composite__b__a__a__x : Integer;
+var __Mission__composite__b__a__b__x : Integer;
+var __Mission__composite__b__b__a__x : Integer;
+var __Mission__composite__b__b__b__x : Integer;
+
+init {
+    assume (false);
+}
+
+trans {
+    __Mission__composite__a__b__a__x := 0;
+    __Mission__composite__x := 0;
+}
+
+env {}
+
+prop {
+    false;
+}

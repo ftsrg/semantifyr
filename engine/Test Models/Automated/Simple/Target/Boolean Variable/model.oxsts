@@ -1,0 +1,17 @@
+package Test
+
+target Mission {
+    var y : Boolean
+
+    init {
+        y := false
+    }
+
+    tran {
+        y := true
+    }
+
+    prop {
+        y = false
+    }
+}

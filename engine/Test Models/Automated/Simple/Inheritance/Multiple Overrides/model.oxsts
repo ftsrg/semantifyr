@@ -8,13 +8,8 @@ type Base {
     }
 }
 
-type ChildA : Base {
-
-}
-
-type ChildB : ChildA {
-
-}
+type ChildA : Base
+type ChildB : ChildA
 
 type ChildC : ChildB {
     override tran {

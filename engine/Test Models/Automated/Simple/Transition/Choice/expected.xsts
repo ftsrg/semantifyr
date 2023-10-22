@@ -1,0 +1,21 @@
+
+var __Mission__y : Boolean;
+var __Mission__x : Integer;
+
+init {
+    __Mission__y := false;
+}
+
+trans {
+    choice {
+        __Mission__y := true;
+    } or {
+        __Mission__x := 10;
+    }
+}
+
+env {}
+
+prop {
+    (__Mission__y == false);
+}

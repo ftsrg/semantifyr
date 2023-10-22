@@ -1,0 +1,16 @@
+
+var __Mission__holder__x : Integer;
+
+init {
+    assume (false);
+}
+
+trans {
+    __Mission__holder__x := 10;
+}
+
+env {}
+
+prop {
+    false;
+}

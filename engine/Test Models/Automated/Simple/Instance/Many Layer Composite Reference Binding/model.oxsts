@@ -1,0 +1,73 @@
+package Test
+
+type Composite {
+    var x : Integer
+    feature composites : Composite[0..*]
+    reference parent : Composite
+
+    tran {
+        x := 0
+        inline if (parent != Nothing) {
+            inline parent.main()
+        }
+    }
+}
+
+target Mission {
+    instance composite : Composite {
+        instance a :> composites : Composite {
+            reference parent <- composite
+            instance a :> composites : Composite {
+                reference parent <- composite
+                instance a :> composites : Composite {
+                    reference parent <- composite
+                }
+                instance b :> composites : Composite {
+                    reference parent <- composite
+                }
+            }
+            instance b :> composites : Composite {
+                reference parent <- composite
+                instance a :> composites : Composite {
+                    reference parent <- composite
+                }
+                instance b :> composites : Composite {
+                    reference parent <- composite
+                }
+            }
+        }
+        instance b :> composites : Composite {
+            reference parent <- composite
+            instance a :> composites : Composite {
+                reference parent <- composite
+                instance a :> composites : Composite {
+                    reference parent <- composite
+                }
+                instance b :> composites : Composite {
+                    reference parent <- composite
+                }
+            }
+            instance b :> composites : Composite {
+                reference parent <- composite
+                instance a :> composites : Composite {
+                    reference parent <- composite
+                }
+                instance b :> composites : Composite {
+                    reference parent <- composite
+                }
+            }
+        }
+    }
+
+    init {
+        assume (false)
+    }
+
+    tran {
+        inline composite.a.b.a.main()
+    }
+
+    prop {
+        false
+    }
+}

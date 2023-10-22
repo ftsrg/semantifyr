@@ -1,15 +1,18 @@
 
 var __Mission__a__x : Integer;
 var __Mission__b__x : Integer;
+var __Mission__c__x : Integer;
 
 init {
     __Mission__a__x := 0;
     __Mission__b__x := 0;
+    __Mission__c__x := 0;
 }
 
 trans {
     __Mission__a__x := (__Mission__a__x + 1);
     __Mission__b__x := (__Mission__b__x + 1);
+    __Mission__c__x := (__Mission__c__x + 1);
 }
 
 env {}

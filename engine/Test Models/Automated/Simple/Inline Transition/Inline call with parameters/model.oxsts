@@ -1,0 +1,28 @@
+package Test
+
+type Holder {
+    var x : Integer
+}
+
+type Component {
+    tran execute(holder: Holder) {
+        holder.x := 10
+    }
+}
+
+target Mission {
+    instance component : Component
+    instance holder : Holder
+
+    init {
+        assume (false)
+    }
+
+    tran {
+        inline component.execute(holder)
+    }
+
+    prop {
+        false
+    }
+}

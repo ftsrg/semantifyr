@@ -16,19 +16,16 @@ type Simple {
 
 target Mission {
     instance a : Simple
-    instance b : Simple
 
     init {
         inline a.init()
-        inline b.init()
     }
 
     tran {
         inline a.main()
-        inline b.main()
     }
 
     prop {
-        a.x != b.x
+        a.x != 10
     }
 }

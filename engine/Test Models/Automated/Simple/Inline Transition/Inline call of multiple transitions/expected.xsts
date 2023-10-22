@@ -1,10 +1,8 @@
 
 var __Mission__a__x : Integer;
-var __Mission__b__x : Integer;
 
 init {
     __Mission__a__x := 0;
-    __Mission__b__x := 0;
 }
 
 trans {
@@ -13,15 +11,10 @@ trans {
     } or {
         __Mission__a__x := (__Mission__a__x - 1);
     }
-    choice {
-        __Mission__b__x := (__Mission__b__x + 1);
-    } or {
-        __Mission__b__x := (__Mission__b__x - 1);
-    }
 }
 
 env {}
 
 prop {
-    (__Mission__a__x != __Mission__b__x);
+    (__Mission__a__x != 10);
 }

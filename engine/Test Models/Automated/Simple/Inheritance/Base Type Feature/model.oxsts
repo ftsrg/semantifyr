@@ -3,13 +3,13 @@ package Test
 type Base {
     var x : Integer
 
-    virtual tran {
+    tran {
         x := 0
     }
 }
 
 type Child : Base {
-    override tran {
+    tran {
         x := 10
     }
 }

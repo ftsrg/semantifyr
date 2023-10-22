@@ -1,0 +1,35 @@
+package Test
+
+type Atom
+
+type Holder {
+    feature atom : Atom
+
+    var current : atom[0..1] := Nothing
+}
+
+target Mission {
+    instance holder : Holder {
+        instance a :> atom : Atom
+        instance b :> atom : Atom
+        instance c :> atom : Atom
+    }
+    instance holder2 : Holder {
+        instance a :> atom : Atom
+        instance b :> atom : Atom
+        instance c :> atom : Atom
+    }
+
+    init {
+        holder.current := holder.a
+    }
+
+    tran {
+        holder.current := holder.b
+        holder2.current := holder2.a
+    }
+
+    prop {
+        holder.current != holder.b
+    }
+}

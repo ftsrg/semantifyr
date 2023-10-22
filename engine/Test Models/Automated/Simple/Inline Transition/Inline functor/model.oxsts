@@ -1,9 +1,15 @@
 package Test
 
 type Callable {
+    virtual tran {
+        assume (true)
+    }
+}
+
+type SimpleCallable : Callable {
     var x : Integer
 
-    tran {
+    override tran {
         x := 0
     }
 }
@@ -16,7 +22,7 @@ type Component {
 
 target Mission {
     instance component : Component
-    instance callable : Callable
+    instance callable : SimpleCallable
 
     init {
         assume (false)
