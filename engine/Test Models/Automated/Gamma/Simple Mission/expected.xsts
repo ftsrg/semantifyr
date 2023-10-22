@@ -1,0 +1,87 @@
+type __Mission__component__simple__Main__states__type : {
+    __Mission__component__simple__Main__A__literal,
+    __Mission__component__simple__Main__B__literal,
+    __Nothing__literal
+}
+type __Mission__component__worker__Main__states__type : {
+    __Mission__component__worker__Main__A__literal,
+    __Mission__component__worker__Main__B__literal,
+    __Nothing__literal
+}
+type __Mission__component__simple__Main__A__ARegion__states__type : {
+    __Mission__component__simple__Main__A__ARegion__Idle__literal,
+    __Nothing__literal
+}
+type __Mission__component__simple__Main__B__BRegion__states__type : {
+    __Mission__component__simple__Main__B__BRegion__Operation__literal,
+    __Nothing__literal
+}
+type __Mission__component__worker__Main__A__ARegion__states__type : {
+    __Mission__component__worker__Main__A__ARegion__Idle__literal,
+    __Nothing__literal
+}
+type __Mission__component__worker__Main__B__BRegion__states__type : {
+    __Mission__component__worker__Main__B__BRegion__Operation__literal,
+    __Nothing__literal
+}
+
+var __Mission__component__simple__fireEvent__isActive : Boolean := false;
+var __Mission__component__simple__stopEvent__isActive : Boolean := false;
+var __Mission__component__simple__startEvent__isActive : Boolean := false;
+var __Mission__component__simple__Main__activeState : __Mission__component__simple__Main__states__type := __Nothing__literal;
+var __Mission__component__worker__startEvent__isActive : Boolean := false;
+var __Mission__component__worker__Main__activeState : __Mission__component__worker__Main__states__type := __Nothing__literal;
+var __Mission__component__simple__Main__A__ARegion__activeState : __Mission__component__simple__Main__A__ARegion__states__type := __Nothing__literal;
+var __Mission__component__simple__Main__B__BRegion__activeState : __Mission__component__simple__Main__B__BRegion__states__type := __Nothing__literal;
+var __Mission__component__worker__Main__A__ARegion__activeState : __Mission__component__worker__Main__A__ARegion__states__type := __Nothing__literal;
+var __Mission__component__worker__Main__B__BRegion__activeState : __Mission__component__worker__Main__B__BRegion__states__type := __Nothing__literal;
+
+init {
+    __Mission__component__simple__Main__activeState := __Mission__component__simple__Main__A__literal;
+    __Mission__component__simple__Main__A__ARegion__activeState := __Mission__component__simple__Main__A__ARegion__Idle__literal;
+    __Mission__component__worker__Main__activeState := __Mission__component__worker__Main__A__literal;
+    __Mission__component__worker__Main__A__ARegion__activeState := __Mission__component__worker__Main__A__ARegion__Idle__literal;
+}
+
+trans {
+    __Mission__component__simple__startEvent__isActive := false;
+    choice {
+        assume (__Mission__component__simple__fireEvent__isActive);
+        __Mission__component__simple__Main__A__ARegion__activeState := __Nothing__literal;
+        __Mission__component__simple__Main__activeState := __Nothing__literal;
+        __Mission__component__simple__startEvent__isActive := true;
+        __Mission__component__simple__Main__activeState := __Mission__component__simple__Main__B__literal;
+        __Mission__component__simple__Main__B__BRegion__activeState := __Mission__component__simple__Main__B__BRegion__Operation__literal;
+    } or {
+        assume (__Mission__component__simple__stopEvent__isActive);
+        __Mission__component__simple__Main__B__BRegion__activeState := __Nothing__literal;
+        __Mission__component__simple__Main__activeState := __Nothing__literal;
+        __Mission__component__simple__Main__activeState := __Mission__component__simple__Main__A__literal;
+        __Mission__component__simple__Main__A__ARegion__activeState := __Mission__component__simple__Main__A__ARegion__Idle__literal;
+    } else {
+    }
+    __Mission__component__simple__fireEvent__isActive := false;
+    __Mission__component__simple__stopEvent__isActive := false;
+    choice {
+        assume (__Mission__component__worker__startEvent__isActive);
+        __Mission__component__worker__Main__A__ARegion__activeState := __Nothing__literal;
+        __Mission__component__worker__Main__activeState := __Nothing__literal;
+        __Mission__component__worker__Main__activeState := __Mission__component__worker__Main__B__literal;
+        __Mission__component__worker__Main__B__BRegion__activeState := __Mission__component__worker__Main__B__BRegion__Operation__literal;
+    } else {
+    }
+    __Mission__component__worker__startEvent__isActive := false;
+    choice {
+        assume (__Mission__component__simple__startEvent__isActive);
+        __Mission__component__worker__startEvent__isActive := true;
+    } else {
+    }
+    havoc (__Mission__component__simple__fireEvent__isActive);
+    havoc (__Mission__component__simple__stopEvent__isActive);
+}
+
+env {}
+
+prop {
+    (__Mission__component__worker__Main__B__BRegion__activeState != __Mission__component__worker__Main__B__BRegion__Operation__literal);
+}
