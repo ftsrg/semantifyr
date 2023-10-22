@@ -161,7 +161,7 @@ object Serializer {
 
             is AssignmentOperation -> appendLine("${operation.reference.serialize()} := ${operation.expression.serialize()};")
             is AssumptionOperation -> appendLine("assume (${operation.expression.serialize()});")
-            is HavocOperation -> appendLine("havoc (${operation.referenceExpression.serialize()};")
+            is HavocOperation -> appendLine("havoc (${operation.referenceExpression.serialize()});")
             is IfOperation -> {
                 appendLine("if (${operation.guard.serialize()}) {")
                 indent {
