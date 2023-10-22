@@ -30,7 +30,7 @@ object OperationOptimizer {
 
     private fun Operation.optimizeSingleBranchChoices(): Boolean {
         val choices = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).filter {
-            it.operation.size == 1
+            it.operation.size == 1 && it.`else` == null
         }
 
         if (choices.isEmpty()) {
@@ -46,7 +46,7 @@ object OperationOptimizer {
 
     private fun Operation.optimizeNoOp(): Boolean {
         val noOps = EcoreUtil2.getAllContentsOfType(this, AssumptionOperation::class.java).filter {
-            it.expression is LiteralBoolean && (it.expression as LiteralBoolean).isValue
+            it.expression is LiteralBoolean && (it.expression as LiteralBoolean).isValue && it.isRemovable()
         }
 
         if (noOps.isEmpty()) {
@@ -62,7 +62,7 @@ object OperationOptimizer {
 
     private fun Operation.optimizeEmptyComposite(): Boolean {
         val emptyComposites = EcoreUtil2.getAllContentsOfType(this, CompositeOperation::class.java).filter {
-            it.operation.isEmpty()
+            it.operation.isEmpty() && it.isRemovable()
         }
 
         if (emptyComposites.isEmpty()) {
@@ -74,6 +74,17 @@ object OperationOptimizer {
         }
 
         return true
+    }
+
+    private fun Operation.isRemovable(): Boolean {
+        val parent = eContainer()
+
+        return when (parent) {
+            is ChoiceOperation -> {
+                parent.`else` != this
+            }
+            else -> true
+        }
     }
 
 }
