@@ -5,7 +5,7 @@ type __Mission__holder__atom__type : {
     __Nothing__literal
 }
 
-var __Mission__holder__current : __Mission__holder__atom__type := __Nothing__literal;
+var __Mission__holder__current : __Mission__holder__atom__type = __Nothing__literal;
 
 init {
     __Mission__holder__current := __Nothing__literal;

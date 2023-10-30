@@ -1,5 +1,5 @@
 
-var __Mission__a__x : Integer;
+var __Mission__a__x : integer;
 
 init {
     __Mission__a__x := 0;

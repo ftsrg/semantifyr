@@ -1,5 +1,5 @@
 
-var __Mission__y : Boolean;
+var __Mission__y : boolean;
 
 init {
     __Mission__y := false;

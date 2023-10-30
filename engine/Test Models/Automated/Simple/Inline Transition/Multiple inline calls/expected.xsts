@@ -1,7 +1,7 @@
 
-var __Mission__a__x : Integer;
-var __Mission__b__x : Integer;
-var __Mission__c__x : Integer;
+var __Mission__a__x : integer;
+var __Mission__b__x : integer;
+var __Mission__c__x : integer;
 
 init {
     __Mission__a__x := 0;

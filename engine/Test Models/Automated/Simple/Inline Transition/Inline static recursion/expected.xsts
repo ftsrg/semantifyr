@@ -1,10 +1,10 @@
 
-var __Mission__a__x : Integer;
-var __Mission__a__b__x : Integer;
-var __Mission__a__b__c__x : Integer;
-var __Mission__a__b__c__d__x : Integer;
-var __Mission__a__b__c__d__e__x : Integer;
-var __Mission__a__b__c__d__e__f__x : Integer;
+var __Mission__a__x : integer;
+var __Mission__a__b__x : integer;
+var __Mission__a__b__c__x : integer;
+var __Mission__a__b__c__d__x : integer;
+var __Mission__a__b__c__d__e__x : integer;
+var __Mission__a__b__c__d__e__f__x : integer;
 
 init {
     __Mission__a__x := 0;

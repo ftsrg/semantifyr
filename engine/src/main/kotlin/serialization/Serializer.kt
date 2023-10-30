@@ -10,10 +10,14 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Enum
 import hu.bme.mit.gamma.oxsts.model.oxsts.EqualityOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
+import hu.bme.mit.gamma.oxsts.model.oxsts.GreaterThanOperator
+import hu.bme.mit.gamma.oxsts.model.oxsts.GreaterThanOrEqualsOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.InequalityOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.IntegerType
+import hu.bme.mit.gamma.oxsts.model.oxsts.LessThanOperator
+import hu.bme.mit.gamma.oxsts.model.oxsts.LessThanOrEqualsOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralInteger
@@ -113,7 +117,7 @@ object Serializer {
     fun IndentationAwareStringWriter.append(variable: Variable) {
         append("var ${variable.name} : ${variable.typing.name}")
         if (variable.expression != null) {
-            append(" := ${variable.expression.serialize()}")
+            append(" = ${variable.expression.serialize()}")
         }
         appendLine(";")
     }
@@ -206,8 +210,8 @@ object Serializer {
 
     val VariableTyping.name: String
         get() = when (this) {
-            is IntegerType -> "Integer"
-            is BooleanType -> "Boolean"
+            is IntegerType -> "integer"
+            is BooleanType -> "boolean"
             is VariableTypeReference -> {
                 val reference = this.reference
 
@@ -234,6 +238,10 @@ object Serializer {
         is MinusOperator -> "(${operands[0].serialize()} - ${operands[1].serialize()})"
         is EqualityOperator -> "(${operands[0].serialize()} == ${operands[1].serialize()})"
         is InequalityOperator -> "(${operands[0].serialize()} != ${operands[1].serialize()})"
+        is LessThanOperator -> "(${operands[0].serialize()} < ${operands[1].serialize()})"
+        is LessThanOrEqualsOperator -> "(${operands[0].serialize()} <= ${operands[1].serialize()})"
+        is GreaterThanOperator -> "(${operands[0].serialize()} > ${operands[1].serialize()})"
+        is GreaterThanOrEqualsOperator -> "(${operands[0].serialize()} >= ${operands[1].serialize()})"
         is NotOperator -> "! (${operands[0].serialize()})"
         else -> "UNKNOWN_EXPRESSION$$$"
     }

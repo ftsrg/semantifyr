@@ -1,5 +1,5 @@
 
-var __Mission__x : Boolean;
+var __Mission__x : boolean;
 
 init {
 }

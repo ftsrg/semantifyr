@@ -1,8 +1,8 @@
 
-var __Mission__composite__a__x : Integer := 0;
-var __Mission__composite__b__x : Integer := 0;
-var __Mission__composite__c__x : Integer := 0;
-var __Mission__composite__d__x : Integer := 0;
+var __Mission__composite__a__x : integer = 0;
+var __Mission__composite__b__x : integer = 0;
+var __Mission__composite__c__x : integer = 0;
+var __Mission__composite__d__x : integer = 0;
 
 init {
     assume (false);

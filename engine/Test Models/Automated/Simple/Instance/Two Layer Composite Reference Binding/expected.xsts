@@ -1,6 +1,6 @@
 
-var __Mission__a1__x : Integer;
-var __Mission__a2__x : Integer;
+var __Mission__a1__x : integer;
+var __Mission__a2__x : integer;
 
 init {
     assume (false);

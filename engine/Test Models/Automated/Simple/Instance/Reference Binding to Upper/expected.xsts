@@ -1,6 +1,6 @@
 
-var __Mission__composite__a__aAtom__x : Integer;
-var __Mission__composite__b__bAtom__x : Integer;
+var __Mission__composite__a__aAtom__x : integer;
+var __Mission__composite__b__bAtom__x : integer;
 
 init {
     assume (false);

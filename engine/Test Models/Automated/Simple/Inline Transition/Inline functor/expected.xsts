@@ -1,5 +1,5 @@
 
-var __Mission__callable__x : Integer;
+var __Mission__callable__x : integer;
 
 init {
     assume (false);

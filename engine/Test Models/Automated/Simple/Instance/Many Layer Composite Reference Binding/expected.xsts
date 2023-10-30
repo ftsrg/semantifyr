@@ -1,19 +1,19 @@
 
-var __Mission__composite__x : Integer;
-var __Mission__composite__a__x : Integer;
-var __Mission__composite__b__x : Integer;
-var __Mission__composite__a__a__x : Integer;
-var __Mission__composite__a__b__x : Integer;
-var __Mission__composite__b__a__x : Integer;
-var __Mission__composite__b__b__x : Integer;
-var __Mission__composite__a__a__a__x : Integer;
-var __Mission__composite__a__a__b__x : Integer;
-var __Mission__composite__a__b__a__x : Integer;
-var __Mission__composite__a__b__b__x : Integer;
-var __Mission__composite__b__a__a__x : Integer;
-var __Mission__composite__b__a__b__x : Integer;
-var __Mission__composite__b__b__a__x : Integer;
-var __Mission__composite__b__b__b__x : Integer;
+var __Mission__composite__x : integer;
+var __Mission__composite__a__x : integer;
+var __Mission__composite__b__x : integer;
+var __Mission__composite__a__a__x : integer;
+var __Mission__composite__a__b__x : integer;
+var __Mission__composite__b__a__x : integer;
+var __Mission__composite__b__b__x : integer;
+var __Mission__composite__a__a__a__x : integer;
+var __Mission__composite__a__a__b__x : integer;
+var __Mission__composite__a__b__a__x : integer;
+var __Mission__composite__a__b__b__x : integer;
+var __Mission__composite__b__a__a__x : integer;
+var __Mission__composite__b__a__b__x : integer;
+var __Mission__composite__b__b__a__x : integer;
+var __Mission__composite__b__b__b__x : integer;
 
 init {
     assume (false);

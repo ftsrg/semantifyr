@@ -1,5 +1,5 @@
 
-var __Mission__holder__x : Integer;
+var __Mission__holder__x : integer;
 
 init {
     assume (false);
