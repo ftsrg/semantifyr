@@ -1,34 +1,67 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
+import hu.bme.mit.gamma.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChoiceOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.CompositeOperation
+import hu.bme.mit.gamma.oxsts.model.oxsts.HavocOperation
+import hu.bme.mit.gamma.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.gamma.oxsts.model.oxsts.Operation
+import hu.bme.mit.gamma.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
 import org.eclipse.xtext.EcoreUtil2
 
 object OperationOptimizer {
 
-    fun optimize(transition: Transition) {
+    fun optimize(transition: Transition): Boolean {
+        var optimized = false
+
         for (operation in transition.operation) {
-            optimize(operation)
+            optimized = optimized || optimize(operation)
         }
+
+        return optimized
     }
 
-    private fun optimize(operation: Operation) {
+    private fun optimize(operation: Operation): Boolean {
+        var anyOptimization = false
         var optimized: Boolean
 
         do {
-            optimized = operation.optimize()
+            optimized = operation.optimizeInternal()
+            anyOptimization = anyOptimization || optimized
         } while (optimized)
+
+        return anyOptimization
     }
 
-    private fun Operation.optimize(): Boolean {
-        return optimizeSingleBranchChoices() || optimizeNoOp() || optimizeEmptyComposite()
+    private fun Operation.optimizeInternal(): Boolean {
+        return rewriteSingleBranchChoices() ||
+                removeTrueAssumptions() ||
+                removeEmptySequences() ||
+                removeEmptyChoices() ||
+                removeEmptyIfs() ||
+                removeRedundantChoiceElse() ||
+                optimizeExpressions()
     }
 
-    private fun Operation.optimizeSingleBranchChoices(): Boolean {
+    private fun Operation.optimizeExpressions(): Boolean {
+        var optimized = false
+
+        val ifs = EcoreUtil2.getAllContentsOfType(this, IfOperation::class.java)
+        val assumptions = EcoreUtil2.getAllContentsOfType(this, AssumptionOperation::class.java)
+        val assignments = EcoreUtil2.getAllContentsOfType(this, AssignmentOperation::class.java)
+
+        val expressions = ifs.map { it.guard } + assumptions.map { it.expression } + assignments.map { it.expression }
+
+        for (expression in expressions) {
+            optimized = optimized || ExpressionOptimizer.optimize(expression)
+        }
+
+        return optimized
+    }
+
+    private fun Operation.rewriteSingleBranchChoices(): Boolean {
         val choices = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).filter {
             it.operation.size == 1 && it.`else` == null
         }
@@ -44,9 +77,9 @@ object OperationOptimizer {
         return true
     }
 
-    private fun Operation.optimizeNoOp(): Boolean {
+    private fun Operation.removeTrueAssumptions(): Boolean {
         val noOps = EcoreUtil2.getAllContentsOfType(this, AssumptionOperation::class.java).filter {
-            it.expression is LiteralBoolean && (it.expression as LiteralBoolean).isValue && it.isRemovable()
+            it.expression is LiteralBoolean && (it.expression as LiteralBoolean).isValue
         }
 
         if (noOps.isEmpty()) {
@@ -60,20 +93,82 @@ object OperationOptimizer {
         return true
     }
 
-    private fun Operation.optimizeEmptyComposite(): Boolean {
-        val emptyComposites = EcoreUtil2.getAllContentsOfType(this, CompositeOperation::class.java).filter {
-            it.operation.isEmpty() && it.isRemovable()
+    private fun Operation.removeEmptyIfs(): Boolean {
+        val emptyIfs = EcoreUtil2.getAllContentsOfType(this, IfOperation::class.java).filter {
+            it.body == null && it.`else` == null
         }
 
-        if (emptyComposites.isEmpty()) {
+        if (emptyIfs.isEmpty()) {
             return false
         }
 
-        for (empty in emptyComposites) {
+        for (empty in emptyIfs) {
             EcoreUtil2.remove(empty)
         }
 
         return true
+    }
+
+    private fun Operation.removeEmptySequences(): Boolean {
+        val emptySequences = EcoreUtil2.getAllContentsOfType(this, SequenceOperation::class.java).filter {
+            it.operation.isEmpty() && it.isRemovable()
+        }
+
+        if (emptySequences.isEmpty()) {
+            return false
+        }
+
+        for (empty in emptySequences) {
+            EcoreUtil2.remove(empty)
+        }
+
+        return true
+    }
+
+    private fun Operation.removeEmptyChoices(): Boolean {
+        val emptyChoices = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).filter {
+            it.operation.isEmpty() && it.`else` == null && it.isRemovable()
+        }
+
+        if (emptyChoices.isEmpty()) {
+            return false
+        }
+
+        for (empty in emptyChoices) {
+            EcoreUtil2.remove(empty)
+        }
+
+        return true
+    }
+
+    private fun Operation.removeRedundantChoiceElse(): Boolean {
+        val redundantChoiceElse = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).filter {
+            it.`else` != null && it.operation.all { it.isAlwaysExecutable() }
+        }
+
+        if (redundantChoiceElse.isEmpty()) {
+            return false
+        }
+
+        for (choice in redundantChoiceElse) {
+            choice.`else` = null
+        }
+
+        return true
+    }
+
+    private fun Operation.isAlwaysExecutable(): Boolean {
+        return when (this) {
+            is AssumptionOperation -> false
+            is AssignmentOperation -> true
+            is HavocOperation -> true
+            is IfOperation -> body.isAlwaysExecutable() || (`else`?.isAlwaysExecutable() ?: false)
+            is ChoiceOperation -> {
+                (operation.map { it.isAlwaysExecutable() }.reduceOrNull { l, r -> l || r } ?: true) || (`else`?.isAlwaysExecutable() ?: false)
+            }
+            is SequenceOperation -> operation.map { it.isAlwaysExecutable() }.reduceOrNull { l, r -> l && r } ?: true
+            else -> error("Unknown operation $this")
+        }
     }
 
     private fun Operation.isRemovable(): Boolean {
