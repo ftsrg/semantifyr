@@ -4,6 +4,11 @@
 package hu.bme.mit.gamma.oxsts.lang.validation;
 
 
+import hu.bme.mit.gamma.oxsts.model.oxsts.Feature;
+import hu.bme.mit.gamma.oxsts.model.oxsts.OxstsPackage;
+import hu.bme.mit.gamma.oxsts.model.oxsts.Type;
+import org.eclipse.xtext.validation.Check;
+
 /**
  * This class contains custom validation rules.
  * <p>
@@ -11,7 +16,7 @@ package hu.bme.mit.gamma.oxsts.lang.validation;
  */
 public class OxstsValidator extends AbstractOxstsValidator {
 
-//	public static final String INVALID_NAME = "invalidName";
+	public static final String INVALID_TYPE = "invalidName";
 //
 //	@Check
 //	public void checkGreetingStartsWithCapital(Greeting greeting) {
@@ -21,5 +26,29 @@ public class OxstsValidator extends AbstractOxstsValidator {
 //					INVALID_NAME);
 //		}
 //	}
+
+    @Check
+    public void checkFeatureSubsetting(Feature feature) {
+        if (feature.getSubsets() == null) return;
+
+        var featureType = feature.getType();
+        var subsettingType = feature.getSubsets().getType();
+
+        if (!isSupertypeOf(subsettingType, featureType)) {
+            error("Feature must have type that is compatible with subsetted feature",
+					OxstsPackage.Literals.FEATURE__SUBSETS,
+                    INVALID_TYPE);
+        }
+    }
+
+    private boolean isSupertypeOf(Type superType, Type type) {
+        if (type == null) return false;
+
+        if (type == superType) {
+            return true;
+        }
+
+        return isSupertypeOf(superType, type.getSupertype());
+    }
 
 }
