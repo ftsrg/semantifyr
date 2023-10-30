@@ -1,0 +1,25 @@
+type __Mission__MainRegion__states__type : {
+    __Mission__MainRegion__MainEntry__literal,
+    __Mission__MainRegion__AState__literal,
+    __Mission__MainRegion__BState__literal,
+    __Nothing__literal
+}
+type __Mission__MainRegion__BState__BRegion__states__type : {
+    __Mission__MainRegion__BState__BRegion__CState__literal,
+    __Nothing__literal
+}
+
+var __Mission__MainRegion__activeState : __Mission__MainRegion__states__type;
+var __Mission__MainRegion__BState__BRegion__activeState : __Mission__MainRegion__BState__BRegion__states__type;
+
+init {
+}
+
+trans {
+}
+
+env {}
+
+prop {
+    true;
+}

@@ -1,0 +1,19 @@
+
+var __Mission__x : integer = 1;
+var __Mission__isZero : boolean = false;
+
+init {
+    __Mission__x := 2;
+    __Mission__isZero := (__Mission__x == 0);
+}
+
+trans {
+    havoc (__Mission__x);
+    __Mission__isZero := (__Mission__x == 0);
+}
+
+env {}
+
+prop {
+    (__Mission__isZero == false);
+}

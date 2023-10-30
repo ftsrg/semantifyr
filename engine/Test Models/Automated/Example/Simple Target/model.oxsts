@@ -1,0 +1,25 @@
+package Test
+
+enum TimeUnit { // enumeration definition
+    Seconds, Minutes, Hours
+}
+
+target Mission {
+    var unit : TimeUnit // variables
+    var x : Integer := 1 // initial value
+    var isZero : Boolean := false
+
+    init { // init transition
+        unit := TimeUnit::Seconds
+    }
+
+    tran { // main transition
+        unit := TimeUnit::Minutes
+        havoc (x)
+        isZero := x = 0
+    }
+
+    prop { // model property
+        isZero = false
+    }
+}

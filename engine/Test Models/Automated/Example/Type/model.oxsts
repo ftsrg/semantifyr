@@ -1,0 +1,35 @@
+package Test
+
+type Container {
+    var x : Integer
+    var isZero : Boolean
+
+    init {
+        x := 2
+    }
+
+    tran { // main transition
+        havoc (x)
+        inline setIsZero()
+    }
+
+    tran setIsZero() {
+        isZero := x = 0
+    }
+}
+
+target Mission {
+    instance container : Container
+
+    init {
+        inline container.init() // init transition reference
+    }
+
+    tran {
+        inline container.main() // main transition reference
+    }
+
+    prop {
+        container.isZero = false
+    }
+}

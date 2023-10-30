@@ -1,0 +1,25 @@
+type TimeUnit : {
+    Seconds,
+    Minutes,
+    Hours
+}
+
+var __Mission__unit : TimeUnit;
+var __Mission__x : integer = 1;
+var __Mission__isZero : boolean = false;
+
+init {
+    __Mission__unit := Seconds;
+}
+
+trans {
+    __Mission__unit := Minutes;
+    havoc (__Mission__x);
+    __Mission__isZero := (__Mission__x == 0);
+}
+
+env {}
+
+prop {
+    (__Mission__isZero == false);
+}

@@ -1,0 +1,24 @@
+package Test
+
+target Mission {
+    var x : Integer := 1
+    var isZero : Boolean := false
+
+    tran setIsZero() {
+        isZero := x = 0
+    }
+
+    init {
+        x := 2
+        inline setIsZero()
+    }
+
+    tran {
+        havoc (x)
+        inline setIsZero()
+    }
+
+    prop {
+        isZero = false
+    }
+}

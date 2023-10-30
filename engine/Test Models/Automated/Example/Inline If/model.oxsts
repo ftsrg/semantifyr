@@ -1,0 +1,20 @@
+package Test
+
+target Mission {
+    var x : Integer := 1
+
+    init {
+    }
+
+    tran {
+        inline if (true) {
+            x := 0
+        } else {
+            x := 1
+        }
+    }
+
+    prop {
+        true
+    }
+}

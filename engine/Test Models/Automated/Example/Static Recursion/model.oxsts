@@ -1,0 +1,73 @@
+package Test
+
+type Region {
+    // composition relation "States"
+    feature states : State[0..*]
+    // entryStates are also states
+    feature entryState :> states : State[1..1]
+    // optional variable typed by the states feature
+    var activeState : states[0..1]
+}
+type State {
+    // reference to parent region
+    reference parentRegion : Region[1..1]
+    // all states have "parentRegions"
+    // but not all have "parentStates"
+    reference parentState : State[0..1]
+    // states may have a composite region
+    feature region : Region[0..1]
+
+    tran enter(commonRegion: Region) {
+        // if parentRegion != commonRegion specified
+        inline if (parentRegion != commonRegion) {
+            // enter the state above
+            inline parentState.enter(commonRegion)
+        }
+
+        // set the activeState variable to "Self"
+        parentRegion.activeState := Self
+    }
+
+    tran exit(commonRegion: Region) {
+        // set the activeState variable to "Nothing"
+        parentRegion.activeState := Nothing
+
+        // if parentRegion != commonRegion specified
+        inline if (parentRegion != commonRegion) {
+            // exit the state above
+            inline parentState.exit(commonRegion)
+        }
+    }
+}
+target Mission {
+    instance MainRegion : Region {
+        // "AState" instance subsets "MainRegion.entryState"
+        instance MainEntry :> entryState : State {
+            // "MainEntry"'s "parentRegion" is "MainRegion"
+            reference parentRegion <- MainRegion
+        }
+        // "AState" instance subsets "MainRegion.states"
+        instance AState :> states : State {
+            reference parentRegion <- MainRegion
+        }
+        instance BState :> states : State {
+            reference parentRegion <- MainRegion
+            // "BRegion" instance subsets "BState.region"
+            instance BRegion :> region : Region {
+                instance CState :> states : State {
+                    reference parentRegion <- BRegion
+                    reference parentState <- BState
+                }
+            }
+        }
+    }
+
+    init {
+    }
+    tran {
+        inline MainRegion.AState.enter(MainRegion)
+        inline MainRegion.AState.exit(MainRegion)
+        inline MainRegion.BState.BRegion.CState.enter(MainRegion)
+    }
+    prop { true }
+}

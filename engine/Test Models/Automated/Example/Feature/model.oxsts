@@ -1,0 +1,45 @@
+package Test
+
+type Region {
+    // composition relation "States"
+    feature states : State[0..*]
+    // entryStates are also states
+    feature entryState :> states : State[1..1]
+}
+type State {
+    // reference to parent region
+    reference parentRegion : Region[1..1]
+    // all states have "parentRegions"
+    // but not all have "parentStates"
+    reference parentState : State[0..1]
+    // states may have a composite region
+    feature region : Region[0..1]
+}
+target Mission {
+    instance MainRegion : Region {
+        // "AState" instance subsets "MainRegion.entryState"
+        instance MainEntry :> entryState : State {
+            // "MainEntry"'s "parentRegion" is "MainRegion"
+            reference parentRegion <- MainRegion
+        }
+        // "AState" instance subsets "MainRegion.states"
+        instance AState :> states : State {
+            reference parentRegion <- MainRegion
+        }
+        instance BState :> states : State {
+            // "BRegion" instance subsets "BState.region"
+            instance BRegion :> region : Region {
+                instance CState :> states : State {
+                    reference parentRegion <- BRegion
+                    reference parentState <- BState
+                }
+            }
+        }
+    }
+
+    init {
+    }
+    tran {
+    }
+    prop { true }
+}

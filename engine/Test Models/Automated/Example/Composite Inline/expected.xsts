@@ -1,0 +1,32 @@
+
+var __Mission__holder__c1__x : integer;
+var __Mission__holder__c1__isZero : boolean;
+var __Mission__holder__c2__x : integer;
+var __Mission__holder__c2__isZero : boolean;
+var __Mission__holder__c3__x : integer;
+var __Mission__holder__c3__isZero : boolean;
+
+init {
+    __Mission__holder__c1__x := 2;
+    __Mission__holder__c2__x := 2;
+    __Mission__holder__c3__x := 2;
+}
+
+trans {
+    choice {
+        havoc (__Mission__holder__c1__x);
+        __Mission__holder__c1__isZero := (__Mission__holder__c1__x == 0);
+    } or {
+        havoc (__Mission__holder__c2__x);
+        __Mission__holder__c2__isZero := (__Mission__holder__c2__x == 0);
+    } or {
+        havoc (__Mission__holder__c3__x);
+        __Mission__holder__c3__isZero := (__Mission__holder__c3__x == 0);
+    }
+}
+
+env {}
+
+prop {
+    (((__Mission__holder__c1__isZero == false) && (__Mission__holder__c2__isZero == false)) && (__Mission__holder__c3__isZero == false));
+}

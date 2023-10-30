@@ -25,16 +25,16 @@ type __Mission__component__worker__Main__B__BRegion__states__type : {
     __Nothing__literal
 }
 
-var __Mission__component__simple__fireEvent__isActive : Boolean := false;
-var __Mission__component__simple__stopEvent__isActive : Boolean := false;
-var __Mission__component__simple__startEvent__isActive : Boolean := false;
-var __Mission__component__simple__Main__activeState : __Mission__component__simple__Main__states__type := __Nothing__literal;
-var __Mission__component__worker__startEvent__isActive : Boolean := false;
-var __Mission__component__worker__Main__activeState : __Mission__component__worker__Main__states__type := __Nothing__literal;
-var __Mission__component__simple__Main__A__ARegion__activeState : __Mission__component__simple__Main__A__ARegion__states__type := __Nothing__literal;
-var __Mission__component__simple__Main__B__BRegion__activeState : __Mission__component__simple__Main__B__BRegion__states__type := __Nothing__literal;
-var __Mission__component__worker__Main__A__ARegion__activeState : __Mission__component__worker__Main__A__ARegion__states__type := __Nothing__literal;
-var __Mission__component__worker__Main__B__BRegion__activeState : __Mission__component__worker__Main__B__BRegion__states__type := __Nothing__literal;
+var __Mission__component__simple__fireEvent__isActive : boolean = false;
+var __Mission__component__simple__stopEvent__isActive : boolean = false;
+var __Mission__component__simple__startEvent__isActive : boolean = false;
+var __Mission__component__simple__Main__activeState : __Mission__component__simple__Main__states__type = __Nothing__literal;
+var __Mission__component__worker__startEvent__isActive : boolean = false;
+var __Mission__component__worker__Main__activeState : __Mission__component__worker__Main__states__type = __Nothing__literal;
+var __Mission__component__simple__Main__A__ARegion__activeState : __Mission__component__simple__Main__A__ARegion__states__type = __Nothing__literal;
+var __Mission__component__simple__Main__B__BRegion__activeState : __Mission__component__simple__Main__B__BRegion__states__type = __Nothing__literal;
+var __Mission__component__worker__Main__A__ARegion__activeState : __Mission__component__worker__Main__A__ARegion__states__type = __Nothing__literal;
+var __Mission__component__worker__Main__B__BRegion__activeState : __Mission__component__worker__Main__B__BRegion__states__type = __Nothing__literal;
 
 init {
     __Mission__component__simple__Main__activeState := __Mission__component__simple__Main__A__literal;
