@@ -210,4 +210,8 @@
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="ContextDependentReference" abstract="true"
       eSuperTypes="#//ChainingExpression"/>
+  <eClassifiers xsi:type="ecore:EClass" name="LessThanOperator" eSuperTypes="#//OperatorExpression"/>
+  <eClassifiers xsi:type="ecore:EClass" name="LessThanOrEqualsOperator" eSuperTypes="#//OperatorExpression"/>
+  <eClassifiers xsi:type="ecore:EClass" name="GreaterThanOperator" eSuperTypes="#//OperatorExpression"/>
+  <eClassifiers xsi:type="ecore:EClass" name="GreaterThanOrEqualsOperator" eSuperTypes="#//OperatorExpression"/>
 </ecore:EPackage>

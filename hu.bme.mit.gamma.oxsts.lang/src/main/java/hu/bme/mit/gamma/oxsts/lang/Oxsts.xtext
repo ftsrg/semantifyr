@@ -307,7 +307,23 @@ EqualityOperator returns Expression:
 ;
 
 InequalityOperator returns Expression: 
-	UnaryOperator ({InequalityOperator.operands+=current} '!=' operands+=UnaryOperator)*
+	LessThanOperator ({InequalityOperator.operands+=current} '!=' operands+=LessThanOperator)*
+;
+
+LessThanOperator returns Expression:
+	LessThanOrEqualsOperator ({LessThanOperator.operands+=current} '<' operands+=LessThanOrEqualsOperator)*
+;
+
+LessThanOrEqualsOperator returns Expression:
+	GreaterThanOperator ({LessThanOrEqualsOperator.operands+=current} '<=' operands+=GreaterThanOperator)*
+;
+
+GreaterThanOperator returns Expression:
+	GreaterThanOrEqualsOperator ({GreaterThanOperator.operands+=current} '>' operands+=GreaterThanOrEqualsOperator)*
+;
+
+GreaterThanOrEqualsOperator returns Expression:
+	UnaryOperator ({GreaterThanOrEqualsOperator.operands+=current} '>=' operands+=UnaryOperator)*
 ;
 
 UnaryOperator returns Expression:
@@ -316,7 +332,7 @@ UnaryOperator returns Expression:
 ;
 
 NotOperator returns NotOperator: 
-	{NotOperator} => ('not' | '!') operands+=NotOperator
+	{NotOperator} => ('not' | '!') operands+=UnaryOperator
 ;
 
 // Reference expressions
