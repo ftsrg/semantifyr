@@ -6,16 +6,23 @@ import hu.bme.mit.gamma.oxsts.engine.utils.element
 import hu.bme.mit.gamma.oxsts.engine.utils.isFeatureTyped
 import hu.bme.mit.gamma.oxsts.engine.utils.lastChain
 import hu.bme.mit.gamma.oxsts.model.oxsts.AssignmentOperation
+import hu.bme.mit.gamma.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.CompositeOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Enum
 import hu.bme.mit.gamma.oxsts.model.oxsts.EqualityOperator
+import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
+import hu.bme.mit.gamma.oxsts.model.oxsts.HavocOperation
+import hu.bme.mit.gamma.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.InequalityOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.InlineOperation
+import hu.bme.mit.gamma.oxsts.model.oxsts.Operation
 import hu.bme.mit.gamma.oxsts.model.oxsts.Package
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.Target
 import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
 import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
@@ -58,6 +65,10 @@ class XstsTransformer {
 
         OperationOptimizer.optimize(xsts.init)
         OperationOptimizer.optimize(xsts.transition)
+        ExpressionOptimizer.optimize(xsts.property.invariant)
+
+//        xsts.init.rewriteChoiceElse()
+//        xsts.transition.rewriteChoiceElse()
 
         return xsts
     }
@@ -75,6 +86,20 @@ class XstsTransformer {
                     processorQueue += inlined
                 }
 
+                is IfOperation -> {
+                    processorQueue += operation.body
+                    if (operation.`else` != null) {
+                        processorQueue += operation.`else`
+                    }
+                }
+
+                is ChoiceOperation -> {
+                    processorQueue += operation.operation
+                    if (operation.`else` != null) {
+                        processorQueue += operation.`else`
+                    }
+                }
+
                 is CompositeOperation -> {
                     processorQueue += operation.operation
                 }
@@ -82,72 +107,103 @@ class XstsTransformer {
         }
     }
 
-//    /**
-//     * TODO
-//     *
-//     * Else branches cannot be mapped simply like this.
-//     * This only works when the assume (...) operation is the first in a sequence, since otherwise
-//     * we must evaluate all preceding operations first, and THEN the guard expression -> hence
-//     * the simple inlining will not work.
-//     *
-//     * Other way: create "simulation" operations, meaning replace all real variable calls with
-//     * local variables, negate all assumptions and inline them in the else branch. This will
-//     * always behave correctly, although it is hard to calculate and would most likely reduce
-//     * performance on the theta side (without optimizations).
-//     */
-//    private fun Transition.rewriteChoiceElse() {
-//        val choices = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).filter {
-//            it.`else` != null
-//        }
-//
-//        for (choice in choices) {
-//            val assumption = choice.calculateAssumption()
-//            val assume = OxstsFactory.createAssumptionOperation(OxstsFactory.createNotOperator(assumption))
-//            val branch = OxstsFactory.createSequenceOperation().also {
-//                it.operation += assume
-//                it.operation += choice.`else`
-//            }
-//
-//            choice.operation += branch
-//        }
-//    }
-//
-//    private fun Operation.calculateAssumption(): Expression {
-//        return when (this) {
-//            is AssumptionOperation -> expression.copy()
-//            is AssignmentOperation -> OxstsFactory.createLiteralBoolean(true)
-//            is HavocOperation -> OxstsFactory.createLiteralBoolean(true)
-//            is SequenceOperation -> {
-//                operation.map {
-//                    it.calculateAssumption()
-//                }.reduce { lhs, rhs ->
-//                    OxstsFactory.createAndOperator(lhs, rhs)
-//                }
-//            }
-//
-//            is ChoiceOperation -> {
-//                operation.map {
-//                    it.calculateAssumption()
-//                }.reduce { lhs, rhs ->
-//                    OxstsFactory.createOrOperator(lhs, rhs)
-//                }
-//            }
-//
-//            is IfOperation -> {
-//                val guardAssumption = guard.copy()
-//                val notGuardAssumption = OxstsFactory.createNotOperator(guard.copy())
-//                val bodyAssumption = body.calculateAssumption()
-//                val elseAssumption = `else`?.calculateAssumption() ?: OxstsFactory.createLiteralBoolean(true)
-//
-//                OxstsFactory.createOrOperator(
-//                    OxstsFactory.createAndOperator(guardAssumption, bodyAssumption),
-//                    OxstsFactory.createAndOperator(notGuardAssumption, elseAssumption),
-//                )
-//            }
-//
-//            else -> error("Unsupported operation!")
-//        }
-//    }
+    /**
+     * TODO
+     *
+     * Else branches cannot be mapped simply like this.
+     * This only works when the assume (...) operation is the first in a sequence, since otherwise
+     * we must evaluate all preceding operations first, and THEN the guard expression -> hence
+     * the simple inlining will not work.
+     *
+     * Other way: create "simulation" operations, meaning replace all real variable calls with
+     * local variables, negate all assumptions and inline them in the else branch. This will
+     * always behave correctly, although it is hard to calculate and would most likely reduce
+     * performance on the theta side (without optimizations).
+     */
+    private fun Transition.rewriteChoiceElse() {
+        for (op in operation) {
+            op.rewriteChoiceElse()
+        }
+    }
+
+    private fun Operation.rewriteChoiceElse() {
+        when (this) {
+            is ChoiceOperation -> {
+                for (op in operation) {
+                    op.rewriteChoiceElse()
+                }
+
+                if (`else` != null) {
+                    `else`.rewriteChoiceElse()
+                }
+            }
+            is IfOperation -> {
+                body.rewriteChoiceElse()
+
+                if (`else` != null) {
+                    `else`.rewriteChoiceElse()
+                }
+            }
+            is CompositeOperation -> {
+                for (op in operation) {
+                    op.rewriteChoiceElse()
+                }
+            }
+        }
+
+        if (this !is ChoiceOperation) return
+        if (`else` == null) return
+
+        val assumption = calculateAssumption()
+        val notAssumption = OxstsFactory.createNotOperator(assumption)
+        ExpressionOptimizer.optimize(notAssumption)
+        val assume = OxstsFactory.createAssumptionOperation(notAssumption)
+        val branch = OxstsFactory.createSequenceOperation().also {
+            it.operation += assume
+            if (`else` != null) {
+                it.operation += `else`
+            }
+        }
+
+        operation += branch
+    }
+
+    private fun Operation.calculateAssumption(): Expression {
+        return when (this) {
+            is AssumptionOperation -> expression.copy()
+            is AssignmentOperation -> OxstsFactory.createLiteralBoolean(true)
+            is HavocOperation -> OxstsFactory.createLiteralBoolean(true)
+            is SequenceOperation -> {
+                operation.map {
+                    it.calculateAssumption()
+                }.reduceOrNull { lhs, rhs ->
+                    OxstsFactory.createAndOperator(lhs, rhs)
+                } ?: OxstsFactory.createLiteralBoolean(true)
+            }
+
+            is ChoiceOperation -> {
+                operation.map {
+                    it.calculateAssumption()
+                }.reduceOrNull { lhs, rhs ->
+                    OxstsFactory.createOrOperator(lhs, rhs)
+                } ?: OxstsFactory.createLiteralBoolean(true)
+            }
+
+            is IfOperation -> {
+                val guardAssumption = guard.copy()
+                val notGuardAssumption = OxstsFactory.createNotOperator(guard.copy())
+                val bodyAssumption = body.calculateAssumption()
+                val elseAssumption = `else`?.calculateAssumption() ?: OxstsFactory.createLiteralBoolean(true)
+
+                OxstsFactory.createOrOperator(
+                    OxstsFactory.createAndOperator(guardAssumption, bodyAssumption),
+                    OxstsFactory.createAndOperator(notGuardAssumption, elseAssumption),
+                )
+            }
+
+            else -> error("Unsupported operation!")
+        }
+    }
 
     private fun XSTS.rewriteVariableAccesses(rootInstance: InstanceObject) {
         val referenceExpressions = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).filter {
