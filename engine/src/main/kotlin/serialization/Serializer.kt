@@ -82,7 +82,15 @@ inline fun indent(indentation: String = "    ", body: IndentationAwareStringWrit
 }
 
 object Serializer {
-    fun serialize(xsts: XSTS): String {
+    fun serializeProperty(xsts: XSTS): String {
+        val text = indent {
+            append(xsts.property)
+        }
+
+        return text
+    }
+
+    fun serialize(xsts: XSTS, includeProperty: Boolean = true): String {
         val text = indent {
             for (type in xsts.enums) {
                 append(type)
@@ -106,9 +114,11 @@ object Serializer {
 
             appendLine("env {}")
 
-            appendLine()
+            if (includeProperty) {
+                appendLine()
 
-            append(xsts.property)
+                append(xsts.property)
+            }
         }
 
         return text

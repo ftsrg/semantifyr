@@ -1,16 +1,12 @@
-import com.google.inject.Inject
 import hu.bme.mit.gamma.oxsts.engine.reader.OxstsReader
 import hu.bme.mit.gamma.oxsts.engine.reader.prepareOxsts
 import hu.bme.mit.gamma.oxsts.engine.serialization.Serializer
 import hu.bme.mit.gamma.oxsts.engine.transformation.XstsTransformer
 import hu.bme.mit.gamma.oxsts.lang.tests.OxstsInjectorProvider
-import hu.bme.mit.gamma.oxsts.model.oxsts.Package
 import org.eclipse.xtext.testing.InjectWith
 import org.eclipse.xtext.testing.extensions.InjectionExtension
-import org.eclipse.xtext.testing.util.ParseHelper
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -21,18 +17,16 @@ import kotlin.streams.asStream
 
 const val baseDirectory = "Test Models"
 const val automatedDirectory = "$baseDirectory/Automated"
+const val simpleDirectory = "$automatedDirectory/Simple"
 
 @ExtendWith(InjectionExtension::class)
 @InjectWith(OxstsInjectorProvider::class)
 class CompilationTests {
 
-    @Inject
-    private lateinit var parser: ParseHelper<Package>
-
     companion object {
         @JvmStatic
         fun `Simple model transformations should not regress`(): Stream<String> {
-            return File(automatedDirectory).walkTopDown().filter {
+            return File(simpleDirectory).walkTopDown().filter {
                 it.isDirectory
             }.filter {
                 it.list { _, name -> name == "model.oxsts" }?.any() ?: false
@@ -52,14 +46,6 @@ class CompilationTests {
     @ParameterizedTest
     @MethodSource
     fun `Simple model transformations should not regress`(directory: String) {
-        simpleReadTransformWrite(directory)
-        assertModelEqualsExpected(directory)
-    }
-
-    @Test
-    fun customTest() {
-        val directory = "$automatedDirectory/Simple/Target/Flat target with enum"
-
         simpleReadTransformWrite(directory)
         assertModelEqualsExpected(directory)
     }
