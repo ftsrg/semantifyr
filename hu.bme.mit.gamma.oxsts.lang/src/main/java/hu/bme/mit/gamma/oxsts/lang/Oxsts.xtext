@@ -14,7 +14,7 @@ Package:
 ;
 
 Target:
-	(abstract?='abstract')? 'target' name=ID (':' supertype=[Type])? ('{'
+	(abstract?='abstract')? 'target' name=ID (':' supertype=[Target])? ('{'
         (
             variables+=Variable
             | instances+=TargetInstance

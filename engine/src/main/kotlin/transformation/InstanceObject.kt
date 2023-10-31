@@ -71,15 +71,30 @@ open class InstanceObject(
 val InstanceHolder.allInstances: List<Instance>
     get() = when (this) {
         is Instance -> allInstances
-        is Target -> instances
+        is Target -> allInstances
         else -> error("Unknown type of InstanceHolder $this")
     }
 
 val InstanceHolder.allVariables: List<Variable>
     get() = when (this) {
         is Instance -> allVariables
-        is Target -> variables
+        is Target -> (this as Type).allVariables
         else -> error("Unknown type of InstanceHolder $this")
+    }
+
+val Target.allInstances: List<Instance>
+    get() {
+        val list = mutableListOf<Instance>()
+        list += features.filterIsInstance<Instance>()
+        list += instances
+        if (supertype != null) {
+            list += if (supertype is Target) {
+                (supertype as Target).allInstances
+            } else {
+                supertype.allInstances
+            }
+        }
+        return list
     }
 
 val Instance.allInstances: List<Instance>

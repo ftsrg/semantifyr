@@ -47,8 +47,12 @@ class XstsTransformer {
         val xsts = OxstsFactory.createXSTS()
 
         xsts.variables += Instantiator.instantiateVariables(rootInstance)
-        xsts.init = target.initTransition.single().copy() // TODO handle multiple inits?
-        xsts.transition = target.mainTransition.single().copy() // TODO handle multiple trans?
+
+        val init = rootInstance.transitionEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createInitTransitionExpression()))
+        val tran = rootInstance.transitionEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createMainTransitionExpression()))
+
+        xsts.init = init.copy() // TODO handle multiple inits?
+        xsts.transition = tran.copy() // TODO handle multiple trans?
         xsts.property = target.properties.single().copy() // TODO handle multiple props?
 
         xsts.init.inlineOperations(rootInstance)

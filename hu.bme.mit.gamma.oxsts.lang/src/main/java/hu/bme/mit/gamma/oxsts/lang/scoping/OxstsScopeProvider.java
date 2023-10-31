@@ -105,6 +105,10 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
         var supertype = type.getSupertype();
         var elements = new ArrayList<>(getInheritedElements(supertype));
 
+        if (type instanceof Target target) {
+            elements.addAll(target.getInstances());
+        }
+
         elements.addAll(type.getFeatures());
         elements.addAll(type.getVariables());
         elements.addAll(type.getProperties());

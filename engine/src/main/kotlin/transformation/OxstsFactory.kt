@@ -44,6 +44,12 @@ object OxstsFactory : OxstsFactoryImpl() {
         }
     }
 
+    fun createChainReferenceExpression(expression: ChainingExpression): ChainReferenceExpression {
+        return createChainReferenceExpression().apply {
+            chains += expression
+        }
+    }
+
     fun createInlineCall(referenceExpression: ReferenceExpression): InlineCall {
         return createInlineCall().also {
             it.reference = referenceExpression
