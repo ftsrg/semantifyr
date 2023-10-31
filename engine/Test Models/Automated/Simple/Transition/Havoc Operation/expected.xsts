@@ -1,16 +1,16 @@
 
-var __Mission__y : boolean;
+var __Mission__y : boolean
+
+trans {
+    havoc __Mission__y;
+}
 
 init {
     __Mission__y := false;
 }
 
-trans {
-    havoc (__Mission__y);
-}
-
 env {}
 
 prop {
-    (__Mission__y == false);
+    (__Mission__y == false)
 }

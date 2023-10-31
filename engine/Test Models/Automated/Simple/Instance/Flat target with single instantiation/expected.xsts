@@ -1,16 +1,16 @@
 
-var __Mission__simple__x : integer;
-
-init {
-    __Mission__simple__x := 0;
-}
+var __Mission__simple__x : integer
 
 trans {
     __Mission__simple__x := (__Mission__simple__x + 1);
 }
 
+init {
+    __Mission__simple__x := 0;
+}
+
 env {}
 
 prop {
-    (__Mission__simple__x != 10);
+    (__Mission__simple__x != 10)
 }

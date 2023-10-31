@@ -1,15 +1,15 @@
 
-var __Mission__holder__child__x : integer;
-
-init {
-}
+var __Mission__holder__child__x : integer
 
 trans {
     __Mission__holder__child__x := 0;
 }
 
+init {
+}
+
 env {}
 
 prop {
-    true;
+    true
 }

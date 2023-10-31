@@ -131,6 +131,7 @@ type Statechart : Component {
         inline seq outputEvents -> reset
         inline choice regions -> fireTransitions else { }
         inline seq inputEvents -> reset
+        inline seq timeouts -> main
     }
 }
 
@@ -154,8 +155,12 @@ type Region {
 
     tran fireTransitions {
         inline choice transitions -> main else {
-            inline choice states -> fireTransitions else { }
+            inline choice states -> fireTransitions
         }
+    }
+
+    tran fireTransitionsInner {
+        inline choice transitions -> main
     }
 }
 
@@ -213,7 +218,7 @@ type State {
     }
 
     tran fireTransitions {
-        inline seq regions -> fireTransitions
+        inline seq regions -> fireTransitionsInner
     }
 }
 
@@ -306,7 +311,7 @@ type Controller : Statechart {
                     instance t :> trigger : TimeoutTrigger {
                         reference timeout <- stopTimeout
                     }
-                    instance a :> entryActions : RaiseEventAction {
+                    instance a :> actions : RaiseEventAction {
                         reference event <- toggleEventA // switch A to Green
                     }
                 }
@@ -328,7 +333,7 @@ type Controller : Statechart {
                     instance t :> trigger : TimeoutTrigger {
                         reference timeout <- trafficTimeout
                     }
-                    instance a :> entryActions : RaiseEventAction {
+                    instance a :> actions : RaiseEventAction {
                         reference event <- toggleEventA // switch A to Yellow
                     }
                 }
@@ -350,10 +355,10 @@ type Controller : Statechart {
                     instance t :> trigger : TimeoutTrigger {
                         reference timeout <- stopTimeout
                     }
-                    instance a1 :> entryActions : RaiseEventAction {
+                    instance a1 :> actions : RaiseEventAction {
                         reference event <- toggleEventA // switch A to Red
                     }
-                    instance a2 :> entryActions : RaiseEventAction {
+                    instance a2 :> actions : RaiseEventAction {
                         reference event <- toggleEventB // switch B to Green
                     }
                 }
@@ -375,7 +380,7 @@ type Controller : Statechart {
                     instance t :> trigger : TimeoutTrigger {
                         reference timeout <- trafficTimeout
                     }
-                    instance a :> entryActions : RaiseEventAction {
+                    instance a :> actions : RaiseEventAction {
                         reference event <- toggleEventB // switch B to Yellow
                     }
                 }
@@ -397,10 +402,10 @@ type Controller : Statechart {
                     instance t :> trigger : TimeoutTrigger {
                         reference timeout <- stopTimeout
                     }
-                    instance a1 :> entryActions : RaiseEventAction {
+                    instance a1 :> actions : RaiseEventAction {
                         reference event <- toggleEventB // switch B to Red
                     }
-                    instance a2 :> entryActions : RaiseEventAction {
+                    instance a2 :> actions : RaiseEventAction {
                         reference event <- toggleEventA // switch A to Green
                     }
                 }
@@ -558,6 +563,7 @@ type TrafficLightCtrl : Statechart {
 
             instance InterruptedRegion :> regions : Region {
                 instance et :> entryTransitions : EntryTransition {
+                    reference commonRegion <- InterruptedRegion
                     reference to <- Black
                 }
 
@@ -634,7 +640,7 @@ type Crossroad : SyncComponent {
     }
 }
 
-target Mission {
+abstract target CrossroadsMission {
     instance crossroad : Crossroad
 
     init {
@@ -645,10 +651,311 @@ target Mission {
         inline crossroad.controller.policeEvent.havoc
         inline crossroad.main()
     }
+}
 
+// Controller state tests
+
+target ControllerOperating_Unsafe : CrossroadsMission {
     prop {
-        // both traffic lights must not be green at the same time
-        crossroad.trafficLightA.Main.Normal.NormalRegion.activeState = crossroad.trafficLightA.Main.Normal.NormalRegion.Green &&
-        crossroad.trafficLightB.Main.Normal.NormalRegion.activeState = crossroad.trafficLightB.Main.Normal.NormalRegion.Green
+        ! (crossroad.controller.Main.activeState = crossroad.controller.Main.Operating)
+    }
+}
+
+target ControllerOperatingInit_Unsafe : CrossroadsMission {
+    prop {
+        ! (crossroad.controller.Main.Operating.OperatingRegion.activeState = crossroad.controller.Main.Operating.OperatingRegion.Init)
+    }
+}
+
+target ControllerOperatingTrafficOnA_Unsafe : CrossroadsMission {
+    prop {
+        ! (crossroad.controller.Main.Operating.OperatingRegion.activeState = crossroad.controller.Main.Operating.OperatingRegion.TrafficOnA)
+    }
+}
+
+target ControllerOperatingStoppingA_Unsafe : CrossroadsMission {
+    prop {
+        ! (crossroad.controller.Main.Operating.OperatingRegion.activeState = crossroad.controller.Main.Operating.OperatingRegion.StoppingA)
+    }
+}
+
+target ControllerOperatingTrafficOnB_Unsafe : CrossroadsMission {
+    prop {
+        ! (crossroad.controller.Main.Operating.OperatingRegion.activeState = crossroad.controller.Main.Operating.OperatingRegion.TrafficOnB)
+    }
+}
+
+target ControllerOperatingStoppingB_Unsafe : CrossroadsMission {
+    prop {
+        ! (crossroad.controller.Main.Operating.OperatingRegion.activeState = crossroad.controller.Main.Operating.OperatingRegion.StoppingB)
+    }
+}
+
+target ControllerInterrupted_Unsafe : CrossroadsMission {
+    prop {
+        ! (crossroad.controller.Main.activeState = crossroad.controller.Main.Interrupted)
+    }
+}
+
+// TrafficLightA state tests
+
+target TrafficLightANormal_Unsafe : CrossroadsMission {
+    prop {
+        ! (crossroad.trafficLightA.Main.activeState = crossroad.trafficLightA.Main.Normal)
+    }
+}
+
+target TrafficLightANormalRed_Unsafe : CrossroadsMission {
+    prop {
+        ! (crossroad.trafficLightA.Main.Normal.NormalRegion.activeState = crossroad.trafficLightA.Main.Normal.NormalRegion.Red)
+    }
+}
+
+target TrafficLightANormalGreen_Unsafe : CrossroadsMission {
+    prop {
+        ! (crossroad.trafficLightA.Main.Normal.NormalRegion.activeState = crossroad.trafficLightA.Main.Normal.NormalRegion.Green)
+    }
+}
+
+target TrafficLightANormalYellow_Unsafe : CrossroadsMission {
+    prop {
+        ! (crossroad.trafficLightA.Main.Normal.NormalRegion.activeState = crossroad.trafficLightA.Main.Normal.NormalRegion.Yellow)
+    }
+}
+
+target TrafficLightAInterrupted_Unsafe : CrossroadsMission {
+    prop {
+        ! (crossroad.trafficLightA.Main.activeState = crossroad.trafficLightA.Main.Interrupted)
+    }
+}
+
+target TrafficLightAInterruptedBlack_Unsafe : CrossroadsMission {
+    prop {
+        ! (crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.activeState = crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.Black)
+    }
+}
+
+target TrafficLightAInterruptedYellow_Unsafe : CrossroadsMission {
+    prop {
+        ! (crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.activeState = crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.Yellow)
+    }
+}
+
+// TrafficLightB state tests
+
+target TrafficLightBNormal_Unsafe : CrossroadsMission {
+    prop {
+        ! (crossroad.trafficLightB.Main.activeState = crossroad.trafficLightB.Main.Normal)
+    }
+}
+
+target TrafficLightBNormalRed_Unsafe : CrossroadsMission {
+    prop {
+        ! (crossroad.trafficLightB.Main.Normal.NormalRegion.activeState = crossroad.trafficLightB.Main.Normal.NormalRegion.Red)
+    }
+}
+
+target TrafficLightBNormalGreen_Unsafe : CrossroadsMission {
+    prop {
+        ! (crossroad.trafficLightB.Main.Normal.NormalRegion.activeState = crossroad.trafficLightB.Main.Normal.NormalRegion.Green)
+    }
+}
+
+target TrafficLightBNormalYellow_Unsafe : CrossroadsMission {
+    prop {
+        ! (crossroad.trafficLightB.Main.Normal.NormalRegion.activeState = crossroad.trafficLightB.Main.Normal.NormalRegion.Yellow)
+    }
+}
+
+target TrafficLightBInterrupted_Unsafe : CrossroadsMission {
+    prop {
+        ! (crossroad.trafficLightB.Main.activeState = crossroad.trafficLightB.Main.Interrupted)
+    }
+}
+
+target TrafficLightBInterruptedBlack_Unsafe : CrossroadsMission {
+    prop {
+        ! (crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.activeState = crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.Black)
+    }
+}
+
+target TrafficLightBInterruptedYellow_Unsafe : CrossroadsMission {
+    prop {
+        ! (crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.activeState = crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.Yellow)
+    }
+}
+
+// Incorrect state tests
+
+target ControllerOperatingInterruptedExclusive_Safe : CrossroadsMission {
+    prop {
+        ! (
+            crossroad.controller.Main.activeState = crossroad.controller.Main.Interrupted &&
+            crossroad.controller.Main.Operating.OperatingRegion.activeState != Nothing
+        )
+    }
+}
+
+target ControllerOperatingIncorrectStateHierarchy_Safe : CrossroadsMission {
+    prop {
+        ! (
+            crossroad.controller.Main.activeState = crossroad.controller.Main.Operating &&
+            crossroad.controller.Main.Operating.OperatingRegion.activeState != crossroad.controller.Main.Operating.OperatingRegion.Init &&
+            crossroad.controller.Main.Operating.OperatingRegion.activeState != crossroad.controller.Main.Operating.OperatingRegion.TrafficOnA &&
+            crossroad.controller.Main.Operating.OperatingRegion.activeState != crossroad.controller.Main.Operating.OperatingRegion.StoppingA &&
+            crossroad.controller.Main.Operating.OperatingRegion.activeState != crossroad.controller.Main.Operating.OperatingRegion.TrafficOnB &&
+            crossroad.controller.Main.Operating.OperatingRegion.activeState != crossroad.controller.Main.Operating.OperatingRegion.StoppingB
+        )
+    }
+}
+
+target TrafficLightANormalInterruptedExclusive_Safe : CrossroadsMission {
+    prop {
+        ! (
+            (
+                crossroad.trafficLightA.Main.activeState = crossroad.trafficLightA.Main.Normal &&
+                crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.activeState != Nothing
+            ) || (
+                crossroad.trafficLightA.Main.activeState = crossroad.trafficLightA.Main.Interrupted &&
+                crossroad.trafficLightA.Main.Normal.NormalRegion.activeState != Nothing
+            )
+        )
+    }
+}
+
+target TrafficLightANormalIncorrectStateHierarchy_Safe : CrossroadsMission {
+    prop {
+        ! (
+            crossroad.trafficLightA.Main.activeState = crossroad.trafficLightA.Main.Normal &&
+            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState != crossroad.trafficLightA.Main.Normal.NormalRegion.Red &&
+            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState != crossroad.trafficLightA.Main.Normal.NormalRegion.Green &&
+            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState != crossroad.trafficLightA.Main.Normal.NormalRegion.Yellow
+        )
+    }
+}
+
+target TrafficLightAInterruptedIncorrectStateHierarchy_Safe : CrossroadsMission {
+    prop {
+        ! (
+            crossroad.trafficLightA.Main.activeState = crossroad.trafficLightA.Main.Interrupted &&
+            crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.activeState != crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.Black &&
+            crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.activeState != crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.Yellow
+        )
+    }
+}
+
+target TrafficLightBNormalInterruptedExclusive_Safe : CrossroadsMission {
+    prop {
+        ! (
+            (
+                crossroad.trafficLightB.Main.activeState = crossroad.trafficLightB.Main.Normal &&
+                crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.activeState != Nothing
+            ) || (
+                crossroad.trafficLightB.Main.activeState = crossroad.trafficLightB.Main.Interrupted &&
+                crossroad.trafficLightB.Main.Normal.NormalRegion.activeState != Nothing
+            )
+        )
+    }
+}
+
+target TrafficLightBNormalIncorrectStateHierarchy_Safe : CrossroadsMission {
+    prop {
+        ! (
+            crossroad.trafficLightB.Main.activeState = crossroad.trafficLightB.Main.Normal &&
+            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState != crossroad.trafficLightB.Main.Normal.NormalRegion.Red &&
+            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState != crossroad.trafficLightB.Main.Normal.NormalRegion.Green &&
+            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState != crossroad.trafficLightB.Main.Normal.NormalRegion.Yellow
+        )
+    }
+}
+
+target TrafficLightBInterruptedIncorrectStateHierarchy_Safe : CrossroadsMission {
+    prop {
+        ! (
+            crossroad.trafficLightB.Main.activeState = crossroad.trafficLightB.Main.Interrupted &&
+            crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.activeState != crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.Black &&
+            crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.activeState != crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.Yellow
+        )
+    }
+}
+
+// Behaviour tests
+
+target BothMustBeInterruptedAtTheSameTime_Unsafe : CrossroadsMission {
+    prop {
+        ! (
+            (
+                crossroad.trafficLightA.Main.activeState = crossroad.trafficLightA.Main.Interrupted &&
+                crossroad.trafficLightB.Main.activeState = crossroad.trafficLightB.Main.Interrupted
+            )
+        )
+    }
+}
+
+target BothMustBeInterruptedAtTheSameTime_Safe : CrossroadsMission {
+    prop {
+        ! (
+            (
+                crossroad.trafficLightA.Main.activeState = crossroad.trafficLightA.Main.Interrupted &&
+                crossroad.trafficLightB.Main.activeState != crossroad.trafficLightB.Main.Interrupted
+            ) || (
+                crossroad.trafficLightA.Main.activeState != crossroad.trafficLightA.Main.Interrupted &&
+                crossroad.trafficLightB.Main.activeState = crossroad.trafficLightB.Main.Interrupted
+            )
+        )
+    }
+}
+
+target BothCannotBeGreen_Safe : CrossroadsMission {
+    prop {
+        ! (
+            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState = crossroad.trafficLightA.Main.Normal.NormalRegion.Green &&
+            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState = crossroad.trafficLightB.Main.Normal.NormalRegion.Green
+        )
+    }
+}
+
+target ARedBRed_Unsafe : CrossroadsMission {
+    prop {
+        ! (
+            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState = crossroad.trafficLightA.Main.Normal.NormalRegion.Red &&
+            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState = crossroad.trafficLightB.Main.Normal.NormalRegion.Red
+        )
+    }
+}
+
+target AGreenBRed_Unsafe : CrossroadsMission {
+    prop {
+        ! (
+            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState = crossroad.trafficLightA.Main.Normal.NormalRegion.Green &&
+            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState = crossroad.trafficLightB.Main.Normal.NormalRegion.Red
+        )
+    }
+}
+
+target AYellowBRed_Unsafe : CrossroadsMission {
+    prop {
+        ! (
+            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState = crossroad.trafficLightA.Main.Normal.NormalRegion.Yellow &&
+            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState = crossroad.trafficLightB.Main.Normal.NormalRegion.Red
+        )
+    }
+}
+
+target ARedBGreen_Unsafe : CrossroadsMission {
+    prop {
+        ! (
+            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState = crossroad.trafficLightA.Main.Normal.NormalRegion.Red &&
+            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState = crossroad.trafficLightB.Main.Normal.NormalRegion.Green
+        )
+    }
+}
+
+target ARedBYellow_Unsafe : CrossroadsMission {
+    prop {
+        ! (
+            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState = crossroad.trafficLightA.Main.Normal.NormalRegion.Red &&
+            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState = crossroad.trafficLightB.Main.Normal.NormalRegion.Yellow
+        )
     }
 }

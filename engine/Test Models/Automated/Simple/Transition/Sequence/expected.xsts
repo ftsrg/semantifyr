@@ -1,18 +1,18 @@
 
-var __Mission__y : boolean;
-var __Mission__x : integer;
-
-init {
-    __Mission__y := false;
-}
+var __Mission__y : boolean
+var __Mission__x : integer
 
 trans {
     __Mission__y := true;
     __Mission__x := 10;
 }
 
+init {
+    __Mission__y := false;
+}
+
 env {}
 
 prop {
-    (__Mission__y == false);
+    (__Mission__y == false)
 }

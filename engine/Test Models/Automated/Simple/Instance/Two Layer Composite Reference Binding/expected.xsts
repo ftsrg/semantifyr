@@ -1,18 +1,18 @@
 
-var __Mission__a1__x : integer;
-var __Mission__a2__x : integer;
-
-init {
-    assume (false);
-}
+var __Mission__a1__x : integer
+var __Mission__a2__x : integer
 
 trans {
     __Mission__a1__x := 1;
     __Mission__a2__x := 1;
 }
 
+init {
+    assume (false);
+}
+
 env {}
 
 prop {
-    false;
+    false
 }

@@ -11,20 +11,20 @@ type __Mission__holder2__atom__type : {
     __Nothing__literal
 }
 
-var __Mission__holder__current : __Mission__holder__atom__type = __Nothing__literal;
-var __Mission__holder2__current : __Mission__holder2__atom__type = __Nothing__literal;
-
-init {
-    __Mission__holder__current := __Mission__holder__a__literal;
-}
+var __Mission__holder__current : __Mission__holder__atom__type = __Nothing__literal
+var __Mission__holder2__current : __Mission__holder2__atom__type = __Nothing__literal
 
 trans {
     __Mission__holder__current := __Mission__holder__b__literal;
     __Mission__holder2__current := __Mission__holder2__a__literal;
 }
 
+init {
+    __Mission__holder__current := __Mission__holder__a__literal;
+}
+
 env {}
 
 prop {
-    (__Mission__holder__current != __Mission__holder__b__literal);
+    (__Mission__holder__current != __Mission__holder__b__literal)
 }

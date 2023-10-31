@@ -1,10 +1,6 @@
 
-var __Mission__composite__a__x : integer;
-var __Mission__composite__b__x : integer;
-
-init {
-    assume (false);
-}
+var __Mission__composite__a__x : integer
+var __Mission__composite__b__x : integer
 
 trans {
     choice {
@@ -14,8 +10,12 @@ trans {
     }
 }
 
+init {
+    assume (false);
+}
+
 env {}
 
 prop {
-    false;
+    false
 }

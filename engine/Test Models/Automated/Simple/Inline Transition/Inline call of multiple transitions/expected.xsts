@@ -1,9 +1,5 @@
 
-var __Mission__a__x : integer;
-
-init {
-    __Mission__a__x := 0;
-}
+var __Mission__a__x : integer
 
 trans {
     choice {
@@ -13,8 +9,12 @@ trans {
     }
 }
 
+init {
+    __Mission__a__x := 0;
+}
+
 env {}
 
 prop {
-    (__Mission__a__x != 10);
+    (__Mission__a__x != 10)
 }

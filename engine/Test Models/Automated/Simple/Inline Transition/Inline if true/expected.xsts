@@ -1,17 +1,17 @@
 
-var __Mission__x : integer;
-
-init {
-    __Mission__x := 0;
-}
+var __Mission__x : integer
 
 trans {
     __Mission__x := (__Mission__x + 1);
     assume ((__Mission__x != 0));
 }
 
+init {
+    __Mission__x := 0;
+}
+
 env {}
 
 prop {
-    (__Mission__x != 10);
+    (__Mission__x != 10)
 }

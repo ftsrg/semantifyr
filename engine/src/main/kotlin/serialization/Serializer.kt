@@ -96,11 +96,11 @@ object Serializer {
 
             appendLine()
 
-            append(xsts.init, "init")
+            append(xsts.transition, "trans")
 
             appendLine()
 
-            append(xsts.transition, "trans")
+            append(xsts.init, "init")
 
             appendLine()
 
@@ -119,7 +119,7 @@ object Serializer {
         if (variable.expression != null) {
             append(" = ${variable.expression.serialize()}")
         }
-        appendLine(";")
+        appendLine()
     }
 
     fun IndentationAwareStringWriter.append(enum: Enum) {
@@ -150,7 +150,7 @@ object Serializer {
     fun IndentationAwareStringWriter.append(property: Property) {
         appendLine("prop {")
         indent {
-            appendLine(property.invariant.serialize() + ";")
+            appendLine(property.invariant.serialize())
         }
         appendLine("}")
     }
@@ -165,7 +165,7 @@ object Serializer {
 
             is AssignmentOperation -> appendLine("${operation.reference.serialize()} := ${operation.expression.serialize()};")
             is AssumptionOperation -> appendLine("assume (${operation.expression.serialize()});")
-            is HavocOperation -> appendLine("havoc (${operation.referenceExpression.serialize()});")
+            is HavocOperation -> appendLine("havoc ${operation.referenceExpression.serialize()};")
             is IfOperation -> {
                 appendLine("if (${operation.guard.serialize()}) {")
                 indent {

@@ -1,16 +1,16 @@
 
-var __Mission__holder__x : integer;
-
-init {
-    assume (false);
-}
+var __Mission__holder__x : integer
 
 trans {
     __Mission__holder__x := 10;
 }
 
+init {
+    assume (false);
+}
+
 env {}
 
 prop {
-    false;
+    false
 }

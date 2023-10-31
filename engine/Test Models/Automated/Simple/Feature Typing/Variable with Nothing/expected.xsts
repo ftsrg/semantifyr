@@ -5,18 +5,18 @@ type __Mission__holder__atom__type : {
     __Nothing__literal
 }
 
-var __Mission__holder__current : __Mission__holder__atom__type;
-
-init {
-    __Mission__holder__current := __Nothing__literal;
-}
+var __Mission__holder__current : __Mission__holder__atom__type
 
 trans {
     __Mission__holder__current := __Mission__holder__b__literal;
 }
 
+init {
+    __Mission__holder__current := __Nothing__literal;
+}
+
 env {}
 
 prop {
-    (__Mission__holder__current != __Mission__holder__b__literal);
+    (__Mission__holder__current != __Mission__holder__b__literal)
 }

@@ -1,12 +1,8 @@
 
-var __Mission__composite__a__x : integer = 0;
-var __Mission__composite__b__x : integer = 0;
-var __Mission__composite__c__x : integer = 0;
-var __Mission__composite__d__x : integer = 0;
-
-init {
-    assume (false);
-}
+var __Mission__composite__a__x : integer = 0
+var __Mission__composite__b__x : integer = 0
+var __Mission__composite__c__x : integer = 0
+var __Mission__composite__d__x : integer = 0
 
 trans {
     __Mission__composite__a__x := (__Mission__composite__a__x + 1);
@@ -14,8 +10,12 @@ trans {
     __Mission__composite__d__x := (__Mission__composite__d__x + 1);
 }
 
+init {
+    assume (false);
+}
+
 env {}
 
 prop {
-    false;
+    false
 }

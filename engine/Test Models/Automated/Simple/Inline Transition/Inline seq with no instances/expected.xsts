@@ -1,14 +1,14 @@
 
 
-init {
-    assume (false);
+trans {
 }
 
-trans {
+init {
+    assume (false);
 }
 
 env {}
 
 prop {
-    true;
+    true
 }

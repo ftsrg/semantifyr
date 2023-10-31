@@ -1,14 +1,10 @@
 
-var __Mission__a__x : integer;
-var __Mission__a__b__x : integer;
-var __Mission__a__b__c__x : integer;
-var __Mission__a__b__c__d__x : integer;
-var __Mission__a__b__c__d__e__x : integer;
-var __Mission__a__b__c__d__e__f__x : integer;
-
-init {
-    __Mission__a__x := 0;
-}
+var __Mission__a__x : integer
+var __Mission__a__b__x : integer
+var __Mission__a__b__c__x : integer
+var __Mission__a__b__c__d__x : integer
+var __Mission__a__b__c__d__e__x : integer
+var __Mission__a__b__c__d__e__f__x : integer
 
 trans {
     __Mission__a__x := 1;
@@ -16,8 +12,12 @@ trans {
     __Mission__a__b__c__x := 1;
 }
 
+init {
+    __Mission__a__x := 0;
+}
+
 env {}
 
 prop {
-    false;
+    false
 }

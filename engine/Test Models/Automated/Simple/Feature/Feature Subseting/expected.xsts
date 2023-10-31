@@ -1,15 +1,15 @@
 
-var __Mission__x : boolean;
-
-init {
-}
+var __Mission__x : boolean
 
 trans {
     __Mission__x := true;
 }
 
+init {
+}
+
 env {}
 
 prop {
-    true;
+    true
 }

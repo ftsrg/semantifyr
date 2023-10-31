@@ -1,18 +1,18 @@
 
-var __Mission__composite__a__aAtom__x : integer;
-var __Mission__composite__b__bAtom__x : integer;
-
-init {
-    assume (false);
-}
+var __Mission__composite__a__aAtom__x : integer
+var __Mission__composite__b__bAtom__x : integer
 
 trans {
     __Mission__composite__a__aAtom__x := 10;
     __Mission__composite__b__bAtom__x := 10;
 }
 
+init {
+    assume (false);
+}
+
 env {}
 
 prop {
-    false;
+    false
 }
