@@ -41,7 +41,7 @@ class XstsTransformer {
         return transform(target)
     }
 
-    private fun transform(target: Target): XSTS {
+    fun transform(target: Target, rewriteChoice: Boolean = false): XSTS {
         val rootInstance = Instantiator.instantiateInstances(target)
 
         val xsts = OxstsFactory.createXSTS()
@@ -71,8 +71,10 @@ class XstsTransformer {
         OperationOptimizer.optimize(xsts.transition)
         ExpressionOptimizer.optimize(xsts.property.invariant)
 
-//        xsts.init.rewriteChoiceElse()
-//        xsts.transition.rewriteChoiceElse()
+        if (rewriteChoice) {
+            xsts.init.rewriteChoiceElse()
+            xsts.transition.rewriteChoiceElse()
+        }
 
         return xsts
     }
@@ -194,15 +196,17 @@ class XstsTransformer {
             }
 
             is IfOperation -> {
-                val guardAssumption = guard.copy()
-                val notGuardAssumption = OxstsFactory.createNotOperator(guard.copy())
-                val bodyAssumption = body.calculateAssumption()
-                val elseAssumption = `else`?.calculateAssumption() ?: OxstsFactory.createLiteralBoolean(true)
+                OxstsFactory.createLiteralBoolean(true)
 
-                OxstsFactory.createOrOperator(
-                    OxstsFactory.createAndOperator(guardAssumption, bodyAssumption),
-                    OxstsFactory.createAndOperator(notGuardAssumption, elseAssumption),
-                )
+//                val guardAssumption = guard.copy()
+//                val notGuardAssumption = OxstsFactory.createNotOperator(guard.copy())
+//                val bodyAssumption = body.calculateAssumption()
+//                val elseAssumption = `else`?.calculateAssumption() ?: OxstsFactory.createLiteralBoolean(true)
+//
+//                OxstsFactory.createOrOperator(
+//                    OxstsFactory.createAndOperator(guardAssumption, bodyAssumption),
+//                    OxstsFactory.createAndOperator(notGuardAssumption, elseAssumption),
+//                )
             }
 
             else -> error("Unsupported operation!")
