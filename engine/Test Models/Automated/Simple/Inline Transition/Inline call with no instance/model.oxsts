@@ -15,7 +15,7 @@ type Holder {
 }
 
 target Mission {
-    instance holder : Holder
+    containment holder : Holder
 
     init {
         assume (false)

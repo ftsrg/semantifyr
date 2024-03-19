@@ -10,10 +10,10 @@ type Holder {
 }
 
 target Mission {
-    instance holder : Holder {
-        instance a :> atom : Atom
-        instance b :> atom : Atom
-        instance c :> atom : Atom
+    containment holder : Holder {
+        containment a :> atom : Atom
+        containment b :> atom : Atom
+        containment c :> atom : Atom
     }
 
     init {

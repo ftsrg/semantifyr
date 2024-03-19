@@ -19,7 +19,7 @@ type Container {
 }
 
 target Mission {
-    instance container : Container
+    containment container : Container
 
     init {
         inline container.init() // init transition reference

@@ -31,15 +31,15 @@ type Composite {
 }
 
 target Mission {
-    instance composite : Composite {
-        instance a :> holders : Holder {
-            instance aAtom :> atom : Atom {
-                reference parent <- composite
+    containment composite : Composite {
+        containment a :> holders : Holder {
+            containment aAtom :> atom : Atom {
+                reference ::> parent : Composite = composite
             }
         }
-        instance b :> holders : Holder {
-            instance bAtom :> atom : Atom {
-                reference parent <- composite
+        containment b :> holders : Holder {
+            containment bAtom :> atom : Atom {
+                reference ::> parent : Composite = composite
             }
         }
     }

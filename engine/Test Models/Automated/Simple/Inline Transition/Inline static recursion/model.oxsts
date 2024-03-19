@@ -18,12 +18,12 @@ type Thing {
 }
 
 target Mission {
-    instance a : Thing {
-        instance b :> innerThing : Thing {
-            instance c :> innerThing : Thing {
-                instance d :> innerThing : Thing {
-                    instance e :> innerThing : Thing {
-                        instance f :> innerThing : Thing
+    containment a : Thing {
+        containment b :> innerThing : Thing {
+            containment c :> innerThing : Thing {
+                containment d :> innerThing : Thing {
+                    containment e :> innerThing : Thing {
+                        containment f :> innerThing : Thing
                     }
                 }
             }

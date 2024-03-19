@@ -40,21 +40,21 @@ type State {
     }
 }
 target Mission {
-    instance MainRegion : Region {
-        // "AState" instance subsets "MainRegion.entryState"
-        instance MainEntry :> entryState : State {
+    containment MainRegion : Region {
+        // "AState" containment subsets "MainRegion.entryState"
+        containment MainEntry :> entryState : State {
             // "MainEntry"'s "parentRegion" is "MainRegion"
             reference parentRegion <- MainRegion
         }
-        // "AState" instance subsets "MainRegion.states"
-        instance AState :> states : State {
+        // "AState" containment subsets "MainRegion.states"
+        containment AState :> states : State {
             reference parentRegion <- MainRegion
         }
-        instance BState :> states : State {
+        containment BState :> states : State {
             reference parentRegion <- MainRegion
-            // "BRegion" instance subsets "BState.region"
-            instance BRegion :> region : Region {
-                instance CState :> states : State {
+            // "BRegion" containment subsets "BState.region"
+            containment BRegion :> region : Region {
+                containment CState :> states : State {
                     reference parentRegion <- BRegion
                     reference parentState <- BState
                 }

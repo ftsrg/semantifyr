@@ -1,0 +1,33 @@
+package Test
+
+type Atom
+
+type Super {
+    reference f : Atom
+}
+
+type Child : Super {
+    containment a ::> f : Atom
+}
+
+target Mission {
+    var x : Boolean
+
+    containment child : Child
+
+    init {
+        assume (true)
+    }
+
+    tran {
+        inline if (child.a = child.f) {
+            x := true
+        } else {
+            x := false
+        }
+    }
+
+    prop {
+        true
+    }
+}

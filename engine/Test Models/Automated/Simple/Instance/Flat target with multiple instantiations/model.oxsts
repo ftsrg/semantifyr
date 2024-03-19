@@ -5,8 +5,8 @@ type Simple {
 }
 
 target Mission {
-    instance a : Simple
-    instance b : Simple
+    containment a : Simple
+    containment b : Simple
 
     init {
         a.x := 0

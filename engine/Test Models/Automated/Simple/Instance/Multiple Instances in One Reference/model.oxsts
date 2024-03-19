@@ -18,15 +18,15 @@ type Composite {
 }
 
 target Mission {
-    instance composite : Composite {
-        instance a :> simples : Simple
-        instance b :> simples : Simple
-        instance c :> simples : Simple
-        instance d :> simples : Simple
+    containment composite : Composite {
+        containment a :> simples : Simple
+        containment b :> simples : Simple
+        containment c :> simples : Simple
+        containment d :> simples : Simple
 
-        reference mainSimple <- a
-        reference mainSimple <- b
-        reference mainSimple <- d
+        reference mainSimpleA :> mainSimple = a
+        reference mainSimpleB :> mainSimple = b
+        reference mainSimpleD :> mainSimple = d
     }
 
     init {
