@@ -8,18 +8,14 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Element
 import hu.bme.mit.gamma.oxsts.model.oxsts.EnumLiteral
 import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
-import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
 import hu.bme.mit.gamma.oxsts.model.oxsts.InlineCall
 import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.gamma.oxsts.model.oxsts.NotOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.Operation
 import hu.bme.mit.gamma.oxsts.model.oxsts.OrOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
-import hu.bme.mit.gamma.oxsts.model.oxsts.VariableTypeReference
+import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceTyping
 import hu.bme.mit.gamma.oxsts.model.oxsts.impl.OxstsFactoryImpl
-import org.eclipse.emf.ecore.EObject
-import org.eclipse.xtext.EcoreUtil2
 
 object OxstsFactory : OxstsFactoryImpl() {
     fun createEmptyOperation(): Operation {
@@ -30,6 +26,16 @@ object OxstsFactory : OxstsFactoryImpl() {
         return createEnumLiteral().also {
             it.name = name
         }
+    }
+
+    fun createReferenceTyping(element: Element): ReferenceTyping {
+        return createReferenceTyping().also {
+            it.reference = createChainReferenceExpression(element)
+        }
+    }
+
+    fun createDeclarationReferenceExpression(element: Element): DeclarationReferenceExpression {
+        return createDeclarationReference(element) as DeclarationReferenceExpression
     }
 
     fun createDeclarationReference(element: Element): ChainingExpression {

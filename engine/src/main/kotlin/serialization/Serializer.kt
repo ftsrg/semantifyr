@@ -1,5 +1,6 @@
 package hu.bme.mit.gamma.oxsts.engine.serialization
 
+import hu.bme.mit.gamma.oxsts.engine.utils.referencedElement
 import hu.bme.mit.gamma.oxsts.model.oxsts.AndOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.AssumptionOperation
@@ -29,11 +30,11 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.OrOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.PlusOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.Property
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceTyping
 import hu.bme.mit.gamma.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
+import hu.bme.mit.gamma.oxsts.model.oxsts.Typing
 import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
-import hu.bme.mit.gamma.oxsts.model.oxsts.VariableTypeReference
-import hu.bme.mit.gamma.oxsts.model.oxsts.VariableTyping
 import hu.bme.mit.gamma.oxsts.model.oxsts.XSTS
 
 class IndentationAwareStringWriter(
@@ -218,15 +219,13 @@ object Serializer {
         }
     }
 
-    val VariableTyping.name: String
+    val Typing.name: String
         get() = when (this) {
             is IntegerType -> "integer"
             is BooleanType -> "boolean"
-            is VariableTypeReference -> {
-                val reference = this.reference
-
-                when (reference) {
-                    is Enum -> reference.name
+            is ReferenceTyping -> {
+                when (referencedElement) {
+                    is Enum -> (referencedElement as Enum).name
                     else -> "UNKNOWN_TYPE$$$"
                 }
             }

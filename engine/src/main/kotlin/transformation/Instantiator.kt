@@ -1,20 +1,28 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
-import hu.bme.mit.gamma.oxsts.engine.utils.asChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.engine.utils.dropLast
+import hu.bme.mit.gamma.oxsts.engine.utils.typedEvaluateElement
+import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.Containment
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
-import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
-import hu.bme.mit.gamma.oxsts.model.oxsts.Target
+import hu.bme.mit.gamma.oxsts.model.oxsts.Reference
+import hu.bme.mit.gamma.oxsts.model.oxsts.Type
 import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
 import java.util.*
 
 object Instantiator {
 
-    fun instantiateInstances(target: Target): InstanceObject {
-        val instanceQueue = LinkedList<InstanceObject>()
+    fun instantiateTree(type: Type): Instance {
+        val instanceQueue = LinkedList<Instance>()
 
-        val rootInstanceObject = InstanceObject(target, null)
-        instanceQueue += rootInstanceObject
+        val rootContainment = OxstsFactory.createContainment().also {
+            it.typing = OxstsFactory.createReferenceTyping(type)
+            it.name = type.name
+            it.multiplicity = OxstsFactory.createOneMultiplicity()
+        }
+
+        val rootInstance = Instance(rootContainment, null)
+        instanceQueue += rootInstance
 
         while (instanceQueue.any()) {
             val instanceObject = instanceQueue.removeFirst()
@@ -22,15 +30,27 @@ object Instantiator {
             instanceQueue += instanceObject.children
         }
 
-        setReferenceBindings(rootInstanceObject)
+        setReferenceBindings(rootInstance)
 
-        return rootInstanceObject
+        return rootInstance
     }
 
-    fun instantiateVariables(rootInstanceObject: InstanceObject): List<Variable> {
-        val instanceQueue = LinkedList<InstanceObject>()
+    private fun setReferenceBindings(rootInstance: Instance) {
+        val instanceQueue = LinkedList<Instance>()
 
-        instanceQueue += rootInstanceObject
+        instanceQueue += rootInstance.children
+
+        while (instanceQueue.any()) {
+            val instance = instanceQueue.removeFirst()
+            instance.resolveReferenceBindings()
+            instanceQueue += instance.children
+        }
+    }
+
+    fun instantiateVariablesTree(rootInstance: Instance): List<Variable> {
+        val instanceQueue = LinkedList<Instance>()
+
+        instanceQueue += rootInstance
         val variables = mutableListOf<Variable>()
 
         while (instanceQueue.any()) {
@@ -42,30 +62,30 @@ object Instantiator {
         return variables
     }
 
-    private fun setReferenceBindings(rootInstanceObject: InstanceObject) {
-        val instanceQueue = LinkedList<InstanceObject>()
-
-        instanceQueue += rootInstanceObject.children
-
-        while (instanceQueue.any()) {
-            val instanceObject = instanceQueue.removeFirst()
-            instanceObject.placeReferences()
-            instanceQueue += instanceObject.children
+    private fun Instance.resolveReferenceBindings() {
+        for (feature in type.features.filterIsInstance<Reference>()) {
+            if (feature.expression != null) {
+                place(feature, resolveBinding(feature))
+            }
         }
     }
 
-    private fun InstanceObject.placeReferences() {
-        if (instanceHolder !is Instance) {
-            return
-        }
+    private fun Instance.resolveBinding(feature: Feature): List<Instance> = when (feature) {
+        is Containment -> featureMap[feature] ?: emptyList()
+        is Reference -> {
+            if (feature.expression == null) { // not bound reference -> take actual contents
+                featureMap[feature] ?: emptyList()
+            } else {
+                val chainingExpression = feature.expression as ChainReferenceExpression
 
-        for (binding in instanceHolder.bindings) {
-            val holder = expressionEvaluator.evaluateInstanceObject(binding.feature.asChainReferenceExpression().dropLast(1))
-            val feature = expressionEvaluator.evaluateTypedReference<Feature>(binding.feature.asChainReferenceExpression())
-            val held = expressionEvaluator.evaluateInstanceObjectBottomUp(binding.instance)
+                val context = expressionEvaluator.findFirstValidContext(chainingExpression)
+                val holder = context.expressionEvaluator.evaluateInstance(chainingExpression.dropLast(1))
+                val referencedFeature = chainingExpression.typedEvaluateElement<Feature>()
 
-            holder.place(feature, held)
+                holder.resolveBinding(referencedFeature) // recurse, until a free feature is found
+            }
         }
+        else -> error("Unsupported Feature type: $feature")
     }
 
 }

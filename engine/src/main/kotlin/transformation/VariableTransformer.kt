@@ -3,33 +3,36 @@ package hu.bme.mit.gamma.oxsts.engine.transformation
 import hu.bme.mit.gamma.oxsts.engine.utils.asChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.engine.utils.copy
 import hu.bme.mit.gamma.oxsts.engine.utils.dropLast
+import hu.bme.mit.gamma.oxsts.engine.utils.referencedElement
 import hu.bme.mit.gamma.oxsts.engine.utils.isFeatureTyped
 import hu.bme.mit.gamma.oxsts.model.oxsts.Enum
 import hu.bme.mit.gamma.oxsts.model.oxsts.EnumLiteral
 import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceTyping
 import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
-import hu.bme.mit.gamma.oxsts.model.oxsts.VariableTypeReference
 
 class EnumMapping(
     val enum: Enum,
-    val literalMapping: Map<InstanceObject, EnumLiteral>
+    val literalMapping: Map<Instance, EnumLiteral>
 )
 
 class VariableTransformer(
-    private val instanceObject: InstanceObject
+    private val instance: Instance
 ) {
-    fun transform(variable: Variable): Variable {
+    fun featureToEnum(variable: Variable): Variable {
         val newVariable = variable.copy()
 
-        newVariable.name = "${instanceObject.fullyQualifiedName}__${variable.name}"
+        newVariable.name = "${instance.fullyQualifiedName}__${variable.name}"
 
-        val typing = variable.typing
-        if (typing is VariableTypeReference) {
-            newVariable.typing = typing.transform()
-            if (variable.expression != null) {
-                newVariable.expression = transformExpression(OxstsFactory.createChainReferenceExpression(variable), variable.expression as ReferenceExpression, variable)
+        if (variable.isFeatureTyped) {
+            val typing = variable.typing
+            if (typing is ReferenceTyping) {
+                newVariable.typing = typing.featureToEnum(variable.isOptional)
+                if (variable.expression != null) {
+                    newVariable.expression = transformExpression(OxstsFactory.createChainReferenceExpression(variable), variable.expression as ReferenceExpression, variable)
+                }
             }
         }
 
@@ -41,39 +44,44 @@ class VariableTransformer(
             "$typedVariable is not a feature typed variable!"
         }
 
-        val feature = (typedVariable.typing as VariableTypeReference).reference as Feature
+        val typing = typedVariable.typing as ReferenceTyping
 
-        val variableHolder = instanceObject.expressionEvaluator.evaluateInstanceObject(variableExpression.asChainReferenceExpression().dropLast(1))
-        val enumMapping = variableHolder.featureEnumMap[feature] ?: error("There is no enum mapping for $feature in $variableHolder")
+        val feature = typing.referencedElement as Feature
 
-        val instanceObject = instanceObject.expressionEvaluator.evaluateInstanceObject(expression)
-        val literal = enumMapping.literalMapping[instanceObject] ?: error("Referenced instance object $instanceObject is not in referenced feature $feature in $variableHolder")
+        val contextInstance = instance.expressionEvaluator.evaluateInstance(variableExpression.asChainReferenceExpression().dropLast(1))
+        val featureHolder = contextInstance.expressionEvaluator.evaluateInstance(typing.reference.dropLast(1))
+        val enumMapping = featureHolder.featureEnumMap[feature] ?: error("There is no enum mapping for $feature in $featureHolder")
+
+        val instanceObject = instance.expressionEvaluator.evaluateInstance(expression)
+        val literal = enumMapping.literalMapping[instanceObject] ?: error("Referenced instance object $instanceObject is not in referenced feature $feature in $contextInstance")
 
         return OxstsFactory.createChainReferenceExpression(literal)
     }
 
-    private fun VariableTypeReference.transform(): VariableTypeReference {
-        if (reference !is Feature) {
+    private fun ReferenceTyping.featureToEnum(isOptional: Boolean): ReferenceTyping {
+        if (referencedElement !is Feature) {
             return this
         }
 
-        return this.copy().also {
-            it.reference = (reference as Feature).transform(isOptional)
+        val enum = (referencedElement as Feature).featureToEnum(isOptional)
+
+        return OxstsFactory.createReferenceTyping().also {
+            it.reference = OxstsFactory.createChainReferenceExpression(enum)
         }
     }
 
-    private fun Feature.transform(isOptional: Boolean): Enum {
-        if (instanceObject.featureEnumMap.containsKey(this)) {
-            return instanceObject.featureEnumMap[this]!!.enum
+    private fun Feature.featureToEnum(isOptional: Boolean): Enum {
+        if (instance.featureEnumMap.containsKey(this)) {
+            return instance.featureEnumMap[this]!!.enum
         }
 
         val enum = OxstsFactory.createEnum()
-        val literalMapping = mutableMapOf<InstanceObject, EnumLiteral>()
+        val literalMapping = mutableMapOf<Instance, EnumLiteral>()
 
-        instanceObject.featureEnumMap[this] = EnumMapping(enum, literalMapping)
+        instance.featureEnumMap[this] = EnumMapping(enum, literalMapping)
 
-        val instances = mutableListOf<InstanceObject>()
-        instances += instanceObject.featureMap[this] ?: emptyList()
+        val instances = mutableListOf<Instance>()
+        instances += instance.featureMap[this] ?: emptyList()
 
         if (isOptional) {
             instances += NothingInstance
@@ -84,13 +92,13 @@ class VariableTransformer(
             literalMapping[instance] = literal
         }
 
-        enum.name = "${instanceObject.fullyQualifiedName}__${this.name}__type"
+        enum.name = "${instance.fullyQualifiedName}__${this.name}__type"
         enum.literals += literalMapping.values
 
         return enum
     }
 
-    private val InstanceObject.enumLiteralName: String
+    private val Instance.enumLiteralName: String
         get() = "${fullyQualifiedName}__literal"
 
 }

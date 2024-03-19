@@ -1,6 +1,7 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
 import hu.bme.mit.gamma.oxsts.engine.utils.element
+import hu.bme.mit.gamma.oxsts.engine.utils.type
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
@@ -12,8 +13,8 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
 import hu.bme.mit.gamma.oxsts.model.oxsts.Type
 
-class TransitionEvaluator(
-    private val instanceObject: InstanceObject
+class TransitionResolver(
+    private val instance: Instance
 ) {
 
     fun evaluateTransition(referenceExpression: ReferenceExpression): Transition {
@@ -26,7 +27,7 @@ class TransitionEvaluator(
         val transition = type.findTransitionUpwards(reference)
 
         if (transition.isVirtual || transition.isOverride) {
-            return instanceObject.type.findTransitionUpwards(reference)
+            return instance.type.findTransitionUpwards(reference)
         }
 
         return transition
@@ -39,7 +40,7 @@ class TransitionEvaluator(
             val feature = referenceExpression.chains.dropLast(1).last().element as? Feature
             feature?.type ?: error("")
         } else {
-            instanceObject.type
+            instance.type
         }
     }
 

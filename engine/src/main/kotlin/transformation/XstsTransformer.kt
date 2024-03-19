@@ -3,6 +3,7 @@ package hu.bme.mit.gamma.oxsts.engine.transformation
 import hu.bme.mit.gamma.oxsts.engine.utils.copy
 import hu.bme.mit.gamma.oxsts.engine.utils.dropLast
 import hu.bme.mit.gamma.oxsts.engine.utils.element
+import hu.bme.mit.gamma.oxsts.engine.utils.referencedElement
 import hu.bme.mit.gamma.oxsts.engine.utils.isFeatureTyped
 import hu.bme.mit.gamma.oxsts.engine.utils.lastChain
 import hu.bme.mit.gamma.oxsts.model.oxsts.AssignmentOperation
@@ -14,7 +15,6 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Enum
 import hu.bme.mit.gamma.oxsts.model.oxsts.EqualityOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
-import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
 import hu.bme.mit.gamma.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.InequalityOperator
@@ -22,38 +22,38 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.InlineOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.Operation
 import hu.bme.mit.gamma.oxsts.model.oxsts.Package
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceTyping
 import hu.bme.mit.gamma.oxsts.model.oxsts.SequenceOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.Target
 import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
+import hu.bme.mit.gamma.oxsts.model.oxsts.Type
 import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
-import hu.bme.mit.gamma.oxsts.model.oxsts.VariableTypeReference
 import hu.bme.mit.gamma.oxsts.model.oxsts.XSTS
 import org.eclipse.xtext.EcoreUtil2
 import java.util.*
 
 class XstsTransformer {
 
-    fun transform(rootElements: List<Package>, targetName: String): XSTS {
-        val target = rootElements.flatMap { it.target }.first {
-            it.name == targetName
+    fun transform(rootElements: List<Package>, typeName: String, rewriteChoice: Boolean = false): XSTS {
+        val type = rootElements.flatMap { it.types }.first {
+            it.name == typeName
         }
 
-        return transform(target)
+        return transform(type, rewriteChoice)
     }
 
-    fun transform(target: Target, rewriteChoice: Boolean = false): XSTS {
-        val rootInstance = Instantiator.instantiateInstances(target)
+    fun transform(type: Type, rewriteChoice: Boolean = false): XSTS {
+        val rootInstance = Instantiator.instantiateTree(type)
 
         val xsts = OxstsFactory.createXSTS()
 
-        xsts.variables += Instantiator.instantiateVariables(rootInstance)
+        xsts.variables += Instantiator.instantiateVariablesTree(rootInstance)
 
-        val init = rootInstance.transitionEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createInitTransitionExpression()))
-        val tran = rootInstance.transitionEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createMainTransitionExpression()))
+        val init = rootInstance.transitionResolver.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createInitTransitionExpression()))
+        val tran = rootInstance.transitionResolver.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createMainTransitionExpression()))
 
         xsts.init = init.copy() // TODO handle multiple inits?
         xsts.transition = tran.copy() // TODO handle multiple trans?
-        xsts.property = target.properties.single().copy() // TODO handle multiple props?
+        xsts.property = type.properties.single().copy() // TODO handle multiple props?
 
         xsts.init.inlineOperations(rootInstance)
         xsts.transition.inlineOperations(rootInstance)
@@ -63,8 +63,8 @@ class XstsTransformer {
 
         xsts.enums += xsts.variables.asSequence().map {
             it.typing
-        }.filterIsInstance<VariableTypeReference>().map {
-            it.reference
+        }.filterIsInstance<ReferenceTyping>().map {
+            it.referencedElement
         }.filterIsInstance<Enum>().toSet()
 
         OperationOptimizer.optimize(xsts.init)
@@ -79,7 +79,7 @@ class XstsTransformer {
         return xsts
     }
 
-    private fun Transition.inlineOperations(rootInstance: InstanceObject) {
+    private fun Transition.inlineOperations(rootInstance: Instance) {
         val processorQueue = LinkedList(operation)
 
         while (processorQueue.any()) {
@@ -87,7 +87,7 @@ class XstsTransformer {
 
             when (operation) {
                 is InlineOperation -> {
-                    val inlined = rootInstance.operationEvaluator.inlineOperation(operation)
+                    val inlined = rootInstance.operationTransformer.inlineOperation(operation)
                     EcoreUtil2.replace(operation, inlined)
                     processorQueue += inlined
                 }
@@ -213,7 +213,7 @@ class XstsTransformer {
         }
     }
 
-    private fun XSTS.rewriteVariableAccesses(rootInstance: InstanceObject) {
+    private fun XSTS.rewriteVariableAccesses(rootInstance: Instance) {
         val referenceExpressions = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).filter {
             val declaration = it.chains.last() as? DeclarationReferenceExpression
             declaration?.element is Variable
@@ -223,7 +223,7 @@ class XstsTransformer {
             val reference = referenceExpression.chains.last() as DeclarationReferenceExpression
             val oldVariable = reference.element as Variable
 
-            val instanceObject = rootInstance.expressionEvaluator.evaluateInstanceObject(referenceExpression.dropLast(1))
+            val instanceObject = rootInstance.expressionEvaluator.evaluateInstance(referenceExpression.dropLast(1))
             val transformedVariable = instanceObject.variableMap[oldVariable]!!
 
             val newExpression = OxstsFactory.createChainReferenceExpression(transformedVariable)
@@ -231,7 +231,7 @@ class XstsTransformer {
         }
     }
 
-    private fun XSTS.rewriteFeatureTypingVariableExpression(rootInstance: InstanceObject) {
+    private fun XSTS.rewriteFeatureTypingVariableExpression(rootInstance: Instance) {
         val expressions = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).filter {
             (it.lastChain().element as? Variable)?.isFeatureTyped == true
         }
@@ -243,7 +243,7 @@ class XstsTransformer {
         }
     }
 
-    private fun rewriteFeatureTypingVariableExpression(variable: Variable, referenceExpression: ChainReferenceExpression, rootInstance: InstanceObject) {
+    private fun rewriteFeatureTypingVariableExpression(variable: Variable, referenceExpression: ChainReferenceExpression, rootInstance: Instance) {
         val parent = referenceExpression.eContainer()
 
         when (parent) {

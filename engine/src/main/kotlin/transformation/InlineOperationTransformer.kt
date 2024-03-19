@@ -21,17 +21,16 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.Parameter
 import hu.bme.mit.gamma.oxsts.model.oxsts.ParameterBinding
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.SelfReference
-import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
 
-class InlineOperationEvaluator(
-    private val context: InstanceObject
+class InlineOperationTransformer(
+    private val context: Instance
 ) {
     fun inlineOperation(operation: InlineOperation): Operation {
         return when (operation) {
             is InlineCall -> {
-                val containerInstance = context.expressionEvaluator.evaluateInstanceObjectOrNull(operation.reference.asChainReferenceExpression().dropLast(1))
+                val containerInstance = context.expressionEvaluator.evaluateInstanceOrNull(operation.reference.asChainReferenceExpression().dropLast(1))
 
                 if (containerInstance == null) {
                     return OxstsFactory.createEmptyOperation()
@@ -77,7 +76,7 @@ class InlineOperationEvaluator(
     }
 
     private fun inlineCallsFromComposite(inlineComposite: InlineComposite): List<InlineCall> {
-        val instanceSet = context.expressionEvaluator.evaluateInstanceObjectSet(inlineComposite.feature)
+        val instanceSet = context.expressionEvaluator.evaluateInstanceSet(inlineComposite.feature)
 
         val baseFeature = inlineComposite.feature.asChainReferenceExpression().dropLast(1)
         val transitionReference = inlineComposite.transition.asChainReferenceExpression()
@@ -85,7 +84,7 @@ class InlineOperationEvaluator(
         val list = mutableListOf<InlineCall>()
 
         for (instance in instanceSet) {
-            val instanceReference = OxstsFactory.createChainReferenceExpression(instance.instanceHolder!!)
+            val instanceReference = OxstsFactory.createChainReferenceExpression(instance.containment)
             val inlineCall = OxstsFactory.createInlineCall(baseFeature.appendWith(instanceReference).appendWith(transitionReference))
 
             list += inlineCall
@@ -128,7 +127,7 @@ class InlineOperationEvaluator(
         return this
     }
 
-    private fun Operation.rewriteToContext(localContext: InstanceObject, parameters: List<Parameter>): Operation {
+    private fun Operation.rewriteToContext(localContext: Instance, parameters: List<Parameter>): Operation {
         val references = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).asSequence().filterNot {
             parameters.contains(it.chains.firstOrNull()?.element)
         }.toList()
@@ -140,7 +139,7 @@ class InlineOperationEvaluator(
         return this
     }
 
-    private fun ReferenceExpression.rewriteToContext(localContext: InstanceObject) {
+    private fun ReferenceExpression.rewriteToContext(localContext: Instance) {
         require(this is ChainReferenceExpression)
 
         val inlineComposite = EcoreUtil2.getContainerOfType(this, InlineComposite::class.java)
@@ -153,10 +152,10 @@ class InlineOperationEvaluator(
     }
 
     private fun createReferenceToContext(
-        localContext: InstanceObject,
+        localContext: Instance,
         context: MutableList<ChainingExpression> = mutableListOf()
     ): List<ChainingExpression> {
-        val instance = localContext.instanceHolder ?: return emptyList()
+        val instance = localContext.containment
         val parent = localContext.parent ?: return emptyList()
 
         createReferenceToContext(parent, context)
@@ -167,7 +166,7 @@ class InlineOperationEvaluator(
     }
 
     private fun Operation.rewriteInlineOperation(
-        containerInstance: InstanceObject,
+        containerInstance: Instance,
         parameters: List<Parameter>,
         bindings: List<ParameterBinding>
     ) = rewriteContextDependentReferences().rewriteToContext(containerInstance, parameters).rewriteToParameters(parameters, bindings)
