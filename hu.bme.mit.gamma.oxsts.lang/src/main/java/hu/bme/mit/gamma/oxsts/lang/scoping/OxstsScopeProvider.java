@@ -25,8 +25,8 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 
     private boolean isTypeReference(EReference reference) {
         return reference == OxstsPackage.Literals.TYPE__SUPERTYPE ||
-                reference == OxstsPackage.Literals.FEATURE__TYPE ||
-                reference == OxstsPackage.Literals.VARIABLE_TYPE_REFERENCE__REFERENCE ||
+                reference == OxstsPackage.Literals.FEATURE__TYPING ||
+                reference == OxstsPackage.Literals.REFERENCE_TYPING__REFERENCE ||
                 reference == OxstsPackage.Literals.PARAMETER__TYPE;
     }
 
@@ -59,6 +59,12 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
         }
 
         if (index <= 0) {
+            var referenceTyping = EcoreUtil2.getContainerOfType(expression, ReferenceTyping.class);
+
+            if (referenceTyping != null) {
+                return scopeElement(referenceTyping.eContainer().eContainer(), reference);
+            }
+
             return scopeElement(chain, reference);
         }
 
@@ -84,15 +90,32 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
             elements.addAll(_package.getTypes().stream().map(it -> (Element) it).toList());
         } else if (element instanceof Type type) {
             elements.addAll(getInheritedElements(type));
-        } else if (element instanceof Instance instance) {
-            elements.addAll(getInheritedElements(instance.getType()));
         } else if (element instanceof Feature feature) {
-            elements.addAll(getInheritedElements(feature.getType()));
+            elements.addAll(getInheritedElements(feature.getTyping()));
         } else if (element instanceof Parameter parameter) {
             elements.addAll(getInheritedElements(parameter.getType()));
         }
 
         elements.addAll(getAccessibleElements(parent));
+
+        return elements;
+    }
+
+    protected List<Element> getInheritedElements(Typing typing) {
+        var elements = new ArrayList<Element>();
+
+        if (typing == null) {
+            return elements;
+        }
+
+        if (typing instanceof ReferenceTyping referenceTyping) {
+            var chain = referenceTyping.getReference();
+            var lastExpression = chain.getChains().get(chain.getChains().size() - 1);
+            var referencedElement = getReferredElement(lastExpression);
+            if (referencedElement instanceof Type type) {
+                elements.addAll(getInheritedElements(type));
+            }
+        }
 
         return elements;
     }
@@ -104,10 +127,6 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 
         var supertype = type.getSupertype();
         var elements = new ArrayList<>(getInheritedElements(supertype));
-
-        if (type instanceof Target target) {
-            elements.addAll(target.getInstances());
-        }
 
         elements.addAll(type.getFeatures());
         elements.addAll(type.getVariables());

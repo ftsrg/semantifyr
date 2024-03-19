@@ -4,7 +4,6 @@
 package hu.bme.mit.gamma.oxsts.lang.formatting2;
 
 import hu.bme.mit.gamma.oxsts.model.oxsts.EnumLiteral;
-import hu.bme.mit.gamma.oxsts.model.oxsts.Target;
 import hu.bme.mit.gamma.oxsts.model.oxsts.Type;
 import org.eclipse.xtext.formatting2.AbstractJavaFormatter;
 import org.eclipse.xtext.formatting2.IFormattableDocument;
@@ -18,9 +17,6 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         }
         for (hu.bme.mit.gamma.oxsts.model.oxsts.Enum _enum : _package.getEnums()) {
             doc.format(_enum);
-        }
-        for (Target target : _package.getTarget()) {
-            doc.format(target);
         }
     }
 
