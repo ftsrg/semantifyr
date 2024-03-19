@@ -27,19 +27,19 @@ public class OxstsValidator extends AbstractOxstsValidator {
 //		}
 //	}
 
-    @Check
-    public void checkFeatureSubsetting(Feature feature) {
-        if (feature.getSubsets() == null) return;
-
-        var featureType = feature.getType();
-        var subsettingType = feature.getSubsets().getType();
-
-        if (!isSupertypeOf(subsettingType, featureType)) {
-            error("Feature must have type that is compatible with subsetted feature",
-					OxstsPackage.Literals.FEATURE__SUBSETS,
-                    INVALID_TYPE);
-        }
-    }
+//    @Check
+//    public void checkFeatureSubsetting(Feature feature) {
+//        if (feature.getSubsets() == null) return;
+//
+//        var featureType = feature.getType();
+//        var subsettingType = feature.getSubsets().getType();
+//
+//        if (!isSupertypeOf(subsettingType, featureType)) {
+//            error("Feature must have type that is compatible with subsetted feature",
+//					OxstsPackage.Literals.FEATURE__SUBSETS,
+//                    INVALID_TYPE);
+//        }
+//    }
 
     private boolean isSupertypeOf(Type superType, Type type) {
         if (type == null) return false;
