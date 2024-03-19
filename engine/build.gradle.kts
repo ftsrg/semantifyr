@@ -28,6 +28,10 @@ tasks.compileKotlin {
     dependsOn(unzipGammaJars)
 }
 
+tasks.test {
+    inputs.dir("Test Models")
+}
+
 dependencies {
     implementation(project(":hu.bme.mit.gamma.oxsts.lang"))
     implementation(project(":hu.bme.mit.gamma.oxsts.model"))
