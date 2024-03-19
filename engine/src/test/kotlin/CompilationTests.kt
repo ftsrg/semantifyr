@@ -7,6 +7,7 @@ import org.eclipse.xtext.testing.InjectWith
 import org.eclipse.xtext.testing.extensions.InjectionExtension
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -50,12 +51,20 @@ class CompilationTests {
         assertModelEqualsExpected(directory)
     }
 
-    private fun simpleReadTransformWrite(directory: String) {
+    @Test
+    fun `Simple Mission`() {
+        val directory = "$automatedDirectory/Gamma/SimpleMission"
+
+        simpleReadTransformWrite(directory, true)
+        assertModelEqualsExpected(directory)
+    }
+
+    private fun simpleReadTransformWrite(directory: String, rewriteChoice: Boolean = false) {
         val reader = OxstsReader(directory)
         reader.read()
 
         val transformer = XstsTransformer()
-        val xsts = transformer.transform(reader.rootElements, "Mission")
+        val xsts = transformer.transform(reader.rootElements, "Mission", rewriteChoice)
         val serializedXsts = Serializer.serialize(xsts)
 
         File("$directory/model.xsts").writeText(serializedXsts)
