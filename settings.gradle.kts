@@ -1,4 +1,4 @@
-rootProject.name = "oxsts"
+rootProject.name = "semantifyr"
 
 include(
     "engine",
