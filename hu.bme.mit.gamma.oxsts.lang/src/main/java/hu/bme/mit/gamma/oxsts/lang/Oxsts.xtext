@@ -7,25 +7,9 @@ import "http://www.eclipse.org/emf/2002/Ecore" as Ecore
 Package:
 	'package' name=ID
 	(
-		  types += Type
+		  types += TypeLike
 		| enums += Enum
-		| target += Target
 	)*
-;
-
-Target:
-	(abstract?='abstract')? 'target' name=ID (':' supertype=[Target])? ('{'
-        (
-            variables+=Variable
-            | instances+=TargetInstance
-//            | features+=FeatureLike
-            | initTransition+=InitTransition
-            | transitions+=NamedTransition
-            | mainTransition+=MainTransition
-//            | havocTransition+=HavocTransition
-            | properties+=Property
-        )*
-    '}')?
 ;
 
 Property:
@@ -55,11 +39,30 @@ EnumLiteral:
 	name=ID
 ;
 
+TypeLike returns Type:
+    Type
+    | Target
+;
+
 Type:
 	(abstract?='abstract')? 'type' name=ID (':' supertype=[Type])? ('{'
 		(
 			variables+=Variable
-			| features+=FeatureLike
+			| features+=Feature
+			| initTransition+=InitTransition
+			| transitions+=NamedTransition
+			| mainTransition+=MainTransition
+			| havocTransition+=HavocTransition
+			| properties+=Property
+		)*
+	'}')?
+;
+
+Target:
+	(abstract?='abstract')? 'target' name=ID (':' supertype=[Type])? ('{'
+		(
+			variables+=Variable
+			| features+=Feature
 			| initTransition+=InitTransition
 			| transitions+=NamedTransition
 			| mainTransition+=MainTransition
@@ -198,38 +201,45 @@ AssignmentOperation:
 
 
 Variable:
-	'var' name=ID ':' typing=VariableTyping (':=' expression=Expression)?
+	'var' name=ID ':' typing=Typing (optional?='[0..1]' | '[1..1]')? (':=' expression=Expression)?
 ;
 
-FeatureLike returns Feature:
-	Feature
-	| Instance
+Feature returns Feature:
+	ActualFeature
+	| Containment
+	| Reference
+	| Derived
 ;
 
-Feature:
-	(reference?='reference' | 'feature') name=ID (':>' subsets=[Feature])? ':' type=[Type] (multiplicity=Multiplicity)?
-;
-
-TargetInstance returns Instance:
-	'instance' name=ID ':' type=[Type]
+fragment FeatureDeclaration returns Feature:
 	(
-		'{'
-			(instances+=Instance | bindings+=InstanceBinding)*
-		'}'
-	)?
+	    name=ID
+	    | ((name=ID)? '::>' redefines=[Feature])
+    )
+    (':>' subsets+=[Feature])?
+    ':' typing=Typing
+    (multiplicity=Multiplicity)?
 ;
 
-Instance: 
-	'instance' name=ID ':>' subsets=[Feature] ':' type=[Type]
-	(
-		'{'
-			(instances+=Instance | bindings+=InstanceBinding)*
-		'}'
-	)?
+ActualFeature returns Feature:
+	'feature' FeatureDeclaration
 ;
 
-InstanceBinding:
-	'reference' feature=ReferenceExpression '<-' instance=ReferenceExpression
+Containment:
+    'containment' FeatureDeclaration
+    (
+        '{'
+            (features+=Feature)*
+        '}'
+    )?
+;
+
+Reference:
+	'reference' FeatureDeclaration ('=' expression=Expression)?
+;
+
+Derived:
+	'derived' 'reference' FeatureDeclaration (multiplicity=Multiplicity)?
 ;
 
 Multiplicity: 
@@ -250,14 +260,9 @@ ManyMultiplicity:
 	{ManyMultiplicity} '[0..*]'
 ;
 
-
-VariableTyping: 
-	VariableTypeReference
-	| DataType
-;
-
-VariableTypeReference: 
-	reference=[VariableType] (optional?='[0..1]' | '[1..1]')?
+Typing:
+    DataType
+    | ReferenceTyping
 ;
 
 DataType: 
@@ -271,7 +276,11 @@ IntegerType:
 
 BooleanType: 
 	{BooleanType} 'Boolean'
-; 
+;
+
+ReferenceTyping:
+    {ReferenceTyping} reference=ChainReferenceExpression
+;
 
 // Expressions
 
