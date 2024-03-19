@@ -29,8 +29,8 @@ class CrossroadsTest {
             reader.read()
 
             val targets = reader.rootElements.flatMap {
-                it.target
-            }.filter {
+                it.types
+            }.filterIsInstance<Target>().filter {
                 !it.isAbstract
             }
 
@@ -81,8 +81,8 @@ class CrossroadsTest {
             "--cex", tracePath,
             "--stacktrace",
         )
-//            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-//            .redirectError(ProcessBuilder.Redirect.INHERIT)
+            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+            .redirectError(ProcessBuilder.Redirect.INHERIT)
             .start()
 
         process.waitFor(60, TimeUnit.MINUTES)
