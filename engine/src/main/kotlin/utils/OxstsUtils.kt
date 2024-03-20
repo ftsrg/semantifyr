@@ -1,11 +1,14 @@
 package hu.bme.mit.gamma.oxsts.engine.utils
 
 import hu.bme.mit.gamma.oxsts.engine.transformation.OxstsFactory
+import hu.bme.mit.gamma.oxsts.model.oxsts.BooleanType
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.Containment
 import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Element
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
+import hu.bme.mit.gamma.oxsts.model.oxsts.IntegerType
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceTyping
 import hu.bme.mit.gamma.oxsts.model.oxsts.Type
@@ -31,15 +34,15 @@ fun ChainReferenceExpression.dropLast(n: Int): ChainReferenceExpression {
     }
 }
 
-fun ChainReferenceExpression.first(): ChainReferenceExpression {
+fun ChainReferenceExpression.onlyFirst(): ChainReferenceExpression {
     return OxstsFactory.createChainReferenceExpression().also {
-        it.chains += chains.first()
+        it.chains += chains.first().copy()
     }
 }
 
-fun ChainReferenceExpression.last(): ChainReferenceExpression {
+fun ChainReferenceExpression.onlyLast(): ChainReferenceExpression {
     return OxstsFactory.createChainReferenceExpression().also {
-        it.chains += chains.last()
+        it.chains += chains.last().copy()
     }
 }
 
@@ -70,8 +73,8 @@ val ChainingExpression.element
 val Feature.isRedefine
     get() = redefines != null
 
-inline fun <reified T : Element> ReferenceExpression.typedEvaluateElement(): T {
-    val element = evaluateElement()
+inline fun <reified T : Element> ReferenceExpression.typedReferencedElement(): T {
+    val element = referencedElement()
 
     check(element is T) {
         "Reference $this must point to element of type ${T::class.qualifiedName}"
@@ -80,19 +83,54 @@ inline fun <reified T : Element> ReferenceExpression.typedEvaluateElement(): T {
     return element
 }
 
-fun ReferenceExpression.evaluateElement(): Element {
+fun ReferenceExpression.referencedElement(): Element {
     require(this is ChainReferenceExpression)
+    require(chains.any())
 
-    return chains.last().evaluateElement()
+    return chains.last().referencedElement()
 }
 
-fun ChainingExpression.evaluateElement(): Element {
+fun ChainingExpression.referencedElement(): Element {
     require(this is DeclarationReferenceExpression) {
         "Expression $this must be DeclarationReferenceExpression"
     }
 
     return element
 }
+
+// TODO create caching containment and variable query
+
+val Feature.allContainments: List<Containment>
+    get() = allFeatures.filterIsInstance<Containment>()
+
+val Feature.allFeatures: List<Feature>
+    get() = type.allFeatures
+
+val Feature.allVariables: List<Variable>
+    get() = type.allVariables
+
+val Type.allFeatures: List<Feature>
+    get() {
+        val list = mutableListOf<Feature>()
+        list += features
+        if (supertype != null) {
+            list += supertype.allFeatures
+        }
+        return list
+    }
+
+val Type.allVariables: List<Variable>
+    get() {
+        val list = mutableListOf<Variable>()
+        list += variables
+        if (supertype != null) {
+            list += supertype.allVariables
+        }
+        return list
+    }
+
+val Feature.isDataType
+    get() = typing is IntegerType || typing is BooleanType
 
 
 val Feature.allSubsets: Set<Feature>

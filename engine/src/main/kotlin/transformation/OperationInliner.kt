@@ -24,13 +24,13 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.SelfReference
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
 
-class InlineOperationTransformer(
+class OperationInliner(
     private val context: Instance
 ) {
     fun inlineOperation(operation: InlineOperation): Operation {
         return when (operation) {
             is InlineCall -> {
-                val containerInstance = context.expressionEvaluator.evaluateInstanceOrNull(operation.reference.asChainReferenceExpression().dropLast(1))
+                val containerInstance = context.expressionEvaluator.evaluateInstanceReferenceOrNull(operation.reference.asChainReferenceExpression().dropLast(1))
 
                 if (containerInstance == null) {
                     return OxstsFactory.createEmptyOperation()
@@ -76,7 +76,7 @@ class InlineOperationTransformer(
     }
 
     private fun inlineCallsFromComposite(inlineComposite: InlineComposite): List<InlineCall> {
-        val instanceSet = context.expressionEvaluator.evaluateInstanceSet(inlineComposite.feature)
+        val instanceSet = context.expressionEvaluator.evaluateInstanceSetReference(inlineComposite.feature)
 
         val baseFeature = inlineComposite.feature.asChainReferenceExpression().dropLast(1)
         val transitionReference = inlineComposite.transition.asChainReferenceExpression()

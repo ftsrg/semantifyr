@@ -1,7 +1,8 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
 import hu.bme.mit.gamma.oxsts.engine.utils.dropLast
-import hu.bme.mit.gamma.oxsts.engine.utils.typedEvaluateElement
+import hu.bme.mit.gamma.oxsts.engine.utils.isDataType
+import hu.bme.mit.gamma.oxsts.engine.utils.typedReferencedElement
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Containment
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
@@ -30,6 +31,8 @@ object Instantiator {
             instanceQueue += instanceObject.children
         }
 
+        // TODO: set reference bindings evaluates and adds all referenced instances to the reference hierarchy.
+        //  Is this correct, or should we evaluate every time?
         setReferenceBindings(rootInstance)
 
         return rootInstance
@@ -64,23 +67,23 @@ object Instantiator {
 
     private fun Instance.resolveReferenceBindings() {
         for (feature in type.features.filterIsInstance<Reference>()) {
-            if (feature.expression != null) {
+            if (!feature.isDataType && feature.expression != null) {
                 place(feature, resolveBinding(feature))
             }
         }
     }
 
-    private fun Instance.resolveBinding(feature: Feature): List<Instance> = when (feature) {
-        is Containment -> featureMap[feature] ?: emptyList()
+    private fun Instance.resolveBinding(feature: Feature): Set<Instance> = when (feature) {
+        is Containment -> featureMap[feature] ?: emptySet()
         is Reference -> {
             if (feature.expression == null) { // not bound reference -> take actual contents
-                featureMap[feature] ?: emptyList()
+                featureMap[feature] ?: emptySet()
             } else {
                 val chainingExpression = feature.expression as ChainReferenceExpression
 
                 val context = expressionEvaluator.findFirstValidContext(chainingExpression)
-                val holder = context.expressionEvaluator.evaluateInstance(chainingExpression.dropLast(1))
-                val referencedFeature = chainingExpression.typedEvaluateElement<Feature>()
+                val holder = context.expressionEvaluator.evaluateInstanceReference(chainingExpression.dropLast(1))
+                val referencedFeature = chainingExpression.typedReferencedElement<Feature>()
 
                 holder.resolveBinding(referencedFeature) // recurse, until a free feature is found
             }

@@ -1,11 +1,32 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
+import hu.bme.mit.gamma.oxsts.engine.utils.allContainments
+import hu.bme.mit.gamma.oxsts.engine.utils.allFeatures
 import hu.bme.mit.gamma.oxsts.engine.utils.allSubsets
+import hu.bme.mit.gamma.oxsts.engine.utils.allVariables
 import hu.bme.mit.gamma.oxsts.engine.utils.type
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
 import hu.bme.mit.gamma.oxsts.model.oxsts.Containment
-import hu.bme.mit.gamma.oxsts.model.oxsts.Type
 import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
+
+class FeatureValueManager(
+    val instance: Instance
+) {
+
+    val featureValueContainers = instance.type.allFeatures.associateWith {
+        FeatureValueContainer(instance, it)
+    }
+
+}
+
+class FeatureValueContainer(
+    val instance: Instance,
+    val feature: Feature
+) {
+
+    lateinit var value: DataType
+
+}
 
 open class Instance(
     val containment: Containment,
@@ -16,23 +37,25 @@ open class Instance(
     // FIXME: extract all accesses!
     val children = mutableSetOf<Instance>()
 
+    val featureValueManager = FeatureValueManager(this)
+
     // FIXME: extract all accesses!
-    val featureMap = mutableMapOf<Feature, MutableList<Instance>>()
+    val featureMap = mutableMapOf<Feature, MutableSet<Instance>>()
+
     // FIXME: extract all accesses!
     val variableMap = mutableMapOf<Variable, Variable>()
     // FIXME: extract all accesses!
     val featureEnumMap = mutableMapOf<Feature, EnumMapping>()
 
     val expressionEvaluator = ExpressionEvaluator(this)
-    val operationTransformer = InlineOperationTransformer(this)
+    val operationTransformer = OperationInliner(this)
     val transitionResolver = TransitionResolver(this)
-    val instanceEvaluator = InstanceEvaluator(this)
+    val featureEvaluator = FeatureEvaluator(this)
     val variableTransformer = VariableTransformer(this)
 
-    private val allContainments = containment.allContainments
-    private val allVariables = containment.allVariables
-
     fun instantiateChildren() {
+        val allContainments = containment.allContainments
+
         for (containment in allContainments) {
             fixImplicitType(containment)
             val instance = Instance(containment, this)
@@ -56,6 +79,8 @@ open class Instance(
     }
 
     fun instantiateVariables(): List<Variable> {
+        val allVariables = containment.allVariables
+
         for (variable in allVariables) {
             variableMap[variable] = variableTransformer.featureToEnum(variable)
         }
@@ -65,7 +90,7 @@ open class Instance(
 
     fun place(feature: Feature, instance: Instance) {
         val instances = featureMap.computeIfAbsent(feature) {
-            mutableListOf()
+            mutableSetOf()
         }
         instances += instance
         for (subset in feature.allSubsets) {
@@ -88,34 +113,6 @@ open class Instance(
     }
 
 }
-
-// TODO create caching containment and variable query
-
-val Containment.allContainments: List<Containment>
-    get() = type.allContainments
-
-val Containment.allVariables: List<Variable>
-    get() = type.allVariables
-
-val Type.allContainments: List<Containment>
-    get() {
-        val list = mutableListOf<Containment>()
-        list += features.filterIsInstance<Containment>()
-        if (supertype != null) {
-            list += supertype.allContainments
-        }
-        return list
-    }
-
-val Type.allVariables: List<Variable>
-    get() {
-        val list = mutableListOf<Variable>()
-        list += variables
-        if (supertype != null) {
-            list += supertype.allVariables
-        }
-        return list
-    }
 
 val nothingType = OxstsFactory.createType().also {
     it.name = "NothingType" // TODO: need character readable by Theta, but not writeable by in Oxsts

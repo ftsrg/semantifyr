@@ -74,6 +74,11 @@ type RaiseEventAction : Action {
 
 type SetTimeoutAction : Action {
     reference timeout : Timeout[1..1]
+    reference amount : Integer = 1
+
+    override tran {
+        timeout.deltaTime := amount
+    }
 }
 
 // Component.oxsts
@@ -251,18 +256,6 @@ type Transition : AbstractTransition {
 
 // Controller.oxsts
 
-type SetTimeoutActionOneS : SetTimeoutAction {
-    override tran {
-        timeout.deltaTime := 1
-    }
-}
-
-type SetTimeoutActionTwoS : SetTimeoutAction {
-    override tran {
-        timeout.deltaTime := 2
-    }
-}
-
 type Controller : Statechart {
     containment policeEvent :> inputEvents : Event
 
@@ -293,7 +286,7 @@ type Controller : Statechart {
                     reference ::> parent : Region = OperatingRegion
                     reference ::> parentState : State = Operating
 
-                    containment ea1 :> entryActions : SetTimeoutActionOneS {
+                    containment ea1 :> entryActions : SetTimeoutAction {
                         reference ::> timeout : Timeout = trafficTimeout
                     }
                 }
@@ -315,8 +308,9 @@ type Controller : Statechart {
                     reference ::> parent : Region = OperatingRegion
                     reference ::> parentState : State = Operating
 
-                    containment a :> entryActions : SetTimeoutActionTwoS {
+                    containment a :> entryActions : SetTimeoutAction {
                         reference ::> timeout : Timeout = trafficTimeout
+                        reference ::> amount : Integer = 2
                     }
                 }
 
@@ -337,7 +331,7 @@ type Controller : Statechart {
                     reference ::> parent : Region = OperatingRegion
                     reference ::> parentState : State = Operating
 
-                    containment a :> entryActions : SetTimeoutActionOneS {
+                    containment a :> entryActions : SetTimeoutAction {
                         reference ::> timeout : Timeout = trafficTimeout
                     }
                 }
@@ -362,8 +356,9 @@ type Controller : Statechart {
                     reference ::> parent : Region = OperatingRegion
                     reference ::> parentState : State = Operating
 
-                    containment a :> entryActions : SetTimeoutActionTwoS {
+                    containment a :> entryActions : SetTimeoutAction {
                         reference ::> timeout : Timeout = trafficTimeout
+                        reference ::> amount : Integer = 2
                     }
                 }
 
@@ -384,7 +379,7 @@ type Controller : Statechart {
                     reference ::> parent : Region = OperatingRegion
                     reference ::> parentState : State = Operating
 
-                    containment a :> entryActions : SetTimeoutActionOneS {
+                    containment a :> entryActions : SetTimeoutAction {
                         reference ::> timeout : Timeout = trafficTimeout
                     }
                 }
@@ -566,7 +561,7 @@ type TrafficLightCtrl : Statechart {
                     reference ::> parent : Region = InterruptedRegion
                     reference ::> parentState : State = Interrupted
 
-                    containment ea1 :> entryActions : SetTimeoutActionOneS {
+                    containment ea1 :> entryActions : SetTimeoutAction {
                         reference ::> timeout : Timeout = blinkingTimeout
                     }
                     containment ea2 :> entryActions : RaiseEventAction {
@@ -598,7 +593,7 @@ type TrafficLightCtrl : Statechart {
                     reference ::> parent : Region = InterruptedRegion
                     reference ::> parentState : State = Interrupted
 
-                    containment ea1 :> entryActions : SetTimeoutActionOneS {
+                    containment ea1 :> entryActions : SetTimeoutAction {
                         reference ::> timeout : Timeout = blinkingTimeout
                     }
                     containment ea2 :> entryActions : RaiseEventAction {

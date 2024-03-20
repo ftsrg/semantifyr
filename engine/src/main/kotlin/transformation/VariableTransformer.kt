@@ -48,11 +48,11 @@ class VariableTransformer(
 
         val feature = typing.referencedElement as Feature
 
-        val contextInstance = instance.expressionEvaluator.evaluateInstance(variableExpression.asChainReferenceExpression().dropLast(1))
-        val featureHolder = contextInstance.expressionEvaluator.evaluateInstance(typing.reference.dropLast(1))
+        val contextInstance = instance.expressionEvaluator.evaluateInstanceReference(variableExpression.asChainReferenceExpression().dropLast(1))
+        val featureHolder = contextInstance.expressionEvaluator.evaluateInstanceReference(typing.reference.dropLast(1))
         val enumMapping = featureHolder.featureEnumMap[feature] ?: error("There is no enum mapping for $feature in $featureHolder")
 
-        val instanceObject = instance.expressionEvaluator.evaluateInstance(expression)
+        val instanceObject = instance.expressionEvaluator.evaluateInstanceReference(expression)
         val literal = enumMapping.literalMapping[instanceObject] ?: error("Referenced instance object $instanceObject is not in referenced feature $feature in $contextInstance")
 
         return OxstsFactory.createChainReferenceExpression(literal)

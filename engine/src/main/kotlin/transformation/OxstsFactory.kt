@@ -10,6 +10,7 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.EnumLiteral
 import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
 import hu.bme.mit.gamma.oxsts.model.oxsts.InlineCall
 import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralBoolean
+import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.gamma.oxsts.model.oxsts.NotOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.Operation
 import hu.bme.mit.gamma.oxsts.model.oxsts.OrOperator
@@ -71,6 +72,12 @@ object OxstsFactory : OxstsFactoryImpl() {
     fun createLiteralBoolean(value: Boolean): LiteralBoolean {
         return createLiteralBoolean().also {
             it.isValue = value
+        }
+    }
+
+    fun createLiteralInteger(value: Int): LiteralInteger {
+        return createLiteralInteger().also {
+            it.value = value
         }
     }
 

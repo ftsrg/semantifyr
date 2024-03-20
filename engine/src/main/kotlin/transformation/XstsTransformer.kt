@@ -15,6 +15,7 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Enum
 import hu.bme.mit.gamma.oxsts.model.oxsts.EqualityOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
+import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
 import hu.bme.mit.gamma.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.InequalityOperator
@@ -60,6 +61,7 @@ class XstsTransformer {
 
         xsts.rewriteFeatureTypingVariableExpression(rootInstance)
         xsts.rewriteVariableAccesses(rootInstance)
+        xsts.rewriteFeatureRefences(rootInstance)
 
         xsts.enums += xsts.variables.asSequence().map {
             it.typing
@@ -223,11 +225,29 @@ class XstsTransformer {
             val reference = referenceExpression.chains.last() as DeclarationReferenceExpression
             val oldVariable = reference.element as Variable
 
-            val instanceObject = rootInstance.expressionEvaluator.evaluateInstance(referenceExpression.dropLast(1))
+            val instanceObject = rootInstance.expressionEvaluator.evaluateInstanceReference(referenceExpression.dropLast(1))
             val transformedVariable = instanceObject.variableMap[oldVariable]!!
 
             val newExpression = OxstsFactory.createChainReferenceExpression(transformedVariable)
             EcoreUtil2.replace(referenceExpression, newExpression)
+        }
+    }
+
+    private fun XSTS.rewriteFeatureRefences(rootInstance: Instance) {
+        val references = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).filter {
+            it.lastChain().element is Feature
+        }
+
+        for (reference in references) {
+            val evaluation = rootInstance.expressionEvaluator.evaluate(reference)
+
+            val expression = when (evaluation) {
+                is BooleanData -> OxstsFactory.createLiteralBoolean(evaluation.value)
+                is IntegerData -> OxstsFactory.createLiteralInteger(evaluation.value)
+                else -> error("")
+            }
+
+            EcoreUtil2.replace(reference, expression)
         }
     }
 
