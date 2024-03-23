@@ -13,6 +13,7 @@ open class Instance(
 ) {
     val type = containment.type
 
+
     // TODO: should be immutable outside of this class
     val children = mutableSetOf<Instance>()
 
