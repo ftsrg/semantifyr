@@ -2,7 +2,6 @@ package hu.bme.mit.gamma.oxsts.engine.transformation
 
 import hu.bme.mit.gamma.oxsts.engine.utils.dropLast
 import hu.bme.mit.gamma.oxsts.engine.utils.lastChain
-import hu.bme.mit.gamma.oxsts.engine.utils.onlyLast
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
 import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralBoolean
@@ -32,12 +31,25 @@ class ExpressionEvaluator(
             return context
         } catch (e: RuntimeException) {
             require(context.parent != null) {
-                "Expression $expression could not be found in the Context tree!"
+                "Expression $expression could not be evaluated in the Context tree!"
             }
 
             return context.parent.expressionEvaluator.findFirstValidContext(expression)
         }
     }
+
+    fun evaluateBottomUp(expression: Expression): DataType {
+        try {
+            return evaluate(expression)
+        } catch (e: RuntimeException) {
+            require(context.parent != null) {
+                "Expression $expression could not be evaluated in the Context tree!"
+            }
+
+            return context.parent.expressionEvaluator.evaluateBottomUp(expression)
+        }
+    }
+
 
     fun evaluateBoolean(expression: Expression): Boolean {
         val result = evaluate(expression)
