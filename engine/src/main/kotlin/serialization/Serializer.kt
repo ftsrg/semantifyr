@@ -229,7 +229,7 @@ object Serializer {
                     else -> "UNKNOWN_TYPE$$$"
                 }
             }
-
+            // FIXME: we should create error markers for cases such as this
             else -> "UNKNOWN_TYPE$$$"
         }
 

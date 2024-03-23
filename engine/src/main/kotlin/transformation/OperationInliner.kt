@@ -155,12 +155,12 @@ class OperationInliner(
         localContext: Instance,
         context: MutableList<ChainingExpression> = mutableListOf()
     ): List<ChainingExpression> {
-        val instance = localContext.containment
+        val containment = localContext.containment
         val parent = localContext.parent ?: return emptyList()
 
         createReferenceToContext(parent, context)
 
-        context += OxstsFactory.createDeclarationReference(instance)
+        context += OxstsFactory.createDeclarationReference(containment)
 
         return context
     }
