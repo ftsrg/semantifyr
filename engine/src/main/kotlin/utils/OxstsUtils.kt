@@ -24,13 +24,13 @@ fun ReferenceExpression.asChainReferenceExpression(): ChainReferenceExpression {
 
 fun ChainReferenceExpression.drop(n: Int): ChainReferenceExpression {
     return OxstsFactory.createChainReferenceExpression().also {
-        it.chains += chains.copy().drop(n)
+        it.chains += chains.drop(n).copy()
     }
 }
 
 fun ChainReferenceExpression.dropLast(n: Int): ChainReferenceExpression {
     return OxstsFactory.createChainReferenceExpression().also {
-        it.chains += chains.copy().dropLast(n)
+        it.chains += chains.dropLast(n).copy()
     }
 }
 
@@ -52,8 +52,7 @@ fun ChainReferenceExpression.lastChain(): ChainingExpression {
 
 fun ChainReferenceExpression.appendWith(chainReferenceExpression: ChainReferenceExpression): ChainReferenceExpression {
     return OxstsFactory.createChainReferenceExpression().also {
-        it.chains += chains.copy()
-        it.chains += chainReferenceExpression.chains.copy()
+        it.chains += chains.copy() + chainReferenceExpression.chains.copy()
     }
 }
 
@@ -90,12 +89,17 @@ fun ReferenceExpression.referencedElement(): Element {
     return chains.last().referencedElement()
 }
 
+
 fun ChainingExpression.referencedElement(): Element {
-    require(this is DeclarationReferenceExpression) {
-        "Expression $this must be DeclarationReferenceExpression"
+    return referencedElementOrNull() ?: error("Expression $this must be DeclarationReferenceExpression")
+}
+
+fun ChainingExpression.referencedElementOrNull(): Element? {
+    if (this is DeclarationReferenceExpression) {
+        return element
     }
 
-    return element
+    return null
 }
 
 // TODO create caching containment and variable query
