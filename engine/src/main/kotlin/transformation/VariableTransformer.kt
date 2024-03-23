@@ -21,7 +21,17 @@ class EnumMapping(
 class VariableTransformer(
     private val instance: Instance
 ) {
-    fun featureToEnum(variable: Variable): Variable {
+    private val variableMap = mutableMapOf<Variable, Variable>()
+    private val featureEnumMap = mutableMapOf<Feature, EnumMapping>()
+
+    val allTransformedVariables
+        get() = variableMap.values.toList()
+
+    operator fun get(oldVariable: Variable): Variable {
+        return variableMap[oldVariable] ?: error("$oldVariable has not been transformed!")
+    }
+
+    fun transform(variable: Variable) {
         val newVariable = variable.copy()
 
         newVariable.name = "${instance.fullyQualifiedName}__${variable.name}"
@@ -29,14 +39,14 @@ class VariableTransformer(
         if (variable.isFeatureTyped) {
             val typing = variable.typing
             if (typing is ReferenceTyping) {
-                newVariable.typing = typing.featureToEnum(variable.isOptional)
+                newVariable.typing = typing.transform(variable.isOptional)
                 if (variable.expression != null) {
                     newVariable.expression = transformExpression(OxstsFactory.createChainReferenceExpression(variable), variable.expression as ReferenceExpression, variable)
                 }
             }
         }
 
-        return newVariable
+        variableMap[variable] = newVariable
     }
 
     fun transformExpression(variableExpression: ReferenceExpression, expression: ReferenceExpression, typedVariable: Variable): Expression {
@@ -48,40 +58,40 @@ class VariableTransformer(
 
         val feature = typing.referencedElement as Feature
 
-        val contextInstance = instance.expressionEvaluator.evaluateInstanceReference(variableExpression.asChainReferenceExpression().dropLast(1))
-        val featureHolder = contextInstance.expressionEvaluator.evaluateInstanceReference(typing.reference.dropLast(1))
-        val enumMapping = featureHolder.featureEnumMap[feature] ?: error("There is no enum mapping for $feature in $featureHolder")
+        val contextInstance = instance.expressionEvaluator.evaluateInstance(variableExpression.asChainReferenceExpression().dropLast(1))
+        val featureHolder = contextInstance.expressionEvaluator.evaluateInstance(typing.reference.dropLast(1))
+        val enumMapping = featureHolder.variableTransformer.featureEnumMap[feature] ?: error("There is no enum mapping for $feature in $featureHolder")
 
-        val instanceObject = instance.expressionEvaluator.evaluateInstanceReference(expression)
-        val literal = enumMapping.literalMapping[instanceObject] ?: error("Referenced instance object $instanceObject is not in referenced feature $feature in $contextInstance")
+        val instance = instance.expressionEvaluator.evaluateInstance(expression)
+        val literal = enumMapping.literalMapping[instance] ?: error("Referenced instance object $instance is not in referenced feature $feature in $contextInstance")
 
         return OxstsFactory.createChainReferenceExpression(literal)
     }
 
-    private fun ReferenceTyping.featureToEnum(isOptional: Boolean): ReferenceTyping {
+    private fun ReferenceTyping.transform(isOptional: Boolean): ReferenceTyping {
         if (referencedElement !is Feature) {
             return this
         }
 
-        val enum = (referencedElement as Feature).featureToEnum(isOptional)
+        val enum = (referencedElement as Feature).transform(isOptional)
 
         return OxstsFactory.createReferenceTyping().also {
             it.reference = OxstsFactory.createChainReferenceExpression(enum)
         }
     }
 
-    private fun Feature.featureToEnum(isOptional: Boolean): Enum {
-        if (instance.featureEnumMap.containsKey(this)) {
-            return instance.featureEnumMap[this]!!.enum
+    private fun Feature.transform(isOptional: Boolean): Enum {
+        if (featureEnumMap.containsKey(this)) {
+            return featureEnumMap[this]!!.enum
         }
 
         val enum = OxstsFactory.createEnum()
         val literalMapping = mutableMapOf<Instance, EnumLiteral>()
 
-        instance.featureEnumMap[this] = EnumMapping(enum, literalMapping)
+        featureEnumMap[this] = EnumMapping(enum, literalMapping)
 
         val instances = mutableListOf<Instance>()
-        instances += instance.featureMap[this] ?: emptyList()
+        instances += instance.featureContainer[this]
 
         if (isOptional) {
             instances += NothingInstance

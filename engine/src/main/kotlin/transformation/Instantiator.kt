@@ -26,9 +26,9 @@ object Instantiator {
         instanceQueue += rootInstance
 
         while (instanceQueue.any()) {
-            val instanceObject = instanceQueue.removeFirst()
-            instanceObject.instantiateChildren()
-            instanceQueue += instanceObject.children
+            val instance = instanceQueue.removeFirst()
+            instance.instantiateChildren()
+            instanceQueue += instance.children
         }
 
         // TODO: set reference bindings evaluates and adds all referenced instances to the reference hierarchy.
@@ -57,9 +57,9 @@ object Instantiator {
         val variables = mutableListOf<Variable>()
 
         while (instanceQueue.any()) {
-            val instanceObject = instanceQueue.removeFirst()
-            variables += instanceObject.instantiateVariables()
-            instanceQueue += instanceObject.children
+            val instance = instanceQueue.removeFirst()
+            variables += instance.instantiateVariables()
+            instanceQueue += instance.children
         }
 
         return variables
@@ -68,21 +68,24 @@ object Instantiator {
     private fun Instance.resolveReferenceBindings() {
         for (feature in type.features.filterIsInstance<Reference>()) {
             if (!feature.isDataType && feature.expression != null) {
-                place(feature, resolveBinding(feature))
+                featureContainer.place(feature, resolveBinding(feature))
             }
         }
     }
 
     private fun Instance.resolveBinding(feature: Feature): Set<Instance> = when (feature) {
-        is Containment -> featureMap[feature] ?: emptySet()
+        is Containment -> featureContainer[feature]
         is Reference -> {
             if (feature.expression == null) { // not bound reference -> take actual contents
-                featureMap[feature] ?: emptySet()
+                // FIXME: what if this reference is subsetted by a bound reference?
+                //  In that case, we must resolve all of its subsetters before
+                //  returning the actual instances!
+                featureContainer[feature]
             } else {
                 val chainingExpression = feature.expression as ChainReferenceExpression
 
                 val context = expressionEvaluator.findFirstValidContext(chainingExpression)
-                val holder = context.expressionEvaluator.evaluateInstanceReference(chainingExpression.dropLast(1))
+                val holder = context.expressionEvaluator.evaluateInstance(chainingExpression.dropLast(1))
                 val referencedFeature = chainingExpression.typedReferencedElement<Feature>()
 
                 holder.resolveBinding(referencedFeature) // recurse, until a free feature is found

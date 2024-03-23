@@ -18,7 +18,7 @@ object ExpressionOptimizer {
             anyOptimized = anyOptimized || optimized
         } while (optimized)
 
-        return optimized
+        return anyOptimized
     }
 
     private fun Expression.optimizeInternal(): Boolean {

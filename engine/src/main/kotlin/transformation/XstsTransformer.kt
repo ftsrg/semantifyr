@@ -49,8 +49,8 @@ class XstsTransformer {
 
         xsts.variables += Instantiator.instantiateVariablesTree(rootInstance)
 
-        val init = rootInstance.transitionResolver.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createInitTransitionExpression()))
-        val tran = rootInstance.transitionResolver.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createMainTransitionExpression()))
+        val init = rootInstance.expressionEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createInitTransitionExpression()))
+        val tran = rootInstance.expressionEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createMainTransitionExpression()))
 
         xsts.init = init.copy() // TODO handle multiple inits?
         xsts.transition = tran.copy() // TODO handle multiple trans?
@@ -89,25 +89,22 @@ class XstsTransformer {
 
             when (operation) {
                 is InlineOperation -> {
-                    val inlined = rootInstance.operationTransformer.inlineOperation(operation)
+                    val inlined = rootInstance.operationInliner.inlineOperation(operation)
                     EcoreUtil2.replace(operation, inlined)
                     processorQueue += inlined
                 }
-
                 is IfOperation -> {
                     processorQueue += operation.body
                     if (operation.`else` != null) {
                         processorQueue += operation.`else`
                     }
                 }
-
                 is ChoiceOperation -> {
                     processorQueue += operation.operation
                     if (operation.`else` != null) {
                         processorQueue += operation.`else`
                     }
                 }
-
                 is CompositeOperation -> {
                     processorQueue += operation.operation
                 }
@@ -115,19 +112,6 @@ class XstsTransformer {
         }
     }
 
-    /**
-     * TODO
-     *
-     * Else branches cannot be mapped simply like this.
-     * This only works when the assume (...) operation is the first in a sequence, since otherwise
-     * we must evaluate all preceding operations first, and THEN the guard expression -> hence
-     * the simple inlining will not work.
-     *
-     * Other way: create "simulation" operations, meaning replace all real variable calls with
-     * local variables, negate all assumptions and inline them in the else branch. This will
-     * always behave correctly, although it is hard to calculate and would most likely reduce
-     * performance on the theta side (without optimizations).
-     */
     private fun Transition.rewriteChoiceElse() {
         for (op in operation) {
             op.rewriteChoiceElse()
@@ -182,36 +166,35 @@ class XstsTransformer {
             is AssignmentOperation -> OxstsFactory.createLiteralBoolean(true)
             is HavocOperation -> OxstsFactory.createLiteralBoolean(true)
             is SequenceOperation -> {
+                // all branches can be executed
                 operation.map {
                     it.calculateAssumption()
                 }.reduceOrNull { lhs, rhs ->
                     OxstsFactory.createAndOperator(lhs, rhs)
                 } ?: OxstsFactory.createLiteralBoolean(true)
             }
-
             is ChoiceOperation -> {
+                // any branch can be executed
                 operation.map {
                     it.calculateAssumption()
                 }.reduceOrNull { lhs, rhs ->
                     OxstsFactory.createOrOperator(lhs, rhs)
                 } ?: OxstsFactory.createLiteralBoolean(true)
             }
-
             is IfOperation -> {
-                OxstsFactory.createLiteralBoolean(true)
+                val guardAssumption = guard.copy()
+                val notGuardAssumption = OxstsFactory.createNotOperator(guard.copy())
+                val bodyAssumption = body.calculateAssumption()
+                val elseAssumption = `else`?.calculateAssumption() ?: OxstsFactory.createLiteralBoolean(true)
 
-//                val guardAssumption = guard.copy()
-//                val notGuardAssumption = OxstsFactory.createNotOperator(guard.copy())
-//                val bodyAssumption = body.calculateAssumption()
-//                val elseAssumption = `else`?.calculateAssumption() ?: OxstsFactory.createLiteralBoolean(true)
-//
-//                OxstsFactory.createOrOperator(
-//                    OxstsFactory.createAndOperator(guardAssumption, bodyAssumption),
-//                    OxstsFactory.createAndOperator(notGuardAssumption, elseAssumption),
-//                )
+                // if can be executed, if the guard is true and the body can be executed,
+                //  or the guard is false and the else can be executed
+                OxstsFactory.createOrOperator(
+                    OxstsFactory.createAndOperator(guardAssumption, bodyAssumption),
+                    OxstsFactory.createAndOperator(notGuardAssumption, elseAssumption),
+                )
             }
-
-            else -> error("Unsupported operation!")
+            else -> error("Unknown operation: $this!")
         }
     }
 
@@ -225,8 +208,8 @@ class XstsTransformer {
             val reference = referenceExpression.chains.last() as DeclarationReferenceExpression
             val oldVariable = reference.element as Variable
 
-            val instanceObject = rootInstance.expressionEvaluator.evaluateInstanceReference(referenceExpression.dropLast(1))
-            val transformedVariable = instanceObject.variableMap[oldVariable]!!
+            val instance = rootInstance.expressionEvaluator.evaluateInstance(referenceExpression.dropLast(1))
+            val transformedVariable = instance.variableTransformer[oldVariable]
 
             val newExpression = OxstsFactory.createChainReferenceExpression(transformedVariable)
             EcoreUtil2.replace(referenceExpression, newExpression)
@@ -244,7 +227,7 @@ class XstsTransformer {
             val expression = when (evaluation) {
                 is BooleanData -> OxstsFactory.createLiteralBoolean(evaluation.value)
                 is IntegerData -> OxstsFactory.createLiteralInteger(evaluation.value)
-                else -> error("")
+                else -> error("Feature reference is not an XSTS-compatible expression type!")
             }
 
             EcoreUtil2.replace(reference, expression)

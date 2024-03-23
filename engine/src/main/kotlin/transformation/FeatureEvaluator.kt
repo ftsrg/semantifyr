@@ -1,47 +1,99 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
-import hu.bme.mit.gamma.oxsts.model.oxsts.*
+import hu.bme.mit.gamma.oxsts.engine.utils.dropLast
+import hu.bme.mit.gamma.oxsts.engine.utils.isDataType
+import hu.bme.mit.gamma.oxsts.engine.utils.lastChain
+import hu.bme.mit.gamma.oxsts.engine.utils.referencedElement
+import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
+import hu.bme.mit.gamma.oxsts.model.oxsts.NothingReference
+import hu.bme.mit.gamma.oxsts.model.oxsts.Reference
+import hu.bme.mit.gamma.oxsts.model.oxsts.SelfReference
 
 class FeatureEvaluator(
     private val context: Instance
 ) {
 
-    fun evaluateInstanceSet(reference: ReferenceExpression): Set<Instance> {
-        require(reference is ChainReferenceExpression) {
-            "Expression $this must be ChainReferenceExpression"
+    fun evaluate(expression: ChainReferenceExpression): DataType {
+        if (expression.chains.size == 0) {
+            // this is a Self expression, return context
+            return InstanceData(setOf(context))
         }
 
+        val context = evaluateInstance(expression.dropLast(1))
+
+        return context.featureEvaluator.evaluate(expression.lastChain())
+    }
+
+    private fun evaluate(expression: ChainingExpression): DataType {
+        return when (expression) {
+            is NothingReference -> InstanceData(setOf(NothingInstance))
+            is SelfReference -> InstanceData(setOf(context))
+            is DeclarationReferenceExpression -> {
+                val feature = expression.referencedElement() as Feature
+                val actualFeature = RedefinitionHandler.resolveFeature(context.type, feature)
+
+                if (actualFeature.isDataType) {
+                    check(actualFeature is Reference)
+
+                    context.expressionEvaluator.evaluate(actualFeature.expression)
+                } else {
+                    val instanceSet = context.featureEvaluator.evaluateInstanceSet(expression)
+
+                    InstanceData(instanceSet)
+                }
+            }
+            else -> error("Expression $this must be a DeclarationReferenceExpression!")
+        }
+    }
+
+    private fun evaluateInstance(reference: ChainReferenceExpression): Instance {
+        return evaluateInstanceOrNull(reference) ?: error("Reference points to empty feature or Nothing literal!")
+    }
+
+    private fun evaluateInstanceOrNull(reference: ChainReferenceExpression): Instance? {
+        val instanceSet = evaluateInstanceSet(reference)
+
+        if (instanceSet.size > 1) {
+            error("Chain refers to a non-singular feature!")
+        }
+
+        return instanceSet.singleOrNull()
+    }
+
+    private fun evaluateInstanceSet(reference: ChainReferenceExpression): Set<Instance> {
         var localContext = setOf(context)
+
         for (chain in reference.chains) {
             check(localContext.size == 1) {
                 "Feature for $chain has ${localContext.size} elements!"
             }
 
-            with(localContext.single().featureEvaluator) {
-                localContext = chain.evaluateInstanceSet()
-            }
+            localContext = localContext.single().featureEvaluator.evaluateInstanceSet(chain)
         }
+
         return localContext
     }
 
-    private fun ChainingExpression.evaluateInstanceSet(): Set<Instance> {
-        return when (this) {
+    private fun evaluateInstanceSet(expression: ChainingExpression): Set<Instance> {
+        return when (expression) {
             is NothingReference -> setOf(NothingInstance)
             is SelfReference -> setOf(context)
-            is DeclarationReferenceExpression -> evaluateInstanceSet()
+            is DeclarationReferenceExpression -> evaluateInstanceSet(expression)
             else -> error("Expression $this must be a DeclarationReferenceExpression!")
         }
     }
 
-    private fun DeclarationReferenceExpression.evaluateInstanceSet(): Set<Instance> {
-        // TODO: this method should return DataType in a generic way (i.e. if feature is datatype, then return the evaluated expression)
-        require(element is Feature) {
-            error("Expression $this must refer to a feature!")
+    private fun evaluateInstanceSet(expression: DeclarationReferenceExpression): Set<Instance> {
+        require(expression.element is Feature) {
+            error("Expression $expression must refer to a feature!")
         }
 
-        val actualFeature = RedefinitionHandler.resolveFeature(context.type, element as Feature)
+        val actualFeature = RedefinitionHandler.resolveFeature(context.type, expression.element as Feature)
 
-        return context.featureMap[actualFeature] ?: emptySet()// error("No instance for feature $element!")
+        return context.featureContainer[actualFeature]
     }
 
 }

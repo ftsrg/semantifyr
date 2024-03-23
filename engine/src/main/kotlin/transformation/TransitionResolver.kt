@@ -1,15 +1,10 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
-import hu.bme.mit.gamma.oxsts.engine.utils.element
-import hu.bme.mit.gamma.oxsts.engine.utils.type
-import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
 import hu.bme.mit.gamma.oxsts.model.oxsts.HavocTransitionExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.InitTransitionExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.MainTransitionExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
 import hu.bme.mit.gamma.oxsts.model.oxsts.Type
 
@@ -17,57 +12,37 @@ class TransitionResolver(
     private val instance: Instance
 ) {
 
-    fun evaluateTransition(referenceExpression: ReferenceExpression): Transition {
-        require(referenceExpression is ChainReferenceExpression)
+    // TODO: this is a name-based redefinition handler, we should support classic redefinition
+    //  to do that, we need to add syntax support as well!
+    fun resolveTransition(expression: ChainingExpression): Transition {
+        val type = instance.type
 
-        val type = getReferencedType(referenceExpression)
-
-        val reference = referenceExpression.chains.last()
-
-        val transition = type.findTransitionUpwards(reference)
-
-        if (transition.isVirtual || transition.isOverride) {
-            return instance.type.findTransitionUpwards(reference)
-        }
-
-        return transition
+        return type.findTransitionUpwards(expression)
     }
 
-    private fun getReferencedType(referenceExpression: ReferenceExpression): Type {
-        require(referenceExpression is ChainReferenceExpression)
-
-        return if (referenceExpression.chains.size > 1) {
-            val feature = referenceExpression.chains.dropLast(1).last().element as? Feature
-            feature?.type ?: error("")
-        } else {
-            instance.type
-        }
-    }
-
-    private fun Type.findTransitionUpwards(chain: ChainingExpression): Transition {
-        val transition = getTransition(chain) ?: supertype?.findTransitionUpwards(chain)
+    private fun Type.findTransitionUpwards(expression: ChainingExpression): Transition {
+        val transition = getTransition(expression) ?: supertype?.findTransitionUpwards(expression)
 
         check(transition != null) {
-            "Transition $chain could not be found in the type hierarchy!"
+            "Transition $expression could not be found in the type hierarchy!"
         }
 
         return transition
     }
 
-    private fun Type.getTransition(chain: ChainingExpression): Transition? {
-        return when (chain) {
-            is HavocTransitionExpression -> havocTransition.singleOrNull()
-            is InitTransitionExpression -> initTransition.singleOrNull()
-            is MainTransitionExpression -> mainTransition.singleOrNull()
+    private fun Type.getTransition(expression: ChainingExpression): Transition? {
+        return when (expression) {
+            is HavocTransitionExpression -> havocTransition.firstOrNull()
+            is InitTransitionExpression -> initTransition.firstOrNull()
+            is MainTransitionExpression -> mainTransition.firstOrNull()
             is DeclarationReferenceExpression -> {
-                val reference = chain.element as Transition
+                val reference = expression.element as Transition
 
                 transitions.firstOrNull {
                     it.name == reference.name
                 }
             }
-
-            else -> null
+            else -> error("Unknown expression: $expression")
         }
     }
 

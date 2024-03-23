@@ -30,9 +30,11 @@ class OperationInliner(
     fun inlineOperation(operation: InlineOperation): Operation {
         return when (operation) {
             is InlineCall -> {
-                val containerInstance = context.expressionEvaluator.evaluateInstanceReferenceOrNull(operation.reference.asChainReferenceExpression().dropLast(1))
+                val containerInstance = context.expressionEvaluator.evaluateInstanceOrNull(operation.reference.asChainReferenceExpression().dropLast(1))
 
                 if (containerInstance == null) {
+                    // TODO: should we throw an exception here?
+                    //  If the feature has no instances, then this is a violated reference
                     return OxstsFactory.createEmptyOperation()
                 }
 
@@ -40,8 +42,7 @@ class OperationInliner(
 
                 OxstsFactory.createChoiceOperation().apply {
                     for (currentOperation in transition.operation) {
-                        this.operation += currentOperation
-                            .copy()
+                        this.operation += currentOperation.copy()
                             .rewriteInlineOperation(containerInstance, transition.parameters, operation.parameterBindings)
                     }
                 }
@@ -76,7 +77,7 @@ class OperationInliner(
     }
 
     private fun inlineCallsFromComposite(inlineComposite: InlineComposite): List<InlineCall> {
-        val instanceSet = context.expressionEvaluator.evaluateInstanceSetReference(inlineComposite.feature)
+        val instanceSet = context.expressionEvaluator.evaluateInstanceSet(inlineComposite.feature)
 
         val baseFeature = inlineComposite.feature.asChainReferenceExpression().dropLast(1)
         val transitionReference = inlineComposite.transition.asChainReferenceExpression()
@@ -118,9 +119,8 @@ class OperationInliner(
                 is SelfReference -> {
                     EcoreUtil2.delete(reference)
                 }
-
                 is NothingReference -> {}
-                else -> error("")
+                else -> error("Should not have other kind of reference")
             }
         }
 
@@ -169,6 +169,10 @@ class OperationInliner(
         containerInstance: Instance,
         parameters: List<Parameter>,
         bindings: List<ParameterBinding>
-    ) = rewriteContextDependentReferences().rewriteToContext(containerInstance, parameters).rewriteToParameters(parameters, bindings)
+    ): Operation {
+        return rewriteContextDependentReferences()
+            .rewriteToContext(containerInstance, parameters)
+            .rewriteToParameters(parameters, bindings)
+    }
 
 }
