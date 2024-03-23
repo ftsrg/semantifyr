@@ -118,6 +118,7 @@ val Type.allFeatures: List<Feature>
         val list = mutableListOf<Feature>()
         list += features
         if (supertype != null) {
+            // FIXME: recursive property accessor
             list += supertype.allFeatures
         }
         return list
@@ -128,6 +129,7 @@ val Type.allVariables: List<Variable>
         val list = mutableListOf<Variable>()
         list += variables
         if (supertype != null) {
+            // FIXME: recursive property accessor
             list += supertype.allVariables
         }
         return list
@@ -142,6 +144,7 @@ val Feature.allSubsets: Set<Feature>
         val features = subsets?.toMutableSet() ?: mutableSetOf()
 
         if (redefines != null) {
+            // FIXME: recursive property accessor
             features += redefines.allSubsets
         }
 

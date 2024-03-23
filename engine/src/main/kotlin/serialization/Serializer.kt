@@ -125,7 +125,7 @@ object Serializer {
         return text
     }
 
-    fun IndentationAwareStringWriter.append(variable: Variable) {
+    private fun IndentationAwareStringWriter.append(variable: Variable) {
         append("var ${variable.name} : ${variable.typing.name}")
         if (variable.expression != null) {
             append(" = ${variable.expression.serialize()}")
@@ -133,15 +133,15 @@ object Serializer {
         appendLine()
     }
 
-    fun IndentationAwareStringWriter.append(enum: Enum) {
+    private fun IndentationAwareStringWriter.append(enum: Enum) {
         appendLine("type ${enum.name} : {")
         indent {
-            appendLine(enum.literals.map { it.name }.joinToString(",\n"))
+            appendLine(enum.literals.joinToString(",\n") { it.name })
         }
         appendLine("}")
     }
 
-    fun IndentationAwareStringWriter.append(transition: Transition, kind: String) {
+    private fun IndentationAwareStringWriter.append(transition: Transition, kind: String) {
         append(kind)
         if (transition.operation.size >= 1) {
             appendLine(" {")
@@ -158,7 +158,7 @@ object Serializer {
         appendLine("}")
     }
 
-    fun IndentationAwareStringWriter.append(property: Property) {
+    private fun IndentationAwareStringWriter.append(property: Property) {
         appendLine("prop {")
         indent {
             appendLine(property.invariant.serialize())
@@ -166,7 +166,7 @@ object Serializer {
         appendLine("}")
     }
 
-    fun IndentationAwareStringWriter.append(operation: Operation) {
+    private fun IndentationAwareStringWriter.append(operation: Operation) {
         when (operation) {
             is SequenceOperation -> {
                 for (seqOp in operation.operation) {
@@ -233,14 +233,14 @@ object Serializer {
             else -> "UNKNOWN_TYPE$$$"
         }
 
-    fun Expression.serialize(): String = when (this) {
+    private fun Expression.serialize(): String = when (this) {
         is OperatorExpression -> serialize()
         is LiteralExpression -> serialize()
         is ReferenceExpression -> serialize()
         else -> "UNKNOWN_EXPRESSION$$$"
     }
 
-    fun OperatorExpression.serialize(): String = when (this) {
+    private fun OperatorExpression.serialize(): String = when (this) {
         is AndOperator -> "(${operands[0].serialize()} && ${operands[1].serialize()})"
         is OrOperator -> "(${operands[0].serialize()} || ${operands[1].serialize()})"
         is PlusOperator -> "(${operands[0].serialize()} + ${operands[1].serialize()})"
@@ -255,15 +255,15 @@ object Serializer {
         else -> "UNKNOWN_EXPRESSION$$$"
     }
 
-    fun LiteralExpression.serialize(): String = when (this) {
+    private fun LiteralExpression.serialize(): String = when (this) {
         is LiteralBoolean -> isValue.toString()
         is LiteralInteger -> value.toString()
         else -> "UNKNOWN_EXPRESSION$$$"
     }
 
-    fun ReferenceExpression.serialize(): String = when (this) {
+    private fun ReferenceExpression.serialize(): String = when (this) {
         is ChainReferenceExpression -> {
-            chains.map { it as DeclarationReferenceExpression }.map { it.element.name }.joinToString(".")
+            chains.map { it as DeclarationReferenceExpression }.joinToString(".") { it.element.name }
         }
 
         else -> "UNKNOWN_EXPRESSION$$$"
