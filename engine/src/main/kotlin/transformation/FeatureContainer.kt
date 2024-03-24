@@ -13,7 +13,7 @@ class FeatureContainer(
     }
 
     fun place(feature: Feature, instance: Instance) {
-        val container = featureValueContainers[feature] ?: error("Feature can not be found on instance $holder")
+        val container = featureValueContainers[feature] ?: error("Feature $feature can not be found on instance $holder")
 
         container.instances += instance
 

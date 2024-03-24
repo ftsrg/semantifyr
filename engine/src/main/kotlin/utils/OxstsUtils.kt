@@ -93,7 +93,6 @@ inline fun <reified T : Element> ReferenceExpression.typedReferencedElement(): T
 }
 
 fun ReferenceExpression.referencedElement(): Element {
-
     return referencedElementOrNull() ?: error("Expression $this must be DeclarationReferenceExpression")
 }
 
