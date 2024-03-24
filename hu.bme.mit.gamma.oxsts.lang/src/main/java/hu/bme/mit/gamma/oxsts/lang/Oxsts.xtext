@@ -97,10 +97,15 @@ fragment TransitionModifier returns Transition:
 ;
 
 fragment TransitionBody returns Transition:
-	('('
-		parameters+=Parameter
-		(',' parameters+=Parameter)* (',')?
-	')')? 
+	(
+        '('
+            (
+                parameters+=Parameter
+                (',' parameters+=Parameter)*
+                (',')?
+            )?
+        ')'
+	)?
 	operation+=SequenceOperation
 	(
 		'or' operation+=SequenceOperation
