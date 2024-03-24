@@ -20,7 +20,7 @@ target Mission {
     }
 
     tran {
-        inline if (child.a = child.f) {
+        inline if (child.a == child.f) {
             x := true
         } else {
             x := false

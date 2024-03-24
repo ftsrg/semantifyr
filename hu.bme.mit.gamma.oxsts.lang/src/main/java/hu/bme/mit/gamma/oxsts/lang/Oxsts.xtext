@@ -206,7 +206,7 @@ AssignmentOperation:
 
 
 Variable:
-	'var' name=ID ':' typing=Typing (optional?='[0..1]' | '[1..1]')? (':=' expression=Expression)?
+	'var' name=ID ':' typing=Typing (optional?='[0..1]' | '[1..1]')? ('=' expression=Expression)?
 ;
 
 Feature returns Feature:
@@ -317,7 +317,7 @@ MinusOperator returns Expression:
 ;
 
 EqualityOperator returns Expression: 
-	InequalityOperator ({EqualityOperator.operands+=current} '=' operands+=InequalityOperator)*
+	InequalityOperator ({EqualityOperator.operands+=current} '==' operands+=InequalityOperator)*
 ;
 
 InequalityOperator returns Expression: 

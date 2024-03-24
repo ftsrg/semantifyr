@@ -14,7 +14,7 @@ type Container {
     }
 
     tran setIsZero() {
-        isZero := x = 0
+        isZero := x == 0
     }
 }
 
@@ -46,6 +46,6 @@ target Mission {
     }
 
     prop {
-        holder.c1.isZero = false && holder.c2.isZero = false && holder.c3.isZero = false
+        holder.c1.isZero == false && holder.c2.isZero == false && holder.c3.isZero == false
     }
 }

@@ -5,8 +5,8 @@ type Atom
 type Holder {
     feature atom : Atom
 
-    var current : atom[0..1] := Nothing
-    var currentTwo : atom[0..1] := Nothing
+    var current : atom[0..1] = Nothing
+    var currentTwo : atom[0..1] = Nothing
 }
 
 target Mission {

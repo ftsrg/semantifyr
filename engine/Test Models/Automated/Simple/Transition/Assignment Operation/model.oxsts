@@ -12,6 +12,6 @@ target Mission {
     }
 
     prop {
-        y = false
+        y == false
     }
 }

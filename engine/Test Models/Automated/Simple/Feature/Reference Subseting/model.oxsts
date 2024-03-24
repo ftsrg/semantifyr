@@ -23,7 +23,7 @@ target Mission {
     }
 
     tran {
-        inline if (holder.atom = holder.subSubSubSubAtom) {
+        inline if (holder.atom == holder.subSubSubSubAtom) {
             x := true
         } else {
             x := false

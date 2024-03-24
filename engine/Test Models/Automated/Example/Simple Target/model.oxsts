@@ -6,8 +6,8 @@ enum TimeUnit { // enumeration definition
 
 target Mission {
     var unit : TimeUnit // variables
-    var x : Integer := 1 // initial value
-    var isZero : Boolean := false
+    var x : Integer = 1 // initial value
+    var isZero : Boolean = false
 
     init { // init transition
         unit := TimeUnit::Seconds
@@ -16,10 +16,10 @@ target Mission {
     tran { // main transition
         unit := TimeUnit::Minutes
         havoc (x)
-        isZero := x = 0
+        isZero := x == 0
     }
 
     prop { // model property
-        isZero = false
+        isZero == false
     }
 }

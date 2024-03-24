@@ -3,7 +3,7 @@ package Test
 // Event.oxsts
 
 type Event {
-    var isActive: Boolean := false
+    var isActive: Boolean = false
 
     tran set {
         isActive := true
@@ -23,7 +23,7 @@ type Event {
 }
 
 type Timeout {
-    var deltaTime : Integer := 0
+    var deltaTime : Integer = 0
 
     tran {
         if (deltaTime > 0) {
@@ -142,7 +142,7 @@ type Region {
     feature abstractStates : AbstractState[0..*]
     feature states :> abstractStates : State[0..*]
 
-    var activeState : states[0..1] := Nothing
+    var activeState : states[0..1] = Nothing
 
     feature abstractTransitions : AbstractTransition[0..*]
 
@@ -176,13 +176,13 @@ type State : AbstractState {
     feature exitActions : Action[0..*]
 
     tran isActive {
-        assume (parent.activeState = Self)
+        assume (parent.activeState == Self)
     }
 
     tran deactivateRecursive {
         inline seq regions -> deactivateRecursive
 
-        if (parent.activeState = Self) {
+        if (parent.activeState == Self) {
             parent.activeState := Nothing
             inline seq exitActions -> main
         }
@@ -443,7 +443,7 @@ type IsNotRechargingGuard : Guard {
     reference spacecraft : Spacecraft
 
     override main {
-        assume (spacecraft.recharging = false)
+        assume (spacecraft.recharging == false)
     }
 }
 
@@ -495,9 +495,9 @@ type Spacecraft : Statechart {
     containment consumeTimeout :> timeouts : Timeout
     containment transmitTimeout :> timeouts : Timeout
 
-    var batteryCharge : Integer := 100
-    var data : Integer := 100
-    var recharging : Boolean := false
+    var batteryCharge : Integer = 100
+    var data : Integer = 100
+    var recharging : Boolean = false
 
     containment Communication :> regions : Region {
         containment et1 :> entryTransitions : EntryTransition {

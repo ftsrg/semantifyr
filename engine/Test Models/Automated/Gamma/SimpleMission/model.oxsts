@@ -3,7 +3,7 @@ package Test
 // Event.oxsts
 
 type Event {
-    var isActive: Boolean := false
+    var isActive: Boolean = false
 
     tran set {
         isActive := true
@@ -23,7 +23,7 @@ type Event {
 }
 
 type Timeout {
-    var deltaTime : Integer := 0 - 1
+    var deltaTime : Integer = 0 - 1
 
     tran {
         if (deltaTime >= 0) {
@@ -32,7 +32,7 @@ type Timeout {
     }
 
     tran isUp {
-        assume (deltaTime = 0)
+        assume (deltaTime == 0)
     }
 }
 
@@ -136,7 +136,7 @@ type Statechart : Component {
 type Region {
     feature states : State[0..*]
 
-    var activeState : states[0..1] := Nothing
+    var activeState : states[0..1] = Nothing
 
     feature abstractTransitions : AbstractTransition[0..*]
 
@@ -171,13 +171,13 @@ type State {
     feature exitActions : Action[0..*]
 
     tran isActive {
-        assume (parent.activeState = Self)
+        assume (parent.activeState == Self)
     }
 
     tran deactivateRecursive {
         inline seq regions -> deactivateRecursive
 
-        if (parent.activeState = Self) {
+        if (parent.activeState == Self) {
             parent.activeState := Nothing
             inline seq exitActions -> main
         }
