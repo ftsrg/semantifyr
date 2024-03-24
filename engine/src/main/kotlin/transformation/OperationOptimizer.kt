@@ -42,7 +42,7 @@ object OperationOptimizer {
                 removeEmptyChoices() ||
                 removeEmptyIfs() ||
                 removeRedundantChoiceElse() ||
-                removeRedundantSequences() ||
+                flattenSequences() ||
                 flattenChoices() ||
                 optimizeExpressions()
     }
@@ -77,7 +77,7 @@ object OperationOptimizer {
         return true
     }
 
-    private fun Operation.removeRedundantSequences(): Boolean {
+    private fun Operation.flattenSequences(): Boolean {
         val sequence = EcoreUtil2.getAllContentsOfType(this, SequenceOperation::class.java).firstOrNull {
             it.operation.size == 1
         }
