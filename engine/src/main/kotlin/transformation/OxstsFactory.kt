@@ -51,6 +51,12 @@ object OxstsFactory : OxstsFactoryImpl() {
         }
     }
 
+    fun createChainReferenceExpression(chains: List<ChainingExpression>): ChainReferenceExpression {
+        return OxstsFactory.createChainReferenceExpression().also {
+            it.chains += chains
+        }
+    }
+
     fun createChainReferenceExpression(expression: ChainingExpression): ChainReferenceExpression {
         return createChainReferenceExpression().apply {
             chains += expression

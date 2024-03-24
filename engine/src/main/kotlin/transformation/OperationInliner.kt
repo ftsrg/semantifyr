@@ -79,14 +79,13 @@ class OperationInliner(
     private fun inlineCallsFromComposite(inlineComposite: InlineComposite): List<InlineCall> {
         val instanceSet = context.expressionEvaluator.evaluateInstanceSet(inlineComposite.feature)
 
-        val baseFeature = inlineComposite.feature.asChainReferenceExpression().dropLast(1)
         val transitionReference = inlineComposite.transition.asChainReferenceExpression()
 
         val list = mutableListOf<InlineCall>()
 
         for (instance in instanceSet) {
-            val instanceReference = OxstsFactory.createChainReferenceExpression(instance.containment)
-            val inlineCall = OxstsFactory.createInlineCall(baseFeature.appendWith(instanceReference).appendWith(transitionReference))
+            val instanceReference = OxstsFactory.createChainReferenceExpression(createReferenceToContext(instance)).appendWith(transitionReference)
+            val inlineCall = OxstsFactory.createInlineCall(instanceReference)
 
             list += inlineCall
         }
