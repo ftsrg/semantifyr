@@ -51,6 +51,7 @@ class CrossroadsTest {
     fun `Crossroads model verification case should pass`(target: Target) {
         val targetDirectory = "$artifactsDirectory/${target.name}"
 
+        File(targetDirectory).deleteRecursively()
         File(targetDirectory).mkdirs()
 
         transformTargetToTheta(targetDirectory, target)

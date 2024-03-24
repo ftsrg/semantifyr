@@ -60,6 +60,8 @@ class CompilationTests {
     }
 
     private fun simpleReadTransformWrite(directory: String, rewriteChoice: Boolean = false) {
+        File("$directory/model.xsts").delete()
+
         val reader = OxstsReader(directory)
         reader.read()
 
