@@ -42,6 +42,8 @@ object OperationOptimizer {
                 removeEmptyChoices() ||
                 removeEmptyIfs() ||
                 removeRedundantChoiceElse() ||
+                removeRedundantSequences() ||
+                flattenChoices() ||
                 optimizeExpressions()
     }
 
@@ -62,32 +64,59 @@ object OperationOptimizer {
     }
 
     private fun Operation.rewriteSingleBranchChoices(): Boolean {
-        val choices = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).filter {
+        val choice = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).firstOrNull {
             it.operation.size == 1 && it.`else` == null
         }
 
-        if (choices.isEmpty()) {
+        if (choice == null) {
             return false
         }
 
-        for (choice in choices) {
-            EcoreUtil2.replace(choice, choice.operation.single())
+        EcoreUtil2.replace(choice, choice.operation.single())
+
+        return true
+    }
+
+    private fun Operation.removeRedundantSequences(): Boolean {
+        val sequence = EcoreUtil2.getAllContentsOfType(this, SequenceOperation::class.java).firstOrNull {
+            it.operation.size == 1
         }
+
+        if (sequence == null) {
+            return false
+        }
+
+        EcoreUtil2.replace(sequence, sequence.operation.single())
+
+        return true
+    }
+
+    private fun Operation.flattenChoices(): Boolean {
+        val choice = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).firstOrNull {
+            it.eContainer() is ChoiceOperation && it.isRemovable()
+        }
+
+        if (choice == null) {
+            return false
+        }
+
+        val container = choice.eContainer() as ChoiceOperation
+        container.operation += choice.operation
 
         return true
     }
 
     private fun Operation.removeTrueAssumptions(): Boolean {
-        val noOps = EcoreUtil2.getAllContentsOfType(this, AssumptionOperation::class.java).filter {
+        val assumptions = EcoreUtil2.getAllContentsOfType(this, AssumptionOperation::class.java).filter {
             it.expression is LiteralBoolean && (it.expression as LiteralBoolean).isValue
         }
 
-        if (noOps.isEmpty()) {
+        if (assumptions.isEmpty()) {
             return false
         }
 
-        for (noOp in noOps) {
-            EcoreUtil2.remove(noOp)
+        for (assumption in assumptions) {
+            EcoreUtil2.remove(assumption)
         }
 
         return true
@@ -102,8 +131,8 @@ object OperationOptimizer {
             return false
         }
 
-        for (empty in emptyIfs) {
-            EcoreUtil2.remove(empty)
+        for (emptyIf in emptyIfs) {
+            EcoreUtil2.remove(emptyIf)
         }
 
         return true
@@ -118,8 +147,8 @@ object OperationOptimizer {
             return false
         }
 
-        for (empty in emptySequences) {
-            EcoreUtil2.remove(empty)
+        for (emptySequence in emptySequences) {
+            EcoreUtil2.remove(emptySequence)
         }
 
         return true
@@ -134,25 +163,23 @@ object OperationOptimizer {
             return false
         }
 
-        for (empty in emptyChoices) {
-            EcoreUtil2.remove(empty)
+        for (emptyChoice in emptyChoices) {
+            EcoreUtil2.remove(emptyChoice)
         }
 
         return true
     }
 
     private fun Operation.removeRedundantChoiceElse(): Boolean {
-        val redundantChoiceElse = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).filter {
+        val redundantChoiceElse = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).firstOrNull {
             it.`else` != null && it.operation.all { it.isAlwaysExecutable() }
         }
 
-        if (redundantChoiceElse.isEmpty()) {
+        if (redundantChoiceElse == null) {
             return false
         }
 
-        for (choice in redundantChoiceElse) {
-            choice.`else` = null
-        }
+        redundantChoiceElse.`else` = null
 
         return true
     }
