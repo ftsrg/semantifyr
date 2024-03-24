@@ -16,9 +16,9 @@ type Composite {
 target Mission {
     containment composite : Composite {
         containment a :> composites : Composite {
-            reference parent <- composite
+            reference ::> parent : Composite = composite
             containment a :> composites : Composite {
-                reference parent <- composite
+                reference ::> parent : Composite = composite
                 containment a :> composites : Composite {
                     reference ::> parent : Composite = composite
                 }
@@ -27,7 +27,7 @@ target Mission {
                 }
             }
             containment b :> composites : Composite {
-                reference parent <- composite
+                reference ::> parent : Composite = composite
                 containment a :> composites : Composite {
                     reference ::> parent : Composite = composite
                 }
@@ -37,9 +37,9 @@ target Mission {
             }
         }
         containment b :> composites : Composite {
-            reference parent <- composite
+            reference ::> parent : Composite = composite
             containment a :> composites : Composite {
-                reference parent <- composite
+                reference ::> parent : Composite = composite
                 containment a :> composites : Composite {
                     reference ::> parent : Composite = composite
                 }
@@ -48,7 +48,7 @@ target Mission {
                 }
             }
             containment b :> composites : Composite {
-                reference parent <- composite
+                reference ::> parent : Composite = composite
                 containment a :> composites : Composite {
                     reference ::> parent : Composite = composite
                 }

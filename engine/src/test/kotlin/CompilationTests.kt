@@ -18,7 +18,6 @@ import kotlin.streams.asStream
 
 const val baseDirectory = "Test Models"
 const val automatedDirectory = "$baseDirectory/Automated"
-const val simpleDirectory = "$automatedDirectory/Simple"
 
 @ExtendWith(InjectionExtension::class)
 @InjectWith(OxstsInjectorProvider::class)
@@ -26,8 +25,8 @@ class CompilationTests {
 
     companion object {
         @JvmStatic
-        fun `Simple model transformations should not regress`(): Stream<String> {
-            return File(simpleDirectory).walkTopDown().filter {
+        fun `Model transformations should not regress`(): Stream<String> {
+            return File(automatedDirectory).walkTopDown().filter {
                 it.isDirectory
             }.filter {
                 it.list { _, name -> name == "model.oxsts" }?.any() ?: false
@@ -46,20 +45,12 @@ class CompilationTests {
 
     @ParameterizedTest
     @MethodSource
-    fun `Simple model transformations should not regress`(directory: String) {
+    fun `Model transformations should not regress`(directory: String) {
         simpleReadTransformWrite(directory)
         assertModelEqualsExpected(directory)
     }
 
-    @Test
-    fun `Simple Mission`() {
-        val directory = "$automatedDirectory/Gamma/SimpleMission"
-
-        simpleReadTransformWrite(directory, true)
-        assertModelEqualsExpected(directory)
-    }
-
-    private fun simpleReadTransformWrite(directory: String, rewriteChoice: Boolean = false) {
+    private fun simpleReadTransformWrite(directory: String, rewriteChoice: Boolean = true) {
         File("$directory/model.xsts").delete()
 
         val reader = OxstsReader(directory)

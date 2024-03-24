@@ -9,11 +9,8 @@ type __Mission__MainRegion__BState__BRegion__states__type : {
     __Nothing__literal
 }
 
-var __Mission__MainRegion__activeState : __Mission__MainRegion__states__type;
-var __Mission__MainRegion__BState__BRegion__activeState : __Mission__MainRegion__BState__BRegion__states__type;
-
-init {
-}
+var __Mission__MainRegion__activeState : __Mission__MainRegion__states__type
+var __Mission__MainRegion__BState__BRegion__activeState : __Mission__MainRegion__BState__BRegion__states__type
 
 trans {
     __Mission__MainRegion__activeState := __Mission__MainRegion__AState__literal;
@@ -22,8 +19,11 @@ trans {
     __Mission__MainRegion__BState__BRegion__activeState := __Mission__MainRegion__BState__BRegion__CState__literal;
 }
 
+init {
+}
+
 env {}
 
 prop {
-    true;
+    true
 }

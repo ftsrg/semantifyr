@@ -21,18 +21,18 @@ target Mission {
         // "AState" containment subsets "MainRegion.entryState"
         containment MainEntry :> entryState : State {
             // "MainEntry"'s "parentRegion" is "MainRegion"
-            reference parentRegion <- MainRegion
+            reference ::> parentRegion : Region = MainRegion
         }
         // "AState" containment subsets "MainRegion.states"
         containment AState :> states : State {
-            reference parentRegion <- MainRegion
+            reference ::> parentRegion : Region = MainRegion
         }
         containment BState :> states : State {
             // "BRegion" containment subsets "BState.region"
             containment BRegion :> region : Region {
                 containment CState :> states : State {
-                    reference parentRegion <- BRegion
-                    reference parentState <- BState
+                    reference ::> parentRegion : Region = BRegion
+                    reference ::> parentState : State = BState
                 }
             }
         }
