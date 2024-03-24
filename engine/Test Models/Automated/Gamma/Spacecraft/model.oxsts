@@ -39,9 +39,7 @@ type Timeout {
 // Trigger.oxsts
 
 type Trigger {
-    virtual tran isTriggered {
-        assume (true)
-    }
+    virtual tran isTriggered { }
 }
 
 type EventTrigger : Trigger {
@@ -76,6 +74,11 @@ type RaiseEventAction : Action {
 
 type SetTimeoutAction : Action {
     reference timeout : Timeout[1..1]
+    reference delta : Integer = 1000
+
+    tran {
+        timeout.deltaTime := delta
+    }
 }
 
 type Guard {
@@ -229,9 +232,7 @@ type AbstractTransition {
     reference commonRegion : Region[1..1]
     reference to : State[1..1]
 
-    virtual tran {
-        assume (true)
-    }
+    virtual tran { }
 }
 
 type EntryTransition : AbstractTransition {
@@ -260,18 +261,6 @@ type Transition : AbstractTransition {
 
 // Station.oxsts
 
-type SetTimeoutActionTenS : SetTimeoutAction {
-    override tran {
-        timeout.deltaTime := 10000
-    }
-}
-
-type SetTimeoutActionFifteenS : SetTimeoutAction {
-    override tran {
-        timeout.deltaTime := 15000
-    }
-}
-
 type Station : Statechart {
     containment dataEvent :> inputEvents : Event
     containment pingEvent :> outputEvents : Event
@@ -284,78 +273,80 @@ type Station : Statechart {
 
     containment Main :> regions : Region {
         containment et1 :> entryTransitions : EntryTransition {
-            reference commonRegion <- Main
-            reference to <- Idle
+            reference ::> commonRegion : Region = Main
+            reference ::> to : State = Idle
         }
 
         containment Idle :> states : State {
-            reference parent <- Main
+            reference ::> parent : Region = Main
 
-            containment ea1 :> entryActions : SetTimeoutActionFifteenS {
-                reference timeout <- startTimeout
+            containment ea1 :> entryActions : SetTimeoutAction {
+                reference ::> timeout : Timeout = startTimeout
+                reference ::> delta : Integer = 15000
             }
         }
 
         containment startOperation :> transitions : Transition {
-            reference commonRegion <- Main
-            reference from <- Idle
-            reference to <- Operation
+            reference ::> commonRegion : Region = Main
+            reference ::> from : State = Idle
+            reference ::> to : State = Operation
 
             containment t :> trigger : EventTrigger {
-                reference event <- startEvent
+                reference ::> event : Event = startEvent
             }
         }
 
         containment autoStartOperation :> transitions : Transition {
-            reference commonRegion <- Main
-            reference from <- Idle
-            reference to <- Operation
+            reference ::> commonRegion : Region = Main
+            reference ::> from : State = Idle
+            reference ::> to : State = Operation
 
             containment t :> trigger : TimeoutTrigger {
-                reference timeout <- startTimeout
+                reference ::> timeout : Timeout = startTimeout
             }
         }
 
         containment Operation :> states : State {
-            reference parent <- Main
+            reference ::> parent : Region = Main
 
-            containment ea1 :> entryActions : SetTimeoutActionTenS {
-                reference timeout <- pingTimeout
+            containment ea1 :> entryActions : SetTimeoutAction {
+                reference ::> timeout : Timeout = pingTimeout
+                reference ::> delta : Integer = 10000
             }
             containment ea2 :> entryActions : RaiseEventAction {
-                reference event <- pingEvent
+                reference ::> event : Event = pingEvent
             }
 
             containment ReceiveData :> regions : Region {
                 containment et2 :> entryTransitions : EntryTransition {
-                    reference commonRegion <- ReceiveData
-                    reference to <- Waiting
+                    reference ::> commonRegion : Region = ReceiveData
+                    reference ::> to : State = Waiting
                 }
 
                 containment Waiting :> states : State {
-                    reference parent <- ReceiveData
-                    reference parentState <- Operation
+                    reference ::> parent : State = ReceiveData
+                    reference ::> parentState : State = Operation
                 }
 
                 containment receivedDataOperation :> transitions : Transition {
-                    reference commonRegion <- ReceiveData
-                    reference from <- Waiting
-                    reference to <- Waiting
+                    reference ::> commonRegion : Region = ReceiveData
+                    reference ::> from : State = Waiting
+                    reference ::> to : State = Waiting
 
                     containment t :> trigger : EventTrigger {
-                        reference event <- dataEvent
+                        reference ::> event : Event = dataEvent
                     }
                 }
             }
         }
 
         containment resendPing :> transitions : Transition {
-            reference commonRegion <- Main
-            reference from <- Operation
-            reference to <- Operation
+            reference ::> commonRegion : Region = Main
+            reference ::> from : State = Operation
+            reference ::> to : State = Operation
 
             containment t :> trigger : TimeoutTrigger {
-                reference timeout <- pingTimeout
+                reference ::> timeout : Timeout = pingTimeout
             }
         }
     }
@@ -363,22 +354,10 @@ type Station : Statechart {
 
 // TrafficLightCtrl.oxsts
 
-type SetTimeoutActionOneS : SetTimeoutAction {
-    override tran {
-        timeout.deltaTime := 1000
-    }
-}
-
-type SetTimeoutActionFifteenMS : SetTimeoutAction {
-    override tran {
-        timeout.deltaTime := 1500
-    }
-}
-
 type SetRechargingAction : Action {
     reference spacecraft : Spacecraft
 
-    override main {
+    override tran {
         spacecraft.recharging := true
     }
 }
@@ -386,7 +365,7 @@ type SetRechargingAction : Action {
 type ResetRechargingAction : Action {
     reference spacecraft : Spacecraft
 
-    override main {
+    override tran {
         spacecraft.recharging := false
     }
 }
@@ -394,7 +373,7 @@ type ResetRechargingAction : Action {
 type DecreaseBatteryChargeAction : Action {
     reference spacecraft : Spacecraft
 
-    override main {
+    override tran {
         spacecraft.batteryCharge := spacecraft.batteryCharge - 1
     }
 }
@@ -402,7 +381,7 @@ type DecreaseBatteryChargeAction : Action {
 type DecreaseBatteryChargeAction : Action {
     reference spacecraft : Spacecraft
 
-    override main {
+    override tran {
         spacecraft.batteryCharge := spacecraft.batteryCharge - 1
     }
 }
@@ -410,7 +389,7 @@ type DecreaseBatteryChargeAction : Action {
 type IncreaseBatteryChargeAction : Action {
     reference spacecraft : Spacecraft
 
-    override main {
+    override tran {
         spacecraft.batteryCharge := spacecraft.batteryCharge + 1
     }
 }
@@ -418,7 +397,7 @@ type IncreaseBatteryChargeAction : Action {
 type DecreaseDataAction : Action {
     reference spacecraft : Spacecraft
 
-    override main {
+    override tran {
         spacecraft.data := spacecraft.data - 1
     }
 }
@@ -426,23 +405,23 @@ type DecreaseDataAction : Action {
 type CanConsumeGuard : Guard {
     reference spacecraft : Spacecraft
 
-    override main {
-        assert (spacecraft.batteryCharge >= 40)
+    override tran {
+        assume (spacecraft.batteryCharge >= 40)
     }
 }
 
 type CannotConsumeGuard : Guard {
     reference spacecraft : Spacecraft
 
-    override main {
-        assert (spacecraft.batteryCharge < 40)
+    override tran {
+        assume (spacecraft.batteryCharge < 40)
     }
 }
 
 type IsNotRechargingGuard : Guard {
     reference spacecraft : Spacecraft
 
-    override main {
+    override tran {
         assume (spacecraft.recharging == false)
     }
 }
@@ -450,7 +429,7 @@ type IsNotRechargingGuard : Guard {
 type CanTransmitGuard : Guard {
     reference spacecraft : Spacecraft
 
-    override main {
+    override tran {
         assume (spacecraft.data > 1 && spacecraft.batteryCharge >= 40)
     }
 }
@@ -458,7 +437,7 @@ type CanTransmitGuard : Guard {
 type CannotTransmitGuard : Guard {
     reference spacecraft : Spacecraft
 
-    override main {
+    override tran {
         assume (spacecraft.data <= 1 || spacecraft.batteryCharge < 40)
     }
 }
@@ -466,7 +445,7 @@ type CannotTransmitGuard : Guard {
 type ShouldRechargeGuard : Guard {
     reference spacecraft : Spacecraft
 
-    override main {
+    override tran {
         assume (spacecraft.batteryCharge < 80)
     }
 }
@@ -474,7 +453,7 @@ type ShouldRechargeGuard : Guard {
 type CanRechargeGuard : Guard {
     reference spacecraft : Spacecraft
 
-    override main {
+    override tran {
         assume (spacecraft.batteryCharge < 100)
     }
 }
@@ -482,7 +461,7 @@ type CanRechargeGuard : Guard {
 type CannotRechargeGuard : Guard {
     reference spacecraft : Spacecraft
 
-    override main {
+    override tran {
         assume (spacecraft.batteryCharge >= 100)
     }
 }
@@ -501,58 +480,60 @@ type Spacecraft : Statechart {
 
     containment Communication :> regions : Region {
         containment et1 :> entryTransitions : EntryTransition {
-            reference commonRegion <- Communication
-            reference to <- WaitingPing
+            reference ::> commonRegion : Region = Communication
+            reference ::> to : State = WaitingPing
         }
 
         containment WaitingPing :> states : State {
-            reference parent <- Communication
+            reference ::> parent : Region = Communication
         }
 
         containment resendPing :> transitions : Transition {
-            reference commonRegion <- Communication
-            reference from <- WaitingPing
-            reference to <- Transmitting
+            reference ::> commonRegion : Region = Communication
+            reference ::> from : State = WaitingPing
+            reference ::> to : State = Transmitting
 
             containment t :> trigger : EventTrigger {
-                reference event <- pingEvent
+                reference ::> event : Event = pingEvent
             }
-            containment g :> guards : IsNotRechargingGuard {
-                reference spacecraft <- Self
-            }
+//            containment g :> guards : IsNotRechargingGuard {
+//                reference ::> spacecraft : Spacecraft = Self
+//            }
         }
 
         containment Transmitting :> states : State {
-            reference parent <- Communication
+            reference ::> parent : State = Communication
 
             containment SendData :> regions : Region {
                 containment et2 :> entryTransitions : EntryTransition {
-                    reference commonRegion <- SendData
-                    reference to <- Sending
+                    reference ::> commonRegion : Region = SendData
+                    reference ::> to : State = Sending
                 }
 
                 containment Sending :> states : State {
-                    reference parent <- SendData
-                    reference parentState <- Transmitting
+                    reference ::> parent : State = SendData
+                    reference ::> parentState : State = Transmitting
 
-                    containment ea1 :> entryActions : SetTimeoutActionFifteenMS {
-                        reference timeout <- transmitTimeout
+                    containment ea1 :> entryActions : SetTimeoutAction {
+                        reference ::> timeout : Timeout = transmitTimeout
+                        reference ::> delta : Integer = 1500
                     }
                 }
             }
 
             containment ConsumePower :> regions : Region {
                 containment et2 :> entryTransitions : EntryTransition {
-                    reference commonRegion <- ConsumePower
-                    reference to <- Consuming
+                    reference ::> commonRegion : Region = ConsumePower
+                    reference ::> to : State = Consuming
                 }
 
                 containment Consuming :> states : State {
-                    reference parent <- ConsumePower
-                    reference parentState <- Transmitting
+                    reference ::> parent : Region = ConsumePower
+                    reference ::> parentState : State = Transmitting
 
-                    containment ea1 :> entryActions : SetTimeoutActionOneS {
-                        reference timeout <- consumeTimeout
+                    containment ea1 :> entryActions : SetTimeoutAction {
+                        reference ::> timeout : Timeout = consumeTimeout
+                        reference ::> delta : Integer = 1000
                     }
                 }
             }
@@ -561,21 +542,20 @@ type Spacecraft : Statechart {
 
     containment Battery :> regions : Region {
         containment et1 :> entryTransitions : EntryTransition {
-            reference commonRegion <- Battery
-            reference to <- NotRecharging
+            reference ::> commonRegion : Region = Battery
+            reference ::> to : State = NotRecharging
         }
 
         containment NotRecharging :> states : State {
-            reference parent <- Battery
-
-
+            reference ::> parent : State = Battery
         }
 
         containment Recharging :> states : State {
-            reference parent <- Battery
+            reference ::> parent : State = Battery
 
-            containment ea1 :> entryActions : SetTimeoutActionTenS {
-                reference timeout <- rechargeTimeout
+            containment ea1 :> entryActions : SetTimeoutAction {
+                reference ::> timeout : Timeout = rechargeTimeout
+                reference ::> delta : Integer = 10000
             }
         }
     }
@@ -587,12 +567,12 @@ type SpaceMission : SyncComponent {
     containment station :> components : Station
 
     containment pingChannel :> channels : Channel {
-        reference inputEvent <- station.pingEvent
-        reference outputEvent <- spacecraft.pingEvent
+        reference ::> inputEvent : Event = station.pingEvent
+        reference ::> outputEvent : Event = spacecraft.pingEvent
     }
     containment dataChannel :> channels : Channel {
-        reference inputEvent <- spacecraft.dataEvent
-        reference outputEvent <- station.dataEvent
+        reference ::> inputEvent : Event = spacecraft.dataEvent
+        reference ::> outputEvent : Event = station.dataEvent
     }
 }
 
@@ -604,8 +584,8 @@ target Mission {
     }
 
     tran {
-        inline spaceMission.station.startEvent.havoc
-        inline spaceMission.station.shutdownEvent.havoc
+        inline spaceMission.station.startEvent.havoc()
+        inline spaceMission.station.shutdownEvent.havoc()
         inline spaceMission.main()
     }
 
