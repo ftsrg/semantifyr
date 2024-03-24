@@ -1,0 +1,196 @@
+package sysml
+
+type Step {
+    var performing : Boolean = false
+
+    reference incoming : Succession [0..*]
+    reference outgoing : Succession [0..*]
+
+    tran ensureStartable {
+        inline seq incoming -> deactivate
+    }
+    tran ensureStoppable {
+        inline seq outgoing -> activate
+    }
+
+    tran start {
+        assume (performing == false)
+        inline ensureStartable()
+        performing := true
+    }
+
+    tran stop {
+        assume (performing)
+        inline ensureStoppable()
+        performing := false
+    }
+
+    tran {
+        choice {
+            inline start()
+        } or {
+            inline stop()
+        }
+    }
+}
+
+type Succession {
+    var activated : Boolean = false
+
+    reference first : Step[1..1]
+    reference then : Step[1..1]
+
+    tran activate {
+        assume (activated == false)
+
+        activated := true
+    }
+    tran deactivate {
+        assume (activated)
+
+        activated := false
+    }
+}
+
+type Action : Step {
+
+}
+
+type ControlNode : Action {
+
+}
+
+type DecisionNode : ControlNode {
+    reference ::> incoming : Succession [1..1]
+    reference ::> outgoing : Succession [1..*]
+
+    tran ensureStoppable {
+        inline choice outgoing -> deactivate
+    }
+
+}
+
+type MergeNode : ControlNode {
+    reference ::> incoming : Succession [1..*]
+    reference ::> outgoing : Succession [1..1]
+
+    tran ensureStartable {
+        inline choice incoming -> activate
+    }
+
+}
+
+type ForkNode : ControlNode {
+    reference ::> incoming : Succession [1..1]
+    reference ::> outgoing : Succession [1..*]
+}
+
+type JoinNode : ControlNode {
+    reference ::> incoming : Succession [1..*]
+    reference ::> outgoing : Succession [1..1]
+}
+
+type Behavior {
+    feature steps : Step [0..*]
+    feature successions : Succession [0..*]
+
+    tran {
+        inline choice steps -> main
+    }
+}
+
+target Mission {
+
+    containment behavior : Behavior {
+        containment start :> steps : Step {
+            reference ::> outgoing : Succession = s_then_f
+        }
+
+        containment s_then_f :> successions : Succession {
+            reference ::> first : Step = Mission::behavior::start
+            reference ::> then : Step = fork
+        }
+
+        containment fork :> steps : ForkNode {
+            reference ::> incoming : Succession = s_then_f
+            reference outgoing1 :> outgoing : Succession = f_then_p1
+            reference outgoing2 :> outgoing : Succession = f_then_p2
+        }
+
+        containment f_then_p1 :> successions : Succession {
+            reference ::> first : Step = fork
+            reference ::> then : Step = paint1
+        }
+        containment f_then_p2 :> successions : Succession {
+            reference ::> first : Step = fork
+            reference ::> then : Step = paint2
+        }
+
+        containment paint1 :> steps : Step {
+            reference ::> incoming : Succession = f_then_p1
+            reference ::> outgoing : Succession = p1_then_d1
+        }
+
+        containment p1_then_d1 :> successions : Succession {
+            reference ::> first : Step = paint1
+            reference ::> then : Step = dry1
+        }
+
+        containment dry1 :> steps : Step {
+            reference ::> incoming : Succession = p1_then_d1
+            reference ::> outgoing : Succession = d1_then_j
+        }
+
+        containment d1_then_j :> successions : Succession {
+            reference ::> first : Step = dry1
+            reference ::> then : Step = join
+        }
+
+        containment paint2 :> steps : Step {
+            reference ::> incoming : Succession = f_then_p2
+            reference ::> outgoing : Succession = p2_then_d2
+        }
+
+        containment p2_then_d2 :> successions : Succession {
+            reference ::> first : Step = paint2
+            reference ::> then : Step = dry2
+        }
+
+        containment dry2 :> steps : Step {
+            reference ::> incoming : Succession = p2_then_d2
+            reference ::> outgoing : Succession = d2_then_j
+        }
+
+        containment d2_then_j :> successions : Succession {
+            reference ::> first : Step = dry2
+            reference ::> then : Step = join
+        }
+
+        containment join :> steps : Step {
+            reference incoming1 :> incoming : Succession = d1_then_j
+            reference incoming2 :> incoming : Succession = d2_then_j
+            reference ::> outgoing : Succession = j_then_s
+        }
+
+        containment j_then_s :> successions : Succession {
+            reference ::> first : Step = join
+            reference ::> then : Step = ship
+        }
+
+        containment ship :> steps : Step {
+            reference ::> incoming : Succession = j_then_s
+        }
+    }
+
+    init {
+
+    }
+
+    tran {
+        inline behavior.main()
+    }
+
+    prop {
+        false
+    }
+}
