@@ -6,6 +6,7 @@ import hu.bme.mit.gamma.oxsts.engine.utils.copy
 import hu.bme.mit.gamma.oxsts.engine.utils.drop
 import hu.bme.mit.gamma.oxsts.engine.utils.dropLast
 import hu.bme.mit.gamma.oxsts.engine.utils.element
+import hu.bme.mit.gamma.oxsts.engine.utils.isStaticReference
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ContextDependentReference
@@ -129,6 +130,8 @@ class OperationInliner(
     private fun Operation.rewriteToContext(localContext: Instance, parameters: List<Parameter>): Operation {
         val references = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).asSequence().filterNot {
             parameters.contains(it.chains.firstOrNull()?.element)
+        }.filterNot {
+            it.isStaticReference
         }.toList()
 
         for (reference in references) {

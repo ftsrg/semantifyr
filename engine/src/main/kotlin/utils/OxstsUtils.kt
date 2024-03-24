@@ -7,6 +7,7 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Containment
 import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Element
+import hu.bme.mit.gamma.oxsts.model.oxsts.EnumLiteral
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
 import hu.bme.mit.gamma.oxsts.model.oxsts.IntegerType
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
@@ -56,6 +57,15 @@ fun ChainReferenceExpression.appendWith(chainReferenceExpression: ChainReference
     }
 }
 
+val ChainReferenceExpression.isStaticReference
+    get() = referencedElementOrNull()?.isStatic ?: false
+
+val Element.isStatic
+    get() = when (this) {
+        is EnumLiteral -> true
+        else -> false
+    }
+
 val Feature.type
     get() = (typing as ReferenceTyping).referencedElement as Type
 
@@ -83,10 +93,14 @@ inline fun <reified T : Element> ReferenceExpression.typedReferencedElement(): T
 }
 
 fun ReferenceExpression.referencedElement(): Element {
-    require(this is ChainReferenceExpression)
-    require(chains.any())
 
-    return chains.last().referencedElement()
+    return referencedElementOrNull() ?: error("Expression $this must be DeclarationReferenceExpression")
+}
+
+fun ReferenceExpression.referencedElementOrNull(): Element? {
+    require(this is ChainReferenceExpression)
+
+    return chains.lastOrNull()?.referencedElementOrNull()
 }
 
 
