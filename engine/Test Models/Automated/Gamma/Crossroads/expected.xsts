@@ -80,38 +80,90 @@ trans {
     __Mission__crossroad__controller__policeEventB__isActive := false;
     __Mission__crossroad__controller__toggleEventB__isActive := false;
     choice {
-        assume (__Mission__crossroad__controller__policeEvent__isActive);
-        assume ((__Mission__crossroad__controller__Main__activeState == __Mission__crossroad__controller__Main__Operating__literal));
-        __Mission__crossroad__controller__Main__activeState := __Nothing__literal;
-        if ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__Init__literal)) {
-            __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Nothing__literal;
+        choice {
+            assume (__Mission__crossroad__controller__policeEvent__isActive);
+            assume ((__Mission__crossroad__controller__Main__activeState == __Mission__crossroad__controller__Main__Operating__literal));
+            __Mission__crossroad__controller__Main__activeState := __Nothing__literal;
+            if ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__Init__literal)) {
+                __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Nothing__literal;
+            }
+            if ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnA__literal)) {
+                __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Nothing__literal;
+            }
+            if ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingA__literal)) {
+                __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Nothing__literal;
+            }
+            if ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnB__literal)) {
+                __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Nothing__literal;
+            }
+            if ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingB__literal)) {
+                __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Nothing__literal;
+            }
+            __Mission__crossroad__controller__Main__activeState := __Mission__crossroad__controller__Main__Interrupted__literal;
+            __Mission__crossroad__controller__policeEventA__isActive := true;
+            __Mission__crossroad__controller__policeEventB__isActive := true;
+        } or {
+            assume (__Mission__crossroad__controller__policeEvent__isActive);
+            assume ((__Mission__crossroad__controller__Main__activeState == __Mission__crossroad__controller__Main__Interrupted__literal));
+            __Mission__crossroad__controller__policeEventA__isActive := true;
+            __Mission__crossroad__controller__policeEventB__isActive := true;
+            __Mission__crossroad__controller__Main__activeState := __Nothing__literal;
+            __Mission__crossroad__controller__Main__activeState := __Mission__crossroad__controller__Main__Operating__literal;
+            __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Mission__crossroad__controller__Main__Operating__OperatingRegion__Init__literal;
+            __Mission__crossroad__controller__trafficTimeout__deltaTime := 1;
+        } or {
+            assume (! ((((__Mission__crossroad__controller__policeEvent__isActive && (__Mission__crossroad__controller__Main__activeState == __Mission__crossroad__controller__Main__Operating__literal)) && ((((((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__Init__literal) || ! ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__Init__literal))) && ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnA__literal) || ! ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnA__literal)))) && ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingA__literal) || ! ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingA__literal)))) && ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnB__literal) || ! ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnB__literal)))) && ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingB__literal) || ! ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingB__literal))))) || (__Mission__crossroad__controller__policeEvent__isActive && (__Mission__crossroad__controller__Main__activeState == __Mission__crossroad__controller__Main__Interrupted__literal)))));
+            choice {
+                assume ((__Mission__crossroad__controller__trafficTimeout__deltaTime == 0));
+                assume ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__Init__literal));
+                __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Nothing__literal;
+                __Mission__crossroad__controller__Main__activeState := __Nothing__literal;
+                __Mission__crossroad__controller__toggleEventA__isActive := true;
+                __Mission__crossroad__controller__Main__activeState := __Mission__crossroad__controller__Main__Operating__literal;
+                __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnA__literal;
+                __Mission__crossroad__controller__trafficTimeout__deltaTime := 2;
+            } or {
+                assume ((__Mission__crossroad__controller__trafficTimeout__deltaTime == 0));
+                assume ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnA__literal));
+                __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Nothing__literal;
+                __Mission__crossroad__controller__Main__activeState := __Nothing__literal;
+                __Mission__crossroad__controller__toggleEventA__isActive := true;
+                __Mission__crossroad__controller__Main__activeState := __Mission__crossroad__controller__Main__Operating__literal;
+                __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingA__literal;
+                __Mission__crossroad__controller__trafficTimeout__deltaTime := 1;
+            } or {
+                assume ((__Mission__crossroad__controller__trafficTimeout__deltaTime == 0));
+                assume ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingA__literal));
+                __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Nothing__literal;
+                __Mission__crossroad__controller__Main__activeState := __Nothing__literal;
+                __Mission__crossroad__controller__toggleEventA__isActive := true;
+                __Mission__crossroad__controller__toggleEventB__isActive := true;
+                __Mission__crossroad__controller__Main__activeState := __Mission__crossroad__controller__Main__Operating__literal;
+                __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnB__literal;
+                __Mission__crossroad__controller__trafficTimeout__deltaTime := 2;
+            } or {
+                assume ((__Mission__crossroad__controller__trafficTimeout__deltaTime == 0));
+                assume ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnB__literal));
+                __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Nothing__literal;
+                __Mission__crossroad__controller__Main__activeState := __Nothing__literal;
+                __Mission__crossroad__controller__toggleEventB__isActive := true;
+                __Mission__crossroad__controller__Main__activeState := __Mission__crossroad__controller__Main__Operating__literal;
+                __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingB__literal;
+                __Mission__crossroad__controller__trafficTimeout__deltaTime := 1;
+            } or {
+                assume ((__Mission__crossroad__controller__trafficTimeout__deltaTime == 0));
+                assume ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingB__literal));
+                __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Nothing__literal;
+                __Mission__crossroad__controller__Main__activeState := __Nothing__literal;
+                __Mission__crossroad__controller__toggleEventB__isActive := true;
+                __Mission__crossroad__controller__toggleEventA__isActive := true;
+                __Mission__crossroad__controller__Main__activeState := __Mission__crossroad__controller__Main__Operating__literal;
+                __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnA__literal;
+                __Mission__crossroad__controller__trafficTimeout__deltaTime := 2;
+            }
         }
-        if ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnA__literal)) {
-            __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Nothing__literal;
-        }
-        if ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingA__literal)) {
-            __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Nothing__literal;
-        }
-        if ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnB__literal)) {
-            __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Nothing__literal;
-        }
-        if ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingB__literal)) {
-            __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Nothing__literal;
-        }
-        __Mission__crossroad__controller__Main__activeState := __Mission__crossroad__controller__Main__Interrupted__literal;
-        __Mission__crossroad__controller__policeEventA__isActive := true;
-        __Mission__crossroad__controller__policeEventB__isActive := true;
     } or {
-        assume (__Mission__crossroad__controller__policeEvent__isActive);
-        assume ((__Mission__crossroad__controller__Main__activeState == __Mission__crossroad__controller__Main__Interrupted__literal));
-        __Mission__crossroad__controller__policeEventA__isActive := true;
-        __Mission__crossroad__controller__policeEventB__isActive := true;
-        __Mission__crossroad__controller__Main__activeState := __Nothing__literal;
-        __Mission__crossroad__controller__Main__activeState := __Mission__crossroad__controller__Main__Operating__literal;
-        __Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState := __Mission__crossroad__controller__Main__Operating__OperatingRegion__Init__literal;
-        __Mission__crossroad__controller__trafficTimeout__deltaTime := 1;
-    } or {
-        assume (! ((((__Mission__crossroad__controller__policeEvent__isActive && (__Mission__crossroad__controller__Main__activeState == __Mission__crossroad__controller__Main__Operating__literal)) && ((((((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__Init__literal) || ! ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__Init__literal))) && ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnA__literal) || ! ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnA__literal)))) && ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingA__literal) || ! ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingA__literal)))) && ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnB__literal) || ! ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnB__literal)))) && ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingB__literal) || ! ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingB__literal))))) || (__Mission__crossroad__controller__policeEvent__isActive && (__Mission__crossroad__controller__Main__activeState == __Mission__crossroad__controller__Main__Interrupted__literal)))));
+        assume (! (((((__Mission__crossroad__controller__policeEvent__isActive && (__Mission__crossroad__controller__Main__activeState == __Mission__crossroad__controller__Main__Operating__literal)) && ((((((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__Init__literal) || ! ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__Init__literal))) && ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnA__literal) || ! ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnA__literal)))) && ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingA__literal) || ! ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingA__literal)))) && ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnB__literal) || ! ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnB__literal)))) && ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingB__literal) || ! ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingB__literal))))) || (__Mission__crossroad__controller__policeEvent__isActive && (__Mission__crossroad__controller__Main__activeState == __Mission__crossroad__controller__Main__Interrupted__literal))) || (! ((((__Mission__crossroad__controller__policeEvent__isActive && (__Mission__crossroad__controller__Main__activeState == __Mission__crossroad__controller__Main__Operating__literal)) && ((((((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__Init__literal) || ! ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__Init__literal))) && ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnA__literal) || ! ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnA__literal)))) && ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingA__literal) || ! ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingA__literal)))) && ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnB__literal) || ! ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnB__literal)))) && ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingB__literal) || ! ((__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingB__literal))))) || (__Mission__crossroad__controller__policeEvent__isActive && (__Mission__crossroad__controller__Main__activeState == __Mission__crossroad__controller__Main__Interrupted__literal)))) && ((((((__Mission__crossroad__controller__trafficTimeout__deltaTime == 0) && (__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__Init__literal)) || ((__Mission__crossroad__controller__trafficTimeout__deltaTime == 0) && (__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnA__literal))) || ((__Mission__crossroad__controller__trafficTimeout__deltaTime == 0) && (__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingA__literal))) || ((__Mission__crossroad__controller__trafficTimeout__deltaTime == 0) && (__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__TrafficOnB__literal))) || ((__Mission__crossroad__controller__trafficTimeout__deltaTime == 0) && (__Mission__crossroad__controller__Main__Operating__OperatingRegion__activeState == __Mission__crossroad__controller__Main__Operating__OperatingRegion__StoppingB__literal)))))));
     }
     __Mission__crossroad__controller__policeEvent__isActive := false;
     if ((__Mission__crossroad__controller__trafficTimeout__deltaTime >= 0)) {
@@ -122,37 +174,74 @@ trans {
     __Mission__crossroad__trafficLightA__displayGreenEvent__isActive := false;
     __Mission__crossroad__trafficLightA__displayNoneEvent__isActive := false;
     choice {
-        assume (__Mission__crossroad__trafficLightA__policeEvent__isActive);
-        assume ((__Mission__crossroad__trafficLightA__Main__activeState == __Mission__crossroad__trafficLightA__Main__Normal__literal));
-        __Mission__crossroad__trafficLightA__Main__activeState := __Nothing__literal;
-        if ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Red__literal)) {
-            __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState := __Nothing__literal;
+        choice {
+            assume (__Mission__crossroad__trafficLightA__policeEvent__isActive);
+            assume ((__Mission__crossroad__trafficLightA__Main__activeState == __Mission__crossroad__trafficLightA__Main__Normal__literal));
+            __Mission__crossroad__trafficLightA__Main__activeState := __Nothing__literal;
+            if ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Red__literal)) {
+                __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState := __Nothing__literal;
+            }
+            if ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Green__literal)) {
+                __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState := __Nothing__literal;
+            }
+            if ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Yellow__literal)) {
+                __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState := __Nothing__literal;
+            }
+            __Mission__crossroad__trafficLightA__Main__activeState := __Mission__crossroad__trafficLightA__Main__Interrupted__literal;
+            __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState := __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Black__literal;
+            __Mission__crossroad__trafficLightA__blinkingTimeout__deltaTime := 1;
+            __Mission__crossroad__trafficLightA__displayNoneEvent__isActive := true;
+        } or {
+            assume (__Mission__crossroad__trafficLightA__policeEvent__isActive);
+            assume ((__Mission__crossroad__trafficLightA__Main__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__literal));
+            __Mission__crossroad__trafficLightA__Main__activeState := __Nothing__literal;
+            if ((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Black__literal)) {
+                __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState := __Nothing__literal;
+            }
+            if ((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Yellow__literal)) {
+                __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState := __Nothing__literal;
+            }
+            __Mission__crossroad__trafficLightA__Main__activeState := __Mission__crossroad__trafficLightA__Main__Normal__literal;
+            __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState := __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Red__literal;
+            __Mission__crossroad__trafficLightA__displayRedEvent__isActive := true;
+        } or {
+            assume (! ((((__Mission__crossroad__trafficLightA__policeEvent__isActive && (__Mission__crossroad__trafficLightA__Main__activeState == __Mission__crossroad__trafficLightA__Main__Normal__literal)) && ((((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Red__literal) || ! ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Red__literal))) && ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Green__literal) || ! ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Green__literal)))) && ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Yellow__literal) || ! ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Yellow__literal))))) || ((__Mission__crossroad__trafficLightA__policeEvent__isActive && (__Mission__crossroad__trafficLightA__Main__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__literal)) && (((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Black__literal) || ! ((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Black__literal))) && ((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Yellow__literal) || ! ((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Yellow__literal))))))));
+            choice {
+                assume (__Mission__crossroad__trafficLightA__toggleEvent__isActive);
+                assume ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Red__literal));
+                __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState := __Nothing__literal;
+                __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState := __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Green__literal;
+                __Mission__crossroad__trafficLightA__displayGreenEvent__isActive := true;
+            } or {
+                assume (__Mission__crossroad__trafficLightA__toggleEvent__isActive);
+                assume ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Green__literal));
+                __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState := __Nothing__literal;
+                __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState := __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Yellow__literal;
+                __Mission__crossroad__trafficLightA__displayYellowEvent__isActive := true;
+            } or {
+                assume (__Mission__crossroad__trafficLightA__toggleEvent__isActive);
+                assume ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Yellow__literal));
+                __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState := __Nothing__literal;
+                __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState := __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Red__literal;
+                __Mission__crossroad__trafficLightA__displayRedEvent__isActive := true;
+            } or {
+                assume ((__Mission__crossroad__trafficLightA__blinkingTimeout__deltaTime == 0));
+                assume ((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Black__literal));
+                __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState := __Nothing__literal;
+                __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState := __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Yellow__literal;
+                __Mission__crossroad__trafficLightA__blinkingTimeout__deltaTime := 1;
+                __Mission__crossroad__trafficLightA__displayYellowEvent__isActive := true;
+            } or {
+                assume ((__Mission__crossroad__trafficLightA__blinkingTimeout__deltaTime == 0));
+                assume ((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Yellow__literal));
+                __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState := __Nothing__literal;
+                __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState := __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Black__literal;
+                __Mission__crossroad__trafficLightA__blinkingTimeout__deltaTime := 1;
+                __Mission__crossroad__trafficLightA__displayNoneEvent__isActive := true;
+            }
         }
-        if ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Green__literal)) {
-            __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState := __Nothing__literal;
-        }
-        if ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Yellow__literal)) {
-            __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState := __Nothing__literal;
-        }
-        __Mission__crossroad__trafficLightA__Main__activeState := __Mission__crossroad__trafficLightA__Main__Interrupted__literal;
-        __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState := __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Black__literal;
-        __Mission__crossroad__trafficLightA__blinkingTimeout__deltaTime := 1;
-        __Mission__crossroad__trafficLightA__displayNoneEvent__isActive := true;
     } or {
-        assume (__Mission__crossroad__trafficLightA__policeEvent__isActive);
-        assume ((__Mission__crossroad__trafficLightA__Main__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__literal));
-        __Mission__crossroad__trafficLightA__Main__activeState := __Nothing__literal;
-        if ((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Black__literal)) {
-            __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState := __Nothing__literal;
-        }
-        if ((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Yellow__literal)) {
-            __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState := __Nothing__literal;
-        }
-        __Mission__crossroad__trafficLightA__Main__activeState := __Mission__crossroad__trafficLightA__Main__Normal__literal;
-        __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState := __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Red__literal;
-        __Mission__crossroad__trafficLightA__displayRedEvent__isActive := true;
-    } or {
-        assume (! ((((__Mission__crossroad__trafficLightA__policeEvent__isActive && (__Mission__crossroad__trafficLightA__Main__activeState == __Mission__crossroad__trafficLightA__Main__Normal__literal)) && ((((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Red__literal) || ! ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Red__literal))) && ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Green__literal) || ! ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Green__literal)))) && ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Yellow__literal) || ! ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Yellow__literal))))) || ((__Mission__crossroad__trafficLightA__policeEvent__isActive && (__Mission__crossroad__trafficLightA__Main__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__literal)) && (((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Black__literal) || ! ((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Black__literal))) && ((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Yellow__literal) || ! ((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Yellow__literal))))))));
+        assume (! (((((__Mission__crossroad__trafficLightA__policeEvent__isActive && (__Mission__crossroad__trafficLightA__Main__activeState == __Mission__crossroad__trafficLightA__Main__Normal__literal)) && ((((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Red__literal) || ! ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Red__literal))) && ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Green__literal) || ! ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Green__literal)))) && ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Yellow__literal) || ! ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Yellow__literal))))) || ((__Mission__crossroad__trafficLightA__policeEvent__isActive && (__Mission__crossroad__trafficLightA__Main__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__literal)) && (((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Black__literal) || ! ((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Black__literal))) && ((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Yellow__literal) || ! ((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Yellow__literal)))))) || (! ((((__Mission__crossroad__trafficLightA__policeEvent__isActive && (__Mission__crossroad__trafficLightA__Main__activeState == __Mission__crossroad__trafficLightA__Main__Normal__literal)) && ((((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Red__literal) || ! ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Red__literal))) && ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Green__literal) || ! ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Green__literal)))) && ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Yellow__literal) || ! ((__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Yellow__literal))))) || ((__Mission__crossroad__trafficLightA__policeEvent__isActive && (__Mission__crossroad__trafficLightA__Main__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__literal)) && (((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Black__literal) || ! ((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Black__literal))) && ((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Yellow__literal) || ! ((__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Yellow__literal))))))) && (((((__Mission__crossroad__trafficLightA__toggleEvent__isActive && (__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Red__literal)) || (__Mission__crossroad__trafficLightA__toggleEvent__isActive && (__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Green__literal))) || (__Mission__crossroad__trafficLightA__toggleEvent__isActive && (__Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightA__Main__Normal__NormalRegion__Yellow__literal))) || ((__Mission__crossroad__trafficLightA__blinkingTimeout__deltaTime == 0) && (__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Black__literal))) || ((__Mission__crossroad__trafficLightA__blinkingTimeout__deltaTime == 0) && (__Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightA__Main__Interrupted__InterruptedRegion__Yellow__literal)))))));
     }
     __Mission__crossroad__trafficLightA__policeEvent__isActive := false;
     __Mission__crossroad__trafficLightA__toggleEvent__isActive := false;
@@ -164,37 +253,74 @@ trans {
     __Mission__crossroad__trafficLightB__displayGreenEvent__isActive := false;
     __Mission__crossroad__trafficLightB__displayNoneEvent__isActive := false;
     choice {
-        assume (__Mission__crossroad__trafficLightB__policeEvent__isActive);
-        assume ((__Mission__crossroad__trafficLightB__Main__activeState == __Mission__crossroad__trafficLightB__Main__Normal__literal));
-        __Mission__crossroad__trafficLightB__Main__activeState := __Nothing__literal;
-        if ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Red__literal)) {
-            __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState := __Nothing__literal;
+        choice {
+            assume (__Mission__crossroad__trafficLightB__policeEvent__isActive);
+            assume ((__Mission__crossroad__trafficLightB__Main__activeState == __Mission__crossroad__trafficLightB__Main__Normal__literal));
+            __Mission__crossroad__trafficLightB__Main__activeState := __Nothing__literal;
+            if ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Red__literal)) {
+                __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState := __Nothing__literal;
+            }
+            if ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Green__literal)) {
+                __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState := __Nothing__literal;
+            }
+            if ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Yellow__literal)) {
+                __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState := __Nothing__literal;
+            }
+            __Mission__crossroad__trafficLightB__Main__activeState := __Mission__crossroad__trafficLightB__Main__Interrupted__literal;
+            __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState := __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Black__literal;
+            __Mission__crossroad__trafficLightB__blinkingTimeout__deltaTime := 1;
+            __Mission__crossroad__trafficLightB__displayNoneEvent__isActive := true;
+        } or {
+            assume (__Mission__crossroad__trafficLightB__policeEvent__isActive);
+            assume ((__Mission__crossroad__trafficLightB__Main__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__literal));
+            __Mission__crossroad__trafficLightB__Main__activeState := __Nothing__literal;
+            if ((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Black__literal)) {
+                __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState := __Nothing__literal;
+            }
+            if ((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Yellow__literal)) {
+                __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState := __Nothing__literal;
+            }
+            __Mission__crossroad__trafficLightB__Main__activeState := __Mission__crossroad__trafficLightB__Main__Normal__literal;
+            __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState := __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Red__literal;
+            __Mission__crossroad__trafficLightB__displayRedEvent__isActive := true;
+        } or {
+            assume (! ((((__Mission__crossroad__trafficLightB__policeEvent__isActive && (__Mission__crossroad__trafficLightB__Main__activeState == __Mission__crossroad__trafficLightB__Main__Normal__literal)) && ((((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Red__literal) || ! ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Red__literal))) && ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Green__literal) || ! ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Green__literal)))) && ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Yellow__literal) || ! ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Yellow__literal))))) || ((__Mission__crossroad__trafficLightB__policeEvent__isActive && (__Mission__crossroad__trafficLightB__Main__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__literal)) && (((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Black__literal) || ! ((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Black__literal))) && ((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Yellow__literal) || ! ((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Yellow__literal))))))));
+            choice {
+                assume (__Mission__crossroad__trafficLightB__toggleEvent__isActive);
+                assume ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Red__literal));
+                __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState := __Nothing__literal;
+                __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState := __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Green__literal;
+                __Mission__crossroad__trafficLightB__displayGreenEvent__isActive := true;
+            } or {
+                assume (__Mission__crossroad__trafficLightB__toggleEvent__isActive);
+                assume ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Green__literal));
+                __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState := __Nothing__literal;
+                __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState := __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Yellow__literal;
+                __Mission__crossroad__trafficLightB__displayYellowEvent__isActive := true;
+            } or {
+                assume (__Mission__crossroad__trafficLightB__toggleEvent__isActive);
+                assume ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Yellow__literal));
+                __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState := __Nothing__literal;
+                __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState := __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Red__literal;
+                __Mission__crossroad__trafficLightB__displayRedEvent__isActive := true;
+            } or {
+                assume ((__Mission__crossroad__trafficLightB__blinkingTimeout__deltaTime == 0));
+                assume ((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Black__literal));
+                __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState := __Nothing__literal;
+                __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState := __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Yellow__literal;
+                __Mission__crossroad__trafficLightB__blinkingTimeout__deltaTime := 1;
+                __Mission__crossroad__trafficLightB__displayYellowEvent__isActive := true;
+            } or {
+                assume ((__Mission__crossroad__trafficLightB__blinkingTimeout__deltaTime == 0));
+                assume ((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Yellow__literal));
+                __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState := __Nothing__literal;
+                __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState := __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Black__literal;
+                __Mission__crossroad__trafficLightB__blinkingTimeout__deltaTime := 1;
+                __Mission__crossroad__trafficLightB__displayNoneEvent__isActive := true;
+            }
         }
-        if ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Green__literal)) {
-            __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState := __Nothing__literal;
-        }
-        if ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Yellow__literal)) {
-            __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState := __Nothing__literal;
-        }
-        __Mission__crossroad__trafficLightB__Main__activeState := __Mission__crossroad__trafficLightB__Main__Interrupted__literal;
-        __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState := __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Black__literal;
-        __Mission__crossroad__trafficLightB__blinkingTimeout__deltaTime := 1;
-        __Mission__crossroad__trafficLightB__displayNoneEvent__isActive := true;
     } or {
-        assume (__Mission__crossroad__trafficLightB__policeEvent__isActive);
-        assume ((__Mission__crossroad__trafficLightB__Main__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__literal));
-        __Mission__crossroad__trafficLightB__Main__activeState := __Nothing__literal;
-        if ((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Black__literal)) {
-            __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState := __Nothing__literal;
-        }
-        if ((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Yellow__literal)) {
-            __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState := __Nothing__literal;
-        }
-        __Mission__crossroad__trafficLightB__Main__activeState := __Mission__crossroad__trafficLightB__Main__Normal__literal;
-        __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState := __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Red__literal;
-        __Mission__crossroad__trafficLightB__displayRedEvent__isActive := true;
-    } or {
-        assume (! ((((__Mission__crossroad__trafficLightB__policeEvent__isActive && (__Mission__crossroad__trafficLightB__Main__activeState == __Mission__crossroad__trafficLightB__Main__Normal__literal)) && ((((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Red__literal) || ! ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Red__literal))) && ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Green__literal) || ! ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Green__literal)))) && ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Yellow__literal) || ! ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Yellow__literal))))) || ((__Mission__crossroad__trafficLightB__policeEvent__isActive && (__Mission__crossroad__trafficLightB__Main__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__literal)) && (((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Black__literal) || ! ((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Black__literal))) && ((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Yellow__literal) || ! ((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Yellow__literal))))))));
+        assume (! (((((__Mission__crossroad__trafficLightB__policeEvent__isActive && (__Mission__crossroad__trafficLightB__Main__activeState == __Mission__crossroad__trafficLightB__Main__Normal__literal)) && ((((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Red__literal) || ! ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Red__literal))) && ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Green__literal) || ! ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Green__literal)))) && ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Yellow__literal) || ! ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Yellow__literal))))) || ((__Mission__crossroad__trafficLightB__policeEvent__isActive && (__Mission__crossroad__trafficLightB__Main__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__literal)) && (((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Black__literal) || ! ((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Black__literal))) && ((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Yellow__literal) || ! ((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Yellow__literal)))))) || (! ((((__Mission__crossroad__trafficLightB__policeEvent__isActive && (__Mission__crossroad__trafficLightB__Main__activeState == __Mission__crossroad__trafficLightB__Main__Normal__literal)) && ((((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Red__literal) || ! ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Red__literal))) && ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Green__literal) || ! ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Green__literal)))) && ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Yellow__literal) || ! ((__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Yellow__literal))))) || ((__Mission__crossroad__trafficLightB__policeEvent__isActive && (__Mission__crossroad__trafficLightB__Main__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__literal)) && (((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Black__literal) || ! ((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Black__literal))) && ((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Yellow__literal) || ! ((__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Yellow__literal))))))) && (((((__Mission__crossroad__trafficLightB__toggleEvent__isActive && (__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Red__literal)) || (__Mission__crossroad__trafficLightB__toggleEvent__isActive && (__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Green__literal))) || (__Mission__crossroad__trafficLightB__toggleEvent__isActive && (__Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__activeState == __Mission__crossroad__trafficLightB__Main__Normal__NormalRegion__Yellow__literal))) || ((__Mission__crossroad__trafficLightB__blinkingTimeout__deltaTime == 0) && (__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Black__literal))) || ((__Mission__crossroad__trafficLightB__blinkingTimeout__deltaTime == 0) && (__Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__activeState == __Mission__crossroad__trafficLightB__Main__Interrupted__InterruptedRegion__Yellow__literal)))))));
     }
     __Mission__crossroad__trafficLightB__policeEvent__isActive := false;
     __Mission__crossroad__trafficLightB__toggleEvent__isActive := false;

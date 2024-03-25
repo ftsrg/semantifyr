@@ -156,7 +156,7 @@ object OperationOptimizer {
 
     private fun Operation.removeEmptyChoices(): Boolean {
         val emptyChoices = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).filter {
-            it.operation.isEmpty() && it.`else` == null && it.isRemovable()
+            it.operation.isEmpty() && it.isRemovable()
         }
 
         if (emptyChoices.isEmpty()) {
@@ -200,6 +200,10 @@ object OperationOptimizer {
 
     private fun Operation.isRemovable(): Boolean {
         val parent = eContainer()
+
+        if (this is ChoiceOperation && `else` != null) {
+            return false
+        }
 
         return when (parent) {
             is ChoiceOperation -> {
