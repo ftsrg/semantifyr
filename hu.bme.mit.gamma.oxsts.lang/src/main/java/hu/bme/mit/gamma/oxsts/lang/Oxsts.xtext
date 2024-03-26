@@ -180,8 +180,10 @@ InlineSeq:
 
 InlineCall: 
 	'inline' reference=ReferenceExpression '('
-		parameterBindings+=ParameterBinding
-		(',' parameterBindings+=ParameterBinding)* (',')?
+		(
+            parameterBindings+=ParameterBinding
+            (',' parameterBindings+=ParameterBinding)* (',')?
+		)?
 	')'
 ;
 
@@ -234,7 +236,13 @@ Containment:
     'containment' FeatureDeclaration
     (
         '{'
-            (features+=Feature)*
+            (
+                features+=Feature
+                | initTransition+=InitTransition
+                | transitions+=NamedTransition
+                | mainTransition+=MainTransition
+                | havocTransition+=HavocTransition
+            )*
         '}'
     )?
 ;
@@ -251,6 +259,7 @@ Multiplicity:
 	OptionalMultiplicity
 	| OneMultiplicity
 	| ManyMultiplicity
+	| SomeMultiplicity
 ;
 
 OptionalMultiplicity: 
@@ -263,6 +272,10 @@ OneMultiplicity:
 
 ManyMultiplicity: 
 	{ManyMultiplicity} '[0..*]'
+;
+
+SomeMultiplicity:
+	{SomeMultiplicity} '[1..*]'
 ;
 
 Typing:
@@ -365,7 +378,7 @@ ChainReferenceExpression:
 	chains+=ChainingExpression
 	(
 		'.' chains+=ChainingExpression
-	)+
+	)*
 ;
 
 ChainingExpression: 

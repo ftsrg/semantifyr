@@ -48,13 +48,24 @@ open class Instance(
 
     private fun fixImplicitType(containment: Containment) {
         // TODO: workaround, since we do not support multi-inheritance for now
-        if (containment.features.none()) {
+
+        if (
+            containment.features.none() &&
+            containment.havocTransition.none() &&
+            containment.initTransition.none() &&
+            containment.mainTransition.none() &&
+            containment.transitions.none()
+        ) {
             return
         }
 
         val newType = OxstsFactory.createType().also {
             it.name = "${containment.name}__implicit"
             it.features += containment.features
+            it.havocTransition += containment.havocTransition
+            it.initTransition += containment.initTransition
+            it.mainTransition += containment.mainTransition
+            it.transitions += containment.transitions
             it.supertype = containment.type
         }
         containment.typing = OxstsFactory.createReferenceTyping(newType)
