@@ -209,7 +209,7 @@ class XstsTransformer {
             val oldVariable = reference.element as Variable
 
             val instance = rootInstance.expressionEvaluator.evaluateInstance(referenceExpression.dropLast(1))
-            val transformedVariable = instance.variableTransformer[oldVariable]
+            val transformedVariable = instance.variableTransformer.findTransformedVariable(oldVariable)
 
             val newExpression = OxstsFactory.createChainReferenceExpression(transformedVariable)
             EcoreUtil2.replace(referenceExpression, newExpression)

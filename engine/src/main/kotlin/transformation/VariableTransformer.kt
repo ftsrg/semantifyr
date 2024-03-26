@@ -27,8 +27,10 @@ class VariableTransformer(
     val allTransformedVariables
         get() = variableMap.values.toList()
 
-    operator fun get(oldVariable: Variable): Variable {
-        return variableMap[oldVariable] ?: error("$oldVariable has not been transformed!")
+    fun findTransformedVariable(oldVariable: Variable): Variable {
+        return variableMap[oldVariable] ?:
+            instance.parent?.variableTransformer?.findTransformedVariable(oldVariable) ?:
+            error("$oldVariable could not be found in the containment hierarchy!")
     }
 
     fun transform(variable: Variable) {
