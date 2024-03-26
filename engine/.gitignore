@@ -3,3 +3,4 @@ gamma-libs/
 Test Models/**/model.xsts
 input/
 output/
+Test Models/**/artifacts/

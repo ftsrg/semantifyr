@@ -638,7 +638,7 @@ abstract target CrossroadsMission {
     }
 
     tran {
-        inline crossroad.controller.policeEvent.havoc
+        inline crossroad.controller.policeEvent.havoc()
         inline crossroad.main()
     }
 }

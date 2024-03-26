@@ -1,55 +1,55 @@
 import hu.bme.mit.gamma.oxsts.engine.reader.OxstsReader
-import hu.bme.mit.gamma.oxsts.engine.reader.prepareOxsts
 import hu.bme.mit.gamma.oxsts.engine.serialization.Serializer
 import hu.bme.mit.gamma.oxsts.engine.transformation.XstsTransformer
-import hu.bme.mit.gamma.oxsts.lang.tests.OxstsInjectorProvider
 import hu.bme.mit.gamma.oxsts.model.oxsts.Target
-import org.eclipse.xtext.testing.InjectWith
-import org.eclipse.xtext.testing.extensions.InjectionExtension
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.extension.ExtendWith
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.MethodSource
 import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.stream.Stream
+import kotlin.streams.asStream
 
-val directory = "Test Models/Automated/Gamma/Crossroads"
-val artifactsDirectory = "$directory/artifacts"
+class TargetDefinition(
+    val directory: String,
+    val target: Target
+) {
+    override fun toString(): String {
+        return "$directory - ${target.name}"
+    }
+}
 
-@ExtendWith(InjectionExtension::class)
-@InjectWith(OxstsInjectorProvider::class)
-class CrossroadsTest {
-
+open class VerificationTest(
+    val directory: String
+) {
     companion object {
-        @JvmStatic
-        fun `Crossroads model verification case should pass`(): Stream<Target> {
-            val reader = OxstsReader(directory)
-            reader.read()
+        fun streamTargetsFromFolder(directory: String): Stream<TargetDefinition> {
+            return File(directory).walkTopDown().filter {
+                it.isDirectory
+            }.filter {
+                it.list { _, name -> name == "model.oxsts" }?.any() ?: false
+            }.flatMap { file ->
+                val reader = OxstsReader("${file.path}/model.oxsts")
+                reader.read()
 
-            val targets = reader.rootElements.flatMap {
-                it.types
-            }.filterIsInstance<Target>().filter {
-                !it.isAbstract
-            }
-
-            return targets.stream()
-        }
-
-        @BeforeAll
-        @JvmStatic
-        fun prepare() {
-            prepareOxsts()
-
-            File(artifactsDirectory).deleteRecursively()
+                reader.rootElements.asSequence().flatMap {
+                    it.types
+                }.filterIsInstance<Target>().filter {
+                    !it.isAbstract
+                }.filter {
+                    it.name.contains("_Safe") || it.name.contains("_Unsafe")
+                }.map { target ->
+                    TargetDefinition(file.path, target)
+                }
+            }.asStream()
         }
     }
 
-    @ParameterizedTest
-    @MethodSource
-    fun `Crossroads model verification case should pass`(target: Target) {
-        val targetDirectory = "$artifactsDirectory/${target.name}"
+
+
+    fun testVerification(targetDefinition: TargetDefinition) {
+        val directory = targetDefinition.directory
+        val target = targetDefinition.target
+
+        val targetDirectory = "$directory/artifacts/${target.name}"
 
         File(targetDirectory).deleteRecursively()
         File(targetDirectory).mkdirs()

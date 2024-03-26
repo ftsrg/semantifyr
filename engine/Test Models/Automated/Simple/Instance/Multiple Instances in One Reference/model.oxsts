@@ -24,9 +24,9 @@ target Mission {
         containment c :> simples : Simple
         containment d :> simples : Simple
 
-        reference mainSimpleA :> mainSimple = a
-        reference mainSimpleB :> mainSimple = b
-        reference mainSimpleD :> mainSimple = d
+        reference mainSimpleA :> mainSimple : Simple = a
+        reference mainSimpleB :> mainSimple : Simple = b
+        reference mainSimpleD :> mainSimple : Simple = d
     }
 
     init {

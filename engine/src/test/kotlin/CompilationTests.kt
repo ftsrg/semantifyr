@@ -50,6 +50,14 @@ class CompilationTests {
         assertModelEqualsExpected(directory)
     }
 
+    @Test
+    fun asdf() {
+        val directory = "$automatedDirectory/Simple/Target/Boolean Variable"
+
+        simpleReadTransformWrite(directory)
+        assertModelEqualsExpected(directory)
+    }
+
     private fun simpleReadTransformWrite(directory: String, rewriteChoice: Boolean = true) {
         File("$directory/model.xsts").delete()
 

@@ -76,7 +76,7 @@ type SetTimeoutAction : Action {
     reference timeout : Timeout[1..1]
     reference delta : Integer = 1000
 
-    tran {
+    override tran {
         timeout.deltaTime := delta
     }
 }
@@ -138,12 +138,12 @@ type Statechart : Component {
         inline seq outputEvents -> reset
         inline choice regions -> fireTransitions else { }
         inline seq inputEvents -> reset
+        inline seq timeouts -> main
     }
 }
 
 type Region {
-    feature abstractStates : AbstractState[0..*]
-    feature states :> abstractStates : State[0..*]
+    feature states : State[0..*]
 
     var activeState : states[0..1] = Nothing
 
@@ -162,17 +162,18 @@ type Region {
 
     tran fireTransitions {
         inline choice transitions -> main else {
-            inline choice states -> fireTransitions else { }
+            inline choice states -> fireTransitions
         }
+    }
+
+    tran fireTransitionsInner {
+        inline choice transitions -> main
     }
 }
 
-type AbstractState {
+type State {
     reference parent : Region[0..1]
     reference parentState : State[0..1]
-}
-
-type State : AbstractState {
     feature regions : Region[0..1]
 
     feature entryActions : Action[0..*]
@@ -224,7 +225,7 @@ type State : AbstractState {
     }
 
     tran fireTransitions {
-        inline seq regions -> fireTransitions
+        inline seq regions -> fireTransitionsInner
     }
 }
 
@@ -306,6 +307,16 @@ type Station : Statechart {
             }
         }
 
+        containment shutdownOperation :> transitions : Transition {
+            reference ::> commonRegion : Region = Main
+            reference ::> from : State = Operation
+            reference ::> to : State = Idle
+
+            containment t :> trigger : EventTrigger {
+                reference ::> event : Event = shutdownEvent
+            }
+        }
+
         containment Operation :> states : State {
             reference ::> parent : Region = Main
 
@@ -354,118 +365,6 @@ type Station : Statechart {
 
 // TrafficLightCtrl.oxsts
 
-type SetRechargingAction : Action {
-    reference spacecraft : Spacecraft
-
-    override tran {
-        spacecraft.recharging := true
-    }
-}
-
-type ResetRechargingAction : Action {
-    reference spacecraft : Spacecraft
-
-    override tran {
-        spacecraft.recharging := false
-    }
-}
-
-type DecreaseBatteryChargeAction : Action {
-    reference spacecraft : Spacecraft
-
-    override tran {
-        spacecraft.batteryCharge := spacecraft.batteryCharge - 1
-    }
-}
-
-type DecreaseBatteryChargeAction : Action {
-    reference spacecraft : Spacecraft
-
-    override tran {
-        spacecraft.batteryCharge := spacecraft.batteryCharge - 1
-    }
-}
-
-type IncreaseBatteryChargeAction : Action {
-    reference spacecraft : Spacecraft
-
-    override tran {
-        spacecraft.batteryCharge := spacecraft.batteryCharge + 1
-    }
-}
-
-type DecreaseDataAction : Action {
-    reference spacecraft : Spacecraft
-
-    override tran {
-        spacecraft.data := spacecraft.data - 1
-    }
-}
-
-type CanConsumeGuard : Guard {
-    reference spacecraft : Spacecraft
-
-    override tran {
-        assume (spacecraft.batteryCharge >= 40)
-    }
-}
-
-type CannotConsumeGuard : Guard {
-    reference spacecraft : Spacecraft
-
-    override tran {
-        assume (spacecraft.batteryCharge < 40)
-    }
-}
-
-type IsNotRechargingGuard : Guard {
-    reference spacecraft : Spacecraft
-
-    override tran {
-        assume (spacecraft.recharging == false)
-    }
-}
-
-type CanTransmitGuard : Guard {
-    reference spacecraft : Spacecraft
-
-    override tran {
-        assume (spacecraft.data > 1 && spacecraft.batteryCharge >= 40)
-    }
-}
-
-type CannotTransmitGuard : Guard {
-    reference spacecraft : Spacecraft
-
-    override tran {
-        assume (spacecraft.data <= 1 || spacecraft.batteryCharge < 40)
-    }
-}
-
-type ShouldRechargeGuard : Guard {
-    reference spacecraft : Spacecraft
-
-    override tran {
-        assume (spacecraft.batteryCharge < 80)
-    }
-}
-
-type CanRechargeGuard : Guard {
-    reference spacecraft : Spacecraft
-
-    override tran {
-        assume (spacecraft.batteryCharge < 100)
-    }
-}
-
-type CannotRechargeGuard : Guard {
-    reference spacecraft : Spacecraft
-
-    override tran {
-        assume (spacecraft.batteryCharge >= 100)
-    }
-}
-
 type Spacecraft : Statechart {
     containment pingEvent :> inputEvents : Event
     containment dataEvent :> outputEvents : Event
@@ -475,8 +374,8 @@ type Spacecraft : Statechart {
     containment transmitTimeout :> timeouts : Timeout
 
     var batteryCharge : Integer = 100
-    var data : Integer = 100
     var recharging : Boolean = false
+    var data : Integer = 100
 
     containment Communication :> regions : Region {
         containment et1 :> entryTransitions : EntryTransition {
@@ -496,9 +395,41 @@ type Spacecraft : Statechart {
             containment t :> trigger : EventTrigger {
                 reference ::> event : Event = pingEvent
             }
-//            containment g :> guards : IsNotRechargingGuard {
-//                reference ::> spacecraft : Spacecraft = Self
-//            }
+            containment g :> guards : Guard {
+                override tran {
+                    assume (recharging == false)
+                }
+            }
+        }
+
+        containment lowBattery :> transitions : Transition {
+            reference ::> commonRegion : Region = Communication
+            reference ::> from : State = Transmitting
+            reference ::> to : State = WaitingPing
+
+            containment t :> trigger : TimeoutTrigger {
+                reference ::> timeout : Timeout = consumeTimeout
+            }
+            containment g :> guards : Guard {
+                override tran {
+                    assume (batteryCharge < 40)
+                }
+            }
+        }
+
+        containment lowBatteryOrDone :> transitions : Transition {
+            reference ::> commonRegion : Region = Communication
+            reference ::> from : State = Transmitting
+            reference ::> to : State = WaitingPing
+
+            containment t :> trigger : TimeoutTrigger {
+                reference ::> timeout : Timeout = transmitTimeout
+            }
+            containment g :> guards : Guard {
+                override tran {
+                    assume (data <= 1 || batteryCharge < 40)
+                }
+            }
         }
 
         containment Transmitting :> states : State {
@@ -519,6 +450,29 @@ type Spacecraft : Statechart {
                         reference ::> delta : Integer = 1500
                     }
                 }
+
+                containment transmitData :> transitions : Transition {
+                    reference ::> commonRegion : Region = SendData
+                    reference ::> from : State = Sending
+                    reference ::> to : State = Sending
+
+                    containment t :> trigger : TimeoutTrigger {
+                        reference ::> timeout : Timeout = transmitTimeout
+                    }
+                    containment g :> guards : Guard {
+                        override tran {
+                            assume (data > 1 && batteryCharge >= 40)
+                        }
+                    }
+                    containment a1 :> actions : Action {
+                        override tran {
+                            data := data -1
+                        }
+                    }
+                    containment a2 :> actions : RaiseEventAction {
+                        reference ::> event : Event = dataEvent
+                    }
+                }
             }
 
             containment ConsumePower :> regions : Region {
@@ -536,6 +490,26 @@ type Spacecraft : Statechart {
                         reference ::> delta : Integer = 1000
                     }
                 }
+
+                containment consumePower :> transitions : Transition {
+                    reference ::> commonRegion : Region = SendData
+                    reference ::> from : State = Consuming
+                    reference ::> to : State = Consuming
+
+                    containment t :> trigger : TimeoutTrigger {
+                        reference ::> timeout : Timeout = consumeTimeout
+                    }
+                    containment g :> guards : Guard {
+                        override tran {
+                            assume (batteryCharge >= 40)
+                        }
+                    }
+                    containment a :> actions : Action {
+                        override tran {
+                            batteryCharge := batteryCharge - 1
+                        }
+                    }
+                }
             }
         }
     }
@@ -548,6 +522,62 @@ type Spacecraft : Statechart {
 
         containment NotRecharging :> states : State {
             reference ::> parent : State = Battery
+
+            containment ea1 :> entryActions : Action {
+                tran {
+                    recharging := false
+                }
+            }
+        }
+
+        containment startRecharging :> transitions : Transition {
+            reference ::> commonRegion : Region = Battery
+            reference ::> from : State = NotRecharging
+            reference ::> to : State = Recharging
+
+            containment t :> trigger : TimeoutTrigger {
+                reference ::> timeout : Timeout = consumeTimeout
+            }
+            containment g :> guards : Guard {
+                override tran {
+                    assume (batteryCharge < 80)
+                }
+            }
+        }
+
+        containment recharge :> transitions : Transition {
+            reference ::> commonRegion : Region = Battery
+            reference ::> from : State = Recharging
+            reference ::> to : State = Recharging
+
+            containment t :> trigger : TimeoutTrigger {
+                reference ::> timeout : Timeout = rechargeTimeout
+            }
+            containment g :> guards : Guard {
+                override tran {
+                    assume (batteryCharge < 100)
+                }
+            }
+            containment a :> actions : Action {
+                override tran {
+                    batteryCharge := batteryCharge + 1
+                }
+            }
+        }
+
+        containment stopRecharging :> transitions : Transition {
+            reference ::> commonRegion : Region = Battery
+            reference ::> from : State = Recharging
+            reference ::> to : State = NotRecharging
+
+            containment t :> trigger : TimeoutTrigger {
+                reference ::> timeout : Timeout = rechargeTimeout
+            }
+            containment g :> guards : Guard {
+                override tran {
+                    assume (batteryCharge == 100)
+                }
+            }
         }
 
         containment Recharging :> states : State {
@@ -556,6 +586,11 @@ type Spacecraft : Statechart {
             containment ea1 :> entryActions : SetTimeoutAction {
                 reference ::> timeout : Timeout = rechargeTimeout
                 reference ::> delta : Integer = 10000
+            }
+            containment ea2 :> entryActions : Action {
+                tran {
+                    recharging := true
+                }
             }
         }
     }
@@ -591,5 +626,17 @@ target Mission {
 
     prop {
         true
+    }
+}
+
+target SendData_Safe : Mission {
+    prop {
+        spaceMission.spacecraft.data <= 99
+    }
+}
+
+target Battery_Safe : Mission {
+    prop {
+        spaceMission.spacecraft.batteryCharge <= 99
     }
 }
