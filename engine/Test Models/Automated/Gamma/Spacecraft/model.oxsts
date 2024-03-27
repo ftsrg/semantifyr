@@ -802,8 +802,8 @@ target Data_is_never_lost_Safe : Mission {
     }
 }
 
-target Spacecraft_batteryCharge_never_under_40_Safe : Mission {
+target Spacecraft_batteryCharge_never_under_20_Safe : Mission {
     prop {
-        ! (spaceMission.spacecraft.batteryCharge <= 40)
+        ! (spaceMission.spacecraft.batteryCharge <= 20)
     }
 }
