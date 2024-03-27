@@ -27,7 +27,7 @@ type Timeout {
 
     tran {
         if (deltaTime > 0) {
-            deltaTime := deltaTime - 500
+            deltaTime := deltaTime - 1501
         }
     }
 
@@ -136,7 +136,9 @@ type Statechart : Component {
 
     override tran {
         inline seq outputEvents -> reset
-        inline choice regions -> fireTransitions else { }
+        choice {
+            inline seq regions -> fireTransitions
+        } else { }
         inline seq inputEvents -> reset
         inline seq timeouts -> main
     }
@@ -164,6 +166,9 @@ type Region {
         inline choice transitions -> main else {
             inline choice states -> fireTransitions
         }
+        /*inline choice states -> fireTransitions else {
+            inline choice transitions -> main
+        }*/
     }
 
     tran fireTransitionsInner {
@@ -225,7 +230,7 @@ type State {
     }
 
     tran fireTransitions {
-        inline seq regions -> fireTransitionsInner
+        inline seq regions -> fireTransitions
     }
 }
 
@@ -271,6 +276,8 @@ type Station : Statechart {
 
     containment pingTimeout :> timeouts : Timeout
     containment startTimeout :> timeouts : Timeout
+
+    var receivedData : Integer = 0
 
     containment Main :> regions : Region {
         containment et1 :> entryTransitions : EntryTransition {
@@ -335,7 +342,7 @@ type Station : Statechart {
                 }
 
                 containment Waiting :> states : State {
-                    reference ::> parent : State = ReceiveData
+                    reference ::> parent : Region = ReceiveData
                     reference ::> parentState : State = Operation
                 }
 
@@ -346,6 +353,11 @@ type Station : Statechart {
 
                     containment t :> trigger : EventTrigger {
                         reference ::> event : Event = dataEvent
+                    }
+                    containment a :> actions : Action {
+                        tran {
+                            receivedData := receivedData + 1
+                        }
                     }
                 }
             }
@@ -375,7 +387,7 @@ type Spacecraft : Statechart {
 
     var batteryCharge : Integer = 100
     var recharging : Boolean = false
-    var data : Integer = 100
+    var data : Integer = 10
 
     containment Communication :> regions : Region {
         containment et1 :> entryTransitions : EntryTransition {
@@ -387,7 +399,7 @@ type Spacecraft : Statechart {
             reference ::> parent : Region = Communication
         }
 
-        containment resendPing :> transitions : Transition {
+        containment receivedPing :> transitions : Transition {
             reference ::> commonRegion : Region = Communication
             reference ::> from : State = WaitingPing
             reference ::> to : State = Transmitting
@@ -433,7 +445,7 @@ type Spacecraft : Statechart {
         }
 
         containment Transmitting :> states : State {
-            reference ::> parent : State = Communication
+            reference ::> parent : Region = Communication
 
             containment SendData :> regions : Region {
                 containment et2 :> entryTransitions : EntryTransition {
@@ -442,7 +454,7 @@ type Spacecraft : Statechart {
                 }
 
                 containment Sending :> states : State {
-                    reference ::> parent : State = SendData
+                    reference ::> parent : Region = SendData
                     reference ::> parentState : State = Transmitting
 
                     containment ea1 :> entryActions : SetTimeoutAction {
@@ -466,7 +478,7 @@ type Spacecraft : Statechart {
                     }
                     containment a1 :> actions : Action {
                         override tran {
-                            data := data -1
+                            data := data - 1
                         }
                     }
                     containment a2 :> actions : RaiseEventAction {
@@ -492,7 +504,7 @@ type Spacecraft : Statechart {
                 }
 
                 containment consumePower :> transitions : Transition {
-                    reference ::> commonRegion : Region = SendData
+                    reference ::> commonRegion : Region = ConsumePower
                     reference ::> from : State = Consuming
                     reference ::> to : State = Consuming
 
@@ -506,7 +518,7 @@ type Spacecraft : Statechart {
                     }
                     containment a :> actions : Action {
                         override tran {
-                            batteryCharge := batteryCharge - 1
+                            batteryCharge := batteryCharge - 10
                         }
                     }
                 }
@@ -521,7 +533,7 @@ type Spacecraft : Statechart {
         }
 
         containment NotRecharging :> states : State {
-            reference ::> parent : State = Battery
+            reference ::> parent : Region = Battery
 
             containment ea1 :> entryActions : Action {
                 tran {
@@ -560,7 +572,7 @@ type Spacecraft : Statechart {
             }
             containment a :> actions : Action {
                 override tran {
-                    batteryCharge := batteryCharge + 1
+                    batteryCharge := batteryCharge + 10
                 }
             }
         }
@@ -581,7 +593,7 @@ type Spacecraft : Statechart {
         }
 
         containment Recharging :> states : State {
-            reference ::> parent : State = Battery
+            reference ::> parent : Region = Battery
 
             containment ea1 :> entryActions : SetTimeoutAction {
                 reference ::> timeout : Timeout = rechargeTimeout
@@ -594,7 +606,6 @@ type Spacecraft : Statechart {
             }
         }
     }
-
 }
 
 type SpaceMission : SyncComponent {
@@ -629,14 +640,170 @@ target Mission {
     }
 }
 
-target SendData_Safe : Mission {
+target StationIdle_Unsafe : Mission {
     prop {
-        spaceMission.spacecraft.data <= 99
+       ! (spaceMission.station.Main.activeState == spaceMission.station.Main.Idle)
     }
 }
 
-target Battery_Safe : Mission {
+target StationOperation_Unsafe : Mission {
     prop {
-        spaceMission.spacecraft.batteryCharge <= 99
+       ! (spaceMission.station.Main.activeState == spaceMission.station.Main.Operation)
+    }
+}
+
+target StationOperationWaiting_Unsafe : Mission {
+    prop {
+       ! (spaceMission.station.Main.Operation.ReceiveData.activeState == spaceMission.station.Main.Operation.ReceiveData.Waiting)
+    }
+}
+
+target SpacecraftWaitingPing_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.Communication.activeState == spaceMission.spacecraft.Communication.WaitingPing)
+    }
+}
+
+target SpacecraftTransmitting_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.Communication.activeState == spaceMission.spacecraft.Communication.Transmitting)
+    }
+}
+
+target SpacecraftTransmittingSending_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.Communication.Transmitting.SendData.activeState == spaceMission.spacecraft.Communication.Transmitting.SendData.Sending)
+    }
+}
+
+target SpacecraftTransmittingConsuming_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.Communication.Transmitting.ConsumePower.activeState == spaceMission.spacecraft.Communication.Transmitting.ConsumePower.Consuming)
+    }
+}
+
+target SpacecraftNotRecharging_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.Battery.activeState == spaceMission.spacecraft.Battery.NotRecharging)
+    }
+}
+
+target SpacecraftRecharging_Unsafe : Mission {
+    prop {
+        ! (spaceMission.spacecraft.Battery.activeState == spaceMission.spacecraft.Battery.Recharging)
+    }
+}
+
+target Station_ReceivedData_0_Unsafe : Mission {
+    prop {
+       ! (spaceMission.station.receivedData == 0)
+    }
+}
+
+target Station_ReceivedData_1_Unsafe : Mission {
+    prop {
+       ! (spaceMission.station.receivedData == 1)
+    }
+}
+
+target Station_ReceivedData_5_Unsafe : Mission {
+    prop {
+       ! (spaceMission.station.receivedData == 5)
+    }
+}
+
+target Station_ReceivedData_9_Unsafe : Mission {
+    prop {
+       ! (spaceMission.station.receivedData == 9)
+    }
+}
+
+target Station_ReceivedData_10_Unsafe : Mission {
+    prop {
+       ! (spaceMission.station.receivedData == 10)
+    }
+}
+
+target Spacecraft_data_10_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.data == 10)
+    }
+}
+
+target Spacecraft_data_9_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.data == 9)
+    }
+}
+
+target Spacecraft_data_5_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.data == 5)
+    }
+}
+
+target Spacecraft_data_3_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.data == 3)
+    }
+}
+
+target Spacecraft_data_2_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.data == 2)
+    }
+}
+
+target Spacecraft_data_1_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.data == 1)
+    }
+}
+
+target Spacecraft_data_0_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.data == 0)
+    }
+}
+
+target Spacecraft_batteryCharge_100_Unsafe : Mission {
+    prop {
+        ! (spaceMission.spacecraft.batteryCharge == 100)
+    }
+}
+
+target Spacecraft_batteryCharge_90_Unsafe : Mission {
+    prop {
+        ! (spaceMission.spacecraft.batteryCharge == 90)
+    }
+}
+
+target Spacecraft_batteryCharge_80_Unsafe : Mission {
+    prop {
+        ! (spaceMission.spacecraft.batteryCharge == 80)
+    }
+}
+
+target Spacecraft_batteryCharge_70_Unsafe : Mission {
+    prop {
+        ! (spaceMission.spacecraft.batteryCharge == 70)
+    }
+}
+
+target Spacecraft_batteryCharge_40_Unsafe : Mission {
+    prop {
+        ! (spaceMission.spacecraft.batteryCharge == 40)
+    }
+}
+
+target Data_is_never_lost_Safe : Mission {
+    prop {
+       spaceMission.station.receivedData == 10 - spaceMission.spacecraft.data
+    }
+}
+
+target Spacecraft_batteryCharge_never_under_40_Safe : Mission {
+    prop {
+        ! (spaceMission.spacecraft.batteryCharge <= 40)
     }
 }
