@@ -45,7 +45,7 @@ TypeLike returns Type:
 ;
 
 Type:
-	(abstract?='abstract')? 'type' name=ID (':' supertype=[Type])? ('{'
+	(abstract?='abstract')? 'type' name=ID (':' supertype=[Type|FQN])? ('{'
 		(
 			variables+=Variable
 			| features+=Feature
@@ -59,7 +59,7 @@ Type:
 ;
 
 Target:
-	(abstract?='abstract')? 'target' name=ID (':' supertype=[Type])? ('{'
+	(abstract?='abstract')? 'target' name=ID (':' supertype=[Type|FQN])? ('{'
 		(
 			variables+=Variable
 			| features+=Feature
@@ -113,7 +113,7 @@ fragment TransitionBody returns Transition:
 ;
 
 Parameter: 
-	name=ID ':' type=[Type]
+	name=ID ':' type=[Type|FQN]
 ;
 
 
@@ -221,9 +221,9 @@ Feature returns Feature:
 fragment FeatureDeclaration returns Feature:
 	(
 	    name=ID
-	    | ((name=ID)? '::>' redefines=[Feature])
+	    | ((name=ID)? '::>' redefines=[Feature|FQN])
     )
-    (':>' subsets+=[Feature])?
+    (':>' subsets+=[Feature|FQN])?
     ':' typing=Typing
     (multiplicity=Multiplicity)?
 ;
@@ -252,7 +252,7 @@ Reference:
 ;
 
 Derived:
-	'derived' 'reference' FeatureDeclaration (multiplicity=Multiplicity)?
+	'derived' 'reference' FeatureDeclaration
 ;
 
 Multiplicity: 
