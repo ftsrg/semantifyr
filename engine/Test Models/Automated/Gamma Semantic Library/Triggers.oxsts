@@ -1,0 +1,23 @@
+package Triggers
+
+import Events
+
+type Trigger {
+    virtual tran isTriggered { }
+}
+
+type EventTrigger : Trigger {
+    reference event : Event[1..1]
+
+    override tran isTriggered {
+        inline event.isSet()
+    }
+}
+
+type TimeoutTrigger : Trigger {
+    reference timeout : Timeout[1..1]
+
+    override tran isTriggered {
+        inline timeout.isUp()
+    }
+}
