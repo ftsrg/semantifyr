@@ -35,17 +35,21 @@ class OxstsReader(
         for (file in inputFile.walkFiles().filter { it.extension == "oxsts" }) {
             val resource = resourceSet.getResource(URI.createURI(file.path), true)
             resource.load(emptyMap<Any, Any>())
+        }
+
+        for (resource in resourceSet.resources) {
             EcoreUtil2.resolveAll(resource)
             if (resource.errors.any()) {
                 println(resource.errors)
-                error("Errors found in the model: {${resource.errors.joinToString(",\n")}}")
+                error("Errors found in file (${resource.uri.toFileString()}):\n${resource.errors.joinToString("\n")}")
             }
             if (resource.warnings.any()) {
-                println(resource.warnings)
+                println("Warnings found in file (${resource.uri.toFileString()}):\n${resource.warnings.joinToString("\n")}")
             }
             val validator = (resource as XtextResource).resourceServiceProvider.resourceValidator
             val issues = validator.validate(resource, CheckMode.ALL, CancelIndicator.NullImpl)
             for (issue in issues) {
+                println("Issues found in file (${resource.uri.toFileString()}):")
                 println("${issue.severity} - ${issue.message}")
             }
         }
