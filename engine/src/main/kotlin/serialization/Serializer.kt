@@ -126,6 +126,9 @@ object Serializer {
     }
 
     private fun IndentationAwareStringWriter.append(variable: Variable) {
+        if (variable.isControl) {
+            append("ctrl ")
+        }
         append("var ${variable.name} : ${variable.typing.name}")
         if (variable.expression != null) {
             append(" = ${variable.expression.serialize()}")

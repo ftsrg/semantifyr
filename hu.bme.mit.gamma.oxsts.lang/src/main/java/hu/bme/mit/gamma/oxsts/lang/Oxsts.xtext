@@ -208,7 +208,7 @@ AssignmentOperation:
 
 
 Variable:
-	'var' name=ID ':' typing=Typing (optional?='[0..1]' | '[1..1]')? ('=' expression=Expression)?
+	(control ?= 'ctrl')? 'var' name=ID ':' typing=Typing (optional?='[0..1]' | '[1..1]')? ('=' expression=Expression)?
 ;
 
 Feature returns Feature:
