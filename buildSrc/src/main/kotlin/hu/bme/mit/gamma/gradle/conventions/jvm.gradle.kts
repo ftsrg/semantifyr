@@ -17,12 +17,13 @@ repositories {
 val libs = the<LibrariesForLibs>()
 
 dependencies {
-    testImplementation(libs.junit.api)
+    testFixturesApi(libs.junit.api)
+    testFixturesApi(libs.junit.params)
+    testFixturesApi(libs.mockito.core)
+    testFixturesApi(libs.mockito.junit)
+
     testRuntimeOnly(libs.junit.engine)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation(libs.junit.params)
-    testImplementation(libs.mockito.core)
-    testImplementation(libs.mockito.junit)
 }
 
 java.toolchain {

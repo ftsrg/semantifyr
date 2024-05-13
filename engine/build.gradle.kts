@@ -30,6 +30,7 @@ tasks.compileKotlin {
 
 tasks.test {
     inputs.dir("Test Models")
+//    maxParallelForks = Runtime.getRuntime().availableProcessors()
 }
 
 dependencies {
@@ -38,9 +39,8 @@ dependencies {
 
     implementation(libs.kotlinx.cli)
 
-    testImplementation("commons-io:commons-io:2.14.0")
-    testImplementation(project(":hu.bme.mit.gamma.oxsts.lang"))
-    testImplementation(testFixtures(project(":hu.bme.mit.gamma.oxsts.lang")))
-
-//    implementation(fileTree("gamma-libs"))
+    testFixturesApi("commons-io:commons-io:2.14.0")
+    testFixturesApi(project(":hu.bme.mit.gamma.oxsts.lang"))
+    testFixturesApi(testFixtures(project(":hu.bme.mit.gamma.oxsts.lang")))
 }
+

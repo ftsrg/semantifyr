@@ -3,32 +3,42 @@ import hu.bme.mit.gamma.oxsts.lang.tests.OxstsInjectorProvider
 import org.eclipse.xtext.testing.InjectWith
 import org.eclipse.xtext.testing.extensions.InjectionExtension
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-
-private val modelDirectory = "Test Models/Automated/Gamma/Crossroads"
+import java.io.File
+import java.util.stream.Stream
+import kotlin.streams.asStream
 
 @ExtendWith(InjectionExtension::class)
 @InjectWith(OxstsInjectorProvider::class)
-@Disabled
-class CrossroadsVerificationTest : VerificationTest(modelDirectory) {
+class SimpleCompilationTests : CompilationTest() {
 
     companion object {
         @JvmStatic
-        fun `Crossroads Verification cases should pass`() = streamTargetsFromFolder(modelDirectory)
+        fun `Model transformations should not regress`(): Stream<String> {
+            return File("Test Models/Automated/Simple").walkTopDown().filter {
+                it.isDirectory
+            }.filter {
+                it.list { _, name -> name == "model.oxsts" }?.any() ?: false
+            }.map {
+                it.path
+            }.asStream()
+        }
 
         @BeforeAll
         @JvmStatic
         fun prepare() {
             prepareOxsts()
         }
+
     }
 
     @ParameterizedTest
     @MethodSource
-    fun `Crossroads Verification cases should pass`(targetDefinition: TargetDefinition) {
-        testVerification(targetDefinition)
+    fun `Model transformations should not regress`(directory: String) {
+        simpleReadTransformWrite(directory)
+        assertModelEqualsExpected(directory)
     }
+
 }

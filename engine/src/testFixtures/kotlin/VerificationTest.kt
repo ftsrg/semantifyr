@@ -4,6 +4,7 @@ import hu.bme.mit.gamma.oxsts.engine.transformation.XstsTransformer
 import hu.bme.mit.gamma.oxsts.model.oxsts.Target
 import org.junit.jupiter.api.Assertions
 import java.io.File
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.stream.Stream
 import kotlin.streams.asStream
@@ -70,7 +71,7 @@ open class VerificationTest(
     }
 
     private fun executeTheta(modelPath: String, propertyPath: String, tracePath: String) {
-        val process = ProcessBuilder(
+        val process1 = ProcessBuilder(
             "java",
             "-jar", "theta/theta-xsts-cli.jar",
             "--domain", "EXPL",
@@ -86,7 +87,33 @@ open class VerificationTest(
             .redirectError(ProcessBuilder.Redirect.INHERIT)
             .start()
 
-        process.waitFor(60, TimeUnit.MINUTES)
+
+        val process2 = ProcessBuilder(
+            "java",
+            "-jar", "theta/theta-xsts-cli.jar",
+            "--domain", "EXPL_PRED_COMBINED",
+            "--autoexpl", "NEWOPERANDS ",
+            "--initprec", "CTRL",
+            "--model", modelPath,
+            "--property", propertyPath,
+            "--cex", tracePath,
+            "--stacktrace",
+        )
+            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+            .redirectError(ProcessBuilder.Redirect.INHERIT)
+            .start()
+
+        val future1 = CompletableFuture.runAsync {
+            process1.waitFor(60, TimeUnit.MINUTES)
+            process1.destroy()
+        }
+
+        val future2 = CompletableFuture.runAsync {
+            process2.waitFor(60, TimeUnit.MINUTES)
+            process2.destroy()
+        }
+
+        CompletableFuture.anyOf(future1, future2).join()
     }
 
     private fun transformTargetToTheta(directory: String, target: Target) {
