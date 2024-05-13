@@ -1,0 +1,23 @@
+package Test
+
+import AP
+
+type C : A
+type D : B
+
+target Mission {
+    containment c: C
+    containment d: D
+
+    init {
+
+    }
+
+    tran {
+
+    }
+
+    prop {
+        true
+    }
+}

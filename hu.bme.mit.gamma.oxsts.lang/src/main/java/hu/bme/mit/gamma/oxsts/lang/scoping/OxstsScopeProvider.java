@@ -32,9 +32,13 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 
     @Override
     public IScope getScope(EObject context, EReference reference) {
+        if (reference == OxstsPackage.Literals.IMPORT__PACKAGE) {
+            return super.getScope(context, reference);
+        }
+
         if (isTypeReference(reference)) {
             var _package = EcoreUtil2.getContainerOfType(context, Package.class);
-            return Scopes.scopeFor(_package.getTypes(), super.getScope(context, reference));
+            return scopeElement(_package, reference);
         }
 
         if (context instanceof ChainingExpression chain) {
@@ -88,6 +92,10 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 
         if (element instanceof Package _package) {
             elements.addAll(_package.getTypes().stream().map(it -> (Element) it).toList());
+            elements.addAll(_package.getEnums().stream().map(it -> (Element) it).toList());
+            elements.addAll(_package.getImports().stream().flatMap(it ->
+                    getAccessibleElements(it.getPackage()).stream()
+            ).toList());
         } else if (element instanceof Type type) {
             elements.addAll(getInheritedElements(type));
         } else if (element instanceof Feature feature) {

@@ -5,7 +5,6 @@ package hu.bme.mit.gamma.oxsts.lang;
 
 
 import org.eclipse.xtext.naming.IQualifiedNameConverter;
-import org.eclipse.xtext.naming.IQualifiedNameProvider;
 
 /**
  * Use this class to register components to be used at runtime / without the Equinox extension registry.
