@@ -38,12 +38,15 @@ object OperationOptimizer {
     private fun Operation.optimizeInternal(): Boolean {
         return rewriteSingleBranchChoices() ||
                 removeTrueAssumptions() ||
+                propagateFalseAssumptions() ||
                 removeEmptySequences() ||
                 removeEmptyChoices() ||
                 removeEmptyIfs() ||
                 removeRedundantChoiceElse() ||
                 flattenSequences() ||
                 flattenChoices() ||
+                removeFalseElseBranches() ||
+                removeFalseBranches() ||
                 optimizeExpressions()
     }
 
@@ -108,7 +111,7 @@ object OperationOptimizer {
 
     private fun Operation.removeTrueAssumptions(): Boolean {
         val assumptions = EcoreUtil2.getAllContentsOfType(this, AssumptionOperation::class.java).filter {
-            it.expression is LiteralBoolean && (it.expression as LiteralBoolean).isValue
+            it.isTrueOperation
         }
 
         if (assumptions.isEmpty()) {
@@ -118,6 +121,26 @@ object OperationOptimizer {
         for (assumption in assumptions) {
             EcoreUtil2.remove(assumption)
         }
+
+        return true
+    }
+
+    private fun Operation.propagateFalseAssumptions(): Boolean {
+        val falseAssumption = EcoreUtil2.getAllContentsOfType(this, AssumptionOperation::class.java).firstOrNull {
+            it.isFalseOperation
+        }
+
+        if (falseAssumption == null) {
+            return false
+        }
+
+        val parent = falseAssumption.eContainer()
+
+        if (parent !is SequenceOperation) {
+            return false
+        }
+
+        EcoreUtil2.replace(parent, falseAssumption)
 
         return true
     }
@@ -133,6 +156,48 @@ object OperationOptimizer {
 
         for (emptyIf in emptyIfs) {
             EcoreUtil2.remove(emptyIf)
+        }
+
+        return true
+    }
+
+    private fun Operation.removeFalseElseBranches(): Boolean {
+        val choices = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).filter {
+            it.`else`.let {
+                it is AssumptionOperation && it.isFalseOperation
+            }
+        }
+
+        if (choices.isEmpty()) {
+            return false
+        }
+
+        for (choice in choices) {
+            choice.`else` = null
+        }
+
+        return true
+    }
+
+    private fun Operation.removeFalseBranches(): Boolean {
+        val choice = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).firstOrNull {
+            it.operation.any {
+                it is AssumptionOperation && it.isFalseOperation
+            }
+        }
+
+        if (choice == null) {
+            return false
+        }
+
+        val assumption = choice.operation.first { it is AssumptionOperation && it.isFalseOperation }
+
+        if (choice.operation.size > 1) {
+            EcoreUtil2.remove(assumption)
+        } else if (choice.`else` != null) {
+            EcoreUtil2.replace(assumption, choice.`else`)
+        } else {
+            EcoreUtil2.replace(choice, assumption)
         }
 
         return true
@@ -171,7 +236,7 @@ object OperationOptimizer {
     }
 
     private fun Operation.removeRedundantChoiceElse(): Boolean {
-        val redundantChoiceElse = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).firstOrNull {
+        val redundantChoiceElse = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).firstOrNull { it ->
             it.`else` != null && it.operation.all { it.isAlwaysExecutable() }
         }
 
@@ -214,3 +279,9 @@ object OperationOptimizer {
     }
 
 }
+
+private val AssumptionOperation.isFalseOperation
+    get() = expression is LiteralBoolean && (expression as LiteralBoolean).isValue == false
+
+private val AssumptionOperation.isTrueOperation
+    get() = expression is LiteralBoolean && (expression as LiteralBoolean).isValue
