@@ -33,11 +33,23 @@ tasks.test {
 //    maxParallelForks = Runtime.getRuntime().availableProcessors()
 }
 
+repositories {
+    mavenCentral()
+    maven("https://repo.eclipse.org/content/groups/viatra/")
+}
+
 dependencies {
     implementation(project(":hu.bme.mit.gamma.oxsts.lang"))
     implementation(project(":hu.bme.mit.gamma.oxsts.model"))
 
+    implementation("com.google.inject:guice:7.0.0")
     implementation(libs.kotlinx.cli)
+    implementation(libs.ecore.codegen)
+    implementation(libs.viatra.query.language) {
+        exclude("com.google.inject", "guice")
+    }
+    implementation(libs.viatra.query.runtime)
+    implementation(libs.viatra.transformation.runtime)
 
     testFixturesApi("commons-io:commons-io:2.14.0")
     testFixturesApi(project(":hu.bme.mit.gamma.oxsts.lang"))

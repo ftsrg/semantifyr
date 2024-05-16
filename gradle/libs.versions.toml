@@ -7,6 +7,7 @@ slf4j = "2.0.9"
 xtext = "2.32.0"
 kotlin = '1.9.10'
 gamma = '2.9.0'
+viatra = '2.8.0'
 
 [libraries]
 ecore = { group = "org.eclipse.emf", name = "org.eclipse.emf.ecore", version.ref = "ecore" }
@@ -32,6 +33,9 @@ xtext-testing = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.testing
 xtext-xbase = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.xbase", version.ref = "xtext" }
 xtext-xbase-ide = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.xbase.ide", version.ref = "xtext" }
 kotlinx-cli = { group = "org.jetbrains.kotlinx", name = "kotlinx-cli", version = "0.3.6" }
+viatra-query-language = { group = 'org.eclipse.viatra', name = 'viatra-query-language', version.ref = "viatra" }
+viatra-query-runtime = { group = 'org.eclipse.viatra', name = 'viatra-query-runtime', version.ref = "viatra" }
+viatra-transformation-runtime = { group = 'org.eclipse.viatra', name = 'viatra-transformation-runtime', version.ref = "viatra" }
 
 [plugins]
 versions = { id = "com.github.ben-manes.versions", version = "0.48.0" }

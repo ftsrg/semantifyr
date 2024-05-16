@@ -1,10 +1,13 @@
 package hu.bme.mit.gamma.oxsts.engine.reader
 
+import hu.bme.mit.gamma.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.gamma.oxsts.model.oxsts.OxstsPackage
 import hu.bme.mit.gamma.oxsts.model.oxsts.Package
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
+import org.eclipse.viatra.query.patternlanguage.emf.EMFPatternLanguageStandaloneSetup
+import org.eclipse.viatra.query.patternlanguage.emf.vql.PatternLanguagePackage
 import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.resource.XtextResource
 import org.eclipse.xtext.util.CancelIndicator
@@ -14,8 +17,11 @@ import java.io.File
 fun File.walkFiles() = walkTopDown().filter { it.isFile }
 
 fun prepareOxsts() {
-    hu.bme.mit.gamma.oxsts.lang.OxstsStandaloneSetup.doSetup()
+    OxstsStandaloneSetup.doSetup()
     OxstsPackage.eINSTANCE.name
+
+    EMFPatternLanguageStandaloneSetup.doSetup()
+    PatternLanguagePackage.eINSTANCE.name
 }
 
 class OxstsReader(
