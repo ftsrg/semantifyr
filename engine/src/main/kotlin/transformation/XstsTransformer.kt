@@ -13,6 +13,7 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.CompositeOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Enum
+import hu.bme.mit.gamma.oxsts.model.oxsts.Target
 import hu.bme.mit.gamma.oxsts.model.oxsts.EqualityOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
@@ -20,13 +21,13 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.InequalityOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.InlineOperation
+import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
 import hu.bme.mit.gamma.oxsts.model.oxsts.Operation
 import hu.bme.mit.gamma.oxsts.model.oxsts.Package
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceTyping
 import hu.bme.mit.gamma.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
-import hu.bme.mit.gamma.oxsts.model.oxsts.Type
 import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
 import hu.bme.mit.gamma.oxsts.model.oxsts.XSTS
 import org.eclipse.xtext.EcoreUtil2
@@ -35,15 +36,17 @@ import java.util.*
 class XstsTransformer {
 
     fun transform(rootElements: List<Package>, typeName: String, rewriteChoice: Boolean = false): XSTS {
-        val type = rootElements.flatMap { it.types }.first {
+        val type = rootElements.flatMap { it.types }.filterIsInstance<Target>().first {
             it.name == typeName
         }
 
         return transform(type, rewriteChoice)
     }
 
-    fun transform(type: Type, rewriteChoice: Boolean = false): XSTS {
-        val rootInstance = Instantiator.instantiateTree(type)
+    fun transform(target: Target, rewriteChoice: Boolean = false): XSTS {
+        val rootInstance = Instantiator.instantiateTree(target)
+
+        target.instances += rootInstance
 
         val xsts = OxstsFactory.createXSTS()
 
@@ -54,7 +57,7 @@ class XstsTransformer {
 
         xsts.init = init.copy() // TODO handle multiple inits?
         xsts.transition = tran.copy() // TODO handle multiple trans?
-        xsts.property = type.properties.single().copy() // TODO handle multiple props?
+        xsts.property = target.properties.single().copy() // TODO handle multiple props?
 
         xsts.init.inlineOperations(rootInstance)
         xsts.transition.inlineOperations(rootInstance)
@@ -193,6 +196,7 @@ class XstsTransformer {
                     OxstsFactory.createAndOperator(guardAssumption, bodyAssumption),
                     OxstsFactory.createAndOperator(notGuardAssumption, elseAssumption),
                 )
+//                OxstsFactory.createLiteralBoolean(true)
             }
             else -> error("Unknown operation: $this!")
         }

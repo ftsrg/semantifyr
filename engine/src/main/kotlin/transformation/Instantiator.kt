@@ -6,6 +6,7 @@ import hu.bme.mit.gamma.oxsts.engine.utils.typedReferencedElement
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Containment
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
+import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
 import hu.bme.mit.gamma.oxsts.model.oxsts.Reference
 import hu.bme.mit.gamma.oxsts.model.oxsts.Type
 import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
@@ -22,7 +23,7 @@ object Instantiator {
             it.multiplicity = OxstsFactory.createOneMultiplicity()
         }
 
-        val rootInstance = Instance(rootContainment, null)
+        val rootInstance = OxstsFactory.createInstance(rootContainment)
         instanceQueue += rootInstance
 
         while (instanceQueue.any()) {

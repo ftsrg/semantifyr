@@ -3,19 +3,22 @@ package hu.bme.mit.gamma.oxsts.engine.transformation
 import hu.bme.mit.gamma.oxsts.engine.utils.allFeatures
 import hu.bme.mit.gamma.oxsts.engine.utils.allSubsets
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
+import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
 
 class FeatureContainer(
     private val holder: Instance
 ) {
 
-    private val featureValueContainers = holder.type.allFeatures.associateWith {
-        FeatureValueContainer(it)
+    private val associationMap = holder.type.allFeatures.associateWith {
+        OxstsFactory.createAssociation(it).also {
+            holder.associations += it
+        }
     }
 
     fun place(feature: Feature, instance: Instance) {
-        val container = featureValueContainers[feature] ?: error("Feature $feature can not be found on instance $holder")
+        val association = associationMap[feature] ?: error("Feature $feature can not be found on instance $holder")
 
-        container.instances += instance
+        association.instances += instance
 
         for (subsetFeature in feature.allSubsets) {
             place(subsetFeature, instance)
@@ -29,15 +32,8 @@ class FeatureContainer(
     }
 
     operator fun get(feature: Feature): Set<Instance> {
-        return featureValueContainers[feature]?.instances ?: error("")
+        return associationMap[feature]?.instances?.toSet() ?: error("")
     }
 
 }
 
-class FeatureValueContainer(
-    val feature: Feature
-) {
-
-    val instances = mutableSetOf<Instance>()
-
-}

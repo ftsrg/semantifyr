@@ -4,6 +4,7 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.HavocTransitionExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.InitTransitionExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
 import hu.bme.mit.gamma.oxsts.model.oxsts.MainTransitionExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
 import hu.bme.mit.gamma.oxsts.model.oxsts.Type

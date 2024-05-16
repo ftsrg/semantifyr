@@ -155,7 +155,9 @@
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//ReferenceTyping/reference"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//Derived"/>
-    <genClasses ecoreClass="oxsts.ecore#//Target"/>
+    <genClasses ecoreClass="oxsts.ecore#//Target">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Target/instances"/>
+    </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//BaseType">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//BaseType/features"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//BaseType/transitions"/>
@@ -167,9 +169,18 @@
     <genClasses ecoreClass="oxsts.ecore#//Parameter">
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//Parameter/type"/>
     </genClasses>
-    <genClasses ecoreClass="oxsts.ecore#//Instance"/>
+    <genClasses ecoreClass="oxsts.ecore#//Instance">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Instance/associations"/>
+      <genFeatures children="true" createChild="true" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//Instance/children"/>
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//Instance/parent"/>
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//Instance/containment"/>
+    </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//Import">
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//Import/package"/>
+    </genClasses>
+    <genClasses ecoreClass="oxsts.ecore#//Association">
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//Association/instances"/>
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//Association/feature"/>
     </genClasses>
   </genPackages>
 </genmodel:GenModel>

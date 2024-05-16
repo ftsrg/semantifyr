@@ -4,6 +4,7 @@ import hu.bme.mit.gamma.oxsts.engine.utils.dropLast
 import hu.bme.mit.gamma.oxsts.engine.utils.lastChain
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
+import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
 import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralInteger

@@ -16,6 +16,7 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.InlineComposite
 import hu.bme.mit.gamma.oxsts.model.oxsts.InlineIfOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.InlineOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.InlineSeq
+import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
 import hu.bme.mit.gamma.oxsts.model.oxsts.NothingReference
 import hu.bme.mit.gamma.oxsts.model.oxsts.Operation
 import hu.bme.mit.gamma.oxsts.model.oxsts.Parameter
@@ -33,6 +34,7 @@ class OperationInliner(
             is InlineCall -> {
                 val containerInstance = context.expressionEvaluator.evaluateInstanceOrNull(operation.reference.asChainReferenceExpression().dropLast(1))
 
+                @Suppress("FoldInitializerAndIfToElvis") // would be difficult to read
                 if (containerInstance == null) {
                     // TODO: should we throw an exception here?
                     //  If the feature has no instances, then this is a violated reference

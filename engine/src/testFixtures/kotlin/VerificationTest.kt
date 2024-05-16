@@ -11,24 +11,22 @@ import kotlin.streams.asStream
 
 class TargetDefinition(
     val directory: String,
-    val target: Target
+    val target: Target,
 ) {
     override fun toString(): String {
         return "$directory - ${target.name}"
     }
 }
 
-open class VerificationTest(
-    val directory: String
-) {
+open class VerificationTest {
     companion object {
-        fun streamTargetsFromFolder(directory: String): Stream<TargetDefinition> {
+        fun streamTargetsFromFolder(directory: String, library: String): Stream<TargetDefinition> {
             return File(directory).walkTopDown().filter {
                 it.isDirectory
             }.filter {
                 it.list { _, name -> name == "model.oxsts" }?.any() ?: false
             }.flatMap { file ->
-                val reader = OxstsReader("${file.path}/model.oxsts")
+                val reader = OxstsReader("${file.path}/model.oxsts", library)
                 reader.read()
 
                 reader.rootElements.asSequence().flatMap {
@@ -43,8 +41,6 @@ open class VerificationTest(
             }.asStream()
         }
     }
-
-
 
     fun testVerification(targetDefinition: TargetDefinition) {
         val directory = targetDefinition.directory
@@ -104,12 +100,12 @@ open class VerificationTest(
             .start()
 
         val future1 = CompletableFuture.runAsync {
-            process1.waitFor(60, TimeUnit.MINUTES)
+            process1.waitFor(5, TimeUnit.MINUTES)
             process1.destroy()
         }
 
         val future2 = CompletableFuture.runAsync {
-            process2.waitFor(60, TimeUnit.MINUTES)
+            process2.waitFor(5, TimeUnit.MINUTES)
             process2.destroy()
         }
 

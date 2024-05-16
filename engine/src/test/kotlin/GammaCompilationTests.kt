@@ -12,12 +12,12 @@ import kotlin.streams.asStream
 
 @ExtendWith(InjectionExtension::class)
 @InjectWith(OxstsInjectorProvider::class)
-class SimpleCompilationTests : CompilationTest() {
+class GammaCompilationTests : CompilationTest() {
 
     companion object {
         @JvmStatic
         fun `Model transformations should not regress`(): Stream<String> {
-            return File("Test Models/Automated/Simple").walkTopDown().filter {
+            return File("Test Models/Automated/Gamma").walkTopDown().filter {
                 it.isDirectory
             }.filter {
                 it.list { _, name -> name == "model.oxsts" }?.any() ?: false
@@ -37,7 +37,7 @@ class SimpleCompilationTests : CompilationTest() {
     @ParameterizedTest
     @MethodSource
     fun `Model transformations should not regress`(directory: String) {
-        simpleReadTransformWrite(directory)
+        simpleReadTransformWrite(directory, "Test Models/Automated/Gamma Semantic Library", rewriteChoice = false)
         assertModelEqualsExpected(directory)
     }
 

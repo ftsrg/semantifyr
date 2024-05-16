@@ -1,14 +1,18 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
 import hu.bme.mit.gamma.oxsts.model.oxsts.AndOperator
+import hu.bme.mit.gamma.oxsts.model.oxsts.Association
 import hu.bme.mit.gamma.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
+import hu.bme.mit.gamma.oxsts.model.oxsts.Containment
 import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Element
 import hu.bme.mit.gamma.oxsts.model.oxsts.EnumLiteral
 import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
+import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
 import hu.bme.mit.gamma.oxsts.model.oxsts.InlineCall
+import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
 import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.gamma.oxsts.model.oxsts.NotOperator
@@ -32,6 +36,24 @@ object OxstsFactory : OxstsFactoryImpl() {
     fun createReferenceTyping(element: Element): ReferenceTyping {
         return createReferenceTyping().also {
             it.reference = createChainReferenceExpression(element)
+        }
+    }
+
+    fun createInstance(containment: Containment): Instance {
+        return createInstance().also {
+            it.containment = containment
+        }
+    }
+
+    fun createInstance(containment: Containment, parent: Instance): Instance {
+        return createInstance(containment).also {
+            it.parent = parent
+        }
+    }
+
+    fun createAssociation(feature: Feature): Association {
+        return createAssociation().also {
+            it.feature = feature
         }
     }
 

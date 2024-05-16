@@ -9,6 +9,7 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.Enum
 import hu.bme.mit.gamma.oxsts.model.oxsts.EnumLiteral
 import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
+import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceTyping
 import hu.bme.mit.gamma.oxsts.model.oxsts.Variable

@@ -8,6 +8,7 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
+import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
 import hu.bme.mit.gamma.oxsts.model.oxsts.NothingReference
 import hu.bme.mit.gamma.oxsts.model.oxsts.Reference
 import hu.bme.mit.gamma.oxsts.model.oxsts.SelfReference
