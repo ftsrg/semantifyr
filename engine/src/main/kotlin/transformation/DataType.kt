@@ -1,5 +1,6 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
+import hu.bme.mit.gamma.oxsts.engine.utils.except
 import hu.bme.mit.gamma.oxsts.model.oxsts.*
 
 sealed class DataType {
@@ -95,6 +96,8 @@ class InstanceData(
     val value: Set<Instance>
 ) : DataType() {
 
+    val isSetSemantics = value.isEmpty() || value.size >= 2
+
     override fun dataEquals(other: DataType) = when (other) {
         is InstanceData -> value == other.value
         else -> false
@@ -104,63 +107,57 @@ class InstanceData(
         error("Unary operators are not supported for Features!")
     }
 
-    override fun evaluateOperator(operator: OperatorExpression, other: DataType) = when(operator) {
-        // Boolean operators
-        is AndOperator -> error("")
-        is OrOperator -> error("")
-        is NotOperator -> error("")
+    override fun evaluateOperator(operator: OperatorExpression, other: DataType): DataType {
+        require(other is InstanceData)
 
-        // Equality operators
-        is EqualityOperator -> {
-            require(other is InstanceData)
-
-            (value == other.value).toBooleanData()
-        }
-        is InequalityOperator -> {
-            require(other is InstanceData)
-
-            (value != other.value).toBooleanData()
-        }
-        is GreaterThanOperator -> {
-            require(other is InstanceData)
-
-            val greaterThen = value.containsAll(other.value)
-            val notEquals = (value - other.value).any()
-
-            (greaterThen && notEquals).toBooleanData()
-        }
-        is GreaterThanOrEqualsOperator -> {
-            require(other is InstanceData)
-
-            value.containsAll(other.value).toBooleanData()
-        }
-        is LessThanOperator -> {
-            require(other is InstanceData)
-
-            val lessThen = other.value.containsAll(value)
-            val notEquals = (other.value - value).any()
-
-            (lessThen && notEquals).toBooleanData()
-        }
-        is LessThanOrEqualsOperator -> {
-            require(other is InstanceData)
-
-            other.value.containsAll(value).toBooleanData()
+        val otherValue = if (isSetSemantics) {
+            other.value.except(NothingInstance)
+        } else {
+            other.value
         }
 
-        // Algebraic operators
-        is PlusOperator -> {
-            require(other is InstanceData)
+        return when(operator) {
+            // Boolean operators
+            is AndOperator -> error("Unsupported type of operator expression for boolean: $operator")
+            is OrOperator -> error("Unsupported type of operator expression for boolean: $operator")
+            is NotOperator -> error("Unsupported type of operator expression for boolean: $operator")
 
-            (value + other.value).toInstanceData()
+            // Equality operators
+            is EqualityOperator -> {
+                (value == otherValue).toBooleanData()
+            }
+            is InequalityOperator -> {
+                (value != otherValue).toBooleanData()
+            }
+            is GreaterThanOperator -> {
+                val greaterThen = value.containsAll(otherValue)
+                val notEquals = (value - otherValue.toSet()).any()
+
+                (greaterThen && notEquals).toBooleanData()
+            }
+            is GreaterThanOrEqualsOperator -> {
+                value.containsAll(other.value).toBooleanData()
+            }
+            is LessThanOperator -> {
+                val lessThen = other.value.containsAll(value)
+                val notEquals = (other.value - value).any()
+
+                (lessThen && notEquals).toBooleanData()
+            }
+            is LessThanOrEqualsOperator -> {
+                other.value.containsAll(value).toBooleanData()
+            }
+
+            // Algebraic operators
+            is PlusOperator -> {
+                (value + other.value).toInstanceData()
+            }
+            is MinusOperator -> {
+                (value - other.value).toInstanceData()
+            }
+
+            else -> error("Unsupported type of operator expression for boolean: $operator")
         }
-        is MinusOperator -> {
-            require(other is InstanceData)
-
-            (value - other.value).toInstanceData()
-        }
-
-        else -> error("Unsupported type of operator expression for boolean: $operator")
     }
 
 }
