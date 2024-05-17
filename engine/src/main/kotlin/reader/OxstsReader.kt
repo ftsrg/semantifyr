@@ -28,8 +28,8 @@ class OxstsReader(
     private val inputDirectory: String,
     private val libraryDirectory: String = ""
 ) {
-    private val resourceSet = ResourceSetImpl()
-    private val userResources = mutableListOf<Resource>()
+    val resourceSet = ResourceSetImpl()
+    val userResources = mutableListOf<Resource>()
 
     val rootElements
         get() = userResources.flatMap { it.contents }.map { it as Package }

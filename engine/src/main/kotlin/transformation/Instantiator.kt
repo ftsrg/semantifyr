@@ -1,10 +1,13 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
+import hu.bme.mit.gamma.oxsts.engine.utils.allFeatures
 import hu.bme.mit.gamma.oxsts.engine.utils.dropLast
 import hu.bme.mit.gamma.oxsts.engine.utils.isDataType
 import hu.bme.mit.gamma.oxsts.engine.utils.typedReferencedElement
+import hu.bme.mit.gamma.oxsts.engine.viatra.PatternRunner
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Containment
+import hu.bme.mit.gamma.oxsts.model.oxsts.Derived
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
 import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
 import hu.bme.mit.gamma.oxsts.model.oxsts.Reference
@@ -32,14 +35,22 @@ object Instantiator {
             instanceQueue += instance.children
         }
 
-        // TODO: set reference bindings evaluates and adds all referenced instances to the reference hierarchy.
-        //  Is this correct, or should we evaluate every time?
-        setReferenceBindings(rootInstance)
-
         return rootInstance
     }
 
-    private fun setReferenceBindings(rootInstance: Instance) {
+    fun setDerivedFeatures(rootInstance: Instance, patternRunner: PatternRunner) {
+        val instanceQueue = LinkedList<Instance>()
+
+        instanceQueue += rootInstance.children
+
+        while (instanceQueue.any()) {
+            val instance = instanceQueue.removeFirst()
+            instance.resolveDerivedFeatures(patternRunner)
+            instanceQueue += instance.children
+        }
+    }
+
+    fun setReferenceBindings(rootInstance: Instance) {
         val instanceQueue = LinkedList<Instance>()
 
         instanceQueue += rootInstance.children
@@ -66,8 +77,15 @@ object Instantiator {
         return variables
     }
 
+    private fun Instance.resolveDerivedFeatures(patternRunner: PatternRunner) {
+        for (feature in type.allFeatures.filterIsInstance<Derived>()) {
+            val instances = patternRunner.execute(this, feature.pattern)
+            featureContainer.place(feature, instances)
+        }
+    }
+
     private fun Instance.resolveReferenceBindings() {
-        for (feature in type.features.filterIsInstance<Reference>()) {
+        for (feature in type.allFeatures.filterIsInstance<Reference>()) {
             if (!feature.isDataType && feature.expression != null) {
                 featureContainer.place(feature, resolveBinding(feature))
             }

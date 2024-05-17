@@ -9,6 +9,7 @@ Package:
 		  types += TypeLike
 		| enums += Enum
 		| imports += Import
+		| patterns += Pattern
 	)*
 ;
 
@@ -257,7 +258,7 @@ Reference:
 ;
 
 Derived:
-	'derived' 'reference' FeatureDeclaration
+	'derived' 'reference' FeatureDeclaration 'as' 'pattern' pattern=[Pattern|FQN]
 ;
 
 Multiplicity: 
@@ -321,6 +322,54 @@ Instance:
 
 Association:
     'association' feature=[Feature] '->' '(' instances+=[Instance] (',' instances+=[Instance])* ','? ')'
+;
+
+// Patterns
+
+Pattern:
+    'pattern' name=ID '('
+        parameters+=Parameter
+        (',' parameters+=Parameter)*
+        (',')?
+    ')'
+    patternBodies += PatternBody
+    ('or' patternBodies += PatternBody)*
+;
+
+PatternBody:
+    '{'
+        (constraints += Constraint)*
+    '}'
+;
+
+Constraint:
+    TypeConstraint
+    | FeatureConstraint
+    | PatternConstraint
+;
+
+PatternVariable:
+    name=ID
+;
+
+TypeConstraint:
+    (negated?='neg')? type=[Type|FQN] '(' variables+=PatternVariable ')'
+;
+
+FeatureConstraint:
+    (negated?='neg')? type=[Type|FQN] '.' feature=[Feature] '(' variables+=PatternVariable ',' variables+=PatternVariable ')'
+;
+
+PatternConstraint:
+    (negated?='neg')? 'find' pattern=[Pattern|FQN] '('
+        variables+=PatternVariable
+        (',' variables+=PatternVariable)*
+        (',')?
+    ')' (transitiveClosure = TransitiveClosureKind)?
+;
+
+enum TransitiveClosureKind:
+    WithoutSelf = '+' | IncludeSelf = '*'
 ;
 
 // Expressions

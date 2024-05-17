@@ -27,6 +27,8 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
         return reference == OxstsPackage.Literals.TYPE__SUPERTYPE ||
                 reference == OxstsPackage.Literals.FEATURE__TYPING ||
                 reference == OxstsPackage.Literals.REFERENCE_TYPING__REFERENCE ||
+                reference == OxstsPackage.Literals.TYPE_CONSTRAINT__TYPE ||
+                reference == OxstsPackage.Literals.FEATURE_CONSTRAINT__TYPE ||
                 reference == OxstsPackage.Literals.PARAMETER__TYPE;
     }
 
@@ -43,6 +45,10 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 
         if (context instanceof ChainingExpression chain) {
             return calculateChainScope(chain, reference);
+        }
+
+        if (context instanceof FeatureConstraint featureConstraint) {
+            return calculateFeatureConstraintScope(featureConstraint, reference);
         }
 
         return scopeElement(context, reference);
@@ -78,8 +84,15 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
         return scopeElement(referencedElement, reference);
     }
 
+    protected IScope calculateFeatureConstraintScope(FeatureConstraint featureConstraint, EReference reference) {
+        return scopeElement(featureConstraint.getType(), reference);
+    }
+
     protected IScope scopeElement(EObject element, EReference reference) {
-        return Scopes.scopeFor(getAccessibleElements(element), super.getScope(element, reference));
+        var referenceClass = reference.getEReferenceType().getInstanceClass();
+        var accessibleElements = getAccessibleElements(element).stream().filter(referenceClass::isInstance).toList();
+
+        return Scopes.scopeFor(accessibleElements, super.getScope(element, reference));
     }
 
     protected List<Element> getAccessibleElements(EObject element) {
@@ -91,10 +104,9 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
         var elements = new ArrayList<Element>();
 
         if (element instanceof Package _package) {
-            elements.addAll(_package.getTypes().stream().map(it -> (Element) it).toList());
-            elements.addAll(_package.getEnums().stream().map(it -> (Element) it).toList());
+            elements.addAll(getLocalScope(_package));
             elements.addAll(_package.getImports().stream().flatMap(it ->
-                    getAccessibleElements(it.getPackage()).stream()
+                    getLocalScope(it.getPackage()).stream()
             ).toList());
         } else if (element instanceof Type type) {
             elements.addAll(getInheritedElements(type));
@@ -106,6 +118,14 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 
         elements.addAll(getAccessibleElements(parent));
 
+        return elements;
+    }
+
+    protected List<Element> getLocalScope(Package _package) {
+        var elements = new ArrayList<Element>();
+        elements.addAll(_package.getTypes().stream().map(it -> (Element) it).toList());
+        elements.addAll(_package.getEnums().stream().map(it -> (Element) it).toList());
+        elements.addAll(_package.getPatterns().stream().map(it -> (Element) it).toList());
         return elements;
     }
 

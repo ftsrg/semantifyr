@@ -158,6 +158,7 @@ val Feature.allSubsets: Set<Feature>
 
         if (redefines != null) {
             // FIXME: recursive property accessor
+            features += redefines
             features += redefines.allSubsets
         }
 

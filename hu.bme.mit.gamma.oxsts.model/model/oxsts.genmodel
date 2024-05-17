@@ -11,6 +11,11 @@
   <testsDirectory xsi:nil="true"/>
   <genPackages prefix="Oxsts" basePackage="hu.bme.mit.gamma.oxsts.model" disposableProviderFactory="true"
       ecorePackage="oxsts.ecore#/">
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="oxsts.ecore#//TransitiveClosureKind">
+      <genEnumLiterals ecoreEnumLiteral="oxsts.ecore#//TransitiveClosureKind/None"/>
+      <genEnumLiterals ecoreEnumLiteral="oxsts.ecore#//TransitiveClosureKind/WithoutSelf"/>
+      <genEnumLiterals ecoreEnumLiteral="oxsts.ecore#//TransitiveClosureKind/IncludeSelf"/>
+    </genEnums>
     <genClasses ecoreClass="oxsts.ecore#//Element">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute oxsts.ecore#//Element/name"/>
     </genClasses>
@@ -18,6 +23,7 @@
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Package/types"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Package/enums"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Package/imports"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Package/patterns"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//Transition">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Transition/operation"/>
@@ -154,7 +160,9 @@
     <genClasses ecoreClass="oxsts.ecore#//ReferenceTyping">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//ReferenceTyping/reference"/>
     </genClasses>
-    <genClasses ecoreClass="oxsts.ecore#//Derived"/>
+    <genClasses ecoreClass="oxsts.ecore#//Derived">
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//Derived/pattern"/>
+    </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//Target">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Target/instances"/>
     </genClasses>
@@ -181,6 +189,31 @@
     <genClasses ecoreClass="oxsts.ecore#//Association">
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//Association/instances"/>
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//Association/feature"/>
+    </genClasses>
+    <genClasses ecoreClass="oxsts.ecore#//Pattern">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Pattern/patternBodies"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Pattern/parameters"/>
+    </genClasses>
+    <genClasses ecoreClass="oxsts.ecore#//PatternBody">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//PatternBody/constraints"/>
+    </genClasses>
+    <genClasses ecoreClass="oxsts.ecore#//Constraint">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute oxsts.ecore#//Constraint/negated"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Constraint/variables"/>
+    </genClasses>
+    <genClasses ecoreClass="oxsts.ecore#//TypeConstraint">
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//TypeConstraint/type"/>
+    </genClasses>
+    <genClasses ecoreClass="oxsts.ecore#//PatternVariable">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute oxsts.ecore#//PatternVariable/name"/>
+    </genClasses>
+    <genClasses ecoreClass="oxsts.ecore#//PatternConstraint">
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//PatternConstraint/pattern"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute oxsts.ecore#//PatternConstraint/transitiveClosure"/>
+    </genClasses>
+    <genClasses ecoreClass="oxsts.ecore#//FeatureConstraint">
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//FeatureConstraint/feature"/>
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//FeatureConstraint/type"/>
     </genClasses>
   </genPackages>
 </genmodel:GenModel>

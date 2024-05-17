@@ -22,9 +22,9 @@ fun main(args: Array<String>) {
     val reader = OxstsReader(inputDirectory)
     reader.read()
 
-    val transformer = XstsTransformer()
+    val transformer = XstsTransformer(reader)
 
-    val xsts = transformer.transform(reader.rootElements, targetName)
+    val xsts = transformer.transform(targetName)
     val xstsString = Serializer.serialize(xsts)
 
     File(outputFile).writeText(xstsString)

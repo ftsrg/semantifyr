@@ -86,6 +86,9 @@ private fun fixImplicitType(containment: Containment) {
         it.transitions += containment.transitions
         it.supertype = containment.type
     }
+
+    containment._package.types += newType
+
     containment.typing = OxstsFactory.createReferenceTyping(newType)
 }
 

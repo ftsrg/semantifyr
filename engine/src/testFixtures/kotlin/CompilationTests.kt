@@ -13,8 +13,8 @@ open class CompilationTest {
         val reader = OxstsReader(directory, library)
         reader.read()
 
-        val transformer = XstsTransformer()
-        val xsts = transformer.transform(reader.rootElements, "Mission", rewriteChoice)
+        val transformer = XstsTransformer(reader)
+        val xsts = transformer.transform("Mission", rewriteChoice)
         val serializedXsts = Serializer.serialize(xsts)
 
         File("$directory/model.xsts").writeText(serializedXsts)

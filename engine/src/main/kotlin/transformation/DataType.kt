@@ -245,5 +245,6 @@ private fun Any.toBooleanData(): BooleanData {
 private fun Any.toInstanceData(): InstanceData {
     require(this is Set<*>)
 
+    @Suppress("UNCHECKED_CAST") // we can be sure * is Instance in this case
     return InstanceData((this as Set<Instance>))
 }

@@ -1,11 +1,13 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
+import hu.bme.mit.gamma.oxsts.engine.reader.OxstsReader
 import hu.bme.mit.gamma.oxsts.engine.utils.copy
 import hu.bme.mit.gamma.oxsts.engine.utils.dropLast
 import hu.bme.mit.gamma.oxsts.engine.utils.element
-import hu.bme.mit.gamma.oxsts.engine.utils.referencedElement
 import hu.bme.mit.gamma.oxsts.engine.utils.isFeatureTyped
 import hu.bme.mit.gamma.oxsts.engine.utils.lastChain
+import hu.bme.mit.gamma.oxsts.engine.utils.referencedElement
+import hu.bme.mit.gamma.oxsts.engine.viatra.PatternRunner
 import hu.bme.mit.gamma.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
@@ -13,7 +15,6 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.CompositeOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Enum
-import hu.bme.mit.gamma.oxsts.model.oxsts.Target
 import hu.bme.mit.gamma.oxsts.model.oxsts.EqualityOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
@@ -23,20 +24,22 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.InequalityOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.InlineOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
 import hu.bme.mit.gamma.oxsts.model.oxsts.Operation
-import hu.bme.mit.gamma.oxsts.model.oxsts.Package
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceTyping
 import hu.bme.mit.gamma.oxsts.model.oxsts.SequenceOperation
+import hu.bme.mit.gamma.oxsts.model.oxsts.Target
 import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
 import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
 import hu.bme.mit.gamma.oxsts.model.oxsts.XSTS
 import org.eclipse.xtext.EcoreUtil2
 import java.util.*
 
-class XstsTransformer {
+class XstsTransformer(
+    val reader: OxstsReader
+) {
 
-    fun transform(rootElements: List<Package>, typeName: String, rewriteChoice: Boolean = false): XSTS {
-        val type = rootElements.flatMap { it.types }.filterIsInstance<Target>().first {
+    fun transform(typeName: String, rewriteChoice: Boolean = false): XSTS {
+        val type = reader.rootElements.flatMap { it.types }.filterIsInstance<Target>().first {
             it.name == typeName
         }
 
@@ -47,6 +50,11 @@ class XstsTransformer {
         val rootInstance = Instantiator.instantiateTree(target)
 
         target.instances += rootInstance
+
+        Instantiator.setReferenceBindings(rootInstance)
+
+        val patternRunner = PatternRunner(reader.resourceSet)
+        Instantiator.setDerivedFeatures(rootInstance, patternRunner)
 
         val xsts = OxstsFactory.createXSTS()
 

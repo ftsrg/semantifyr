@@ -12,6 +12,7 @@ import kotlin.streams.asStream
 class TargetDefinition(
     val directory: String,
     val target: Target,
+    val reader: OxstsReader,
 ) {
     override fun toString(): String {
         return "$directory - ${target.name}"
@@ -36,7 +37,7 @@ open class VerificationTest {
                 }.filter {
                     it.name.contains("_Safe") || it.name.contains("_Unsafe")
                 }.map { target ->
-                    TargetDefinition(file.path, target)
+                    TargetDefinition(file.path, target, reader)
                 }
             }.asStream()
         }
@@ -45,13 +46,14 @@ open class VerificationTest {
     fun testVerification(targetDefinition: TargetDefinition) {
         val directory = targetDefinition.directory
         val target = targetDefinition.target
+        val reader = targetDefinition.reader
 
         val targetDirectory = "$directory/artifacts/${target.name}"
 
         File(targetDirectory).deleteRecursively()
         File(targetDirectory).mkdirs()
 
-        transformTargetToTheta(targetDirectory, target)
+        transformTargetToTheta(targetDirectory, target, reader)
 
         val modelPath = "$targetDirectory/${target.name}.xsts"
         val propertyPath = "$targetDirectory/${target.name}.prop"
@@ -112,8 +114,8 @@ open class VerificationTest {
         CompletableFuture.anyOf(future1, future2).join()
     }
 
-    private fun transformTargetToTheta(directory: String, target: Target) {
-        val transformer = XstsTransformer()
+    private fun transformTargetToTheta(directory: String, target: Target, reader: OxstsReader) {
+        val transformer = XstsTransformer(reader)
         val xsts = transformer.transform(target, true)
         val serializedXsts = Serializer.serialize(xsts, false)
 
