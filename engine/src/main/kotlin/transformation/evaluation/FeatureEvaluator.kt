@@ -1,9 +1,15 @@
-package hu.bme.mit.gamma.oxsts.engine.transformation
+package hu.bme.mit.gamma.oxsts.engine.transformation.evaluation
 
+import hu.bme.mit.gamma.oxsts.engine.transformation.resolution.RedefinitionHandler
+import hu.bme.mit.gamma.oxsts.engine.utils.NothingInstance
+import hu.bme.mit.gamma.oxsts.engine.utils.contextualEvaluator
 import hu.bme.mit.gamma.oxsts.engine.utils.dropLast
+import hu.bme.mit.gamma.oxsts.engine.utils.featureEvaluator
+import hu.bme.mit.gamma.oxsts.engine.utils.instancePlacer
 import hu.bme.mit.gamma.oxsts.engine.utils.isDataType
 import hu.bme.mit.gamma.oxsts.engine.utils.lastChain
 import hu.bme.mit.gamma.oxsts.engine.utils.referencedElement
+import hu.bme.mit.gamma.oxsts.engine.utils.type
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
@@ -39,7 +45,7 @@ class FeatureEvaluator(
                 if (actualFeature.isDataType) {
                     check(actualFeature is Reference)
 
-                    context.expressionEvaluator.evaluate(actualFeature.expression)
+                    context.contextualEvaluator.evaluate(actualFeature.expression)
                 } else {
                     val instanceSet = context.featureEvaluator.evaluateInstanceSet(expression)
 
@@ -94,7 +100,7 @@ class FeatureEvaluator(
 
         val actualFeature = RedefinitionHandler.resolveFeature(context.type, expression.element as Feature)
 
-        return context.featureContainer[actualFeature]
+        return context.instancePlacer[actualFeature]
     }
 
 }

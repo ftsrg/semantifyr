@@ -1,4 +1,4 @@
-package hu.bme.mit.gamma.oxsts.engine.transformation
+package hu.bme.mit.gamma.oxsts.engine.transformation.resolution
 
 import hu.bme.mit.gamma.oxsts.engine.utils.isRedefine
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature

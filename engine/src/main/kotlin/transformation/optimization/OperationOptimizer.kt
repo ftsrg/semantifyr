@@ -1,4 +1,4 @@
-package hu.bme.mit.gamma.oxsts.engine.transformation
+package hu.bme.mit.gamma.oxsts.engine.transformation.optimization
 
 import hu.bme.mit.gamma.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.AssumptionOperation

@@ -1,11 +1,13 @@
-package hu.bme.mit.gamma.oxsts.engine.transformation
+package hu.bme.mit.gamma.oxsts.engine.transformation.instantiation
 
+import hu.bme.mit.gamma.oxsts.engine.utils.OxstsFactory
 import hu.bme.mit.gamma.oxsts.engine.utils.allFeatures
 import hu.bme.mit.gamma.oxsts.engine.utils.allSubsets
+import hu.bme.mit.gamma.oxsts.engine.utils.type
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
 import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
 
-class FeatureContainer(
+class InstancePlacer(
     private val holder: Instance
 ) {
 

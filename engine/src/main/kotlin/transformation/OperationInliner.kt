@@ -1,7 +1,9 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
+import hu.bme.mit.gamma.oxsts.engine.utils.OxstsFactory
 import hu.bme.mit.gamma.oxsts.engine.utils.appendWith
 import hu.bme.mit.gamma.oxsts.engine.utils.asChainReferenceExpression
+import hu.bme.mit.gamma.oxsts.engine.utils.contextualEvaluator
 import hu.bme.mit.gamma.oxsts.engine.utils.copy
 import hu.bme.mit.gamma.oxsts.engine.utils.drop
 import hu.bme.mit.gamma.oxsts.engine.utils.dropLast
@@ -32,7 +34,7 @@ class OperationInliner(
     fun inlineOperation(operation: InlineOperation): Operation {
         return when (operation) {
             is InlineCall -> {
-                val containerInstance = context.expressionEvaluator.evaluateInstanceOrNull(operation.reference.asChainReferenceExpression().dropLast(1))
+                val containerInstance = context.contextualEvaluator.evaluateInstanceOrNull(operation.reference.asChainReferenceExpression().dropLast(1))
 
                 @Suppress("FoldInitializerAndIfToElvis") // would be difficult to read
                 if (containerInstance == null) {
@@ -41,7 +43,7 @@ class OperationInliner(
                     return OxstsFactory.createEmptyOperation()
                 }
 
-                val transition = context.expressionEvaluator.evaluateTransition(operation.reference)
+                val transition = context.contextualEvaluator.evaluateTransition(operation.reference)
 
                 OxstsFactory.createChoiceOperation().apply {
                     for (currentOperation in transition.operation) {
@@ -51,7 +53,7 @@ class OperationInliner(
                 }
             }
             is InlineIfOperation -> {
-                if (context.expressionEvaluator.evaluateBoolean(operation.guard)) {
+                if (context.contextualEvaluator.evaluateBoolean(operation.guard)) {
                     operation.body.copy()
                 } else {
                     operation.`else`?.copy() ?: OxstsFactory.createEmptyOperation()
@@ -80,7 +82,7 @@ class OperationInliner(
     }
 
     private fun inlineCallsFromComposite(inlineComposite: InlineComposite): List<InlineCall> {
-        val instanceSet = context.expressionEvaluator.evaluateInstanceSet(inlineComposite.feature)
+        val instanceSet = context.contextualEvaluator.evaluateInstanceSet(inlineComposite.feature)
 
         val transitionReference = inlineComposite.transition.asChainReferenceExpression()
 

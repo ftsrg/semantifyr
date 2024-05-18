@@ -12,6 +12,7 @@ fun main(args: Array<String>) {
     val parser = ArgParser("oxsts")
 
     val inputDirectory by parser.argument(ArgType.String, "input")
+    val libraryDirectory by parser.option(ArgType.String, "library")
     val targetName by parser.argument(ArgType.String, "target")
     val outputFile by parser.argument(ArgType.String, "output")
 
@@ -19,7 +20,7 @@ fun main(args: Array<String>) {
 
     prepareOxsts()
 
-    val reader = OxstsReader(inputDirectory)
+    val reader = OxstsReader(inputDirectory, libraryDirectory ?: "")
     reader.read()
 
     val transformer = XstsTransformer(reader)

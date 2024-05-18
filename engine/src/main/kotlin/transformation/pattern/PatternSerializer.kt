@@ -1,10 +1,10 @@
-package hu.bme.mit.gamma.oxsts.engine.viatra
+package hu.bme.mit.gamma.oxsts.engine.transformation.pattern
 
 import hu.bme.mit.gamma.oxsts.engine.serialization.IndentationAwareStringWriter
 import hu.bme.mit.gamma.oxsts.engine.serialization.indent
+import hu.bme.mit.gamma.oxsts.engine.utils.fullyQualifiedName
 import hu.bme.mit.gamma.oxsts.model.oxsts.Constraint
 import hu.bme.mit.gamma.oxsts.model.oxsts.FeatureConstraint
-import hu.bme.mit.gamma.oxsts.model.oxsts.Package
 import hu.bme.mit.gamma.oxsts.model.oxsts.Parameter
 import hu.bme.mit.gamma.oxsts.model.oxsts.Pattern
 import hu.bme.mit.gamma.oxsts.model.oxsts.PatternBody
@@ -12,12 +12,9 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.PatternConstraint
 import hu.bme.mit.gamma.oxsts.model.oxsts.TransitiveClosureKind
 import hu.bme.mit.gamma.oxsts.model.oxsts.TypeConstraint
 
-val Pattern.fullyQualifiedName
-    get() = "${(eContainer() as Package).name}__$name"
-
 object PatternSerializer {
 
-    val serializedPatterns = mutableMapOf<Pattern, String>()
+    private val serializedPatterns = mutableMapOf<Pattern, String>()
 
     val helperPatterns = """
         package oxsts_queries
@@ -55,22 +52,35 @@ object PatternSerializer {
 
     fun serialize(pattern: Pattern) = serializedPatterns.computeIfAbsent(pattern) {
         indent {
-            append("pattern ${pattern.fullyQualifiedName}(${pattern.parameters.map { it.name }.joinToString(", ")})")
-            append(pattern.patternBodies.first(), pattern.parameters)
+            val patternName = pattern.fullyQualifiedName
+            val parameters = pattern.parameters
+            val parameterString = parameters.joinToString(", ") { it.name }
 
-            for (body in pattern.patternBodies.stream().skip(1)) {
-                append("or")
-                append(body, pattern.parameters)
+            append("pattern $patternName($parameterString)")
+
+            val bodies = pattern.patternBodies
+
+            if (bodies.any()) {
+                append(bodies.first(), parameters)
+
+                for (body in bodies.stream().skip(1)) {
+                    append("or")
+                    append(body, parameters)
+                }
+            } else {
+                appendLine("{")
+                indent {
+                    appendParameterConstraints(parameters)
+                }
+                append("}")
             }
         }
     }
 
-    fun IndentationAwareStringWriter.append(body: PatternBody, parameters: List<Parameter>) {
+    private fun IndentationAwareStringWriter.append(body: PatternBody, parameters: List<Parameter>) {
         appendLine("{")
         indent {
-            for (parameter in parameters) {
-                appendLine("find OXSTS___instanceOfType(${parameter.name}, \"${parameter.type.name}\");")
-            }
+            appendParameterConstraints(parameters)
             for (constraint in body.constraints) {
                 append(constraint)
             }
@@ -78,38 +88,57 @@ object PatternSerializer {
         append("}")
     }
 
-    fun IndentationAwareStringWriter.append(constraint: Constraint) = when(constraint) {
+    private fun IndentationAwareStringWriter.appendParameterConstraints(parameters: List<Parameter>) {
+        for (parameter in parameters) {
+            appendLine("find OXSTS___instanceOfType(${parameter.name}, \"${parameter.type.name}\");")
+        }
+    }
+
+    private fun IndentationAwareStringWriter.append(constraint: Constraint) = when(constraint) {
         is TypeConstraint -> append(constraint)
         is FeatureConstraint -> append(constraint)
         is PatternConstraint -> append(constraint)
-        else -> error("")
+        else -> error("Unknown type of constraint: $constraint")
     }
 
-    fun IndentationAwareStringWriter.append(constraint: TypeConstraint) {
+    private fun IndentationAwareStringWriter.append(constraint: TypeConstraint) {
+        val variableName = constraint.variables.first().name
+        val typeName = constraint.type.name
+
         if (constraint.isNegated) {
             append("neg ")
         }
-        appendLine("find OXSTS___instanceOfType(${constraint.variables.first().name}, \"${constraint.type.name}\");")
+        appendLine("""find OXSTS___instanceOfType($variableName, "$typeName");""")
     }
 
     fun IndentationAwareStringWriter.append(constraint: FeatureConstraint) {
+        val holderVariableName = constraint.variables[0].name
+        val heldVariableName = constraint.variables[1].name
+        val typeName = constraint.type.name
+        val featureName = constraint.feature.name
+
         if (constraint.isNegated) {
             append("neg ")
         }
-        appendLine("find OXSTS___instanceInFeature(${constraint.variables[0].name}, ${constraint.variables[1].name}, \"${constraint.type.name}\", \"${constraint.feature.name}\");")
+        appendLine(
+            """find OXSTS___instanceInFeature($holderVariableName, $heldVariableName, "$typeName", "$featureName");"""
+        )
     }
 
-    fun IndentationAwareStringWriter.append(constraint: PatternConstraint) {
+    private fun IndentationAwareStringWriter.append(constraint: PatternConstraint) {
+        val patternName = constraint.pattern.fullyQualifiedName
+        val callModifier = when (constraint.transitiveClosure) {
+            TransitiveClosureKind.WITHOUT_SELF -> "+"
+            TransitiveClosureKind.INCLUDE_SELF -> "*"
+            TransitiveClosureKind.NONE -> ""
+        }
+
+        val constraintVariables = constraint.variables.joinToString(", ") { it.name }
+
         if (constraint.isNegated) {
             append("neg ")
         }
-        append("find ${constraint.pattern.fullyQualifiedName}")
-        when (constraint.transitiveClosure) {
-            TransitiveClosureKind.WITHOUT_SELF -> append("+")
-            TransitiveClosureKind.INCLUDE_SELF -> append("*")
-            TransitiveClosureKind.NONE -> { }
-        }
-        appendLine("(${constraint.variables.map { it.name }.joinToString(", ")});")
+        appendLine("find $patternName$callModifier($constraintVariables);")
     }
 
 }

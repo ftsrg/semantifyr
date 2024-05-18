@@ -1,5 +1,6 @@
-package hu.bme.mit.gamma.oxsts.engine.transformation
+package hu.bme.mit.gamma.oxsts.engine.transformation.resolution
 
+import hu.bme.mit.gamma.oxsts.engine.utils.type
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.HavocTransitionExpression

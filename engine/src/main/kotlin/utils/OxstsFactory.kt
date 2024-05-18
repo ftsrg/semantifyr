@@ -1,4 +1,4 @@
-package hu.bme.mit.gamma.oxsts.engine.transformation
+package hu.bme.mit.gamma.oxsts.engine.utils
 
 import hu.bme.mit.gamma.oxsts.model.oxsts.AndOperator
 import hu.bme.mit.gamma.oxsts.model.oxsts.Association

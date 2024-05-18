@@ -1,6 +1,5 @@
 package hu.bme.mit.gamma.oxsts.engine.utils
 
-import hu.bme.mit.gamma.oxsts.engine.transformation.OxstsFactory
 import hu.bme.mit.gamma.oxsts.model.oxsts.BooleanType
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
@@ -10,10 +9,15 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.Element
 import hu.bme.mit.gamma.oxsts.model.oxsts.EnumLiteral
 import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
 import hu.bme.mit.gamma.oxsts.model.oxsts.IntegerType
+import hu.bme.mit.gamma.oxsts.model.oxsts.Package
+import hu.bme.mit.gamma.oxsts.model.oxsts.Pattern
+import hu.bme.mit.gamma.oxsts.model.oxsts.PatternConstraint
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceTyping
 import hu.bme.mit.gamma.oxsts.model.oxsts.Type
 import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
+import org.eclipse.xtext.EcoreUtil2
+import java.util.*
 
 fun ReferenceExpression.asChainReferenceExpression(): ChainReferenceExpression {
     require(this is ChainReferenceExpression) {
@@ -164,3 +168,26 @@ val Feature.allSubsets: Set<Feature>
 
         return features
     }
+
+val Pattern.fullyQualifiedName
+    get() = "${(eContainer() as Package).name}__$name"
+
+fun Pattern.allReferencedPatterns(): Set<Pattern> {
+    val patterns = mutableSetOf<Pattern>()
+
+    val patternQueue = LinkedList<Pattern>()
+
+    patternQueue += this
+
+    while (patternQueue.any()) {
+        val referencedPattern = patternQueue.removeFirst()
+        if (patterns.add(referencedPattern)) {
+            val patternConstraints = EcoreUtil2.getAllContentsOfType(referencedPattern, PatternConstraint::class.java)
+            patternQueue += patternConstraints.map {
+                it.pattern
+            }
+        }
+    }
+
+    return patterns
+}

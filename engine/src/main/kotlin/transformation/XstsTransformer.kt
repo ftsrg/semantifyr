@@ -1,13 +1,21 @@
 package hu.bme.mit.gamma.oxsts.engine.transformation
 
 import hu.bme.mit.gamma.oxsts.engine.reader.OxstsReader
+import hu.bme.mit.gamma.oxsts.engine.transformation.evaluation.BooleanData
+import hu.bme.mit.gamma.oxsts.engine.transformation.evaluation.IntegerData
+import hu.bme.mit.gamma.oxsts.engine.transformation.instantiation.Instantiator
+import hu.bme.mit.gamma.oxsts.engine.transformation.optimization.ExpressionOptimizer
+import hu.bme.mit.gamma.oxsts.engine.transformation.optimization.OperationOptimizer
+import hu.bme.mit.gamma.oxsts.engine.utils.OxstsFactory
+import hu.bme.mit.gamma.oxsts.engine.utils.contextualEvaluator
 import hu.bme.mit.gamma.oxsts.engine.utils.copy
 import hu.bme.mit.gamma.oxsts.engine.utils.dropLast
 import hu.bme.mit.gamma.oxsts.engine.utils.element
 import hu.bme.mit.gamma.oxsts.engine.utils.isFeatureTyped
 import hu.bme.mit.gamma.oxsts.engine.utils.lastChain
+import hu.bme.mit.gamma.oxsts.engine.utils.operationInliner
 import hu.bme.mit.gamma.oxsts.engine.utils.referencedElement
-import hu.bme.mit.gamma.oxsts.engine.viatra.PatternRunner
+import hu.bme.mit.gamma.oxsts.engine.utils.variableTransformer
 import hu.bme.mit.gamma.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
@@ -47,21 +55,14 @@ class XstsTransformer(
     }
 
     fun transform(target: Target, rewriteChoice: Boolean = false): XSTS {
-        val rootInstance = Instantiator.instantiateTree(target)
-
-        target.instances += rootInstance
-
-        Instantiator.setReferenceBindings(rootInstance)
-
-        val patternRunner = PatternRunner(reader.resourceSet)
-        Instantiator.setDerivedFeatures(rootInstance, patternRunner)
-
         val xsts = OxstsFactory.createXSTS()
+
+        val rootInstance = Instantiator.instantiateTree(target)
 
         xsts.variables += Instantiator.instantiateVariablesTree(rootInstance)
 
-        val init = rootInstance.expressionEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createInitTransitionExpression()))
-        val tran = rootInstance.expressionEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createMainTransitionExpression()))
+        val init = rootInstance.contextualEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createInitTransitionExpression()))
+        val tran = rootInstance.contextualEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createMainTransitionExpression()))
 
         xsts.init = init.copy() // TODO handle multiple inits?
         xsts.transition = tran.copy() // TODO handle multiple trans?
@@ -204,7 +205,6 @@ class XstsTransformer(
                     OxstsFactory.createAndOperator(guardAssumption, bodyAssumption),
                     OxstsFactory.createAndOperator(notGuardAssumption, elseAssumption),
                 )
-//                OxstsFactory.createLiteralBoolean(true)
             }
             else -> error("Unknown operation: $this!")
         }
@@ -220,7 +220,7 @@ class XstsTransformer(
             val reference = referenceExpression.chains.last() as DeclarationReferenceExpression
             val oldVariable = reference.element as Variable
 
-            val instance = rootInstance.expressionEvaluator.evaluateInstance(referenceExpression.dropLast(1))
+            val instance = rootInstance.contextualEvaluator.evaluateInstance(referenceExpression.dropLast(1))
             val transformedVariable = instance.variableTransformer.findTransformedVariable(oldVariable)
 
             val newExpression = OxstsFactory.createChainReferenceExpression(transformedVariable)
@@ -234,7 +234,7 @@ class XstsTransformer(
         }
 
         for (reference in references) {
-            val evaluation = rootInstance.expressionEvaluator.evaluate(reference)
+            val evaluation = rootInstance.contextualEvaluator.evaluate(reference)
 
             val expression = when (evaluation) {
                 is BooleanData -> OxstsFactory.createLiteralBoolean(evaluation.value)

@@ -1,10 +1,16 @@
-package hu.bme.mit.gamma.oxsts.engine.transformation
+package hu.bme.mit.gamma.oxsts.engine.transformation.instantiation
 
+import hu.bme.mit.gamma.oxsts.engine.utils.NothingInstance
+import hu.bme.mit.gamma.oxsts.engine.utils.OxstsFactory
 import hu.bme.mit.gamma.oxsts.engine.utils.asChainReferenceExpression
+import hu.bme.mit.gamma.oxsts.engine.utils.contextualEvaluator
 import hu.bme.mit.gamma.oxsts.engine.utils.copy
 import hu.bme.mit.gamma.oxsts.engine.utils.dropLast
-import hu.bme.mit.gamma.oxsts.engine.utils.referencedElement
+import hu.bme.mit.gamma.oxsts.engine.utils.fullyQualifiedName
+import hu.bme.mit.gamma.oxsts.engine.utils.instancePlacer
 import hu.bme.mit.gamma.oxsts.engine.utils.isFeatureTyped
+import hu.bme.mit.gamma.oxsts.engine.utils.referencedElement
+import hu.bme.mit.gamma.oxsts.engine.utils.variableTransformer
 import hu.bme.mit.gamma.oxsts.model.oxsts.Enum
 import hu.bme.mit.gamma.oxsts.model.oxsts.EnumLiteral
 import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
@@ -14,7 +20,7 @@ import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceTyping
 import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
 
-class EnumMapping(
+private class EnumMapping(
     val enum: Enum,
     val literalMapping: Map<Instance, EnumLiteral>
 )
@@ -61,11 +67,11 @@ class VariableTransformer(
 
         val feature = typing.referencedElement as Feature
 
-        val contextInstance = instance.expressionEvaluator.evaluateInstance(variableExpression.asChainReferenceExpression().dropLast(1))
-        val featureHolder = contextInstance.expressionEvaluator.evaluateInstance(typing.reference.dropLast(1))
+        val contextInstance = instance.contextualEvaluator.evaluateInstance(variableExpression.asChainReferenceExpression().dropLast(1))
+        val featureHolder = contextInstance.contextualEvaluator.evaluateInstance(typing.reference.dropLast(1))
         val enumMapping = featureHolder.variableTransformer.featureEnumMap[feature] ?: error("There is no enum mapping for $feature in $featureHolder")
 
-        val instance = instance.expressionEvaluator.evaluateInstance(expression)
+        val instance = instance.contextualEvaluator.evaluateInstance(expression)
         val literal = enumMapping.literalMapping[instance] ?: error("Referenced instance object $instance is not in referenced feature $feature in $contextInstance")
 
         return OxstsFactory.createChainReferenceExpression(literal)
@@ -94,7 +100,7 @@ class VariableTransformer(
         featureEnumMap[this] = EnumMapping(enum, literalMapping)
 
         val instances = mutableListOf<Instance>()
-        instances += instance.featureContainer[this]
+        instances += instance.instancePlacer[this]
 
         if (isOptional) {
             instances += NothingInstance
