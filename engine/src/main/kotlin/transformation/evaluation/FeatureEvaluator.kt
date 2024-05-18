@@ -1,23 +1,23 @@
-package hu.bme.mit.gamma.oxsts.engine.transformation.evaluation
+package hu.bme.mit.semantifyr.oxsts.engine.transformation.evaluation
 
-import hu.bme.mit.gamma.oxsts.engine.transformation.resolution.RedefinitionHandler
-import hu.bme.mit.gamma.oxsts.engine.utils.NothingInstance
-import hu.bme.mit.gamma.oxsts.engine.utils.contextualEvaluator
-import hu.bme.mit.gamma.oxsts.engine.utils.dropLast
-import hu.bme.mit.gamma.oxsts.engine.utils.featureEvaluator
-import hu.bme.mit.gamma.oxsts.engine.utils.instancePlacer
-import hu.bme.mit.gamma.oxsts.engine.utils.isDataType
-import hu.bme.mit.gamma.oxsts.engine.utils.lastChain
-import hu.bme.mit.gamma.oxsts.engine.utils.referencedElement
-import hu.bme.mit.gamma.oxsts.engine.utils.type
-import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
-import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
-import hu.bme.mit.gamma.oxsts.model.oxsts.NothingReference
-import hu.bme.mit.gamma.oxsts.model.oxsts.Reference
-import hu.bme.mit.gamma.oxsts.model.oxsts.SelfReference
+import hu.bme.mit.semantifyr.oxsts.engine.transformation.resolution.RedefinitionHandler
+import hu.bme.mit.semantifyr.oxsts.engine.utils.NothingInstance
+import hu.bme.mit.semantifyr.oxsts.engine.utils.contextualEvaluator
+import hu.bme.mit.semantifyr.oxsts.engine.utils.dropLast
+import hu.bme.mit.semantifyr.oxsts.engine.utils.featureEvaluator
+import hu.bme.mit.semantifyr.oxsts.engine.utils.instancePlacer
+import hu.bme.mit.semantifyr.oxsts.engine.utils.isDataType
+import hu.bme.mit.semantifyr.oxsts.engine.utils.lastChain
+import hu.bme.mit.semantifyr.oxsts.engine.utils.referencedElement
+import hu.bme.mit.semantifyr.oxsts.engine.utils.type
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainingExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DeclarationReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Feature
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.NothingReference
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Reference
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 
 class FeatureEvaluator(
     private val context: Instance

@@ -1,8 +1,8 @@
-package hu.bme.mit.gamma.oxsts.engine.reader
+package hu.bme.mit.semantifyr.oxsts.engine.reader
 
-import hu.bme.mit.gamma.oxsts.lang.OxstsStandaloneSetup
-import hu.bme.mit.gamma.oxsts.model.oxsts.OxstsPackage
-import hu.bme.mit.gamma.oxsts.model.oxsts.Package
+import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsPackage
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl

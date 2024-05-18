@@ -1,4 +1,4 @@
-package hu.bme.mit.gamma.oxsts.engine.serialization
+package hu.bme.mit.semantifyr.oxsts.engine.serialization
 
 class IndentationAwareStringWriter(
     private val indentation: String

@@ -1,14 +1,14 @@
-package hu.bme.mit.gamma.oxsts.engine.transformation.optimization
+package hu.bme.mit.semantifyr.oxsts.engine.transformation.optimization
 
-import hu.bme.mit.gamma.oxsts.engine.transformation.evaluation.BooleanData
-import hu.bme.mit.gamma.oxsts.engine.transformation.evaluation.IntegerData
-import hu.bme.mit.gamma.oxsts.engine.transformation.evaluation.SharedExpressionEvaluator
-import hu.bme.mit.gamma.oxsts.engine.utils.OxstsFactory
-import hu.bme.mit.gamma.oxsts.model.oxsts.AndOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
-import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralBoolean
-import hu.bme.mit.gamma.oxsts.model.oxsts.OperatorExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.OrOperator
+import hu.bme.mit.semantifyr.oxsts.engine.transformation.evaluation.BooleanData
+import hu.bme.mit.semantifyr.oxsts.engine.transformation.evaluation.IntegerData
+import hu.bme.mit.semantifyr.oxsts.engine.transformation.evaluation.SharedExpressionEvaluator
+import hu.bme.mit.semantifyr.oxsts.engine.utils.OxstsFactory
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AndOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.OperatorExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.OrOperator
 import org.eclipse.xtext.EcoreUtil2
 
 object ExpressionOptimizer {

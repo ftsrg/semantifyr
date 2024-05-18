@@ -1,4 +1,4 @@
-package hu.bme.mit.gamma.oxsts.engine.utils
+package hu.bme.mit.semantifyr.oxsts.engine.utils
 
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2

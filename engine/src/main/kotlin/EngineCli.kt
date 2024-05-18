@@ -1,9 +1,9 @@
-package hu.bme.mit.gamma.oxsts.engine
+package hu.bme.mit.semantifyr.oxsts.engine
 
-import hu.bme.mit.gamma.oxsts.engine.reader.OxstsReader
-import hu.bme.mit.gamma.oxsts.engine.reader.prepareOxsts
-import hu.bme.mit.gamma.oxsts.engine.serialization.Serializer
-import hu.bme.mit.gamma.oxsts.engine.transformation.XstsTransformer
+import hu.bme.mit.semantifyr.oxsts.engine.reader.OxstsReader
+import hu.bme.mit.semantifyr.oxsts.engine.reader.prepareOxsts
+import hu.bme.mit.semantifyr.oxsts.engine.serialization.Serializer
+import hu.bme.mit.semantifyr.oxsts.engine.transformation.XstsTransformer
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import java.io.File

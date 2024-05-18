@@ -1,8 +1,8 @@
-package hu.bme.mit.gamma.oxsts.engine.transformation.pattern
+package hu.bme.mit.semantifyr.oxsts.engine.transformation.pattern
 
-import hu.bme.mit.gamma.oxsts.engine.utils.fullyQualifiedName
-import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
-import hu.bme.mit.gamma.oxsts.model.oxsts.Pattern
+import hu.bme.mit.semantifyr.oxsts.engine.utils.fullyQualifiedName
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Pattern
 import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.viatra.query.runtime.api.ViatraQueryEngine
 import org.eclipse.viatra.query.runtime.emf.EMFScope

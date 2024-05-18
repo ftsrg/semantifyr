@@ -1,8 +1,8 @@
-package hu.bme.mit.gamma.oxsts.engine.transformation.resolution
+package hu.bme.mit.semantifyr.oxsts.engine.transformation.resolution
 
-import hu.bme.mit.gamma.oxsts.engine.utils.isRedefine
-import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
-import hu.bme.mit.gamma.oxsts.model.oxsts.Type
+import hu.bme.mit.semantifyr.oxsts.engine.utils.isRedefine
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Feature
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Type
 
 object RedefinitionHandler {
 

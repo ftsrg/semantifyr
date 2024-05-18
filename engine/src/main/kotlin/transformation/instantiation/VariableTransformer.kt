@@ -1,24 +1,24 @@
-package hu.bme.mit.gamma.oxsts.engine.transformation.instantiation
+package hu.bme.mit.semantifyr.oxsts.engine.transformation.instantiation
 
-import hu.bme.mit.gamma.oxsts.engine.utils.NothingInstance
-import hu.bme.mit.gamma.oxsts.engine.utils.OxstsFactory
-import hu.bme.mit.gamma.oxsts.engine.utils.asChainReferenceExpression
-import hu.bme.mit.gamma.oxsts.engine.utils.contextualEvaluator
-import hu.bme.mit.gamma.oxsts.engine.utils.copy
-import hu.bme.mit.gamma.oxsts.engine.utils.dropLast
-import hu.bme.mit.gamma.oxsts.engine.utils.fullyQualifiedName
-import hu.bme.mit.gamma.oxsts.engine.utils.instancePlacer
-import hu.bme.mit.gamma.oxsts.engine.utils.isFeatureTyped
-import hu.bme.mit.gamma.oxsts.engine.utils.referencedElement
-import hu.bme.mit.gamma.oxsts.engine.utils.variableTransformer
-import hu.bme.mit.gamma.oxsts.model.oxsts.Enum
-import hu.bme.mit.gamma.oxsts.model.oxsts.EnumLiteral
-import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
-import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
-import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
-import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceTyping
-import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
+import hu.bme.mit.semantifyr.oxsts.engine.utils.NothingInstance
+import hu.bme.mit.semantifyr.oxsts.engine.utils.OxstsFactory
+import hu.bme.mit.semantifyr.oxsts.engine.utils.asChainReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.engine.utils.contextualEvaluator
+import hu.bme.mit.semantifyr.oxsts.engine.utils.copy
+import hu.bme.mit.semantifyr.oxsts.engine.utils.dropLast
+import hu.bme.mit.semantifyr.oxsts.engine.utils.fullyQualifiedName
+import hu.bme.mit.semantifyr.oxsts.engine.utils.instancePlacer
+import hu.bme.mit.semantifyr.oxsts.engine.utils.isFeatureTyped
+import hu.bme.mit.semantifyr.oxsts.engine.utils.referencedElement
+import hu.bme.mit.semantifyr.oxsts.engine.utils.variableTransformer
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Enum
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Feature
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceTyping
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
 
 private class EnumMapping(
     val enum: Enum,

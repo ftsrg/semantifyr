@@ -1,7 +1,7 @@
-import hu.bme.mit.gamma.oxsts.engine.reader.OxstsReader
-import hu.bme.mit.gamma.oxsts.engine.serialization.Serializer
-import hu.bme.mit.gamma.oxsts.engine.transformation.XstsTransformer
-import hu.bme.mit.gamma.oxsts.model.oxsts.Target
+import hu.bme.mit.semantifyr.oxsts.engine.reader.OxstsReader
+import hu.bme.mit.semantifyr.oxsts.engine.serialization.Serializer
+import hu.bme.mit.semantifyr.oxsts.engine.transformation.XstsTransformer
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Target
 import org.junit.jupiter.api.Assertions
 import java.io.File
 import java.util.concurrent.CompletableFuture

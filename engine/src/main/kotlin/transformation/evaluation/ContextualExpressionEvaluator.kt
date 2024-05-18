@@ -1,14 +1,14 @@
-package hu.bme.mit.gamma.oxsts.engine.transformation.evaluation
+package hu.bme.mit.semantifyr.oxsts.engine.transformation.evaluation
 
-import hu.bme.mit.gamma.oxsts.engine.utils.contextualEvaluator
-import hu.bme.mit.gamma.oxsts.engine.utils.dropLast
-import hu.bme.mit.gamma.oxsts.engine.utils.featureEvaluator
-import hu.bme.mit.gamma.oxsts.engine.utils.lastChain
-import hu.bme.mit.gamma.oxsts.engine.utils.transitionResolver
-import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
-import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
-import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
+import hu.bme.mit.semantifyr.oxsts.engine.utils.contextualEvaluator
+import hu.bme.mit.semantifyr.oxsts.engine.utils.dropLast
+import hu.bme.mit.semantifyr.oxsts.engine.utils.featureEvaluator
+import hu.bme.mit.semantifyr.oxsts.engine.utils.lastChain
+import hu.bme.mit.semantifyr.oxsts.engine.utils.transitionResolver
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 
 class ContextualExpressionEvaluator(
     private val context: Instance

@@ -1,11 +1,11 @@
-package hu.bme.mit.gamma.oxsts.engine.transformation.evaluation
+package hu.bme.mit.semantifyr.oxsts.engine.transformation.evaluation
 
-import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
-import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
-import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralBoolean
-import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralInteger
-import hu.bme.mit.gamma.oxsts.model.oxsts.OperatorExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.OperatorExpression
 
 open class ExpressionEvaluator {
 

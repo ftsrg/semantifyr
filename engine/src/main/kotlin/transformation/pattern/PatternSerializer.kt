@@ -1,16 +1,16 @@
-package hu.bme.mit.gamma.oxsts.engine.transformation.pattern
+package hu.bme.mit.semantifyr.oxsts.engine.transformation.pattern
 
-import hu.bme.mit.gamma.oxsts.engine.serialization.IndentationAwareStringWriter
-import hu.bme.mit.gamma.oxsts.engine.serialization.indent
-import hu.bme.mit.gamma.oxsts.engine.utils.fullyQualifiedName
-import hu.bme.mit.gamma.oxsts.model.oxsts.Constraint
-import hu.bme.mit.gamma.oxsts.model.oxsts.FeatureConstraint
-import hu.bme.mit.gamma.oxsts.model.oxsts.Parameter
-import hu.bme.mit.gamma.oxsts.model.oxsts.Pattern
-import hu.bme.mit.gamma.oxsts.model.oxsts.PatternBody
-import hu.bme.mit.gamma.oxsts.model.oxsts.PatternConstraint
-import hu.bme.mit.gamma.oxsts.model.oxsts.TransitiveClosureKind
-import hu.bme.mit.gamma.oxsts.model.oxsts.TypeConstraint
+import hu.bme.mit.semantifyr.oxsts.engine.serialization.IndentationAwareStringWriter
+import hu.bme.mit.semantifyr.oxsts.engine.serialization.indent
+import hu.bme.mit.semantifyr.oxsts.engine.utils.fullyQualifiedName
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Constraint
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureConstraint
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Parameter
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Pattern
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.PatternBody
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.PatternConstraint
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitiveClosureKind
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.TypeConstraint
 
 object PatternSerializer {
 
@@ -127,7 +127,7 @@ object PatternSerializer {
 
     private fun IndentationAwareStringWriter.append(constraint: PatternConstraint) {
         val patternName = constraint.pattern.fullyQualifiedName
-        val callModifier = when (constraint.transitiveClosure) {
+        val callModifier = when (constraint.transitiveClosure!!) {
             TransitiveClosureKind.WITHOUT_SELF -> "+"
             TransitiveClosureKind.INCLUDE_SELF -> "*"
             TransitiveClosureKind.NONE -> ""

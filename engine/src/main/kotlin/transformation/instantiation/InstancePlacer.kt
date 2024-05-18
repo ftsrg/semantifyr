@@ -1,11 +1,11 @@
-package hu.bme.mit.gamma.oxsts.engine.transformation.instantiation
+package hu.bme.mit.semantifyr.oxsts.engine.transformation.instantiation
 
-import hu.bme.mit.gamma.oxsts.engine.utils.OxstsFactory
-import hu.bme.mit.gamma.oxsts.engine.utils.allFeatures
-import hu.bme.mit.gamma.oxsts.engine.utils.allSubsets
-import hu.bme.mit.gamma.oxsts.engine.utils.type
-import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
-import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.engine.utils.OxstsFactory
+import hu.bme.mit.semantifyr.oxsts.engine.utils.allFeatures
+import hu.bme.mit.semantifyr.oxsts.engine.utils.allSubsets
+import hu.bme.mit.semantifyr.oxsts.engine.utils.type
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Feature
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 
 class InstancePlacer(
     private val holder: Instance

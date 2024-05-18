@@ -1,5 +1,5 @@
 plugins {
-    id("hu.bme.mit.gamma.gradle.conventions.application")
+    id("hu.bme.mit.semantifyr.gradle.conventions.application")
     kotlin("jvm") version "1.9.10"
 }
 
@@ -17,8 +17,8 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":hu.bme.mit.gamma.oxsts.lang"))
-    implementation(project(":hu.bme.mit.gamma.oxsts.model"))
+    implementation(project(":oxsts.lang"))
+    implementation(project(":oxsts.model"))
 
     implementation("com.google.inject:guice:7.0.0")
     implementation(libs.kotlinx.cli)
@@ -30,6 +30,6 @@ dependencies {
     implementation(libs.viatra.transformation.runtime)
 
     testFixturesApi("commons-io:commons-io:2.14.0")
-    testFixturesApi(project(":hu.bme.mit.gamma.oxsts.lang"))
-    testFixturesApi(testFixtures(project(":hu.bme.mit.gamma.oxsts.lang")))
+    testFixturesApi(project(":oxsts.lang"))
+    testFixturesApi(testFixtures(project(":oxsts.lang")))
 }

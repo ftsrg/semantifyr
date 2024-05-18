@@ -1,13 +1,13 @@
-package hu.bme.mit.gamma.oxsts.engine.utils
+package hu.bme.mit.semantifyr.oxsts.engine.utils
 
-import hu.bme.mit.gamma.oxsts.engine.transformation.OperationInliner
-import hu.bme.mit.gamma.oxsts.engine.transformation.evaluation.ContextualExpressionEvaluator
-import hu.bme.mit.gamma.oxsts.engine.transformation.evaluation.FeatureEvaluator
-import hu.bme.mit.gamma.oxsts.engine.transformation.instantiation.InstancePlacer
-import hu.bme.mit.gamma.oxsts.engine.transformation.instantiation.VariableTransformer
-import hu.bme.mit.gamma.oxsts.engine.transformation.resolution.TransitionResolver
-import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
-import hu.bme.mit.gamma.oxsts.model.oxsts.impl.InstanceImpl
+import hu.bme.mit.semantifyr.oxsts.engine.transformation.OperationInliner
+import hu.bme.mit.semantifyr.oxsts.engine.transformation.evaluation.ContextualExpressionEvaluator
+import hu.bme.mit.semantifyr.oxsts.engine.transformation.evaluation.FeatureEvaluator
+import hu.bme.mit.semantifyr.oxsts.engine.transformation.instantiation.InstancePlacer
+import hu.bme.mit.semantifyr.oxsts.engine.transformation.instantiation.VariableTransformer
+import hu.bme.mit.semantifyr.oxsts.engine.transformation.resolution.TransitionResolver
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.impl.InstanceImpl
 
 val Instance.type
     get() = containment.type

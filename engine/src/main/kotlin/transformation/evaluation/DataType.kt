@@ -1,20 +1,20 @@
-package hu.bme.mit.gamma.oxsts.engine.transformation.evaluation
+package hu.bme.mit.semantifyr.oxsts.engine.transformation.evaluation
 
-import hu.bme.mit.gamma.oxsts.engine.utils.NothingInstance
-import hu.bme.mit.gamma.oxsts.engine.utils.except
-import hu.bme.mit.gamma.oxsts.model.oxsts.AndOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.EqualityOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.GreaterThanOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.GreaterThanOrEqualsOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.InequalityOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
-import hu.bme.mit.gamma.oxsts.model.oxsts.LessThanOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.LessThanOrEqualsOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.MinusOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.NotOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.OperatorExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.OrOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.PlusOperator
+import hu.bme.mit.semantifyr.oxsts.engine.utils.NothingInstance
+import hu.bme.mit.semantifyr.oxsts.engine.utils.except
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AndOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.EqualityOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.GreaterThanOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.GreaterThanOrEqualsOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InequalityOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LessThanOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LessThanOrEqualsOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.MinusOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.NotOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.OperatorExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.OrOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.PlusOperator
 
 sealed class DataType {
 

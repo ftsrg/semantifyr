@@ -1,6 +1,6 @@
-package hu.bme.mit.gamma.oxsts.engine.utils
+package hu.bme.mit.semantifyr.oxsts.engine.utils
 
-import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import java.util.*
 
 class InstanceTreeIterator(

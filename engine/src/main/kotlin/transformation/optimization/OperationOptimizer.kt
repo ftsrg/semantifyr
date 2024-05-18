@@ -1,14 +1,14 @@
-package hu.bme.mit.gamma.oxsts.engine.transformation.optimization
+package hu.bme.mit.semantifyr.oxsts.engine.transformation.optimization
 
-import hu.bme.mit.gamma.oxsts.model.oxsts.AssignmentOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.AssumptionOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.ChoiceOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.HavocOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.IfOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralBoolean
-import hu.bme.mit.gamma.oxsts.model.oxsts.Operation
-import hu.bme.mit.gamma.oxsts.model.oxsts.SequenceOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 import org.eclipse.xtext.EcoreUtil2
 
 object OperationOptimizer {

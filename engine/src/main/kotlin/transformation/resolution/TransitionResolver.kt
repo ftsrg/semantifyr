@@ -1,14 +1,14 @@
-package hu.bme.mit.gamma.oxsts.engine.transformation.resolution
+package hu.bme.mit.semantifyr.oxsts.engine.transformation.resolution
 
-import hu.bme.mit.gamma.oxsts.engine.utils.type
-import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.HavocTransitionExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.InitTransitionExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.Instance
-import hu.bme.mit.gamma.oxsts.model.oxsts.MainTransitionExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
-import hu.bme.mit.gamma.oxsts.model.oxsts.Type
+import hu.bme.mit.semantifyr.oxsts.engine.utils.type
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainingExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DeclarationReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocTransitionExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InitTransitionExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.MainTransitionExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Type
 
 class TransitionResolver(
     private val instance: Instance
