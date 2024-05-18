@@ -1,5 +1,0 @@
-analysis {
-	component : SimpleComponent
-	language : Theta
-	optimize : false
-}

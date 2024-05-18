@@ -1,5 +1,0 @@
-analysis {
-	component : SimpleStatechart
-	language : Theta
-	optimize : false
-}
