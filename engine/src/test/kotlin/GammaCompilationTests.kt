@@ -37,7 +37,7 @@ class GammaCompilationTests : CompilationTest() {
     @ParameterizedTest
     @MethodSource
     fun `Model transformations should not regress`(directory: String) {
-        simpleReadTransformWrite(directory, "Test Models/Automated/Gamma Semantic Library", rewriteChoice = false)
+        simpleReadTransformWrite(directory, "Test Models/Automated/Gamma Semantic Library")
         assertModelEqualsExpected(directory)
     }
 
