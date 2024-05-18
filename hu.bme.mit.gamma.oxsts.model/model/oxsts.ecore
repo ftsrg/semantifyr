@@ -13,6 +13,10 @@
         eType="#//Import" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="patterns" upperBound="-1"
         eType="#//Pattern" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="features" upperBound="-1"
+        eType="#//Feature" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="instances" upperBound="-1"
+        eType="#//Instance" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Transition" eSuperTypes="#//Namespace">
     <eStructuralFeatures xsi:type="ecore:EReference" name="operation" lowerBound="1"
@@ -200,10 +204,7 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="pattern" lowerBound="1"
         eType="#//Pattern"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="Target" eSuperTypes="#//Type">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="instances" upperBound="-1"
-        eType="#//Instance" containment="true"/>
-  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Target" eSuperTypes="#//Type"/>
   <eClassifiers xsi:type="ecore:EClass" name="BaseType">
     <eStructuralFeatures xsi:type="ecore:EReference" name="features" upperBound="-1"
         eType="#//Feature" containment="true"/>

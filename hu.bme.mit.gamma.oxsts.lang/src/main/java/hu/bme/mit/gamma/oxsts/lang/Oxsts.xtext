@@ -10,6 +10,8 @@ Package:
 		| enums += Enum
 		| imports += Import
 		| patterns += Pattern
+        | instances += Instance
+        | features += Feature
 	)*
 ;
 
@@ -73,7 +75,6 @@ Target:
 			| mainTransition+=MainTransition
 			| havocTransition+=HavocTransition
 			| properties+=Property
-			| instances+=Instance
 		)*
 	'}')?
 ;
