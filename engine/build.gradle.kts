@@ -1,3 +1,5 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.application")
     kotlin("jvm") version "1.9.10"
@@ -7,8 +9,23 @@ kotlin {
     jvmToolchain(17)
 }
 
+val downloadTheta = tasks.create<Exec>("downloadTheta") {
+    inputs.files("scripts/Get-Theta.ps1")
+    inputs.files("scripts/get-theta.sh")
+    outputs.dir("theta")
+
+    workingDir = File("theta")
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        commandLine("powershell", "../scripts/Get-Theta.ps1")
+    } else {
+        commandLine("sh", "../scripts/get-theta.sh")
+    }
+}
+
 tasks.test {
     inputs.dir("Test Models")
+
+    dependsOn(downloadTheta)
 }
 
 repositories {

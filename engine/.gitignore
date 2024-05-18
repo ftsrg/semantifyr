@@ -1,4 +1,5 @@
-Test Models/**/model.xsts
-Test Models/**/artifacts/
-input/
-output/
+/Test Models/**/model.xsts
+/Test Models/**/artifacts/
+/theta/
+/input/
+/output/
