@@ -11,11 +11,11 @@ import kotlin.streams.asStream
 
 class TargetDefinition(
     val directory: String,
-    val target: Target,
-    val reader: OxstsReader,
+    val targetName: String,
+    val library: String,
 ) {
     override fun toString(): String {
-        return "$directory - ${target.name}"
+        return "$directory - $targetName"
     }
 }
 
@@ -37,7 +37,7 @@ open class VerificationTest {
                 }.filter {
                     it.name.contains("_Safe") || it.name.contains("_Unsafe")
                 }.map { target ->
-                    TargetDefinition(file.path, target, reader)
+                    TargetDefinition(file.path, target.name, library)
                 }
             }.asStream()
         }
@@ -45,30 +45,33 @@ open class VerificationTest {
 
     fun testVerification(targetDefinition: TargetDefinition) {
         val directory = targetDefinition.directory
-        val target = targetDefinition.target
-        val reader = targetDefinition.reader
+        val library = targetDefinition.library
+        val targetName = targetDefinition.targetName
 
-        val targetDirectory = "$directory/artifacts/${target.name}"
+        val targetDirectory = "$directory/artifacts/$targetName"
 
         File(targetDirectory).deleteRecursively()
         File(targetDirectory).mkdirs()
 
-        transformTargetToTheta(targetDirectory, target, reader)
+        transformTargetToTheta(directory, library, targetName, targetDirectory)
 
-        val modelPath = "$targetDirectory/${target.name}.xsts"
-        val propertyPath = "$targetDirectory/${target.name}.prop"
-        val tracePath = "$targetDirectory/${target.name}.cex"
+        val modelPath = "$targetDirectory/$targetName.xsts"
+        val propertyPath = "$targetDirectory/$targetName.prop"
+        val tracePath = "$targetDirectory/$targetName.cex"
 
         executeTheta(modelPath, propertyPath, tracePath)
 
-        if (target.name.contains("Unsafe")) {
-            Assertions.assertTrue(File(tracePath).exists(), "${target.name} failed!")
-        } else if (target.name.contains("Safe")) {
-            Assertions.assertFalse(File(tracePath).exists(), "${target.name} failed!")
+        if (targetName.contains("Unsafe")) {
+            Assertions.assertTrue(File(tracePath).exists(), "$targetName failed!")
+        } else if (targetName.contains("Safe")) {
+            Assertions.assertFalse(File(tracePath).exists(), "$targetName failed!")
         }
     }
 
-    private fun executeTheta(modelPath: String, propertyPath: String, tracePath: String) {
+    private fun executeTheta(
+        modelPath: String, propertyPath: String, tracePath: String,
+        timeout: Long = 5, timeUnit: TimeUnit = TimeUnit.MINUTES
+    ) {
         val process1 = ProcessBuilder(
             "java",
             "-jar", "theta/theta-xsts-cli.jar",
@@ -80,8 +83,7 @@ open class VerificationTest {
             "--property", propertyPath,
             "--cex", tracePath,
             "--stacktrace",
-        )
-            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+        ).redirectOutput(ProcessBuilder.Redirect.INHERIT)
             .redirectError(ProcessBuilder.Redirect.INHERIT)
             .start()
 
@@ -96,33 +98,36 @@ open class VerificationTest {
             "--property", propertyPath,
             "--cex", tracePath,
             "--stacktrace",
-        )
-            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+        ).redirectOutput(ProcessBuilder.Redirect.INHERIT)
             .redirectError(ProcessBuilder.Redirect.INHERIT)
             .start()
 
         val future1 = CompletableFuture.runAsync {
-            process1.waitFor(5, TimeUnit.MINUTES)
-            process1.destroy()
+            process1.waitFor(timeout, timeUnit)
         }
 
         val future2 = CompletableFuture.runAsync {
-            process2.waitFor(5, TimeUnit.MINUTES)
-            process2.destroy()
+            process2.waitFor(timeout, timeUnit)
         }
 
         CompletableFuture.anyOf(future1, future2).join()
+
+        process1.destroy()
+        process2.destroy()
     }
 
-    private fun transformTargetToTheta(directory: String, target: Target, reader: OxstsReader) {
+    private fun transformTargetToTheta(modelDirectory: String, library: String, targetName: String, targetDirectory: String) {
+        val reader = OxstsReader(modelDirectory, library)
+        reader.read()
+
         val transformer = XstsTransformer(reader)
-        val xsts = transformer.transform(target, true)
+        val xsts = transformer.transform(targetName, true)
         val serializedXsts = Serializer.serialize(xsts, false)
 
-        File("$directory/${target.name}.xsts").writeText(serializedXsts)
+        File("$targetDirectory/$targetName.xsts").writeText(serializedXsts)
 
         val serializedProperty = Serializer.serializeProperty(xsts)
 
-        File("$directory/${target.name}.prop").writeText(serializedProperty)
+        File("$targetDirectory/$targetName.prop").writeText(serializedProperty)
     }
 }

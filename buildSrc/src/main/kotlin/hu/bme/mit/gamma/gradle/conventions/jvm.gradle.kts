@@ -35,6 +35,10 @@ tasks {
         useJUnitPlatform {
             excludeTags("slow")
         }
+
+        minHeapSize = "512m"
+        maxHeapSize = "4G"
+
         finalizedBy(tasks.jacocoTestReport)
     }
 
