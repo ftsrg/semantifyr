@@ -64,7 +64,7 @@ object PatternSerializer {
                 append(bodies.first(), parameters)
 
                 for (body in bodies.stream().skip(1)) {
-                    append("or")
+                    append(" or ")
                     append(body, parameters)
                 }
             } else {
