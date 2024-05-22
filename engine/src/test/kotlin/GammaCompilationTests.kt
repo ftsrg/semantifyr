@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2024 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
 import hu.bme.mit.semantifyr.oxsts.engine.reader.prepareOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.OxstsInjectorProvider
 import org.eclipse.xtext.testing.InjectWith

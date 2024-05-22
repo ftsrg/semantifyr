@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2024 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
 grammar hu.bme.mit.semantifyr.oxsts.lang.Oxsts with org.eclipse.xtext.common.Terminals
 
 import "http://www.bme.hu/mit/2023/oxsts" 
