@@ -1,0 +1,28 @@
+package Actions
+
+import Events
+
+type Action {
+    virtual tran { }
+}
+
+type RaiseEventAction : Action {
+    reference event : Event[1..1]
+
+    override tran {
+        inline event.set()
+    }
+}
+
+type SetTimeoutAction : Action {
+    reference timeout : Timeout[1..1]
+    reference amount : Integer = 1
+
+    override tran {
+        timeout.deltaTime := amount
+    }
+}
+
+type Guard {
+    virtual tran { }
+}

@@ -1,4 +1,10 @@
-package hu.bme.mit.gamma.oxsts.engine.utils
+/*
+ * SPDX-FileCopyrightText: 2024 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package hu.bme.mit.semantifyr.oxsts.engine.utils
 
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2

@@ -14,46 +14,46 @@ type Composite {
 }
 
 target Mission {
-    instance composite : Composite {
-        instance a :> composites : Composite {
-            reference parent <- composite
-            instance a :> composites : Composite {
-                reference parent <- composite
-                instance a :> composites : Composite {
-                    reference parent <- composite
+    containment composite : Composite {
+        containment a :> composites : Composite {
+            reference ::> parent : Composite = composite
+            containment a :> composites : Composite {
+                reference ::> parent : Composite = composite
+                containment a :> composites : Composite {
+                    reference ::> parent : Composite = composite
                 }
-                instance b :> composites : Composite {
-                    reference parent <- composite
+                containment b :> composites : Composite {
+                    reference ::> parent : Composite = composite
                 }
             }
-            instance b :> composites : Composite {
-                reference parent <- composite
-                instance a :> composites : Composite {
-                    reference parent <- composite
+            containment b :> composites : Composite {
+                reference ::> parent : Composite = composite
+                containment a :> composites : Composite {
+                    reference ::> parent : Composite = composite
                 }
-                instance b :> composites : Composite {
-                    reference parent <- composite
+                containment b :> composites : Composite {
+                    reference ::> parent : Composite = composite
                 }
             }
         }
-        instance b :> composites : Composite {
-            reference parent <- composite
-            instance a :> composites : Composite {
-                reference parent <- composite
-                instance a :> composites : Composite {
-                    reference parent <- composite
+        containment b :> composites : Composite {
+            reference ::> parent : Composite = composite
+            containment a :> composites : Composite {
+                reference ::> parent : Composite = composite
+                containment a :> composites : Composite {
+                    reference ::> parent : Composite = composite
                 }
-                instance b :> composites : Composite {
-                    reference parent <- composite
+                containment b :> composites : Composite {
+                    reference ::> parent : Composite = composite
                 }
             }
-            instance b :> composites : Composite {
-                reference parent <- composite
-                instance a :> composites : Composite {
-                    reference parent <- composite
+            containment b :> composites : Composite {
+                reference ::> parent : Composite = composite
+                containment a :> composites : Composite {
+                    reference ::> parent : Composite = composite
                 }
-                instance b :> composites : Composite {
-                    reference parent <- composite
+                containment b :> composites : Composite {
+                    reference ::> parent : Composite = composite
                 }
             }
         }

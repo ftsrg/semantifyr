@@ -1,18 +1,18 @@
 
-var __Mission__container__x : integer;
-var __Mission__container__isZero : boolean;
+var __Mission__container__x : integer
+var __Mission__container__isZero : boolean
+
+trans {
+    havoc __Mission__container__x;
+    __Mission__container__isZero := (__Mission__container__x == 0);
+}
 
 init {
     __Mission__container__x := 2;
 }
 
-trans {
-    havoc (__Mission__container__x);
-    __Mission__container__isZero := (__Mission__container__x == 0);
-}
-
 env {}
 
 prop {
-    (__Mission__container__isZero == false);
+    (__Mission__container__isZero == false)
 }

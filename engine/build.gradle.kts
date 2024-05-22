@@ -1,7 +1,13 @@
-import org.jetbrains.kotlin.de.undercouch.gradle.tasks.download.Download
+/*
+ * SPDX-FileCopyrightText: 2024 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-    id("hu.bme.mit.gamma.gradle.conventions.application")
+    id("hu.bme.mit.semantifyr.gradle.conventions.application")
     kotlin("jvm") version "1.9.10"
 }
 
@@ -9,34 +15,44 @@ kotlin {
     jvmToolchain(17)
 }
 
-val gammaVersion = libs.versions.gamma.get()
-val gammaJarsZip = "v$gammaVersion/gamma-tool.zip"
+val downloadTheta = tasks.create<Exec>("downloadTheta") {
+    inputs.files("scripts/Get-Theta.ps1")
+    inputs.files("scripts/get-theta.sh")
+    outputs.dir("theta")
 
-val downloadGammaJars by tasks.registering(Download::class) {
-    src("https://github.com/ftsrg/gamma/releases/download/$gammaJarsZip")
-    overwrite(false)
-    dest("gamma.$gammaVersion.zip")
+    workingDir = File("theta")
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        commandLine("powershell", "../scripts/Get-Theta.ps1")
+    } else {
+        commandLine("sh", "../scripts/get-theta.sh")
+    }
 }
 
-val unzipGammaJars by tasks.registering(Sync::class) {
-    dependsOn(downloadGammaJars)
-    from(zipTree("gamma.$gammaVersion.zip"))
-    into("gamma-libs")
+tasks.test {
+    inputs.dir("Test Models")
+
+    dependsOn(downloadTheta)
 }
 
-tasks.compileKotlin {
-    dependsOn(unzipGammaJars)
+repositories {
+    mavenCentral()
+    maven("https://repo.eclipse.org/content/groups/viatra/")
 }
 
 dependencies {
-    implementation(project(":hu.bme.mit.gamma.oxsts.lang"))
-    implementation(project(":hu.bme.mit.gamma.oxsts.model"))
+    implementation(project(":oxsts.lang"))
+    implementation(project(":oxsts.model"))
 
+    implementation("com.google.inject:guice:7.0.0")
     implementation(libs.kotlinx.cli)
+    implementation(libs.ecore.codegen)
+    implementation(libs.viatra.query.language) {
+        exclude("com.google.inject", "guice")
+    }
+    implementation(libs.viatra.query.runtime)
+    implementation(libs.viatra.transformation.runtime)
 
-    testImplementation("commons-io:commons-io:2.14.0")
-    testImplementation(project(":hu.bme.mit.gamma.oxsts.lang"))
-    testImplementation(testFixtures(project(":hu.bme.mit.gamma.oxsts.lang")))
-
-//    implementation(fileTree("gamma-libs"))
+    testFixturesApi("commons-io:commons-io:2.14.0")
+    testFixturesApi(project(":oxsts.lang"))
+    testFixturesApi(testFixtures(project(":oxsts.lang")))
 }

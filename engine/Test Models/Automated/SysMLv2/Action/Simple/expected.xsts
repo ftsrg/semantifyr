@@ -1,0 +1,57 @@
+
+var __Mission__behavior__start__performing : boolean = false
+var __Mission__behavior__s_then_p1__activated : boolean = false
+var __Mission__behavior__paint1__performing : boolean = false
+var __Mission__behavior__p1_then_d1__activated : boolean = false
+var __Mission__behavior__dry1__performing : boolean = false
+var __Mission__behavior__d1_then_s__activated : boolean = false
+var __Mission__behavior__ship__performing : boolean = false
+
+trans {
+    choice {
+        assume ((__Mission__behavior__start__performing == false));
+        __Mission__behavior__start__performing := true;
+    } or {
+        assume (__Mission__behavior__start__performing);
+        assume ((__Mission__behavior__s_then_p1__activated == false));
+        __Mission__behavior__s_then_p1__activated := true;
+        __Mission__behavior__start__performing := false;
+    } or {
+        assume ((__Mission__behavior__paint1__performing == false));
+        assume (__Mission__behavior__s_then_p1__activated);
+        __Mission__behavior__s_then_p1__activated := false;
+        __Mission__behavior__paint1__performing := true;
+    } or {
+        assume (__Mission__behavior__paint1__performing);
+        assume ((__Mission__behavior__p1_then_d1__activated == false));
+        __Mission__behavior__p1_then_d1__activated := true;
+        __Mission__behavior__paint1__performing := false;
+    } or {
+        assume ((__Mission__behavior__dry1__performing == false));
+        assume (__Mission__behavior__p1_then_d1__activated);
+        __Mission__behavior__p1_then_d1__activated := false;
+        __Mission__behavior__dry1__performing := true;
+    } or {
+        assume (__Mission__behavior__dry1__performing);
+        assume ((__Mission__behavior__d1_then_s__activated == false));
+        __Mission__behavior__d1_then_s__activated := true;
+        __Mission__behavior__dry1__performing := false;
+    } or {
+        assume ((__Mission__behavior__ship__performing == false));
+        assume (__Mission__behavior__d1_then_s__activated);
+        __Mission__behavior__d1_then_s__activated := false;
+        __Mission__behavior__ship__performing := true;
+    } or {
+        assume (__Mission__behavior__ship__performing);
+        __Mission__behavior__ship__performing := false;
+    }
+}
+
+init {
+}
+
+env {}
+
+prop {
+    false
+}

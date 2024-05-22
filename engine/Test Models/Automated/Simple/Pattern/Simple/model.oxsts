@@ -1,0 +1,30 @@
+package Test
+
+type Simple {
+    var x : Integer
+
+    tran {
+        x := 10
+    }
+}
+
+pattern simples(t: Mission, s: Simple) { }
+
+target Mission {
+    containment a : Simple
+    containment b : Simple
+
+    derived reference simples : Simple[0..*] as pattern simples
+
+    init {
+
+    }
+
+    tran {
+        inline seq simples -> main
+    }
+
+    prop {
+        a.x != b.x
+    }
+}

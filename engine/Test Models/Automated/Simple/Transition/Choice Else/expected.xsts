@@ -9,7 +9,8 @@ trans {
     } or {
         assume ((__Mission__x == 10));
         __Mission__x := 10;
-    } else {
+    } or {
+        assume (! (((__Mission__x == 10) || (__Mission__x == 10))));
         __Mission__x := 0;
     }
 }

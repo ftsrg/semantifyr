@@ -3,18 +3,18 @@ package Test
 type Atom
 
 type Holder {
-    feature atom : Atom
-    feature subAtom :> atom : Atom
-    feature subSubAtom :> subAtom : Atom
-    feature subSubSubAtom :> subSubAtom : Atom
-    feature subSubSubSubAtom :> subSubSubAtom : Atom
+    reference atom : Atom
+    reference subAtom :> atom : Atom
+    reference subSubAtom :> subAtom : Atom
+    reference subSubSubAtom :> subSubAtom : Atom
+    reference subSubSubSubAtom :> subSubSubAtom : Atom
 }
 
 target Mission {
     var x : Boolean
 
-    instance holder : Holder {
-        instance a :> subSubSubSubAtom : Atom
+    containment holder : Holder {
+        containment a :> subSubSubSubAtom : Atom
     }
 
     init {
@@ -22,7 +22,7 @@ target Mission {
     }
 
     tran {
-        inline if (holder.atom = holder.subSubSubSubAtom) {
+        inline if (holder.atom == holder.subSubSubSubAtom) {
             x := true
         } else {
             x := false

@@ -1,85 +1,47 @@
-package hu.bme.mit.gamma.oxsts.engine.serialization
+/*
+ * SPDX-FileCopyrightText: 2024 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
 
-import hu.bme.mit.gamma.oxsts.model.oxsts.AndOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.AssignmentOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.AssumptionOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.BooleanType
-import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.ChoiceOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.Enum
-import hu.bme.mit.gamma.oxsts.model.oxsts.EqualityOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
-import hu.bme.mit.gamma.oxsts.model.oxsts.GreaterThanOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.GreaterThanOrEqualsOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.HavocOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.IfOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.InequalityOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.IntegerType
-import hu.bme.mit.gamma.oxsts.model.oxsts.LessThanOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.LessThanOrEqualsOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralBoolean
-import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.LiteralInteger
-import hu.bme.mit.gamma.oxsts.model.oxsts.MinusOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.NotOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.Operation
-import hu.bme.mit.gamma.oxsts.model.oxsts.OperatorExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.OrOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.PlusOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.Property
-import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.SequenceOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
-import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
-import hu.bme.mit.gamma.oxsts.model.oxsts.VariableTypeReference
-import hu.bme.mit.gamma.oxsts.model.oxsts.VariableTyping
-import hu.bme.mit.gamma.oxsts.model.oxsts.XSTS
+package hu.bme.mit.semantifyr.oxsts.engine.serialization
 
-class IndentationAwareStringWriter(
-    private val indentation: String
-) {
-    private val stringBuilder = StringBuilder()
-
-    private var indentLevel = 0
-
-    fun appendLine() {
-        stringBuilder.appendLine()
-    }
-
-    fun append(string: String) {
-        val indentedString = string.prependIndent(indentation.repeat(indentLevel))
-        stringBuilder.append(indentedString)
-    }
-
-    fun appendLine(string: String) {
-        val indentedString = string.prependIndent(indentation.repeat(indentLevel))
-        stringBuilder.appendLine(indentedString)
-    }
-
-    inline fun indent(body: IndentationAwareStringWriter.() -> Unit) {
-        indent()
-        body()
-        outdent()
-    }
-
-    fun indent() {
-        indentLevel++
-    }
-
-    fun outdent() {
-        indentLevel--
-    }
-
-    override fun toString() = stringBuilder.toString()
-
-}
-
-inline fun indent(indentation: String = "    ", body: IndentationAwareStringWriter.() -> Unit): String {
-    val writer = IndentationAwareStringWriter(indentation)
-    writer.body()
-    return writer.toString()
-}
+import hu.bme.mit.semantifyr.oxsts.engine.utils.referencedElement
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AndOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanType
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DeclarationReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Enum
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.EqualityOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.GreaterThanOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.GreaterThanOrEqualsOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InequalityOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.IntegerType
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LessThanOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LessThanOrEqualsOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.MinusOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.NotOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.OperatorExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.OrOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.PlusOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Property
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceTyping
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Typing
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.XSTS
 
 object Serializer {
     fun serializeProperty(xsts: XSTS): String {
@@ -124,7 +86,10 @@ object Serializer {
         return text
     }
 
-    fun IndentationAwareStringWriter.append(variable: Variable) {
+    private fun IndentationAwareStringWriter.append(variable: Variable) {
+        if (variable.isControl) {
+            append("ctrl ")
+        }
         append("var ${variable.name} : ${variable.typing.name}")
         if (variable.expression != null) {
             append(" = ${variable.expression.serialize()}")
@@ -132,15 +97,15 @@ object Serializer {
         appendLine()
     }
 
-    fun IndentationAwareStringWriter.append(enum: Enum) {
+    private fun IndentationAwareStringWriter.append(enum: Enum) {
         appendLine("type ${enum.name} : {")
         indent {
-            appendLine(enum.literals.map { it.name }.joinToString(",\n"))
+            appendLine(enum.literals.joinToString(",\n") { it.name })
         }
         appendLine("}")
     }
 
-    fun IndentationAwareStringWriter.append(transition: Transition, kind: String) {
+    private fun IndentationAwareStringWriter.append(transition: Transition, kind: String) {
         append(kind)
         if (transition.operation.size >= 1) {
             appendLine(" {")
@@ -157,7 +122,7 @@ object Serializer {
         appendLine("}")
     }
 
-    fun IndentationAwareStringWriter.append(property: Property) {
+    private fun IndentationAwareStringWriter.append(property: Property) {
         appendLine("prop {")
         indent {
             appendLine(property.invariant.serialize())
@@ -165,7 +130,7 @@ object Serializer {
         appendLine("}")
     }
 
-    fun IndentationAwareStringWriter.append(operation: Operation) {
+    private fun IndentationAwareStringWriter.append(operation: Operation) {
         when (operation) {
             is SequenceOperation -> {
                 for (seqOp in operation.operation) {
@@ -218,30 +183,28 @@ object Serializer {
         }
     }
 
-    val VariableTyping.name: String
+    val Typing.name: String
         get() = when (this) {
             is IntegerType -> "integer"
             is BooleanType -> "boolean"
-            is VariableTypeReference -> {
-                val reference = this.reference
-
-                when (reference) {
-                    is Enum -> reference.name
+            is ReferenceTyping -> {
+                when (referencedElement) {
+                    is Enum -> (referencedElement as Enum).name
                     else -> "UNKNOWN_TYPE$$$"
                 }
             }
-
+            // FIXME: we should create error markers for cases such as this
             else -> "UNKNOWN_TYPE$$$"
         }
 
-    fun Expression.serialize(): String = when (this) {
+    private fun Expression.serialize(): String = when (this) {
         is OperatorExpression -> serialize()
         is LiteralExpression -> serialize()
         is ReferenceExpression -> serialize()
         else -> "UNKNOWN_EXPRESSION$$$"
     }
 
-    fun OperatorExpression.serialize(): String = when (this) {
+    private fun OperatorExpression.serialize(): String = when (this) {
         is AndOperator -> "(${operands[0].serialize()} && ${operands[1].serialize()})"
         is OrOperator -> "(${operands[0].serialize()} || ${operands[1].serialize()})"
         is PlusOperator -> "(${operands[0].serialize()} + ${operands[1].serialize()})"
@@ -256,15 +219,15 @@ object Serializer {
         else -> "UNKNOWN_EXPRESSION$$$"
     }
 
-    fun LiteralExpression.serialize(): String = when (this) {
+    private fun LiteralExpression.serialize(): String = when (this) {
         is LiteralBoolean -> isValue.toString()
         is LiteralInteger -> value.toString()
         else -> "UNKNOWN_EXPRESSION$$$"
     }
 
-    fun ReferenceExpression.serialize(): String = when (this) {
+    private fun ReferenceExpression.serialize(): String = when (this) {
         is ChainReferenceExpression -> {
-            chains.map { it as DeclarationReferenceExpression }.map { it.element.name }.joinToString(".")
+            chains.map { it as DeclarationReferenceExpression }.joinToString(".") { it.element.name }
         }
 
         else -> "UNKNOWN_EXPRESSION$$$"

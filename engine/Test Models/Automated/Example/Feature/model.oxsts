@@ -16,22 +16,22 @@ type State {
     feature region : Region[0..1]
 }
 target Mission {
-    instance MainRegion : Region {
-        // "AState" instance subsets "MainRegion.entryState"
-        instance MainEntry :> entryState : State {
+    containment MainRegion : Region {
+        // "AState" containment subsets "MainRegion.entryState"
+        containment MainEntry :> entryState : State {
             // "MainEntry"'s "parentRegion" is "MainRegion"
-            reference parentRegion <- MainRegion
+            reference ::> parentRegion : Region = MainRegion
         }
-        // "AState" instance subsets "MainRegion.states"
-        instance AState :> states : State {
-            reference parentRegion <- MainRegion
+        // "AState" containment subsets "MainRegion.states"
+        containment AState :> states : State {
+            reference ::> parentRegion : Region = MainRegion
         }
-        instance BState :> states : State {
-            // "BRegion" instance subsets "BState.region"
-            instance BRegion :> region : Region {
-                instance CState :> states : State {
-                    reference parentRegion <- BRegion
-                    reference parentState <- BState
+        containment BState :> states : State {
+            // "BRegion" containment subsets "BState.region"
+            containment BRegion :> region : Region {
+                containment CState :> states : State {
+                    reference ::> parentRegion : Region = BRegion
+                    reference ::> parentState : State = BState
                 }
             }
         }

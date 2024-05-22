@@ -1,55 +1,74 @@
-package hu.bme.mit.gamma.oxsts.engine.transformation
+/*
+ * SPDX-FileCopyrightText: 2024 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
 
-import hu.bme.mit.gamma.oxsts.engine.utils.copy
-import hu.bme.mit.gamma.oxsts.engine.utils.dropLast
-import hu.bme.mit.gamma.oxsts.engine.utils.element
-import hu.bme.mit.gamma.oxsts.engine.utils.isFeatureTyped
-import hu.bme.mit.gamma.oxsts.engine.utils.lastChain
-import hu.bme.mit.gamma.oxsts.model.oxsts.AssignmentOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.AssumptionOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.ChoiceOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.CompositeOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.Enum
-import hu.bme.mit.gamma.oxsts.model.oxsts.EqualityOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.Expression
-import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
-import hu.bme.mit.gamma.oxsts.model.oxsts.HavocOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.IfOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.InequalityOperator
-import hu.bme.mit.gamma.oxsts.model.oxsts.InlineOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.Operation
-import hu.bme.mit.gamma.oxsts.model.oxsts.Package
-import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.SequenceOperation
-import hu.bme.mit.gamma.oxsts.model.oxsts.Target
-import hu.bme.mit.gamma.oxsts.model.oxsts.Transition
-import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
-import hu.bme.mit.gamma.oxsts.model.oxsts.VariableTypeReference
-import hu.bme.mit.gamma.oxsts.model.oxsts.XSTS
+package hu.bme.mit.semantifyr.oxsts.engine.transformation
+
+import hu.bme.mit.semantifyr.oxsts.engine.reader.OxstsReader
+import hu.bme.mit.semantifyr.oxsts.engine.transformation.evaluation.BooleanData
+import hu.bme.mit.semantifyr.oxsts.engine.transformation.evaluation.IntegerData
+import hu.bme.mit.semantifyr.oxsts.engine.transformation.instantiation.Instantiator
+import hu.bme.mit.semantifyr.oxsts.engine.transformation.optimization.ExpressionOptimizer
+import hu.bme.mit.semantifyr.oxsts.engine.transformation.optimization.OperationOptimizer
+import hu.bme.mit.semantifyr.oxsts.engine.utils.OxstsFactory
+import hu.bme.mit.semantifyr.oxsts.engine.utils.contextualEvaluator
+import hu.bme.mit.semantifyr.oxsts.engine.utils.copy
+import hu.bme.mit.semantifyr.oxsts.engine.utils.dropLast
+import hu.bme.mit.semantifyr.oxsts.engine.utils.element
+import hu.bme.mit.semantifyr.oxsts.engine.utils.isFeatureTyped
+import hu.bme.mit.semantifyr.oxsts.engine.utils.lastChain
+import hu.bme.mit.semantifyr.oxsts.engine.utils.operationInliner
+import hu.bme.mit.semantifyr.oxsts.engine.utils.referencedElement
+import hu.bme.mit.semantifyr.oxsts.engine.utils.variableTransformer
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.CompositeOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DeclarationReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Enum
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.EqualityOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Feature
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InequalityOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceTyping
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Target
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.XSTS
 import org.eclipse.xtext.EcoreUtil2
 import java.util.*
 
-class XstsTransformer {
+class XstsTransformer(
+    val reader: OxstsReader
+) {
 
-    fun transform(rootElements: List<Package>, targetName: String): XSTS {
-        val target = rootElements.flatMap { it.target }.first {
-            it.name == targetName
+    fun transform(typeName: String, rewriteChoice: Boolean = false): XSTS {
+        val type = reader.rootElements.flatMap { it.types }.filterIsInstance<Target>().first {
+            it.name == typeName
         }
 
-        return transform(target)
+        return transform(type, rewriteChoice)
     }
 
     fun transform(target: Target, rewriteChoice: Boolean = false): XSTS {
-        val rootInstance = Instantiator.instantiateInstances(target)
-
         val xsts = OxstsFactory.createXSTS()
 
-        xsts.variables += Instantiator.instantiateVariables(rootInstance)
+        val rootInstance = Instantiator.instantiateTree(target)
 
-        val init = rootInstance.transitionEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createInitTransitionExpression()))
-        val tran = rootInstance.transitionEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createMainTransitionExpression()))
+        xsts.variables += Instantiator.instantiateVariablesTree(rootInstance)
+
+        val init = rootInstance.contextualEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createInitTransitionExpression()))
+        val tran = rootInstance.contextualEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createMainTransitionExpression()))
 
         xsts.init = init.copy() // TODO handle multiple inits?
         xsts.transition = tran.copy() // TODO handle multiple trans?
@@ -60,11 +79,12 @@ class XstsTransformer {
 
         xsts.rewriteFeatureTypingVariableExpression(rootInstance)
         xsts.rewriteVariableAccesses(rootInstance)
+        xsts.rewriteFeatureRefences(rootInstance)
 
         xsts.enums += xsts.variables.asSequence().map {
             it.typing
-        }.filterIsInstance<VariableTypeReference>().map {
-            it.reference
+        }.filterIsInstance<ReferenceTyping>().map {
+            it.referencedElement
         }.filterIsInstance<Enum>().toSet()
 
         OperationOptimizer.optimize(xsts.init)
@@ -79,7 +99,7 @@ class XstsTransformer {
         return xsts
     }
 
-    private fun Transition.inlineOperations(rootInstance: InstanceObject) {
+    private fun Transition.inlineOperations(rootInstance: Instance) {
         val processorQueue = LinkedList(operation)
 
         while (processorQueue.any()) {
@@ -87,25 +107,22 @@ class XstsTransformer {
 
             when (operation) {
                 is InlineOperation -> {
-                    val inlined = rootInstance.operationEvaluator.inlineOperation(operation)
+                    val inlined = rootInstance.operationInliner.inlineOperation(operation)
                     EcoreUtil2.replace(operation, inlined)
                     processorQueue += inlined
                 }
-
                 is IfOperation -> {
                     processorQueue += operation.body
                     if (operation.`else` != null) {
                         processorQueue += operation.`else`
                     }
                 }
-
                 is ChoiceOperation -> {
                     processorQueue += operation.operation
                     if (operation.`else` != null) {
                         processorQueue += operation.`else`
                     }
                 }
-
                 is CompositeOperation -> {
                     processorQueue += operation.operation
                 }
@@ -113,19 +130,6 @@ class XstsTransformer {
         }
     }
 
-    /**
-     * TODO
-     *
-     * Else branches cannot be mapped simply like this.
-     * This only works when the assume (...) operation is the first in a sequence, since otherwise
-     * we must evaluate all preceding operations first, and THEN the guard expression -> hence
-     * the simple inlining will not work.
-     *
-     * Other way: create "simulation" operations, meaning replace all real variable calls with
-     * local variables, negate all assumptions and inline them in the else branch. This will
-     * always behave correctly, although it is hard to calculate and would most likely reduce
-     * performance on the theta side (without optimizations).
-     */
     private fun Transition.rewriteChoiceElse() {
         for (op in operation) {
             op.rewriteChoiceElse()
@@ -180,40 +184,39 @@ class XstsTransformer {
             is AssignmentOperation -> OxstsFactory.createLiteralBoolean(true)
             is HavocOperation -> OxstsFactory.createLiteralBoolean(true)
             is SequenceOperation -> {
+                // all branches can be executed
                 operation.map {
                     it.calculateAssumption()
                 }.reduceOrNull { lhs, rhs ->
                     OxstsFactory.createAndOperator(lhs, rhs)
                 } ?: OxstsFactory.createLiteralBoolean(true)
             }
-
             is ChoiceOperation -> {
+                // any branch can be executed
                 operation.map {
                     it.calculateAssumption()
                 }.reduceOrNull { lhs, rhs ->
                     OxstsFactory.createOrOperator(lhs, rhs)
                 } ?: OxstsFactory.createLiteralBoolean(true)
             }
-
             is IfOperation -> {
-                OxstsFactory.createLiteralBoolean(true)
+                val guardAssumption = guard.copy()
+                val notGuardAssumption = OxstsFactory.createNotOperator(guard.copy())
+                val bodyAssumption = body.calculateAssumption()
+                val elseAssumption = `else`?.calculateAssumption() ?: OxstsFactory.createLiteralBoolean(true)
 
-//                val guardAssumption = guard.copy()
-//                val notGuardAssumption = OxstsFactory.createNotOperator(guard.copy())
-//                val bodyAssumption = body.calculateAssumption()
-//                val elseAssumption = `else`?.calculateAssumption() ?: OxstsFactory.createLiteralBoolean(true)
-//
-//                OxstsFactory.createOrOperator(
-//                    OxstsFactory.createAndOperator(guardAssumption, bodyAssumption),
-//                    OxstsFactory.createAndOperator(notGuardAssumption, elseAssumption),
-//                )
+                // if can be executed, if the guard is true and the body can be executed,
+                //  or the guard is false and the else can be executed
+                OxstsFactory.createOrOperator(
+                    OxstsFactory.createAndOperator(guardAssumption, bodyAssumption),
+                    OxstsFactory.createAndOperator(notGuardAssumption, elseAssumption),
+                )
             }
-
-            else -> error("Unsupported operation!")
+            else -> error("Unknown operation: $this!")
         }
     }
 
-    private fun XSTS.rewriteVariableAccesses(rootInstance: InstanceObject) {
+    private fun XSTS.rewriteVariableAccesses(rootInstance: Instance) {
         val referenceExpressions = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).filter {
             val declaration = it.chains.last() as? DeclarationReferenceExpression
             declaration?.element is Variable
@@ -223,15 +226,33 @@ class XstsTransformer {
             val reference = referenceExpression.chains.last() as DeclarationReferenceExpression
             val oldVariable = reference.element as Variable
 
-            val instanceObject = rootInstance.expressionEvaluator.evaluateInstanceObject(referenceExpression.dropLast(1))
-            val transformedVariable = instanceObject.variableMap[oldVariable]!!
+            val instance = rootInstance.contextualEvaluator.evaluateInstance(referenceExpression.dropLast(1))
+            val transformedVariable = instance.variableTransformer.findTransformedVariable(oldVariable)
 
             val newExpression = OxstsFactory.createChainReferenceExpression(transformedVariable)
             EcoreUtil2.replace(referenceExpression, newExpression)
         }
     }
 
-    private fun XSTS.rewriteFeatureTypingVariableExpression(rootInstance: InstanceObject) {
+    private fun XSTS.rewriteFeatureRefences(rootInstance: Instance) {
+        val references = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).filter {
+            it.lastChain().element is Feature
+        }
+
+        for (reference in references) {
+            val evaluation = rootInstance.contextualEvaluator.evaluate(reference)
+
+            val expression = when (evaluation) {
+                is BooleanData -> OxstsFactory.createLiteralBoolean(evaluation.value)
+                is IntegerData -> OxstsFactory.createLiteralInteger(evaluation.value)
+                else -> error("Feature reference is not an XSTS-compatible expression type!")
+            }
+
+            EcoreUtil2.replace(reference, expression)
+        }
+    }
+
+    private fun XSTS.rewriteFeatureTypingVariableExpression(rootInstance: Instance) {
         val expressions = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).filter {
             (it.lastChain().element as? Variable)?.isFeatureTyped == true
         }
@@ -243,7 +264,7 @@ class XstsTransformer {
         }
     }
 
-    private fun rewriteFeatureTypingVariableExpression(variable: Variable, referenceExpression: ChainReferenceExpression, rootInstance: InstanceObject) {
+    private fun rewriteFeatureTypingVariableExpression(variable: Variable, referenceExpression: ChainReferenceExpression, rootInstance: Instance) {
         val parent = referenceExpression.eContainer()
 
         when (parent) {

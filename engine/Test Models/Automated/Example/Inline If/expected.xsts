@@ -1,15 +1,15 @@
 
-var __Mission__x : integer = 1;
-
-init {
-}
+var __Mission__x : integer = 1
 
 trans {
     __Mission__x := 0;
 }
 
+init {
+}
+
 env {}
 
 prop {
-    true;
+    true
 }

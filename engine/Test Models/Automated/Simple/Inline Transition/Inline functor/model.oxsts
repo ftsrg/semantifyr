@@ -21,8 +21,8 @@ type Component {
 }
 
 target Mission {
-    instance component : Component
-    instance callable : SimpleCallable
+    containment component : Component
+    containment callable : SimpleCallable
 
     init {
         assume (false)

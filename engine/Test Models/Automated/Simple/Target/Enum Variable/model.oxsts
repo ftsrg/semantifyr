@@ -16,6 +16,6 @@ target Mission {
     }
 
     prop {
-        unit = TimeUnit::Seconds
+        unit == TimeUnit::Seconds
     }
 }

@@ -3,7 +3,7 @@ package Test
 // Event.oxsts
 
 type Event {
-    var isActive: Boolean := false
+    var isActive: Boolean = false
 
     tran set {
         isActive := true
@@ -23,25 +23,23 @@ type Event {
 }
 
 type Timeout {
-    var deltaTime : Integer := 0
+    var deltaTime : Integer = 0 - 1
 
     tran {
-        if (deltaTime > 0) {
+        if (deltaTime >= 0) {
             deltaTime := deltaTime - 1
         }
     }
 
     tran isUp {
-        assume (deltaTime <= 0)
+        assume (deltaTime == 0)
     }
 }
 
 // Trigger.oxsts
 
 type Trigger {
-    virtual tran isTriggered {
-        assume (true)
-    }
+    virtual tran isTriggered { }
 }
 
 type EventTrigger : Trigger {
@@ -76,6 +74,11 @@ type RaiseEventAction : Action {
 
 type SetTimeoutAction : Action {
     reference timeout : Timeout[1..1]
+    reference amount : Integer = 1
+
+    override tran {
+        timeout.deltaTime := amount
+    }
 }
 
 // Component.oxsts
@@ -138,7 +141,7 @@ type Statechart : Component {
 type Region {
     feature states : State[0..*]
 
-    var activeState : states[0..1] := Nothing
+    var activeState : states[0..1] = Nothing
 
     feature abstractTransitions : AbstractTransition[0..*]
 
@@ -173,13 +176,13 @@ type State {
     feature exitActions : Action[0..*]
 
     tran isActive {
-        assume (parent.activeState = Self)
+        assume (parent.activeState == Self)
     }
 
     tran deactivateRecursive {
         inline seq regions -> deactivateRecursive
 
-        if (parent.activeState = Self) {
+        if (parent.activeState == Self) {
             parent.activeState := Nothing
             inline seq exitActions -> main
         }
@@ -226,9 +229,7 @@ type AbstractTransition {
     reference commonRegion : Region[1..1]
     reference to : State[1..1]
 
-    virtual tran {
-        assume (true)
-    }
+    virtual tran { }
 }
 
 type EntryTransition : AbstractTransition {
@@ -255,197 +256,186 @@ type Transition : AbstractTransition {
 
 // Controller.oxsts
 
-type SetTimeoutActionOneS : SetTimeoutAction {
-    override tran {
-        timeout.deltaTime := 1
-    }
-}
-
-type SetTimeoutActionTwoS : SetTimeoutAction {
-    override tran {
-        timeout.deltaTime := 2
-    }
-}
-
 type Controller : Statechart {
-    instance policeEvent :> inputEvents : Event
+    containment policeEvent :> inputEvents : Event
 
-    instance policeEventA :> outputEvents : Event
-    instance toggleEventA :> outputEvents : Event
+    containment policeEventA :> outputEvents : Event
+    containment toggleEventA :> outputEvents : Event
 
-    instance policeEventB :> outputEvents : Event
-    instance toggleEventB :> outputEvents : Event
+    containment policeEventB :> outputEvents : Event
+    containment toggleEventB :> outputEvents : Event
 
-    instance trafficTimeout :> timeouts : Timeout
-    instance stopTimeout :> timeouts : Timeout
+    containment trafficTimeout :> timeouts : Timeout
 
-    instance Main :> regions : Region {
-        instance et1 :> entryTransitions : EntryTransition {
-            reference commonRegion <- Main
-            reference to <- Operating
+    containment Main :> regions : Region {
+        containment et1 :> entryTransitions : EntryTransition {
+            reference ::> commonRegion : Region = Main
+            reference ::> to : State = Operating
         }
 
-        instance Operating :> states : State {
-            reference parent <- Main
+        containment Operating :> states : State {
+            reference ::> parent : Region = Main
 
-            instance OperatingRegion :> regions : Region {
-                instance et2 :> entryTransitions : EntryTransition {
-                    reference commonRegion <- OperatingRegion
-                    reference to <- Init
+            containment OperatingRegion :> regions : Region {
+                containment et2 :> entryTransitions : EntryTransition {
+                    reference ::> commonRegion : Region = OperatingRegion
+                    reference ::> to : State = Init
                 }
 
-                instance Init :> states : State {
-                    reference parent <- OperatingRegion
-                    reference parentState <- Operating
+                containment Init :> states : State {
+                    reference ::> parent : Region = OperatingRegion
+                    reference ::> parentState : State = Operating
 
-                    instance ea1 :> entryActions : SetTimeoutActionOneS {
-                        reference timeout <- stopTimeout
-                    }
-                }
-
-                instance initToTrafficOnA :> transitions : Transition {
-                    reference commonRegion <- Main
-                    reference from <- Init
-                    reference to <- TrafficOnA
-
-                    instance t :> trigger : TimeoutTrigger {
-                        reference timeout <- stopTimeout
-                    }
-                    instance a :> actions : RaiseEventAction {
-                        reference event <- toggleEventA // switch A to Green
+                    containment ea1 :> entryActions : SetTimeoutAction {
+                        reference ::> timeout : Timeout = trafficTimeout
                     }
                 }
 
-                instance TrafficOnA :> states : State {
-                    reference parent <- OperatingRegion
-                    reference parentState <- Operating
+                containment initToTrafficOnA :> transitions : Transition {
+                    reference ::> commonRegion : Region = Main
+                    reference ::> from : State = Init
+                    reference ::> to : State = TrafficOnA
 
-                    instance a :> entryActions : SetTimeoutActionTwoS {
-                        reference timeout <- trafficTimeout
+                    containment t :> trigger : TimeoutTrigger {
+                        reference ::> timeout : Timeout = trafficTimeout
+                    }
+                    containment a :> actions : RaiseEventAction {
+                        reference ::> event : Event = toggleEventA // switch A to Green
                     }
                 }
 
-                instance trafficOnAToStoppingA :> transitions : Transition {
-                    reference commonRegion <- Main
-                    reference from <- TrafficOnA
-                    reference to <- StoppingA
+                containment TrafficOnA :> states : State {
+                    reference ::> parent : Region = OperatingRegion
+                    reference ::> parentState : State = Operating
 
-                    instance t :> trigger : TimeoutTrigger {
-                        reference timeout <- trafficTimeout
-                    }
-                    instance a :> actions : RaiseEventAction {
-                        reference event <- toggleEventA // switch A to Yellow
+                    containment a :> entryActions : SetTimeoutAction {
+                        reference ::> timeout : Timeout = trafficTimeout
+                        reference ::> amount : Integer = 2
                     }
                 }
 
-                instance StoppingA :> states : State {
-                    reference parent <- OperatingRegion
-                    reference parentState <- Operating
+                containment trafficOnAToStoppingA :> transitions : Transition {
+                    reference ::> commonRegion : Region = Main
+                    reference ::> from : State = TrafficOnA
+                    reference ::> to : State = StoppingA
 
-                    instance a :> entryActions : SetTimeoutActionTwoS {
-                        reference timeout <- stopTimeout
+                    containment t :> trigger : TimeoutTrigger {
+                        reference ::> timeout : Timeout = trafficTimeout
+                    }
+                    containment a :> actions : RaiseEventAction {
+                        reference ::> event : Event = toggleEventA // switch A to Yellow
                     }
                 }
 
-                instance stoppingAToTrafficOnB :> transitions : Transition {
-                    reference commonRegion <- Main
-                    reference from <- StoppingA
-                    reference to <- TrafficOnB
+                containment StoppingA :> states : State {
+                    reference ::> parent : Region = OperatingRegion
+                    reference ::> parentState : State = Operating
 
-                    instance t :> trigger : TimeoutTrigger {
-                        reference timeout <- stopTimeout
-                    }
-                    instance a1 :> actions : RaiseEventAction {
-                        reference event <- toggleEventA // switch A to Red
-                    }
-                    instance a2 :> actions : RaiseEventAction {
-                        reference event <- toggleEventB // switch B to Green
+                    containment a :> entryActions : SetTimeoutAction {
+                        reference ::> timeout : Timeout = trafficTimeout
                     }
                 }
 
-                instance TrafficOnB :> states : State {
-                    reference parent <- OperatingRegion
-                    reference parentState <- Operating
+                containment stoppingAToTrafficOnB :> transitions : Transition {
+                    reference ::> commonRegion : Region = Main
+                    reference ::> from : State = StoppingA
+                    reference ::> to : State = TrafficOnB
 
-                    instance a :> entryActions : SetTimeoutActionOneS {
-                        reference timeout <- trafficTimeout
+                    containment t :> trigger : TimeoutTrigger {
+                        reference ::> timeout : Timeout = trafficTimeout
+                    }
+                    containment a1 :> actions : RaiseEventAction {
+                        reference ::> event : Event = toggleEventA // switch A to Red
+                    }
+                    containment a2 :> actions : RaiseEventAction {
+                        reference ::> event : Event = toggleEventB // switch B to Green
                     }
                 }
 
-                instance trafficOnBToStoppingB :> transitions : Transition {
-                    reference commonRegion <- Main
-                    reference from <- TrafficOnB
-                    reference to <- StoppingB
+                containment TrafficOnB :> states : State {
+                    reference ::> parent : Region = OperatingRegion
+                    reference ::> parentState : State = Operating
 
-                    instance t :> trigger : TimeoutTrigger {
-                        reference timeout <- trafficTimeout
-                    }
-                    instance a :> actions : RaiseEventAction {
-                        reference event <- toggleEventB // switch B to Yellow
+                    containment a :> entryActions : SetTimeoutAction {
+                        reference ::> timeout : Timeout = trafficTimeout
+                        reference ::> amount : Integer = 2
                     }
                 }
 
-                instance StoppingB :> states : State {
-                    reference parent <- OperatingRegion
-                    reference parentState <- Operating
+                containment trafficOnBToStoppingB :> transitions : Transition {
+                    reference ::> commonRegion : Region = Main
+                    reference ::> from : State = TrafficOnB
+                    reference ::> to : State = StoppingB
 
-                    instance a :> entryActions : SetTimeoutActionOneS {
-                        reference timeout <- stopTimeout
+                    containment t :> trigger : TimeoutTrigger {
+                        reference ::> timeout : Timeout = trafficTimeout
+                    }
+                    containment a :> actions : RaiseEventAction {
+                        reference ::> event : Event = toggleEventB // switch B to Yellow
                     }
                 }
 
-                instance stoppingBToTrafficOnA :> transitions : Transition {
-                    reference commonRegion <- Main
-                    reference from <- StoppingB
-                    reference to <- TrafficOnA
+                containment StoppingB :> states : State {
+                    reference ::> parent : Region = OperatingRegion
+                    reference ::> parentState : State = Operating
 
-                    instance t :> trigger : TimeoutTrigger {
-                        reference timeout <- stopTimeout
-                    }
-                    instance a1 :> actions : RaiseEventAction {
-                        reference event <- toggleEventB // switch B to Red
-                    }
-                    instance a2 :> actions : RaiseEventAction {
-                        reference event <- toggleEventA // switch A to Green
+                    containment a :> entryActions : SetTimeoutAction {
+                        reference ::> timeout : Timeout = trafficTimeout
                     }
                 }
-            }
-        }
 
-        instance operatingToInterrupted :> transitions : Transition {
-            reference commonRegion <- Main
-            reference from <- Operating
-            reference to <- Interrupted
+                containment stoppingBToTrafficOnA :> transitions : Transition {
+                    reference ::> commonRegion : Region = Main
+                    reference ::> from : State = StoppingB
+                    reference ::> to : State = TrafficOnA
 
-            instance t :> trigger : EventTrigger {
-                reference event <- policeEvent
+                    containment t :> trigger : TimeoutTrigger {
+                        reference ::> timeout : Timeout = trafficTimeout
+                    }
+                    containment a1 :> actions : RaiseEventAction {
+                        reference ::> event : Event = toggleEventB // switch B to Red
+                    }
+                    containment a2 :> actions : RaiseEventAction {
+                        reference ::> event : Event = toggleEventA // switch A to Green
+                    }
+                }
             }
         }
 
-        instance interruptedToOperating :> transitions : Transition {
-            reference commonRegion <- Main
-            reference from <- Interrupted
-            reference to <- Operating
+        containment operatingToInterrupted :> transitions : Transition {
+            reference ::> commonRegion : Region = Main
+            reference ::> from : State = Operating
+            reference ::> to : State = Interrupted
 
-            instance t :> trigger : EventTrigger {
-                reference event <- policeEvent
+            containment t :> trigger : EventTrigger {
+                reference ::> event : Event = policeEvent
             }
         }
 
-        instance Interrupted :> states : State {
-            reference parent <- Main
+        containment interruptedToOperating :> transitions : Transition {
+            reference ::> commonRegion : Region = Main
+            reference ::> from : State = Interrupted
+            reference ::> to : State = Operating
 
-            instance ea1 :> entryActions : RaiseEventAction {
-                reference event <- policeEventA
+            containment t :> trigger : EventTrigger {
+                reference ::> event : Event = policeEvent
             }
-            instance ea2 :> entryActions : RaiseEventAction {
-                reference event <- policeEventB
+        }
+
+        containment Interrupted :> states : State {
+            reference ::> parent : Region = Main
+
+            containment ea1 :> entryActions : RaiseEventAction {
+                reference ::> event : Event = policeEventA
             }
-            instance ea3 :> exitActions : RaiseEventAction {
-                reference event <- policeEventA
+            containment ea2 :> entryActions : RaiseEventAction {
+                reference ::> event : Event = policeEventB
             }
-            instance ea4 :> exitActions : RaiseEventAction {
-                reference event <- policeEventB
+            containment ea3 :> exitActions : RaiseEventAction {
+                reference ::> event : Event = policeEventA
+            }
+            containment ea4 :> exitActions : RaiseEventAction {
+                reference ::> event : Event = policeEventB
             }
         }
     }
@@ -454,160 +444,160 @@ type Controller : Statechart {
 // TrafficLightCtrl.oxsts
 
 type TrafficLightCtrl : Statechart {
-    instance policeEvent :> inputEvents : Event
-    instance toggleEvent :> inputEvents : Event
+    containment policeEvent :> inputEvents : Event
+    containment toggleEvent :> inputEvents : Event
 
-    instance displayRedEvent :> outputEvents : Event
-    instance displayYellowEvent :> outputEvents : Event
-    instance displayGreenEvent :> outputEvents : Event
-    instance displayNoneEvent :> outputEvents : Event
+    containment displayRedEvent :> outputEvents : Event
+    containment displayYellowEvent :> outputEvents : Event
+    containment displayGreenEvent :> outputEvents : Event
+    containment displayNoneEvent :> outputEvents : Event
 
-    instance blinkingTimeout :> timeouts : Timeout
+    containment blinkingTimeout :> timeouts : Timeout
 
-    instance Main :> regions : Region {
-        instance et :> entryTransitions : EntryTransition {
-            reference commonRegion <- Main
-            reference to <- Normal
+    containment Main :> regions : Region { // this defines a new MainRegion type inheriting from Region
+        containment et :> entryTransitions : EntryTransition {
+            reference ::> commonRegion : Region = Main
+            reference ::> to : State = Normal
         }
 
-        instance Normal :> states : State {
-            reference parent <- Main
+        containment Normal :> states : State {
+            reference ::> parent : Region = Main
 
-            instance NormalRegion :> regions : Region {
-                instance et2 :> entryTransitions : EntryTransition {
-                    reference commonRegion <- NormalRegion
-                    reference to <- Red
+            containment NormalRegion :> regions : Region {
+                containment et2 :> entryTransitions : EntryTransition {
+                    reference ::> commonRegion : Region = NormalRegion
+                    reference ::> to : State = Red
                 }
 
-                instance Red :> states : State {
-                    reference parent <- NormalRegion
-                    reference parentState <- Normal
+                containment Red :> states : State {
+                    reference ::> parent : Region = NormalRegion
+                    reference ::> parentState : State = Normal
 
-                    instance e :> entryActions : RaiseEventAction {
-                        reference event <- displayRedEvent
+                    containment e :> entryActions : RaiseEventAction {
+                        reference ::> event : Event = displayRedEvent
                     }
                 }
 
-                instance redToGreen :> transitions : Transition {
-                    reference commonRegion <- NormalRegion
-                    reference from <- Red
-                    reference to <- Green
+                containment redToGreen :> transitions : Transition {
+                    reference ::> commonRegion : Region = NormalRegion
+                    reference ::> from : State = Red
+                    reference ::> to : State = Green
 
-                    instance t :> trigger : EventTrigger {
-                        reference event <- toggleEvent
+                    containment t :> trigger : EventTrigger {
+                        reference ::> event : Event = toggleEvent
                     }
                 }
 
-                instance Green :> states : State {
-                    reference parent <- NormalRegion
-                    reference parentState <- Normal
+                containment Green :> states : State {
+                    reference ::> parent : Region = NormalRegion
+                    reference ::> parentState : State = Normal
 
-                    instance e :> entryActions : RaiseEventAction {
-                        reference event <- displayGreenEvent
+                    containment e :> entryActions : RaiseEventAction {
+                        reference ::> event : Event = displayGreenEvent
                     }
                 }
 
-                instance greenToYellow :> transitions : Transition {
-                    reference commonRegion <- NormalRegion
-                    reference from <- Green
-                    reference to <- Yellow
+                containment greenToYellow :> transitions : Transition {
+                    reference ::> commonRegion : Region = NormalRegion
+                    reference ::> from : State = Green
+                    reference ::> to : State = Yellow
 
-                    instance t :> trigger : EventTrigger {
-                        reference event <- toggleEvent
+                    containment t :> trigger : EventTrigger {
+                        reference ::> event : Event = toggleEvent
                     }
                 }
 
-                instance Yellow :> states : State {
-                    reference parent <- NormalRegion
-                    reference parentState <- Normal
+                containment Yellow :> states : State {
+                    reference ::> parent : Region = NormalRegion
+                    reference ::> parentState : State = Normal
 
-                    instance e :> entryActions : RaiseEventAction {
-                        reference event <- displayYellowEvent
+                    containment e :> entryActions : RaiseEventAction {
+                        reference ::> event : Event = displayYellowEvent
                     }
                 }
 
-                instance yellowToRed :> transitions : Transition {
-                    reference commonRegion <- NormalRegion
-                    reference from <- Yellow
-                    reference to <- Red
+                containment yellowToRed :> transitions : Transition {
+                    reference ::> commonRegion : Region = NormalRegion
+                    reference ::> from : State = Yellow
+                    reference ::> to : State = Red
 
-                    instance t :> trigger : EventTrigger {
-                        reference event <- toggleEvent
+                    containment t :> trigger : EventTrigger {
+                        reference ::> event : Event = toggleEvent
                     }
                 }
             }
         }
 
-        instance normalToInterrupt :> transitions : Transition {
-            reference commonRegion <- Main
-            reference from <- Normal
-            reference to <- Interrupted
+        containment normalToInterrupt :> transitions : Transition {
+            reference ::> commonRegion : Region = Main
+            reference ::> from : State = Normal
+            reference ::> to : State = Interrupted
 
-            instance t :> trigger : EventTrigger {
-                reference event <- policeEvent
+            containment t :> trigger : EventTrigger {
+                reference ::> event : Event = policeEvent
             }
         }
 
-        instance interruptToNormal :> transitions : Transition {
-            reference commonRegion <- Main
-            reference from <- Interrupted
-            reference to <- Normal
+        containment interruptToNormal :> transitions : Transition {
+            reference ::> commonRegion : Region = Main
+            reference ::> from : State = Interrupted
+            reference ::> to : State = Normal
 
-            instance t :> trigger : EventTrigger {
-                reference event <- policeEvent
+            containment t :> trigger : EventTrigger {
+                reference ::> event : Event = policeEvent
             }
         }
 
-        instance Interrupted :> states : State {
-            reference parent <- Main
+        containment Interrupted :> states : State {
+            reference ::> parent : Region = Main
 
-            instance InterruptedRegion :> regions : Region {
-                instance et :> entryTransitions : EntryTransition {
-                    reference commonRegion <- InterruptedRegion
-                    reference to <- Black
+            containment InterruptedRegion :> regions : Region {
+                containment et :> entryTransitions : EntryTransition {
+                    reference ::> commonRegion : Region = InterruptedRegion
+                    reference ::> to : State = Black
                 }
 
-                instance Black :> states : State {
-                    reference parent <- InterruptedRegion
-                    reference parentState <- Interrupted
+                containment Black :> states : State {
+                    reference ::> parent : Region = InterruptedRegion
+                    reference ::> parentState : State = Interrupted
 
-                    instance ea1 :> entryActions : SetTimeoutActionOneS {
-                        reference timeout <- blinkingTimeout
+                    containment ea1 :> entryActions : SetTimeoutAction {
+                        reference ::> timeout : Timeout = blinkingTimeout
                     }
-                    instance ea2 :> entryActions : RaiseEventAction {
-                        reference event <- displayNoneEvent
-                    }
-                }
-
-                instance blackToYellow :> transitions : Transition {
-                    reference commonRegion <- InterruptedRegion
-                    reference from <- Black
-                    reference to <- Yellow
-
-                    instance t :> trigger : TimeoutTrigger {
-                        reference timeout <- blinkingTimeout
+                    containment ea2 :> entryActions : RaiseEventAction {
+                        reference ::> event : Event = displayNoneEvent
                     }
                 }
 
-                instance yellowToBlack :> transitions : Transition {
-                    reference commonRegion <- InterruptedRegion
-                    reference from <- Yellow
-                    reference to <- Black
+                containment blackToYellow :> transitions : Transition {
+                    reference ::> commonRegion : Region = InterruptedRegion
+                    reference ::> from : State = Black
+                    reference ::> to : State = Yellow
 
-                    instance t :> trigger : TimeoutTrigger {
-                        reference timeout <- blinkingTimeout
+                    containment t :> trigger : TimeoutTrigger {
+                        reference ::> timeout : Timeout = blinkingTimeout
                     }
                 }
 
-                instance Yellow :> states : State {
-                    reference parent <- InterruptedRegion
-                    reference parentState <- Interrupted
+                containment yellowToBlack :> transitions : Transition {
+                    reference ::> commonRegion : Region = InterruptedRegion
+                    reference ::> from : State = Yellow
+                    reference ::> to : State = Black
 
-                    instance ea1 :> entryActions : SetTimeoutActionOneS {
-                        reference timeout <- blinkingTimeout
+                    containment t :> trigger : TimeoutTrigger {
+                        reference ::> timeout : Timeout = blinkingTimeout
                     }
-                    instance ea2 :> entryActions : RaiseEventAction {
-                        reference event <- displayYellowEvent
+                }
+
+                containment Yellow :> states : State {
+                    reference ::> parent : Region = InterruptedRegion
+                    reference ::> parentState : State = Interrupted
+
+                    containment ea1 :> entryActions : SetTimeoutAction {
+                        reference ::> timeout : Timeout = blinkingTimeout
+                    }
+                    containment ea2 :> entryActions : RaiseEventAction {
+                        reference ::> event : Event = displayYellowEvent
                     }
                 }
 
@@ -617,39 +607,45 @@ type TrafficLightCtrl : Statechart {
 }
 
 type Crossroad : SyncComponent {
-    instance controller :> components : Controller
-    instance trafficLightA :> components : TrafficLightCtrl
-    instance trafficLightB :> components : TrafficLightCtrl
+    containment controller :> components : Controller
+    containment trafficLightA :> components : TrafficLightCtrl
+    containment trafficLightB :> components : TrafficLightCtrl
 
-    instance policeAChannel :> channels : Channel {
-        reference inputEvent <- controller.policeEventA
-        reference outputEvent <- trafficLightA.policeEvent
+    containment policeAChannel :> channels : Channel {
+        reference ::> inputEvent : Event = controller.policeEventA
+        reference ::> outputEvent : Event = trafficLightA.policeEvent
     }
-    instance toggleAChannel :> channels : Channel {
-        reference inputEvent <- controller.toggleEventA
-        reference outputEvent <- trafficLightA.toggleEvent
+    containment toggleAChannel :> channels : Channel {
+        reference ::> inputEvent : Event = controller.toggleEventA
+        reference ::> outputEvent : Event = trafficLightA.toggleEvent
     }
 
-    instance policeBChannel :> channels : Channel {
-        reference inputEvent <- controller.policeEventB
-        reference outputEvent <- trafficLightB.policeEvent
+    containment policeBChannel :> channels : Channel {
+        reference ::> inputEvent : Event = controller.policeEventB
+        reference ::> outputEvent : Event = trafficLightB.policeEvent
     }
-    instance toggleBChannel :> channels : Channel {
-        reference inputEvent <- controller.toggleEventB
-        reference outputEvent <- trafficLightB.toggleEvent
+    containment toggleBChannel :> channels : Channel {
+        reference ::> inputEvent : Event = controller.toggleEventB
+        reference ::> outputEvent : Event = trafficLightB.toggleEvent
     }
 }
 
 abstract target CrossroadsMission {
-    instance crossroad : Crossroad
+    containment crossroad : Crossroad
 
     init {
         inline crossroad.init()
     }
 
     tran {
-        inline crossroad.controller.policeEvent.havoc
+        inline crossroad.controller.policeEvent.havoc()
         inline crossroad.main()
+    }
+}
+
+target Mission : CrossroadsMission {
+    prop {
+        true
     }
 }
 
@@ -657,43 +653,43 @@ abstract target CrossroadsMission {
 
 target ControllerOperating_Unsafe : CrossroadsMission {
     prop {
-        ! (crossroad.controller.Main.activeState = crossroad.controller.Main.Operating)
+        ! (crossroad.controller.Main.activeState == crossroad.controller.Main.Operating)
     }
 }
 
 target ControllerOperatingInit_Unsafe : CrossroadsMission {
     prop {
-        ! (crossroad.controller.Main.Operating.OperatingRegion.activeState = crossroad.controller.Main.Operating.OperatingRegion.Init)
+        ! (crossroad.controller.Main.Operating.OperatingRegion.activeState == crossroad.controller.Main.Operating.OperatingRegion.Init)
     }
 }
 
 target ControllerOperatingTrafficOnA_Unsafe : CrossroadsMission {
     prop {
-        ! (crossroad.controller.Main.Operating.OperatingRegion.activeState = crossroad.controller.Main.Operating.OperatingRegion.TrafficOnA)
+        ! (crossroad.controller.Main.Operating.OperatingRegion.activeState == crossroad.controller.Main.Operating.OperatingRegion.TrafficOnA)
     }
 }
 
 target ControllerOperatingStoppingA_Unsafe : CrossroadsMission {
     prop {
-        ! (crossroad.controller.Main.Operating.OperatingRegion.activeState = crossroad.controller.Main.Operating.OperatingRegion.StoppingA)
+        ! (crossroad.controller.Main.Operating.OperatingRegion.activeState == crossroad.controller.Main.Operating.OperatingRegion.StoppingA)
     }
 }
 
 target ControllerOperatingTrafficOnB_Unsafe : CrossroadsMission {
     prop {
-        ! (crossroad.controller.Main.Operating.OperatingRegion.activeState = crossroad.controller.Main.Operating.OperatingRegion.TrafficOnB)
+        ! (crossroad.controller.Main.Operating.OperatingRegion.activeState == crossroad.controller.Main.Operating.OperatingRegion.TrafficOnB)
     }
 }
 
 target ControllerOperatingStoppingB_Unsafe : CrossroadsMission {
     prop {
-        ! (crossroad.controller.Main.Operating.OperatingRegion.activeState = crossroad.controller.Main.Operating.OperatingRegion.StoppingB)
+        ! (crossroad.controller.Main.Operating.OperatingRegion.activeState == crossroad.controller.Main.Operating.OperatingRegion.StoppingB)
     }
 }
 
 target ControllerInterrupted_Unsafe : CrossroadsMission {
     prop {
-        ! (crossroad.controller.Main.activeState = crossroad.controller.Main.Interrupted)
+        ! (crossroad.controller.Main.activeState == crossroad.controller.Main.Interrupted)
     }
 }
 
@@ -701,43 +697,43 @@ target ControllerInterrupted_Unsafe : CrossroadsMission {
 
 target TrafficLightANormal_Unsafe : CrossroadsMission {
     prop {
-        ! (crossroad.trafficLightA.Main.activeState = crossroad.trafficLightA.Main.Normal)
+        ! (crossroad.trafficLightA.Main.activeState == crossroad.trafficLightA.Main.Normal)
     }
 }
 
 target TrafficLightANormalRed_Unsafe : CrossroadsMission {
     prop {
-        ! (crossroad.trafficLightA.Main.Normal.NormalRegion.activeState = crossroad.trafficLightA.Main.Normal.NormalRegion.Red)
+        ! (crossroad.trafficLightA.Main.Normal.NormalRegion.activeState == crossroad.trafficLightA.Main.Normal.NormalRegion.Red)
     }
 }
 
 target TrafficLightANormalGreen_Unsafe : CrossroadsMission {
     prop {
-        ! (crossroad.trafficLightA.Main.Normal.NormalRegion.activeState = crossroad.trafficLightA.Main.Normal.NormalRegion.Green)
+        ! (crossroad.trafficLightA.Main.Normal.NormalRegion.activeState == crossroad.trafficLightA.Main.Normal.NormalRegion.Green)
     }
 }
 
 target TrafficLightANormalYellow_Unsafe : CrossroadsMission {
     prop {
-        ! (crossroad.trafficLightA.Main.Normal.NormalRegion.activeState = crossroad.trafficLightA.Main.Normal.NormalRegion.Yellow)
+        ! (crossroad.trafficLightA.Main.Normal.NormalRegion.activeState == crossroad.trafficLightA.Main.Normal.NormalRegion.Yellow)
     }
 }
 
 target TrafficLightAInterrupted_Unsafe : CrossroadsMission {
     prop {
-        ! (crossroad.trafficLightA.Main.activeState = crossroad.trafficLightA.Main.Interrupted)
+        ! (crossroad.trafficLightA.Main.activeState == crossroad.trafficLightA.Main.Interrupted)
     }
 }
 
 target TrafficLightAInterruptedBlack_Unsafe : CrossroadsMission {
     prop {
-        ! (crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.activeState = crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.Black)
+        ! (crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.activeState == crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.Black)
     }
 }
 
 target TrafficLightAInterruptedYellow_Unsafe : CrossroadsMission {
     prop {
-        ! (crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.activeState = crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.Yellow)
+        ! (crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.activeState == crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.Yellow)
     }
 }
 
@@ -745,43 +741,43 @@ target TrafficLightAInterruptedYellow_Unsafe : CrossroadsMission {
 
 target TrafficLightBNormal_Unsafe : CrossroadsMission {
     prop {
-        ! (crossroad.trafficLightB.Main.activeState = crossroad.trafficLightB.Main.Normal)
+        ! (crossroad.trafficLightB.Main.activeState == crossroad.trafficLightB.Main.Normal)
     }
 }
 
 target TrafficLightBNormalRed_Unsafe : CrossroadsMission {
     prop {
-        ! (crossroad.trafficLightB.Main.Normal.NormalRegion.activeState = crossroad.trafficLightB.Main.Normal.NormalRegion.Red)
+        ! (crossroad.trafficLightB.Main.Normal.NormalRegion.activeState == crossroad.trafficLightB.Main.Normal.NormalRegion.Red)
     }
 }
 
 target TrafficLightBNormalGreen_Unsafe : CrossroadsMission {
     prop {
-        ! (crossroad.trafficLightB.Main.Normal.NormalRegion.activeState = crossroad.trafficLightB.Main.Normal.NormalRegion.Green)
+        ! (crossroad.trafficLightB.Main.Normal.NormalRegion.activeState == crossroad.trafficLightB.Main.Normal.NormalRegion.Green)
     }
 }
 
 target TrafficLightBNormalYellow_Unsafe : CrossroadsMission {
     prop {
-        ! (crossroad.trafficLightB.Main.Normal.NormalRegion.activeState = crossroad.trafficLightB.Main.Normal.NormalRegion.Yellow)
+        ! (crossroad.trafficLightB.Main.Normal.NormalRegion.activeState == crossroad.trafficLightB.Main.Normal.NormalRegion.Yellow)
     }
 }
 
 target TrafficLightBInterrupted_Unsafe : CrossroadsMission {
     prop {
-        ! (crossroad.trafficLightB.Main.activeState = crossroad.trafficLightB.Main.Interrupted)
+        ! (crossroad.trafficLightB.Main.activeState == crossroad.trafficLightB.Main.Interrupted)
     }
 }
 
 target TrafficLightBInterruptedBlack_Unsafe : CrossroadsMission {
     prop {
-        ! (crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.activeState = crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.Black)
+        ! (crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.activeState == crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.Black)
     }
 }
 
 target TrafficLightBInterruptedYellow_Unsafe : CrossroadsMission {
     prop {
-        ! (crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.activeState = crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.Yellow)
+        ! (crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.activeState == crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.Yellow)
     }
 }
 
@@ -790,7 +786,7 @@ target TrafficLightBInterruptedYellow_Unsafe : CrossroadsMission {
 target ControllerOperatingInterruptedExclusive_Safe : CrossroadsMission {
     prop {
         ! (
-            crossroad.controller.Main.activeState = crossroad.controller.Main.Interrupted &&
+            crossroad.controller.Main.activeState == crossroad.controller.Main.Interrupted &&
             crossroad.controller.Main.Operating.OperatingRegion.activeState != Nothing
         )
     }
@@ -799,7 +795,7 @@ target ControllerOperatingInterruptedExclusive_Safe : CrossroadsMission {
 target ControllerOperatingIncorrectStateHierarchy_Safe : CrossroadsMission {
     prop {
         ! (
-            crossroad.controller.Main.activeState = crossroad.controller.Main.Operating &&
+            crossroad.controller.Main.activeState == crossroad.controller.Main.Operating &&
             crossroad.controller.Main.Operating.OperatingRegion.activeState != crossroad.controller.Main.Operating.OperatingRegion.Init &&
             crossroad.controller.Main.Operating.OperatingRegion.activeState != crossroad.controller.Main.Operating.OperatingRegion.TrafficOnA &&
             crossroad.controller.Main.Operating.OperatingRegion.activeState != crossroad.controller.Main.Operating.OperatingRegion.StoppingA &&
@@ -813,10 +809,10 @@ target TrafficLightANormalInterruptedExclusive_Safe : CrossroadsMission {
     prop {
         ! (
             (
-                crossroad.trafficLightA.Main.activeState = crossroad.trafficLightA.Main.Normal &&
+                crossroad.trafficLightA.Main.activeState == crossroad.trafficLightA.Main.Normal &&
                 crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.activeState != Nothing
             ) || (
-                crossroad.trafficLightA.Main.activeState = crossroad.trafficLightA.Main.Interrupted &&
+                crossroad.trafficLightA.Main.activeState == crossroad.trafficLightA.Main.Interrupted &&
                 crossroad.trafficLightA.Main.Normal.NormalRegion.activeState != Nothing
             )
         )
@@ -826,7 +822,7 @@ target TrafficLightANormalInterruptedExclusive_Safe : CrossroadsMission {
 target TrafficLightANormalIncorrectStateHierarchy_Safe : CrossroadsMission {
     prop {
         ! (
-            crossroad.trafficLightA.Main.activeState = crossroad.trafficLightA.Main.Normal &&
+            crossroad.trafficLightA.Main.activeState == crossroad.trafficLightA.Main.Normal &&
             crossroad.trafficLightA.Main.Normal.NormalRegion.activeState != crossroad.trafficLightA.Main.Normal.NormalRegion.Red &&
             crossroad.trafficLightA.Main.Normal.NormalRegion.activeState != crossroad.trafficLightA.Main.Normal.NormalRegion.Green &&
             crossroad.trafficLightA.Main.Normal.NormalRegion.activeState != crossroad.trafficLightA.Main.Normal.NormalRegion.Yellow
@@ -837,7 +833,7 @@ target TrafficLightANormalIncorrectStateHierarchy_Safe : CrossroadsMission {
 target TrafficLightAInterruptedIncorrectStateHierarchy_Safe : CrossroadsMission {
     prop {
         ! (
-            crossroad.trafficLightA.Main.activeState = crossroad.trafficLightA.Main.Interrupted &&
+            crossroad.trafficLightA.Main.activeState == crossroad.trafficLightA.Main.Interrupted &&
             crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.activeState != crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.Black &&
             crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.activeState != crossroad.trafficLightA.Main.Interrupted.InterruptedRegion.Yellow
         )
@@ -848,10 +844,10 @@ target TrafficLightBNormalInterruptedExclusive_Safe : CrossroadsMission {
     prop {
         ! (
             (
-                crossroad.trafficLightB.Main.activeState = crossroad.trafficLightB.Main.Normal &&
+                crossroad.trafficLightB.Main.activeState == crossroad.trafficLightB.Main.Normal &&
                 crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.activeState != Nothing
             ) || (
-                crossroad.trafficLightB.Main.activeState = crossroad.trafficLightB.Main.Interrupted &&
+                crossroad.trafficLightB.Main.activeState == crossroad.trafficLightB.Main.Interrupted &&
                 crossroad.trafficLightB.Main.Normal.NormalRegion.activeState != Nothing
             )
         )
@@ -861,7 +857,7 @@ target TrafficLightBNormalInterruptedExclusive_Safe : CrossroadsMission {
 target TrafficLightBNormalIncorrectStateHierarchy_Safe : CrossroadsMission {
     prop {
         ! (
-            crossroad.trafficLightB.Main.activeState = crossroad.trafficLightB.Main.Normal &&
+            crossroad.trafficLightB.Main.activeState == crossroad.trafficLightB.Main.Normal &&
             crossroad.trafficLightB.Main.Normal.NormalRegion.activeState != crossroad.trafficLightB.Main.Normal.NormalRegion.Red &&
             crossroad.trafficLightB.Main.Normal.NormalRegion.activeState != crossroad.trafficLightB.Main.Normal.NormalRegion.Green &&
             crossroad.trafficLightB.Main.Normal.NormalRegion.activeState != crossroad.trafficLightB.Main.Normal.NormalRegion.Yellow
@@ -872,7 +868,7 @@ target TrafficLightBNormalIncorrectStateHierarchy_Safe : CrossroadsMission {
 target TrafficLightBInterruptedIncorrectStateHierarchy_Safe : CrossroadsMission {
     prop {
         ! (
-            crossroad.trafficLightB.Main.activeState = crossroad.trafficLightB.Main.Interrupted &&
+            crossroad.trafficLightB.Main.activeState == crossroad.trafficLightB.Main.Interrupted &&
             crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.activeState != crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.Black &&
             crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.activeState != crossroad.trafficLightB.Main.Interrupted.InterruptedRegion.Yellow
         )
@@ -885,8 +881,8 @@ target BothMustBeInterruptedAtTheSameTime_Unsafe : CrossroadsMission {
     prop {
         ! (
             (
-                crossroad.trafficLightA.Main.activeState = crossroad.trafficLightA.Main.Interrupted &&
-                crossroad.trafficLightB.Main.activeState = crossroad.trafficLightB.Main.Interrupted
+                crossroad.trafficLightA.Main.activeState == crossroad.trafficLightA.Main.Interrupted &&
+                crossroad.trafficLightB.Main.activeState == crossroad.trafficLightB.Main.Interrupted
             )
         )
     }
@@ -896,21 +892,12 @@ target BothMustBeInterruptedAtTheSameTime_Safe : CrossroadsMission {
     prop {
         ! (
             (
-                crossroad.trafficLightA.Main.activeState = crossroad.trafficLightA.Main.Interrupted &&
+                crossroad.trafficLightA.Main.activeState == crossroad.trafficLightA.Main.Interrupted &&
                 crossroad.trafficLightB.Main.activeState != crossroad.trafficLightB.Main.Interrupted
             ) || (
                 crossroad.trafficLightA.Main.activeState != crossroad.trafficLightA.Main.Interrupted &&
-                crossroad.trafficLightB.Main.activeState = crossroad.trafficLightB.Main.Interrupted
+                crossroad.trafficLightB.Main.activeState == crossroad.trafficLightB.Main.Interrupted
             )
-        )
-    }
-}
-
-target BothCannotBeGreen_Safe : CrossroadsMission {
-    prop {
-        ! (
-            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState = crossroad.trafficLightA.Main.Normal.NormalRegion.Green &&
-            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState = crossroad.trafficLightB.Main.Normal.NormalRegion.Green
         )
     }
 }
@@ -918,26 +905,8 @@ target BothCannotBeGreen_Safe : CrossroadsMission {
 target ARedBRed_Unsafe : CrossroadsMission {
     prop {
         ! (
-            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState = crossroad.trafficLightA.Main.Normal.NormalRegion.Red &&
-            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState = crossroad.trafficLightB.Main.Normal.NormalRegion.Red
-        )
-    }
-}
-
-target AGreenBRed_Unsafe : CrossroadsMission {
-    prop {
-        ! (
-            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState = crossroad.trafficLightA.Main.Normal.NormalRegion.Green &&
-            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState = crossroad.trafficLightB.Main.Normal.NormalRegion.Red
-        )
-    }
-}
-
-target AYellowBRed_Unsafe : CrossroadsMission {
-    prop {
-        ! (
-            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState = crossroad.trafficLightA.Main.Normal.NormalRegion.Yellow &&
-            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState = crossroad.trafficLightB.Main.Normal.NormalRegion.Red
+            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState == crossroad.trafficLightA.Main.Normal.NormalRegion.Red &&
+            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState == crossroad.trafficLightB.Main.Normal.NormalRegion.Red
         )
     }
 }
@@ -945,8 +914,8 @@ target AYellowBRed_Unsafe : CrossroadsMission {
 target ARedBGreen_Unsafe : CrossroadsMission {
     prop {
         ! (
-            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState = crossroad.trafficLightA.Main.Normal.NormalRegion.Red &&
-            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState = crossroad.trafficLightB.Main.Normal.NormalRegion.Green
+            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState == crossroad.trafficLightA.Main.Normal.NormalRegion.Red &&
+            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState == crossroad.trafficLightB.Main.Normal.NormalRegion.Green
         )
     }
 }
@@ -954,8 +923,62 @@ target ARedBGreen_Unsafe : CrossroadsMission {
 target ARedBYellow_Unsafe : CrossroadsMission {
     prop {
         ! (
-            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState = crossroad.trafficLightA.Main.Normal.NormalRegion.Red &&
-            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState = crossroad.trafficLightB.Main.Normal.NormalRegion.Yellow
+            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState == crossroad.trafficLightA.Main.Normal.NormalRegion.Red &&
+            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState == crossroad.trafficLightB.Main.Normal.NormalRegion.Yellow
+        )
+    }
+}
+
+target AGreenBRed_Unsafe : CrossroadsMission {
+    prop {
+        ! (
+            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState == crossroad.trafficLightA.Main.Normal.NormalRegion.Green &&
+            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState == crossroad.trafficLightB.Main.Normal.NormalRegion.Red
+        )
+    }
+}
+
+target AGreenBGreen_Safe : CrossroadsMission {
+    prop {
+        ! (
+            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState == crossroad.trafficLightA.Main.Normal.NormalRegion.Green &&
+            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState == crossroad.trafficLightB.Main.Normal.NormalRegion.Green
+        )
+    }
+}
+
+target AGreenBYellow_Safe : CrossroadsMission {
+    prop {
+        ! (
+            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState == crossroad.trafficLightA.Main.Normal.NormalRegion.Green &&
+            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState == crossroad.trafficLightB.Main.Normal.NormalRegion.Yellow
+        )
+    }
+}
+
+target AYellowBRed_Unsafe : CrossroadsMission {
+    prop {
+        ! (
+            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState == crossroad.trafficLightA.Main.Normal.NormalRegion.Yellow &&
+            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState == crossroad.trafficLightB.Main.Normal.NormalRegion.Red
+        )
+    }
+}
+
+target AYellowBGreen_Safe : CrossroadsMission {
+    prop {
+        ! (
+            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState == crossroad.trafficLightA.Main.Normal.NormalRegion.Yellow &&
+            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState == crossroad.trafficLightB.Main.Normal.NormalRegion.Green
+        )
+    }
+}
+
+target AYellowBYellow_Safe : CrossroadsMission {
+    prop {
+        ! (
+            crossroad.trafficLightA.Main.Normal.NormalRegion.activeState == crossroad.trafficLightA.Main.Normal.NormalRegion.Yellow &&
+            crossroad.trafficLightB.Main.Normal.NormalRegion.activeState == crossroad.trafficLightB.Main.Normal.NormalRegion.Yellow
         )
     }
 }

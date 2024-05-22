@@ -16,7 +16,7 @@ type Child : ChildD
 
 type Holder {
     feature base : Child
-    instance child :> base : Child
+    containment child :> base : Child
 
     tran {
         inline base.main()
@@ -24,7 +24,7 @@ type Holder {
 }
 
 target Mission {
-    instance holder : Holder
+    containment holder : Holder
 
     init {
         assume (true)

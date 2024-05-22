@@ -11,25 +11,25 @@ type Composite {
 }
 
 target Mission {
-    instance composite : Composite {
-        instance a :> composites : Composite {
-            instance a :> composites : Composite {
-                instance a :> composites : Composite
-                instance b :> composites : Composite
+    containment composite : Composite {
+        containment a :> composites : Composite {
+            containment a :> composites : Composite {
+                containment a :> composites : Composite
+                containment b :> composites : Composite
             }
-            instance b :> composites : Composite {
-                instance a :> composites : Composite
-                instance b :> composites : Composite
+            containment b :> composites : Composite {
+                containment a :> composites : Composite
+                containment b :> composites : Composite
             }
         }
-        instance b :> composites : Composite {
-            instance a :> composites : Composite {
-                instance a :> composites : Composite
-                instance b :> composites : Composite
+        containment b :> composites : Composite {
+            containment a :> composites : Composite {
+                containment a :> composites : Composite
+                containment b :> composites : Composite
             }
-            instance b :> composites : Composite {
-                instance a :> composites : Composite
-                instance b :> composites : Composite
+            containment b :> composites : Composite {
+                containment a :> composites : Composite
+                containment b :> composites : Composite
             }
         }
     }

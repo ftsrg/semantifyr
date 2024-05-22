@@ -1,0 +1,35 @@
+package Components
+
+import Events
+
+type Component {
+    virtual init { }
+    virtual tran { }
+}
+
+type Channel {
+    reference inputEvent : Event
+    reference outputEvent : Event
+
+    tran {
+        if (inputEvent.isActive) {
+            inline outputEvent.set()
+        }
+    }
+}
+
+type CompositeComponent : Component {
+    feature components : Component
+    feature channels : Channel
+}
+
+type SyncComponent : CompositeComponent {
+    override init {
+        inline seq components -> init
+    }
+
+    override tran {
+        inline seq components -> main
+        inline seq channels -> main
+    }
+}

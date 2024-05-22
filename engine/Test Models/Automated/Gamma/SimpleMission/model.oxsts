@@ -3,7 +3,7 @@ package Test
 // Event.oxsts
 
 type Event {
-    var isActive: Boolean := false
+    var isActive: Boolean = false
 
     tran set {
         isActive := true
@@ -22,15 +22,27 @@ type Event {
     }
 }
 
-// Trigger.oxsts
+type Timeout {
+    var deltaTime : Integer = 0 - 1
 
-type Trigger {
-    virtual tran isTriggered {
-        assume (true)
+    tran {
+        if (deltaTime >= 0) {
+            deltaTime := deltaTime - 1
+        }
+    }
+
+    tran isUp {
+        assume (deltaTime == 0)
     }
 }
 
-type EventTrigger {
+// Trigger.oxsts
+
+type Trigger {
+    virtual tran isTriggered { }
+}
+
+type EventTrigger : Trigger {
     reference event : Event[1..1]
 
     override tran isTriggered {
@@ -38,12 +50,18 @@ type EventTrigger {
     }
 }
 
+type TimeoutTrigger : Trigger {
+    reference timeout : Timeout[1..1]
+
+    override tran isTriggered {
+        inline timeout.isUp()
+    }
+}
+
 // Action.oxsts
 
 type Action {
-    virtual tran {
-
-    }
+    virtual tran { }
 }
 
 type RaiseEventAction : Action {
@@ -54,16 +72,15 @@ type RaiseEventAction : Action {
     }
 }
 
+type SetTimeoutAction : Action {
+    reference timeout : Timeout[1..1]
+}
+
 // Component.oxsts
 
 type Component {
-    virtual init {
-
-    }
-
-    virtual tran {
-
-    }
+    virtual init { }
+    virtual tran { }
 }
 
 type Channel {
@@ -71,11 +88,8 @@ type Channel {
     reference outputEvent : Event
 
     tran {
-        choice {
-            inline inputEvent.isSet()
+        if (inputEvent.isActive) {
             inline outputEvent.set()
-        } else {
-
         }
     }
 }
@@ -96,71 +110,121 @@ type SyncComponent : CompositeComponent {
     }
 }
 
-type AtomicComponent : Component {
+// Statechart.oxsts
+
+type Statechart : Component {
     feature events : Event[0..*]
     feature inputEvents :> events : Event[0..*]
     feature outputEvents :> events : Event[0..*]
+
+    feature timeouts : Timeout[0..*]
+
+    feature regions : Region[0..*]
+
+    override init {
+        inline seq regions -> activateRecursive
+    }
+
+    override tran {
+        inline seq outputEvents -> reset
+        inline choice regions -> fireTransitions else { }
+        inline seq inputEvents -> reset
+        inline seq timeouts -> main
+    }
 }
 
-// Statechart.oxsts
+type Region {
+    feature states : State[0..*]
 
-type Statechart : AtomicComponent {
-    feature region : Region[0..*]
+    var activeState : states[0..1] = Nothing
+
     feature abstractTransitions : AbstractTransition[0..*]
 
     feature transitions :> abstractTransitions : Transition[0..*]
     feature entryTransitions :> abstractTransitions : EntryTransition[0..*]
 
-    override init {
+    tran activateRecursive {
         inline seq entryTransitions -> main
     }
 
-    override tran {
-        inline seq outputEvents -> reset
-        inline choice transitions -> main else { }
-        inline seq inputEvents -> reset
+    tran deactivateRecursive {
+        inline seq states -> deactivateRecursive
+    }
+
+    tran fireTransitions {
+        inline choice transitions -> main else {
+            inline choice states -> fireTransitions
+        }
+    }
+
+    tran fireTransitionsInner {
+        inline choice transitions -> main
     }
 }
 
-type Region {
-    feature abstractStates : AbstractState[0..*]
-    feature states :> abstractStates : State[0..*]
-
-    var activeState : states[0..1] := Nothing
-}
-
-type AbstractState {
+type State {
     reference parent : Region[0..1]
     reference parentState : State[0..1]
+    feature regions : Region[0..1]
 
-    tran exit(commonRegion : Region) {
+    feature entryActions : Action[0..*]
+    feature exitActions : Action[0..*]
+
+    tran isActive {
+        assume (parent.activeState == Self)
+    }
+
+    tran deactivateRecursive {
+        inline seq regions -> deactivateRecursive
+
+        if (parent.activeState == Self) {
+            parent.activeState := Nothing
+            inline seq exitActions -> main
+        }
+    }
+
+    tran exitRecursive(commonRegion : Region) {
+        inline seq exitActions -> main
+
         parent.activeState := Nothing
 
         inline if (commonRegion != parent) {
-            inline parentState.exit(commonRegion)
+            inline parentState.exitRecursive(commonRegion)
         }
     }
-    tran enter(commonRegion : Region) {
+
+    tran exit(commonRegion : Region) {
+        inline exitRecursive(commonRegion)
+
+        inline seq regions -> deactivateRecursive
+    }
+
+    tran enterRecursive(commonRegion : Region) {
         inline if (commonRegion != parent) {
-            inline parentState.enter(commonRegion)
+            inline parentState.enterRecursive(commonRegion)
         }
 
         parent.activeState := Self
-    }
-}
 
-type State : AbstractState {
-    feature region : Region[0..*]
+        inline seq entryActions -> main
+    }
+
+    tran enter(commonRegion : Region) {
+        inline enterRecursive(commonRegion)
+
+        inline seq regions -> activateRecursive
+    }
+
+    tran fireTransitions {
+        inline seq regions -> fireTransitionsInner
+    }
 }
 
 type AbstractTransition {
     reference commonRegion : Region[1..1]
-    reference from : AbstractState[0..1]
-    reference to : AbstractState[1..1]
+    reference to : State[1..1]
 
-    virtual tran {
-        assume (true)
-    }
+    virtual tran { }
 }
 
 type EntryTransition : AbstractTransition {
@@ -170,143 +234,112 @@ type EntryTransition : AbstractTransition {
 }
 
 type Transition : AbstractTransition {
+    reference from : State[0..1]
+
     feature trigger : Trigger
-    feature action : Action
+    feature actions : Action[0..*]
 
     tran {
         inline trigger.isTriggered()
+        inline from.isActive()
 
         inline from.exit(commonRegion)
-        inline action.main()
+        inline seq actions -> main
         inline to.enter(commonRegion)
     }
 }
 
 // Mission.oxsts
 
-type SimpleStatechart : Statechart {
-    instance fireEvent :> inputEvents : Event
-    instance stopEvent :> inputEvents : Event
-    instance startEvent :> outputEvents : Event
+type LeaderStatechart : Statechart {
+    containment fireEvent :> inputEvents : Event
+    containment stopEvent :> inputEvents : Event
+    containment startEvent :> outputEvents : Event
 
-    instance Main :> region : Region {
-        instance A :> states : State {
-            reference parent <- Main
-
-            instance ARegion :> region : Region {
-                instance Idle :> states : State {
-                    reference parent <- ARegion
-                    reference parentState <- A
-                }
+    containment Main :> regions : Region {
+       containment et1 :> entryTransitions : EntryTransition {
+            reference ::> commonRegion : Region = Main
+            reference ::> to : State = Idle
+        }
+        containment Idle :> states : State {
+            reference ::> parent : Region = Main
+        }
+        containment idleToOperational :> transitions : Transition {
+            reference ::> commonRegion : Region = Main
+            reference ::> from : State = Idle
+            reference ::> to : State = Operational
+            containment t1Trigger :> trigger : EventTrigger {
+                reference ::> event : Event = fireEvent
+            }
+            containment t1Action :> actions : RaiseEventAction {
+                reference ::> event : Event = startEvent
             }
         }
-
-        instance B :> states : State {
-            reference parent <- Main
-
-            instance BRegion :> region : Region {
-                instance Operation :> states : State {
-                    reference parent <- BRegion
-                    reference parentState <- B
-                }
+        containment operationalToIdle :> transitions : Transition {
+            reference ::> commonRegion : Region = Main
+            reference ::> from : State = Operational
+            reference ::> to : State = Idle
+            containment t2Trigger :> trigger : EventTrigger {
+                reference ::> event : Event = stopEvent
             }
         }
-    }
-
-    instance et1 :> entryTransitions : EntryTransition {
-        reference commonRegion <- Main
-        reference to <- Main.A.ARegion.Idle
-    }
-
-    instance t1 :> transitions : Transition {
-        reference commonRegion <- Main
-        reference from <- Main.A.ARegion.Idle
-        reference to <- Main.B.BRegion.Operation
-
-        instance t1Trigger :> trigger : EventTrigger {
-            reference event <- fireEvent
-        }
-        instance t1Action :> action : RaiseEventAction {
-            reference event <- startEvent
-        }
-    }
-    instance t2 :> transitions : Transition {
-        reference commonRegion <- Main
-        reference from <- Main.B.BRegion.Operation
-        reference to <- Main.A.ARegion.Idle
-
-        instance t2Trigger :> trigger : EventTrigger {
-            reference event <- stopEvent
+        containment Operational :> states : State {
+            reference ::> parent : Region = Main
         }
     }
 }
-
 type WorkerStatechart : Statechart {
-    instance startEvent :> inputEvents : Event
+    containment startEvent :> inputEvents : Event
 
-    instance Main :> region : Region {
-        instance A :> states : State {
-            reference parent <- Main
-
-            instance ARegion :> region : Region {
-                instance Idle :> states : State {
-                    reference parent <- ARegion
-                    reference parentState <- A
-                }
+    containment Main :> regions : Region {
+        containment et :> entryTransitions : EntryTransition {
+            reference ::> commonRegion : Region = Main
+            reference ::> to : State = Idle
+        }
+        containment Idle :> states : State {
+            reference ::> parent : Region = Main
+        }
+        containment idleToOperational :> transitions : Transition {
+            reference ::> commonRegion : Region = Main
+            reference ::> from : State = Idle
+            reference ::> to : State = Operational
+            containment t1Trigger :> trigger : EventTrigger {
+                reference ::> event : Event = startEvent
             }
         }
-
-        instance B :> states : State {
-            reference parent <- Main
-
-            instance BRegion :> region : Region {
-                instance Operation :> states : State {
-                    reference parent <- BRegion
-                    reference parentState <- B
-                }
-            }
-        }
-    }
-
-    instance et1 :> entryTransitions : EntryTransition {
-        reference commonRegion <- Main
-        reference to <- Main.A.ARegion.Idle
-    }
-
-    instance t1 :> transitions : Transition {
-        reference commonRegion <- Main
-        reference from <- Main.A.ARegion.Idle
-        reference to <- Main.B.BRegion.Operation
-
-        instance t1Trigger :> trigger : EventTrigger {
-            reference event <- startEvent
+        containment Operational :> states : State {
+            reference ::> parent : Region = Main
         }
     }
 }
 
-type Spacecraft : SyncComponent {
-    instance simple :> components : SimpleStatechart
-    instance worker :> components : WorkerStatechart
-    instance startChannel :> channels : Channel {
-        reference inputEvent <- simple.startEvent
-        reference outputEvent <- worker.startEvent
+
+type System : SyncComponent {
+    containment leader :> components : LeaderStatechart
+    containment worker :> components : WorkerStatechart
+    containment startChannel :> channels : Channel {
+        reference ::> inputEvent : Event = leader.startEvent
+        reference ::> outputEvent : Event = worker.startEvent
     }
 }
 
 target Mission {
-    instance component : Spacecraft
+    containment system : System
 
     init {
-        inline component.init()
+        inline system.init()
     }
 
     tran {
-        inline component.main()
-        havoc (component.simple.fireEvent.isActive)
-        havoc (component.simple.stopEvent.isActive)
+        // simulating the environment
+        havoc (system.leader.fireEvent.isActive)
+        havoc (system.leader.stopEvent.isActive)
+        // executing the system
+        inline system.main()
     }
 
     prop {
-        component.worker.Main.B.BRegion.activeState != component.worker.Main.B.BRegion.Operation
+        system.worker.Main.activeState !=
+            system.worker.Main.Operational
     }
 }

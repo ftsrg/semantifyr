@@ -1,11 +1,11 @@
 package Test
 
 target Mission {
-    var x : Integer := 1
-    var isZero : Boolean := false
+    var x : Integer = 1
+    var isZero : Boolean = false
 
     tran setIsZero() {
-        isZero := x = 0
+        isZero := x == 0
     }
 
     init {
@@ -19,6 +19,6 @@ target Mission {
     }
 
     prop {
-        isZero = false
+        isZero == false
     }
 }

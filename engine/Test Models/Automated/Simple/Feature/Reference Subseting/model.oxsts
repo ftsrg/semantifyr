@@ -13,9 +13,9 @@ type Holder {
 target Mission {
     var x : Boolean
 
-    instance a : Atom
-    instance holder : Holder {
-        reference subSubSubSubAtom <- a
+    containment a : Atom
+    containment holder : Holder {
+        reference ::> subSubSubSubAtom : Atom = a
     }
 
     init {
@@ -23,7 +23,7 @@ target Mission {
     }
 
     tran {
-        inline if (holder.atom = holder.subSubSubSubAtom) {
+        inline if (holder.atom == holder.subSubSubSubAtom) {
             x := true
         } else {
             x := false

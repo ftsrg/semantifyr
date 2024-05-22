@@ -11,8 +11,8 @@ type Component {
 }
 
 target Mission {
-    instance component : Component
-    instance holder : Holder
+    containment component : Component
+    containment holder : Holder
 
     init {
         assume (false)

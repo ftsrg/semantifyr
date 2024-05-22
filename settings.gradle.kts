@@ -1,7 +1,13 @@
-rootProject.name = "oxsts"
+/*
+ * SPDX-FileCopyrightText: 2024 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+rootProject.name = "semantifyr"
 
 include(
     "engine",
-    "hu.bme.mit.gamma.oxsts.model",
-    "hu.bme.mit.gamma.oxsts.lang",
+    "oxsts.model",
+    "oxsts.lang",
 )

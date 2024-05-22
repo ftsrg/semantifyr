@@ -1,87 +1,62 @@
-type __Mission__component__simple__Main__states__type : {
-    __Mission__component__simple__Main__A__literal,
-    __Mission__component__simple__Main__B__literal,
+type __Mission__system__leader__Main__states__type : {
+    __Mission__system__leader__Main__Idle__literal,
+    __Mission__system__leader__Main__Operational__literal,
     __Nothing__literal
 }
-type __Mission__component__worker__Main__states__type : {
-    __Mission__component__worker__Main__A__literal,
-    __Mission__component__worker__Main__B__literal,
-    __Nothing__literal
-}
-type __Mission__component__simple__Main__A__ARegion__states__type : {
-    __Mission__component__simple__Main__A__ARegion__Idle__literal,
-    __Nothing__literal
-}
-type __Mission__component__simple__Main__B__BRegion__states__type : {
-    __Mission__component__simple__Main__B__BRegion__Operation__literal,
-    __Nothing__literal
-}
-type __Mission__component__worker__Main__A__ARegion__states__type : {
-    __Mission__component__worker__Main__A__ARegion__Idle__literal,
-    __Nothing__literal
-}
-type __Mission__component__worker__Main__B__BRegion__states__type : {
-    __Mission__component__worker__Main__B__BRegion__Operation__literal,
+type __Mission__system__worker__Main__states__type : {
+    __Mission__system__worker__Main__Idle__literal,
+    __Mission__system__worker__Main__Operational__literal,
     __Nothing__literal
 }
 
-var __Mission__component__simple__fireEvent__isActive : boolean = false;
-var __Mission__component__simple__stopEvent__isActive : boolean = false;
-var __Mission__component__simple__startEvent__isActive : boolean = false;
-var __Mission__component__simple__Main__activeState : __Mission__component__simple__Main__states__type = __Nothing__literal;
-var __Mission__component__worker__startEvent__isActive : boolean = false;
-var __Mission__component__worker__Main__activeState : __Mission__component__worker__Main__states__type = __Nothing__literal;
-var __Mission__component__simple__Main__A__ARegion__activeState : __Mission__component__simple__Main__A__ARegion__states__type = __Nothing__literal;
-var __Mission__component__simple__Main__B__BRegion__activeState : __Mission__component__simple__Main__B__BRegion__states__type = __Nothing__literal;
-var __Mission__component__worker__Main__A__ARegion__activeState : __Mission__component__worker__Main__A__ARegion__states__type = __Nothing__literal;
-var __Mission__component__worker__Main__B__BRegion__activeState : __Mission__component__worker__Main__B__BRegion__states__type = __Nothing__literal;
-
-init {
-    __Mission__component__simple__Main__activeState := __Mission__component__simple__Main__A__literal;
-    __Mission__component__simple__Main__A__ARegion__activeState := __Mission__component__simple__Main__A__ARegion__Idle__literal;
-    __Mission__component__worker__Main__activeState := __Mission__component__worker__Main__A__literal;
-    __Mission__component__worker__Main__A__ARegion__activeState := __Mission__component__worker__Main__A__ARegion__Idle__literal;
-}
+var __Mission__system__leader__fireEvent__isActive : boolean = false
+var __Mission__system__leader__stopEvent__isActive : boolean = false
+var __Mission__system__leader__startEvent__isActive : boolean = false
+var __Mission__system__leader__Main__activeState : __Mission__system__leader__Main__states__type = __Nothing__literal
+var __Mission__system__worker__startEvent__isActive : boolean = false
+var __Mission__system__worker__Main__activeState : __Mission__system__worker__Main__states__type = __Nothing__literal
 
 trans {
-    __Mission__component__simple__startEvent__isActive := false;
+    havoc __Mission__system__leader__fireEvent__isActive;
+    havoc __Mission__system__leader__stopEvent__isActive;
+    __Mission__system__leader__startEvent__isActive := false;
     choice {
-        assume (__Mission__component__simple__fireEvent__isActive);
-        __Mission__component__simple__Main__A__ARegion__activeState := __Nothing__literal;
-        __Mission__component__simple__Main__activeState := __Nothing__literal;
-        __Mission__component__simple__startEvent__isActive := true;
-        __Mission__component__simple__Main__activeState := __Mission__component__simple__Main__B__literal;
-        __Mission__component__simple__Main__B__BRegion__activeState := __Mission__component__simple__Main__B__BRegion__Operation__literal;
+        assume (__Mission__system__leader__fireEvent__isActive);
+        assume ((__Mission__system__leader__Main__activeState == __Mission__system__leader__Main__Idle__literal));
+        __Mission__system__leader__Main__activeState := __Nothing__literal;
+        __Mission__system__leader__startEvent__isActive := true;
+        __Mission__system__leader__Main__activeState := __Mission__system__leader__Main__Operational__literal;
     } or {
-        assume (__Mission__component__simple__stopEvent__isActive);
-        __Mission__component__simple__Main__B__BRegion__activeState := __Nothing__literal;
-        __Mission__component__simple__Main__activeState := __Nothing__literal;
-        __Mission__component__simple__Main__activeState := __Mission__component__simple__Main__A__literal;
-        __Mission__component__simple__Main__A__ARegion__activeState := __Mission__component__simple__Main__A__ARegion__Idle__literal;
-    } else {
+        assume (__Mission__system__leader__stopEvent__isActive);
+        assume ((__Mission__system__leader__Main__activeState == __Mission__system__leader__Main__Operational__literal));
+        __Mission__system__leader__Main__activeState := __Nothing__literal;
+        __Mission__system__leader__Main__activeState := __Mission__system__leader__Main__Idle__literal;
+    } or {
+        assume (! (((__Mission__system__leader__fireEvent__isActive && (__Mission__system__leader__Main__activeState == __Mission__system__leader__Main__Idle__literal)) || (__Mission__system__leader__stopEvent__isActive && (__Mission__system__leader__Main__activeState == __Mission__system__leader__Main__Operational__literal)))));
     }
-    __Mission__component__simple__fireEvent__isActive := false;
-    __Mission__component__simple__stopEvent__isActive := false;
+    __Mission__system__leader__fireEvent__isActive := false;
+    __Mission__system__leader__stopEvent__isActive := false;
     choice {
-        assume (__Mission__component__worker__startEvent__isActive);
-        __Mission__component__worker__Main__A__ARegion__activeState := __Nothing__literal;
-        __Mission__component__worker__Main__activeState := __Nothing__literal;
-        __Mission__component__worker__Main__activeState := __Mission__component__worker__Main__B__literal;
-        __Mission__component__worker__Main__B__BRegion__activeState := __Mission__component__worker__Main__B__BRegion__Operation__literal;
-    } else {
+        assume (__Mission__system__worker__startEvent__isActive);
+        assume ((__Mission__system__worker__Main__activeState == __Mission__system__worker__Main__Idle__literal));
+        __Mission__system__worker__Main__activeState := __Nothing__literal;
+        __Mission__system__worker__Main__activeState := __Mission__system__worker__Main__Operational__literal;
+    } or {
+        assume (! ((__Mission__system__worker__startEvent__isActive && (__Mission__system__worker__Main__activeState == __Mission__system__worker__Main__Idle__literal))));
     }
-    __Mission__component__worker__startEvent__isActive := false;
-    choice {
-        assume (__Mission__component__simple__startEvent__isActive);
-        __Mission__component__worker__startEvent__isActive := true;
-    } else {
+    __Mission__system__worker__startEvent__isActive := false;
+    if (__Mission__system__leader__startEvent__isActive) {
+        __Mission__system__worker__startEvent__isActive := true;
     }
-    havoc (__Mission__component__simple__fireEvent__isActive);
-    havoc (__Mission__component__simple__stopEvent__isActive);
+}
+
+init {
+    __Mission__system__leader__Main__activeState := __Mission__system__leader__Main__Idle__literal;
+    __Mission__system__worker__Main__activeState := __Mission__system__worker__Main__Idle__literal;
 }
 
 env {}
 
 prop {
-    (__Mission__component__worker__Main__B__BRegion__activeState != __Mission__component__worker__Main__B__BRegion__Operation__literal);
+    (__Mission__system__worker__Main__activeState != __Mission__system__worker__Main__Operational__literal)
 }

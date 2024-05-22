@@ -1,5 +1,5 @@
-gamma.*.zip
-gamma-libs/
-Test Models/**/model.xsts
-input/
-output/
+/Test Models/**/model.xsts
+/Test Models/**/artifacts/
+/theta/
+/input/
+/output/

@@ -40,23 +40,23 @@ type State {
     }
 }
 target Mission {
-    instance MainRegion : Region {
-        // "AState" instance subsets "MainRegion.entryState"
-        instance MainEntry :> entryState : State {
+    containment MainRegion : Region {
+        // "AState" containment subsets "MainRegion.entryState"
+        containment MainEntry :> entryState : State {
             // "MainEntry"'s "parentRegion" is "MainRegion"
-            reference parentRegion <- MainRegion
+            reference ::> parentRegion : Region = MainRegion
         }
-        // "AState" instance subsets "MainRegion.states"
-        instance AState :> states : State {
-            reference parentRegion <- MainRegion
+        // "AState" containment subsets "MainRegion.states"
+        containment AState :> states : State {
+            reference ::> parentRegion : Region = MainRegion
         }
-        instance BState :> states : State {
-            reference parentRegion <- MainRegion
-            // "BRegion" instance subsets "BState.region"
-            instance BRegion :> region : Region {
-                instance CState :> states : State {
-                    reference parentRegion <- BRegion
-                    reference parentState <- BState
+        containment BState :> states : State {
+            reference ::> parentRegion : Region = MainRegion
+            // "BRegion" containment subsets "BState.region"
+            containment BRegion :> region : Region {
+                containment CState :> states : State {
+                    reference ::> parentRegion : Region = BRegion
+                    reference ::> parentState : State = BState
                 }
             }
         }
@@ -64,10 +64,14 @@ target Mission {
 
     init {
     }
+
     tran {
         inline MainRegion.AState.enter(MainRegion)
         inline MainRegion.AState.exit(MainRegion)
         inline MainRegion.BState.BRegion.CState.enter(MainRegion)
     }
-    prop { true }
+
+    prop {
+        true
+    }
 }

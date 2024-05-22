@@ -1,13 +1,29 @@
-package hu.bme.mit.gamma.oxsts.engine.utils
+/*
+ * SPDX-FileCopyrightText: 2024 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
 
-import hu.bme.mit.gamma.oxsts.engine.transformation.OxstsFactory
-import hu.bme.mit.gamma.oxsts.model.oxsts.ChainReferenceExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.ChainingExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.DeclarationReferenceExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.Feature
-import hu.bme.mit.gamma.oxsts.model.oxsts.ReferenceExpression
-import hu.bme.mit.gamma.oxsts.model.oxsts.Variable
-import hu.bme.mit.gamma.oxsts.model.oxsts.VariableTypeReference
+package hu.bme.mit.semantifyr.oxsts.engine.utils
+
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanType
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainingExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Containment
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DeclarationReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Feature
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.IntegerType
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Pattern
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.PatternConstraint
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceTyping
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Type
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
+import org.eclipse.xtext.EcoreUtil2
+import java.util.*
 
 fun ReferenceExpression.asChainReferenceExpression(): ChainReferenceExpression {
     require(this is ChainReferenceExpression) {
@@ -19,19 +35,25 @@ fun ReferenceExpression.asChainReferenceExpression(): ChainReferenceExpression {
 
 fun ChainReferenceExpression.drop(n: Int): ChainReferenceExpression {
     return OxstsFactory.createChainReferenceExpression().also {
-        it.chains += chains.copy().drop(n)
+        it.chains += chains.drop(n).copy()
     }
 }
 
 fun ChainReferenceExpression.dropLast(n: Int): ChainReferenceExpression {
     return OxstsFactory.createChainReferenceExpression().also {
-        it.chains += chains.copy().dropLast(n)
+        it.chains += chains.dropLast(n).copy()
     }
 }
 
-fun ChainReferenceExpression.last(): ChainReferenceExpression {
+fun ChainReferenceExpression.onlyFirst(): ChainReferenceExpression {
     return OxstsFactory.createChainReferenceExpression().also {
-        it.chains += chains.last()
+        it.chains += chains.first().copy()
+    }
+}
+
+fun ChainReferenceExpression.onlyLast(): ChainReferenceExpression {
+    return OxstsFactory.createChainReferenceExpression().also {
+        it.chains += chains.last().copy()
     }
 }
 
@@ -41,13 +63,137 @@ fun ChainReferenceExpression.lastChain(): ChainingExpression {
 
 fun ChainReferenceExpression.appendWith(chainReferenceExpression: ChainReferenceExpression): ChainReferenceExpression {
     return OxstsFactory.createChainReferenceExpression().also {
-        it.chains += chains.copy()
-        it.chains += chainReferenceExpression.chains.copy()
+        it.chains += chains.copy() + chainReferenceExpression.chains.copy()
     }
 }
 
+val ChainReferenceExpression.isStaticReference
+    get() = referencedElementOrNull()?.isStatic ?: false
+
+val Element.isStatic
+    get() = when (this) {
+        is EnumLiteral -> true
+        else -> false
+    }
+
+val Feature.type
+    get() = (typing as ReferenceTyping).referencedElement as Type
+
 val Variable.isFeatureTyped
-    get() = (typing as? VariableTypeReference)?.reference is Feature
+    get() = (typing as? ReferenceTyping)?.referencedElement is Feature
+
+val ReferenceTyping.referencedElement
+    get() = reference.chains.last().element
 
 val ChainingExpression.element
     get() = (this as? DeclarationReferenceExpression)?.element
+
+
+val Feature.isRedefine
+    get() = redefines != null
+
+inline fun <reified T : Element> ReferenceExpression.typedReferencedElement(): T {
+    val element = referencedElement()
+
+    check(element is T) {
+        "Reference $this must point to element of type ${T::class.qualifiedName}"
+    }
+
+    return element
+}
+
+fun ReferenceExpression.referencedElement(): Element {
+    return referencedElementOrNull() ?: error("Expression $this must be DeclarationReferenceExpression")
+}
+
+fun ReferenceExpression.referencedElementOrNull(): Element? {
+    require(this is ChainReferenceExpression)
+
+    return chains.lastOrNull()?.referencedElementOrNull()
+}
+
+
+fun ChainingExpression.referencedElement(): Element {
+    return referencedElementOrNull() ?: error("Expression $this must be DeclarationReferenceExpression")
+}
+
+fun ChainingExpression.referencedElementOrNull(): Element? {
+    if (this is DeclarationReferenceExpression) {
+        return element
+    }
+
+    return null
+}
+
+// TODO create caching containment and variable query
+
+val Feature.allContainments: List<Containment>
+    get() = allFeatures.filterIsInstance<Containment>()
+
+val Feature.allFeatures: List<Feature>
+    get() = type.allFeatures
+
+val Feature.allVariables: List<Variable>
+    get() = type.allVariables
+
+val Type.allFeatures: List<Feature>
+    get() {
+        val list = mutableListOf<Feature>()
+        list += features
+        if (supertype != null) {
+            // FIXME: recursive property accessor
+            list += supertype.allFeatures
+        }
+        return list
+    }
+
+val Type.allVariables: List<Variable>
+    get() {
+        val list = mutableListOf<Variable>()
+        list += variables
+        if (supertype != null) {
+            // FIXME: recursive property accessor
+            list += supertype.allVariables
+        }
+        return list
+    }
+
+val Feature.isDataType
+    get() = typing is IntegerType || typing is BooleanType
+
+
+val Feature.allSubsets: Set<Feature>
+    get() {
+        val features = subsets?.toMutableSet() ?: mutableSetOf()
+
+        if (redefines != null) {
+            // FIXME: recursive property accessor
+            features += redefines
+            features += redefines.allSubsets
+        }
+
+        return features
+    }
+
+val Pattern.fullyQualifiedName
+    get() = "${(eContainer() as Package).name}__$name"
+
+fun Pattern.allReferencedPatterns(): Set<Pattern> {
+    val patterns = mutableSetOf<Pattern>()
+
+    val patternQueue = LinkedList<Pattern>()
+
+    patternQueue += this
+
+    while (patternQueue.any()) {
+        val referencedPattern = patternQueue.removeFirst()
+        if (patterns.add(referencedPattern)) {
+            val patternConstraints = EcoreUtil2.getAllContentsOfType(referencedPattern, PatternConstraint::class.java)
+            patternQueue += patternConstraints.map {
+                it.pattern
+            }
+        }
+    }
+
+    return patterns
+}

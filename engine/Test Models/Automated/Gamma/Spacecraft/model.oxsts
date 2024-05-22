@@ -3,7 +3,7 @@ package Test
 // Event.oxsts
 
 type Event {
-    var isActive: Boolean := false
+    var isActive: Boolean = false
 
     tran set {
         isActive := true
@@ -23,11 +23,11 @@ type Event {
 }
 
 type Timeout {
-    var deltaTime : Integer := 0
+    var deltaTime : Integer = 0
 
     tran {
         if (deltaTime > 0) {
-            deltaTime := deltaTime - 500
+            deltaTime := deltaTime - 1501
         }
     }
 
@@ -39,9 +39,7 @@ type Timeout {
 // Trigger.oxsts
 
 type Trigger {
-    virtual tran isTriggered {
-        assume (true)
-    }
+    virtual tran isTriggered { }
 }
 
 type EventTrigger : Trigger {
@@ -76,6 +74,11 @@ type RaiseEventAction : Action {
 
 type SetTimeoutAction : Action {
     reference timeout : Timeout[1..1]
+    reference delta : Integer = 1000
+
+    override tran {
+        timeout.deltaTime := delta
+    }
 }
 
 type Guard {
@@ -133,16 +136,18 @@ type Statechart : Component {
 
     override tran {
         inline seq outputEvents -> reset
-        inline choice regions -> fireTransitions else { }
+        choice {
+            inline seq regions -> fireTransitions
+        } else { }
         inline seq inputEvents -> reset
+        inline seq timeouts -> main
     }
 }
 
 type Region {
-    feature abstractStates : AbstractState[0..*]
-    feature states :> abstractStates : State[0..*]
+    feature states : State[0..*]
 
-    var activeState : states[0..1] := Nothing
+    var activeState : states[0..1] = Nothing
 
     feature abstractTransitions : AbstractTransition[0..*]
 
@@ -159,30 +164,34 @@ type Region {
 
     tran fireTransitions {
         inline choice transitions -> main else {
-            inline choice states -> fireTransitions else { }
+            inline choice states -> fireTransitions
         }
+        /*inline choice states -> fireTransitions else {
+            inline choice transitions -> main
+        }*/
+    }
+
+    tran fireTransitionsInner {
+        inline choice transitions -> main
     }
 }
 
-type AbstractState {
+type State {
     reference parent : Region[0..1]
     reference parentState : State[0..1]
-}
-
-type State : AbstractState {
     feature regions : Region[0..1]
 
     feature entryActions : Action[0..*]
     feature exitActions : Action[0..*]
 
     tran isActive {
-        assume (parent.activeState = Self)
+        assume (parent.activeState == Self)
     }
 
     tran deactivateRecursive {
         inline seq regions -> deactivateRecursive
 
-        if (parent.activeState = Self) {
+        if (parent.activeState == Self) {
             parent.activeState := Nothing
             inline seq exitActions -> main
         }
@@ -229,9 +238,7 @@ type AbstractTransition {
     reference commonRegion : Region[1..1]
     reference to : State[1..1]
 
-    virtual tran {
-        assume (true)
-    }
+    virtual tran { }
 }
 
 type EntryTransition : AbstractTransition {
@@ -260,102 +267,109 @@ type Transition : AbstractTransition {
 
 // Station.oxsts
 
-type SetTimeoutActionTenS : SetTimeoutAction {
-    override tran {
-        timeout.deltaTime := 10000
-    }
-}
-
-type SetTimeoutActionFifteenS : SetTimeoutAction {
-    override tran {
-        timeout.deltaTime := 15000
-    }
-}
-
 type Station : Statechart {
-    instance dataEvent :> inputEvents : Event
-    instance pingEvent :> outputEvents : Event
+    containment dataEvent :> inputEvents : Event
+    containment pingEvent :> outputEvents : Event
 
-    instance startEvent :> inputEvents : Event
-    instance shutdownEvent :> inputEvents : Event
+    containment startEvent :> inputEvents : Event
+    containment shutdownEvent :> inputEvents : Event
 
-    instance pingTimeout :> timeouts : Timeout
-    instance startTimeout :> timeouts : Timeout
+    containment pingTimeout :> timeouts : Timeout
+    containment startTimeout :> timeouts : Timeout
 
-    instance Main :> regions : Region {
-        instance et1 :> entryTransitions : EntryTransition {
-            reference commonRegion <- Main
-            reference to <- Idle
+    var receivedData : Integer = 0
+
+    containment Main :> regions : Region {
+        containment et1 :> entryTransitions : EntryTransition {
+            reference ::> commonRegion : Region = Main
+            reference ::> to : State = Idle
         }
 
-        instance Idle :> states : State {
-            reference parent <- Main
+        containment Idle :> states : State {
+            reference ::> parent : Region = Main
 
-            instance ea1 :> entryActions : SetTimeoutActionFifteenS {
-                reference timeout <- startTimeout
-            }
-        }
-
-        instance startOperation :> transitions : Transition {
-            reference commonRegion <- Main
-            reference from <- Idle
-            reference to <- Operation
-
-            instance t :> trigger : EventTrigger {
-                reference event <- startEvent
+            containment ea1 :> entryActions : SetTimeoutAction {
+                reference ::> timeout : Timeout = startTimeout
+                reference ::> delta : Integer = 15000
             }
         }
 
-        instance autoStartOperation :> transitions : Transition {
-            reference commonRegion <- Main
-            reference from <- Idle
-            reference to <- Operation
+        containment startOperation :> transitions : Transition {
+            reference ::> commonRegion : Region = Main
+            reference ::> from : State = Idle
+            reference ::> to : State = Operation
 
-            instance t :> trigger : TimeoutTrigger {
-                reference timeout <- startTimeout
+            containment t :> trigger : EventTrigger {
+                reference ::> event : Event = startEvent
             }
         }
 
-        instance Operation :> states : State {
-            reference parent <- Main
+        containment autoStartOperation :> transitions : Transition {
+            reference ::> commonRegion : Region = Main
+            reference ::> from : State = Idle
+            reference ::> to : State = Operation
 
-            instance ea1 :> entryActions : SetTimeoutActionTenS {
-                reference timeout <- pingTimeout
+            containment t :> trigger : TimeoutTrigger {
+                reference ::> timeout : Timeout = startTimeout
             }
-            instance ea2 :> entryActions : RaiseEventAction {
-                reference event <- pingEvent
+        }
+
+        containment shutdownOperation :> transitions : Transition {
+            reference ::> commonRegion : Region = Main
+            reference ::> from : State = Operation
+            reference ::> to : State = Idle
+
+            containment t :> trigger : EventTrigger {
+                reference ::> event : Event = shutdownEvent
+            }
+        }
+
+        containment Operation :> states : State {
+            reference ::> parent : Region = Main
+
+            containment ea1 :> entryActions : SetTimeoutAction {
+                reference ::> timeout : Timeout = pingTimeout
+                reference ::> delta : Integer = 10000
+            }
+            containment ea2 :> entryActions : RaiseEventAction {
+                reference ::> event : Event = pingEvent
             }
 
-            instance ReceiveData :> regions : Region {
-                instance et2 :> entryTransitions : EntryTransition {
-                    reference commonRegion <- ReceiveData
-                    reference to <- Waiting
+            containment ReceiveData :> regions : Region {
+                containment et2 :> entryTransitions : EntryTransition {
+                    reference ::> commonRegion : Region = ReceiveData
+                    reference ::> to : State = Waiting
                 }
 
-                instance Waiting :> states : State {
-                    reference parent <- ReceiveData
-                    reference parentState <- Operation
+                containment Waiting :> states : State {
+                    reference ::> parent : Region = ReceiveData
+                    reference ::> parentState : State = Operation
                 }
 
-                instance receivedDataOperation :> transitions : Transition {
-                    reference commonRegion <- ReceiveData
-                    reference from <- Waiting
-                    reference to <- Waiting
+                containment receivedDataOperation :> transitions : Transition {
+                    reference ::> commonRegion : Region = ReceiveData
+                    reference ::> from : State = Waiting
+                    reference ::> to : State = Waiting
 
-                    instance t :> trigger : EventTrigger {
-                        reference event <- dataEvent
+                    containment t :> trigger : EventTrigger {
+                        reference ::> event : Event = dataEvent
+                    }
+                    containment a :> actions : Action {
+                        tran {
+                            receivedData := receivedData + 1
+                        }
                     }
                 }
             }
         }
 
-        instance resendPing :> transitions : Transition {
-            reference commonRegion <- Main
-            reference from <- Operation
-            reference to <- Operation
+        containment resendPing :> transitions : Transition {
+            reference ::> commonRegion : Region = Main
+            reference ::> from : State = Operation
+            reference ::> to : State = Operation
 
-            instance t :> trigger : TimeoutTrigger {
-                reference timeout <- pingTimeout
+            containment t :> trigger : TimeoutTrigger {
+                reference ::> timeout : Timeout = pingTimeout
             }
         }
     }
@@ -363,253 +377,433 @@ type Station : Statechart {
 
 // TrafficLightCtrl.oxsts
 
-type SetTimeoutActionOneS : SetTimeoutAction {
-    override tran {
-        timeout.deltaTime := 1000
-    }
-}
-
-type SetTimeoutActionFifteenMS : SetTimeoutAction {
-    override tran {
-        timeout.deltaTime := 1500
-    }
-}
-
-type SetRechargingAction : Action {
-    reference spacecraft : Spacecraft
-
-    override main {
-        spacecraft.recharging := true
-    }
-}
-
-type ResetRechargingAction : Action {
-    reference spacecraft : Spacecraft
-
-    override main {
-        spacecraft.recharging := false
-    }
-}
-
-type DecreaseBatteryChargeAction : Action {
-    reference spacecraft : Spacecraft
-
-    override main {
-        spacecraft.batteryCharge := spacecraft.batteryCharge - 1
-    }
-}
-
-type DecreaseBatteryChargeAction : Action {
-    reference spacecraft : Spacecraft
-
-    override main {
-        spacecraft.batteryCharge := spacecraft.batteryCharge - 1
-    }
-}
-
-type IncreaseBatteryChargeAction : Action {
-    reference spacecraft : Spacecraft
-
-    override main {
-        spacecraft.batteryCharge := spacecraft.batteryCharge + 1
-    }
-}
-
-type DecreaseDataAction : Action {
-    reference spacecraft : Spacecraft
-
-    override main {
-        spacecraft.data := spacecraft.data - 1
-    }
-}
-
-type CanConsumeGuard : Guard {
-    reference spacecraft : Spacecraft
-
-    override main {
-        assert (spacecraft.batteryCharge >= 40)
-    }
-}
-
-type CannotConsumeGuard : Guard {
-    reference spacecraft : Spacecraft
-
-    override main {
-        assert (spacecraft.batteryCharge < 40)
-    }
-}
-
-type IsNotRechargingGuard : Guard {
-    reference spacecraft : Spacecraft
-
-    override main {
-        assume (spacecraft.recharging = false)
-    }
-}
-
-type CanTransmitGuard : Guard {
-    reference spacecraft : Spacecraft
-
-    override main {
-        assume (spacecraft.data > 1 && spacecraft.batteryCharge >= 40)
-    }
-}
-
-type CannotTransmitGuard : Guard {
-    reference spacecraft : Spacecraft
-
-    override main {
-        assume (spacecraft.data <= 1 || spacecraft.batteryCharge < 40)
-    }
-}
-
-type ShouldRechargeGuard : Guard {
-    reference spacecraft : Spacecraft
-
-    override main {
-        assume (spacecraft.batteryCharge < 80)
-    }
-}
-
-type CanRechargeGuard : Guard {
-    reference spacecraft : Spacecraft
-
-    override main {
-        assume (spacecraft.batteryCharge < 100)
-    }
-}
-
-type CannotRechargeGuard : Guard {
-    reference spacecraft : Spacecraft
-
-    override main {
-        assume (spacecraft.batteryCharge >= 100)
-    }
-}
-
 type Spacecraft : Statechart {
-    instance pingEvent :> inputEvents : Event
-    instance dataEvent :> outputEvents : Event
+    containment pingEvent :> inputEvents : Event
+    containment dataEvent :> outputEvents : Event
 
-    instance rechargeTimeout :> timeouts : Timeout
-    instance consumeTimeout :> timeouts : Timeout
-    instance transmitTimeout :> timeouts : Timeout
+    containment rechargeTimeout :> timeouts : Timeout
+    containment consumeTimeout :> timeouts : Timeout
+    containment transmitTimeout :> timeouts : Timeout
 
-    var batteryCharge : Integer := 100
-    var data : Integer := 100
-    var recharging : Boolean := false
+    var batteryCharge : Integer = 100
+    var recharging : Boolean = false
+    var data : Integer = 10
 
-    instance Communication :> regions : Region {
-        instance et1 :> entryTransitions : EntryTransition {
-            reference commonRegion <- Communication
-            reference to <- WaitingPing
+    containment Communication :> regions : Region {
+        containment et1 :> entryTransitions : EntryTransition {
+            reference ::> commonRegion : Region = Communication
+            reference ::> to : State = WaitingPing
         }
 
-        instance WaitingPing :> states : State {
-            reference parent <- Communication
+        containment WaitingPing :> states : State {
+            reference ::> parent : Region = Communication
         }
 
-        instance resendPing :> transitions : Transition {
-            reference commonRegion <- Communication
-            reference from <- WaitingPing
-            reference to <- Transmitting
+        containment receivedPing :> transitions : Transition {
+            reference ::> commonRegion : Region = Communication
+            reference ::> from : State = WaitingPing
+            reference ::> to : State = Transmitting
 
-            instance t :> trigger : EventTrigger {
-                reference event <- pingEvent
+            containment t :> trigger : EventTrigger {
+                reference ::> event : Event = pingEvent
             }
-            instance g :> guards : IsNotRechargingGuard {
-                reference spacecraft <- Self
+            containment g :> guards : Guard {
+                override tran {
+                    assume (recharging == false)
+                }
             }
         }
 
-        instance Transmitting :> states : State {
-            reference parent <- Communication
+        containment lowBattery :> transitions : Transition {
+            reference ::> commonRegion : Region = Communication
+            reference ::> from : State = Transmitting
+            reference ::> to : State = WaitingPing
 
-            instance SendData :> regions : Region {
-                instance et2 :> entryTransitions : EntryTransition {
-                    reference commonRegion <- SendData
-                    reference to <- Sending
+            containment t :> trigger : TimeoutTrigger {
+                reference ::> timeout : Timeout = consumeTimeout
+            }
+            containment g :> guards : Guard {
+                override tran {
+                    assume (batteryCharge < 40)
+                }
+            }
+        }
+
+        containment lowBatteryOrDone :> transitions : Transition {
+            reference ::> commonRegion : Region = Communication
+            reference ::> from : State = Transmitting
+            reference ::> to : State = WaitingPing
+
+            containment t :> trigger : TimeoutTrigger {
+                reference ::> timeout : Timeout = transmitTimeout
+            }
+            containment g :> guards : Guard {
+                override tran {
+                    assume (data <= 1 || batteryCharge < 40)
+                }
+            }
+        }
+
+        containment Transmitting :> states : State {
+            reference ::> parent : Region = Communication
+
+            containment SendData :> regions : Region {
+                containment et2 :> entryTransitions : EntryTransition {
+                    reference ::> commonRegion : Region = SendData
+                    reference ::> to : State = Sending
                 }
 
-                instance Sending :> states : State {
-                    reference parent <- SendData
-                    reference parentState <- Transmitting
+                containment Sending :> states : State {
+                    reference ::> parent : Region = SendData
+                    reference ::> parentState : State = Transmitting
 
-                    instance ea1 :> entryActions : SetTimeoutActionFifteenMS {
-                        reference timeout <- transmitTimeout
+                    containment ea1 :> entryActions : SetTimeoutAction {
+                        reference ::> timeout : Timeout = transmitTimeout
+                        reference ::> delta : Integer = 1500
+                    }
+                }
+
+                containment transmitData :> transitions : Transition {
+                    reference ::> commonRegion : Region = SendData
+                    reference ::> from : State = Sending
+                    reference ::> to : State = Sending
+
+                    containment t :> trigger : TimeoutTrigger {
+                        reference ::> timeout : Timeout = transmitTimeout
+                    }
+                    containment g :> guards : Guard {
+                        override tran {
+                            assume (data > 1 && batteryCharge >= 40)
+                        }
+                    }
+                    containment a1 :> actions : Action {
+                        override tran {
+                            data := data - 1
+                        }
+                    }
+                    containment a2 :> actions : RaiseEventAction {
+                        reference ::> event : Event = dataEvent
                     }
                 }
             }
 
-            instance ConsumePower :> regions : Region {
-                instance et2 :> entryTransitions : EntryTransition {
-                    reference commonRegion <- ConsumePower
-                    reference to <- Consuming
+            containment ConsumePower :> regions : Region {
+                containment et2 :> entryTransitions : EntryTransition {
+                    reference ::> commonRegion : Region = ConsumePower
+                    reference ::> to : State = Consuming
                 }
 
-                instance Consuming :> states : State {
-                    reference parent <- ConsumePower
-                    reference parentState <- Transmitting
+                containment Consuming :> states : State {
+                    reference ::> parent : Region = ConsumePower
+                    reference ::> parentState : State = Transmitting
 
-                    instance ea1 :> entryActions : SetTimeoutActionOneS {
-                        reference timeout <- consumeTimeout
+                    containment ea1 :> entryActions : SetTimeoutAction {
+                        reference ::> timeout : Timeout = consumeTimeout
+                        reference ::> delta : Integer = 1000
+                    }
+                }
+
+                containment consumePower :> transitions : Transition {
+                    reference ::> commonRegion : Region = ConsumePower
+                    reference ::> from : State = Consuming
+                    reference ::> to : State = Consuming
+
+                    containment t :> trigger : TimeoutTrigger {
+                        reference ::> timeout : Timeout = consumeTimeout
+                    }
+                    containment g :> guards : Guard {
+                        override tran {
+                            assume (batteryCharge >= 40)
+                        }
+                    }
+                    containment a :> actions : Action {
+                        override tran {
+                            batteryCharge := batteryCharge - 10
+                        }
                     }
                 }
             }
         }
     }
 
-    instance Battery :> regions : Region {
-        instance et1 :> entryTransitions : EntryTransition {
-            reference commonRegion <- Battery
-            reference to <- NotRecharging
+    containment Battery :> regions : Region {
+        containment et1 :> entryTransitions : EntryTransition {
+            reference ::> commonRegion : Region = Battery
+            reference ::> to : State = NotRecharging
         }
 
-        instance NotRecharging :> states : State {
-            reference parent <- Battery
+        containment NotRecharging :> states : State {
+            reference ::> parent : Region = Battery
 
-
+            containment ea1 :> entryActions : Action {
+                tran {
+                    recharging := false
+                }
+            }
         }
 
-        instance Recharging :> states : State {
-            reference parent <- Battery
+        containment startRecharging :> transitions : Transition {
+            reference ::> commonRegion : Region = Battery
+            reference ::> from : State = NotRecharging
+            reference ::> to : State = Recharging
 
-            instance ea1 :> entryActions : SetTimeoutActionTenS {
-                reference timeout <- rechargeTimeout
+            containment t :> trigger : TimeoutTrigger {
+                reference ::> timeout : Timeout = consumeTimeout
+            }
+            containment g :> guards : Guard {
+                override tran {
+                    assume (batteryCharge < 80)
+                }
+            }
+        }
+
+        containment recharge :> transitions : Transition {
+            reference ::> commonRegion : Region = Battery
+            reference ::> from : State = Recharging
+            reference ::> to : State = Recharging
+
+            containment t :> trigger : TimeoutTrigger {
+                reference ::> timeout : Timeout = rechargeTimeout
+            }
+            containment g :> guards : Guard {
+                override tran {
+                    assume (batteryCharge < 100)
+                }
+            }
+            containment a :> actions : Action {
+                override tran {
+                    batteryCharge := batteryCharge + 10
+                }
+            }
+        }
+
+        containment stopRecharging :> transitions : Transition {
+            reference ::> commonRegion : Region = Battery
+            reference ::> from : State = Recharging
+            reference ::> to : State = NotRecharging
+
+            containment t :> trigger : TimeoutTrigger {
+                reference ::> timeout : Timeout = rechargeTimeout
+            }
+            containment g :> guards : Guard {
+                override tran {
+                    assume (batteryCharge == 100)
+                }
+            }
+        }
+
+        containment Recharging :> states : State {
+            reference ::> parent : Region = Battery
+
+            containment ea1 :> entryActions : SetTimeoutAction {
+                reference ::> timeout : Timeout = rechargeTimeout
+                reference ::> delta : Integer = 10000
+            }
+            containment ea2 :> entryActions : Action {
+                tran {
+                    recharging := true
+                }
             }
         }
     }
-
 }
 
 type SpaceMission : SyncComponent {
-    instance spacecraft :> components : Spacecraft
-    instance station :> components : Station
+    containment spacecraft :> components : Spacecraft
+    containment station :> components : Station
 
-    instance pingChannel :> channels : Channel {
-        reference inputEvent <- station.pingEvent
-        reference outputEvent <- spacecraft.pingEvent
+    containment pingChannel :> channels : Channel {
+        reference ::> inputEvent : Event = station.pingEvent
+        reference ::> outputEvent : Event = spacecraft.pingEvent
     }
-    instance dataChannel :> channels : Channel {
-        reference inputEvent <- spacecraft.dataEvent
-        reference outputEvent <- station.dataEvent
+    containment dataChannel :> channels : Channel {
+        reference ::> inputEvent : Event = spacecraft.dataEvent
+        reference ::> outputEvent : Event = station.dataEvent
     }
 }
 
 target Mission {
-    instance spaceMission : SpaceMission
+    containment spaceMission : SpaceMission
 
     init {
         inline spaceMission.init()
     }
 
     tran {
-        inline spaceMission.station.startEvent.havoc
-        inline spaceMission.station.shutdownEvent.havoc
+        inline spaceMission.station.startEvent.havoc()
+        inline spaceMission.station.shutdownEvent.havoc()
         inline spaceMission.main()
     }
 
     prop {
         true
+    }
+}
+
+target StationIdle_Unsafe : Mission {
+    prop {
+       ! (spaceMission.station.Main.activeState == spaceMission.station.Main.Idle)
+    }
+}
+
+target StationOperation_Unsafe : Mission {
+    prop {
+       ! (spaceMission.station.Main.activeState == spaceMission.station.Main.Operation)
+    }
+}
+
+target StationOperationWaiting_Unsafe : Mission {
+    prop {
+       ! (spaceMission.station.Main.Operation.ReceiveData.activeState == spaceMission.station.Main.Operation.ReceiveData.Waiting)
+    }
+}
+
+target SpacecraftWaitingPing_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.Communication.activeState == spaceMission.spacecraft.Communication.WaitingPing)
+    }
+}
+
+target SpacecraftTransmitting_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.Communication.activeState == spaceMission.spacecraft.Communication.Transmitting)
+    }
+}
+
+target SpacecraftTransmittingSending_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.Communication.Transmitting.SendData.activeState == spaceMission.spacecraft.Communication.Transmitting.SendData.Sending)
+    }
+}
+
+target SpacecraftTransmittingConsuming_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.Communication.Transmitting.ConsumePower.activeState == spaceMission.spacecraft.Communication.Transmitting.ConsumePower.Consuming)
+    }
+}
+
+target SpacecraftNotRecharging_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.Battery.activeState == spaceMission.spacecraft.Battery.NotRecharging)
+    }
+}
+
+target SpacecraftRecharging_Unsafe : Mission {
+    prop {
+        ! (spaceMission.spacecraft.Battery.activeState == spaceMission.spacecraft.Battery.Recharging)
+    }
+}
+
+target Station_ReceivedData_0_Unsafe : Mission {
+    prop {
+       ! (spaceMission.station.receivedData == 0)
+    }
+}
+
+target Station_ReceivedData_1_Unsafe : Mission {
+    prop {
+       ! (spaceMission.station.receivedData == 1)
+    }
+}
+
+target Station_ReceivedData_5_Unsafe : Mission {
+    prop {
+       ! (spaceMission.station.receivedData == 5)
+    }
+}
+
+target Station_ReceivedData_9_Unsafe : Mission {
+    prop {
+       ! (spaceMission.station.receivedData == 9)
+    }
+}
+
+target Station_ReceivedData_10_Unsafe : Mission {
+    prop {
+       ! (spaceMission.station.receivedData == 10)
+    }
+}
+
+target Spacecraft_data_10_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.data == 10)
+    }
+}
+
+target Spacecraft_data_9_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.data == 9)
+    }
+}
+
+target Spacecraft_data_5_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.data == 5)
+    }
+}
+
+target Spacecraft_data_3_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.data == 3)
+    }
+}
+
+target Spacecraft_data_2_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.data == 2)
+    }
+}
+
+target Spacecraft_data_1_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.data == 1)
+    }
+}
+
+target Spacecraft_data_0_Unsafe : Mission {
+    prop {
+       ! (spaceMission.spacecraft.data == 0)
+    }
+}
+
+target Spacecraft_batteryCharge_100_Unsafe : Mission {
+    prop {
+        ! (spaceMission.spacecraft.batteryCharge == 100)
+    }
+}
+
+target Spacecraft_batteryCharge_90_Unsafe : Mission {
+    prop {
+        ! (spaceMission.spacecraft.batteryCharge == 90)
+    }
+}
+
+target Spacecraft_batteryCharge_80_Unsafe : Mission {
+    prop {
+        ! (spaceMission.spacecraft.batteryCharge == 80)
+    }
+}
+
+target Spacecraft_batteryCharge_70_Unsafe : Mission {
+    prop {
+        ! (spaceMission.spacecraft.batteryCharge == 70)
+    }
+}
+
+target Spacecraft_batteryCharge_40_Unsafe : Mission {
+    prop {
+        ! (spaceMission.spacecraft.batteryCharge == 40)
+    }
+}
+
+target Data_is_never_lost_Safe : Mission {
+    prop {
+       spaceMission.station.receivedData == 10 - spaceMission.spacecraft.data
+    }
+}
+
+target Spacecraft_batteryCharge_never_under_20_Safe : Mission {
+    prop {
+        ! (spaceMission.spacecraft.batteryCharge <= 20)
     }
 }

@@ -5,15 +5,15 @@ type Atom
 type Holder {
     feature atom : Atom
 
-    var current : atom[0..1] := Nothing
-    var currentTwo : atom[0..1] := Nothing
+    var current : atom[0..1] = Nothing
+    var currentTwo : atom[0..1] = Nothing
 }
 
 target Mission {
-    instance holder : Holder {
-        instance a :> atom : Atom
-        instance b :> atom : Atom
-        instance c :> atom : Atom
+    containment holder : Holder {
+        containment a :> atom : Atom
+        containment b :> atom : Atom
+        containment c :> atom : Atom
     }
 
     init {

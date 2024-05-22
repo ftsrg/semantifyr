@@ -1,0 +1,17 @@
+
+var __Mission__a__x : integer
+var __Mission__b__x : integer
+
+trans {
+    __Mission__a__x := 10;
+    __Mission__b__x := 10;
+}
+
+init {
+}
+
+env {}
+
+prop {
+    (__Mission__a__x != __Mission__b__x)
+}

@@ -9,17 +9,17 @@ type __Mission__MainRegion__BState__BRegion__states__type : {
     __Nothing__literal
 }
 
-var __Mission__MainRegion__activeState : __Mission__MainRegion__states__type;
-var __Mission__MainRegion__BState__BRegion__activeState : __Mission__MainRegion__BState__BRegion__states__type;
-
-init {
-}
+var __Mission__MainRegion__activeState : __Mission__MainRegion__states__type
+var __Mission__MainRegion__BState__BRegion__activeState : __Mission__MainRegion__BState__BRegion__states__type
 
 trans {
+}
+
+init {
 }
 
 env {}
 
 prop {
-    true;
+    true
 }

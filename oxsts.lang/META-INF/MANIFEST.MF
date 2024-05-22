@@ -1,27 +1,26 @@
 Manifest-Version: 1.0
-Automatic-Module-Name: oxsts.lang
+Automatic-Module-Name: hu.bme.mit.semantifyr.oxsts.lang
 Bundle-ManifestVersion: 2
-Bundle-Name: oxsts.lang
+Bundle-Name: hu.bme.mit.semantifyr.oxsts.lang
 Bundle-Vendor: My Company
 Bundle-Version: 1.0.0.qualifier
-Bundle-SymbolicName: oxsts.lang; singleton:=true
+Bundle-SymbolicName: hu.bme.mit.semantifyr.oxsts.lang; singleton:=true
 Bundle-ActivationPolicy: lazy
-Require-Bundle: hu.bme.mit.gamma.oxsts.model,
+Require-Bundle: hu.bme.mit.semantifyr.oxsts.model,
  org.eclipse.xtext,
  org.eclipse.xtext.xbase,
  org.eclipse.equinox.common;bundle-version="3.16.0",
  org.eclipse.xtext.xbase.lib;bundle-version="2.14.0",
  org.eclipse.xtext.util,
- org.eclipse.xtend.lib;bundle-version="2.14.0",
  org.antlr.runtime;bundle-version="[3.2.0,3.2.1)"
 Bundle-RequiredExecutionEnvironment: JavaSE-17
-Export-Package: hu.bme.mit.gamma.oxsts.lang.services,
- hu.bme.mit.gamma.oxsts.lang.serializer,
- hu.bme.mit.gamma.oxsts.lang.parser.antlr.internal,
- hu.bme.mit.gamma.oxsts.lang.formatting2,
- hu.bme.mit.gamma.oxsts.lang,
- hu.bme.mit.gamma.oxsts.lang.validation,
- hu.bme.mit.gamma.oxsts.lang.scoping,
- hu.bme.mit.gamma.oxsts.lang.generator,
- hu.bme.mit.gamma.oxsts.lang.parser.antlr
+Export-Package: hu.bme.mit.semantifyr.oxsts.lang.services,
+ hu.bme.mit.semantifyr.oxsts.lang.serializer,
+ hu.bme.mit.semantifyr.oxsts.lang.parser.antlr.internal,
+ hu.bme.mit.semantifyr.oxsts.lang.formatting2,
+ hu.bme.mit.semantifyr.oxsts.lang,
+ hu.bme.mit.semantifyr.oxsts.lang.validation,
+ hu.bme.mit.semantifyr.oxsts.lang.scoping,
+ hu.bme.mit.semantifyr.oxsts.lang.generator,
+ hu.bme.mit.semantifyr.oxsts.lang.parser.antlr
 Import-Package: org.apache.log4j

@@ -5,7 +5,7 @@ type Simple {
 }
 
 target Mission {
-    instance simple : Simple
+    containment simple : Simple
 
     init {
         simple.x := 0

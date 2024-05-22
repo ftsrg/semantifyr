@@ -10,10 +10,10 @@ target Mission {
 
     tran {
         choice {
-            assume (x = 10)
+            assume (x == 10)
             y := true
         } or {
-            assume (x = 10)
+            assume (x == 10)
             x := 10
         } else {
             x := 0
@@ -21,6 +21,6 @@ target Mission {
     }
 
     prop {
-        y = false
+        y == false
     }
 }
