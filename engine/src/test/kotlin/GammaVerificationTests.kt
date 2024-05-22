@@ -3,6 +3,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.tests.OxstsInjectorProvider
 import org.eclipse.xtext.testing.InjectWith
 import org.eclipse.xtext.testing.extensions.InjectionExtension
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -10,6 +11,7 @@ import org.junit.jupiter.params.provider.MethodSource
 private val baseDirectory = "Test Models/Automated/Gamma"
 private val libraryDirectory = "Test Models/Automated/Gamma Semantic Library"
 
+@Tag("slow")
 @ExtendWith(InjectionExtension::class)
 @InjectWith(OxstsInjectorProvider::class)
 class GammaVerificationTests : VerificationTest() {
