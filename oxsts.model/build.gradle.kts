@@ -1,13 +1,12 @@
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
     id("hu.bme.mit.semantifyr.gradle.mwe2")
-    id("hu.bme.mit.semantifyr.gradle.xtext-generated")
     id("hu.bme.mit.semantifyr.gradle.eclipse")
 }
 
 dependencies {
     api(libs.ecore)
     api(libs.ecore.xmi)
+
     mwe2(libs.ecore.codegen)
     mwe2(libs.mwe.utils)
     mwe2(libs.mwe2.lib)
@@ -24,11 +23,15 @@ sourceSets {
 tasks {
     val generateEPackage by registering(JavaExec::class) {
         mainClass.set("org.eclipse.emf.mwe2.launch.runtime.Mwe2Launcher")
+
         classpath(configurations.mwe2)
+
         inputs.file("./GenerateModel.mwe2")
         inputs.file("model/oxsts.ecore")
         inputs.file("model/oxsts.genmodel")
+
         outputs.dir("src/main/emf-gen")
+
         args("./GenerateModel.mwe2", "-p", "rootPath=/$projectDir")
     }
 
