@@ -362,11 +362,11 @@ FeatureConstraint:
 ;
 
 PatternConstraint:
-    (negated?='neg')? 'find' pattern=[Pattern|FQN] '('
+    (negated?='neg')? 'find' pattern=[Pattern|FQN] (transitiveClosure = TransitiveClosureKind)? '('
         variables+=PatternVariable
         (',' variables+=PatternVariable)*
         (',')?
-    ')' (transitiveClosure = TransitiveClosureKind)?
+    ')'
 ;
 
 enum TransitiveClosureKind:
