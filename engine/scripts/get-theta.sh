@@ -1,4 +1,9 @@
 #!/bin/bash
+
+# SPDX-FileCopyrightText: 2024 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
 THETA_VERSION="v4.2.2"
 
 apt-get install libgomp1 -y

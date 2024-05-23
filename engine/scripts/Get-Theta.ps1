@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
 $thetaVersion = "v4.2.2"
 $z3release = "z3-4.5.0"
 $z3version = "z3-4.5.0-x64-win"
