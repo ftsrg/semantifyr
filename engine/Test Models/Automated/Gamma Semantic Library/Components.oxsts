@@ -9,8 +9,26 @@ package Components
 import Events
 
 type Component {
+    feature events : Event[0..*]
+    feature inputEvents :> events : Event[0..*]
+    feature outputEvents :> events : Event[0..*]
+
+    feature timeouts : Timeout[0..*]
+
     virtual init { }
     virtual tran { }
+
+    tran resetInputEvents {
+        inline seq inputEvents -> reset
+    }
+
+    tran resetOutputEvents {
+        inline seq outputEvents -> reset
+    }
+
+    tran passTime {
+        inline seq timeouts -> main
+    }
 }
 
 type Channel {
@@ -27,6 +45,11 @@ type Channel {
 type CompositeComponent : Component {
     feature components : Component
     feature channels : Channel
+
+    tran passTime {
+        inline seq timeouts -> main
+        inline seq components -> passTime
+    }
 }
 
 type SyncComponent : CompositeComponent {
@@ -35,7 +58,9 @@ type SyncComponent : CompositeComponent {
     }
 
     override tran {
+        inline resetOutputEvents()
         inline seq components -> main
         inline seq channels -> main
+        inline resetInputEvents()
     }
 }

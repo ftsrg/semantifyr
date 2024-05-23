@@ -1,3 +1,8 @@
+type __Mission__spaceMission__station__Main__states__type : {
+    __Mission__spaceMission__station__Main__Idle__literal,
+    __Mission__spaceMission__station__Main__Operation__literal,
+    __Nothing__literal
+}
 type __Mission__spaceMission__spacecraft__Communication__states__type : {
     __Mission__spaceMission__spacecraft__Communication__WaitingPing__literal,
     __Mission__spaceMission__spacecraft__Communication__Transmitting__literal,
@@ -8,9 +13,8 @@ type __Mission__spaceMission__spacecraft__Battery__states__type : {
     __Mission__spaceMission__spacecraft__Battery__Recharging__literal,
     __Nothing__literal
 }
-type __Mission__spaceMission__station__Main__states__type : {
-    __Mission__spaceMission__station__Main__Idle__literal,
-    __Mission__spaceMission__station__Main__Operation__literal,
+type __Mission__spaceMission__station__Main__Operation__ReceiveData__states__type : {
+    __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal,
     __Nothing__literal
 }
 type __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__states__type : {
@@ -21,206 +25,197 @@ type __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePo
     __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal,
     __Nothing__literal
 }
-type __Mission__spaceMission__station__Main__Operation__ReceiveData__states__type : {
-    __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal,
-    __Nothing__literal
-}
 
+var __Mission__spaceMission__station__receivedData : integer = 0
 var __Mission__spaceMission__spacecraft__batteryCharge : integer = 100
 var __Mission__spaceMission__spacecraft__recharging : boolean = false
 var __Mission__spaceMission__spacecraft__data : integer = 10
-var __Mission__spaceMission__station__receivedData : integer = 0
-var __Mission__spaceMission__spacecraft__pingEvent__isActive : boolean = false
-var __Mission__spaceMission__spacecraft__dataEvent__isActive : boolean = false
-var __Mission__spaceMission__spacecraft__rechargeTimeout__deltaTime : integer = 0
-var __Mission__spaceMission__spacecraft__consumeTimeout__deltaTime : integer = 0
-var __Mission__spaceMission__spacecraft__transmitTimeout__deltaTime : integer = 0
-var __Mission__spaceMission__spacecraft__Communication__activeState : __Mission__spaceMission__spacecraft__Communication__states__type = __Nothing__literal
-var __Mission__spaceMission__spacecraft__Battery__activeState : __Mission__spaceMission__spacecraft__Battery__states__type = __Nothing__literal
-var __Mission__spaceMission__station__dataEvent__isActive : boolean = false
-var __Mission__spaceMission__station__pingEvent__isActive : boolean = false
-var __Mission__spaceMission__station__startEvent__isActive : boolean = false
-var __Mission__spaceMission__station__shutdownEvent__isActive : boolean = false
-var __Mission__spaceMission__station__pingTimeout__deltaTime : integer = 0
-var __Mission__spaceMission__station__startTimeout__deltaTime : integer = 0
-var __Mission__spaceMission__station__Main__activeState : __Mission__spaceMission__station__Main__states__type = __Nothing__literal
-var __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState : __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__states__type = __Nothing__literal
-var __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState : __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__states__type = __Nothing__literal
-var __Mission__spaceMission__station__Main__Operation__ReceiveData__activeState : __Mission__spaceMission__station__Main__Operation__ReceiveData__states__type = __Nothing__literal
+ctrl var __Mission__spaceMission__station__dataEvent__isActive : boolean = false
+ctrl var __Mission__spaceMission__station__startEvent__isActive : boolean = false
+ctrl var __Mission__spaceMission__station__shutdownEvent__isActive : boolean = false
+ctrl var __Mission__spaceMission__station__pingEvent__isActive : boolean = false
+var __Mission__spaceMission__station__pingTimeout__remainingTime : integer = 0
+var __Mission__spaceMission__station__startTimeout__remainingTime : integer = 0
+ctrl var __Mission__spaceMission__station__Main__activeState : __Mission__spaceMission__station__Main__states__type = __Nothing__literal
+ctrl var __Mission__spaceMission__spacecraft__pingEvent__isActive : boolean = false
+ctrl var __Mission__spaceMission__spacecraft__dataEvent__isActive : boolean = false
+var __Mission__spaceMission__spacecraft__rechargeTimeout__remainingTime : integer = 0
+var __Mission__spaceMission__spacecraft__consumeTimeout__remainingTime : integer = 0
+var __Mission__spaceMission__spacecraft__transmitTimeout__remainingTime : integer = 0
+ctrl var __Mission__spaceMission__spacecraft__Communication__activeState : __Mission__spaceMission__spacecraft__Communication__states__type = __Nothing__literal
+ctrl var __Mission__spaceMission__spacecraft__Battery__activeState : __Mission__spaceMission__spacecraft__Battery__states__type = __Nothing__literal
+ctrl var __Mission__spaceMission__station__Main__Operation__ReceiveData__activeState : __Mission__spaceMission__station__Main__Operation__ReceiveData__states__type = __Nothing__literal
+ctrl var __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState : __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__states__type = __Nothing__literal
+ctrl var __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState : __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__states__type = __Nothing__literal
 
 trans {
     havoc __Mission__spaceMission__station__startEvent__isActive;
     havoc __Mission__spaceMission__station__shutdownEvent__isActive;
+    __Mission__spaceMission__station__pingEvent__isActive := false;
+    choice {
+        choice {
+            assume (__Mission__spaceMission__station__startEvent__isActive);
+            assume ((__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Idle__literal));
+            __Mission__spaceMission__station__Main__activeState := __Nothing__literal;
+            __Mission__spaceMission__station__Main__activeState := __Mission__spaceMission__station__Main__Operation__literal;
+            __Mission__spaceMission__station__pingTimeout__remainingTime := 5000;
+            __Mission__spaceMission__station__pingEvent__isActive := true;
+            __Mission__spaceMission__station__Main__Operation__ReceiveData__activeState := __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal;
+        } or {
+            assume ((__Mission__spaceMission__station__startTimeout__remainingTime <= 0));
+            assume ((__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Idle__literal));
+            __Mission__spaceMission__station__Main__activeState := __Nothing__literal;
+            __Mission__spaceMission__station__Main__activeState := __Mission__spaceMission__station__Main__Operation__literal;
+            __Mission__spaceMission__station__pingTimeout__remainingTime := 5000;
+            __Mission__spaceMission__station__pingEvent__isActive := true;
+            __Mission__spaceMission__station__Main__Operation__ReceiveData__activeState := __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal;
+        } or {
+            assume (__Mission__spaceMission__station__shutdownEvent__isActive);
+            assume ((__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Operation__literal));
+            __Mission__spaceMission__station__Main__activeState := __Nothing__literal;
+            if ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal)) {
+                __Mission__spaceMission__station__Main__Operation__ReceiveData__activeState := __Nothing__literal;
+            }
+            __Mission__spaceMission__station__Main__activeState := __Mission__spaceMission__station__Main__Idle__literal;
+            __Mission__spaceMission__station__startTimeout__remainingTime := 1500;
+        } or {
+            assume ((__Mission__spaceMission__station__pingTimeout__remainingTime <= 0));
+            assume ((__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Operation__literal));
+            __Mission__spaceMission__station__Main__activeState := __Nothing__literal;
+            if ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal)) {
+                __Mission__spaceMission__station__Main__Operation__ReceiveData__activeState := __Nothing__literal;
+            }
+            __Mission__spaceMission__station__Main__activeState := __Mission__spaceMission__station__Main__Operation__literal;
+            __Mission__spaceMission__station__pingTimeout__remainingTime := 5000;
+            __Mission__spaceMission__station__pingEvent__isActive := true;
+            __Mission__spaceMission__station__Main__Operation__ReceiveData__activeState := __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal;
+        } or {
+            assume (! (((((__Mission__spaceMission__station__startEvent__isActive && (__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Idle__literal)) || ((__Mission__spaceMission__station__startTimeout__remainingTime <= 0) && (__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Idle__literal))) || ((__Mission__spaceMission__station__shutdownEvent__isActive && (__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Operation__literal)) && ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal) || ! ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal))))) || (((__Mission__spaceMission__station__pingTimeout__remainingTime <= 0) && (__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Operation__literal)) && ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal) || ! ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal)))))));
+            assume (__Mission__spaceMission__station__dataEvent__isActive);
+            assume ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal));
+            __Mission__spaceMission__station__Main__Operation__ReceiveData__activeState := __Nothing__literal;
+            __Mission__spaceMission__station__receivedData := (__Mission__spaceMission__station__receivedData + 1);
+            __Mission__spaceMission__station__pingEvent__isActive := true;
+            __Mission__spaceMission__station__Main__Operation__ReceiveData__activeState := __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal;
+        }
+    } or {
+        assume (! ((((((__Mission__spaceMission__station__startEvent__isActive && (__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Idle__literal)) || ((__Mission__spaceMission__station__startTimeout__remainingTime <= 0) && (__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Idle__literal))) || ((__Mission__spaceMission__station__shutdownEvent__isActive && (__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Operation__literal)) && ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal) || ! ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal))))) || (((__Mission__spaceMission__station__pingTimeout__remainingTime <= 0) && (__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Operation__literal)) && ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal) || ! ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal))))) || (! (((((__Mission__spaceMission__station__startEvent__isActive && (__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Idle__literal)) || ((__Mission__spaceMission__station__startTimeout__remainingTime <= 0) && (__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Idle__literal))) || ((__Mission__spaceMission__station__shutdownEvent__isActive && (__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Operation__literal)) && ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal) || ! ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal))))) || (((__Mission__spaceMission__station__pingTimeout__remainingTime <= 0) && (__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Operation__literal)) && ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal) || ! ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal)))))) && (__Mission__spaceMission__station__dataEvent__isActive && (__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal))))));
+    }
+    __Mission__spaceMission__station__dataEvent__isActive := false;
+    __Mission__spaceMission__station__startEvent__isActive := false;
+    __Mission__spaceMission__station__shutdownEvent__isActive := false;
     __Mission__spaceMission__spacecraft__dataEvent__isActive := false;
     choice {
-        assume ((__Mission__spaceMission__spacecraft__recharging == false));
-        assume (__Mission__spaceMission__spacecraft__pingEvent__isActive);
-        assume ((__Mission__spaceMission__spacecraft__Communication__activeState == __Mission__spaceMission__spacecraft__Communication__WaitingPing__literal));
-        __Mission__spaceMission__spacecraft__Communication__activeState := __Nothing__literal;
-        __Mission__spaceMission__spacecraft__Communication__activeState := __Mission__spaceMission__spacecraft__Communication__Transmitting__literal;
-        __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState := __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal;
-        __Mission__spaceMission__spacecraft__transmitTimeout__deltaTime := 1500;
-        __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState := __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal;
-        __Mission__spaceMission__spacecraft__consumeTimeout__deltaTime := 1000;
-    } or {
-        assume ((__Mission__spaceMission__spacecraft__batteryCharge < 40));
-        assume ((__Mission__spaceMission__spacecraft__consumeTimeout__deltaTime <= 0));
-        assume ((__Mission__spaceMission__spacecraft__Communication__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__literal));
-        __Mission__spaceMission__spacecraft__Communication__activeState := __Nothing__literal;
-        if ((__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal)) {
-            __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState := __Nothing__literal;
-        }
-        if ((__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal)) {
-            __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState := __Nothing__literal;
-        }
-        __Mission__spaceMission__spacecraft__Communication__activeState := __Mission__spaceMission__spacecraft__Communication__WaitingPing__literal;
-    } or {
-        assume (((__Mission__spaceMission__spacecraft__data <= 1) || (__Mission__spaceMission__spacecraft__batteryCharge < 40)));
-        assume ((__Mission__spaceMission__spacecraft__transmitTimeout__deltaTime <= 0));
-        assume ((__Mission__spaceMission__spacecraft__Communication__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__literal));
-        __Mission__spaceMission__spacecraft__Communication__activeState := __Nothing__literal;
-        if ((__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal)) {
-            __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState := __Nothing__literal;
-        }
-        if ((__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal)) {
-            __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState := __Nothing__literal;
-        }
-        __Mission__spaceMission__spacecraft__Communication__activeState := __Mission__spaceMission__spacecraft__Communication__WaitingPing__literal;
-    } or {
-        assume (! ((((((__Mission__spaceMission__spacecraft__recharging == false) && __Mission__spaceMission__spacecraft__pingEvent__isActive) && (__Mission__spaceMission__spacecraft__Communication__activeState == __Mission__spaceMission__spacecraft__Communication__WaitingPing__literal)) || ((((__Mission__spaceMission__spacecraft__batteryCharge < 40) && (__Mission__spaceMission__spacecraft__consumeTimeout__deltaTime <= 0)) && (__Mission__spaceMission__spacecraft__Communication__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__literal)) && (((__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal) || ! ((__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal))) && ((__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal) || ! ((__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal)))))) || (((((__Mission__spaceMission__spacecraft__data <= 1) || (__Mission__spaceMission__spacecraft__batteryCharge < 40)) && (__Mission__spaceMission__spacecraft__transmitTimeout__deltaTime <= 0)) && (__Mission__spaceMission__spacecraft__Communication__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__literal)) && (((__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal) || ! ((__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal))) && ((__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal) || ! ((__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal))))))));
         choice {
-            assume (((__Mission__spaceMission__spacecraft__data > 1) && (__Mission__spaceMission__spacecraft__batteryCharge >= 40)));
-            assume ((__Mission__spaceMission__spacecraft__transmitTimeout__deltaTime <= 0));
+            assume ((__Mission__spaceMission__spacecraft__recharging == false));
+            assume (__Mission__spaceMission__spacecraft__pingEvent__isActive);
+            assume ((__Mission__spaceMission__spacecraft__Communication__activeState == __Mission__spaceMission__spacecraft__Communication__WaitingPing__literal));
+            __Mission__spaceMission__spacecraft__Communication__activeState := __Nothing__literal;
+            __Mission__spaceMission__spacecraft__Communication__activeState := __Mission__spaceMission__spacecraft__Communication__Transmitting__literal;
+            __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState := __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal;
+            __Mission__spaceMission__spacecraft__transmitTimeout__remainingTime := 1500;
+            __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState := __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal;
+            __Mission__spaceMission__spacecraft__consumeTimeout__remainingTime := 1000;
+        } or {
+            assume ((__Mission__spaceMission__spacecraft__batteryCharge < 40));
+            assume ((__Mission__spaceMission__spacecraft__consumeTimeout__remainingTime <= 0));
+            assume ((__Mission__spaceMission__spacecraft__Communication__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__literal));
+            __Mission__spaceMission__spacecraft__Communication__activeState := __Nothing__literal;
+            if ((__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal)) {
+                __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState := __Nothing__literal;
+            }
+            if ((__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal)) {
+                __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState := __Nothing__literal;
+            }
+            __Mission__spaceMission__spacecraft__Communication__activeState := __Mission__spaceMission__spacecraft__Communication__WaitingPing__literal;
+        } or {
+            assume (((__Mission__spaceMission__spacecraft__data <= 0) || (__Mission__spaceMission__spacecraft__batteryCharge < 40)));
+            assume ((__Mission__spaceMission__spacecraft__transmitTimeout__remainingTime <= 0));
+            assume ((__Mission__spaceMission__spacecraft__Communication__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__literal));
+            __Mission__spaceMission__spacecraft__Communication__activeState := __Nothing__literal;
+            if ((__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal)) {
+                __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState := __Nothing__literal;
+            }
+            if ((__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal)) {
+                __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState := __Nothing__literal;
+            }
+            __Mission__spaceMission__spacecraft__Communication__activeState := __Mission__spaceMission__spacecraft__Communication__WaitingPing__literal;
+        } or {
+            assume (! ((((((__Mission__spaceMission__spacecraft__recharging == false) && __Mission__spaceMission__spacecraft__pingEvent__isActive) && (__Mission__spaceMission__spacecraft__Communication__activeState == __Mission__spaceMission__spacecraft__Communication__WaitingPing__literal)) || ((((__Mission__spaceMission__spacecraft__batteryCharge < 40) && (__Mission__spaceMission__spacecraft__consumeTimeout__remainingTime <= 0)) && (__Mission__spaceMission__spacecraft__Communication__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__literal)) && (((__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal) || ! ((__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal))) && ((__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal) || ! ((__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal)))))) || (((((__Mission__spaceMission__spacecraft__data <= 0) || (__Mission__spaceMission__spacecraft__batteryCharge < 40)) && (__Mission__spaceMission__spacecraft__transmitTimeout__remainingTime <= 0)) && (__Mission__spaceMission__spacecraft__Communication__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__literal)) && (((__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal) || ! ((__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal))) && ((__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal) || ! ((__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal))))))));
+            assume (! (((__Mission__spaceMission__spacecraft__data <= 0) || (__Mission__spaceMission__spacecraft__batteryCharge < 40))));
+            assume ((__Mission__spaceMission__spacecraft__transmitTimeout__remainingTime <= 0));
             assume ((__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal));
             __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState := __Nothing__literal;
             __Mission__spaceMission__spacecraft__data := (__Mission__spaceMission__spacecraft__data - 1);
             __Mission__spaceMission__spacecraft__dataEvent__isActive := true;
             __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState := __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal;
-            __Mission__spaceMission__spacecraft__transmitTimeout__deltaTime := 1500;
-        } or {
-            assume (! (((((__Mission__spaceMission__spacecraft__data > 1) && (__Mission__spaceMission__spacecraft__batteryCharge >= 40)) && (__Mission__spaceMission__spacecraft__transmitTimeout__deltaTime <= 0)) && (__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal))));
-        }
-        choice {
+            __Mission__spaceMission__spacecraft__transmitTimeout__remainingTime := 1500;
             assume ((__Mission__spaceMission__spacecraft__batteryCharge >= 40));
-            assume ((__Mission__spaceMission__spacecraft__consumeTimeout__deltaTime <= 0));
+            assume ((__Mission__spaceMission__spacecraft__consumeTimeout__remainingTime <= 0));
             assume ((__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal));
             __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState := __Nothing__literal;
             __Mission__spaceMission__spacecraft__batteryCharge := (__Mission__spaceMission__spacecraft__batteryCharge - 10);
             __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState := __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal;
-            __Mission__spaceMission__spacecraft__consumeTimeout__deltaTime := 1000;
-        } or {
-            assume (! ((((__Mission__spaceMission__spacecraft__batteryCharge >= 40) && (__Mission__spaceMission__spacecraft__consumeTimeout__deltaTime <= 0)) && (__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal))));
+            __Mission__spaceMission__spacecraft__consumeTimeout__remainingTime := 1000;
         }
-    }
-    choice {
-        assume ((__Mission__spaceMission__spacecraft__batteryCharge < 80));
-        assume ((__Mission__spaceMission__spacecraft__consumeTimeout__deltaTime <= 0));
-        assume ((__Mission__spaceMission__spacecraft__Battery__activeState == __Mission__spaceMission__spacecraft__Battery__NotRecharging__literal));
-        __Mission__spaceMission__spacecraft__Battery__activeState := __Nothing__literal;
-        __Mission__spaceMission__spacecraft__Battery__activeState := __Mission__spaceMission__spacecraft__Battery__Recharging__literal;
-        __Mission__spaceMission__spacecraft__rechargeTimeout__deltaTime := 10000;
-        __Mission__spaceMission__spacecraft__recharging := true;
+        choice {
+            assume ((__Mission__spaceMission__spacecraft__batteryCharge < 80));
+            assume ((__Mission__spaceMission__spacecraft__consumeTimeout__remainingTime <= 0));
+            assume ((__Mission__spaceMission__spacecraft__Battery__activeState == __Mission__spaceMission__spacecraft__Battery__NotRecharging__literal));
+            __Mission__spaceMission__spacecraft__Battery__activeState := __Nothing__literal;
+            __Mission__spaceMission__spacecraft__Battery__activeState := __Mission__spaceMission__spacecraft__Battery__Recharging__literal;
+            __Mission__spaceMission__spacecraft__rechargeTimeout__remainingTime := 2000;
+            __Mission__spaceMission__spacecraft__recharging := true;
+        } or {
+            assume ((__Mission__spaceMission__spacecraft__batteryCharge < 100));
+            assume ((__Mission__spaceMission__spacecraft__rechargeTimeout__remainingTime <= 0));
+            assume ((__Mission__spaceMission__spacecraft__Battery__activeState == __Mission__spaceMission__spacecraft__Battery__Recharging__literal));
+            __Mission__spaceMission__spacecraft__Battery__activeState := __Nothing__literal;
+            __Mission__spaceMission__spacecraft__batteryCharge := (__Mission__spaceMission__spacecraft__batteryCharge + 10);
+            __Mission__spaceMission__spacecraft__Battery__activeState := __Mission__spaceMission__spacecraft__Battery__Recharging__literal;
+            __Mission__spaceMission__spacecraft__rechargeTimeout__remainingTime := 2000;
+            __Mission__spaceMission__spacecraft__recharging := true;
+        } or {
+            assume ((__Mission__spaceMission__spacecraft__batteryCharge == 100));
+            assume ((__Mission__spaceMission__spacecraft__rechargeTimeout__remainingTime <= 0));
+            assume ((__Mission__spaceMission__spacecraft__Battery__activeState == __Mission__spaceMission__spacecraft__Battery__Recharging__literal));
+            __Mission__spaceMission__spacecraft__Battery__activeState := __Nothing__literal;
+            __Mission__spaceMission__spacecraft__Battery__activeState := __Mission__spaceMission__spacecraft__Battery__NotRecharging__literal;
+            __Mission__spaceMission__spacecraft__recharging := false;
+        }
     } or {
-        assume ((__Mission__spaceMission__spacecraft__batteryCharge < 100));
-        assume ((__Mission__spaceMission__spacecraft__rechargeTimeout__deltaTime <= 0));
-        assume ((__Mission__spaceMission__spacecraft__Battery__activeState == __Mission__spaceMission__spacecraft__Battery__Recharging__literal));
-        __Mission__spaceMission__spacecraft__Battery__activeState := __Nothing__literal;
-        __Mission__spaceMission__spacecraft__batteryCharge := (__Mission__spaceMission__spacecraft__batteryCharge + 10);
-        __Mission__spaceMission__spacecraft__Battery__activeState := __Mission__spaceMission__spacecraft__Battery__Recharging__literal;
-        __Mission__spaceMission__spacecraft__rechargeTimeout__deltaTime := 10000;
-        __Mission__spaceMission__spacecraft__recharging := true;
-    } or {
-        assume ((__Mission__spaceMission__spacecraft__batteryCharge == 100));
-        assume ((__Mission__spaceMission__spacecraft__rechargeTimeout__deltaTime <= 0));
-        assume ((__Mission__spaceMission__spacecraft__Battery__activeState == __Mission__spaceMission__spacecraft__Battery__Recharging__literal));
-        __Mission__spaceMission__spacecraft__Battery__activeState := __Nothing__literal;
-        __Mission__spaceMission__spacecraft__Battery__activeState := __Mission__spaceMission__spacecraft__Battery__NotRecharging__literal;
-        __Mission__spaceMission__spacecraft__recharging := false;
-    } or {
-        assume (! ((((((__Mission__spaceMission__spacecraft__batteryCharge < 80) && (__Mission__spaceMission__spacecraft__consumeTimeout__deltaTime <= 0)) && (__Mission__spaceMission__spacecraft__Battery__activeState == __Mission__spaceMission__spacecraft__Battery__NotRecharging__literal)) || (((__Mission__spaceMission__spacecraft__batteryCharge < 100) && (__Mission__spaceMission__spacecraft__rechargeTimeout__deltaTime <= 0)) && (__Mission__spaceMission__spacecraft__Battery__activeState == __Mission__spaceMission__spacecraft__Battery__Recharging__literal))) || (((__Mission__spaceMission__spacecraft__batteryCharge == 100) && (__Mission__spaceMission__spacecraft__rechargeTimeout__deltaTime <= 0)) && (__Mission__spaceMission__spacecraft__Battery__activeState == __Mission__spaceMission__spacecraft__Battery__Recharging__literal)))));
+        assume (! ((((((((__Mission__spaceMission__spacecraft__recharging == false) && __Mission__spaceMission__spacecraft__pingEvent__isActive) && (__Mission__spaceMission__spacecraft__Communication__activeState == __Mission__spaceMission__spacecraft__Communication__WaitingPing__literal)) || ((((__Mission__spaceMission__spacecraft__batteryCharge < 40) && (__Mission__spaceMission__spacecraft__consumeTimeout__remainingTime <= 0)) && (__Mission__spaceMission__spacecraft__Communication__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__literal)) && (((__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal) || ! ((__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal))) && ((__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal) || ! ((__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal)))))) || (((((__Mission__spaceMission__spacecraft__data <= 0) || (__Mission__spaceMission__spacecraft__batteryCharge < 40)) && (__Mission__spaceMission__spacecraft__transmitTimeout__remainingTime <= 0)) && (__Mission__spaceMission__spacecraft__Communication__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__literal)) && (((__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal) || ! ((__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal))) && ((__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal) || ! ((__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal)))))) || (! ((((((__Mission__spaceMission__spacecraft__recharging == false) && __Mission__spaceMission__spacecraft__pingEvent__isActive) && (__Mission__spaceMission__spacecraft__Communication__activeState == __Mission__spaceMission__spacecraft__Communication__WaitingPing__literal)) || ((((__Mission__spaceMission__spacecraft__batteryCharge < 40) && (__Mission__spaceMission__spacecraft__consumeTimeout__remainingTime <= 0)) && (__Mission__spaceMission__spacecraft__Communication__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__literal)) && (((__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal) || ! ((__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal))) && ((__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal) || ! ((__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal)))))) || (((((__Mission__spaceMission__spacecraft__data <= 0) || (__Mission__spaceMission__spacecraft__batteryCharge < 40)) && (__Mission__spaceMission__spacecraft__transmitTimeout__remainingTime <= 0)) && (__Mission__spaceMission__spacecraft__Communication__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__literal)) && (((__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal) || ! ((__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal))) && ((__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal) || ! ((__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal))))))) && (((! (((__Mission__spaceMission__spacecraft__data <= 0) || (__Mission__spaceMission__spacecraft__batteryCharge < 40))) && (__Mission__spaceMission__spacecraft__transmitTimeout__remainingTime <= 0)) && (__Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__SendData__Sending__literal)) && (((__Mission__spaceMission__spacecraft__batteryCharge >= 40) && (__Mission__spaceMission__spacecraft__consumeTimeout__remainingTime <= 0)) && (__Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__activeState == __Mission__spaceMission__spacecraft__Communication__Transmitting__ConsumePower__Consuming__literal))))) && (((((__Mission__spaceMission__spacecraft__batteryCharge < 80) && (__Mission__spaceMission__spacecraft__consumeTimeout__remainingTime <= 0)) && (__Mission__spaceMission__spacecraft__Battery__activeState == __Mission__spaceMission__spacecraft__Battery__NotRecharging__literal)) || (((__Mission__spaceMission__spacecraft__batteryCharge < 100) && (__Mission__spaceMission__spacecraft__rechargeTimeout__remainingTime <= 0)) && (__Mission__spaceMission__spacecraft__Battery__activeState == __Mission__spaceMission__spacecraft__Battery__Recharging__literal))) || (((__Mission__spaceMission__spacecraft__batteryCharge == 100) && (__Mission__spaceMission__spacecraft__rechargeTimeout__remainingTime <= 0)) && (__Mission__spaceMission__spacecraft__Battery__activeState == __Mission__spaceMission__spacecraft__Battery__Recharging__literal))))));
     }
     __Mission__spaceMission__spacecraft__pingEvent__isActive := false;
-    if ((__Mission__spaceMission__spacecraft__rechargeTimeout__deltaTime > 0)) {
-        __Mission__spaceMission__spacecraft__rechargeTimeout__deltaTime := (__Mission__spaceMission__spacecraft__rechargeTimeout__deltaTime - 1501);
-    }
-    if ((__Mission__spaceMission__spacecraft__consumeTimeout__deltaTime > 0)) {
-        __Mission__spaceMission__spacecraft__consumeTimeout__deltaTime := (__Mission__spaceMission__spacecraft__consumeTimeout__deltaTime - 1501);
-    }
-    if ((__Mission__spaceMission__spacecraft__transmitTimeout__deltaTime > 0)) {
-        __Mission__spaceMission__spacecraft__transmitTimeout__deltaTime := (__Mission__spaceMission__spacecraft__transmitTimeout__deltaTime - 1501);
-    }
-    __Mission__spaceMission__station__pingEvent__isActive := false;
-    choice {
-        assume (__Mission__spaceMission__station__startEvent__isActive);
-        assume ((__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Idle__literal));
-        __Mission__spaceMission__station__Main__activeState := __Nothing__literal;
-        __Mission__spaceMission__station__Main__activeState := __Mission__spaceMission__station__Main__Operation__literal;
-        __Mission__spaceMission__station__pingTimeout__deltaTime := 10000;
-        __Mission__spaceMission__station__pingEvent__isActive := true;
-        __Mission__spaceMission__station__Main__Operation__ReceiveData__activeState := __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal;
-    } or {
-        assume ((__Mission__spaceMission__station__startTimeout__deltaTime <= 0));
-        assume ((__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Idle__literal));
-        __Mission__spaceMission__station__Main__activeState := __Nothing__literal;
-        __Mission__spaceMission__station__Main__activeState := __Mission__spaceMission__station__Main__Operation__literal;
-        __Mission__spaceMission__station__pingTimeout__deltaTime := 10000;
-        __Mission__spaceMission__station__pingEvent__isActive := true;
-        __Mission__spaceMission__station__Main__Operation__ReceiveData__activeState := __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal;
-    } or {
-        assume (__Mission__spaceMission__station__shutdownEvent__isActive);
-        assume ((__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Operation__literal));
-        __Mission__spaceMission__station__Main__activeState := __Nothing__literal;
-        if ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal)) {
-            __Mission__spaceMission__station__Main__Operation__ReceiveData__activeState := __Nothing__literal;
-        }
-        __Mission__spaceMission__station__Main__activeState := __Mission__spaceMission__station__Main__Idle__literal;
-        __Mission__spaceMission__station__startTimeout__deltaTime := 15000;
-    } or {
-        assume ((__Mission__spaceMission__station__pingTimeout__deltaTime <= 0));
-        assume ((__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Operation__literal));
-        __Mission__spaceMission__station__Main__activeState := __Nothing__literal;
-        if ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal)) {
-            __Mission__spaceMission__station__Main__Operation__ReceiveData__activeState := __Nothing__literal;
-        }
-        __Mission__spaceMission__station__Main__activeState := __Mission__spaceMission__station__Main__Operation__literal;
-        __Mission__spaceMission__station__pingTimeout__deltaTime := 10000;
-        __Mission__spaceMission__station__pingEvent__isActive := true;
-        __Mission__spaceMission__station__Main__Operation__ReceiveData__activeState := __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal;
-    } or {
-        assume (! (((((__Mission__spaceMission__station__startEvent__isActive && (__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Idle__literal)) || ((__Mission__spaceMission__station__startTimeout__deltaTime <= 0) && (__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Idle__literal))) || ((__Mission__spaceMission__station__shutdownEvent__isActive && (__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Operation__literal)) && ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal) || ! ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal))))) || (((__Mission__spaceMission__station__pingTimeout__deltaTime <= 0) && (__Mission__spaceMission__station__Main__activeState == __Mission__spaceMission__station__Main__Operation__literal)) && ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal) || ! ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal)))))));
-        choice {
-            assume (__Mission__spaceMission__station__dataEvent__isActive);
-            assume ((__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal));
-            __Mission__spaceMission__station__Main__Operation__ReceiveData__activeState := __Nothing__literal;
-            __Mission__spaceMission__station__receivedData := (__Mission__spaceMission__station__receivedData + 1);
-            __Mission__spaceMission__station__Main__Operation__ReceiveData__activeState := __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal;
-        } or {
-            assume (! ((__Mission__spaceMission__station__dataEvent__isActive && (__Mission__spaceMission__station__Main__Operation__ReceiveData__activeState == __Mission__spaceMission__station__Main__Operation__ReceiveData__Waiting__literal))));
-        }
-    }
-    __Mission__spaceMission__station__dataEvent__isActive := false;
-    __Mission__spaceMission__station__startEvent__isActive := false;
-    __Mission__spaceMission__station__shutdownEvent__isActive := false;
-    if ((__Mission__spaceMission__station__pingTimeout__deltaTime > 0)) {
-        __Mission__spaceMission__station__pingTimeout__deltaTime := (__Mission__spaceMission__station__pingTimeout__deltaTime - 1501);
-    }
-    if ((__Mission__spaceMission__station__startTimeout__deltaTime > 0)) {
-        __Mission__spaceMission__station__startTimeout__deltaTime := (__Mission__spaceMission__station__startTimeout__deltaTime - 1501);
-    }
     if (__Mission__spaceMission__station__pingEvent__isActive) {
         __Mission__spaceMission__spacecraft__pingEvent__isActive := true;
     }
     if (__Mission__spaceMission__spacecraft__dataEvent__isActive) {
         __Mission__spaceMission__station__dataEvent__isActive := true;
     }
+    if ((__Mission__spaceMission__station__pingTimeout__remainingTime > 0)) {
+        __Mission__spaceMission__station__pingTimeout__remainingTime := (__Mission__spaceMission__station__pingTimeout__remainingTime - 1);
+    }
+    if ((__Mission__spaceMission__station__startTimeout__remainingTime > 0)) {
+        __Mission__spaceMission__station__startTimeout__remainingTime := (__Mission__spaceMission__station__startTimeout__remainingTime - 1);
+    }
+    if ((__Mission__spaceMission__spacecraft__rechargeTimeout__remainingTime > 0)) {
+        __Mission__spaceMission__spacecraft__rechargeTimeout__remainingTime := (__Mission__spaceMission__spacecraft__rechargeTimeout__remainingTime - 1);
+    }
+    if ((__Mission__spaceMission__spacecraft__consumeTimeout__remainingTime > 0)) {
+        __Mission__spaceMission__spacecraft__consumeTimeout__remainingTime := (__Mission__spaceMission__spacecraft__consumeTimeout__remainingTime - 1);
+    }
+    if ((__Mission__spaceMission__spacecraft__transmitTimeout__remainingTime > 0)) {
+        __Mission__spaceMission__spacecraft__transmitTimeout__remainingTime := (__Mission__spaceMission__spacecraft__transmitTimeout__remainingTime - 1);
+    }
 }
 
 init {
+    __Mission__spaceMission__station__Main__activeState := __Mission__spaceMission__station__Main__Idle__literal;
+    __Mission__spaceMission__station__startTimeout__remainingTime := 1500;
     __Mission__spaceMission__spacecraft__Communication__activeState := __Mission__spaceMission__spacecraft__Communication__WaitingPing__literal;
     __Mission__spaceMission__spacecraft__Battery__activeState := __Mission__spaceMission__spacecraft__Battery__NotRecharging__literal;
     __Mission__spaceMission__spacecraft__recharging := false;
-    __Mission__spaceMission__station__Main__activeState := __Mission__spaceMission__station__Main__Idle__literal;
-    __Mission__spaceMission__station__startTimeout__deltaTime := 15000;
 }
 
 env {}

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package Statecharts
+package BottomUpStatecharts
 
 import Components
 import Triggers
@@ -46,11 +46,15 @@ type Region {
     }
 
     tran fireTransitions {
-        inline choice transitions -> main else {
-            inline choice states -> fireTransitions
+        //inline choice transitions -> main else {
+        //    inline choice states -> fireTransitions
+        //}
+        inline choice states -> fireTransitions else {
+            inline choice transitions -> main
         }
     }
 }
+
 
 pattern parentState(childState: State, parentState: State) {
     State.regions(parentState, parentRegion)
@@ -65,7 +69,7 @@ type State {
     derived reference parent : Region[0..1] as pattern parentRegion
     derived reference parentState : State[0..1] as pattern parentState
 
-    feature regions : Region[0..*]
+    feature regions : Region[0..1]
 
     feature entryActions : Action[0..*]
     feature exitActions : Action[0..*]
@@ -124,13 +128,8 @@ type State {
     }
 }
 
-pattern transitionParentRegion(transition: AbstractTransition, region: Region) {
-    Region.transitions(region, transition)
-}
-
 type AbstractTransition {
-    derived reference commonRegion : Region[1..1] as pattern transitionParentRegion
-
+    reference commonRegion : Region[1..1]
     reference to : State[1..1]
 
     virtual tran { }

@@ -9,12 +9,12 @@ type __Mission__system__worker__Main__states__type : {
     __Nothing__literal
 }
 
-var __Mission__system__leader__fireEvent__isActive : boolean = false
-var __Mission__system__leader__stopEvent__isActive : boolean = false
-var __Mission__system__leader__startEvent__isActive : boolean = false
-var __Mission__system__leader__Main__activeState : __Mission__system__leader__Main__states__type = __Nothing__literal
-var __Mission__system__worker__startEvent__isActive : boolean = false
-var __Mission__system__worker__Main__activeState : __Mission__system__worker__Main__states__type = __Nothing__literal
+ctrl var __Mission__system__leader__fireEvent__isActive : boolean = false
+ctrl var __Mission__system__leader__stopEvent__isActive : boolean = false
+ctrl var __Mission__system__leader__startEvent__isActive : boolean = false
+ctrl var __Mission__system__leader__Main__activeState : __Mission__system__leader__Main__states__type = __Nothing__literal
+ctrl var __Mission__system__worker__startEvent__isActive : boolean = false
+ctrl var __Mission__system__worker__Main__activeState : __Mission__system__worker__Main__states__type = __Nothing__literal
 
 trans {
     havoc __Mission__system__leader__fireEvent__isActive;

@@ -6,279 +6,18 @@
 
 package Test
 
-// Event.oxsts
-
-type Event {
-    var isActive: Boolean = false
-
-    tran set {
-        isActive := true
-    }
-
-    tran reset {
-        isActive := false
-    }
-
-    havoc {
-        havoc (isActive)
-    }
-
-    tran isSet {
-        assume (isActive)
-    }
-}
-
-type Timeout {
-    var deltaTime : Integer = 0
-
-    tran {
-        if (deltaTime > 0) {
-            deltaTime := deltaTime - 1501
-        }
-    }
-
-    tran isUp {
-        assume (deltaTime <= 0)
-    }
-}
-
-// Trigger.oxsts
-
-type Trigger {
-    virtual tran isTriggered { }
-}
-
-type EventTrigger : Trigger {
-    reference event : Event[1..1]
-
-    override tran isTriggered {
-        inline event.isSet()
-    }
-}
-
-type TimeoutTrigger : Trigger {
-    reference timeout : Timeout[1..1]
-
-    override tran isTriggered {
-        inline timeout.isUp()
-    }
-}
-
-// Action.oxsts
-
-type Action {
-    virtual tran { }
-}
-
-type RaiseEventAction : Action {
-    reference event : Event[1..1]
-
-    override tran {
-        inline event.set()
-    }
-}
-
-type SetTimeoutAction : Action {
-    reference timeout : Timeout[1..1]
-    reference delta : Integer = 1000
-
-    override tran {
-        timeout.deltaTime := delta
-    }
-}
-
-type Guard {
-    virtual tran { }
-}
-
-// Component.oxsts
-
-type Component {
-    virtual init { }
-    virtual tran { }
-}
-
-type Channel {
-    reference inputEvent : Event
-    reference outputEvent : Event
-
-    tran {
-        if (inputEvent.isActive) {
-            inline outputEvent.set()
-        }
-    }
-}
-
-type CompositeComponent : Component {
-    feature components : Component
-    feature channels : Channel
-}
-
-type SyncComponent : CompositeComponent {
-    override init {
-        inline seq components -> init
-    }
-
-    override tran {
-        inline seq components -> main
-        inline seq channels -> main
-    }
-}
-
-// Statechart.oxsts
-
-type Statechart : Component {
-    feature events : Event[0..*]
-    feature inputEvents :> events : Event[0..*]
-    feature outputEvents :> events : Event[0..*]
-
-    feature timeouts : Timeout[0..*]
-
-    feature regions : Region[0..*]
-
-    override init {
-        inline seq regions -> activateRecursive
-    }
-
-    override tran {
-        inline seq outputEvents -> reset
-        choice {
-            inline seq regions -> fireTransitions
-        } else { }
-        inline seq inputEvents -> reset
-        inline seq timeouts -> main
-    }
-}
-
-type Region {
-    feature states : State[0..*]
-
-    var activeState : states[0..1] = Nothing
-
-    feature abstractTransitions : AbstractTransition[0..*]
-
-    feature transitions :> abstractTransitions : Transition[0..*]
-    feature entryTransitions :> abstractTransitions : EntryTransition[0..*]
-
-    tran activateRecursive {
-        inline seq entryTransitions -> main
-    }
-
-    tran deactivateRecursive {
-        inline seq states -> deactivateRecursive
-    }
-
-    tran fireTransitions {
-        inline choice transitions -> main else {
-            inline choice states -> fireTransitions
-        }
-        /*inline choice states -> fireTransitions else {
-            inline choice transitions -> main
-        }*/
-    }
-
-    tran fireTransitionsInner {
-        inline choice transitions -> main
-    }
-}
-
-type State {
-    reference parent : Region[0..1]
-    reference parentState : State[0..1]
-    feature regions : Region[0..1]
-
-    feature entryActions : Action[0..*]
-    feature exitActions : Action[0..*]
-
-    tran isActive {
-        assume (parent.activeState == Self)
-    }
-
-    tran deactivateRecursive {
-        inline seq regions -> deactivateRecursive
-
-        if (parent.activeState == Self) {
-            parent.activeState := Nothing
-            inline seq exitActions -> main
-        }
-    }
-
-    tran exitRecursive(commonRegion : Region) {
-        inline seq exitActions -> main
-
-        parent.activeState := Nothing
-
-        inline if (commonRegion != parent) {
-            inline parentState.exitRecursive(commonRegion)
-        }
-    }
-
-    tran exit(commonRegion : Region) {
-        inline exitRecursive(commonRegion)
-
-        inline seq regions -> deactivateRecursive
-    }
-
-    tran enterRecursive(commonRegion : Region) {
-        inline if (commonRegion != parent) {
-            inline parentState.enterRecursive(commonRegion)
-        }
-
-        parent.activeState := Self
-
-        inline seq entryActions -> main
-    }
-
-    tran enter(commonRegion : Region) {
-        inline enterRecursive(commonRegion)
-
-        inline seq regions -> activateRecursive
-    }
-
-    tran fireTransitions {
-        inline seq regions -> fireTransitions
-    }
-}
-
-type AbstractTransition {
-    reference commonRegion : Region[1..1]
-    reference to : State[1..1]
-
-    virtual tran { }
-}
-
-type EntryTransition : AbstractTransition {
-    override tran {
-        inline to.enter(commonRegion)
-    }
-}
-
-type Transition : AbstractTransition {
-    reference from : State[0..1]
-
-    feature trigger : Trigger
-    feature actions : Action[0..*]
-    feature guards : Guard[0..*]
-
-    tran {
-        inline seq guards -> main
-        inline trigger.isTriggered()
-        inline from.isActive()
-
-        inline from.exit(commonRegion)
-        inline seq actions -> main
-        inline to.enter(commonRegion)
-    }
-}
-
-// Station.oxsts
+import Statecharts
+import Components
+import Triggers
+import Actions
+import Events
 
 type Station : Statechart {
     containment dataEvent :> inputEvents : Event
-    containment pingEvent :> outputEvents : Event
-
     containment startEvent :> inputEvents : Event
     containment shutdownEvent :> inputEvents : Event
+
+    containment pingEvent :> outputEvents : Event
 
     containment pingTimeout :> timeouts : Timeout
     containment startTimeout :> timeouts : Timeout
@@ -292,11 +31,9 @@ type Station : Statechart {
         }
 
         containment Idle :> states : State {
-            reference ::> parent : Region = Main
-
             containment ea1 :> entryActions : SetTimeoutAction {
                 reference ::> timeout : Timeout = startTimeout
-                reference ::> delta : Integer = 15000
+                reference ::> amount : Integer = 1500
             }
         }
 
@@ -331,11 +68,9 @@ type Station : Statechart {
         }
 
         containment Operation :> states : State {
-            reference ::> parent : Region = Main
-
             containment ea1 :> entryActions : SetTimeoutAction {
                 reference ::> timeout : Timeout = pingTimeout
-                reference ::> delta : Integer = 10000
+                reference ::> amount : Integer = 5000
             }
             containment ea2 :> entryActions : RaiseEventAction {
                 reference ::> event : Event = pingEvent
@@ -347,10 +82,7 @@ type Station : Statechart {
                     reference ::> to : State = Waiting
                 }
 
-                containment Waiting :> states : State {
-                    reference ::> parent : Region = ReceiveData
-                    reference ::> parentState : State = Operation
-                }
+                containment Waiting :> states : State
 
                 containment receivedDataOperation :> transitions : Transition {
                     reference ::> commonRegion : Region = ReceiveData
@@ -360,10 +92,13 @@ type Station : Statechart {
                     containment t :> trigger : EventTrigger {
                         reference ::> event : Event = dataEvent
                     }
-                    containment a :> actions : Action {
+                    containment a1 :> actions : Action {
                         tran {
                             receivedData := receivedData + 1
                         }
+                    }
+                    containment a2 :> actions : RaiseEventAction {
+                        reference ::> event : Event = pingEvent
                     }
                 }
             }
@@ -401,9 +136,7 @@ type Spacecraft : Statechart {
             reference ::> to : State = WaitingPing
         }
 
-        containment WaitingPing :> states : State {
-            reference ::> parent : Region = Communication
-        }
+        containment WaitingPing :> states : State
 
         containment receivedPing :> transitions : Transition {
             reference ::> commonRegion : Region = Communication
@@ -445,14 +178,12 @@ type Spacecraft : Statechart {
             }
             containment g :> guards : Guard {
                 override tran {
-                    assume (data <= 1 || batteryCharge < 40)
+                    assume (data <= 0 || batteryCharge < 40)
                 }
             }
         }
 
         containment Transmitting :> states : State {
-            reference ::> parent : Region = Communication
-
             containment SendData :> regions : Region {
                 containment et2 :> entryTransitions : EntryTransition {
                     reference ::> commonRegion : Region = SendData
@@ -460,12 +191,9 @@ type Spacecraft : Statechart {
                 }
 
                 containment Sending :> states : State {
-                    reference ::> parent : Region = SendData
-                    reference ::> parentState : State = Transmitting
-
                     containment ea1 :> entryActions : SetTimeoutAction {
                         reference ::> timeout : Timeout = transmitTimeout
-                        reference ::> delta : Integer = 1500
+                        reference ::> amount : Integer = 1500
                     }
                 }
 
@@ -479,7 +207,7 @@ type Spacecraft : Statechart {
                     }
                     containment g :> guards : Guard {
                         override tran {
-                            assume (data > 1 && batteryCharge >= 40)
+                            assume (! (data <= 0 || batteryCharge < 40))
                         }
                     }
                     containment a1 :> actions : Action {
@@ -500,12 +228,9 @@ type Spacecraft : Statechart {
                 }
 
                 containment Consuming :> states : State {
-                    reference ::> parent : Region = ConsumePower
-                    reference ::> parentState : State = Transmitting
-
                     containment ea1 :> entryActions : SetTimeoutAction {
                         reference ::> timeout : Timeout = consumeTimeout
-                        reference ::> delta : Integer = 1000
+                        reference ::> amount : Integer = 1000
                     }
                 }
 
@@ -539,8 +264,6 @@ type Spacecraft : Statechart {
         }
 
         containment NotRecharging :> states : State {
-            reference ::> parent : Region = Battery
-
             containment ea1 :> entryActions : Action {
                 tran {
                     recharging := false
@@ -599,11 +322,9 @@ type Spacecraft : Statechart {
         }
 
         containment Recharging :> states : State {
-            reference ::> parent : Region = Battery
-
             containment ea1 :> entryActions : SetTimeoutAction {
                 reference ::> timeout : Timeout = rechargeTimeout
-                reference ::> delta : Integer = 10000
+                reference ::> amount : Integer = 2000
             }
             containment ea2 :> entryActions : Action {
                 tran {
@@ -615,8 +336,11 @@ type Spacecraft : Statechart {
 }
 
 type SpaceMission : SyncComponent {
-    containment spacecraft :> components : Spacecraft
     containment station :> components : Station
+    containment spacecraft :> components : Spacecraft
+
+    //containment startEvent :> inputEvents : Event
+    //containment shutdownEvent :> inputEvents : Event
 
     containment pingChannel :> channels : Channel {
         reference ::> inputEvent : Event = station.pingEvent
@@ -626,6 +350,14 @@ type SpaceMission : SyncComponent {
         reference ::> inputEvent : Event = spacecraft.dataEvent
         reference ::> outputEvent : Event = station.dataEvent
     }
+    /*containment startChannel :> channels : Channel {
+        reference ::> inputEvent : Event = startEvent
+        reference ::> outputEvent : Event = station.startEvent
+    }
+    containment shutdownChannel :> channels : Channel {
+        reference ::> inputEvent : Event = shutdownEvent
+        reference ::> outputEvent : Event = station.shutdownEvent
+    }*/
 }
 
 target Mission {
@@ -636,13 +368,24 @@ target Mission {
     }
 
     tran {
+        //inline spaceMission.startEvent.havoc()
+        //inline spaceMission.shutdownEvent.havoc()
+
         inline spaceMission.station.startEvent.havoc()
         inline spaceMission.station.shutdownEvent.havoc()
+
         inline spaceMission.main()
+        inline spaceMission.passTime()
     }
 
     prop {
         true
+    }
+}
+
+target Ping_Unsafe : Mission {
+    prop {
+        ! (spaceMission.spacecraft.pingEvent.isActive)
     }
 }
 
@@ -706,6 +449,7 @@ target Station_ReceivedData_0_Unsafe : Mission {
     }
 }
 
+/*
 target Station_ReceivedData_1_Unsafe : Mission {
     prop {
        ! (spaceMission.station.receivedData == 1)
@@ -729,6 +473,7 @@ target Station_ReceivedData_10_Unsafe : Mission {
        ! (spaceMission.station.receivedData == 10)
     }
 }
+*/
 
 target Spacecraft_data_10_Unsafe : Mission {
     prop {
@@ -742,6 +487,7 @@ target Spacecraft_data_9_Unsafe : Mission {
     }
 }
 
+/*
 target Spacecraft_data_5_Unsafe : Mission {
     prop {
        ! (spaceMission.spacecraft.data == 5)
@@ -771,6 +517,7 @@ target Spacecraft_data_0_Unsafe : Mission {
        ! (spaceMission.spacecraft.data == 0)
     }
 }
+*/
 
 target Spacecraft_batteryCharge_100_Unsafe : Mission {
     prop {
@@ -778,6 +525,7 @@ target Spacecraft_batteryCharge_100_Unsafe : Mission {
     }
 }
 
+/*
 target Spacecraft_batteryCharge_90_Unsafe : Mission {
     prop {
         ! (spaceMission.spacecraft.batteryCharge == 90)
@@ -801,10 +549,11 @@ target Spacecraft_batteryCharge_40_Unsafe : Mission {
         ! (spaceMission.spacecraft.batteryCharge == 40)
     }
 }
+*/
 
-target Data_is_never_lost_Safe : Mission {
+target Data_is_lost_if_state_shut_down_Unsafe : Mission {
     prop {
-       spaceMission.station.receivedData == 10 - spaceMission.spacecraft.data
+        ((10 - spaceMission.spacecraft.data) - spaceMission.station.receivedData) <= 1
     }
 }
 

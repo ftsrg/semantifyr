@@ -6,256 +6,11 @@
 
 package Test
 
-// Event.oxsts
-
-type Event {
-    var isActive: Boolean = false
-
-    tran set {
-        isActive := true
-    }
-
-    tran reset {
-        isActive := false
-    }
-
-    havoc {
-        havoc (isActive)
-    }
-
-    tran isSet {
-        assume (isActive)
-    }
-}
-
-type Timeout {
-    var deltaTime : Integer = 0 - 1
-
-    tran {
-        if (deltaTime >= 0) {
-            deltaTime := deltaTime - 1
-        }
-    }
-
-    tran isUp {
-        assume (deltaTime == 0)
-    }
-}
-
-// Trigger.oxsts
-
-type Trigger {
-    virtual tran isTriggered { }
-}
-
-type EventTrigger : Trigger {
-    reference event : Event[1..1]
-
-    override tran isTriggered {
-        inline event.isSet()
-    }
-}
-
-type TimeoutTrigger : Trigger {
-    reference timeout : Timeout[1..1]
-
-    override tran isTriggered {
-        inline timeout.isUp()
-    }
-}
-
-// Action.oxsts
-
-type Action {
-    virtual tran { }
-}
-
-type RaiseEventAction : Action {
-    reference event : Event[1..1]
-
-    override tran {
-        inline event.set()
-    }
-}
-
-type SetTimeoutAction : Action {
-    reference timeout : Timeout[1..1]
-}
-
-// Component.oxsts
-
-type Component {
-    virtual init { }
-    virtual tran { }
-}
-
-type Channel {
-    reference inputEvent : Event
-    reference outputEvent : Event
-
-    tran {
-        if (inputEvent.isActive) {
-            inline outputEvent.set()
-        }
-    }
-}
-
-type CompositeComponent : Component {
-    feature components : Component
-    feature channels : Channel
-}
-
-type SyncComponent : CompositeComponent {
-    override init {
-        inline seq components -> init
-    }
-
-    override tran {
-        inline seq components -> main
-        inline seq channels -> main
-    }
-}
-
-// Statechart.oxsts
-
-type Statechart : Component {
-    feature events : Event[0..*]
-    feature inputEvents :> events : Event[0..*]
-    feature outputEvents :> events : Event[0..*]
-
-    feature timeouts : Timeout[0..*]
-
-    feature regions : Region[0..*]
-
-    override init {
-        inline seq regions -> activateRecursive
-    }
-
-    override tran {
-        inline seq outputEvents -> reset
-        inline choice regions -> fireTransitions else { }
-        inline seq inputEvents -> reset
-        inline seq timeouts -> main
-    }
-}
-
-type Region {
-    feature states : State[0..*]
-
-    var activeState : states[0..1] = Nothing
-
-    feature abstractTransitions : AbstractTransition[0..*]
-
-    feature transitions :> abstractTransitions : Transition[0..*]
-    feature entryTransitions :> abstractTransitions : EntryTransition[0..*]
-
-    tran activateRecursive {
-        inline seq entryTransitions -> main
-    }
-
-    tran deactivateRecursive {
-        inline seq states -> deactivateRecursive
-    }
-
-    tran fireTransitions {
-        inline choice transitions -> main else {
-            inline choice states -> fireTransitions
-        }
-    }
-
-    tran fireTransitionsInner {
-        inline choice transitions -> main
-    }
-}
-
-type State {
-    reference parent : Region[0..1]
-    reference parentState : State[0..1]
-    feature regions : Region[0..1]
-
-    feature entryActions : Action[0..*]
-    feature exitActions : Action[0..*]
-
-    tran isActive {
-        assume (parent.activeState == Self)
-    }
-
-    tran deactivateRecursive {
-        inline seq regions -> deactivateRecursive
-
-        if (parent.activeState == Self) {
-            parent.activeState := Nothing
-            inline seq exitActions -> main
-        }
-    }
-
-    tran exitRecursive(commonRegion : Region) {
-        inline seq exitActions -> main
-
-        parent.activeState := Nothing
-
-        inline if (commonRegion != parent) {
-            inline parentState.exitRecursive(commonRegion)
-        }
-    }
-
-    tran exit(commonRegion : Region) {
-        inline exitRecursive(commonRegion)
-
-        inline seq regions -> deactivateRecursive
-    }
-
-    tran enterRecursive(commonRegion : Region) {
-        inline if (commonRegion != parent) {
-            inline parentState.enterRecursive(commonRegion)
-        }
-
-        parent.activeState := Self
-
-        inline seq entryActions -> main
-    }
-
-    tran enter(commonRegion : Region) {
-        inline enterRecursive(commonRegion)
-
-        inline seq regions -> activateRecursive
-    }
-
-    tran fireTransitions {
-        inline seq regions -> fireTransitionsInner
-    }
-}
-
-type AbstractTransition {
-    reference commonRegion : Region[1..1]
-    reference to : State[1..1]
-
-    virtual tran { }
-}
-
-type EntryTransition : AbstractTransition {
-    override tran {
-        inline to.enter(commonRegion)
-    }
-}
-
-type Transition : AbstractTransition {
-    reference from : State[0..1]
-
-    feature trigger : Trigger
-    feature actions : Action[0..*]
-
-    tran {
-        inline trigger.isTriggered()
-        inline from.isActive()
-
-        inline from.exit(commonRegion)
-        inline seq actions -> main
-        inline to.enter(commonRegion)
-    }
-}
-
-// Mission.oxsts
+import Statecharts
+import Components
+import Triggers
+import Actions
+import Events
 
 type LeaderStatechart : Statechart {
     containment fireEvent :> inputEvents : Event
@@ -264,14 +19,10 @@ type LeaderStatechart : Statechart {
 
     containment Main :> regions : Region {
        containment et1 :> entryTransitions : EntryTransition {
-            reference ::> commonRegion : Region = Main
             reference ::> to : State = Idle
         }
-        containment Idle :> states : State {
-            reference ::> parent : Region = Main
-        }
+        containment Idle :> states : State
         containment idleToOperational :> transitions : Transition {
-            reference ::> commonRegion : Region = Main
             reference ::> from : State = Idle
             reference ::> to : State = Operational
             containment t1Trigger :> trigger : EventTrigger {
@@ -282,43 +33,34 @@ type LeaderStatechart : Statechart {
             }
         }
         containment operationalToIdle :> transitions : Transition {
-            reference ::> commonRegion : Region = Main
             reference ::> from : State = Operational
             reference ::> to : State = Idle
             containment t2Trigger :> trigger : EventTrigger {
                 reference ::> event : Event = stopEvent
             }
         }
-        containment Operational :> states : State {
-            reference ::> parent : Region = Main
-        }
+        containment Operational :> states : State
     }
 }
+
 type WorkerStatechart : Statechart {
     containment startEvent :> inputEvents : Event
 
     containment Main :> regions : Region {
         containment et :> entryTransitions : EntryTransition {
-            reference ::> commonRegion : Region = Main
             reference ::> to : State = Idle
         }
-        containment Idle :> states : State {
-            reference ::> parent : Region = Main
-        }
+        containment Idle :> states : State
         containment idleToOperational :> transitions : Transition {
-            reference ::> commonRegion : Region = Main
             reference ::> from : State = Idle
             reference ::> to : State = Operational
             containment t1Trigger :> trigger : EventTrigger {
                 reference ::> event : Event = startEvent
             }
         }
-        containment Operational :> states : State {
-            reference ::> parent : Region = Main
-        }
+        containment Operational :> states : State
     }
 }
-
 
 type System : SyncComponent {
     containment leader :> components : LeaderStatechart
@@ -329,7 +71,7 @@ type System : SyncComponent {
     }
 }
 
-target Mission {
+abstract target SimpleMission {
     containment system : System
 
     init {
@@ -343,9 +85,34 @@ target Mission {
         // executing the system
         inline system.main()
     }
+}
 
+target Mission : SimpleMission {
     prop {
-        system.worker.Main.activeState !=
-            system.worker.Main.Operational
+        system.worker.Main.activeState != system.worker.Main.Operational
+    }
+}
+
+target LeaderIdle_Unsafe : SimpleMission {
+    prop {
+        ! (system.leader.Main.activeState == system.leader.Main.Idle)
+    }
+}
+
+target LeaderOperational_Unsafe : SimpleMission {
+    prop {
+        ! (system.leader.Main.activeState == system.leader.Main.Operational)
+    }
+}
+
+target WorkerIdle_Unsafe : SimpleMission {
+    prop {
+        ! (system.worker.Main.activeState == system.worker.Main.Idle)
+    }
+}
+
+target WorkerOperational_Unsafe : SimpleMission {
+    prop {
+        ! (system.worker.Main.activeState == system.worker.Main.Operational)
     }
 }

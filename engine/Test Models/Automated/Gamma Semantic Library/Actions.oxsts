@@ -25,7 +25,7 @@ type SetTimeoutAction : Action {
     reference amount : Integer = 1
 
     override tran {
-        timeout.deltaTime := amount
+        timeout.remainingTime := amount
     }
 }
 

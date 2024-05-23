@@ -7,7 +7,7 @@
 package Events
 
 type Event {
-    var isActive: Boolean = false
+    ctrl var isActive: Boolean = false
 
     tran set {
         isActive := true
@@ -27,15 +27,16 @@ type Event {
 }
 
 type Timeout {
-    var deltaTime : Integer = 0 - 1
+    var remainingTime : Integer = 0
+    reference deltaTime : Integer = 1
 
     tran {
-        if (deltaTime >= 0) {
-            deltaTime := deltaTime - 1
+        if (remainingTime > 0) {
+            remainingTime := remainingTime - deltaTime
         }
     }
 
     tran isUp {
-        assume (deltaTime <= 0)
+        assume (remainingTime <= 0)
     }
 }
