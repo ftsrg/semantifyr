@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
 
 var __Mission__holder__c1__x : integer
 var __Mission__holder__c1__isZero : boolean

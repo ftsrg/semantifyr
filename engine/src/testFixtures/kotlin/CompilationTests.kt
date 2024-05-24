@@ -27,8 +27,18 @@ open class CompilationTest {
     }
 
     fun assertModelEqualsExpected(directory: String) {
-        val expected = File("$directory/expected.xsts").readTextOrEmpty()
-        val actual = File("$directory/model.xsts").readTextOrEmpty()
+        val expected = File("$directory/expected.xsts").readTextOrEmpty().removePrefix(
+            """
+                /*
+                 * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+                 *
+                 * SPDX-License-Identifier: EPL-2.0
+                 */
+                
+
+            """.trimIndent(),
+        ).trim()
+        val actual = File("$directory/model.xsts").readTextOrEmpty().trim()
         Assertions.assertEquals(expected, actual)
     }
 

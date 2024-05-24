@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
 type __Mission__crossroad__controller__Main__states__type : {
     __Mission__crossroad__controller__Main__Operating__literal,
     __Mission__crossroad__controller__Main__Interrupted__literal,
