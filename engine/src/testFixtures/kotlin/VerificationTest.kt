@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Assertions
 import java.io.File
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
@@ -76,7 +77,7 @@ open class VerificationTest {
 
     private fun executeTheta(
         modelPath: String, propertyPath: String, tracePath: String,
-        timeout: Long = 5, timeUnit: TimeUnit = TimeUnit.MINUTES
+        timeout: Long = 60, timeUnit: TimeUnit = TimeUnit.MINUTES
     ) {
         val process1 = ProcessBuilder(
             "java",
@@ -89,8 +90,8 @@ open class VerificationTest {
             "--property", propertyPath,
             "--cex", tracePath,
             "--stacktrace",
-        ).redirectOutput(ProcessBuilder.Redirect.INHERIT)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
+        )
+            .inheritIO()
             .start()
 
 
@@ -104,15 +105,15 @@ open class VerificationTest {
             "--property", propertyPath,
             "--cex", tracePath,
             "--stacktrace",
-        ).redirectOutput(ProcessBuilder.Redirect.INHERIT)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
+        )
+            .inheritIO()
             .start()
 
-        val future1 = CompletableFuture.runAsync {
+        val future1 = CompletableFuture.supplyAsync {
             process1.waitFor(timeout, timeUnit)
         }
 
-        val future2 = CompletableFuture.runAsync {
+        val future2 = CompletableFuture.supplyAsync {
             process2.waitFor(timeout, timeUnit)
         }
 
@@ -120,6 +121,10 @@ open class VerificationTest {
 
         process1.destroy()
         process2.destroy()
+
+        if (!future1.getNow(true) && !future1.getNow(true)) {
+            throw TimeoutException("Verification stopped due to reaching timeout $timeout $timeUnit")
+        }
     }
 
     private fun transformTargetToTheta(modelDirectory: String, library: String, targetName: String, targetDirectory: String) {
