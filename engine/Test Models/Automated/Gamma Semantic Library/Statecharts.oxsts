@@ -47,7 +47,7 @@ type Region {
 
     tran fireTransitions {
         inline choice transitions -> main else {
-            inline choice states -> fireTransitions
+            inline choice states -> fireTransitions else { }
         }
     }
 }
@@ -119,7 +119,10 @@ type State {
         inline if (regions == Nothing) {
             assume (false)
         } else {
-            inline seq regions -> fireTransitions
+            inline isActive()
+            choice {
+                inline seq regions -> fireTransitions
+            } else { }
         }
     }
 }
