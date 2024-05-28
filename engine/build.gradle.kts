@@ -31,6 +31,8 @@ val downloadTheta = tasks.create<Exec>("downloadTheta") {
 tasks.withType(Test::class.java) {
     inputs.dir("Test Models")
 
+    environment("PATH", layout.projectDirectory.dir("theta"))
+
     dependsOn(downloadTheta)
 }
 
