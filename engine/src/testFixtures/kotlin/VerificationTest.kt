@@ -28,7 +28,13 @@ class TargetDefinition(
 
 open class VerificationTest {
     companion object {
-        fun streamTargetsFromFolder(directory: String, library: String): Stream<TargetDefinition> {
+        fun streamTargetsFromFolder(
+            directory: String,
+            library: String,
+            filter: (Target) -> Boolean = {
+                it.name.contains("_Safe") || it.name.contains("_Unsafe")
+            }
+        ): Stream<TargetDefinition> {
             return File(directory).walkTopDown().filter {
                 it.isDirectory
             }.filter {
@@ -41,9 +47,7 @@ open class VerificationTest {
                     it.types
                 }.filterIsInstance<Target>().filter {
                     !it.isAbstract
-                }.filter {
-                    it.name.contains("_Safe") || it.name.contains("_Unsafe")
-                }.map { target ->
+                }.filter(filter).map { target ->
                     TargetDefinition(file.path, target.name, library)
                 }
             }.asStream()

@@ -48,6 +48,15 @@ tasks {
         finalizedBy(tasks.jacocoTestReport)
     }
 
+    val allTests by tasks.creating(Test::class) {
+        useJUnitPlatform()
+
+        minHeapSize = "512m"
+        maxHeapSize = "4G"
+
+        finalizedBy(tasks.jacocoTestReport)
+    }
+
     jacocoTestReport {
         dependsOn(tasks.test)
         reports {

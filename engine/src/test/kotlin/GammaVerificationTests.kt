@@ -17,7 +17,6 @@ import org.junit.jupiter.params.provider.MethodSource
 private val baseDirectory = "Test Models/Automated/Gamma"
 private val libraryDirectory = "Test Models/Automated/Gamma Semantic Library"
 
-@Tag("slow")
 @ExtendWith(InjectionExtension::class)
 @InjectWith(OxstsInjectorProvider::class)
 class GammaVerificationTests : VerificationTest() {
@@ -30,7 +29,14 @@ class GammaVerificationTests : VerificationTest() {
         fun `Simple Mission Verification cases should pass`() = streamTargetsFromFolder("$baseDirectory/SimpleMission", libraryDirectory)
 
         @JvmStatic
-        fun `Spacecraft Verification cases should pass`() = streamTargetsFromFolder("$baseDirectory/Spacecraft", libraryDirectory)
+        fun `Spacecraft Verification cases should pass`() = streamTargetsFromFolder("$baseDirectory/Spacecraft", libraryDirectory) {
+            (it.name.contains("_Safe") || it.name.contains("_Unsafe")) && !it.name.contains("_Slow")
+        }
+
+        @JvmStatic
+        fun `Slow Spacecraft Verification cases should pass`() = streamTargetsFromFolder("$baseDirectory/Spacecraft", libraryDirectory) {
+            (it.name.contains("_Safe") || it.name.contains("_Unsafe")) && it.name.contains("_Slow")
+        }
 
         @BeforeAll
         @JvmStatic
@@ -54,6 +60,13 @@ class GammaVerificationTests : VerificationTest() {
     @ParameterizedTest
     @MethodSource
     fun `Spacecraft Verification cases should pass`(targetDefinition: TargetDefinition) {
+        testVerification(targetDefinition)
+    }
+
+    @Tag("slow")
+    @ParameterizedTest
+    @MethodSource
+    fun `Slow Spacecraft Verification cases should pass`(targetDefinition: TargetDefinition) {
         testVerification(targetDefinition)
     }
 

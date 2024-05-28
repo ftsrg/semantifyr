@@ -430,61 +430,59 @@ target Spacecraft_data_90_Unsafe : Mission {
     }
 }
 
-///* TIMEOUT
-target Spacecraft_data_80_Unsafe : Mission {
+target Spacecraft_data_80_Unsafe_Slow : Mission {
     prop {
        ! (spaceMission.spacecraft.data == 80)
     }
 }
 
-target Spacecraft_data_70_Unsafe : Mission {
+target Spacecraft_data_70_Unsafe_Slow : Mission {
     prop {
        ! (spaceMission.spacecraft.data == 70)
     }
 }
 
-target Spacecraft_data_60_Unsafe : Mission {
+target Spacecraft_data_60_Unsafe_Slow : Mission {
     prop {
        ! (spaceMission.spacecraft.data == 60)
     }
 }
 
-target Spacecraft_data_50_Unsafe : Mission {
+target Spacecraft_data_50_Unsafe_Slow : Mission {
     prop {
        ! (spaceMission.spacecraft.data == 50)
     }
 }
 
-target Spacecraft_data_40_Unsafe : Mission {
+target Spacecraft_data_40_Unsafe_Slow : Mission {
     prop {
        ! (spaceMission.spacecraft.data == 40)
     }
 }
 
-target Spacecraft_data_30_Unsafe : Mission {
+target Spacecraft_data_30_Unsafe_Slow : Mission {
     prop {
        ! (spaceMission.spacecraft.data == 30)
     }
 }
 
-target Spacecraft_data_20_Unsafe : Mission {
+target Spacecraft_data_20_Unsafe_Slow : Mission {
     prop {
        ! (spaceMission.spacecraft.data == 20)
     }
 }
 
-target Spacecraft_data_10_Unsafe : Mission {
+target Spacecraft_data_10_Unsafe_Slow : Mission {
     prop {
        ! (spaceMission.spacecraft.data == 10)
     }
 }
 
-target Spacecraft_data_0_Unsafe : Mission {
+target Spacecraft_data_0_Unsafe_Slow : Mission {
     prop {
        ! (spaceMission.spacecraft.data == 00)
     }
 }
-//*/
 
 target Spacecraft_batteryCharge_100_Unsafe : Mission {
     prop {
@@ -522,13 +520,13 @@ target Spacecraft_batteryCharge_50_Unsafe : Mission {
     }
 }
 
-target Spacecraft_batteryCharge_40_Unsafe : Mission {
+target Spacecraft_batteryCharge_40_Unsafe_Slow : Mission {
     prop {
         ! (spaceMission.spacecraft.batteryCharge == 40)
     }
 }
 
-target Spacecraft_batteryCharge_30_Unsafe : Mission {
+target Spacecraft_batteryCharge_30_Unsafe_Slow : Mission {
     prop {
         ! (spaceMission.spacecraft.batteryCharge == 30)
     }
@@ -542,76 +540,66 @@ target Spacecraft_batteryCharge_never_under_20_Safe : Mission {
 
 target Station_ReceivedData_0_Unsafe : Mission {
     prop {
-       ! (spaceMission.station.receivedData >= 0)
+       ! (spaceMission.station.receivedData == 0)
     }
 }
 
 target Station_ReceivedData_10_Unsafe : Mission {
     prop {
-       ! (spaceMission.station.receivedData >= 10)
+       ! (spaceMission.station.receivedData == 10)
     }
 }
 
-target Station_ReceivedData_20_Unsafe : Mission {
+target Station_ReceivedData_20_Unsafe_Slow : Mission {
     prop {
-       ! (spaceMission.station.receivedData >= 20)
+       ! (spaceMission.station.receivedData == 20)
     }
 }
 
-///* TIMEOUT
-target Station_ReceivedData_30_Unsafe : Mission {
+target Station_ReceivedData_30_Unsafe_Slow : Mission {
     prop {
-       ! (spaceMission.station.receivedData >= 30)
+       ! (spaceMission.station.receivedData == 30)
     }
 }
 
-target Station_ReceivedData_40_Unsafe : Mission {
+target Station_ReceivedData_40_Unsafe_Slow : Mission {
     prop {
-       ! (spaceMission.station.receivedData >= 40)
+       ! (spaceMission.station.receivedData == 40)
     }
 }
 
-target Station_ReceivedData_50_Unsafe : Mission {
+target Station_ReceivedData_50_Unsafe_Slow : Mission {
     prop {
-       ! (spaceMission.station.receivedData >= 50)
+       ! (spaceMission.station.receivedData == 50)
     }
 }
 
-target Station_ReceivedData_60_Unsafe : Mission {
+target Station_ReceivedData_60_Unsafe_Slow : Mission {
     prop {
-       ! (spaceMission.station.receivedData >= 60)
+       ! (spaceMission.station.receivedData == 60)
     }
 }
 
-target Station_ReceivedData_70_Unsafe : Mission {
+target Station_ReceivedData_70_Unsafe_Slow : Mission {
     prop {
-       ! (spaceMission.station.receivedData >= 70)
+       ! (spaceMission.station.receivedData == 70)
     }
 }
 
-target Station_ReceivedData_80_Unsafe : Mission {
+target Station_ReceivedData_80_Unsafe_Slow : Mission {
     prop {
-       ! (spaceMission.station.receivedData >= 80)
+       ! (spaceMission.station.receivedData == 80)
     }
 }
 
-target Station_ReceivedData_90_Unsafe : Mission {
+target Station_ReceivedData_90_Unsafe_Slow : Mission {
     prop {
-       ! (spaceMission.station.receivedData >= 90)
+       ! (spaceMission.station.receivedData == 90)
     }
 }
 
-target Station_ReceivedData_100_Unsafe : Mission {
+target Station_ReceivedData_100_Unsafe_Slow : Mission {
     prop {
-       ! (spaceMission.station.receivedData >= 100)
+       ! (spaceMission.station.receivedData == 100)
     }
 }
-//*/
-
-///* TIMEOUT
-target Station_ReceivedData_100_Unsafe : Mission {
-    prop {
-       ! (spaceMission.station.receivedData >= 100)
-    }
-}
-//*/
