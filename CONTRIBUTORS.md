@@ -8,11 +8,11 @@
 
 ### Semantifyr Authors
 
-**Project leader** Vince, Molnár <molnar.vince@vik.bme.hu>
+**Project leader** Vince, Molnar <molnar.vince@vik.bme.hu>
 
 Contributors (in alphabetical order):
  
- - Ármin, Zavada <zavadaarmin@edu.bme.hu>
+ - Armin, Zavada <zavadaarmin@edu.bme.hu>
 
 ### Support
 
