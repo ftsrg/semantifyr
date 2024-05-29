@@ -6,6 +6,8 @@
 
 # Semantifyr
 
+A framework to support the declarative definition of engineering model semantics.
+
 ## Build
 
 Use Java 17 for building.
