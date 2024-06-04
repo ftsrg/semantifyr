@@ -24,8 +24,29 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public void checkFeatureSubsetting(Feature feature) {
         if (feature.getSubsets().isEmpty()) return;
 
-        var featureType = getType(feature.getTyping());
-        var subsettingType = getType(feature.getSubsets().stream().findFirst().get().getTyping());
+        var featureTyping = feature.getTyping();
+        var subsettingTyping = feature.getSubsets().stream().findFirst().get().getTyping();
+
+        if (featureTyping instanceof IntegerType) {
+            if (!(subsettingTyping instanceof IntegerType)) {
+                error("Feature must have type that is compatible with subsetted feature",
+                        OxstsPackage.Literals.FEATURE__SUBSETS,
+                        INVALID_TYPE);
+            } else {
+                return;
+            }
+        } else if (featureTyping instanceof BooleanType) {
+            if (!(subsettingTyping instanceof BooleanType)) {
+                error("Feature must have type that is compatible with subsetted feature",
+                        OxstsPackage.Literals.FEATURE__SUBSETS,
+                        INVALID_TYPE);
+            } else {
+                return;
+            }
+        }
+
+        var featureType = getType(featureTyping);
+        var subsettingType = getType(subsettingTyping);
 
         if (!isSupertypeOf(subsettingType, featureType)) {
             error("Feature must have type that is compatible with subsetted feature",
@@ -38,12 +59,33 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public void checkFeatureRedefinition(Feature feature) {
         if (feature.getRedefines() == null) return;
 
-        var featureType = getType(feature.getTyping());
-        var redefinedType = getType(feature.getRedefines().getTyping());
+        var featureTyping = feature.getTyping();
+        var redefinedTyping = feature.getRedefines().getTyping();
+
+        if (featureTyping instanceof IntegerType) {
+            if (!(redefinedTyping instanceof IntegerType)) {
+                error("Feature must have type that is compatible with redefined feature",
+                        OxstsPackage.Literals.FEATURE__SUBSETS,
+                        INVALID_TYPE);
+            } else {
+                return;
+            }
+        } else if (featureTyping instanceof BooleanType) {
+            if (!(redefinedTyping instanceof BooleanType)) {
+                error("Feature must have type that is compatible with redefined feature",
+                        OxstsPackage.Literals.FEATURE__SUBSETS,
+                        INVALID_TYPE);
+            } else {
+                return;
+            }
+        }
+
+        var featureType = getType(featureTyping);
+        var redefinedType = getType(redefinedTyping);
 
         if (!isSupertypeOf(redefinedType, featureType)) {
             error("Feature must have type that is compatible with redefined feature",
-					OxstsPackage.Literals.FEATURE__SUBSETS,
+                    OxstsPackage.Literals.FEATURE__SUBSETS,
                     INVALID_TYPE);
         }
     }
