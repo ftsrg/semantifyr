@@ -70,7 +70,16 @@ open class VerificationTest {
         val propertyPath = "$targetDirectory/$targetName.prop"
         val tracePath = "$targetDirectory/$targetName.cex"
 
-        executeTheta(modelPath, propertyPath, tracePath)
+        println("Executing theta on $modelPath")
+
+        try {
+            executeTheta(modelPath, propertyPath, tracePath)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw e
+        }
+
+        println("Checking results of Theta")
 
         if (targetName.contains("Unsafe")) {
             Assertions.assertTrue(File(tracePath).exists(), "$targetName failed!")
