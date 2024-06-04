@@ -44,6 +44,7 @@ tasks {
 
         minHeapSize = "512m"
         maxHeapSize = "4G"
+        testLogging.showStandardStreams = true
 
         finalizedBy(tasks.jacocoTestReport)
     }
@@ -53,6 +54,7 @@ tasks {
 
         minHeapSize = "512m"
         maxHeapSize = "4G"
+        testLogging.showStandardStreams = true
 
         finalizedBy(tasks.jacocoTestReport)
     }
