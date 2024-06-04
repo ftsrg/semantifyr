@@ -28,10 +28,21 @@ val downloadTheta = tasks.create<Exec>("downloadTheta") {
     }
 }
 
+fun Test.addToVariable(key: String, value: String) {
+    val pathSeparator = File.pathSeparator
+    val old = environment[key]?.toString() ?: ""
+    val newValue = if (old.isBlank()) value else "$old$pathSeparator$value"
+    environment(key, newValue)
+}
+
 tasks.withType(Test::class.java) {
     inputs.dir("Test Models")
 
-    environment("PATH", layout.projectDirectory.dir("theta"))
+
+    val thetaDir = layout.projectDirectory.dir("theta").toString()
+
+    addToVariable("LD_LIBRARY_PATH", thetaDir)
+    addToVariable("PATH", thetaDir)
 
     dependsOn(downloadTheta)
 }
