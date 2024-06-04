@@ -12,12 +12,12 @@ A framework to support the declarative definition of engineering model semantics
 
 Use Java 17 for building.
 
-Run `gradle build` to assemble the whole project, and execute all automated test, including regression testing and formal verifications. The required environment (e.g., Theta binaries) is automatically constructed by Gradle. Tests should run in a few minutes.
+Run `gradlew build` to assemble the whole project, and execute all automated test, including regression testing and formal verifications. The required environment (e.g., Theta binaries) is automatically constructed by Gradle. Tests should run in a few minutes.
 
-To execute all tests (even extremely slow, several hours long tests!), run `gradle allTests`.
+To execute all tests (even extremely slow, several days long tests!), run `gradlew allTests`.
 
 NOTE: on windows machines, set script execution policy to unrestricted, because the build uses ps1 scripts.
-`Set-ExecutionPolicy Unrestricted`
+Start elevated powershell, and run the following command: `Set-ExecutionPolicy Unrestricted`.
 
 ## Contribution
 
