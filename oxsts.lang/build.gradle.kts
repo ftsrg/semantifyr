@@ -30,6 +30,10 @@ val syncModel by tasks.registering(Sync::class) {
 val generateXtextLanguage by tasks.registering(JavaExec::class) {
     dependsOn(syncModel)
 
+    doFirst {
+        mkdir(parent!!.layout.projectDirectory.dir("oxsts.lang.ide"))
+    }
+
     mainClass.set("org.eclipse.emf.mwe2.launch.runtime.Mwe2Launcher")
     classpath(configurations.mwe2)
 

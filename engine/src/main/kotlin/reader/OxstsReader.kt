@@ -73,9 +73,9 @@ class OxstsReader(
             }
             val validator = (resource as XtextResource).resourceServiceProvider.resourceValidator
             val issues = validator.validate(resource, CheckMode.ALL, CancelIndicator.NullImpl)
-            for (issue in issues) {
+            if (issues.any()) {
                 println("Issues found in file (${resource.uri.toFileString()}):")
-                println("${issue.severity} - ${issue.message}")
+                error("Issues found in file (${resource.uri.toFileString()}):\n${issues.joinToString("\n")}")
             }
         }
 
