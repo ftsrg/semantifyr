@@ -5,11 +5,10 @@
  */
 
 plugins {
-    alias(libs.plugins.versions)
     id("hu.bme.mit.semantifyr.gradle.eclipse")
 }
 
 tasks.wrapper {
-    version = "8.3"
+    version = "8.8"
     distributionType = Wrapper.DistributionType.ALL
 }
