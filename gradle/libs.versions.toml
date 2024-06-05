@@ -9,7 +9,7 @@ mockito = "5.5.0"
 mwe2 = "2.15.0"
 slf4j = "2.0.9"
 xtext = "2.32.0"
-kotlin = '1.9.10'
+kotlin = '2.0.0'
 viatra = '2.8.0'
 
 [libraries]
@@ -41,4 +41,4 @@ viatra-query-runtime = { group = 'org.eclipse.viatra', name = 'viatra-query-runt
 viatra-transformation-runtime = { group = 'org.eclipse.viatra', name = 'viatra-transformation-runtime', version.ref = "viatra" }
 
 [plugins]
-versions = { id = "com.github.ben-manes.versions", version = "0.48.0" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

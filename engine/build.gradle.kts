@@ -8,7 +8,7 @@ import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.application")
-    kotlin("jvm") version "1.9.10"
+    alias(libs.plugins.kotlin.jvm)
 }
 
 kotlin {
