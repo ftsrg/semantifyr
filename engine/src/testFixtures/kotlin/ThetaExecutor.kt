@@ -55,6 +55,18 @@ class ThetaExecutor(
 
     val logger = LoggerFactory.getLogger(javaClass)
 
+    fun initTheta() {
+        val process = ProcessBuilder(
+            "docker",
+            "pull",
+            "ftsrg/theta-xsts-cli:$version",
+        )
+            .inheritIO()
+            .start()
+
+        process.waitFor(timeout, timeUnit)
+    }
+
     private suspend fun runTheta(
         workingDirectory: String,
         name: String,
