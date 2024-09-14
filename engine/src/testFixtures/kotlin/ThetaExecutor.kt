@@ -57,7 +57,7 @@ class ThetaExecutionResult(
 class ThetaExecutor(
     private val version: String = "latest",
     private val parameters: List<String>,
-    private val timeout: Long = 1,
+    private val timeout: Long = 5,
     private val timeUnit: TimeUnit = TimeUnit.MINUTES
 ) {
 
