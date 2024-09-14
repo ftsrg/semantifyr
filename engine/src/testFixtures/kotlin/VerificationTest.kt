@@ -11,7 +11,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Target
 import org.junit.jupiter.api.Assertions
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.util.concurrent.TimeUnit
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
@@ -84,12 +83,12 @@ open class VerificationTest {
 
         logger.info("Checking results of Theta")
 
-        Assertions.assertTrue(result.exitCode == 0, "Theta exited with code ${result.exitCode}. See $targetDirectory/theta.err")
+        Assertions.assertEquals(0, result.exitCode, "Theta exited with code ${result.exitCode}. See $targetDirectory/theta.err")
 
         if (targetName.contains("Unsafe")) {
-            Assertions.assertTrue(result.isSafe, "$targetName failed!")
+            Assertions.assertTrue(result.isUnsafe, "$targetName failed!")
         } else if (targetName.contains("Safe")) {
-            Assertions.assertFalse(result.isSafe, "$targetName failed!")
+            Assertions.assertFalse(result.isUnsafe, "$targetName failed!")
         }
     }
 
