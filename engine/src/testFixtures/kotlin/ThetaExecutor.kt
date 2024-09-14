@@ -110,13 +110,11 @@ class ThetaExecutor(
                 }
             }
         } catch (e: TimeoutCancellationException) {
-            process.destroyForcibly()
-
             -1
         } catch (e: CancellationException) {
-            process.destroyForcibly()
-
             -2
+        } finally {
+            process.destroyForcibly()
         }
 
         val result = ThetaExecutionResult(
