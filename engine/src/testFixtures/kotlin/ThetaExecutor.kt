@@ -75,9 +75,9 @@ class ThetaExecutor(
                 "--mount", "type=bind,source=$workingDirectory,target=/host",
                 "ftsrg/theta-xsts-cli:$version",
                 "CEGAR",
-                "--model", """"/host/$model"""",
-                "--property", """"/host/$property"""",
-                "--cexfile", """"/host/$cex"""",
+                "--model", "/host/$model",
+                "--property", "/host/$property",
+                "--cexfile", "/host/$cex",
                 *parameter.split(" ").toTypedArray(),
             )
                 .redirectOutput(File(workingDirectory, logName))
