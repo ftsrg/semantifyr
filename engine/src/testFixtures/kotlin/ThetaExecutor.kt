@@ -12,6 +12,7 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -52,6 +53,8 @@ class ThetaExecutor(
     private val timeUnit: TimeUnit = TimeUnit.MINUTES
 ) {
 
+    val logger = LoggerFactory.getLogger(javaClass)
+
     private suspend fun runTheta(
         workingDirectory: String,
         name: String,
@@ -85,7 +88,7 @@ class ThetaExecutor(
                 process.destroyForcibly()
             }
 
-            ThetaExecutionResult(
+            val result = ThetaExecutionResult(
                 exitCode = process.waitFor(),
                 id = id,
                 modelPath = "$workingDirectory${File.separator}$model",
@@ -94,6 +97,12 @@ class ThetaExecutor(
                 logPath = "$workingDirectory${File.separator}$logName",
                 errPath = "$workingDirectory${File.separator}$errName"
             )
+
+            if (result.exitCode != 0) {
+                logger.error("Theta ($id) failed execution:\n" + File(result.errPath).readText())
+            }
+
+            result
         }
     }
 
