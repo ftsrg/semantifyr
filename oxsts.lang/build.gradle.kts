@@ -28,19 +28,13 @@ val syncModel by tasks.registering(Sync::class) {
 }
 
 val generateXtextLanguage by tasks.registering(JavaExec::class) {
-    dependsOn(syncModel)
-
-    doFirst {
-        mkdir(parent!!.layout.projectDirectory.dir("oxsts.lang.ide"))
-    }
-
     mainClass.set("org.eclipse.emf.mwe2.launch.runtime.Mwe2Launcher")
     classpath(configurations.mwe2)
 
+    inputs.files(syncModel.get().outputs)
+
     inputs.file("src/main/java/hu/bme/mit/semantifyr/oxsts/lang/GenerateOxsts.mwe2")
     inputs.file("src/main/java/hu/bme/mit/semantifyr/oxsts/lang/Oxsts.xtext")
-    inputs.file("../oxsts.model/model/oxsts.ecore")
-    inputs.file("../oxsts.model/model/oxsts.genmodel")
 
     outputs.dir("src/main/xtext-gen")
     outputs.dir("src/test/java")
@@ -59,7 +53,7 @@ tasks {
 
     for (taskName in listOf("compileJava", "processResources", "generateEclipseSourceFolders", "processTestFixturesResources")) {
         named(taskName) {
-            dependsOn(generateXtextLanguage)
+            inputs.files(generateXtextLanguage.get().outputs)
         }
     }
 

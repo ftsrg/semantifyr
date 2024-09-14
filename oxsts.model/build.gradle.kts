@@ -43,7 +43,7 @@ tasks {
 
     for (taskName in listOf("compileJava", "processResources", "generateEclipseSourceFolders")) {
         named(taskName) {
-            dependsOn(generateEPackage)
+            inputs.files(generateEPackage.get().outputs)
         }
     }
 

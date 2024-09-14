@@ -29,7 +29,6 @@ dependencies {
     testFixturesApi(libs.mockito.junit)
 
     testRuntimeOnly(libs.junit.engine)
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 java.toolchain {
@@ -60,10 +59,7 @@ tasks {
     }
 
     jacocoTestReport {
-        dependsOn(tasks.test)
-        reports {
-            xml.required.set(true)
-        }
+        inputs.files(test.get().outputs)
     }
 
     jar {
