@@ -11,34 +11,8 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
 }
 
-val downloadTheta = tasks.create<Exec>("downloadTheta") {
-    inputs.files("scripts/Get-Theta.ps1")
-    inputs.files("scripts/get-theta.sh")
-    outputs.dir("theta")
-
-    workingDir = File("theta")
-    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        commandLine("powershell", "../scripts/Get-Theta.ps1")
-    } else {
-        commandLine("sh", "../scripts/get-theta.sh")
-    }
-}
-
-fun Test.addToVariable(key: String, value: String) {
-    val pathSeparator = File.pathSeparator
-    val old = environment[key]?.toString() ?: ""
-    val newValue = if (old.isBlank()) value else "$old$pathSeparator$value"
-    environment(key, newValue)
-}
-
 tasks.withType(Test::class.java) {
-    inputs.dir("Test Models")
-    inputs.files(downloadTheta.outputs)
-
-    val thetaDir = layout.projectDirectory.dir("theta").toString()
-
-    addToVariable("LD_LIBRARY_PATH", thetaDir)
-    addToVariable("PATH", thetaDir)
+    inputs.dir("TestModels")
 }
 
 repositories {
@@ -51,13 +25,18 @@ dependencies {
     implementation(project(":oxsts.model"))
 
     implementation("com.google.inject:guice:7.0.0")
+    implementation(libs.slf4j.api)
+    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.cli)
     implementation(libs.ecore.codegen)
     implementation(libs.viatra.query.language) {
         exclude("com.google.inject", "guice")
     }
-    implementation(libs.viatra.query.runtime)
-    implementation(libs.viatra.transformation.runtime)
+
+    runtimeOnly(libs.viatra.query.runtime)
+    runtimeOnly(libs.viatra.transformation.runtime)
+    runtimeOnly(libs.slf4j.simple)
+    runtimeOnly(libs.slf4j.log4j)
 
     testFixturesApi("commons-io:commons-io:2.14.0")
     testFixturesApi(project(":oxsts.lang"))

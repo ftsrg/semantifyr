@@ -9,10 +9,9 @@ import hu.bme.mit.semantifyr.oxsts.engine.serialization.Serializer
 import hu.bme.mit.semantifyr.oxsts.engine.transformation.XstsTransformer
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Target
 import org.junit.jupiter.api.Assertions
+import org.slf4j.LoggerFactory
 import java.io.File
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
@@ -27,7 +26,18 @@ class TargetDefinition(
 }
 
 open class VerificationTest {
+
+    val logger = LoggerFactory.getLogger(this.javaClass)
+
     companion object {
+        val thetaExecutor = ThetaExecutor(
+            "6.5.2",
+            listOf(
+                "--domain EXPL --refinement SEQ_ITP --maxenum 250 --initprec CTRL --stacktrace",
+                "--domain EXPL_PRED_COMBINED --autoexpl NEWOPERANDS --initprec CTRL --stacktrace",
+            ),
+        )
+
         fun streamTargetsFromFolder(
             directory: String,
             library: String,
@@ -67,76 +77,19 @@ open class VerificationTest {
         transformTargetToTheta(directory, library, targetName, targetDirectory)
 
         val modelPath = "$targetDirectory/$targetName.xsts"
-        val propertyPath = "$targetDirectory/$targetName.prop"
-        val tracePath = "$targetDirectory/$targetName.cex"
 
-        println("Executing theta on $modelPath")
+        logger.info("Executing theta on $modelPath")
 
-        try {
-            executeTheta(modelPath, propertyPath, tracePath)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            throw e
-        }
+        val result = thetaExecutor.run(targetDirectory, targetName)
 
-        println("Checking results of Theta")
+        logger.info("Checking results of Theta")
+
+        Assertions.assertTrue(result.exitCode == 0, "Theta exited with code ${result.exitCode}. See $targetDirectory/theta.err")
 
         if (targetName.contains("Unsafe")) {
-            Assertions.assertTrue(File(tracePath).exists(), "$targetName failed!")
+            Assertions.assertTrue(result.isSafe, "$targetName failed!")
         } else if (targetName.contains("Safe")) {
-            Assertions.assertFalse(File(tracePath).exists(), "$targetName failed!")
-        }
-    }
-
-    private fun executeTheta(
-        modelPath: String, propertyPath: String, tracePath: String,
-        timeout: Long = 60, timeUnit: TimeUnit = TimeUnit.MINUTES
-    ) {
-        val process1 = ProcessBuilder(
-            "java",
-            "-jar", "theta/theta-xsts-cli.jar",
-            "--domain", "EXPL",
-            "--refinement", "SEQ_ITP",
-            "--maxenum", "250",
-            "--initprec", "CTRL",
-            "--model", modelPath,
-            "--property", propertyPath,
-            "--cex", tracePath,
-            "--stacktrace",
-        )
-            .inheritIO()
-            .start()
-
-
-        val process2 = ProcessBuilder(
-            "java",
-            "-jar", "theta/theta-xsts-cli.jar",
-            "--domain", "EXPL_PRED_COMBINED",
-            "--autoexpl", "NEWOPERANDS ",
-            "--initprec", "CTRL",
-            "--model", modelPath,
-            "--property", propertyPath,
-            "--cex", tracePath,
-            "--stacktrace",
-        )
-            .inheritIO()
-            .start()
-
-        val future1 = CompletableFuture.supplyAsync {
-            process1.waitFor(timeout, timeUnit)
-        }
-
-        val future2 = CompletableFuture.supplyAsync {
-            process2.waitFor(timeout, timeUnit)
-        }
-
-        CompletableFuture.anyOf(future1, future2).join()
-
-        process1.destroy()
-        process2.destroy()
-
-        if (!future1.getNow(true) && !future1.getNow(true)) {
-            throw TimeoutException("Verification stopped due to reaching timeout $timeout $timeUnit")
+            Assertions.assertFalse(result.isSafe, "$targetName failed!")
         }
     }
 

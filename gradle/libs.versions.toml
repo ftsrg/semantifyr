@@ -10,6 +10,7 @@ mwe2 = "2.15.0"
 slf4j = "2.0.9"
 xtext = "2.32.0"
 kotlin = '2.0.0'
+kotlinxCoroutines = "1.9.0"
 viatra = '2.8.0'
 
 [libraries]
@@ -36,6 +37,7 @@ xtext-testing = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.testing
 xtext-xbase = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.xbase", version.ref = "xtext" }
 xtext-xbase-ide = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.xbase.ide", version.ref = "xtext" }
 kotlinx-cli = { group = "org.jetbrains.kotlinx", name = "kotlinx-cli", version = "0.3.6" }
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 viatra-query-language = { group = 'org.eclipse.viatra', name = 'viatra-query-language', version.ref = "viatra" }
 viatra-query-runtime = { group = 'org.eclipse.viatra', name = 'viatra-query-runtime', version.ref = "viatra" }
 viatra-transformation-runtime = { group = 'org.eclipse.viatra', name = 'viatra-transformation-runtime', version.ref = "viatra" }
