@@ -91,7 +91,7 @@ class ThetaExecutor(
             "docker",
             "run",
             "--rm",
-            "--mount", "type=bind,source=$workingDirectory,target=/host",
+            "-v", "$workingDirectory:/host",
             "ftsrg/theta-xsts-cli:$version",
             "CEGAR",
             "--model", "/host/$model",
