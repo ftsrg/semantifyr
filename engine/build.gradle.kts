@@ -11,10 +11,6 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
 }
 
-kotlin {
-    jvmToolchain(17)
-}
-
 val downloadTheta = tasks.create<Exec>("downloadTheta") {
     inputs.files("scripts/Get-Theta.ps1")
     inputs.files("scripts/get-theta.sh")
@@ -37,14 +33,12 @@ fun Test.addToVariable(key: String, value: String) {
 
 tasks.withType(Test::class.java) {
     inputs.dir("Test Models")
-
+    inputs.files(downloadTheta.outputs)
 
     val thetaDir = layout.projectDirectory.dir("theta").toString()
 
     addToVariable("LD_LIBRARY_PATH", thetaDir)
     addToVariable("PATH", thetaDir)
-
-    dependsOn(downloadTheta)
 }
 
 repositories {
