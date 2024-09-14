@@ -84,12 +84,12 @@ class ThetaExecutor(
                 "docker",
                 "run",
                 "--rm",
-                "--mount", "type=bind,source=$workingDirectory,target=/host",
+                "--mount", "type=bind,source=$workingDirectory,target=/theta",
                 "ftsrg/theta-xsts-cli:$version",
                 "CEGAR",
-                "--model", "/host/$model",
-                "--property", "/host/$property",
-                "--cexfile", "/host/$cex",
+                "--model", "/theta/$model",
+                "--property", "/theta/$property",
+                "--cexfile", "/theta/$cex",
                 *parameter.split(" ").toTypedArray(),
             )
                 .redirectOutput(File(workingDirectory, logName))
