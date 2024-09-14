@@ -23,7 +23,7 @@ class GammaCompilationTests : CompilationTest() {
     companion object {
         @JvmStatic
         fun `Model transformations should not regress`(): Stream<String> {
-            return File("Test Models/Automated/Gamma").walkTopDown().filter {
+            return File("TestModels/Automated/Gamma").walkTopDown().filter {
                 it.isDirectory
             }.filter {
                 it.list { _, name -> name == "model.oxsts" }?.any() ?: false
@@ -43,7 +43,7 @@ class GammaCompilationTests : CompilationTest() {
     @ParameterizedTest
     @MethodSource
     fun `Model transformations should not regress`(directory: String) {
-        simpleReadTransformWrite(directory, "Test Models/Automated/Gamma Semantic Library")
+        simpleReadTransformWrite(directory, "TestModels/Automated/GammaSemanticLibrary")
         assertModelEqualsExpected(directory)
     }
 

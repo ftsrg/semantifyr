@@ -23,7 +23,7 @@ class RegressionCompilationTests : CompilationTest() {
     companion object {
         @JvmStatic
         fun `Simple Model transformations should not regress`(): Stream<String> {
-            return File("Test Models/Automated/Simple").walkTopDown().filter {
+            return File("TestModels/Automated/Simple").walkTopDown().filter {
                 it.isDirectory
             }.filter {
                 it.list { _, name -> name == "model.oxsts" }?.any() ?: false
@@ -34,7 +34,7 @@ class RegressionCompilationTests : CompilationTest() {
 
         @JvmStatic
         fun `Example Model transformations should not regress`(): Stream<String> {
-            return File("Test Models/Automated/Example").walkTopDown().filter {
+            return File("TestModels/Automated/Example").walkTopDown().filter {
                 it.isDirectory
             }.filter {
                 it.list { _, name -> name == "model.oxsts" }?.any() ?: false

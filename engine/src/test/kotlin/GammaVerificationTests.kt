@@ -14,8 +14,8 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
-private val baseDirectory = "Test Models/Automated/Gamma"
-private val libraryDirectory = "Test Models/Automated/Gamma Semantic Library"
+private val baseDirectory = "TestModels/Automated/Gamma"
+private val libraryDirectory = "TestModels/Automated/GammaSemanticLibrary"
 
 @ExtendWith(InjectionExtension::class)
 @InjectWith(OxstsInjectorProvider::class)
