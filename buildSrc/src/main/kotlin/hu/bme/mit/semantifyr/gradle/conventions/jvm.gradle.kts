@@ -14,7 +14,6 @@ plugins {
     `java-test-fixtures`
     jacoco
     java
-    id("hu.bme.mit.semantifyr.gradle.eclipse")
 }
 
 repositories {
@@ -62,25 +61,5 @@ tasks {
 
     jacocoTestReport {
         inputs.files(test.get().outputs)
-    }
-
-    jar {
-        manifest {
-            attributes(
-                "Bundle-SymbolicName" to "${project.group}.${project.name}",
-                "Bundle-Version" to project.version,
-            )
-        }
-    }
-
-    val generateEclipseSourceFolders by tasks.registering
-
-    register("prepareEclipse") {
-        dependsOn(generateEclipseSourceFolders)
-        dependsOn(tasks.named("eclipseJdt"))
-    }
-
-    eclipseClasspath {
-        dependsOn(generateEclipseSourceFolders)
     }
 }

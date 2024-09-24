@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import org.apache.tools.ant.taskdefs.condition.Os
-
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.application")
     alias(libs.plugins.kotlin.jvm)
@@ -37,7 +35,6 @@ dependencies {
     runtimeOnly(libs.viatra.transformation.runtime)
     runtimeOnly(libs.slf4j.simple)
 
-    testFixturesApi("commons-io:commons-io:2.14.0")
     testFixturesApi(project(":oxsts.lang"))
     testFixturesApi(testFixtures(project(":oxsts.lang")))
 

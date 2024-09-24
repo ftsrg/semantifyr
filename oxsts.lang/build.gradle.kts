@@ -6,7 +6,6 @@
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.xtext-generated")
-    id("hu.bme.mit.semantifyr.gradle.eclipse")
 }
 
 dependencies {
@@ -51,7 +50,7 @@ tasks {
         }
     }
 
-    for (taskName in listOf("compileJava", "processResources", "generateEclipseSourceFolders", "processTestFixturesResources")) {
+    for (taskName in listOf("compileJava", "processResources", "processTestFixturesResources")) {
         named(taskName) {
             inputs.files(generateXtextLanguage.get().outputs)
         }
@@ -61,5 +60,3 @@ tasks {
         delete("src/main/xtext-gen")
     }
 }
-
-eclipse.project.natures.plusAssign("org.eclipse.xtext.ui.shared.xtextNature")

@@ -23,5 +23,3 @@ val libs = the<LibrariesForLibs>()
 dependencies {
     mwe2(libs.mwe2.launch)
 }
-
-eclipse.classpath.plusConfigurations += mwe2

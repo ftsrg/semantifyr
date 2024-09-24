@@ -6,7 +6,6 @@
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.mwe2")
-    id("hu.bme.mit.semantifyr.gradle.eclipse")
 }
 
 dependencies {
@@ -41,7 +40,7 @@ tasks {
         args("./GenerateModel.mwe2", "-p", "rootPath=/$projectDir")
     }
 
-    for (taskName in listOf("compileJava", "processResources", "generateEclipseSourceFolders")) {
+    for (taskName in listOf("compileJava", "processResources")) {
         named(taskName) {
             inputs.files(generateEPackage.get().outputs)
         }
@@ -51,9 +50,3 @@ tasks {
         delete("src/main/emf-gen")
     }
 }
-
-eclipse.project.natures.plusAssign(listOf(
-    "org.eclipse.sirius.nature.modelingproject",
-    "org.eclipse.pde.PluginNature",
-    "org.eclipse.xtext.ui.shared.xtextNature",
-))
