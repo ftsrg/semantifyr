@@ -26,7 +26,8 @@ jobs:
         java-version: 17
         distribution: adopt
     - name: Test Docker
-      run: docker run hello-world
+      run: brew install docker && docker run hello-world
+      if: ${{ matrix.os == 'macos-latest' }}
     - name: Checkout code
       uses: actions/checkout@v4
     - name: Setup Gradle
