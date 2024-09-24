@@ -17,8 +17,6 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - ubuntu-20.04
-#          - windows-latest
           - macos-latest
     runs-on: ${{ matrix.os }}
     steps:
@@ -27,9 +25,8 @@ jobs:
       with:
         java-version: 17
         distribution: adopt
-    - name: Install Docker
-      run: brew install docker
-      if: ${{ matrix.os == 'macos-13' }}
+    - name: Test Docker
+      run: docker run hello-world
     - name: Checkout code
       uses: actions/checkout@v4
     - name: Setup Gradle
