@@ -12,6 +12,7 @@ xtext = "2.32.0"
 kotlin = '2.0.0'
 kotlinxCoroutines = "1.9.0"
 viatra = '2.8.0'
+dockerJava = '3.4.0'
 
 [libraries]
 ecore = { group = "org.eclipse.emf", name = "org.eclipse.emf.ecore", version.ref = "ecore" }
@@ -41,6 +42,9 @@ kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 viatra-query-language = { group = 'org.eclipse.viatra', name = 'viatra-query-language', version.ref = "viatra" }
 viatra-query-runtime = { group = 'org.eclipse.viatra', name = 'viatra-query-runtime', version.ref = "viatra" }
 viatra-transformation-runtime = { group = 'org.eclipse.viatra', name = 'viatra-transformation-runtime', version.ref = "viatra" }
+
+docker-java-core = { group = "com.github.docker-java" , name = "docker-java-core", version.ref = "dockerJava" }
+docker-java-transport = { group = "com.github.docker-java" , name = "docker-java-transport-httpclient5", version.ref = "dockerJava" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

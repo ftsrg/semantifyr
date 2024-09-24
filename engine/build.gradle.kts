@@ -36,9 +36,11 @@ dependencies {
     runtimeOnly(libs.viatra.query.runtime)
     runtimeOnly(libs.viatra.transformation.runtime)
     runtimeOnly(libs.slf4j.simple)
-    runtimeOnly(libs.slf4j.log4j)
 
     testFixturesApi("commons-io:commons-io:2.14.0")
     testFixturesApi(project(":oxsts.lang"))
     testFixturesApi(testFixtures(project(":oxsts.lang")))
+
+    testFixturesImplementation(libs.docker.java.core)
+    testFixturesImplementation(libs.docker.java.transport)
 }

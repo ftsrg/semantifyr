@@ -4,18 +4,21 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import com.github.dockerjava.api.command.CreateContainerResponse
+import com.github.dockerjava.api.exception.ConflictException
+import com.github.dockerjava.api.model.Bind
+import com.github.dockerjava.api.model.HostConfig
+import com.github.dockerjava.api.model.Volume
+import com.github.dockerjava.api.model.WaitResponse
+import com.github.dockerjava.core.DefaultDockerClientConfig
+import com.github.dockerjava.core.DockerClientImpl
+import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.runInterruptible
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -24,23 +27,8 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.absolute
-import kotlin.time.Duration
 import kotlin.time.toDuration
 import kotlin.time.toDurationUnit
-
-suspend fun <T> List<Deferred<T>>.awaitAny(): T {
-    val firstCompleted = CompletableDeferred<T>()
-
-    forEach { job ->
-        job.invokeOnCompletion { exception ->
-            if (exception == null && !firstCompleted.isCompleted) {
-                firstCompleted.complete(job.getCompleted())
-            }
-        }
-    }
-
-    return firstCompleted.await()
-}
 
 class ThetaExecutionResult(
     val exitCode: Int,
@@ -63,16 +51,14 @@ class ThetaExecutor(
 
     val logger = LoggerFactory.getLogger(javaClass)
 
-    fun initTheta() {
-        val process = ProcessBuilder(
-            "docker",
-            "pull",
-            "ftsrg/theta-xsts-cli:$version",
-        )
-            .inheritIO()
-            .start()
+    private val config = DefaultDockerClientConfig.createDefaultConfigBuilder().build()
+    private val httpClient = ApacheDockerHttpClient.Builder()
+        .dockerHost(config.getDockerHost())
+        .sslConfig(config.getSSLConfig()).build()
+    private val dockerClient = DockerClientImpl.getInstance(config, httpClient);
 
-        process.waitFor()
+    fun initTheta() {
+        dockerClient.pullImageCmd("ftsrg/theta-xsts-cli").withTag(version).start().awaitCompletion()
     }
 
     private suspend fun runTheta(
@@ -80,61 +66,86 @@ class ThetaExecutor(
         name: String,
         parameter: String,
         id: Int
-    ) = withContext(Dispatchers.IO) {
+    ): ThetaExecutionResult {
         val model = "$name.xsts"
         val property = "$name.prop"
         val cex = "$name$id.cex"
         val logName = "theta$id.out"
         val errName = "theta$id.err"
 
-        val process = ProcessBuilder(
-            "docker",
-            "run",
-            "--rm",
-            "-v", "$workingDirectory:/host",
-            "ftsrg/theta-xsts-cli:$version",
-            "CEGAR",
-            "--model", "/host/$model",
-            "--property", "/host/$property",
-            "--cexfile", "/host/$cex",
-            *parameter.split(" ").toTypedArray(),
-        )
-            .redirectOutput(File(workingDirectory, logName))
-            .redirectError(File(workingDirectory, errName))
-            .start()
+        logger.info("Starting container ($id)")
 
-        val exitCode = try {
-            withTimeout(timeout.toDuration(timeUnit.toDurationUnit())) {
-                runInterruptible {
-                    process.waitFor()
+        val container = createContainer(logName, errName, workingDirectory, model, property, cex, parameter)
+        dockerClient.startContainerCmd(container.id).exec()
+
+        val waitResult = try {
+            val result = withTimeout(timeout.toDuration(timeUnit.toDurationUnit())) {
+                runAsync<WaitResponse> {
+                    dockerClient.waitContainerCmd(container.id).exec(it)
                 }
             }
+
+            logger.info("Theta finished ($id)")
+
+            result
         } catch (e: TimeoutCancellationException) {
-            -1
+            logger.info("Theta timed out ($id)")
+            throw e
         } catch (e: CancellationException) {
-            -2
+            logger.info("Theta cancelled ($id)")
+            throw e
         } finally {
-            process.destroyForcibly()
+            try {
+                logger.info("Removing container ($id)")
+                dockerClient.removeContainerCmd(container.id).withForce(true).exec()
+            } catch (e: ConflictException) {
+                // ignore, it means the container is already being removed
+            }
         }
 
-        val result = ThetaExecutionResult(
-            exitCode = exitCode,
+        return ThetaExecutionResult(
+            exitCode = waitResult.statusCode,
             id = id,
             modelPath = "$workingDirectory${File.separator}$model",
             propertyPath = "$workingDirectory${File.separator}$property",
             cexPath = "$workingDirectory${File.separator}$cex",
             logPath = "$workingDirectory${File.separator}$logName",
-            errPath = "$workingDirectory${File.separator}$errName"
+            errPath = "$workingDirectory${File.separator}$errName",
         )
+    }
 
-        when (result.exitCode) {
-            0 -> logger.info("Theta ($id) finished successfully!")
-            -1 -> logger.info("Theta ($id) timed out!")
-            -2 -> logger.info("Theta ($id) has been cancelled!")
-            else -> logger.error("Theta ($id) failed execution:\n" + File(result.errPath).readText())
-        }
+    private fun createContainer(
+        logName: String,
+        errName: String,
+        workingDirectory: String,
+        model: String,
+        property: String,
+        cex: String,
+        parameter: String
+    ): CreateContainerResponse {
+        val logFile = File(workingDirectory, logName)
+        val errFile = File(workingDirectory, errName)
 
-        result
+        val hostConfig = HostConfig.newHostConfig()
+            .withBinds(Bind(workingDirectory, Volume("/host")))
+
+        val container = dockerClient.createContainerCmd("ftsrg/theta-xsts-cli:$version")
+            .withCmd(
+                "CEGAR",
+                "--model", "/host/$model",
+                "--property", "/host/$property",
+                "--cexfile", "/host/$cex",
+                *parameter.split(" ").toTypedArray(),
+            )
+            .withHostConfig(hostConfig)
+            .exec()
+
+        dockerClient.logContainerCmd(container.id)
+            .withStdOut(true)
+            .withStdErr(true)
+            .exec(StreamLoggerCallback(logFile.outputStream(), errFile.outputStream()))
+
+        return container
     }
 
     private suspend fun runWorkflow(workingDirectory: String, name: String) = coroutineScope {
@@ -144,13 +155,13 @@ class ThetaExecutor(
             }
         }
 
-        val finishedJob = jobs.awaitAny()
-
-        jobs.forEach {
-            it.cancelAndJoin()
+        try {
+            jobs.awaitAny()
+        } finally {
+            jobs.forEach {
+                it.cancelAndJoin()
+            }
         }
-
-        finishedJob
     }
 
     fun run(workingDirectory: String, name: String) = runBlocking {

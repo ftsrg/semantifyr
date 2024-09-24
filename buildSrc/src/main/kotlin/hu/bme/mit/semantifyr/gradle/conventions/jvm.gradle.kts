@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.gradle.conventions
 
 import org.gradle.accessors.dm.LibrariesForLibs
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
 plugins {
     `java-library`
@@ -44,6 +45,7 @@ tasks {
         minHeapSize = "512m"
         maxHeapSize = "4G"
         testLogging.showStandardStreams = true
+        testLogging.exceptionFormat = TestExceptionFormat.FULL
 
         finalizedBy(tasks.jacocoTestReport)
     }
