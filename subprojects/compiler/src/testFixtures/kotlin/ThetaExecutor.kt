@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.engine
+package hu.bme.mit.semantifyr.oxsts.compiler
 
 import com.github.dockerjava.api.command.CreateContainerResponse
 import com.github.dockerjava.api.exception.ConflictException

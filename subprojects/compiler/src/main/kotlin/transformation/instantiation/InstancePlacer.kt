@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.engine.transformation.instantiation
+package hu.bme.mit.semantifyr.oxsts.compiler.transformation.instantiation
 
-import hu.bme.mit.semantifyr.oxsts.engine.utils.OxstsFactory
-import hu.bme.mit.semantifyr.oxsts.engine.utils.allFeatures
-import hu.bme.mit.semantifyr.oxsts.engine.utils.allSubsets
-import hu.bme.mit.semantifyr.oxsts.engine.utils.type
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.OxstsFactory
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.allFeatures
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.allSubsets
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.type
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Feature
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 

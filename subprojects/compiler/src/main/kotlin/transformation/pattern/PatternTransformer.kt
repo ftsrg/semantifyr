@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.engine.transformation.pattern
+package hu.bme.mit.semantifyr.oxsts.compiler.transformation.pattern
 
-import hu.bme.mit.semantifyr.oxsts.engine.utils.allReferencedPatterns
-import hu.bme.mit.semantifyr.oxsts.engine.utils.fullyQualifiedName
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.allReferencedPatterns
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.fullyQualifiedName
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Pattern
 import org.eclipse.viatra.query.patternlanguage.emf.util.PatternParserBuilder
 import org.eclipse.viatra.query.runtime.api.GenericPatternMatcher

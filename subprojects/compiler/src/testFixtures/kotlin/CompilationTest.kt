@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.engine
+package hu.bme.mit.semantifyr.oxsts.compiler
 
-import hu.bme.mit.semantifyr.oxsts.engine.reader.OxstsReader
-import hu.bme.mit.semantifyr.oxsts.engine.serialization.Serializer
-import hu.bme.mit.semantifyr.oxsts.engine.transformation.XstsTransformer
+import hu.bme.mit.semantifyr.oxsts.compiler.reader.OxstsReader
+import hu.bme.mit.semantifyr.oxsts.compiler.serialization.Serializer
+import hu.bme.mit.semantifyr.oxsts.compiler.transformation.XstsTransformer
 import org.junit.jupiter.api.Assertions
 import java.io.File
 import java.nio.charset.Charset

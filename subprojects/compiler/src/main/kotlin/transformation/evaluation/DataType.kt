@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.engine.transformation.evaluation
+package hu.bme.mit.semantifyr.oxsts.compiler.transformation.evaluation
 
-import hu.bme.mit.semantifyr.oxsts.engine.utils.NothingInstance
-import hu.bme.mit.semantifyr.oxsts.engine.utils.except
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.NothingInstance
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.except
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AndOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EqualityOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.GreaterThanOperator

@@ -4,22 +4,22 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.engine.transformation.instantiation
+package hu.bme.mit.semantifyr.oxsts.compiler.transformation.instantiation
 
-import hu.bme.mit.semantifyr.oxsts.engine.transformation.pattern.PatternRunner
-import hu.bme.mit.semantifyr.oxsts.engine.utils.OxstsFactory
-import hu.bme.mit.semantifyr.oxsts.engine.utils._package
-import hu.bme.mit.semantifyr.oxsts.engine.utils.allContainments
-import hu.bme.mit.semantifyr.oxsts.engine.utils.allFeatures
-import hu.bme.mit.semantifyr.oxsts.engine.utils.allVariables
-import hu.bme.mit.semantifyr.oxsts.engine.utils.contextualEvaluator
-import hu.bme.mit.semantifyr.oxsts.engine.utils.dropLast
-import hu.bme.mit.semantifyr.oxsts.engine.utils.instancePlacer
-import hu.bme.mit.semantifyr.oxsts.engine.utils.isDataType
-import hu.bme.mit.semantifyr.oxsts.engine.utils.treeSequence
-import hu.bme.mit.semantifyr.oxsts.engine.utils.type
-import hu.bme.mit.semantifyr.oxsts.engine.utils.typedReferencedElement
-import hu.bme.mit.semantifyr.oxsts.engine.utils.variableTransformer
+import hu.bme.mit.semantifyr.oxsts.compiler.transformation.pattern.PatternRunner
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.OxstsFactory
+import hu.bme.mit.semantifyr.oxsts.compiler.utils._package
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.allContainments
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.allFeatures
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.allVariables
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.contextualEvaluator
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.dropLast
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.instancePlacer
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.isDataType
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.treeSequence
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.type
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.typedReferencedElement
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.variableTransformer
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Containment
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Derived

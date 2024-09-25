@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.engine.utils
+package hu.bme.mit.semantifyr.oxsts.compiler.utils
 
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2

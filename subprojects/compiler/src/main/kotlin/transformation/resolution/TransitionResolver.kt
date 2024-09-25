@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.engine.transformation.resolution
+package hu.bme.mit.semantifyr.oxsts.compiler.transformation.resolution
 
-import hu.bme.mit.semantifyr.oxsts.engine.utils.type
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.type
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainingExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocTransitionExpression

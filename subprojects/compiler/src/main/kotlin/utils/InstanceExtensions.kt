@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.engine.utils
+package hu.bme.mit.semantifyr.oxsts.compiler.utils
 
-import hu.bme.mit.semantifyr.oxsts.engine.transformation.OperationInliner
-import hu.bme.mit.semantifyr.oxsts.engine.transformation.evaluation.ContextualExpressionEvaluator
-import hu.bme.mit.semantifyr.oxsts.engine.transformation.evaluation.FeatureEvaluator
-import hu.bme.mit.semantifyr.oxsts.engine.transformation.instantiation.InstancePlacer
-import hu.bme.mit.semantifyr.oxsts.engine.transformation.instantiation.VariableTransformer
-import hu.bme.mit.semantifyr.oxsts.engine.transformation.resolution.TransitionResolver
+import hu.bme.mit.semantifyr.oxsts.compiler.transformation.OperationInliner
+import hu.bme.mit.semantifyr.oxsts.compiler.transformation.evaluation.ContextualExpressionEvaluator
+import hu.bme.mit.semantifyr.oxsts.compiler.transformation.evaluation.FeatureEvaluator
+import hu.bme.mit.semantifyr.oxsts.compiler.transformation.instantiation.InstancePlacer
+import hu.bme.mit.semantifyr.oxsts.compiler.transformation.instantiation.VariableTransformer
+import hu.bme.mit.semantifyr.oxsts.compiler.transformation.resolution.TransitionResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.impl.InstanceImpl
 

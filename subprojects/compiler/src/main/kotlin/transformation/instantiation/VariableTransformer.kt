@@ -4,19 +4,19 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.engine.transformation.instantiation
+package hu.bme.mit.semantifyr.oxsts.compiler.transformation.instantiation
 
-import hu.bme.mit.semantifyr.oxsts.engine.utils.NothingInstance
-import hu.bme.mit.semantifyr.oxsts.engine.utils.OxstsFactory
-import hu.bme.mit.semantifyr.oxsts.engine.utils.asChainReferenceExpression
-import hu.bme.mit.semantifyr.oxsts.engine.utils.contextualEvaluator
-import hu.bme.mit.semantifyr.oxsts.engine.utils.copy
-import hu.bme.mit.semantifyr.oxsts.engine.utils.dropLast
-import hu.bme.mit.semantifyr.oxsts.engine.utils.fullyQualifiedName
-import hu.bme.mit.semantifyr.oxsts.engine.utils.instancePlacer
-import hu.bme.mit.semantifyr.oxsts.engine.utils.isFeatureTyped
-import hu.bme.mit.semantifyr.oxsts.engine.utils.referencedElement
-import hu.bme.mit.semantifyr.oxsts.engine.utils.variableTransformer
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.NothingInstance
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.OxstsFactory
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.asChainReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.contextualEvaluator
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.copy
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.dropLast
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.fullyQualifiedName
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.instancePlacer
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.isFeatureTyped
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.referencedElement
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.variableTransformer
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Enum
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression

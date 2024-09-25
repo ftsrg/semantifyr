@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.engine.transformation.optimization
+package hu.bme.mit.semantifyr.oxsts.compiler.transformation.optimization
 
-import hu.bme.mit.semantifyr.oxsts.engine.transformation.evaluation.BooleanData
-import hu.bme.mit.semantifyr.oxsts.engine.transformation.evaluation.IntegerData
-import hu.bme.mit.semantifyr.oxsts.engine.transformation.evaluation.SharedExpressionEvaluator
-import hu.bme.mit.semantifyr.oxsts.engine.utils.OxstsFactory
+import hu.bme.mit.semantifyr.oxsts.compiler.transformation.evaluation.BooleanData
+import hu.bme.mit.semantifyr.oxsts.compiler.transformation.evaluation.IntegerData
+import hu.bme.mit.semantifyr.oxsts.compiler.transformation.evaluation.SharedExpressionEvaluator
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AndOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean

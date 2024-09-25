@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.engine.transformation.pattern
+package hu.bme.mit.semantifyr.oxsts.compiler.transformation.pattern
 
-import hu.bme.mit.semantifyr.oxsts.engine.utils.fullyQualifiedName
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.fullyQualifiedName
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Pattern
 import org.eclipse.emf.ecore.resource.ResourceSet

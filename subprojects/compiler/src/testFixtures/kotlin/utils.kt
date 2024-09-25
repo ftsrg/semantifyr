@@ -4,17 +4,19 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.engine
+package hu.bme.mit.semantifyr.oxsts.compiler
 
 import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.model.Frame
 import com.github.dockerjava.api.model.StreamType
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runInterruptible
 import java.io.Closeable
 import java.io.OutputStream
 
+@OptIn(ExperimentalCoroutinesApi::class)
 suspend fun <T> List<Deferred<T>>.awaitAny(): T {
     val firstCompleted = CompletableDeferred<T>()
     var counter = 0

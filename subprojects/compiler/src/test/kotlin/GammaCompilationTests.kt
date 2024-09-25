@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.engine
+package hu.bme.mit.semantifyr.oxsts.compiler
 
-import hu.bme.mit.semantifyr.oxsts.engine.reader.prepareOxsts
+import hu.bme.mit.semantifyr.oxsts.compiler.reader.prepareOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.OxstsInjectorProvider
 import org.eclipse.xtext.testing.InjectWith
 import org.eclipse.xtext.testing.extensions.InjectionExtension

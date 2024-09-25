@@ -4,24 +4,24 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.engine.transformation
+package hu.bme.mit.semantifyr.oxsts.compiler.transformation
 
-import hu.bme.mit.semantifyr.oxsts.engine.reader.OxstsReader
-import hu.bme.mit.semantifyr.oxsts.engine.transformation.evaluation.BooleanData
-import hu.bme.mit.semantifyr.oxsts.engine.transformation.evaluation.IntegerData
-import hu.bme.mit.semantifyr.oxsts.engine.transformation.instantiation.Instantiator
-import hu.bme.mit.semantifyr.oxsts.engine.transformation.optimization.ExpressionOptimizer
-import hu.bme.mit.semantifyr.oxsts.engine.transformation.optimization.OperationOptimizer
-import hu.bme.mit.semantifyr.oxsts.engine.utils.OxstsFactory
-import hu.bme.mit.semantifyr.oxsts.engine.utils.contextualEvaluator
-import hu.bme.mit.semantifyr.oxsts.engine.utils.copy
-import hu.bme.mit.semantifyr.oxsts.engine.utils.dropLast
-import hu.bme.mit.semantifyr.oxsts.engine.utils.element
-import hu.bme.mit.semantifyr.oxsts.engine.utils.isFeatureTyped
-import hu.bme.mit.semantifyr.oxsts.engine.utils.lastChain
-import hu.bme.mit.semantifyr.oxsts.engine.utils.operationInliner
-import hu.bme.mit.semantifyr.oxsts.engine.utils.referencedElement
-import hu.bme.mit.semantifyr.oxsts.engine.utils.variableTransformer
+import hu.bme.mit.semantifyr.oxsts.compiler.reader.OxstsReader
+import hu.bme.mit.semantifyr.oxsts.compiler.transformation.evaluation.BooleanData
+import hu.bme.mit.semantifyr.oxsts.compiler.transformation.evaluation.IntegerData
+import hu.bme.mit.semantifyr.oxsts.compiler.transformation.instantiation.Instantiator
+import hu.bme.mit.semantifyr.oxsts.compiler.transformation.optimization.ExpressionOptimizer
+import hu.bme.mit.semantifyr.oxsts.compiler.transformation.optimization.OperationOptimizer
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.OxstsFactory
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.contextualEvaluator
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.copy
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.dropLast
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.element
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.isFeatureTyped
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.lastChain
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.operationInliner
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.referencedElement
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.variableTransformer
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression

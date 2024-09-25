@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.engine.serialization
+package hu.bme.mit.semantifyr.oxsts.compiler.serialization
 
-import hu.bme.mit.semantifyr.oxsts.engine.utils.referencedElement
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.referencedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AndOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation

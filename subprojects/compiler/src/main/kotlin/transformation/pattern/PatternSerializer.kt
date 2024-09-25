@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.engine.transformation.pattern
+package hu.bme.mit.semantifyr.oxsts.compiler.transformation.pattern
 
-import hu.bme.mit.semantifyr.oxsts.engine.serialization.IndentationAwareStringWriter
-import hu.bme.mit.semantifyr.oxsts.engine.serialization.indent
-import hu.bme.mit.semantifyr.oxsts.engine.utils.fullyQualifiedName
+import hu.bme.mit.semantifyr.oxsts.compiler.serialization.IndentationAwareStringWriter
+import hu.bme.mit.semantifyr.oxsts.compiler.serialization.indent
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.fullyQualifiedName
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Constraint
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureConstraint
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Parameter

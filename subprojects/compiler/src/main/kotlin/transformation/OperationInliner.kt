@@ -4,17 +4,17 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.engine.transformation
+package hu.bme.mit.semantifyr.oxsts.compiler.transformation
 
-import hu.bme.mit.semantifyr.oxsts.engine.utils.OxstsFactory
-import hu.bme.mit.semantifyr.oxsts.engine.utils.appendWith
-import hu.bme.mit.semantifyr.oxsts.engine.utils.asChainReferenceExpression
-import hu.bme.mit.semantifyr.oxsts.engine.utils.contextualEvaluator
-import hu.bme.mit.semantifyr.oxsts.engine.utils.copy
-import hu.bme.mit.semantifyr.oxsts.engine.utils.drop
-import hu.bme.mit.semantifyr.oxsts.engine.utils.dropLast
-import hu.bme.mit.semantifyr.oxsts.engine.utils.element
-import hu.bme.mit.semantifyr.oxsts.engine.utils.isStaticReference
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.OxstsFactory
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.appendWith
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.asChainReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.contextualEvaluator
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.copy
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.drop
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.dropLast
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.element
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.isStaticReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainingExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ContextDependentReference
