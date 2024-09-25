@@ -25,8 +25,11 @@ jobs:
       with:
         java-version: 17
         distribution: adopt
+    - name: Setup Docker on MacOS
+      uses: douglascamata/setup-docker-macos-action@v1-alpha
+      if: ${{ matrix.os == 'macos-latest' }}
     - name: Test Docker
-      run: brew install docker colima && brew services start colima && docker run hello-world
+      run: docker run hello-world
       if: ${{ matrix.os == 'macos-latest' }}
     - name: Checkout code
       uses: actions/checkout@v4
