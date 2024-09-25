@@ -48,10 +48,10 @@ Workflow {
 			fragment = ecore2xtext.Ecore2XtextValueConverterServiceFragment2 auto-inject {}
 
             serializer = {
-				generateStub = true
+				generateStub = false
 			}
 			formatter = {
-				generateStub = true
+				generateStub = false
 			}
 			validator = {
 				generateDeprecationValidation = true

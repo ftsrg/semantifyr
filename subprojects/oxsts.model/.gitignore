@@ -2,4 +2,8 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 
-model/
+/META-INF/
+/src/main/emf-gen/
+**/plugin.xml
+**/plugin.properties
+**/build.properties

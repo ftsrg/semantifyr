@@ -36,7 +36,6 @@ val generateXtextLanguage by tasks.registering(JavaExec::class) {
     inputs.file("src/main/java/hu/bme/mit/semantifyr/oxsts/lang/Oxsts.xtext")
 
     outputs.dir("src/main/xtext-gen")
-    outputs.dir("src/test/java")
     outputs.dir("src/testFixtures/xtext-gen")
     outputs.dir(layout.buildDirectory.dir("generated/sources/xtext/ide"))
 
@@ -58,5 +57,7 @@ tasks {
 
     clean {
         delete("src/main/xtext-gen")
+        delete("src/test/java")
+        delete("src/testFixtures/xtext-gen")
     }
 }

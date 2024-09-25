@@ -11,3 +11,7 @@ include(
     "oxsts.model",
     "oxsts.lang",
 )
+
+rootProject.children.forEach { project ->
+    project.projectDir = file("subprojects/${project.name}")
+}

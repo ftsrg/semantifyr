@@ -3,16 +3,6 @@
 # SPDX-License-Identifier: EPL-2.0
 
 *._trace
-/**/.classpath
 .idea/
 .gradle/
-/**/.project
-/**/.settings
-/**/bin/
 /**/build/
-
-/**/emf-gen/
-/**/xtend-gen/
-/**/src-gen/
-/**/*.xtendbin
-/**/xtext-gen/
