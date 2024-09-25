@@ -7,7 +7,7 @@
 rootProject.name = "semantifyr"
 
 include(
-    "engine",
+    "compiler",
     "oxsts.model",
     "oxsts.lang",
 )

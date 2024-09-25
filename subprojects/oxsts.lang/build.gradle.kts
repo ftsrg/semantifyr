@@ -49,8 +49,8 @@ tasks {
         }
     }
 
-    for (taskName in listOf("compileJava", "processResources", "processTestFixturesResources")) {
-        named(taskName) {
+    listOf("compileJava", "processResources", "compileTestJava", "compileTestFixturesJava", "processTestFixturesResources").forEach { task ->
+        named(task) {
             inputs.files(generateXtextLanguage.get().outputs)
         }
     }

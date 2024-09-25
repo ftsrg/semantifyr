@@ -40,8 +40,8 @@ tasks {
         args("./GenerateModel.mwe2", "-p", "rootPath=/$projectDir")
     }
 
-    for (taskName in listOf("compileJava", "processResources")) {
-        named(taskName) {
+    listOf("compileJava", "processResources").forEach { task ->
+        named(task) {
             inputs.files(generateEPackage.get().outputs)
         }
     }
