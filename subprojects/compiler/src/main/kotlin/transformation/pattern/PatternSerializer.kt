@@ -100,7 +100,7 @@ object PatternSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.append(constraint: Constraint) = when(constraint) {
+    private fun IndentationAwareStringWriter.append(constraint: Constraint) = when (constraint) {
         is TypeConstraint -> append(constraint)
         is FeatureConstraint -> append(constraint)
         is PatternConstraint -> append(constraint)
@@ -127,7 +127,7 @@ object PatternSerializer {
             append("neg ")
         }
         appendLine(
-            """find OXSTS___instanceInFeature($holderVariableName, $heldVariableName, "$typeName", "$featureName");"""
+            """find OXSTS___instanceInFeature($holderVariableName, $heldVariableName, "$typeName", "$featureName");""",
         )
     }
 

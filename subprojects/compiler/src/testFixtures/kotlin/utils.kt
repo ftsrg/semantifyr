@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+package hu.bme.mit.semantifyr.oxsts.engine
+
 import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.model.Frame
 import com.github.dockerjava.api.model.StreamType

@@ -51,7 +51,7 @@ class BooleanData(
         else -> false
     }
 
-    override fun evaluateOperator(operator: OperatorExpression) = when(operator) {
+    override fun evaluateOperator(operator: OperatorExpression) = when (operator) {
         // Boolean operators
         is AndOperator -> error("")
         is OrOperator -> error("")
@@ -72,7 +72,7 @@ class BooleanData(
         else -> error("Unsupported type of operator expression for boolean: $operator")
     }.toBooleanData()
 
-    override fun evaluateOperator(operator: OperatorExpression, other: DataType) = when(operator) {
+    override fun evaluateOperator(operator: OperatorExpression, other: DataType) = when (operator) {
         // Boolean operators
         is AndOperator -> {
             require(other is BooleanData)
@@ -135,7 +135,7 @@ class InstanceData(
             other.value
         }
 
-        return when(operator) {
+        return when (operator) {
             // Boolean operators
             is AndOperator -> error("Unsupported type of operator expression for boolean: $operator")
             is OrOperator -> error("Unsupported type of operator expression for boolean: $operator")

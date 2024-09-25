@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+package hu.bme.mit.semantifyr.oxsts.engine
+
 import com.github.dockerjava.api.command.CreateContainerResponse
 import com.github.dockerjava.api.exception.ConflictException
 import com.github.dockerjava.api.model.Bind
@@ -49,7 +51,7 @@ class ThetaExecutor(
     private val timeUnit: TimeUnit = TimeUnit.MINUTES
 ) {
 
-    val logger = LoggerFactory.getLogger(javaClass)
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     private val config = DefaultDockerClientConfig.createDefaultConfigBuilder().build()
     private val httpClient = ApacheDockerHttpClient.Builder()

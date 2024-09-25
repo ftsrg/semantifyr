@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+package hu.bme.mit.semantifyr.oxsts.engine
+
 import hu.bme.mit.semantifyr.oxsts.engine.reader.prepareOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.OxstsInjectorProvider
 import org.eclipse.xtext.testing.InjectWith
@@ -14,8 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
-private val baseDirectory = "TestModels/Automated/Gamma"
-private val libraryDirectory = "TestModels/Automated/GammaSemanticLibrary"
+private const val baseDirectory = "TestModels/Automated/Gamma"
+private const val libraryDirectory = "TestModels/Automated/GammaSemanticLibrary"
 
 @ExtendWith(InjectionExtension::class)
 @InjectWith(OxstsInjectorProvider::class)

@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+package hu.bme.mit.semantifyr.oxsts.engine
+
 import hu.bme.mit.semantifyr.oxsts.engine.reader.OxstsReader
 import hu.bme.mit.semantifyr.oxsts.engine.serialization.Serializer
 import hu.bme.mit.semantifyr.oxsts.engine.transformation.XstsTransformer
@@ -26,7 +28,7 @@ class TargetDefinition(
 
 open class VerificationTest {
 
-    val logger = LoggerFactory.getLogger(this.javaClass)
+    private val logger = LoggerFactory.getLogger(this.javaClass)
 
     companion object {
         val thetaExecutor = ThetaExecutor(
