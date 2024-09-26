@@ -16,11 +16,13 @@ import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeout
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -152,15 +154,19 @@ class ThetaExecutor(
     }
 
     private suspend fun runWorkflow(workingDirectory: String, name: String) = coroutineScope {
-        val jobs = parameters.indices.map { index ->
-            async {
-                runTheta(workingDirectory, name, parameters[index], index)
+        val jobs = supervisorScope {
+            parameters.indices.map { index ->
+                async(Dispatchers.IO) {
+                    runTheta(workingDirectory, name, parameters[index], index)
+                }
             }
         }
 
         try {
+            logger.debug("Awaiting jobs")
             jobs.awaitAny()
         } finally {
+            logger.debug("Canceling jobs")
             jobs.forEach {
                 it.cancelAndJoin()
             }
