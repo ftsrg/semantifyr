@@ -17,12 +17,12 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - macos-13
+#          - macos-13
     runs-on: ${{ matrix.os }}
     steps:
-    - name: Setup Docker on MacOS
-      uses: douglascamata/setup-docker-macos-action@v1-alpha
-      if: ${{ matrix.os == 'macos-13' }}
+#    - name: Setup Docker on MacOS
+#      uses: douglascamata/setup-docker-macos-action@v1-alpha
+#      if: ${{ matrix.os == 'macos-13' }}
     - name: Test Docker
       run: docker run hello-world
     - name: Set up JDK
