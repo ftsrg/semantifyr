@@ -13,8 +13,11 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runInterruptible
+import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.OutputStream
+
+private val logger = LoggerFactory.getLogger("awaitAny")
 
 @OptIn(ExperimentalCoroutinesApi::class)
 suspend fun <T> List<Deferred<T>>.awaitAny(): T {
@@ -23,13 +26,15 @@ suspend fun <T> List<Deferred<T>>.awaitAny(): T {
 
     forEach { job ->
         job.invokeOnCompletion { exception ->
-            counter++
+            synchronized(firstCompleted) {
+                val id = counter++
 
-            if (exception == null && !firstCompleted.isCompleted) {
-                firstCompleted.complete(job.getCompleted())
-            } else {
-                if (counter == size) {
-                    firstCompleted.completeExceptionally(IllegalStateException("All executed jobs failed: ", exception))
+                if (!firstCompleted.isCompleted) {
+                    if (exception == null) {
+                        firstCompleted.complete(job.getCompleted())
+                    } else if (id == size - 1) {
+                        firstCompleted.completeExceptionally(IllegalStateException("All executed jobs failed: ", exception))
+                    }
                 }
             }
         }
