@@ -33,7 +33,6 @@ import kotlin.time.toDuration
 import kotlin.time.toDurationUnit
 
 class ThetaExecutionResult(
-    val exitCode: Int,
     val id: Int,
     val modelPath: String,
     val propertyPath: String,
@@ -80,16 +79,12 @@ class ThetaExecutor(
         val container = createContainer(logName, errName, workingDirectory, model, property, cex, parameter)
         dockerClient.startContainerCmd(container.id).exec()
 
-        val waitResult = try {
-            val result = withTimeout(timeout.toDuration(timeUnit.toDurationUnit())) {
+        val result = try {
+            withTimeout(timeout.toDuration(timeUnit.toDurationUnit())) {
                 runAsync<WaitResponse> {
                     dockerClient.waitContainerCmd(container.id).exec(it)
                 }
             }
-
-            logger.info("Theta finished ($id)")
-
-            result
         } catch (e: TimeoutCancellationException) {
             logger.info("Theta timed out ($id)")
             throw e
@@ -105,8 +100,14 @@ class ThetaExecutor(
             }
         }
 
+        if (result.statusCode == 0) {
+            logger.info("Theta finished ($id)")
+        } else {
+            logger.error("Theta failed ($id)")
+            throw IllegalStateException("Theta execution failed with code ${result.statusCode}. See $workingDirectory${File.separator}$errName")
+        }
+
         return ThetaExecutionResult(
-            exitCode = waitResult.statusCode,
             id = id,
             modelPath = "$workingDirectory${File.separator}$model",
             propertyPath = "$workingDirectory${File.separator}$property",

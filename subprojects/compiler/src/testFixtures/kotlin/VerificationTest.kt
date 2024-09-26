@@ -85,8 +85,6 @@ open class VerificationTest {
 
         logger.info("Checking results of Theta")
 
-        Assertions.assertEquals(0, result.exitCode, "Theta exited with code ${result.exitCode}. See $targetDirectory/theta.err")
-
         if (targetName.contains("Unsafe")) {
             Assertions.assertTrue(result.isUnsafe, "$targetName failed!")
         } else if (targetName.contains("Safe")) {
