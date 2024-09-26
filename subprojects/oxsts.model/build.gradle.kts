@@ -10,7 +10,6 @@ plugins {
 
 dependencies {
     api(libs.ecore)
-    api(libs.ecore.xmi)
 
     mwe2(libs.ecore.codegen)
     mwe2(libs.mwe.utils)

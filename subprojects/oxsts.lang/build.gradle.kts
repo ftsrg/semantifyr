@@ -9,11 +9,11 @@ plugins {
 }
 
 dependencies {
-    api(platform(libs.xtext.bom))
-    api(libs.ecore)
-    api(libs.xtext.core)
-    api(libs.xtext.xbase)
     api(project(":oxsts.model"))
+
+    implementation(platform(libs.xtext.bom))
+    implementation(libs.xtext.core)
+    implementation(libs.xtext.xbase)
 
     testFixturesApi(libs.xtext.testing)
 

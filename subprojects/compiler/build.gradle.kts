@@ -20,9 +20,8 @@ repositories {
 
 dependencies {
     implementation(project(":oxsts.lang"))
-    implementation(project(":oxsts.model"))
 
-    implementation("com.google.inject:guice:7.0.0")
+    implementation(libs.guice)
     implementation(libs.slf4j.api)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.cli)
@@ -33,7 +32,7 @@ dependencies {
 
     runtimeOnly(libs.viatra.query.runtime)
     runtimeOnly(libs.viatra.transformation.runtime)
-    runtimeOnly(libs.slf4j.simple)
+    runtimeOnly(libs.slf4j.log4j)
 
     testFixturesApi(project(":oxsts.lang"))
     testFixturesApi(testFixtures(project(":oxsts.lang")))
