@@ -5,7 +5,7 @@
 [versions]
 ecore = "2.37.0"
 junit = "5.11.0"
-mockito = "5.14.0"
+mockito = "5.14.1"
 mwe2 = "2.19.0"
 slf4j = "2.0.16"
 log4j = "2.24.1"
