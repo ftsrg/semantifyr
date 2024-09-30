@@ -153,12 +153,10 @@ class ThetaExecutor(
         return container
     }
 
-    private suspend fun runWorkflow(workingDirectory: String, name: String) = coroutineScope {
-        val jobs = supervisorScope {
-            parameters.indices.map { index ->
-                async(Dispatchers.IO) {
-                    runTheta(workingDirectory, name, parameters[index], index)
-                }
+    private suspend fun runWorkflow(workingDirectory: String, name: String) = supervisorScope {
+        val jobs = parameters.indices.map { index ->
+            async(Dispatchers.IO) {
+                runTheta(workingDirectory, name, parameters[index], index)
             }
         }
 
