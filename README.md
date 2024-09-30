@@ -16,8 +16,7 @@ Run `gradlew build` to assemble the whole project, and execute all automated tes
 
 To execute all tests (even extremely slow, several days long tests!), run `gradlew allTests`.
 
-NOTE: on windows machines, set script execution policy to unrestricted, because the build uses ps1 scripts.
-Start elevated powershell, and run the following command: `Set-ExecutionPolicy Unrestricted`.
+NOTE: Verification tests use Docker to run Theta. To run the build locally, ensure you have docker installed!
 
 ## Contribution
 
