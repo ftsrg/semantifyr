@@ -2,7 +2,8 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 
-*._trace
-.idea/
-.gradle/
-/**/build/
+/META-INF/
+/src/main/emf-gen/
+**/plugin.xml
+**/plugin.properties
+**/build.properties

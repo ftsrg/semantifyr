@@ -7,7 +7,11 @@
 rootProject.name = "semantifyr"
 
 include(
-    "engine",
+    "compiler",
     "oxsts.model",
     "oxsts.lang",
 )
+
+rootProject.children.forEach { project ->
+    project.projectDir = file("subprojects/${project.name}")
+}

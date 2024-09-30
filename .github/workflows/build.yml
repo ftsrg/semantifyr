@@ -1,0 +1,57 @@
+# SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+name: Continuous Integration
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+jobs:
+  build:
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+#          - macos-13
+    runs-on: ${{ matrix.os }}
+    steps:
+#    - name: Setup Docker on MacOS
+#      uses: douglascamata/setup-docker-macos-action@v1-alpha
+#      if: ${{ matrix.os == 'macos-13' }}
+    - name: Test Docker
+      run: docker run hello-world
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: 17
+        distribution: adopt
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Gradle build
+      run: ./gradlew build
+    - name: Upload Artifacts
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      uses: actions/upload-artifact@v4
+      with:
+        path: |
+          **/build/distributions/
+          **/build/reports/
+          **/build/test-results/
+
+  reuse-check:
+    name: REUSE Compliance Check
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: REUSE Compliance Check
+        uses: fsfe/reuse-action@v4
