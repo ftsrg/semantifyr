@@ -514,7 +514,7 @@ target Spacecraft_batteryCharge_60_Unsafe : Mission {
     }
 }
 
-target Spacecraft_batteryCharge_50_Unsafe : Mission {
+target Spacecraft_batteryCharge_50_Unsafe_Slow : Mission {
     prop {
         ! (spaceMission.spacecraft.batteryCharge == 50)
     }
