@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.oxsts.compiler
 
 import com.github.dockerjava.api.command.CreateContainerResponse
-import com.github.dockerjava.api.exception.ConflictException
 import com.github.dockerjava.api.model.Bind
 import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.Volume
@@ -17,12 +16,13 @@ import com.github.dockerjava.core.DockerClientImpl
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -34,15 +34,26 @@ import kotlin.io.path.absolute
 import kotlin.time.toDuration
 import kotlin.time.toDurationUnit
 
-class ThetaExecutionResult(
+class ThetaRuntimeDetails(
     val id: Int,
-    val modelPath: String,
-    val propertyPath: String,
-    val cexPath: String,
-    val logPath: String,
-    val errPath: String
+    val workingDirectory: String,
+    val name: String
 ) {
-    val isUnsafe: Boolean = Files.exists(Paths.get(cexPath))
+    val modelFile = "$name.xsts"
+    val propertyFile = "$name.prop"
+    val cexFile = "$name$id.cex"
+    val logFile = "theta$id.out"
+    val errFile = "theta$id.err"
+
+    val modelPath = "$workingDirectory${File.separator}$modelFile"
+    val propertyPath = "$workingDirectory${File.separator}$propertyFile"
+    val cexPath = "$workingDirectory${File.separator}$cexFile"
+    val logPath = "$workingDirectory${File.separator}$logFile"
+    val errPath = "$workingDirectory${File.separator}$errFile"
+
+    val isUnsafe: Boolean by lazy {
+        Files.exists(Paths.get(cexPath))
+    }
 }
 
 class ThetaExecutor(
@@ -69,16 +80,13 @@ class ThetaExecutor(
         name: String,
         parameter: String,
         id: Int
-    ): ThetaExecutionResult {
-        val model = "$name.xsts"
-        val property = "$name.prop"
-        val cex = "$name$id.cex"
-        val logName = "theta$id.out"
-        val errName = "theta$id.err"
+    ): ThetaRuntimeDetails {
+        logger.info("Starting theta ($id)")
 
-        logger.info("Starting container ($id)")
+        val thetaRuntimeDetails = ThetaRuntimeDetails(id, workingDirectory, name)
 
-        val container = createContainer(logName, errName, workingDirectory, model, property, cex, parameter)
+        val container = createContainer(thetaRuntimeDetails, parameter)
+
         dockerClient.startContainerCmd(container.id).exec()
 
         val result = try {
@@ -94,11 +102,12 @@ class ThetaExecutor(
             logger.info("Theta cancelled ($id)")
             throw e
         } finally {
-            try {
-                logger.info("Removing container ($id)")
+            withContext(NonCancellable) {
+                logger.debug("Saving theta logs ($id)")
+                saveContainerLogs(thetaRuntimeDetails, container)
+
+                logger.debug("Removing theta ($id)")
                 dockerClient.removeContainerCmd(container.id).withForce(true).exec()
-            } catch (e: ConflictException) {
-                // ignore, it means the container is already being removed
             }
         }
 
@@ -106,49 +115,48 @@ class ThetaExecutor(
             logger.info("Theta finished ($id)")
         } else {
             logger.error("Theta failed ($id)")
-            throw IllegalStateException("Theta execution failed with code ${result.statusCode}. See $workingDirectory${File.separator}$errName")
+            throw IllegalStateException("Theta execution failed with code ${result.statusCode}. See $thetaRuntimeDetails")
         }
 
-        return ThetaExecutionResult(
-            id = id,
-            modelPath = "$workingDirectory${File.separator}$model",
-            propertyPath = "$workingDirectory${File.separator}$property",
-            cexPath = "$workingDirectory${File.separator}$cex",
-            logPath = "$workingDirectory${File.separator}$logName",
-            errPath = "$workingDirectory${File.separator}$errName",
-        )
+        return thetaRuntimeDetails
+    }
+
+    private suspend fun saveContainerLogs(
+        thetaRuntimeDetails: ThetaRuntimeDetails,
+        container: CreateContainerResponse
+    ) {
+        try {
+            val logFile = File(thetaRuntimeDetails.logPath)
+            val errFile = File(thetaRuntimeDetails.errPath)
+
+            dockerClient.logContainerCmd(container.id)
+                .withStdOut(true)
+                .withStdErr(true)
+                .withTailAll()
+                .exec(StreamLoggerCallback(logFile.outputStream(), errFile.outputStream()))
+                .await()
+        } catch (e: Throwable) {
+            logger.error("Exception during saving logging details (${thetaRuntimeDetails.id})", e)
+        }
     }
 
     private fun createContainer(
-        logName: String,
-        errName: String,
-        workingDirectory: String,
-        model: String,
-        property: String,
-        cex: String,
+        thetaRuntimeDetails: ThetaRuntimeDetails,
         parameter: String
     ): CreateContainerResponse {
-        val logFile = File(workingDirectory, logName)
-        val errFile = File(workingDirectory, errName)
-
         val hostConfig = HostConfig.newHostConfig()
-            .withBinds(Bind(workingDirectory, Volume("/host")))
+            .withBinds(Bind(thetaRuntimeDetails.workingDirectory, Volume("/host")))
 
         val container = dockerClient.createContainerCmd("ftsrg/theta-xsts-cli:$version")
             .withCmd(
                 "CEGAR",
-                "--model", "/host/$model",
-                "--property", "/host/$property",
-                "--cexfile", "/host/$cex",
+                "--model", "/host/${thetaRuntimeDetails.modelFile}",
+                "--property", "/host/${thetaRuntimeDetails.propertyFile}",
+                "--cexfile", "/host/${thetaRuntimeDetails.cexFile}",
                 *parameter.split(" ").toTypedArray(),
             )
             .withHostConfig(hostConfig)
             .exec()
-
-        dockerClient.logContainerCmd(container.id)
-            .withStdOut(true)
-            .withStdErr(true)
-            .exec(StreamLoggerCallback(logFile.outputStream(), errFile.outputStream()))
 
         return container
     }

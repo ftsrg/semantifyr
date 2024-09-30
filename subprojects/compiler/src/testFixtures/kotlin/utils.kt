@@ -13,11 +13,8 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runInterruptible
-import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.OutputStream
-
-private val logger = LoggerFactory.getLogger("awaitAny")
 
 @OptIn(ExperimentalCoroutinesApi::class)
 suspend fun <T> List<Deferred<T>>.awaitAny(): T {
@@ -44,7 +41,7 @@ suspend fun <T> List<Deferred<T>>.awaitAny(): T {
 }
 
 class DefferedResultCallback<T : Any> : ResultCallback<T> {
-    val job = CompletableDeferred<T>()
+    private val job = CompletableDeferred<T>()
     private lateinit var item: T
 
     override fun close() {
@@ -67,6 +64,10 @@ class DefferedResultCallback<T : Any> : ResultCallback<T> {
         this.item = item
     }
 
+    suspend fun await(): T {
+        return job.await()
+    }
+
 }
 
 suspend fun <T : Any> runAsync(block: (DefferedResultCallback<T>) -> Unit): T {
@@ -76,25 +77,43 @@ suspend fun <T : Any> runAsync(block: (DefferedResultCallback<T>) -> Unit): T {
         block(callback)
     }
 
-    return callback.job.await()
+    return callback.await()
 }
 
 class StreamLoggerCallback(
     private val logStream: OutputStream,
     private val errorStream: OutputStream
-) : ResultCallback.Adapter<Frame>() {
+) : ResultCallback<Frame> {
 
-    override fun onNext(frame: Frame) {
-        if (frame.streamType == StreamType.STDOUT) {
-            logStream.write(frame.payload)
-        } else if (frame.streamType == StreamType.STDERR) {
-            errorStream.write(frame.payload)
+    private val job = CompletableDeferred<Unit>()
+
+    override fun onNext(item: Frame) {
+        if (item.streamType == StreamType.STDOUT) {
+            logStream.write(item.payload)
+        } else if (item.streamType == StreamType.STDERR) {
+            errorStream.write(item.payload)
         }
     }
 
     override fun close() {
-        super.close()
         logStream.close()
         errorStream.close()
     }
+
+    override fun onStart(closeable: Closeable) {
+
+    }
+
+    override fun onError(throwable: Throwable) {
+        job.completeExceptionally(throwable)
+    }
+
+    override fun onComplete() {
+        job.complete(Unit)
+    }
+
+    suspend fun await() {
+        job.await()
+    }
+
 }
