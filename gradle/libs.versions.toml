@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: EPL-2.0
 
 [versions]
-ecore = "2.26.0"
+ecore = "2.37.0"
 junit = "5.11.0"
 mockito = "5.13.0"
 mwe2 = "2.15.0"
