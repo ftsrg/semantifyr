@@ -27,6 +27,7 @@ tasks.clean {
 tasks {
     val compile by registering(NpmTask::class) {
         dependsOn(npmInstall)
+        inputs.files("node_modules")
 
         npmCommand.set(
             listOf(
@@ -41,7 +42,7 @@ tasks {
     val packageExtension by registering(Exec::class) {
         inputs.files(cloneIde.get().outputs)
         inputs.files(compile.get().outputs)
-        inputs.file("node_modules/.bin/vsce.cmd")
+        inputs.files("node_modules")
 
         outputs.dir(project.layout.buildDirectory.dir("vscode"))
 
