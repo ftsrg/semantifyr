@@ -15,9 +15,17 @@ artifacts {
     add(distributionOutput.name, tasks.distTar)
 }
 
+tasks.clean {
+    delete("src/main/xtext-gen")
+}
+
 dependencies {
     api(project(":oxsts.lang"))
 
     implementation(libs.xtext.ide)
     runtimeOnly(libs.slf4j.log4j)
+}
+
+application {
+    mainClass = "hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsIdeSetup"
 }

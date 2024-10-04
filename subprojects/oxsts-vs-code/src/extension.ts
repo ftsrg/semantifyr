@@ -1,26 +1,45 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
+import * as path from 'path';
+import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
+import { workspace, ExtensionContext } from 'vscode';
+import { Trace } from 'vscode-jsonrpc';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
+let client: LanguageClient;
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "semantifyr" is now active!');
+export function activate(context: ExtensionContext) {
+    const serverModule = path.join(context.extensionPath, 'bin', 'oxsts.lang.ide', 'bin', 'oxsts.lang.ide.bat');
+    
+    let serverOptions: ServerOptions = {
+        run : { command: 'cmd', args: ['/c', serverModule] },
+        debug: { command: 'cmd', args: ['/c', serverModule], options: { env: createDebugEnv() } }
+    };
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('semantifyr.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from Semantifyr!');
-	});
+    const clientOptions: LanguageClientOptions = {
+        documentSelector: [{ scheme: 'file', language: 'oxsts' }],
+        synchronize: {
+            fileEvents: workspace.createFileSystemWatcher('**/.oxsts')
+        }
+    };
 
-	context.subscriptions.push(disposable);
+    client = new LanguageClient(
+            'oxstsLSP',
+            'OXSTS Language Server',
+            serverOptions,
+            clientOptions
+    );
+
+    client.setTrace(Trace.Verbose);
+    client.start();
 }
 
-// This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+    if (!client) {
+        return undefined;
+    }
+    return client.stop();
+}
+
+function createDebugEnv() {
+    return Object.assign({
+        JAVA_OPTS:"-Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=8000,suspend=n,quiet=y"
+    }, process.env);
+}

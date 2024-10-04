@@ -1,6 +1,4 @@
-import com.github.gradle.node.exec.ExecRunner
 import com.github.gradle.node.npm.task.NpmTask
-import com.github.gradle.node.task.NodeTask
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
@@ -15,6 +13,9 @@ dependencies {
 }
 
 val cloneIde by tasks.registering(Sync::class) {
+    dependsOn(distribution)
+    inputs.file(distribution.singleFile)
+
     from(tarTree(distribution.singleFile))
     into("bin")
 }
@@ -38,8 +39,10 @@ tasks {
     }
 
     val packageExtension by registering(Exec::class) {
+        inputs.files(cloneIde.get().outputs)
         inputs.files(compile.get().outputs)
         inputs.file("node_modules/.bin/vsce.cmd")
+
         outputs.dir(project.layout.buildDirectory.dir("vscode"))
 
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {

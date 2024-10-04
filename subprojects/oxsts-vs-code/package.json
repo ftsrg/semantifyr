@@ -17,6 +17,14 @@
         "command": "semantifyr.helloWorld",
         "title": "Hello World"
       }
+    ],
+    "languages": [
+      {
+        "id": "oxsts",
+        "extensions": [".oxsts"],
+        "aliases": ["OXSTS"],
+        "configuration": "./oxsts-configuration.json"
+      }
     ]
   },
   "scripts": {
@@ -46,5 +54,8 @@
     "npm-run-all": "^4.1.5",
     "typescript": "^5.6.2",
     "vsce": "^2.15.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
   }
 }
