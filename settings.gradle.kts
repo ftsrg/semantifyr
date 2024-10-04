@@ -10,6 +10,8 @@ include(
     "compiler",
     "oxsts.model",
     "oxsts.lang",
+    "oxsts.lang.ide",
+    "oxsts-vs-code",
 )
 
 rootProject.children.forEach { project ->

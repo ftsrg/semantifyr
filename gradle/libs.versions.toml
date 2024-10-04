@@ -16,6 +16,7 @@ kotlinxCli = "0.3.6"
 viatra = "2.9.1"
 dockerJava = "3.4.0"
 guice = "7.0.0"
+node = "7.1.0"
 
 [libraries]
 ecore = { group = "org.eclipse.emf", name = "org.eclipse.emf.ecore", version.ref = "ecore" }
@@ -32,6 +33,7 @@ slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
 slf4j-log4j = { group = "org.apache.logging.log4j", name = "log4j-slf4j2-impl", version.ref = "log4j" }
 xtext-bom = { group = "org.eclipse.xtext", name = "xtext-dev-bom", version.ref = "xtext" }
 xtext-core = { group = "org.eclipse.xtext", name = "org.eclipse.xtext", version.ref = "xtext" }
+xtext-ide = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.ide", version.ref = "xtext" }
 xtext-generator-antlr = { group = "org.eclipse.xtext", name = "xtext-antlr-generator", version = "2.1.1" }
 xtext-generator = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.xtext.generator", version.ref = "xtext" }
 xtext-testing = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.testing", version.ref = "xtext" }
@@ -47,3 +49,4 @@ docker-java-transport = { group = "com.github.docker-java" , name = "docker-java
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+gradle-node = { id = "com.github.node-gradle.node", version.ref = "node" }

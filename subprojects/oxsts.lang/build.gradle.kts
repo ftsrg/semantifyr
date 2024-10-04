@@ -37,7 +37,8 @@ val generateXtextLanguage by tasks.registering(JavaExec::class) {
 
     outputs.dir("src/main/xtext-gen")
     outputs.dir("src/testFixtures/xtext-gen")
-    outputs.dir(layout.buildDirectory.dir("generated/sources/xtext/ide"))
+    outputs.dir(project(":oxsts.lang.ide").layout.projectDirectory.dir("src/main/xtext-gen"))
+    outputs.dir(project(":oxsts.lang.ide").layout.projectDirectory.dir("src/main/java"))
 
     args("src/main/java/hu/bme/mit/semantifyr/oxsts/lang/GenerateOxsts.mwe2", "-p", "rootPath=/$projectDir/..")
 }
