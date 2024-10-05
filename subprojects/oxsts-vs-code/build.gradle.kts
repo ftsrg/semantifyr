@@ -25,7 +25,7 @@ val cloneDistribution by tasks.registering(Sync::class) {
     inputs.files(distributionClasspath)
 
     from (distributionClasspath.map {
-        tarTree(it)
+        fileTree(it)
     })
 
     into("bin")
