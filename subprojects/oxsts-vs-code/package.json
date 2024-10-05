@@ -23,7 +23,14 @@
         "id": "oxsts",
         "extensions": [".oxsts"],
         "aliases": ["OXSTS"],
-        "configuration": "./oxsts-configuration.json"
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "oxsts",
+        "scopeName": "source.oxsts",
+        "path": "./syntaxes/oxsts.tmLanguage.json"
       }
     ]
   },
