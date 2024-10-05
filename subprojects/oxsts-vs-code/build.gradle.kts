@@ -64,9 +64,7 @@ tasks {
             commandLine(
                 "sh",
                 "-c",
-                "node_modules/.bin/vsce",
-                "package",
-                "--out", project.layout.buildDirectory.dir("vscode").get().asFile.absolutePath,
+                "node_modules/.bin/vsce package --out " + project.layout.buildDirectory.dir("vscode").get().asFile.absolutePath,
             )
         }
     }
