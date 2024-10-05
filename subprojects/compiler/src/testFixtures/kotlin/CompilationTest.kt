@@ -18,8 +18,8 @@ open class CompilationTest {
     fun simpleReadTransformWrite(directory: String, library: String = "", rewriteChoice: Boolean = true) {
         File("$directory/model.xsts").delete()
 
-        val reader = OxstsReader(directory, library)
-        reader.read()
+        val reader = OxstsReader(library)
+        reader.readDirectory(directory)
 
         val transformer = XstsTransformer(reader)
         val xsts = transformer.transform("Mission", rewriteChoice)

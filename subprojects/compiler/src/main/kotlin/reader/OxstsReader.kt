@@ -31,8 +31,7 @@ fun prepareOxsts() {
 }
 
 class OxstsReader(
-    private val inputDirectory: String,
-    private val libraryDirectory: String = ""
+    private val libraryDirectory: String
 ) {
     val resourceSet = ResourceSetImpl()
     val userResources = mutableListOf<Resource>()
@@ -44,24 +43,53 @@ class OxstsReader(
         resourceSet.loadOptions[XtextResource.OPTION_ENCODING] = "UTF-8"
     }
 
-    fun read() {
-        if (libraryDirectory.isNotBlank()) {
-            val libraryFile = File(libraryDirectory)
+    fun readFile(file: File): Resource {
+        val resource = resourceSet.getResource(URI.createFileURI(file.path), true)
+        resource.load(emptyMap<Any, Any>())
 
-            for (file in libraryFile.walkFiles().filter { it.extension == "oxsts" }) {
-                val resource = resourceSet.getResource(URI.createURI(file.path), true)
-                resource.load(emptyMap<Any, Any>())
-            }
+        return resource
+    }
+
+    fun readDirectory(modelDirectory: String) {
+        val libraryFiles = File(libraryDirectory).walkFiles().filter {
+            it.extension == "oxsts"
         }
 
-        val inputFile = File(inputDirectory)
-
-        for (file in inputFile.walkFiles().filter { it.extension == "oxsts" }) {
-            val resource = resourceSet.getResource(URI.createFileURI(file.path), true)
-            resource.load(emptyMap<Any, Any>())
-            userResources += resource
+        for (file in libraryFiles) {
+            readFile(file)
         }
 
+        val modelFiles = File(modelDirectory).walkFiles().filter {
+            it.extension == "oxsts"
+        }
+
+        for (file in modelFiles) {
+            userResources += readFile(file)
+        }
+
+        validateResources()
+    }
+
+    fun readModel(modelPath: String) {
+        val modelFile = File(modelPath)
+        val modelAbsolutePath = modelFile.absolutePath
+
+        val libraryFiles = File(libraryDirectory).walkFiles().filter {
+            it.extension == "oxsts"
+        }.filterNot {
+            it.absolutePath == modelAbsolutePath
+        }
+
+        for (file in libraryFiles) {
+            readFile(file)
+        }
+
+        userResources += readFile(modelFile)
+
+        validateResources()
+    }
+
+    private fun validateResources() {
         for (resource in resourceSet.resources) {
             EcoreUtil2.resolveAll(resource)
             if (resource.errors.any()) {
@@ -78,7 +106,6 @@ class OxstsReader(
                 error("Issues found in file (${resource.uri.toFileString()}):\n${issues.joinToString("\n")}")
             }
         }
-
     }
 
 }

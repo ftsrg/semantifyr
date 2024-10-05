@@ -17,22 +17,24 @@ import java.io.File
 fun main(args: Array<String>) {
     val parser = ArgParser("oxsts")
 
-    val inputDirectory by parser.argument(ArgType.String, "input")
-    val libraryDirectory by parser.option(ArgType.String, "library")
+    val modelPath by parser.argument(ArgType.String, "model")
+    val libraryDirectory by parser.argument(ArgType.String, "library")
     val targetName by parser.argument(ArgType.String, "target")
-    val outputFile by parser.argument(ArgType.String, "output")
+    val output by parser.option(ArgType.String, "output", shortName = "o")
 
     parser.parse(args)
 
     prepareOxsts()
 
-    val reader = OxstsReader(inputDirectory, libraryDirectory ?: "")
-    reader.read()
+    val reader = OxstsReader(libraryDirectory)
+    reader.readModel(modelPath)
 
     val transformer = XstsTransformer(reader)
 
     val xsts = transformer.transform(targetName)
     val xstsString = Serializer.serialize(xsts)
 
-    File(outputFile).writeText(xstsString)
+    val outputPath = output ?: modelPath.replace(".oxsts", ".xsts")
+
+    File(outputPath).writeText(xstsString)
 }

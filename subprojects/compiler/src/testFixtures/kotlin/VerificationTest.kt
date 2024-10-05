@@ -53,8 +53,8 @@ open class VerificationTest {
             }.filter {
                 it.list { _, name -> name == "model.oxsts" }?.any() ?: false
             }.flatMap { file ->
-                val reader = OxstsReader("${file.path}/model.oxsts", library)
-                reader.read()
+                val reader = OxstsReader(library)
+                reader.readModel("${file.path}/model.oxsts")
 
                 reader.rootElements.asSequence().flatMap {
                     it.types
@@ -95,8 +95,8 @@ open class VerificationTest {
     }
 
     private fun transformTargetToTheta(modelDirectory: String, library: String, targetName: String, targetDirectory: String) {
-        val reader = OxstsReader(modelDirectory, library)
-        reader.read()
+        val reader = OxstsReader(library)
+        reader.readDirectory(modelDirectory)
 
         val transformer = XstsTransformer(reader)
         val xsts = transformer.transform(targetName, true)
