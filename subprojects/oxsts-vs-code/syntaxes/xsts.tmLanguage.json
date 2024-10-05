@@ -1,0 +1,76 @@
+{
+  "scopeName": "source.xsts",
+  "name": "xsts",
+  "patterns": [
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#operators"
+    },
+    {
+      "include": "#types"
+    },
+    {
+      "include": "#literals"
+    },
+    {
+      "include": "#comments"
+    }
+  ],
+  "repository": {
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.xsts",
+          "match": "\\b(or|enum|ctrl|assume|var|type|init|havoc|trans|choice|if|else|prop|env)\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.xsts",
+          "match": "(==|!=|<=|>=|<|>|\\+|-|&&|\\|\\|)"
+        },
+        {
+          "name": "keyword.operator.assignment.xsts",
+          "match": ":="
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "storage.type.xsts",
+          "match": "\\b(Integer|Boolean|Self|Nothing)\\b"
+        }
+      ]
+    },
+    "literals": {
+      "patterns": [
+        {
+          "name": "constant.numeric.xsts",
+          "match": "\\b\\d+\\b"
+        },
+        {
+          "name": "constant.language.boolean.xsts",
+          "match": "\\b(true|false)\\b"
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.xsts",
+          "begin": "/\\*",
+          "end": "\\*/"
+        },
+        {
+          "name": "comment.line.double-slash.xsts",
+          "match": "//.*$"
+        }
+      ]
+    }
+  }
+}

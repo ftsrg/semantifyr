@@ -12,17 +12,17 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "semantifyr.helloWorld",
-        "title": "Hello World"
-      }
-    ],
     "languages": [
       {
         "id": "oxsts",
         "extensions": [".oxsts"],
         "aliases": ["OXSTS"],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "xsts",
+        "extensions": [".xsts"],
+        "aliases": ["XSTS"],
         "configuration": "./language-configuration.json"
       }
     ],
@@ -31,6 +31,11 @@
         "language": "oxsts",
         "scopeName": "source.oxsts",
         "path": "./syntaxes/oxsts.tmLanguage.json"
+      },
+      {
+        "language": "xsts",
+        "scopeName": "source.xsts",
+        "path": "./syntaxes/xsts.tmLanguage.json"
       }
     ]
   },
