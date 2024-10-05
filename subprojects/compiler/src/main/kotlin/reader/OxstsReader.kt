@@ -57,7 +57,7 @@ class OxstsReader(
         val inputFile = File(inputDirectory)
 
         for (file in inputFile.walkFiles().filter { it.extension == "oxsts" }) {
-            val resource = resourceSet.getResource(URI.createURI(file.path), true)
+            val resource = resourceSet.getResource(URI.createFileURI(file.path), true)
             resource.load(emptyMap<Any, Any>())
             userResources += resource
         }
