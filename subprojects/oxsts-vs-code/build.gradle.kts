@@ -6,28 +6,28 @@ plugins {
     alias(libs.plugins.gradle.node)
 }
 
-val distribution by configurations.creating
+val distributionClasspath by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
 
 dependencies {
-    distribution(project(":oxsts.lang.ide", configuration = "distributionOutput"))
+    distributionClasspath(project(":oxsts.lang.ide", configuration = "distributionOutput"))
 }
 
-val cloneIde by tasks.registering(Sync::class) {
-    dependsOn(distribution)
-    inputs.file(distribution.singleFile)
+val cloneDistribution by tasks.registering(Sync::class) {
+    inputs.files(distributionClasspath)
 
-    from(tarTree(distribution.singleFile))
+    from (distributionClasspath.map {
+        tarTree(it)
+    })
+
     into("bin")
-}
-
-tasks.clean {
-    delete("dist")
 }
 
 tasks {
     val compile by registering(NpmTask::class) {
-        dependsOn(npmInstall)
-        inputs.files("node_modules")
+        inputs.files(npmInstall.get().outputs)
 
         npmCommand.set(
             listOf(
@@ -40,9 +40,9 @@ tasks {
     }
 
     val packageExtension by registering(Exec::class) {
-        inputs.files(cloneIde.get().outputs)
+        inputs.files(cloneDistribution.get().outputs)
         inputs.files(compile.get().outputs)
-        inputs.files("node_modules")
+        inputs.dir("node_modules")
 
         outputs.dir(project.layout.buildDirectory.dir("vscode"))
 
@@ -65,6 +65,10 @@ tasks {
     }
 
     assemble {
-        dependsOn(packageExtension)
+        inputs.files(packageExtension.get().outputs)
+    }
+
+    clean {
+        delete("dist")
     }
 }

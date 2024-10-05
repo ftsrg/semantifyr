@@ -28,7 +28,8 @@ Workflow {
 				}
 				genericIde = {
 					enabled = true
-					root = "${rootPath}/oxsts.lang.ide"
+					root = null
+                    srcGen = "${rootPath}/oxsts.lang/build/generated/sources/xtext/ide"
                 }
 				mavenLayout = true
 			}
