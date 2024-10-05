@@ -1,0 +1,18 @@
+<!--
+SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+
+SPDX-License-Identifier: EPL-2.0
+-->
+
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="EngineCliKt" type="JetRunConfigurationType" nameIsGenerated="true">
+    <option name="MAIN_CLASS_NAME" value="hu.bme.mit.semantifyr.oxsts.compiler.EngineCliKt" />
+    <module name="semantifyr.compiler.main" />
+    <option name="PROGRAM_PARAMETERS" value="TestModels\\Automated\\Simple\\Feature\\FeatureRedefinition Mission TestModels\Automated\Simple\Feature\FeatureRedefinition\Mission.xsts" />
+    <shortenClasspath name="NONE" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/subprojects/compiler" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
