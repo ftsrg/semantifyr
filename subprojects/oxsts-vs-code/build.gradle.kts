@@ -19,6 +19,7 @@ val distributionClasspath by configurations.creating {
 
 dependencies {
     distributionClasspath(project(":oxsts.lang.ide", configuration = "distributionOutput"))
+    distributionClasspath(project(":compiler", configuration = "distributionOutput"))
 }
 
 val cloneDistribution by tasks.registering(Sync::class) {

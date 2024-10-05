@@ -18,6 +18,17 @@ repositories {
     maven("https://repo.eclipse.org/content/groups/viatra/")
 }
 
+val distributionOutput by configurations.creating {
+    isCanBeConsumed = true
+    isCanBeResolved = false
+}
+
+artifacts {
+    add(distributionOutput.name, layout.buildDirectory.dir("install")) {
+        builtBy(tasks.installDist)
+    }
+}
+
 dependencies {
     implementation(project(":oxsts.lang"))
 
@@ -39,4 +50,8 @@ dependencies {
 
     testFixturesImplementation(libs.docker.java.core)
     testFixturesImplementation(libs.docker.java.transport)
+}
+
+application {
+    mainClass = "hu.bme.mit.semantifyr.oxsts.compiler.CompileCliKt"
 }
