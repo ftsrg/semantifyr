@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
 import com.github.gradle.node.npm.task.NpmTask
 import org.apache.tools.ant.taskdefs.condition.Os
 
@@ -57,6 +63,7 @@ tasks {
         } else {
             commandLine(
                 "sh",
+                "-c",
                 "node_modules/.bin/vsce",
                 "package",
                 "--out", project.layout.buildDirectory.dir("vscode").get().asFile.absolutePath,
