@@ -19,6 +19,7 @@ val distributionClasspath by configurations.creating {
 
 dependencies {
     distributionClasspath(project(":oxsts.lang.ide", configuration = "distributionOutput"))
+    distributionClasspath(project(":xsts.lang.ide", configuration = "distributionOutput"))
     distributionClasspath(project(":compiler", configuration = "distributionOutput"))
 }
 

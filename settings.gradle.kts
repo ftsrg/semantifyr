@@ -8,6 +8,8 @@ rootProject.name = "semantifyr"
 
 include(
     "compiler",
+    "xsts.lang",
+    "xsts.lang.ide",
     "oxsts.model",
     "oxsts.lang",
     "oxsts.lang.ide",

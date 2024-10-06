@@ -11,7 +11,8 @@ import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-lan
 import { workspace, ExtensionContext } from 'vscode';
 import * as vscode from "vscode";
 
-let client: LanguageClient;
+let oxstsClient: LanguageClient;
+let xstsClient: LanguageClient;
 
 class SemantifyrCodeLensProvider implements vscode.CodeLensProvider {
 
@@ -45,7 +46,8 @@ class SemantifyrCodeLensProvider implements vscode.CodeLensProvider {
 }
 
 export function activate(context: ExtensionContext) {
-    const ideExecutable = path.join(context.extensionPath, 'bin', 'oxsts.lang.ide', 'bin', 'oxsts.lang.ide.bat');
+    const oxstsIdeExecutable = path.join(context.extensionPath, 'bin', 'oxsts.lang.ide', 'bin', 'oxsts.lang.ide.bat');
+    const xstsIdeExecutable = path.join(context.extensionPath, 'bin', 'xsts.lang.ide', 'bin', 'xsts.lang.ide.bat');
     const compilerExecutable = path.join(context.extensionPath, 'bin', 'compiler', 'bin', 'compiler.bat');
 
     const runner = os.type() === 'Windows_NT' ? 'cmd' : 'sh';
@@ -96,38 +98,52 @@ export function activate(context: ExtensionContext) {
             vscode.window.showInformationMessage(`Verification is not yet supported from VS Code!`);
         })
     );
-
-    let serverOptions: ServerOptions = {
-        run : { command: runner, args: [ commandArg, ideExecutable ] },
-        debug: { command: runner, args: [ commandArg, ideExecutable ], options: { env: createDebugEnv() } }
+    
+    let oxstsServerOptions: ServerOptions = {
+        run : { command: runner, args: [ commandArg, oxstsIdeExecutable ] },
+        debug: { command: runner, args: [ commandArg, oxstsIdeExecutable ] }
     };
 
-    const clientOptions: LanguageClientOptions = {
+    const oxstsClientOptions: LanguageClientOptions = {
         documentSelector: [{ scheme: 'file', language: 'oxsts' }],
         synchronize: {
             fileEvents: workspace.createFileSystemWatcher('**/.oxsts')
         }
     };
 
-    client = new LanguageClient(
+    oxstsClient = new LanguageClient(
             'oxstsLSP',
             'OXSTS Language Server',
-            serverOptions,
-            clientOptions
+            oxstsServerOptions,
+            oxstsClientOptions
     );
 
-    client.start();
+
+    let xstsServerOptions: ServerOptions = {
+        run : { command: runner, args: [ commandArg, xstsIdeExecutable ] },
+        debug: { command: runner, args: [ commandArg, xstsIdeExecutable ] }
+    };
+
+    const xstsClientOptions: LanguageClientOptions = {
+        documentSelector: [{ scheme: 'file', language: 'xsts' }],
+        synchronize: {
+            fileEvents: workspace.createFileSystemWatcher('**/.xsts')
+        }
+    };
+
+    xstsClient = new LanguageClient(
+            'xstsLSP',
+            'XSTS Language Server',
+            xstsServerOptions,
+            xstsClientOptions
+    );
+
+    oxstsClient.start();
+    xstsClient.start();
 }
 
 export function deactivate() {
-    if (!client) {
-        return undefined;
-    }
-    return client.stop();
-}
-
-function createDebugEnv() {
-    return Object.assign({
-        JAVA_OPTS:"-Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=8000,suspend=n,quiet=y"
-    }, process.env);
+    return oxstsClient.stop().then(() => {
+        xstsClient.stop();
+    });
 }
