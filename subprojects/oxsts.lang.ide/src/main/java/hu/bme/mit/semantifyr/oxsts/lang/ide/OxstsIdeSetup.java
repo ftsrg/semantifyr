@@ -31,7 +31,7 @@ public class OxstsIdeSetup extends OxstsStandaloneSetup {
 		return Guice.createInjector(Modules2.mixin(new OxstsRuntimeModule(), new OxstsIdeModule()));
 	}
 
-    public static void main(String[] args) throws InterruptedException, IOException, ExecutionException {
+    public static void main(String[] args) throws InterruptedException, ExecutionException {
         OxstsIdeSetup.doSetup();
         OxstsPackage.eINSTANCE.getName();
 
