@@ -1,7 +1,7 @@
 {
   "name": "semantifyr",
-  "displayName": "Semantifyr",
-  "description": "OXSTS language support for VS Code",
+  "displayName": "Semantifyr VS Code",
+  "description": "VS Code integration for the Semantifyr tool",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.93.0"
