@@ -39,7 +39,7 @@ dependencies {
     implementation(libs.guice)
     implementation(libs.slf4j.api)
     implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.kotlinx.cli)
+    implementation(libs.clikt)
     implementation(libs.ecore.codegen)
     implementation(libs.viatra.query.language) {
         exclude("com.google.inject", "guice")

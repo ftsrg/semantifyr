@@ -68,7 +68,7 @@ export function activate(context: ExtensionContext) {
 
             vscode.window.showInformationMessage(`Compiling target: ${targetName}`);
 
-            const compileCommand = `${runner} ${commandArg} ${compilerExecutable} ${documentPath} ${workspaceFolder} ${targetName} -o ${outputFile}`;
+            const compileCommand = `${runner} ${commandArg} ${compilerExecutable} compile ${documentPath} ${workspaceFolder} ${targetName} -o ${outputFile}`;
 
             vscode.window.withProgress({
                 location: vscode.ProgressLocation.Window,
@@ -76,7 +76,7 @@ export function activate(context: ExtensionContext) {
                 cancellable: false
             }, () => {
                 return new Promise<void>((resolve, reject) => {                    
-                    childProcess.exec(compileCommand, (error, stderr) => {
+                    childProcess.exec(compileCommand, (error, stdout, stderr) => {
                         if (error) {
                             vscode.window.showErrorMessage(`Error compiling target: ${error.message}`);
                             reject(error);
@@ -95,7 +95,35 @@ export function activate(context: ExtensionContext) {
 
     context.subscriptions.push(
         vscode.commands.registerCommand('semantifyr.verifyTarget', (targetName: string, document: vscode.TextDocument) => {
-            vscode.window.showInformationMessage(`Verification is not yet supported from VS Code!`);
+            const documentPath = document.uri.fsPath;
+            const documentDirectory = path.dirname(documentPath);
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            const workspaceFolder = workspaceFolders ? workspaceFolders[0].uri.fsPath : documentDirectory;
+
+            vscode.window.showInformationMessage(`Verifying target: ${targetName}`);
+
+            const verifyCommand = `${runner} ${commandArg} ${compilerExecutable} verify ${documentPath} ${workspaceFolder} ${targetName}`;
+
+            vscode.window.withProgress({
+                location: vscode.ProgressLocation.Window,
+                title: `Verifying target: ${targetName}`,
+                cancellable: false
+            }, () => {
+                return new Promise<void>((resolve, reject) => {
+                    childProcess.exec(verifyCommand, (error, stdout, stderr) => {
+                        if (error) {
+                            vscode.window.showErrorMessage(`Error verifying target: ${error.message}`);
+                            reject(error);
+                        } else if (stderr) {
+                            vscode.window.showErrorMessage(`Verification error: ${stderr}`);
+                            reject(stderr);
+                        } else {
+                            vscode.window.showInformationMessage(`Success! Result: `);
+                            resolve();
+                        }
+                    });
+                });
+            });
         })
     );
     

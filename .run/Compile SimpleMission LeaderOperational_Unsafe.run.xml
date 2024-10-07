@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Compile SimpleMission LeaderOperational_Unsafe" type="JetRunConfigurationType">
+    <option name="MAIN_CLASS_NAME" value="hu.bme.mit.semantifyr.oxsts.semantifyr.SemantifyrCliKt" />
+    <module name="semantifyr.semantifyr.main" />
+    <option name="PROGRAM_PARAMETERS" value="compile TestModels\Automated\Gamma\SimpleMission\model.oxsts TestModels\Automated\GammaSemanticLibrary LeaderOperational_Unsafe" />
+    <shortenClasspath name="NONE" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/subprojects/semantifyr" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
