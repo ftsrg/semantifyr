@@ -16,6 +16,19 @@ import kotlinx.coroutines.runInterruptible
 import java.io.Closeable
 import java.io.OutputStream
 
+import kotlin.reflect.KProperty
+
+open class EnvVar {
+
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): String {
+        return System.getenv(property.name)
+    }
+
+}
+
+@Suppress("ClassName")
+object environment : EnvVar()
+
 @OptIn(ExperimentalCoroutinesApi::class)
 suspend fun <T> List<Deferred<T>>.awaitAny(): T {
     val firstCompleted = CompletableDeferred<T>()

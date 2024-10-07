@@ -55,7 +55,7 @@ class ThetaRuntimeDetails(
 }
 
 class ThetaExecutor(
-    private val version: String = "latest",
+    private val version: String,
     private val parameters: List<String>,
     private val timeout: Long = 3,
     private val timeUnit: TimeUnit = TimeUnit.MINUTES

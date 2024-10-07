@@ -31,8 +31,10 @@ open class VerificationTest {
     private val logger = LoggerFactory.getLogger(this.javaClass)
 
     companion object {
+        val thetaVersion by EnvVar()
+
         val thetaExecutor = ThetaExecutor(
-            "6.5.2",
+            thetaVersion,
             listOf(
                 "--domain EXPL --refinement SEQ_ITP --maxenum 250 --initprec CTRL --stacktrace",
                 "--domain EXPL_PRED_COMBINED --autoexpl NEWOPERANDS --initprec CTRL --stacktrace",
