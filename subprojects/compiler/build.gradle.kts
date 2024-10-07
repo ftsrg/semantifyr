@@ -45,15 +45,15 @@ dependencies {
         exclude("com.google.inject", "guice")
     }
 
+    implementation(libs.docker.java.core)
+    implementation(libs.docker.java.transport)
+
     runtimeOnly(libs.viatra.query.runtime)
     runtimeOnly(libs.viatra.transformation.runtime)
     runtimeOnly(libs.slf4j.log4j)
 
     testFixturesApi(project(":oxsts.lang"))
     testFixturesApi(testFixtures(project(":oxsts.lang")))
-
-    testFixturesImplementation(libs.docker.java.core)
-    testFixturesImplementation(libs.docker.java.transport)
 }
 
 application {

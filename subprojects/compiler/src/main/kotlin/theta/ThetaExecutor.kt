@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.compiler
+package hu.bme.mit.semantifyr.oxsts.compiler.theta
 
 import com.github.dockerjava.api.command.CreateContainerResponse
 import com.github.dockerjava.api.model.Bind
@@ -14,6 +14,9 @@ import com.github.dockerjava.api.model.WaitResponse
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.StreamLoggerCallback
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.awaitAny
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.runAsync
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -65,8 +68,8 @@ class ThetaExecutor(
 
     private val config = DefaultDockerClientConfig.createDefaultConfigBuilder().build()
     private val httpClient = ApacheDockerHttpClient.Builder()
-        .dockerHost(config.getDockerHost())
-        .sslConfig(config.getSSLConfig()).build()
+        .dockerHost(config.dockerHost)
+        .sslConfig(config.sslConfig).build()
     private val dockerClient = DockerClientImpl.getInstance(config, httpClient);
 
     fun initTheta() {

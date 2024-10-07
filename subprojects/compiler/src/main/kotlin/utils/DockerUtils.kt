@@ -1,10 +1,4 @@
-/*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
- *
- * SPDX-License-Identifier: EPL-2.0
- */
-
-package hu.bme.mit.semantifyr.oxsts.compiler
+package hu.bme.mit.semantifyr.oxsts.compiler.utils
 
 import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.model.Frame
@@ -15,19 +9,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runInterruptible
 import java.io.Closeable
 import java.io.OutputStream
-
-import kotlin.reflect.KProperty
-
-open class EnvVar {
-
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): String {
-        return System.getenv(property.name)
-    }
-
-}
-
-@Suppress("ClassName")
-object environment : EnvVar()
+import kotlin.collections.forEach
 
 @OptIn(ExperimentalCoroutinesApi::class)
 suspend fun <T> List<Deferred<T>>.awaitAny(): T {

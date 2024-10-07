@@ -8,7 +8,9 @@ package hu.bme.mit.semantifyr.oxsts.compiler
 
 import hu.bme.mit.semantifyr.oxsts.compiler.reader.OxstsReader
 import hu.bme.mit.semantifyr.oxsts.compiler.serialization.Serializer
+import hu.bme.mit.semantifyr.oxsts.compiler.theta.ThetaExecutor
 import hu.bme.mit.semantifyr.oxsts.compiler.transformation.XstsTransformer
+import hu.bme.mit.semantifyr.oxsts.compiler.utils.EnvVar
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Target
 import org.junit.jupiter.api.Assertions
 import org.slf4j.LoggerFactory
