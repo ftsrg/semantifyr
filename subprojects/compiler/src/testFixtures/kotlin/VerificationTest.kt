@@ -100,12 +100,8 @@ open class VerificationTest {
 
         val transformer = XstsTransformer(reader)
         val xsts = transformer.transform(targetName, true)
-        val serializedXsts = Serializer.serialize(xsts, false)
+        val serializedXsts = Serializer.serialize(xsts)
 
         File("$targetDirectory/$targetName.xsts").writeText(serializedXsts)
-
-        val serializedProperty = Serializer.serializeProperty(xsts)
-
-        File("$targetDirectory/$targetName.prop").writeText(serializedProperty)
     }
 }

@@ -40,13 +40,11 @@ class ThetaRuntimeDetails(
     val name: String
 ) {
     val modelFile = "$name.xsts"
-    val propertyFile = "$name.prop"
     val cexFile = "$name$id.cex"
     val logFile = "theta$id.out"
     val errFile = "theta$id.err"
 
     val modelPath = "$workingDirectory${File.separator}$modelFile"
-    val propertyPath = "$workingDirectory${File.separator}$propertyFile"
     val cexPath = "$workingDirectory${File.separator}$cexFile"
     val logPath = "$workingDirectory${File.separator}$logFile"
     val errPath = "$workingDirectory${File.separator}$errFile"
@@ -151,7 +149,6 @@ class ThetaExecutor(
             .withCmd(
                 "CEGAR",
                 "--model", "/host/${thetaRuntimeDetails.modelFile}",
-                "--property", "/host/${thetaRuntimeDetails.propertyFile}",
                 "--cexfile", "/host/${thetaRuntimeDetails.cexFile}",
                 *parameter.split(" ").toTypedArray(),
             )
