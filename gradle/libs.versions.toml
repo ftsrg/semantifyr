@@ -4,7 +4,7 @@
 
 [versions]
 ecore = "2.37.0"
-junit = "5.11.0"
+junit = "5.11.2"
 mockito = "5.14.0"
 mwe2 = "2.19.0"
 slf4j = "2.0.16"
