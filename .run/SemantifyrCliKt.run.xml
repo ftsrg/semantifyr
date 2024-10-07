@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="SemantifyrCliKt" type="JetRunConfigurationType" nameIsGenerated="true">
+    <option name="MAIN_CLASS_NAME" value="hu.bme.mit.semantifyr.oxsts.semantifyr.SemantifyrCliKt" />
+    <module name="semantifyr.semantifyr.main" />
+    <option name="PROGRAM_PARAMETERS" value="TestModels\\Automated\\Simple\\Feature\\FeatureRedefinition\\model.oxsts TestModels\\Automated\\Simple\\Feature\\FeatureRedefinition Mission" />
+    <shortenClasspath name="NONE" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/subprojects/semantifyr" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

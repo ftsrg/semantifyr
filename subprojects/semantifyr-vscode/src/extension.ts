@@ -46,13 +46,13 @@ class SemantifyrCodeLensProvider implements vscode.CodeLensProvider {
 }
 
 export function activate(context: ExtensionContext) {
-    const oxstsIdeExecutable = path.join(context.extensionPath, 'bin', 'oxsts.lang.ide', 'bin', 'oxsts.lang.ide.bat');
-    const xstsIdeExecutable = path.join(context.extensionPath, 'bin', 'xsts.lang.ide', 'bin', 'xsts.lang.ide.bat');
-    const compilerExecutable = path.join(context.extensionPath, 'bin', 'compiler', 'bin', 'compiler.bat');
-
     const runner = os.type() === 'Windows_NT' ? 'cmd' : 'sh';
     const commandArg = os.type() === 'Windows_NT' ? '/c' : '-c';
+    const executablePostfix = os.type() === 'Windows_NT' ? '.bat' : '';
 
+    const oxstsIdeExecutable = path.join(context.extensionPath, 'bin', 'oxsts.lang.ide', 'bin', `oxsts.lang.ide${executablePostfix}`);
+    const xstsIdeExecutable = path.join(context.extensionPath, 'bin', 'xsts.lang.ide', 'bin', `xsts.lang.ide${executablePostfix}`);
+    const compilerExecutable = path.join(context.extensionPath, 'bin', 'semantifyr', 'bin', `semantifyr${executablePostfix}`);
 
     context.subscriptions.push(
         vscode.languages.registerCodeLensProvider({ language: 'oxsts' }, new SemantifyrCodeLensProvider())
