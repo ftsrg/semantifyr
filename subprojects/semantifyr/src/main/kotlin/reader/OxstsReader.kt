@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.semantifyr.reader
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsPackage
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package
+import hu.bme.mit.semantifyr.oxsts.semantifyr.commands.CompileCommand
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
@@ -18,6 +19,7 @@ import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.resource.XtextResource
 import org.eclipse.xtext.util.CancelIndicator
 import org.eclipse.xtext.validation.CheckMode
+import org.slf4j.LoggerFactory
 import java.io.File
 
 fun File.walkFiles() = walkTopDown().filter { it.isFile }
@@ -33,6 +35,9 @@ fun prepareOxsts() {
 class OxstsReader(
     private val libraryDirectory: String
 ) {
+
+    val logger = LoggerFactory.getLogger(CompileCommand::class.java)!!
+
     val resourceSet = ResourceSetImpl()
     val userResources = mutableListOf<Resource>()
 
@@ -44,6 +49,7 @@ class OxstsReader(
     }
 
     fun readFile(file: File): Resource {
+        logger.info("Reading file: $file")
         val resource = resourceSet.getResource(URI.createFileURI(file.path), true)
         resource.load(emptyMap<Any, Any>())
 
@@ -51,6 +57,8 @@ class OxstsReader(
     }
 
     fun readDirectory(modelDirectory: String) {
+        logger.info("Reading library files from $libraryDirectory")
+
         val libraryFiles = File(libraryDirectory).walkFiles().filter {
             it.extension == "oxsts"
         }
@@ -58,6 +66,8 @@ class OxstsReader(
         for (file in libraryFiles) {
             readFile(file)
         }
+
+        logger.info("Reading model files from $modelDirectory")
 
         val modelFiles = File(modelDirectory).walkFiles().filter {
             it.extension == "oxsts"
@@ -71,6 +81,8 @@ class OxstsReader(
     }
 
     fun readModel(modelPath: String) {
+        logger.info("Reading library files from $libraryDirectory")
+
         val modelFile = File(modelPath)
         val modelAbsolutePath = modelFile.absolutePath
 
@@ -84,28 +96,48 @@ class OxstsReader(
             readFile(file)
         }
 
+        logger.info("Reading model file")
+
         userResources += readFile(modelFile)
 
         validateResources()
     }
 
     private fun validateResources() {
+        logger.info("Validating resources")
+
         for (resource in resourceSet.resources) {
             EcoreUtil2.resolveAll(resource)
             if (resource.errors.any()) {
-                println(resource.errors)
-                error("Errors found in file (${resource.uri.toFileString()}):\n${resource.errors.joinToString("\n")}")
+                logger.error("Errors found in file (${resource.uri.toFileString()})}")
+
+                for (error in resource.errors) {
+                    logger.error(error.message)
+                }
+
+                error("Errors found in file (${resource.uri.toFileString()})}")
             }
             if (resource.warnings.any()) {
-                println("Warnings found in file (${resource.uri.toFileString()}):\n${resource.warnings.joinToString("\n")}")
+                logger.warn("Warnings found in file (${resource.uri.toFileString()})")
+
+                for (warning in resource.warnings) {
+                    logger.warn(warning.message)
+                }
             }
             val validator = (resource as XtextResource).resourceServiceProvider.resourceValidator
             val issues = validator.validate(resource, CheckMode.ALL, CancelIndicator.NullImpl)
             if (issues.any()) {
-                println("Issues found in file (${resource.uri.toFileString()}):")
-                error("Issues found in file (${resource.uri.toFileString()}):\n${issues.joinToString("\n")}")
+                logger.error("Issues found in file (${resource.uri.toFileString()})}")
+
+                for (issue in issues) {
+                    logger.error(issue.message)
+                }
+
+                error("Issues found in file (${resource.uri.toFileString()})")
             }
         }
+
+        logger.info("Validation successful!")
     }
 
 }

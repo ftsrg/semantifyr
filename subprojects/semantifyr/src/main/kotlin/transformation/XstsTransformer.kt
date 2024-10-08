@@ -46,11 +46,13 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.XSTS
 import org.eclipse.xtext.EcoreUtil2
+import org.slf4j.LoggerFactory
 import java.util.*
 
 class XstsTransformer(
     val reader: OxstsReader
 ) {
+    val logger = LoggerFactory.getLogger(XstsTransformer::class.java)
 
     fun transform(typeName: String, rewriteChoice: Boolean = false): XSTS {
         val type = reader.rootElements.flatMap { it.types }.filterIsInstance<Target>().first {
@@ -63,9 +65,13 @@ class XstsTransformer(
     fun transform(target: Target, rewriteChoice: Boolean = false): XSTS {
         val xsts = OxstsFactory.createXSTS()
 
+        logger.info("Instantiating target ${target.name}")
+
         val rootInstance = Instantiator.instantiateTree(target)
 
         xsts.variables += Instantiator.instantiateVariablesTree(rootInstance)
+
+        logger.info("Transforming transitions")
 
         val init = rootInstance.contextualEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createInitTransitionExpression()))
         val tran = rootInstance.contextualEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createMainTransitionExpression()))
@@ -77,6 +83,8 @@ class XstsTransformer(
         xsts.init.inlineOperations(rootInstance)
         xsts.transition.inlineOperations(rootInstance)
 
+        logger.info("Rewriting operations")
+
         xsts.rewriteFeatureTypingVariableExpression(rootInstance)
         xsts.rewriteVariableAccesses(rootInstance)
         xsts.rewriteFeatureRefences(rootInstance)
@@ -87,14 +95,20 @@ class XstsTransformer(
             it.referencedElement
         }.filterIsInstance<Enum>().toSet()
 
+        logger.info("Optimizing XSTS model")
+
         OperationOptimizer.optimize(xsts.init)
         OperationOptimizer.optimize(xsts.transition)
         ExpressionOptimizer.optimize(xsts.property.invariant)
 
         if (rewriteChoice) {
+            logger.info("Rewriting choice-else operations")
+
             xsts.init.rewriteChoiceElse()
             xsts.transition.rewriteChoiceElse()
         }
+
+        logger.info("Transformation done!")
 
         return xsts
     }

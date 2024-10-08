@@ -7,9 +7,12 @@ import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import hu.bme.mit.semantifyr.oxsts.semantifyr.theta.ThetaExecutor
+import org.slf4j.Logger
 import java.io.File
 
 abstract class BaseVerifyCommand(name: String) : CliktCommand(name) {
+
+    abstract val logger: Logger
 
     val model by argument().file(mustExist = true, canBeFile = true, canBeDir = false)
     val thetaVersion by option().default("6.5.2")
@@ -25,6 +28,7 @@ abstract class BaseVerifyCommand(name: String) : CliktCommand(name) {
     fun runVerification(xstsPath: String) {
         val xstsFile = File(xstsPath)
 
+        logger.info("Executing Theta (v$thetaVersion) on $xstsPath")
 
         val thetaExecutor = ThetaExecutor(
             thetaVersion,
@@ -36,7 +40,7 @@ abstract class BaseVerifyCommand(name: String) : CliktCommand(name) {
 
         val runtimeDetails = thetaExecutor.run(workingDirectory, fileName)
 
-        println(runtimeDetails.isUnsafe)
+        logger.info("Verification result: isUnsafe = ${runtimeDetails.isUnsafe}")
     }
 
 }
