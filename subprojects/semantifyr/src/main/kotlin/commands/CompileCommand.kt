@@ -34,7 +34,7 @@ class CompileCommand : CliktCommand("compile") {
 
         val transformer = XstsTransformer(reader)
 
-        val xsts = transformer.transform(targetName)
+        val xsts = transformer.transform(targetName, rewriteChoice = true)
         val xstsString = Serializer.serialize(xsts)
 
         val outputFile = output ?: File(model.path.replace(".oxsts", ".xsts"))

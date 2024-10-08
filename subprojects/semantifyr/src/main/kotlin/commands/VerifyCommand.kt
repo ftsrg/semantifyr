@@ -30,7 +30,7 @@ class VerifyCommand : BaseVerifyCommand("verify") {
 
         val transformer = XstsTransformer(reader)
 
-        val xsts = transformer.transform(targetName)
+        val xsts = transformer.transform(targetName, rewriteChoice = true)
         val xstsString = Serializer.serialize(xsts)
 
         val output = model.path.replace(".oxsts", ".xsts")
