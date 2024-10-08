@@ -12,6 +12,20 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "semantifyr.verifyXsts",
+        "title": "Verify XSTS File"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "semantifyr.verifyXsts",
+          "when": "resourceExtname == .xsts"
+        }
+      ]
+    },
     "languages": [
       {
         "id": "oxsts",

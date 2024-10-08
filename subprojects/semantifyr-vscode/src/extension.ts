@@ -13,8 +13,16 @@ import * as vscode from "vscode";
 
 let oxstsClient: LanguageClient;
 let xstsClient: LanguageClient;
+let outputChannel: vscode.OutputChannel;
 
-class SemantifyrCodeLensProvider implements vscode.CodeLensProvider {
+function writeToOutput(message: string, reveal: boolean = true) {
+    outputChannel.append(message);
+    if (reveal) {        
+        outputChannel.show(true);
+    }
+}
+
+class OxstsCodeLensProvider implements vscode.CodeLensProvider {
 
     public provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.CodeLens[] {
         const codeLenses: vscode.CodeLens[] = [];
@@ -43,6 +51,7 @@ class SemantifyrCodeLensProvider implements vscode.CodeLensProvider {
 
         return codeLenses;
     }
+
 }
 
 export function activate(context: ExtensionContext) {
@@ -54,8 +63,11 @@ export function activate(context: ExtensionContext) {
     const xstsIdeExecutable = path.join(context.extensionPath, 'bin', 'xsts.lang.ide', 'bin', `xsts.lang.ide${executablePostfix}`);
     const compilerExecutable = path.join(context.extensionPath, 'bin', 'semantifyr', 'bin', `semantifyr${executablePostfix}`);
 
+    outputChannel = vscode.window.createOutputChannel("Semantifyr");
+    context.subscriptions.push(outputChannel);
+
     context.subscriptions.push(
-        vscode.languages.registerCodeLensProvider({ language: 'oxsts' }, new SemantifyrCodeLensProvider())
+        vscode.languages.registerCodeLensProvider({ language: 'oxsts' }, new OxstsCodeLensProvider())
     );
 
     context.subscriptions.push(
@@ -68,25 +80,40 @@ export function activate(context: ExtensionContext) {
 
             vscode.window.showInformationMessage(`Compiling target: ${targetName}`);
 
-            const compileCommand = `${runner} ${commandArg} ${compilerExecutable} compile ${documentPath} ${workspaceFolder} ${targetName} -o ${outputFile}`;
-
             vscode.window.withProgress({
                 location: vscode.ProgressLocation.Window,
                 title: `Compiling target: ${targetName}`,
                 cancellable: false
             }, () => {
                 return new Promise<void>((resolve, reject) => {                    
-                    childProcess.exec(compileCommand, (error, stdout, stderr) => {
-                        if (error) {
-                            vscode.window.showErrorMessage(`Error compiling target: ${error.message}`);
-                            reject(error);
-                        } else if (stderr) {
-                            vscode.window.showErrorMessage(`Compilation error: ${stderr}`);
-                            reject(stderr);
-                        } else {
-                            vscode.window.showInformationMessage(`Success! See ${targetName}.xsts`);
+                    const process = childProcess.spawn(runner, [commandArg, compilerExecutable, 'compile', documentPath, workspaceFolder, targetName, '-o', outputFile]);
+
+                    outputChannel.clear();
+
+                    process.stdout.on('data', (data) => {
+                        writeToOutput(data.toString());
+                    });
+
+                    process.stderr.on('data', (data) => {
+                        writeToOutput(data.toString());
+                    });
+
+                    process.on('close', (code) => {
+                        if (code === 0) {
+                            vscode.window.showInformationMessage(`Success! Compiled ${targetName} to ${outputFile}`);
+                            writeToOutput(`Success! Compiled ${targetName} to ${outputFile}`);
                             resolve();
+                        } else {
+                            vscode.window.showErrorMessage(`Compilation failed with exit code ${code}`);
+                            writeToOutput(`Compilation failed with exit code ${code}`);
+                            reject(new Error(`Process exited with code ${code}`));
                         }
+                    });
+
+                    process.on('error', (error) => {
+                        vscode.window.showErrorMessage(`Error compiling target: ${error.message}`);
+                        writeToOutput(`Error: ${error.message}`);
+                        reject(error);
                     });
                 });
             });            
@@ -102,25 +129,86 @@ export function activate(context: ExtensionContext) {
 
             vscode.window.showInformationMessage(`Verifying target: ${targetName}`);
 
-            const verifyCommand = `${runner} ${commandArg} ${compilerExecutable} verify ${documentPath} ${workspaceFolder} ${targetName}`;
-
             vscode.window.withProgress({
                 location: vscode.ProgressLocation.Window,
                 title: `Verifying target: ${targetName}`,
                 cancellable: false
             }, () => {
                 return new Promise<void>((resolve, reject) => {
-                    childProcess.exec(verifyCommand, (error, stdout, stderr) => {
-                        if (error) {
-                            vscode.window.showErrorMessage(`Error verifying target: ${error.message}`);
-                            reject(error);
-                        } else if (stderr) {
-                            vscode.window.showErrorMessage(`Verification error: ${stderr}`);
-                            reject(stderr);
-                        } else {
-                            vscode.window.showInformationMessage(`Success! Result: `);
+                    const process = childProcess.spawn(runner, [commandArg, compilerExecutable, 'verify', documentPath, workspaceFolder, targetName]);
+
+                    outputChannel.clear();
+
+                    process.stdout.on('data', (data) => {
+                        writeToOutput(data.toString());
+                    });
+
+                    process.stderr.on('data', (data) => {
+                        writeToOutput(data.toString());
+                    });
+
+                    process.on('close', (code) => {
+                        if (code === 0) {
+                            vscode.window.showInformationMessage(`Success! Verified target: ${targetName}`);
+                            writeToOutput(`Success! Verified target: ${targetName}`);
                             resolve();
+                        } else {
+                            vscode.window.showErrorMessage(`Verification failed with exit code ${code}`);
+                            writeToOutput(`Verification failed with exit code ${code}`);
+                            reject(new Error(`Process exited with code ${code}`));
                         }
+                    });
+
+                    process.on('error', (error) => {
+                        vscode.window.showErrorMessage(`Error verifying target: ${error.message}`);
+                        writeToOutput(`Error: ${error.message}`);
+                        reject(error);
+                    });
+                });
+            });
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('semantifyr.verifyXsts', (uri: vscode.Uri) => {
+            const documentPath = uri.fsPath;
+
+            vscode.window.showInformationMessage(`Verifying xsts: ${documentPath}`);
+
+            vscode.window.withProgress({
+                location: vscode.ProgressLocation.Window,
+                title: `Verifying xsts: ${documentPath}`,
+                cancellable: false
+            }, () => {
+                return new Promise<void>((resolve, reject) => {
+                    const process = childProcess.spawn(runner, [commandArg, compilerExecutable, 'verify-xsts', documentPath]);
+
+                    outputChannel.clear();
+
+                    process.stdout.on('data', (data) => {
+                        writeToOutput(data.toString());
+                    });
+
+                    process.stderr.on('data', (data) => {
+                        writeToOutput(data.toString());
+                    });
+
+                    process.on('close', (code) => {
+                        if (code === 0) {
+                            vscode.window.showInformationMessage(`Success! Verified xsts: ${documentPath}`);
+                            writeToOutput(`Success! Verified xsts: ${documentPath}`);
+                            resolve();
+                        } else {
+                            vscode.window.showErrorMessage(`Verification failed with exit code ${code}`);
+                            writeToOutput(`Verification failed with exit code ${code}`);
+                            reject(new Error(`Process exited with code ${code}`));
+                        }
+                    });
+
+                    process.on('error', (error) => {
+                        vscode.window.showErrorMessage(`Error verifying target: ${error.message}`);
+                        writeToOutput(`Error: ${error.message}`);
+                        reject(error);
                     });
                 });
             });
