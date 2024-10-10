@@ -25,6 +25,8 @@ jobs:
 #      if: ${{ matrix.os == 'macos-13' }}
     - name: Test Docker
       run: docker run hello-world
+    - name: Checkout code
+      uses: actions/checkout@v4
     - name: Set up JDK
       uses: actions/setup-java@v4
       with:
@@ -32,8 +34,13 @@ jobs:
         distribution: adopt
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - name: Cache npm dependencies
+      uses: actions/cache@v4
+      with:
+        path: subprojects/oxsts-vs-code/node_modules
+        key: ${{ matrix.os }}-node-${{ hashFiles('subprojects/oxsts-vs-code/package-lock.json') }}
+        restore-keys: |
+          ${{ matrix.os }}-node-
     - name: Gradle build
       run: ./gradlew build
     - name: Upload Artifacts
@@ -41,6 +48,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         path: |
+          **/build/vscode/
           **/build/distributions/
           **/build/reports/
           **/build/test-results/
