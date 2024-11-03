@@ -45,6 +45,10 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Target
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.XSTS
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.findInitTransition
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.findMainTransition
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.findProperty
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.type
 import org.eclipse.xtext.EcoreUtil2
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -73,12 +77,13 @@ class XstsTransformer(
 
         logger.info("Transforming transitions")
 
-        val init = rootInstance.contextualEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createInitTransitionExpression()))
-        val tran = rootInstance.contextualEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createMainTransitionExpression()))
+        val init = rootInstance.contextualEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createDeclarationReferenceExpression(rootInstance.type.findInitTransition())))
+        val tran = rootInstance.contextualEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createDeclarationReferenceExpression(rootInstance.type.findMainTransition())))
+        val property = target.findProperty()
 
-        xsts.init = init.copy() // TODO handle multiple inits?
-        xsts.transition = tran.copy() // TODO handle multiple trans?
-        xsts.property = target.properties.single().copy() // TODO handle multiple props?
+        xsts.init = init.copy()
+        xsts.transition = tran.copy()
+        xsts.property = property.copy()
 
         xsts.init.inlineOperations(rootInstance)
         xsts.transition.inlineOperations(rootInstance)

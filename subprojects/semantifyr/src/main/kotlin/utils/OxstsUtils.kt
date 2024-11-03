@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.semantifyr.utils
 
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.BaseType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainingExpression
@@ -18,8 +19,10 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.IntegerType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Pattern
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PatternConstraint
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Property
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceTyping
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Type
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
 import org.eclipse.xtext.EcoreUtil2
@@ -174,6 +177,30 @@ val Feature.allSubsets: Set<Feature>
 
         return features
     }
+
+fun Type.findInitTransition(): Transition {
+    return initTransition.singleOrNull() ?: supertype?.findInitTransition() ?: error("No init transition found!")
+}
+
+fun Type.findMainTransition(): Transition {
+    return mainTransition.singleOrNull() ?: supertype?.findMainTransition() ?: error("No main transition found!")
+}
+
+fun Type.findProperty(): Property {
+    return properties.singleOrNull() ?: supertype?.findProperty() ?: error("No property in type hierarchy!")
+}
+
+val Transition.baseType: BaseType
+    get() = EcoreUtil2.getContainerOfType(this, BaseType::class.java)
+
+val Transition.isMainTransition: Boolean
+    get() = baseType.mainTransition.contains(this)
+
+val Transition.isInitTransition: Boolean
+    get() = baseType.initTransition.contains(this)
+
+val Transition.isHavocTransition: Boolean
+    get() = baseType.havocTransition.contains(this)
 
 val Pattern.fullyQualifiedName
     get() = "${(eContainer() as Package).name}__$name"

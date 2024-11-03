@@ -151,8 +151,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
             var last = chainReference.getChains().get(chainReference.getChains().size() - 1);
             if (last instanceof DeclarationReferenceExpression declarationReference) {
                 return declarationReference.getElement();
-            } else if (last instanceof ImplicitTransitionExpression implicitTransition) {
-                return null;
             }
         }
 

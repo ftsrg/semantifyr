@@ -9,12 +9,12 @@ package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.resolution
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.type
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainingExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DeclarationReferenceExpression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocTransitionExpression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InitTransitionExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.MainTransitionExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Type
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isHavocTransition
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isInitTransition
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isMainTransition
 
 class TransitionResolver(
     private val instance: Instance
@@ -40,14 +40,16 @@ class TransitionResolver(
 
     private fun Type.getTransition(expression: ChainingExpression): Transition? {
         return when (expression) {
-            is HavocTransitionExpression -> havocTransition.firstOrNull()
-            is InitTransitionExpression -> initTransition.firstOrNull()
-            is MainTransitionExpression -> mainTransition.firstOrNull()
             is DeclarationReferenceExpression -> {
                 val reference = expression.element as Transition
 
-                transitions.firstOrNull {
-                    it.name == reference.name
+                when {
+                    reference.isMainTransition -> mainTransition.firstOrNull()
+                    reference.isInitTransition -> initTransition.firstOrNull()
+                    reference.isHavocTransition -> havocTransition.firstOrNull()
+                    else -> transitions.firstOrNull {
+                        it.name == reference.name
+                    }
                 }
             }
             else -> error("Unknown expression: $expression")

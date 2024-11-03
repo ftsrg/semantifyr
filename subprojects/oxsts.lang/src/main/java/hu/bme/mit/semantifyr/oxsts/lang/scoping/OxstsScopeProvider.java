@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.xtext.EcoreUtil2;
+import org.eclipse.xtext.naming.QualifiedName;
 import org.eclipse.xtext.scoping.IScope;
 import org.eclipse.xtext.scoping.Scopes;
 
@@ -91,11 +92,28 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
         return scopeElement(featureConstraint.getType(), reference);
     }
 
+    private String customNameProvider(EObject eObject) {
+        var element = (Element) eObject;
+
+        if (element instanceof Transition transition) {
+            var baseType = EcoreUtil2.getContainerOfType(transition, BaseType.class);
+            if (baseType.getMainTransition().contains(transition)) {
+                return "main";
+            } else if (baseType.getInitTransition().contains(transition)) {
+                return "init";
+            } else if (baseType.getHavocTransition().contains(transition)) {
+                return "havoc";
+            }
+        }
+
+        return element.getName();
+    }
+
     protected IScope scopeElement(EObject element, EReference reference) {
         var referenceClass = reference.getEReferenceType().getInstanceClass();
         var accessibleElements = getAccessibleElements(element).stream().filter(referenceClass::isInstance).toList();
 
-        return Scopes.scopeFor(accessibleElements, super.getScope(element, reference));
+        return Scopes.scopeFor(accessibleElements, QualifiedName.wrapper(this::customNameProvider), super.getScope(element, reference));
     }
 
     protected List<Element> getAccessibleElements(EObject element) {
@@ -157,7 +175,7 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
         }
 
         var supertype = type.getSupertype();
-        var elements = new ArrayList<>(getInheritedElements(supertype));
+        var elements = new ArrayList<Element>();
 
         elements.addAll(type.getFeatures());
         elements.addAll(type.getVariables());
@@ -166,6 +184,8 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
         elements.addAll(type.getInitTransition());
         elements.addAll(type.getHavocTransition());
         elements.addAll(type.getMainTransition());
+
+        elements.addAll(getInheritedElements(supertype));
 
         return elements;
     }
