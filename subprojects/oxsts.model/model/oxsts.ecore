@@ -106,9 +106,6 @@
   <eClassifiers xsi:type="ecore:EClass" name="IntegerType" eSuperTypes="#//DataType"/>
   <eClassifiers xsi:type="ecore:EClass" name="BooleanType" eSuperTypes="#//DataType"/>
   <eClassifiers xsi:type="ecore:EClass" name="SelfReference" eSuperTypes="#//ContextDependentReference"/>
-  <eClassifiers xsi:type="ecore:EClass" name="ImplicitTransitionExpression" abstract="true"
-      eSuperTypes="#//ChainingExpression"/>
-  <eClassifiers xsi:type="ecore:EClass" name="InitTransitionExpression" eSuperTypes="#//ImplicitTransitionExpression"/>
   <eClassifiers xsi:type="ecore:EClass" name="EqualityOperator" eSuperTypes="#//OperatorExpression"/>
   <eClassifiers xsi:type="ecore:EClass" name="InequalityOperator" eSuperTypes="#//OperatorExpression"/>
   <eClassifiers xsi:type="ecore:EClass" name="DeclarationReferenceExpression" eSuperTypes="#//ChainingExpression">
@@ -131,8 +128,6 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="transition" lowerBound="1"
         eType="#//ReferenceExpression" containment="true"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="MainTransitionExpression" eSuperTypes="#//ImplicitTransitionExpression"/>
-  <eClassifiers xsi:type="ecore:EClass" name="HavocTransitionExpression" eSuperTypes="#//ImplicitTransitionExpression"/>
   <eClassifiers xsi:type="ecore:EClass" name="ChainingExpression" abstract="true"/>
   <eClassifiers xsi:type="ecore:EClass" name="Namespace" abstract="true" eSuperTypes="#//Element"/>
   <eClassifiers xsi:type="ecore:EClass" name="IfOperation" eSuperTypes="#//Operation">
@@ -167,8 +162,8 @@
         eType="#//Transition" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="init" lowerBound="1" eType="#//Transition"
         containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="property" lowerBound="1"
-        eType="#//Property" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="property" eType="#//Property"
+        containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="variables" upperBound="-1"
         eType="#//Variable" containment="true"/>
   </eClassifiers>

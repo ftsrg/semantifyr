@@ -20,6 +20,11 @@ public class OxstsValidator extends AbstractOxstsValidator {
 	public static final String INVALID_INLINING = "invalidInlining";
 	public static final String INVALID_MULTIPLICITIY = "invalidMultiplicity";
 
+    @Override
+    protected void handleExceptionDuringValidation(Throwable targetException) throws RuntimeException {
+        // swallow all exceptions!
+    }
+
     @Check
     public void checkFeatureSubsetting(Feature feature) {
         if (feature.getSubsets().isEmpty()) return;
@@ -146,8 +151,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
             var last = chainReference.getChains().get(chainReference.getChains().size() - 1);
             if (last instanceof DeclarationReferenceExpression declarationReference) {
                 return declarationReference.getElement();
-            } else if (last instanceof ImplicitTransitionExpression implicitTransition) {
-                return null;
             }
         }
 

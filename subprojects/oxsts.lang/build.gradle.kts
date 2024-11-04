@@ -31,7 +31,6 @@ val generateXtextLanguage by tasks.registering(JavaExec::class) {
     classpath(configurations.mwe2)
 
     inputs.files(syncModel.get().outputs)
-
     inputs.file("src/main/java/hu/bme/mit/semantifyr/oxsts/lang/GenerateOxsts.mwe2")
     inputs.file("src/main/java/hu/bme/mit/semantifyr/oxsts/lang/Oxsts.xtext")
 
@@ -40,6 +39,17 @@ val generateXtextLanguage by tasks.registering(JavaExec::class) {
     outputs.dir(layout.buildDirectory.dir("generated/sources/xtext/ide"))
 
     args("src/main/java/hu/bme/mit/semantifyr/oxsts/lang/GenerateOxsts.mwe2", "-p", "rootPath=/$projectDir/..")
+}
+
+val ideGeneratedOutput by configurations.creating {
+    isCanBeConsumed = true
+    isCanBeResolved = false
+}
+
+artifacts {
+    add(ideGeneratedOutput.name, layout.buildDirectory.dir("generated/sources/xtext/ide")) {
+        builtBy(generateXtextLanguage)
+    }
 }
 
 tasks {

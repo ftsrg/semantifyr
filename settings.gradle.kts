@@ -7,9 +7,13 @@
 rootProject.name = "semantifyr"
 
 include(
-    "compiler",
+    "semantifyr",
+    "xsts.lang",
+    "xsts.lang.ide",
     "oxsts.model",
     "oxsts.lang",
+    "oxsts.lang.ide",
+    "semantifyr-vscode",
 )
 
 rootProject.children.forEach { project ->
