@@ -6,12 +6,12 @@ import hu.bme.mit.semantifyr.oxsts.semantifyr.reader.OxstsReader
 import hu.bme.mit.semantifyr.oxsts.semantifyr.reader.prepareOxsts
 import hu.bme.mit.semantifyr.oxsts.semantifyr.serialization.Serializer
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.XstsTransformer
-import org.slf4j.LoggerFactory
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.loggerFactory
 import java.io.File
 
 class VerifyCommand : BaseVerifyCommand("verify") {
 
-    override val logger = LoggerFactory.getLogger(VerifyCommand::class.java)!!
+    override val logger by loggerFactory()
 
     val libraryDirectory by argument().file(mustExist = true, canBeDir = true)
     val targetName by argument()

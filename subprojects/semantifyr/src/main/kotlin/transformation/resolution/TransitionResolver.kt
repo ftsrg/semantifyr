@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.resolution
 
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.type
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainingExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
@@ -15,6 +14,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Type
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isHavocTransition
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isInitTransition
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isMainTransition
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.type
 
 class TransitionResolver(
     private val instance: Instance

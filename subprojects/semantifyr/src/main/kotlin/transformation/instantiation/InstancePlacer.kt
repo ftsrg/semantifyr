@@ -6,12 +6,12 @@
 
 package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.instantiation
 
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Feature
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.allFeatures
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.allSubsets
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.type
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Feature
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 
 class InstancePlacer(
     private val holder: Instance

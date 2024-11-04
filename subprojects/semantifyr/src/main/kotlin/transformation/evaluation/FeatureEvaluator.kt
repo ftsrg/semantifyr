@@ -6,6 +6,14 @@
 
 package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.evaluation
 
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainingExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DeclarationReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Feature
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.NothingReference
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Reference
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.resolution.RedefinitionHandler
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.NothingInstance
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.contextualEvaluator
@@ -16,14 +24,6 @@ import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isDataType
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.lastChain
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElement
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.type
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainingExpression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.DeclarationReferenceExpression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Feature
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.NothingReference
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Reference
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 
 class FeatureEvaluator(
     private val context: Instance

@@ -6,6 +6,15 @@
 
 package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.instantiation
 
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Containment
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Derived
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Feature
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Reference
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Target
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.pattern.PatternRunner
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils._package
@@ -20,15 +29,6 @@ import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.treeSequence
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.type
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.typedReferencedElement
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.variableTransformer
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Containment
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Derived
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Feature
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Reference
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Target
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
 import org.eclipse.xtext.EcoreUtil2
 import java.util.*
 

@@ -6,8 +6,6 @@
 
 package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.evaluation
 
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.NothingInstance
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.except
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AndOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EqualityOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.GreaterThanOperator
@@ -21,6 +19,8 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.NotOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OperatorExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OrOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PlusOperator
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.NothingInstance
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.except
 
 sealed class DataType {
 

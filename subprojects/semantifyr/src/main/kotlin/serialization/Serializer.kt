@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.oxsts.semantifyr.serialization
 
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AndOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
@@ -42,6 +41,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Typing
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.XSTS
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElement
 
 object Serializer {
     fun serializeProperty(xsts: XSTS): String {

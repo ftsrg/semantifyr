@@ -6,9 +6,6 @@
 
 package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.pattern
 
-import hu.bme.mit.semantifyr.oxsts.semantifyr.serialization.IndentationAwareStringWriter
-import hu.bme.mit.semantifyr.oxsts.semantifyr.serialization.indent
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.fullyQualifiedName
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Constraint
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureConstraint
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Parameter
@@ -17,6 +14,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.PatternBody
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PatternConstraint
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitiveClosureKind
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TypeConstraint
+import hu.bme.mit.semantifyr.oxsts.semantifyr.serialization.IndentationAwareStringWriter
+import hu.bme.mit.semantifyr.oxsts.semantifyr.serialization.indent
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.fullyQualifiedName
 
 object PatternSerializer {
 

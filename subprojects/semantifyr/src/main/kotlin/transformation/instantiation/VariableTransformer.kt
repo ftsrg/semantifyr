@@ -6,6 +6,14 @@
 
 package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.instantiation
 
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Enum
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Feature
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceTyping
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.NothingInstance
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.asChainReferenceExpression
@@ -17,14 +25,6 @@ import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.instancePlacer
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isFeatureTyped
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElement
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.variableTransformer
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Enum
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Feature
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceTyping
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
 
 private class EnumMapping(
     val enum: Enum,

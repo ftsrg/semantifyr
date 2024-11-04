@@ -6,22 +6,6 @@
 
 package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation
 
-import hu.bme.mit.semantifyr.oxsts.semantifyr.reader.OxstsReader
-import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.evaluation.BooleanData
-import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.evaluation.IntegerData
-import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.instantiation.Instantiator
-import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.optimization.ExpressionOptimizer
-import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.optimization.OperationOptimizer
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.contextualEvaluator
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.copy
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.dropLast
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.element
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isFeatureTyped
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.lastChain
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.operationInliner
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElement
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.variableTransformer
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
@@ -45,18 +29,34 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Target
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.XSTS
+import hu.bme.mit.semantifyr.oxsts.semantifyr.reader.OxstsReader
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.evaluation.BooleanData
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.evaluation.IntegerData
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.instantiation.Instantiator
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.optimization.ExpressionOptimizer
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.optimization.OperationOptimizer
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.contextualEvaluator
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.copy
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.dropLast
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.element
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.findInitTransition
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.findMainTransition
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.findProperty
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isFeatureTyped
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.lastChain
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.loggerFactory
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.operationInliner
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElement
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.type
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.variableTransformer
 import org.eclipse.xtext.EcoreUtil2
-import org.slf4j.LoggerFactory
 import java.util.*
 
 class XstsTransformer(
     val reader: OxstsReader
 ) {
-    val logger = LoggerFactory.getLogger(XstsTransformer::class.java)
+    val logger by loggerFactory()
 
     fun transform(typeName: String, rewriteChoice: Boolean = false): XSTS {
         val type = reader.rootElements.flatMap { it.types }.filterIsInstance<Target>().first {

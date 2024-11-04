@@ -6,9 +6,9 @@
 
 package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.resolution
 
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isRedefine
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Feature
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Type
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isRedefine
 
 object RedefinitionHandler {
 

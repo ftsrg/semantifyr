@@ -7,7 +7,8 @@
 package hu.bme.mit.semantifyr.xsts.lang.scoping;
 
 
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DeclarationReferenceExpression;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.XSTS;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.xtext.EcoreUtil2;

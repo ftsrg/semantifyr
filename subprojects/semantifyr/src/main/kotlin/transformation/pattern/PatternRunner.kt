@@ -6,9 +6,9 @@
 
 package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.pattern
 
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.fullyQualifiedName
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Pattern
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.fullyQualifiedName
 import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.viatra.query.runtime.api.ViatraQueryEngine
 import org.eclipse.viatra.query.runtime.emf.EMFScope

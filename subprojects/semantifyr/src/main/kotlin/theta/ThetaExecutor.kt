@@ -16,6 +16,7 @@ import com.github.dockerjava.core.DockerClientImpl
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.StreamLoggerCallback
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.awaitAny
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.runAsync
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +28,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -64,7 +64,7 @@ class ThetaExecutor(
     private val timeUnit: TimeUnit = TimeUnit.MINUTES
 ) {
 
-    private val logger = LoggerFactory.getLogger(javaClass)
+    private val logger by loggerFactory()
 
     private val config = DefaultDockerClientConfig.createDefaultConfigBuilder().build()
     private val httpClient = ApacheDockerHttpClient.Builder()

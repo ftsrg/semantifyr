@@ -6,14 +6,14 @@
 
 package hu.bme.mit.semantifyr.oxsts.semantifyr
 
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Target
 import hu.bme.mit.semantifyr.oxsts.semantifyr.reader.OxstsReader
 import hu.bme.mit.semantifyr.oxsts.semantifyr.serialization.Serializer
 import hu.bme.mit.semantifyr.oxsts.semantifyr.theta.ThetaExecutor
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.XstsTransformer
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.EnvVar
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Target
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.loggerFactory
 import org.junit.jupiter.api.Assertions
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.util.stream.Stream
 import kotlin.streams.asStream
@@ -30,7 +30,7 @@ class TargetDefinition(
 
 open class VerificationTest {
 
-    private val logger = LoggerFactory.getLogger(this.javaClass)
+    private val logger by loggerFactory()
 
     companion object {
         val thetaVersion by EnvVar()

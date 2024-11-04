@@ -6,15 +6,6 @@
 
 package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation
 
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.appendWith
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.asChainReferenceExpression
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.contextualEvaluator
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.copy
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.drop
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.dropLast
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.element
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isStaticReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainingExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ContextDependentReference
@@ -31,6 +22,15 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Parameter
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParameterBinding
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.appendWith
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.asChainReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.contextualEvaluator
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.copy
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.drop
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.dropLast
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.element
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isStaticReference
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
 

@@ -6,15 +6,15 @@
 
 package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.optimization
 
-import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.evaluation.BooleanData
-import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.evaluation.IntegerData
-import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.evaluation.SharedExpressionEvaluator
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AndOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OperatorExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OrOperator
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.evaluation.BooleanData
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.evaluation.IntegerData
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.evaluation.SharedExpressionEvaluator
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
 import org.eclipse.xtext.EcoreUtil2
 
 object ExpressionOptimizer {

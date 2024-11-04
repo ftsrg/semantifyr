@@ -9,7 +9,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runInterruptible
 import java.io.Closeable
 import java.io.OutputStream
-import kotlin.collections.forEach
 
 @OptIn(ExperimentalCoroutinesApi::class)
 suspend fun <T> List<Deferred<T>>.awaitAny(): T {

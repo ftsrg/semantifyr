@@ -6,15 +6,15 @@
 
 package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.evaluation
 
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.contextualEvaluator
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.dropLast
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.featureEvaluator
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.lastChain
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.transitionResolver
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 
 class ContextualExpressionEvaluator(
     private val context: Instance
