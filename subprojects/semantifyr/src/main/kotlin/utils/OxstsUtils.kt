@@ -11,10 +11,12 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainingExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Containment
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DataType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Feature
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IntegerType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Pattern
@@ -27,6 +29,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Type
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
 import org.eclipse.xtext.EcoreUtil2
 import java.util.*
+import kotlin.collections.ArrayDeque
 
 fun ReferenceExpression.asChainReferenceExpression(): ChainReferenceExpression {
     require(this is ChainReferenceExpression) {
@@ -85,12 +88,26 @@ val Feature.type
 val Variable.isFeatureTyped
     get() = (typing as? ReferenceTyping)?.referencedElement is Feature
 
+val Variable.isDataTyped
+    get() = typing is DataType
+
 val ReferenceTyping.referencedElement
     get() = reference.chains.last().element
 
 val ChainingExpression.element
     get() = (this as? DeclarationReferenceExpression)?.element
 
+fun Instance.createReference(): List<ChainingExpression> {
+    val context = ArrayDeque<ChainingExpression>()
+    var current: Instance? = this
+
+    while (current != null) {
+        context.addFirst(OxstsFactory.createDeclarationReference(current.containment))
+        current = current.parent
+    }
+
+    return context
+}
 
 val Feature.isRedefine
     get() = redefines != null

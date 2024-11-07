@@ -4,13 +4,11 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation
+package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Argument
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArgumentBinding
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainingExpression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ContextDependentReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineCall
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineChoice
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineComposite
@@ -18,15 +16,15 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineIfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineSeq
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.NothingReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite.ExpressionRewriter.rewriteContextDependentReferences
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite.ExpressionRewriter.rewriteToContext
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.appendWith
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.asChainReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.contextualEvaluator
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.copy
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.createReference
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.drop
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.dropLast
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.element
@@ -95,7 +93,7 @@ class OperationInliner(
         val list = mutableListOf<InlineCall>()
 
         for (instance in instanceSet) {
-            val instanceReference = OxstsFactory.createChainReferenceExpression(createReferenceToContext(instance)).appendWith(transitionReference)
+            val instanceReference = OxstsFactory.createChainReferenceExpression(instance.createReference()).appendWith(transitionReference)
             val inlineCall = OxstsFactory.createInlineCall(instanceReference)
 
             list += inlineCall
@@ -125,27 +123,14 @@ class OperationInliner(
         return this
     }
 
-    private fun Operation.rewriteContextDependentReferences(): Operation {
-        val references = EcoreUtil2.getAllContentsOfType(this, ContextDependentReference::class.java)
 
-        for (reference in references) {
-            when (reference) {
-                is SelfReference -> {
-                    EcoreUtil2.delete(reference)
-                }
-                is NothingReference -> {}
-                else -> error("Should not have other kind of reference")
-            }
-        }
-
-        return this
-    }
-
-    private fun Operation.rewriteToContext(localContext: Instance, arguments: List<Argument>): Operation {
+    private fun Operation.rewriteToContextSkipArguments(localContext: Instance, arguments: List<Argument>): Operation {
         val references = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).asSequence().filterNot {
             arguments.contains(it.chains.firstOrNull()?.element)
         }.filterNot {
             it.isStaticReference
+        }.filterNot {
+            EcoreUtil2.getContainerOfType(it, InlineComposite::class.java)?.transition == it
         }.toList()
 
         for (reference in references) {
@@ -155,39 +140,13 @@ class OperationInliner(
         return this
     }
 
-    private fun ReferenceExpression.rewriteToContext(localContext: Instance) {
-        require(this is ChainReferenceExpression)
-
-        val inlineComposite = EcoreUtil2.getContainerOfType(this, InlineComposite::class.java)
-
-        if (inlineComposite?.transition == this) {
-            return
-        }
-
-        chains.addAll(0, createReferenceToContext(localContext))
-    }
-
-    private fun createReferenceToContext(
-        localContext: Instance,
-        context: MutableList<ChainingExpression> = mutableListOf()
-    ): List<ChainingExpression> {
-        val containment = localContext.containment
-        val parent = localContext.parent ?: return emptyList()
-
-        createReferenceToContext(parent, context)
-
-        context += OxstsFactory.createDeclarationReference(containment)
-
-        return context
-    }
-
     private fun Operation.rewriteInlineOperation(
         containerInstance: Instance,
         arguments: List<Argument>,
         bindings: List<ArgumentBinding>
     ): Operation {
         return rewriteContextDependentReferences()
-            .rewriteToContext(containerInstance, arguments)
+            .rewriteToContextSkipArguments(containerInstance, arguments)
             .rewriteToArguments(arguments, bindings)
     }
 
