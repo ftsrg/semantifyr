@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceTyping
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite.ExpressionRewriter.rewriteToContext
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.NothingInstance
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.asChainReferenceExpression
@@ -22,6 +23,7 @@ import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.copy
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.dropLast
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.fullyQualifiedName
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.instancePlacer
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isDataTyped
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isFeatureTyped
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElement
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.variableTransformer
@@ -58,6 +60,11 @@ class VariableTransformer(
                 if (variable.expression != null) {
                     newVariable.expression = transformExpression(OxstsFactory.createChainReferenceExpression(variable), variable.expression as ReferenceExpression, variable)
                 }
+            }
+        } else if (variable.isDataTyped) {
+            val expression = newVariable.expression
+            if (expression is ReferenceExpression) {
+                expression.rewriteToContext(instance)
             }
         }
 
