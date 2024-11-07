@@ -33,8 +33,10 @@ import hu.bme.mit.semantifyr.oxsts.semantifyr.reader.OxstsReader
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.evaluation.BooleanData
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.evaluation.IntegerData
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.instantiation.Instantiator
-import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.optimization.ExpressionOptimizer
-import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.optimization.OperationOptimizer
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.optimization.ExpressionOptimizer.optimize
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.optimization.OperationOptimizer.optimize
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite.ChoiceElseRewriter.rewriteChoiceElse
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite.ExpressionRewriter.rewriteReferences
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.contextualEvaluator
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.copy
@@ -102,9 +104,9 @@ class XstsTransformer(
 
         logger.info("Optimizing XSTS model")
 
-        OperationOptimizer.optimize(xsts.init)
-        OperationOptimizer.optimize(xsts.transition)
-        ExpressionOptimizer.optimize(xsts.property.invariant)
+        xsts.init.optimize()
+        xsts.transition.optimize()
+        xsts.property.invariant.optimize()
 
         if (rewriteChoice) {
             logger.info("Rewriting choice-else operations")

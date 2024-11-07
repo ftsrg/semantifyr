@@ -15,26 +15,27 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.optimization.ExpressionOptimizer.optimize
 import org.eclipse.xtext.EcoreUtil2
 
 object OperationOptimizer {
 
-    fun optimize(transition: Transition): Boolean {
+    fun Transition.optimize(): Boolean {
         var optimized = false
 
-        for (operation in transition.operation) {
-            optimized = optimized || optimize(operation)
+        for (operation in operation) {
+            optimized = optimized || operation.optimize()
         }
 
         return optimized
     }
 
-    private fun optimize(operation: Operation): Boolean {
+    private fun Operation.optimize(): Boolean {
         var anyOptimization = false
         var optimized: Boolean
 
         do {
-            optimized = operation.optimizeInternal()
+            optimized = optimizeInternal()
             anyOptimization = anyOptimization || optimized
         } while (optimized)
 
@@ -66,7 +67,7 @@ object OperationOptimizer {
         val expressions = ifs.map { it.guard } + assumptions.map { it.expression } + assignments.map { it.expression }
 
         for (expression in expressions) {
-            optimized = optimized || ExpressionOptimizer.optimize(expression)
+            optimized = optimized || expression.optimize()
         }
 
         return optimized
@@ -286,6 +287,7 @@ object OperationOptimizer {
 
 }
 
+@Suppress("SimplifyBooleanWithConstants")
 private val AssumptionOperation.isFalseOperation
     get() = expression is LiteralBoolean && (expression as LiteralBoolean).isValue == false
 

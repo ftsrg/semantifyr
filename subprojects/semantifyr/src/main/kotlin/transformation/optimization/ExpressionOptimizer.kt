@@ -19,12 +19,12 @@ import org.eclipse.xtext.EcoreUtil2
 
 object ExpressionOptimizer {
 
-    fun optimize(expression: Expression): Boolean {
+    fun Expression.optimize(): Boolean {
         var anyOptimized = false
         var optimized: Boolean
 
         do {
-            optimized = expression.optimizeInternal()
+            optimized = optimizeInternal()
             anyOptimized = anyOptimized || optimized
         } while (optimized)
 
