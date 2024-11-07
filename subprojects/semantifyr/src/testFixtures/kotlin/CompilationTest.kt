@@ -7,7 +7,7 @@
 package hu.bme.mit.semantifyr.oxsts.semantifyr
 
 import hu.bme.mit.semantifyr.oxsts.semantifyr.reader.OxstsReader
-import hu.bme.mit.semantifyr.oxsts.semantifyr.serialization.Serializer
+import hu.bme.mit.semantifyr.oxsts.semantifyr.serialization.XstsSerializer
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.XstsTransformer
 import org.junit.jupiter.api.Assertions
 import java.io.File
@@ -23,7 +23,7 @@ open class CompilationTest {
 
         val transformer = XstsTransformer(reader)
         val xsts = transformer.transform("Mission", rewriteChoice)
-        val serializedXsts = Serializer.serialize(xsts)
+        val serializedXsts = XstsSerializer.serialize(xsts)
 
         File("$directory/model.xsts").writeText(serializedXsts)
     }

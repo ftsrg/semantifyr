@@ -6,7 +6,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import hu.bme.mit.semantifyr.oxsts.semantifyr.reader.OxstsReader
 import hu.bme.mit.semantifyr.oxsts.semantifyr.reader.prepareOxsts
-import hu.bme.mit.semantifyr.oxsts.semantifyr.serialization.Serializer
+import hu.bme.mit.semantifyr.oxsts.semantifyr.serialization.XstsSerializer
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.XstsTransformer
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.loggerFactory
 import java.io.File
@@ -35,7 +35,7 @@ class CompileCommand : CliktCommand("compile") {
         val transformer = XstsTransformer(reader)
 
         val xsts = transformer.transform(targetName, rewriteChoice = true)
-        val xstsString = Serializer.serialize(xsts)
+        val xstsString = XstsSerializer.serialize(xsts)
 
         val outputFile = output ?: File(model.path.replace(".oxsts", ".xsts"))
 
