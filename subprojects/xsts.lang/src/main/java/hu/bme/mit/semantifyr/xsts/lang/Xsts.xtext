@@ -229,9 +229,13 @@ LiteralBoolean:
 ;
 
 LiteralInteger:
-	value = INT
+	value = SignedInt
 ;
 
 BooleanValue returns Ecore::EBoolean:
 	'true' | 'false'
+;
+
+SignedInt returns Ecore::EInt:
+    ('-')? INT
 ;
