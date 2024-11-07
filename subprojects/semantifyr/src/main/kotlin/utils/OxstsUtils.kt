@@ -106,6 +106,8 @@ fun Instance.createReference(): List<ChainingExpression> {
         current = current.parent
     }
 
+    context.removeFirst() // remove rootInstance reference
+
     return context
 }
 
