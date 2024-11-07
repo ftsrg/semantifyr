@@ -11,13 +11,19 @@ generate cex "http://www.bme.hu/mit/2024/cex"
 import "http://www.eclipse.org/emf/2002/Ecore" as Ecore
 
 Cex:
-	"(" "XstsStateSequence"
+	"(" ("XstsStateSequence" | "XstsCliTracegen")
 	    (states += XstsState)*
+
+	    (edges += StateEdge)*
 	")"
 ;
 
+StateEdge:
+    from=[XstsState] "->" to=[XstsState]
+;
+
 XstsState:
-    "(" "XstsState" (preInit?="pre_init")? (postInit?="post_init")? (lastEnv?="last_env")? (lastInternal?="last_internal")?
+    "(" (name=ID ":")? "XstsState" (preInit?="pre_init")? (postInit?="post_init")? (lastEnv?="last_env")? (lastInternal?="last_internal")?
         state = State
     ")"
 ;
