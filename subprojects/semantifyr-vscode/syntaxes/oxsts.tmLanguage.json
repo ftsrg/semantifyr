@@ -23,7 +23,7 @@
       "patterns": [
         {
           "name": "keyword.control.oxsts",
-          "match": "\\b(abstract|package|or|import|enum|inline|seq|ctrl|as|assume|var|type|target|feature|containment|reference|derived|instance|association|pattern|init|havoc|tran|choice|if|else|find|virtual|override|prop)\\b"
+          "match": "\\b(abstract|package|or|import|enum|static|inline|seq|ctrl|as|assume|var|type|target|feature|containment|reference|derived|instance|association|pattern|init|havoc|tran|choice|if|else|find|virtual|override|prop)\\b"
         }
       ]
     },

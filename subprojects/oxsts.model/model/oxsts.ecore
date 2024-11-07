@@ -66,6 +66,8 @@
         containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="argumentBindings" upperBound="-1"
         eType="#//ArgumentBinding" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="static" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//Boolean"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Expression" abstract="true" eSuperTypes="#//Element"/>
   <eClassifiers xsi:type="ecore:EClass" name="LiteralExpression" abstract="true" eSuperTypes="#//Expression"/>

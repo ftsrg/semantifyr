@@ -1,0 +1,158 @@
+package Example
+
+type Place {
+    reference defaultTokens : Integer = 0
+
+    var tokens : Integer = defaultTokens
+
+    tran enoughTokens(weight: Integer) {
+        assume (tokens >= weight)
+    }
+
+    tran takeTokens(weight: Integer) {
+        tokens := tokens - weight
+    }
+
+    tran placeTokens(weight: Integer) {
+        tokens := tokens + weight
+    }
+}
+
+type Edge {
+    reference weight : Integer = 1
+    reference place : Place
+
+    tran takeTokens {
+        inline place.enoughTokens(weight)
+        inline place.takeTokens(weight)
+    }
+
+    tran placeTokens {
+        inline place.placeTokens(weight)
+    }
+}
+
+type Transition {
+    feature sourceEdges : Edge[0..*]
+    feature targetEdges : Edge[0..*]
+
+    tran fire {
+        inline seq sourceEdges -> takeTokens 
+        inline seq targetEdges -> placeTokens 
+    }
+}
+
+type PetriNet {
+    feature places : Place[0..*]
+    feature transitions : Transition[0..*]
+
+    tran {
+        inline choice transitions -> fire
+    }
+}
+
+target Mission {
+    containment petriNet : PetriNet {
+        containment p1 :> places : Place {
+            reference ::> defaultTokens : Integer = 100
+        }
+        containment p2 :> places : Place
+
+        containment t1 :> transitions : Transition {
+            containment p1_t1 :> sourceEdges : Edge {
+                reference ::> weight : Integer = 5
+                reference ::> place : Place = p1
+            }
+            containment t1_p2 :> targetEdges : Edge {
+                reference ::> weight : Integer = 5
+                reference ::> place : Place = p2
+            }
+        }
+    }
+
+    init {
+        
+    }
+
+    tran asdf {
+
+    }
+
+    tran {
+        inline petriNet.main()
+    }
+
+    prop {
+        ! (petriNet.p2.tokens >= 20)
+    }
+
+}
+
+target MissionWitness : Mission {
+    ctrl var state : Integer = 0 - 1
+    
+    init {
+        assume (state == (0 - 1))
+
+        assume (petriNet.p1.tokens == 100)
+        assume (petriNet.p2.tokens == 0)
+
+        static inline ExamplePetriNet::init()
+
+        assume (petriNet.p1.tokens == 100)
+        assume (petriNet.p2.tokens == 0)
+
+        choice {
+            state := 0
+        }
+    }
+
+    tran {
+        choice {
+            assume (state == 0)
+
+            static inline ExamplePetriNet::main()
+
+            assume (petriNet.p1.tokens == 95)
+            assume (petriNet.p2.tokens == 5)
+
+            choice {
+                state := 1
+            }
+        } or {
+            assume (state == 1)
+
+            static inline ExamplePetriNet::main()
+
+            assume (petriNet.p1.tokens == 90)
+            assume (petriNet.p2.tokens == 10)
+
+            choice {
+                state := 2
+            }
+        } or {
+            assume (state == 2)
+
+            static inline ExamplePetriNet::main()
+
+            assume (petriNet.p1.tokens == 85)
+            assume (petriNet.p2.tokens == 15)
+
+            choice {
+                state := 3
+            }
+        } or {
+            assume (state == 3)
+
+            static inline ExamplePetriNet::main()
+
+            assume (petriNet.p1.tokens == 80)
+            assume (petriNet.p2.tokens == 20)
+
+            choice {
+                state := 4
+            }
+        }
+    }
+
+}
