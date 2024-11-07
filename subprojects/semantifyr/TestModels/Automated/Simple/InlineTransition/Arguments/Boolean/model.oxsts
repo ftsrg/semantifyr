@@ -7,14 +7,14 @@
 package Test
 
 type Simple {
-    var x : Integer
+    var x : Boolean
 
     init {
-        x := 0
+        x := false
     }
 
-    tran {
-        x := x + 1
+    tran set(y: Boolean) {
+        x := y
     }
 }
 
@@ -26,10 +26,10 @@ target Mission {
     }
 
     tran {
-        inline a.main()
+        inline a.set(true)
     }
 
     prop {
-        a.x != 10
+        a.x != true
     }
 }

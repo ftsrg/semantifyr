@@ -135,6 +135,8 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
             elements.addAll(getInheritedElements(feature.getTyping()));
         } else if (element instanceof Parameter parameter) {
             elements.addAll(getInheritedElements(parameter.getType()));
+        } else if (element instanceof Argument argument) {
+            elements.addAll(getInheritedElements(argument.getTyping()));
         }
 
         elements.addAll(getAccessibleElements(parent));

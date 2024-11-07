@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation
 
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Argument
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArgumentBinding
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainingExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ContextDependentReference
@@ -18,8 +20,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineSeq
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NothingReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Parameter
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParameterBinding
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
@@ -54,7 +54,7 @@ class OperationInliner(
                 OxstsFactory.createChoiceOperation().apply {
                     for (currentOperation in transition.operation) {
                         this.operation += currentOperation.copy()
-                            .rewriteInlineOperation(containerInstance, transition.parameters, operation.parameterBindings)
+                            .rewriteInlineOperation(containerInstance, transition.arguments, operation.argumentBindings)
                     }
                 }
             }
@@ -104,17 +104,21 @@ class OperationInliner(
         return list
     }
 
-    private fun Operation.rewriteToParameters(parameters: List<Parameter>, bindings: List<ParameterBinding>): Operation {
+    private fun Operation.rewriteToArguments(arguments: List<Argument>, bindings: List<ArgumentBinding>): Operation {
         val references = EcoreUtil2.getAllContents<EObject>(this, true).asSequence().filterIsInstance<ChainReferenceExpression>().filter {
-            parameters.contains(it.chains.first().element)
+            arguments.contains(it.chains.first().element)
         }.toList()
 
         for (reference in references) {
-            val parameter = reference.chains.first().element
-            val parameterIndex = parameters.indexOf(parameter)
-            val binding = bindings[parameterIndex] // TODO is index based stable?
-            val chain = binding.expression as ChainReferenceExpression
-            val newExpression = chain.copy().appendWith(reference.drop(1))
+            val argument = reference.chains.first().element
+            val argumentIndex = arguments.indexOf(argument)
+            val binding = bindings[argumentIndex] // TODO is index based stable?
+            val expression = binding.expression
+            val newExpression = if (expression is ChainReferenceExpression) {
+                expression.copy().appendWith(reference.drop(1))
+            } else {
+                expression.copy()
+            }
             EcoreUtil2.replace(reference, newExpression)
         }
 
@@ -137,9 +141,9 @@ class OperationInliner(
         return this
     }
 
-    private fun Operation.rewriteToContext(localContext: Instance, parameters: List<Parameter>): Operation {
+    private fun Operation.rewriteToContext(localContext: Instance, arguments: List<Argument>): Operation {
         val references = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).asSequence().filterNot {
-            parameters.contains(it.chains.firstOrNull()?.element)
+            arguments.contains(it.chains.firstOrNull()?.element)
         }.filterNot {
             it.isStaticReference
         }.toList()
@@ -179,12 +183,12 @@ class OperationInliner(
 
     private fun Operation.rewriteInlineOperation(
         containerInstance: Instance,
-        parameters: List<Parameter>,
-        bindings: List<ParameterBinding>
+        arguments: List<Argument>,
+        bindings: List<ArgumentBinding>
     ): Operation {
         return rewriteContextDependentReferences()
-            .rewriteToContext(containerInstance, parameters)
-            .rewriteToParameters(parameters, bindings)
+            .rewriteToContext(containerInstance, arguments)
+            .rewriteToArguments(arguments, bindings)
     }
 
 }

@@ -113,8 +113,8 @@ fragment TransitionBody returns Transition:
 	(
         '('
             (
-                parameters+=Parameter
-                (',' parameters+=Parameter)*
+                arguments+=Argument
+                (',' arguments+=Argument)*
                 (',')?
             )?
         ')'
@@ -125,8 +125,9 @@ fragment TransitionBody returns Transition:
 	)*
 ;
 
-Parameter: 
-	name=ID ':' type=[Type|FQN]
+
+Argument:
+    name=ID ':' typing=Typing
 ;
 
 
@@ -194,13 +195,13 @@ InlineSeq:
 InlineCall: 
 	'inline' reference=ReferenceExpression '('
 		(
-            parameterBindings+=ParameterBinding
-            (',' parameterBindings+=ParameterBinding)* (',')?
+            argumentBindings+=ArgumentBinding
+            (',' argumentBindings+=ArgumentBinding)* (',')?
 		)?
 	')'
 ;
 
-ParameterBinding: 
+ArgumentBinding:
 	expression=Expression
 ;
 
@@ -341,6 +342,10 @@ Pattern:
     ')'
     patternBodies += PatternBody
     ('or' patternBodies += PatternBody)*
+;
+
+Parameter:
+	name=ID ':' type=[Type|FQN]
 ;
 
 PatternBody:
