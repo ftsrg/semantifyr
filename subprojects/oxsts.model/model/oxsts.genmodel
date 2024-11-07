@@ -59,6 +59,7 @@
     <genClasses ecoreClass="oxsts.ecore#//InlineCall">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlineCall/reference"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlineCall/argumentBindings"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute oxsts.ecore#//InlineCall/static"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//Expression"/>
     <genClasses ecoreClass="oxsts.ecore#//LiteralExpression"/>

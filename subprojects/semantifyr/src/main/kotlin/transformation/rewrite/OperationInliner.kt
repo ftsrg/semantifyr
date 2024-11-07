@@ -29,6 +29,7 @@ import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.drop
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.dropLast
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.element
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isStaticReference
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.typedReferencedElement
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
 
@@ -40,14 +41,18 @@ class OperationInliner(
             is InlineCall -> {
                 val containerInstance = context.contextualEvaluator.evaluateInstanceOrNull(operation.reference.asChainReferenceExpression().dropLast(1))
 
-                @Suppress("FoldInitializerAndIfToElvis") // would be difficult to read
+                @Suppress("FoldInitializerAndIfToElvis")
                 if (containerInstance == null) {
                     // TODO: should we throw an exception here?
                     //  If the feature has no instances, then this is a violated reference
                     return OxstsFactory.createEmptyOperation()
                 }
 
-                val transition = context.contextualEvaluator.evaluateTransition(operation.reference)
+                val transition = if (operation.isStatic) {
+                    operation.reference.typedReferencedElement()
+                } else {
+                    context.contextualEvaluator.evaluateTransition(operation.reference)
+                }
 
                 OxstsFactory.createChoiceOperation().apply {
                     for (currentOperation in transition.operation) {

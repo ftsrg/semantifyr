@@ -1,0 +1,45 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package Test
+
+type A {
+    var x : Integer = 0
+
+    tran {
+        assume (x == 2)
+    }
+}
+
+type B : A {
+    tran {
+        static inline A::main() // without static would become a recursion
+    }
+}
+
+type C : B {
+    tran {
+        x := 10
+    }
+}
+
+target Mission {
+    containment b : B
+    containment c : C
+
+    init {
+
+    }
+
+    tran {
+        inline b.main()
+        inline c.main()
+    }
+
+    prop {
+        true
+    }
+}

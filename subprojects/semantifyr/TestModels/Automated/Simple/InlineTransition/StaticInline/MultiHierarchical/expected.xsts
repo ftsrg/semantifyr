@@ -1,0 +1,24 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+
+var __Mission__b__x : integer = 0
+var __Mission__c__x : integer = 0
+
+trans {
+    assume ((__Mission__b__x == 2));
+    __Mission__c__x := 10;
+}
+
+init {
+}
+
+env {}
+
+prop {
+    true
+}
+ 

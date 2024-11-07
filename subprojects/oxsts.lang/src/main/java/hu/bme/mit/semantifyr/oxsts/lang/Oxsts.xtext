@@ -193,7 +193,7 @@ InlineSeq:
 ;
 
 InlineCall: 
-	'inline' reference=ReferenceExpression '('
+	(static ?= 'static')? 'inline' reference=ReferenceExpression '('
 		(
             argumentBindings+=ArgumentBinding
             (',' argumentBindings+=ArgumentBinding)* (',')?
