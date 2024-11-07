@@ -25,8 +25,8 @@
         eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//Boolean"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="override" lowerBound="1"
         eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//Boolean"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="parameters" upperBound="-1"
-        eType="#//Parameter" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="arguments" upperBound="-1"
+        eType="#//Argument" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="SequenceOperation" eSuperTypes="#//CompositeOperation"/>
   <eClassifiers xsi:type="ecore:EClass" name="Operation" abstract="true" eSuperTypes="#//Element"/>
@@ -64,8 +64,8 @@
   <eClassifiers xsi:type="ecore:EClass" name="InlineCall" eSuperTypes="#//InlineOperation">
     <eStructuralFeatures xsi:type="ecore:EReference" name="reference" eType="#//ReferenceExpression"
         containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="parameterBindings" upperBound="-1"
-        eType="#//ParameterBinding" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="argumentBindings" upperBound="-1"
+        eType="#//ArgumentBinding" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Expression" abstract="true" eSuperTypes="#//Element"/>
   <eClassifiers xsi:type="ecore:EClass" name="LiteralExpression" abstract="true" eSuperTypes="#//Expression"/>
@@ -167,7 +167,7 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="variables" upperBound="-1"
         eType="#//Variable" containment="true"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="ParameterBinding">
+  <eClassifiers xsi:type="ecore:EClass" name="ArgumentBinding">
     <eStructuralFeatures xsi:type="ecore:EReference" name="expression" lowerBound="1"
         eType="#//Expression" containment="true"/>
   </eClassifiers>
@@ -272,5 +272,9 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="feature" lowerBound="1"
         eType="#//Feature"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="type" lowerBound="1" eType="#//Type"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Argument" eSuperTypes="#//Element">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="typing" lowerBound="1"
+        eType="#//Typing" containment="true"/>
   </eClassifiers>
 </ecore:EPackage>

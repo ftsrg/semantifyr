@@ -30,7 +30,7 @@
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Transition/operation"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute oxsts.ecore#//Transition/virtual"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute oxsts.ecore#//Transition/override"/>
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Transition/parameters"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Transition/arguments"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//SequenceOperation"/>
     <genClasses ecoreClass="oxsts.ecore#//Operation"/>
@@ -58,7 +58,7 @@
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//InlineCall">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlineCall/reference"/>
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlineCall/parameterBindings"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlineCall/argumentBindings"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//Expression"/>
     <genClasses ecoreClass="oxsts.ecore#//LiteralExpression"/>
@@ -136,8 +136,8 @@
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//XSTS/property"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//XSTS/variables"/>
     </genClasses>
-    <genClasses ecoreClass="oxsts.ecore#//ParameterBinding">
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//ParameterBinding/expression"/>
+    <genClasses ecoreClass="oxsts.ecore#//ArgumentBinding">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//ArgumentBinding/expression"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//ContextDependentReference"/>
     <genClasses ecoreClass="oxsts.ecore#//LessThanOperator"/>
@@ -209,6 +209,9 @@
     <genClasses ecoreClass="oxsts.ecore#//FeatureConstraint">
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//FeatureConstraint/feature"/>
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//FeatureConstraint/type"/>
+    </genClasses>
+    <genClasses ecoreClass="oxsts.ecore#//Argument">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Argument/typing"/>
     </genClasses>
   </genPackages>
 </genmodel:GenModel>

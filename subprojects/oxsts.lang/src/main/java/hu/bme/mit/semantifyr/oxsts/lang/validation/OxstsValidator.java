@@ -97,18 +97,18 @@ public class OxstsValidator extends AbstractOxstsValidator {
 
     @Check
     public void checkTransitionInlining(InlineCall operation) {
-        var bindings = operation.getParameterBindings();
+        var bindings = operation.getArgumentBindings();
         var transition = (Transition) getReference(operation.getReference());
 
         if (transition == null) return;
 
-        if (bindings.size() < transition.getParameters().size()) {
+        if (bindings.size() < transition.getArguments().size()) {
             error("Transition inlining defines too few parameter bindings",
-                    OxstsPackage.Literals.INLINE_CALL__PARAMETER_BINDINGS,
+                    OxstsPackage.Literals.INLINE_CALL__ARGUMENT_BINDINGS,
                     INVALID_INLINING);
-        } else if (bindings.size() > transition.getParameters().size()) {
+        } else if (bindings.size() > transition.getArguments().size()) {
             error("Transition inlining defines too much parameter bindings",
-                    OxstsPackage.Literals.INLINE_CALL__PARAMETER_BINDINGS,
+                    OxstsPackage.Literals.INLINE_CALL__ARGUMENT_BINDINGS,
                     INVALID_INLINING);
         }
     }
