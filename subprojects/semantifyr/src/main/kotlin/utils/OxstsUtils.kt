@@ -27,9 +27,28 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceTyping
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Type
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
+import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
 import java.util.*
 import kotlin.collections.ArrayDeque
+
+@Suppress("ObjectPropertyName")
+val EObject._package: Package
+    get() = if (this is Package) this else eContainer()._package
+
+fun Instance.createReference(): List<ChainingExpression> {
+    val context = ArrayDeque<ChainingExpression>()
+    var current: Instance? = this
+
+    while (current != null) {
+        context.addFirst(OxstsFactory.createDeclarationReference(current.containment))
+        current = current.parent
+    }
+
+    context.removeFirst() // remove rootInstance reference
+
+    return context
+}
 
 fun ReferenceExpression.asChainReferenceExpression(): ChainReferenceExpression {
     require(this is ChainReferenceExpression) {
@@ -68,8 +87,8 @@ fun ChainReferenceExpression.lastChain(): ChainingExpression {
 }
 
 fun ChainReferenceExpression.appendWith(chainReferenceExpression: ChainReferenceExpression): ChainReferenceExpression {
-    return OxstsFactory.createChainReferenceExpression().also {
-        it.chains += chains.copy() + chainReferenceExpression.chains.copy()
+    return copy().also {
+        it.chains += chainReferenceExpression.chains.copy()
     }
 }
 
@@ -83,36 +102,24 @@ val Element.isStatic
     }
 
 val Feature.type
-    get() = (typing as ReferenceTyping).referencedElement as Type
+    get() = (typing as ReferenceTyping).reference.typedReferencedElement<Type>()
 
 val Variable.isFeatureTyped
-    get() = (typing as? ReferenceTyping)?.referencedElement is Feature
+    get() = (typing as? ReferenceTyping)?.reference?.referencedElementOrNull() is Feature
 
 val Variable.isDataTyped
     get() = typing is DataType
 
-val ReferenceTyping.referencedElement
-    get() = reference.chains.last().element
-
-val ChainingExpression.element
-    get() = (this as? DeclarationReferenceExpression)?.element
-
-fun Instance.createReference(): List<ChainingExpression> {
-    val context = ArrayDeque<ChainingExpression>()
-    var current: Instance? = this
-
-    while (current != null) {
-        context.addFirst(OxstsFactory.createDeclarationReference(current.containment))
-        current = current.parent
-    }
-
-    context.removeFirst() // remove rootInstance reference
-
-    return context
-}
-
 val Feature.isRedefine
     get() = redefines != null
+
+fun ReferenceTyping.referencedElement(): Element {
+    return reference.referencedElement()
+}
+
+fun ReferenceTyping.referencedElementOrNull(): Element? {
+    return reference.referencedElementOrNull()
+}
 
 inline fun <reified T : Element> ReferenceExpression.typedReferencedElement(): T {
     val element = referencedElement()
@@ -134,7 +141,6 @@ fun ReferenceExpression.referencedElementOrNull(): Element? {
     return chains.lastOrNull()?.referencedElementOrNull()
 }
 
-
 fun ChainingExpression.referencedElement(): Element {
     return referencedElementOrNull() ?: error("Expression $this must be DeclarationReferenceExpression")
 }
@@ -147,79 +153,98 @@ fun ChainingExpression.referencedElementOrNull(): Element? {
     return null
 }
 
-// TODO create caching containment and variable query
-
-val Feature.allContainments: List<Containment>
+val Feature.allContainments: Sequence<Containment>
     get() = allFeatures.filterIsInstance<Containment>()
 
-val Feature.allFeatures: List<Feature>
+val Feature.allFeatures: Sequence<Feature>
     get() = type.allFeatures
 
-val Feature.allVariables: List<Variable>
+val Feature.allVariables: Sequence<Variable>
     get() = type.allVariables
 
-val Type.allFeatures: List<Feature>
-    get() {
-        val list = mutableListOf<Feature>()
-        list += features
+val Type.allFeatures: Sequence<Feature>
+    get() = sequence {
+        yieldAll(features)
         if (supertype != null) {
-            // FIXME: recursive property accessor
-            list += supertype.allFeatures
+            yieldAll(supertype.allFeatures)
         }
-        return list
     }
 
-val Type.allVariables: List<Variable>
-    get() {
-        val list = mutableListOf<Variable>()
-        list += variables
+val Type.allVariables: Sequence<Variable>
+    get() = sequence {
+        yieldAll(variables)
         if (supertype != null) {
-            // FIXME: recursive property accessor
-            list += supertype.allVariables
+            yieldAll(supertype.allVariables)
         }
-        return list
     }
 
 val Feature.isDataType
     get() = typing is IntegerType || typing is BooleanType
 
+val Feature.allSubsets
+    get() = internalAllSubsets.toSet()
 
-val Feature.allSubsets: Set<Feature>
-    get() {
-        val features = subsets?.toMutableSet() ?: mutableSetOf()
-
-        if (redefines != null) {
-            // FIXME: recursive property accessor
-            features += redefines
-            features += redefines.allSubsets
+private val Feature.internalAllSubsets: Sequence<Feature>
+    get() = sequence {
+        if (subsets != null) {
+            yieldAll(subsets)
         }
 
-        return features
+        if (redefines != null) {
+            yield(redefines)
+            yieldAll(redefines.internalAllSubsets)
+        }
     }
 
+val BaseType.allLocalTransitions: Sequence<Transition>
+    get() = transitions.asSequence() + initTransition.asSequence() + havocTransition.asSequence() + mainTransition.asSequence()
+
 fun Type.findInitTransition(): Transition {
-    return initTransition.singleOrNull() ?: supertype?.findInitTransition() ?: error("No init transition found!")
+    return findLocalInitTransition() ?: supertype?.findInitTransition() ?: error("No init transition found!")
+}
+
+fun BaseType.findLocalInitTransition(): Transition? {
+    return allLocalTransitions.firstOrNull {
+        it.isInitTransition
+    }
 }
 
 fun Type.findMainTransition(): Transition {
-    return mainTransition.singleOrNull() ?: supertype?.findMainTransition() ?: error("No main transition found!")
+    return findLocalMainTransition() ?: supertype?.findMainTransition() ?: error("No main transition found!")
+}
+
+fun BaseType.findLocalMainTransition(): Transition? {
+    return allLocalTransitions.firstOrNull {
+        it.isMainTransition
+    }
+}
+
+
+fun Type.findHavocTransition(): Transition {
+    return findLocalHavocTransition() ?: supertype?.findHavocTransition() ?: error("No main transition found!")
+}
+
+fun BaseType.findLocalHavocTransition(): Transition? {
+    return allLocalTransitions.firstOrNull {
+        it.isHavocTransition
+    }
 }
 
 fun Type.findProperty(): Property {
-    return properties.singleOrNull() ?: supertype?.findProperty() ?: error("No property in type hierarchy!")
+    return properties.firstOrNull() ?: supertype?.findProperty() ?: error("No property in type hierarchy!")
 }
 
 val Transition.baseType: BaseType
     get() = EcoreUtil2.getContainerOfType(this, BaseType::class.java)
 
 val Transition.isMainTransition: Boolean
-    get() = baseType.mainTransition.contains(this)
+    get() = name == "main" || baseType.mainTransition.contains(this)
 
 val Transition.isInitTransition: Boolean
-    get() = baseType.initTransition.contains(this)
+    get() = name == "init" || baseType.initTransition.contains(this)
 
 val Transition.isHavocTransition: Boolean
-    get() = baseType.havocTransition.contains(this)
+    get() = name == "havoc" || baseType.havocTransition.contains(this)
 
 val Pattern.fullyQualifiedName
     get() = "${(eContainer() as Package).name}__$name"

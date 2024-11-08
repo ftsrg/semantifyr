@@ -24,11 +24,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NotOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OrOperator
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceTyping
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.impl.OxstsFactoryImpl
-import org.eclipse.emf.ecore.EObject
 
 object OxstsFactory : OxstsFactoryImpl() {
     fun createEmptyOperation(): Operation {
@@ -138,9 +136,3 @@ object OxstsFactory : OxstsFactoryImpl() {
     }
 
 }
-
-val Element._package
-    get() = if (this is Package) this else eContainer()._package
-
-val EObject._package: Package
-    get() = if (this is Package) this else eContainer()._package

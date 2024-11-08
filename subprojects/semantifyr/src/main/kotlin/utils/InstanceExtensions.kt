@@ -8,12 +8,12 @@ package hu.bme.mit.semantifyr.oxsts.semantifyr.utils
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.impl.InstanceImpl
-import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite.OperationInliner
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.evaluation.ContextualExpressionEvaluator
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.evaluation.FeatureEvaluator
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.instantiation.InstancePlacer
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.instantiation.VariableTransformer
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.resolution.TransitionResolver
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite.OperationInliner
 
 val Instance.type
     get() = containment.type

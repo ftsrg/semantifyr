@@ -6,4 +6,4 @@
 
 package hu.bme.mit.semantifyr.oxsts.semantifyr.utils
 
-inline fun <reified T, reified C : Set<T>> C.except(other: T) = filter { it != other }.toSet()
+inline fun <reified T, reified C : Set<T>> C.except(other: T) = asSequence().filter { it != other }.toSet()

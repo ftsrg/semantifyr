@@ -41,7 +41,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Typing
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.XSTS
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElement
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElementOrNull
 
 object XstsSerializer {
 
@@ -179,8 +179,8 @@ object XstsSerializer {
             is IntegerType -> "integer"
             is BooleanType -> "boolean"
             is ReferenceTyping -> {
-                when (referencedElement) {
-                    is Enum -> (referencedElement as Enum).name
+                when (referencedElementOrNull()) {
+                    is Enum -> (referencedElementOrNull() as Enum).name
                     else -> "UNKNOWN_TYPE$$$"
                 }
             }
