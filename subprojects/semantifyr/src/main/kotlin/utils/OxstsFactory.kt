@@ -26,11 +26,19 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OrOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceTyping
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.impl.OxstsFactoryImpl
 
 object OxstsFactory : OxstsFactoryImpl() {
     fun createEmptyOperation(): Operation {
         return createAssumptionOperation(createLiteralBoolean(true))
+    }
+
+    inline fun createSequentialTransition(creator: SequenceOperation.() -> Unit): Transition {
+        return createTransition().also {
+            it.operation += createSequenceOperation().also(creator)
+        }
     }
 
     fun createEnumLiteral(name: String): EnumLiteral {
@@ -91,9 +99,10 @@ object OxstsFactory : OxstsFactoryImpl() {
         }
     }
 
-    fun createInlineCall(referenceExpression: ReferenceExpression): InlineCall {
+    fun createInlineCall(referenceExpression: ReferenceExpression, isStatic: Boolean = false): InlineCall {
         return createInlineCall().also {
             it.reference = referenceExpression
+            it.isStatic = isStatic
         }
     }
 
@@ -133,6 +142,15 @@ object OxstsFactory : OxstsFactoryImpl() {
         return createNotOperator().also {
             it.operands += expression
         }
+    }
+
+    fun createEqualityAssumption(referenceExpression: ReferenceExpression, expression: Expression): AssumptionOperation {
+        return createAssumptionOperation(
+            createEqualityOperator().also {
+                it.operands += referenceExpression
+                it.operands += expression
+            }
+        )
     }
 
 }

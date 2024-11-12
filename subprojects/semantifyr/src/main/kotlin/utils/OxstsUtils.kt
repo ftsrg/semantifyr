@@ -95,6 +95,10 @@ fun ChainReferenceExpression.appendWith(chainReferenceExpression: ChainReference
 val ChainReferenceExpression.isStaticReference
     get() = referencedElementOrNull()?.isStatic ?: false
 
+fun ChainingExpression.toReferenceExpression(): ChainReferenceExpression {
+    return OxstsFactory.createChainReferenceExpression(this)
+}
+
 val Element.isStatic
     get() = when (this) {
         is EnumLiteral -> true

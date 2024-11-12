@@ -43,7 +43,7 @@
       "patterns": [
         {
           "name": "storage.type.xsts",
-          "match": "\\b(Integer|Boolean|Self|Nothing)\\b"
+          "match": "\\b(integer|boolean)\\b"
         }
       ]
     },
