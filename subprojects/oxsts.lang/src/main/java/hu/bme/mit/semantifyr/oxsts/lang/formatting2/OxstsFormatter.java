@@ -158,18 +158,37 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
     protected void format(AssumptionOperation operation, IFormattableDocument document) {
         document.prepend(regionFor(operation).keyword("assume"), this::newLine);
+        document.append(regionFor(operation).keyword("("), this::noSpace);
+        document.prepend(regionFor(operation).keyword(")"), this::noSpace);
+
+        document.format(operation.getExpression());
     }
 
     protected void format(HavocOperation operation, IFormattableDocument document) {
         document.prepend(regionFor(operation).keyword("havoc"), this::newLine);
+        document.append(regionFor(operation).keyword("("), this::noSpace);
+        document.prepend(regionFor(operation).keyword(")"), this::noSpace);
+
+        document.format(operation.getReferenceExpression());
     }
 
     protected void format(AssignmentOperation operation, IFormattableDocument document) {
         document.prepend(regionFor(operation).feature(OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE), this::newLine);
+
+        document.format(operation.getReference());
+        document.format(operation.getExpression());
     }
 
     protected void format(InlineCall operation, IFormattableDocument document) {
-        document.prepend(regionFor(operation).keyword("inline"), this::newLine);
+        if (operation.isStatic())  {
+            document.prepend(regionFor(operation).keyword("static"), this::newLine);
+        } else {
+            document.prepend(regionFor(operation).keyword("inline"), this::newLine);
+        }
+
+        document.prepend(regionFor(operation).keyword("("), this::noSpace);
+        document.append(regionFor(operation).keyword("("), this::noSpace);
+        document.prepend(regionFor(operation).keyword(")"), this::noSpace);
     }
 
     protected void format(InlineChoice operation, IFormattableDocument document) {
@@ -237,6 +256,21 @@ public class OxstsFormatter extends AbstractJavaFormatter {
             document.prepend(regionFor(constraint).keyword("neg"), this::newLine);
         } else {
             document.prepend(regionFor(constraint).keyword("find"), this::newLine);
+        }
+    }
+
+    protected void format(OperatorExpression expression, IFormattableDocument document) {
+        for (Expression operand : expression.getOperands()) {
+            document.format(operand);
+        }
+    }
+
+    protected void format(ChainReferenceExpression expression, IFormattableDocument document) {
+        document.prepend(allRegionsFor(expression).keyword("."), this::noSpace);
+        document.append(allRegionsFor(expression).keyword("."), this::noSpace);
+
+        for (var expr : expression.getChains()) {
+            document.format(expr);
         }
     }
 
