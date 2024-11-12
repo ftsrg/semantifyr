@@ -14,6 +14,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceTyping
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.Namings.enumLiteralName
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.Namings.enumName
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.Namings.variableName
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite.ExpressionRewriter.rewriteToContext
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.NothingInstance
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
@@ -21,7 +24,6 @@ import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.asChainReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.contextualEvaluator
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.copy
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.dropLast
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.fullyQualifiedName
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.instancePlacer
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isDataTyped
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isFeatureTyped
@@ -52,7 +54,7 @@ class VariableTransformer(
     fun transform(variable: Variable) {
         val newVariable = variable.copy()
 
-        newVariable.name = "${instance.fullyQualifiedName}__${variable.name}"
+        newVariable.name = instance.variableName(variable)
 
         if (variable.isFeatureTyped) {
             val typing = variable.typing
@@ -125,13 +127,10 @@ class VariableTransformer(
             literalMapping[instance] = literal
         }
 
-        enum.name = "${instance.fullyQualifiedName}__${this.name}__type"
+        enum.name = instance.enumName(this)
         enum.literals += literalMapping.values
 
         return enum
     }
-
-    private val Instance.enumLiteralName: String
-        get() = "${fullyQualifiedName}__literal"
 
 }
