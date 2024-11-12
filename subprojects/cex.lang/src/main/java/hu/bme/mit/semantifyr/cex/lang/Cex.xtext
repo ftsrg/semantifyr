@@ -59,11 +59,15 @@ LiteralBoolean:
 ;
 
 LiteralInteger:
-	value = INT
+	value = SignedInt
 ;
 
 BooleanValue returns Ecore::EBoolean:
 	'true' | 'false'
+;
+
+SignedInt returns Ecore::EInt:
+    ('-')? INT
 ;
 
 terminal ID: '^'?('a'..'z'|'A'..'Z'|'_'|'$') ('a'..'z'|'A'..'Z'|'_'|'0'..'9'|'$')*;
