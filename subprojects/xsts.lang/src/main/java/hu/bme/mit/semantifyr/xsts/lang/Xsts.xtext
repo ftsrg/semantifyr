@@ -239,3 +239,5 @@ BooleanValue returns Ecore::EBoolean:
 SignedInt returns Ecore::EInt:
     ('-')? INT
 ;
+
+terminal ID: '^'?('a'..'z'|'A'..'Z'|'_'|'$') ('a'..'z'|'A'..'Z'|'_'|'0'..'9'|'$')*;

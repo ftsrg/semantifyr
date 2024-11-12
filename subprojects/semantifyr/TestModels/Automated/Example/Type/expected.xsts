@@ -5,20 +5,20 @@
  */
 
 
-var __Mission__container__x : integer
-var __Mission__container__isZero : boolean
+var $Mission$container$x : integer
+var $Mission$container$isZero : boolean
 
 trans {
-    havoc __Mission__container__x;
-    __Mission__container__isZero := (__Mission__container__x == 0);
+    havoc $Mission$container$x;
+    $Mission$container$isZero := ($Mission$container$x == 0);
 }
 
 init {
-    __Mission__container__x := 2;
+    $Mission$container$x := 2;
 }
 
 env {}
 
 prop {
-    (__Mission__container__isZero == false)
+    ($Mission$container$isZero == false)
 }

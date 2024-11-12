@@ -6,8 +6,8 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
 
 @Suppress("MemberVisibilityCanBePrivate")
 object Namings {
-    const val SYNTHETIC_SEPARATOR = "__"
-    const val SYNTHETIC_ELEMENT_PREFIX = "__"
+    const val SYNTHETIC_SEPARATOR = "$"
+    const val SYNTHETIC_ELEMENT_PREFIX = "$$"
 
     const val LITERAL_SUFFIX = "${SYNTHETIC_ELEMENT_PREFIX}literal"
     const val TYPE_SUFFIX = "${SYNTHETIC_ELEMENT_PREFIX}type"

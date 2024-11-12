@@ -5,18 +5,18 @@
  */
 
 
-var __Mission__x : integer
+var $Mission$x : integer
 
 trans {
-    assume ((__Mission__x != 0));
+    assume (($Mission$x != 0));
 }
 
 init {
-    __Mission__x := 0;
+    $Mission$x := 0;
 }
 
 env {}
 
 prop {
-    (__Mission__x != 10)
+    ($Mission$x != 10)
 }

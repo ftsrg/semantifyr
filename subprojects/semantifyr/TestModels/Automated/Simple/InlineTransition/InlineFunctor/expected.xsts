@@ -5,10 +5,10 @@
  */
 
 
-var __Mission__callable__x : integer
+var $Mission$callable$x : integer
 
 trans {
-    __Mission__callable__x := 0;
+    $Mission$callable$x := 0;
 }
 
 init {

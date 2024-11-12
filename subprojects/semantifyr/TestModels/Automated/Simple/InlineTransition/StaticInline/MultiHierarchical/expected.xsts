@@ -5,12 +5,12 @@
  */
 
 
-var __Mission__b__x : integer = 0
-var __Mission__c__x : integer = 0
+var $Mission$b$x : integer = 0
+var $Mission$c$x : integer = 0
 
 trans {
-    assume ((__Mission__b__x == 2));
-    __Mission__c__x := 10;
+    assume (($Mission$b$x == 2));
+    $Mission$c$x := 10;
 }
 
 init {
@@ -21,4 +21,3 @@ env {}
 prop {
     true
 }
- 
