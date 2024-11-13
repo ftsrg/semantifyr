@@ -104,9 +104,9 @@ class Witness(
         it.isTran
     }.state.transform(target)
 
-    val transitionStates = cex.states.drop(1).filter { // first state is the init transition
+    val transitionStates = cex.states.filter { // first state is the init transition
         it.isTran
-    }.map {
+    }.drop(1).map {
         it.state.transform(target)
     }
 
