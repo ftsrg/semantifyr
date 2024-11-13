@@ -110,7 +110,7 @@ class OperationInliner(
 
     private fun Operation.rewriteToArguments(arguments: List<Argument>, bindings: List<ArgumentBinding>): Operation {
         val references = EcoreUtil2.getAllContents<EObject>(this, true).asSequence().filterIsInstance<ChainReferenceExpression>().filter {
-            arguments.contains(it.chains.first().referencedElement())
+            arguments.contains(it.chains.firstOrNull()?.referencedElementOrNull())
         }.toList()
 
         for (reference in references) {
