@@ -158,7 +158,7 @@ class WitnessMapping(
 
     val witnessPackage by lazy {
         OxstsFactory.createPackage().also {
-            it.name = "${target._package.name}_Witness"
+            it.name = target._package.name
         }
     }
 
