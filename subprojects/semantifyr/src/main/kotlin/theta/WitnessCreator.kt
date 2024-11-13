@@ -100,9 +100,9 @@ class Witness(
 //        it.isPreInit
 //    }.state.toOxstsWitnessState(target)
 
-    val initializedState = cex.states.first {
+    val initializedState = cex.states.firstOrNull {
         it.isTran
-    }.state.transform(target)
+    }?.state?.transform(target)
 
     val transitionStates = cex.states.filter { // first state is the init transition
         it.isTran
@@ -189,9 +189,13 @@ class WitnessMapping(
 
             operation += OxstsFactory.createInlineCall(OxstsFactory.createChainReferenceExpression(target.findInitTransition()), isStatic = true)
 
-            operation += witness.initializedState.toAssumptionOperations()
+            if (witness.initializedState != null) {
+                operation += witness.initializedState.toAssumptionOperations()
+            }
 
-            operation += stateVariableAssignment(0)
+            if (witness.transitionStates.any()) {
+                operation += stateVariableAssignment(witness.transitionStates.first().id)
+            }
         }
 
 //        witnessType.mainTransition += OxstsFactory.createSequentialTransition {
@@ -203,20 +207,22 @@ class WitnessMapping(
 //        }
 
         witnessType.mainTransition += OxstsFactory.createSequentialTransition {
-            operation += OxstsFactory.createChoiceOperation().also {
-                for (transitionState in witness.transitionStates) {
-                    it.operation += OxstsFactory.createSequenceOperation().also {
-                        it.operation += stateVariableAssumption(transitionState.id)
+            if (witness.transitionStates.any()) {
+                operation += OxstsFactory.createChoiceOperation().also {
+                    for (transitionState in witness.transitionStates) {
+                        it.operation += OxstsFactory.createSequenceOperation().also {
+                            it.operation += stateVariableAssumption(transitionState.id)
 
-                        it.operation += OxstsFactory.createInlineCall(OxstsFactory.createChainReferenceExpression(target.findMainTransition()), isStatic = true)
+                            it.operation += OxstsFactory.createInlineCall(OxstsFactory.createChainReferenceExpression(target.findMainTransition()), isStatic = true)
 
-                        it.operation += transitionState.toAssumptionOperations()
+                            it.operation += transitionState.toAssumptionOperations()
 
-                        if (!witness.transitions[transitionState].isEmpty()) {
-                            it.operation += OxstsFactory.createChoiceOperation().also {
-                                for (nextState in witness.transitions[transitionState]) {
-                                    it.operation += OxstsFactory.createSequenceOperation().also {
-                                        it.operation += stateVariableAssignment(nextState.id)
+                            if (!witness.transitions[transitionState].isEmpty()) {
+                                it.operation += OxstsFactory.createChoiceOperation().also {
+                                    for (nextState in witness.transitions[transitionState]) {
+                                        it.operation += OxstsFactory.createSequenceOperation().also {
+                                            it.operation += stateVariableAssignment(nextState.id)
+                                        }
                                     }
                                 }
                             }
