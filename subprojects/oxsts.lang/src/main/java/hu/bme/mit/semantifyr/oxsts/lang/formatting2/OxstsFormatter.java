@@ -173,7 +173,9 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void format(AssignmentOperation operation, IFormattableDocument document) {
-        document.prepend(regionFor(operation).feature(OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE), this::newLine);
+        var reference = (ChainReferenceExpression) operation.getReference();
+        var firstDeclaration = (DeclarationReferenceExpression) reference.getChains().getFirst();
+        document.prepend(regionFor(firstDeclaration).feature(OxstsPackage.Literals.DECLARATION_REFERENCE_EXPRESSION__ELEMENT), this::newLine);
 
         document.format(operation.getReference());
         document.format(operation.getExpression());
@@ -268,6 +270,18 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     protected void format(ChainReferenceExpression expression, IFormattableDocument document) {
         document.prepend(allRegionsFor(expression).keyword("."), this::noSpace);
         document.append(allRegionsFor(expression).keyword("."), this::noSpace);
+
+        for (var expr : expression.getChains().stream().skip(1).toList()) {
+            if (expr instanceof DeclarationReferenceExpression declarationReferenceExpression) {
+                document.prepend(regionFor(declarationReferenceExpression).feature(OxstsPackage.Literals.DECLARATION_REFERENCE_EXPRESSION__ELEMENT), this::noSpace);
+            }
+        }
+
+        for (var expr : expression.getChains().stream().limit(expression.getChains().size() - 1).toList()) {
+            if (expr instanceof DeclarationReferenceExpression declarationReferenceExpression) {
+                document.append(regionFor(declarationReferenceExpression).feature(OxstsPackage.Literals.DECLARATION_REFERENCE_EXPRESSION__ELEMENT), this::noSpace);
+            }
+        }
 
         for (var expr : expression.getChains()) {
             document.format(expr);
