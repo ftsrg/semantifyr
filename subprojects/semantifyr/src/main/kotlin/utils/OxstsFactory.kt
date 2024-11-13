@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.oxsts.semantifyr.utils
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AndOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Association
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
@@ -151,6 +152,13 @@ object OxstsFactory : OxstsFactoryImpl() {
                 it.operands += expression
             }
         )
+    }
+
+    fun createAssignmentOperation(referenceExpression: ReferenceExpression, expression: Expression): AssignmentOperation {
+        return createAssignmentOperation().also {
+            it.reference = referenceExpression
+            it.expression = expression
+        }
     }
 
 }
