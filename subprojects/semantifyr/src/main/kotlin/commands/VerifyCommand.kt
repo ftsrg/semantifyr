@@ -1,9 +1,8 @@
 package hu.bme.mit.semantifyr.oxsts.semantifyr.commands
 
 import com.github.ajalt.clikt.parameters.arguments.argument
-import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.types.boolean
 import com.github.ajalt.clikt.parameters.types.file
 import hu.bme.mit.semantifyr.oxsts.semantifyr.reader.OxstsReader
 import hu.bme.mit.semantifyr.oxsts.semantifyr.reader.prepareOxsts
@@ -23,7 +22,7 @@ class VerifyCommand : BaseVerifyCommand("verify") {
 
     val libraryDirectory by argument().file(mustExist = true, canBeDir = true)
     val targetName by argument()
-    val witness by option("-w", "--witness").boolean().default(false)
+    val generateWitness by option("-w", "--witness").flag()
 
     override fun run() {
         logger.info("Preparing Xtext Language")
@@ -50,7 +49,7 @@ class VerifyCommand : BaseVerifyCommand("verify") {
 
         val result = runVerification(output)
 
-        if (witness) {
+        if (generateWitness && result.isUnsafe) {
             generateWitness(result, reader)
         }
     }
