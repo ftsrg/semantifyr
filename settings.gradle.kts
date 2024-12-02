@@ -10,6 +10,8 @@ include(
     "semantifyr",
     "xsts.lang",
     "xsts.lang.ide",
+    "cex.lang",
+    "cex.lang.ide",
     "oxsts.model",
     "oxsts.lang",
     "oxsts.lang.ide",

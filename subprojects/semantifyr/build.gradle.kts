@@ -35,6 +35,7 @@ artifacts {
 
 dependencies {
     implementation(project(":oxsts.lang"))
+    implementation(project(":cex.lang"))
 
     implementation(libs.guice)
     implementation(libs.slf4j.api)

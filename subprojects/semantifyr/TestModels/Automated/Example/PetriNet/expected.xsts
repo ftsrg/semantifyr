@@ -5,13 +5,13 @@
  */
 
 
-var __Mission__petriNet__p1__tokens : integer = 100
-var __Mission__petriNet__p2__tokens : integer = 0
+var $Mission$petriNet$p1$tokens : integer = 100
+var $Mission$petriNet$p2$tokens : integer = 0
 
 trans {
-    assume ((__Mission__petriNet__p1__tokens >= 5));
-    __Mission__petriNet__p1__tokens := (__Mission__petriNet__p1__tokens - 5);
-    __Mission__petriNet__p2__tokens := (__Mission__petriNet__p2__tokens + 5);
+    assume (($Mission$petriNet$p1$tokens >= 5));
+    $Mission$petriNet$p1$tokens := ($Mission$petriNet$p1$tokens - 5);
+    $Mission$petriNet$p2$tokens := ($Mission$petriNet$p2$tokens + 5);
 }
 
 init {
@@ -20,5 +20,5 @@ init {
 env {}
 
 prop {
-    ! ((__Mission__petriNet__p2__tokens >= 20))
+    ! (($Mission$petriNet$p2$tokens >= 20))
 }

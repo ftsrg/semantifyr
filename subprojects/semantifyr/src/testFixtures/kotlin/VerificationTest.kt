@@ -8,7 +8,7 @@ package hu.bme.mit.semantifyr.oxsts.semantifyr
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Target
 import hu.bme.mit.semantifyr.oxsts.semantifyr.reader.OxstsReader
-import hu.bme.mit.semantifyr.oxsts.semantifyr.serialization.Serializer
+import hu.bme.mit.semantifyr.oxsts.semantifyr.serialization.XstsSerializer
 import hu.bme.mit.semantifyr.oxsts.semantifyr.theta.ThetaExecutor
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.XstsTransformer
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.EnvVar
@@ -104,7 +104,7 @@ open class VerificationTest {
 
         val transformer = XstsTransformer(reader)
         val xsts = transformer.transform(targetName, true)
-        val serializedXsts = Serializer.serialize(xsts)
+        val serializedXsts = XstsSerializer.serialize(xsts)
 
         File("$targetDirectory/$targetName.xsts").writeText(serializedXsts)
     }

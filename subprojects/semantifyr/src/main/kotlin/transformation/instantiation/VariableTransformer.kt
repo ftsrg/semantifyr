@@ -14,6 +14,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceTyping
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.Namings.enumLiteralName
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.Namings.enumName
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.Namings.variableName
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite.ExpressionRewriter.rewriteToContext
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.NothingInstance
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
@@ -21,11 +24,11 @@ import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.asChainReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.contextualEvaluator
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.copy
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.dropLast
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.fullyQualifiedName
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.instancePlacer
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isDataTyped
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isFeatureTyped
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElement
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElementOrNull
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.variableTransformer
 
 private class EnumMapping(
@@ -51,7 +54,7 @@ class VariableTransformer(
     fun transform(variable: Variable) {
         val newVariable = variable.copy()
 
-        newVariable.name = "${instance.fullyQualifiedName}__${variable.name}"
+        newVariable.name = instance.variableName(variable)
 
         if (variable.isFeatureTyped) {
             val typing = variable.typing
@@ -78,7 +81,7 @@ class VariableTransformer(
 
         val typing = typedVariable.typing as ReferenceTyping
 
-        val feature = typing.referencedElement as Feature
+        val feature = typing.referencedElement() as Feature
 
         val contextInstance = instance.contextualEvaluator.evaluateInstance(variableExpression.asChainReferenceExpression().dropLast(1))
         val featureHolder = contextInstance.contextualEvaluator.evaluateInstance(typing.reference.dropLast(1))
@@ -91,11 +94,11 @@ class VariableTransformer(
     }
 
     private fun ReferenceTyping.transform(isOptional: Boolean): ReferenceTyping {
-        if (referencedElement !is Feature) {
+        if (referencedElementOrNull() !is Feature) {
             return this
         }
 
-        val enum = (referencedElement as Feature).transform(isOptional)
+        val enum = (referencedElement() as Feature).transform(isOptional)
 
         return OxstsFactory.createReferenceTyping().also {
             it.reference = OxstsFactory.createChainReferenceExpression(enum)
@@ -124,13 +127,10 @@ class VariableTransformer(
             literalMapping[instance] = literal
         }
 
-        enum.name = "${instance.fullyQualifiedName}__${this.name}__type"
+        enum.name = instance.enumName(this)
         enum.literals += literalMapping.values
 
         return enum
     }
-
-    private val Instance.enumLiteralName: String
-        get() = "${fullyQualifiedName}__literal"
 
 }

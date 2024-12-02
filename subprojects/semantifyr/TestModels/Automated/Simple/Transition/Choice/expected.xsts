@@ -5,23 +5,23 @@
  */
 
 
-var __Mission__y : boolean
-var __Mission__x : integer
+var $Mission$y : boolean
+var $Mission$x : integer
 
 trans {
     choice {
-        __Mission__y := true;
+        $Mission$y := true;
     } or {
-        __Mission__x := 10;
+        $Mission$x := 10;
     }
 }
 
 init {
-    __Mission__y := false;
+    $Mission$y := false;
 }
 
 env {}
 
 prop {
-    (__Mission__y == false)
+    ($Mission$y == false)
 }

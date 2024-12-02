@@ -5,7 +5,7 @@
  */
 
 
-var __Mission__a__x : boolean = true
+var $Mission$a$x : boolean = true
 
 trans {
 }
@@ -16,5 +16,5 @@ init {
 env {}
 
 prop {
-    (__Mission__a__x != true)
+    ($Mission$a$x != true)
 }

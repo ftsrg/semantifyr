@@ -5,25 +5,25 @@
  */
 
 
-var __Mission__composite__x : integer
-var __Mission__composite__a__x : integer
-var __Mission__composite__b__x : integer
-var __Mission__composite__a__a__x : integer
-var __Mission__composite__a__b__x : integer
-var __Mission__composite__b__a__x : integer
-var __Mission__composite__b__b__x : integer
-var __Mission__composite__a__a__a__x : integer
-var __Mission__composite__a__a__b__x : integer
-var __Mission__composite__a__b__a__x : integer
-var __Mission__composite__a__b__b__x : integer
-var __Mission__composite__b__a__a__x : integer
-var __Mission__composite__b__a__b__x : integer
-var __Mission__composite__b__b__a__x : integer
-var __Mission__composite__b__b__b__x : integer
+var $Mission$composite$x : integer
+var $Mission$composite$a$x : integer
+var $Mission$composite$b$x : integer
+var $Mission$composite$a$a$x : integer
+var $Mission$composite$a$b$x : integer
+var $Mission$composite$b$a$x : integer
+var $Mission$composite$b$b$x : integer
+var $Mission$composite$a$a$a$x : integer
+var $Mission$composite$a$a$b$x : integer
+var $Mission$composite$a$b$a$x : integer
+var $Mission$composite$a$b$b$x : integer
+var $Mission$composite$b$a$a$x : integer
+var $Mission$composite$b$a$b$x : integer
+var $Mission$composite$b$b$a$x : integer
+var $Mission$composite$b$b$b$x : integer
 
 trans {
-    __Mission__composite__a__b__a__x := 0;
-    __Mission__composite__x := 0;
+    $Mission$composite$a$b$a$x := 0;
+    $Mission$composite$x := 0;
 }
 
 init {

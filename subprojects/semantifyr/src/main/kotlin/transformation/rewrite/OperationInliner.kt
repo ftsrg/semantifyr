@@ -27,8 +27,9 @@ import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.copy
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.createReference
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.drop
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.dropLast
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.element
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isStaticReference
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElement
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElementOrNull
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.typedReferencedElement
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
@@ -109,11 +110,11 @@ class OperationInliner(
 
     private fun Operation.rewriteToArguments(arguments: List<Argument>, bindings: List<ArgumentBinding>): Operation {
         val references = EcoreUtil2.getAllContents<EObject>(this, true).asSequence().filterIsInstance<ChainReferenceExpression>().filter {
-            arguments.contains(it.chains.first().element)
+            arguments.contains(it.chains.firstOrNull()?.referencedElementOrNull())
         }.toList()
 
         for (reference in references) {
-            val argument = reference.chains.first().element
+            val argument = reference.chains.first().referencedElement()
             val argumentIndex = arguments.indexOf(argument)
             val binding = bindings[argumentIndex] // TODO is index based stable?
             val expression = binding.expression
@@ -131,7 +132,7 @@ class OperationInliner(
 
     private fun Operation.rewriteToContextSkipArguments(localContext: Instance, arguments: List<Argument>): Operation {
         val references = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).asSequence().filterNot {
-            arguments.contains(it.chains.firstOrNull()?.element)
+            arguments.contains(it.chains.firstOrNull()?.referencedElementOrNull())
         }.filterNot {
             it.isStaticReference
         }.filterNot {

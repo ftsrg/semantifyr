@@ -5,8 +5,8 @@
  */
 
 
-var __Mission__c__i : integer
-var __Mission__d__i : integer
+var $Mission$c$i : integer
+var $Mission$d$i : integer
 
 trans {
 }

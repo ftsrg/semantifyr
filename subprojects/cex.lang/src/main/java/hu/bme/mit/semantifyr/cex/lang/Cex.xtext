@@ -1,0 +1,73 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+grammar hu.bme.mit.semantifyr.cex.lang.Cex with org.eclipse.xtext.common.Terminals
+
+generate cex "http://www.bme.hu/mit/2024/cex"
+
+import "http://www.eclipse.org/emf/2002/Ecore" as Ecore
+
+Cex:
+	"(" ("XstsStateSequence" | "XstsCliTracegen")
+	    (states += XstsState)*
+
+	    (edges += StateEdge)*
+	")"
+;
+
+StateEdge:
+    from=[XstsState] "->" to=[XstsState]
+;
+
+XstsState:
+    "(" (name=ID ":")? "XstsState" (preInit?="pre_init")? (postInit?="post_init")? (lastEnv?="last_env")? (lastInternal?="last_internal")?
+        state = State
+    ")"
+;
+
+State:
+    ExplState
+;
+
+ExplState:
+    "(" "ExplState"
+        (variableStates += ExplVariableState)*
+    ")"
+;
+
+ExplVariableState:
+    "("
+        variable=ID value=ExplVariableValue
+    ")"
+;
+
+ExplVariableValue:
+    LiteralInteger
+    | LiteralBoolean
+    | LiteralEnum
+;
+
+LiteralEnum:
+    type=ID "." value=ID
+;
+
+LiteralBoolean:
+	value = BooleanValue
+;
+
+LiteralInteger:
+	value = SignedInt
+;
+
+BooleanValue returns Ecore::EBoolean:
+	'true' | 'false'
+;
+
+SignedInt returns Ecore::EInt:
+    ('-')? INT
+;
+
+terminal ID: '^'?('a'..'z'|'A'..'Z'|'_'|'$') ('a'..'z'|'A'..'Z'|'_'|'0'..'9'|'$')*;

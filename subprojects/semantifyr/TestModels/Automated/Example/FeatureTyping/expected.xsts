@@ -4,19 +4,19 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-type __Mission__MainRegion__states__type : {
-    __Mission__MainRegion__MainEntry__literal,
-    __Mission__MainRegion__AState__literal,
-    __Mission__MainRegion__BState__literal,
-    __Nothing__literal
+type $Mission$MainRegion$states$$type : {
+    $Mission$MainRegion$MainEntry$$literal,
+    $Mission$MainRegion$AState$$literal,
+    $Mission$MainRegion$BState$$literal,
+    $Nothing$$literal
 }
-type __Mission__MainRegion__BState__BRegion__states__type : {
-    __Mission__MainRegion__BState__BRegion__CState__literal,
-    __Nothing__literal
+type $Mission$MainRegion$BState$BRegion$states$$type : {
+    $Mission$MainRegion$BState$BRegion$CState$$literal,
+    $Nothing$$literal
 }
 
-var __Mission__MainRegion__activeState : __Mission__MainRegion__states__type
-var __Mission__MainRegion__BState__BRegion__activeState : __Mission__MainRegion__BState__BRegion__states__type
+var $Mission$MainRegion$activeState : $Mission$MainRegion$states$$type
+var $Mission$MainRegion$BState$BRegion$activeState : $Mission$MainRegion$BState$BRegion$states$$type
 
 trans {
 }

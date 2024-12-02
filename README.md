@@ -10,7 +10,7 @@ A framework to support the declarative definition of engineering model semantics
 
 ## Build
 
-Use Java 17 for building.
+Use Java 21 for building.
 
 Run `gradlew build` to assemble the whole project, and execute all automated test, including regression testing and formal verifications. The required environment (e.g., Theta binaries) is automatically constructed by Gradle. Tests should run in a few minutes.
 

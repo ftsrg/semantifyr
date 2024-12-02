@@ -45,7 +45,13 @@ class OxstsCodeLensProvider implements vscode.CodeLensProvider {
             codeLenses.push(new vscode.CodeLens(range, {
                 title: 'Verify',
                 command: 'semantifyr.verifyTarget',
-                arguments: [targetName, document]
+                arguments: [targetName, document, true]
+            }));
+
+            codeLenses.push(new vscode.CodeLens(range, {
+                title: 'Verify (no Witness)',
+                command: 'semantifyr.verifyTarget',
+                arguments: [targetName, document, false]
             }));
         }
 
@@ -121,7 +127,7 @@ export function activate(context: ExtensionContext) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('semantifyr.verifyTarget', (targetName: string, document: vscode.TextDocument) => {
+        vscode.commands.registerCommand('semantifyr.verifyTarget', (targetName: string, document: vscode.TextDocument, generateWitness: boolean) => {
             const documentPath = document.uri.fsPath;
             const documentDirectory = path.dirname(documentPath);
             const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -135,7 +141,12 @@ export function activate(context: ExtensionContext) {
                 cancellable: false
             }, () => {
                 return new Promise<void>((resolve, reject) => {
-                    const process = childProcess.spawn(runner, [commandArg, compilerExecutable, 'verify', documentPath, workspaceFolder, targetName]);
+                    const args = [commandArg, compilerExecutable, 'verify', documentPath, workspaceFolder, targetName]
+                    if (generateWitness) {
+                        args.push("--witness")
+                    }
+
+                    const process = childProcess.spawn(runner, args);
 
                     outputChannel.clear();
 
