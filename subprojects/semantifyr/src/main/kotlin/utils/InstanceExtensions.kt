@@ -8,12 +8,15 @@ package hu.bme.mit.semantifyr.oxsts.semantifyr.utils
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.impl.InstanceImpl
-import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite.OperationInliner
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.Namings.computeFullyQualifiedName
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.evaluation.ContextualExpressionEvaluator
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.evaluation.FeatureEvaluator
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.instantiation.InstancePlacer
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.instantiation.VariableTransformer
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.resolution.TransitionResolver
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite.OperationInliner
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.Namings.NOTHING_CONTAINMENT_NAME
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.Namings.NOTHING_TYPE_NAME
 
 val Instance.type
     get() = containment.type
@@ -33,9 +36,7 @@ private class InstanceExtensions(
     val variableTransformer = VariableTransformer(instance)
 
     val fullyQualifiedName: String by lazy {
-        val parentName = instance.parent?.fullyQualifiedName ?: ""
-
-        "${parentName}__${instance.name}"
+        instance.computeFullyQualifiedName()
     }
 }
 
@@ -61,10 +62,10 @@ val Instance.fullyQualifiedName
     get() = extensions.fullyQualifiedName
 
 private val nothingType = OxstsFactory.createType().also {
-    it.name = "NothingType" // TODO: need character that is valid in XSTS, but not in OXSTS
+    it.name = NOTHING_TYPE_NAME
 }
 private val nothingContainment = OxstsFactory.createContainment().also {
-    it.name = "Nothing" // TODO: need character that is valid in XSTS, but not in OXSTS
+    it.name = NOTHING_CONTAINMENT_NAME
     it.typing = OxstsFactory.createReferenceTyping(nothingType)
 }
 

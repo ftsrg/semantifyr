@@ -10,18 +10,18 @@ type TimeUnit : {
     Hours
 }
 
-var __Mission__unit : TimeUnit
+var $Mission$unit : TimeUnit
 
 trans {
-    __Mission__unit := Minutes;
+    $Mission$unit := Minutes;
 }
 
 init {
-    __Mission__unit := Seconds;
+    $Mission$unit := Seconds;
 }
 
 env {}
 
 prop {
-    (__Mission__unit == Seconds)
+    ($Mission$unit == Seconds)
 }

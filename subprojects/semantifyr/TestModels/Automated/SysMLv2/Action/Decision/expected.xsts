@@ -5,100 +5,100 @@
  */
 
 
-var __Mission__behavior__start__performing : boolean = false
-var __Mission__behavior__s_then_f__activated : boolean = false
-var __Mission__behavior__fork__performing : boolean = false
-var __Mission__behavior__f_then_p1__activated : boolean = false
-var __Mission__behavior__f_then_p2__activated : boolean = false
-var __Mission__behavior__paint1__performing : boolean = false
-var __Mission__behavior__p1_then_d1__activated : boolean = false
-var __Mission__behavior__dry1__performing : boolean = false
-var __Mission__behavior__d1_then_j__activated : boolean = false
-var __Mission__behavior__paint2__performing : boolean = false
-var __Mission__behavior__p2_then_d2__activated : boolean = false
-var __Mission__behavior__dry2__performing : boolean = false
-var __Mission__behavior__d2_then_j__activated : boolean = false
-var __Mission__behavior__join__performing : boolean = false
-var __Mission__behavior__j_then_s__activated : boolean = false
-var __Mission__behavior__ship__performing : boolean = false
+var $Mission$behavior$start$performing : boolean = false
+var $Mission$behavior$s_then_f$activated : boolean = false
+var $Mission$behavior$fork$performing : boolean = false
+var $Mission$behavior$f_then_p1$activated : boolean = false
+var $Mission$behavior$f_then_p2$activated : boolean = false
+var $Mission$behavior$paint1$performing : boolean = false
+var $Mission$behavior$p1_then_d1$activated : boolean = false
+var $Mission$behavior$dry1$performing : boolean = false
+var $Mission$behavior$d1_then_j$activated : boolean = false
+var $Mission$behavior$paint2$performing : boolean = false
+var $Mission$behavior$p2_then_d2$activated : boolean = false
+var $Mission$behavior$dry2$performing : boolean = false
+var $Mission$behavior$d2_then_j$activated : boolean = false
+var $Mission$behavior$join$performing : boolean = false
+var $Mission$behavior$j_then_s$activated : boolean = false
+var $Mission$behavior$ship$performing : boolean = false
 
 trans {
     choice {
-        assume ((__Mission__behavior__start__performing == false));
-        __Mission__behavior__start__performing := true;
+        assume (($Mission$behavior$start$performing == false));
+        $Mission$behavior$start$performing := true;
     } or {
-        assume (__Mission__behavior__start__performing);
-        assume ((__Mission__behavior__s_then_f__activated == false));
-        __Mission__behavior__s_then_f__activated := true;
-        __Mission__behavior__start__performing := false;
+        assume ($Mission$behavior$start$performing);
+        assume (($Mission$behavior$s_then_f$activated == false));
+        $Mission$behavior$s_then_f$activated := true;
+        $Mission$behavior$start$performing := false;
     } or {
-        assume ((__Mission__behavior__fork__performing == false));
-        assume (__Mission__behavior__s_then_f__activated);
-        __Mission__behavior__s_then_f__activated := false;
-        __Mission__behavior__fork__performing := true;
+        assume (($Mission$behavior$fork$performing == false));
+        assume ($Mission$behavior$s_then_f$activated);
+        $Mission$behavior$s_then_f$activated := false;
+        $Mission$behavior$fork$performing := true;
     } or {
-        assume (__Mission__behavior__fork__performing);
-        __Mission__behavior__fork__performing := false;
+        assume ($Mission$behavior$fork$performing);
+        $Mission$behavior$fork$performing := false;
     } or {
-        assume ((__Mission__behavior__paint1__performing == false));
-        assume (__Mission__behavior__f_then_p1__activated);
-        __Mission__behavior__f_then_p1__activated := false;
-        __Mission__behavior__paint1__performing := true;
+        assume (($Mission$behavior$paint1$performing == false));
+        assume ($Mission$behavior$f_then_p1$activated);
+        $Mission$behavior$f_then_p1$activated := false;
+        $Mission$behavior$paint1$performing := true;
     } or {
-        assume (__Mission__behavior__paint1__performing);
-        assume ((__Mission__behavior__p1_then_d1__activated == false));
-        __Mission__behavior__p1_then_d1__activated := true;
-        __Mission__behavior__paint1__performing := false;
+        assume ($Mission$behavior$paint1$performing);
+        assume (($Mission$behavior$p1_then_d1$activated == false));
+        $Mission$behavior$p1_then_d1$activated := true;
+        $Mission$behavior$paint1$performing := false;
     } or {
-        assume ((__Mission__behavior__dry1__performing == false));
-        assume (__Mission__behavior__p1_then_d1__activated);
-        __Mission__behavior__p1_then_d1__activated := false;
-        __Mission__behavior__dry1__performing := true;
+        assume (($Mission$behavior$dry1$performing == false));
+        assume ($Mission$behavior$p1_then_d1$activated);
+        $Mission$behavior$p1_then_d1$activated := false;
+        $Mission$behavior$dry1$performing := true;
     } or {
-        assume (__Mission__behavior__dry1__performing);
-        assume ((__Mission__behavior__d1_then_j__activated == false));
-        __Mission__behavior__d1_then_j__activated := true;
-        __Mission__behavior__dry1__performing := false;
+        assume ($Mission$behavior$dry1$performing);
+        assume (($Mission$behavior$d1_then_j$activated == false));
+        $Mission$behavior$d1_then_j$activated := true;
+        $Mission$behavior$dry1$performing := false;
     } or {
-        assume ((__Mission__behavior__paint2__performing == false));
-        assume (__Mission__behavior__f_then_p2__activated);
-        __Mission__behavior__f_then_p2__activated := false;
-        __Mission__behavior__paint2__performing := true;
+        assume (($Mission$behavior$paint2$performing == false));
+        assume ($Mission$behavior$f_then_p2$activated);
+        $Mission$behavior$f_then_p2$activated := false;
+        $Mission$behavior$paint2$performing := true;
     } or {
-        assume (__Mission__behavior__paint2__performing);
-        assume ((__Mission__behavior__p2_then_d2__activated == false));
-        __Mission__behavior__p2_then_d2__activated := true;
-        __Mission__behavior__paint2__performing := false;
+        assume ($Mission$behavior$paint2$performing);
+        assume (($Mission$behavior$p2_then_d2$activated == false));
+        $Mission$behavior$p2_then_d2$activated := true;
+        $Mission$behavior$paint2$performing := false;
     } or {
-        assume ((__Mission__behavior__dry2__performing == false));
-        assume (__Mission__behavior__p2_then_d2__activated);
-        __Mission__behavior__p2_then_d2__activated := false;
-        __Mission__behavior__dry2__performing := true;
+        assume (($Mission$behavior$dry2$performing == false));
+        assume ($Mission$behavior$p2_then_d2$activated);
+        $Mission$behavior$p2_then_d2$activated := false;
+        $Mission$behavior$dry2$performing := true;
     } or {
-        assume (__Mission__behavior__dry2__performing);
-        assume ((__Mission__behavior__d2_then_j__activated == false));
-        __Mission__behavior__d2_then_j__activated := true;
-        __Mission__behavior__dry2__performing := false;
+        assume ($Mission$behavior$dry2$performing);
+        assume (($Mission$behavior$d2_then_j$activated == false));
+        $Mission$behavior$d2_then_j$activated := true;
+        $Mission$behavior$dry2$performing := false;
     } or {
-        assume ((__Mission__behavior__join__performing == false));
-        assume (__Mission__behavior__d1_then_j__activated);
-        __Mission__behavior__d1_then_j__activated := false;
-        assume (__Mission__behavior__d2_then_j__activated);
-        __Mission__behavior__d2_then_j__activated := false;
-        __Mission__behavior__join__performing := true;
+        assume (($Mission$behavior$join$performing == false));
+        assume ($Mission$behavior$d1_then_j$activated);
+        $Mission$behavior$d1_then_j$activated := false;
+        assume ($Mission$behavior$d2_then_j$activated);
+        $Mission$behavior$d2_then_j$activated := false;
+        $Mission$behavior$join$performing := true;
     } or {
-        assume (__Mission__behavior__join__performing);
-        assume ((__Mission__behavior__j_then_s__activated == false));
-        __Mission__behavior__j_then_s__activated := true;
-        __Mission__behavior__join__performing := false;
+        assume ($Mission$behavior$join$performing);
+        assume (($Mission$behavior$j_then_s$activated == false));
+        $Mission$behavior$j_then_s$activated := true;
+        $Mission$behavior$join$performing := false;
     } or {
-        assume ((__Mission__behavior__ship__performing == false));
-        assume (__Mission__behavior__j_then_s__activated);
-        __Mission__behavior__j_then_s__activated := false;
-        __Mission__behavior__ship__performing := true;
+        assume (($Mission$behavior$ship$performing == false));
+        assume ($Mission$behavior$j_then_s$activated);
+        $Mission$behavior$j_then_s$activated := false;
+        $Mission$behavior$ship$performing := true;
     } or {
-        assume (__Mission__behavior__ship__performing);
-        __Mission__behavior__ship__performing := false;
+        assume ($Mission$behavior$ship$performing);
+        $Mission$behavior$ship$performing := false;
     }
 }
 

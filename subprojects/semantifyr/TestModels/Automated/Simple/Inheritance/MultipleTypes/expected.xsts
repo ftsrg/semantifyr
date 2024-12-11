@@ -5,10 +5,10 @@
  */
 
 
-var __Mission__holder__child__x : integer
+var $Mission$holder$child$x : integer
 
 trans {
-    __Mission__holder__child__x := 0;
+    $Mission$holder$child$x := 0;
 }
 
 init {

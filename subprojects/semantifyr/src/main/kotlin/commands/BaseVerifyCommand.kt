@@ -9,6 +9,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.long
 import hu.bme.mit.semantifyr.oxsts.semantifyr.theta.ThetaExecutor
+import hu.bme.mit.semantifyr.oxsts.semantifyr.theta.ThetaRuntimeDetails
 import org.slf4j.Logger
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -29,7 +30,7 @@ abstract class BaseVerifyCommand(name: String) : CliktCommand(name) {
         ),
     )
 
-    fun runVerification(xstsPath: String) {
+    fun runVerification(xstsPath: String): ThetaRuntimeDetails {
         val xstsFile = File(xstsPath)
 
         logger.info("Executing Theta (v$thetaVersion) on $xstsPath")
@@ -47,6 +48,8 @@ abstract class BaseVerifyCommand(name: String) : CliktCommand(name) {
         val runtimeDetails = thetaExecutor.run(workingDirectory, fileName)
 
         logger.info("Verification result: isUnsafe = ${runtimeDetails.isUnsafe}")
+
+        return runtimeDetails
     }
 
 }

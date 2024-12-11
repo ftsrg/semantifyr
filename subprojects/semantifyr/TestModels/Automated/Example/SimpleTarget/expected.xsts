@@ -10,22 +10,22 @@ type TimeUnit : {
     Hours
 }
 
-var __Mission__unit : TimeUnit
-var __Mission__x : integer = 1
-var __Mission__isZero : boolean = false
+var $Mission$unit : TimeUnit
+var $Mission$x : integer = 1
+var $Mission$isZero : boolean = false
 
 trans {
-    __Mission__unit := Minutes;
-    havoc __Mission__x;
-    __Mission__isZero := (__Mission__x == 0);
+    $Mission$unit := Minutes;
+    havoc $Mission$x;
+    $Mission$isZero := ($Mission$x == 0);
 }
 
 init {
-    __Mission__unit := Seconds;
+    $Mission$unit := Seconds;
 }
 
 env {}
 
 prop {
-    (__Mission__isZero == false)
+    ($Mission$isZero == false)
 }

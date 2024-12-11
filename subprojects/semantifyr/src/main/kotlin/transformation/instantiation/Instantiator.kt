@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Reference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Target
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.pattern.PatternRunner
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.Namings.implicitTypeName
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils._package
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.allContainments
@@ -91,7 +92,7 @@ object Instantiator {
         }
 
         val newType = OxstsFactory.createType().also {
-            it.name = "${containment.name}__implicit"
+            it.name = containment.implicitTypeName
             it.features += containment.features
             it.havocTransition += containment.havocTransition
             it.initTransition += containment.initTransition

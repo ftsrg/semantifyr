@@ -5,12 +5,12 @@
  */
 
 
-var __Mission__a1__x : integer
-var __Mission__a2__x : integer
+var $Mission$a1$x : integer
+var $Mission$a2$x : integer
 
 trans {
-    __Mission__a1__x := 1;
-    __Mission__a2__x := 1;
+    $Mission$a1$x := 1;
+    $Mission$a2$x := 1;
 }
 
 init {
