@@ -36,6 +36,8 @@ import java.util.concurrent.TimeUnit
 import kotlin.io.path.absolute
 import kotlin.time.toDuration
 import kotlin.time.toDurationUnit
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class ThetaRuntimeDetails(
     val id: Int,
@@ -185,4 +187,112 @@ class ThetaExecutor(
         runWorkflow(absoluteDirectory, name)
     }
 
+}
+
+class ThetaShellExecutor(
+    private val shPath: String,
+    private val parameters: List<String>,
+    private val timeout: Long = 3,
+    private val timeUnit: TimeUnit = TimeUnit.MINUTES
+) {
+
+    private val logger by loggerFactory()
+    private val mutex = Mutex()
+
+    init {
+        if (System.getProperty("os.name").contains("Windows", ignoreCase = true)) {
+            throw UnsupportedOperationException("ThetaShellExecutor does not support Windows for now")
+        }
+    }
+
+    private suspend fun runTheta(
+        workingDirectory: String,
+        name: String,
+        parameter: String,
+        id: Int
+    ): ThetaRuntimeDetails {
+        logger.info("Starting theta ($id)")
+
+        val thetaRuntimeDetails = ThetaRuntimeDetails(id, workingDirectory, name)
+
+        val processBuilder = ProcessBuilder(
+            shPath,
+            "CEGAR",
+            "--model", thetaRuntimeDetails.modelFile,
+            "--cexfile", thetaRuntimeDetails.cexFile,
+            *parameter.split(" ").toTypedArray()
+        )
+        processBuilder.directory(File(workingDirectory))
+
+        val process = try {
+            withTimeout(timeout.toDuration(timeUnit.toDurationUnit())) {
+                mutex.withLock {
+                    processBuilder.start()
+                }
+            }
+        } catch (e: TimeoutCancellationException) {
+            logger.info("Theta timed out ($id)")
+            throw e
+        } catch (e: Exception) {
+            logger.error("Theta execution failed ($id)", e)
+            throw e
+        }
+
+        val exitCode = try {
+            withTimeout(timeout.toDuration(timeUnit.toDurationUnit())) {
+                process.waitFor()
+            }
+        } catch (e: TimeoutCancellationException) {
+            logger.info("Theta timed out ($id)")
+            process.destroy()
+            throw e
+        } finally {
+            saveProcessLogs(thetaRuntimeDetails, process)
+        }
+
+        if (exitCode == 0) {
+            logger.info("Theta finished ($id)")
+        } else {
+            logger.error("Theta failed ($id) with code $exitCode")
+            throw IllegalStateException("Theta execution failed with code $exitCode. See $thetaRuntimeDetails")
+        }
+
+        return thetaRuntimeDetails
+    }
+
+    private fun saveProcessLogs(thetaRuntimeDetails: ThetaRuntimeDetails, process: Process) {
+        try {
+            val logFile = File(thetaRuntimeDetails.logPath)
+            val errFile = File(thetaRuntimeDetails.errPath)
+
+            process.inputStream.bufferedReader().use { logFile.writeText(it.readText()) }
+            process.errorStream.bufferedReader().use { errFile.writeText(it.readText()) }
+        } catch (e: Exception) {
+            logger.error("Exception during saving logging details (${thetaRuntimeDetails.id})", e)
+        }
+    }
+
+    private suspend fun runWorkflow(workingDirectory: String, name: String) = supervisorScope {
+        val jobs = parameters.indices.map { index ->
+            async(Dispatchers.IO) {
+                runTheta(workingDirectory, name, parameters[index], index)
+            }
+        }
+
+        try {
+            logger.debug("Awaiting jobs")
+            jobs.awaitAny()
+        } finally {
+            logger.debug("Canceling jobs")
+            jobs.forEach {
+                it.cancelAndJoin()
+            }
+        }
+    }
+
+    fun run(workingDirectory: String, name: String) = runBlocking {
+        val absoluteDirectory = Path.of(workingDirectory).absolute().toString()
+
+        runWorkflow(absoluteDirectory, name)
+    }
 }
