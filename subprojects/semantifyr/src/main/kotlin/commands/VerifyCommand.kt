@@ -53,8 +53,13 @@ class VerifyCommand : BaseVerifyCommand("verify") {
 
         val result = runVerification(output, thetaStartScript)
 
-        if (generateWitness && result.isUnsafe) {
+        if (generateWitness && result.isUnsafe && File(result.cexPath).exists()) {
             generateWitness(result, reader)
+        }
+
+        // in case of tracegen generating .cexs, safety of result does not matter
+        if (generateWitness && File(result.cexsPath).exists()) {
+            generateSummaryWitness(result, reader)
         }
     }
 
@@ -80,4 +85,25 @@ class VerifyCommand : BaseVerifyCommand("verify") {
         logger.info("Saved witness to $witnessPath")
     }
 
+    private fun generateSummaryWitness(
+        result: ThetaRuntimeDetails,
+        reader: OxstsReader
+    ) {
+        logger.info("Generating witness from ${result.cexsPath}")
+
+        prepareCex()
+
+        val cexReader = CexReader()
+        val cex = cexReader.readCexFile(File(result.cexsPath))
+
+        val witnessCreator = WitnessCreator(reader)
+
+        val witnessPath = model.path.replace(".oxsts", ".cexs.oxsts")
+        val resource = reader.resourceSet.createResource(URI.createFileURI(witnessPath))
+        resource.contents += witnessCreator.createWitness(targetName, cex)
+
+        resource.save(null)
+
+        logger.info("Saved witness to $witnessPath")
+    }
 }

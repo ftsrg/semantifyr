@@ -38,10 +38,10 @@ open class VerificationTest {
         val thetaDockerExecutor = ThetaDockerExecutor(
             thetaVersion,
             listOf(
-                "--domain EXPL --refinement SEQ_ITP --maxenum 250 --initprec CTRL --stacktrace",
-                "--domain EXPL_PRED_COMBINED --autoexpl NEWOPERANDS --initprec CTRL --stacktrace",
-                "--domain PRED_CART --refinement SEQ_ITP --stacktrace",
-                "--stacktrace",
+                "CEGAR --domain EXPL --refinement SEQ_ITP --maxenum 250 --initprec CTRL --stacktrace",
+                "CEGAR --domain EXPL_PRED_COMBINED --autoexpl NEWOPERANDS --initprec CTRL --stacktrace",
+                "CEGAR --domain PRED_CART --refinement SEQ_ITP --stacktrace",
+                "CEGAR --stacktrace",
             ),
         )
 

@@ -46,11 +46,17 @@ class ThetaRuntimeDetails(
 ) {
     val modelFile = "$name.xsts"
     val cexFile = "$name$id.cex"
+    val cexsFile = "$name.cexs"
     val logFile = "theta$id.out"
     val errFile = "theta$id.err"
 
     val modelPath = "$workingDirectory${File.separator}$modelFile"
-    val cexPath = "$workingDirectory${File.separator}$cexFile"
+    // Theta can produce several kinds of output files, even images
+    // it's probably a good idea to group all of those under here
+    val outputPath = "$workingDirectory${File.separator}traces"
+
+    val cexPath = "$outputPath${File.separator}$cexFile"
+    val cexsPath = "$outputPath${File.separator}$cexsFile"
     val logPath = "$workingDirectory${File.separator}$logFile"
     val errPath = "$workingDirectory${File.separator}$errFile"
 
@@ -61,6 +67,32 @@ class ThetaRuntimeDetails(
 
 abstract class ThetaExecutor {
     abstract fun run(workingDirectory: String, name: String) : ThetaRuntimeDetails
+
+    // Some Theta parameters are only important to Theta (e.g., what abstraction to use),
+    // but some are important here as well, such as if the output is a single or several .cex files, or .cexs files, etc. (see TRACEGEN).
+    // To keep the different executors uniform, they should use this helper function to get their Theta parameters.
+    fun getParameters(parameter: String, thetaRuntimeDetails: ThetaRuntimeDetails, docker: Boolean = false): Array<String> {
+        val params = parameter.split(" ").toTypedArray()
+        val outputFlag = if(parameter.contains("TRACEGEN")) {
+            if(docker) {
+                "--trace-dir " + "/host/${File(thetaRuntimeDetails.cexsPath).parent}"
+            } else {
+                "--trace-dir " + File(thetaRuntimeDetails.cexsPath).parent
+            }
+        } else {
+            if(docker) {
+                "--cexfile " + "/host/${thetaRuntimeDetails.cexFile}"
+            } else {
+                "--cexfile " + thetaRuntimeDetails.cexFile
+            }
+        }
+        val modelFlag = if(docker) {
+            "--model " + "/host/${thetaRuntimeDetails.modelFile}"
+        } else {
+            "--model " + thetaRuntimeDetails.modelFile
+        }
+            return (params + outputFlag + modelFlag).joinToString(" ").split(" ").toTypedArray()
+    }
 }
 
 class ThetaDockerExecutor(
@@ -122,7 +154,7 @@ class ThetaDockerExecutor(
             logger.info("Theta finished ($id)")
         } else {
             logger.error("Theta failed ($id)")
-            throw IllegalStateException("Theta execution failed with code ${result.statusCode}. See $thetaRuntimeDetails")
+            throw IllegalStateException("Theta execution failed with code ${result.statusCode}. See ${thetaRuntimeDetails.errPath}")
         }
 
         return thetaRuntimeDetails
@@ -154,12 +186,11 @@ class ThetaDockerExecutor(
         val hostConfig = HostConfig.newHostConfig()
             .withBinds(Bind(thetaRuntimeDetails.workingDirectory, Volume("/host")))
 
+        val param = super.getParameters(parameter, thetaRuntimeDetails, true)
+
         val container = dockerClient.createContainerCmd("ftsrg/theta-xsts-cli:$version")
             .withCmd(
-                "CEGAR",
-                "--model", "/host/${thetaRuntimeDetails.modelFile}",
-                "--cexfile", "/host/${thetaRuntimeDetails.cexFile}",
-                *parameter.split(" ").toTypedArray(),
+                *param
             )
             .withHostConfig(hostConfig)
             .exec()
@@ -220,12 +251,11 @@ class ThetaShellExecutor(
 
         val thetaRuntimeDetails = ThetaRuntimeDetails(id, workingDirectory, name)
 
+        val param = super.getParameters(parameter, thetaRuntimeDetails, false)
+
         val processBuilder = ProcessBuilder(
             shPath,
-            "CEGAR",
-            "--model", thetaRuntimeDetails.modelFile,
-            "--cexfile", thetaRuntimeDetails.cexFile,
-            *parameter.split(" ").toTypedArray()
+            *param
         )
         processBuilder.directory(File(workingDirectory))
 
@@ -259,7 +289,7 @@ class ThetaShellExecutor(
             logger.info("Theta finished ($id)")
         } else {
             logger.error("Theta failed ($id) with code $exitCode")
-            throw IllegalStateException("Theta execution failed with code $exitCode. See $thetaRuntimeDetails")
+            throw IllegalStateException("Theta execution failed with code $exitCode. See ${thetaRuntimeDetails.errPath}")
         }
 
         return thetaRuntimeDetails

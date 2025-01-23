@@ -25,10 +25,10 @@ abstract class BaseVerifyCommand(name: String) : CliktCommand(name) {
     val thetaVersion by option().default("6.5.2")
     val thetaConfiguration by option().multiple(
         default = listOf(
-            "--domain EXPL --refinement SEQ_ITP --maxenum 250 --initprec CTRL --stacktrace",
-            "--domain EXPL_PRED_COMBINED --autoexpl NEWOPERANDS --initprec CTRL --stacktrace",
-            "--domain PRED_CART --refinement SEQ_ITP --stacktrace",
-            "--stacktrace",
+            "CEGAR --domain EXPL --refinement SEQ_ITP --maxenum 250 --initprec CTRL --stacktrace",
+            "CEGAR --domain EXPL_PRED_COMBINED --autoexpl NEWOPERANDS --initprec CTRL --stacktrace",
+            "CEGAR --domain PRED_CART --refinement SEQ_ITP --stacktrace",
+            "CEGAR --stacktrace",
         ),
     )
 
