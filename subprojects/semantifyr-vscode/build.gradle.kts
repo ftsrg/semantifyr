@@ -39,6 +39,8 @@ val cloneDistribution by tasks.registering(Sync::class) {
 
 tasks {
     val compile by registering(NpmTask::class) {
+        inputs.dir(project.layout.projectDirectory.dir("src"))
+        inputs.file(project.layout.projectDirectory.file("esbuild.js"))
         inputs.files(npmInstall.get().outputs)
 
         npmCommand.set(
@@ -51,32 +53,34 @@ tasks {
         outputs.dir("dist")
     }
 
-//    val packageExtension by registering(Exec::class) {
-//        inputs.files(cloneDistribution.get().outputs)
-//        inputs.files(compile.get().outputs)
-//        inputs.dir("node_modules")
-//
-//        outputs.dir(project.layout.buildDirectory.dir("vscode"))
-//
-//        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-//            commandLine(
-//                "cmd",
-//                "/c",
-//                "node_modules\\.bin\\vsce.cmd",
-//                "package",
-//                "--out", project.layout.buildDirectory.dir("vscode").get().asFile.absolutePath,
-//            )
-//        } else {
-//            commandLine(
-//                "sh",
-//                "-c",
-//                "node_modules/.bin/vsce package --out " + project.layout.buildDirectory.dir("vscode").get().asFile.absolutePath,
-//            )
-//        }
-//    }
+    val packageExtension by registering(Exec::class) {
+        inputs.files(cloneDistribution.get().outputs)
+        inputs.files(compile.get().outputs)
+        inputs.files(npmInstall.get().outputs)
+
+        outputs.dir(project.layout.buildDirectory.dir("vscode"))
+
+        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+            commandLine(
+                "cmd",
+                "/c",
+                "node_modules\\.bin\\vsce.cmd",
+                "package",
+                "--out", project.layout.buildDirectory.dir("vscode").get().asFile.absolutePath,
+            )
+        } else {
+            commandLine(
+                "sh",
+                "-c",
+                "node_modules/.bin/vsce package --out " + project.layout.buildDirectory.dir("vscode").get().asFile.absolutePath,
+            )
+        }
+    }
 
     assemble {
+        inputs.files(cloneDistribution.get().outputs)
         inputs.files(compile.get().outputs)
+        inputs.files(packageExtension.get().outputs)
     }
 
     clean {
