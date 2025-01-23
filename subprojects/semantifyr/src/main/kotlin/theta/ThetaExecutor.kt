@@ -53,7 +53,7 @@ class ThetaRuntimeDetails(
     val modelPath = "$workingDirectory${File.separator}$modelFile"
     // Theta can produce several kinds of output files, even images
     // it's probably a good idea to group all of those under here
-    val outputPath = "$workingDirectory${File.separator}traces"
+    val outputPath = "$workingDirectory${File.separator}theta-traces"
 
     val cexPath = "$outputPath${File.separator}$cexFile"
     val cexsPath = "$outputPath${File.separator}$cexsFile"
@@ -61,7 +61,14 @@ class ThetaRuntimeDetails(
     val errPath = "$workingDirectory${File.separator}$errFile"
 
     val isUnsafe: Boolean by lazy {
-        Files.exists(Paths.get(cexPath))
+        val filePath = Paths.get(logPath)
+        if (Files.exists(filePath)) {
+            Files.lines(filePath).use { lines ->
+                lines.anyMatch { it.contains("SafetyResult Unsafe") }
+            }
+        } else {
+            false
+        }
     }
 }
 
@@ -81,9 +88,11 @@ abstract class ThetaExecutor {
             }
         } else {
             if(docker) {
-                "--cexfile " + "/host/${thetaRuntimeDetails.cexFile}"
+                // Mainline Theta will not create the folder and will concatenate absolute paths incorrectly here
+                // TODO will add fix in PR later to properly support output directories and absolute paths
+                "--cexfile " + "/host/${File(thetaRuntimeDetails.outputPath).name}${File.separator}${thetaRuntimeDetails.cexFile}"
             } else {
-                "--cexfile " + thetaRuntimeDetails.cexFile
+                "--cexfile " + "${File(thetaRuntimeDetails.outputPath).name}${File.separator}${thetaRuntimeDetails.cexFile}"
             }
         }
         val modelFlag = if(docker) {
@@ -154,7 +163,7 @@ class ThetaDockerExecutor(
             logger.info("Theta finished ($id)")
         } else {
             logger.error("Theta failed ($id)")
-            throw IllegalStateException("Theta execution failed with code ${result.statusCode}. See ${thetaRuntimeDetails.errPath}")
+            throw IllegalStateException("Theta execution failed with code ${result.statusCode}. See ${thetaRuntimeDetails.errPath} (and .out) files")
         }
 
         return thetaRuntimeDetails
@@ -289,7 +298,7 @@ class ThetaShellExecutor(
             logger.info("Theta finished ($id)")
         } else {
             logger.error("Theta failed ($id) with code $exitCode")
-            throw IllegalStateException("Theta execution failed with code $exitCode. See ${thetaRuntimeDetails.errPath}")
+            throw IllegalStateException("Theta execution failed with code $exitCode. See ${thetaRuntimeDetails.errPath} (and .out) files")
         }
 
         return thetaRuntimeDetails
