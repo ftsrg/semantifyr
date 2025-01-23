@@ -82,20 +82,28 @@ class XstsTransformer(
 
         logger.info("Optimizing XSTS model")
 
-        xsts.init.optimize()
-        xsts.transition.optimize()
-        xsts.property.invariant.optimize()
+        xsts.optimize()
 
         if (rewriteChoice) {
             logger.info("Rewriting choice-else operations")
 
             xsts.init.rewriteChoiceElse()
             xsts.transition.rewriteChoiceElse()
+
+            logger.info("Optimizing XSTS model")
+
+            xsts.optimize()
         }
 
         logger.info("Transformation done!")
 
         return xsts
+    }
+
+    private fun XSTS.optimize() {
+        init.optimize()
+        transition.optimize()
+        property.invariant.optimize()
     }
 
     private fun Transition.inlineOperations(rootInstance: Instance) {

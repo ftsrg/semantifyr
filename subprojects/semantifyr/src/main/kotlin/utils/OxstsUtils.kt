@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.semantifyr.utils
 
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BaseType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
@@ -15,9 +16,12 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.DataType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Feature
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IntegerType
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Pattern
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PatternConstraint
@@ -272,3 +276,17 @@ fun Pattern.allReferencedPatterns(): Set<Pattern> {
 
     return patterns
 }
+
+
+val Operation.isConstantFalseOperation
+    get() = this is AssumptionOperation && expression.isConstantFalse
+
+val Operation.isConstantTrueOperation
+    get() = this is AssumptionOperation && expression.isConstantTrue
+
+@Suppress("SimplifyBooleanWithConstants")
+val Expression.isConstantFalse
+    get() = this is LiteralBoolean && isValue == false
+
+val Expression.isConstantTrue
+    get() = this is LiteralBoolean && isValue
