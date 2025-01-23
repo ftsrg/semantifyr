@@ -62,12 +62,24 @@ class OxstsCodeLensProvider implements vscode.CodeLensProvider {
 
 export function activate(context: ExtensionContext) {
     const runner = os.type() === 'Windows_NT' ? 'cmd' : 'sh';
-    const commandArg = os.type() === 'Windows_NT' ? '/c' : '-c';
+    const commandArg = os.type() === 'Windows_NT' ? '/c' : '';
     const executablePostfix = os.type() === 'Windows_NT' ? '.bat' : '';
 
     const oxstsIdeExecutable = path.join(context.extensionPath, 'bin', 'oxsts.lang.ide', 'bin', `oxsts.lang.ide${executablePostfix}`);
     const xstsIdeExecutable = path.join(context.extensionPath, 'bin', 'xsts.lang.ide', 'bin', `xsts.lang.ide${executablePostfix}`);
     const compilerExecutable = path.join(context.extensionPath, 'bin', 'semantifyr', 'bin', `semantifyr${executablePostfix}`);
+
+    // TODO: needs testing on Windows
+    function spawnProcess(compilerExecutable: string, semantifyrCommand: string, remainingArgs: string[]) {
+        if (os.type() === 'Windows_NT') {
+            const args = [commandArg, compilerExecutable, semantifyrCommand].concat(remainingArgs)
+            return childProcess.spawn(runner, args);
+        } else { // assume linux
+            // -c does not work (would probably work if args would be concatenated to a string), but also not necessary
+            const args = [compilerExecutable, semantifyrCommand].concat(remainingArgs)
+            return childProcess.spawn(runner, args);
+        }
+    }
 
     outputChannel = vscode.window.createOutputChannel("Semantifyr");
     context.subscriptions.push(outputChannel);
@@ -91,8 +103,8 @@ export function activate(context: ExtensionContext) {
                 title: `Compiling target: ${targetName}`,
                 cancellable: false
             }, () => {
-                return new Promise<void>((resolve, reject) => {                    
-                    const process = childProcess.spawn(runner, [commandArg, compilerExecutable, 'compile', documentPath, workspaceFolder, targetName, '-o', outputFile]);
+                return new Promise<void>((resolve, reject) => {
+                    const process = spawnProcess(compilerExecutable, 'compile', [documentPath, workspaceFolder, targetName, "-o", outputFile]);
 
                     outputChannel.clear();
 
@@ -141,12 +153,13 @@ export function activate(context: ExtensionContext) {
                 cancellable: false
             }, () => {
                 return new Promise<void>((resolve, reject) => {
-                    const args = [commandArg, compilerExecutable, 'verify', documentPath, workspaceFolder, targetName]
+                    const args = [documentPath, workspaceFolder, targetName]
+
                     if (generateWitness) {
                         args.push("--witness")
                     }
 
-                    const process = childProcess.spawn(runner, args);
+                    const process = spawnProcess(compilerExecutable, 'verify', args);
 
                     outputChannel.clear();
 
@@ -192,7 +205,7 @@ export function activate(context: ExtensionContext) {
                 cancellable: false
             }, () => {
                 return new Promise<void>((resolve, reject) => {
-                    const process = childProcess.spawn(runner, [commandArg, compilerExecutable, 'verify-xsts', documentPath]);
+                    const process = spawnProcess(compilerExecutable, 'verify-xsts', [documentPath]);
 
                     outputChannel.clear();
 
