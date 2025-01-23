@@ -11,3 +11,5 @@ import org.eclipse.xtext.EcoreUtil2
 
 fun <T : EObject> T.copy() = EcoreUtil2.copy(this)
 fun <T : EObject> Collection<T>.copy() = map { it.copy() }
+
+inline fun <reified T : EObject> EObject.eAllContentsOfType() = eAllContents().asSequence().filterIsInstance<T>()

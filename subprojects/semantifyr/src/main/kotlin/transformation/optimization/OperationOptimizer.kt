@@ -11,58 +11,68 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.optimization.ExpressionOptimizer.optimize
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.eAllContentsOfType
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isConstantFalse
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isConstantFalseOperation
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isConstantTrue
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isConstantTrueOperation
 import org.eclipse.xtext.EcoreUtil2
 
 object OperationOptimizer {
 
-    fun Transition.optimize(): Boolean {
-        var optimized = false
-
+    fun Transition.optimize(): Transition {
         for (operation in operation) {
-            optimized = optimized || operation.optimize()
+            operation.optimize()
         }
 
-        return optimized
+        // optimization results in possibly consistent, but "not well-formed" model
+        fixWellFormednessProblems()
+
+        return this
     }
 
-    private fun Operation.optimize(): Boolean {
-        var anyOptimization = false
-        var optimized: Boolean
+    private fun Operation.optimize() {
+        var workRemaining = true
 
-        do {
-            optimized = optimizeInternal()
-            anyOptimization = anyOptimization || optimized
-        } while (optimized)
-
-        return anyOptimization
+        while (workRemaining) {
+            workRemaining = optimizeInternal()
+        }
     }
 
     private fun Operation.optimizeInternal(): Boolean {
-        return rewriteSingleBranchChoices() ||
-                removeTrueAssumptions() ||
-                propagateFalseAssumptions() ||
-                removeEmptySequences() ||
-                removeEmptyChoices() ||
-                removeEmptyIfs() ||
-                removeRedundantChoiceElse() ||
-                flattenSequences() ||
-                flattenChoices() ||
-                removeFalseElseBranches() ||
-                removeFalseBranches() ||
-                optimizeExpressions()
+        return removeTrueAssumptions() ||
+            removeEmptySequences() ||
+            removeEmptyChoices() ||
+            removeEmptyIfs() ||
+            removeRedundantChoiceElseBranch() ||
+
+            rewriteSingleBranchChoices() ||
+            rewriteSingleStepSequences() ||
+
+            flattenNestedSequences() ||
+            flattenNestedChoices() ||
+
+            rewriteConstantGuardIfs() ||
+
+            optimizeExpressions() ||
+
+            removeConstantFalseElseBranches() ||
+            propagateConstantFalseSequenceSteps() ||
+            propagateConstantFalseChoiceBranches() ||
+            propagateConstantFalseIfBranches()
     }
 
     private fun Operation.optimizeExpressions(): Boolean {
         var optimized = false
 
-        val ifs = EcoreUtil2.getAllContentsOfType(this, IfOperation::class.java)
-        val assumptions = EcoreUtil2.getAllContentsOfType(this, AssumptionOperation::class.java)
-        val assignments = EcoreUtil2.getAllContentsOfType(this, AssignmentOperation::class.java)
+        val ifs = eAllContentsOfType<IfOperation>()
+        val assumptions = eAllContentsOfType<AssumptionOperation>()
+        val assignments = eAllContentsOfType<AssignmentOperation>()
 
         val expressions = ifs.map { it.guard } + assumptions.map { it.expression } + assignments.map { it.expression }
 
@@ -73,8 +83,26 @@ object OperationOptimizer {
         return optimized
     }
 
+    private fun Operation.rewriteConstantGuardIfs(): Boolean {
+        val ifOperation = eAllContentsOfType<IfOperation>().firstOrNull {
+            it.guard.isConstantTrue || it.guard.isConstantFalse
+        }
+
+        if (ifOperation == null) {
+            return false
+        }
+
+        if (ifOperation.guard.isConstantTrue) {
+            EcoreUtil2.replace(ifOperation, ifOperation.body)
+        } else {
+            EcoreUtil2.replace(ifOperation, ifOperation.`else`)
+        }
+
+        return true
+    }
+
     private fun Operation.rewriteSingleBranchChoices(): Boolean {
-        val choice = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).firstOrNull {
+        val choice = eAllContentsOfType<ChoiceOperation>().firstOrNull {
             it.operation.size == 1 && it.`else` == null
         }
 
@@ -87,8 +115,28 @@ object OperationOptimizer {
         return true
     }
 
-    private fun Operation.flattenSequences(): Boolean {
-        val sequence = EcoreUtil2.getAllContentsOfType(this, SequenceOperation::class.java).firstOrNull {
+    private fun Operation.flattenNestedSequences(): Boolean {
+        val sequence = eAllContentsOfType<SequenceOperation>().firstOrNull {
+            it.operation.any { it is SequenceOperation }
+        }
+
+        if (sequence == null) {
+            return false
+        }
+
+        val internalSequence = sequence.operation.first {
+            it is SequenceOperation
+        } as SequenceOperation
+
+        val index = sequence.operation.indexOf(internalSequence)
+        sequence.operation.addAll(index, internalSequence.operation)
+        EcoreUtil2.remove(internalSequence)
+
+        return true
+    }
+
+    private fun Operation.rewriteSingleStepSequences(): Boolean {
+        val sequence = eAllContentsOfType<SequenceOperation>().firstOrNull {
             it.operation.size == 1
         }
 
@@ -101,149 +149,112 @@ object OperationOptimizer {
         return true
     }
 
-    private fun Operation.flattenChoices(): Boolean {
-        val choice = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).firstOrNull {
-            it.eContainer() is ChoiceOperation && it.isRemovable()
+    private fun Operation.flattenNestedChoices(): Boolean {
+        val choice = eAllContentsOfType<ChoiceOperation>().firstOrNull {
+            it.operation.any {
+                it is ChoiceOperation && it.`else` == null
+            }
         }
 
         if (choice == null) {
             return false
         }
 
-        val container = choice.eContainer() as ChoiceOperation
-        container.operation += choice.operation
+        val internalChoice = choice.operation.first {
+            it is ChoiceOperation && it.`else` == null
+        } as ChoiceOperation
+
+        choice.operation += internalChoice.operation
 
         return true
     }
 
     private fun Operation.removeTrueAssumptions(): Boolean {
-        val assumptions = EcoreUtil2.getAllContentsOfType(this, AssumptionOperation::class.java).filter {
-            it.isTrueOperation
+        val assumption = eAllContentsOfType<AssumptionOperation>().firstOrNull {
+            it.isConstantTrueOperation
         }
 
-        if (assumptions.isEmpty()) {
+        if (assumption == null) {
             return false
         }
 
-        for (assumption in assumptions) {
-            EcoreUtil2.remove(assumption)
-        }
+        EcoreUtil2.remove(assumption)
 
         return true
     }
 
-    private fun Operation.propagateFalseAssumptions(): Boolean {
-        val falseAssumption = EcoreUtil2.getAllContentsOfType(this, AssumptionOperation::class.java).firstOrNull {
-            it.isFalseOperation
+    private fun Operation.propagateConstantFalseIfBranches(): Boolean {
+        val ifOperation = eAllContentsOfType<IfOperation>().firstOrNull {
+            it.body.isConstantFalseOperation && it.`else` != null && it.`else`.isConstantFalseOperation
         }
 
-        if (falseAssumption == null) {
+        if (ifOperation == null) {
             return false
         }
 
-        val parent = falseAssumption.eContainer()
-
-        if (parent !is SequenceOperation) {
-            return false
-        }
-
-        EcoreUtil2.replace(parent, falseAssumption)
+        EcoreUtil2.replace(ifOperation, ifOperation.body)
 
         return true
     }
 
-    private fun Operation.removeEmptyIfs(): Boolean {
-        val emptyIfs = EcoreUtil2.getAllContentsOfType(this, IfOperation::class.java).filter {
-            it.body == null && it.`else` == null
+    private fun Operation.propagateConstantFalseSequenceSteps(): Boolean {
+        val sequence = eAllContentsOfType<SequenceOperation>().firstOrNull {
+            it.operation.any { it.isConstantFalseOperation }
         }
 
-        if (emptyIfs.isEmpty()) {
+        if (sequence == null) {
             return false
         }
 
-        for (emptyIf in emptyIfs) {
-            EcoreUtil2.remove(emptyIf)
+        val assumption = sequence.operation.first {
+            it.isConstantFalseOperation
         }
+
+        EcoreUtil2.replace(sequence, assumption)
 
         return true
     }
 
-    private fun Operation.removeFalseElseBranches(): Boolean {
-        val choices = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).filter {
-            it.`else`.let {
-                it is AssumptionOperation && it.isFalseOperation
-            }
-        }
-
-        if (choices.isEmpty()) {
-            return false
-        }
-
-        for (choice in choices) {
-            choice.`else` = null
-        }
-
-        return true
-    }
-
-    private fun Operation.removeFalseBranches(): Boolean {
-        val choice = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).firstOrNull {
-            it.operation.any {
-                it is AssumptionOperation && it.isFalseOperation
-            }
+    private fun Operation.removeConstantFalseElseBranches(): Boolean {
+        val choice = eAllContentsOfType<ChoiceOperation>().firstOrNull {
+            it.`else` != null && it.`else`.isConstantFalseOperation
         }
 
         if (choice == null) {
             return false
         }
 
-        val assumption = choice.operation.first { it is AssumptionOperation && it.isFalseOperation }
+        choice.`else` = null
 
-        if (choice.operation.size > 1) {
+        return true
+    }
+
+    private fun Operation.propagateConstantFalseChoiceBranches(): Boolean {
+        val choice = eAllContentsOfType<ChoiceOperation>().firstOrNull {
+            it.operation.any { it.isConstantFalseOperation }
+        }
+
+        if (choice == null) {
+            return false
+        }
+
+        val assumption = choice.operation.first {
+            it.isConstantFalseOperation
+        }
+
+        if (choice.operation.size > 1) { // there are other branches
             EcoreUtil2.remove(assumption)
-        } else if (choice.`else` != null) {
+        } else if (choice.`else` != null) { // this is the only branch, but there is an else branch
             EcoreUtil2.replace(assumption, choice.`else`)
-        } else {
+        } else { // the whole choice is not executable
             EcoreUtil2.replace(choice, assumption)
         }
 
         return true
     }
 
-    private fun Operation.removeEmptySequences(): Boolean {
-        val emptySequences = EcoreUtil2.getAllContentsOfType(this, SequenceOperation::class.java).filter {
-            it.operation.isEmpty() && it.isRemovable()
-        }
-
-        if (emptySequences.isEmpty()) {
-            return false
-        }
-
-        for (emptySequence in emptySequences) {
-            EcoreUtil2.remove(emptySequence)
-        }
-
-        return true
-    }
-
-    private fun Operation.removeEmptyChoices(): Boolean {
-        val emptyChoices = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).filter {
-            it.operation.isEmpty() && it.isRemovable()
-        }
-
-        if (emptyChoices.isEmpty()) {
-            return false
-        }
-
-        for (emptyChoice in emptyChoices) {
-            EcoreUtil2.remove(emptyChoice)
-        }
-
-        return true
-    }
-
-    private fun Operation.removeRedundantChoiceElse(): Boolean {
-        val redundantChoiceElse = EcoreUtil2.getAllContentsOfType(this, ChoiceOperation::class.java).firstOrNull { it ->
+    private fun Operation.removeRedundantChoiceElseBranch(): Boolean {
+        val redundantChoiceElse = eAllContentsOfType<ChoiceOperation>().firstOrNull { it ->
             it.`else` != null && it.operation.all { it.isAlwaysExecutable() }
         }
 
@@ -256,16 +267,73 @@ object OperationOptimizer {
         return true
     }
 
+    private fun Operation.removeEmptySequences(): Boolean {
+        val emptySequence = eAllContentsOfType<SequenceOperation>().firstOrNull {
+            it.operation.isEmpty() && it.isRemovable()
+        }
+
+        if (emptySequence == null) {
+            return false
+        }
+
+        EcoreUtil2.remove(emptySequence)
+
+        return true
+    }
+
+    private fun Operation.removeEmptyChoices(): Boolean {
+        val emptyChoice = eAllContentsOfType<ChoiceOperation>().firstOrNull {
+            it.operation.isEmpty() && it.`else` == null && it.isRemovable()
+        }
+
+        if (emptyChoice == null) {
+            return false
+        }
+
+        EcoreUtil2.remove(emptyChoice)
+
+        return true
+    }
+
+    private fun Operation.removeEmptyIfs(): Boolean {
+        val emptyIf = eAllContentsOfType<IfOperation>().firstOrNull {
+            it.body == null && it.`else` == null && it.isRemovable()
+        }
+
+        if (emptyIf == null) {
+            return false
+        }
+
+        EcoreUtil2.remove(emptyIf)
+
+        return true
+    }
+
+    // Upper-approximation of if this operation is never not executable.
+    // False does NOT mean this operation is never executable!
     private fun Operation.isAlwaysExecutable(): Boolean {
         return when (this) {
-            is AssumptionOperation -> false
+            is AssumptionOperation -> isConstantTrueOperation
             is AssignmentOperation -> true
             is HavocOperation -> true
-            is IfOperation -> body.isAlwaysExecutable() || (`else`?.isAlwaysExecutable() ?: false)
-            is ChoiceOperation -> {
-                (operation.map { it.isAlwaysExecutable() }.reduceOrNull { l, r -> l || r } ?: true) || (`else`?.isAlwaysExecutable() ?: false)
+            is IfOperation -> {
+                if (guard.isConstantFalse) {
+                    true
+                } else if (`else` == null) {
+                    body.isAlwaysExecutable()
+                } else {
+                    body.isAlwaysExecutable() && `else`.isAlwaysExecutable()
+                }
             }
-            is SequenceOperation -> operation.map { it.isAlwaysExecutable() }.reduceOrNull { l, r -> l && r } ?: true
+            is ChoiceOperation -> {
+                if (operation.isEmpty()) {
+                    `else` == null || `else`.isAlwaysExecutable()
+                } else {
+                    operation.any { it.isAlwaysExecutable() } ||
+                    `else`?.isAlwaysExecutable() == true
+                }
+            }
+            is SequenceOperation -> operation.all { it.isAlwaysExecutable() }
             else -> error("Unknown operation $this")
         }
     }
@@ -285,11 +353,41 @@ object OperationOptimizer {
         }
     }
 
+    private fun Transition.fixWellFormednessProblems() {
+        for (operation in operation) {
+            // transition operations must be wrapped in sequences
+            operation.ensureWrapped()
+
+            // choice branch-else must be wrapped in sequences
+            operation.eAllContentsOfType<ChoiceOperation>().forEach {
+                it.ensureBranchesWrapped()
+            }
+
+            // if body-else must be wrapped in sequences
+            operation.eAllContentsOfType<IfOperation>().forEach {
+                it.ensureBranchesWrapped()
+            }
+        }
+    }
+
+    private fun ChoiceOperation.ensureBranchesWrapped() {
+        for (branch in operation) {
+            branch.ensureWrapped()
+        }
+        `else`?.ensureWrapped()
+    }
+
+    private fun IfOperation.ensureBranchesWrapped() {
+        body.ensureWrapped()
+        `else`?.ensureWrapped()
+    }
+
+    private fun Operation.ensureWrapped() {
+        if (this is SequenceOperation) return
+
+        val wrapper = OxstsFactory.createSequenceOperation()
+        EcoreUtil2.replace(this, wrapper)
+        wrapper.operation += this
+    }
+
 }
-
-@Suppress("SimplifyBooleanWithConstants")
-private val AssumptionOperation.isFalseOperation
-    get() = expression is LiteralBoolean && (expression as LiteralBoolean).isValue == false
-
-private val AssumptionOperation.isTrueOperation
-    get() = expression is LiteralBoolean && (expression as LiteralBoolean).isValue

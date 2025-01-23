@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -17,9 +17,13 @@ import hu.bme.mit.semantifyr.cex.lang.cex.State
 import hu.bme.mit.semantifyr.cex.lang.cex.XstsState
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Target
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 import hu.bme.mit.semantifyr.oxsts.semantifyr.reader.OxstsReader
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.optimization.OperationOptimizer.optimize
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.MultiMap
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.Namings
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.NothingInstance
@@ -30,7 +34,6 @@ import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.findInitTransition
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.findMainTransition
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.fullyQualifiedName
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.resolvePath
-import java.io.File
 
 fun ExplVariableValue.toExpression(target: Target): Expression {
     return when (this) {
@@ -60,6 +63,10 @@ class OxstsVariableState(
 }
 fun ExplVariableState.toOxstsVariableState(target: Target) = OxstsVariableState(this, target)
 
+fun OxstsVariableState.toAssumption(): AssumptionOperation {
+    return OxstsFactory.createEqualityAssumption(reference.copy(), value.copy())
+}
+
 class OxstsWitnessState(
     state: ExplState,
     target: Target
@@ -75,11 +82,6 @@ class OxstsWitnessState(
 }
 fun ExplState.toOxstsWitnessState(target: Target) = OxstsWitnessState(this, target)
 
-
-fun OxstsVariableState.toAssumption(): AssumptionOperation {
-    return OxstsFactory.createEqualityAssumption(reference.copy(), value.copy())
-}
-
 fun OxstsWitnessState.toAssumptionOperations(): List<AssumptionOperation> {
     return variableStates.map {
         it.toAssumption()
@@ -94,7 +96,7 @@ class Witness(
     target: Target
 ) {
 
-    val stateMap = mutableMapOf<State, OxstsWitnessState>()
+    private val stateMap = mutableMapOf<State, OxstsWitnessState>()
 
 //    val initialState = cex.states.single {
 //        it.isPreInit
@@ -104,17 +106,20 @@ class Witness(
         it.isTran
     }?.state?.transform(target)
 
-    val transitionStates = cex.states.filter { // first state is the init transition
+    val transitionStates = cex.states.filter {
         it.isTran
-    }.drop(1).map {
+    }.drop(1).map { // first state is the init transition
         it.state.transform(target)
     }
 
-    val edgeMap = MultiMap<State, State>().also {
+    private val edgeMap = MultiMap<State, State>().also {
         for (edge in cex.edges) {
             it.put(edge.from.state, edge.to.state)
         }
     }
+
+    val isSingleTrace = cex.edges.isEmpty()
+    val isSummary = !isSingleTrace
 
     val transitions = MultiMap<OxstsWitnessState, OxstsWitnessState>().also {
         val tranEdges = cex.edges.filter {
@@ -122,11 +127,16 @@ class Witness(
         }
 
         if (tranEdges.isEmpty()) {
-            for (index in 1..< transitionStates.size) {
-                val sourceState = transitionStates[index - 1]
-                val targetState = transitionStates[index]
+            if (transitionStates.any()) {
+                if (initializedState != null) {
+                    it.put(initializedState, transitionStates.first())
+                }
+                for (index in 1..<transitionStates.size) {
+                    val sourceState = transitionStates[index - 1]
+                    val targetState = transitionStates[index]
 
-                it.put(sourceState, targetState)
+                    it.put(sourceState, targetState)
+                }
             }
         } else {
             for (edge in tranEdges) {
@@ -144,7 +154,7 @@ class Witness(
     fun State.transform(target: Target) = stateMap.getOrPut(this) {
         when (this) {
             is ExplState -> toOxstsWitnessState(target)
-            else -> error("")
+            else -> error("Unknown State $this")
         }
     }
 
@@ -152,8 +162,9 @@ class Witness(
 
 fun Cex.toWitness(target: Target) = Witness(this, target)
 
-class WitnessMapping(
-    val target: Target
+class OxstsWitness(
+    private val target: Target,
+    cex: Cex
 ) {
 
     val witnessPackage by lazy {
@@ -162,7 +173,7 @@ class WitnessMapping(
         }
     }
 
-    val witnessType by lazy {
+    private val witnessType by lazy {
         OxstsFactory.createTarget().also {
             witnessPackage.types += it
 
@@ -171,76 +182,75 @@ class WitnessMapping(
         }
     }
 
-    val stateVariable by lazy {
+    private val stateVariable by lazy {
         OxstsFactory.createVariable().also {
             witnessType.variables += it
 
             it.name = "state"
             it.typing = OxstsFactory.createIntegerType()
-            it.expression = OxstsFactory.createLiteralInteger(-1)
         }
     }
 
-    fun transform(cex: Cex) {
+    init {
         val witness = cex.toWitness(target)
 
         witnessType.initTransition += OxstsFactory.createSequentialTransition {
-            operation += stateVariableAssumption(-1)
-
-            operation += OxstsFactory.createInlineCall(OxstsFactory.createChainReferenceExpression(target.findInitTransition()), isStatic = true)
-
             if (witness.initializedState != null) {
-                operation += witness.initializedState.toAssumptionOperations()
+                operation += witness.createTransitionOperation(witness.initializedState, target.findInitTransition())
             }
+        }.optimize()
 
-            if (witness.transitionStates.any()) {
-                operation += stateVariableAssignment(witness.transitionStates.first().id)
-            }
-        }
-
-//        witnessType.mainTransition += OxstsFactory.createSequentialTransition {
-//            for (transitionState in witness.transitionStates) {
-//                operation += OxstsFactory.createInlineCall(OxstsFactory.createChainReferenceExpression(target.findMainTransition()), isStatic = true)
-//
-//                operation += transitionState.toAssumptionOperations()
-//            }
-//        }
-
-        witnessType.mainTransition += OxstsFactory.createSequentialTransition {
-            if (witness.transitionStates.any()) {
-                operation += OxstsFactory.createChoiceOperation().also {
-                    for (transitionState in witness.transitionStates) {
-                        it.operation += OxstsFactory.createSequenceOperation().also {
-                            it.operation += stateVariableAssumption(transitionState.id)
-
-                            it.operation += OxstsFactory.createInlineCall(OxstsFactory.createChainReferenceExpression(target.findMainTransition()), isStatic = true)
-
-                            it.operation += transitionState.toAssumptionOperations()
-
-                            if (!witness.transitions[transitionState].isEmpty()) {
-                                it.operation += OxstsFactory.createChoiceOperation().also {
-                                    for (nextState in witness.transitions[transitionState]) {
-                                        it.operation += OxstsFactory.createSequenceOperation().also {
-                                            it.operation += stateVariableAssignment(nextState.id)
-                                        }
-                                    }
-                                }
-                            }
+        if (witness.isSingleTrace) {
+            witnessType.mainTransition += OxstsFactory.createSequentialTransition {
+                for (transitionState in witness.transitionStates) {
+                    operation += witness.createTransitionOperation(transitionState, target.findMainTransition())
+                }
+            }.optimize()
+        } else {
+            witnessType.mainTransition += OxstsFactory.createSequentialTransition {
+                if (witness.transitionStates.any()) {
+                    operation += OxstsFactory.createChoiceOperation().also {
+                        for (transitionState in witness.transitionStates) {
+                            it.operation += witness.createTransitionOperation(transitionState, target.findMainTransition())
                         }
                     }
+                }
+            }.optimize()
+        }
+    }
+
+    private fun Witness.createTransitionOperation(transitionState: OxstsWitnessState, transition: Transition): SequenceOperation {
+        return OxstsFactory.createSequenceOperation().also {
+            it.operation += stateVariableAssumption(transitionState.id)
+
+            it.operation += OxstsFactory.createInlineCall(OxstsFactory.createChainReferenceExpression(transition), isStatic = true)
+
+            it.operation += transitionState.toAssumptionOperations()
+
+            if (transitions[transitionState].any()) {
+                it.operation += createStateTransitionChoiceOperation(transitionState)
+            }
+        }
+    }
+
+    private fun Witness.createStateTransitionChoiceOperation(transitionState: OxstsWitnessState): ChoiceOperation {
+        return OxstsFactory.createChoiceOperation().also {
+            for (nextState in transitions[transitionState]) {
+                it.operation += OxstsFactory.createSequenceOperation().also {
+                    it.operation += stateVariableAssignment(nextState.id)
                 }
             }
         }
     }
 
-    fun stateVariableAssumption(value: Int): AssumptionOperation {
+    private fun stateVariableAssumption(value: Int): AssumptionOperation {
         return OxstsFactory.createEqualityAssumption(
             referenceExpression = OxstsFactory.createChainReferenceExpression(stateVariable),
             expression = OxstsFactory.createLiteralInteger(value)
         )
     }
 
-    fun stateVariableAssignment(value: Int): AssignmentOperation {
+    private fun stateVariableAssignment(value: Int): AssignmentOperation {
         return OxstsFactory.createAssignmentOperation(
             referenceExpression = OxstsFactory.createChainReferenceExpression(stateVariable),
             expression = OxstsFactory.createLiteralInteger(value)
@@ -258,21 +268,9 @@ class WitnessCreator(
             it.name == targetName
         }
 
-        val mapping = WitnessMapping(target)
+        val oxstsWitness = OxstsWitness(target, cex)
 
-        mapping.transform(cex)
-
-        return mapping.witnessPackage
+        return oxstsWitness.witnessPackage
     }
-
-}
-
-
-fun main() {
-    prepareCex()
-    val reader = CexReader()
-    val cex = reader.readCexFile(File("C:\\Users\\Armin\\work\\ftsrg\\semantifyr\\subprojects\\semantifyr\\TestModels\\Automated\\Gamma\\Spacecraft\\artifacts\\Spacecraft_batteryCharge_100_Unsafe\\Spacecraft_batteryCharge_100_Unsafe0.cex"))
-
-
 
 }

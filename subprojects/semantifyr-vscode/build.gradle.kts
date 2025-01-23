@@ -12,6 +12,10 @@ plugins {
     alias(libs.plugins.gradle.node)
 }
 
+node {
+    download = true
+}
+
 val distributionClasspath by configurations.creating {
     isCanBeConsumed = false
     isCanBeResolved = true
@@ -36,6 +40,7 @@ val cloneDistribution by tasks.registering(Sync::class) {
 tasks {
     val compile by registering(NpmTask::class) {
         inputs.dir(project.layout.projectDirectory.dir("src"))
+        inputs.file(project.layout.projectDirectory.file("esbuild.js"))
         inputs.files(npmInstall.get().outputs)
 
         npmCommand.set(
@@ -51,7 +56,7 @@ tasks {
     val packageExtension by registering(Exec::class) {
         inputs.files(cloneDistribution.get().outputs)
         inputs.files(compile.get().outputs)
-        inputs.dir("node_modules")
+        inputs.files(npmInstall.get().outputs)
 
         outputs.dir(project.layout.buildDirectory.dir("vscode"))
 
@@ -73,6 +78,8 @@ tasks {
     }
 
     assemble {
+        inputs.files(cloneDistribution.get().outputs)
+        inputs.files(compile.get().outputs)
         inputs.files(packageExtension.get().outputs)
     }
 
