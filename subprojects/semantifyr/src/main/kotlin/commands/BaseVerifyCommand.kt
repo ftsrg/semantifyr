@@ -32,12 +32,12 @@ abstract class BaseVerifyCommand(name: String) : CliktCommand(name) {
         ),
     )
 
-    fun runVerification(xstsPath: String, thetaStartPath: String? = null): ThetaRuntimeDetails {
+    fun runVerification(xstsPath: String, thetaStartPath: String = ""): ThetaRuntimeDetails {
         val xstsFile = File(xstsPath)
 
         val workingDirectory = xstsFile.parentFile.absolutePath
         val fileName = xstsFile.nameWithoutExtension
-        val thetaExecutor : ThetaExecutor = if(thetaStartPath!=null) {
+        val thetaExecutor : ThetaExecutor = if(thetaStartPath!="") {
             // using a local release (Theta-xsts.zip)
             logger.info("Executing local Theta from JAR ($thetaStartPath) on $xstsPath")
             ThetaShellExecutor(
