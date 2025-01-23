@@ -35,6 +35,7 @@ val cloneDistribution by tasks.registering(Sync::class) {
 
 tasks {
     val compile by registering(NpmTask::class) {
+        inputs.dir(project.layout.projectDirectory.dir("src"))
         inputs.files(npmInstall.get().outputs)
 
         npmCommand.set(

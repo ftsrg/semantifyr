@@ -59,12 +59,16 @@ class ThetaRuntimeDetails(
     }
 }
 
-class ThetaExecutor(
+abstract class ThetaExecutor {
+    abstract fun run(workingDirectory: String, name: String) : ThetaRuntimeDetails
+}
+
+class ThetaDockerExecutor(
     private val version: String,
     private val parameters: List<String>,
     private val timeout: Long = 3,
     private val timeUnit: TimeUnit = TimeUnit.MINUTES
-) {
+) : ThetaExecutor() {
 
     private val logger by loggerFactory()
 
@@ -181,6 +185,7 @@ class ThetaExecutor(
         }
     }
 
+    override
     fun run(workingDirectory: String, name: String) = runBlocking {
         val absoluteDirectory = Path.of(workingDirectory).absolute().toString()
 
@@ -194,7 +199,7 @@ class ThetaShellExecutor(
     private val parameters: List<String>,
     private val timeout: Long = 3,
     private val timeUnit: TimeUnit = TimeUnit.MINUTES
-) {
+) : ThetaExecutor() {
 
     private val logger by loggerFactory()
     private val mutex = Mutex()
@@ -290,6 +295,7 @@ class ThetaShellExecutor(
         }
     }
 
+    override
     fun run(workingDirectory: String, name: String) = runBlocking {
         val absoluteDirectory = Path.of(workingDirectory).absolute().toString()
 

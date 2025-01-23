@@ -8,8 +8,10 @@ import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.long
+import hu.bme.mit.semantifyr.oxsts.semantifyr.theta.ThetaDockerExecutor
 import hu.bme.mit.semantifyr.oxsts.semantifyr.theta.ThetaExecutor
 import hu.bme.mit.semantifyr.oxsts.semantifyr.theta.ThetaRuntimeDetails
+import hu.bme.mit.semantifyr.oxsts.semantifyr.theta.ThetaShellExecutor
 import org.slf4j.Logger
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -30,23 +32,32 @@ abstract class BaseVerifyCommand(name: String) : CliktCommand(name) {
         ),
     )
 
-    fun runVerification(xstsPath: String): ThetaRuntimeDetails {
+    fun runVerification(xstsPath: String, thetaStartPath: String? = null): ThetaRuntimeDetails {
         val xstsFile = File(xstsPath)
-
-        logger.info("Executing Theta (v$thetaVersion) on $xstsPath")
-
-        val thetaExecutor = ThetaExecutor(
-            thetaVersion,
-            thetaConfiguration,
-            timeout,
-            TimeUnit.MINUTES
-        )
 
         val workingDirectory = xstsFile.parentFile.absolutePath
         val fileName = xstsFile.nameWithoutExtension
+        val thetaExecutor : ThetaExecutor = if(thetaStartPath!=null) {
+            // using a local release (Theta-xsts.zip)
+            logger.info("Executing local Theta from JAR ($thetaStartPath) on $xstsPath")
+            ThetaShellExecutor(
+                thetaStartPath,
+                thetaConfiguration,
+                timeout,
+                TimeUnit.MINUTES
+            )
+        } else {
+            // using docker
+            logger.info("Executing Theta (v$thetaVersion) on $xstsPath")
+            ThetaDockerExecutor(
+                thetaVersion,
+                thetaConfiguration,
+                timeout,
+                TimeUnit.MINUTES
+            )
+        }
 
         val runtimeDetails = thetaExecutor.run(workingDirectory, fileName)
-
         logger.info("Verification result: isUnsafe = ${runtimeDetails.isUnsafe}")
 
         return runtimeDetails
