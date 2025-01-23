@@ -44,7 +44,7 @@ class GammaVerificationTests : VerificationTest() {
         @JvmStatic
         fun prepare() {
             prepareOxsts()
-            thetaExecutor.initTheta()
+            thetaDockerExecutor.initTheta()
         }
     }
 
