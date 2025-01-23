@@ -4,6 +4,8 @@
   SPDX-License-Identifier: EPL-2.0
 -->
 
+[![Continuous Integration](https://github.com/ftsrg/semantifyr/actions/workflows/build.yml/badge.svg)](https://github.com/ftsrg/semantifyr/actions/workflows/build.yml)
+
 # Semantifyr
 
 A framework to support the declarative definition of engineering model semantics.
