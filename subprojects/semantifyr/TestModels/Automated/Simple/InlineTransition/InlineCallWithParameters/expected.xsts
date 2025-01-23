@@ -5,10 +5,10 @@
  */
 
 
-var __Mission__holder__x : integer
+var $Mission$holder$x : integer
 
 trans {
-    __Mission__holder__x := 10;
+    $Mission$holder$x := 10;
 }
 
 init {

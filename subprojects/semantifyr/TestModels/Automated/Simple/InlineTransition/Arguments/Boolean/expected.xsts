@@ -5,18 +5,18 @@
  */
 
 
-var __Mission__a__x : boolean
+var $Mission$a$x : boolean
 
 trans {
-    __Mission__a__x := true;
+    $Mission$a$x := true;
 }
 
 init {
-    __Mission__a__x := false;
+    $Mission$a$x := false;
 }
 
 env {}
 
 prop {
-    (__Mission__a__x != true)
+    ($Mission$a$x != true)
 }

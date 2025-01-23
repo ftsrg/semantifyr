@@ -5,10 +5,10 @@
  */
 
 
-var __Mission__x : integer = 1
+var $Mission$x : integer = 1
 
 trans {
-    __Mission__x := 0;
+    $Mission$x := 0;
 }
 
 init {

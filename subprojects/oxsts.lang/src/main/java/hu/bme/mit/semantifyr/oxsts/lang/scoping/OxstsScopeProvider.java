@@ -19,6 +19,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsUtils.getAccessibleElements;
+import static hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsUtils.getReferredElement;
+
 /**
  * This class contains custom scoping description.
  * <p>
@@ -114,100 +117,6 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
         var accessibleElements = getAccessibleElements(element).stream().filter(referenceClass::isInstance).toList();
 
         return Scopes.scopeFor(accessibleElements, QualifiedName.wrapper(this::customNameProvider), super.getScope(element, reference));
-    }
-
-    protected List<Element> getAccessibleElements(EObject element) {
-        if (element == null) {
-            return Collections.emptyList();
-        }
-
-        var parent = element.eContainer();
-        var elements = new ArrayList<Element>();
-
-        if (element instanceof Package _package) {
-            elements.addAll(getLocalScope(_package));
-            elements.addAll(_package.getImports().stream().flatMap(it ->
-                    getLocalScope(it.getPackage()).stream()
-            ).toList());
-        } else if (element instanceof Type type) {
-            elements.addAll(getInheritedElements(type));
-        } else if (element instanceof Feature feature) {
-            elements.addAll(getInheritedElements(feature.getTyping()));
-        } else if (element instanceof Parameter parameter) {
-            elements.addAll(getInheritedElements(parameter.getType()));
-        } else if (element instanceof Argument argument) {
-            elements.addAll(getInheritedElements(argument.getTyping()));
-        }
-
-        elements.addAll(getAccessibleElements(parent));
-
-        return elements;
-    }
-
-    protected List<Element> getLocalScope(Package _package) {
-        var elements = new ArrayList<Element>();
-        elements.addAll(_package.getTypes().stream().map(it -> (Element) it).toList());
-        elements.addAll(_package.getEnums().stream().map(it -> (Element) it).toList());
-        elements.addAll(_package.getPatterns().stream().map(it -> (Element) it).toList());
-        return elements;
-    }
-
-    protected List<Element> getInheritedElements(Typing typing) {
-        var elements = new ArrayList<Element>();
-
-        if (typing == null) {
-            return elements;
-        }
-
-        if (typing instanceof ReferenceTyping referenceTyping) {
-            var chain = referenceTyping.getReference();
-            var lastExpression = chain.getChains().get(chain.getChains().size() - 1);
-            var referencedElement = getReferredElement(lastExpression);
-            if (referencedElement instanceof Type type) {
-                elements.addAll(getInheritedElements(type));
-            }
-        }
-
-        return elements;
-    }
-
-    protected List<Element> getInheritedElements(Type type) {
-        if (type == null) {
-            return List.of();
-        }
-
-        var supertype = type.getSupertype();
-        var elements = new ArrayList<Element>();
-
-        elements.addAll(type.getFeatures());
-        elements.addAll(type.getVariables());
-        elements.addAll(type.getProperties());
-        elements.addAll(type.getTransitions());
-        elements.addAll(type.getInitTransition());
-        elements.addAll(type.getHavocTransition());
-        elements.addAll(type.getMainTransition());
-
-        elements.addAll(getInheritedElements(supertype));
-
-        return elements;
-    }
-
-    protected Element getReferredElement(ReferenceExpression expression) {
-        if (expression instanceof DeclarationReferenceExpression declarationReference) {
-            return declarationReference.getElement();
-        } else if (expression instanceof ChainReferenceExpression chainReference) {
-            return getReferredElement(chainReference.getChains().get(chainReference.getChains().size() - 1));
-        } else {
-            return null;
-        }
-    }
-
-    protected Element getReferredElement(ChainingExpression expression) {
-        if (expression instanceof DeclarationReferenceExpression declarationReferenceExpression) {
-            return declarationReferenceExpression.getElement();
-        }
-
-        throw new IllegalStateException("");
     }
 
 }

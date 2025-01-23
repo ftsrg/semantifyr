@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.oxsts.semantifyr.utils
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AndOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Association
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
@@ -24,15 +25,21 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NotOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OrOperator
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceTyping
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.impl.OxstsFactoryImpl
-import org.eclipse.emf.ecore.EObject
 
 object OxstsFactory : OxstsFactoryImpl() {
     fun createEmptyOperation(): Operation {
         return createAssumptionOperation(createLiteralBoolean(true))
+    }
+
+    inline fun createSequentialTransition(creator: SequenceOperation.() -> Unit): Transition {
+        return createTransition().also {
+            it.operation += createSequenceOperation().also(creator)
+        }
     }
 
     fun createEnumLiteral(name: String): EnumLiteral {
@@ -93,9 +100,10 @@ object OxstsFactory : OxstsFactoryImpl() {
         }
     }
 
-    fun createInlineCall(referenceExpression: ReferenceExpression): InlineCall {
+    fun createInlineCall(referenceExpression: ReferenceExpression, isStatic: Boolean = false): InlineCall {
         return createInlineCall().also {
             it.reference = referenceExpression
+            it.isStatic = isStatic
         }
     }
 
@@ -137,10 +145,20 @@ object OxstsFactory : OxstsFactoryImpl() {
         }
     }
 
+    fun createEqualityAssumption(referenceExpression: ReferenceExpression, expression: Expression): AssumptionOperation {
+        return createAssumptionOperation(
+            createEqualityOperator().also {
+                it.operands += referenceExpression
+                it.operands += expression
+            }
+        )
+    }
+
+    fun createAssignmentOperation(referenceExpression: ReferenceExpression, expression: Expression): AssignmentOperation {
+        return createAssignmentOperation().also {
+            it.reference = referenceExpression
+            it.expression = expression
+        }
+    }
+
 }
-
-val Element._package
-    get() = if (this is Package) this else eContainer()._package
-
-val EObject._package: Package
-    get() = if (this is Package) this else eContainer()._package

@@ -5,28 +5,28 @@
  */
 
 
-var __Mission__y : boolean
-var __Mission__x : integer
+var $Mission$y : boolean
+var $Mission$x : integer
 
 trans {
     choice {
-        assume ((__Mission__x == 10));
-        __Mission__y := true;
+        assume (($Mission$x == 10));
+        $Mission$y := true;
     } or {
-        assume ((__Mission__x == 10));
-        __Mission__x := 10;
+        assume (($Mission$x == 10));
+        $Mission$x := 10;
     } or {
-        assume (! (((__Mission__x == 10) || (__Mission__x == 10))));
-        __Mission__x := 0;
+        assume (! ((($Mission$x == 10) || ($Mission$x == 10))));
+        $Mission$x := 0;
     }
 }
 
 init {
-    __Mission__y := false;
+    $Mission$y := false;
 }
 
 env {}
 
 prop {
-    (__Mission__y == false)
+    ($Mission$y == false)
 }

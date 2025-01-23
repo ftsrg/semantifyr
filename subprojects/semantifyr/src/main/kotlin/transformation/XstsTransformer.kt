@@ -30,7 +30,7 @@ import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.findMainTransition
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.findProperty
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.operationInliner
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElement
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElementOrNull
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.type
 import org.eclipse.xtext.EcoreUtil2
 import java.util.*
@@ -59,8 +59,8 @@ class XstsTransformer(
 
         logger.info("Transforming transitions")
 
-        val init = rootInstance.contextualEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createDeclarationReferenceExpression(rootInstance.type.findInitTransition())))
-        val tran = rootInstance.contextualEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(OxstsFactory.createDeclarationReferenceExpression(rootInstance.type.findMainTransition())))
+        val init = rootInstance.contextualEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(rootInstance.type.findInitTransition()))
+        val tran = rootInstance.contextualEvaluator.evaluateTransition(OxstsFactory.createChainReferenceExpression(rootInstance.type.findMainTransition()))
         val property = target.findProperty()
 
         xsts.init = init.copy() // FIXME: consider non-existent tran as empty tran
@@ -77,25 +77,33 @@ class XstsTransformer(
         xsts.enums += xsts.variables.asSequence().map {
             it.typing
         }.filterIsInstance<ReferenceTyping>().map {
-            it.referencedElement
+            it.referencedElementOrNull()
         }.filterIsInstance<Enum>().toSet()
 
         logger.info("Optimizing XSTS model")
 
-        xsts.init.optimize()
-        xsts.transition.optimize()
-        xsts.property.invariant.optimize()
+        xsts.optimize()
 
         if (rewriteChoice) {
             logger.info("Rewriting choice-else operations")
 
             xsts.init.rewriteChoiceElse()
             xsts.transition.rewriteChoiceElse()
+
+            logger.info("Optimizing XSTS model")
+
+            xsts.optimize()
         }
 
         logger.info("Transformation done!")
 
         return xsts
+    }
+
+    private fun XSTS.optimize() {
+        init.optimize()
+        transition.optimize()
+        property.invariant.optimize()
     }
 
     private fun Transition.inlineOperations(rootInstance: Instance) {

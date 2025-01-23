@@ -41,18 +41,11 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Typing
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.XSTS
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElement
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElementOrNull
 
-object Serializer {
-    fun serializeProperty(xsts: XSTS): String {
-        val text = indent {
-            append(xsts.property)
-        }
+object XstsSerializer {
 
-        return text
-    }
-
-    fun serialize(xsts: XSTS, includeProperty: Boolean = true): String {
+    fun serialize(xsts: XSTS): String {
         val text = indent {
             for (type in xsts.enums) {
                 append(type)
@@ -76,11 +69,9 @@ object Serializer {
 
             appendLine("env {}")
 
-            if (includeProperty) {
-                appendLine()
+            appendLine()
 
-                append(xsts.property)
-            }
+            append(xsts.property)
         }
 
         return text
@@ -188,8 +179,8 @@ object Serializer {
             is IntegerType -> "integer"
             is BooleanType -> "boolean"
             is ReferenceTyping -> {
-                when (referencedElement) {
-                    is Enum -> (referencedElement as Enum).name
+                when (referencedElementOrNull()) {
+                    is Enum -> (referencedElementOrNull() as Enum).name
                     else -> "UNKNOWN_TYPE$$$"
                 }
             }

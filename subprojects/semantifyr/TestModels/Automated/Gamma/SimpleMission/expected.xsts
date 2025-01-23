@@ -4,65 +4,65 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-type __Mission__system__leader__Main__states__type : {
-    __Mission__system__leader__Main__Idle__literal,
-    __Mission__system__leader__Main__Operational__literal,
-    __Nothing__literal
+type $Mission$system$leader$Main$states$$type : {
+    $Mission$system$leader$Main$Idle$$literal,
+    $Mission$system$leader$Main$Operational$$literal,
+    $Nothing$$literal
 }
-type __Mission__system__worker__Main__states__type : {
-    __Mission__system__worker__Main__Idle__literal,
-    __Mission__system__worker__Main__Operational__literal,
-    __Nothing__literal
+type $Mission$system$worker$Main$states$$type : {
+    $Mission$system$worker$Main$Idle$$literal,
+    $Mission$system$worker$Main$Operational$$literal,
+    $Nothing$$literal
 }
 
-ctrl var __Mission__system__leader__fireEvent__isActive : boolean = false
-ctrl var __Mission__system__leader__stopEvent__isActive : boolean = false
-ctrl var __Mission__system__leader__startEvent__isActive : boolean = false
-ctrl var __Mission__system__leader__Main__activeState : __Mission__system__leader__Main__states__type = __Nothing__literal
-ctrl var __Mission__system__worker__startEvent__isActive : boolean = false
-ctrl var __Mission__system__worker__Main__activeState : __Mission__system__worker__Main__states__type = __Nothing__literal
+ctrl var $Mission$system$leader$fireEvent$isActive : boolean = false
+ctrl var $Mission$system$leader$stopEvent$isActive : boolean = false
+ctrl var $Mission$system$leader$startEvent$isActive : boolean = false
+ctrl var $Mission$system$leader$Main$activeState : $Mission$system$leader$Main$states$$type = $Nothing$$literal
+ctrl var $Mission$system$worker$startEvent$isActive : boolean = false
+ctrl var $Mission$system$worker$Main$activeState : $Mission$system$worker$Main$states$$type = $Nothing$$literal
 
 trans {
-    havoc __Mission__system__leader__fireEvent__isActive;
-    havoc __Mission__system__leader__stopEvent__isActive;
-    __Mission__system__leader__startEvent__isActive := false;
+    havoc $Mission$system$leader$fireEvent$isActive;
+    havoc $Mission$system$leader$stopEvent$isActive;
+    $Mission$system$leader$startEvent$isActive := false;
     choice {
-        assume (__Mission__system__leader__fireEvent__isActive);
-        assume ((__Mission__system__leader__Main__activeState == __Mission__system__leader__Main__Idle__literal));
-        __Mission__system__leader__Main__activeState := __Nothing__literal;
-        __Mission__system__leader__startEvent__isActive := true;
-        __Mission__system__leader__Main__activeState := __Mission__system__leader__Main__Operational__literal;
+        assume ($Mission$system$leader$fireEvent$isActive);
+        assume (($Mission$system$leader$Main$activeState == $Mission$system$leader$Main$Idle$$literal));
+        $Mission$system$leader$Main$activeState := $Nothing$$literal;
+        $Mission$system$leader$startEvent$isActive := true;
+        $Mission$system$leader$Main$activeState := $Mission$system$leader$Main$Operational$$literal;
     } or {
-        assume (__Mission__system__leader__stopEvent__isActive);
-        assume ((__Mission__system__leader__Main__activeState == __Mission__system__leader__Main__Operational__literal));
-        __Mission__system__leader__Main__activeState := __Nothing__literal;
-        __Mission__system__leader__Main__activeState := __Mission__system__leader__Main__Idle__literal;
+        assume ($Mission$system$leader$stopEvent$isActive);
+        assume (($Mission$system$leader$Main$activeState == $Mission$system$leader$Main$Operational$$literal));
+        $Mission$system$leader$Main$activeState := $Nothing$$literal;
+        $Mission$system$leader$Main$activeState := $Mission$system$leader$Main$Idle$$literal;
     } or {
-        assume (! (((__Mission__system__leader__fireEvent__isActive && (__Mission__system__leader__Main__activeState == __Mission__system__leader__Main__Idle__literal)) || (__Mission__system__leader__stopEvent__isActive && (__Mission__system__leader__Main__activeState == __Mission__system__leader__Main__Operational__literal)))));
+        assume (! ((($Mission$system$leader$fireEvent$isActive && ($Mission$system$leader$Main$activeState == $Mission$system$leader$Main$Idle$$literal)) || ($Mission$system$leader$stopEvent$isActive && ($Mission$system$leader$Main$activeState == $Mission$system$leader$Main$Operational$$literal)))));
     }
-    __Mission__system__leader__fireEvent__isActive := false;
-    __Mission__system__leader__stopEvent__isActive := false;
+    $Mission$system$leader$fireEvent$isActive := false;
+    $Mission$system$leader$stopEvent$isActive := false;
     choice {
-        assume (__Mission__system__worker__startEvent__isActive);
-        assume ((__Mission__system__worker__Main__activeState == __Mission__system__worker__Main__Idle__literal));
-        __Mission__system__worker__Main__activeState := __Nothing__literal;
-        __Mission__system__worker__Main__activeState := __Mission__system__worker__Main__Operational__literal;
+        assume ($Mission$system$worker$startEvent$isActive);
+        assume (($Mission$system$worker$Main$activeState == $Mission$system$worker$Main$Idle$$literal));
+        $Mission$system$worker$Main$activeState := $Nothing$$literal;
+        $Mission$system$worker$Main$activeState := $Mission$system$worker$Main$Operational$$literal;
     } or {
-        assume (! ((__Mission__system__worker__startEvent__isActive && (__Mission__system__worker__Main__activeState == __Mission__system__worker__Main__Idle__literal))));
+        assume (! (($Mission$system$worker$startEvent$isActive && ($Mission$system$worker$Main$activeState == $Mission$system$worker$Main$Idle$$literal))));
     }
-    __Mission__system__worker__startEvent__isActive := false;
-    if (__Mission__system__leader__startEvent__isActive) {
-        __Mission__system__worker__startEvent__isActive := true;
+    $Mission$system$worker$startEvent$isActive := false;
+    if ($Mission$system$leader$startEvent$isActive) {
+        $Mission$system$worker$startEvent$isActive := true;
     }
 }
 
 init {
-    __Mission__system__leader__Main__activeState := __Mission__system__leader__Main__Idle__literal;
-    __Mission__system__worker__Main__activeState := __Mission__system__worker__Main__Idle__literal;
+    $Mission$system$leader$Main$activeState := $Mission$system$leader$Main$Idle$$literal;
+    $Mission$system$worker$Main$activeState := $Mission$system$worker$Main$Idle$$literal;
 }
 
 env {}
 
 prop {
-    (__Mission__system__worker__Main__activeState != __Mission__system__worker__Main__Operational__literal)
+    ($Mission$system$worker$Main$activeState != $Mission$system$worker$Main$Operational$$literal)
 }

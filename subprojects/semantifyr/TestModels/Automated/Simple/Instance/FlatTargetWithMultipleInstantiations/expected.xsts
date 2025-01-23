@@ -5,21 +5,21 @@
  */
 
 
-var __Mission__a__x : integer
-var __Mission__b__x : integer
+var $Mission$a$x : integer
+var $Mission$b$x : integer
 
 trans {
-    __Mission__a__x := (__Mission__a__x + 1);
-    __Mission__b__x := (__Mission__b__x - 1);
+    $Mission$a$x := ($Mission$a$x + 1);
+    $Mission$b$x := ($Mission$b$x - 1);
 }
 
 init {
-    __Mission__a__x := 0;
-    __Mission__b__x := 10;
+    $Mission$a$x := 0;
+    $Mission$b$x := 10;
 }
 
 env {}
 
 prop {
-    (__Mission__a__x != __Mission__b__x)
+    ($Mission$a$x != $Mission$b$x)
 }

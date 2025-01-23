@@ -26,9 +26,10 @@ import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.contextualEvaluator
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.createReference
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.dropLast
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.element
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isFeatureTyped
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.lastChain
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElement
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElementOrNull
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.variableTransformer
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
@@ -83,7 +84,7 @@ object ExpressionRewriter {
 
     private fun XSTS.evaluateFeatureReferences(rootInstance: Instance) {
         val references = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).filter {
-            it.lastChain().element is Feature
+            it.lastChain().referencedElementOrNull() is Feature
         }
 
         for (reference in references) {
@@ -101,11 +102,11 @@ object ExpressionRewriter {
 
     private fun XSTS.rewriteFeatureTypedOperatorAccess(rootInstance: Instance) {
         val expressions = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).filter {
-            (it.lastChain().element as? Variable)?.isFeatureTyped == true
+            (it.lastChain().referencedElementOrNull() as? Variable)?.isFeatureTyped == true
         }
 
         for (expression in expressions) {
-            val oldVariable = expression.lastChain().element!! as Variable
+            val oldVariable = expression.lastChain().referencedElement() as Variable
 
             rewriteFeatureTypedOperatorAccess(oldVariable, expression, rootInstance)
         }

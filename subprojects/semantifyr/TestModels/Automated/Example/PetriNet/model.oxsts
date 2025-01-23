@@ -70,13 +70,7 @@ target Mission {
         }
     }
 
-    init {
-        
-    }
-
-    tran asdf {
-
-    }
+    init { }
 
     tran {
         inline petriNet.main()
@@ -89,15 +83,15 @@ target Mission {
 }
 
 target MissionWitness : Mission {
-    ctrl var state : Integer = 0 - 1
+    ctrl var state : Integer = -1
     
     init {
-        assume (state == (0 - 1))
+        assume (state == -1)
 
         assume (petriNet.p1.tokens == 100)
         assume (petriNet.p2.tokens == 0)
 
-        static inline ExamplePetriNet::init()
+        static inline Mission::init()
 
         assume (petriNet.p1.tokens == 100)
         assume (petriNet.p2.tokens == 0)
@@ -111,7 +105,7 @@ target MissionWitness : Mission {
         choice {
             assume (state == 0)
 
-            static inline ExamplePetriNet::main()
+            static inline Mission::main()
 
             assume (petriNet.p1.tokens == 95)
             assume (petriNet.p2.tokens == 5)
@@ -122,7 +116,7 @@ target MissionWitness : Mission {
         } or {
             assume (state == 1)
 
-            static inline ExamplePetriNet::main()
+            static inline Mission::main()
 
             assume (petriNet.p1.tokens == 90)
             assume (petriNet.p2.tokens == 10)
@@ -133,7 +127,7 @@ target MissionWitness : Mission {
         } or {
             assume (state == 2)
 
-            static inline ExamplePetriNet::main()
+            static inline Mission::main()
 
             assume (petriNet.p1.tokens == 85)
             assume (petriNet.p2.tokens == 15)
@@ -144,7 +138,7 @@ target MissionWitness : Mission {
         } or {
             assume (state == 3)
 
-            static inline ExamplePetriNet::main()
+            static inline Mission::main()
 
             assume (petriNet.p1.tokens == 80)
             assume (petriNet.p2.tokens == 20)

@@ -5,14 +5,14 @@
  */
 
 
-var __Mission__composite__a__x : integer
-var __Mission__composite__b__x : integer
+var $Mission$composite$a$x : integer
+var $Mission$composite$b$x : integer
 
 trans {
     choice {
-        __Mission__composite__a__x := (__Mission__composite__a__x + 1);
+        $Mission$composite$a$x := ($Mission$composite$a$x + 1);
     } or {
-        __Mission__composite__b__x := (__Mission__composite__b__x + 1);
+        $Mission$composite$b$x := ($Mission$composite$b$x + 1);
     }
 }
 

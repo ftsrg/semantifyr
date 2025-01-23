@@ -5,10 +5,10 @@
  */
 
 
-var __Mission__x : boolean
+var $Mission$x : boolean
 
 trans {
-    __Mission__x := true;
+    $Mission$x := true;
 }
 
 init {

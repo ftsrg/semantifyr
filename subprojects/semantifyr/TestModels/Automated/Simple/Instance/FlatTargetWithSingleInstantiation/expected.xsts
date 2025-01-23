@@ -5,18 +5,18 @@
  */
 
 
-var __Mission__simple__x : integer
+var $Mission$simple$x : integer
 
 trans {
-    __Mission__simple__x := (__Mission__simple__x + 1);
+    $Mission$simple$x := ($Mission$simple$x + 1);
 }
 
 init {
-    __Mission__simple__x := 0;
+    $Mission$simple$x := 0;
 }
 
 env {}
 
 prop {
-    (__Mission__simple__x != 10)
+    ($Mission$simple$x != 10)
 }

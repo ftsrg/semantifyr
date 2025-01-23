@@ -5,22 +5,22 @@
  */
 
 
-var __Mission__a__x : integer
+var $Mission$a$x : integer
 
 trans {
     choice {
-        __Mission__a__x := (__Mission__a__x + 1);
+        $Mission$a$x := ($Mission$a$x + 1);
     } or {
-        __Mission__a__x := (__Mission__a__x - 1);
+        $Mission$a$x := ($Mission$a$x - 1);
     }
 }
 
 init {
-    __Mission__a__x := 0;
+    $Mission$a$x := 0;
 }
 
 env {}
 
 prop {
-    (__Mission__a__x != 10)
+    ($Mission$a$x != 10)
 }

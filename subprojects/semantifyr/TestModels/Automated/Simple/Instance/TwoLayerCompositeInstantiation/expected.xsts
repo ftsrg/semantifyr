@@ -5,8 +5,8 @@
  */
 
 
-var __Mission__composite__a__x : integer
-var __Mission__composite__b__x : integer
+var $Mission$composite$a$x : integer
+var $Mission$composite$b$x : integer
 
 trans {
     assume (false);
