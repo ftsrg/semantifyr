@@ -70,13 +70,7 @@ target Mission {
         }
     }
 
-    init {
-        
-    }
-
-    tran asdf {
-
-    }
+    init { }
 
     tran {
         inline petriNet.main()
