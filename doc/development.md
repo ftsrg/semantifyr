@@ -1,3 +1,9 @@
+<!--
+  SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+  
+  SPDX-License-Identifier: EPL-2.0
+-->
+
 ## General Workflow
 
 You have the following options on how to use and/or debug Semantifyr:
