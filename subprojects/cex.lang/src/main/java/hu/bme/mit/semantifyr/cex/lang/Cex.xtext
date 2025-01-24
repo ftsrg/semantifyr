@@ -33,6 +33,7 @@ State:
 ;
 
 ExplState:
+    {ExplState}
     "(" "ExplState"
         (variableStates += ExplVariableState)*
     ")"
