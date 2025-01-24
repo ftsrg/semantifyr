@@ -267,8 +267,7 @@ fun Pattern.allReferencedPatterns(): Set<Pattern> {
     while (patternQueue.any()) {
         val referencedPattern = patternQueue.removeFirst()
         if (patterns.add(referencedPattern)) {
-            val patternConstraints = EcoreUtil2.getAllContentsOfType(referencedPattern, PatternConstraint::class.java)
-            patternQueue += patternConstraints.map {
+            patternQueue += referencedPattern.eAllContentsOfType<PatternConstraint>().map {
                 it.pattern
             }
         }

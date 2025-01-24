@@ -74,7 +74,11 @@ object OperationOptimizer {
         val assumptions = eAllContentsOfType<AssumptionOperation>()
         val assignments = eAllContentsOfType<AssignmentOperation>()
 
-        val expressions = ifs.map { it.guard } + assumptions.map { it.expression } + assignments.map { it.expression }
+        val expressions = (
+            ifs.map { it.guard } +
+            assumptions.map { it.expression } +
+            assignments.map { it.expression }
+        ).toList()
 
         for (expression in expressions) {
             optimized = optimized || expression.optimize()
@@ -359,12 +363,12 @@ object OperationOptimizer {
             operation.ensureWrapped()
 
             // choice branch-else must be wrapped in sequences
-            operation.eAllContentsOfType<ChoiceOperation>().forEach {
+            operation.eAllContentsOfType<ChoiceOperation>().toList().forEach {
                 it.ensureBranchesWrapped()
             }
 
             // if body-else must be wrapped in sequences
-            operation.eAllContentsOfType<IfOperation>().forEach {
+            operation.eAllContentsOfType<IfOperation>().toList().forEach {
                 it.ensureBranchesWrapped()
             }
         }

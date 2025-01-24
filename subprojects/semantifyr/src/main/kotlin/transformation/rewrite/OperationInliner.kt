@@ -27,11 +27,11 @@ import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.copy
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.createReference
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.drop
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.dropLast
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.eAllContentsOfType
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isStaticReference
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElement
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElementOrNull
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.typedReferencedElement
-import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
 
 class OperationInliner(
@@ -109,7 +109,7 @@ class OperationInliner(
     }
 
     private fun Operation.rewriteToArguments(arguments: List<Argument>, bindings: List<ArgumentBinding>): Operation {
-        val references = EcoreUtil2.getAllContents<EObject>(this, true).asSequence().filterIsInstance<ChainReferenceExpression>().filter {
+        val references = eAllContents().asSequence().filterIsInstance<ChainReferenceExpression>().filter {
             arguments.contains(it.chains.firstOrNull()?.referencedElementOrNull())
         }.toList()
 
@@ -131,7 +131,7 @@ class OperationInliner(
 
 
     private fun Operation.rewriteToContextSkipArguments(localContext: Instance, arguments: List<Argument>): Operation {
-        val references = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).asSequence().filterNot {
+        val references = eAllContentsOfType<ChainReferenceExpression>().filterNot {
             arguments.contains(it.chains.firstOrNull()?.referencedElementOrNull())
         }.filterNot {
             it.isStaticReference

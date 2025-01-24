@@ -26,6 +26,7 @@ import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.contextualEvaluator
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.createReference
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.dropLast
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.eAllContentsOfType
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isFeatureTyped
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.lastChain
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElement
@@ -37,7 +38,7 @@ import org.eclipse.xtext.EcoreUtil2
 object ExpressionRewriter {
 
     fun <T : EObject> T.rewriteContextDependentReferences(): T {
-        val references = EcoreUtil2.getAllContentsOfType(this, ContextDependentReference::class.java)
+        val references = eAllContentsOfType<ContextDependentReference>().toList()
 
         for (reference in references) {
             when (reference) {
@@ -65,10 +66,10 @@ object ExpressionRewriter {
     }
 
     fun XSTS.rewriteVariableAccesses(rootInstance: Instance) {
-        val referenceExpressions = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).filter {
+        val referenceExpressions = eAllContentsOfType<ChainReferenceExpression>().filter {
             val declaration = it.chains.last() as? DeclarationReferenceExpression
             declaration?.element is Variable
-        }
+        }.toList()
 
         for (referenceExpression in referenceExpressions) {
             val reference = referenceExpression.chains.last() as DeclarationReferenceExpression
@@ -83,9 +84,9 @@ object ExpressionRewriter {
     }
 
     private fun XSTS.evaluateFeatureReferences(rootInstance: Instance) {
-        val references = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).filter {
+        val references = eAllContentsOfType<ChainReferenceExpression>().filter {
             it.lastChain().referencedElementOrNull() is Feature
-        }
+        }.toList()
 
         for (reference in references) {
             val evaluation = rootInstance.contextualEvaluator.evaluate(reference)
@@ -101,9 +102,9 @@ object ExpressionRewriter {
     }
 
     private fun XSTS.rewriteFeatureTypedOperatorAccess(rootInstance: Instance) {
-        val expressions = EcoreUtil2.getAllContentsOfType(this, ChainReferenceExpression::class.java).filter {
+        val expressions = eAllContentsOfType<ChainReferenceExpression>().filter {
             (it.lastChain().referencedElementOrNull() as? Variable)?.isFeatureTyped == true
-        }
+        }.toList()
 
         for (expression in expressions) {
             val oldVariable = expression.lastChain().referencedElement() as Variable
