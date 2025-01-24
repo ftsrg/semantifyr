@@ -53,6 +53,7 @@ dependencies {
     runtimeOnly(libs.viatra.transformation.runtime)
     runtimeOnly(libs.slf4j.log4j)
 
+    testFixturesImplementation(libs.slf4j.api)
     testFixturesApi(project(":oxsts.lang"))
     testFixturesApi(testFixtures(project(":oxsts.lang")))
 }
