@@ -106,7 +106,7 @@ class XstsTransformer(
     private fun XSTS.optimize() {
         init.optimize()
         transition.optimize()
-        property.invariant.optimize()
+        property.optimize()
     }
 
     private fun Transition.inlineOperations(rootInstance: Instance) {

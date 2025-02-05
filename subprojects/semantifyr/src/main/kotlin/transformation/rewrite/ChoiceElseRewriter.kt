@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -16,7 +16,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
-import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.optimization.ExpressionOptimizer.optimize
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.optimization.OperationOptimizer.optimize
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.copy
 
@@ -39,6 +39,7 @@ object ChoiceElseRewriter {
                     `else`.rewriteChoiceElse()
                 }
             }
+
             is IfOperation -> {
                 body.rewriteChoiceElse()
 
@@ -46,6 +47,7 @@ object ChoiceElseRewriter {
                     `else`.rewriteChoiceElse()
                 }
             }
+
             is CompositeOperation -> {
                 for (op in operation) {
                     op.rewriteChoiceElse()
@@ -57,11 +59,11 @@ object ChoiceElseRewriter {
         if (`else` == null) return
 
         val assumption = calculateAssumption()
-        val notAssumption = OxstsFactory.createNotOperator(assumption)
+        val notOperator = OxstsFactory.createNotOperator(assumption)
+        val notAssumption = OxstsFactory.createAssumptionOperation(notOperator)
         notAssumption.optimize()
-        val assume = OxstsFactory.createAssumptionOperation(notAssumption)
         val branch = OxstsFactory.createSequenceOperation().also {
-            it.operation += assume
+            it.operation += notAssumption
             if (`else` != null) {
                 it.operation += `else`
             }
@@ -83,6 +85,7 @@ object ChoiceElseRewriter {
                     OxstsFactory.createAndOperator(lhs, rhs)
                 } ?: OxstsFactory.createLiteralBoolean(true)
             }
+
             is ChoiceOperation -> {
                 // any branch can be executed
                 operation.map {
@@ -91,6 +94,7 @@ object ChoiceElseRewriter {
                     OxstsFactory.createOrOperator(lhs, rhs)
                 } ?: OxstsFactory.createLiteralBoolean(true)
             }
+
             is IfOperation -> {
                 val guardAssumption = guard.copy()
                 val notGuardAssumption = OxstsFactory.createNotOperator(guard.copy())
@@ -104,6 +108,7 @@ object ChoiceElseRewriter {
                     OxstsFactory.createAndOperator(notGuardAssumption, elseAssumption),
                 )
             }
+
             else -> error("Unknown operation: $this!")
         }
     }
