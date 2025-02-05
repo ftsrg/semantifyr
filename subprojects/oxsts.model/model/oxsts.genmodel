@@ -25,6 +25,7 @@
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Package/patterns"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Package/features"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Package/instances"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Package/constraints"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//Transition">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Transition/operation"/>
@@ -214,5 +215,6 @@
     <genClasses ecoreClass="oxsts.ecore#//Argument">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Argument/typing"/>
     </genClasses>
+    <genClasses ecoreClass="oxsts.ecore#//SemanticConstraint"/>
   </genPackages>
 </genmodel:GenModel>

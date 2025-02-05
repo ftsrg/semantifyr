@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -140,7 +140,7 @@ object Instantiator {
 
     private fun Instance.resolveDerivedFeatures(patternRunner: PatternRunner) {
         for (feature in type.allFeatures.filterIsInstance<Derived>()) {
-            val instances = patternRunner.execute(this, feature.pattern)
+            val instances = patternRunner.evaluateOnInstance(this, feature.pattern)
             instancePlacer.place(feature, instances)
         }
     }
@@ -171,6 +171,7 @@ object Instantiator {
                 holder.resolveBinding(referencedFeature) // recurse, until a free feature is found
             }
         }
+
         else -> error("Unsupported Feature type: $feature")
     }
 

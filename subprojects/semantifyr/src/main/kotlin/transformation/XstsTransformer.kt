@@ -20,6 +20,7 @@ import hu.bme.mit.semantifyr.oxsts.semantifyr.reader.OxstsReader
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.instantiation.Instantiator
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.optimization.ExpressionOptimizer.optimize
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.optimization.OperationOptimizer.optimize
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.pattern.ConstraintChecker
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite.ChoiceElseRewriter.rewriteChoiceElse
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite.ExpressionRewriter.rewriteReferences
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
@@ -54,6 +55,8 @@ class XstsTransformer(
         logger.info("Instantiating target ${target.name}")
 
         val rootInstance = Instantiator.instantiateTree(target)
+
+        ConstraintChecker.checkConstraints(rootInstance)
 
         xsts.variables += Instantiator.instantiateVariablesTree(rootInstance)
 
