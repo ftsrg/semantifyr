@@ -1,0 +1,160 @@
+/*
+ * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+grammar hu.bme.mit.semantifyr.frontends.gamma.lang.Gamma with org.eclipse.xtext.common.Terminals
+
+generate gamma "http://www.bme.hu/mit/2024/gamma"
+
+import "http://www.eclipse.org/emf/2002/Ecore" as Ecore
+
+Package:
+    'package' name=ID
+
+    components += Component*
+
+    verificationCases += VerificationCase*
+;
+
+Component:
+    Statechart
+    | SyncComponent
+;
+
+Statechart:
+	'statechart' name=ID
+	('['
+	    (
+	        events += Event
+        )*
+	']')?
+	'{'
+        timeouts += Timeout*
+        regions += Region*
+	'}'
+;
+
+Timeout:
+    'timeout' name=ID
+;
+
+Region:
+    'region' name=ID '{'
+        (
+            states += State
+            | transitions += Transition
+        )*
+    '}'
+;
+
+State:
+    'state' name=ID ( '{'
+        (
+            ('entry' entryActions += Action)
+            | ('exit' exitActions += Action)
+            | regions += Region
+        )*
+    '}')?
+;
+
+Transition:
+    EntryTransition
+    | StateTransition
+;
+
+EntryTransition:
+    'entry' 'transition' 'to' to=[State]
+;
+
+StateTransition:
+    'transition' from=[State] 'to' to=[State]
+    (
+        'when' trigger=Trigger
+    )?
+    (
+        '/' action=Action
+    )?
+;
+
+Event:
+    InputEvent
+    | OutputEvent
+;
+
+InputEvent:
+    'in' 'event' name=ID
+;
+
+OutputEvent:
+    'out' 'event' name=ID
+;
+
+Trigger:
+    TimeoutTrigger
+    | EventTrigger
+;
+
+TimeoutTrigger:
+    'timeout' timeout=[Timeout]
+;
+
+EventTrigger:
+    'event' event=[Event]
+;
+
+Action:
+    RaiseEventAction
+    | SetTimeoutAction
+;
+
+RaiseEventAction:
+    'raise' event=[Event]
+;
+
+SetTimeoutAction:
+    'set' timeout=[Timeout] 'to' value=INT
+;
+
+SyncComponent:
+    'sync' 'component' name=ID
+    ('['
+        (
+            events += Event
+        )*
+    ']')?
+    '{'
+        (components += ComponentInstance)*
+        (channels += Channel)*
+    '}'
+;
+
+ComponentInstance:
+    'component' name=ID ':' component=[Component]
+;
+
+Channel:
+    'channel'
+    from=ChainingExpression 'to'
+    to=ChainingExpression
+;
+
+ChainingExpression:
+    elements += ReferenceExpression ('.' elements += ReferenceExpression)*
+;
+
+ReferenceExpression:
+    element = [Ecore::EObject]
+;
+
+VerificationCase:
+    'verification' 'case' name=ID '{'
+        component = ComponentInstance
+        'reachable' state=ChainingExpression
+    '}'
+;
+
+FQN:
+    ID ('.' ID)*
+;
