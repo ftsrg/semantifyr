@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -14,9 +14,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.PatternBody
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PatternConstraint
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitiveClosureKind
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TypeConstraint
-import hu.bme.mit.semantifyr.oxsts.semantifyr.serialization.IndentationAwareStringWriter
-import hu.bme.mit.semantifyr.oxsts.semantifyr.serialization.indent
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.IndentationAwareStringWriter
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.fullyQualifiedName
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.indent
 
 object PatternSerializer {
 
