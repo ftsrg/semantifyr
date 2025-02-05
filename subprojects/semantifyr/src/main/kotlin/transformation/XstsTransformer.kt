@@ -1,28 +1,23 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
 package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation
 
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.CompositeOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Enum
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceTyping
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Target
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.XSTS
 import hu.bme.mit.semantifyr.oxsts.semantifyr.reader.OxstsReader
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.instantiation.Instantiator
-import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.optimization.ExpressionOptimizer.optimize
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.optimization.OperationOptimizer.optimize
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.pattern.ConstraintChecker
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite.ChoiceElseRewriter.rewriteChoiceElse
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite.ExpressionRewriter.rewriteReferences
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite.PropertyAccessInliner.inlinePropertyAccesses
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite.inlineOperations
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.contextualEvaluator
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.copy
@@ -30,11 +25,8 @@ import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.findInitTransition
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.findMainTransition
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.findProperty
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.loggerFactory
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.operationInliner
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElementOrNull
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.type
-import org.eclipse.xtext.EcoreUtil2
-import java.util.*
 
 class XstsTransformer(
     val reader: OxstsReader
@@ -72,6 +64,12 @@ class XstsTransformer(
 
         xsts.init.inlineOperations(rootInstance)
         xsts.transition.inlineOperations(rootInstance)
+
+        logger.info("Rewriting properties")
+
+        xsts.init.inlinePropertyAccesses(rootInstance)
+        xsts.transition.inlinePropertyAccesses(rootInstance)
+        xsts.property.inlinePropertyAccesses(rootInstance)
 
         logger.info("Rewriting operations")
 
