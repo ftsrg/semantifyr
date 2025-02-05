@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -14,10 +14,6 @@ import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.naming.QualifiedName;
 import org.eclipse.xtext.scoping.IScope;
 import org.eclipse.xtext.scoping.Scopes;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 import static hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsUtils.getAccessibleElements;
 import static hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsUtils.getReferredElement;
@@ -114,7 +110,7 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 
     protected IScope scopeElement(EObject element, EReference reference) {
         var referenceClass = reference.getEReferenceType().getInstanceClass();
-        var accessibleElements = getAccessibleElements(element).stream().filter(referenceClass::isInstance).toList();
+        var accessibleElements = getAccessibleElements(element).filter(referenceClass::isInstance).toList();
 
         return Scopes.scopeFor(accessibleElements, QualifiedName.wrapper(this::customNameProvider), super.getScope(element, reference));
     }
