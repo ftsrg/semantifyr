@@ -1,0 +1,54 @@
+/*
+ * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package Simple
+
+statechart LeaderStatechart [
+    in event fire
+    in event stop
+    out event start
+] {
+    timeout t1
+
+    region Main {
+        state Idle
+        state Operational
+
+        entry transition to Idle
+        transition Idle to Operational when event fire / raise start
+        transition Operational to Idle when event stop
+    }
+}
+
+statechart WorkerStatechart [
+    in event start
+] {
+    region Main {
+        state Idle
+        state Operational
+
+        entry transition to Idle
+        transition Idle to Operational when event start
+    }
+}
+
+sync component System[
+    in event fire
+    in event stop
+] {
+    component leader : LeaderStatechart
+    component worker : WorkerStatechart
+
+    channel fire to leader.fire
+    channel stop to leader.stop
+    channel leader.start to worker.start
+}
+
+verification case WorkerStatechartOperationalReachable {
+    component system : System
+
+    reachable system.worker.Main.Operational
+}

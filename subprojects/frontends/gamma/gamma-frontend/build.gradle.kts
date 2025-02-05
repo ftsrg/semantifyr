@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -34,30 +34,25 @@ artifacts {
 }
 
 dependencies {
-    api(project(":oxsts.lang"))
-    api(project(":cex.lang"))
+    implementation(project(":gamma.lang"))
+    implementation(project(":semantifyr"))
+
+    implementation(platform(libs.xtext.bom))
+    implementation(libs.xtext.core)
 
     implementation(libs.guice)
     implementation(libs.slf4j.api)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.clikt)
-    implementation(libs.ecore.codegen)
-    implementation(libs.viatra.query.language) {
-        exclude("com.google.inject", "guice")
-    }
+    implementation(libs.ecore)
+    implementation(libs.ecore)
 
-    implementation(libs.docker.java.core)
-    implementation(libs.docker.java.transport)
-
-    runtimeOnly(libs.viatra.query.runtime)
-    runtimeOnly(libs.viatra.transformation.runtime)
     runtimeOnly(libs.slf4j.log4j)
 
-    testFixturesImplementation(libs.slf4j.api)
-    testFixturesApi(project(":oxsts.lang"))
-    testFixturesApi(testFixtures(project(":oxsts.lang")))
+    testFixturesApi(project(":gamma.lang"))
+    testFixturesApi(testFixtures(project(":gamma.lang")))
 }
 
 application {
-    mainClass = "hu.bme.mit.semantifyr.oxsts.semantifyr.SemantifyrCliKt"
+    mainClass = "hu.bme.mit.semantifyr.frontends.gamma.frontend.GammaFrontendCliKt"
 }
