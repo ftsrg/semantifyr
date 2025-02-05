@@ -16,6 +16,10 @@
       {
         "command": "semantifyr.verifyXsts",
         "title": "Verify XSTS File"
+      },
+      {
+        "command": "gamma.compile",
+        "title": "Compile Gamma File"
       }
     ],
     "menus": {
@@ -23,6 +27,10 @@
         {
           "command": "semantifyr.verifyXsts",
           "when": "resourceExtname == .xsts"
+        },
+        {
+          "command": "gamma.compile",
+          "when": "resourceExtname == .gamma"
         }
       ]
     },
@@ -38,6 +46,18 @@
         "extensions": [".xsts"],
         "aliases": ["XSTS"],
         "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "gamma",
+        "extensions": [".gamma"],
+        "aliases": ["Gamma"],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "cex",
+        "extensions": [".cex"],
+        "aliases": ["CEX"],
+        "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [
@@ -50,6 +70,16 @@
         "language": "xsts",
         "scopeName": "source.xsts",
         "path": "./syntaxes/xsts.tmLanguage.json"
+      },
+      {
+        "language": "gamma",
+        "scopeName": "source.gamma",
+        "path": "./syntaxes/gamma.tmLanguage.json"
+      },
+      {
+        "language": "cex",
+        "scopeName": "source.cex",
+        "path": "./syntaxes/cex.tmLanguage.json"
       }
     ]
   },
