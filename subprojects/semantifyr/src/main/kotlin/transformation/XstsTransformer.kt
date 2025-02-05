@@ -93,7 +93,7 @@ class XstsTransformer(
             xsts.init.rewriteChoiceElse()
             xsts.transition.rewriteChoiceElse()
 
-            logger.info("Optimizing XSTS model")
+            logger.info("Optimizing final XSTS model")
 
             xsts.optimize()
         }
@@ -107,37 +107,6 @@ class XstsTransformer(
         init.optimize()
         transition.optimize()
         property.optimize()
-    }
-
-    private fun Transition.inlineOperations(rootInstance: Instance) {
-        val processorQueue = LinkedList(operation)
-
-        while (processorQueue.any()) {
-            val operation = processorQueue.removeFirst()
-
-            when (operation) {
-                is InlineOperation -> {
-                    val inlined = rootInstance.operationInliner.inlineOperation(operation)
-                    EcoreUtil2.replace(operation, inlined)
-                    processorQueue += inlined
-                }
-                is IfOperation -> {
-                    processorQueue += operation.body
-                    if (operation.`else` != null) {
-                        processorQueue += operation.`else`
-                    }
-                }
-                is ChoiceOperation -> {
-                    processorQueue += operation.operation
-                    if (operation.`else` != null) {
-                        processorQueue += operation.`else`
-                    }
-                }
-                is CompositeOperation -> {
-                    processorQueue += operation.operation
-                }
-            }
-        }
     }
 
 }
