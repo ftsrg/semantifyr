@@ -6,6 +6,8 @@
 
 package Actions
 
+import Variables
+import Expressions
 import Events
 
 type Action {
@@ -22,13 +24,22 @@ type RaiseEventAction : Action {
 
 type SetTimeoutAction : Action {
     reference timeout : Timeout[1..1]
-    reference amount : Integer = 1
+    feature expression : Expression
 
     override tran {
-        timeout.remainingTime := amount
+        timeout.remainingTime := expression.evaluate
+    }
+}
+
+type AssignmentAction : Action {
+    reference variable : Variable
+    feature expression : Expression
+    override tran {
+        inline variable.set(expression.evaluate)
     }
 }
 
 type Guard {
-    virtual tran { }
+    feature expression : Expression
+    virtual tran { assume (expression.evaluate) }
 }

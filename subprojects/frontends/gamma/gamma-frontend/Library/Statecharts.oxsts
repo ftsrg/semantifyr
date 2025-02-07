@@ -6,6 +6,8 @@
 
 package Statecharts
 
+import Expressions
+import Variables
 import Components
 import Triggers
 import Actions
@@ -13,6 +15,7 @@ import Events
 
 type Statechart : Component {
     feature regions : Region[0..*]
+    feature variables : Variable[0..*]
 
     override init {
         inline seq regions -> activateRecursive
@@ -70,8 +73,8 @@ type State {
     feature entryActions : Action[0..*]
     feature exitActions : Action[0..*]
 
-    tran isActive {
-        assume (parent.activeState == Self)
+    prop isActive {
+        parent.activeState == Self
     }
 
     tran deactivateRecursive {
@@ -119,7 +122,7 @@ type State {
         inline if (regions == Nothing) {
             assume (false)
         } else {
-            inline isActive()
+            assume (isActive)
             choice {
                 inline seq regions -> fireTransitions
             } else { }
@@ -155,10 +158,18 @@ type Transition : AbstractTransition {
     tran {
         inline seq guards -> main
         inline trigger.isTriggered()
-        inline from.isActive()
+        assume (from.isActive)
 
         inline from.exit(commonRegion)
         inline seq actions -> main
         inline to.enter(commonRegion)
+    }
+}
+
+type StateReachabilityExpression : Expression {
+    reference state : State
+    
+    prop evaluate {
+        state.isActive
     }
 }

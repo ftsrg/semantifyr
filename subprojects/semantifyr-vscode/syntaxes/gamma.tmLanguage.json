@@ -23,7 +23,7 @@
       "patterns": [
         {
           "name": "keyword.control.xsts",
-          "match": "\\b(package|sync|statechart|timeout|region|state|entry|exit|transition|when|to|in|event|out|raise|set|component|channel|verification|reachable|case)\\b"
+          "match": "\\b(expression|var|assign|and|or|package|sync|statechart|timeout|region|state|entry|exit|transition|when|to|in|event|out|raise|set|component|channel|verification|reachable|case)\\b"
         }
       ]
     },

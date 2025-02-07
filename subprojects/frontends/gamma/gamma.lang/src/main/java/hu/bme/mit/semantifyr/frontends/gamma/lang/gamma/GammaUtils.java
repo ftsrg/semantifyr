@@ -101,7 +101,8 @@ public class GammaUtils {
         return streamOfCollections(
                 statechart.getEvents(),
                 statechart.getTimeouts(),
-                statechart.getRegions()
+                statechart.getRegions(),
+                statechart.getVariables()
         );
     }
 

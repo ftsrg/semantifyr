@@ -22,6 +22,10 @@ type Component {
         inline seq inputEvents -> reset
     }
 
+    tran havocInputEvents {
+        inline seq inputEvents -> havoc
+    }
+
     tran resetOutputEvents {
         inline seq outputEvents -> reset
     }
@@ -32,8 +36,8 @@ type Component {
 }
 
 type Channel {
-    reference inputEvent : Event
-    reference outputEvent : Event
+    reference inputEvent : Event[1..1]
+    reference outputEvent : Event[1..1]
 
     tran {
         if (inputEvent.isActive) {

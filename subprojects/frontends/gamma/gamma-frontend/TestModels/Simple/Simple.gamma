@@ -50,5 +50,11 @@ sync component System[
 verification case WorkerStatechartOperationalReachable {
     component system : System
 
-    reachable system.worker.Main.Operational
+    expression { state system.worker.Main.Operational }
+}
+
+verification case LeaderStatechartOperationalReachable {
+    component system : System
+
+    expression { system.leader.Main.Operational }
 }

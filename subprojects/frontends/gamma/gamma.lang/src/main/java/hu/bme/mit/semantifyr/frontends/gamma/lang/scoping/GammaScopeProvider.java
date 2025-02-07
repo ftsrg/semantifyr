@@ -8,9 +8,9 @@ package hu.bme.mit.semantifyr.frontends.gamma.lang.scoping;
 
 
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ChainingExpression;
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ElementReferenceExpression;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaPackage;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Package;
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ReferenceExpression;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.xtext.EcoreUtil2;
@@ -38,14 +38,14 @@ public class GammaScopeProvider extends AbstractGammaScopeProvider {
             return scopeElement(_package, reference);
         }
 
-        if (context instanceof ReferenceExpression chainingExpression) {
-            return calculateChainScope(chainingExpression, reference);
+        if (context instanceof ElementReferenceExpression elementReferenceExpression) {
+            return calculateChainScope(elementReferenceExpression, reference);
         }
 
         return scopeElement(context, reference);
     }
 
-    IScope calculateChainScope(ReferenceExpression expression, EReference ref) {
+    IScope calculateChainScope(ElementReferenceExpression expression, EReference ref) {
         var chainingExpression = (ChainingExpression) expression.eContainer();
         var index = chainingExpression.getElements().indexOf(expression);
 
