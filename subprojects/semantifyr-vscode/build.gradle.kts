@@ -83,7 +83,7 @@ tasks {
     assemble {
         inputs.files(cloneDistribution.get().outputs)
         inputs.files(compile.get().outputs)
-//        inputs.files(packageExtension.get().outputs)
+        inputs.files(packageExtension.get().outputs)
     }
 
     clean {

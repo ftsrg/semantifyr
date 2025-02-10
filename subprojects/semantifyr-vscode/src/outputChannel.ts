@@ -21,7 +21,7 @@ export function registerOutputChannel(context: ExtensionContext) {
 }
 
 export async function writeSuccessMessage(message: string) {
-    await vscode.window.showInformationMessage(message)
+    await vscode.window.showInformationMessage(message);
     writeToOutputChannel(message);
 }
 
