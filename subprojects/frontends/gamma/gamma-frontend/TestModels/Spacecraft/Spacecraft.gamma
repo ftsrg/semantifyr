@@ -118,3 +118,57 @@ verification case Station_OperationReachable {
 
     expression { state mission.station.Main.Operation }
 }
+
+verification case Station_IdleReachable {
+    component mission : SpaceMission
+
+    expression { state mission.station.Main.Idle }
+}
+
+verification case Station_OperationReachable {
+    component mission : SpaceMission
+
+    expression { state mission.station.Main.Operation }
+}
+
+verification case Station_OperationReceiveDataWaitingReachable {
+    component mission : SpaceMission
+
+    expression { state mission.station.Main.Operation.ReceiveData.Waiting }
+}
+
+verification case Spacecraft_CommunicationWaitingPingReachable {
+    component mission : SpaceMission
+
+    expression { state mission.spacecraft.Communication.WaitingPing }
+}
+
+verification case Spacecraft_CommunicationTransmittingReachable {
+    component mission : SpaceMission
+
+    expression { state mission.spacecraft.Communication.Transmitting }
+}
+
+verification case Spacecraft_CommunicationTransmittingSendDataSendingReachable {
+    component mission : SpaceMission
+
+    expression { state mission.spacecraft.Communication.Transmitting.SendData.Sending }
+}
+
+verification case Spacecraft_CommunicationTransmittingConsumePowerConsumingReachable {
+    component mission : SpaceMission
+
+    expression { state mission.spacecraft.Communication.Transmitting.ConsumePower.Consuming }
+}
+
+verification case Spacecraft_BatteryNotRechargingReachable {
+    component mission : SpaceMission
+
+    expression { state mission.spacecraft.Battery.NotRecharging }
+}
+
+verification case Spacecraft_BatteryRechargingReachable {
+    component mission : SpaceMission
+
+    expression { state mission.spacecraft.Battery.Recharging }
+}
