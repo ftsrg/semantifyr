@@ -216,5 +216,8 @@
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Argument/typing"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//SemanticConstraint"/>
+    <genClasses ecoreClass="oxsts.ecore#//ExpressionConstraint"/>
+    <genClasses ecoreClass="oxsts.ecore#//EqualityConstraint"/>
+    <genClasses ecoreClass="oxsts.ecore#//InequalityConstraint"/>
   </genPackages>
 </genmodel:GenModel>

@@ -359,6 +359,7 @@ Constraint:
     TypeConstraint
     | FeatureConstraint
     | PatternConstraint
+    | ExpressionConstraint
 ;
 
 PatternVariable:
@@ -379,6 +380,19 @@ PatternConstraint:
         (',' variables+=PatternVariable)*
         (',')?
     ')'
+;
+
+ExpressionConstraint:
+    EqualityConstraint
+    | InequalityConstraint
+;
+
+EqualityConstraint:
+    variables+=PatternVariable '==' variables+=PatternVariable
+;
+
+InequalityConstraint:
+    variables+=PatternVariable '!=' variables+=PatternVariable
 ;
 
 SemanticConstraint:

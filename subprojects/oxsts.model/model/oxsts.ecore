@@ -282,4 +282,8 @@
         eType="#//Typing" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="SemanticConstraint" eSuperTypes="#//Pattern"/>
+  <eClassifiers xsi:type="ecore:EClass" name="ExpressionConstraint" abstract="true"
+      eSuperTypes="#//Constraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="EqualityConstraint" eSuperTypes="#//ExpressionConstraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="InequalityConstraint" eSuperTypes="#//ExpressionConstraint"/>
 </ecore:EPackage>

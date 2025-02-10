@@ -7,7 +7,10 @@
 package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.pattern
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Constraint
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.EqualityConstraint
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ExpressionConstraint
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureConstraint
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InequalityConstraint
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Parameter
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Pattern
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PatternBody
@@ -15,6 +18,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.PatternConstraint
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitiveClosureKind
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TypeConstraint
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.IndentationAwareStringWriter
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.appendIndent
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.fullyQualifiedName
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.indent
 
@@ -74,24 +78,20 @@ object PatternSerializer {
                     append(body, parameters)
                 }
             } else {
-                appendLine("{")
-                indent {
+                appendIndent("") {
                     appendParameterConstraints(parameters)
                 }
-                append("}")
             }
         }
     }
 
     private fun IndentationAwareStringWriter.append(body: PatternBody, parameters: List<Parameter>) {
-        appendLine("{")
-        indent {
+        appendIndent("") {
             appendParameterConstraints(parameters)
             for (constraint in body.constraints) {
                 append(constraint)
             }
         }
-        append("}")
     }
 
     private fun IndentationAwareStringWriter.appendParameterConstraints(parameters: List<Parameter>) {
@@ -104,6 +104,7 @@ object PatternSerializer {
         is TypeConstraint -> append(constraint)
         is FeatureConstraint -> append(constraint)
         is PatternConstraint -> append(constraint)
+        is ExpressionConstraint -> append(constraint)
         else -> error("Unknown type of constraint: $constraint")
     }
 
@@ -145,6 +146,23 @@ object PatternSerializer {
             append("neg ")
         }
         appendLine("find $patternName$callModifier($constraintVariables);")
+    }
+
+    private fun IndentationAwareStringWriter.append(constraint: ExpressionConstraint) {
+        require(constraint.variables.size == 2) {
+            "Expression constraint must have exactly two variables (left and right)!"
+        }
+
+        val left = constraint.variables.first().name
+        val right = constraint.variables.last().name
+
+        val expression = when (constraint) {
+            is EqualityConstraint -> "=="
+            is InequalityConstraint -> "!="
+            else -> error("Unknown expression constraint: $constraint")
+        }
+
+        appendLine("$left $expression $right;")
     }
 
 }
