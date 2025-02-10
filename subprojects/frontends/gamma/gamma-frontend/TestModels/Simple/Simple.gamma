@@ -47,14 +47,26 @@ sync component System[
     channel leader.start to worker.start
 }
 
+verification case WorkerStatechartIdleReachable {
+    component system : System
+
+    expression { state system.worker.Main.Idle }
+}
+
 verification case WorkerStatechartOperationalReachable {
     component system : System
 
     expression { state system.worker.Main.Operational }
 }
 
+verification case LeaderStatechartIdleReachable {
+    component system : System
+
+    expression { state system.leader.Main.Idle }
+}
+
 verification case LeaderStatechartOperationalReachable {
     component system : System
 
-    expression { system.leader.Main.Operational }
+    expression { state system.leader.Main.Operational }
 }

@@ -51,6 +51,8 @@ dependencies {
 
     testFixturesApi(project(":gamma.lang"))
     testFixturesApi(testFixtures(project(":gamma.lang")))
+    testFixturesApi(project(":semantifyr"))
+    testFixturesApi(testFixtures(project(":semantifyr")))
 }
 
 application {
