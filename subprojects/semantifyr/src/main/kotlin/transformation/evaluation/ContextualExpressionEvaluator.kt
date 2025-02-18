@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -9,11 +9,13 @@ package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.evaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Property
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.contextualEvaluator
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.dropLast
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.featureEvaluator
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.lastChain
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.propertyResolver
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.transitionResolver
 
 class ContextualExpressionEvaluator(
@@ -25,6 +27,13 @@ class ContextualExpressionEvaluator(
 
         val context = evaluateInstance(expression.dropLast(1))
         return context.transitionResolver.resolveTransition(expression.lastChain())
+    }
+
+    fun evaluateProperty(expression: Expression): Property {
+        require(expression is ChainReferenceExpression)
+
+        val context = evaluateInstance(expression.dropLast(1))
+        return context.propertyResolver.resolveProperty(expression.lastChain())
     }
 
     fun findFirstValidContext(expression: Expression): Instance {

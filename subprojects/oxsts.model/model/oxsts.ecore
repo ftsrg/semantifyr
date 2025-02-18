@@ -17,6 +17,8 @@
         eType="#//Feature" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="instances" upperBound="-1"
         eType="#//Instance" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="constraints" upperBound="-1"
+        eType="#//SemanticConstraint" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Transition" eSuperTypes="#//Namespace">
     <eStructuralFeatures xsi:type="ecore:EReference" name="operation" lowerBound="1"
@@ -279,4 +281,9 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="typing" lowerBound="1"
         eType="#//Typing" containment="true"/>
   </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="SemanticConstraint" eSuperTypes="#//Pattern"/>
+  <eClassifiers xsi:type="ecore:EClass" name="ExpressionConstraint" abstract="true"
+      eSuperTypes="#//Constraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="EqualityConstraint" eSuperTypes="#//ExpressionConstraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="InequalityConstraint" eSuperTypes="#//ExpressionConstraint"/>
 </ecore:EPackage>

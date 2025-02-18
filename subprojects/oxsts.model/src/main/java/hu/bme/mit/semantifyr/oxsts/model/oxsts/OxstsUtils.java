@@ -1,104 +1,139 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
 package hu.bme.mit.semantifyr.oxsts.model.oxsts;
 
+import org.eclipse.emf.common.util.EList;
+import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.Iterator;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class OxstsUtils {
 
-    public static List<Element> getAccessibleElements(EObject element) {
-        if (element == null) {
-            return Collections.emptyList();
-        }
+    public static Iterable<EObject> getAllContainers(final EObject eObject) {
+        return () -> new Iterator<>() {
+            private EObject next = eObject;
 
-        var parent = element.eContainer();
-        var elements = new ArrayList<Element>();
-
-        elements.addAll(getLocalAccessibleElements(element));
-        elements.addAll(getAccessibleElements(parent));
-
-        return elements;
-    }
-
-    public static List<Element> getLocalAccessibleElements(EObject element) {
-        if (element == null) {
-            return Collections.emptyList();
-        }
-
-        var elements = new ArrayList<Element>();
-
-        switch (element) {
-            case Package _package -> {
-                elements.addAll(getLocalAccessibleElements(_package));
-                elements.addAll(_package.getImports().stream().flatMap(it ->
-                        getLocalAccessibleElements(it.getPackage()).stream()
-                ).toList());
+            @Override
+            public boolean hasNext() {
+                return next != null;
             }
-            case Type type -> elements.addAll(getInheritedElements(type));
-            case Feature feature -> elements.addAll(getInheritedElements(feature.getTyping()));
-            case Parameter parameter -> elements.addAll(getInheritedElements(parameter.getType()));
-            case Argument argument -> elements.addAll(getInheritedElements(argument.getTyping()));
-            default -> {
+
+            @Override
+            public EObject next() {
+                var current = next;
+                next = next.eContainer();
+                return current;
             }
-        }
-
-        return elements;
+        };
     }
 
-    public static List<Element> getLocalAccessibleElements(Package _package) {
-        var elements = new ArrayList<Element>();
-        elements.addAll(_package.getTypes().stream().map(it -> (Element) it).toList());
-        elements.addAll(_package.getEnums().stream().map(it -> (Element) it).toList());
-        elements.addAll(_package.getPatterns().stream().map(it -> (Element) it).toList());
-        return elements;
+    public static Iterable<Type> getAllSupertypes(final Type type) {
+        return () -> new Iterator<>() {
+            private Type next = type;
+
+            @Override
+            public boolean hasNext() {
+                return next != null;
+            }
+
+            @Override
+            public Type next() {
+                var current = next;
+                next = next.getSupertype();
+                return current;
+            }
+        };
     }
 
-    public static List<Element> getInheritedElements(Typing typing) {
-        var elements = new ArrayList<Element>();
-
-        if (typing == null) {
-            return elements;
+    public static Stream<? extends Element> getAccessibleElements(EObject element, EClass eClass, boolean hierarchy) {
+        if (element == null) {
+            return Stream.empty();
         }
 
+        if (hierarchy) {
+            var containers = getAllContainers(element).spliterator();
+
+            return StreamSupport.stream(containers, false)
+                    .flatMap(e -> getDirectlyAccessibleElements(e, eClass))
+                    .distinct();
+        } else {
+            return getDirectlyAccessibleElements(element, eClass).distinct();
+        }
+    }
+
+    private static Stream<? extends Element> getDirectlyAccessibleElements(EObject element, EClass eClass) {
+        if (element == null) {
+            return Stream.empty();
+        }
+
+        return switch (element) {
+            case Package _package -> Stream.concat(
+                    getDirectlyAccessibleElementsReflective(_package, eClass),
+                    getImportedElements(_package, eClass)
+            );
+            case Type type -> getInheritedElements(type, eClass);
+            case Feature feature -> getInheritedElements(feature.getTyping(), eClass);
+            case Parameter parameter -> getInheritedElements(parameter.getType(), eClass);
+            case Argument argument -> getInheritedElements(argument.getTyping(), eClass);
+            default -> Stream.empty();
+        };
+    }
+
+    public static Stream<? extends Element> getImportedElements(Package _package, EClass eClass) {
+        return _package.getImports().stream().flatMap(it -> getDirectlyAccessibleElementsReflective(it.getPackage(), eClass));
+    }
+
+    public static Stream<? extends Element> getDirectlyAccessibleElementsReflective(EObject eObject, EClass eClass) {
+        return eObject.eClass().getEAllContainments().stream()
+                .filter(containment -> eClass.isSuperTypeOf(containment.getEReferenceType()))
+                .flatMap(containment -> {
+                    try {
+                        var element = eObject.eGet(containment);
+
+                        if (element instanceof EList<?> list) {
+                            //noinspection unchecked
+                            return (Stream<? extends Element>) list.stream();
+                        }
+
+                        return Stream.of((Element) element);
+                    } catch (Throwable throwable) {
+                        // If for some reason the features are not resolvable, fail gracefully.
+                        return Stream.empty();
+                    }
+                });
+
+    }
+
+    public static Stream<? extends Element> getInheritedElements(Typing typing, EClass eClass) {
         if (typing instanceof ReferenceTyping referenceTyping) {
             var chain = referenceTyping.getReference();
-            var lastExpression = chain.getChains().get(chain.getChains().size() - 1);
+            var lastExpression = chain.getChains().getLast();
             var referencedElement = getReferredElement(lastExpression);
             if (referencedElement instanceof Type type) {
-                elements.addAll(getInheritedElements(type));
+                return getInheritedElements(type, eClass);
             }
         }
 
-        return elements;
+        return Stream.empty();
     }
 
-    public static List<Element> getInheritedElements(Type type) {
+    public static Stream<? extends Element> getInheritedElements(Type type, EClass eClass) {
         if (type == null) {
-            return List.of();
+            return Stream.empty();
         }
 
-        var supertype = type.getSupertype();
-        var elements = new ArrayList<Element>();
+        var supertypes = getAllSupertypes(type).spliterator();
 
-        elements.addAll(type.getFeatures());
-        elements.addAll(type.getVariables());
-        elements.addAll(type.getProperties());
-        elements.addAll(type.getTransitions());
-        elements.addAll(type.getInitTransition());
-        elements.addAll(type.getHavocTransition());
-        elements.addAll(type.getMainTransition());
-
-        elements.addAll(getInheritedElements(supertype));
-
-        return elements;
+        return StreamSupport.stream(supertypes, false).flatMap(it ->
+                getDirectlyAccessibleElementsReflective(it, eClass)
+        );
     }
 
     public static Element getReferredElement(ReferenceExpression expression) {

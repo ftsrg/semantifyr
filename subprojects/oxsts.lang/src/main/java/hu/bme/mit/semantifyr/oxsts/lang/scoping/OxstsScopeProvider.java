@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -14,10 +14,6 @@ import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.naming.QualifiedName;
 import org.eclipse.xtext.scoping.IScope;
 import org.eclipse.xtext.scoping.Scopes;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 import static hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsUtils.getAccessibleElements;
 import static hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsUtils.getReferredElement;
@@ -47,7 +43,7 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 
         if (isTypeReference(reference)) {
             var _package = EcoreUtil2.getContainerOfType(context, Package.class);
-            return scopeElement(_package, reference);
+            return scopeElement(_package, reference, false);
         }
 
         if (context instanceof ChainingExpression chain) {
@@ -58,41 +54,41 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
             return calculateFeatureConstraintScope(featureConstraint, reference);
         }
 
-        return scopeElement(context, reference);
+        return scopeElement(context, reference, true);
     }
 
     protected IScope calculateChainScope(ChainingExpression expression, EReference reference) {
         var chain = EcoreUtil2.getContainerOfType(expression, ChainReferenceExpression.class);
 
-        var inlineComposite = EcoreUtil2.getContainerOfType(expression, InlineComposite.class);
-
         var index = chain.getChains().indexOf(expression);
 
-        if (inlineComposite != null && inlineComposite.getTransition() == chain) {
-            // calculate reference pretending to be from the feature's poing of view
-            if (index <= 0) {
-                return scopeElement(getReferredElement(inlineComposite.getFeature()), reference);
-            }
-        }
-
         if (index <= 0) {
-            var referenceTyping = EcoreUtil2.getContainerOfType(expression, ReferenceTyping.class);
-
-            if (referenceTyping != null) {
-                return scopeElement(referenceTyping.eContainer().eContainer(), reference);
-            }
-
-            return scopeElement(chain, reference);
+            return calculateFirstChainScope(chain, reference);
         }
 
         var lastExpression = chain.getChains().get(index - 1);
         var referencedElement = getReferredElement(lastExpression);
 
-        return scopeElement(referencedElement, reference);
+        return scopeElement(referencedElement, reference, false);
+    }
+
+    protected IScope calculateFirstChainScope(ChainReferenceExpression chain, EReference reference) {
+        var inlineComposite = EcoreUtil2.getContainerOfType(chain, InlineComposite.class);
+        if (inlineComposite != null && inlineComposite.getTransition() == chain) {
+            return scopeElement(getReferredElement(inlineComposite.getFeature()), reference, false);
+        }
+
+        var referenceTyping = EcoreUtil2.getContainerOfType(chain, ReferenceTyping.class);
+        if (referenceTyping != null) {
+            var containingType = EcoreUtil2.getContainerOfType(chain, Type.class);
+            return scopeElement(containingType, reference, true);
+        }
+
+        return scopeElement(chain, reference, true);
     }
 
     protected IScope calculateFeatureConstraintScope(FeatureConstraint featureConstraint, EReference reference) {
-        return scopeElement(featureConstraint.getType(), reference);
+        return scopeElement(featureConstraint.getType(), reference, false);
     }
 
     private String customNameProvider(EObject eObject) {
@@ -112,11 +108,20 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
         return element.getName();
     }
 
-    protected IScope scopeElement(EObject element, EReference reference) {
-        var referenceClass = reference.getEReferenceType().getInstanceClass();
-        var accessibleElements = getAccessibleElements(element).stream().filter(referenceClass::isInstance).toList();
+    protected IScope scopeElement(EObject element, EReference reference, boolean hierarchy) {
+        var accessibleElements = getAccessibleElements(element, reference.getEReferenceType(), hierarchy).toList();
 
-        return Scopes.scopeFor(accessibleElements, QualifiedName.wrapper(this::customNameProvider), super.getScope(element, reference));
+        var outer = getSuperScopeOrNull(element, reference);
+
+        return Scopes.scopeFor(accessibleElements, QualifiedName.wrapper(this::customNameProvider), outer);
+    }
+
+    protected IScope getSuperScopeOrNull(EObject element, EReference reference) {
+        try {
+            return super.getScope(element, reference);
+        } catch (Throwable t) {
+            return IScope.NULLSCOPE;
+        }
     }
 
 }

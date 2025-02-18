@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
 package hu.bme.mit.semantifyr.oxsts.semantifyr.commands
 
 import com.github.ajalt.clikt.core.CliktCommand
@@ -28,7 +34,12 @@ class CompileCommand : CliktCommand("compile") {
         logger.info("Reading model $model")
 
         val reader = OxstsReader(libraryDirectory.path)
-        reader.readModel(model.path)
+
+        if (model.isFile) {
+            reader.readModel(model.path)
+        } else {
+            reader.readDirectory(model.path)
+        }
 
         logger.info("Compiling target $targetName")
 

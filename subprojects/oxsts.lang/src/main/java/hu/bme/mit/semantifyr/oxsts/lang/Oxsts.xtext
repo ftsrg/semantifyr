@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -16,6 +16,7 @@ Package:
 		| enums += Enum
 		| imports += Import
 		| patterns += Pattern
+		| constraints += SemanticConstraint
         | instances += Instance
         | features += Feature
 	)*
@@ -358,6 +359,7 @@ Constraint:
     TypeConstraint
     | FeatureConstraint
     | PatternConstraint
+    | ExpressionConstraint
 ;
 
 PatternVariable:
@@ -378,6 +380,29 @@ PatternConstraint:
         (',' variables+=PatternVariable)*
         (',')?
     ')'
+;
+
+ExpressionConstraint:
+    EqualityConstraint
+    | InequalityConstraint
+;
+
+EqualityConstraint:
+    variables+=PatternVariable '==' variables+=PatternVariable
+;
+
+InequalityConstraint:
+    variables+=PatternVariable '!=' variables+=PatternVariable
+;
+
+SemanticConstraint:
+    'neg' 'constraint' name=ID '('
+       parameters+=Parameter
+       (',' parameters+=Parameter)*
+       (',')?
+   ')'
+   patternBodies += PatternBody
+   ('or' patternBodies += PatternBody)*
 ;
 
 enum TransitiveClosureKind:

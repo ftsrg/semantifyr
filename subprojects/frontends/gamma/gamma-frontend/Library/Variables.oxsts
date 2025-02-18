@@ -1,0 +1,29 @@
+package Variables
+
+type Variable {
+    prop evaluate { false }
+
+    tran set(value: Integer) {
+
+    }
+}
+
+type IntegerVariable : Variable {
+    reference defaultValue : Integer = 0
+
+    var variable : Integer = defaultValue
+
+    prop evaluate { variable }
+
+    tran set(value: Integer) {
+        variable := value
+    }
+}
+
+type BooleanVariable : Variable {
+    reference defaultValue : Boolean = false
+
+    var variable : Boolean = defaultValue
+
+    prop evaluate { variable }
+}

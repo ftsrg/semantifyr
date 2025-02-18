@@ -1,0 +1,174 @@
+/*
+ * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package Simple
+
+statechart Station [
+    in event data
+    in event start
+    in event shutdown
+    out event ping
+] {
+    timeout pingTimeout
+    timeout startTimeout
+
+    var receivedData : Integer = 0
+
+    region Main {
+        state Idle {
+            entry / set startTimeout to 30;
+        }
+        state Operation {
+            entry / set pingTimeout to 10
+            entry / raise ping
+
+            region ReceiveData {
+                state Waiting
+
+                entry transition to Waiting
+                transition Waiting to Waiting when event data [receivedData > 10 or receivedData < 100] / raise ping; assign receivedData := receivedData + 10
+            }
+        }
+
+        entry transition to Idle
+        transition Idle to Operation when event start
+        transition Idle to Operation when timeout startTimeout
+        transition Operation to Idle when event shutdown
+        transition Operation to Operation when timeout pingTimeout
+    }
+}
+
+statechart Spacecraft[
+    in event ping
+    out event dataEvent
+] {
+    timeout checkBatteryTimeout
+    timeout rechargeTimeout
+    timeout consumeTimeout
+    timeout transmitTimeout
+    
+    var batteryCharge : Integer = 100
+    var recharging : Boolean = false
+    var data : Integer = 100
+
+    region Communication {
+        state WaitingPing
+        state Transmitting {
+            region SendData {
+                state Sending {
+                    entry / set transmitTimeout to 4
+                }
+
+                entry transition to Sending
+                transition Sending to Sending when timeout transmitTimeout [! (data <= 0 || batteryCharge < 40)] / assign data := data - 10; raise dataEvent
+            }
+            region ConsumePower {
+                state Consuming {
+                    entry / set consumeTimeout to 2
+                }
+
+                entry transition to Consuming
+                transition Consuming to Consuming when timeout consumeTimeout [! (batteryCharge < 40)] / assign batteryCharge := batteryCharge - 10
+            }
+        }
+
+        entry transition to WaitingPing
+        transition WaitingPing to Transmitting when event ping [recharging == false && ! (data <= 0 || batteryCharge < 40)]
+        transition Transmitting to WaitingPing when timeout consumeTimeout [batteryCharge < 40]
+        transition Transmitting to WaitingPing when timeout transmitTimeout [data <= 0 || batteryCharge < 40]
+    }
+
+    region Battery {
+        state NotRecharging {
+            entry / set checkBatteryTimeout to 3
+            entry / assign recharging := false
+        }
+
+        state Recharging {
+            entry / set rechargeTimeout to 3
+            entry / assign recharging := true
+        }
+
+        entry transition to NotRecharging
+        transition NotRecharging to Recharging when timeout checkBatteryTimeout [batteryCharge < 80]
+        transition Recharging to Recharging when timeout rechargeTimeout [batteryCharge < 100] / assign batteryCharge := batteryCharge + 10
+        transition Recharging to NotRecharging when timeout rechargeTimeout [batteryCharge >= 100]
+    }
+}
+
+sync component SpaceMission [
+    in event start
+    in event shutdown
+] {
+    component station : Station
+    component spacecraft : Spacecraft
+
+    channel start to station.start
+    channel shutdown to station.shutdown
+
+    channel station.ping to spacecraft.ping
+    channel spacecraft.dataEvent to station.data
+}
+
+verification case Station_OperationReachable {
+    component mission : SpaceMission
+
+    expression { state mission.station.Main.Operation }
+}
+
+verification case Station_IdleReachable {
+    component mission : SpaceMission
+
+    expression { state mission.station.Main.Idle }
+}
+
+verification case Station_OperationReachable {
+    component mission : SpaceMission
+
+    expression { state mission.station.Main.Operation }
+}
+
+verification case Station_OperationReceiveDataWaitingReachable {
+    component mission : SpaceMission
+
+    expression { state mission.station.Main.Operation.ReceiveData.Waiting }
+}
+
+verification case Spacecraft_CommunicationWaitingPingReachable {
+    component mission : SpaceMission
+
+    expression { state mission.spacecraft.Communication.WaitingPing }
+}
+
+verification case Spacecraft_CommunicationTransmittingReachable {
+    component mission : SpaceMission
+
+    expression { state mission.spacecraft.Communication.Transmitting }
+}
+
+verification case Spacecraft_CommunicationTransmittingSendDataSendingReachable {
+    component mission : SpaceMission
+
+    expression { state mission.spacecraft.Communication.Transmitting.SendData.Sending }
+}
+
+verification case Spacecraft_CommunicationTransmittingConsumePowerConsumingReachable {
+    component mission : SpaceMission
+
+    expression { state mission.spacecraft.Communication.Transmitting.ConsumePower.Consuming }
+}
+
+verification case Spacecraft_BatteryNotRechargingReachable {
+    component mission : SpaceMission
+
+    expression { state mission.spacecraft.Battery.NotRecharging }
+}
+
+verification case Spacecraft_BatteryRechargingReachable {
+    component mission : SpaceMission
+
+    expression { state mission.spacecraft.Battery.Recharging }
+}

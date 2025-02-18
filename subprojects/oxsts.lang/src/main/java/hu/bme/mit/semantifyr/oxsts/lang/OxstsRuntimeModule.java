@@ -1,11 +1,12 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
 package hu.bme.mit.semantifyr.oxsts.lang;
 
+import hu.bme.mit.semantifyr.oxsts.lang.scoping.OxstsQualifiedNameConverter;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.OxstsQualifiedNameProvider;
 import org.eclipse.xtext.naming.IQualifiedNameConverter;
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
@@ -19,15 +20,9 @@ public class OxstsRuntimeModule extends AbstractOxstsRuntimeModule {
         return OxstsQualifiedNameConverter.class;
     }
 
+    @Override
     public Class<? extends IQualifiedNameProvider> bindIQualifiedNameProvider() {
         return OxstsQualifiedNameProvider.class;
     }
 
-}
-
-class OxstsQualifiedNameConverter extends IQualifiedNameConverter.DefaultImpl {
-    @Override
-    public String getDelimiter() {
-        return "::";
-    }
 }

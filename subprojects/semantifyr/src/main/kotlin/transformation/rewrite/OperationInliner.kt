@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -9,6 +9,9 @@ package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Argument
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArgumentBinding
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.CompositeOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineCall
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineChoice
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineComposite
@@ -17,6 +20,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineSeq
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite.ExpressionRewriter.rewriteContextDependentReferences
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite.ExpressionRewriter.rewriteToContext
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
@@ -29,10 +33,12 @@ import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.drop
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.dropLast
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.eAllContentsOfType
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.isStaticReference
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.operationInliner
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElement
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElementOrNull
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.typedReferencedElement
 import org.eclipse.xtext.EcoreUtil2
+import java.util.*
 
 class OperationInliner(
     private val context: Instance
@@ -156,4 +162,35 @@ class OperationInliner(
             .rewriteToArguments(arguments, bindings)
     }
 
+}
+
+fun Transition.inlineOperations(rootInstance: Instance) {
+    val processorQueue = LinkedList(operation)
+
+    while (processorQueue.any()) {
+        val operation = processorQueue.removeFirst()
+
+        when (operation) {
+            is InlineOperation -> {
+                val inlined = rootInstance.operationInliner.inlineOperation(operation)
+                EcoreUtil2.replace(operation, inlined)
+                processorQueue += inlined
+            }
+            is IfOperation -> {
+                processorQueue += operation.body
+                if (operation.`else` != null) {
+                    processorQueue += operation.`else`
+                }
+            }
+            is ChoiceOperation -> {
+                processorQueue += operation.operation
+                if (operation.`else` != null) {
+                    processorQueue += operation.`else`
+                }
+            }
+            is CompositeOperation -> {
+                processorQueue += operation.operation
+            }
+        }
+    }
 }

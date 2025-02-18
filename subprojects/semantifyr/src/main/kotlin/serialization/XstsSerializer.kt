@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -41,6 +41,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Typing
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.XSTS
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.IndentationAwareStringWriter
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.appendIndent
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.indent
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElementOrNull
 
 object XstsSerializer {
@@ -89,11 +92,9 @@ object XstsSerializer {
     }
 
     private fun IndentationAwareStringWriter.append(enum: Enum) {
-        appendLine("type ${enum.name} : {")
-        indent {
+        appendIndent("type ${enum.name} :") {
             appendLine(enum.literals.joinToString(",\n") { it.name })
         }
-        appendLine("}")
     }
 
     private fun IndentationAwareStringWriter.append(transition: Transition, kind: String) {
@@ -114,11 +115,9 @@ object XstsSerializer {
     }
 
     private fun IndentationAwareStringWriter.append(property: Property) {
-        appendLine("prop {")
-        indent {
+        appendIndent("prop") {
             appendLine(property.invariant.serialize())
         }
-        appendLine("}")
     }
 
     private fun IndentationAwareStringWriter.append(operation: Operation) {
