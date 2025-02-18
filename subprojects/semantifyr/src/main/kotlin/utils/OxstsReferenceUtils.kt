@@ -8,12 +8,13 @@ package hu.bme.mit.semantifyr.oxsts.semantifyr.utils
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DeclarationReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsPackage
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
 import kotlin.streams.asSequence
 
-fun Element.resolveElement(name: String): DeclarationReferenceExpression {
-    val accessibleElements = OxstsUtils.getAccessibleElements(this)
+fun Element.resolveElement(name: String, hierarchy: Boolean = false): DeclarationReferenceExpression {
+    val accessibleElements = OxstsUtils.getAccessibleElements(this, OxstsPackage.eINSTANCE.element, hierarchy)
 
     val element = accessibleElements.asSequence().filterIsInstance<Element>().first {
         it.name == name

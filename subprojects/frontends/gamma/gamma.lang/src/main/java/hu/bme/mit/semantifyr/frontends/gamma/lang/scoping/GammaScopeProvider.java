@@ -35,14 +35,14 @@ public class GammaScopeProvider extends AbstractGammaScopeProvider {
     public IScope getScope(EObject context, EReference reference) {
         if (isTypeReference(reference)) {
             var _package = EcoreUtil2.getContainerOfType(context, Package.class);
-            return scopeElement(_package, reference);
+            return scopeElement(_package, reference, false);
         }
 
         if (context instanceof ElementReferenceExpression elementReferenceExpression) {
             return calculateChainScope(elementReferenceExpression, reference);
         }
 
-        return scopeElement(context, reference);
+        return scopeElement(context, reference, true);
     }
 
     IScope calculateChainScope(ElementReferenceExpression expression, EReference ref) {
@@ -52,17 +52,26 @@ public class GammaScopeProvider extends AbstractGammaScopeProvider {
         if (index > 0) {
             var lastReference = chainingExpression.getElements().get(index - 1);
             var referencedElement = lastReference.getElement();
-            return scopeElement(referencedElement, ref);
+            return scopeElement(referencedElement, ref, false);
         }
 
-        return scopeElement(chainingExpression, ref);
+        return scopeElement(chainingExpression, ref, true);
     }
 
-    protected IScope scopeElement(EObject element, EReference reference) {
-        var referenceClass = reference.getEReferenceType().getInstanceClass();
-        var accessibleElements = getAccessibleElements(element).filter(referenceClass::isInstance).toList();
+    protected IScope scopeElement(EObject element, EReference reference, boolean hierarchy) {
+        var accessibleElements = getAccessibleElements(element, reference.getEReferenceType(), hierarchy).toList();
 
-        return Scopes.scopeFor(accessibleElements, super.getScope(element, reference));
+        var outer = getSuperScopeOrNull(element, reference);
+
+        return Scopes.scopeFor(accessibleElements, outer);
+    }
+
+    protected IScope getSuperScopeOrNull(EObject element, EReference reference) {
+        try {
+            return super.getScope(element, reference);
+        } catch (Throwable t) {
+            return IScope.NULLSCOPE;
+        }
     }
 
 }

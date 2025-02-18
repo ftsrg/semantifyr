@@ -9,7 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.semantifyr.reader
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsPackage
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.XtextResourceValidator
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.XtextResourceValidator.validateAndLoadResourceSet
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.info
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.walkFiles
@@ -71,7 +71,7 @@ class OxstsReader(
             userResources += readFile(file)
         }
 
-        validateAndLoadResources()
+        validateAndLoadResourceSet(resourceSet)
     }
 
     fun readModel(modelPath: String) {
@@ -94,17 +94,7 @@ class OxstsReader(
 
         userResources += readFile(modelFile)
 
-        validateAndLoadResources()
-    }
-
-    private fun validateAndLoadResources() {
-        logger.info("Validating resources")
-
-        for (resource in resourceSet.resources) {
-            XtextResourceValidator.validateAndLoadResource(resource)
-        }
-
-        logger.info("Validation successful!")
+        validateAndLoadResourceSet(resourceSet)
     }
 
 }

@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.oxsts.semantifyr.utils
 
 import org.eclipse.emf.ecore.resource.Resource
+import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.xtext.diagnostics.Severity
 import org.eclipse.xtext.resource.XtextResource
 import org.eclipse.xtext.util.CancelIndicator
@@ -62,4 +63,15 @@ object XtextResourceValidator {
             }
         }
     }
+
+    fun validateAndLoadResourceSet(resourceSet: ResourceSet) {
+        logger.info("Validating resources")
+
+        for (resource in resourceSet.resources) {
+            validateAndLoadResource(resource)
+        }
+
+        logger.info("Validation successful!")
+    }
+
 }
