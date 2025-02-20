@@ -79,10 +79,14 @@ public class OxstsUtils {
                     getImportedElements(_package, eClass)
             );
             case Type type -> getInheritedElements(type, eClass);
+            case Containment containment -> Stream.concat(
+                    getDirectlyAccessibleElementsReflective(containment, eClass),
+                    getInheritedElements(containment.getTyping(), eClass)
+            );
             case Feature feature -> getInheritedElements(feature.getTyping(), eClass);
             case Parameter parameter -> getInheritedElements(parameter.getType(), eClass);
             case Argument argument -> getInheritedElements(argument.getTyping(), eClass);
-            default -> Stream.empty();
+            default -> getDirectlyAccessibleElementsReflective(element, eClass);
         };
     }
 

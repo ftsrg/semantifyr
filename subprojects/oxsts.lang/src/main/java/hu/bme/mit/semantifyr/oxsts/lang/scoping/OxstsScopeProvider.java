@@ -105,23 +105,17 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
             }
         }
 
-        return element.getName();
+        try {
+            return element.getName();
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     protected IScope scopeElement(EObject element, EReference reference, boolean hierarchy) {
         var accessibleElements = getAccessibleElements(element, reference.getEReferenceType(), hierarchy).toList();
 
-        var outer = getSuperScopeOrNull(element, reference);
-
-        return Scopes.scopeFor(accessibleElements, QualifiedName.wrapper(this::customNameProvider), outer);
-    }
-
-    protected IScope getSuperScopeOrNull(EObject element, EReference reference) {
-        try {
-            return super.getScope(element, reference);
-        } catch (Throwable t) {
-            return IScope.NULLSCOPE;
-        }
+        return Scopes.scopeFor(accessibleElements, QualifiedName.wrapper(this::customNameProvider), IScope.NULLSCOPE);
     }
 
 }
