@@ -219,5 +219,6 @@
     <genClasses ecoreClass="oxsts.ecore#//ExpressionConstraint"/>
     <genClasses ecoreClass="oxsts.ecore#//EqualityConstraint"/>
     <genClasses ecoreClass="oxsts.ecore#//InequalityConstraint"/>
+    <genClasses ecoreClass="oxsts.ecore#//UnaryMinusOperator"/>
   </genPackages>
 </genmodel:GenModel>

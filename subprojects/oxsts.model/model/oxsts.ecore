@@ -286,4 +286,5 @@
       eSuperTypes="#//Constraint"/>
   <eClassifiers xsi:type="ecore:EClass" name="EqualityConstraint" eSuperTypes="#//ExpressionConstraint"/>
   <eClassifiers xsi:type="ecore:EClass" name="InequalityConstraint" eSuperTypes="#//ExpressionConstraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="UnaryMinusOperator" eSuperTypes="#//OperatorExpression"/>
 </ecore:EPackage>

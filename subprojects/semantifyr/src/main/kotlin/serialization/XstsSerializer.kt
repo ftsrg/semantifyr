@@ -39,6 +39,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceTyping
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Typing
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryMinusOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Variable
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.XSTS
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.IndentationAwareStringWriter
@@ -206,6 +207,7 @@ object XstsSerializer {
         is GreaterThanOperator -> "(${operands[0].serialize()} > ${operands[1].serialize()})"
         is GreaterThanOrEqualsOperator -> "(${operands[0].serialize()} >= ${operands[1].serialize()})"
         is NotOperator -> "! (${operands[0].serialize()})"
+        is UnaryMinusOperator -> "-(${operands[0].serialize()})"
         else -> "UNKNOWN_EXPRESSION$$$"
     }
 
