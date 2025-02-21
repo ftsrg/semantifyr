@@ -6,6 +6,9 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.scoping;
 
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import org.eclipse.emf.ecore.EObject;
@@ -13,32 +16,31 @@ import org.eclipse.emf.ecore.EReference;
 import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.naming.QualifiedName;
 import org.eclipse.xtext.scoping.IScope;
+import org.eclipse.xtext.scoping.IScopeProvider;
 import org.eclipse.xtext.scoping.Scopes;
+import org.eclipse.xtext.scoping.impl.AbstractDeclarativeScopeProvider;
 
-import static hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsUtils.getAccessibleElements;
-import static hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsUtils.getReferredElement;
+import static hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils.getAccessibleElements;
+import static hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils.getReferredElement;
 
-/**
- * This class contains custom scoping description.
- * <p>
- * See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#scoping
- * on how and when to use it.
- */
-public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
+public class OxstsScopeProvider implements IScopeProvider {
 
-    private boolean isTypeReference(EReference reference) {
-        return reference == OxstsPackage.Literals.TYPE__SUPERTYPE ||
-                reference == OxstsPackage.Literals.FEATURE__TYPING ||
-                reference == OxstsPackage.Literals.REFERENCE_TYPING__REFERENCE ||
-                reference == OxstsPackage.Literals.TYPE_CONSTRAINT__TYPE ||
-                reference == OxstsPackage.Literals.FEATURE_CONSTRAINT__TYPE ||
-                reference == OxstsPackage.Literals.PARAMETER__TYPE;
-    }
+    @Inject
+    @Named(AbstractDeclarativeScopeProvider.NAMED_DELEGATE)
+    private IScopeProvider localScopeProvider;
 
     @Override
     public IScope getScope(EObject context, EReference reference) {
+        if (context == null || context.eResource() == null) {
+            return IScope.NULLSCOPE;
+        }
+
+        return calculateScope(context, reference);
+    }
+
+    protected IScope calculateScope(EObject context, EReference reference) {
         if (reference == OxstsPackage.Literals.IMPORT__PACKAGE) {
-            return super.getScope(context, reference);
+            return calculateOuterScope(context, reference);
         }
 
         if (isTypeReference(reference)) {
@@ -92,30 +94,46 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
     }
 
     private String customNameProvider(EObject eObject) {
+        if (eObject == null) {
+            return null;
+        }
+
         var element = (Element) eObject;
 
         if (element instanceof Transition transition) {
-            var baseType = EcoreUtil2.getContainerOfType(transition, BaseType.class);
-            if (baseType.getMainTransition().contains(transition)) {
-                return "main";
-            } else if (baseType.getInitTransition().contains(transition)) {
-                return "init";
-            } else if (baseType.getHavocTransition().contains(transition)) {
-                return "havoc";
-            }
+            return OxstsQualifiedNameProvider.transitionWithImplicitName(transition);
         }
 
-        try {
-            return element.getName();
-        } catch (Throwable t) {
-            return null;
-        }
+        return element.getName();
     }
 
     protected IScope scopeElement(EObject element, EReference reference, boolean hierarchy) {
+        if (element == null) {
+            return IScope.NULLSCOPE;
+        }
+
         var accessibleElements = getAccessibleElements(element, reference.getEReferenceType(), hierarchy).toList();
 
-        return Scopes.scopeFor(accessibleElements, QualifiedName.wrapper(this::customNameProvider), IScope.NULLSCOPE);
+        var outer = calculateOuterScope(element, reference);
+
+        return Scopes.scopeFor(accessibleElements, QualifiedName.wrapper(this::customNameProvider), outer);
+    }
+
+    protected IScope calculateOuterScope(EObject element, EReference reference) {
+        if (element == null || element.eResource() == null) {
+            return IScope.NULLSCOPE;
+        }
+
+        return localScopeProvider.getScope(element, reference);
+    }
+
+    private boolean isTypeReference(EReference reference) {
+        return reference == OxstsPackage.Literals.TYPE__SUPERTYPE ||
+                reference == OxstsPackage.Literals.FEATURE__TYPING ||
+                reference == OxstsPackage.Literals.REFERENCE_TYPING__REFERENCE ||
+                reference == OxstsPackage.Literals.TYPE_CONSTRAINT__TYPE ||
+                reference == OxstsPackage.Literals.FEATURE_CONSTRAINT__TYPE ||
+                reference == OxstsPackage.Literals.PARAMETER__TYPE;
     }
 
 }

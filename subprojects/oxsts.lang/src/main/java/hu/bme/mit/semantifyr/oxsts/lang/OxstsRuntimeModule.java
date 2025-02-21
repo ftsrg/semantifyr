@@ -6,8 +6,8 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang;
 
-import hu.bme.mit.semantifyr.oxsts.lang.scoping.OxstsQualifiedNameConverter;
-import hu.bme.mit.semantifyr.oxsts.lang.scoping.OxstsQualifiedNameProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameConverter;
+import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import org.eclipse.xtext.naming.IQualifiedNameConverter;
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
 

@@ -464,11 +464,16 @@ GreaterThanOrEqualsOperator returns Expression:
 
 UnaryOperator returns Expression:
 	NotOperator
+	| UnaryMinusOperator
 	| PrimaryExpression
 ;
 
-NotOperator returns NotOperator: 
+NotOperator returns Expression:
 	{NotOperator} => ('not' | '!') operands+=UnaryOperator
+;
+
+UnaryMinusOperator returns Expression:
+    {UnaryMinusOperator} => '-' operands+=UnaryOperator
 ;
 
 // Reference expressions
@@ -479,7 +484,7 @@ PrimaryExpression returns Expression:
 	| '(' Expression ')'
 ;
 
-ReferenceExpression returns ReferenceExpression: 
+ReferenceExpression:
 	ChainReferenceExpression
 ;
 
@@ -532,13 +537,9 @@ LiteralBoolean:
 ;
 
 LiteralInteger:
-	value = SignedInt
+	value = INT
 ;
 
 BooleanValue returns Ecore::EBoolean:
 	'true' | 'false'
-;
-
-SignedInt returns Ecore::EInt:
-    ('-')? INT
 ;
