@@ -1,0 +1,18 @@
+<!--
+  ~ SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+  ~
+  ~ SPDX-License-Identifier: EPL-2.0
+  -->
+
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Compile Spacecraft.gamma" type="JetRunConfigurationType">
+    <option name="MAIN_CLASS_NAME" value="hu.bme.mit.semantifyr.frontends.gamma.frontend.GammaFrontendCliKt" />
+    <module name="semantifyr.gamma-frontend.main" />
+    <option name="PROGRAM_PARAMETERS" value="compile TestModels/Spacecraft/Spacecraft.gamma" />
+    <shortenClasspath name="NONE" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/subprojects/frontends/gamma/gamma-frontend" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

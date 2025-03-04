@@ -1,0 +1,280 @@
+/*
+ * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+grammar hu.bme.mit.semantifyr.frontends.gamma.lang.Gamma with org.eclipse.xtext.common.Terminals
+
+generate gamma "http://www.bme.hu/mit/2024/gamma"
+
+import "http://www.eclipse.org/emf/2002/Ecore" as Ecore
+
+Package:
+    'package' name=ID
+
+    components += Component*
+
+    verificationCases += VerificationCase*
+;
+
+Component:
+    Statechart
+    | SyncComponent
+;
+
+Statechart:
+	'statechart' name=ID
+	('['
+	    (
+	        events += Event
+        )*
+	']')?
+	'{'
+        (
+            variables += Variable
+            | timeouts += Timeout
+            | regions += Region
+        )*
+	'}'
+;
+
+Variable:
+    'var' name=ID ':' (type = ('Integer' | 'Boolean')) ('=' default=LiteralExpression)?
+;
+
+Timeout:
+    'timeout' name=ID
+;
+
+Region:
+    'region' name=ID '{'
+        (
+            states += State
+            | transitions += Transition
+        )*
+    '}'
+;
+
+State:
+    'state' name=ID ( '{'
+        (
+            ('entry' '/' (entryActions += Action) (';' entryActions += Action)* (';')?)
+            | ('exit' '/' (exitActions += Action) (';' exitActions += Action)* (';')?)
+            | regions += Region
+        )*
+    '}')?
+;
+
+Transition:
+    EntryTransition
+    | StateTransition
+;
+
+EntryTransition:
+    'entry' 'transition' 'to' to=[State]
+;
+
+StateTransition:
+    'transition' from=[State] 'to' to=[State]
+    (
+        'when' trigger=Trigger
+    )?
+    (
+        guard=Guard
+    )?
+    (
+        '/' (actions += Action) (';' actions += Action)* (';')?
+    )?
+;
+
+Event:
+    InputEvent
+    | OutputEvent
+;
+
+InputEvent:
+    'in' 'event' name=ID
+;
+
+OutputEvent:
+    'out' 'event' name=ID
+;
+
+Trigger:
+    TimeoutTrigger
+    | EventTrigger
+;
+
+TimeoutTrigger:
+    'timeout' timeout=[Timeout]
+;
+
+EventTrigger:
+    'event' event=[Event]
+;
+
+Guard:
+    '[' expression=Expression ']'
+;
+
+Action:
+    RaiseEventAction
+    | SetTimeoutAction
+    | AssignmentAction
+;
+
+RaiseEventAction:
+    'raise' event=[Event]
+;
+
+SetTimeoutAction:
+    'set' timeout=[Timeout] 'to' value=INT
+;
+
+AssignmentAction:
+    'assign' variable=[Variable] ':=' expression=Expression
+;
+
+SyncComponent:
+    'sync' 'component' name=ID
+    ('['
+        (
+            events += Event
+        )*
+    ']')?
+    '{'
+        (
+            components += ComponentInstance
+            | channels += Channel
+        )*
+    '}'
+;
+
+ComponentInstance:
+    'component' name=ID ':' component=[Component]
+;
+
+Channel:
+    'channel'
+    from=ReferenceExpression 'to'
+    to=ReferenceExpression
+;
+
+VerificationCase:
+    'verification' 'case' name=ID '{'
+        component = ComponentInstance
+        'expression' '{' expression=Expression '}'
+    '}'
+;
+
+Expression:
+	OperatorExpression
+;
+
+// Operator expressions
+
+OperatorExpression returns Expression:
+	OrOperator
+;
+
+OrOperator returns Expression:
+	AndOperator ({OrOperator.left=current} ('or' | '||') right=AndOperator)*
+;
+
+AndOperator returns Expression:
+	PlusOperator ({AndOperator.left=current} ('and' | '&&') right=PlusOperator)*
+;
+
+PlusOperator returns Expression:
+	MinusOperator ({PlusOperator.left=current} '+' right=MinusOperator)*
+;
+
+MinusOperator returns Expression:
+	EqualityOperator ({MinusOperator.left=current} '-' right=EqualityOperator)*
+;
+
+EqualityOperator returns Expression:
+	InequalityOperator ({EqualityOperator.left=current} '==' right=InequalityOperator)*
+;
+
+InequalityOperator returns Expression:
+	LessThanOperator ({InequalityOperator.left=current} '!=' right=LessThanOperator)*
+;
+
+LessThanOperator returns Expression:
+	LessThanOrEqualsOperator ({LessThanOperator.left=current} '<' right=LessThanOrEqualsOperator)*
+;
+
+LessThanOrEqualsOperator returns Expression:
+	GreaterThanOperator ({LessThanOrEqualsOperator.left=current} '<=' right=GreaterThanOperator)*
+;
+
+GreaterThanOperator returns Expression:
+	GreaterThanOrEqualsOperator ({GreaterThanOperator.left=current} '>' right=GreaterThanOrEqualsOperator)*
+;
+
+GreaterThanOrEqualsOperator returns Expression:
+	UnaryOperator ({GreaterThanOrEqualsOperator.left=current} '>=' right=UnaryOperator)*
+;
+
+UnaryOperator returns Expression:
+	NotOperator
+	| PrimaryExpression
+;
+
+NotOperator:
+	{NotOperator} => ('not' | '!') operand=UnaryOperator
+;
+
+// Reference expressions
+
+PrimaryExpression returns Expression:
+	  ReferenceExpression
+	| ReachabilityExpression
+	| LiteralExpression
+	| '(' Expression ')'
+;
+
+ReferenceExpression:
+    ChainingExpression
+;
+
+ChainingExpression:
+    elements += ElementReferenceExpression ('.' elements += ElementReferenceExpression)*
+;
+
+ElementReferenceExpression:
+    element = [Ecore::EObject]
+;
+
+ReachabilityExpression:
+    StateReachabilityExpression
+;
+
+StateReachabilityExpression:
+    'state' expression=ReferenceExpression
+;
+
+// Literal expressions
+
+LiteralExpression:
+	   LiteralBoolean
+	 | LiteralInteger
+;
+
+LiteralBoolean:
+	value = BooleanValue
+;
+
+LiteralInteger:
+	value = SignedInt
+;
+
+BooleanValue returns Ecore::EBoolean:
+	'true' | 'false'
+;
+
+SignedInt returns Ecore::EInt:
+    ('-')? INT
+;

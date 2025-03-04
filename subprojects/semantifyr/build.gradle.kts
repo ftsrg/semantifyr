@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -34,8 +34,8 @@ artifacts {
 }
 
 dependencies {
-    implementation(project(":oxsts.lang"))
-    implementation(project(":cex.lang"))
+    api(project(":oxsts.lang"))
+    api(project(":cex.lang"))
 
     implementation(libs.guice)
     implementation(libs.slf4j.api)
@@ -53,6 +53,7 @@ dependencies {
     runtimeOnly(libs.viatra.transformation.runtime)
     runtimeOnly(libs.slf4j.log4j)
 
+    testFixturesImplementation(libs.slf4j.api)
     testFixturesApi(project(":oxsts.lang"))
     testFixturesApi(testFixtures(project(":oxsts.lang")))
 }

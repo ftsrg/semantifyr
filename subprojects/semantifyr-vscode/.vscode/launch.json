@@ -9,9 +9,24 @@
 				"--extensionDevelopmentPath=${workspaceFolder}"
 			],
 			"outFiles": [
-				"${workspaceFolder}/dist/**/*.js"
+				"${workspaceFolder}/dist/**/*.cjs"
 			],
-			"preLaunchTask": "${defaultBuildTask}"
+			"preLaunchTask": "Build"
+		},
+		{
+			"name": "Run Extension (attach to OXSTS LSP)",
+			"type": "extensionHost",
+			"request": "launch",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}"
+			],
+			"env": {
+				"DEBUG_OXSTS_LSP": "5007"
+			},
+			"outFiles": [
+				"${workspaceFolder}/dist/**/*.cjs"
+			],
+			"preLaunchTask": "Build"
 		}
 	]
 }

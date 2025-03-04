@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -33,7 +33,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.impl.OxstsFactoryImpl
 
 object OxstsFactory : OxstsFactoryImpl() {
     fun createEmptyOperation(): Operation {
-        return createAssumptionOperation(createLiteralBoolean(true))
+        return createSequenceOperation()
     }
 
     inline fun createSequentialTransition(creator: SequenceOperation.() -> Unit): Transition {

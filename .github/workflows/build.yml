@@ -8,6 +8,8 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+env:
+  CI: true
 jobs:
   build:
     permissions:
@@ -34,15 +36,16 @@ jobs:
         distribution: adopt
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
-    - name: Cache npm dependencies
-      uses: actions/cache@v4
+    - name: Setup Node
+      uses: actions/setup-node@v4
       with:
-        path: subprojects/oxsts-vs-code/node_modules
-        key: ${{ matrix.os }}-node-${{ hashFiles('subprojects/oxsts-vs-code/package-lock.json') }}
-        restore-keys: |
-          ${{ matrix.os }}-node-
+        node-version: 22
+        cache: 'npm'
+        cache-dependency-path: 'subprojects/semantifyr-vscode/package-lock.json'
     - name: Gradle build
       run: ./gradlew build
+    - name: Bundle Extension
+      run: ./gradlew bundleExtension
     - name: Upload Artifacts
       if: ${{ matrix.os == 'ubuntu-latest' }}
       uses: actions/upload-artifact@v4

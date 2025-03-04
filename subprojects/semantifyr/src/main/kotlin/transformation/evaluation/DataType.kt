@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -19,6 +19,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.NotOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OperatorExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OrOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PlusOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryMinusOperator
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.NothingInstance
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.except
 
@@ -68,6 +69,7 @@ class BooleanData(
         // Algebraic operators
         is PlusOperator -> error("")
         is MinusOperator -> error("")
+        is UnaryMinusOperator -> error("")
 
         else -> error("Unsupported type of operator expression for boolean: $operator")
     }.toBooleanData()
@@ -105,6 +107,7 @@ class BooleanData(
         // Algebraic operators
         is PlusOperator -> error("")
         is MinusOperator -> error("")
+        is UnaryMinusOperator -> error("")
 
         else -> error("Unsupported type of operator expression for boolean: $operator")
     }.toBooleanData()
@@ -174,6 +177,7 @@ class InstanceData(
             is MinusOperator -> {
                 (value - other.value).toInstanceData()
             }
+            is UnaryMinusOperator -> error("")
 
             else -> error("Unsupported type of operator expression for boolean: $operator")
         }
@@ -190,8 +194,12 @@ class IntegerData(
         else -> false
     }
 
-    override fun evaluateOperator(operator: OperatorExpression): DataType {
-        error("Unary operators are not supported for Integers!")
+    override fun evaluateOperator(operator: OperatorExpression) = when (operator) {
+        is UnaryMinusOperator -> {
+            (-value).toIntegerData()
+        }
+
+        else -> error("Unknown type of operator expression: $operator")
     }
 
     override fun evaluateOperator(operator: OperatorExpression, other: DataType) = when (operator) {

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -10,6 +10,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Pattern
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.fullyQualifiedName
 import org.eclipse.emf.ecore.resource.ResourceSet
+import org.eclipse.viatra.query.runtime.api.GenericPatternMatch
 import org.eclipse.viatra.query.runtime.api.ViatraQueryEngine
 import org.eclipse.viatra.query.runtime.emf.EMFScope
 
@@ -19,7 +20,16 @@ class PatternRunner(
 
     private val engine = ViatraQueryEngine.on(EMFScope(resourceSet))
 
-    fun execute(instance: Instance, pattern: Pattern): List<Instance> {
+    fun evaluate(pattern: Pattern): Collection<GenericPatternMatch> {
+        val query = PatternTransformer.transform(pattern)
+
+        val matcher = engine.getMatcher(query)
+        val matches = matcher.allMatches
+
+        return matches
+    }
+
+    fun evaluateOnInstance(instance: Instance, pattern: Pattern): List<Instance> {
         val query = PatternTransformer.transform(pattern)
 
         check(query.parameters.size == 2) {
