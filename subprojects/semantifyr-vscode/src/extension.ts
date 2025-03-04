@@ -5,10 +5,10 @@
  */
 
 import {ExtensionContext} from 'vscode';
-import {registerCodeLensProvider} from "./codeLensProvider";
-import {registerOutputChannel} from "./outputChannel";
-import {registerCommands} from "./commands";
-import {startClients, stopClients} from "./clients";
+import {registerCodeLensProvider} from "./codeLensProvider.js";
+import {registerOutputChannel} from "./outputChannel.js";
+import {registerCommands} from "./commands.js";
+import {startClients, stopClients} from "./clients.js";
 
 export async function activate(context: ExtensionContext) {
     registerOutputChannel(context);

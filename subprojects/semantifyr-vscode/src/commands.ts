@@ -7,234 +7,155 @@
 import vscode, {ExtensionContext} from "vscode";
 import path from "path";
 import childProcess from "child_process";
-import {outputChannel, writeErrorMessage, writeSuccessMessage, writeToOutputChannel} from "./outputChannel";
-import {commandArg, executablePostfix, runnerUtils} from "./runnerUtils";
+import {outputChannel, writeErrorMessage, writeSuccessMessage, writeToOutputChannel} from "./outputChannel.js";
+import {executablePostfix} from "./runnerUtils.js";
 
 export async function executeProcess<R>(name: string, process: () => Thenable<R>) {
     vscode.window.showInformationMessage(name);
-    await vscode.window.withProgress(
-            {
-                location: vscode.ProgressLocation.Window,
-                title: name,
-                cancellable: false
-            },
-            () => process()
+    await vscode.window.withProgress({
+        location: vscode.ProgressLocation.Window,
+        title: name,
+        cancellable: false
+    }, process);
+}
+
+async function waitForProcess(
+    process: childProcess.ChildProcess, 
+    name: string, 
+    successMessage: string, 
+    errorMessage: (error: Error) => string
+) {
+    await executeProcess(name, () => {
+        return new Promise<void>((resolve, reject) => {
+            outputChannel.clear();
+
+            process.stdout?.on('data', (data: string) => {
+                writeToOutputChannel(data);
+            });
+            process.stderr?.on('data', (data: string) => {
+                writeToOutputChannel(data);
+            });
+
+            process.on('close', (code) => {
+                if (code === 0) {
+                    // We don't need to wait for the UI to complete.
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    writeSuccessMessage(successMessage);
+                    resolve();
+                } else {
+                    const error = new Error(`Process exited with code ${code}`);
+                    // We don't need to wait for the UI to complete.
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    writeErrorMessage(errorMessage(error));
+                    reject(error);
+                }
+            });
+
+            process.on('error', (error) => {
+                // We don't need to wait for the UI to complete.
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                writeErrorMessage(errorMessage(error));
+                reject(error);
+            });
+        });
+    });
+}
+
+function registerCompileTargetCommand(context: ExtensionContext, compilerExecutable: string) {
+    context.subscriptions.push(
+        vscode.commands.registerCommand('semantifyr.compileTarget', async (targetName: string, document: vscode.TextDocument) => {
+            const documentPath = document.uri.fsPath;
+            const documentDirectory = path.dirname(documentPath);
+            const outputFile = path.join(documentDirectory, `${targetName}.xsts`);
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            const workspaceFolder = workspaceFolders ? workspaceFolders[0].uri.fsPath : documentDirectory;
+            const args = `${compilerExecutable} compile ${documentPath} ${workspaceFolder} ${targetName} -o ${outputFile}`;
+
+            await waitForProcess(
+                childProcess.exec(args),
+                `Compiling target: ${targetName}`,
+                `Success! Compiled ${targetName} to ${outputFile}`, 
+                (error) => `Error compiling target: ${error.message}.`
+            )
+        })
     );
 }
 
-function registerCompileTargetCommand(context: ExtensionContext, runner: string, commandArg: string, compilerExecutable: string) {
+function registerVerifyTargetCommand(context: ExtensionContext, compilerExecutable: string) {
     context.subscriptions.push(
-            vscode.commands.registerCommand('semantifyr.compileTarget', async (targetName: string, document: vscode.TextDocument) => {
-                const documentPath = document.uri.fsPath;
-                const documentDirectory = path.dirname(documentPath);
-                const outputFile = path.join(documentDirectory, `${targetName}.xsts`);
-                const workspaceFolders = vscode.workspace.workspaceFolders;
-                const workspaceFolder = workspaceFolders ? workspaceFolders[0].uri.fsPath : documentDirectory;
+        vscode.commands.registerCommand('semantifyr.verifyTarget', async (targetName: string, document: vscode.TextDocument, generateWitness: boolean) => {
+            const documentPath = document.uri.fsPath;
+            const documentDirectory = path.dirname(documentPath);
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            const workspaceFolder = workspaceFolders ? workspaceFolders[0].uri.fsPath : documentDirectory;
+            
+            let args = `${compilerExecutable} verify ${documentPath} ${workspaceFolder} ${targetName}`;
+            if (generateWitness) {
+                args += " --witness";
+            }
 
-                await executeProcess(`Compiling target: ${targetName}`, () => {
-                    return new Promise<void>((resolve, reject) => {
-                        const process = childProcess.spawn(runner, [commandArg, compilerExecutable, 'compile', documentPath, workspaceFolder, targetName, '-o', outputFile]);
-
-                        outputChannel.clear();
-
-                        process.stdout.on('data', (data) => {
-                            writeToOutputChannel(data.toString());
-                        });
-
-                        process.stderr.on('data', (data) => {
-                            writeToOutputChannel(data.toString());
-                        });
-
-                        process.on('close', (code) => {
-                            if (code === 0) {
-                                writeSuccessMessage(`Success! Compiled ${targetName} to ${outputFile}`);
-                                resolve();
-                            } else {
-                                writeErrorMessage(`Compilation failed with exit code ${code}`);
-                                reject(new Error(`Process exited with code ${code}`));
-                            }
-                        });
-
-                        process.on('error', (error) => {
-                            writeErrorMessage(`Error compiling target: ${error.message}`);
-                            reject(error);
-                        });
-                    });
-                });
-            })
+            await waitForProcess(
+                childProcess.exec(args), 
+                `Verifying target: ${targetName}`, 
+                `Success! Verified target: ${targetName}.`,
+                (error) => `Error verifying target: ${error.message}.`
+            );
+        })
     );
 }
 
-function registerVerifyTargetCommand(context: ExtensionContext, runner: string, commandArg: string, compilerExecutable: string) {
+function registerVerifyXstsCommand(context: ExtensionContext, compilerExecutable: string) {
     context.subscriptions.push(
-            vscode.commands.registerCommand('semantifyr.verifyTarget', async (targetName: string, document: vscode.TextDocument, generateWitness: boolean) => {
-                const documentPath = document.uri.fsPath;
-                const documentDirectory = path.dirname(documentPath);
-                const workspaceFolders = vscode.workspace.workspaceFolders;
-                const workspaceFolder = workspaceFolders ? workspaceFolders[0].uri.fsPath : documentDirectory;
+        vscode.commands.registerCommand('semantifyr.verifyXsts', async (uri: vscode.Uri) => {
+            const documentPath = uri.fsPath;
+            const args = `${compilerExecutable} verify-xsts ${documentPath}`;
 
-                await executeProcess(`Verifying target: ${targetName}`, () => {
-                    return new Promise<void>((resolve, reject) => {
-                        const args = [commandArg, compilerExecutable, 'verify', documentPath, workspaceFolder, targetName];
-                        if (generateWitness) {
-                            args.push("--witness");
-                        }
-
-                        const process = childProcess.spawn(runner, args);
-
-                        outputChannel.clear();
-
-                        process.stdout.on('data', (data) => {
-                            writeToOutputChannel(data.toString());
-                        });
-
-                        process.stderr.on('data', (data) => {
-                            writeToOutputChannel(data.toString());
-                        });
-
-                        process.on('close', (code) => {
-                            if (code === 0) {
-                                writeSuccessMessage(`Success! Verified target: ${targetName}`);
-                                resolve();
-                            } else {
-                                writeErrorMessage(`Verification failed with exit code ${code}`);
-                                reject(new Error(`Process exited with code ${code}`));
-                            }
-                        });
-
-                        process.on('error', (error) => {
-                            writeErrorMessage(`Error verifying target: ${error.message}`);
-                            reject(error);
-                        });
-                    });
-                });
-            })
+            await waitForProcess(
+                childProcess.exec(args), 
+                `Verifying XSTS model: ${documentPath}`, 
+                `Success! Verified XSTS model: ${documentPath}.`,
+                (error) => `Error verifying XSTS model: ${error.message}.`
+            );
+        })
     );
 }
 
-function registerVerifyXstsCommand(context: ExtensionContext, runner: string, commandArg: string, compilerExecutable: string) {
+function registerCompileGammaCommand(context: ExtensionContext, gammaExecutable: string) {
     context.subscriptions.push(
-            vscode.commands.registerCommand('semantifyr.verifyXsts', async (uri: vscode.Uri) => {
-                const documentPath = uri.fsPath;
+        vscode.commands.registerCommand('gamma.compile', async (uri: vscode.Uri) => {
+            const documentPath = uri.fsPath;
+            const args = `${gammaExecutable} compile ${documentPath}`;
 
-                await executeProcess(`Verifying XSTS model: ${documentPath}`, () => {
-                    return new Promise<void>((resolve, reject) => {
-                        const process = childProcess.spawn(runner, [commandArg, compilerExecutable, 'verify-xsts', documentPath]);
-
-                        outputChannel.clear();
-
-                        process.stdout.on('data', (data) => {
-                            writeToOutputChannel(data.toString());
-                        });
-
-                        process.stderr.on('data', (data) => {
-                            writeToOutputChannel(data.toString());
-                        });
-
-                        process.on('close', (code) => {
-                            if (code === 0) {
-                                writeSuccessMessage(`Success! Verified XSTS model: ${documentPath}`);
-                                resolve();
-                            } else {
-                                writeErrorMessage(`Verification failed with exit code ${code}`);
-                                reject(new Error(`Process exited with code ${code}`));
-                            }
-                        });
-
-                        process.on('error', (error) => {
-                            writeErrorMessage(`Error verifying XSTS model: ${error.message}`);
-                            reject(error);
-                        });
-                    });
-                });
-            })
+            await waitForProcess(
+                childProcess.exec(args), 
+                `Compiling Gamma model: ${documentPath}`, 
+                `Success! Gamma model: ${documentPath}.`,
+                (error) => `Error compiling target: ${error.message}.`
+            );
+        })
     );
 }
 
-
-function registerCompileGammaCommand(context: ExtensionContext, runner: string, commandArg: string, gammaExecutable: string) {
+function registerVerifyGammaCommand(context: ExtensionContext, gammaExecutable: string) {
     context.subscriptions.push(
-            vscode.commands.registerCommand('gamma.compile', async (uri: vscode.Uri) => {
-                const documentPath = uri.fsPath;
+        vscode.commands.registerCommand('gamma.verify', async (verificationCase: string, document: vscode.TextDocument, generateWitness: boolean) => {
+            const documentPath = document.uri.fsPath;
+            const documentDirectory = path.dirname(documentPath);
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            const workspaceFolder = workspaceFolders ? workspaceFolders[0].uri.fsPath : documentDirectory;
 
-                await executeProcess(`Compiling Gamma model: ${documentPath}.`, () => {
-                    return new Promise<void>((resolve, reject) => {
-                        const process = childProcess.spawn(runner, [commandArg, gammaExecutable, 'compile', documentPath]);
+            let args = `${gammaExecutable} verify ${documentPath} ${verificationCase} ${workspaceFolder}`;
+            if (generateWitness) {
+                args += " --witness";
+            }
 
-                        outputChannel.clear();
-
-                        process.stdout.on('data', (data) => {
-                            writeToOutputChannel(data.toString());
-                        });
-
-                        process.stderr.on('data', (data) => {
-                            writeToOutputChannel(data.toString());
-                        });
-
-                        process.on('close', (code) => {
-                            if (code === 0) {
-                                writeSuccessMessage(`Success! Gamma model: ${documentPath}.`);
-                                resolve();
-                            } else {
-                                writeErrorMessage(`Compilation failed with exit code ${code}.`);
-                                reject(new Error(`Process exited with code ${code}`));
-                            }
-                        });
-
-                        process.on('error', (error) => {
-                            writeErrorMessage(`Error compiling target: ${error.message}.`);
-                            reject(error);
-                        });
-                    });
-                });
-            })
-    );
-}
-
-function registerVerifyGammaCommand(context: ExtensionContext, runner: string, commandArg: string, gammaExecutable: string) {
-    context.subscriptions.push(
-            vscode.commands.registerCommand('gamma.verify', async (verificationCase: string, document: vscode.TextDocument, generateWitness: boolean) => {
-                const documentPath = document.uri.fsPath;
-                const documentDirectory = path.dirname(documentPath);
-                const workspaceFolders = vscode.workspace.workspaceFolders;
-                const workspaceFolder = workspaceFolders ? workspaceFolders[0].uri.fsPath : documentDirectory;
-
-                await executeProcess(`Verifying verification case: ${verificationCase}`, () => {
-                    return new Promise<void>((resolve, reject) => {
-                        const args = [commandArg, gammaExecutable, 'verify', documentPath, verificationCase, workspaceFolder];
-                        if (generateWitness) {
-                            args.push("--witness");
-                        }
-
-                        const process = childProcess.spawn(runner, args);
-
-                        outputChannel.clear();
-
-                        process.stdout.on('data', (data) => {
-                            writeToOutputChannel(data.toString());
-                        });
-
-                        process.stderr.on('data', (data) => {
-                            writeToOutputChannel(data.toString());
-                        });
-
-                        process.on('close', (code) => {
-                            if (code === 0) {
-                                writeSuccessMessage(`Success! Verified verification case: ${verificationCase}`);
-                                resolve();
-                            } else {
-                                writeErrorMessage(`Verification failed with exit code ${code}`);
-                                reject(new Error(`Process exited with code ${code}`));
-                            }
-                        });
-
-                        process.on('error', (error) => {
-                            writeErrorMessage(`Error verifying verification case: ${error.message}`);
-                            reject(error);
-                        });
-                    });
-                });
-            })
+            await waitForProcess(
+                childProcess.exec(args), 
+                `Verifying verification case: ${verificationCase}`, 
+                `Success! Verified verification case: ${verificationCase}.`,
+                (error) => `Error verifying verification case: ${error.message}.`
+            );
+        })
     );
 }
 
@@ -242,9 +163,9 @@ export function registerCommands(context: ExtensionContext) {
     const compilerExecutable = path.join(context.extensionPath, 'bin', 'semantifyr', 'bin', `semantifyr${executablePostfix}`);
     const gammaExecutable = path.join(context.extensionPath, 'bin', 'gamma-frontend', 'bin', `gamma-frontend${executablePostfix}`);
 
-    registerCompileTargetCommand(context, runnerUtils, commandArg, compilerExecutable);
-    registerVerifyTargetCommand(context, runnerUtils, commandArg, compilerExecutable);
-    registerCompileGammaCommand(context, runnerUtils, commandArg, gammaExecutable);
-    registerVerifyGammaCommand(context, runnerUtils, commandArg, gammaExecutable);
-    registerVerifyXstsCommand(context, runnerUtils, commandArg, compilerExecutable);
+    registerCompileTargetCommand(context, compilerExecutable);
+    registerVerifyTargetCommand(context, compilerExecutable);
+    registerCompileGammaCommand(context, gammaExecutable);
+    registerVerifyGammaCommand(context, gammaExecutable);
+    registerVerifyXstsCommand(context, compilerExecutable);
 }

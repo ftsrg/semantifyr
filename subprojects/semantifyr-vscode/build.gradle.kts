@@ -5,7 +5,6 @@
  */
 
 import com.github.gradle.node.npm.task.NpmTask
-import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
     base
@@ -41,49 +40,48 @@ val cloneDistribution by tasks.registering(Sync::class) {
 }
 
 tasks {
-    val compile by registering(NpmTask::class) {
+    val buildExtension by registering(NpmTask::class) {
         inputs.dir(project.layout.projectDirectory.dir("src"))
-        inputs.file(project.layout.projectDirectory.file("esbuild.js"))
+        inputs.file(project.layout.projectDirectory.file("esbuild.mjs"))
+        inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
+        inputs.file(project.layout.projectDirectory.file("package-lock.json"))
+        inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
         inputs.files(npmInstall.get().outputs)
 
         npmCommand.set(
             listOf(
                 "run",
-                "package",
+                "build",
             )
         )
 
         outputs.dir("dist")
     }
 
-    val packageExtension by registering(Exec::class) {
+    val bundleExtension by registering(NpmTask::class) {
         inputs.files(cloneDistribution.get().outputs)
-        inputs.files(compile.get().outputs)
+        inputs.dir(project.layout.projectDirectory.dir("src"))
+        inputs.dir(project.layout.projectDirectory.dir("syntaxes"))
+        inputs.file(project.layout.projectDirectory.file("esbuild.mjs"))
+        inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
+        inputs.file(project.layout.projectDirectory.file("language-configuration.json"))
+        inputs.file(project.layout.projectDirectory.file("package.json"))
+        inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
         inputs.files(npmInstall.get().outputs)
 
-        outputs.dir(project.layout.buildDirectory.dir("vscode"))
+        npmCommand.set(
+            listOf(
+                "run",
+                "bundle",
+            )
+        )
 
-        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-            commandLine(
-                "cmd",
-                "/c",
-                "node_modules\\.bin\\vsce.cmd",
-                "package",
-                "--out", project.layout.buildDirectory.dir("vscode").get().asFile.absolutePath,
-            )
-        } else {
-            commandLine(
-                "sh",
-                "-c",
-                "node_modules/.bin/vsce package --out " + project.layout.buildDirectory.dir("vscode").get().asFile.absolutePath,
-            )
-        }
+        outputs.dir(project.layout.buildDirectory.dir("vscode"))
     }
 
     assemble {
         inputs.files(cloneDistribution.get().outputs)
-        inputs.files(compile.get().outputs)
-        inputs.files(packageExtension.get().outputs)
+        inputs.files(buildExtension.get().outputs)
     }
 
     clean {
