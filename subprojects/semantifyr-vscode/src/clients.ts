@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import {LanguageClient, LanguageClientOptions, ServerOptions} from "vscode-languageclient/node";
 import {ExtensionContext, workspace} from "vscode";
 import path from "path";
-import {commandArg, executablePostfix, runnerUtils} from "./runnerUtils";
+import {executablePostfix} from "./runnerUtils.js";
 import * as net from 'net';
+import {LanguageClient, LanguageClientOptions, ServerOptions} from "vscode-languageclient/node.js";
 
 let oxstsClient: LanguageClient;
 let xstsClient: LanguageClient;
@@ -26,12 +26,12 @@ export async function startClients(context: ExtensionContext) {
         console.log('Debug mode enabled via launch args for OXSTS');
         oxstsClient = createRemoteLspClient(port, "oxsts");
     } else {
-        oxstsClient = createLspClient(runnerUtils, commandArg, oxstsIdeExecutable, "oxsts");
+        oxstsClient = createLspClient(oxstsIdeExecutable, "oxsts");
     }
 
-    xstsClient = createLspClient(runnerUtils, commandArg, xstsIdeExecutable, "xsts");
-    cexClient = createLspClient(runnerUtils, commandArg, cexIdeExecutable, "cex");
-    gammaClient = createLspClient(runnerUtils, commandArg, gammaIdeExecutable, "gamma");
+    xstsClient = createLspClient(xstsIdeExecutable, "xsts");
+    cexClient = createLspClient(cexIdeExecutable, "cex");
+    gammaClient = createLspClient(gammaIdeExecutable, "gamma");
 
     await oxstsClient.start();
     await xstsClient.start();
@@ -76,10 +76,10 @@ function createRemoteLspClient(port: number, language: string): LanguageClient {
     );
 }
 
-function createLspClient(runner: string, commandArg: string, oxstsIdeExecutable: string, language: string): LanguageClient {
-    let serverOptions: ServerOptions = {
-        run: {command: runner, args: [commandArg, oxstsIdeExecutable]},
-        debug: {command: runner, args: [commandArg, oxstsIdeExecutable]}
+function createLspClient(oxstsIdeExecutable: string, language: string): LanguageClient {
+    const serverOptions: ServerOptions = {
+        run: {command: oxstsIdeExecutable, options: { shell: true }},
+        debug: {command: oxstsIdeExecutable, options: { shell: true }}
     };
 
     const clientOptions: LanguageClientOptions = {
@@ -90,9 +90,9 @@ function createLspClient(runner: string, commandArg: string, oxstsIdeExecutable:
     };
 
     return new LanguageClient(
-            `${language}LSP`,
-            `${language.toUpperCase()} Language Server`,
-            serverOptions,
-            clientOptions
+        `${language}LSP`,
+        `${language.toUpperCase()} Language Server`,
+        serverOptions,
+        clientOptions
     );
 }
