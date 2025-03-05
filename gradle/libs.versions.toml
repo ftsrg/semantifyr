@@ -17,6 +17,7 @@ viatra = "2.9.1"
 dockerJava = "3.4.0"
 guice = "7.0.0"
 node = "7.1.0"
+sysml = "0.46.0"
 
 [libraries]
 ecore = { group = "org.eclipse.emf", name = "org.eclipse.emf.ecore", version.ref = "ecore" }
@@ -46,6 +47,11 @@ viatra-transformation-runtime = { group = "org.eclipse.viatra", name = "viatra-t
 guice = { group = "com.google.inject", name = "guice", version.ref = "guice" }
 docker-java-core = { group = "com.github.docker-java" , name = "docker-java-core", version.ref = "dockerJava" }
 docker-java-transport = { group = "com.github.docker-java" , name = "docker-java-transport-httpclient5", version.ref = "dockerJava" }
+
+sysml-kerml-expressions = { group = "org.omg.sysml", name = "org.omg.kerml.expressions.xtext", version.ref = "sysml" }
+sysml-kerml = { group = "org.omg.sysml", name = "org.omg.kerml.xtext", version.ref = "sysml" }
+sysml-sysml-xtext = { group = "org.omg.sysml", name = "org.omg.sysml.xtext", version.ref = "sysml" }
+sysml-sysml = { group = "org.omg.sysml", name = "org.omg.sysml", version.ref = "sysml" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

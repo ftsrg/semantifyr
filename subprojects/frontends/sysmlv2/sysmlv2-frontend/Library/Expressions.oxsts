@@ -1,12 +1,5 @@
 package Expressions
 
-import Variables
-
-type VariableExpression : Expression {
-    reference variable : Variable
-    prop evaluate { variable.evaluate }
-}
-
 type Expression {
     prop evaluate { false }
 }

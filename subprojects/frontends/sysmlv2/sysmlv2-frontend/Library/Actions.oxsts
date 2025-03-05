@@ -6,36 +6,29 @@
 
 package Actions
 
-import Variables
+import Attributes
 import Expressions
-import Events
+import Items
+import Ports
 
 type Action {
     virtual tran { }
 }
 
-type RaiseEventAction : Action {
-    reference event : Event[1..1]
+type SendItemAction : Action {
+    reference port : Port[1..1]
+    reference item : Item[1..1]
 
     override tran {
-        inline event.set()
-    }
-}
-
-type SetTimeoutAction : Action {
-    reference timeout : Timeout[1..1]
-    feature expression : Expression
-
-    override tran {
-        timeout.remainingTime := expression.evaluate
+        port.outgoingItem := item
     }
 }
 
 type AssignmentAction : Action {
-    reference variable : Variable
+    reference attribute : Attribute
     feature expression : Expression
     override tran {
-        inline variable.set(expression.evaluate)
+        inline attribute.set(expression.evaluate)
     }
 }
 

@@ -33,3 +33,4 @@ fun includeDirectory(dirPath: String) {
 }
 
 includeDirectory("subprojects/frontends/gamma")
+//includeDirectory("subprojects/frontends/sysmlv2")
