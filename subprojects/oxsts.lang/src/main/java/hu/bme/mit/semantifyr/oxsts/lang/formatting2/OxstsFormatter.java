@@ -1,9 +1,8 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-
 
 package hu.bme.mit.semantifyr.oxsts.lang.formatting2;
 
@@ -52,7 +51,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void format(EnumLiteral literal, IFormattableDocument document) {
-        document.prepend(regionFor(literal).feature(OxstsPackage.Literals.ELEMENT__NAME), this::newLine);
+        document.prepend(regionFor(literal).feature(OxstsPackage.Literals.NAMED_ELEMENT__NAME), this::newLine);
     }
 
     protected void format(Type type, IFormattableDocument document) {
@@ -133,10 +132,6 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         }
     }
 
-    protected void format(SequenceOperation operation, IFormattableDocument document) {
-        format((CompositeOperation) operation, document);
-    }
-
     protected void format(ChoiceOperation operation, IFormattableDocument document) {
         document.prepend(regionFor(operation).keyword("choice"), this::newLine);
 
@@ -149,6 +144,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
     protected void format(IfOperation operation, IFormattableDocument document) {
         document.prepend(regionFor(operation).keyword("if"), this::newLine);
+        document.format(operation.getGuard());
         document.format(operation.getBody());
 
         if (operation.getElse() != null) {
@@ -169,13 +165,13 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.append(regionFor(operation).keyword("("), this::noSpace);
         document.prepend(regionFor(operation).keyword(")"), this::noSpace);
 
-        document.format(operation.getReferenceExpression());
+        document.format(operation.getReference());
     }
 
     protected void format(AssignmentOperation operation, IFormattableDocument document) {
-        var reference = (ChainReferenceExpression) operation.getReference();
-        var firstDeclaration = (DeclarationReferenceExpression) reference.getChains().getFirst();
-        document.prepend(regionFor(firstDeclaration).feature(OxstsPackage.Literals.DECLARATION_REFERENCE_EXPRESSION__ELEMENT), this::newLine);
+        var reference = operation.getReference();
+        var firstDeclaration = reference.getChains().getFirst();
+        document.prepend(regionFor(firstDeclaration).feature(OxstsPackage.Literals.ELEMENT_REFERENCE_EXPRESSION__ELEMENT), this::newLine);
 
         document.format(operation.getReference());
         document.format(operation.getExpression());
@@ -191,10 +187,18 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.prepend(regionFor(operation).keyword("("), this::noSpace);
         document.append(regionFor(operation).keyword("("), this::noSpace);
         document.prepend(regionFor(operation).keyword(")"), this::noSpace);
+
+        if (operation.getReference() != null) {
+            document.format(operation.getReference());
+        }
+        document.format(operation.getTransition());
     }
 
     protected void format(InlineChoice operation, IFormattableDocument document) {
         document.prepend(regionFor(operation).keyword("inline"), this::newLine);
+
+        document.format(operation.getReference());
+        document.format(operation.getTransition());
 
         if (operation.getElse() != null) {
             document.format(operation.getElse());
@@ -203,11 +207,15 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
     protected void format(InlineSeq operation, IFormattableDocument document) {
         document.prepend(regionFor(operation).keyword("inline"), this::newLine);
+
+        document.format(operation.getReference());
+        document.format(operation.getTransition());
     }
 
     protected void format(InlineIfOperation operation, IFormattableDocument document) {
         document.prepend(regionFor(operation).keyword("inline"), this::newLine);
         document.format(operation.getBody());
+        document.format(operation.getGuard());
 
         if (operation.getElse() != null) {
             document.format(operation.getElse());
@@ -217,6 +225,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     protected void format(Property property, IFormattableDocument document) {
         document.prepend(regionFor(property).keyword("prop"), this::newLine);
         setupBrackets(property, document);
+        document.format(property.getInvariant());
     }
 
     protected void format(Pattern pattern, IFormattableDocument document) {
@@ -261,25 +270,28 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         }
     }
 
-    protected void format(OperatorExpression expression, IFormattableDocument document) {
-        for (Expression operand : expression.getOperands()) {
-            document.format(operand);
-        }
+    protected void format(UnaryOperator expression, IFormattableDocument document) {
+        document.format(expression.getBody());
     }
 
-    protected void format(ChainReferenceExpression expression, IFormattableDocument document) {
+    protected void format(BinaryOperator expression, IFormattableDocument document) {
+        document.format(expression.getLeft());
+        document.format(expression.getRight());
+    }
+
+    protected void format(ChainingExpression expression, IFormattableDocument document) {
         document.prepend(allRegionsFor(expression).keyword("."), this::noSpace);
         document.append(allRegionsFor(expression).keyword("."), this::noSpace);
 
         for (var expr : expression.getChains().stream().skip(1).toList()) {
-            if (expr instanceof DeclarationReferenceExpression declarationReferenceExpression) {
-                document.prepend(regionFor(declarationReferenceExpression).feature(OxstsPackage.Literals.DECLARATION_REFERENCE_EXPRESSION__ELEMENT), this::noSpace);
+            if (expr instanceof ElementReferenceExpression elementReferenceExpression) {
+                document.prepend(regionFor(elementReferenceExpression).feature(OxstsPackage.Literals.ELEMENT_REFERENCE_EXPRESSION__ELEMENT), this::noSpace);
             }
         }
 
         for (var expr : expression.getChains().stream().limit(expression.getChains().size() - 1).toList()) {
-            if (expr instanceof DeclarationReferenceExpression declarationReferenceExpression) {
-                document.append(regionFor(declarationReferenceExpression).feature(OxstsPackage.Literals.DECLARATION_REFERENCE_EXPRESSION__ELEMENT), this::noSpace);
+            if (expr instanceof ElementReferenceExpression elementReferenceExpression) {
+                document.append(regionFor(elementReferenceExpression).feature(OxstsPackage.Literals.ELEMENT_REFERENCE_EXPRESSION__ELEMENT), this::noSpace);
             }
         }
 

@@ -10,47 +10,34 @@ import "http://www.bme.hu/mit/2023/oxsts"
 import "http://www.eclipse.org/emf/2002/Ecore" as Ecore
 
 Package:
-	'package' name=ID
-	(
-		  types += TypeLike
-		| enums += Enum
-		| imports += Import
-		| patterns += Pattern
-		| constraints += SemanticConstraint
-        | instances += Instance
-        | features += Feature
-	)*
+    'package' name=ID
+    imports += Import*
+    (
+        types += TypeLike
+        | enums += Enum
+        | patterns += Pattern
+        | constraints += SemanticConstraint
+    )*
 ;
 
 Import:
-    'import' package=[Package]
+    'import' package=[Package|FQN]
 ;
 
 Property:
-	NamedProperty
-	| NamelessProperty
+    'prop' name=ID? '{'
+        invariant=Expression
+    '}'
 ;
 
-NamedProperty returns Property:
-	'prop' name=ID '{'
-		invariant=Expression
-	'}'
-;
-
-NamelessProperty returns Property:
-	'prop' '{'
-		invariant=Expression
-	'}'
-;
-
-Enum: 
-	'enum' name=ID '{'
-		literals+=EnumLiteral (',' literals+=EnumLiteral)* (',')?
-	'}'
+Enum:
+    'enum' name=ID '{'
+        literals+=EnumLiteral (',' literals+=EnumLiteral)* (',')?
+    '}'
 ;
 
 EnumLiteral:
-	name=ID
+    name=ID
 ;
 
 TypeLike returns Type:
@@ -59,73 +46,61 @@ TypeLike returns Type:
 ;
 
 Type:
-	(abstract?='abstract')? 'type' name=ID (':' supertype=[Type|FQN])? ('{'
-		(
-			variables+=Variable
-			| features+=Feature
-			| initTransition+=InitTransition
-			| transitions+=NamedTransition
-			| mainTransition+=MainTransition
-			| havocTransition+=HavocTransition
-			| properties+=Property
-		)*
-	'}')?
+    (abstract?='abstract')? 'type' name=ID (':' supertype=[Type|FQN])? ('{'
+        (
+            variables+=Variable
+            | features+=Feature
+            | initTransition+=InitTransition
+            | transitions+=NamedTransition
+            | mainTransition+=MainTransition
+            | havocTransition+=HavocTransition
+            | properties+=Property
+        )*
+    '}')?
 ;
 
 Target:
-	(abstract?='abstract')? 'target' name=ID (':' supertype=[Type|FQN])? ('{'
-		(
-			variables+=Variable
-			| features+=Feature
-			| initTransition+=InitTransition
-			| transitions+=NamedTransition
-			| mainTransition+=MainTransition
-			| havocTransition+=HavocTransition
-			| properties+=Property
-		)*
-	'}')?
+    (abstract?='abstract')? 'target' name=ID (':' supertype=[Type|FQN])? ('{'
+        (
+            variables+=Variable
+            | features+=Feature
+            | initTransition+=InitTransition
+            | transitions+=NamedTransition
+            | mainTransition+=MainTransition
+            | havocTransition+=HavocTransition
+            | properties+=Property
+        )*
+    '}')?
 ;
 
 NamedTransition returns Transition:
-	TransitionModifier 'tran' name=ID TransitionBody
-;
-
-fragment NamelessTransition returns Transition:
-	TransitionBody
+    TransitionModifier 'tran' name=ID TransitionBody
 ;
 
 HavocTransition returns Transition:
-	TransitionModifier 'havoc' NamelessTransition
+    TransitionModifier 'havoc' TransitionBody
 ;
 
 MainTransition returns Transition:
-	TransitionModifier 'tran' NamelessTransition
+    TransitionModifier 'tran' TransitionBody
 ;
 
 InitTransition returns Transition:
-	TransitionModifier 'init' NamelessTransition
+    TransitionModifier 'init' TransitionBody
 ;
 
 fragment TransitionModifier returns Transition:
-	(virtual?='virtual' | override?='override')?
+    (virtual?='virtual' | override?='override')?
 ;
 
 fragment TransitionBody returns Transition:
-	(
-        '('
-            (
-                arguments+=Argument
-                (',' arguments+=Argument)*
-                (',')?
-            )?
-        ')'
-	)?
-	operation+=SequenceOperation
-	(
-		'or' operation+=SequenceOperation
-	)*
+    ('('(
+        arguments+=Argument
+        (',' arguments+=Argument)*
+        (',')?
+    )?')')?
+    operation+=SequenceOperation ('or' operation+=SequenceOperation)*
 ;
-
 
 Argument:
     name=ID ':' typing=Typing
@@ -144,103 +119,98 @@ Operation:
 
 SequenceOperation:
     {SequenceOperation}
-	'{'
-		(operation+=Operation)*
-	'}'
+    '{'
+        (operation+=Operation)*
+    '}'
 ;
 
 HavocOperation:
-	'havoc' '(' referenceExpression=ReferenceExpression ')'
+    'havoc' '(' reference=ChainingExpression ')'
 ;
 
 ChoiceOperation:
-	'choice' operation+=SequenceOperation
-	(
-		'or' operation+=SequenceOperation
-	)*
-	(
-		'else' else=SequenceOperation
-	)?
+    'choice' operation+=SequenceOperation
+    (
+        'or' operation+=SequenceOperation
+    )*
+    (
+        'else' else=SequenceOperation
+    )?
 ;
 
-AssumptionOperation: 
-	'assume' '(' expression=Expression ')'
+AssumptionOperation:
+    'assume' '(' expression=Expression ')'
 ;
 
-IfOperation: 
-	'if' '(' guard=Expression ')'
-	body = SequenceOperation
-	(
-		'else' else=SequenceOperation
-	)?
+AssignmentOperation:
+    reference=ChainingExpression ':=' expression=Expression
 ;
 
-InlineOperation: 
-	InlineCall
-	| InlineChoice
-	| InlineSeq
-	| InlineIfOperation
+IfOperation:
+    'if' '(' guard=Expression ')'
+    body = SequenceOperation
+    (
+        'else' else=SequenceOperation
+    )?
 ;
 
-InlineChoice: 
-	'inline' 'choice' feature=ReferenceExpression '->' transition=ReferenceExpression 
-	(
-		'else' else=SequenceOperation
-	)?
+InlineOperation:
+    InlineCall
+    | InlineChoice
+    | InlineSeq
+    | InlineIfOperation
 ;
 
-InlineSeq: 
-	'inline' 'seq' feature=ReferenceExpression '->' transition=ReferenceExpression
+InlineChoice:
+    'inline' 'choice' reference=ChainingExpression '->' transition=[Transition|KeywordID]
+    (
+        'else' else=SequenceOperation
+    )?
 ;
 
-InlineCall: 
-	(static ?= 'static')? 'inline' reference=ReferenceExpression '('
-		(
-            argumentBindings+=ArgumentBinding
-            (',' argumentBindings+=ArgumentBinding)* (',')?
-		)?
-	')'
+InlineSeq:
+    'inline' 'seq' reference=ChainingExpression '->' transition=[Transition|KeywordID]
+;
+
+InlineCall:
+    (static ?= 'static')? 'inline' ((reference=ChainingExpression '.' transition=[Transition|KeywordID]) | transition=[Transition|FQN]) '('(
+        argumentBindings+=ArgumentBinding
+        (',' argumentBindings+=ArgumentBinding)* (',')?
+    )?')'
 ;
 
 ArgumentBinding:
-	expression=Expression
+    expression=Expression
 ;
 
 
-InlineIfOperation: 
-	'inline' 'if' '(' guard=Expression ')'
-	body = SequenceOperation
-	(
-		'else' else=SequenceOperation
-	)?
+InlineIfOperation:
+    'inline' 'if' '(' guard=Expression ')'
+    body = SequenceOperation
+    (
+        'else' else=SequenceOperation
+    )?
 ;
-
-
-AssignmentOperation: 
-	reference=ReferenceExpression ':=' expression=Expression
-;
-
-
 
 Variable:
-	(control ?= 'ctrl')? 'var' name=ID ':' typing=Typing (optional?='[0..1]' | '[1..1]')? ('=' expression=Expression)?
+    (control ?= 'ctrl')? 'var' name=ID
+    ':' typing=Typing
+    multiplicity=Multiplicity?
+    ('=' expression=Expression)?
 ;
 
 Feature returns Feature:
-	ActualFeature
-	| Containment
-	| Reference
-	| Derived
+    ActualFeature
+    | Containment
+    | Reference
+    | Derived
 ;
 
 fragment FeatureDeclaration returns Feature:
-	(
-	    name=ID
-	    | ((name=ID)? '::>' redefines=[Feature|FQN])
-    )
+    (name=ID | ((name=ID)? '::>' redefines=[Feature|FQN]))
     (':>' subsets+=[Feature|FQN])?
     ':' typing=Typing
-    (multiplicity=Multiplicity)?
+    multiplicity=Multiplicity?
 ;
 
 ActualFeature returns Feature:
@@ -249,48 +219,43 @@ ActualFeature returns Feature:
 
 Containment:
     'containment' FeatureDeclaration
-    (
-        '{'
-            (
-                features+=Feature
-                | initTransition+=InitTransition
-                | transitions+=NamedTransition
-                | mainTransition+=MainTransition
-                | havocTransition+=HavocTransition
-            )*
-        '}'
-    )?
+    ('{'
+        features+=Feature*
+    '}')?
 ;
 
 Reference:
-	'reference' FeatureDeclaration ('=' expression=Expression)?
+    'reference' FeatureDeclaration ('=' expression=Expression)?
 ;
 
 Derived:
-	'derived' 'reference' FeatureDeclaration 'as' 'pattern' pattern=[Pattern|FQN]
+    'derived' 'reference' FeatureDeclaration 'as' 'pattern' pattern=[Pattern|FQN]
 ;
 
-Multiplicity: 
-	OptionalMultiplicity
-	| OneMultiplicity
-	| ManyMultiplicity
-	| SomeMultiplicity
+Multiplicity:
+    DefiniteMultiplicity
+    | UnboundedMultiplicity
 ;
 
-OptionalMultiplicity: 
-	{OptionalMultiplicity} '[0..1]'
+UnboundedMultiplicity:
+    {UnboundedMultiplicity} '[' ']'
 ;
 
-OneMultiplicity: 
-	{OneMultiplicity} '[1..1]'
+DefiniteMultiplicity:
+    RangeMultiplicity
+    | ExactMultiplicity
 ;
 
-ManyMultiplicity: 
-	{ManyMultiplicity} '[0..*]'
+RangeMultiplicity:
+    '[' lowerBound=INT '..' upperBound=UpperBound ']'
 ;
 
-SomeMultiplicity:
-	{SomeMultiplicity} '[1..*]'
+ExactMultiplicity:
+    '[' value=INT ']'
+;
+
+UpperBound returns Ecore::EInt:
+    INT | "*"
 ;
 
 Typing:
@@ -298,21 +263,21 @@ Typing:
     | ReferenceTyping
 ;
 
-DataType: 
-	IntegerType 
-	| BooleanType
+DataType:
+    IntegerType
+    | BooleanType
 ;
 
-IntegerType: 
-	{IntegerType} 'Integer'
+IntegerType:
+    {IntegerType} 'Integer'
 ;
 
-BooleanType: 
-	{BooleanType} 'Boolean'
+BooleanType:
+    {BooleanType} 'Boolean'
 ;
 
 ReferenceTyping:
-    {ReferenceTyping} reference=ChainReferenceExpression
+    reference=ChainingExpression
 ;
 
 // Instance
@@ -346,7 +311,7 @@ Pattern:
 ;
 
 Parameter:
-	name=ID ':' type=[Type|FQN]
+    name=ID ':' type=[Type|FQN]
 ;
 
 PatternBody:
@@ -371,7 +336,7 @@ TypeConstraint:
 ;
 
 FeatureConstraint:
-    (negated?='neg')? type=[Type|FQN] '.' feature=[Feature] '(' variables+=PatternVariable ',' variables+=PatternVariable ')'
+    (negated?='neg')? type=[Type|FQN] '.' feature=[Feature|KeywordID] '(' variables+=PatternVariable ',' variables+=PatternVariable ')'
 ;
 
 PatternConstraint:
@@ -411,106 +376,128 @@ enum TransitiveClosureKind:
 
 // Expressions
 
-Expression: 
-	OperatorExpression
+Expression:
+    OperatorExpression
 ;
-
 
 // Operator expressions
 
 OperatorExpression returns Expression:
-	OrOperator
+    BooleanOperator
 ;
 
-OrOperator returns Expression: 
-	AndOperator ({OrOperator.operands+=current} '||' operands+=AndOperator)*
+enum BooleanOp:
+    AND="&&" | OR="||" | XOR="^^"
 ;
 
-AndOperator returns Expression: 
-	PlusOperator ({AndOperator.operands+=current} '&&' operands+=PlusOperator)*
+BooleanOperator returns Expression:
+    ComparisonOperator (
+        {BooleanOperator.left=current} op=BooleanOp right=ComparisonOperator
+    )*
 ;
 
-PlusOperator returns Expression: 
-	MinusOperator ({PlusOperator.operands+=current} '+' operands+=MinusOperator)*
+enum ComparisonOp:
+    LESS="<" | LESS_EQ="<=" | GREATER=">" | GREATER_EQ=">=" | EQ="==" | NOT_EQ="!="
 ;
 
-MinusOperator returns Expression: 
-	EqualityOperator ({MinusOperator.operands+=current} '-' operands+=EqualityOperator)*
+ComparisonOperator returns Expression:
+    AdditiveOperator (
+        {ComparisonOperator.left=current} op=ComparisonOp right=AdditiveOperator
+    )*
 ;
 
-EqualityOperator returns Expression: 
-	InequalityOperator ({EqualityOperator.operands+=current} '==' operands+=InequalityOperator)*
+enum AdditiveOp returns ArithmeticOp:
+    ADD="+" | SUB="-"
 ;
 
-InequalityOperator returns Expression: 
-	LessThanOperator ({InequalityOperator.operands+=current} '!=' operands+=LessThanOperator)*
+AdditiveOperator returns Expression:
+    MultiplicativeOperator (
+        {ArithmeticBinaryOperator.left=current} op=AdditiveOp right=MultiplicativeOperator
+    )*
 ;
 
-LessThanOperator returns Expression:
-	LessThanOrEqualsOperator ({LessThanOperator.operands+=current} '<' operands+=LessThanOrEqualsOperator)*
+enum MultiplicativeOp returns ArithmeticOp:
+    MUL="*" | DIV="/"
 ;
 
-LessThanOrEqualsOperator returns Expression:
-	GreaterThanOperator ({LessThanOrEqualsOperator.operands+=current} '<=' operands+=GreaterThanOperator)*
-;
-
-GreaterThanOperator returns Expression:
-	GreaterThanOrEqualsOperator ({GreaterThanOperator.operands+=current} '>' operands+=GreaterThanOrEqualsOperator)*
-;
-
-GreaterThanOrEqualsOperator returns Expression:
-	UnaryOperator ({GreaterThanOrEqualsOperator.operands+=current} '>=' operands+=UnaryOperator)*
+MultiplicativeOperator returns Expression:
+    UnaryOperator (
+        {ArithmeticBinaryOperator.left=current} op=MultiplicativeOp right=UnaryOperator
+    )*
 ;
 
 UnaryOperator returns Expression:
-	NotOperator
-	| UnaryMinusOperator
+	NegationOperator
+	| ArithmeticUnaryOperator
 	| PrimaryExpression
 ;
 
-NotOperator returns Expression:
-	{NotOperator} => ('not' | '!') operands+=UnaryOperator
+NegationOperator:
+	'!' body=UnaryOperator
 ;
 
-UnaryMinusOperator returns Expression:
-    {UnaryMinusOperator} => '-' operands+=UnaryOperator
+enum UnaryOp:
+	PLUS="+" | MINUS="-"
+;
+
+ArithmeticUnaryOperator:
+    op=UnaryOp body=UnaryOperator
+;
+
+PrimaryExpression returns Expression:
+      ReferenceExpression
+    | LiteralExpression
+    | '(' Expression ')'
+;
+
+// Literal expressions
+
+LiteralExpression:
+    LiteralBoolean
+    | LiteralInteger
+;
+
+LiteralBoolean:
+    value = BooleanValue
+;
+
+LiteralInteger:
+    value = INT
+;
+
+BooleanValue returns Ecore::EBoolean:
+    'true' | 'false'
 ;
 
 // Reference expressions
 
-PrimaryExpression returns Expression:
-	  ReferenceExpression
-	| LiteralExpression
-	| '(' Expression ')'
-;
-
 ReferenceExpression:
-	ChainReferenceExpression
+    ChainingExpression
+    | SelfReference
+    | NothingReference
 ;
 
-ChainReferenceExpression: 
-	chains+=ChainingExpression
-	(
-		'.' chains+=ChainingExpression
-	)*
+ChainingExpression:
+    chains+=FQNElementReferenceExpression
+    (
+        '.' chains+=ElementReferenceExpression
+    )*
 ;
 
-ChainingExpression: 
-	DeclarationReferenceExpression
-	| SelfReference
-	| NothingReference
+ElementReferenceExpression:
+    element=[NamedElement|KeywordID]
+;
+
+FQNElementReferenceExpression returns ElementReferenceExpression:
+    element=[NamedElement|FQN]
 ;
 
 SelfReference:
-	{SelfReference} 'Self'
+    {SelfReference} 'Self'
 ;
 
 NothingReference:
-	{NothingReference} 'Nothing'
-;
-
-DeclarationReferenceExpression: 
-	element=[Element|FQN]
+    {NothingReference} 'Nothing'
 ;
 
 FQN:
@@ -520,26 +507,8 @@ FQN:
 KeywordID:
     ID | KEYWORD
 ;
+
 KEYWORD:
     'init'
     | 'havoc'
-;
-
-// Literal expressions
-
-LiteralExpression:
-	   LiteralBoolean
-	 | LiteralInteger
-;
-
-LiteralBoolean:
-	value = BooleanValue
-;
-
-LiteralInteger:
-	value = INT
-;
-
-BooleanValue returns Ecore::EBoolean:
-	'true' | 'false'
 ;

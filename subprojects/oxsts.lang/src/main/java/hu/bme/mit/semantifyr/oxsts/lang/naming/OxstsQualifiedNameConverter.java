@@ -11,8 +11,10 @@ import org.eclipse.xtext.naming.IQualifiedNameConverter;
 
 @Singleton
 public class OxstsQualifiedNameConverter extends IQualifiedNameConverter.DefaultImpl {
+
     @Override
     public String getDelimiter() {
         return "::";
     }
+
 }

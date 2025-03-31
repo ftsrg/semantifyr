@@ -1,0 +1,24 @@
+/*
+ * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package hu.bme.mit.semantifyr.oxsts.lang.conversion;
+
+import com.google.inject.Inject;
+import org.eclipse.xtext.common.services.DefaultTerminalConverters;
+import org.eclipse.xtext.conversion.IValueConverter;
+import org.eclipse.xtext.conversion.ValueConverter;
+
+public class OxstsValueConverterService extends DefaultTerminalConverters {
+
+    @Inject
+    private UpperBoundValueConverter upperBoundValueConverter;
+
+    @ValueConverter(rule = "UpperBound")
+    public IValueConverter<Integer> UpperBound() {
+        return upperBoundValueConverter;
+    }
+
+}

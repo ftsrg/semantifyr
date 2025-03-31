@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -114,23 +114,19 @@ public class OxstsValidator extends AbstractOxstsValidator {
     }
 
     public void checkCompositeTransitionInlining(InlineComposite operation) {
-        var feature = (Feature) getReference(operation.getFeature());
+        var feature = (Feature) getReference(operation.getReference());
         var multiplicity = feature.getMultiplicity();
 
-        if (multiplicity instanceof OneMultiplicity || multiplicity instanceof OptionalMultiplicity) {
-            error("Composite inlining must reference feature with many multiplicity",
-                    OxstsPackage.Literals.INLINE_COMPOSITE__FEATURE,
-                    INVALID_MULTIPLICITIY);
-        }
+//        if (multiplicity instanceof OneMultiplicity || multiplicity instanceof OptionalMultiplicity) {
+//            error("Composite inlining must reference feature with many multiplicity",
+//                    OxstsPackage.Literals.INLINE_COMPOSITE__FEATURE,
+//                    INVALID_MULTIPLICITIY);
+//        }
     }
 
     private Type getType(Typing typing) {
         if (typing instanceof ReferenceTyping referenceTyping) {
-            var reference = referenceTyping.getReference().getChains().stream().findFirst().get();
-
-            if (reference instanceof DeclarationReferenceExpression declarationReference) {
-                return (Type) declarationReference.getElement();
-            }
+            return (Type) referenceTyping.getReference().getChains().getLast().getElement();
         }
 
         throw new RuntimeException("Typing is of incorrect form!");
@@ -147,11 +143,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
     }
 
     private Element getReference(ReferenceExpression reference) {
-        if (reference instanceof ChainReferenceExpression chainReference) {
-            var last = chainReference.getChains().get(chainReference.getChains().size() - 1);
-            if (last instanceof DeclarationReferenceExpression declarationReference) {
-                return declarationReference.getElement();
-            }
+        if (reference instanceof ChainingExpression chainReference) {
+            return chainReference.getChains().getLast().getElement();
         }
 
         throw new RuntimeException("Reference expression is of incorrect form!");
