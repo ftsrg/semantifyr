@@ -16,6 +16,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Property
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.XSTS
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.ArtifactManager
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.DefaultArtifactManager
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.optimization.ExpressionOptimizer.optimizeExpressions
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.eAllContentsOfType
@@ -47,10 +50,15 @@ object OperationOptimizer {
     }
 
     private fun Element.optimizeLoop() {
-        var workRemaining = true
+        var changed = true
 
-        while (workRemaining) {
-            workRemaining = optimizeInternal()
+        while (changed) {
+            changed = optimizeInternal()
+
+            if (changed) {
+                val xsts = EcoreUtil2.getContainerOfType(this, XSTS::class.java)
+                DefaultArtifactManager.intermediateXstsPersistor.persist(xsts)
+            }
         }
     }
 

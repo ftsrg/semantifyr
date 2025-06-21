@@ -10,6 +10,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChainReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Property
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.XSTS
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.ArtifactManager
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.DefaultArtifactManager
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.asChainReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.contextualEvaluator
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.copy
@@ -27,6 +30,10 @@ object PropertyAccessInliner {
 
         while (changed) {
             changed = inlinePropertyExpression(rootInstance)
+
+            if (changed) {
+                DefaultArtifactManager.intermediateXstsPersistor.persist(EcoreUtil2.getContainerOfType(this, XSTS::class.java))
+            }
         }
     }
 

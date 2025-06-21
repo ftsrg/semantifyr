@@ -1,0 +1,386 @@
+package SampleSpaceMission
+
+import Expressions
+import Attributes
+import States
+import Parts
+import Ports
+import Items
+import Actions
+import VerificationDefinitions
+
+type GroundStation : Part {
+    containment commandPort :> ports : CommandPort
+    containment spacecraftCommandPort :> ports : CommandPort // conjugated
+    containment dataPort :> ports : DataPort // conjugated
+
+    containment receivedData :> attributes : IntegerAttribute {
+        reference ::> defaultValue : Integer = 0
+    }
+
+    containment Behaviour :> exhibitState : ExhibitState {
+        containment Idle :> states : State
+        containment Operation :> states : State {
+            containment a1 :> entryActions : SendAction
+
+            containment Waiting :> states : State
+
+            containment t1 :> transitions : Transition {
+                reference ::> from : State = start
+                reference ::> to : State = Waiting
+            }
+            
+            containment t2 :> transitions : Transition {
+                reference ::> from : State = Waiting
+                reference ::> to : State = Waiting
+                // trigger
+                containment ::> guards : Guard {
+                    containment ::> expression : LessThanOperatorExpression {
+                        containment ::> left : AttributeReferenceExpression {
+                            reference ::> attribute : Attribute = receivedData
+                        }
+                        containment ::> right : LiteralIntegerExpression {
+                            reference ::> value : Integer = 100
+                        }
+                    }
+                }
+                containment ::> actions : AssignmentAction {
+                    reference ::> attribute : Attribute = receivedData
+                    containment ::> expression : PlusOperatorExpression {
+                        containment ::> left : AttributeReferenceExpression {
+                            reference ::> attribute : Attribute = receivedData
+                        }
+                        containment ::> right : LiteralIntegerExpression {
+                            reference ::> value : Integer = 10
+                        }
+                    }
+                }
+            }
+        }
+
+        containment t3 :> transitions : Transition {
+            reference ::> from : State = start
+            reference ::> to : State = Idle
+        }
+
+        containment t4 :> transitions : Transition {
+            reference ::> from : State = Idle
+            reference ::> to : State = Operation
+        }
+    }
+}
+
+type Spacecraft : Part {
+    containment commandPort :> ports : CommandPort
+    containment dataPort :> ports : DataPort
+
+    containment batteryCharge :> attributes : IntegerAttribute {
+        reference ::> defaultValue : Integer = 100
+    }
+    containment data :> attributes : IntegerAttribute {
+        reference ::> defaultValue : Integer = 100
+    }
+    containment recharging :> attributes : BooleanAttribute {
+        reference ::> defaultValue : Boolean = false
+    }
+
+    containment Behaviour :> exhibitState : ExhibitState {
+        reference ::> isParallel : Boolean = true
+
+        containment Communication :> states : State {
+            containment WaitingPing :> states : State
+
+            containment Transmitting :> states : State {
+                reference ::> isParallel : Boolean = true
+
+                containment SendData :> states : State {
+                    containment Sending :> states : State
+
+                    containment t1 :> transitions : Transition {
+                        reference ::> from : State = start
+                        reference ::> to : State = Sending
+                    }
+
+                    containment t2 :> transitions : Transition {
+                        reference ::> from : State = Sending
+                        reference ::> to : State = Sending
+                        // trigger
+                        containment ::> guards : Guard {
+                            containment ::> expression : NotExpression {
+                                containment ::> operand : OrOperatorExpression {
+                                    containment ::> left : LessThanOrEqualsOperatorExpression {
+                                        containment ::> left : AttributeReferenceExpression {
+                                            reference ::> attribute : Attribute = data
+                                        }
+                                        containment ::> right : LiteralIntegerExpression {
+                                            reference ::> value : Integer = 0
+                                        }
+                                    }
+                                    containment ::> right : LessThanOperatorExpression {
+                                        containment ::> left : AttributeReferenceExpression {
+                                            reference ::> attribute : Attribute = data
+                                        }
+                                        containment ::> right : LiteralIntegerExpression {
+                                            reference ::> value : Integer = 0
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        containment ::> actions : AssignmentAction {
+                            reference ::> attribute : Attribute = data
+                            containment ::> expression : MinusOperatorExpression {
+                                containment ::> left : AttributeReferenceExpression {
+                                    reference ::> attribute : Attribute = data
+                                }
+                                containment ::> right : LiteralIntegerExpression {
+                                    reference ::> value : Integer = 10
+                                }
+                            }
+                        }
+                    }
+                }
+
+                containment ConsumePower :> states : State {
+                    containment Consuming :> states : State
+
+                    containment t1 :> transitions : Transition {
+                        reference ::> from : State = start
+                        reference ::> to : State = Consuming
+                    }
+                    
+                    containment t2 :> transitions : Transition {
+                        reference ::> from : State = Consuming
+                        reference ::> to : State = Consuming
+                        // trigger
+                        containment ::> guards : Guard {
+                            containment ::> expression : NotExpression {
+                                containment ::> operand : LessThanOperatorExpression {
+                                    containment ::> left : AttributeReferenceExpression {
+                                        reference ::> attribute : Attribute = data
+                                    }
+                                    containment ::> right : LiteralIntegerExpression {
+                                        reference ::> value : Integer = 40
+                                    }
+                                }
+                            }
+                        }
+                        containment ::> actions : AssignmentAction {
+                            reference ::> attribute : Attribute = batteryCharge
+                            containment ::> expression : MinusOperatorExpression {
+                                containment ::> left : AttributeReferenceExpression {
+                                    reference ::> attribute : Attribute = batteryCharge
+                                }
+                                containment ::> right : LiteralIntegerExpression {
+                                    reference ::> value : Integer = 10
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            containment t1 :> transitions : Transition {
+                reference ::> from : State = start
+                reference ::> to : State = WaitingPing
+            }
+
+            containment t2 :> transitions : Transition {
+                reference ::> from : State = WaitingPing
+                reference ::> to : State = Transmitting
+                // trigger
+                containment ::> guards : Guard {
+                    containment ::> expression : AndOperatorExpression {
+                        containment ::> left : EqualityOperatorExpression {
+                            containment ::> left : AttributeReferenceExpression {
+                                reference ::> attribute : Attribute = recharging
+                            }
+                            containment ::> right : LiteralBooleanExpression {
+                                reference ::> value : Boolean = false
+                            }
+                        }
+                        containment ::> right : NotExpression {
+                            containment ::> operand : OrOperatorExpression {
+                                containment ::> left : LessThanOrEqualsOperatorExpression {
+                                    containment ::> left : AttributeReferenceExpression {
+                                        reference ::> attribute : Attribute = data
+                                    }
+                                    containment ::> right : LiteralIntegerExpression {
+                                        reference ::> value : Integer = 0
+                                    }
+                                }
+                                containment ::> right : LessThanOperatorExpression {
+                                    containment ::> left : AttributeReferenceExpression {
+                                        reference ::> attribute : Attribute = batteryCharge
+                                    }
+                                    containment ::> right : LiteralIntegerExpression {
+                                        reference ::> value : Integer = 40
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            containment t3 :> transitions : Transition {
+                reference ::> from : State = Transmitting.ConsumePower.Consuming
+                reference ::> to : State = WaitingPing
+                // trigger
+                containment ::> guards : Guard {
+                    containment ::> expression : OrOperatorExpression {
+                        containment ::> left : LessThanOrEqualsOperatorExpression {
+                            containment ::> left : AttributeReferenceExpression {
+                                reference ::> attribute : Attribute = data
+                            }
+                            containment ::> right : LiteralIntegerExpression {
+                                reference ::> value : Integer = 0
+                            }
+                        }
+                        containment ::> right : LessThanOperatorExpression {
+                            containment ::> left : AttributeReferenceExpression {
+                                reference ::> attribute : Attribute = data
+                            }
+                            containment ::> right : LiteralIntegerExpression {
+                                reference ::> value : Integer = 0
+                            }
+                        }
+                    }
+                }
+            }
+
+            containment t4 :> transitions : Transition {
+                reference ::> from : State = Transmitting.SendData.Sending
+                reference ::> to : State = WaitingPing
+                // trigger
+                containment ::> guards : Guard {
+                    containment ::> expression : LessThanOperatorExpression {
+                        containment ::> left : AttributeReferenceExpression {
+                            reference ::> attribute : Attribute = data
+                        }
+                        containment ::> right : LiteralIntegerExpression {
+                            reference ::> value : Integer = 40
+                        }
+                    }
+                }
+            }
+        }
+        containment Battery :> states : State {
+            containment NotRecharging :> states : State {
+                containment a1 :> entryActions : AssignmentAction {
+                    reference ::> attribute : Attribute = recharging
+                    containment ::> expression : LiteralBooleanExpression {
+                        reference ::> value : Boolean = false
+                    }
+                }
+            }
+            containment Recharging :> states : State {
+                containment a1 :> entryActions : AssignmentAction {
+                    reference ::> attribute : Attribute = recharging
+                    containment ::> expression : LiteralBooleanExpression {
+                        reference ::> value : Boolean = true
+                    }
+                }
+            }
+
+            containment t1 :> transitions : Transition {
+                reference ::> from : State = start
+                reference ::> to : State = NotRecharging
+            }
+
+            containment t2 :> transitions : Transition {
+                reference ::> from : State = Recharging
+                reference ::> to : State = NotRecharging
+
+                containment ::> guards : Guard {
+                    containment ::> expression : GreaterThanOrEqualsOperatorExpression {
+                        containment ::> left : AttributeReferenceExpression {
+                            reference ::> attribute : Attribute = batteryCharge
+                        }
+                        containment ::> right : LiteralIntegerExpression {
+                            reference ::> value : Integer = 100
+                        }
+                    }
+                }
+            }
+
+            containment t3 :> transitions : Transition {
+                reference ::> from : State = NotRecharging
+                reference ::> to : State = Recharging
+
+                containment ::> guards : Guard {
+                    containment ::> expression : LessThanOperatorExpression {
+                        containment ::> left : AttributeReferenceExpression {
+                            reference ::> attribute : Attribute = batteryCharge
+                        }
+                        containment ::> right : LiteralIntegerExpression {
+                            reference ::> value : Integer = 80
+                        }
+                    }
+                }
+            }
+
+
+            containment t4 :> transitions : Transition {
+                reference ::> from : State = Recharging
+                reference ::> to : State = Recharging
+
+                containment ::> guards : Guard {
+                    containment ::> expression : LessThanOperatorExpression {
+                        containment ::> left : AttributeReferenceExpression {
+                            reference ::> attribute : Attribute = batteryCharge
+                        }
+                        containment ::> right : LiteralIntegerExpression {
+                            reference ::> value : Integer = 100
+                        }
+                    }
+                }
+                containment ::> actions : AssignmentAction {
+                    reference ::> attribute : Attribute = batteryCharge
+                    containment ::> expression : PlusOperatorExpression {
+                        containment ::> left : AttributeReferenceExpression {
+                            reference ::> attribute : Attribute = batteryCharge
+                        }
+                        containment ::> right : LiteralIntegerExpression {
+                            reference ::> value : Integer = 10
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+type Data : Item
+type Command : Item
+type PingCommand : Item
+type StopCommand : Item
+type StartCommand : Item
+
+type CommandPort : Port {
+    
+}
+type DataPort : Port
+
+type Mission : Part {
+    containment commandPort :> ports : CommandPort
+
+    containment groundStation :> parts : GroundStation
+    containment spacecraft :> parts : Spacecraft
+
+    tran { static inline Parts::Part::main() }
+    init { static inline Parts::Part::init() }
+}
+
+target Station_IdleReachable : GroundStation {
+    prop { false }
+} 
+
+target Station_OperationReachable : Spacecraft {
+    prop { false }
+}
+
+target MissionReachable : Mission {
+    prop { false }
+}

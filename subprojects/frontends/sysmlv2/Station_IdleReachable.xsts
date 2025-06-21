@@ -1,0 +1,90 @@
+type $_station_IdleReachable$_commandPort$inputItems$$type : {
+    $_Nothing$$literal
+}
+type $_station_IdleReachable$_commandPort$outputItems$$type : {
+    $_Nothing$$literal
+}
+type $_station_IdleReachable$_spacecraftCommandPort$inputItems$$type : {
+    $_Nothing$$literal
+}
+type $_station_IdleReachable$_spacecraftCommandPort$outputItems$$type : {
+    $_Nothing$$literal
+}
+type $_station_IdleReachable$_dataPort$inputItems$$type : {
+    $_Nothing$$literal
+}
+type $_station_IdleReachable$_dataPort$outputItems$$type : {
+    $_Nothing$$literal
+}
+type $_station_IdleReachable$_Behaviour$states$$type : {
+    $_station_IdleReachable$_Behaviour$_Idle$$literal,
+    $_station_IdleReachable$_Behaviour$_Operation$$literal,
+    $_Nothing$$literal
+}
+type $_station_IdleReachable$_Behaviour$_Idle$states$$type : {
+    $_Nothing$$literal
+}
+type $_station_IdleReachable$_Behaviour$_Operation$states$$type : {
+    $_station_IdleReachable$_Behaviour$_Operation$_Waiting$$literal,
+    $_Nothing$$literal
+}
+type $_station_IdleReachable$_Behaviour$_Operation$_Waiting$states$$type : {
+    $_Nothing$$literal
+}
+
+var $_station_IdleReachable$_commandPort$incomingItem : $_station_IdleReachable$_commandPort$inputItems$$type = $_Nothing$$literal
+var $_station_IdleReachable$_commandPort$outgoingItem : $_station_IdleReachable$_commandPort$outputItems$$type = $_Nothing$$literal
+var $_station_IdleReachable$_spacecraftCommandPort$incomingItem : $_station_IdleReachable$_spacecraftCommandPort$inputItems$$type = $_Nothing$$literal
+var $_station_IdleReachable$_spacecraftCommandPort$outgoingItem : $_station_IdleReachable$_spacecraftCommandPort$outputItems$$type = $_Nothing$$literal
+var $_station_IdleReachable$_dataPort$incomingItem : $_station_IdleReachable$_dataPort$inputItems$$type = $_Nothing$$literal
+var $_station_IdleReachable$_dataPort$outgoingItem : $_station_IdleReachable$_dataPort$outputItems$$type = $_Nothing$$literal
+var $_station_IdleReachable$_receivedData$value : integer = 0
+var $_station_IdleReachable$_Behaviour$activeState : $_station_IdleReachable$_Behaviour$states$$type = $_Nothing$$literal
+var $_station_IdleReachable$_Behaviour$_Idle$activeState : $_station_IdleReachable$_Behaviour$_Idle$states$$type = $_Nothing$$literal
+var $_station_IdleReachable$_Behaviour$_Operation$activeState : $_station_IdleReachable$_Behaviour$_Operation$states$$type = $_Nothing$$literal
+var $_station_IdleReachable$_Behaviour$_Operation$_Waiting$activeState : $_station_IdleReachable$_Behaviour$_Operation$_Waiting$states$$type = $_Nothing$$literal
+
+trans {
+    $_station_IdleReachable$_commandPort$outgoingItem := $_Nothing$$literal;
+    $_station_IdleReachable$_spacecraftCommandPort$outgoingItem := $_Nothing$$literal;
+    $_station_IdleReachable$_dataPort$outgoingItem := $_Nothing$$literal;
+    choice {
+        assume (($_station_IdleReachable$_Behaviour$activeState == $_station_IdleReachable$_Behaviour$_Idle$$literal));
+        if (($_station_IdleReachable$_Behaviour$activeState == $_station_IdleReachable$_Behaviour$_Idle$$literal)) {
+            $_station_IdleReachable$_Behaviour$activeState := $_Nothing$$literal;
+        }
+        $_station_IdleReachable$_Behaviour$activeState := $_Nothing$$literal;
+        $_station_IdleReachable$_Behaviour$activeState := $_station_IdleReachable$_Behaviour$_Operation$$literal;
+        $_station_IdleReachable$_Behaviour$_Operation$activeState := $_station_IdleReachable$_Behaviour$_Operation$_Waiting$$literal;
+    } or {
+        assume (! ((($_station_IdleReachable$_Behaviour$activeState == $_station_IdleReachable$_Behaviour$_Idle$$literal) && (($_station_IdleReachable$_Behaviour$activeState == $_station_IdleReachable$_Behaviour$_Idle$$literal) || ! (($_station_IdleReachable$_Behaviour$activeState == $_station_IdleReachable$_Behaviour$_Idle$$literal))))));
+        choice {
+            assume (($_station_IdleReachable$_receivedData$value < 100));
+            assume (($_station_IdleReachable$_Behaviour$_Operation$activeState == $_station_IdleReachable$_Behaviour$_Operation$_Waiting$$literal));
+            if (($_station_IdleReachable$_Behaviour$_Operation$activeState == $_station_IdleReachable$_Behaviour$_Operation$_Waiting$$literal)) {
+                $_station_IdleReachable$_Behaviour$_Operation$activeState := $_Nothing$$literal;
+            }
+            $_station_IdleReachable$_Behaviour$_Operation$activeState := $_Nothing$$literal;
+            $_station_IdleReachable$_receivedData$value := ($_station_IdleReachable$_receivedData$value + 10);
+            $_station_IdleReachable$_Behaviour$_Operation$activeState := $_station_IdleReachable$_Behaviour$_Operation$_Waiting$$literal;
+        } or {
+            assume (! (((($_station_IdleReachable$_receivedData$value < 100) && ($_station_IdleReachable$_Behaviour$_Operation$activeState == $_station_IdleReachable$_Behaviour$_Operation$_Waiting$$literal)) && (($_station_IdleReachable$_Behaviour$_Operation$activeState == $_station_IdleReachable$_Behaviour$_Operation$_Waiting$$literal) || ! (($_station_IdleReachable$_Behaviour$_Operation$activeState == $_station_IdleReachable$_Behaviour$_Operation$_Waiting$$literal))))));
+        }
+    }
+    $_station_IdleReachable$_commandPort$incomingItem := $_Nothing$$literal;
+    $_station_IdleReachable$_spacecraftCommandPort$incomingItem := $_Nothing$$literal;
+    $_station_IdleReachable$_dataPort$incomingItem := $_Nothing$$literal;
+}
+
+init {
+    $_station_IdleReachable$_commandPort$outgoingItem := $_Nothing$$literal;
+    $_station_IdleReachable$_spacecraftCommandPort$outgoingItem := $_Nothing$$literal;
+    $_station_IdleReachable$_dataPort$outgoingItem := $_Nothing$$literal;
+    $_station_IdleReachable$_Behaviour$activeState := $_station_IdleReachable$_Behaviour$_Idle$$literal;
+}
+
+env {}
+
+prop {
+    false
+}

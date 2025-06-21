@@ -161,6 +161,9 @@ fun ChainingExpression.referencedElementOrNull(): Element? {
     return null
 }
 
+val Feature.realName: String
+    get() = name ?: redefines?.realName ?: Namings.UNNAMED
+
 val Feature.allContainments: Sequence<Containment>
     get() = allFeatures.filterIsInstance<Containment>()
 
@@ -169,6 +172,21 @@ val Feature.allFeatures: Sequence<Feature>
 
 val Feature.allVariables: Sequence<Variable>
     get() = type.allVariables
+
+val Transition.realName: String
+    get() = name ?: when {
+        isMainTransition -> "main"
+        isInitTransition -> "init"
+        isHavocTransition -> "havoc"
+        else -> "UNNAMED"
+    }
+
+val Element.realName: String
+    get() = when (this) {
+        is Transition -> realName
+        is Feature -> realName
+        else -> name
+    }
 
 val Type.allFeatures: Sequence<Feature>
     get() = sequence {

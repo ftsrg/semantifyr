@@ -1,0 +1,271 @@
+type $_missionReachable$_commandPort$inputItems$$type : {
+    $_Nothing$$literal
+}
+type $_missionReachable$_commandPort$outputItems$$type : {
+    $_Nothing$$literal
+}
+type $_missionReachable$_groundStation$_commandPort$inputItems$$type : {
+    $_Nothing$$literal
+}
+type $_missionReachable$_groundStation$_commandPort$outputItems$$type : {
+    $_Nothing$$literal
+}
+type $_missionReachable$_groundStation$_spacecraftCommandPort$inputItems$$type : {
+    $_Nothing$$literal
+}
+type $_missionReachable$_groundStation$_spacecraftCommandPort$outputItems$$type : {
+    $_Nothing$$literal
+}
+type $_missionReachable$_groundStation$_dataPort$inputItems$$type : {
+    $_Nothing$$literal
+}
+type $_missionReachable$_groundStation$_dataPort$outputItems$$type : {
+    $_Nothing$$literal
+}
+type $_missionReachable$_groundStation$_Behaviour$states$$type : {
+    $_missionReachable$_groundStation$_Behaviour$_Idle$$literal,
+    $_missionReachable$_groundStation$_Behaviour$_Operation$$literal,
+    $_Nothing$$literal
+}
+type $_missionReachable$_spacecraft$_commandPort$inputItems$$type : {
+    $_Nothing$$literal
+}
+type $_missionReachable$_spacecraft$_commandPort$outputItems$$type : {
+    $_Nothing$$literal
+}
+type $_missionReachable$_spacecraft$_dataPort$inputItems$$type : {
+    $_Nothing$$literal
+}
+type $_missionReachable$_spacecraft$_dataPort$outputItems$$type : {
+    $_Nothing$$literal
+}
+type $_missionReachable$_spacecraft$_Behaviour$states$$type : {
+    $_missionReachable$_spacecraft$_Behaviour$_Communication$$literal,
+    $_missionReachable$_spacecraft$_Behaviour$_Battery$$literal,
+    $_Nothing$$literal
+}
+type $_missionReachable$_groundStation$_Behaviour$_Idle$states$$type : {
+    $_Nothing$$literal
+}
+type $_missionReachable$_groundStation$_Behaviour$_Operation$states$$type : {
+    $_missionReachable$_groundStation$_Behaviour$_Operation$_Waiting$$literal,
+    $_Nothing$$literal
+}
+type $_missionReachable$_spacecraft$_Behaviour$_Communication$states$$type : {
+    $_missionReachable$_spacecraft$_Behaviour$_Communication$_WaitingPing$$literal,
+    $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$$literal,
+    $_Nothing$$literal
+}
+type $_missionReachable$_spacecraft$_Behaviour$_Battery$states$$type : {
+    $_missionReachable$_spacecraft$_Behaviour$_Battery$_NotRecharging$$literal,
+    $_missionReachable$_spacecraft$_Behaviour$_Battery$_Recharging$$literal,
+    $_Nothing$$literal
+}
+type $_missionReachable$_groundStation$_Behaviour$_Operation$_Waiting$states$$type : {
+    $_Nothing$$literal
+}
+type $_missionReachable$_spacecraft$_Behaviour$_Communication$_WaitingPing$states$$type : {
+    $_Nothing$$literal
+}
+type $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$states$$type : {
+    $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$$literal,
+    $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$$literal,
+    $_Nothing$$literal
+}
+type $_missionReachable$_spacecraft$_Behaviour$_Battery$_NotRecharging$states$$type : {
+    $_Nothing$$literal
+}
+type $_missionReachable$_spacecraft$_Behaviour$_Battery$_Recharging$states$$type : {
+    $_Nothing$$literal
+}
+type $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$states$$type : {
+    $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$_Sending$$literal,
+    $_Nothing$$literal
+}
+type $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$states$$type : {
+    $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$_Consuming$$literal,
+    $_Nothing$$literal
+}
+type $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$_Sending$states$$type : {
+    $_Nothing$$literal
+}
+type $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$_Consuming$states$$type : {
+    $_Nothing$$literal
+}
+
+var $_missionReachable$_commandPort$incomingItem : $_missionReachable$_commandPort$inputItems$$type = $_Nothing$$literal
+var $_missionReachable$_commandPort$outgoingItem : $_missionReachable$_commandPort$outputItems$$type = $_Nothing$$literal
+var $_missionReachable$_groundStation$_commandPort$incomingItem : $_missionReachable$_groundStation$_commandPort$inputItems$$type = $_Nothing$$literal
+var $_missionReachable$_groundStation$_commandPort$outgoingItem : $_missionReachable$_groundStation$_commandPort$outputItems$$type = $_Nothing$$literal
+var $_missionReachable$_groundStation$_spacecraftCommandPort$incomingItem : $_missionReachable$_groundStation$_spacecraftCommandPort$inputItems$$type = $_Nothing$$literal
+var $_missionReachable$_groundStation$_spacecraftCommandPort$outgoingItem : $_missionReachable$_groundStation$_spacecraftCommandPort$outputItems$$type = $_Nothing$$literal
+var $_missionReachable$_groundStation$_dataPort$incomingItem : $_missionReachable$_groundStation$_dataPort$inputItems$$type = $_Nothing$$literal
+var $_missionReachable$_groundStation$_dataPort$outgoingItem : $_missionReachable$_groundStation$_dataPort$outputItems$$type = $_Nothing$$literal
+var $_missionReachable$_groundStation$_receivedData$value : integer = 0
+var $_missionReachable$_groundStation$_Behaviour$activeState : $_missionReachable$_groundStation$_Behaviour$states$$type = $_Nothing$$literal
+var $_missionReachable$_spacecraft$_commandPort$incomingItem : $_missionReachable$_spacecraft$_commandPort$inputItems$$type = $_Nothing$$literal
+var $_missionReachable$_spacecraft$_commandPort$outgoingItem : $_missionReachable$_spacecraft$_commandPort$outputItems$$type = $_Nothing$$literal
+var $_missionReachable$_spacecraft$_dataPort$incomingItem : $_missionReachable$_spacecraft$_dataPort$inputItems$$type = $_Nothing$$literal
+var $_missionReachable$_spacecraft$_dataPort$outgoingItem : $_missionReachable$_spacecraft$_dataPort$outputItems$$type = $_Nothing$$literal
+var $_missionReachable$_spacecraft$_batteryCharge$value : integer = 100
+var $_missionReachable$_spacecraft$_data$value : integer = 100
+var $_missionReachable$_spacecraft$_recharging$value : boolean = false
+var $_missionReachable$_spacecraft$_Behaviour$activeState : $_missionReachable$_spacecraft$_Behaviour$states$$type = $_Nothing$$literal
+var $_missionReachable$_groundStation$_Behaviour$_Idle$activeState : $_missionReachable$_groundStation$_Behaviour$_Idle$states$$type = $_Nothing$$literal
+var $_missionReachable$_groundStation$_Behaviour$_Operation$activeState : $_missionReachable$_groundStation$_Behaviour$_Operation$states$$type = $_Nothing$$literal
+var $_missionReachable$_spacecraft$_Behaviour$_Communication$activeState : $_missionReachable$_spacecraft$_Behaviour$_Communication$states$$type = $_Nothing$$literal
+var $_missionReachable$_spacecraft$_Behaviour$_Battery$activeState : $_missionReachable$_spacecraft$_Behaviour$_Battery$states$$type = $_Nothing$$literal
+var $_missionReachable$_groundStation$_Behaviour$_Operation$_Waiting$activeState : $_missionReachable$_groundStation$_Behaviour$_Operation$_Waiting$states$$type = $_Nothing$$literal
+var $_missionReachable$_spacecraft$_Behaviour$_Communication$_WaitingPing$activeState : $_missionReachable$_spacecraft$_Behaviour$_Communication$_WaitingPing$states$$type = $_Nothing$$literal
+var $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$activeState : $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$states$$type = $_Nothing$$literal
+var $_missionReachable$_spacecraft$_Behaviour$_Battery$_NotRecharging$activeState : $_missionReachable$_spacecraft$_Behaviour$_Battery$_NotRecharging$states$$type = $_Nothing$$literal
+var $_missionReachable$_spacecraft$_Behaviour$_Battery$_Recharging$activeState : $_missionReachable$_spacecraft$_Behaviour$_Battery$_Recharging$states$$type = $_Nothing$$literal
+var $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$activeState : $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$states$$type = $_Nothing$$literal
+var $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$activeState : $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$states$$type = $_Nothing$$literal
+var $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$_Sending$activeState : $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$_Sending$states$$type = $_Nothing$$literal
+var $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$_Consuming$activeState : $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$_Consuming$states$$type = $_Nothing$$literal
+
+trans {
+    $_missionReachable$_commandPort$outgoingItem := $_Nothing$$literal;
+    $_missionReachable$_groundStation$_commandPort$outgoingItem := $_Nothing$$literal;
+    $_missionReachable$_groundStation$_spacecraftCommandPort$outgoingItem := $_Nothing$$literal;
+    $_missionReachable$_groundStation$_dataPort$outgoingItem := $_Nothing$$literal;
+    choice {
+        assume (($_missionReachable$_groundStation$_Behaviour$activeState == $_missionReachable$_groundStation$_Behaviour$_Idle$$literal));
+        if (($_missionReachable$_groundStation$_Behaviour$activeState == $_missionReachable$_groundStation$_Behaviour$_Idle$$literal)) {
+            $_missionReachable$_groundStation$_Behaviour$activeState := $_Nothing$$literal;
+        }
+        $_missionReachable$_groundStation$_Behaviour$activeState := $_Nothing$$literal;
+        $_missionReachable$_groundStation$_Behaviour$activeState := $_missionReachable$_groundStation$_Behaviour$_Operation$$literal;
+        $_missionReachable$_groundStation$_Behaviour$_Operation$activeState := $_missionReachable$_groundStation$_Behaviour$_Operation$_Waiting$$literal;
+    } or {
+        assume (! ((($_missionReachable$_groundStation$_Behaviour$activeState == $_missionReachable$_groundStation$_Behaviour$_Idle$$literal) && (($_missionReachable$_groundStation$_Behaviour$activeState == $_missionReachable$_groundStation$_Behaviour$_Idle$$literal) || ! (($_missionReachable$_groundStation$_Behaviour$activeState == $_missionReachable$_groundStation$_Behaviour$_Idle$$literal))))));
+        choice {
+            assume (($_missionReachable$_groundStation$_receivedData$value < 100));
+            assume (($_missionReachable$_groundStation$_Behaviour$_Operation$activeState == $_missionReachable$_groundStation$_Behaviour$_Operation$_Waiting$$literal));
+            if (($_missionReachable$_groundStation$_Behaviour$_Operation$activeState == $_missionReachable$_groundStation$_Behaviour$_Operation$_Waiting$$literal)) {
+                $_missionReachable$_groundStation$_Behaviour$_Operation$activeState := $_Nothing$$literal;
+            }
+            $_missionReachable$_groundStation$_Behaviour$_Operation$activeState := $_Nothing$$literal;
+            $_missionReachable$_groundStation$_receivedData$value := ($_missionReachable$_groundStation$_receivedData$value + 10);
+            $_missionReachable$_groundStation$_Behaviour$_Operation$activeState := $_missionReachable$_groundStation$_Behaviour$_Operation$_Waiting$$literal;
+        } or {
+            assume (! (((($_missionReachable$_groundStation$_receivedData$value < 100) && ($_missionReachable$_groundStation$_Behaviour$_Operation$activeState == $_missionReachable$_groundStation$_Behaviour$_Operation$_Waiting$$literal)) && (($_missionReachable$_groundStation$_Behaviour$_Operation$activeState == $_missionReachable$_groundStation$_Behaviour$_Operation$_Waiting$$literal) || ! (($_missionReachable$_groundStation$_Behaviour$_Operation$activeState == $_missionReachable$_groundStation$_Behaviour$_Operation$_Waiting$$literal))))));
+        }
+    }
+    $_missionReachable$_groundStation$_commandPort$incomingItem := $_Nothing$$literal;
+    $_missionReachable$_groundStation$_spacecraftCommandPort$incomingItem := $_Nothing$$literal;
+    $_missionReachable$_groundStation$_dataPort$incomingItem := $_Nothing$$literal;
+    $_missionReachable$_spacecraft$_commandPort$outgoingItem := $_Nothing$$literal;
+    $_missionReachable$_spacecraft$_dataPort$outgoingItem := $_Nothing$$literal;
+    choice {
+        assume ((($_missionReachable$_spacecraft$_recharging$value == false) && ! ((($_missionReachable$_spacecraft$_data$value <= 0) || ($_missionReachable$_spacecraft$_batteryCharge$value < 40)))));
+        assume (($_missionReachable$_spacecraft$_Behaviour$_Communication$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_WaitingPing$$literal));
+        if (($_missionReachable$_spacecraft$_Behaviour$_Communication$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_WaitingPing$$literal)) {
+            $_missionReachable$_spacecraft$_Behaviour$_Communication$activeState := $_Nothing$$literal;
+        }
+        $_missionReachable$_spacecraft$_Behaviour$_Communication$activeState := $_Nothing$$literal;
+        $_missionReachable$_spacecraft$_Behaviour$_Communication$activeState := $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$$literal;
+        $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$activeState := $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$_Sending$$literal;
+        $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$activeState := $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$_Consuming$$literal;
+    } or {
+        assume (! ((((($_missionReachable$_spacecraft$_recharging$value == false) && ! ((($_missionReachable$_spacecraft$_data$value <= 0) || ($_missionReachable$_spacecraft$_batteryCharge$value < 40)))) && ($_missionReachable$_spacecraft$_Behaviour$_Communication$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_WaitingPing$$literal)) && (($_missionReachable$_spacecraft$_Behaviour$_Communication$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_WaitingPing$$literal) || ! (($_missionReachable$_spacecraft$_Behaviour$_Communication$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_WaitingPing$$literal))))));
+        choice {
+            assume (! ((($_missionReachable$_spacecraft$_data$value <= 0) || ($_missionReachable$_spacecraft$_data$value < 0))));
+            assume (($_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$_Sending$$literal));
+            if (($_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$_Sending$$literal)) {
+                $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$activeState := $_Nothing$$literal;
+            }
+            $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$activeState := $_Nothing$$literal;
+            $_missionReachable$_spacecraft$_data$value := ($_missionReachable$_spacecraft$_data$value - 10);
+            $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$activeState := $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$_Sending$$literal;
+        } or {
+            assume (($_missionReachable$_spacecraft$_data$value < 40));
+            assume (($_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$_Sending$$literal));
+            if (($_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$_Sending$$literal)) {
+                $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$activeState := $_Nothing$$literal;
+            }
+            $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$activeState := $_Nothing$$literal;
+            $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$activeState := $_Nothing$$literal;
+            $_missionReachable$_spacecraft$_Behaviour$_Communication$activeState := $_Nothing$$literal;
+            $_missionReachable$_spacecraft$_Behaviour$_Communication$activeState := $_missionReachable$_spacecraft$_Behaviour$_Communication$_WaitingPing$$literal;
+        } or {
+            assume (! ((((! ((($_missionReachable$_spacecraft$_data$value <= 0) || ($_missionReachable$_spacecraft$_data$value < 0))) && ($_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$_Sending$$literal)) && (($_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$_Sending$$literal) || ! (($_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$_Sending$$literal)))) || ((($_missionReachable$_spacecraft$_data$value < 40) && ($_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$_Sending$$literal)) && (($_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$_Sending$$literal) || ! (($_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_SendData$_Sending$$literal)))))));
+        }
+        choice {
+            assume (! (($_missionReachable$_spacecraft$_data$value < 40)));
+            assume (($_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$_Consuming$$literal));
+            if (($_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$_Consuming$$literal)) {
+                $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$activeState := $_Nothing$$literal;
+            }
+            $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$activeState := $_Nothing$$literal;
+            $_missionReachable$_spacecraft$_batteryCharge$value := ($_missionReachable$_spacecraft$_batteryCharge$value - 10);
+            $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$activeState := $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$_Consuming$$literal;
+        } or {
+            assume ((($_missionReachable$_spacecraft$_data$value <= 0) || ($_missionReachable$_spacecraft$_data$value < 0)));
+            assume (($_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$_Consuming$$literal));
+            if (($_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$_Consuming$$literal)) {
+                $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$activeState := $_Nothing$$literal;
+            }
+            $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$activeState := $_Nothing$$literal;
+            $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$activeState := $_Nothing$$literal;
+            $_missionReachable$_spacecraft$_Behaviour$_Communication$activeState := $_Nothing$$literal;
+            $_missionReachable$_spacecraft$_Behaviour$_Communication$activeState := $_missionReachable$_spacecraft$_Behaviour$_Communication$_WaitingPing$$literal;
+        } or {
+            assume (! ((((! (($_missionReachable$_spacecraft$_data$value < 40)) && ($_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$_Consuming$$literal)) && (($_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$_Consuming$$literal) || ! (($_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$_Consuming$$literal)))) || (((($_missionReachable$_spacecraft$_data$value <= 0) || ($_missionReachable$_spacecraft$_data$value < 0)) && ($_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$_Consuming$$literal)) && (($_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$_Consuming$$literal) || ! (($_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$activeState == $_missionReachable$_spacecraft$_Behaviour$_Communication$_Transmitting$_ConsumePower$_Consuming$$literal)))))));
+        }
+    }
+    choice {
+        assume (($_missionReachable$_spacecraft$_batteryCharge$value >= 100));
+        assume (($_missionReachable$_spacecraft$_Behaviour$_Battery$activeState == $_missionReachable$_spacecraft$_Behaviour$_Battery$_Recharging$$literal));
+        if (($_missionReachable$_spacecraft$_Behaviour$_Battery$activeState == $_missionReachable$_spacecraft$_Behaviour$_Battery$_Recharging$$literal)) {
+            $_missionReachable$_spacecraft$_Behaviour$_Battery$activeState := $_Nothing$$literal;
+        }
+        $_missionReachable$_spacecraft$_Behaviour$_Battery$activeState := $_Nothing$$literal;
+        $_missionReachable$_spacecraft$_Behaviour$_Battery$activeState := $_missionReachable$_spacecraft$_Behaviour$_Battery$_NotRecharging$$literal;
+        $_missionReachable$_spacecraft$_recharging$value := false;
+    } or {
+        assume (($_missionReachable$_spacecraft$_batteryCharge$value < 80));
+        assume (($_missionReachable$_spacecraft$_Behaviour$_Battery$activeState == $_missionReachable$_spacecraft$_Behaviour$_Battery$_NotRecharging$$literal));
+        if (($_missionReachable$_spacecraft$_Behaviour$_Battery$activeState == $_missionReachable$_spacecraft$_Behaviour$_Battery$_NotRecharging$$literal)) {
+            $_missionReachable$_spacecraft$_Behaviour$_Battery$activeState := $_Nothing$$literal;
+        }
+        $_missionReachable$_spacecraft$_Behaviour$_Battery$activeState := $_Nothing$$literal;
+        $_missionReachable$_spacecraft$_Behaviour$_Battery$activeState := $_missionReachable$_spacecraft$_Behaviour$_Battery$_Recharging$$literal;
+        $_missionReachable$_spacecraft$_recharging$value := true;
+    } or {
+        assume (($_missionReachable$_spacecraft$_batteryCharge$value < 100));
+        assume (($_missionReachable$_spacecraft$_Behaviour$_Battery$activeState == $_missionReachable$_spacecraft$_Behaviour$_Battery$_Recharging$$literal));
+        if (($_missionReachable$_spacecraft$_Behaviour$_Battery$activeState == $_missionReachable$_spacecraft$_Behaviour$_Battery$_Recharging$$literal)) {
+            $_missionReachable$_spacecraft$_Behaviour$_Battery$activeState := $_Nothing$$literal;
+        }
+        $_missionReachable$_spacecraft$_Behaviour$_Battery$activeState := $_Nothing$$literal;
+        $_missionReachable$_spacecraft$_batteryCharge$value := ($_missionReachable$_spacecraft$_batteryCharge$value + 10);
+        $_missionReachable$_spacecraft$_Behaviour$_Battery$activeState := $_missionReachable$_spacecraft$_Behaviour$_Battery$_Recharging$$literal;
+        $_missionReachable$_spacecraft$_recharging$value := true;
+    } or {
+        assume (! (((((($_missionReachable$_spacecraft$_batteryCharge$value >= 100) && ($_missionReachable$_spacecraft$_Behaviour$_Battery$activeState == $_missionReachable$_spacecraft$_Behaviour$_Battery$_Recharging$$literal)) && (($_missionReachable$_spacecraft$_Behaviour$_Battery$activeState == $_missionReachable$_spacecraft$_Behaviour$_Battery$_Recharging$$literal) || ! (($_missionReachable$_spacecraft$_Behaviour$_Battery$activeState == $_missionReachable$_spacecraft$_Behaviour$_Battery$_Recharging$$literal)))) || ((($_missionReachable$_spacecraft$_batteryCharge$value < 80) && ($_missionReachable$_spacecraft$_Behaviour$_Battery$activeState == $_missionReachable$_spacecraft$_Behaviour$_Battery$_NotRecharging$$literal)) && (($_missionReachable$_spacecraft$_Behaviour$_Battery$activeState == $_missionReachable$_spacecraft$_Behaviour$_Battery$_NotRecharging$$literal) || ! (($_missionReachable$_spacecraft$_Behaviour$_Battery$activeState == $_missionReachable$_spacecraft$_Behaviour$_Battery$_NotRecharging$$literal))))) || ((($_missionReachable$_spacecraft$_batteryCharge$value < 100) && ($_missionReachable$_spacecraft$_Behaviour$_Battery$activeState == $_missionReachable$_spacecraft$_Behaviour$_Battery$_Recharging$$literal)) && (($_missionReachable$_spacecraft$_Behaviour$_Battery$activeState == $_missionReachable$_spacecraft$_Behaviour$_Battery$_Recharging$$literal) || ! (($_missionReachable$_spacecraft$_Behaviour$_Battery$activeState == $_missionReachable$_spacecraft$_Behaviour$_Battery$_Recharging$$literal)))))));
+    }
+    $_missionReachable$_spacecraft$_commandPort$incomingItem := $_Nothing$$literal;
+    $_missionReachable$_spacecraft$_dataPort$incomingItem := $_Nothing$$literal;
+    $_missionReachable$_commandPort$incomingItem := $_Nothing$$literal;
+}
+
+init {
+    $_missionReachable$_groundStation$_commandPort$outgoingItem := $_Nothing$$literal;
+    $_missionReachable$_groundStation$_spacecraftCommandPort$outgoingItem := $_Nothing$$literal;
+    $_missionReachable$_groundStation$_dataPort$outgoingItem := $_Nothing$$literal;
+    $_missionReachable$_groundStation$_Behaviour$activeState := $_missionReachable$_groundStation$_Behaviour$_Idle$$literal;
+    $_missionReachable$_spacecraft$_commandPort$outgoingItem := $_Nothing$$literal;
+    $_missionReachable$_spacecraft$_dataPort$outgoingItem := $_Nothing$$literal;
+    $_missionReachable$_spacecraft$_Behaviour$_Communication$activeState := $_missionReachable$_spacecraft$_Behaviour$_Communication$_WaitingPing$$literal;
+    $_missionReachable$_spacecraft$_Behaviour$_Battery$activeState := $_missionReachable$_spacecraft$_Behaviour$_Battery$_NotRecharging$$literal;
+    $_missionReachable$_spacecraft$_recharging$value := false;
+    $_missionReachable$_commandPort$outgoingItem := $_Nothing$$literal;
+}
+
+env {}
+
+prop {
+    false
+}

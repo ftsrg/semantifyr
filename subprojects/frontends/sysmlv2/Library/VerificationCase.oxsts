@@ -1,0 +1,39 @@
+package VerificationDefinitions
+
+import Parts
+import Expressions
+
+type EventuallyExpression : Expression {
+
+}
+
+type RequirementUsage {
+
+}
+
+type Constraint {
+    feature expression : Expression
+}
+
+type Objective {
+    prop evaluate {
+        false
+    }
+}
+
+type VerificationCaseDefinition {
+    feature subject : Part
+    feature objective : Objective
+
+    tran {
+        inline subject.main()
+    }
+
+    init {
+        inline subject.init() 
+    }
+
+    prop { 
+        objective.evaluate
+    }
+}

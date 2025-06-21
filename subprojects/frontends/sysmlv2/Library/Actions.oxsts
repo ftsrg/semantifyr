@@ -1,0 +1,68 @@
+/*
+ * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package Actions
+
+import Attributes
+import Expressions
+import Ports
+import Items
+
+type Action {
+    virtual tran { }
+}
+
+type SendAction : Action {
+    reference viaPort : Port
+    feature item : Item
+
+    override tran {
+        inline viaPort.place(item)
+    }
+}
+
+type AcceptAction {
+//    virtual tran main(event: States::Event) {}
+}
+
+type SpecialItem : Item
+
+type AcceptItemAction {
+
+    feature viaPort : Port
+    feature payload : Item // maybe var?
+    var actualPayload : payload[0..1]
+/*
+    tran main(event: States::Event) {
+        actualPayload := event
+        assume (actualPayload != Nothing)
+    }
+
+    containment a1 : AcceptItemAction {
+        feature ::> payload : SpecialItem
+    }*/
+
+}
+
+type AssignmentAction : Action {
+    reference attribute : Attribute
+    feature expression : Expression
+    override tran {
+        inline attribute.set(expression.evaluate)
+    }
+}
+
+type CompositeAction : Action {
+    feature children : Action
+    override tran {
+        inline seq children -> main
+    }
+}
+
+type Guard {
+    feature expression : Expression
+    virtual tran { assume (expression.evaluate) }
+}

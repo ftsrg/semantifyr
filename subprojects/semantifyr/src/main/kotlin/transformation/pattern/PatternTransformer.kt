@@ -7,13 +7,19 @@
 package hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.pattern
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Pattern
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.DefaultArtifactManager
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.allReferencedPatterns
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.fullyQualifiedName
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.info
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.loggerFactory
 import org.eclipse.viatra.query.patternlanguage.emf.util.PatternParserBuilder
 import org.eclipse.viatra.query.runtime.api.GenericPatternMatcher
 import org.eclipse.viatra.query.runtime.api.IQuerySpecification
+import kotlin.getValue
 
 object PatternTransformer {
+
+    private val logger by loggerFactory()
 
     private val transformedPatterns = mutableMapOf<Pattern, IQuerySpecification<GenericPatternMatcher>>()
 
@@ -32,6 +38,8 @@ object PatternTransformer {
                 appendLine(PatternSerializer.serialize(referencedPattern))
             }
         }
+
+        DefaultArtifactManager.patternPersistor.persist(pattern, vql)
 
         val results = vqlParser.parse(vql)
 

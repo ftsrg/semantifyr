@@ -61,7 +61,6 @@ object ChoiceElseRewriter {
         val assumption = calculateAssumption()
         val notOperator = OxstsFactory.createNotOperator(assumption)
         val notAssumption = OxstsFactory.createAssumptionOperation(notOperator)
-        notAssumption.optimize()
         val branch = OxstsFactory.createSequenceOperation().also {
             it.operation += notAssumption
             if (`else` != null) {
@@ -70,6 +69,8 @@ object ChoiceElseRewriter {
         }
 
         operation += branch
+
+        notAssumption.optimize()
     }
 
     private fun Operation.calculateAssumption(): Expression {

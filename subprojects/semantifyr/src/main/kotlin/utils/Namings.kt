@@ -9,6 +9,8 @@ object Namings {
     const val SYNTHETIC_SEPARATOR = "$"
     const val SYNTHETIC_ELEMENT_PREFIX = "$$"
 
+    const val UNNAMED = "$$\$unnamed"
+
     const val LITERAL_SUFFIX = "${SYNTHETIC_ELEMENT_PREFIX}literal"
     const val TYPE_SUFFIX = "${SYNTHETIC_ELEMENT_PREFIX}type"
     const val IMPLICIT_SUFFIX = "${SYNTHETIC_ELEMENT_PREFIX}implicit"
@@ -34,6 +36,6 @@ object Namings {
     }
 
     val Feature.implicitTypeName: String
-        get() = "$name$IMPLICIT_SUFFIX"
+        get() = "$realName$IMPLICIT_SUFFIX"
 
 }

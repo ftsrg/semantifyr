@@ -1,0 +1,195 @@
+package States
+
+import Actions
+
+pattern parentState_Transition(child: Transition, parent: State) {
+    State.transitions(parent, child)
+}
+
+type Transition {
+    derived reference parentState : State[1..1] as pattern parentState_Transition
+
+    reference from : AbstractState[1..1]
+    reference to : AbstractState[1..1]
+
+    feature actions : Action
+    feature guards : Guard
+
+    tran fire {
+        inline seq guards -> main
+        inline from.assumeIsActive()
+
+        inline from.exit(parentState)
+        inline seq actions -> main
+        inline to.enter(parentState)
+    }
+}
+
+pattern parent_AbstractState(child: State, parent: State) {
+    State.states(parent, child)
+}
+
+type AbstractState {
+    tran assumeIsActive { }
+    tran exit(commonState: State) { }
+    tran enter(commonState: State) { }
+}
+
+pattern entryTransitions_State(state: State, transition: Transition) {
+    State.start(state, start)
+    Transition.from(transition, start)
+}
+
+pattern normalTransitions_State(state: State, transition: Transition) {
+    State.states(state, innerState)
+    Transition.from(transition, innerState)
+}
+
+type State : AbstractState {
+    derived reference parent : State[0..1] as pattern parent_AbstractState
+    derived reference entryTransitions : Transition[0..1] as pattern entryTransitions_State
+    derived reference normalTransitions : Transition[0..*] as pattern normalTransitions_State
+
+    reference isParallel : Boolean = false
+
+    feature states : State[0..*]
+
+    containment start : EntryState
+
+    feature transitions : Transition[0..*]
+
+    feature entryActions : Action[0..*]
+    feature exitActions : Action[0..*]
+
+    // if (isParallel == false)
+    var activeState : states[0..1] = Nothing
+
+    prop isActive {
+        // if parent is parallel then Self is active if parent is active
+        // otherwise, check if Self is the parent's active state
+        (parent.isParallel && parent.isActive) || (parent.activeState == Self)
+    }
+    tran assumeIsActive {
+        assume (isActive)
+    }
+
+    init {
+        inline activateDescendantsDownwards()
+    }
+
+    tran {
+        // inline fireTransitionsBottomUp()
+        inline fireTransitions()
+    }
+
+    // transition priority: top-down
+    tran fireTransitions {
+        inline if (isParallel) {
+            // inline par states -> main
+            inline seq states -> fireTransitions
+        } else {
+            inline choice normalTransitions -> fire else {
+                inline choice states -> fireTransitions else {
+                    // no transitions to fire in the whole state hierarchy
+                }
+            }
+        }
+    }
+
+    // transition priority: bottom-up
+    tran fireTransitionsBottomUp {
+        inline if (isParallel) {
+            // inline par states -> main
+            inline seq states -> fireTransitionsBottomUp
+        } else {
+            inline choice states -> fireTransitionsBottomUp else {
+                inline choice normalTransitions -> fire /*else {
+                    // no transitions to fire in the whole state hierarchy
+                    //assume (false)
+                }*/
+            }
+        }
+    }
+
+    tran enterDownwardsRecursivelyDownFrom(commonState: State) {
+        inline if (commonState != parent) {
+            inline parent.enterDownwardsRecursivelyDownFrom(commonState)
+        }
+
+        parent.activeState := Self
+
+        inline seq entryActions -> main
+    }
+
+    tran exitUpwardsRecursivelyUpTo(commonState: State) {
+        inline seq exitActions -> main
+
+        parent.activeState := Nothing
+
+        inline if (commonState != parent) {
+            inline parent.exitUpwardsRecursivelyUpTo(commonState)
+        }
+    }
+
+    tran activateDescendantsDownwards() {
+        inline if (isParallel) {
+            // parallel states have no entry transitions!
+            inline seq states -> activateDescendantsDownwards
+        } else {
+            // non-parallel states must have 0..1 entry transitions!
+            // TODO: currently does not consider entryTransition guards .. bug?
+            inline if (entryTransitions != Nothing) {
+                inline entryTransitions.to.enter(Self)
+            }
+        }
+    }
+
+    tran deactivateDescendantsUpwards() {
+        inline seq states -> deactivateDescendantsUpwards
+
+        if (isActive) {
+            // safe, as if parent is parallel then activeState is not tracked anyway..
+            // TODO: what if Self is ExhibitState? Should never happen, but I am not sure
+            parent.activeState := Nothing
+            inline seq exitActions -> main
+        }
+    }
+
+    tran enter(commonState: State) {
+        inline enterDownwardsRecursivelyDownFrom(commonState)
+
+        inline if (isParallel) {
+            inline seq states -> activateDescendantsDownwards
+        } else {
+            inline activateDescendantsDownwards()
+        }
+    }
+
+    tran exit(commonState: State) {
+        inline if (isParallel) {
+            inline seq states -> deactivateDescendantsUpwards
+        } else {
+            inline deactivateDescendantsUpwards()
+        }
+
+        inline exitUpwardsRecursivelyUpTo(commonState)
+    }
+}
+
+type ExhibitState : State {
+
+    prop isActive {
+        true // exhibit state is always active
+        // TODO: should be when surrounding part is executed ..
+    }
+
+}
+
+type EntryState : AbstractState {
+
+    prop isActive {
+        false
+        // TODO: is this correct? Pseudo-states should never be active ..
+    }
+
+}

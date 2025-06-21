@@ -48,9 +48,11 @@ class XstsTransformer(
 
         val rootInstance = Instantiator.instantiateTree(target)
 
+        DefaultArtifactManager.instancePersistor.persist(rootInstance)
+
         ConstraintChecker.checkConstraints(rootInstance)
 
-        xsts.variables += Instantiator.instantiateVariablesTree(rootInstance)
+        val variables = Instantiator.instantiateVariablesTree(rootInstance)
 
         logger.info("Transforming transitions")
 
@@ -73,6 +75,7 @@ class XstsTransformer(
 
         logger.info("Rewriting operations")
 
+        xsts.variables += variables
         xsts.rewriteReferences(rootInstance)
 
         xsts.enums += xsts.variables.asSequence().map {
@@ -80,6 +83,8 @@ class XstsTransformer(
         }.filterIsInstance<ReferenceTyping>().map {
             it.referencedElementOrNull()
         }.filterIsInstance<Enum>().toSet()
+
+        DefaultArtifactManager.intermediateXstsPersistor.persist(xsts)
 
         logger.info("Optimizing XSTS model")
 
@@ -90,6 +95,8 @@ class XstsTransformer(
 
             xsts.init.rewriteChoiceElse()
             xsts.transition.rewriteChoiceElse()
+
+            DefaultArtifactManager.intermediateXstsPersistor.persist(xsts)
 
             logger.info("Optimizing final XSTS model")
 

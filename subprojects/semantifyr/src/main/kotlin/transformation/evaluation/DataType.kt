@@ -22,6 +22,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.PlusOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryMinusOperator
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.NothingInstance
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.except
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.fullyQualifiedName
 
 sealed class DataType {
 
@@ -46,6 +47,10 @@ sealed class DataType {
 class BooleanData(
     val value: Boolean
 ) : DataType() {
+
+    override fun toString(): String {
+        return value.toString()
+    }
 
     override fun dataEquals(other: DataType) = when (other) {
         is BooleanData -> value == other.value
@@ -118,6 +123,10 @@ class InstanceData(
     val value: Set<Instance>
 ) : DataType() {
 
+    override fun toString(): String {
+        return "[${value.joinToString { it.fullyQualifiedName }}]"
+    }
+
     val isSetSemantics = value.isEmpty() || value.size >= 2
 
     override fun dataEquals(other: DataType) = when (other) {
@@ -188,6 +197,10 @@ class InstanceData(
 class IntegerData(
     val value: Int
 ) : DataType() {
+
+    override fun toString(): String {
+        return value.toString()
+    }
 
     override fun dataEquals(other: DataType) = when (other) {
         is IntegerData -> value == other.value

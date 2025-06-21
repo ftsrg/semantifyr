@@ -1,0 +1,36 @@
+package Parts
+
+import Attributes
+import Ports
+import States
+
+type PortConnection {
+    reference inputPort : Port
+    reference outputPort : Port
+
+    tran {
+        outputPort.incomingItem := inputPort.outgoingItem
+    }
+}
+
+type Part {
+    feature parts : Part[0..*]
+    feature attributes : Attribute[0..*]
+    feature ports : Port[0..*]
+    feature exhibitState : State[0..1]
+    feature portConnections : PortConnection[0..*]
+
+    tran {
+        inline seq ports -> resetOutgoing
+        inline seq portConnections -> main
+        inline seq parts -> main
+        inline exhibitState.main()
+        inline seq ports -> resetIncoming
+    }
+
+    init {
+        inline seq parts -> init
+        inline seq ports -> init
+        inline exhibitState.init()
+    }
+}

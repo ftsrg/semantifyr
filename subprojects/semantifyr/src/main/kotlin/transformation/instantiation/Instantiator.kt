@@ -32,6 +32,8 @@ import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.typedReferencedElement
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.variableTransformer
 import org.eclipse.xtext.EcoreUtil2
 import java.util.*
+import java.util.Locale
+import java.util.Locale.getDefault
 
 object Instantiator {
 
@@ -40,7 +42,7 @@ object Instantiator {
 
         val rootContainment = OxstsFactory.createContainment().also {
             it.typing = OxstsFactory.createReferenceTyping(target)
-            it.name = target.name
+            it.name = target.name.replaceFirstChar { it.lowercase() }
             it.multiplicity = OxstsFactory.createOneMultiplicity()
         }
         val rootInstance = OxstsFactory.createInstance(rootContainment)

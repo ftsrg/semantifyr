@@ -21,6 +21,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineSeq
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.XSTS
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.ArtifactManager
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.DefaultArtifactManager
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite.ExpressionRewriter.rewriteContextDependentReferences
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.rewrite.ExpressionRewriter.rewriteToContext
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.OxstsFactory
@@ -175,6 +178,8 @@ fun Transition.inlineOperations(rootInstance: Instance) {
                 val inlined = rootInstance.operationInliner.inlineOperation(operation)
                 EcoreUtil2.replace(operation, inlined)
                 processorQueue += inlined
+
+                DefaultArtifactManager.intermediateXstsPersistor.persist(EcoreUtil2.getContainerOfType(this, XSTS::class.java))
             }
             is IfOperation -> {
                 processorQueue += operation.body

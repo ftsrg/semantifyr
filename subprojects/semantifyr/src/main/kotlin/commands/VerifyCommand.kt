@@ -11,6 +11,8 @@ import hu.bme.mit.semantifyr.oxsts.semantifyr.theta.CexReader
 import hu.bme.mit.semantifyr.oxsts.semantifyr.theta.ThetaRuntimeDetails
 import hu.bme.mit.semantifyr.oxsts.semantifyr.theta.WitnessCreator
 import hu.bme.mit.semantifyr.oxsts.semantifyr.theta.prepareCex
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.ArtifactManager
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.DefaultArtifactManager
 import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.XstsTransformer
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.loggerFactory
 import org.eclipse.emf.common.util.URI
@@ -46,6 +48,8 @@ class VerifyCommand : BaseVerifyCommand("verify") {
         File(output).writeText(xstsString)
 
         logger.info("Producing xsts file to $output")
+
+        logger.info("Artifacts: ${DefaultArtifactManager.baseDirectory.path}")
 
         val result = runVerification(output)
 

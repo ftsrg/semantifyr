@@ -21,6 +21,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.GreaterThanOrEqualsOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InequalityOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineCall
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineChoice
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineSeq
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IntegerType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LessThanOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LessThanOrEqualsOperator
@@ -29,6 +32,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.MinusOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NotOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.NothingReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OperatorExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OrOperator
@@ -36,6 +40,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.PlusOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Property
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceTyping
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Transition
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Typing
@@ -45,6 +50,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.XSTS
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.IndentationAwareStringWriter
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.appendIndent
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.indent
+import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.realName
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.referencedElementOrNull
 
 object XstsSerializer {
@@ -100,7 +106,7 @@ object XstsSerializer {
 
     private fun IndentationAwareStringWriter.append(transition: Transition, kind: String) {
         append(kind)
-        if (transition.operation.size >= 1) {
+        if (transition.operation.isNotEmpty()) {
             appendLine(" {")
             indent {
                 append(transition.operation.first())
@@ -171,6 +177,26 @@ object XstsSerializer {
 
                 appendLine("}")
             }
+
+            is InlineCall -> {
+                appendLine("inline ${operation.reference.serialize()}(${operation.argumentBindings.joinToString { 
+                    it.expression.serialize()
+                }})")
+            }
+            is InlineChoice -> {
+                appendLine("inline choice ${operation.feature.serialize()} -> ${operation.transition.serialize()}")
+
+                if (operation.`else` != null) {
+                    appendIndent("else") {
+
+                    }
+                } else {
+                    appendLine()
+                }
+            }
+            is InlineSeq -> {
+                appendLine("inline seq ${operation.feature.serialize()} -> ${operation.transition.serialize()}")
+            }
         }
     }
 
@@ -219,7 +245,14 @@ object XstsSerializer {
 
     private fun ReferenceExpression.serialize(): String = when (this) {
         is ChainReferenceExpression -> {
-            chains.map { it as DeclarationReferenceExpression }.joinToString(".") { it.element.name }
+            chains.joinToString(".") {
+                when (it) {
+                    is SelfReference -> "Self"
+                    is NothingReference -> "Nothing"
+                    is DeclarationReferenceExpression -> it.element.realName
+                    else -> ""
+                }
+            }
         }
 
         else -> "UNKNOWN_EXPRESSION$$$"

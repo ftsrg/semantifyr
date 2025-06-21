@@ -1,0 +1,24 @@
+package Ports
+
+import Items
+
+type Port {
+    var incomingItem : Item[0..1] = Nothing
+    var outgoingItem : Item[0..1] = Nothing
+
+    init {
+        inline resetOutgoing()
+    }
+
+    tran place(item: Item) {
+        incomingItem := item
+    }
+
+    tran resetIncoming() {
+        incomingItem := Nothing
+    }
+
+    tran resetOutgoing() {
+        outgoingItem := Nothing
+    }
+}

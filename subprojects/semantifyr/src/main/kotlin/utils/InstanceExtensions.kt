@@ -23,7 +23,7 @@ val Instance.type
     get() = containment.type
 
 val Instance.name
-    get() = containment.name
+    get() = "_${containment.realName}"
 
 private class InstanceExtensions(
     val instance: Instance

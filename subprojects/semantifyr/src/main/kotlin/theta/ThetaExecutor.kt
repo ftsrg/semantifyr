@@ -73,6 +73,8 @@ class ThetaExecutor(
     private val dockerClient = DockerClientImpl.getInstance(config, httpClient);
 
     fun initTheta() {
+        logger.info("Pulling ftsrg/theta-xsts-cli@$version")
+
         dockerClient.pullImageCmd("ftsrg/theta-xsts-cli").withTag(version).start().awaitCompletion()
     }
 

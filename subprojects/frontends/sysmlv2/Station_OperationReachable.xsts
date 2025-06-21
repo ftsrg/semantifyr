@@ -1,0 +1,86 @@
+type $_station_OperationReachable$_commandPort$inputItems$$type : {
+    $_Nothing$$literal
+}
+type $_station_OperationReachable$_commandPort$outputItems$$type : {
+    $_Nothing$$literal
+}
+type $_station_OperationReachable$_dataPort$inputItems$$type : {
+    $_Nothing$$literal
+}
+type $_station_OperationReachable$_dataPort$outputItems$$type : {
+    $_Nothing$$literal
+}
+type $_station_OperationReachable$_Behaviour$states$$type : {
+    $_station_OperationReachable$_Behaviour$_Communication$$literal,
+    $_station_OperationReachable$_Behaviour$_Battery$$literal,
+    $_Nothing$$literal
+}
+type $_station_OperationReachable$_Behaviour$_Communication$states$$type : {
+    $_station_OperationReachable$_Behaviour$_Communication$_WaitingPing$$literal,
+    $_station_OperationReachable$_Behaviour$_Communication$_Transmitting$$literal,
+    $_Nothing$$literal
+}
+type $_station_OperationReachable$_Behaviour$_Battery$states$$type : {
+    $_station_OperationReachable$_Behaviour$_Battery$_NotRecharging$$literal,
+    $_station_OperationReachable$_Behaviour$_Battery$_Recharging$$literal,
+    $_Nothing$$literal
+}
+type $_station_OperationReachable$_Behaviour$_Communication$_WaitingPing$states$$type : {
+    $_Nothing$$literal
+}
+type $_station_OperationReachable$_Behaviour$_Communication$_Transmitting$states$$type : {
+    $_station_OperationReachable$_Behaviour$_Communication$_Transmitting$_SendData$$literal,
+    $_station_OperationReachable$_Behaviour$_Communication$_Transmitting$_ConsumePower$$literal,
+    $_Nothing$$literal
+}
+type $_station_OperationReachable$_Behaviour$_Battery$_NotRecharging$states$$type : {
+    $_Nothing$$literal
+}
+type $_station_OperationReachable$_Behaviour$_Battery$_Recharging$states$$type : {
+    $_Nothing$$literal
+}
+type $_station_OperationReachable$_Behaviour$_Communication$_Transmitting$_SendData$states$$type : {
+    $_station_OperationReachable$_Behaviour$_Communication$_Transmitting$_SendData$_Sending$$literal,
+    $_Nothing$$literal
+}
+type $_station_OperationReachable$_Behaviour$_Communication$_Transmitting$_ConsumePower$states$$type : {
+    $_station_OperationReachable$_Behaviour$_Communication$_Transmitting$_ConsumePower$_Consuming$$literal,
+    $_Nothing$$literal
+}
+type $_station_OperationReachable$_Behaviour$_Communication$_Transmitting$_SendData$_Sending$states$$type : {
+    $_Nothing$$literal
+}
+type $_station_OperationReachable$_Behaviour$_Communication$_Transmitting$_ConsumePower$_Consuming$states$$type : {
+    $_Nothing$$literal
+}
+
+var $_station_OperationReachable$_commandPort$incomingItem : $_station_OperationReachable$_commandPort$inputItems$$type = $_Nothing$$literal
+var $_station_OperationReachable$_commandPort$outgoingItem : $_station_OperationReachable$_commandPort$outputItems$$type = $_Nothing$$literal
+var $_station_OperationReachable$_dataPort$incomingItem : $_station_OperationReachable$_dataPort$inputItems$$type = $_Nothing$$literal
+var $_station_OperationReachable$_dataPort$outgoingItem : $_station_OperationReachable$_dataPort$outputItems$$type = $_Nothing$$literal
+var $_station_OperationReachable$_batteryCharge$value : integer = 100
+var $_station_OperationReachable$_data$value : integer = 100
+var $_station_OperationReachable$_recharging$value : boolean = false
+var $_station_OperationReachable$_Behaviour$activeState : $_station_OperationReachable$_Behaviour$states$$type = $_Nothing$$literal
+var $_station_OperationReachable$_Behaviour$_Communication$activeState : $_station_OperationReachable$_Behaviour$_Communication$states$$type = $_Nothing$$literal
+var $_station_OperationReachable$_Behaviour$_Battery$activeState : $_station_OperationReachable$_Behaviour$_Battery$states$$type = $_Nothing$$literal
+var $_station_OperationReachable$_Behaviour$_Communication$_WaitingPing$activeState : $_station_OperationReachable$_Behaviour$_Communication$_WaitingPing$states$$type = $_Nothing$$literal
+var $_station_OperationReachable$_Behaviour$_Communication$_Transmitting$activeState : $_station_OperationReachable$_Behaviour$_Communication$_Transmitting$states$$type = $_Nothing$$literal
+var $_station_OperationReachable$_Behaviour$_Battery$_NotRecharging$activeState : $_station_OperationReachable$_Behaviour$_Battery$_NotRecharging$states$$type = $_Nothing$$literal
+var $_station_OperationReachable$_Behaviour$_Battery$_Recharging$activeState : $_station_OperationReachable$_Behaviour$_Battery$_Recharging$states$$type = $_Nothing$$literal
+var $_station_OperationReachable$_Behaviour$_Communication$_Transmitting$_SendData$activeState : $_station_OperationReachable$_Behaviour$_Communication$_Transmitting$_SendData$states$$type = $_Nothing$$literal
+var $_station_OperationReachable$_Behaviour$_Communication$_Transmitting$_ConsumePower$activeState : $_station_OperationReachable$_Behaviour$_Communication$_Transmitting$_ConsumePower$states$$type = $_Nothing$$literal
+var $_station_OperationReachable$_Behaviour$_Communication$_Transmitting$_SendData$_Sending$activeState : $_station_OperationReachable$_Behaviour$_Communication$_Transmitting$_SendData$_Sending$states$$type = $_Nothing$$literal
+var $_station_OperationReachable$_Behaviour$_Communication$_Transmitting$_ConsumePower$_Consuming$activeState : $_station_OperationReachable$_Behaviour$_Communication$_Transmitting$_ConsumePower$_Consuming$states$$type = $_Nothing$$literal
+
+trans {
+}
+
+init {
+}
+
+env {}
+
+prop {
+    false
+}

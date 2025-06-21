@@ -64,6 +64,7 @@ statechart Spacecraft[
 
                 entry transition to Sending
                 transition Sending to Sending when timeout transmitTimeout [! (data <= 0 || batteryCharge < 40)] / assign data := data - 10; raise dataEvent
+                transition Sending to WaitingPing when timeout transmitTimeout [data <= 0 || batteryCharge < 40]
             }
             region ConsumePower {
                 state Consuming {
@@ -71,14 +72,13 @@ statechart Spacecraft[
                 }
 
                 entry transition to Consuming
-                transition Consuming to Consuming when timeout consumeTimeout [! (batteryCharge < 40)] / assign batteryCharge := batteryCharge - 10
+                transition Consuming to Consuming when timeout consumeTimeout  [! (batteryCharge < 40)] / assign batteryCharge := batteryCharge - 10
+                transition Consuming to WaitingPing when timeout consumeTimeout  [batteryCharge < 40]
             }
         }
 
         entry transition to WaitingPing
         transition WaitingPing to Transmitting when event ping [recharging == false && ! (data <= 0 || batteryCharge < 40)]
-        transition Transmitting to WaitingPing when timeout consumeTimeout [batteryCharge < 40]
-        transition Transmitting to WaitingPing when timeout transmitTimeout [data <= 0 || batteryCharge < 40]
     }
 
     region Battery {
@@ -111,12 +111,6 @@ sync component SpaceMission [
 
     channel station.ping to spacecraft.ping
     channel spacecraft.dataEvent to station.data
-}
-
-verification case Station_OperationReachable {
-    component mission : SpaceMission
-
-    expression { state mission.station.Main.Operation }
 }
 
 verification case Station_IdleReachable {

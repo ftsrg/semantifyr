@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.oxsts.semantifyr
 
 import hu.bme.mit.semantifyr.oxsts.lang.tests.OxstsInjectorProvider
 import hu.bme.mit.semantifyr.oxsts.semantifyr.reader.prepareOxsts
+import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.DefaultArtifactManager
 import org.eclipse.xtext.testing.InjectWith
 import org.eclipse.xtext.testing.extensions.InjectionExtension
 import org.junit.jupiter.api.BeforeAll
@@ -45,6 +46,10 @@ class GammaCompilationTests : CompilationTest() {
     @ParameterizedTest
     @MethodSource
     fun `Model transformations should not regress`(directory: String) {
+        DefaultArtifactManager.patternPersistor.isEnabled = true
+        DefaultArtifactManager.instancePersistor.isEnabled = true
+        DefaultArtifactManager.intermediateXstsPersistor.isEnabled = true
+
         simpleReadTransformWrite(directory, "TestModels/Automated/GammaSemanticLibrary")
         assertModelEqualsExpected(directory)
     }

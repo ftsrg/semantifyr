@@ -143,6 +143,8 @@ class VerifyCommand : CliktCommand("verify") {
         val workingDirectory = xstsFile.parentFile.absolutePath
         val fileName = xstsFile.nameWithoutExtension
 
+        thetaExecutor.initTheta()
+
         val runtimeDetails = thetaExecutor.run(workingDirectory, fileName)
 
         logger.info("Verification result: isUnsafe = ${runtimeDetails.isUnsafe}")

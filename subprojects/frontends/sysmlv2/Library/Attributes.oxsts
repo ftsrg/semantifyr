@@ -1,0 +1,40 @@
+package Attributes
+
+import Expressions
+
+type Attribute {
+    prop evaluate { false }
+
+    tran set(value: Integer) {
+
+    }
+}
+
+type IntegerAttribute : Attribute {
+    reference defaultValue : Integer = 0
+
+    var value : Integer = defaultValue
+
+    prop evaluate { value }
+
+    tran set(newValue: Integer) {
+        value := newValue
+    }
+}
+
+type BooleanAttribute : Attribute {
+    reference defaultValue : Boolean = false
+
+    var value : Boolean = defaultValue
+
+    prop evaluate { value }
+
+    tran set(newValue: Boolean) {
+        value := newValue
+    }
+}
+
+type AttributeReferenceExpression : Expression {
+    reference attribute : Attribute
+    prop evaluate { attribute.evaluate }
+}
