@@ -1,72 +1,65 @@
-package Expressions
+package semantifyr::gamma::expressions
 
-import Variables
-
-type VariableExpression : Expression {
-    reference variable : Variable
-    prop evaluate { variable.evaluate }
+class Expression {
+    prop evaluate() { false }
 }
 
-type Expression {
-    prop evaluate { false }
+class LiteralExpression : Expression
+class LiteralBooleanExpression : LiteralExpression {
+    refers value : bool[1]
+    redefine prop evaluate() { value }
+}
+class LiteralIntegerExpression : LiteralExpression {
+    refers value : int[1]
+    redefine prop evaluate() { value }
 }
 
-type LiteralExpression : Expression
-type LiteralBooleanExpression : LiteralExpression {
-    reference value : Boolean
-    prop evaluate { value }
-}
-type LiteralIntegerExpression : LiteralExpression {
-    reference value : Integer
-    prop evaluate { value }
+class OperatorExpression : Expression {
+    contains left : Expression[1]
+    contains right : Expression[1]
 }
 
-type OperatorExpression : Expression {
-    feature left : Expression[1..1]
-    feature right : Expression[1..1]
+class LessThanOperatorExpression : OperatorExpression {
+    redefine prop evaluate() { left }
 }
 
-type LessThanOperatorExpression : OperatorExpression {
-    prop evaluate { left.evaluate < right.evaluate }
+class LessThanOrEqualsOperatorExpression : OperatorExpression {
+    redefine prop evaluate() { left.evaluate() <= right.evaluate() }
 }
 
-type LessThanOrEqualsOperatorExpression : OperatorExpression {
-    prop evaluate { left.evaluate <= right.evaluate }
+class GreaterThanOperatorExpression : OperatorExpression {
+    redefine prop evaluate() { left.evaluate() > right.evaluate() }
 }
 
-type GreaterThanOperatorExpression : OperatorExpression {
-    prop evaluate { left.evaluate > right.evaluate }
+class GreaterThanOrEqualsOperatorExpression : OperatorExpression {
+    redefine prop evaluate() { left.evaluate() >= right.evaluate() }
 }
 
-type GreaterThanOrEqualsOperatorExpression : OperatorExpression {
-    prop evaluate { left.evaluate >= right.evaluate }
+class PlusOperatorExpression : OperatorExpression {
+    redefine prop evaluate() { left.evaluate() + right.evaluate() }
 }
 
-type PlusOperatorExpression : OperatorExpression {
-    prop evaluate { left.evaluate + right.evaluate }
+class MinusOperatorExpression : OperatorExpression {
+    redefine prop evaluate() { left.evaluate() - right.evaluate() }
 }
 
-type MinusOperatorExpression : OperatorExpression {
-    prop evaluate { left.evaluate - right.evaluate }
+class EqualityOperatorExpression : OperatorExpression {
+    redefine prop evaluate() { left.evaluate() == right.evaluate() }
 }
 
-type EqualityOperatorExpression : OperatorExpression {
-    prop evaluate { left.evaluate == right.evaluate }
+class InequalityOperatorExpression : OperatorExpression {
+    redefine prop evaluate() { left.evaluate() != right.evaluate() }
 }
 
-type InequalityOperatorExpression : OperatorExpression {
-    prop evaluate { left.evaluate != right.evaluate }
+class OrOperatorExpression : OperatorExpression {
+    redefine prop evaluate() { left.evaluate() || right.evaluate() }
 }
 
-type OrOperatorExpression : OperatorExpression {
-    prop evaluate { left.evaluate || right.evaluate }
+class AndOperatorExpression : OperatorExpression {
+    redefine prop evaluate() { left.evaluate() && right.evaluate() }
 }
 
-type AndOperatorExpression : OperatorExpression {
-    prop evaluate { left.evaluate && right.evaluate }
-}
-
-type NotExpression : Expression {
-    feature operand : Expression
-    prop evaluate { ! operand.evaluate }
+class NotExpression : Expression {
+    contains operand : Expression[1]
+    redefine prop evaluate() { ! operand.evaluate() }
 }

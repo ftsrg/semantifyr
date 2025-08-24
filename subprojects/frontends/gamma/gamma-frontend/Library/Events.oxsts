@@ -4,39 +4,40 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package Events
+package semantifyr::gamma::events
 
-type Event {
-    ctrl var isActive: Boolean = false
+class Event {
+    var isActive := false
 
-    tran set {
+    tran set() {
         isActive := true
     }
 
-    tran reset {
+    tran reset() {
         isActive := false
     }
 
-    havoc {
+    redefine havoc {
         havoc (isActive)
     }
 
-    tran isSet {
+    tran isSet() {
         assume (isActive)
     }
 }
 
-type Timeout {
-    var remainingTime : Integer = 0
-    reference deltaTime : Integer = 1
+class Timeout {
+    refers deltaTime: int = 1
 
-    tran {
+    var remainingTime: int := 0
+ 
+    redefine tran {
         if (remainingTime > 0) {
             remainingTime := remainingTime - deltaTime
         }
     }
 
-    tran isUp {
+    tran isUp() {
         assume (remainingTime <= 0)
     }
 }

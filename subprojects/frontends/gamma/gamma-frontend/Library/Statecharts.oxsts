@@ -4,94 +4,114 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package Statecharts
+package semantifyr::gamma::statecharts
 
-import Expressions
-import Variables
-import Components
-import Triggers
-import Actions
-import Events
+import semantifyr::gamma::expressions
+import semantifyr::gamma::variables
+import semantifyr::gamma::components
+import semantifyr::gamma::triggers
+import semantifyr::gamma::actions
+import semantifyr::gamma::events
 
-type Statechart : Component {
-    feature regions : Region[0..*]
-    feature variables : Variable[0..*]
+class Statechart : Component {
+    contains regions : Region[0..*] opposite parent
+    contains variables : Variable[0..*]
 
-    override init {
-        inline seq regions -> activateRecursive
+    redefine init {
+        inline for (region in regions) {
+            inline region.activateRecursive()
+        }
     }
 
-    override tran {
+    redefine tran {
         inline resetOutputEvents()
-        choice {
-            inline seq regions -> fireTransitions
+
+        choice {        
+            inline for (region in regions) {
+                inline region.fireTransitions()
+            }
         } else { }
+
         inline resetInputEvents()
     }
 }
 
-type Region {
-    feature states : State[0..*]
+class Region {
+    contains states : State[0..*] opposite parentRegion
+    container parent : State[0..1] opposite regions
 
-    ctrl var activeState : states[0..1] = Nothing
+    contains abstractTransitions : AbstractTransition[0..*]
+    contains transitions : Transition[0..*] subsets abstractTransitions
+    contains entryTransitions : EntryTransition[0..*] subsets abstractTransitions
 
-    feature abstractTransitions : AbstractTransition[0..*]
+    @Control
+    var activeState : states[0..1] := nothing
 
-    feature transitions :> abstractTransitions : Transition[0..*]
-    feature entryTransitions :> abstractTransitions : EntryTransition[0..*]
-
-    tran activateRecursive {
-        inline seq entryTransitions -> main
+    tran activateRecursive() {
+        inline for (transition in entryTransitions) {
+            inline transition.main()
+        }
     }
 
-    tran deactivateRecursive {
-        inline seq states -> deactivateRecursive
+    tran deactivateRecursive() {        
+        inline for (state in states) {
+            inline state.deactivateRecursive()
+        }
     }
 
-    tran fireTransitions {
-        inline choice transitions -> main else {
-            inline choice states -> fireTransitions else { }
+    tran fireTransitions() {
+        inline for choice (transition in transitions) {
+            inline transition.main()
+        } else {
+            inline for choice (state in states) {
+                inline state.fireTransitions()
+            } else { }
         }
     }
 }
 
+/*
 pattern parentState(childState: State, parentState: State) {
     State.regions(parentState, parentRegion)
     Region.states(parentRegion, childState)
 }
+*/
 
-pattern parentRegion(childState: State, parentRegion: Region) {
-    Region.states(parentRegion, childState)
-}
+class State {
+    container parentRegion : Region[0..1] opposite states    
+    contains regions : Region[0..*] opposite parent
 
-type State {
-    derived reference parent : Region[0..1] as pattern parentRegion
-    derived reference parentState : State[0..1] as pattern parentState
+    refers parentState : State[0..1] = parentRegion.parent //as pattern parentState
 
-    feature regions : Region[0..*]
+    contains entryActions : Action[0..*]
+    contains exitActions : Action[0..*]
 
-    feature entryActions : Action[0..*]
-    feature exitActions : Action[0..*]
-
-    prop isActive {
-        parent.activeState == Self
+    prop isActive() {
+        parentRegion.activeState == self
     }
 
-    tran deactivateRecursive {
-        inline seq regions -> deactivateRecursive
+    tran deactivateRecursive() {
+        inline for (region in regions) {
+            inline region.deactivateRecursive()
+        }
 
-        if (parent.activeState == Self) {
-            parent.activeState := Nothing
-            inline seq exitActions -> main
+        if (parentRegion.activeState == self) {
+            parentRegion.activeState := nothing
+
+            inline for (exitAction in exitActions) {
+                inline exitAction.main()
+            }
         }
     }
 
-    tran exitRecursive(commonRegion : Region) {
-        inline seq exitActions -> main
+    tran exitRecursive(commonRegion : Region) {            
+        inline for (exitAction in exitActions) {
+            inline exitAction.main()
+        }
 
-        parent.activeState := Nothing
+        parentRegion.activeState := nothing
 
-        inline if (commonRegion != parent) {
+        inline if (commonRegion != parentRegion) {
             inline parentState.exitRecursive(commonRegion)
         }
     }
@@ -99,77 +119,107 @@ type State {
     tran exit(commonRegion : Region) {
         inline exitRecursive(commonRegion)
 
-        inline seq regions -> deactivateRecursive
+        inline for (region in regions) {
+            inline region.deactivateRecursive()
+        }
     }
 
     tran enterRecursive(commonRegion : Region) {
-        inline if (commonRegion != parent) {
+        inline if (commonRegion != parentRegion) {
             inline parentState.enterRecursive(commonRegion)
         }
 
-        parent.activeState := Self
+        parentRegion.activeState := self
 
-        inline seq entryActions -> main
+        inline for (action in entryActions) {
+            inline action.main()
+        }
     }
 
     tran enter(commonRegion : Region) {
         inline enterRecursive(commonRegion)
 
-        inline seq regions -> activateRecursive
+        inline for (region in regions) {
+            inline region.activateRecursive()
+        }
     }
 
-    tran fireTransitions {
-        inline if (regions == Nothing) {
+    tran fireTransitions() {
+        inline if (regions == nothing) {
             assume (false)
         } else {
             assume (isActive)
             choice {
-                inline seq regions -> fireTransitions
+                inline for (region in regions) {
+                    inline region.fireTransitions()
+                }
             } else { }
         }
     }
 }
 
-pattern transitionParentRegion(transition: AbstractTransition, region: Region) {
-    Region.transitions(region, transition)
+class AbstractTransition {
+    container commonRegion: Region[1] opposite transitions
+
+    refers to : State[1]
 }
 
-type AbstractTransition {
-    derived reference commonRegion : Region[1..1] as pattern transitionParentRegion
-
-    reference to : State[1..1]
-
-    virtual tran { }
-}
-
-type EntryTransition : AbstractTransition {
-    override tran {
+class EntryTransition : AbstractTransition {
+    redefine tran {
         inline to.enter(commonRegion)
     }
 }
 
-type Transition : AbstractTransition {
-    reference from : State[0..1]
+class Transition : AbstractTransition {
+    refers from : State[1]
 
-    feature trigger : Trigger
-    feature actions : Action[0..*]
-    feature guards : Guard[0..*]
+    contains trigger : Trigger[1]
+    contains actions : Action[0..*]
+    contains guards : Guard[0..*]
 
     tran {
-        inline seq guards -> main
         inline trigger.isTriggered()
         assume (from.isActive)
+        inline for (guard in guards) {
+            inline guard.main()
+        }
 
         inline from.exit(commonRegion)
-        inline seq actions -> main
+
+        inline for (action in actions) {
+            inline action.main()
+        }
+
         inline to.enter(commonRegion)
     }
 }
 
-type StateReachabilityExpression : Expression {
-    reference state : State
+class StateReachabilityExpression : Expression {
+    refers state : State
     
-    prop evaluate {
-        state.isActive
+    prop evaluate() {
+        state.isActive()
     }
 }
+
+/*
+pattern parallelRegions(r1: Region, r2: Region) {
+    State.regions(state, r1)
+    State.regions(state, r2)
+    r1 != r2
+}
+
+neg constraint noParallelRegionTransitions(t: Transition) {
+    Transition.from(t, from)
+    Transition.to(t, to)
+    Region.states(fromR, from)
+    Region.states(toR, to)
+    fromR != toR
+}
+
+neg constraint noParallelRegions(state: State) {
+    State.regions(state, r1)
+    State.regions(state, r2)
+    find parallelRegions(r1, r2)
+}
+*/

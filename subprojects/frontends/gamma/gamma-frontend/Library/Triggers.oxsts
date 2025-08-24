@@ -4,26 +4,26 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package Triggers
+package semantifyr::gamma::triggers
 
-import Events
+import semantifyr::gamma::events
 
-type Trigger {
-    virtual tran isTriggered { }
+class Trigger {
+    tran isTriggered() { }
 }
 
-type EventTrigger : Trigger {
-    reference event : Event[1..1]
+class EventTrigger : Trigger {
+    refers event : Event[1]
 
-    override tran isTriggered {
+    tran isTriggered() {
         inline event.isSet()
     }
 }
 
-type TimeoutTrigger : Trigger {
-    reference timeout : Timeout[1..1]
+class TimeoutTrigger : Trigger {
+    refers timeout : Timeout[1]
 
-    override tran isTriggered {
+    tran isTriggered() {
         inline timeout.isUp()
     }
 }

@@ -4,42 +4,44 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package Actions
+package semantifyr::gamma::actions
 
-import Variables
-import Expressions
-import Events
+import semantifyr::gamma::variables
+import semantifyr::gamma::expressions
+import semantifyr::gamma::events
 
-type Action {
-    virtual tran { }
-}
+class Action
 
-type RaiseEventAction : Action {
-    reference event : Event[1..1]
+class RaiseEventAction : Action {
+    refers event: Event[1]
 
-    override tran {
+    redefine tran {
         inline event.set()
     }
 }
 
-type SetTimeoutAction : Action {
-    reference timeout : Timeout[1..1]
-    feature expression : Expression
+class SetTimeoutAction : Action {
+    refers timeout: Timeout[1]
+    contains expression: Expression[1]
 
-    override tran {
-        timeout.remainingTime := expression.evaluate
+    redefine tran {
+        timeout.remainingTime := expression.evaluate()
     }
 }
 
-type AssignmentAction : Action {
-    reference variable : Variable
-    feature expression : Expression
-    override tran {
-        inline variable.set(expression.evaluate)
+class AssignmentAction : Action {
+    refers variable: Variable[1]
+    contains expression: Expression[1]
+
+    redefine tran {
+        inline variable.set(expression.evaluate())
     }
 }
 
-type Guard {
-    feature expression : Expression
-    virtual tran { assume (expression.evaluate) }
+class Guard {
+    contains expression: Expression[1]
+    
+    redefine tran { 
+        assume (expression.evaluate())
+    }
 }

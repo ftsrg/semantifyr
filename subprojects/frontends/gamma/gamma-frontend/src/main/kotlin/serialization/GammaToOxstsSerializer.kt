@@ -63,13 +63,13 @@ object GammaToOxstsSerializer {
         appendLine("package ${gammaPackage.name}")
         appendLine()
 
-        appendLine("import Expressions")
-        appendLine("import Variables")
-        appendLine("import Statecharts")
-        appendLine("import Components")
-        appendLine("import Triggers")
-        appendLine("import Actions")
-        appendLine("import Events")
+        appendLine("import semantifyr::gamma::expressions")
+        appendLine("import semantifyr::gamma::variables")
+        appendLine("import semantifyr::gamma::statecharts")
+        appendLine("import semantifyr::gamma::components")
+        appendLine("import semantifyr::gamma::triggers")
+        appendLine("import semantifyr::gamma::actions")
+        appendLine("import semantifyr::gamma::events")
         appendLine()
 
         for (component in gammaPackage.components) {
@@ -88,7 +88,7 @@ object GammaToOxstsSerializer {
     }
 
     private fun IndentationAwareStringWriter.serialize(statechart: Statechart) {
-        appendIndent("type ${statechart.name} : Statechart") {
+        appendIndent("class ${statechart.name} : Statechart") {
             for (timeout in statechart.timeouts) {
                 serialize(timeout)
             }
@@ -109,7 +109,7 @@ object GammaToOxstsSerializer {
 
     private fun IndentationAwareStringWriter.serialize(variable: Variable) {
 
-        appendIndent("containment ${variable.name} :> variables : ${variable.type}Variable") {
+        appendIndent("contains ${variable.name}: ${variable.type}Variable subsets variables") {
             if (variable.default != null) {
                 val default = when (variable.default) {
                     is LiteralInteger -> (variable.default as LiteralInteger).value.toString()
@@ -117,13 +117,21 @@ object GammaToOxstsSerializer {
                     else -> ""
                 }
 
-                appendLine("reference ::> defaultValue : ${variable.type} = $default")
+                appendLine("redefine refers defaultValue: ${transformVariableType(variable)} = $default")
             }
         }
     }
 
+    private fun transformVariableType(variable: Variable): String {
+        return when (variable.type) {
+            "Integer" -> "int"
+            "Boolean" -> "bool"
+            else -> ""
+        }
+    }
+
     private fun IndentationAwareStringWriter.serialize(timeout: Timeout) {
-        appendLine("containment ${timeout.name} :> timeouts : Timeout")
+        appendLine("contains ${timeout.name}: Timeout subsets timeouts")
     }
 
     private fun IndentationAwareStringWriter.serialize(event: Event) = when (event) {
@@ -133,15 +141,15 @@ object GammaToOxstsSerializer {
     }
 
     private fun IndentationAwareStringWriter.serialize(event: InputEvent) {
-        appendLine("containment ${event.name} :> inputEvents : Event")
+        appendLine("contains ${event.name}: Event subsets inputEvents")
     }
 
     private fun IndentationAwareStringWriter.serialize(event: OutputEvent) {
-        appendLine("containment ${event.name} :> outputEvents : Event")
+        appendLine("contains ${event.name}: Event subsets outputEvents")
     }
 
     private fun IndentationAwareStringWriter.serialize(region: Region) {
-        appendIndent("containment ${region.name} :> regions : Region") {
+        appendIndent("contains ${region.name}: Region subsets regions") {
             for (state in region.states) {
                 serialize(state)
             }
@@ -153,7 +161,7 @@ object GammaToOxstsSerializer {
     }
 
     private fun IndentationAwareStringWriter.serialize(state: State) {
-        appendIndent("containment ${state.name} :> states : State") {
+        appendIndent("contains ${state.name}: State subsets states") {
             for (action in state.entryActions) {
                 serialize(action, "entryActions")
             }
@@ -175,15 +183,15 @@ object GammaToOxstsSerializer {
     }
 
     private fun IndentationAwareStringWriter.serialize(transition: EntryTransition) {
-        appendIndent("containment ${transition.name} :> entryTransitions : EntryTransition") {
-            appendLine("reference ::> to : State = ${transition.to.name}")
+        appendIndent("contains ${transition.name}: EntryTransition subsets entryTransitions") {
+            appendLine("redefine refers to: State = ${transition.to.name}")
         }
     }
 
     private fun IndentationAwareStringWriter.serialize(transition: StateTransition) {
-        appendIndent("containment ${transition.name} :> transitions : Transition") {
-            appendLine("reference ::> from : State = ${transition.from.name}")
-            appendLine("reference ::> to : State = ${transition.to.name}")
+        appendIndent("contains ${transition.name}: Transition subsets transitions") {
+            appendLine("redefine refers from: State = ${transition.from.name}")
+            appendLine("redefine refers to: State = ${transition.to.name}")
 
             if (transition.guard != null) {
                 serialize(transition.guard)
@@ -200,7 +208,7 @@ object GammaToOxstsSerializer {
     }
 
     private fun IndentationAwareStringWriter.serialize(guard: Guard) {
-        appendIndent("containment ${guard.name} :> guards : Guard") {
+        appendIndent("contains ${guard.name}: Guard subsets guards") {
             serialize(guard.expression, "expression")
         }
     }
@@ -212,14 +220,14 @@ object GammaToOxstsSerializer {
     }
 
     private fun IndentationAwareStringWriter.serialize(trigger: EventTrigger) {
-        appendIndent("containment ${trigger.name} :> trigger : EventTrigger") {
-            appendLine("reference ::> event : Event = ${trigger.event.name}")
+        appendIndent("contains ${trigger.name}: EventTrigger subsets trigger") {
+            appendLine("redefine refers event: Event = ${trigger.event.name}")
         }
     }
 
     private fun IndentationAwareStringWriter.serialize(trigger: TimeoutTrigger) {
-        appendIndent("containment ${trigger.name} :> trigger : TimeoutTrigger") {
-            appendLine("reference ::> timeout : Timeout = ${trigger.timeout.name}")
+        appendIndent("contains ${trigger.name}: TimeoutTrigger subsets trigger") {
+            appendLine("redefine refers timeout: Timeout = ${trigger.timeout.name}")
         }
     }
 
@@ -231,30 +239,30 @@ object GammaToOxstsSerializer {
     }
 
     private fun IndentationAwareStringWriter.serialize(action: RaiseEventAction, subsets: String) {
-        appendIndent("containment ${action.name} :> $subsets : RaiseEventAction") {
-            appendLine("reference ::> event : Event = ${action.event.name}")
+        appendIndent("contains ${action.name}: RaiseEventAction subsets $subsets") {
+            appendLine("redefine refers event: Event = ${action.event.name}")
         }
     }
 
     private var a = 0
     private fun IndentationAwareStringWriter.serialize(action: SetTimeoutAction, subsets: String) {
-        appendIndent("containment ${action.name} :> $subsets : SetTimeoutAction") {
-            appendLine("reference ::> timeout : Timeout = ${action.timeout.name}")
-            appendIndent("containment ee${a++} :> expression : LiteralIntegerExpression") {
-                appendLine("reference ::> value : Integer = ${action.value}")
+        appendIndent("contains ${action.name}: SetTimeoutAction subsets $subsets") {
+            appendLine("redefine refers timeout: Timeout = ${action.timeout.name}")
+            appendIndent("contains ee${a++}: LiteralIntegerExpression subsets expression") {
+                appendLine("redefine refers value: int = ${action.value}")
             }
         }
     }
 
     private fun IndentationAwareStringWriter.serialize(action: AssignmentAction, subsets: String) {
-        appendIndent("containment ${action.name} :> $subsets : AssignmentAction") {
-            appendLine("reference ::> variable : Variable = ${action.variable.name}")
+        appendIndent("contains ${action.name}: AssignmentAction subsets $subsets") {
+            appendLine("redefine refers variable: Variable = ${action.variable.name}")
             serialize(action.expression, "expression")
         }
     }
 
     private fun IndentationAwareStringWriter.serialize(component: SyncComponent) {
-        appendIndent("type ${component.name} : SyncComponent") {
+        appendIndent("class ${component.name} : SyncComponent") {
             for (event in component.events) {
                 serialize(event)
             }
@@ -270,36 +278,36 @@ object GammaToOxstsSerializer {
     }
 
     private fun IndentationAwareStringWriter.serialize(instance: ComponentInstance) {
-        appendLine("containment ${instance.name} :> components : ${instance.component.name}")
+        appendLine("contains ${instance.name}: ${instance.component.name} subsets components")
     }
 
     private fun IndentationAwareStringWriter.serialize(channel: Channel) {
-        appendIndent("containment ${channel.name} :> channels : Channel") {
-            appendLine("reference ::> inputEvent : Event = ${channel.from.serialize()}")
-            appendLine("reference ::> outputEvent : Event = ${channel.to.serialize()}")
+        appendIndent("contains ${channel.name}: Channel subsets channels") {
+            appendLine("redefine refers inputEvent: Event = ${channel.from.serialize()}")
+            appendLine("redefine refers outputEvent: Event = ${channel.to.serialize()}")
         }
     }
 
     private fun IndentationAwareStringWriter.serialize(verificationCase: VerificationCase) {
-        appendIndent("target ${verificationCase.name}") {
-            appendLine("containment ${verificationCase.component.name} : ${verificationCase.component.component.name}")
+        appendIndent("/*target*/ class ${verificationCase.name}") {
+            appendLine("contains ${verificationCase.component.name}: ${verificationCase.component.component.name}")
 
-            appendIndent("init") {
+            appendIndent("redefine init") {
                 appendLine("inline ${verificationCase.component.name}.init()")
             }
 
-            appendIndent("tran") {
+            appendIndent("redefine tran") {
                 appendLine("inline ${verificationCase.component.name}.havocInputEvents()")
                 appendLine("inline ${verificationCase.component.name}.main()")
                 appendLine("inline ${verificationCase.component.name}.passTime()")
             }
 
-            appendLine("feature props : Expression[1..1]")
+            appendLine("contains props: Expression")
 
             serialize(verificationCase.expression, "props")
 
             appendIndent("prop") {
-                appendLine("! (${verificationCase.expression.name}.evaluate)")
+                appendLine("! (${verificationCase.expression.name}.evaluate())")
             }
         }
     }
@@ -323,31 +331,31 @@ object GammaToOxstsSerializer {
     }
 
     private fun IndentationAwareStringWriter.serializeVariable(expression: ReferenceExpression, subsets: String) {
-        appendIndent("containment ${expression.name} :> $subsets : VariableExpression") {
-            appendLine("reference ::> variable : Variable = ${expression.serialize()}")
+        appendIndent("contains ${expression.name}: VariableExpression subsets $subsets") {
+            appendLine("redefine refers variable: Variable = ${expression.serialize()}")
         }
     }
 
     private fun IndentationAwareStringWriter.serializeOperator(expression: Expression, left: Expression, right: Expression, type: String, subsets: String) {
-        appendIndent("containment ${expression.name} :> $subsets : $type") {
+        appendIndent("contains ${expression.name}: $type subsets $subsets") {
             serialize(left, "left")
             serialize(right, "right")
         }
     }
 
     private fun IndentationAwareStringWriter.serialize(expression: NotOperator, subsets: String) {
-        appendIndent("containment ${expression.name} :> $subsets : NotExpression") {
+        appendIndent("contains ${expression.name}: NotExpression subsets $subsets") {
             serialize(expression.operand, "operand")
         }
     }
 
     private fun IndentationAwareStringWriter.serialize(expression: LiteralExpression, subsets: String) {
         when (expression) {
-            is LiteralInteger -> appendIndent("containment ${expression.name} :> $subsets : LiteralIntegerExpression") {
-                appendLine("reference ::> value : Integer = ${expression.value}")
+            is LiteralInteger -> appendIndent("contains ${expression.name}: LiteralIntegerExpression subsets $subsets") {
+                appendLine("redefine refers value: int = ${expression.value}")
             }
-            is LiteralBoolean -> appendIndent("containment ${expression.name} :> $subsets : LiteralBooleanExpression") {
-                appendLine("reference ::> value : Boolean = ${expression.isValue}")
+            is LiteralBoolean -> appendIndent("contains ${expression.name}: LiteralBooleanExpression subsets $subsets") {
+                appendLine("redefine refers value: bool = ${expression.isValue}")
             }
         }
     }
@@ -358,8 +366,8 @@ object GammaToOxstsSerializer {
     }
 
     private fun IndentationAwareStringWriter.serialize(expression: StateReachabilityExpression, subsets: String) {
-        appendIndent("containment ${expression.name} :> $subsets : StateReachabilityExpression") {
-            appendLine("reference ::> state : State = ${expression.expression.serialize()}")
+        appendIndent("contains ${expression.name}: StateReachabilityExpression subsets $subsets") {
+            appendLine("redefine refers state: State = ${expression.expression.serialize()}")
         }
     }
 

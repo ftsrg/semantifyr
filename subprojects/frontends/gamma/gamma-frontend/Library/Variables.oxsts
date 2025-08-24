@@ -1,29 +1,38 @@
-package Variables
+package semantifyr::gamma::variables
 
-type Variable {
-    prop evaluate { false }
+import semantifyr::gamma::expressions
 
-    tran set(value: Integer) {
+class Variable {
+    prop evaluate() { false }
 
-    }
+    tran set(value: int) { }
 }
 
-type IntegerVariable : Variable {
-    reference defaultValue : Integer = 0
+class IntegerVariable : Variable {
+    refers defaultValue : int = 0
 
-    var variable : Integer = defaultValue
+    var variable : int := defaultValue
 
-    prop evaluate { variable }
+    redefine prop evaluate() { variable }
 
-    tran set(value: Integer) {
+    tran set(value: int) {
         variable := value
     }
 }
 
-type BooleanVariable : Variable {
-    reference defaultValue : Boolean = false
+class BooleanVariable : Variable {
+    refers defaultValue : bool = false
 
-    var variable : Boolean = defaultValue
+    var variable : bool := defaultValue
 
-    prop evaluate { variable }
+    redefine prop evaluate() { variable }
+
+    tran set(value: bool) {
+        variable := value
+    }
+}
+
+class VariableExpression : Expression {
+    refers variable : Variable
+    prop evaluate() { variable.evaluate() }
 }
