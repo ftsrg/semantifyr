@@ -6,7 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.validation;
 
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package;
 import org.eclipse.xtext.validation.Check;
 
 /**
@@ -26,128 +26,133 @@ public class OxstsValidator extends AbstractOxstsValidator {
     }
 
     @Check
-    public void checkFeatureSubsetting(Feature feature) {
-        if (feature.getSubsets().isEmpty()) return;
-
-        var featureTyping = feature.getTyping();
-        var subsettingTyping = feature.getSubsets().stream().findFirst().get().getTyping();
-
-        if (featureTyping instanceof IntegerType) {
-            if (!(subsettingTyping instanceof IntegerType)) {
-                error("Feature must have type that is compatible with subsetted feature",
-                        OxstsPackage.Literals.FEATURE__SUBSETS,
-                        INVALID_TYPE);
-            } else {
-                return;
-            }
-        } else if (featureTyping instanceof BooleanType) {
-            if (!(subsettingTyping instanceof BooleanType)) {
-                error("Feature must have type that is compatible with subsetted feature",
-                        OxstsPackage.Literals.FEATURE__SUBSETS,
-                        INVALID_TYPE);
-            } else {
-                return;
-            }
-        }
-
-        var featureType = getType(featureTyping);
-        var subsettingType = getType(subsettingTyping);
-
-        if (!isSupertypeOf(subsettingType, featureType)) {
-            error("Feature must have type that is compatible with subsetted feature",
-					OxstsPackage.Literals.FEATURE__SUBSETS,
-                    INVALID_TYPE);
-        }
+    public void checkDummy(Package _package) {
+        _package.getDeclarations();
     }
 
-    @Check
-    public void checkFeatureRedefinition(Feature feature) {
-        if (feature.getRedefines() == null) return;
-
-        var featureTyping = feature.getTyping();
-        var redefinedTyping = feature.getRedefines().getTyping();
-
-        if (featureTyping instanceof IntegerType) {
-            if (!(redefinedTyping instanceof IntegerType)) {
-                error("Feature must have type that is compatible with redefined feature",
-                        OxstsPackage.Literals.FEATURE__SUBSETS,
-                        INVALID_TYPE);
-            } else {
-                return;
-            }
-        } else if (featureTyping instanceof BooleanType) {
-            if (!(redefinedTyping instanceof BooleanType)) {
-                error("Feature must have type that is compatible with redefined feature",
-                        OxstsPackage.Literals.FEATURE__SUBSETS,
-                        INVALID_TYPE);
-            } else {
-                return;
-            }
-        }
-
-        var featureType = getType(featureTyping);
-        var redefinedType = getType(redefinedTyping);
-
-        if (!isSupertypeOf(redefinedType, featureType)) {
-            error("Feature must have type that is compatible with redefined feature",
-                    OxstsPackage.Literals.FEATURE__SUBSETS,
-                    INVALID_TYPE);
-        }
-    }
-
-    @Check
-    public void checkTransitionInlining(InlineCall operation) {
-        var bindings = operation.getArgumentBindings();
-        var transition = (Transition) getReference(operation.getReference());
-
-        if (transition == null) return;
-
-        if (bindings.size() < transition.getArguments().size()) {
-            error("Transition inlining defines too few parameter bindings",
-                    OxstsPackage.Literals.INLINE_CALL__ARGUMENT_BINDINGS,
-                    INVALID_INLINING);
-        } else if (bindings.size() > transition.getArguments().size()) {
-            error("Transition inlining defines too much parameter bindings",
-                    OxstsPackage.Literals.INLINE_CALL__ARGUMENT_BINDINGS,
-                    INVALID_INLINING);
-        }
-    }
-
-    public void checkCompositeTransitionInlining(InlineComposite operation) {
-        var feature = (Feature) getReference(operation.getReference());
-        var multiplicity = feature.getMultiplicity();
-
-//        if (multiplicity instanceof OneMultiplicity || multiplicity instanceof OptionalMultiplicity) {
-//            error("Composite inlining must reference feature with many multiplicity",
-//                    OxstsPackage.Literals.INLINE_COMPOSITE__FEATURE,
-//                    INVALID_MULTIPLICITIY);
+//    @Check
+//    public void checkFeatureSubsetting(Feature feature) {
+//        if (feature.getSubsets().isEmpty()) return;
+//
+//        var featureTyping = feature.getTyping();
+//        var subsettingTyping = feature.getSubsets().stream().findFirst().get().getTyping();
+//
+//        if (featureTyping instanceof IntegerType) {
+//            if (!(subsettingTyping instanceof IntegerType)) {
+//                error("Feature must have type that is compatible with subsetted feature",
+//                        OxstsPackage.Literals.FEATURE__SUBSETS,
+//                        INVALID_TYPE);
+//            } else {
+//                return;
+//            }
+//        } else if (featureTyping instanceof BooleanType) {
+//            if (!(subsettingTyping instanceof BooleanType)) {
+//                error("Feature must have type that is compatible with subsetted feature",
+//                        OxstsPackage.Literals.FEATURE__SUBSETS,
+//                        INVALID_TYPE);
+//            } else {
+//                return;
+//            }
 //        }
-    }
-
-    private Type getType(Typing typing) {
-        if (typing instanceof ReferenceTyping referenceTyping) {
-            return (Type) referenceTyping.getReference().getChains().getLast().getElement();
-        }
-
-        throw new RuntimeException("Typing is of incorrect form!");
-    }
-
-    private boolean isSupertypeOf(Type superType, Type type) {
-        if (type == null) return false;
-
-        if (type == superType) {
-            return true;
-        }
-
-        return isSupertypeOf(superType, type.getSupertype());
-    }
-
-    private Element getReference(ReferenceExpression reference) {
-        if (reference instanceof ChainingExpression chainReference) {
-            return chainReference.getChains().getLast().getElement();
-        }
-
-        throw new RuntimeException("Reference expression is of incorrect form!");
-    }
+//
+//        var featureType = getType(featureTyping);
+//        var subsettingType = getType(subsettingTyping);
+//
+//        if (!isSupertypeOf(subsettingType, featureType)) {
+//            error("Feature must have type that is compatible with subsetted feature",
+//					OxstsPackage.Literals.FEATURE__SUBSETS,
+//                    INVALID_TYPE);
+//        }
+//    }
+//
+//    @Check
+//    public void checkFeatureRedefinition(Feature feature) {
+//        if (feature.getRedefines() == null) return;
+//
+//        var featureTyping = feature.getTyping();
+//        var redefinedTyping = feature.getRedefines().getTyping();
+//
+//        if (featureTyping instanceof IntegerType) {
+//            if (!(redefinedTyping instanceof IntegerType)) {
+//                error("Feature must have type that is compatible with redefined feature",
+//                        OxstsPackage.Literals.FEATURE__SUBSETS,
+//                        INVALID_TYPE);
+//            } else {
+//                return;
+//            }
+//        } else if (featureTyping instanceof BooleanType) {
+//            if (!(redefinedTyping instanceof BooleanType)) {
+//                error("Feature must have type that is compatible with redefined feature",
+//                        OxstsPackage.Literals.FEATURE__SUBSETS,
+//                        INVALID_TYPE);
+//            } else {
+//                return;
+//            }
+//        }
+//
+//        var featureType = getType(featureTyping);
+//        var redefinedType = getType(redefinedTyping);
+//
+//        if (!isSupertypeOf(redefinedType, featureType)) {
+//            error("Feature must have type that is compatible with redefined feature",
+//                    OxstsPackage.Literals.FEATURE__SUBSETS,
+//                    INVALID_TYPE);
+//        }
+//    }
+//
+//    @Check
+//    public void checkTransitionInlining(InlineCall operation) {
+//        var bindings = operation.getArgumentBindings();
+//        var transition = (Transition) getReference(operation.getReference());
+//
+//        if (transition == null) return;
+//
+//        if (bindings.size() < transition.getArguments().size()) {
+//            error("Transition inlining defines too few parameter bindings",
+//                    OxstsPackage.Literals.INLINE_CALL__ARGUMENT_BINDINGS,
+//                    INVALID_INLINING);
+//        } else if (bindings.size() > transition.getArguments().size()) {
+//            error("Transition inlining defines too much parameter bindings",
+//                    OxstsPackage.Literals.INLINE_CALL__ARGUMENT_BINDINGS,
+//                    INVALID_INLINING);
+//        }
+//    }
+//
+//    public void checkCompositeTransitionInlining(InlineComposite operation) {
+//        var feature = (Feature) getReference(operation.getReference());
+//        var multiplicity = feature.getMultiplicity();
+//
+////        if (multiplicity instanceof OneMultiplicity || multiplicity instanceof OptionalMultiplicity) {
+////            error("Composite inlining must reference feature with many multiplicity",
+////                    OxstsPackage.Literals.INLINE_COMPOSITE__FEATURE,
+////                    INVALID_MULTIPLICITIY);
+////        }
+//    }
+//
+//    private Type getType(Typing typing) {
+//        if (typing instanceof ReferenceTyping referenceTyping) {
+//            return (Type) referenceTyping.getReference().getChains().getLast().getElement();
+//        }
+//
+//        throw new RuntimeException("Typing is of incorrect form!");
+//    }
+//
+//    private boolean isSupertypeOf(Type superType, Type type) {
+//        if (type == null) return false;
+//
+//        if (type == superType) {
+//            return true;
+//        }
+//
+//        return isSupertypeOf(superType, type.getSupertype());
+//    }
+//
+//    private Element getReference(ReferenceExpression reference) {
+//        if (reference instanceof ChainingExpression chainReference) {
+//            return chainReference.getChains().getLast().getElement();
+//        }
+//
+//        throw new RuntimeException("Reference expression is of incorrect form!");
+//    }
 
 }

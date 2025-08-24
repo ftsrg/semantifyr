@@ -6,115 +6,191 @@
 
 grammar hu.bme.mit.semantifyr.oxsts.lang.Oxsts with org.eclipse.xtext.common.Terminals
 
-import "http://www.bme.hu/mit/2023/oxsts" 
+import "http://www.bme.hu/mit/2023/oxsts"
 import "http://www.eclipse.org/emf/2002/Ecore" as Ecore
 
 Package:
-    'package' name=ID
-    imports += Import*
-    (
-        types += TypeLike
-        | enums += Enum
-        | patterns += Pattern
-        | constraints += SemanticConstraint
-    )*
+    'package' name=QualifiedIdentifier ';'?
+    imports += ImportStatement*
+    declarations += TopLevelDeclaration*
 ;
 
-Import:
-    'import' package=[Package|FQN]
+ImportStatement:
+    'import' importedPackage=[Package|QualifiedIdentifier] ';'?
 ;
 
-Property:
-    'prop' name=ID? '{'
-        invariant=Expression
-    '}'
+Annotation:
+    '@' declaration=[AnnotationDeclaration|QualifiedIdentifier]
+    ('(' (arguments += Argument (',' arguments += Argument)* ','?)? ')')?
 ;
 
-Enum:
-    'enum' name=ID '{'
-        literals+=EnumLiteral (',' literals+=EnumLiteral)* (',')?
-    '}'
+TopLevelDeclaration returns Declaration:
+    {AnnotationContainer} annotations+=Annotation*
+
+    -> (
+        {DataTypeDeclaration.annotation=current}
+        'extern' 'datatype' name=Identifier ';'?
+    |
+        {EnumDeclaration.annotation=current}
+        'enum' name=Identifier (';'? | '{'
+            literals+=EnumLiteral? (',' literals+=EnumLiteral)* ','?
+        '}')
+    |
+        {RecordDeclaration.annotation=current}
+        'record' name=Identifier (';'? | '{'
+            members += RecordMember*
+        '}')
+    |
+        {ClassDeclaration.annotation=current}
+        abstract?='abstract'? 'class' name=Identifier
+        (':' superTypes += [ClassDeclaration|QualifiedIdentifier] (',' superTypes += [ClassDeclaration|QualifiedIdentifier])* ','? )?
+        (';'? | '{'
+            members += ClassMember*
+        '}')
+    |
+        {AnnotationDeclaration.annotation=current}
+        'annotation' name=Identifier
+        ('(' (parameters += Parameter (',' parameters += Parameter)* ','?)? ')')?
+        ';'?
+    // |
+        // {FunctionDeclaration}
+        // 'redefine'? 'fun' name=Identifier
+        // '(' (parameters += Parameter (',' parameters += Parameter)* ','?)? ')'
+        // (':' returnType=[TypeDeclaration|QualifiedIdentifier])?
+        // '{'
+        //     expression=Expression
+        // '}'
+    // | PatternDeclaration
+    )
 ;
 
 EnumLiteral:
-    name=ID
+    name=Identifier
 ;
 
-TypeLike returns Type:
-    Type
-    | Target
+RecordMember returns Declaration:
+    {AnnotationContainer} annotations+=Annotation*
+
+    -> (
+        {VariableDeclaration.annotation=current}
+        control ?= 'ctrl'? 'var' name=Identifier
+        (':' type=[DomainDeclaration|QualifiedIdentifier])?
+        multiplicity=Multiplicity?
+        (':=' expression=Expression)?
+        ';'?
+    // |
+        // {FunctionDeclaration}
+        // 'redefine'? 'fun' name=Identifier
+        // '(' (parameters += Parameter (',' parameters += Parameter)* ','?)? ')'
+        // (':' returnType=[TypeDeclaration|QualifiedIdentifier])?
+        // '{'
+        //     expression=Expression
+        // '}'
+    )
 ;
 
-Type:
-    (abstract?='abstract')? 'type' name=ID (':' supertype=[Type|FQN])? ('{'
+ClassMember returns Declaration:
+    {AnnotationContainer} annotations+=Annotation*
+
+    -> (
+        {VariableDeclaration.annotation=current}
+        control?='ctrl'? 'var' name=Identifier
+        (':' type=[DomainDeclaration|QualifiedIdentifier])?
+        multiplicity=Multiplicity?
+        (':=' expression=Expression)?
+        ';'?
+    // |
+        // {FunctionDeclaration}
+        // -> 'redefine'? 'fun' name=Identifier
+        // '(' (parameters += Parameter (',' parameters += Parameter)* ','?)? ')'
+        // (':' returnType=[TypeDeclaration|QualifiedIdentifier])?
+        // '{'
+        //     expression=Expression
+        // '}'
+    |
+        {PropertyDeclaration.annotation=current}
+        'redefine'? 'prop'
         (
-            variables+=Variable
-            | features+=Feature
-            | initTransition+=InitTransition
-            | transitions+=NamedTransition
-            | mainTransition+=MainTransition
-            | havocTransition+=HavocTransition
-            | properties+=Property
-        )*
-    '}')?
-;
-
-Target:
-    (abstract?='abstract')? 'target' name=ID (':' supertype=[Type|FQN])? ('{'
+            name=Identifier
+            '(' (parameters += Parameter (',' parameters += Parameter)* ','?)? ')'
+        )?
+        (':' returnType=[TypeDeclaration|QualifiedIdentifier])?
+        '{'
+            'return'? expression=Expression
+        '}'
+    |
+        {TransitionDeclaration.annotation=current}
+        'redefine'? kind=TransitionKind
         (
-            variables+=Variable
-            | features+=Feature
-            | initTransition+=InitTransition
-            | transitions+=NamedTransition
-            | mainTransition+=MainTransition
-            | havocTransition+=HavocTransition
-            | properties+=Property
-        )*
-    '}')?
+            name=Identifier
+            '(' (parameters += Parameter (',' parameters += Parameter)* ','?)? ')'
+        )?
+        operations += SequenceOperation
+        ('or' operations += SequenceOperation)*
+    |
+        {FeatureDeclaration.annotation=current}
+        'redefine'? kind=FeatureKind name=Identifier ':' type=[TypeDeclaration|QualifiedIdentifier] multiplicity=Multiplicity?
+        (
+            ('subsets' superSets += [FeatureDeclaration|Identifier] (',' superSets += [FeatureDeclaration|Identifier])*)?
+            & ('opposite' opposite=[FeatureDeclaration|Identifier])?
+            & ('redefines' redefined=[FeatureDeclaration|Identifier])?
+        )
+        (
+            ';'?
+            | '=' expression=Expression ';'?
+            | '{'
+                innerFeatures += InnerFeature*
+            '}'
+        )
+    )
 ;
 
-NamedTransition returns Transition:
-    TransitionModifier 'tran' name=ID TransitionBody
+AnnotationContainer:
+    {AnnotationContainer} annotations+=Annotation*
 ;
 
-HavocTransition returns Transition:
-    TransitionModifier 'havoc' TransitionBody
+InnerFeature returns FeatureDeclaration:
+    annotation = AnnotationContainer
+    'redefine'? kind=FeatureKind name=Identifier ':' type=[TypeDeclaration|QualifiedIdentifier] multiplicity=Multiplicity?
+    (
+        ('subsets' superSets += [FeatureDeclaration|Identifier] (',' superSets += [FeatureDeclaration|Identifier])*)?
+        & ('opposite' opposite=[FeatureDeclaration|Identifier])?
+        & ('redefines' redefined=[FeatureDeclaration|Identifier])?
+    )
+    (
+        ';'?
+        | '=' expression=Expression ';'?
+        | '{'
+            innerFeatures += InnerFeature*
+        '}'
+    )
 ;
 
-MainTransition returns Transition:
-    TransitionModifier 'tran' TransitionBody
+enum TransitionKind:
+    TRAN='tran'
+    | ENV='env'
+    | INIT='init'
+    | HAVOC='havoc'
 ;
 
-InitTransition returns Transition:
-    TransitionModifier 'init' TransitionBody
+enum FeatureKind:
+    REFERENCE='refers'
+    | CONTAINMENT='contains'
+    | CONTAINER='container'
+    | DERIVED='derived refers'
+    | FEATURE='features'
 ;
-
-fragment TransitionModifier returns Transition:
-    (virtual?='virtual' | override?='override')?
-;
-
-fragment TransitionBody returns Transition:
-    ('('(
-        arguments+=Argument
-        (',' arguments+=Argument)*
-        (',')?
-    )?')')?
-    operation+=SequenceOperation ('or' operation+=SequenceOperation)*
-;
-
-Argument:
-    name=ID ':' typing=Typing
-;
-
 
 Operation:
-	   HavocOperation
-	 | ChoiceOperation
-	 | SequenceOperation
-	 | AssumptionOperation
-	 | InlineOperation
-	 | AssignmentOperation
-	 | IfOperation
+	HavocOperation
+	| ChoiceOperation
+	| SequenceOperation
+	| AssumptionOperation
+	| InlineOperation
+	| AssignmentOperation
+	| IfOperation
+	| ForOperation
+	| LocalVarDeclarationOperation
 ;
 
 SequenceOperation:
@@ -125,111 +201,73 @@ SequenceOperation:
 ;
 
 HavocOperation:
-    'havoc' '(' reference=ChainingExpression ')'
+    'havoc' '(' reference=Expression ')' ';'?
 ;
 
 ChoiceOperation:
     'choice' operation+=SequenceOperation
-    (
-        'or' operation+=SequenceOperation
-    )*
-    (
-        'else' else=SequenceOperation
-    )?
+    ('or' operation+=SequenceOperation)*
+    ('else' else=SequenceOperation)?
 ;
 
 AssumptionOperation:
-    'assume' '(' expression=Expression ')'
+    'assume' '(' expression=Expression ')' ';'?
 ;
 
 AssignmentOperation:
-    reference=ChainingExpression ':=' expression=Expression
+    reference=PostfixUnaryExpression ':=' expression=Expression ';'?
 ;
 
 IfOperation:
     'if' '(' guard=Expression ')'
-    body = SequenceOperation
-    (
-        'else' else=SequenceOperation
-    )?
+    body=SequenceOperation
+    ('else' else=SequenceOperation)?
+;
+
+LoopVariable returns VariableDeclaration:
+    name=Identifier
+;
+
+ForOperation:
+    'for' '(' loopVariable=LoopVariable 'in' rangeExpression=Expression ')'
+    body=SequenceOperation
+;
+
+LocalVarDeclarationOperation:
+    'var' name=Identifier
+    (':' type=[DomainDeclaration|QualifiedIdentifier])?
+    (-> multiplicity=Multiplicity)?
+    (':=' expression=Expression)?
+    ';'?
 ;
 
 InlineOperation:
     InlineCall
-    | InlineChoice
-    | InlineSeq
+    | InlineForOperation
     | InlineIfOperation
 ;
 
-InlineChoice:
-    'inline' 'choice' reference=ChainingExpression '->' transition=[Transition|KeywordID]
-    (
-        'else' else=SequenceOperation
-    )?
-;
-
-InlineSeq:
-    'inline' 'seq' reference=ChainingExpression '->' transition=[Transition|KeywordID]
-;
-
 InlineCall:
-    (static ?= 'static')? 'inline' ((reference=ChainingExpression '.' transition=[Transition|KeywordID]) | transition=[Transition|FQN]) '('(
-        argumentBindings+=ArgumentBinding
-        (',' argumentBindings+=ArgumentBinding)* (',')?
-    )?')'
+    'inline' callExpression=DefiniteCallExpression ';'?
 ;
 
-ArgumentBinding:
-    expression=Expression
+InlineForOperation:
+    InlineSeqFor
+    | InlineChoiceFor
 ;
 
+InlineSeqFor:
+    'inline' 'for' 'seq'? '(' loopVariable=LoopVariable 'in' rangeExpression=Expression ')' body=SequenceOperation
+;
+
+InlineChoiceFor:
+    'inline' 'for' 'choice' '(' loopVariable=LoopVariable 'in' rangeExpression=Expression ')' body=SequenceOperation
+    ('else' else=SequenceOperation)?
+;
 
 InlineIfOperation:
-    'inline' 'if' '(' guard=Expression ')'
-    body = SequenceOperation
-    (
-        'else' else=SequenceOperation
-    )?
-;
-
-Variable:
-    (control ?= 'ctrl')? 'var' name=ID
-    ':' typing=Typing
-    multiplicity=Multiplicity?
-    ('=' expression=Expression)?
-;
-
-Feature returns Feature:
-    ActualFeature
-    | Containment
-    | Reference
-    | Derived
-;
-
-fragment FeatureDeclaration returns Feature:
-    (name=ID | ((name=ID)? '::>' redefines=[Feature|FQN]))
-    (':>' subsets+=[Feature|FQN])?
-    ':' typing=Typing
-    multiplicity=Multiplicity?
-;
-
-ActualFeature returns Feature:
-	'feature' FeatureDeclaration
-;
-
-Containment:
-    'containment' FeatureDeclaration
-    ('{'
-        features+=Feature*
-    '}')?
-;
-
-Reference:
-    'reference' FeatureDeclaration ('=' expression=Expression)?
-;
-
-Derived:
-    'derived' 'reference' FeatureDeclaration 'as' 'pattern' pattern=[Pattern|FQN]
+    'inline' 'if' '(' guard=Expression ')' body = SequenceOperation
+    (';'? | 'else' else=SequenceOperation)
 ;
 
 Multiplicity:
@@ -242,136 +280,15 @@ UnboundedMultiplicity:
 ;
 
 DefiniteMultiplicity:
-    RangeMultiplicity
-    | ExactMultiplicity
-;
-
-RangeMultiplicity:
-    '[' lowerBound=INT '..' upperBound=UpperBound ']'
-;
-
-ExactMultiplicity:
-    '[' value=INT ']'
-;
-
-UpperBound returns Ecore::EInt:
-    INT | "*"
-;
-
-Typing:
-    DataType
-    | ReferenceTyping
-;
-
-DataType:
-    IntegerType
-    | BooleanType
-;
-
-IntegerType:
-    {IntegerType} 'Integer'
-;
-
-BooleanType:
-    {BooleanType} 'Boolean'
-;
-
-ReferenceTyping:
-    reference=ChainingExpression
-;
-
-// Instance
-
-Instance:
-    'instance' ':' containment=[Containment]
-    (
-        '{'
-            (
-                children+=Instance
-                | associations+=Association
-            )*
-        '}'
-    )?
-;
-
-Association:
-    'association' feature=[Feature] '->' '(' instances+=[Instance] (',' instances+=[Instance])* ','? ')'
-;
-
-// Patterns
-
-Pattern:
-    'pattern' name=ID '('
-        parameters+=Parameter
-        (',' parameters+=Parameter)*
-        (',')?
-    ')'
-    patternBodies += PatternBody
-    ('or' patternBodies += PatternBody)*
+    '[' expression=Expression ']'
 ;
 
 Parameter:
-    name=ID ':' type=[Type|FQN]
+    name=Identifier ':' type=[TypeDeclaration|QualifiedIdentifier] (multiplicity=Multiplicity)?
 ;
 
-PatternBody:
-    '{'
-        (constraints += Constraint)*
-    '}'
-;
-
-Constraint:
-    TypeConstraint
-    | FeatureConstraint
-    | PatternConstraint
-    | ExpressionConstraint
-;
-
-PatternVariable:
-    name=ID
-;
-
-TypeConstraint:
-    (negated?='neg')? type=[Type|FQN] '(' variables+=PatternVariable ')'
-;
-
-FeatureConstraint:
-    (negated?='neg')? type=[Type|FQN] '.' feature=[Feature|KeywordID] '(' variables+=PatternVariable ',' variables+=PatternVariable ')'
-;
-
-PatternConstraint:
-    (negated?='neg')? 'find' pattern=[Pattern|FQN] (transitiveClosure = TransitiveClosureKind)? '('
-        variables+=PatternVariable
-        (',' variables+=PatternVariable)*
-        (',')?
-    ')'
-;
-
-ExpressionConstraint:
-    EqualityConstraint
-    | InequalityConstraint
-;
-
-EqualityConstraint:
-    variables+=PatternVariable '==' variables+=PatternVariable
-;
-
-InequalityConstraint:
-    variables+=PatternVariable '!=' variables+=PatternVariable
-;
-
-SemanticConstraint:
-    'neg' 'constraint' name=ID '('
-       parameters+=Parameter
-       (',' parameters+=Parameter)*
-       (',')?
-   ')'
-   patternBodies += PatternBody
-   ('or' patternBodies += PatternBody)*
-;
-
-enum TransitiveClosureKind:
-    WithoutSelf = '+' | IncludeSelf = '*'
+Argument:
+    (parameter=[Parameter|Identifier] '=')? expression=Expression
 ;
 
 // Expressions
@@ -391,7 +308,7 @@ enum BooleanOp:
 ;
 
 BooleanOperator returns Expression:
-    ComparisonOperator (
+    ComparisonOperator -> (
         {BooleanOperator.left=current} op=BooleanOp right=ComparisonOperator
     )*
 ;
@@ -401,9 +318,15 @@ enum ComparisonOp:
 ;
 
 ComparisonOperator returns Expression:
-    AdditiveOperator (
-        {ComparisonOperator.left=current} op=ComparisonOp right=AdditiveOperator
+    RangeExpression -> (
+        {ComparisonOperator.left=current} op=ComparisonOp right=RangeExpression
     )*
+;
+
+RangeExpression returns Expression:
+    AdditiveOperator -> (
+        {RangeExpression.left=current} ('..' | exclusive?='..<') right=AdditiveOperator
+    )?
 ;
 
 enum AdditiveOp returns ArithmeticOp:
@@ -411,7 +334,7 @@ enum AdditiveOp returns ArithmeticOp:
 ;
 
 AdditiveOperator returns Expression:
-    MultiplicativeOperator (
+    MultiplicativeOperator -> (
         {ArithmeticBinaryOperator.left=current} op=AdditiveOp right=MultiplicativeOperator
     )*
 ;
@@ -421,7 +344,7 @@ enum MultiplicativeOp returns ArithmeticOp:
 ;
 
 MultiplicativeOperator returns Expression:
-    UnaryOperator (
+    UnaryOperator -> (
         {ArithmeticBinaryOperator.left=current} op=MultiplicativeOp right=UnaryOperator
     )*
 ;
@@ -429,7 +352,7 @@ MultiplicativeOperator returns Expression:
 UnaryOperator returns Expression:
 	NegationOperator
 	| ArithmeticUnaryOperator
-	| PrimaryExpression
+	| CallExpression
 ;
 
 NegationOperator:
@@ -444,10 +367,27 @@ ArithmeticUnaryOperator:
     op=UnaryOp body=UnaryOperator
 ;
 
+CallExpression returns Expression:
+     PostfixUnaryExpression -> (
+        {CallSuffixExpression.primary=current} '(' (arguments += Argument (',' arguments += Argument)* ','? )? ')'
+     )?
+;
+
+DefiniteCallExpression returns CallSuffixExpression:
+    primary=PostfixUnaryExpression '(' (arguments += Argument (',' arguments += Argument)* ','?)? ')'
+;
+
+PostfixUnaryExpression returns Expression:
+    PrimaryExpression -> (
+        ({NavigationSuffixExpression.primary=current} '.' member=[NamedElement|Identifier])
+        | ({IndexingSuffixExpression.primary=current} '[' index=Expression ']')
+    )*
+;
+
 PrimaryExpression returns Expression:
-      ReferenceExpression
+    DirectReferenceExpression
     | LiteralExpression
-    | '(' Expression ')'
+    | -> '(' Expression ')'
 ;
 
 // Literal expressions
@@ -455,60 +395,91 @@ PrimaryExpression returns Expression:
 LiteralExpression:
     LiteralBoolean
     | LiteralInteger
+    | LiteralInfinity
+    | LiteralNothing
+    | LiteralReal
+    | LiteralString
+    | ArrayLiteral
 ;
 
 LiteralBoolean:
-    value = BooleanValue
+    value=BooleanValue
 ;
 
 LiteralInteger:
-    value = INT
+    value=INT
+;
+
+LiteralInfinity:
+    {LiteralInfinity} '*'
 ;
 
 BooleanValue returns Ecore::EBoolean:
     'true' | 'false'
 ;
 
+LiteralNothing:
+    {LiteralNothing} 'nothing'
+;
+
+LiteralReal:
+    value = Real
+;
+
+Real returns Ecore::EDouble:
+	EXPONENTIAL | INT "." (INT | EXPONENTIAL)
+;
+
+LiteralString:
+    value=STRING
+;
+
+ArrayLiteral:
+    {ArrayLiteral} '[' (values+=Expression (',' values+=Expression)* ','?)? ']'
+;
+
 // Reference expressions
 
-ReferenceExpression:
-    ChainingExpression
-    | SelfReference
-    | NothingReference
+DirectReferenceExpression:
+    SelfReference
+    | ElementReference
 ;
 
-ChainingExpression:
-    chains+=FQNElementReferenceExpression
-    (
-        '.' chains+=ElementReferenceExpression
-    )*
-;
-
-ElementReferenceExpression:
-    element=[NamedElement|KeywordID]
-;
-
-FQNElementReferenceExpression returns ElementReferenceExpression:
-    element=[NamedElement|FQN]
+ElementReference:
+    element=[NamedElement|QualifiedIdentifier]
 ;
 
 SelfReference:
-    {SelfReference} 'Self'
+    {SelfReference} 'self'
 ;
 
-NothingReference:
-    {NothingReference} 'Nothing'
+QualifiedIdentifier:
+    Identifier ('::' Identifier)*
 ;
 
-FQN:
-    KeywordID ('::' KeywordID)*
-;
-
-KeywordID:
-    ID | KEYWORD
+Identifier:
+    ID | QUOTED_ID | KEYWORD
 ;
 
 KEYWORD:
     'init'
     | 'havoc'
+;
+
+@Override
+terminal ID:
+	('a'..'z' | 'A'..'Z' | '_') ('a'..'z' | 'A'..'Z' | '_' | '0'..'9')*
+;
+
+terminal EXPONENTIAL:
+	INT ("e" | "E") ("+" | "-")? INT
+;
+
+@Override
+terminal STRING:
+	'"' ( !('"' | "\r" | "\n") )* '"'
+;
+
+terminal QUOTED_ID:
+	"'" ( !("'" | "\r" | "\n") )* "'"
 ;

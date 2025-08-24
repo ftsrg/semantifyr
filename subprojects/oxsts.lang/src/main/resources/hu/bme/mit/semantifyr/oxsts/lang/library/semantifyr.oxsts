@@ -1,0 +1,20 @@
+package semantifyr
+
+extern datatype int;
+extern datatype real;
+extern datatype bool;
+extern datatype string;
+
+annotation Control;
+
+/*
+* Anything is the implicit supertype of all classes.
+*/
+class Anything {
+    contains children: Anything[0..*] opposite parent;
+    container parent: Anything[0..1] opposite children;
+
+    tran { }
+    init { }
+    havoc { }
+}

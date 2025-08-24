@@ -14,11 +14,11 @@ import org.eclipse.xtext.conversion.ValueConverter;
 public class OxstsValueConverterService extends DefaultTerminalConverters {
 
     @Inject
-    private UpperBoundValueConverter upperBoundValueConverter;
+    private QUOTED_IDValueConverter quotedIdValueConverter;
 
-    @ValueConverter(rule = "UpperBound")
-    public IValueConverter<Integer> UpperBound() {
-        return upperBoundValueConverter;
+    @ValueConverter(rule = "QUOTED_ID")
+    public IValueConverter<String> QUOTED_ID() {
+        return quotedIdValueConverter;
     }
 
 }
