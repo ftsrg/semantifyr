@@ -7,9 +7,9 @@
 package hu.bme.mit.semantifyr.oxsts.lang.ide;
 
 import hu.bme.mit.semantifyr.oxsts.lang.ide.contentassist.FuzzyMatcher;
-import hu.bme.mit.semantifyr.oxsts.lang.ide.contentassist.OxstsContentProposalProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.syntaxcoloring.OxstsSemanticHighlightingCalculator;
 import org.eclipse.xtext.ide.editor.contentassist.IPrefixMatcher;
-import org.eclipse.xtext.ide.editor.contentassist.IdeContentProposalProvider;
+import org.eclipse.xtext.ide.editor.syntaxcoloring.ISemanticHighlightingCalculator;
 
 /**
  * Use this class to register ide components.
@@ -21,12 +21,9 @@ public class OxstsIdeModule extends AbstractOxstsIdeModule {
         return FuzzyMatcher.class;
     }
 
-//    public Class<? extends IdeCrossrefProposalProvider> bindIdeCrossrefProposalProvider() {
-//        return IdeCrossrefProposalProvider.class;
-//    }
-
-    public Class<? extends IdeContentProposalProvider> bindIdeContentProposalProvider() {
-        return OxstsContentProposalProvider.class;
+    @SuppressWarnings("unused")
+    public Class<? extends ISemanticHighlightingCalculator> bindISemanticHighlightingCalculator() {
+        return OxstsSemanticHighlightingCalculator.class;
     }
 
 }
