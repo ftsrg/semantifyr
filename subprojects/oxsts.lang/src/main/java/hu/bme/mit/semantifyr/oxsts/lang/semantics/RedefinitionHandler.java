@@ -9,10 +9,11 @@ package hu.bme.mit.semantifyr.oxsts.lang.semantics;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind;
+import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
+import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
+import org.eclipse.xtext.naming.QualifiedName;
 import org.eclipse.xtext.util.IResourceScopeCache;
 import org.eclipse.xtext.util.Tuples;
 
@@ -26,27 +27,41 @@ public class RedefinitionHandler {
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
 
-    public DomainDeclaration getRedefinedDeclaration(DomainDeclaration declaration) {
-        return getRedefinedDeclaration((Declaration) declaration);
-    }
+    @Inject
+    protected DomainMemberCalculator domainMemberCalculator;
 
-    public DomainDeclaration getRedefinedDeclaration(Declaration declaration) {
+    @Inject
+    protected OxstsQualifiedNameProvider qualifiedNameProvider;
+
+    public RedefinableDeclaration getRedefinedDeclaration(RedefinableDeclaration declaration) {
         return cache.get(Tuples.create(CACHE_KEY, declaration), declaration.eResource(), () -> computeRedefinedDeclaration(declaration));
     }
 
-    protected DomainDeclaration computeRedefinedDeclaration(Declaration declaration) {
-        if (declaration instanceof FeatureDeclaration featureDeclaration) {
-            var redefined = featureDeclaration.getRedefined();
+    protected RedefinableDeclaration computeRedefinedDeclaration(RedefinableDeclaration declaration) {
+        var redefined = declaration.getRedefined();
 
-            if (redefined == null && featureDeclaration.getKind() == FeatureKind.CONTAINER) {
-                if (builtinSymbolResolver.isAnythingParentFeature(featureDeclaration)) {
-                    return null;
-                }
+        if (redefined != null) {
+            return redefined;
+        }
 
-                return builtinSymbolResolver.anythingParentFeature(declaration);
+        if (declaration.isRedefine()) {
+            // find the other RedefinableDeclaration in the parent domain with the same name
+
+            var parentDomain = domainMemberCalculator.getParentCollection(declaration);
+            var found = parentDomain.getMembers().getExportedObjects(declaration.eClass(), QualifiedName.create(NamingUtil.getName(declaration)), false);
+
+            for (var element : found) {
+                return (RedefinableDeclaration) element.getEObjectOrProxy();
             }
 
-            return redefined;
+//            if (declaration instanceof FeatureDeclaration featureDeclaration) {
+//
+//                if (builtinSymbolResolver.isAnythingParentFeature(featureDeclaration)) {
+//                    return null;
+//                }
+//
+//                return builtinSymbolResolver.anythingParentFeature(declaration);
+//            }
         }
 
         return null;

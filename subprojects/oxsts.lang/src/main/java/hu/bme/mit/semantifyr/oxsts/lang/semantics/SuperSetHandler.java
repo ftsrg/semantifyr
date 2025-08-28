@@ -31,7 +31,7 @@ public class SuperSetHandler {
     }
 
     protected Iterable<FeatureDeclaration> computeSuperSetFeatures(FeatureDeclaration declaration) {
-        var superSet = declaration.getSuperSets();
+        var superSet = declaration.getSuperset();
 
         if (superSet.isEmpty() && declaration.getKind() == FeatureKind.CONTAINMENT) {
             if (builtinSymbolResolver.isAnythingChildrenFeature(declaration)) {

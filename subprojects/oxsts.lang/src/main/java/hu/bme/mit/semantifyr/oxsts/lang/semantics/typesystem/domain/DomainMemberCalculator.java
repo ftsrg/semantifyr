@@ -12,7 +12,9 @@ import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.InheritanceHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration;
+import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.resource.ISelectable;
 import org.eclipse.xtext.util.Tuples;
 
@@ -29,7 +31,7 @@ public class DomainMemberCalculator {
     private RedefinitionHandler redefinitionHandler;
 
     @Inject
-    OnResourceSetChangeEvictingCache cache;
+    private OnResourceSetChangeEvictingCache cache;
 
     public ISelectable getMembers(DomainDeclaration domain) {
         var collection = getMemberCollection(domain);
@@ -41,7 +43,7 @@ public class DomainMemberCalculator {
         return cache.get(Tuples.create(MEMBER_KEY, domain), domain.eResource(), () -> computeMemberCollection(domain));
     }
 
-    public DomainMemberCollection getParentCollection(DomainDeclaration domain) {
+    public DomainMemberCollection getParentCollection(Declaration domain) {
         return cache.get(Tuples.create(PARENT_KEY, domain), domain.eResource(), () -> computeParentCollection(domain));
     }
 
@@ -51,9 +53,14 @@ public class DomainMemberCalculator {
         return new DomainMemberCollection(domain, parent, redefinitionHandler);
     }
 
-    protected DomainMemberCollection computeParentCollection(DomainDeclaration domain) {
-        return FluentIterable.from(inheritanceHandler.getSuperDomains(domain)).transform(this::getMemberCollection).stream()
+    protected DomainMemberCollection computeParentCollection(Declaration declaration) {
+        if (declaration instanceof DomainDeclaration domainDeclaration) {
+            return FluentIterable.from(inheritanceHandler.getSuperDomains(domainDeclaration)).transform(this::getMemberCollection).stream()
                     .reduce(DomainMemberCollection.EMPTY, DomainMemberCollection::merge);
+        }
+
+        var parentDomain = EcoreUtil2.getContainerOfType(declaration, DomainDeclaration.class);
+        return getParentCollection(parentDomain);
     }
 
 }

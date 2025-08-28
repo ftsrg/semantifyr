@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration;
 import org.eclipse.xtext.resource.ISelectable;
 
 import java.util.ArrayList;
@@ -74,13 +75,15 @@ public class DomainMemberCollection {
     }
 
     private <T extends Declaration> void addMember(T declaration) {
-        var redefined = redefinitionHandler.getRedefinedDeclaration(declaration);
-
-        if (redefined != null) {
-            add(declaration, redefined);
-        } else {
-            add(declaration);
+        if (declaration instanceof RedefinableDeclaration redefinableDeclaration) {
+            var redefined = redefinitionHandler.getRedefinedDeclaration(redefinableDeclaration);
+            if (redefined != null) {
+                add(declaration, redefined);
+                return;
+            }
         }
+
+        add(declaration);
     }
 
     protected void initFrom(DomainMemberCollection collection) {
