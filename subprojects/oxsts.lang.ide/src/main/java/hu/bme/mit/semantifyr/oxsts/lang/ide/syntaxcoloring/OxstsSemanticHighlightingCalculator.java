@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
+import org.eclipse.lsp4j.SemanticTokenTypes;
 import org.eclipse.xtext.ide.editor.syntaxcoloring.DefaultSemanticHighlightingCalculator;
 import org.eclipse.xtext.ide.editor.syntaxcoloring.IHighlightedPositionAcceptor;
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils;
@@ -82,23 +83,23 @@ public class OxstsSemanticHighlightingCalculator extends DefaultSemanticHighligh
 	protected String getHighlightClass(EObject eObject, EReference reference) {
         if (eObject == null) return null;
         return switch (eObject) {
-            case Package ignored -> "namespace";
-            case DataTypeDeclaration ignored -> "type";
-            case EnumDeclaration ignored -> "enum";
-            case EnumLiteral ignored -> "enumMember";
-            case RecordDeclaration ignored -> "struct";
-            case ClassDeclaration ignored -> "class";
-            case AnnotationDeclaration ignored -> "decorator";
-            case VariableDeclaration ignored -> "variable";
-            case PropertyDeclaration ignored -> "function";
-            case TransitionDeclaration ignored -> "method";
-            case FeatureDeclaration ignored -> "property";
-            case Parameter ignored -> "parameter";
+            case Package ignored -> SemanticTokenTypes.Namespace;
+            case DataTypeDeclaration ignored -> SemanticTokenTypes.Type;
+            case EnumDeclaration ignored -> SemanticTokenTypes.Enum;
+            case EnumLiteral ignored -> SemanticTokenTypes.EnumMember;
+            case RecordDeclaration ignored -> SemanticTokenTypes.Struct;
+            case ClassDeclaration ignored -> SemanticTokenTypes.Class;
+            case AnnotationDeclaration ignored -> SemanticTokenTypes.Decorator;
+            case VariableDeclaration ignored -> SemanticTokenTypes.Variable;
+            case PropertyDeclaration ignored -> SemanticTokenTypes.Function;
+            case TransitionDeclaration ignored -> SemanticTokenTypes.Method;
+            case FeatureDeclaration ignored -> SemanticTokenTypes.Property;
+            case Parameter ignored -> SemanticTokenTypes.Parameter;
 
-            case LiteralString ignored -> "string";
-            case LiteralInfinity ignored -> "number";
-            case LiteralInteger ignored -> "number";
-            case LiteralReal ignored -> "number";
+            case LiteralString ignored -> SemanticTokenTypes.String;
+            case LiteralInfinity ignored -> SemanticTokenTypes.Number;
+            case LiteralInteger ignored -> SemanticTokenTypes.Number;
+            case LiteralReal ignored -> SemanticTokenTypes.Number;
 
             default -> null;
         };
