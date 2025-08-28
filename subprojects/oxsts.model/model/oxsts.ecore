@@ -8,7 +8,7 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="declarations" upperBound="-1"
         eType="#//Declaration" containment="true"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="TransitionDeclaration" eSuperTypes="#//ParametricDeclaration">
+  <eClassifiers xsi:type="ecore:EClass" name="TransitionDeclaration" eSuperTypes="#//ParametricDeclaration #//RedefinableDeclaration">
     <eStructuralFeatures xsi:type="ecore:EReference" name="operations" upperBound="-1"
         eType="#//Operation" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="kind" lowerBound="1" eType="#//TransitionKind"/>
@@ -29,10 +29,9 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="else" eType="#//Operation"
         containment="true"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="FeatureDeclaration" eSuperTypes="#//DomainDeclaration #//Namespace">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="superSets" upperBound="-1"
+  <eClassifiers xsi:type="ecore:EClass" name="FeatureDeclaration" eSuperTypes="#//DomainDeclaration #//Namespace #//RedefinableDeclaration">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="superset" upperBound="-1"
         eType="#//FeatureDeclaration"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="redefined" eType="#//FeatureDeclaration"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="type" eType="#//TypeDeclaration"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="multiplicity" eType="#//Multiplicity"
         containment="true"/>
@@ -110,7 +109,7 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="literals" upperBound="-1"
         eType="#//EnumLiteral" containment="true"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="PropertyDeclaration" eSuperTypes="#//ParametricDeclaration">
+  <eClassifiers xsi:type="ecore:EClass" name="PropertyDeclaration" eSuperTypes="#//ParametricDeclaration #//RedefinableDeclaration">
     <eStructuralFeatures xsi:type="ecore:EReference" name="expression" eType="#//Expression"
         containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="returnType" eType="#//TypeDeclaration"/>
@@ -145,6 +144,8 @@
   <eClassifiers xsi:type="ecore:EClass" name="Association" eSuperTypes="#//Element">
     <eStructuralFeatures xsi:type="ecore:EReference" name="feature" lowerBound="1"
         eType="#//FeatureDeclaration"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="instances" upperBound="-1"
+        eType="#//Instance"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="PatternDeclaration" eSuperTypes="#//Namespace #//TopLevelDeclaration #//ParametricDeclaration">
     <eStructuralFeatures xsi:type="ecore:EReference" name="bodies" upperBound="-1"
@@ -315,4 +316,36 @@
         defaultValueLiteral="false"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="LiteralInfinity" eSuperTypes="#//LiteralExpression"/>
+  <eClassifiers xsi:type="ecore:EClass" name="Instance">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="children" upperBound="-1"
+        eType="#//Instance" containment="true" eOpposite="#//Instance/parent"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="feature" lowerBound="1"
+        eType="#//FeatureDeclaration"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="parent" eType="#//Instance"
+        eOpposite="#//Instance/children"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="model" eType="#//InstanceModel"
+        eOpposite="#//InstanceModel/rootInstance"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="associations" upperBound="-1"
+        eType="#//Association" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="variableMappings" upperBound="-1"
+        eType="#//VariableMapping" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="AssociationValue"/>
+  <eClassifiers xsi:type="ecore:EClass" name="InstanceModel">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="rootInstance" lowerBound="1"
+        eType="#//Instance" containment="true" eOpposite="#//Instance/model"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="rootFeature" lowerBound="1"
+        eType="#//FeatureDeclaration" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="VariableMapping">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="original" lowerBound="1"
+        eType="#//VariableDeclaration"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="actual" lowerBound="1"
+        eType="#//VariableDeclaration" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="RedefinableDeclaration" eSuperTypes="#//Declaration">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="redefine" eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//Boolean"
+        defaultValueLiteral="false"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="redefined" eType="#//RedefinableDeclaration"/>
+  </eClassifiers>
 </ecore:EPackage>
