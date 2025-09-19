@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.gradle.conventions
 
 import org.gradle.accessors.dm.LibrariesForLibs
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.kotlin.dsl.registering
 
 plugins {
     `java-library`
@@ -29,6 +30,7 @@ dependencies {
     testFixturesApi(libs.mockito.junit)
 
     testRuntimeOnly(libs.junit.engine)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 java.toolchain {
@@ -49,7 +51,7 @@ tasks {
         finalizedBy(tasks.jacocoTestReport)
     }
 
-    val allTests by tasks.creating(Test::class) {
+    val allTests by tasks.registering(Test::class) {
         useJUnitPlatform()
 
         minHeapSize = "512m"
