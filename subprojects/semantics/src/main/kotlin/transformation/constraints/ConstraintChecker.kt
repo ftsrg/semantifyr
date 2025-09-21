@@ -7,12 +7,12 @@
 package hu.bme.mit.semantifyr.semantics.transformation.constraints
 
 import com.google.inject.Singleton
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InstanceModel
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 
 @Singleton
 class ConstraintChecker {
 
-    fun checkConstraints(instanceModel: InstanceModel) {
+    fun checkConstraints(inlinedOxsts: InlinedOxsts) {
 
     }
 

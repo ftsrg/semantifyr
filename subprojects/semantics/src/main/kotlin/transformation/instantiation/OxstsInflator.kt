@@ -21,9 +21,9 @@ class OxstsInflator {
     private lateinit var constraintChecker: ConstraintChecker
 
     fun inflateInstanceModel(inlinedOxsts: InlinedOxsts) {
-        oxstsClassInstantiator.instantiateModel(inlinedOxsts.instanceModel)
+        oxstsClassInstantiator.instantiateModel(inlinedOxsts)
 
-        constraintChecker.checkConstraints(inlinedOxsts.instanceModel)
+        constraintChecker.checkConstraints(inlinedOxsts)
     }
 
     fun deflateInstanceModel(inlinedOxsts: InlinedOxsts) {

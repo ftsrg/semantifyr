@@ -42,6 +42,10 @@ public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
             return getPackageScope(_package, reference);
         }
 
+        if (context instanceof InlinedOxsts inlinedOxsts) {
+            return getInlinedOxstsScope(inlinedOxsts, reference);
+        }
+
         var containerScope = getScope(context.eContainer(), reference);
         return getLocalScope(containerScope, context, reference);
     }
@@ -54,6 +58,11 @@ public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
         var packageName = qualifiedNameProvider.getFullyQualifiedName(_package);
         var resourceSelectable = new TrimPrefixSelectable(resourceDescription, packageName);
         return SelectableBasedScope.createScope(globalScope, resourceSelectable, reference.getEReferenceType(), isIgnoreCase(reference));
+    }
+
+    protected IScope getInlinedOxstsScope(InlinedOxsts inlinedOxsts, EReference reference) {
+        var resource = inlinedOxsts.eResource();
+        return getGlobalScope(resource, reference);
     }
 
     // caching feels unnecessary here, since most of the calculated instances are simple to create, or are cache anyway

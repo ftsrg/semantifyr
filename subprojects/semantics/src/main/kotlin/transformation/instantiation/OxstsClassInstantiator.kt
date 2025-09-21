@@ -13,8 +13,8 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InstanceModel
 import java.util.*
 
 @Singleton
@@ -29,14 +29,14 @@ class OxstsClassInstantiator {
     @Inject
     private lateinit var instanceManager: InstanceManager
 
-    fun instantiateModel(instanceModel: InstanceModel) {
-        instantiateTree(instanceModel)
-        resolveCrossReferences(instanceModel)
+    fun instantiateModel(inlinedOxsts: InlinedOxsts) {
+        instantiateTree(inlinedOxsts)
+        resolveCrossReferences(inlinedOxsts)
     }
 
-    private fun instantiateTree(instanceModel: InstanceModel) {
+    private fun instantiateTree(inlinedOxsts: InlinedOxsts) {
         val instanceQueue = LinkedList<Instance>()
-        instanceQueue += instanceModel.rootInstance
+        instanceQueue += inlinedOxsts.rootInstance
 
         while (instanceQueue.any()) {
             val instance = instanceQueue.removeFirst()
@@ -62,7 +62,7 @@ class OxstsClassInstantiator {
         }
     }
 
-    private fun resolveCrossReferences(instanceModel: InstanceModel) {
+    private fun resolveCrossReferences(inlinedOxsts: InlinedOxsts) {
 //        setReferenceBindings(instanceModel.rootInstance)
 
 //        val patternRunner = PatternRunner(resourceSet)

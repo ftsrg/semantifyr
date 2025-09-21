@@ -9,6 +9,48 @@ grammar hu.bme.mit.semantifyr.oxsts.lang.Oxsts with org.eclipse.xtext.common.Ter
 import "http://www.bme.hu/mit/2023/oxsts"
 import "http://www.eclipse.org/emf/2002/Ecore" as Ecore
 
+Model returns Ecore::EObject:
+    OxstsModelPackage
+    | InlinedOxsts
+;
+
+InlinedOxsts:
+    'inlined' 'oxsts' 'of' classDeclaration=[ClassDeclaration|QualifiedIdentifier]
+
+    rootFeature=RootFeature
+
+    initTransition=InlinedInitTransition
+    mainTransition=InlinedMainTransition
+    property=InlinedProperty
+
+;
+
+RootFeature returns FeatureDeclaration:
+    annotation=AnnotationContainer
+    kind=FeatureKind name=Identifier ':' type=[TypeDeclaration|QualifiedIdentifier] multiplicity=Multiplicity?
+;
+
+InlinedInitTransition returns TransitionDeclaration:
+    annotation=AnnotationContainer
+    kind=TransitionKind
+    branches += SequenceOperation
+    ('or' branches += SequenceOperation)*
+;
+
+InlinedMainTransition returns TransitionDeclaration:
+    annotation=AnnotationContainer
+    kind=TransitionKind
+    branches += SequenceOperation
+    ('or' branches += SequenceOperation)*
+;
+
+InlinedProperty returns PropertyDeclaration:
+    annotation=AnnotationContainer
+    'prop' '{'
+        expression=Expression
+    '}'
+;
+
 OxstsModelPackage:
     'package' name=QualifiedIdentifier ';'?
     imports += ImportStatement*

@@ -82,6 +82,7 @@ public class OxstsSemanticHighlightingCalculator extends DefaultSemanticHighligh
 	protected String getHighlightClass(EObject eObject, EReference reference) {
         if (eObject == null) return null;
         return switch (eObject) {
+            case InlinedOxsts ignored -> SemanticTokenTypes.Namespace;
             case OxstsModelPackage ignored -> SemanticTokenTypes.Namespace;
             case DataTypeDeclaration ignored -> SemanticTokenTypes.Type;
             case EnumDeclaration ignored -> SemanticTokenTypes.Enum;

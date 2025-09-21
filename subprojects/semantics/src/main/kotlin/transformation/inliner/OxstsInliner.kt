@@ -28,12 +28,12 @@ class OxstsInliner {
     private lateinit var xstsExpressionOptimizer: XstsExpressionOptimizer
 
     fun inlineOxsts(inlinedOxsts: InlinedOxsts) {
-        operationInliner.inlineOperations(inlinedOxsts.instanceModel.rootInstance, inlinedOxsts.initTransition)
-        operationInliner.inlineOperations(inlinedOxsts.instanceModel.rootInstance, inlinedOxsts.mainTransition)
+        operationInliner.inlineOperations(inlinedOxsts.rootInstance, inlinedOxsts.initTransition)
+        operationInliner.inlineOperations(inlinedOxsts.rootInstance, inlinedOxsts.mainTransition)
 
-        callExpressionInliner.inlineExpressions(inlinedOxsts.instanceModel.rootInstance, inlinedOxsts.initTransition)
-        callExpressionInliner.inlineExpressions(inlinedOxsts.instanceModel.rootInstance, inlinedOxsts.mainTransition)
-        callExpressionInliner.inlineExpressions(inlinedOxsts.instanceModel.rootInstance, inlinedOxsts.property)
+        callExpressionInliner.inlineExpressions(inlinedOxsts.rootInstance, inlinedOxsts.initTransition)
+        callExpressionInliner.inlineExpressions(inlinedOxsts.rootInstance, inlinedOxsts.mainTransition)
+        callExpressionInliner.inlineExpressions(inlinedOxsts.rootInstance, inlinedOxsts.property)
 
         inlinedOxstsOperationOptimizer.optimize(inlinedOxsts.initTransition)
         inlinedOxstsOperationOptimizer.optimize(inlinedOxsts.mainTransition)

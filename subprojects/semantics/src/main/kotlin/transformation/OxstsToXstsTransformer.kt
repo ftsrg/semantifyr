@@ -9,8 +9,6 @@ package hu.bme.mit.semantifyr.semantics.transformation
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.XSTS
 import hu.bme.mit.semantifyr.semantics.loading.SemantifyrModelContext
 import hu.bme.mit.semantifyr.semantics.transformation.inliner.OxstsInliner
 import hu.bme.mit.semantifyr.semantics.transformation.instantiation.OxstsInflator
@@ -44,12 +42,14 @@ class OxstsToXstsTransformer {
     }
 
     fun transform(classDeclaration: ClassDeclaration, rewriteChoice: Boolean = false) {
-        inlinedOxstsModelManager.useInlinedModel(classDeclaration) { inlinedOxsts ->
-//            oxstsInflator.inflateInstanceModel(inlinedOxsts)
-//            oxstsInliner.inlineOxsts(inlinedOxsts)
-//            oxstsInflator.deflateInstanceModel(inlinedOxsts)
-//            xstsTransformer.transform(inlinedOxsts, rewriteChoice)
-        }
+        val inlinedOxsts = inlinedOxstsModelManager.createInlinedOxsts(classDeclaration)
+
+        inlinedOxsts.eResource().save(mapOf<Any, Any>())
+
+//        oxstsInflator.inflateInstanceModel(inlinedOxsts)
+//        oxstsInliner.inlineOxsts(inlinedOxsts)
+//        oxstsInflator.deflateInstanceModel(inlinedOxsts)
+//        xstsTransformer.transform(inlinedOxsts, rewriteChoice)
     }
 
 }
