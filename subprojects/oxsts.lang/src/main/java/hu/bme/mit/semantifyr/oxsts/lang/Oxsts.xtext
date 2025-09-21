@@ -158,7 +158,7 @@ ClassMember returns Declaration:
         )?
         (':' returnType=[TypeDeclaration|QualifiedIdentifier])?
         '{'
-            'return'? expression=Expression
+            'return' expression=Expression
         '}'
     |
         {TransitionDeclaration.annotation=current}
@@ -308,8 +308,9 @@ InlineChoiceFor:
 ;
 
 InlineIfOperation:
-    'inline' 'if' '(' guard=Expression ')' body = SequenceOperation
-    (';'? | 'else' else=SequenceOperation)
+    'inline' 'if' '(' guard=Expression ')' 
+    body=SequenceOperation
+    ('else' else=SequenceOperation)?
 ;
 
 Multiplicity:

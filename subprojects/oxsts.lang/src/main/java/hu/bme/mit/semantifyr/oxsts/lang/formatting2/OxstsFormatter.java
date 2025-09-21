@@ -6,290 +6,386 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.formatting2;
 
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.xtext.formatting2.AbstractJavaFormatter;
+import org.eclipse.xtext.formatting2.IFormattableDocument;
+import org.eclipse.xtext.formatting2.IHiddenRegionFormatter;
 
+@SuppressWarnings("UnstableApiUsage")
 public class OxstsFormatter extends AbstractJavaFormatter {
 
-//    protected void format(hu.bme.mit.semantifyr.oxsts.model.oxsts.Package _package, IFormattableDocument document) {
-//        for (var _import : _package.getImports()) {
-//            document.format(_import);
-//        }
-//
-//        for (var type : _package.getDeclarations()) {
-//            document.format(type);
-//        }
-//    }
-//
-//    protected void format(ImportStatement _import, IFormattableDocument document) {
-//        document.prepend(regionFor(_import).keyword("import"), (a) -> {
-//            a.setNewLines(1, 1, 2);
-//        });
-//    }
-//
-//    protected void format(hu.bme.mit.semantifyr.oxsts.model.oxsts.Enum _enum, IFormattableDocument document) {
-//        document.prepend(regionFor(_enum).keyword("enum"), (a) -> {
-//            a.setNewLines(1, 1, 2);
-//        });
-//        document.prepend(regionFor(_enum).keyword(","), this::noSpace);
-//        document.append(regionFor(_enum).keyword(","), this::noSpace);
-//        setupBrackets(_enum, document);
-//
-//        for (var literal : _enum.getLiterals()) {
-//            document.format(literal);
-//        }
-//    }
-//
-//    protected void format(EnumLiteral literal, IFormattableDocument document) {
-//        document.prepend(regionFor(literal).feature(OxstsPackage.Literals.NAMED_ELEMENT__NAME), this::newLine);
-//    }
-//
-//    protected void format(Type type, IFormattableDocument document) {
-//        document.prepend(regionFor(type).keyword("type"), (a) -> {
-//            a.setNewLines(1, 1, 2);
-//        });
-//        document.prepend(regionFor(type).keyword("target"), (a) -> {
-//            a.setNewLines(1, 1, 2);
-//        });
-//
-//        formatBaseType(type, document);
-//
-//        for (var variable : type.getVariables()) {
-//            document.format(variable);
-//        }
-//
-//        for (var property : type.getProperties()) {
-//            document.format(property);
-//        }
-//    }
-//
-//    protected void format(Variable variable, IFormattableDocument document) {
-//        document.prepend(regionFor(variable).keyword("var"), this::newLine);
-//    }
-//
-//    protected void format(Feature feature, IFormattableDocument document) {
-//        document.prepend(regionFor(feature).keyword("feature"), this::newLine);
-//        document.prepend(regionFor(feature).keyword("reference"), this::newLine);
-//        document.prepend(regionFor(feature).keyword("derived"), this::newLine);
-//    }
-//
-//    protected void format(Containment containment, IFormattableDocument document) {
-//        document.prepend(regionFor(containment).keyword("containment"), this::newLine);
-//
-//        formatBaseType(containment, document);
-//    }
-//
-//    protected void formatBaseType(BaseType type, IFormattableDocument document) {
-//        setupBrackets(type, document);
-//
-//        for (var feature : type.getFeatures()) {
-//            document.format(feature);
-//        }
-//
-//        for (var init : type.getInitTransition()) {
-//            document.format(init);
-//        }
-//
-//        for (var transition : type.getTransitions()) {
-//            document.format(transition);
-//        }
-//
-//        for (var main : type.getMainTransition()) {
-//            document.format(main);
-//        }
-//
-//        for (var havoc : type.getHavocTransition()) {
-//            document.format(havoc);
-//        }
-//    }
-//
-//    protected void format(Transition transition, IFormattableDocument document) {
-//        document.prepend(regionFor(transition).keyword("tran"), this::newLine);
-//        document.prepend(regionFor(transition).keyword("havoc"), this::newLine);
-//        document.prepend(regionFor(transition).keyword("init"), this::newLine);
-//        setupBrackets(transition, document);
-//
-//        for (var operation : transition.getOperation()) {
-//            document.format(operation);
-//        }
-//    }
-//
-//    protected void format(CompositeOperation operation, IFormattableDocument document) {
-//        setupBrackets(operation, document);
-//
-//        for (var inner : operation.getOperation()) {
-//            document.format(inner);
-//        }
-//    }
-//
-//    protected void format(ChoiceOperation operation, IFormattableDocument document) {
-//        document.prepend(regionFor(operation).keyword("choice"), this::newLine);
-//
-//        format((CompositeOperation) operation, document);
-//
-//        if (operation.getElse() != null) {
-//            document.format(operation.getElse());
-//        }
-//    }
-//
-//    protected void format(IfOperation operation, IFormattableDocument document) {
-//        document.prepend(regionFor(operation).keyword("if"), this::newLine);
-//        document.format(operation.getGuard());
-//        document.format(operation.getBody());
-//
-//        if (operation.getElse() != null) {
-//            document.format(operation.getElse());
-//        }
-//    }
-//
-//    protected void format(AssumptionOperation operation, IFormattableDocument document) {
-//        document.prepend(regionFor(operation).keyword("assume"), this::newLine);
-//        document.append(regionFor(operation).keyword("("), this::noSpace);
-//        document.prepend(regionFor(operation).keyword(")"), this::noSpace);
-//
-//        document.format(operation.getExpression());
-//    }
-//
-//    protected void format(HavocOperation operation, IFormattableDocument document) {
-//        document.prepend(regionFor(operation).keyword("havoc"), this::newLine);
-//        document.append(regionFor(operation).keyword("("), this::noSpace);
-//        document.prepend(regionFor(operation).keyword(")"), this::noSpace);
-//
-//        document.format(operation.getReference());
-//    }
-//
-//    protected void format(AssignmentOperation operation, IFormattableDocument document) {
-//        var reference = operation.getReference();
-//        var firstDeclaration = reference.getChains().getFirst();
-//        document.prepend(regionFor(firstDeclaration).feature(OxstsPackage.Literals.ELEMENT_REFERENCE_EXPRESSION__ELEMENT), this::newLine);
-//
-//        document.format(operation.getReference());
-//        document.format(operation.getExpression());
-//    }
-//
-//    protected void format(InlineCall operation, IFormattableDocument document) {
-//        if (operation.isStatic())  {
-//            document.prepend(regionFor(operation).keyword("static"), this::newLine);
-//        } else {
-//            document.prepend(regionFor(operation).keyword("inline"), this::newLine);
-//        }
-//
-//        document.prepend(regionFor(operation).keyword("("), this::noSpace);
-//        document.append(regionFor(operation).keyword("("), this::noSpace);
-//        document.prepend(regionFor(operation).keyword(")"), this::noSpace);
-//
-//        document.format(operation.getReference());
-//    }
-//
-//    protected void format(InlineChoice operation, IFormattableDocument document) {
-//        document.prepend(regionFor(operation).keyword("inline"), this::newLine);
-//
-//        document.format(operation.getReference());
-//        document.format(operation.getTransition());
-//
-//        if (operation.getElse() != null) {
-//            document.format(operation.getElse());
-//        }
-//    }
-//
-//    protected void format(InlineSeq operation, IFormattableDocument document) {
-//        document.prepend(regionFor(operation).keyword("inline"), this::newLine);
-//
-//        document.format(operation.getReference());
-//        document.format(operation.getTransition());
-//    }
-//
-//    protected void format(InlineIfOperation operation, IFormattableDocument document) {
-//        document.prepend(regionFor(operation).keyword("inline"), this::newLine);
-//        document.format(operation.getBody());
-//        document.format(operation.getGuard());
-//
-//        if (operation.getElse() != null) {
-//            document.format(operation.getElse());
-//        }
-//    }
-//
-//    protected void format(Property property, IFormattableDocument document) {
-//        document.prepend(regionFor(property).keyword("prop"), this::newLine);
-//        setupBrackets(property, document);
-//        document.format(property.getInvariant());
-//    }
-//
-//    protected void format(Pattern pattern, IFormattableDocument document) {
-//        document.prepend(regionFor(pattern).keyword("pattern"), (a) -> {
-//            a.setNewLines(1, 1, 2);
-//        });
-//
-//        for (var body : pattern.getPatternBodies()) {
-//            document.format(body);
-//        }
-//    }
-//
-//    protected void format(PatternBody body, IFormattableDocument document) {
-//        setupBrackets(body, document);
-//
-//        for (var constraint : body.getConstraints()) {
-//            document.format(constraint);
-//        }
-//    }
-//
-//    protected void format(TypeConstraint constraint, IFormattableDocument document) {
-//        if (constraint.isNegated()) {
-//            document.prepend(regionFor(constraint).keyword("neg"), this::newLine);
-//        } else {
-//            document.prepend(regionFor(constraint).feature(OxstsPackage.Literals.TYPE_CONSTRAINT__TYPE), this::newLine);
-//        }
-//    }
-//
-//    protected void format(FeatureConstraint constraint, IFormattableDocument document) {
-//        if (constraint.isNegated()) {
-//            document.prepend(regionFor(constraint).keyword("neg"), this::newLine);
-//        } else {
-//            document.prepend(regionFor(constraint).feature(OxstsPackage.Literals.TYPE_CONSTRAINT__TYPE), this::newLine);
-//        }
-//    }
-//
-//    protected void format(PatternConstraint constraint, IFormattableDocument document) {
-//        if (constraint.isNegated()) {
-//            document.prepend(regionFor(constraint).keyword("neg"), this::newLine);
-//        } else {
-//            document.prepend(regionFor(constraint).keyword("find"), this::newLine);
-//        }
-//    }
-//
-//    protected void format(UnaryOperator expression, IFormattableDocument document) {
-//        document.format(expression.getBody());
-//    }
-//
-//    protected void format(BinaryOperator expression, IFormattableDocument document) {
-//        document.format(expression.getLeft());
-//        document.format(expression.getRight());
-//    }
-//
-//    protected void format(ChainingExpression expression, IFormattableDocument document) {
-//        document.prepend(allRegionsFor(expression).keyword("."), this::noSpace);
-//        document.append(allRegionsFor(expression).keyword("."), this::noSpace);
-//
-//        for (var expr : expression.getChains().stream().skip(1).toList()) {
-//            if (expr instanceof ElementReferenceExpression elementReferenceExpression) {
-//                document.prepend(regionFor(elementReferenceExpression).feature(OxstsPackage.Literals.ELEMENT_REFERENCE_EXPRESSION__ELEMENT), this::noSpace);
-//            }
-//        }
-//
-//        for (var expr : expression.getChains().stream().limit(expression.getChains().size() - 1).toList()) {
-//            if (expr instanceof ElementReferenceExpression elementReferenceExpression) {
-//                document.append(regionFor(elementReferenceExpression).feature(OxstsPackage.Literals.ELEMENT_REFERENCE_EXPRESSION__ELEMENT), this::noSpace);
-//            }
-//        }
-//
-//        for (var expr : expression.getChains()) {
-//            document.format(expr);
-//        }
-//    }
-//
-//    protected void setupBrackets(EObject eObject, IFormattableDocument document) {
-//        document.prepend(regionFor(eObject).keyword("{"), this::oneSpace);
-//        document.prepend(regionFor(eObject).keyword("}"), this::newLine);
-//        document.interior(regionFor(eObject).keyword("{"), regionFor(eObject).keyword("}"), this::indent);
-//    }
+    protected void formatBracketedDeclaration(EObject declaration, IFormattableDocument document) {
+        formatSemicolonedLine(declaration, document);
+        formatBrackets(declaration, document);
+    }
+
+    protected void formatSemicolonedLine(EObject declaration, IFormattableDocument document) {
+        document.prepend(regionFor(declaration).keyword(";"), this::noSpace);
+        document.set(previousHiddenRegion(declaration), this::newLines);
+        document.set(nextHiddenRegion(declaration), this::newLines);
+    }
+
+    protected void formatBrackets(EObject eObject, IFormattableDocument document) {
+        document.prepend(regionFor(eObject).keyword("{"), this::oneSpace);
+        document.append(regionFor(eObject).keyword("{"), this::newLine);
+        document.prepend(regionFor(eObject).keyword("}"), this::newLine);
+        document.interior(regionFor(eObject).keyword("{"), regionFor(eObject).keyword("}"), this::indent);
+    }
+
+    protected void newLines(IHiddenRegionFormatter hrf) {
+        hrf.setNewLines(1, 1, 2);
+    }
+
+    protected void optionalNewLine(IHiddenRegionFormatter hrf) {
+        hrf.setNewLines(0, 1, 1);
+    }
+
+    protected void format(OxstsModelPackage _package, IFormattableDocument document) {
+        _package.getImports().forEach(document::format);
+        _package.getDeclarations().forEach(document::format);
+    }
+
+    protected void format(InlinedOxsts inlinedOxsts, IFormattableDocument document) {
+        document.format(inlinedOxsts.getInitTransition());
+        document.format(inlinedOxsts.getMainTransition());
+        document.format(inlinedOxsts.getProperty());
+        document.format(inlinedOxsts.getRootFeature());
+        document.format(inlinedOxsts.getRootInstance());
+
+        inlinedOxsts.getVariables().forEach(document::format);
+    }
+
+    protected void format(ImportStatement _import, IFormattableDocument document) {
+        document.prepend(regionFor(_import).keyword("import"), this::newLines);
+        document.append(regionFor(_import).keyword("import"), this::oneSpace);
+        document.append(regionFor(_import).feature(OxstsPackage.Literals.IMPORT_STATEMENT__IMPORTED_PACKAGE), this::newLines);
+    }
+
+    protected void format(Annotation annotation, IFormattableDocument document) {
+        document.prepend(regionFor(annotation).keyword("@"), this::newLines);
+        document.append(regionFor(annotation).keyword("@"), this::noSpace);
+
+        formatCallLike(annotation, document);
+
+        for (var argument : annotation.getArguments()) {
+            document.format(argument);
+        }
+    }
+
+    protected void formatCallLike(EObject eObject, IFormattableDocument document) {
+        document.prepend(regionFor(eObject).keyword("("), this::noSpace);
+        document.append(regionFor(eObject).keyword("("), this::optionalNewLine);
+        document.prepend(regionFor(eObject).keyword(")"), this::noSpace);
+        document.prepend(regionFor(eObject).keyword(")"), this::optionalNewLine);
+        document.append(regionFor(eObject).keyword(")"), this::newLine);
+
+        document.interior(regionFor(eObject).keyword("("), regionFor(eObject).keyword(")"), this::indent);
+    }
+
+    protected void format(DataTypeDeclaration dataTypeDeclaration, IFormattableDocument document) {
+        formatSemicolonedLine(dataTypeDeclaration, document);
+
+        document.append(regionFor(dataTypeDeclaration).keyword("extern"), this::oneSpace);
+        document.append(regionFor(dataTypeDeclaration).keyword("datatype"), this::oneSpace);
+    }
+
+    protected void format(EnumDeclaration enumDeclaration, IFormattableDocument document) {
+        formatBracketedDeclaration(enumDeclaration, document);
+
+        document.append(regionFor(enumDeclaration).keyword("enum"), this::oneSpace);
+
+        enumDeclaration.getLiterals().forEach(document::format);
+    }
+
+    protected void format(EnumLiteral literal, IFormattableDocument document) {
+        document.prepend(regionFor(literal).feature(OxstsPackage.Literals.NAMED_ELEMENT__NAME), this::optionalNewLine);
+        document.append(regionFor(literal).feature(OxstsPackage.Literals.NAMED_ELEMENT__NAME), this::noSpace);
+    }
+
+    protected void format(RecordDeclaration recordDeclaration, IFormattableDocument document) {
+        formatBracketedDeclaration(recordDeclaration, document);
+
+        document.append(regionFor(recordDeclaration).keyword("record"), this::oneSpace);
+
+        recordDeclaration.getMembers().forEach(document::format);
+    }
+
+    protected void format(ClassDeclaration classDeclaration, IFormattableDocument document) {
+        formatBracketedDeclaration(classDeclaration, document);
+
+        document.append(regionFor(classDeclaration).keyword("abstract"), this::oneSpace);
+        document.append(regionFor(classDeclaration).keyword("class"), this::oneSpace);
+        document.surround(regionFor(classDeclaration).keyword(":"), this::oneSpace);
+
+        document.prepend(allRegionsFor(classDeclaration).keyword(","), this::noSpace);
+        document.append(allRegionsFor(classDeclaration).keyword(","), this::oneSpace);
+
+        classDeclaration.getMembers().forEach(document::format);
+    }
+
+    protected void format(AnnotationDeclaration annotationDeclaration, IFormattableDocument document) {
+        formatSemicolonedLine(annotationDeclaration, document);
+
+        document.append(regionFor(annotationDeclaration).keyword("annotation"), this::oneSpace);
+
+        formatCallLike(annotationDeclaration, document);
+
+        annotationDeclaration.getParameters().forEach(document::format);
+    }
+
+    protected void format(VariableDeclaration variableDeclaration, IFormattableDocument document) {
+        formatSemicolonedLine(variableDeclaration, document);
+
+        document.append(regionFor(variableDeclaration).keyword("ctrl"), this::oneSpace);
+        document.append(regionFor(variableDeclaration).keyword("var"), this::oneSpace);
+        document.prepend(regionFor(variableDeclaration).keyword(":"), this::noSpace);
+        document.append(regionFor(variableDeclaration).keyword(":"), this::oneSpace);
+        document.surround(regionFor(variableDeclaration).keyword(":="), this::oneSpace);
+
+        document.format(variableDeclaration.getMultiplicity());
+        document.format(variableDeclaration.getExpression());
+    }
+
+    protected void format(PropertyDeclaration propertyDeclaration, IFormattableDocument document) {
+        formatBracketedDeclaration(propertyDeclaration, document);
+
+        document.append(regionFor(propertyDeclaration).keyword("redefine"), this::oneSpace);
+        document.append(regionFor(propertyDeclaration).keyword("prop"), this::oneSpace);
+        document.append(regionFor(propertyDeclaration).keyword("return"), this::oneSpace);
+        document.prepend(regionFor(propertyDeclaration).keyword(":"), this::noSpace);
+        document.append(regionFor(propertyDeclaration).keyword(":"), this::oneSpace);
+
+        propertyDeclaration.getParameters().forEach(document::format);
+        document.format(propertyDeclaration.getExpression());
+    }
+
+    protected void format(TransitionDeclaration transitionDeclaration, IFormattableDocument document) {
+        document.append(regionFor(transitionDeclaration).keyword("redefine"), this::oneSpace);
+        document.append(regionFor(transitionDeclaration).keyword("tran"), this::oneSpace);
+        document.append(regionFor(transitionDeclaration).keyword("init"), this::oneSpace);
+        document.append(regionFor(transitionDeclaration).keyword("env"), this::oneSpace);
+        document.append(regionFor(transitionDeclaration).keyword("havoc"), this::oneSpace);
+
+        transitionDeclaration.getBranches().forEach(document::format);
+    }
+
+    protected void format(FeatureDeclaration featureDeclaration, IFormattableDocument document) {
+        formatBracketedDeclaration(featureDeclaration, document);
+
+        document.append(regionFor(featureDeclaration).keyword("redefine"), this::oneSpace);
+        document.append(regionFor(featureDeclaration).keyword("refers"), this::oneSpace);
+        document.append(regionFor(featureDeclaration).keyword("contains"), this::oneSpace);
+        document.append(regionFor(featureDeclaration).keyword("container"), this::oneSpace);
+        document.append(regionFor(featureDeclaration).keyword("derived"), this::oneSpace);
+        document.append(regionFor(featureDeclaration).keyword("features"), this::oneSpace);
+        document.prepend(regionFor(featureDeclaration).keyword(":"), this::noSpace);
+        document.append(regionFor(featureDeclaration).keyword(":"), this::oneSpace);
+        document.surround(regionFor(featureDeclaration).keyword("="), this::oneSpace);
+
+        featureDeclaration.getInnerFeatures().forEach(document::format);
+        document.format(featureDeclaration.getMultiplicity());
+        document.format(featureDeclaration.getExpression());
+    }
+
+    protected void format(HavocOperation havocOperation, IFormattableDocument document) {
+        document.append(regionFor(havocOperation).keyword("havoc"), this::oneSpace);
+
+        formatSemicolonedLine(havocOperation, document);
+
+        document.format(havocOperation.getReference());
+    }
+
+    protected void format(AssumptionOperation assumptionOperation, IFormattableDocument document) {
+        document.append(regionFor(assumptionOperation).keyword("assume"), this::oneSpace);
+
+        formatSemicolonedLine(assumptionOperation, document);
+
+        document.format(assumptionOperation.getExpression());
+    }
+
+    protected void format(AssignmentOperation assignmentOperation, IFormattableDocument document) {
+        document.surround(regionFor(assignmentOperation).keyword(":="), this::oneSpace);
+
+        formatSemicolonedLine(assignmentOperation, document);
+
+        document.format(assignmentOperation.getReference());
+        document.format(assignmentOperation.getExpression());
+    }
+
+    protected void format(SequenceOperation sequenceOperation, IFormattableDocument document) {
+        formatBrackets(sequenceOperation, document);
+
+        sequenceOperation.getSteps().forEach(document::format);
+    }
+
+    protected void format(ChoiceOperation choiceOperation, IFormattableDocument document) {
+        document.append(regionFor(choiceOperation).keyword("choice"), this::oneSpace);
+        document.surround(regionFor(choiceOperation).keyword("or"), this::oneSpace);
+        document.surround(regionFor(choiceOperation).keyword("else"), this::oneSpace);
+
+        choiceOperation.getBranches().forEach(document::format);
+        document.format(choiceOperation.getElse());
+    }
+
+    protected void format(IfOperation ifOperation, IFormattableDocument document) {
+        document.append(regionFor(ifOperation).keyword("if"), this::oneSpace);
+
+        formatBracketedDeclaration(ifOperation, document);
+
+        document.format(ifOperation.getGuard());
+        document.format(ifOperation.getBody());
+        document.format(ifOperation.getElse());
+    }
+
+    protected void format(ForOperation forOperation, IFormattableDocument document) {
+        document.append(regionFor(forOperation).keyword("for"), this::oneSpace);
+        document.surround(regionFor(forOperation).keyword("in"), this::oneSpace);
+
+        document.format(forOperation.getRangeExpression());
+        document.format(forOperation.getBody());
+    }
+
+    protected void format(LocalVarDeclarationOperation localVarDeclarationOperation, IFormattableDocument document) {
+        document.append(regionFor(localVarDeclarationOperation).keyword("var"), this::oneSpace);
+        document.append(regionFor(localVarDeclarationOperation).keyword(":"), this::oneSpace);
+        document.surround(regionFor(localVarDeclarationOperation).keyword(":="), this::oneSpace);
+
+        formatBracketedDeclaration(localVarDeclarationOperation, document);
+
+        document.format(localVarDeclarationOperation.getMultiplicity());
+        document.format(localVarDeclarationOperation.getExpression());
+    }
+
+    protected void format(InlineCall inlineCall, IFormattableDocument document) {
+        document.surround(regionFor(inlineCall).keyword("inline"), this::oneSpace);
+
+        formatSemicolonedLine(inlineCall, document);
+
+        document.format(inlineCall.getCallExpression());
+    }
+
+    protected void format(InlineForOperation inlineFor, IFormattableDocument document) {
+        document.surround(regionFor(inlineFor).keyword("inline"), this::oneSpace);
+        document.surround(regionFor(inlineFor).keyword("for"), this::oneSpace);
+        document.surround(regionFor(inlineFor).keyword("choice"), this::oneSpace);
+        document.surround(regionFor(inlineFor).keyword("else"), this::oneSpace);
+        document.surround(regionFor(inlineFor).keyword("seq"), this::oneSpace);
+
+        document.surround(regionFor(inlineFor).keyword("in"), this::oneSpace);
+
+        document.format(inlineFor.getRangeExpression());
+        document.format(inlineFor.getBody());
+    }
+
+    protected void format(InlineIfOperation inlineIfOperation, IFormattableDocument document) {
+        document.surround(regionFor(inlineIfOperation).keyword("inline"), this::oneSpace);
+        document.surround(regionFor(inlineIfOperation).keyword("if"), this::oneSpace);
+
+        document.format(inlineIfOperation.getGuard());
+        document.format(inlineIfOperation.getBody());
+        document.format(inlineIfOperation.getElse());
+    }
+
+    protected void format(Multiplicity multiplicity, IFormattableDocument document) {
+        document.surround(regionFor(multiplicity).keyword("["), this::noSpace);
+        document.prepend(regionFor(multiplicity).keyword("]"), this::noSpace);
+
+        if (multiplicity instanceof DefiniteMultiplicity definiteMultiplicity) {
+            document.format(definiteMultiplicity.getExpression());
+        }
+    }
+
+    protected void format(ParameterDeclaration parameterDeclaration, IFormattableDocument document) {
+        document.set(previousHiddenRegion(parameterDeclaration), this::optionalNewLine);
+        document.set(nextHiddenRegion(parameterDeclaration), this::noSpace);
+        document.surround(regionFor(parameterDeclaration).keyword("="), this::oneSpace);
+
+        document.format(parameterDeclaration.getMultiplicity());
+    }
+
+    protected void format(Argument argument, IFormattableDocument document) {
+        document.set(previousHiddenRegion(argument), this::optionalNewLine);
+        document.set(nextHiddenRegion(argument), this::noSpace);
+        document.surround(regionFor(argument).keyword("="), this::oneSpace);
+
+        document.format(argument.getExpression());
+    }
+
+    protected void format(RangeExpression rangeExpression, IFormattableDocument document) {
+        document.surround(regionFor(rangeExpression).keyword(".."), this::noSpace);
+        document.surround(regionFor(rangeExpression).keyword("..<"), this::noSpace);
+
+        document.format(rangeExpression.getLeft());
+        document.format(rangeExpression.getRight());
+    }
+
+    protected void format(ComparisonOperator comparisonOperator, IFormattableDocument document) {
+        allRegionsFor(comparisonOperator).keywords(
+                "<", "<=", ">", "==", "!="
+        ).forEach(r -> document.surround(r, this::oneSpace));
+
+        document.format(comparisonOperator.getLeft());
+        document.format(comparisonOperator.getRight());
+    }
+
+    protected void format(ArithmeticBinaryOperator arithmeticBinaryOperator, IFormattableDocument document) {
+        allRegionsFor(arithmeticBinaryOperator).keywords(
+                "+", "-", "*", "/"
+        ).forEach(r -> document.surround(r, this::oneSpace));
+
+        document.format(arithmeticBinaryOperator.getLeft());
+        document.format(arithmeticBinaryOperator.getRight());
+    }
+
+    protected void format(BooleanOperator booleanOperator, IFormattableDocument document) {
+        allRegionsFor(booleanOperator).keywords(
+                "&&", "||", "^^"
+        ).forEach(r -> document.surround(r, this::oneSpace));
+
+        document.format(booleanOperator.getLeft());
+        document.format(booleanOperator.getRight());
+    }
+
+    protected void format(UnaryOperator unaryOperator, IFormattableDocument document) {
+        document.append(regionFor(unaryOperator).keyword("+"), this::noSpace);
+        document.append(regionFor(unaryOperator).keyword("-"), this::noSpace);
+        document.append(regionFor(unaryOperator).keyword("!"), this::noSpace);
+
+        document.format(unaryOperator.getBody());
+    }
+
+    protected void format(ArrayLiteral arrayLiteral, IFormattableDocument document) {
+        document.surround(regionFor(arrayLiteral).keyword("["), this::noSpace);
+        document.surround(regionFor(arrayLiteral).keyword("]"), this::noSpace);
+
+        arrayLiteral.getValues().forEach(document::format);
+    }
+
+    protected void format(SelfReference selfReference, IFormattableDocument document) {
+        document.surround(regionFor(selfReference).keyword("@"), this::noSpace);
+    }
+
+    protected void format(NavigationSuffixExpression postfixUnaryExpression, IFormattableDocument document) {
+        document.surround(regionFor(postfixUnaryExpression).keyword("."), this::noSpace);
+
+        document.format(postfixUnaryExpression.getPrimary());
+    }
+
+    protected void format(CallSuffixExpression postfixUnaryExpression, IFormattableDocument document) {
+        document.surround(regionFor(postfixUnaryExpression).keyword("("), this::noSpace);
+        document.prepend(regionFor(postfixUnaryExpression).keyword(")"), this::noSpace);
+
+        document.format(postfixUnaryExpression.getPrimary());
+        postfixUnaryExpression.getArguments().forEach(document::format);
+    }
+
+    protected void format(IndexingSuffixExpression postfixUnaryExpression, IFormattableDocument document) {
+        document.surround(regionFor(postfixUnaryExpression).keyword("["), this::noSpace);
+        document.prepend(regionFor(postfixUnaryExpression).keyword("]"), this::noSpace);
+
+        document.format(postfixUnaryExpression.getPrimary());
+        document.format(postfixUnaryExpression.getIndex());
+    }
 
 }
