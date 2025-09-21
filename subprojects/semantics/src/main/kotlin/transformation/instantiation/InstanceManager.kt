@@ -1,0 +1,117 @@
+/*
+ * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package hu.bme.mit.semantifyr.semantics.transformation.instantiation
+
+import com.google.inject.Inject
+import com.google.inject.Singleton
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Association
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableMapping
+import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
+
+class VariableManager(
+    instance: Instance,
+    variables: List<VariableDeclaration>
+) {
+
+    private val variableMappings = mutableMapOf<VariableDeclaration, VariableMapping>()
+
+    init {
+        for (variable in variables) {
+            val mapping = OxstsFactory.createVariableMapping(variable)
+            instance.variableMappings += mapping
+            variableMappings.put(variable, mapping)
+        }
+    }
+
+    fun resolve(variableDeclaration: VariableDeclaration): VariableDeclaration {
+        return variableMappings[variableDeclaration]!!.actual
+    }
+
+}
+
+class AssociationManager(
+    instance: Instance,
+    features: List<FeatureDeclaration>
+) {
+
+    private val associations = mutableMapOf<FeatureDeclaration, Association>()
+
+    init {
+        for (feature in features) {
+            val association = OxstsFactory.createAssociation(feature)
+            instance.associations += association
+            associations.put(feature, association)
+        }
+    }
+
+    fun instancesAt(featureDeclaration: FeatureDeclaration): Instance {
+        return associations[featureDeclaration]!!.instances.first()
+    }
+
+}
+
+@Singleton
+class InstanceManager {
+
+    @Inject
+    private lateinit var domainMemberCalculator: DomainMemberCalculator
+
+    private val variableManagers = mutableMapOf<Instance, VariableManager>()
+    private val associationManagers = mutableMapOf<Instance, AssociationManager>()
+
+    fun createInstance(holder: Instance, featureDeclaration: FeatureDeclaration) {
+        val instance = createInstance(featureDeclaration)
+        holder.children += instance
+        placeInstance(holder, featureDeclaration, instance)
+    }
+
+    fun createInstance(featureDeclaration: FeatureDeclaration): Instance {
+        val instance = OxstsFactory.createInstance(featureDeclaration)
+
+        createVariableMappings(instance)
+        createFeatureMappings(instance)
+
+        return instance
+    }
+
+    private fun createVariableMappings(instance: Instance) {
+        val memberCollection = domainMemberCalculator.getMemberCollection(instance.feature)
+
+        val allVariables = memberCollection.declarationHolders.map {
+            it.declaration
+        }.filterIsInstance<VariableDeclaration>().distinct()
+
+        variableManagers.put(instance, VariableManager(instance, allVariables))
+    }
+
+    private fun createFeatureMappings(instance: Instance) {
+        val memberCollection = domainMemberCalculator.getMemberCollection(instance.feature)
+
+        val allFeatures = memberCollection.declarationHolders.map {
+            it.declaration
+        }.filterIsInstance<FeatureDeclaration>().distinct()
+
+        associationManagers.put(instance, AssociationManager(instance, allFeatures))
+    }
+
+    fun placeInstance(holder: Instance, featureDeclaration: FeatureDeclaration, held: Instance) {
+
+    }
+
+    fun resolveVariable(holder: Instance, variableDeclaration: VariableDeclaration): VariableDeclaration {
+        return variableManagers[holder]!!.resolve(variableDeclaration)
+    }
+
+    fun instancesAt(holder: Instance, featureDeclaration: FeatureDeclaration): Instance {
+        return associationManagers[holder]!!.instancesAt(featureDeclaration)
+    }
+
+}
