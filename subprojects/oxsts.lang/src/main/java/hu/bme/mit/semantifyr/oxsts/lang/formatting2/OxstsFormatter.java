@@ -32,9 +32,22 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.prepend(regionFor(eObject).keyword("}"), this::newLine);
         document.interior(regionFor(eObject).keyword("{"), regionFor(eObject).keyword("}"), this::indent);
     }
+    protected void formatCallLike(EObject eObject, IFormattableDocument document) {
+        document.prepend(regionFor(eObject).keyword("("), this::noSpace);
+        document.append(regionFor(eObject).keyword("("), this::optionalNewLine);
+        document.prepend(regionFor(eObject).keyword(")"), this::noSpace);
+        document.prepend(regionFor(eObject).keyword(")"), this::optionalNewLine);
+        document.append(regionFor(eObject).keyword(")"), this::newLine);
+
+        document.interior(regionFor(eObject).keyword("("), regionFor(eObject).keyword(")"), this::indent);
+    }
 
     protected void newLines(IHiddenRegionFormatter hrf) {
         hrf.setNewLines(1, 1, 2);
+    }
+
+    protected void twoLines(IHiddenRegionFormatter hrf) {
+        hrf.setNewLines(2);
     }
 
     protected void optionalNewLine(IHiddenRegionFormatter hrf) {
@@ -42,11 +55,15 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void format(OxstsModelPackage _package, IFormattableDocument document) {
+        document.append(regionFor(_package).feature(OxstsPackage.Literals.NAMED_ELEMENT__NAME), this::twoLines);
+
         _package.getImports().forEach(document::format);
         _package.getDeclarations().forEach(document::format);
     }
 
     protected void format(InlinedOxsts inlinedOxsts, IFormattableDocument document) {
+        document.append(regionFor(inlinedOxsts).feature(OxstsPackage.Literals.INLINED_OXSTS__CLASS_DECLARATION), this::twoLines);
+
         document.format(inlinedOxsts.getInitTransition());
         document.format(inlinedOxsts.getMainTransition());
         document.format(inlinedOxsts.getProperty());
@@ -57,12 +74,15 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void format(ImportStatement _import, IFormattableDocument document) {
-        document.prepend(regionFor(_import).keyword("import"), this::newLines);
+        formatSemicolonedLine(_import, document);
+
         document.append(regionFor(_import).keyword("import"), this::oneSpace);
         document.append(regionFor(_import).feature(OxstsPackage.Literals.IMPORT_STATEMENT__IMPORTED_PACKAGE), this::newLines);
     }
 
     protected void format(Annotation annotation, IFormattableDocument document) {
+        formatSemicolonedLine(annotation, document);
+
         document.prepend(regionFor(annotation).keyword("@"), this::newLines);
         document.append(regionFor(annotation).keyword("@"), this::noSpace);
 
@@ -71,16 +91,6 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         for (var argument : annotation.getArguments()) {
             document.format(argument);
         }
-    }
-
-    protected void formatCallLike(EObject eObject, IFormattableDocument document) {
-        document.prepend(regionFor(eObject).keyword("("), this::noSpace);
-        document.append(regionFor(eObject).keyword("("), this::optionalNewLine);
-        document.prepend(regionFor(eObject).keyword(")"), this::noSpace);
-        document.prepend(regionFor(eObject).keyword(")"), this::optionalNewLine);
-        document.append(regionFor(eObject).keyword(")"), this::newLine);
-
-        document.interior(regionFor(eObject).keyword("("), regionFor(eObject).keyword(")"), this::indent);
     }
 
     protected void format(DataTypeDeclaration dataTypeDeclaration, IFormattableDocument document) {
@@ -161,6 +171,8 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void format(TransitionDeclaration transitionDeclaration, IFormattableDocument document) {
+        formatSemicolonedLine(transitionDeclaration, document);
+
         document.append(regionFor(transitionDeclaration).keyword("redefine"), this::oneSpace);
         document.append(regionFor(transitionDeclaration).keyword("tran"), this::oneSpace);
         document.append(regionFor(transitionDeclaration).keyword("init"), this::oneSpace);
@@ -189,25 +201,25 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void format(HavocOperation havocOperation, IFormattableDocument document) {
-        document.append(regionFor(havocOperation).keyword("havoc"), this::oneSpace);
-
         formatSemicolonedLine(havocOperation, document);
+
+        document.append(regionFor(havocOperation).keyword("havoc"), this::oneSpace);
 
         document.format(havocOperation.getReference());
     }
 
     protected void format(AssumptionOperation assumptionOperation, IFormattableDocument document) {
-        document.append(regionFor(assumptionOperation).keyword("assume"), this::oneSpace);
-
         formatSemicolonedLine(assumptionOperation, document);
+
+        document.append(regionFor(assumptionOperation).keyword("assume"), this::oneSpace);
 
         document.format(assumptionOperation.getExpression());
     }
 
     protected void format(AssignmentOperation assignmentOperation, IFormattableDocument document) {
-        document.surround(regionFor(assignmentOperation).keyword(":="), this::oneSpace);
-
         formatSemicolonedLine(assignmentOperation, document);
+
+        document.surround(regionFor(assignmentOperation).keyword(":="), this::oneSpace);
 
         document.format(assignmentOperation.getReference());
         document.format(assignmentOperation.getExpression());
@@ -220,6 +232,8 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void format(ChoiceOperation choiceOperation, IFormattableDocument document) {
+        formatSemicolonedLine(choiceOperation, document);
+
         document.append(regionFor(choiceOperation).keyword("choice"), this::oneSpace);
         document.surround(regionFor(choiceOperation).keyword("or"), this::oneSpace);
         document.surround(regionFor(choiceOperation).keyword("else"), this::oneSpace);
@@ -229,9 +243,9 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void format(IfOperation ifOperation, IFormattableDocument document) {
-        document.append(regionFor(ifOperation).keyword("if"), this::oneSpace);
-
         formatBracketedDeclaration(ifOperation, document);
+
+        document.append(regionFor(ifOperation).keyword("if"), this::oneSpace);
 
         document.format(ifOperation.getGuard());
         document.format(ifOperation.getBody());
@@ -239,6 +253,8 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void format(ForOperation forOperation, IFormattableDocument document) {
+        formatSemicolonedLine(forOperation, document);
+
         document.append(regionFor(forOperation).keyword("for"), this::oneSpace);
         document.surround(regionFor(forOperation).keyword("in"), this::oneSpace);
 
@@ -247,25 +263,27 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void format(LocalVarDeclarationOperation localVarDeclarationOperation, IFormattableDocument document) {
+        formatSemicolonedLine(localVarDeclarationOperation, document);
+
         document.append(regionFor(localVarDeclarationOperation).keyword("var"), this::oneSpace);
         document.append(regionFor(localVarDeclarationOperation).keyword(":"), this::oneSpace);
         document.surround(regionFor(localVarDeclarationOperation).keyword(":="), this::oneSpace);
-
-        formatBracketedDeclaration(localVarDeclarationOperation, document);
 
         document.format(localVarDeclarationOperation.getMultiplicity());
         document.format(localVarDeclarationOperation.getExpression());
     }
 
     protected void format(InlineCall inlineCall, IFormattableDocument document) {
-        document.surround(regionFor(inlineCall).keyword("inline"), this::oneSpace);
-
         formatSemicolonedLine(inlineCall, document);
+
+        document.surround(regionFor(inlineCall).keyword("inline"), this::oneSpace);
 
         document.format(inlineCall.getCallExpression());
     }
 
     protected void format(InlineForOperation inlineFor, IFormattableDocument document) {
+        formatSemicolonedLine(inlineFor, document);
+
         document.surround(regionFor(inlineFor).keyword("inline"), this::oneSpace);
         document.surround(regionFor(inlineFor).keyword("for"), this::oneSpace);
         document.surround(regionFor(inlineFor).keyword("choice"), this::oneSpace);
@@ -279,6 +297,8 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void format(InlineIfOperation inlineIfOperation, IFormattableDocument document) {
+        formatSemicolonedLine(inlineIfOperation, document);
+
         document.surround(regionFor(inlineIfOperation).keyword("inline"), this::oneSpace);
         document.surround(regionFor(inlineIfOperation).keyword("if"), this::oneSpace);
 
