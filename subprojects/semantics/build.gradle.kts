@@ -24,20 +24,15 @@ repositories {
 
 dependencies {
     api(project(":oxsts.lang"))
-//    api(project(":cex.lang"))
-
-    // FIXME: should probably come from oxsts.lang dependency
-    api(libs.slf4j.api)
 
     implementation(libs.guice)
     implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.ecore.codegen)
     implementation(libs.viatra.query.language) {
         exclude("com.google.inject", "guice")
     }
 
-    runtimeOnly(libs.viatra.query.runtime)
-    runtimeOnly(libs.viatra.transformation.runtime)
+//    runtimeOnly(libs.viatra.query.runtime)
+//    runtimeOnly(libs.viatra.transformation.runtime)
 
     testFixturesApi(libs.slf4j.api)
     testFixturesApi(project(":oxsts.lang"))

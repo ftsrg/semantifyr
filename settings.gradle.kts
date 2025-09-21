@@ -7,15 +7,12 @@
 rootProject.name = "semantifyr"
 
 include(
-    "semantifyr",
-    "xsts.lang",
-    "xsts.lang.ide",
-    "cex.lang",
-    "cex.lang.ide",
+    "semantics",
+//    "semantifyr-cli",
     "oxsts.model",
     "oxsts.lang",
     "oxsts.lang.ide",
-    "semantifyr-vscode",
+//    "semantifyr-vscode",
 )
 
 rootProject.children.forEach { project ->
@@ -32,4 +29,5 @@ fun includeDirectory(dirPath: String) {
     }
 }
 
-includeDirectory("subprojects/frontends/gamma")
+//includeDirectory("subprojects/frontends/gamma")
+//includeDirectory("subprojects/backends/theta")

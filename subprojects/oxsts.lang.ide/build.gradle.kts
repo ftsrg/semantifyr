@@ -17,6 +17,8 @@ val ideGeneratedClasspath by configurations.creating {
 dependencies {
     api(project(":oxsts.lang"))
 
+    implementation(project(":semantics"))
+
     implementation(libs.xtext.ide)
     runtimeOnly(libs.slf4j.log4j)
 
