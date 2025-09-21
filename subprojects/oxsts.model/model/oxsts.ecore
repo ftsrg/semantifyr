@@ -2,7 +2,7 @@
 <ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="oxsts" nsURI="http://www.bme.hu/mit/2023/oxsts" nsPrefix="oxsts">
   <eClassifiers xsi:type="ecore:EClass" name="Element" abstract="true"/>
-  <eClassifiers xsi:type="ecore:EClass" name="Package" eSuperTypes="#//Namespace">
+  <eClassifiers xsi:type="ecore:EClass" name="OxstsModelPackage" eSuperTypes="#//Namespace">
     <eStructuralFeatures xsi:type="ecore:EReference" name="imports" upperBound="-1"
         eType="#//ImportStatement" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="declarations" upperBound="-1"
@@ -143,7 +143,7 @@
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="ImportStatement" eSuperTypes="#//Element">
     <eStructuralFeatures xsi:type="ecore:EReference" name="importedPackage" lowerBound="1"
-        eType="#//Package"/>
+        eType="#//OxstsModelPackage"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Association" eSuperTypes="#//Element">
     <eStructuralFeatures xsi:type="ecore:EReference" name="feature" lowerBound="1"
@@ -327,20 +327,14 @@
         eType="#//FeatureDeclaration"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="parent" eType="#//Instance"
         eOpposite="#//Instance/children"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="model" eType="#//InstanceModel"
-        eOpposite="#//InstanceModel/rootInstance"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="model" eType="#//InlinedOxsts"
+        eOpposite="#//InlinedOxsts/rootInstance"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="associations" upperBound="-1"
         eType="#//Association" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="variableMappings" upperBound="-1"
         eType="#//VariableMapping" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="AssociationValue"/>
-  <eClassifiers xsi:type="ecore:EClass" name="InstanceModel">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="rootInstance" lowerBound="1"
-        eType="#//Instance" containment="true" eOpposite="#//Instance/model"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="rootFeature" lowerBound="1"
-        eType="#//FeatureDeclaration" containment="true"/>
-  </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="VariableMapping">
     <eStructuralFeatures xsi:type="ecore:EReference" name="original" lowerBound="1"
         eType="#//VariableDeclaration"/>
@@ -361,9 +355,11 @@
         eType="#//PropertyDeclaration" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="variables" upperBound="-1"
         eType="#//VariableDeclaration" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="instanceModel" lowerBound="1"
-        eType="#//InstanceModel" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="classDeclaration" lowerBound="1"
         eType="#//ClassDeclaration"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="rootInstance" eType="#//Instance"
+        containment="true" eOpposite="#//Instance/model"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="rootFeature" eType="#//FeatureDeclaration"
+        containment="true"/>
   </eClassifiers>
 </ecore:EPackage>

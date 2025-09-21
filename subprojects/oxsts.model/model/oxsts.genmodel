@@ -52,9 +52,9 @@
       <genEnumLiterals ecoreEnumLiteral="oxsts.ecore#//FeatureKind/FEATURE"/>
     </genEnums>
     <genClasses ecoreClass="oxsts.ecore#//Element"/>
-    <genClasses ecoreClass="oxsts.ecore#//Package">
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Package/imports"/>
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Package/declarations"/>
+    <genClasses ecoreClass="oxsts.ecore#//OxstsModelPackage">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//OxstsModelPackage/imports"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//OxstsModelPackage/declarations"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//TransitionDeclaration">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//TransitionDeclaration/branches"/>
@@ -265,10 +265,6 @@
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//Instance/variableMappings"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//AssociationValue"/>
-    <genClasses ecoreClass="oxsts.ecore#//InstanceModel">
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InstanceModel/rootInstance"/>
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InstanceModel/rootFeature"/>
-    </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//VariableMapping">
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//VariableMapping/original"/>
       <genFeatures property="None" notify="false" createChild="false" ecoreFeature="ecore:EReference oxsts.ecore#//VariableMapping/actual"/>
@@ -282,8 +278,9 @@
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlinedOxsts/mainTransition"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlinedOxsts/property"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlinedOxsts/variables"/>
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlinedOxsts/instanceModel"/>
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlinedOxsts/classDeclaration"/>
+      <genFeatures children="true" createChild="true" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlinedOxsts/rootInstance"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlinedOxsts/rootFeature"/>
     </genClasses>
   </genPackages>
 </genmodel:GenModel>

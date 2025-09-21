@@ -10,7 +10,6 @@ import hu.bme.mit.semantifyr.oxsts.lang.ide.codelens.OxstsCodeLensProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.commands.OxstsCommandService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.contentassist.FuzzyMatcher;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.syntaxcoloring.OxstsSemanticHighlightingCalculator;
-import org.eclipse.lsp4j.CodeLens;
 import org.eclipse.xtext.ide.editor.contentassist.IPrefixMatcher;
 import org.eclipse.xtext.ide.editor.syntaxcoloring.ISemanticHighlightingCalculator;
 import org.eclipse.xtext.ide.server.codelens.ICodeLensResolver;

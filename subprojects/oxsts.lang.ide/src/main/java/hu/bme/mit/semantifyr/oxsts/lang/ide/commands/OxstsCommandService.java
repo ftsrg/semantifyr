@@ -9,8 +9,8 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.commands;
 import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package;
-import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.OxstsToXstsTransformer;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
+import hu.bme.mit.semantifyr.semantics.transformation.OxstsToXstsTransformer;
 import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.ide.server.commands.IExecutableCommandService;
@@ -45,7 +45,7 @@ public class OxstsCommandService implements IExecutableCommandService {
 
         var classDeclaration = access.doRead(uri, context -> {
             var resource = context.getResource();
-            var oxstsPackage = (Package) resource.getContents().getFirst();
+            var oxstsPackage = (OxstsModelPackage) resource.getContents().getFirst();
             return (ClassDeclaration) oxstsPackage.getDeclarations().stream().filter(c -> className.equals(c.getName())).findFirst().get();
         });
 

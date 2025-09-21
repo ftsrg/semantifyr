@@ -12,7 +12,6 @@ import hu.bme.mit.semantifyr.oxsts.lang.resource.ResourceDescriptionProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.selectables.TrimPrefixSelectable;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
@@ -39,7 +38,7 @@ public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
 
     @Override
     public IScope getScope(EObject context, EReference reference) {
-        if (context instanceof Package _package) {
+        if (context instanceof OxstsModelPackage _package) {
             return getPackageScope(_package, reference);
         }
 
@@ -47,7 +46,7 @@ public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
         return getLocalScope(containerScope, context, reference);
     }
 
-    protected IScope getPackageScope(Package _package, EReference reference) {
+    protected IScope getPackageScope(OxstsModelPackage _package, EReference reference) {
         var resource = _package.eResource();
         var globalScope = getGlobalScope(resource, reference);
 

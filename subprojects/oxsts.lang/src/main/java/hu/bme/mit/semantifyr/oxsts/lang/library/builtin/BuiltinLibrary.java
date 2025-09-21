@@ -8,7 +8,6 @@ package hu.bme.mit.semantifyr.oxsts.lang.library.builtin;
 
 import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryResolutionUtil;
-import hu.bme.mit.semantifyr.oxsts.lang.library.PathLibrary;
 import hu.bme.mit.semantifyr.oxsts.lang.library.ResourceSourcePathLibrary;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.xtext.naming.QualifiedName;

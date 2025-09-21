@@ -10,7 +10,7 @@ import com.google.inject.Inject
 import com.google.inject.Provider
 import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryAdapterFinder
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
 import hu.bme.mit.semantifyr.semantics.utils.error
 import hu.bme.mit.semantifyr.semantics.utils.info
 import hu.bme.mit.semantifyr.semantics.utils.loggerFactory
@@ -33,8 +33,8 @@ class SemantifyrModelContext(
     val resources: List<Resource>
 ) {
     fun streamClasses(): Sequence<ClassDeclaration> {
-        return resources.asSequence().map {
-            it.contents.first() as Package
+        return resources.asSequence().mapNotNull {
+            it.contents.first() as? OxstsModelPackage
         }.flatMap {
             it.declarations
         }.filterIsInstance(ClassDeclaration::class.java)

@@ -9,14 +9,14 @@ grammar hu.bme.mit.semantifyr.oxsts.lang.Oxsts with org.eclipse.xtext.common.Ter
 import "http://www.bme.hu/mit/2023/oxsts"
 import "http://www.eclipse.org/emf/2002/Ecore" as Ecore
 
-Package:
+OxstsModelPackage:
     'package' name=QualifiedIdentifier ';'?
     imports += ImportStatement*
     declarations += TopLevelDeclaration*
 ;
 
 ImportStatement:
-    'import' importedPackage=[Package|QualifiedIdentifier] ';'?
+    'import' importedPackage=[OxstsModelPackage|QualifiedIdentifier] ';'?
 ;
 
 Annotation:
@@ -464,6 +464,7 @@ Identifier:
 KEYWORD:
     'init'
     | 'havoc'
+    | 'prop'
 ;
 
 @Override

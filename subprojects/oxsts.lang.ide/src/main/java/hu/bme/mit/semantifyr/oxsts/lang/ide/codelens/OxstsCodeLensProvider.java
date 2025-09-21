@@ -7,7 +7,7 @@
 package hu.bme.mit.semantifyr.oxsts.lang.ide.codelens;
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
 import org.eclipse.lsp4j.*;
 import org.eclipse.xtext.ide.server.Document;
 import org.eclipse.xtext.ide.server.codelens.ICodeLensResolver;
@@ -30,7 +30,7 @@ public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensServic
 
         var rootElement = resource.getContents().getFirst();
 
-        if (! (rootElement instanceof Package oxstsPackage)) {
+        if (! (rootElement instanceof OxstsModelPackage oxstsPackage)) {
             return List.of();
         }
 

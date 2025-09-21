@@ -8,7 +8,6 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.syntaxcoloring;
 
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
@@ -83,7 +82,7 @@ public class OxstsSemanticHighlightingCalculator extends DefaultSemanticHighligh
 	protected String getHighlightClass(EObject eObject, EReference reference) {
         if (eObject == null) return null;
         return switch (eObject) {
-            case Package ignored -> SemanticTokenTypes.Namespace;
+            case OxstsModelPackage ignored -> SemanticTokenTypes.Namespace;
             case DataTypeDeclaration ignored -> SemanticTokenTypes.Type;
             case EnumDeclaration ignored -> SemanticTokenTypes.Enum;
             case EnumLiteral ignored -> SemanticTokenTypes.EnumMember;

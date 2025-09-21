@@ -10,7 +10,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryAdapter;
 import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryAdapterFinder;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.xtext.util.IResourceScopeCache;
 
@@ -33,7 +33,7 @@ public class ImportCollector {
     }
 
     protected List<Import> computeDirectImports(Resource resource) {
-        if (resource.getContents().isEmpty() || !(resource.getContents().getFirst() instanceof Package _package)) {
+        if (resource.getContents().isEmpty() || !(resource.getContents().getFirst() instanceof OxstsModelPackage _package)) {
             return Collections.emptyList();
         }
         var adapter = libraryAdapterFinder.getOrInstall(resource);
@@ -50,7 +50,7 @@ public class ImportCollector {
         }
     }
 
-    private void collectExplicitImports(Package _package, List<Import> collection) {
+    private void collectExplicitImports(OxstsModelPackage _package, List<Import> collection) {
         for (var importStatement : _package.getImports()) {
             var importedPackage = importStatement.getImportedPackage();
             if (importedPackage != null && importedPackage.eResource() != null && importedPackage.eResource().getURI() != null) {
