@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.oxsts.lang.library.builtin;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryAdapterFinder;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
@@ -14,11 +15,15 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.xtext.naming.QualifiedName;
 import org.eclipse.xtext.resource.IResourceDescription;
 
+@Singleton
 public class BuiltinSymbolResolver {
 
     public static final QualifiedName ANYTHING_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Anything");
     public static final QualifiedName ANYTHING_CHILDREN_NAME = ANYTHING_NAME.append("children");
     public static final QualifiedName ANYTHING_PARENT_NAME = ANYTHING_NAME.append("parent");
+    public static final QualifiedName ANYTHING_INIT_NAME = ANYTHING_NAME.append("init");
+    public static final QualifiedName ANYTHING_MAIN_NAME = ANYTHING_NAME.append("main");
+    public static final QualifiedName ANYTHING_HAVOC_NAME = ANYTHING_NAME.append("havoc");
 
     public static final QualifiedName BOOL_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("bool");
     public static final QualifiedName INT_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("int");
@@ -63,6 +68,18 @@ public class BuiltinSymbolResolver {
 
     public FeatureDeclaration anythingParentFeature(EObject context) {
         return findInBuiltin(context, FeatureDeclaration.class, ANYTHING_PARENT_NAME);
+    }
+
+    public TransitionDeclaration anythingInitTransition(EObject context) {
+        return findInBuiltin(context, TransitionDeclaration.class, ANYTHING_INIT_NAME);
+    }
+
+    public TransitionDeclaration anythingMainTransition(EObject context) {
+        return findInBuiltin(context, TransitionDeclaration.class, ANYTHING_MAIN_NAME);
+    }
+
+    public TransitionDeclaration anythingHavocTransition(EObject context) {
+        return findInBuiltin(context, TransitionDeclaration.class, ANYTHING_HAVOC_NAME);
     }
 
     public boolean isBuiltin(EObject eObject) {

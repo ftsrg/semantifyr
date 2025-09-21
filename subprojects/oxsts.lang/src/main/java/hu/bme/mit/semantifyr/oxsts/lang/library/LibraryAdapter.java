@@ -72,7 +72,8 @@ public class LibraryAdapter extends AdapterImpl {
 
     public OxstsLibrary getLibrary() {
         if (oxstsLibrary == null) {
-            oxstsLibrary = new CompositeLibrary(List.of(builtinLibrary, additionalLibrary));
+            // FIXME: this is wrong right now. Should be replaced with injection of all libraries
+            oxstsLibrary = new CompositeLibrary(List.of(builtinLibrary/*, additionalLibrary*/));
         }
 
         return oxstsLibrary;

@@ -12,11 +12,11 @@ import java.util.List;
 public class AdditionalLibrary extends PathLibrary {
 
     public AdditionalLibrary() {
-        super(List.of());
+        super(Path.of(""));
     }
 
     public void setLibraryPaths(List<Path> libraryPaths) {
-        this.libraryPaths = libraryPaths;
+//        this.libraryPaths = libraryPaths;
     }
 
 }
