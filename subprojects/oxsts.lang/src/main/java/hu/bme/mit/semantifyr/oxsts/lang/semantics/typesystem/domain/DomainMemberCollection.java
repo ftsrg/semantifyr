@@ -119,4 +119,14 @@ public class DomainMemberCollection {
         redefinitions.put(declaration, redefinedHolder);
     }
 
+    public Declaration resolveElement(Declaration element) {
+        var redefinedHolder = redefinitions.get(element);
+
+        if (redefinedHolder == null) {
+            throw new IllegalArgumentException("This domain does not have this element!");
+        }
+
+        return redefinedHolder.getDeclaration();
+    }
+
 }

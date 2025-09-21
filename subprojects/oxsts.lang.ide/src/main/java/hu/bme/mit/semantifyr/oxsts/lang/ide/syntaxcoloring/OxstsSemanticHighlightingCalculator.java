@@ -94,7 +94,7 @@ public class OxstsSemanticHighlightingCalculator extends DefaultSemanticHighligh
             case PropertyDeclaration ignored -> SemanticTokenTypes.Function;
             case TransitionDeclaration ignored -> SemanticTokenTypes.Method;
             case FeatureDeclaration ignored -> SemanticTokenTypes.Property;
-            case Parameter ignored -> SemanticTokenTypes.Parameter;
+            case ParameterDeclaration ignored -> SemanticTokenTypes.Parameter;
 
             case LiteralString ignored -> SemanticTokenTypes.String;
             case LiteralInfinity ignored -> SemanticTokenTypes.Number;

@@ -9,7 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.scoping;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ImmutableTypeEvaluation;
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.TypeEvaluatorProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import org.eclipse.emf.ecore.EObject;
@@ -25,7 +25,7 @@ import org.eclipse.xtext.scoping.impl.SelectableBasedScope;
 public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 
     @Inject
-    private TypeEvaluatorProvider typeEvaluatorProvider;
+    private ExpressionTypeEvaluatorProvider expressionTypeEvaluatorProvider;
 
     @Inject
     private DomainMemberCalculator domainMemberCalculator;
@@ -49,11 +49,11 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
     }
 
     protected IScope calculateScope(EObject context, EReference reference) {
-        if (reference == OxstsPackage.Literals.FEATURE_DECLARATION__SUPER_SETS) {
+        if (reference == OxstsPackage.Literals.FEATURE_DECLARATION__SUPERSET) {
             return calculateFeatureSuperSetsScope(context, reference);
         }
 
-        if (reference == OxstsPackage.Literals.FEATURE_DECLARATION__REDEFINED) {
+        if (reference == OxstsPackage.Literals.REDEFINABLE_DECLARATION__REDEFINED) {
             return calculateFeatureRedefinedScope(context, reference);
         }
 
@@ -84,7 +84,7 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 
         if (context instanceof NavigationSuffixExpression navigationSuffixExpression) {
             var primary = navigationSuffixExpression.getPrimary();
-            var primaryEvaluation = typeEvaluatorProvider.evaluateExpression(primary);
+            var primaryEvaluation = expressionTypeEvaluatorProvider.evaluateExpressionType(primary);
 
             if (primaryEvaluation instanceof ImmutableTypeEvaluation(DomainDeclaration domainDeclaration)) {
                 var members = domainMemberCalculator.getMembers(domainDeclaration);

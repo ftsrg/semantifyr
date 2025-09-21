@@ -49,8 +49,8 @@ public class MultiplicityRangeEvaluator {
             return rangeEvaluation;
         }
 
-        if (evaluation instanceof IntegerEvaluation integerEvaluation) {
-            return RangeEvaluation.of(integerEvaluation.value(), integerEvaluation.value());
+        if (evaluation instanceof IntegerEvaluation(int value)) {
+            return RangeEvaluation.of(value, value);
         }
 
         throw new IllegalArgumentException("Expression could not be evaluated to a range!");

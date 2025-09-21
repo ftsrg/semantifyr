@@ -50,12 +50,12 @@ TopLevelDeclaration returns Declaration:
     |
         {AnnotationDeclaration.annotation=current}
         'annotation' name=Identifier
-        ('(' (parameters += Parameter (',' parameters += Parameter)* ','?)? ')')?
+        ('(' (parameters += ParameterDeclaration (',' parameters += ParameterDeclaration)* ','?)? ')')?
         ';'?
     // |
         // {FunctionDeclaration}
         // 'fun' name=Identifier
-        // '(' (parameters += Parameter (',' parameters += Parameter)* ','?)? ')'
+        // '(' (parameters += ParameterDeclaration (',' parameters += ParameterDeclaration)* ','?)? ')'
         // (':' returnType=[TypeDeclaration|QualifiedIdentifier])?
         // '{'
         //     expression=Expression
@@ -81,7 +81,7 @@ RecordMember returns Declaration:
     // |
         // {FunctionDeclaration}
         // redefine?='redefine'? 'fun' name=Identifier
-        // '(' (parameters += Parameter (',' parameters += Parameter)* ','?)? ')'
+        // '(' (parameters += ParameterDeclaration (',' parameters += ParameterDeclaration)* ','?)? ')'
         // (':' returnType=[TypeDeclaration|QualifiedIdentifier])?
         // '{'
         //     expression=Expression
@@ -102,7 +102,7 @@ ClassMember returns Declaration:
     // |
         // {FunctionDeclaration}
         // -> redefine?='redefine'? 'fun' name=Identifier
-        // '(' (parameters += Parameter (',' parameters += Parameter)* ','?)? ')'
+        // '(' (parameters += ParameterDeclaration (',' parameters += ParameterDeclaration)* ','?)? ')'
         // (':' returnType=[TypeDeclaration|QualifiedIdentifier])?
         // '{'
         //     expression=Expression
@@ -112,7 +112,7 @@ ClassMember returns Declaration:
         redefine?='redefine'? 'prop'
         (
             name=Identifier
-            '(' (parameters += Parameter (',' parameters += Parameter)* ','?)? ')'
+            '(' (parameters += ParameterDeclaration (',' parameters += ParameterDeclaration)* ','?)? ')'
         )?
         (':' returnType=[TypeDeclaration|QualifiedIdentifier])?
         '{'
@@ -123,10 +123,10 @@ ClassMember returns Declaration:
         redefine?='redefine'? kind=TransitionKind
         (
             name=Identifier
-            '(' (parameters += Parameter (',' parameters += Parameter)* ','?)? ')'
+            '(' (parameters += ParameterDeclaration (',' parameters += ParameterDeclaration)* ','?)? ')'
         )?
-        operations += SequenceOperation
-        ('or' operations += SequenceOperation)*
+        branches += SequenceOperation
+        ('or' branches += SequenceOperation)*
     |
         {FeatureDeclaration.annotation=current}
         redefine?='redefine'? kind=FeatureKind name=Identifier ':' type=[TypeDeclaration|QualifiedIdentifier] multiplicity=Multiplicity?
@@ -196,7 +196,7 @@ Operation:
 SequenceOperation:
     {SequenceOperation}
     '{'
-        (operation+=Operation)*
+        (steps+=Operation)*
     '}'
 ;
 
@@ -205,8 +205,8 @@ HavocOperation:
 ;
 
 ChoiceOperation:
-    'choice' operation+=SequenceOperation
-    ('or' operation+=SequenceOperation)*
+    'choice' branches+=SequenceOperation
+    ('or' branches+=SequenceOperation)*
     ('else' else=SequenceOperation)?
 ;
 
@@ -283,12 +283,12 @@ DefiniteMultiplicity:
     '[' expression=Expression ']'
 ;
 
-Parameter:
+ParameterDeclaration:
     name=Identifier ':' type=[TypeDeclaration|QualifiedIdentifier] (multiplicity=Multiplicity)?
 ;
 
 Argument:
-    (parameter=[Parameter|Identifier] '=')? expression=Expression
+    (parameter=[ParameterDeclaration|Identifier] '=')? expression=Expression
 ;
 
 // Expressions
@@ -304,7 +304,7 @@ OperatorExpression returns Expression:
 ;
 
 enum BooleanOp:
-    AND="&&" | OR="||" | XOR="^^"
+    AND='&&' | OR='||' | XOR='^^'
 ;
 
 BooleanOperator returns Expression:
@@ -314,7 +314,7 @@ BooleanOperator returns Expression:
 ;
 
 enum ComparisonOp:
-    LESS="<" | LESS_EQ="<=" | GREATER=">" | GREATER_EQ=">=" | EQ="==" | NOT_EQ="!="
+    LESS='<' | LESS_EQ='<=' | GREATER='>' | GREATER_EQ='>=' | EQ='==' | NOT_EQ='!='
 ;
 
 ComparisonOperator returns Expression:
@@ -330,7 +330,7 @@ RangeExpression returns Expression:
 ;
 
 enum AdditiveOp returns ArithmeticOp:
-    ADD="+" | SUB="-"
+    ADD='+' | SUB='-'
 ;
 
 AdditiveOperator returns Expression:
@@ -340,7 +340,7 @@ AdditiveOperator returns Expression:
 ;
 
 enum MultiplicativeOp returns ArithmeticOp:
-    MUL="*" | DIV="/"
+    MUL='*' | DIV='/'
 ;
 
 MultiplicativeOperator returns Expression:
@@ -360,7 +360,7 @@ NegationOperator:
 ;
 
 enum UnaryOp:
-	PLUS="+" | MINUS="-"
+	PLUS='+' | MINUS='-'
 ;
 
 ArithmeticUnaryOperator:
@@ -427,7 +427,7 @@ LiteralReal:
 ;
 
 Real returns Ecore::EDouble:
-	EXPONENTIAL | INT "." (INT | EXPONENTIAL)
+	EXPONENTIAL | INT '.' (INT | EXPONENTIAL)
 ;
 
 LiteralString:
@@ -472,12 +472,12 @@ terminal ID:
 ;
 
 terminal EXPONENTIAL:
-	INT ("e" | "E") ("+" | "-")? INT
+	INT ('e' | 'E') ('+' | '-')? INT
 ;
 
 @Override
 terminal STRING:
-	'"' ( !('"' | "\r" | "\n") )* '"'
+	'"' ( !('"' | '\r' | '\n') )* '"'
 ;
 
 terminal QUOTED_ID:
