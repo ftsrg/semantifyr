@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Association
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
@@ -56,6 +57,10 @@ class AssociationManager(
         return associations[featureDeclaration]!!.instances.first()
     }
 
+    fun place(featureDeclaration: FeatureDeclaration, instance: Instance) {
+        associations[featureDeclaration]!!.instances.add(instance)
+    }
+
 }
 
 @Singleton
@@ -73,8 +78,8 @@ class InstanceManager {
         placeInstance(holder, featureDeclaration, instance)
     }
 
-    fun createInstance(featureDeclaration: FeatureDeclaration): Instance {
-        val instance = OxstsFactory.createInstance(featureDeclaration)
+    fun createInstance(domainDeclaration: DomainDeclaration): Instance {
+        val instance = OxstsFactory.createInstance(domainDeclaration)
 
         createVariableMappings(instance)
         createFeatureMappings(instance)
@@ -83,7 +88,7 @@ class InstanceManager {
     }
 
     private fun createVariableMappings(instance: Instance) {
-        val memberCollection = domainMemberCalculator.getMemberCollection(instance.feature)
+        val memberCollection = domainMemberCalculator.getMemberCollection(instance.domain)
 
         val allVariables = memberCollection.declarationHolders.map {
             it.declaration
@@ -93,7 +98,7 @@ class InstanceManager {
     }
 
     private fun createFeatureMappings(instance: Instance) {
-        val memberCollection = domainMemberCalculator.getMemberCollection(instance.feature)
+        val memberCollection = domainMemberCalculator.getMemberCollection(instance.domain)
 
         val allFeatures = memberCollection.declarationHolders.map {
             it.declaration
@@ -103,7 +108,7 @@ class InstanceManager {
     }
 
     fun placeInstance(holder: Instance, featureDeclaration: FeatureDeclaration, held: Instance) {
-
+        associationManagers[holder]!!.place(featureDeclaration, held)
     }
 
     fun resolveVariable(holder: Instance, variableDeclaration: VariableDeclaration): VariableDeclaration {

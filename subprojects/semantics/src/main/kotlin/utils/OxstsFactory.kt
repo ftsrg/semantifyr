@@ -10,6 +10,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Association
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
@@ -46,9 +47,9 @@ object OxstsFactory : OxstsFactoryImpl() {
         }
     }
 
-    fun createInstance(featureDeclaration: FeatureDeclaration): Instance {
+    fun createInstance(domainDeclaration: DomainDeclaration): Instance {
         return createInstance().also {
-            it.feature = featureDeclaration
+            it.domain = domainDeclaration
         }
     }
 

@@ -6,7 +6,14 @@
 
 package hu.bme.mit.semantifyr.semantics.optimization
 
+import com.google.inject.Inject
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationArtifactSaver
+
 abstract class AbstractLoopedOptimizer<T> {
+
+    @Inject
+    private lateinit var compilationArtifactSaver: CompilationArtifactSaver
+
     fun optimize(element: T): Boolean {
         var didAnyWork = false
         var workRemaining = true
@@ -16,6 +23,8 @@ abstract class AbstractLoopedOptimizer<T> {
 
             if (workRemaining) {
                 didAnyWork = true
+
+                compilationArtifactSaver.commitModelState()
             }
         }
 

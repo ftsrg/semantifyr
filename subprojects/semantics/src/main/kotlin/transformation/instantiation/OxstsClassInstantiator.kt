@@ -46,7 +46,7 @@ class OxstsClassInstantiator {
     }
 
     private fun Instance.instantiateChildren() {
-        val memberCollection = domainMemberCalculator.getMemberCollection(feature)
+        val memberCollection = domainMemberCalculator.getMemberCollection(domain)
 
         val allContainments = memberCollection.declarationHolders.map {
             it.declaration

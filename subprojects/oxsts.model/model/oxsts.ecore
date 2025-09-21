@@ -323,8 +323,8 @@
   <eClassifiers xsi:type="ecore:EClass" name="Instance">
     <eStructuralFeatures xsi:type="ecore:EReference" name="children" upperBound="-1"
         eType="#//Instance" containment="true" eOpposite="#//Instance/parent"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="feature" lowerBound="1"
-        eType="#//FeatureDeclaration"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="domain" lowerBound="1"
+        eType="#//DomainDeclaration"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="parent" eType="#//Instance"
         eOpposite="#//Instance/children"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="model" eType="#//InlinedOxsts"
@@ -346,7 +346,7 @@
         defaultValueLiteral="false"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="redefined" eType="#//RedefinableDeclaration"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="InlinedOxsts">
+  <eClassifiers xsi:type="ecore:EClass" name="InlinedOxsts" eSuperTypes="#//DomainDeclaration">
     <eStructuralFeatures xsi:type="ecore:EReference" name="initTransition" lowerBound="1"
         eType="#//TransitionDeclaration" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="mainTransition" lowerBound="1"

@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.semantics.loading.SemantifyrModelContext
 import hu.bme.mit.semantifyr.semantics.transformation.inliner.OxstsInliner
 import hu.bme.mit.semantifyr.semantics.transformation.instantiation.OxstsInflator
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationArtifactSaver
 import hu.bme.mit.semantifyr.semantics.transformation.xsts.XstsTransformer
 
 @Singleton
@@ -29,6 +30,9 @@ class OxstsToXstsTransformer {
     @Inject
     private lateinit var xstsTransformer: XstsTransformer
 
+    @Inject
+    private lateinit var compilationArtifactSaver: CompilationArtifactSaver
+
     fun transform(model: SemantifyrModelContext, className: String, rewriteChoice: Boolean = false) {
         val classDeclaration = model.streamClasses().firstOrNull {
             it.name == className
@@ -44,12 +48,14 @@ class OxstsToXstsTransformer {
     fun transform(classDeclaration: ClassDeclaration, rewriteChoice: Boolean = false) {
         val inlinedOxsts = inlinedOxstsModelManager.createInlinedOxsts(classDeclaration)
 
-        inlinedOxsts.eResource().save(mapOf<Any, Any>())
+        compilationArtifactSaver.initArtifactManager(inlinedOxsts)
 
-//        oxstsInflator.inflateInstanceModel(inlinedOxsts)
-//        oxstsInliner.inlineOxsts(inlinedOxsts)
-//        oxstsInflator.deflateInstanceModel(inlinedOxsts)
-//        xstsTransformer.transform(inlinedOxsts, rewriteChoice)
+        oxstsInflator.inflateInstanceModel(inlinedOxsts)
+        oxstsInliner.inlineOxsts(inlinedOxsts)
+        oxstsInflator.deflateInstanceModel(inlinedOxsts)
+        xstsTransformer.transform(inlinedOxsts, rewriteChoice)
+
+        inlinedOxsts.eResource().save(mapOf<Any, Any>())
     }
 
 }

@@ -44,6 +44,7 @@ public class InheritanceHandler {
             case RecordDeclaration domain -> List.of();
             case DataTypeDeclaration domain -> List.of();
             case EnumDeclaration domain -> List.of();
+            case InlinedOxsts domain -> List.of();
             default -> throw new IllegalStateException("Unexpected value: " + domainDeclaration);
         };
     }

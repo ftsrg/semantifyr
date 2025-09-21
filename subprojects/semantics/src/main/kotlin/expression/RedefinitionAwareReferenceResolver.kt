@@ -27,7 +27,7 @@ class RedefinitionAwareReferenceResolver {
     }
 
     fun resolve(instance: Instance, name: QualifiedName): NamedElement {
-        val domain = domainMemberCalculator.getMembers(instance.feature)
+        val domain = domainMemberCalculator.getMembers(instance.domain)
         val elements = domain.getExportedObjects(OxstsPackage.eINSTANCE.namedElement, name, false)
 
         for (element in elements) {
@@ -46,7 +46,7 @@ class RedefinitionAwareReferenceResolver {
     }
 
     fun resolve(instance: Instance, redefinableDeclaration: RedefinableDeclaration): Declaration {
-        val domain = domainMemberCalculator.getMemberCollection(instance.feature)
+        val domain = domainMemberCalculator.getMemberCollection(instance.domain)
 
         return domain.resolveElement(redefinableDeclaration) as Declaration
     }

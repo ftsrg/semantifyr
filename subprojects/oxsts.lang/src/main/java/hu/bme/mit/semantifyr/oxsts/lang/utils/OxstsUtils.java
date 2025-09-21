@@ -6,11 +6,10 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.utils;
 
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordDeclaration;
+import com.google.common.collect.Iterables;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class OxstsUtils {
@@ -22,11 +21,31 @@ public class OxstsUtils {
 
     public static Iterable<Declaration> getDirectMembers(Declaration declaration) {
         return switch (declaration) {
+            case InlinedOxsts decl -> getDirectMembers(decl);
             case RecordDeclaration decl -> getDirectMembers(decl);
             case ClassDeclaration decl -> getDirectMembers(decl);
             case FeatureDeclaration decl -> getDirectMembers(decl);
             default -> List.of();
         };
+    }
+
+    public static Iterable<Declaration> getDirectMembers(InlinedOxsts inlinedOxsts) {
+        var elements = new ArrayList<Declaration>();
+
+        if (inlinedOxsts.getRootFeature() != null) {
+            elements.add(inlinedOxsts.getRootFeature());
+        }
+        if (inlinedOxsts.getInitTransition() != null) {
+            elements.add(inlinedOxsts.getInitTransition());
+        }
+        if (inlinedOxsts.getMainTransition() != null) {
+            elements.add(inlinedOxsts.getMainTransition());
+        }
+        if (inlinedOxsts.getProperty() != null) {
+            elements.add(inlinedOxsts.getProperty());
+        }
+
+        return Iterables.concat(inlinedOxsts.getVariables(), elements);
     }
 
     public static Iterable<Declaration> getDirectMembers(RecordDeclaration declaration) {

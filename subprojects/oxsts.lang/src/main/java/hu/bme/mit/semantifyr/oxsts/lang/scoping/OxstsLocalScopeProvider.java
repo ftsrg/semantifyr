@@ -62,7 +62,14 @@ public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
 
     protected IScope getInlinedOxstsScope(InlinedOxsts inlinedOxsts, EReference reference) {
         var resource = inlinedOxsts.eResource();
-        return getGlobalScope(resource, reference);
+        var globalScope = getGlobalScope(resource, reference);
+
+        if (reference == OxstsPackage.Literals.INLINED_OXSTS__CLASS_DECLARATION) {
+            return globalScope;
+        }
+
+        var memberCollection = domainMemberCalculator.getMemberCollection(inlinedOxsts).getMembers();
+        return SelectableBasedScope.createScope(globalScope, memberCollection, reference.getEReferenceType(), isIgnoreCase(reference));
     }
 
     // caching feels unnecessary here, since most of the calculated instances are simple to create, or are cache anyway

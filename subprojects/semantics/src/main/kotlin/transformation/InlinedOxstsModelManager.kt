@@ -27,16 +27,7 @@ import org.eclipse.emf.common.util.URI
 class InlinedOxstsModelManager {
 
     @Inject
-    lateinit var builtinSymbolResolver: BuiltinSymbolResolver
-
-    @Inject
-    lateinit var metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider
-
-    @Inject
     private lateinit var instanceManager: InstanceManager
-
-    @Inject
-    private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
 
     fun createInlinedOxsts(classDeclaration: ClassDeclaration): InlinedOxsts {
         val resourceSet = classDeclaration.eResource().resourceSet
@@ -62,53 +53,7 @@ class InlinedOxstsModelManager {
             it.name = "_${inlinedOxsts.classDeclaration.name}"
         }
 
-        inlinedOxsts.rootInstance = instanceManager.createInstance(inlinedOxsts.rootFeature)
-
-        val builtinInit = OxstsFactory.createElementReference().also {
-            it.element = builtinSymbolResolver.anythingInitTransition(inlinedOxsts)
-        }
-        val builtinMain = OxstsFactory.createElementReference().also {
-            it.element = builtinSymbolResolver.anythingMainTransition(inlinedOxsts)
-        }
-
-        inlinedOxsts.initTransition = createTransitionDeclaration(inlinedOxsts, TransitionKind.INIT, builtinInit)
-        inlinedOxsts.mainTransition = createTransitionDeclaration(inlinedOxsts, TransitionKind.TRAN, builtinMain)
-
-        val property = redefinitionAwareReferenceResolver.resolve(inlinedOxsts.rootInstance, "prop") as PropertyDeclaration
-
-        inlinedOxsts.property = OxstsFactory.createPropertyDeclaration().also {
-            it.annotation = OxstsFactory.createAnnotationContainer()
-            it.expression = OxstsFactory.createCallSuffixExpression().also {
-                it.primary = OxstsFactory.createNavigationSuffixExpression().also {
-                    it.primary = OxstsFactory.createElementReference().also {
-                        it.element = inlinedOxsts.rootFeature
-                    }
-                    it.member = property
-                }
-            }
-        }
-    }
-
-    private fun createTransitionDeclaration(inlinedOxsts: InlinedOxsts, transitionKind: TransitionKind, expression: Expression): TransitionDeclaration {
-        val metaEvaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(inlinedOxsts.rootInstance)
-        val transition = metaEvaluator.evaluateTyped(TransitionDeclaration::class.java, expression)
-
-        return OxstsFactory.createTransitionDeclaration().also {
-            it.kind = transitionKind
-            it.annotation = OxstsFactory.createAnnotationContainer()
-            it.branches += OxstsFactory.createSequenceOperation().also {
-                it.steps += OxstsFactory.createInlineCall().also {
-                    it.callExpression = OxstsFactory.createCallSuffixExpression().also {
-                        it.primary = OxstsFactory.createNavigationSuffixExpression().also {
-                            it.primary = OxstsFactory.createElementReference().also {
-                                it.element = inlinedOxsts.rootFeature
-                            }
-                            it.member = transition
-                        }
-                    }
-                }
-            }
-        }
+        inlinedOxsts.rootInstance = instanceManager.createInstance(inlinedOxsts)
     }
 
 }

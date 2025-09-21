@@ -8,12 +8,28 @@ package hu.bme.mit.semantifyr.semantics.transformation.inliner
 
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionKind
+import hu.bme.mit.semantifyr.semantics.expression.MetaStaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.semantics.expression.RedefinitionAwareReferenceResolver
+import hu.bme.mit.semantifyr.semantics.expression.evaluateTyped
 import hu.bme.mit.semantifyr.semantics.optimization.InlinedOxstsOperationOptimizer
 import hu.bme.mit.semantifyr.semantics.optimization.XstsExpressionOptimizer
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationArtifactSaver
+import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 
 @Singleton
 class OxstsInliner {
+
+    @Inject
+    lateinit var builtinSymbolResolver: BuiltinSymbolResolver
+
+    @Inject
+    lateinit var metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider
 
     @Inject
     private lateinit var operationInliner: OperationInliner
@@ -27,17 +43,82 @@ class OxstsInliner {
     @Inject
     private lateinit var xstsExpressionOptimizer: XstsExpressionOptimizer
 
+    @Inject
+    private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
+
+    @Inject
+    private lateinit var compilationArtifactSaver: CompilationArtifactSaver
+
     fun inlineOxsts(inlinedOxsts: InlinedOxsts) {
+        initializeInlining(inlinedOxsts)
+
+        compilationArtifactSaver.commitModelState()
+
         operationInliner.inlineOperations(inlinedOxsts.rootInstance, inlinedOxsts.initTransition)
         operationInliner.inlineOperations(inlinedOxsts.rootInstance, inlinedOxsts.mainTransition)
 
-        callExpressionInliner.inlineExpressions(inlinedOxsts.rootInstance, inlinedOxsts.initTransition)
-        callExpressionInliner.inlineExpressions(inlinedOxsts.rootInstance, inlinedOxsts.mainTransition)
-        callExpressionInliner.inlineExpressions(inlinedOxsts.rootInstance, inlinedOxsts.property)
+//        callExpressionInliner.inlineExpressions(inlinedOxsts.rootInstance, inlinedOxsts.initTransition)
+//        callExpressionInliner.inlineExpressions(inlinedOxsts.rootInstance, inlinedOxsts.mainTransition)
+//        callExpressionInliner.inlineExpressions(inlinedOxsts.rootInstance, inlinedOxsts.property)
 
         inlinedOxstsOperationOptimizer.optimize(inlinedOxsts.initTransition)
         inlinedOxstsOperationOptimizer.optimize(inlinedOxsts.mainTransition)
-        xstsExpressionOptimizer.optimize(inlinedOxsts.property)
+//        xstsExpressionOptimizer.optimize(inlinedOxsts.property)
+    }
+
+    private fun initializeInlining(inlinedOxsts: InlinedOxsts) {
+        val builtinInit = OxstsFactory.createNavigationSuffixExpression().also {
+            it.primary = OxstsFactory.createElementReference().also {
+                it.element = inlinedOxsts.rootFeature
+            }
+            it.member = builtinSymbolResolver.anythingInitTransition(inlinedOxsts)
+        }
+        val builtinMain = OxstsFactory.createNavigationSuffixExpression().also {
+            it.primary = OxstsFactory.createElementReference().also {
+                it.element = inlinedOxsts.rootFeature
+            }
+            it.member = builtinSymbolResolver.anythingMainTransition(inlinedOxsts)
+        }
+
+        inlinedOxsts.initTransition = createTransitionDeclaration(inlinedOxsts, TransitionKind.INIT, builtinInit)
+        inlinedOxsts.mainTransition = createTransitionDeclaration(inlinedOxsts, TransitionKind.TRAN, builtinMain)
+
+//        val property = redefinitionAwareReferenceResolver.resolve(inlinedOxsts.rootInstance, "prop") as PropertyDeclaration
+//
+        inlinedOxsts.property = OxstsFactory.createPropertyDeclaration().also {
+            it.annotation = OxstsFactory.createAnnotationContainer()
+            it.expression = OxstsFactory.createLiteralBoolean(true)
+//            it.expression = OxstsFactory.createCallSuffixExpression().also {
+//                it.primary = OxstsFactory.createNavigationSuffixExpression().also {
+//                    it.primary = OxstsFactory.createElementReference().also {
+//                        it.element = inlinedOxsts.rootFeature
+//                    }
+//                    it.member = property
+//                }
+//            }
+        }
+    }
+
+    private fun createTransitionDeclaration(inlinedOxsts: InlinedOxsts, transitionKind: TransitionKind, expression: Expression): TransitionDeclaration {
+        val metaEvaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(inlinedOxsts.rootInstance)
+        val transition = metaEvaluator.evaluateTyped(TransitionDeclaration::class.java, expression)
+
+        return OxstsFactory.createTransitionDeclaration().also {
+            it.kind = transitionKind
+            it.annotation = OxstsFactory.createAnnotationContainer()
+            it.branches += OxstsFactory.createSequenceOperation().also {
+                it.steps += OxstsFactory.createInlineCall().also {
+                    it.callExpression = OxstsFactory.createCallSuffixExpression().also {
+                        it.primary = OxstsFactory.createNavigationSuffixExpression().also {
+                            it.primary = OxstsFactory.createElementReference().also {
+                                it.element = inlinedOxsts.rootFeature
+                            }
+                            it.member = transition
+                        }
+                    }
+                }
+            }
+        }
     }
 
 }
