@@ -11,9 +11,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.resource.ResourceDescriptionProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.selectables.TrimPrefixSelectable;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Namespace;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsPackage;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
@@ -61,7 +59,14 @@ public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
 
     // caching feels unnecessary here, since most of the calculated instances are simple to create, or are cache anyway
     protected IScope getLocalScope(IScope containerScope, EObject context, EReference reference) {
-        if (reference != OxstsPackage.Literals.CLASS_DECLARATION__SUPER_TYPES && context instanceof DomainDeclaration declaration) {
+        if (
+            reference == OxstsPackage.Literals.CLASS_DECLARATION__SUPER_TYPES
+            || reference == OxstsPackage.Literals.FEATURE_DECLARATION__TYPE
+        ) {
+            return containerScope;
+        }
+
+        if (context instanceof DomainDeclaration declaration) {
             var memberCollection = domainMemberCalculator.getMemberCollection(declaration).getMembers();
             return SelectableBasedScope.createScope(containerScope, memberCollection, reference.getEReferenceType(), isIgnoreCase(reference));
         }
