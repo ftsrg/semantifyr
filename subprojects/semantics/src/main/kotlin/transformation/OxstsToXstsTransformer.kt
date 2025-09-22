@@ -55,7 +55,7 @@ class OxstsToXstsTransformer {
         oxstsInflator.deflateInstanceModel(inlinedOxsts)
         xstsTransformer.transform(inlinedOxsts, rewriteChoice)
 
-        inlinedOxsts.eResource().save(mapOf<Any, Any>())
+        compilationArtifactSaver.finalizeArtifactManager(inlinedOxsts)
     }
 
 }

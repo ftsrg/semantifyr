@@ -42,17 +42,23 @@ class CompilationArtifactSaver {
     @Inject
     protected lateinit var artifactSaverProvider: Provider<ArtifactSaver>
 
-    private lateinit var artifactSaver: ArtifactSaver
+    private var artifactSaver: ArtifactSaver? = null
 
     fun initArtifactManager(inlinedOxsts: InlinedOxsts): ArtifactSaver {
         artifactSaver = artifactSaverProvider.get()
-        artifactSaver.inlinedOxsts = inlinedOxsts
-        artifactSaver.basePath = Files.createTempDirectory("semantifyr").toFile()
-        return artifactSaver
+        artifactSaver!!.inlinedOxsts = inlinedOxsts
+        artifactSaver!!.basePath = File("artifacts") //Files.createTempDirectory("semantifyr").toFile()
+        artifactSaver!!.basePath.deleteRecursively()
+        return artifactSaver!!
+    }
+
+    fun finalizeArtifactManager(inlinedOxsts: InlinedOxsts) {
+        artifactSaver = null
+        inlinedOxsts.eResource().save(emptyMap<Any, Any>())
     }
 
     fun commitModelState() {
-        artifactSaver.commitModelState()
+        artifactSaver?.commitModelState()
     }
 
 }
