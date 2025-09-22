@@ -14,8 +14,8 @@ import semantifyr::gamma::actions
 import semantifyr::gamma::events
 
 class Statechart : Component {
-    contains regions : Region[0..*] opposite parent
-    contains variables : Variable[0..*]
+    contains regions: Region[0..*] opposite parent
+    contains variables: Variable[0..*]
 
     redefine init {
         inline for (region in regions) {
@@ -31,22 +31,23 @@ class Statechart : Component {
             inline for (region in regions) {
                 inline region.fireTransitions()
             }
-        } else { }
+        } else {
+        }
 
         inline resetInputEvents()
     }
 }
 
 class Region {
-    contains states : State[0..*] opposite parentRegion
-    container parent : State[0..1] opposite regions
+    contains states: State[0..*] opposite parentRegion
+    container parent: State[0..1] opposite regions
 
-    contains abstractTransitions : AbstractTransition[0..*]
-    contains transitions : Transition[0..*] subsets abstractTransitions
-    contains entryTransitions : EntryTransition[0..*] subsets abstractTransitions
+    contains abstractTransitions: AbstractTransition[0..*]
+    contains transitions: Transition[0..*] subsets abstractTransitions
+    contains entryTransitions: EntryTransition[0..*] subsets abstractTransitions
 
     @Control
-    var activeState : states[0..1] := nothing
+    var activeState: states[0..1] := nothing
 
     tran activateRecursive() {
         inline for (transition in entryTransitions) {
@@ -54,58 +55,54 @@ class Region {
         }
     }
 
-    tran deactivateRecursive() {        
+    tran deactivateRecursive() {
         inline for (state in states) {
             inline state.deactivateRecursive()
         }
     }
 
-    tran fireTransitions() {        
-        ///*
+    tran fireTransitions() {
+        // /*
         // bottom-up
-
         var eventConsumed := false
 
         inline for choice (state in states) {
             inline state.fireTransitions()
             eventConsumed := true
-        }        
+        }
 
         if (eventConsumed == false) {
             inline for choice (transition in transitions) {
                 inline transition.main()
             }
         }
-        //*/
-
-        /*
-        // top-down
-        inline for choice (transition in transitions) {
-            inline transition.main()
-        } else {
-            inline for choice (state in states) {
-                inline state.fireTransitions()
-            } else { }
-        }
-            */
+    // */
+    /*
+     * // top-down
+     * inline for choice (transition in transitions) {
+     *     inline transition.main()
+     * } else {
+     *     inline for choice (state in states) {
+     *         inline state.fireTransitions()
+     *     } else { }
+     * }
+     */
     }
 }
 
 /*
-pattern parentState(childState: State, parentState: State) {
-    State.regions(parentState, parentRegion)
-    Region.states(parentRegion, childState)
-}
-*/
-
+ * pattern parentState(childState: State, parentState: State) {
+ *     State.regions(parentState, parentRegion)
+ *     Region.states(parentRegion, childState)
+ * }
+ */
 class State {
-    container parentRegion : Region[0..1] opposite states
-    contains regions : Region[0..*] opposite parent
+    container parentRegion: Region[0..1] opposite states
+    contains regions: Region[0..*] opposite parent
 
-    refers parentState : State[0..1] = parentRegion.parent //as pattern parentState
-
-    contains entryActions : Action[0..*]
-    contains exitActions : Action[0..*]
+    refers parentState: State[0..1] = parentRegion.parent // as pattern parentState
+    contains entryActions: Action[0..*]
+    contains exitActions: Action[0..*]
 
     prop isActive() {
         return parentRegion.activeState == self
@@ -125,7 +122,7 @@ class State {
         }
     }
 
-    tran exitRecursive(commonRegion : Region) {            
+    tran exitRecursive(commonRegion : Region) {
         inline for (exitAction in exitActions) {
             inline exitAction.main()
         }
@@ -174,7 +171,8 @@ class State {
                 inline for (region in regions) {
                     inline region.fireTransitions()
                 }
-            } else { }
+            } else {
+            }
         }
     }
 }
@@ -182,7 +180,7 @@ class State {
 class AbstractTransition {
     container commonRegion: Region[1] opposite transitions
 
-    refers to : State[1]
+    refers to: State[1]
 }
 
 class EntryTransition : AbstractTransition {
@@ -192,11 +190,11 @@ class EntryTransition : AbstractTransition {
 }
 
 class Transition : AbstractTransition {
-    refers from : State[1]
+    refers from: State[1]
 
-    contains trigger : Trigger[1]
-    contains actions : Action[0..*]
-    contains guards : Guard[0..*]
+    contains trigger: Trigger[1]
+    contains actions: Action[0..*]
+    contains guards: Guard[0..*]
 
     redefine tran {
         inline trigger.isTriggered()
@@ -216,31 +214,31 @@ class Transition : AbstractTransition {
 }
 
 class StateReachabilityExpression : Expression {
-    refers state : State
-    
+    refers state: State
+
     redefine prop evaluate() {
         return state.isActive()
     }
 }
 
 /*
-pattern parallelRegions(r1: Region, r2: Region) {
-    State.regions(state, r1)
-    State.regions(state, r2)
-    r1 != r2
-}
+ * pattern parallelRegions(r1: Region, r2: Region) {
+ *     State.regions(state, r1)
+ *     State.regions(state, r2)
+ *     r1 != r2
+ * }
 
-neg constraint noParallelRegionTransitions(t: Transition) {
-    Transition.from(t, from)
-    Transition.to(t, to)
-    Region.states(fromR, from)
-    Region.states(toR, to)
-    fromR != toR
-}
+ * neg constraint noParallelRegionTransitions(t: Transition) {
+ *     Transition.from(t, from)
+ *     Transition.to(t, to)
+ *     Region.states(fromR, from)
+ *     Region.states(toR, to)
+ *     fromR != toR
+ * }
 
-neg constraint noParallelRegions(state: State) {
-    State.regions(state, r1)
-    State.regions(state, r2)
-    find parallelRegions(r1, r2)
-}
-*/
+ * neg constraint noParallelRegions(state: State) {
+ *     State.regions(state, r1)
+ *     State.regions(state, r2)
+ *     find parallelRegions(r1, r2)
+ * }
+ */

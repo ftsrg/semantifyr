@@ -3,17 +3,22 @@ package semantifyr::gamma::variables
 import semantifyr::gamma::expressions
 
 class Variable {
-    prop evaluate() { return false }
+    prop evaluate() {
+        return false
+    }
 
-    tran set(value: int) { }
+    tran set(value: int) {
+    }
 }
 
 class IntegerVariable : Variable {
-    refers defaultValue : int = 0
+    refers defaultValue: int = 0
 
-    var variable : int := defaultValue
+    var variable: int := defaultValue
 
-    redefine prop evaluate() { return variable }
+    redefine prop evaluate() {
+        return variable
+    }
 
     tran set(value: int) {
         variable := value
@@ -21,11 +26,13 @@ class IntegerVariable : Variable {
 }
 
 class BooleanVariable : Variable {
-    refers defaultValue : bool = false
+    refers defaultValue: bool = false
 
-    var variable : bool := defaultValue
+    var variable: bool := defaultValue
 
-    redefine prop evaluate() { return variable }
+    redefine prop evaluate() {
+        return variable
+    }
 
     tran set(value: bool) {
         variable := value
@@ -33,6 +40,8 @@ class BooleanVariable : Variable {
 }
 
 class VariableExpression : Expression {
-    refers variable : Variable
-    prop evaluate() { return variable.evaluate() }
+    refers variable: Variable
+    prop evaluate() {
+        return variable.evaluate()
+    }
 }

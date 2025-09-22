@@ -30,7 +30,7 @@ class Timeout {
     refers deltaTime: int = 1
 
     var remainingTime: int := 0
- 
+
     redefine tran {
         if (remainingTime > 0) {
             remainingTime := remainingTime - deltaTime

@@ -33,11 +33,10 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.interior(regionFor(eObject).keyword("{"), regionFor(eObject).keyword("}"), this::indent);
     }
     protected void formatCallLike(EObject eObject, IFormattableDocument document) {
-        document.prepend(regionFor(eObject).keyword("("), this::noSpace);
-        document.append(regionFor(eObject).keyword("("), this::optionalNewLine);
+        document.append(regionFor(eObject).keyword("("), this::noSpace);
+        document.surround(regionFor(eObject).keyword("("), this::optionalNewLine);
         document.prepend(regionFor(eObject).keyword(")"), this::noSpace);
-        document.prepend(regionFor(eObject).keyword(")"), this::optionalNewLine);
-        document.append(regionFor(eObject).keyword(")"), this::newLine);
+        document.surround(regionFor(eObject).keyword(")"), this::optionalNewLine);
 
         document.interior(regionFor(eObject).keyword("("), regionFor(eObject).keyword(")"), this::indent);
     }
@@ -205,6 +204,8 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
         document.append(regionFor(havocOperation).keyword("havoc"), this::oneSpace);
 
+        formatCallLike(havocOperation, document);
+
         document.format(havocOperation.getReference());
     }
 
@@ -212,6 +213,8 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         formatSemicolonedLine(assumptionOperation, document);
 
         document.append(regionFor(assumptionOperation).keyword("assume"), this::oneSpace);
+
+        formatCallLike(assumptionOperation, document);
 
         document.format(assumptionOperation.getExpression());
     }
@@ -238,6 +241,8 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.surround(regionFor(choiceOperation).keyword("or"), this::oneSpace);
         document.surround(regionFor(choiceOperation).keyword("else"), this::oneSpace);
 
+        formatCallLike(choiceOperation, document);
+
         choiceOperation.getBranches().forEach(document::format);
         document.format(choiceOperation.getElse());
     }
@@ -246,6 +251,8 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         formatBracketedDeclaration(ifOperation, document);
 
         document.append(regionFor(ifOperation).keyword("if"), this::oneSpace);
+
+        formatCallLike(ifOperation, document);
 
         document.format(ifOperation.getGuard());
         document.format(ifOperation.getBody());
@@ -257,6 +264,8 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
         document.append(regionFor(forOperation).keyword("for"), this::oneSpace);
         document.surround(regionFor(forOperation).keyword("in"), this::oneSpace);
+
+        formatCallLike(forOperation, document);
 
         document.format(forOperation.getRangeExpression());
         document.format(forOperation.getBody());
@@ -278,6 +287,8 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
         document.surround(regionFor(inlineCall).keyword("inline"), this::oneSpace);
 
+        formatCallLike(inlineCall, document);
+
         document.format(inlineCall.getCallExpression());
     }
 
@@ -292,6 +303,8 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
         document.surround(regionFor(inlineFor).keyword("in"), this::oneSpace);
 
+        formatCallLike(inlineFor, document);
+
         document.format(inlineFor.getRangeExpression());
         document.format(inlineFor.getBody());
     }
@@ -301,6 +314,8 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
         document.surround(regionFor(inlineIfOperation).keyword("inline"), this::oneSpace);
         document.surround(regionFor(inlineIfOperation).keyword("if"), this::oneSpace);
+
+        formatCallLike(inlineIfOperation, document);
 
         document.format(inlineIfOperation.getGuard());
         document.format(inlineIfOperation.getBody());
@@ -393,8 +408,8 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void format(CallSuffixExpression postfixUnaryExpression, IFormattableDocument document) {
-        document.surround(regionFor(postfixUnaryExpression).keyword("("), this::noSpace);
-        document.prepend(regionFor(postfixUnaryExpression).keyword(")"), this::noSpace);
+        formatCallLike(postfixUnaryExpression, document);
+        document.prepend(regionFor(postfixUnaryExpression).keyword("("), this::noSpace);
 
         document.format(postfixUnaryExpression.getPrimary());
         postfixUnaryExpression.getArguments().forEach(document::format);

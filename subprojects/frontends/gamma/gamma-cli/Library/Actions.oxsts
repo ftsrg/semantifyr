@@ -40,8 +40,8 @@ class AssignmentAction : Action {
 
 class Guard {
     contains expression: Expression[1]
-    
-    redefine tran { 
+
+    redefine tran {
         assume (expression.evaluate())
     }
 }

@@ -9,11 +9,12 @@ package semantifyr::gamma::triggers
 import semantifyr::gamma::events
 
 class Trigger {
-    tran isTriggered() { }
+    tran isTriggered() {
+    }
 }
 
 class EventTrigger : Trigger {
-    refers event : Event[1]
+    refers event: Event[1]
 
     redefine tran isTriggered() {
         inline event.isSet()
@@ -21,7 +22,7 @@ class EventTrigger : Trigger {
 }
 
 class TimeoutTrigger : Trigger {
-    refers timeout : Timeout[1]
+    refers timeout: Timeout[1]
 
     redefine tran isTriggered() {
         inline timeout.isUp()

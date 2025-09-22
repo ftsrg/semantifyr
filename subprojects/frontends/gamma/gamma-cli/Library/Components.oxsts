@@ -10,7 +10,7 @@ import semantifyr::gamma::events
 
 class Component {
     contains events: Event[0..*]
-    contains inputEvents: Event[0..*] subsets events 
+    contains inputEvents: Event[0..*] subsets events
     contains outputEvents: Event[0..*] subsets events
 
     contains timeouts: Timeout[0..*]
@@ -19,13 +19,13 @@ class Component {
         inline for (event in inputEvents) {
             inline event.reset()
         }
-    } 
+    }
 
     tran havocInputEvents() {
         inline for (event in inputEvents) {
             inline event.havoc()
-        } 
-    } 
+        }
+    }
 
     tran resetOutputEvents() {
         inline for (event in outputEvents) {
@@ -59,7 +59,7 @@ class CompositeComponent : Component {
         inline for (timeout in timeouts) {
             inline timeout.main()
         }
-        
+
         inline for (component in components) {
             inline component.passTime()
         }
@@ -79,11 +79,11 @@ class SyncComponent : CompositeComponent {
         inline for (component in components) {
             inline component.main()
         }
-        
+
         inline for (channel in channels) {
             inline channel.main()
         }
-        
+
         inline resetInputEvents()
     }
 }
