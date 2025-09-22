@@ -160,8 +160,8 @@ function registerVerifyGammaCommand(context: ExtensionContext, gammaExecutable: 
 }
 
 export function registerCommands(context: ExtensionContext) {
-    const compilerExecutable = path.join(context.extensionPath, 'bin', 'semantifyr', 'bin', `semantifyr${executablePostfix}`);
-    const gammaExecutable = path.join(context.extensionPath, 'bin', 'gamma-frontend', 'bin', `gamma-frontend${executablePostfix}`);
+    const compilerExecutable = path.join(context.extensionPath, 'bin', 'semantifyr', 'bin', `semantifyr-cli${executablePostfix}`);
+    const gammaExecutable = path.join(context.extensionPath, 'bin', 'gamma-cli', 'bin', `gamma-cli${executablePostfix}`);
 
     registerCompileTargetCommand(context, compilerExecutable);
     registerVerifyTargetCommand(context, compilerExecutable);

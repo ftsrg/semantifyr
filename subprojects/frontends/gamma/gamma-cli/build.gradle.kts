@@ -35,7 +35,7 @@ artifacts {
 
 dependencies {
     implementation(project(":gamma.lang"))
-    implementation(project(":semantifyr"))
+    implementation(project(":semantics"))
 
     implementation(platform(libs.xtext.bom))
     implementation(libs.xtext.core)
@@ -51,10 +51,10 @@ dependencies {
 
     testFixturesApi(project(":gamma.lang"))
     testFixturesApi(testFixtures(project(":gamma.lang")))
-    testFixturesApi(project(":semantifyr"))
-    testFixturesApi(testFixtures(project(":semantifyr")))
+    testFixturesApi(project(":semantics"))
+    testFixturesApi(testFixtures(project(":semantics")))
 }
 
 application {
-    mainClass = "hu.bme.mit.semantifyr.frontends.gamma.frontend.GammaFrontendCliKt"
+    mainClass = "hu.bme.mit.semantifyr.frontends.gamma.cli.GammaFrontendCliKt"
 }

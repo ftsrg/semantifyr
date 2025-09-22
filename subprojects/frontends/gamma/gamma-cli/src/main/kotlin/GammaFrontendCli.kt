@@ -4,13 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.frontends.gamma.frontend
+package hu.bme.mit.semantifyr.frontends.gamma.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.core.subcommands
-import hu.bme.mit.semantifyr.frontends.gamma.frontend.commands.CompileCommand
-import hu.bme.mit.semantifyr.frontends.gamma.frontend.commands.VerifyCommand
+import hu.bme.mit.semantifyr.frontends.gamma.cli.commands.CompileCommand
 
 class GammaFrontendCommand : CliktCommand("gamma-frontend") {
     override fun run() = Unit
@@ -19,6 +18,6 @@ class GammaFrontendCommand : CliktCommand("gamma-frontend") {
 fun main(args: Array<String>) {
     GammaFrontendCommand().subcommands(
         CompileCommand(),
-        VerifyCommand(),
+//        VerifyCommand(),
     ).main(args)
 }

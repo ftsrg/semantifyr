@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.frontends.gamma.frontend.serialization
+package hu.bme.mit.semantifyr.frontends.gamma.cli.serialization
 
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Action
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.AndOperator
@@ -51,9 +51,9 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Transition
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Trigger
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Variable
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCase
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.IndentationAwareStringWriter
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.appendIndent
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.indent
+import hu.bme.mit.semantifyr.semantics.utils.IndentationAwareStringWriter
+import hu.bme.mit.semantifyr.semantics.utils.appendIndent
+import hu.bme.mit.semantifyr.semantics.utils.indent
 import org.eclipse.emf.ecore.EObject
 import kotlin.reflect.KProperty
 

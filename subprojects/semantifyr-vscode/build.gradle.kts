@@ -27,9 +27,8 @@ dependencies {
     distributionClasspath(project(":oxsts.lang.ide", configuration = "distributionOutput"))
 //    distributionClasspath(project(":xsts.lang.ide", configuration = "distributionOutput"))
 //    distributionClasspath(project(":cex.lang.ide", configuration = "distributionOutput"))
-//    distributionClasspath(project(":gamma.lang.ide", configuration = "distributionOutput"))
-//    distributionClasspath(project(":semantifyr", configuration = "distributionOutput"))
-//    distributionClasspath(project(":gamma-frontend", configuration = "distributionOutput"))
+    distributionClasspath(project(":gamma.lang.ide", configuration = "distributionOutput"))
+    distributionClasspath(project(":gamma-cli", configuration = "distributionOutput"))
 }
 
 val cloneDistribution by tasks.registering(Sync::class) {

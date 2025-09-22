@@ -15,7 +15,7 @@ class Trigger {
 class EventTrigger : Trigger {
     refers event : Event[1]
 
-    tran isTriggered() {
+    redefine tran isTriggered() {
         inline event.isSet()
     }
 }
@@ -23,7 +23,7 @@ class EventTrigger : Trigger {
 class TimeoutTrigger : Trigger {
     refers timeout : Timeout[1]
 
-    tran isTriggered() {
+    redefine tran isTriggered() {
         inline timeout.isUp()
     }
 }

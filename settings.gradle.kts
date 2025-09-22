@@ -12,7 +12,7 @@ include(
     "oxsts.model",
     "oxsts.lang",
     "oxsts.lang.ide",
-//    "semantifyr-vscode",
+    "semantifyr-vscode",
 )
 
 rootProject.children.forEach { project ->
@@ -29,5 +29,5 @@ fun includeDirectory(dirPath: String) {
     }
 }
 
-//includeDirectory("subprojects/frontends/gamma")
+includeDirectory("subprojects/frontends/gamma")
 //includeDirectory("subprojects/backends/theta")

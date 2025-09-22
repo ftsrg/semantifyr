@@ -15,7 +15,7 @@ class Component {
 
     contains timeouts: Timeout[0..*]
 
-    tran resetInputEvents() {        
+    tran resetInputEvents() {
         inline for (event in inputEvents) {
             inline event.reset()
         }
@@ -59,7 +59,7 @@ class CompositeComponent : Component {
         inline for (timeout in timeouts) {
             inline timeout.main()
         }
-
+        
         inline for (component in components) {
             inline component.passTime()
         }

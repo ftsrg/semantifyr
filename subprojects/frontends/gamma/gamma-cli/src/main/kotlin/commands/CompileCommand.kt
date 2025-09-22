@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.frontends.gamma.frontend.commands
+package hu.bme.mit.semantifyr.frontends.gamma.cli.commands
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
-import hu.bme.mit.semantifyr.frontends.gamma.frontend.reader.GammaReader
-import hu.bme.mit.semantifyr.frontends.gamma.frontend.reader.prepareGamma
-import hu.bme.mit.semantifyr.frontends.gamma.frontend.serialization.GammaToOxstsSerializer
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.loggerFactory
+import hu.bme.mit.semantifyr.frontends.gamma.cli.reader.GammaReader
+import hu.bme.mit.semantifyr.frontends.gamma.cli.reader.prepareGamma
+import hu.bme.mit.semantifyr.frontends.gamma.cli.serialization.GammaToOxstsSerializer
+import hu.bme.mit.semantifyr.semantics.utils.loggerFactory
 import java.io.File
 
 class CompileCommand : CliktCommand("compile") {

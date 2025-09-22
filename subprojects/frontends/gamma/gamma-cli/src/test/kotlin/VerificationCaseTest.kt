@@ -8,9 +8,9 @@ package hu.bme.mit.semantifyr.frontends.gamma.frontend
 
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCase
 import hu.bme.mit.semantifyr.oxsts.semantifyr.VerificationTest
-import hu.bme.mit.semantifyr.oxsts.semantifyr.reader.OxstsReader
+import hu.bme.mit.semantifyr.oxsts.semantifyr.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.oxsts.semantifyr.serialization.XstsSerializer
-import hu.bme.mit.semantifyr.oxsts.semantifyr.transformation.XstsTransformer
+import hu.bme.mit.semantifyr.semantics.transformation.OxstsToXstsTransformer
 import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.loggerFactory
 import org.junit.jupiter.api.Assertions
 import java.io.File
@@ -30,10 +30,10 @@ open class VerificationCaseTest : VerificationTest() {
     private val logger by loggerFactory()
 
     fun compileOxstsToXsts(verificationCaseDefinition: VerificationCaseDefinition) {
-        val oxstsReader = OxstsReader(verificationCaseDefinition.library)
-        oxstsReader.readModel(verificationCaseDefinition.serializedOxstsPath)
+        val semantifyrLoader = SemantifyrLoader(verificationCaseDefinition.library)
+        semantifyrLoader.readModel(verificationCaseDefinition.serializedOxstsPath)
 
-        val transformer = XstsTransformer(oxstsReader)
+        val transformer = OxstsToXstsTransformer(semantifyrLoader)
 
         val xsts = transformer.transform(verificationCaseDefinition.name, rewriteChoice = true)
         val xstsString = XstsSerializer.serialize(xsts)
