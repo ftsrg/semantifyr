@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParameterDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParametricDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
@@ -32,13 +33,13 @@ class ExpressionRewriter {
         rewriteSelfExpressionsToContext(rootElement, newContext)
     }
 
-    fun rewriteExpressionsToCall(rootElement: Element, transitionDeclaration: TransitionDeclaration, callSuffixExpression: CallSuffixExpression) {
+    fun rewriteExpressionsToCall(rootElement: Element, parametricDeclaration: ParametricDeclaration, callSuffixExpression: CallSuffixExpression) {
         val parameterReferences = rootElement.eAllOfType<ElementReference>().filter {
             it.element is ParameterDeclaration
         }.toList()
 
         for (parameterReference in parameterReferences) {
-            val index = transitionDeclaration.parameters.indexOf(parameterReference.element)
+            val index = parametricDeclaration.parameters.indexOf(parameterReference.element)
             val argument = callSuffixExpression.arguments[index].expression
 
             EcoreUtil2.replace(parameterReference, argument)

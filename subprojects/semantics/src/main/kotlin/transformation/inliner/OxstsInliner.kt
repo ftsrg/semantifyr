@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionKind
 import hu.bme.mit.semantifyr.semantics.expression.MetaStaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.expression.RedefinitionAwareReferenceResolver
+import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.expression.evaluateTyped
 import hu.bme.mit.semantifyr.semantics.optimization.InlinedOxstsOperationOptimizer
 import hu.bme.mit.semantifyr.semantics.optimization.XstsExpressionOptimizer
@@ -30,6 +31,9 @@ class OxstsInliner {
 
     @Inject
     lateinit var metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider
+
+    @Inject
+    lateinit var staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider
 
     @Inject
     private lateinit var operationInliner: OperationInliner
@@ -57,13 +61,13 @@ class OxstsInliner {
         operationInliner.inlineOperations(inlinedOxsts.rootInstance, inlinedOxsts.initTransition)
         operationInliner.inlineOperations(inlinedOxsts.rootInstance, inlinedOxsts.mainTransition)
 
-//        callExpressionInliner.inlineExpressions(inlinedOxsts.rootInstance, inlinedOxsts.initTransition)
-//        callExpressionInliner.inlineExpressions(inlinedOxsts.rootInstance, inlinedOxsts.mainTransition)
-//        callExpressionInliner.inlineExpressions(inlinedOxsts.rootInstance, inlinedOxsts.property)
+        callExpressionInliner.inlineExpressions(inlinedOxsts.rootInstance, inlinedOxsts.initTransition)
+        callExpressionInliner.inlineExpressions(inlinedOxsts.rootInstance, inlinedOxsts.mainTransition)
+        callExpressionInliner.inlineExpressions(inlinedOxsts.rootInstance, inlinedOxsts.property)
 
         inlinedOxstsOperationOptimizer.optimize(inlinedOxsts.initTransition)
         inlinedOxstsOperationOptimizer.optimize(inlinedOxsts.mainTransition)
-//        xstsExpressionOptimizer.optimize(inlinedOxsts.property)
+        xstsExpressionOptimizer.optimize(inlinedOxsts.property)
     }
 
     private fun initializeInlining(inlinedOxsts: InlinedOxsts) {
@@ -82,21 +86,7 @@ class OxstsInliner {
 
         inlinedOxsts.initTransition = createTransitionDeclaration(inlinedOxsts, TransitionKind.INIT, builtinInit)
         inlinedOxsts.mainTransition = createTransitionDeclaration(inlinedOxsts, TransitionKind.TRAN, builtinMain)
-
-//        val property = redefinitionAwareReferenceResolver.resolve(inlinedOxsts.rootInstance, "prop") as PropertyDeclaration
-//
-        inlinedOxsts.property = OxstsFactory.createPropertyDeclaration().also {
-            it.annotation = OxstsFactory.createAnnotationContainer()
-            it.expression = OxstsFactory.createLiteralBoolean(true)
-//            it.expression = OxstsFactory.createCallSuffixExpression().also {
-//                it.primary = OxstsFactory.createNavigationSuffixExpression().also {
-//                    it.primary = OxstsFactory.createElementReference().also {
-//                        it.element = inlinedOxsts.rootFeature
-//                    }
-//                    it.member = property
-//                }
-//            }
-        }
+        inlinedOxsts.property = createPropertyDeclaration(inlinedOxsts)
     }
 
     private fun createTransitionDeclaration(inlinedOxsts: InlinedOxsts, transitionKind: TransitionKind, expression: Expression): TransitionDeclaration {
@@ -116,6 +106,24 @@ class OxstsInliner {
                             it.member = transition
                         }
                     }
+                }
+            }
+        }
+    }
+
+    private fun createPropertyDeclaration(inlinedOxsts: InlinedOxsts): PropertyDeclaration {
+        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(inlinedOxsts.rootInstance)
+        val rootFeatureInstance = evaluator.evaluateSingleInstance(OxstsFactory.createElementReference(inlinedOxsts.rootFeature))
+        val property = redefinitionAwareReferenceResolver.resolve(rootFeatureInstance, "prop") as PropertyDeclaration
+
+        return OxstsFactory.createPropertyDeclaration().also {
+            it.annotation = OxstsFactory.createAnnotationContainer()
+            it.expression = OxstsFactory.createCallSuffixExpression().also {
+                it.primary = OxstsFactory.createNavigationSuffixExpression().also {
+                    it.primary = OxstsFactory.createElementReference().also {
+                        it.element = inlinedOxsts.rootFeature
+                    }
+                    it.member = property
                 }
             }
         }
