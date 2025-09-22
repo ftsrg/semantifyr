@@ -18,6 +18,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OperatorExpression
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationArtifactSaver
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import hu.bme.mit.semantifyr.semantics.utils.isConstantLiteralFalse
@@ -29,6 +30,9 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
 
     @Inject
     private lateinit var constantExpressionEvaluatorProvider: ConstantExpressionEvaluatorProvider
+
+    @Inject
+    private lateinit var compilationArtifactSaver: CompilationArtifactSaver
 
     override fun doOptimizationStep(element: Element): Boolean {
         return rewriteConstantTrueOr(element)
@@ -61,6 +65,8 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
 
         EcoreUtil2.replace(operator, constant)
 
+        compilationArtifactSaver.commitModelState()
+
         return true
     }
 
@@ -80,6 +86,8 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
         } else {
             EcoreUtil2.replace(constantTrueOr, constantTrueOr.right)
         }
+
+        compilationArtifactSaver.commitModelState()
 
         return true
     }
@@ -101,6 +109,8 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
             EcoreUtil2.replace(constantFalseAnd, constantFalseAnd.right)
         }
 
+        compilationArtifactSaver.commitModelState()
+
         return true
     }
 
@@ -119,6 +129,8 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
         } else {
             EcoreUtil2.replace(redundantOr, redundantOr.left)
         }
+
+        compilationArtifactSaver.commitModelState()
 
         return true
     }
@@ -139,6 +151,8 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
             EcoreUtil2.replace(redundantAnd, redundantAnd.left)
         }
 
+        compilationArtifactSaver.commitModelState()
+
         return true
     }
 
@@ -154,6 +168,8 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
         val internalNegation = redundantNegation.body as NegationOperator
 
         EcoreUtil2.replace(redundantNegation, internalNegation.body)
+
+        compilationArtifactSaver.commitModelState()
 
         return true
     }

@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.semantics.optimization
 
+import com.google.inject.Inject
 import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
@@ -13,6 +14,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationArtifactSaver
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import hu.bme.mit.semantifyr.semantics.utils.isConstantLiteralTrue
@@ -26,6 +28,9 @@ private val SequenceOperation.isSingleConstantFalseAssumption
 
 @Singleton
 class ConstantFalseAssumptionPropagatorOptimizer : AbstractLoopedOptimizer<Element>() {
+
+    @Inject
+    private lateinit var compilationArtifactSaver: CompilationArtifactSaver
 
     override fun doOptimizationStep(element: Element): Boolean {
         return propagateInSequenceOperation(element)
@@ -49,6 +54,8 @@ class ConstantFalseAssumptionPropagatorOptimizer : AbstractLoopedOptimizer<Eleme
         sequenceOperation.steps.clear()
         sequenceOperation.steps += assumption
 
+        compilationArtifactSaver.commitModelState()
+
         return true
     }
 
@@ -62,6 +69,8 @@ class ConstantFalseAssumptionPropagatorOptimizer : AbstractLoopedOptimizer<Eleme
         }
 
         choice.`else` = null
+
+        compilationArtifactSaver.commitModelState()
 
         return true
     }
@@ -78,6 +87,8 @@ class ConstantFalseAssumptionPropagatorOptimizer : AbstractLoopedOptimizer<Eleme
         val constantFalseBranch = choiceOperation.branches.first { it.isSingleConstantFalseAssumption }
 
         EcoreUtil2.remove(constantFalseBranch)
+
+        compilationArtifactSaver.commitModelState()
 
         return true
     }
@@ -97,6 +108,8 @@ class ConstantFalseAssumptionPropagatorOptimizer : AbstractLoopedOptimizer<Eleme
             EcoreUtil2.replace(choiceOperation, OxstsFactory.createAssumptionOperation(false))
         }
 
+        compilationArtifactSaver.commitModelState()
+
         return true
     }
 
@@ -110,6 +123,8 @@ class ConstantFalseAssumptionPropagatorOptimizer : AbstractLoopedOptimizer<Eleme
         }
 
         EcoreUtil2.replace(ifOperation, ifOperation.body)
+
+        compilationArtifactSaver.commitModelState()
 
         return true
     }
