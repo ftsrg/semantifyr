@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.semantics.transformation.inliner
 
 import com.google.inject.Singleton
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AbstractForOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
@@ -46,12 +47,23 @@ class ExpressionRewriter {
         }
     }
 
+    private fun isReferenceContextual(elementReference: ElementReference): Boolean {
+        val element = elementReference.element
+        val container = element.eContainer()
+
+        if (container is AbstractForOperation && container.loopVariable == element) {
+            return false
+        }
+
+        return element is FeatureDeclaration
+            || element is VariableDeclaration
+            || element is PropertyDeclaration
+            || element is TransitionDeclaration
+    }
+
     private fun rewriteContextualExpressionsToContext(rootElement: Element, newContext: Expression) {
         val contextualReferences = rootElement.eAllOfType<ElementReference>().filter {
-            it.element is FeatureDeclaration
-            || it.element is VariableDeclaration
-            || it.element is PropertyDeclaration
-            || it.element is TransitionDeclaration
+            isReferenceContextual(it)
         }.toList()
 
         for (contextualReference in contextualReferences) {
