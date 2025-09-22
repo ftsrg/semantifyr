@@ -51,7 +51,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void optionalNewLine(IHiddenRegionFormatter hrf) {
-        hrf.setNewLines(0, 1, 1);
+        hrf.setNewLines(0, 0, 1);
     }
 
     protected void format(OxstsModelPackage _package, IFormattableDocument document) {
