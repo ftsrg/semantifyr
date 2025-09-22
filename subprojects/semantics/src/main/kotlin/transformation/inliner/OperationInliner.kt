@@ -66,12 +66,28 @@ class OperationInliner {
                 is InlineOperation -> {
                     val inlined = createInlinedOperation(instance, operation)
                     EcoreUtil2.replace(operation, inlined)
-                    processorQueue += inlined
+
+                    processorQueue += simplifyNestedInlinedSequence(inlined)
 
                     compilationArtifactSaver.commitModelState()
                 }
             }
         }
+    }
+
+    private fun simplifyNestedInlinedSequence(inlinedOperation: Operation): List<Operation> {
+        val parent = inlinedOperation.eContainer()
+        if (inlinedOperation !is SequenceOperation || parent !is SequenceOperation) {
+            return listOf(inlinedOperation)
+        }
+
+        val internalInlined = ArrayList(inlinedOperation.steps)
+
+        val index = parent.steps.indexOf(inlinedOperation)
+        parent.steps.addAll(index, inlinedOperation.steps)
+        EcoreUtil2.remove(inlinedOperation)
+
+        return internalInlined
     }
 
     private fun createInlinedOperation(instance: Instance, operation: InlineOperation): Operation {
