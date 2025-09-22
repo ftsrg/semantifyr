@@ -20,8 +20,21 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
 
     @Override
     protected ExpressionEvaluation compute(ComparisonOperator expression) {
-        // TODO
-        throw new IllegalStateException("Not yet implemented!");
+        var left = evaluate(expression.getLeft());
+        var right = evaluate(expression.getRight());
+
+        if (left instanceof IntegerEvaluation(int lValue) && right instanceof IntegerEvaluation(int rValue)) {
+            return switch (expression.getOp()) {
+                case LESS -> new BooleanEvaluation(lValue < rValue);
+                case LESS_EQ -> new BooleanEvaluation(lValue <= rValue);
+                case GREATER -> new BooleanEvaluation(lValue > rValue);
+                case GREATER_EQ -> new BooleanEvaluation(lValue >= rValue);
+                case EQ -> new BooleanEvaluation(lValue == rValue);
+                case NOT_EQ -> new BooleanEvaluation(lValue != rValue);
+            };
+        }
+
+        throw new IllegalArgumentException("Left and right are not integer expressions!");
     }
 
     @Override
@@ -30,12 +43,12 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
         var left = evaluate(expression.getLeft());
         var right = evaluate(expression.getRight());
 
-        if (left instanceof IntegerEvaluation leftValue && right instanceof IntegerEvaluation rightValue) {
+        if (left instanceof IntegerEvaluation(int lValue) && right instanceof IntegerEvaluation(int rValue)) {
             return switch (expression.getOp()) {
-                case ADD -> new IntegerEvaluation(leftValue.value() + rightValue.value());
-                case SUB -> new IntegerEvaluation(leftValue.value() - rightValue.value());
-                case MUL -> new IntegerEvaluation(leftValue.value() * rightValue.value());
-                case DIV -> new IntegerEvaluation(leftValue.value() / rightValue.value());
+                case ADD -> new IntegerEvaluation(lValue + rValue);
+                case SUB -> new IntegerEvaluation(lValue - rValue);
+                case MUL -> new IntegerEvaluation(lValue * rValue);
+                case DIV -> new IntegerEvaluation(lValue / rValue);
             };
         }
 
@@ -47,11 +60,11 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
         var left = evaluate(expression.getLeft());
         var right = evaluate(expression.getRight());
 
-        if (left instanceof BooleanEvaluation leftValue && right instanceof BooleanEvaluation rightValue) {
+        if (left instanceof BooleanEvaluation(boolean lValue) && right instanceof BooleanEvaluation(boolean rValue)) {
             return switch (expression.getOp()) {
-                case OR -> new BooleanEvaluation(leftValue.value() || rightValue.value());
-                case AND -> new BooleanEvaluation(leftValue.value() && rightValue.value());
-                case XOR -> new BooleanEvaluation(leftValue.value() ^ rightValue.value());
+                case OR -> new BooleanEvaluation(lValue || rValue);
+                case AND -> new BooleanEvaluation(lValue && rValue);
+                case XOR -> new BooleanEvaluation(lValue ^ rValue);
             };
         }
 
@@ -62,16 +75,16 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
     protected ExpressionEvaluation compute(ArithmeticUnaryOperator expression) {
         var body = evaluate(expression.getBody());
 
-        if (body instanceof IntegerEvaluation value) {
+        if (body instanceof IntegerEvaluation(int value)) {
             return switch (expression.getOp()) {
-                case MINUS -> new IntegerEvaluation(- value.value());
+                case MINUS -> new IntegerEvaluation(-value);
                 case PLUS -> body;
             };
         }
 
-        if (body instanceof RealEvaluation value) {
+        if (body instanceof RealEvaluation(double value)) {
             return switch (expression.getOp()) {
-                case MINUS -> new RealEvaluation(- value.value());
+                case MINUS -> new RealEvaluation(-value);
                 case PLUS -> body;
             };
         }
@@ -83,8 +96,8 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
     protected ExpressionEvaluation compute(NegationOperator expression) {
         var evaluation = evaluate(expression.getBody());
 
-        if (evaluation instanceof BooleanEvaluation booleanEvaluation) {
-            return new BooleanEvaluation(! booleanEvaluation.value());
+        if (evaluation instanceof BooleanEvaluation(boolean value)) {
+            return new BooleanEvaluation(!value);
         }
 
         throw new IllegalArgumentException("Expression body is not a boolean expression!");
@@ -92,9 +105,7 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
 
     @Override
     protected ExpressionEvaluation compute(ArrayLiteral expression) {
-        var elements = expression.getValues().stream().map(v -> evaluate(v)).toList();
-
-        return new ArrayEvaluation(elements);
+        return new ArrayEvaluation(expression.getValues().stream().map(this::evaluate).toList());
     }
 
     @Override
