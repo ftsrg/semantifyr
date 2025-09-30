@@ -307,7 +307,7 @@ object GammaToOxstsSerializer {
             serialize(verificationCase.expression, "props")
 
             appendIndent("prop") {
-                appendLine("! (${verificationCase.expression.name}.evaluate())")
+                appendLine("return ! (${verificationCase.expression.name}.evaluate())")
             }
         }
     }
