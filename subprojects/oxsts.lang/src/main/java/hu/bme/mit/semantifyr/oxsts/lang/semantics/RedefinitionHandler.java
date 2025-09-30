@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration;
 import org.eclipse.xtext.naming.QualifiedName;
 import org.eclipse.xtext.util.IResourceScopeCache;
@@ -46,13 +47,15 @@ public class RedefinitionHandler {
 
         if (declaration.isRedefine()) {
             // find the other RedefinableDeclaration in the parent domain with the same name
-
-            var parentDomain = domainMemberCalculator.getParentCollection(declaration);
+            var surroundingFeature = (DomainDeclaration) declaration.eContainer();
+            var parentDomain = domainMemberCalculator.getParentCollection(surroundingFeature);
             var found = parentDomain.getMembers().getExportedObjects(declaration.eClass(), QualifiedName.create(NamingUtil.getName(declaration)), false);
 
             for (var element : found) {
                 return (RedefinableDeclaration) element.getEObjectOrProxy();
             }
+
+            throw new IllegalStateException("Redefined feature could not be found!");
 
 //            if (declaration instanceof FeatureDeclaration featureDeclaration) {
 //
