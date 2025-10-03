@@ -22,30 +22,25 @@ InlinedOxsts:
     initTransition=InlinedInitTransition
     mainTransition=InlinedMainTransition
     property=InlinedProperty
-
 ;
 
 RootFeature returns FeatureDeclaration:
-    annotation=AnnotationContainer
     kind=FeatureKind name=Identifier ':' type=[TypeDeclaration|QualifiedIdentifier] multiplicity=Multiplicity?
 ;
 
 InlinedInitTransition returns TransitionDeclaration:
-    annotation=AnnotationContainer
     kind=TransitionKind
     branches += SequenceOperation
     ('or' branches += SequenceOperation)*
 ;
 
 InlinedMainTransition returns TransitionDeclaration:
-    annotation=AnnotationContainer
     kind=TransitionKind
     branches += SequenceOperation
     ('or' branches += SequenceOperation)*
 ;
 
 InlinedProperty returns PropertyDeclaration:
-    annotation=AnnotationContainer
     'prop' '{'
         expression=Expression
     '}'
@@ -173,7 +168,7 @@ ClassMember returns Declaration:
         {FeatureDeclaration.annotation=current}
         redefine?='redefine'? kind=FeatureKind name=Identifier ':' type=[TypeDeclaration|QualifiedIdentifier] multiplicity=Multiplicity?
         (
-            ('subsets' superset += [FeatureDeclaration|Identifier] (',' superset += [FeatureDeclaration|Identifier])*)?
+            ('subsets' superset=[FeatureDeclaration|Identifier])?
             & ('opposite' opposite=[FeatureDeclaration|Identifier])?
             & ('redefines' redefined=[FeatureDeclaration|Identifier])?
         )
@@ -195,7 +190,7 @@ InnerFeature returns FeatureDeclaration:
     annotation = AnnotationContainer
     redefine?='redefine'? kind=FeatureKind name=Identifier ':' type=[TypeDeclaration|QualifiedIdentifier] multiplicity=Multiplicity?
     (
-        ('subsets' superset += [FeatureDeclaration|Identifier] (',' superset += [FeatureDeclaration|Identifier])*)?
+        ('subsets' superset=[FeatureDeclaration|Identifier])?
         & ('opposite' opposite=[FeatureDeclaration|Identifier])?
         & ('redefines' redefined=[FeatureDeclaration|Identifier])?
     )
@@ -422,7 +417,7 @@ DefiniteCallExpression returns CallSuffixExpression:
 
 PostfixUnaryExpression returns Expression:
     PrimaryExpression -> (
-        ({NavigationSuffixExpression.primary=current} '.' member=[NamedElement|Identifier])
+        ({NavigationSuffixExpression.primary=current} optional?='?'? '.' member=[NamedElement|Identifier])
         | ({IndexingSuffixExpression.primary=current} '[' index=Expression ']')
     )*
 ;
