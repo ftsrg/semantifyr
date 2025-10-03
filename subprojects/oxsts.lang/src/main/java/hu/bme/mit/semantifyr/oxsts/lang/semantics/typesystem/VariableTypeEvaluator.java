@@ -40,12 +40,12 @@ public class VariableTypeEvaluator {
 
     private TypeEvaluation computeImplicitTypeOf(VariableDeclaration variableDeclaration) {
         if (variableDeclaration.getExpression() != null) {
-            return expressionTypeEvaluatorProvider.evaluateExpressionType(variableDeclaration.getExpression());
+            return expressionTypeEvaluatorProvider.evaluate(variableDeclaration.getExpression());
         }
 
         if (variableDeclaration.eContainer() instanceof AbstractForOperation abstractForOperation) {
             // TODO: should get the 'type of an element of the rangeExpression'
-            return expressionTypeEvaluatorProvider.evaluateExpressionType(abstractForOperation.getRangeExpression());
+            return expressionTypeEvaluatorProvider.evaluate(abstractForOperation.getRangeExpression());
         }
 
         return TypeEvaluation.INVALID;

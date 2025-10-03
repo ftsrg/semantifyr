@@ -84,7 +84,7 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 
         if (context instanceof NavigationSuffixExpression navigationSuffixExpression) {
             var primary = navigationSuffixExpression.getPrimary();
-            var primaryEvaluation = expressionTypeEvaluatorProvider.evaluateExpressionType(primary);
+            var primaryEvaluation = expressionTypeEvaluatorProvider.evaluate(primary);
 
             if (primaryEvaluation instanceof ImmutableTypeEvaluation(DomainDeclaration domainDeclaration)) {
                 var members = domainMemberCalculator.getMembers(domainDeclaration);

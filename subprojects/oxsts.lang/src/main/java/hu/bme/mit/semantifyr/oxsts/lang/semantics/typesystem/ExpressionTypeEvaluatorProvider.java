@@ -24,12 +24,12 @@ public class ExpressionTypeEvaluatorProvider {
     @Inject
     private Provider<ExpressionTypeEvaluator> expressionTypeEvaluatorProvider;
 
-    public ExpressionTypeEvaluator getExpressionTypeEvaluator(EObject eObject) {
+    public ExpressionTypeEvaluator getEvaluator(EObject eObject) {
         return resourceScopeCache.get(CACHE_KEY, eObject.eResource(), expressionTypeEvaluatorProvider);
     }
 
-    public TypeEvaluation evaluateExpressionType(Expression expression) {
-        return getExpressionTypeEvaluator(expression).evaluate(expression);
+    public TypeEvaluation evaluate(Expression expression) {
+        return getEvaluator(expression).evaluate(expression);
     }
 
 }
