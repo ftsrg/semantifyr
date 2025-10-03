@@ -35,8 +35,7 @@
         upperBound="-1" eType="#//SequenceOperation" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="FeatureDeclaration" eSuperTypes="#//DomainDeclaration #//Namespace #//RedefinableDeclaration">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="superset" upperBound="-1"
-        eType="#//FeatureDeclaration"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="superset" eType="#//FeatureDeclaration"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="type" eType="#//TypeDeclaration"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="multiplicity" eType="#//Multiplicity"
         containment="true"/>
@@ -99,9 +98,9 @@
   <eClassifiers xsi:type="ecore:EClass" name="InlineIfOperation" eSuperTypes="#//InlineOperation">
     <eStructuralFeatures xsi:type="ecore:EReference" name="guard" eType="#//Expression"
         containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="body" lowerBound="1" eType="#//Operation"
+    <eStructuralFeatures xsi:type="ecore:EReference" name="body" lowerBound="1" eType="#//SequenceOperation"
         containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="else" eType="#//Operation"
+    <eStructuralFeatures xsi:type="ecore:EReference" name="else" eType="#//SequenceOperation"
         containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="EnumLiteral" eSuperTypes="#//NamedElement"/>
@@ -223,6 +222,9 @@
   <eClassifiers xsi:type="ecore:EClass" name="NavigationSuffixExpression" eSuperTypes="#//PostfixUnaryExpression">
     <eStructuralFeatures xsi:type="ecore:EReference" name="member" lowerBound="1"
         eType="#//NamedElement"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="optional" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//Boolean"
+        defaultValueLiteral="false"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="IndexingSuffixExpression" eSuperTypes="#//PostfixUnaryExpression">
     <eStructuralFeatures xsi:type="ecore:EReference" name="index" lowerBound="1" eType="#//Expression"
@@ -298,7 +300,7 @@
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="InlineSeqFor" eSuperTypes="#//InlineForOperation"/>
   <eClassifiers xsi:type="ecore:EClass" name="InlineChoiceFor" eSuperTypes="#//InlineForOperation">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="else" eType="#//Operation"
+    <eStructuralFeatures xsi:type="ecore:EReference" name="else" eType="#//SequenceOperation"
         containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="AbstractForOperation" abstract="true"

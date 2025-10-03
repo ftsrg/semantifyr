@@ -28,7 +28,7 @@ public class InheritanceHandler {
     protected RedefinitionHandler redefinitionHandler;
 
     @Inject
-    protected SuperSetHandler superSetHandler;
+    protected SubsetHandler subsetHandler;
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;

@@ -11,13 +11,12 @@ import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
 import org.eclipse.xtext.util.IResourceScopeCache;
 import org.eclipse.xtext.util.Tuples;
 
-import java.util.List;
-
 @Singleton
-public class SuperSetHandler {
+public class SubsetHandler {
     private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.semantics.SuperSetHandler.CACHE_KEY";
 
     @Inject
@@ -26,19 +25,23 @@ public class SuperSetHandler {
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
 
-    public Iterable<FeatureDeclaration> getSuperSetFeatures(FeatureDeclaration declaration) {
-        return cache.get(Tuples.create(CACHE_KEY, declaration), declaration.eResource(), () -> computeSuperSetFeatures(declaration));
+    public FeatureDeclaration getSubsetFeature(FeatureDeclaration feature) {
+        return cache.get(Tuples.create(CACHE_KEY, feature), feature.eResource(), () -> computeSubsetFeature(feature));
     }
 
-    protected Iterable<FeatureDeclaration> computeSuperSetFeatures(FeatureDeclaration declaration) {
-        var superSet = declaration.getSuperset();
+    protected FeatureDeclaration computeSubsetFeature(FeatureDeclaration feature) {
+        var superSet = feature.getSuperset();
 
-        if (superSet.isEmpty() && declaration.getKind() == FeatureKind.CONTAINMENT) {
-            if (builtinSymbolResolver.isAnythingChildrenFeature(declaration)) {
-                return List.of();
+        if (superSet == null && feature.getKind() == FeatureKind.CONTAINMENT) {
+            if (feature.eContainer() instanceof InlinedOxsts) {
+                return null;
             }
 
-            return List.of(builtinSymbolResolver.anythingChildrenFeature(declaration));
+//            if (builtinSymbolResolver.isAnythingChildrenFeature(feature)) {
+//                return null;
+//            }
+//
+//            return builtinSymbolResolver.anythingChildrenFeature(feature);
         }
 
         return superSet;
