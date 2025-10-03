@@ -21,8 +21,8 @@ class LiteralIntegerExpression : LiteralExpression {
 }
 
 class OperatorExpression : Expression {
-    contains left: Expression[1]
-    contains right: Expression[1]
+    features left: Expression[1]
+    features right: Expression[1]
 }
 
 class LessThanOperatorExpression : OperatorExpression {
@@ -86,7 +86,7 @@ class AndOperatorExpression : OperatorExpression {
 }
 
 class NotExpression : Expression {
-    contains operand: Expression[1]
+    features operand: Expression[1]
     redefine prop evaluate() {
         return !operand.evaluate()
     }

@@ -14,7 +14,7 @@ import semantifyr::gamma::actions
 import semantifyr::gamma::events
 
 class Statechart : Component {
-    contains regions: Region[0..*] opposite parent
+    contains regions: Region[0..*]
     contains variables: Variable[0..*]
 
     redefine init {
@@ -40,7 +40,7 @@ class Statechart : Component {
 
 class Region {
     contains states: State[0..*] opposite parentRegion
-    container parent: State[0..1] opposite regions
+    container parentState: State[0..1] opposite regions
 
     contains abstractTransitions: AbstractTransition[0..*]
     contains transitions: Transition[0..*] subsets abstractTransitions
@@ -62,7 +62,7 @@ class Region {
     }
 
     tran fireTransitions() {
-        // /*
+        /*
         // bottom-up
         var eventConsumed := false
 
@@ -76,17 +76,17 @@ class Region {
                 inline transition.main()
             }
         }
-    // */
-    /*
-     * // top-down
-     * inline for choice (transition in transitions) {
-     *     inline transition.main()
-     * } else {
-     *     inline for choice (state in states) {
-     *         inline state.fireTransitions()
-     *     } else { }
-     * }
-     */
+    */
+    
+        // top-down
+        inline for choice (transition in transitions) {
+            inline transition.main()
+        } else {
+            inline for choice (state in states) {
+                inline state.fireTransitions()
+            } else { }
+        }
+     
     }
 }
 
@@ -97,15 +97,15 @@ class Region {
  * }
  */
 class State {
-    container parentRegion: Region[0..1] opposite states
-    contains regions: Region[0..*] opposite parent
+    container parentRegion: Region[1] opposite states
+    contains regions: Region[0..*] opposite parentState
 
-    refers parentState: State[0..1] = parentRegion.parent // as pattern parentState
+    refers parentState: State[0..1] = parentRegion.parentState // as pattern parentState
     contains entryActions: Action[0..*]
     contains exitActions: Action[0..*]
 
     prop isActive() {
-        return parentRegion.activeState == self
+        return parentRegion?.activeState == self
     }
 
     tran deactivateRecursive() {
@@ -130,7 +130,9 @@ class State {
         parentRegion.activeState := nothing
 
         inline if (commonRegion != parentRegion) {
-            inline parentState.exitRecursive(commonRegion)
+            inline if (parentState != nothing) {
+                inline parentState.exitRecursive(commonRegion)
+            }
         }
     }
 
@@ -144,7 +146,9 @@ class State {
 
     tran enterRecursive(commonRegion : Region) {
         inline if (commonRegion != parentRegion) {
-            inline parentState.enterRecursive(commonRegion)
+            inline if (parentState != nothing) {
+                inline parentState.enterRecursive(commonRegion)
+            }
         }
 
         parentRegion.activeState := self
@@ -192,7 +196,8 @@ class EntryTransition : AbstractTransition {
 class Transition : AbstractTransition {
     refers from: State[1]
 
-    contains trigger: Trigger[1]
+    features trigger: Trigger[1]
+    
     contains actions: Action[0..*]
     contains guards: Guard[0..*]
 

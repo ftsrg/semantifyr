@@ -41,8 +41,8 @@ class Component {
 }
 
 class Channel {
-    refers inputEvent: Event
-    refers outputEvent: Event
+    refers inputEvent: Event[1]
+    refers outputEvent: Event[1]
 
     redefine tran {
         if (inputEvent.isActive) {
