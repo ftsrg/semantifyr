@@ -62,13 +62,13 @@ public class BuiltinSymbolResolver {
         return findInBuiltin(context, DataTypeDeclaration.class, STRING_NAME);
     }
 
-    public FeatureDeclaration anythingChildrenFeature(EObject context) {
-        return findInBuiltin(context, FeatureDeclaration.class, ANYTHING_CHILDREN_NAME);
-    }
+//    public FeatureDeclaration anythingChildrenFeature(EObject context) {
+//        return findInBuiltin(context, FeatureDeclaration.class, ANYTHING_CHILDREN_NAME);
+//    }
 
-    public FeatureDeclaration anythingParentFeature(EObject context) {
-        return findInBuiltin(context, FeatureDeclaration.class, ANYTHING_PARENT_NAME);
-    }
+//    public FeatureDeclaration anythingParentFeature(EObject context) {
+//        return findInBuiltin(context, FeatureDeclaration.class, ANYTHING_PARENT_NAME);
+//    }
 
     public TransitionDeclaration anythingInitTransition(EObject context) {
         return findInBuiltin(context, TransitionDeclaration.class, ANYTHING_INIT_NAME);
@@ -94,13 +94,13 @@ public class BuiltinSymbolResolver {
         return isBuiltin(classDeclaration) && isNamed(classDeclaration, ANYTHING_NAME);
     }
 
-    public boolean isAnythingParentFeature(FeatureDeclaration featureDeclaration) {
-        return isBuiltin(featureDeclaration) && isNamed(featureDeclaration, ANYTHING_PARENT_NAME);
-    }
+//    public boolean isAnythingParentFeature(FeatureDeclaration featureDeclaration) {
+//        return isBuiltin(featureDeclaration) && isNamed(featureDeclaration, ANYTHING_PARENT_NAME);
+//    }
 
-    public boolean isAnythingChildrenFeature(FeatureDeclaration featureDeclaration) {
-        return isBuiltin(featureDeclaration) && isNamed(featureDeclaration, ANYTHING_CHILDREN_NAME);
-    }
+//    public boolean isAnythingChildrenFeature(FeatureDeclaration featureDeclaration) {
+//        return isBuiltin(featureDeclaration) && isNamed(featureDeclaration, ANYTHING_CHILDREN_NAME);
+//    }
 
     protected <T extends Declaration> T findInBuiltin(EObject context, Class<T> type, QualifiedName name) {
         var builtinResource = libraryAdapterFinder.getOrInstall(context).getBuiltinResource();

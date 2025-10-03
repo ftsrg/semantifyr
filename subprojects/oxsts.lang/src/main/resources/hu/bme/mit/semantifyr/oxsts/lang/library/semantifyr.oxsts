@@ -11,8 +11,8 @@ annotation Control;
  * Anything is the implicit supertype of all classes.
  */
 class Anything {
-    contains children: Anything[0..*] opposite parent;
-    container parent: Anything[0..1] opposite children;
+    // contains children: Anything[0..*] opposite parent;
+    // container parent: Anything[0..1] opposite children;
 
     tran { }
     init { }
