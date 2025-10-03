@@ -95,7 +95,6 @@ class OxstsInliner {
 
         return OxstsFactory.createTransitionDeclaration().also {
             it.kind = transitionKind
-            it.annotation = OxstsFactory.createAnnotationContainer()
             it.branches += OxstsFactory.createSequenceOperation().also {
                 it.steps += OxstsFactory.createInlineCall().also {
                     it.callExpression = OxstsFactory.createCallSuffixExpression().also {
@@ -117,7 +116,6 @@ class OxstsInliner {
         val property = redefinitionAwareReferenceResolver.resolve(rootFeatureInstance, "prop") as PropertyDeclaration
 
         return OxstsFactory.createPropertyDeclaration().also {
-            it.annotation = OxstsFactory.createAnnotationContainer()
             it.expression = OxstsFactory.createCallSuffixExpression().also {
                 it.primary = OxstsFactory.createNavigationSuffixExpression().also {
                     it.primary = OxstsFactory.createElementReference().also {

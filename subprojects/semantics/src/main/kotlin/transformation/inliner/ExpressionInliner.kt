@@ -17,7 +17,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.semantics.expression.MetaStaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.expression.evaluateTyped
+import hu.bme.mit.semantifyr.semantics.transformation.instantiation.InstanceManager
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationArtifactSaver
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.copy
@@ -29,6 +31,9 @@ import java.util.*
 class ExpressionInliner {
 
     @Inject
+    private lateinit var staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider
+
+    @Inject
     private lateinit var metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider
 
     @Inject
@@ -36,6 +41,9 @@ class ExpressionInliner {
 
     @Inject
     private lateinit var compilationArtifactSaver: CompilationArtifactSaver
+
+    @Inject
+    private lateinit var instanceManager: InstanceManager
 
     fun inlineExpressions(instance: Instance, transition: TransitionDeclaration) {
         for (branch in transition.branches) {
@@ -58,7 +66,7 @@ class ExpressionInliner {
             if (expression is CallSuffixExpression) {
                 val inlined = createInlinedExpression(instance, expression)
                 EcoreUtil2.replace(expression, inlined)
-                processorQueue += inlined.findCallExpressions(instance)
+                processorQueue.addAll(0, inlined.findCallExpressions(instance).toList())
 
                 compilationArtifactSaver.commitModelState()
             }
@@ -73,6 +81,8 @@ class ExpressionInliner {
     }
 
     private fun createInlinedExpression(instance: Instance, callSuffixExpression: CallSuffixExpression): Expression {
+        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
+
         val propertyReferenceExpression = callSuffixExpression.primary
 
         val containerInstanceReference = if (propertyReferenceExpression is NavigationSuffixExpression) {
@@ -85,6 +95,15 @@ class ExpressionInliner {
             OxstsFactory.createSelfReference()
         }
 
+        val containerInstance = evaluator.evaluateSingleInstanceOrNull(containerInstanceReference)
+
+        @Suppress("FoldInitializerAndIfToElvis")
+        if (containerInstance == null) {
+            error("Container instance of the property is empty!")
+        }
+
+        val actualContainerInstanceReference = instanceManager.createReferenceExpression(containerInstance)
+
         val metaEvaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(instance)
 
         val property = metaEvaluator.evaluateTyped(PropertyDeclaration::class.java, propertyReferenceExpression)
@@ -93,7 +112,7 @@ class ExpressionInliner {
         val expressionHolder = OxstsFactory.createArgument()
         expressionHolder.expression = property.expression.copy()
 
-        expressionRewriter.rewriteExpressionsToContext(expressionHolder.expression, containerInstanceReference)
+        expressionRewriter.rewriteExpressionsToContext(expressionHolder.expression, actualContainerInstanceReference)
         expressionRewriter.rewriteExpressionsToCall(expressionHolder.expression, property, callSuffixExpression)
 
         return expressionHolder.expression

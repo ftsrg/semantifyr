@@ -34,6 +34,14 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
             };
         }
 
+        if (left instanceof BooleanEvaluation(boolean lValue) && right instanceof BooleanEvaluation(boolean rValue)) {
+            return switch (expression.getOp()) {
+                case EQ -> new BooleanEvaluation(lValue == rValue);
+                case NOT_EQ -> new BooleanEvaluation(lValue != rValue);
+                default -> throw  new IllegalArgumentException("Boolean expression can only be == or !=!");
+            };
+        }
+
         throw new IllegalArgumentException("Left and right are not integer expressions!");
     }
 

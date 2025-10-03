@@ -31,7 +31,6 @@ class OxstsClassInstantiator {
 
     fun instantiateModel(inlinedOxsts: InlinedOxsts) {
         instantiateTree(inlinedOxsts)
-        resolveCrossReferences(inlinedOxsts)
     }
 
     private fun instantiateTree(inlinedOxsts: InlinedOxsts) {
@@ -40,13 +39,13 @@ class OxstsClassInstantiator {
 
         while (instanceQueue.any()) {
             val instance = instanceQueue.removeFirst()
-            instance.instantiateChildren()
+            instantiateChildren(instance)
             instanceQueue += instance.children
         }
     }
 
-    private fun Instance.instantiateChildren() {
-        val memberCollection = domainMemberCalculator.getMemberCollection(domain)
+    private fun instantiateChildren(instance: Instance) {
+        val memberCollection = domainMemberCalculator.getMemberCollection(instance.domain)
 
         val allContainments = memberCollection.declarationHolders.map {
             it.declaration
@@ -58,65 +57,8 @@ class OxstsClassInstantiator {
         }.distinct()
 
         for (containment in allContainments) {
-            instanceManager.createInstance(this, containment)
+            instanceManager.createAndPlaceInstance(instance, containment)
         }
     }
-
-    private fun resolveCrossReferences(inlinedOxsts: InlinedOxsts) {
-//        setReferenceBindings(instanceModel.rootInstance)
-
-//        val patternRunner = PatternRunner(resourceSet)
-//
-//        setDerivedFeatures(instanceModel.rootInstance, patternRunner)
-    }
-
-//    private fun setDerivedFeatures(rootInstance: Instance, patternRunner: PatternRunner) {
-//        for (instance in rootInstance.treeSequence()) {
-//            instance.resolveDerivedFeatures(patternRunner)
-//        }
-//    }
-//
-//    private fun setReferenceBindings(rootInstance: Instance) {
-//        for (instance in rootInstance.treeSequence()) {
-//            instance.resolveReferenceBindings()
-//        }
-//    }
-//
-//    private fun Instance.resolveDerivedFeatures(patternRunner: PatternRunner) {
-//        for (feature in type.allFeatures.filterIsInstance<Derived>()) {
-//            val instances = patternRunner.evaluateOnInstance(this, feature.pattern)
-//            instancePlacer.place(feature, instances)
-//        }
-//    }
-//
-//    private fun Instance.resolveReferenceBindings() {
-//        for (feature in type.allFeatures.filterIsInstance<Reference>()) {
-//            if (!feature.isDataType && feature.expression != null) {
-//                instancePlacer.place(feature, resolveBinding(feature))
-//            }
-//        }
-//    }
-//
-//    private fun Instance.resolveBinding(feature: Feature): Set<Instance> = when (feature) {
-//        is Containment -> instancePlacer[feature]
-//        is Reference -> {
-//            if (feature.expression == null) { // not bound reference -> take actual contents
-//                // FIXME: what if this reference is subsetted by a bound reference?
-//                //  In that case, we must resolve all of its subsetters before
-//                //  returning the actual instances!
-//                instancePlacer[feature]
-//            } else {
-//                val chainingExpression = feature.expression as ChainReferenceExpression
-//
-//                val context = contextualEvaluator.findFirstValidContext(chainingExpression)
-//                val holder = context.contextualEvaluator.evaluateInstance(chainingExpression.dropLast(1))
-//                val referencedFeature = chainingExpression.typedReferencedElement<Feature>()
-//
-//                holder.resolveBinding(referencedFeature) // recurse, until a free feature is found
-//            }
-//        }
-//
-//        else -> error("Unsupported Feature type: $feature")
-//    }
 
 }

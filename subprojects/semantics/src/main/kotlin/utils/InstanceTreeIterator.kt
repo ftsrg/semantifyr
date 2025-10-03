@@ -31,8 +31,6 @@ class InstanceTreeIterator(
 
 }
 
-fun Instance.treeSequence() = Sequence {
-    treeIterator()
-}
-
 fun Instance.treeIterator() = InstanceTreeIterator(this)
+
+fun Instance.treeSequence() = treeIterator().asSequence()

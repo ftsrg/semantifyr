@@ -71,9 +71,9 @@ class ChoiceElseRewriter {
         val assumptionExpression = calculateAssumption(operation)
         val negatedAssumptionExpression = OxstsFactory.createNegationOperator(assumptionExpression)
 
-        xstsExpressionOptimizer.optimize(negatedAssumptionExpression)
-
         val choiceElseAssumption = OxstsFactory.createAssumptionOperation(negatedAssumptionExpression)
+
+        xstsExpressionOptimizer.optimize(choiceElseAssumption)
 
         operationElse.steps.add(0, choiceElseAssumption)
 

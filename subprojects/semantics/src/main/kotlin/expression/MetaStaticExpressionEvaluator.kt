@@ -28,7 +28,14 @@ class MetaStaticExpressionEvaluator : MetaConstantExpressionEvaluator() {
 
     override fun compute(expression: NavigationSuffixExpression): NamedElement {
         val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
-        val context = evaluator.evaluateSingleInstance(expression.primary)
+        val context = evaluator.evaluateSingleInstanceOrNull(expression.primary)
+
+        if (context == null) {
+            // Found no instance, so we must assume this member will not be used
+            // If used, it will throw an exception in the non-meta evaluator anyway
+            // TODO: log this!
+            return expression.member
+        }
 
         return redefinitionAwareReferenceResolver.resolve(context, expression.member)
     }

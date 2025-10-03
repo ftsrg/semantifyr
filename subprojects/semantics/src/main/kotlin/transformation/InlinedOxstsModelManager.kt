@@ -39,7 +39,6 @@ class InlinedOxstsModelManager {
 
     private fun initializeInlinedOxstsModel(inlinedOxsts: InlinedOxsts) {
         inlinedOxsts.rootFeature = OxstsFactory.createFeatureDeclaration().also {
-            it.annotation = OxstsFactory.createAnnotationContainer()
             it.kind = FeatureKind.CONTAINMENT
             it.type = inlinedOxsts.classDeclaration
             it.name = "_${inlinedOxsts.classDeclaration.name}"

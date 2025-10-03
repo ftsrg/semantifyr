@@ -6,19 +6,22 @@
 
 package hu.bme.mit.semantifyr.semantics.transformation.inliner
 
+import com.google.inject.Inject
 import com.google.inject.Singleton
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.AbstractForOperation
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ImmutableTypeEvaluation
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParameterDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParametricDeclaration
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
+import hu.bme.mit.semantifyr.semantics.utils.isReferenceContextual
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.copy
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
@@ -26,6 +29,12 @@ import org.eclipse.xtext.EcoreUtil2
 
 @Singleton
 class ExpressionRewriter {
+
+    @Inject
+    private lateinit var domainMemberCalculator: DomainMemberCalculator
+
+    @Inject
+    private lateinit var expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider
 
     fun rewriteExpressionsToContext(rootElement: Element, newContext: Expression) {
         rewriteContextualExpressionsToContext(rootElement, newContext)
@@ -41,24 +50,11 @@ class ExpressionRewriter {
 
         for (parameterReference in parameterReferences) {
             val index = parametricDeclaration.parameters.indexOf(parameterReference.element)
-            val argument = callSuffixExpression.arguments[index].expression
+            val argument = callSuffixExpression.arguments[index].expression.copy()
 
             EcoreUtil2.replace(parameterReference, argument)
+            fixRedefinitions(argument)
         }
-    }
-
-    private fun isReferenceContextual(elementReference: ElementReference): Boolean {
-        val element = elementReference.element
-        val container = element.eContainer()
-
-        if (container is AbstractForOperation && container.loopVariable == element) {
-            return false
-        }
-
-        return element is FeatureDeclaration
-            || element is VariableDeclaration
-            || element is PropertyDeclaration
-            || element is TransitionDeclaration
     }
 
     private fun rewriteContextualExpressionsToContext(rootElement: Element, newContext: Expression) {
@@ -72,14 +68,50 @@ class ExpressionRewriter {
                 it.member = contextualReference.element
             }
             EcoreUtil2.replace(contextualReference, newReference)
+            fixRedefinitions(newReference)
         }
+    }
+
+    fun rewriteReferencesTo(referencedElement: NamedElement, rootElement: Element, newContext: Expression) {
+        val elementReferences = rootElement.eAllOfType<ElementReference>().filter {
+            it.element == referencedElement
+        }.toList()
+
+        for (elementReference in elementReferences) {
+            val context = newContext.copy()
+            EcoreUtil2.replace(elementReference, context)
+            fixRedefinitions(context)
+        }
+    }
+
+    private tailrec fun fixRedefinitions(expression: Expression) {
+        if (expression is NavigationSuffixExpression && expression.member is Declaration) {
+            val member = expression.member
+            if (member is Declaration) {
+                val primaryType = expressionTypeEvaluatorProvider.evaluate(expression.primary)
+                if (primaryType is ImmutableTypeEvaluation) {
+                    val memberCollection = domainMemberCalculator.getMemberCollection(primaryType.domainDeclaration)
+                    expression.member = memberCollection.resolveElement(member)
+                }
+            }
+        }
+
+        val parent = expression.eContainer()
+
+        if (parent !is Expression) {
+            return
+        }
+
+        return fixRedefinitions(parent)
     }
 
     private fun rewriteSelfExpressionsToContext(rootElement: Element, newContext: Expression) {
         val selfReferences = rootElement.eAllOfType<SelfReference>().toList()
 
         for (selfReference in selfReferences) {
-            EcoreUtil2.replace(selfReference, newContext.copy())
+            val context = newContext.copy()
+            EcoreUtil2.replace(selfReference, context)
+            fixRedefinitions(context)
         }
     }
 

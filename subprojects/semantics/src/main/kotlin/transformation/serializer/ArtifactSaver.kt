@@ -13,7 +13,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
 import java.io.File
-import java.nio.file.Files
 
 class ArtifactSaver {
 
@@ -47,7 +46,7 @@ class CompilationArtifactSaver {
     fun initArtifactManager(inlinedOxsts: InlinedOxsts): ArtifactSaver {
         artifactSaver = artifactSaverProvider.get()
         artifactSaver!!.inlinedOxsts = inlinedOxsts
-        artifactSaver!!.basePath = File("artifacts") //Files.createTempDirectory("semantifyr").toFile()
+        artifactSaver!!.basePath = File(inlinedOxsts.eResource().uri.toFileString() + ".artifacts.d")
         artifactSaver!!.basePath.deleteRecursively()
         return artifactSaver!!
     }

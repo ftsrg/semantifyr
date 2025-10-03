@@ -8,14 +8,18 @@ package hu.bme.mit.semantifyr.semantics.transformation.instantiation
 
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.OppositeHandler
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Association
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableMapping
+import hu.bme.mit.semantifyr.semantics.expression.RedefinitionAwareReferenceResolver
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
+import hu.bme.mit.semantifyr.semantics.utils.parentSequence
 
 class VariableManager(
     instance: Instance,
@@ -53,8 +57,8 @@ class AssociationManager(
         }
     }
 
-    fun instancesAt(featureDeclaration: FeatureDeclaration): Instance {
-        return associations[featureDeclaration]!!.instances.first()
+    fun instancesAt(featureDeclaration: FeatureDeclaration): Set<Instance> {
+        return associations[featureDeclaration]!!.instances.toSet()
     }
 
     fun place(featureDeclaration: FeatureDeclaration, instance: Instance) {
@@ -69,10 +73,16 @@ class InstanceManager {
     @Inject
     private lateinit var domainMemberCalculator: DomainMemberCalculator
 
+    @Inject
+    private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
+
+    @Inject
+    private lateinit var oppositeHandler: OppositeHandler
+
     private val variableManagers = mutableMapOf<Instance, VariableManager>()
     private val associationManagers = mutableMapOf<Instance, AssociationManager>()
 
-    fun createInstance(holder: Instance, featureDeclaration: FeatureDeclaration) {
+    fun createAndPlaceInstance(holder: Instance, featureDeclaration: FeatureDeclaration) {
         val instance = createInstance(featureDeclaration)
         holder.children += instance
         placeInstance(holder, featureDeclaration, instance)
@@ -108,15 +118,44 @@ class InstanceManager {
     }
 
     fun placeInstance(holder: Instance, featureDeclaration: FeatureDeclaration, held: Instance) {
-        associationManagers[holder]!!.place(featureDeclaration, held)
+        localPlaceInstance(holder, featureDeclaration, held)
+
+        val opposite = oppositeHandler.getOppositeFeature(featureDeclaration)
+        if (opposite != null) {
+            localPlaceInstance(held, opposite, holder)
+        }
+//        superSetHandler.getSuperSetFeatures(featureDeclaration).asSequence().forEach {
+//            placeInstance(holder, it, held)
+//        }
+    }
+
+    private fun localPlaceInstance(holder: Instance, featureDeclaration: FeatureDeclaration, held: Instance) {
+        val feature = redefinitionAwareReferenceResolver.resolve(holder, featureDeclaration) as FeatureDeclaration
+
+        associationManagers[holder]!!.place(feature, held)
     }
 
     fun resolveVariable(holder: Instance, variableDeclaration: VariableDeclaration): VariableDeclaration {
         return variableManagers[holder]!!.resolve(variableDeclaration)
     }
 
-    fun instancesAt(holder: Instance, featureDeclaration: FeatureDeclaration): Instance {
+    fun instancesAt(holder: Instance, featureDeclaration: FeatureDeclaration): Set<Instance> {
         return associationManagers[holder]!!.instancesAt(featureDeclaration)
+    }
+
+    fun createReferenceExpression(instance: Instance): Expression {
+        val containmentTree = instance.parentSequence().toList().asReversed().asSequence().drop(1).iterator()
+
+        var reference: Expression = OxstsFactory.createElementReference(containmentTree.next().domain)
+
+        while (containmentTree.hasNext()) {
+            reference = OxstsFactory.createNavigationSuffixExpression().also {
+                it.primary = reference
+                it.member = containmentTree.next().domain
+            }
+        }
+
+        return reference
     }
 
 }

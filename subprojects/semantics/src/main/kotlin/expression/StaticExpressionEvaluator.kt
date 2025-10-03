@@ -10,16 +10,24 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.BooleanEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluator
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralNothing
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.PostfixUnaryExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 import hu.bme.mit.semantifyr.semantics.transformation.instantiation.InstanceManager
+import hu.bme.mit.semantifyr.semantics.utils.FeatureSubSettersFinder
+import hu.bme.mit.semantifyr.semantics.utils.isReferenceContextual
+import hu.bme.mit.semantifyr.semantics.utils.parentSequence
 
 class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
 
@@ -37,6 +45,27 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
     @Inject
     private lateinit var instanceManager: InstanceManager
 
+    @Inject
+    private lateinit var featureSubSettersFinder: FeatureSubSettersFinder
+
+    @Inject
+    private lateinit var domainMemberCalculator: DomainMemberCalculator
+
+    override fun compute(expression: ComparisonOperator): ExpressionEvaluation {
+        val left = evaluate(expression.getLeft())
+        val right = evaluate(expression.getRight())
+
+        if (left is InstanceEvaluation && right is InstanceEvaluation) {
+            return when (expression.getOp()) {
+                ComparisonOp.EQ -> BooleanEvaluation(left.instances.containsAll(right.instances))
+                ComparisonOp.NOT_EQ -> BooleanEvaluation(!left.instances.containsAll(right.instances))
+                else -> error("Unsupported operator!")
+            }
+        }
+
+        return super.compute(expression)
+    }
+
     override fun compute(expression: ElementReference): ExpressionEvaluation {
         return evaluateElement(expression.element)
     }
@@ -45,9 +74,26 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
         return InstanceEvaluation(instance)
     }
 
+    override fun compute(expression: LiteralNothing?): ExpressionEvaluation {
+        return InstanceEvaluation(emptySet())
+    }
+
     override fun compute(expression: NavigationSuffixExpression): ExpressionEvaluation {
-        val instance = evaluateSingleInstance(expression.primary)
-        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
+        val instance = evaluateInstances(expression.primary)
+
+        if (instance.isEmpty()) {
+            if (expression.isOptional) {
+                return InstanceEvaluation(setOf())
+            }
+
+            error("The left side is evaluated to an empty evaluation!")
+        }
+
+        if (instance.size != 1) {
+            error("Left hand side contains more than a single instance!")
+        }
+
+        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance.single())
         return evaluator.evaluateElement(expression.member)
     }
 
@@ -66,18 +112,41 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
     private fun evaluateElement(element: NamedElement): ExpressionEvaluation {
         val resolvedElement = redefinitionAwareReferenceResolver.resolve(instance, element)
 
-        if (resolvedElement is FeatureDeclaration) {
-            return InstanceEvaluation(instanceManager.instancesAt(instance, resolvedElement))
+        if (resolvedElement !is FeatureDeclaration) {
+            error("This expression is not resolvable! (probably a meta-expression?)")
         }
 
-        error("This expression is not resolvable! (probably a meta-expression?)")
+        if (resolvedElement.expression != null) {
+            return evaluateFeatureExpression(resolvedElement)
+        }
+
+        return evaluateFeature(resolvedElement)
     }
 
-    fun evaluateInstances(expression: Expression): List<Instance> {
+    private fun evaluateFeatureExpression(featureDeclaration: FeatureDeclaration): ExpressionEvaluation {
+        val validContext = findValidContext(instance, featureDeclaration.expression)
+        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(validContext)
+
+        return evaluator.evaluate(featureDeclaration.expression)
+    }
+
+    private fun evaluateFeature(featureDeclaration: FeatureDeclaration): InstanceEvaluation {
+        val instances = mutableSetOf<Instance>()
+
+        instances += instanceManager.instancesAt(instance, featureDeclaration)
+
+        for (feature in featureSubSettersFinder.getSubSetters(instance.domain, featureDeclaration)) {
+            instances += evaluateFeature(feature).instances
+        }
+
+        return InstanceEvaluation(instances)
+    }
+
+    fun evaluateInstances(expression: Expression): Set<Instance> {
         return evaluateInstancesOrNull(expression) ?: error("This expression is not evaluable to instances!")
     }
 
-    fun evaluateInstancesOrNull(expression: Expression): List<Instance>? {
+    fun evaluateInstancesOrNull(expression: Expression): Set<Instance>? {
         val evaluation = evaluate(expression)
 
         if (evaluation is InstanceEvaluation) {
@@ -111,5 +180,31 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
         error("This expression is not evaluable to boolean!")
     }
 
-}
+    private fun findValidContext(instance: Instance, expression: Expression): Instance {
+        val innerMostExpression = expression.innerMostElementReference()
 
+        @Suppress("SimplifyBooleanWithConstants") // more readable this way
+        if (isReferenceContextual(innerMostExpression) == false) {
+            return instance
+        }
+
+        for (candidate in instance.parentSequence()) {
+            val members = domainMemberCalculator.getMemberCollection(candidate.domain)
+
+            if (members.declarations.contains(innerMostExpression.element)) {
+                return candidate
+            }
+        }
+
+        error("No valid context found in instance tree!")
+    }
+
+    private tailrec fun Expression.innerMostElementReference(): ElementReference {
+        return when (this) {
+            is ElementReference -> this
+            is PostfixUnaryExpression -> primary.innerMostElementReference()
+            else -> error("Unsupported expression!")
+        }
+    }
+
+}
