@@ -1,5 +1,5 @@
 <!--
-  SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+  SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
   
   SPDX-License-Identifier: EPL-2.0
 -->
@@ -26,7 +26,7 @@ Please, follow the instructions in [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## License
 
-Copyright (c) 2024 [Semantifyr Authors](CONTRIBUTORS.md)
+Copyright (c) 2023-2025 [Semantifyr Authors](CONTRIBUTORS.md)
 
 Semantifyr is available under the [Eclipse Public License - v 2.0](https://www.eclipse.org/legal/epl-2.0/).
 
