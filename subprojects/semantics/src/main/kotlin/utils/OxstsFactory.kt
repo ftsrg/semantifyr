@@ -16,9 +16,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableMapping
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.impl.OxstsFactoryImpl
@@ -73,9 +73,18 @@ object OxstsFactory : OxstsFactoryImpl() {
         }
     }
 
-    fun createLiteralInteger(value: Int): LiteralInteger {
-        return createLiteralInteger().also {
-            it.value = value
+    fun createLiteralInteger(value: Int): Expression {
+        if (value >= 0) {
+            return createLiteralInteger().also {
+                it.value = value
+            }
+        }
+
+        return createArithmeticUnaryOperator().also {
+            it.op = UnaryOp.MINUS
+            it.body = createLiteralInteger().also {
+                it.value = value
+            }
         }
     }
 
