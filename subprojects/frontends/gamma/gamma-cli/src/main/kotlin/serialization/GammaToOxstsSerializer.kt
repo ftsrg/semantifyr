@@ -70,6 +70,7 @@ object GammaToOxstsSerializer {
         appendLine("import semantifyr::gamma::triggers")
         appendLine("import semantifyr::gamma::actions")
         appendLine("import semantifyr::gamma::events")
+        appendLine("import semantifyr::gamma::verification")
         appendLine()
 
         for (component in gammaPackage.components) {
@@ -208,7 +209,7 @@ object GammaToOxstsSerializer {
     }
 
     private fun IndentationAwareStringWriter.serialize(guard: Guard) {
-        appendIndent("contains ${guard.name}: Guard subsets guards") {
+        appendIndent("redefine contains guard: Guard") {
             serialize(guard.expression, "expression")
         }
     }
@@ -220,13 +221,13 @@ object GammaToOxstsSerializer {
     }
 
     private fun IndentationAwareStringWriter.serialize(trigger: EventTrigger) {
-        appendIndent("contains ${trigger.name}: EventTrigger subsets trigger") {
+        appendIndent("redefine contains trigger: EventTrigger") {
             appendLine("redefine refers event: Event = ${trigger.event.name}")
         }
     }
 
     private fun IndentationAwareStringWriter.serialize(trigger: TimeoutTrigger) {
-        appendIndent("contains ${trigger.name}: TimeoutTrigger subsets trigger") {
+        appendIndent("redefine contains trigger: TimeoutTrigger") {
             appendLine("redefine refers timeout: Timeout = ${trigger.timeout.name}")
         }
     }
@@ -248,7 +249,7 @@ object GammaToOxstsSerializer {
     private fun IndentationAwareStringWriter.serialize(action: SetTimeoutAction, subsets: String) {
         appendIndent("contains ${action.name}: SetTimeoutAction subsets $subsets") {
             appendLine("redefine refers timeout: Timeout = ${action.timeout.name}")
-            appendIndent("contains ee${a++}: LiteralIntegerExpression subsets expression") {
+            appendIndent("redefine contains expression: LiteralIntegerExpression") {
                 appendLine("redefine refers value: int = ${action.value}")
             }
         }
@@ -289,84 +290,68 @@ object GammaToOxstsSerializer {
     }
 
     private fun IndentationAwareStringWriter.serialize(verificationCase: VerificationCase) {
-        appendIndent("/*target*/ class ${verificationCase.name}") {
-            appendLine("contains ${verificationCase.component.name}: ${verificationCase.component.component.name}")
+        appendIndent("class ${verificationCase.name} : GammaVerificationCase") {
+            appendLine("contains ${verificationCase.component.name}: ${verificationCase.component.component.name} redefines component")
 
-            appendIndent("redefine init") {
-                appendLine("inline ${verificationCase.component.name}.init()")
-            }
-
-            appendIndent("redefine tran") {
-                appendLine("inline ${verificationCase.component.name}.havocInputEvents()")
-                appendLine("inline ${verificationCase.component.name}.main()")
-                appendLine("inline ${verificationCase.component.name}.passTime()")
-            }
-
-            appendLine("contains props: Expression")
-
-            serialize(verificationCase.expression, "props")
-
-            appendIndent("prop") {
-                appendLine("return ! (${verificationCase.expression.name}.evaluate())")
-            }
+            serialize(verificationCase.expression, "propertyExpression")
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(expression: Expression, subsets: String) = when (expression) {
-        is ReferenceExpression -> serializeVariable(expression, subsets)
-        is GreaterThanOperator -> serializeOperator(expression, expression.left, expression.right, "GreaterThanOperatorExpression", subsets)
-        is GreaterThanOrEqualsOperator -> serializeOperator(expression, expression.left, expression.right, "GreaterThanOrEqualsOperatorExpression", subsets)
-        is LessThanOperator -> serializeOperator(expression, expression.left, expression.right, "LessThanOperatorExpression", subsets)
-        is LessThanOrEqualsOperator -> serializeOperator(expression, expression.left, expression.right, "LessThanOrEqualsOperatorExpression", subsets)
-        is LiteralExpression -> serialize(expression, subsets)
-        is MinusOperator -> serializeOperator(expression, expression.left, expression.right, "MinusOperatorExpression", subsets)
-        is NotOperator -> serialize(expression, subsets)
-        is OrOperator -> serializeOperator(expression, expression.left, expression.right, "OrOperatorExpression", subsets)
-        is AndOperator -> serializeOperator(expression, expression.left, expression.right, "AndOperatorExpression", subsets)
-        is PlusOperator -> serializeOperator(expression, expression.left, expression.right, "PlusOperatorExpression", subsets)
-        is EqualityOperator -> serializeOperator(expression, expression.left, expression.right, "EqualityOperatorExpression", subsets)
-        is InequalityOperator -> serializeOperator(expression, expression.left, expression.right, "InequalityOperatorExpression", subsets)
-        is ReachabilityExpression -> serialize(expression, subsets)
+    private fun IndentationAwareStringWriter.serialize(expression: Expression, redefines: String) = when (expression) {
+        is ReferenceExpression -> serializeVariable(expression, redefines)
+        is GreaterThanOperator -> serializeOperator(expression, expression.left, expression.right, "GreaterThanOperatorExpression", redefines)
+        is GreaterThanOrEqualsOperator -> serializeOperator(expression, expression.left, expression.right, "GreaterThanOrEqualsOperatorExpression", redefines)
+        is LessThanOperator -> serializeOperator(expression, expression.left, expression.right, "LessThanOperatorExpression", redefines)
+        is LessThanOrEqualsOperator -> serializeOperator(expression, expression.left, expression.right, "LessThanOrEqualsOperatorExpression", redefines)
+        is LiteralExpression -> serialize(expression, redefines)
+        is MinusOperator -> serializeOperator(expression, expression.left, expression.right, "MinusOperatorExpression", redefines)
+        is NotOperator -> serialize(expression, redefines)
+        is OrOperator -> serializeOperator(expression, expression.left, expression.right, "OrOperatorExpression", redefines)
+        is AndOperator -> serializeOperator(expression, expression.left, expression.right, "AndOperatorExpression", redefines)
+        is PlusOperator -> serializeOperator(expression, expression.left, expression.right, "PlusOperatorExpression", redefines)
+        is EqualityOperator -> serializeOperator(expression, expression.left, expression.right, "EqualityOperatorExpression", redefines)
+        is InequalityOperator -> serializeOperator(expression, expression.left, expression.right, "InequalityOperatorExpression", redefines)
+        is ReachabilityExpression -> serialize(expression, redefines)
         else -> error("Unknown type of expression: $expression")
     }
 
-    private fun IndentationAwareStringWriter.serializeVariable(expression: ReferenceExpression, subsets: String) {
-        appendIndent("contains ${expression.name}: VariableExpression subsets $subsets") {
+    private fun IndentationAwareStringWriter.serializeVariable(expression: ReferenceExpression, redefines: String) {
+        appendIndent("redefine contains $redefines: VariableExpression") {
             appendLine("redefine refers variable: Variable = ${expression.serialize()}")
         }
     }
 
-    private fun IndentationAwareStringWriter.serializeOperator(expression: Expression, left: Expression, right: Expression, type: String, subsets: String) {
-        appendIndent("contains ${expression.name}: $type subsets $subsets") {
+    private fun IndentationAwareStringWriter.serializeOperator(expression: Expression, left: Expression, right: Expression, type: String, redefines: String) {
+        appendIndent("redefine contains $redefines: $type") {
             serialize(left, "left")
             serialize(right, "right")
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(expression: NotOperator, subsets: String) {
-        appendIndent("contains ${expression.name}: NotExpression subsets $subsets") {
+    private fun IndentationAwareStringWriter.serialize(expression: NotOperator, redefines: String) {
+        appendIndent("redefine contains $redefines: NotExpression") {
             serialize(expression.operand, "operand")
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(expression: LiteralExpression, subsets: String) {
+    private fun IndentationAwareStringWriter.serialize(expression: LiteralExpression, redefines: String) {
         when (expression) {
-            is LiteralInteger -> appendIndent("contains ${expression.name}: LiteralIntegerExpression subsets $subsets") {
+            is LiteralInteger -> appendIndent("redefine contains $redefines: LiteralIntegerExpression") {
                 appendLine("redefine refers value: int = ${expression.value}")
             }
-            is LiteralBoolean -> appendIndent("contains ${expression.name}: LiteralBooleanExpression subsets $subsets") {
+            is LiteralBoolean -> appendIndent("redefine contains $redefines: LiteralBooleanExpression") {
                 appendLine("redefine refers value: bool = ${expression.isValue}")
             }
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(expression: ReachabilityExpression, subsets: String) = when (expression) {
-        is StateReachabilityExpression -> serialize(expression, subsets)
+    private fun IndentationAwareStringWriter.serialize(expression: ReachabilityExpression, redefines: String) = when (expression) {
+        is StateReachabilityExpression -> serialize(expression, redefines)
         else -> error("Unknown reachability expression: $expression")
     }
 
-    private fun IndentationAwareStringWriter.serialize(expression: StateReachabilityExpression, subsets: String) {
-        appendIndent("contains ${expression.name}: StateReachabilityExpression subsets $subsets") {
+    private fun IndentationAwareStringWriter.serialize(expression: StateReachabilityExpression, redefines: String) {
+        appendIndent("redefine contains $redefines: StateReachabilityExpression") {
             appendLine("redefine refers state: State = ${expression.expression.serialize()}")
         }
     }

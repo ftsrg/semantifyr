@@ -1,0 +1,20 @@
+package semantifyr::gamma::verification
+
+import semantifyr::gamma::components
+import semantifyr::gamma::expressions
+
+class GammaVerificationCase {
+    features component: Component
+    redefine init {
+        inline component.init()
+    }
+    redefine tran {
+        inline component.havocInputEvents()
+        inline component.main()
+        inline component.passTime()
+    }
+    features propertyExpression: Expression
+    prop {
+        return ! (propertyExpression.evaluate())
+    }
+}

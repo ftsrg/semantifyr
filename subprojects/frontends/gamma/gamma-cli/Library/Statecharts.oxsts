@@ -27,7 +27,6 @@ class Statechart : Component {
         inline resetOutputEvents()
 
         choice {
-            var localVar := 10
             inline for (region in regions) {
                 inline region.fireTransitions()
             }
@@ -54,13 +53,11 @@ class Region {
             inline transition.main()
         }
     }
-
     tran deactivateRecursive() {
         inline for (state in states) {
             inline state.deactivateRecursive()
         }
     }
-
     tran fireTransitions() {
         /*
         // bottom-up
@@ -107,7 +104,6 @@ class State {
     prop isActive() {
         return parentRegion?.activeState == self
     }
-
     tran deactivateRecursive() {
         inline for (region in regions) {
             inline region.deactivateRecursive()
@@ -121,7 +117,6 @@ class State {
             }
         }
     }
-
     tran exitRecursive(commonRegion : Region) {
         inline for (exitAction in exitActions) {
             inline exitAction.main()
@@ -135,7 +130,6 @@ class State {
             }
         }
     }
-
     tran exit(commonRegion : Region) {
         inline exitRecursive(commonRegion)
 
@@ -143,7 +137,6 @@ class State {
             inline region.deactivateRecursive()
         }
     }
-
     tran enterRecursive(commonRegion : Region) {
         inline if (commonRegion != parentRegion) {
             inline if (parentState != nothing) {
@@ -157,7 +150,6 @@ class State {
             inline action.main()
         }
     }
-
     tran enter(commonRegion : Region) {
         inline enterRecursive(commonRegion)
 
@@ -165,7 +157,6 @@ class State {
             inline region.activateRecursive()
         }
     }
-
     tran fireTransitions() {
         inline if (regions == nothing) {
             assume (false)
@@ -199,21 +190,19 @@ class Transition : AbstractTransition {
     features trigger: Trigger[1]
     
     contains actions: Action[0..*]
-    contains guards: Guard[0..*]
+    features guard: Guard[0..1]
 
     redefine tran {
-        inline trigger.isTriggered()
+        inline trigger.assumeIsTriggered()
         assume (from.isActive())
-        inline for (guard in guards) {
-            inline guard.main()
+        inline if (guard != nothing) {
+            inline guard.assumeIsTrue()
         }
 
         inline from.exit(commonRegion)
-
         inline for (action in actions) {
             inline action.main()
         }
-
         inline to.enter(commonRegion)
     }
 }
