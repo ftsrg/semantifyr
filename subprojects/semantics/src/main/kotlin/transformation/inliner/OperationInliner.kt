@@ -23,13 +23,15 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
+import hu.bme.mit.semantifyr.semantics.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.semantics.expression.MetaStaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.semantics.expression.RedefinitionAwareReferenceResolver
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.expression.evaluateTyped
-import hu.bme.mit.semantifyr.semantics.transformation.instantiation.InstanceManager
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationArtifactSaver
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.copy
+import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
 import java.util.*
 
@@ -49,7 +51,10 @@ class OperationInliner {
     private lateinit var compilationArtifactSaver: CompilationArtifactSaver
 
     @Inject
-    private lateinit var instanceManager: InstanceManager
+    private lateinit var instanceReferenceProvider: InstanceReferenceProvider
+
+    @Inject
+    private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
 
     fun inlineOperations(instance: Instance, transition: TransitionDeclaration) {
         val processorQueue = LinkedList<Operation>(transition.branches)
@@ -72,7 +77,7 @@ class OperationInliner {
                     val inlined = createInlinedOperation(instance, operation)
                     EcoreUtil2.replace(operation, inlined)
 
-                    processorQueue.addAll(0, simplifyNestedInlinedSequence(inlined))
+                    processorQueue.addAll(0, simplifyInlinedOperation(inlined))
 
                     compilationArtifactSaver.commitModelState()
                 }
@@ -80,16 +85,46 @@ class OperationInliner {
         }
     }
 
-    private fun simplifyNestedInlinedSequence(inlinedOperation: Operation): List<Operation> {
+    private fun simplifyNestedSequence(operation: Operation): Boolean {
+        // TODO: this is duplicated from OperationFlattenerOptimizer -> should probably merge?
+        val sequenceOperation = operation.eAllOfType<SequenceOperation>().firstOrNull {
+            it.steps.filterIsInstance<SequenceOperation>().any()
+        }
+
+        if (sequenceOperation == null) {
+            return false
+        }
+
+        val nestedSequenceOperation = sequenceOperation.steps.filterIsInstance<SequenceOperation>().first()
+
+        val index = sequenceOperation.steps.indexOf(nestedSequenceOperation)
+        sequenceOperation.steps.addAll(index, nestedSequenceOperation.steps)
+
+        EcoreUtil2.remove(nestedSequenceOperation)
+
+        return true
+    }
+
+    private fun simplifyNestedOperation(operation: Operation) {
+        var anyProgress = true
+
+        while (anyProgress) {
+            anyProgress = simplifyNestedSequence(operation)
+        }
+    }
+
+    private fun simplifyInlinedOperation(inlinedOperation: Operation): List<Operation> {
+        simplifyNestedOperation(inlinedOperation)
+
         val parent = inlinedOperation.eContainer()
-        if (inlinedOperation !is SequenceOperation || parent !is SequenceOperation) {
+
+        if (parent !is SequenceOperation || inlinedOperation !is SequenceOperation) {
             return listOf(inlinedOperation)
         }
 
-        val internalInlined = ArrayList(inlinedOperation.steps)
-
         val index = parent.steps.indexOf(inlinedOperation)
-        parent.steps.addAll(index, inlinedOperation.steps)
+        val internalInlined = ArrayList(inlinedOperation.steps)
+        parent.steps.addAll(index, internalInlined)
         EcoreUtil2.remove(inlinedOperation)
 
         return internalInlined
@@ -106,13 +141,15 @@ class OperationInliner {
     }
 
     private fun createInlinedOperation(instance: Instance, operation: InlineCall): Operation {
-        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
-
         val callExpression = operation.callExpression as CallSuffixExpression
+
+        val metaEvaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(instance)
+        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
         val transitionReferenceExpression = callExpression.primary
 
         val containerInstanceReference = if (transitionReferenceExpression is NavigationSuffixExpression) {
-            check(transitionReferenceExpression.primary !is VariableDeclaration) {
+            val transitionHolder = metaEvaluator.evaluate(transitionReferenceExpression.primary)
+            check(transitionHolder !is VariableDeclaration) {
                 "Variable dispatching is not supported yet!"
             }
 
@@ -121,27 +158,22 @@ class OperationInliner {
             OxstsFactory.createSelfReference()
         }
 
-        val containerInstance = evaluator.evaluateSingleInstanceOrNull(containerInstanceReference)
-
-        @Suppress("FoldInitializerAndIfToElvis")
-        if (containerInstance == null) {
-            // TODO: should we throw an exception here?
-            //  If the feature has no instances, then this is a violated reference
-            return OxstsFactory.createSequenceOperation()
-        }
-
-        val actualContainerInstanceReference = instanceManager.createReferenceExpression(containerInstance)
-
-        val metaEvaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(instance)
-
         val transitionDeclaration = metaEvaluator.evaluateTyped(TransitionDeclaration::class.java, transitionReferenceExpression)
+        val containerInstance = evaluator.evaluateSingleInstance(containerInstanceReference)
+        return inlineTransitionCall(containerInstance, transitionDeclaration, callExpression)
+    }
+
+    private fun inlineTransitionCall(containerInstance: Instance, transitionDeclaration: TransitionDeclaration, callExpression: CallSuffixExpression): Operation {
+        val containerInstanceReference = instanceReferenceProvider.getReference(containerInstance)
+
+        val actualTransition = redefinitionAwareReferenceResolver.resolve(containerInstance, transitionDeclaration) as TransitionDeclaration
 
         val inlined = OxstsFactory.createChoiceOperation().also {
-            for (currentOperation in transitionDeclaration.branches) {
+            for (currentOperation in actualTransition.branches) {
                 val inlinedOperation = currentOperation.copy()
 
-                expressionRewriter.rewriteExpressionsToContext(inlinedOperation, actualContainerInstanceReference)
-                expressionRewriter.rewriteExpressionsToCall(inlinedOperation, transitionDeclaration, callExpression)
+                expressionRewriter.rewriteExpressionsToContext(inlinedOperation, containerInstanceReference)
+                expressionRewriter.rewriteExpressionsToCall(inlinedOperation, actualTransition, callExpression)
 
                 it.branches += inlinedOperation
             }
@@ -176,7 +208,7 @@ class OperationInliner {
         val inlinedFor = OxstsFactory.createSequenceOperation()
 
         for (featureInstance in featureInstances) {
-            val instanceReference = instanceManager.createReferenceExpression(featureInstance)
+            val instanceReference = instanceReferenceProvider.getReference(featureInstance)
             val inlinedBody = operation.body.copy()
             expressionRewriter.rewriteReferencesTo(operation.loopVariable, inlinedBody, instanceReference)
             inlinedFor.steps += inlinedBody
@@ -197,7 +229,7 @@ class OperationInliner {
         val inlinedChoice = OxstsFactory.createChoiceOperation()
 
         for (featureInstance in featureInstances) {
-            val instanceReference = instanceManager.createReferenceExpression(featureInstance)
+            val instanceReference = instanceReferenceProvider.getReference(featureInstance)
             val inlinedBody = operation.body.copy()
             expressionRewriter.rewriteReferencesTo(operation.loopVariable, inlinedBody, instanceReference)
             inlinedChoice.branches += inlinedBody
