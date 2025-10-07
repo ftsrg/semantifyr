@@ -23,6 +23,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralNothing
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PostfixUnaryExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 import hu.bme.mit.semantifyr.semantics.transformation.instantiation.InstanceManager
 import hu.bme.mit.semantifyr.semantics.utils.FeatureSubSettersFinder
@@ -181,6 +182,11 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
     }
 
     private fun findValidContext(instance: Instance, expression: Expression): Instance {
+        // TODO: What if this is an array, and there are internal expressions? This should be done better...
+        if (expression !is ReferenceExpression) {
+            return instance
+        }
+
         val innerMostExpression = expression.innerMostElementReference()
 
         @Suppress("SimplifyBooleanWithConstants") // more readable this way
