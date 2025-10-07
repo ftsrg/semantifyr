@@ -10,13 +10,20 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.BooleanEvaluation
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.IntegerEvaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralNothing
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
+import hu.bme.mit.semantifyr.semantics.expression.InstanceEvaluation
 import hu.bme.mit.semantifyr.semantics.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.transformation.constraints.ConstraintChecker
@@ -63,6 +70,8 @@ class OxstsInflator {
     private lateinit var instanceReferenceProvider: InstanceReferenceProvider
 
     private val variableInstanceDomain = mutableMapOf<VariableDeclaration, Set<Instance>>()
+    private var instanceId = 0
+    private val instanceIds = mutableMapOf<Instance, Int>()
 
     fun inflateInstanceModel(inlinedOxsts: InlinedOxsts) {
         oxstsClassInstantiator.instantiateModel(inlinedOxsts)
@@ -75,11 +84,13 @@ class OxstsInflator {
 
         pullDownVariables(inlinedOxsts)
         rewriteVariableReferences(inlinedOxsts)
-        transformFeatureTypedVariables(inlinedOxsts)
+        rewriteFeatureTypedVariables(inlinedOxsts)
 
         compilationArtifactSaver.commitModelState()
 
-        // TODO: transform pointers to integer ids
+        rewriteStaticExpressions(inlinedOxsts)
+
+        compilationArtifactSaver.commitModelState()
     }
 
     private fun pullDownVariables(inlinedOxsts: InlinedOxsts) {
@@ -124,7 +135,7 @@ class OxstsInflator {
         }
     }
 
-    private fun transformFeatureTypedVariables(inlinedOxsts: InlinedOxsts) {
+    private fun rewriteFeatureTypedVariables(inlinedOxsts: InlinedOxsts) {
         val featureTypedVariables = variableInstanceDomain.keys
 
         for (variable in featureTypedVariables) {
@@ -172,6 +183,82 @@ class OxstsInflator {
         }
 
         EcoreUtil2.replace(container, havocChoice)
+    }
+
+    private fun rewriteStaticExpressions(inlinedOxsts: InlinedOxsts) {
+        rewriteVariableDeclarations(inlinedOxsts)
+        rewriteNothingExpressions(inlinedOxsts)
+        rewriteFeatureExpressions(inlinedOxsts)
+
+        inlinedOxsts.rootFeature = null
+    }
+
+    private fun rewriteVariableDeclarations(inlinedOxsts: InlinedOxsts) {
+        val builtinInt = builtinSymbolResolver.intDatatype(inlinedOxsts)
+        val featureTypedVariables = variableInstanceDomain.keys
+
+        for (variable in featureTypedVariables) {
+            variable.type = builtinInt
+            variable.multiplicity = null
+        }
+    }
+
+    private fun rewriteNothingExpressions(inlinedOxsts: InlinedOxsts) {
+        while (true) {
+            val nothingExpression = inlinedOxsts.eAllOfType<LiteralNothing>().firstOrNull()
+
+            if (nothingExpression == null) {
+                return
+            }
+
+            EcoreUtil2.replace(nothingExpression, OxstsFactory.createArithmeticUnaryOperator().also {
+                it.op = UnaryOp.MINUS
+                it.body = OxstsFactory.createLiteralInteger(1)
+            })
+        }
+    }
+
+    private fun rewriteFeatureExpressions(inlinedOxsts: InlinedOxsts) {
+        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(inlinedOxsts.rootInstance)
+
+        while (true) {
+            val featureExpression = inlinedOxsts.eAllOfType<NavigationSuffixExpression>().filter {
+                it.member is FeatureDeclaration
+            }.firstOrNull()
+
+            if (featureExpression == null) {
+                return
+            }
+
+            val evaluation = evaluator.evaluate(featureExpression)
+            val expression = transformEvaluation(evaluation)
+
+            EcoreUtil2.replace(featureExpression, expression)
+        }
+    }
+
+    private fun transformEvaluation(evaluation: ExpressionEvaluation): Expression {
+        return when (evaluation) {
+            is BooleanEvaluation -> OxstsFactory.createLiteralBoolean(evaluation.value)
+            is IntegerEvaluation -> {
+                if (evaluation.value < 0) {
+                    OxstsFactory.createArithmeticUnaryOperator().also {
+                        it.op = UnaryOp.MINUS
+                        it.body = OxstsFactory.createLiteralInteger(-evaluation.value)
+                    }
+                } else {
+                    OxstsFactory.createLiteralInteger(evaluation.value)
+                }
+            }
+            is InstanceEvaluation -> {
+                val instance = evaluation.instances.single()
+                val id = instanceIds.getOrPut(instance) {
+                    instanceId++
+                }
+                OxstsFactory.createLiteralInteger(id)
+            }
+            else -> error("Unsupported evaluation!")
+        }
     }
 
 }
