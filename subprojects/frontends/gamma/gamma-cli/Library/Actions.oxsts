@@ -41,7 +41,7 @@ class AssignmentAction : Action {
 class Guard {
     features expression: Expression[1]
 
-    redefine tran {
+    tran assumeIsTrue() {
         assume (expression.evaluate())
     }
 }
