@@ -23,10 +23,18 @@ class RedefinitionAwareReferenceResolver {
     private lateinit var domainMemberCalculator: DomainMemberCalculator
 
     fun resolve(instance: Instance, name: String): NamedElement {
-        return resolve(instance, QualifiedName.create(name))
+        return resolveOrNull(instance, name) ?: throw IllegalArgumentException("Could not find any element named $name!")
+    }
+
+    fun resolveOrNull(instance: Instance, name: String): NamedElement? {
+        return resolveOrNull(instance, QualifiedName.create(name))
     }
 
     fun resolve(instance: Instance, name: QualifiedName): NamedElement {
+        return resolveOrNull(instance, name) ?: throw IllegalArgumentException("Could not find any element named $name!")
+    }
+
+    fun resolveOrNull(instance: Instance, name: QualifiedName): NamedElement? {
         val domain = domainMemberCalculator.getMembers(instance.domain)
         val elements = domain.getExportedObjects(OxstsPackage.eINSTANCE.namedElement, name, false)
 
@@ -34,7 +42,7 @@ class RedefinitionAwareReferenceResolver {
             return element.eObjectOrProxy as NamedElement
         }
 
-        throw IllegalArgumentException("Could not find any element named $name!")
+        return null
     }
 
     fun resolve(instance: Instance, reference: NamedElement): NamedElement {

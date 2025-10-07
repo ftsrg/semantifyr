@@ -113,7 +113,13 @@ class OxstsInliner {
     private fun createPropertyDeclaration(inlinedOxsts: InlinedOxsts): PropertyDeclaration {
         val evaluator = staticExpressionEvaluatorProvider.getEvaluator(inlinedOxsts.rootInstance)
         val rootFeatureInstance = evaluator.evaluateSingleInstance(OxstsFactory.createElementReference(inlinedOxsts.rootFeature))
-        val property = redefinitionAwareReferenceResolver.resolve(rootFeatureInstance, "prop") as PropertyDeclaration
+        val property = redefinitionAwareReferenceResolver.resolveOrNull(rootFeatureInstance, "prop") as? PropertyDeclaration
+
+        if (property == null) {
+            return OxstsFactory.createPropertyDeclaration().also {
+                it.expression = OxstsFactory.createLiteralBoolean(true)
+            }
+        }
 
         return OxstsFactory.createPropertyDeclaration().also {
             it.expression = OxstsFactory.createCallSuffixExpression().also {
