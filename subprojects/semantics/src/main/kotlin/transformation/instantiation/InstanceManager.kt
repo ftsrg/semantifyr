@@ -12,14 +12,12 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.OppositeHandler
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Association
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableMapping
 import hu.bme.mit.semantifyr.semantics.expression.RedefinitionAwareReferenceResolver
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
-import hu.bme.mit.semantifyr.semantics.utils.parentSequence
 
 class VariableManager(
     instance: Instance,
@@ -38,6 +36,12 @@ class VariableManager(
 
     fun resolve(variableDeclaration: VariableDeclaration): VariableDeclaration {
         return variableMappings[variableDeclaration]!!.actual
+    }
+
+    fun actualVariables(): Collection<VariableDeclaration> {
+        return variableMappings.values.map {
+            it.actual
+        }
     }
 
 }
@@ -143,19 +147,8 @@ class InstanceManager {
         return associationManagers[holder]!!.instancesAt(featureDeclaration)
     }
 
-    fun createReferenceExpression(instance: Instance): Expression {
-        val containmentTree = instance.parentSequence().toList().asReversed().asSequence().drop(1).iterator()
-
-        var reference: Expression = OxstsFactory.createElementReference(containmentTree.next().domain)
-
-        while (containmentTree.hasNext()) {
-            reference = OxstsFactory.createNavigationSuffixExpression().also {
-                it.primary = reference
-                it.member = containmentTree.next().domain
-            }
-        }
-
-        return reference
+    fun actualVariables(holder: Instance): Collection<VariableDeclaration> {
+        return variableManagers[holder]!!.actualVariables()
     }
 
 }
