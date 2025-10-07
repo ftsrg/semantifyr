@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.lang.ide.syntaxcoloring;
+package hu.bme.mit.semantifyr.oxsts.lang.ide.editor.syntaxcoloring;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
@@ -18,6 +19,7 @@ import org.eclipse.xtext.nodemodel.util.NodeModelUtils;
 import org.eclipse.xtext.service.OperationCanceledManager;
 import org.eclipse.xtext.util.CancelIndicator;
 
+@Singleton
 public class OxstsSemanticHighlightingCalculator extends DefaultSemanticHighlightingCalculator {
 
 	@Inject

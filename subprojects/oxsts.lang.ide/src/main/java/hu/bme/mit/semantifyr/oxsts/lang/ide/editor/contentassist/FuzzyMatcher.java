@@ -1,10 +1,10 @@
 /*
- * SPDX-FileCopyrightText: 2021-2023 The Refinery Authors <https://refinery.tools/>
+ * SPDX-FileCopyrightText: 2021-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.lang.ide.contentassist;
+package hu.bme.mit.semantifyr.oxsts.lang.ide.editor.contentassist;
 
 import com.google.inject.Singleton;
 import org.eclipse.xtext.ide.editor.contentassist.IPrefixMatcher;

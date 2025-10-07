@@ -6,10 +6,10 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide;
 
-import hu.bme.mit.semantifyr.oxsts.lang.ide.codelens.OxstsCodeLensProvider;
-import hu.bme.mit.semantifyr.oxsts.lang.ide.commands.OxstsCommandService;
-import hu.bme.mit.semantifyr.oxsts.lang.ide.contentassist.FuzzyMatcher;
-import hu.bme.mit.semantifyr.oxsts.lang.ide.syntaxcoloring.OxstsSemanticHighlightingCalculator;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.contentassist.FuzzyMatcher;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.syntaxcoloring.OxstsSemanticHighlightingCalculator;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.codelens.OxstsCodeLensProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands.OxstsCommandService;
 import org.eclipse.xtext.ide.editor.contentassist.IPrefixMatcher;
 import org.eclipse.xtext.ide.editor.syntaxcoloring.ISemanticHighlightingCalculator;
 import org.eclipse.xtext.ide.server.codelens.ICodeLensResolver;

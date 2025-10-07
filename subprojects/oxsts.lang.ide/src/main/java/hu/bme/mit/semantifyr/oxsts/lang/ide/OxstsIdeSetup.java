@@ -8,12 +8,12 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import hu.bme.mit.semantifyr.oxsts.lang.OxstsRuntimeModule;
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.OxstsServerModule;
+import hu.bme.mit.semantifyr.semantics.SemantifyrRuntimeModule;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.xtext.ide.server.LanguageServerImpl;
-import org.eclipse.xtext.ide.server.ServerModule;
 import org.eclipse.xtext.util.Modules2;
 
 import java.io.IOException;
@@ -27,7 +27,7 @@ public class OxstsIdeSetup extends OxstsStandaloneSetup {
 
 	@Override
 	public Injector createInjector() {
-		return Guice.createInjector(Modules2.mixin(new ServerModule(), new OxstsRuntimeModule(), new OxstsIdeModule()));
+		return Guice.createInjector(Modules2.mixin(new OxstsServerModule(), new SemantifyrRuntimeModule(), new OxstsIdeModule()));
 	}
 
     public static void main(String[] args) throws InterruptedException, ExecutionException, IOException {
