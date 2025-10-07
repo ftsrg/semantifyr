@@ -7,16 +7,15 @@
 package hu.bme.mit.semantifyr.semantics.transformation.xsts
 
 import com.google.inject.Inject
-import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.XSTS
 import hu.bme.mit.semantifyr.semantics.optimization.InlinedOxstsOperationOptimizer
-import hu.bme.mit.semantifyr.semantics.optimization.XstsExpressionOptimizer
+import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.copy
 
-@Singleton
+@CompilationScoped
 class XstsTransformer {
 
     @Inject
@@ -25,19 +24,18 @@ class XstsTransformer {
     @Inject
     private lateinit var inlinedOxstsOperationOptimizer: InlinedOxstsOperationOptimizer
 
-    @Inject
-    private lateinit var xstsExpressionOptimizer: XstsExpressionOptimizer
-
     fun transform(inlinedOxsts: InlinedOxsts, rewriteChoice: Boolean): XSTS {
         if (rewriteChoice) {
             choiceElseRewriter.rewriteChoiceElse(inlinedOxsts.initTransition)
             choiceElseRewriter.rewriteChoiceElse(inlinedOxsts.mainTransition)
         }
 
-        inlinedOxstsOperationOptimizer.optimize(inlinedOxsts.initTransition)
-        inlinedOxstsOperationOptimizer.optimize(inlinedOxsts.mainTransition)
-        xstsExpressionOptimizer.optimize(inlinedOxsts.property)
+        inlinedOxstsOperationOptimizer.optimize(inlinedOxsts)
 
+        return createXsts(inlinedOxsts)
+    }
+
+    private fun createXsts(inlinedOxsts: InlinedOxsts): XSTS {
         val copy = inlinedOxsts.copy()
         val xsts = OxstsFactory.createXSTS()
 

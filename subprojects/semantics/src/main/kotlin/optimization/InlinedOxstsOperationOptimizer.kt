@@ -7,10 +7,10 @@
 package hu.bme.mit.semantifyr.semantics.optimization
 
 import com.google.inject.Inject
-import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
+import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 
-@Singleton
+@CompilationScoped
 class InlinedOxstsOperationOptimizer : AbstractLoopedOptimizer<Element>() {
 
     @Inject

@@ -7,11 +7,8 @@
 package hu.bme.mit.semantifyr.semantics.optimization
 
 import com.google.inject.Inject
-import com.google.inject.Singleton
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.BooleanEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.IntegerEvaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
@@ -19,23 +16,26 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OperatorExpression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOperator
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationArtifactSaver
-import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
+import hu.bme.mit.semantifyr.semantics.expression.ConstantEvaluationTransformer
+import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import hu.bme.mit.semantifyr.semantics.utils.isConstantLiteralFalse
 import hu.bme.mit.semantifyr.semantics.utils.isConstantLiteralTrue
 import org.eclipse.xtext.EcoreUtil2
 
-@Singleton
+@CompilationScoped
 class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
 
     @Inject
     private lateinit var constantExpressionEvaluatorProvider: ConstantExpressionEvaluatorProvider
 
     @Inject
-    private lateinit var compilationArtifactSaver: CompilationArtifactSaver
+    private lateinit var compilationStateManager: CompilationStateManager
+
+    @Inject
+    private lateinit var constantEvaluationTransformer: ConstantEvaluationTransformer
 
     override fun doOptimizationStep(element: Element): Boolean {
         return rewriteConstantTrueOr(element)
@@ -62,24 +62,11 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
 
         val (operator, evaluation) = operatorResultPair
 
-        val constant = when (evaluation) {
-            is BooleanEvaluation -> OxstsFactory.createLiteralBoolean(evaluation.value)
-            is IntegerEvaluation -> {
-                if (evaluation.value < 0) {
-                    OxstsFactory.createArithmeticUnaryOperator().also {
-                        it.op = UnaryOp.MINUS
-                        it.body = OxstsFactory.createLiteralInteger(-evaluation.value)
-                    }
-                } else {
-                    OxstsFactory.createLiteralInteger(evaluation.value)
-                }
-            }
-            else -> error("Incompatible result of constant operator: $operatorResultPair")
-        }
+        val constant = constantEvaluationTransformer.transformEvaluation(evaluation!!)
 
         EcoreUtil2.replace(operator, constant)
 
-        compilationArtifactSaver.commitModelState()
+        compilationStateManager.commitModelState()
 
         return true
     }
@@ -101,7 +88,7 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
             EcoreUtil2.replace(constantTrueOr, constantTrueOr.right)
         }
 
-        compilationArtifactSaver.commitModelState()
+        compilationStateManager.commitModelState()
 
         return true
     }
@@ -123,7 +110,7 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
             EcoreUtil2.replace(constantFalseAnd, constantFalseAnd.right)
         }
 
-        compilationArtifactSaver.commitModelState()
+        compilationStateManager.commitModelState()
 
         return true
     }
@@ -144,7 +131,7 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
             EcoreUtil2.replace(redundantOr, redundantOr.left)
         }
 
-        compilationArtifactSaver.commitModelState()
+        compilationStateManager.commitModelState()
 
         return true
     }
@@ -165,7 +152,7 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
             EcoreUtil2.replace(redundantAnd, redundantAnd.left)
         }
 
-        compilationArtifactSaver.commitModelState()
+        compilationStateManager.commitModelState()
 
         return true
     }
@@ -183,7 +170,7 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
 
         EcoreUtil2.replace(redundantNegation, internalNegation.body)
 
-        compilationArtifactSaver.commitModelState()
+        compilationStateManager.commitModelState()
 
         return true
     }

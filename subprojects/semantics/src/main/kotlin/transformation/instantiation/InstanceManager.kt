@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.semantics.transformation.instantiation
 
 import com.google.inject.Inject
-import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.OppositeHandler
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Association
@@ -17,6 +16,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableMapping
 import hu.bme.mit.semantifyr.semantics.expression.RedefinitionAwareReferenceResolver
+import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 
 class VariableManager(
@@ -71,7 +71,7 @@ class AssociationManager(
 
 }
 
-@Singleton
+@CompilationScoped
 class InstanceManager {
 
     @Inject

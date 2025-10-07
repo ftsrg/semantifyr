@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.semantics.transformation.inliner
 
 import com.google.inject.Inject
-import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -19,21 +18,21 @@ import hu.bme.mit.semantifyr.semantics.expression.RedefinitionAwareReferenceReso
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.expression.evaluateTyped
 import hu.bme.mit.semantifyr.semantics.optimization.InlinedOxstsOperationOptimizer
-import hu.bme.mit.semantifyr.semantics.optimization.XstsExpressionOptimizer
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationArtifactSaver
+import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 
-@Singleton
+@CompilationScoped
 class OxstsInliner {
 
     @Inject
-    lateinit var builtinSymbolResolver: BuiltinSymbolResolver
+    private lateinit var builtinSymbolResolver: BuiltinSymbolResolver
 
     @Inject
-    lateinit var metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider
+    private lateinit var metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider
 
     @Inject
-    lateinit var staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider
+    private lateinit var staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider
 
     @Inject
     private lateinit var operationInliner: OperationInliner
@@ -45,18 +44,15 @@ class OxstsInliner {
     private lateinit var inlinedOxstsOperationOptimizer: InlinedOxstsOperationOptimizer
 
     @Inject
-    private lateinit var xstsExpressionOptimizer: XstsExpressionOptimizer
-
-    @Inject
     private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
 
     @Inject
-    private lateinit var compilationArtifactSaver: CompilationArtifactSaver
+    private lateinit var compilationStateManager: CompilationStateManager
 
     fun inlineOxsts(inlinedOxsts: InlinedOxsts) {
         initializeInlining(inlinedOxsts)
 
-        compilationArtifactSaver.commitModelState()
+        compilationStateManager.commitModelState()
 
         operationInliner.inlineOperations(inlinedOxsts.rootInstance, inlinedOxsts.initTransition)
         operationInliner.inlineOperations(inlinedOxsts.rootInstance, inlinedOxsts.mainTransition)
@@ -65,9 +61,7 @@ class OxstsInliner {
         callExpressionInliner.inlineExpressions(inlinedOxsts.rootInstance, inlinedOxsts.mainTransition)
         callExpressionInliner.inlineExpressions(inlinedOxsts.rootInstance, inlinedOxsts.property)
 
-        inlinedOxstsOperationOptimizer.optimize(inlinedOxsts.initTransition)
-        inlinedOxstsOperationOptimizer.optimize(inlinedOxsts.mainTransition)
-        xstsExpressionOptimizer.optimize(inlinedOxsts.property)
+        inlinedOxstsOperationOptimizer.optimize(inlinedOxsts)
     }
 
     private fun initializeInlining(inlinedOxsts: InlinedOxsts) {

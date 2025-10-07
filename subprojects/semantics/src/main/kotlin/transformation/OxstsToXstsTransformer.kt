@@ -7,17 +7,16 @@
 package hu.bme.mit.semantifyr.semantics.transformation
 
 import com.google.inject.Inject
-import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
-import hu.bme.mit.semantifyr.semantics.loading.SemantifyrModelContext
+import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.inliner.OxstsInliner
 import hu.bme.mit.semantifyr.semantics.transformation.instantiation.OxstsInflator
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationArtifactSaver
 import hu.bme.mit.semantifyr.semantics.transformation.xsts.XstsTransformer
 import org.eclipse.xtext.util.OnChangeEvictingCache
 
-@Singleton
+@CompilationScoped
 class OxstsToXstsTransformer {
 
     @Inject

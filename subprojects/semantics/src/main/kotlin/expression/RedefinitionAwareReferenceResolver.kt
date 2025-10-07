@@ -7,16 +7,16 @@
 package hu.bme.mit.semantifyr.semantics.expression
 
 import com.google.inject.Inject
-import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsPackage
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration
+import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import org.eclipse.xtext.naming.QualifiedName
 
-@Singleton
+@CompilationScoped
 class RedefinitionAwareReferenceResolver {
 
     @Inject

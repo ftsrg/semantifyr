@@ -7,14 +7,9 @@
 package hu.bme.mit.semantifyr.semantics.transformation.instantiation
 
 import com.google.inject.Inject
-import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.BooleanEvaluation
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.IntegerEvaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -23,20 +18,21 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralNothing
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
-import hu.bme.mit.semantifyr.semantics.expression.InstanceEvaluation
 import hu.bme.mit.semantifyr.semantics.expression.InstanceReferenceProvider
+import hu.bme.mit.semantifyr.semantics.expression.StaticEvaluationTransformer
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.transformation.constraints.ConstraintChecker
+import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.inliner.ExpressionRewriter
 import hu.bme.mit.semantifyr.semantics.transformation.instantiation.NameHelper.INSTANCE_NAME_SEPARATOR
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationArtifactSaver
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.copy
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import hu.bme.mit.semantifyr.semantics.utils.treeSequence
 import org.eclipse.xtext.EcoreUtil2
 
-@Singleton
+@CompilationScoped
 class OxstsInflator {
 
     @Inject
@@ -55,7 +51,7 @@ class OxstsInflator {
     private lateinit var staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider
 
     @Inject
-    private lateinit var compilationArtifactSaver: CompilationArtifactSaver
+    private lateinit var compilationStateManager: CompilationStateManager
 
     @Inject
     private lateinit var instanceNameProvider: InstanceNameProvider
@@ -69,9 +65,10 @@ class OxstsInflator {
     @Inject
     private lateinit var instanceReferenceProvider: InstanceReferenceProvider
 
+    @Inject
+    private lateinit var staticEvaluationTransformer: StaticEvaluationTransformer
+
     private val variableInstanceDomain = mutableMapOf<VariableDeclaration, Set<Instance>>()
-    private var instanceId = 0
-    private val instanceIds = mutableMapOf<Instance, Int>()
 
     fun inflateInstanceModel(inlinedOxsts: InlinedOxsts) {
         oxstsClassInstantiator.instantiateModel(inlinedOxsts)
@@ -80,17 +77,15 @@ class OxstsInflator {
     }
 
     fun deflateInstanceModel(inlinedOxsts: InlinedOxsts) {
-        variableInstanceDomain.clear()
-
         pullDownVariables(inlinedOxsts)
         rewriteVariableReferences(inlinedOxsts)
         rewriteFeatureTypedVariables(inlinedOxsts)
 
-        compilationArtifactSaver.commitModelState()
+        compilationStateManager.commitModelState()
 
         rewriteStaticExpressions(inlinedOxsts)
 
-        compilationArtifactSaver.commitModelState()
+        compilationStateManager.commitModelState()
     }
 
     private fun pullDownVariables(inlinedOxsts: InlinedOxsts) {
@@ -211,10 +206,12 @@ class OxstsInflator {
                 return
             }
 
-            EcoreUtil2.replace(nothingExpression, OxstsFactory.createArithmeticUnaryOperator().also {
+            val minusOne = OxstsFactory.createArithmeticUnaryOperator().also {
                 it.op = UnaryOp.MINUS
                 it.body = OxstsFactory.createLiteralInteger(1)
-            })
+            }
+
+            EcoreUtil2.replace(nothingExpression, minusOne)
         }
     }
 
@@ -231,33 +228,9 @@ class OxstsInflator {
             }
 
             val evaluation = evaluator.evaluate(featureExpression)
-            val expression = transformEvaluation(evaluation)
+            val expression = staticEvaluationTransformer.transformEvaluation(evaluation)
 
             EcoreUtil2.replace(featureExpression, expression)
-        }
-    }
-
-    private fun transformEvaluation(evaluation: ExpressionEvaluation): Expression {
-        return when (evaluation) {
-            is BooleanEvaluation -> OxstsFactory.createLiteralBoolean(evaluation.value)
-            is IntegerEvaluation -> {
-                if (evaluation.value < 0) {
-                    OxstsFactory.createArithmeticUnaryOperator().also {
-                        it.op = UnaryOp.MINUS
-                        it.body = OxstsFactory.createLiteralInteger(-evaluation.value)
-                    }
-                } else {
-                    OxstsFactory.createLiteralInteger(evaluation.value)
-                }
-            }
-            is InstanceEvaluation -> {
-                val instance = evaluation.instances.single()
-                val id = instanceIds.getOrPut(instance) {
-                    instanceId++
-                }
-                OxstsFactory.createLiteralInteger(id)
-            }
-            else -> error("Unsupported evaluation!")
         }
     }
 

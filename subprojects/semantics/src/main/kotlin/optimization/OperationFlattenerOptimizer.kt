@@ -7,19 +7,19 @@
 package hu.bme.mit.semantifyr.semantics.optimization
 
 import com.google.inject.Inject
-import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationArtifactSaver
+import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
 
-@Singleton
+@CompilationScoped
 class OperationFlattenerOptimizer : AbstractLoopedOptimizer<Element>() {
 
     @Inject
-    private lateinit var compilationArtifactSaver: CompilationArtifactSaver
+    private lateinit var compilationStateManager: CompilationStateManager
 
     override fun doOptimizationStep(element: Element): Boolean {
         return flattenNestedSequenceOperations(element)
@@ -43,7 +43,7 @@ class OperationFlattenerOptimizer : AbstractLoopedOptimizer<Element>() {
 
         EcoreUtil2.remove(nestedSequenceOperation)
 
-        compilationArtifactSaver.commitModelState()
+        compilationStateManager.commitModelState()
 
         return true
     }
@@ -71,7 +71,7 @@ class OperationFlattenerOptimizer : AbstractLoopedOptimizer<Element>() {
 
         EcoreUtil2.remove(internalChoice)
 
-        compilationArtifactSaver.commitModelState()
+        compilationStateManager.commitModelState()
 
         return true
     }
@@ -87,7 +87,7 @@ class OperationFlattenerOptimizer : AbstractLoopedOptimizer<Element>() {
 
         EcoreUtil2.replace(choiceOperation, choiceOperation.branches.single())
 
-        compilationArtifactSaver.commitModelState()
+        compilationStateManager.commitModelState()
 
         return true
     }

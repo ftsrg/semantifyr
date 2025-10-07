@@ -6,10 +6,10 @@
 
 package hu.bme.mit.semantifyr.semantics.transformation.constraints
 
-import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 
-@Singleton
+@CompilationScoped
 class ConstraintChecker {
 
     fun checkConstraints(inlinedOxsts: InlinedOxsts) {

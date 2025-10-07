@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.semantics.transformation.inliner
 
 import com.google.inject.Inject
-import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ImmutableTypeEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator
@@ -21,13 +20,14 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParameterDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParametricDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
-import hu.bme.mit.semantifyr.semantics.utils.isReferenceContextual
+import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.copy
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
+import hu.bme.mit.semantifyr.semantics.utils.isReferenceContextual
 import org.eclipse.xtext.EcoreUtil2
 
-@Singleton
+@CompilationScoped
 class ExpressionRewriter {
 
     @Inject

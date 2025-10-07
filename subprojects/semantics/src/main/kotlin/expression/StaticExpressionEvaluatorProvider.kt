@@ -8,26 +8,21 @@ package hu.bme.mit.semantifyr.semantics.expression
 
 import com.google.inject.Inject
 import com.google.inject.Provider
-import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
-import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
-import org.eclipse.xtext.util.Tuples
+import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 
-@Singleton
+@CompilationScoped
 class StaticExpressionEvaluatorProvider {
 
-    private val CACHE_KEY: String = "${javaClass.canonicalName}.CACHE_KEY"
-
-    @Inject
-    private lateinit var resourceScopeCache: OnResourceSetChangeEvictingCache
+    private val cache = mutableMapOf<Instance, StaticExpressionEvaluator>()
 
     @Inject
     private lateinit var staticExpressionEvaluatorProvider: Provider<StaticExpressionEvaluator>
 
     fun getEvaluator(context: Instance): StaticExpressionEvaluator {
-        return resourceScopeCache.get(Tuples.create(CACHE_KEY, context), context.eResource()) {
+        return cache.getOrPut(context) {
             createEvaluator(context)
         }
     }

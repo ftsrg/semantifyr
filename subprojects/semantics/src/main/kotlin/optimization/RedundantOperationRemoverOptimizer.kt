@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.semantics.optimization
 
 import com.google.inject.Inject
-import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
@@ -18,18 +17,19 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationArtifactSaver
+import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.allBranches
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import hu.bme.mit.semantifyr.semantics.utils.isConstantLiteralTrue
 import org.eclipse.xtext.EcoreUtil2
 
-@Singleton
+@CompilationScoped
 class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
 
     @Inject
-    private lateinit var compilationArtifactSaver: CompilationArtifactSaver
+    private lateinit var compilationStateManager: CompilationStateManager
 
     override fun doOptimizationStep(element: Element): Boolean {
         return removeConstantTrueAssumptions(element)
@@ -54,7 +54,7 @@ class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
             EcoreUtil2.remove(assumption)
         }
 
-        compilationArtifactSaver.commitModelState()
+        compilationStateManager.commitModelState()
 
         return true
     }
@@ -70,7 +70,7 @@ class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
 
         redundantChoiceElse.`else` = null
 
-        compilationArtifactSaver.commitModelState()
+        compilationStateManager.commitModelState()
 
         return true
     }
@@ -88,7 +88,7 @@ class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
 
         EcoreUtil2.remove(redundantBranch)
 
-        compilationArtifactSaver.commitModelState()
+        compilationStateManager.commitModelState()
 
         return true
     }
@@ -106,7 +106,7 @@ class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
             EcoreUtil2.remove(emptyForOperation)
         }
 
-        compilationArtifactSaver.commitModelState()
+        compilationStateManager.commitModelState()
 
         return true
     }
@@ -124,7 +124,7 @@ class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
             emptyIfElseBranch.`else` = null
         }
 
-        compilationArtifactSaver.commitModelState()
+        compilationStateManager.commitModelState()
 
         return true
     }
@@ -145,7 +145,7 @@ class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
             emptyIfBodyBranch.body = emptyIfBodyBranch.`else`
         }
 
-        compilationArtifactSaver.commitModelState()
+        compilationStateManager.commitModelState()
 
         return true
     }
@@ -167,7 +167,7 @@ class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
             EcoreUtil2.remove(ifOperation)
         }
 
-        compilationArtifactSaver.commitModelState()
+        compilationStateManager.commitModelState()
 
         return true
     }

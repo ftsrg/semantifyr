@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.semantics.transformation.inliner
 
 import com.google.inject.Inject
-import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
@@ -28,14 +27,15 @@ import hu.bme.mit.semantifyr.semantics.expression.MetaStaticExpressionEvaluatorP
 import hu.bme.mit.semantifyr.semantics.expression.RedefinitionAwareReferenceResolver
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.expression.evaluateTyped
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationArtifactSaver
+import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.copy
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
 import java.util.*
 
-@Singleton
+@CompilationScoped
 class OperationInliner {
 
     @Inject
@@ -48,7 +48,7 @@ class OperationInliner {
     private lateinit var expressionRewriter: ExpressionRewriter
 
     @Inject
-    private lateinit var compilationArtifactSaver: CompilationArtifactSaver
+    private lateinit var compilationStateManager: CompilationStateManager
 
     @Inject
     private lateinit var instanceReferenceProvider: InstanceReferenceProvider
@@ -79,7 +79,7 @@ class OperationInliner {
 
                     processorQueue.addAll(0, simplifyInlinedOperation(inlined))
 
-                    compilationArtifactSaver.commitModelState()
+                    compilationStateManager.commitModelState()
                 }
             }
         }

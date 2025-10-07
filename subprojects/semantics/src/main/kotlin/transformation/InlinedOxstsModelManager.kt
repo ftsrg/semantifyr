@@ -7,15 +7,15 @@
 package hu.bme.mit.semantifyr.semantics.transformation
 
 import com.google.inject.Inject
-import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.instantiation.InstanceManager
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import org.eclipse.emf.common.util.URI
 
-@Singleton
+@CompilationScoped
 class InlinedOxstsModelManager {
 
     @Inject

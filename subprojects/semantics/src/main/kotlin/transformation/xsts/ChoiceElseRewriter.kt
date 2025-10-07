@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.semantics.transformation.xsts
 
 import com.google.inject.Inject
-import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
@@ -20,11 +19,12 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.semantics.optimization.XstsExpressionOptimizer
+import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.allBranches
 import hu.bme.mit.semantifyr.semantics.utils.copy
 
-@Singleton
+@CompilationScoped
 class ChoiceElseRewriter {
 
     @Inject
