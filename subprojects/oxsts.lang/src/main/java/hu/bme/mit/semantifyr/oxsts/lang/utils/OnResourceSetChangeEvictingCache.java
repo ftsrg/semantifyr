@@ -10,17 +10,17 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import org.apache.log4j.Logger;
 import org.eclipse.emf.common.notify.Notification;
+import org.eclipse.emf.common.util.WrappedException;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.eclipse.xtext.util.IResourceScopeCache;
-import org.eclipse.xtext.util.NonRecursiveEContentAdapter;
-import org.eclipse.xtext.util.Pair;
-import org.eclipse.xtext.util.Tuples;
+import org.eclipse.xtext.util.*;
+import org.eclipse.xtext.util.concurrent.IUnitOfWork;
 
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A cache implementation that stores its values in the scope of a resource set.
@@ -85,11 +85,31 @@ public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
         return new CacheAdapter();
     }
 
+    /**
+     * The transaction will be executed. While it is running, any semantic state change
+     * in the given resource will be ignored and the cache will not be cleared.
+     */
+    public <Result, Param extends Resource> Result execWithoutCacheClear(Param resource, IUnitOfWork<Result, Param> transaction) throws WrappedException {
+        var cacheAdapter = getOrCreate(resource.getResourceSet());
+        try {
+            cacheAdapter.ignoreNotifications();
+            return transaction.exec(resource);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new WrappedException(e);
+        } finally {
+            cacheAdapter.listenToNotifications();
+        }
+    }
+
     public static class CacheAdapter extends NonRecursiveEContentAdapter {
 
         private static final Object EMPTY_VALUE = new Object();
 
         private final Map<Pair<Resource, Object>, Object> values;
+
+        private final AtomicInteger ignoreNotificationCounter = new AtomicInteger(0);
 
         private volatile boolean empty = true;
 
@@ -123,6 +143,16 @@ public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
             hits++;
         }
 
+        public void listenToNotifications() {
+            if (ignoreNotificationCounter.decrementAndGet() < 0) {
+                throw new IllegalStateException("ignoreNotificationCounter may not be less than zero");
+            }
+        }
+
+        public void ignoreNotifications() {
+            ignoreNotificationCounter.incrementAndGet();
+        }
+
         private <T> T internalGet(Resource resource, Object key) {
             if (empty) {
                 return null;
@@ -142,7 +172,7 @@ public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
         @Override
         public void notifyChanged(Notification notification) {
             super.notifyChanged(notification);
-            if (isSemanticStateChange(notification)) {
+            if (ignoreNotificationCounter.get() == 0 && isSemanticStateChange(notification)) {
                 clearValues();
             }
         }
@@ -176,6 +206,10 @@ public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
         @Override
         public boolean isAdapterForType(Object type) {
             return type == getClass() || type == OnResourceSetChangeEvictingCache.class || type == CacheAdapter.class;
+        }
+
+        public boolean isIgnoreNotifications() {
+            return ignoreNotificationCounter.get() > 0;
         }
 
         @Override

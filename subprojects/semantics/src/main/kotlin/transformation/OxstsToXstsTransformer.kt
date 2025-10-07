@@ -8,12 +8,14 @@ package hu.bme.mit.semantifyr.semantics.transformation
 
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.semantics.loading.SemantifyrModelContext
 import hu.bme.mit.semantifyr.semantics.transformation.inliner.OxstsInliner
 import hu.bme.mit.semantifyr.semantics.transformation.instantiation.OxstsInflator
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationArtifactSaver
 import hu.bme.mit.semantifyr.semantics.transformation.xsts.XstsTransformer
+import org.eclipse.xtext.util.OnChangeEvictingCache
 
 @Singleton
 class OxstsToXstsTransformer {
@@ -33,6 +35,12 @@ class OxstsToXstsTransformer {
     @Inject
     private lateinit var compilationArtifactSaver: CompilationArtifactSaver
 
+    @Inject
+    private lateinit var onChangeEvictingCache: OnChangeEvictingCache
+
+    @Inject
+    private lateinit var onResourceSetChangeEvictingCache: OnResourceSetChangeEvictingCache
+
     fun transform(model: SemantifyrModelContext, className: String, rewriteChoice: Boolean = false) {
         val classDeclaration = model.streamClasses().firstOrNull {
             it.name == className
@@ -48,14 +56,19 @@ class OxstsToXstsTransformer {
     fun transform(classDeclaration: ClassDeclaration, rewriteChoice: Boolean = false) {
         val inlinedOxsts = inlinedOxstsModelManager.createInlinedOxsts(classDeclaration)
 
-        compilationArtifactSaver.initArtifactManager(inlinedOxsts)
+        onResourceSetChangeEvictingCache.execWithoutCacheClear(inlinedOxsts.eResource()) {
+            onChangeEvictingCache.execWithoutCacheClear(inlinedOxsts.eResource()) {
+                compilationArtifactSaver.initArtifactManager(inlinedOxsts)
 
-        oxstsInflator.inflateInstanceModel(inlinedOxsts)
-        oxstsInliner.inlineOxsts(inlinedOxsts)
-        oxstsInflator.deflateInstanceModel(inlinedOxsts)
-        xstsTransformer.transform(inlinedOxsts, rewriteChoice)
+                oxstsInflator.inflateInstanceModel(inlinedOxsts)
+                oxstsInliner.inlineOxsts(inlinedOxsts)
+                oxstsInflator.deflateInstanceModel(inlinedOxsts)
+                xstsTransformer.transform(inlinedOxsts, rewriteChoice)
 
-        compilationArtifactSaver.finalizeArtifactManager(inlinedOxsts)
+                compilationArtifactSaver.finalizeArtifactManager(inlinedOxsts)
+            }
+        }
+
     }
 
 }
