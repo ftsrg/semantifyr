@@ -7,57 +7,45 @@
 package hu.bme.mit.semantifyr.semantics.transformation.serializer
 
 import com.google.inject.Inject
-import com.google.inject.Provider
-import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.semantics.transformation.ProgressContext
+import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
 import java.io.File
 
-class ArtifactSaver {
+@CompilationScoped
+class CompilationStateManager {
 
-    lateinit var basePath: File
+    private lateinit var basePath: File
 
-    lateinit var inlinedOxsts: InlinedOxsts
+    private lateinit var inlinedOxsts: InlinedOxsts
+    private lateinit var progressContext: ProgressContext
+
+    private var id = 0
 
     @Inject
     private lateinit var serializer: ISerializer
 
-    private var id = 0
-
-    fun commitModelState() {
-        val modelFile = basePath.resolve("state${id++}.oxsts")
-        modelFile.parentFile.mkdirs()
-
-        val fileWriter = modelFile.writer()
-        serializer.serialize(inlinedOxsts, fileWriter, SaveOptions.defaultOptions())
-    }
-
-}
-
-@Singleton
-class CompilationArtifactSaver {
-
-    @Inject
-    protected lateinit var artifactSaverProvider: Provider<ArtifactSaver>
-
-    private var artifactSaver: ArtifactSaver? = null
-
-    fun initArtifactManager(inlinedOxsts: InlinedOxsts): ArtifactSaver {
-        artifactSaver = artifactSaverProvider.get()
-        artifactSaver!!.inlinedOxsts = inlinedOxsts
-        artifactSaver!!.basePath = File(inlinedOxsts.eResource().uri.toFileString() + ".artifacts.d")
-        artifactSaver!!.basePath.deleteRecursively()
-        return artifactSaver!!
+    fun initArtifactManager(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext) {
+        this.inlinedOxsts = inlinedOxsts
+        this.progressContext = progressContext
+        basePath = File("/tmp/semantifyr-output")
+        basePath.deleteRecursively()
     }
 
     fun finalizeArtifactManager(inlinedOxsts: InlinedOxsts) {
-        artifactSaver = null
         inlinedOxsts.eResource().save(emptyMap<Any, Any>())
     }
 
     fun commitModelState() {
-        artifactSaver?.commitModelState()
+        progressContext.checkIsCancelled()
+
+//        val modelFile = basePath.resolve("state${id++}.oxsts")
+//        modelFile.parentFile.mkdirs()
+//
+//        val fileWriter = modelFile.writer()
+//        serializer.serialize(inlinedOxsts, fileWriter, SaveOptions.defaultOptions())
     }
 
 }

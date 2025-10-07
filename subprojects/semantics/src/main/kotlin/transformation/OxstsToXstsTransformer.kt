@@ -12,7 +12,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.inliner.OxstsInliner
 import hu.bme.mit.semantifyr.semantics.transformation.instantiation.OxstsInflator
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationArtifactSaver
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.transformation.xsts.XstsTransformer
 import org.eclipse.xtext.util.OnChangeEvictingCache
 
@@ -32,42 +32,44 @@ class OxstsToXstsTransformer {
     private lateinit var xstsTransformer: XstsTransformer
 
     @Inject
-    private lateinit var compilationArtifactSaver: CompilationArtifactSaver
+    private lateinit var compilationStateManager: CompilationStateManager
 
-    @Inject
-    private lateinit var onChangeEvictingCache: OnChangeEvictingCache
+//    fun transform(model: SemantifyrModelContext, className: String, rewriteChoice: Boolean = false) {
+//        val classDeclaration = model.streamClasses().firstOrNull {
+//            it.name == className
+//        }
+//
+//        if (classDeclaration == null) {
+//            throw IllegalArgumentException("Could not find class named $className")
+//        }
+//
+//        transform(classDeclaration, rewriteChoice)
+//    }
 
-    @Inject
-    private lateinit var onResourceSetChangeEvictingCache: OnResourceSetChangeEvictingCache
-
-    fun transform(model: SemantifyrModelContext, className: String, rewriteChoice: Boolean = false) {
-        val classDeclaration = model.streamClasses().firstOrNull {
-            it.name == className
-        }
-
-        if (classDeclaration == null) {
-            throw IllegalArgumentException("Could not find class named $className")
-        }
-
-        transform(classDeclaration, rewriteChoice)
-    }
-
-    fun transform(classDeclaration: ClassDeclaration, rewriteChoice: Boolean = false) {
+    fun transform(progressContext: ProgressContext, classDeclaration: ClassDeclaration, rewriteChoice: Boolean = false) {
         val inlinedOxsts = inlinedOxstsModelManager.createInlinedOxsts(classDeclaration)
 
-        onResourceSetChangeEvictingCache.execWithoutCacheClear(inlinedOxsts.eResource()) {
-            onChangeEvictingCache.execWithoutCacheClear(inlinedOxsts.eResource()) {
-                compilationArtifactSaver.initArtifactManager(inlinedOxsts)
+        compilationStateManager.initArtifactManager(inlinedOxsts, progressContext)
 
-                oxstsInflator.inflateInstanceModel(inlinedOxsts)
-                oxstsInliner.inlineOxsts(inlinedOxsts)
-                oxstsInflator.deflateInstanceModel(inlinedOxsts)
-                xstsTransformer.transform(inlinedOxsts, rewriteChoice)
+        progressContext.reportProgress("Instantiating model", 10)
 
-                compilationArtifactSaver.finalizeArtifactManager(inlinedOxsts)
-            }
-        }
+        oxstsInflator.inflateInstanceModel(inlinedOxsts)
 
+        progressContext.reportProgress("Inlining calls", 20)
+
+        oxstsInliner.inlineOxsts(inlinedOxsts)
+
+        progressContext.reportProgress("Deflating instances and structure", 60)
+
+        oxstsInflator.deflateInstanceModel(inlinedOxsts)
+
+        progressContext.reportProgress("Transforming to XSTS", 80)
+
+        xstsTransformer.transform(inlinedOxsts, rewriteChoice)
+
+        progressContext.reportProgress("Serializing final model", 90)
+
+        compilationStateManager.finalizeArtifactManager(inlinedOxsts)
     }
 
 }
