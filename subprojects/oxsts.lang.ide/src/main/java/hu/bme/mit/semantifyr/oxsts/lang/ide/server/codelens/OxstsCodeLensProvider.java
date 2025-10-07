@@ -4,8 +4,11 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.lang.ide.codelens;
+package hu.bme.mit.semantifyr.oxsts.lang.ide.server.codelens;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands.CompileOxstsCommandHandler;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
 import org.eclipse.lsp4j.*;
@@ -18,15 +21,22 @@ import org.eclipse.xtext.util.CancelIndicator;
 
 import java.util.List;
 
+@Singleton
 public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensService {
+
+    @Inject
+    private CompileOxstsCommandHandler compileOxstsCommandHandler;
 
     @Override
     public CodeLens resolveCodeLens(Document document, XtextResource resource, CodeLens codeLens, CancelIndicator indicator) {
-        return null;
+        return codeLens;
     }
 
     @Override
     public List<? extends CodeLens> computeCodeLenses(Document document, XtextResource resource, CodeLensParams params, CancelIndicator indicator) {
+        if (resource.getContents().isEmpty()) {
+            return List.of();
+        }
 
         var rootElement = resource.getContents().getFirst();
 
@@ -40,7 +50,8 @@ public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensServic
 //                .filter(c -> !c.getAnnotation().getAnnotations().isEmpty())
                 .map(c -> {
                     var codeLens = new CodeLens();
-                    codeLens.setCommand(new Command("Compile", "oxsts.class.compile", List.of(c.eResource().getURI().toString(), c.getName())));
+                    var command = new Command(compileOxstsCommandHandler.getTitle(), compileOxstsCommandHandler.getId(), compileOxstsCommandHandler.serializeArguments(c));
+                    codeLens.setCommand(command);
                     var classNode = NodeModelUtils.getNode(c);
                     var start = new Position(classNode.getStartLine() - 1, 0);
                     codeLens.setRange(new Range(start, start));
