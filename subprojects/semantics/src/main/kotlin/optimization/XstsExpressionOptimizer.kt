@@ -16,8 +16,11 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OperatorExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOperator
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationArtifactSaver
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
@@ -45,7 +48,9 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
 
     // FIXME: replace with constant evaluator!
     private fun rewriteConstantExpression(element: Element): Boolean {
-        val operatorResultPair = element.eAllOfType<OperatorExpression>().map {
+        val operatorResultPair = element.eAllOfType<OperatorExpression>().filterNot {
+            it is UnaryOperator && it.body is LiteralInteger
+        }.map {
             it to evaluateOrNull(it)
         }.firstOrNull {
             it.second != null
@@ -59,7 +64,16 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
 
         val constant = when (evaluation) {
             is BooleanEvaluation -> OxstsFactory.createLiteralBoolean(evaluation.value)
-            is IntegerEvaluation -> OxstsFactory.createLiteralInteger(evaluation.value)
+            is IntegerEvaluation -> {
+                if (evaluation.value < 0) {
+                    OxstsFactory.createArithmeticUnaryOperator().also {
+                        it.op = UnaryOp.MINUS
+                        it.body = OxstsFactory.createLiteralInteger(-evaluation.value)
+                    }
+                } else {
+                    OxstsFactory.createLiteralInteger(evaluation.value)
+                }
+            }
             else -> error("Incompatible result of constant operator: $operatorResultPair")
         }
 
