@@ -63,13 +63,17 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     protected void format(InlinedOxsts inlinedOxsts, IFormattableDocument document) {
         document.append(regionFor(inlinedOxsts).feature(OxstsPackage.Literals.INLINED_OXSTS__CLASS_DECLARATION), this::twoLines);
 
+        document.prepend(regionFor(inlinedOxsts.getRootFeature()).feature(OxstsPackage.Literals.FEATURE_DECLARATION__KIND), this::twoLines);
+        document.prepend(regionFor(inlinedOxsts.getInitTransition()).feature(OxstsPackage.Literals.TRANSITION_DECLARATION__KIND), this::twoLines);
+        document.prepend(regionFor(inlinedOxsts.getMainTransition()).feature(OxstsPackage.Literals.TRANSITION_DECLARATION__KIND), this::twoLines);
+        document.prepend(regionFor(inlinedOxsts.getProperty()).keyword("prop"), this::twoLines);
+
+        inlinedOxsts.getVariables().forEach(document::format);
+
+        document.format(inlinedOxsts.getRootFeature());
         document.format(inlinedOxsts.getInitTransition());
         document.format(inlinedOxsts.getMainTransition());
         document.format(inlinedOxsts.getProperty());
-        document.format(inlinedOxsts.getRootFeature());
-        document.format(inlinedOxsts.getRootInstance());
-
-        inlinedOxsts.getVariables().forEach(document::format);
     }
 
     protected void format(ImportStatement _import, IFormattableDocument document) {
@@ -87,9 +91,11 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
         formatCallLike(annotation, document);
 
-        for (var argument : annotation.getArguments()) {
-            document.format(argument);
-        }
+        annotation.getArguments().forEach(document::format);
+    }
+
+    protected void format(AnnotationContainer annotationContainer, IFormattableDocument document) {
+        annotationContainer.getAnnotations().forEach(document::format);
     }
 
     protected void format(DataTypeDeclaration dataTypeDeclaration, IFormattableDocument document) {
@@ -97,12 +103,16 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
         document.append(regionFor(dataTypeDeclaration).keyword("extern"), this::oneSpace);
         document.append(regionFor(dataTypeDeclaration).keyword("datatype"), this::oneSpace);
+
+        document.format(dataTypeDeclaration.getAnnotation());
     }
 
     protected void format(EnumDeclaration enumDeclaration, IFormattableDocument document) {
         formatBracketedDeclaration(enumDeclaration, document);
 
         document.append(regionFor(enumDeclaration).keyword("enum"), this::oneSpace);
+
+        document.format(enumDeclaration.getAnnotation());
 
         enumDeclaration.getLiterals().forEach(document::format);
     }
@@ -117,6 +127,8 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
         document.append(regionFor(recordDeclaration).keyword("record"), this::oneSpace);
 
+        document.format(recordDeclaration.getAnnotation());
+
         recordDeclaration.getMembers().forEach(document::format);
     }
 
@@ -129,6 +141,8 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
         document.prepend(allRegionsFor(classDeclaration).keyword(","), this::noSpace);
         document.append(allRegionsFor(classDeclaration).keyword(","), this::oneSpace);
+
+        document.format(classDeclaration.getAnnotation());
 
         classDeclaration.getMembers().forEach(document::format);
     }
@@ -154,6 +168,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
         document.format(variableDeclaration.getMultiplicity());
         document.format(variableDeclaration.getExpression());
+        document.format(variableDeclaration.getAnnotation());
     }
 
     protected void format(PropertyDeclaration propertyDeclaration, IFormattableDocument document) {
@@ -165,8 +180,10 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.prepend(regionFor(propertyDeclaration).keyword(":"), this::noSpace);
         document.append(regionFor(propertyDeclaration).keyword(":"), this::oneSpace);
 
-        propertyDeclaration.getParameters().forEach(document::format);
         document.format(propertyDeclaration.getExpression());
+        document.format(propertyDeclaration.getAnnotation());
+
+        propertyDeclaration.getParameters().forEach(document::format);
     }
 
     protected void format(TransitionDeclaration transitionDeclaration, IFormattableDocument document) {
@@ -177,6 +194,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.append(regionFor(transitionDeclaration).keyword("init"), this::oneSpace);
         document.append(regionFor(transitionDeclaration).keyword("env"), this::oneSpace);
         document.append(regionFor(transitionDeclaration).keyword("havoc"), this::oneSpace);
+        document.format(transitionDeclaration.getAnnotation());
 
         transitionDeclaration.getBranches().forEach(document::format);
     }
@@ -197,6 +215,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         featureDeclaration.getInnerFeatures().forEach(document::format);
         document.format(featureDeclaration.getMultiplicity());
         document.format(featureDeclaration.getExpression());
+        document.format(featureDeclaration.getAnnotation());
     }
 
     protected void format(HavocOperation havocOperation, IFormattableDocument document) {
@@ -280,6 +299,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
         document.format(localVarDeclarationOperation.getMultiplicity());
         document.format(localVarDeclarationOperation.getExpression());
+        document.format(localVarDeclarationOperation.getAnnotation());
     }
 
     protected void format(InlineCall inlineCall, IFormattableDocument document) {
@@ -412,6 +432,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.prepend(regionFor(postfixUnaryExpression).keyword("("), this::noSpace);
 
         document.format(postfixUnaryExpression.getPrimary());
+
         postfixUnaryExpression.getArguments().forEach(document::format);
     }
 
