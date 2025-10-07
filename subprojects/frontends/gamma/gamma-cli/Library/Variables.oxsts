@@ -20,7 +20,7 @@ class IntegerVariable : Variable {
         return variable
     }
 
-    tran set(value: int) {
+    redefine tran set(value: int) {
         variable := value
     }
 }
@@ -34,14 +34,14 @@ class BooleanVariable : Variable {
         return variable
     }
 
-    tran set(value: bool) {
+    redefine tran set(value: bool) {
         variable := value
     }
 }
 
 class VariableExpression : Expression {
     refers variable: Variable
-    prop evaluate() {
+    redefine prop evaluate() {
         return variable.evaluate()
     }
 }

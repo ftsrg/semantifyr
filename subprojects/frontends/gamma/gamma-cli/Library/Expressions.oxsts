@@ -27,7 +27,7 @@ class OperatorExpression : Expression {
 
 class LessThanOperatorExpression : OperatorExpression {
     redefine prop evaluate() {
-        return left
+        return left.evaluate() < right.evaluate()
     }
 }
 
