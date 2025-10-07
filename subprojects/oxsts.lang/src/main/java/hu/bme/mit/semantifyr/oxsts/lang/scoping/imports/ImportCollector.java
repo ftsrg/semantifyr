@@ -33,14 +33,18 @@ public class ImportCollector {
     }
 
     protected List<Import> computeDirectImports(Resource resource) {
-        if (resource.getContents().isEmpty() || !(resource.getContents().getFirst() instanceof OxstsModelPackage _package)) {
+        if (resource.getContents().isEmpty()) {
             return Collections.emptyList();
         }
         var adapter = libraryAdapterFinder.getOrInstall(resource);
 
         var collection = new ArrayList<Import>();
         collectImplicitImports(collection, adapter);
-        collectExplicitImports(_package, collection);
+
+        if (resource.getContents().getFirst() instanceof OxstsModelPackage _package) {
+            collectExplicitImports(_package, collection);
+        }
+
         return collection;
     }
 
