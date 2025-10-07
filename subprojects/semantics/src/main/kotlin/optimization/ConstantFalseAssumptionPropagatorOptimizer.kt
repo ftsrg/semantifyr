@@ -17,11 +17,11 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationArtifactSaver
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
-import hu.bme.mit.semantifyr.semantics.utils.isConstantLiteralTrue
+import hu.bme.mit.semantifyr.semantics.utils.isConstantLiteralFalse
 import org.eclipse.xtext.EcoreUtil2
 
 private val Operation.isConstantFalseAssumption
-    get() = this is AssumptionOperation && expression.isConstantLiteralTrue
+    get() = this is AssumptionOperation && expression.isConstantLiteralFalse
 
 private val SequenceOperation.isSingleConstantFalseAssumption
     get() = steps.singleOrNull()?.isConstantFalseAssumption == true
