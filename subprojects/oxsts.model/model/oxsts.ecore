@@ -330,7 +330,7 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="parent" eType="#//Instance"
         eOpposite="#//Instance/children"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="model" eType="#//InlinedOxsts"
-        eOpposite="#//InlinedOxsts/rootInstance"/>
+        transient="true" eOpposite="#//InlinedOxsts/rootInstance"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="associations" upperBound="-1"
         eType="#//Association" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="variableMappings" upperBound="-1"
@@ -360,7 +360,7 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="classDeclaration" lowerBound="1"
         eType="#//ClassDeclaration"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="rootInstance" eType="#//Instance"
-        containment="true" eOpposite="#//Instance/model"/>
+        transient="true" containment="true" eOpposite="#//Instance/model"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="rootFeature" eType="#//FeatureDeclaration"
         containment="true"/>
   </eClassifiers>
