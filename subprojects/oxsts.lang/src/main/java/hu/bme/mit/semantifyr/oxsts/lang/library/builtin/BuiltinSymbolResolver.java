@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.library.builtin;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryAdapterFinder;
+import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import org.eclipse.emf.ecore.EObject;
@@ -19,11 +20,11 @@ import org.eclipse.xtext.resource.IResourceDescription;
 public class BuiltinSymbolResolver {
 
     public static final QualifiedName ANYTHING_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Anything");
-    public static final QualifiedName ANYTHING_CHILDREN_NAME = ANYTHING_NAME.append("children");
-    public static final QualifiedName ANYTHING_PARENT_NAME = ANYTHING_NAME.append("parent");
-    public static final QualifiedName ANYTHING_INIT_NAME = ANYTHING_NAME.append("init");
-    public static final QualifiedName ANYTHING_MAIN_NAME = ANYTHING_NAME.append("main");
-    public static final QualifiedName ANYTHING_HAVOC_NAME = ANYTHING_NAME.append("havoc");
+//    public static final String ANYTHING_CHILDREN_NAME = "children";
+//    public static final String ANYTHING_PARENT_NAME = "parent";
+    public static final String ANYTHING_INIT_NAME = "init";
+    public static final String ANYTHING_MAIN_NAME = "main";
+    public static final String ANYTHING_HAVOC_NAME = "havoc";
 
     public static final QualifiedName BOOL_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("bool");
     public static final QualifiedName INT_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("int");
@@ -62,6 +63,12 @@ public class BuiltinSymbolResolver {
         return findInBuiltin(context, DataTypeDeclaration.class, STRING_NAME);
     }
 
+    protected <T extends Declaration> T findInAnything(EObject context, Class<T> type, String name) {
+        var anythingClass = anythingClass(context);
+
+        return findInClassDeclaration(anythingClass, type, name);
+    }
+
 //    public FeatureDeclaration anythingChildrenFeature(EObject context) {
 //        return findInBuiltin(context, FeatureDeclaration.class, ANYTHING_CHILDREN_NAME);
 //    }
@@ -71,15 +78,15 @@ public class BuiltinSymbolResolver {
 //    }
 
     public TransitionDeclaration anythingInitTransition(EObject context) {
-        return findInBuiltin(context, TransitionDeclaration.class, ANYTHING_INIT_NAME);
+        return findInAnything(context, TransitionDeclaration.class, ANYTHING_INIT_NAME);
     }
 
     public TransitionDeclaration anythingMainTransition(EObject context) {
-        return findInBuiltin(context, TransitionDeclaration.class, ANYTHING_MAIN_NAME);
+        return findInAnything(context, TransitionDeclaration.class, ANYTHING_MAIN_NAME);
     }
 
     public TransitionDeclaration anythingHavocTransition(EObject context) {
-        return findInBuiltin(context, TransitionDeclaration.class, ANYTHING_HAVOC_NAME);
+        return findInAnything(context, TransitionDeclaration.class, ANYTHING_HAVOC_NAME);
     }
 
     public boolean isBuiltin(EObject eObject) {
@@ -102,6 +109,17 @@ public class BuiltinSymbolResolver {
 //        return isBuiltin(featureDeclaration) && isNamed(featureDeclaration, ANYTHING_CHILDREN_NAME);
 //    }
 
+    protected <T extends Declaration> T findInClassDeclaration(ClassDeclaration classDeclaration, Class<T> type, String name) {
+        for (var candidate : classDeclaration.getMembers()) {
+            if (name.equals(NamingUtil.getName(candidate)) && type.isInstance(candidate)) {
+                //noinspection unchecked
+                return (T) candidate;
+            }
+        }
+
+        throw new IllegalArgumentException("Built-in declaration '" + name + "' was not found in class " + classDeclaration.getName());
+    }
+
     protected <T extends Declaration> T findInBuiltin(EObject context, Class<T> type, QualifiedName name) {
         var builtinResource = libraryAdapterFinder.getOrInstall(context).getBuiltinResource();
         var builtins = descriptionManager.getResourceDescription(builtinResource);
@@ -109,6 +127,7 @@ public class BuiltinSymbolResolver {
         for (var candidate : builtins.getExportedObjects(OxstsPackage.Literals.ELEMENT, name, false)) {
             if (type.isInstance(candidate.getEObjectOrProxy())) {
                 // Will always be a loaded EObject, since we force load the resource
+                //noinspection unchecked
                 return (T) candidate.getEObjectOrProxy();
             }
         }
