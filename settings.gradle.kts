@@ -30,4 +30,4 @@ fun includeDirectory(dirPath: String) {
 }
 
 includeDirectory("subprojects/frontends/gamma")
-//includeDirectory("subprojects/backends/theta")
+includeDirectory("subprojects/backends/theta")

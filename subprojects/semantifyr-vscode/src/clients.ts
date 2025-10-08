@@ -11,13 +11,13 @@ import * as net from 'net';
 import {LanguageClient, LanguageClientOptions, ServerOptions} from "vscode-languageclient/node.js";
 
 let oxstsClient: LanguageClient;
-// let xstsClient: LanguageClient;
+let xstsClient: LanguageClient;
 let gammaClient: LanguageClient;
 // let cexClient: LanguageClient;
 
 export async function startClients(context: ExtensionContext) {
     const oxstsIdeExecutable = path.join(context.extensionPath, 'bin', 'oxsts.lang.ide', 'bin', `oxsts.lang.ide${executablePostfix}`);
-    // const xstsIdeExecutable = path.join(context.extensionPath, 'bin', 'xsts.lang.ide', 'bin', `xsts.lang.ide${executablePostfix}`);
+    const xstsIdeExecutable = path.join(context.extensionPath, 'bin', 'xsts.lang.ide', 'bin', `xsts.lang.ide${executablePostfix}`);
     // const cexIdeExecutable = path.join(context.extensionPath, 'bin', 'cex.lang.ide', 'bin', `cex.lang.ide${executablePostfix}`);
     const gammaIdeExecutable = path.join(context.extensionPath, 'bin', 'gamma.lang.ide', 'bin', `gamma.lang.ide${executablePostfix}`);
 
@@ -29,19 +29,19 @@ export async function startClients(context: ExtensionContext) {
         oxstsClient = createLspClient(oxstsIdeExecutable, "oxsts");
     }
 
-    // xstsClient = createLspClient(xstsIdeExecutable, "xsts");
+    xstsClient = createLspClient(xstsIdeExecutable, "xsts");
     // cexClient = createLspClient(cexIdeExecutable, "cex");
     gammaClient = createLspClient(gammaIdeExecutable, "gamma");
 
     await oxstsClient.start();
-    // await xstsClient.start();
+    await xstsClient.start();
     // await cexClient.start();
     await gammaClient.start();
 }
 
 export async function stopClients() {
     await oxstsClient.stop();
-    // await xstsClient.stop();
+    await xstsClient.stop();
     // await cexClient.stop();
     await gammaClient.stop();
 }

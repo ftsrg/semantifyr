@@ -23,7 +23,7 @@
       "patterns": [
         {
           "name": "keyword.control.xsts",
-          "match": "\\b(or|enum|ctrl|assume|var|type|init|havoc|trans|choice|if|else|prop|env)\\b"
+          "match": "\\b(local|for|from|to|do|or|enum|ctrl|assume|var|type|init|havoc|trans|choice|if|else|prop|env)\\b"
         }
       ]
     },
