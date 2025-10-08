@@ -6,10 +6,17 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.resource;
 
+import org.eclipse.emf.ecore.resource.Resource;
+import org.eclipse.xtext.resource.IDefaultResourceDescriptionStrategy;
 import org.eclipse.xtext.resource.IResourceDescription;
 import org.eclipse.xtext.resource.impl.DefaultResourceDescriptionManager;
 
 public class OxstsResourceDescriptionManager extends DefaultResourceDescriptionManager {
+
+    @Override
+    protected IResourceDescription internalGetResourceDescription(Resource resource, IDefaultResourceDescriptionStrategy strategy) {
+        return new OxstsResourceDescription(resource, strategy, getCache());
+    }
 
     @Override
     protected boolean hasChanges(IResourceDescription.Delta delta, IResourceDescription candidate) {
@@ -32,4 +39,5 @@ public class OxstsResourceDescriptionManager extends DefaultResourceDescriptionM
 
         return false;
     }
+
 }

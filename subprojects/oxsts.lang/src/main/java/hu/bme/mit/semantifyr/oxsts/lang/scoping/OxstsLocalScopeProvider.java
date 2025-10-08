@@ -25,9 +25,6 @@ import org.eclipse.xtext.scoping.impl.SelectableBasedScope;
 public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeProvider {
 
     @Inject
-    private IGlobalScopeProvider globalScopeProvider;
-
-    @Inject
     private IQualifiedNameProvider qualifiedNameProvider;
 
     @Inject
@@ -68,8 +65,8 @@ public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
             return globalScope;
         }
 
-        var memberCollection = domainMemberCalculator.getMemberCollection(inlinedOxsts).getMembers();
-        return SelectableBasedScope.createScope(globalScope, memberCollection, reference.getEReferenceType(), isIgnoreCase(reference));
+        var resourceDescription = resourceDescriptionProvider.getResourceDescription(resource);
+        return SelectableBasedScope.createScope(globalScope, resourceDescription, reference.getEReferenceType(), isIgnoreCase(reference));
     }
 
     // caching feels unnecessary here, since most of the calculated instances are simple to create, or are cache anyway
