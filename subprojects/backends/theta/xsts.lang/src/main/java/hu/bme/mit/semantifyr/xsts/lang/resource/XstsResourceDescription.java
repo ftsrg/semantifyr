@@ -42,6 +42,10 @@ public class XstsResourceDescription extends DefaultResourceDescription {
             }
         }
 
+        if (getResource().getContents().isEmpty()) {
+            return List.of();
+        }
+
         var rootElement = getResource().getContents().getFirst();
         if (! (rootElement instanceof XstsModel xstsModel)) {
             // delegate to super, we do not know what this resource is...

@@ -43,6 +43,10 @@ public class OxstsResourceDescription extends DefaultResourceDescription {
             }
         }
 
+        if (getResource().getContents().isEmpty()) {
+            return List.of();
+        }
+
         var rootElement = getResource().getContents().getFirst();
         if (rootElement instanceof InlinedOxsts inlinedOxsts) {
             return computeExportedObjects(inlinedOxsts);

@@ -11,6 +11,7 @@ generate xsts "http://www.bme.hu/mit/2025/xsts"
 import "http://www.eclipse.org/emf/2002/Ecore" as Ecore
 
 XstsModel:
+    {XstsModel}
     enumDeclarations+=EnumDeclaration*
     variableDeclarations+=VariableDeclaration*
     tran=Transition?
