@@ -286,6 +286,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
         formatCallLike(forOperation, document);
 
+        document.format(forOperation.getLoopVariable());
         document.format(forOperation.getRangeExpression());
         document.format(forOperation.getBody());
     }
@@ -312,21 +313,38 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.format(inlineCall.getCallExpression());
     }
 
-    protected void format(InlineForOperation inlineFor, IFormattableDocument document) {
+    protected void format(InlineSeqFor inlineFor, IFormattableDocument document) {
         formatSemicolonedLine(inlineFor, document);
 
         document.surround(regionFor(inlineFor).keyword("inline"), this::oneSpace);
         document.surround(regionFor(inlineFor).keyword("for"), this::oneSpace);
-        document.surround(regionFor(inlineFor).keyword("choice"), this::oneSpace);
-        document.surround(regionFor(inlineFor).keyword("else"), this::oneSpace);
         document.surround(regionFor(inlineFor).keyword("seq"), this::oneSpace);
 
         document.surround(regionFor(inlineFor).keyword("in"), this::oneSpace);
 
         formatCallLike(inlineFor, document);
 
+        document.format(inlineFor.getLoopVariable());
         document.format(inlineFor.getRangeExpression());
         document.format(inlineFor.getBody());
+    }
+
+    protected void format(InlineChoiceFor inlineFor, IFormattableDocument document) {
+        formatSemicolonedLine(inlineFor, document);
+
+        document.surround(regionFor(inlineFor).keyword("inline"), this::oneSpace);
+        document.surround(regionFor(inlineFor).keyword("for"), this::oneSpace);
+        document.surround(regionFor(inlineFor).keyword("choice"), this::oneSpace);
+        document.surround(regionFor(inlineFor).keyword("else"), this::oneSpace);
+
+        document.surround(regionFor(inlineFor).keyword("in"), this::oneSpace);
+
+        formatCallLike(inlineFor, document);
+
+        document.format(inlineFor.getLoopVariable());
+        document.format(inlineFor.getRangeExpression());
+        document.format(inlineFor.getBody());
+        document.format(inlineFor.getElse());
     }
 
     protected void format(InlineIfOperation inlineIfOperation, IFormattableDocument document) {

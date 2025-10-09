@@ -25,11 +25,11 @@ repositories {
 dependencies {
     api(project(":oxsts.lang"))
 
-    implementation(libs.guice)
-    implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.viatra.query.language) {
-        exclude("com.google.inject", "guice")
-    }
+    api(libs.guice)
+//    implementation(libs.kotlinx.coroutines.core)
+//    implementation(libs.viatra.query.language) {
+//        exclude("com.google.inject", "guice")
+//    }
 
 //    runtimeOnly(libs.viatra.query.runtime)
 //    runtimeOnly(libs.viatra.transformation.runtime)
