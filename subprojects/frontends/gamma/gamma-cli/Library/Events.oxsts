@@ -21,7 +21,7 @@ class Event {
         havoc (isActive)
     }
 
-    tran isSet() {
+    tran assumeIsSet() {
         assume (isActive)
     }
 }
@@ -31,13 +31,13 @@ class Timeout {
 
     var remainingTime: int := 0
 
-    redefine tran {
+    tran passTime() {
         if (remainingTime > 0) {
             remainingTime := remainingTime - deltaTime
         }
     }
 
-    tran isUp() {
+    tran assumeIsUp() {
         assume (remainingTime <= 0)
     }
 }

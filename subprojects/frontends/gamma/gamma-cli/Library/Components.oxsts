@@ -35,7 +35,7 @@ class Component {
 
     tran passTime() {
         inline for (timeout in timeouts) {
-            inline timeout.main()
+            inline timeout.passTime()
         }
     }
 }
@@ -57,7 +57,7 @@ class CompositeComponent : Component {
 
     redefine tran passTime() {
         inline for (timeout in timeouts) {
-            inline timeout.main()
+            inline timeout.passTime()
         }
 
         inline for (component in components) {

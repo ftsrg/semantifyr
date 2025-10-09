@@ -17,7 +17,7 @@ class EventTrigger : Trigger {
     refers event: Event[1]
 
     redefine tran assumeIsTriggered() {
-        inline event.isSet()
+        inline event.assumeIsSet()
     }
 }
 
@@ -25,6 +25,6 @@ class TimeoutTrigger : Trigger {
     refers timeout: Timeout[1]
 
     redefine tran assumeIsTriggered() {
-        inline timeout.isUp()
+        inline timeout.assumeIsUp()
     }
 }

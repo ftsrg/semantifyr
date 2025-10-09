@@ -11,6 +11,7 @@ class GammaVerificationCase {
     redefine tran {
         inline component.havocInputEvents()
         inline component.main()
+        inline component.resetOutputEvents()
         inline component.passTime()
     }
     features propertyExpression: Expression

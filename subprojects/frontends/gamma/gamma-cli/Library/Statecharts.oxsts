@@ -117,7 +117,7 @@ class State {
             }
         }
     }
-    tran exitRecursive(commonRegion : Region) {
+    tran exitRecursive(commonRegion: Region) {
         inline for (exitAction in exitActions) {
             inline exitAction.main()
         }
@@ -130,7 +130,7 @@ class State {
             }
         }
     }
-    tran exit(commonRegion : Region) {
+    tran exit(commonRegion: Region) {
         inline exitRecursive(commonRegion)
 
         inline for (region in regions) {
@@ -150,7 +150,7 @@ class State {
             inline action.main()
         }
     }
-    tran enter(commonRegion : Region) {
+    tran enter(commonRegion: Region) {
         inline enterRecursive(commonRegion)
 
         inline for (region in regions) {
@@ -173,14 +173,14 @@ class State {
 }
 
 class AbstractTransition {
-    container commonRegion: Region[1] opposite transitions
+    container parentRegion: Region[1] opposite transitions
 
     refers to: State[1]
 }
 
 class EntryTransition : AbstractTransition {
     redefine tran {
-        inline to.enter(commonRegion)
+        inline to.enter(parentRegion)
     }
 }
 
@@ -188,9 +188,9 @@ class Transition : AbstractTransition {
     refers from: State[1]
 
     features trigger: Trigger[1]
-    
-    contains actions: Action[0..*]
     features guard: Guard[0..1]
+
+    contains actions: Action[0..*]
 
     redefine tran {
         inline trigger.assumeIsTriggered()
@@ -199,11 +199,11 @@ class Transition : AbstractTransition {
             inline guard.assumeIsTrue()
         }
 
-        inline from.exit(commonRegion)
+        inline from.exit(parentRegion)
         inline for (action in actions) {
             inline action.main()
         }
-        inline to.enter(commonRegion)
+        inline to.enter(parentRegion)
     }
 }
 
