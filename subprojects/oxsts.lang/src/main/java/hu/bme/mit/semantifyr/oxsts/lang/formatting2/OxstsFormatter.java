@@ -286,7 +286,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
         formatCallLike(forOperation, document);
 
-        document.format(forOperation.getLoopVariable());
+//        document.format(forOperation.getLoopVariable());
         document.format(forOperation.getRangeExpression());
         document.format(forOperation.getBody());
     }
@@ -324,7 +324,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
         formatCallLike(inlineFor, document);
 
-        document.format(inlineFor.getLoopVariable());
+//        document.format(inlineFor.getLoopVariable());
         document.format(inlineFor.getRangeExpression());
         document.format(inlineFor.getBody());
     }
@@ -341,7 +341,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
         formatCallLike(inlineFor, document);
 
-        document.format(inlineFor.getLoopVariable());
+//        document.format(inlineFor.getLoopVariable());
         document.format(inlineFor.getRangeExpression());
         document.format(inlineFor.getBody());
         document.format(inlineFor.getElse());
