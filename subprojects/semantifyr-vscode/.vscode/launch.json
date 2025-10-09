@@ -27,6 +27,37 @@
 				"${workspaceFolder}/dist/**/*.cjs"
 			],
 			"preLaunchTask": "Build"
+		},
+		{
+			"name": "Run Extension (attach to XSTS LSP)",
+			"type": "extensionHost",
+			"request": "launch",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}"
+			],
+			"env": {
+				"DEBUG_XSTS_LSP": "5008"
+			},
+			"outFiles": [
+				"${workspaceFolder}/dist/**/*.cjs"
+			],
+			"preLaunchTask": "Build"
+		},
+		{
+			"name": "Run Extension (attach to each LSP)",
+			"type": "extensionHost",
+			"request": "launch",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}"
+			],
+			"env": {
+				"DEBUG_OXSTS_LSP": "5007",
+				"DEBUG_XSTS_LSP": "5008"
+			},
+			"outFiles": [
+				"${workspaceFolder}/dist/**/*.cjs"
+			],
+			"preLaunchTask": "Build"
 		}
 	]
 }
