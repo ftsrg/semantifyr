@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.semantics.transformation.inliner
 
 import com.google.inject.Inject
+import com.google.inject.Provider
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -35,12 +36,6 @@ class OxstsInliner {
     private lateinit var staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider
 
     @Inject
-    private lateinit var operationInliner: OperationInliner
-
-    @Inject
-    private lateinit var callExpressionInliner: ExpressionInliner
-
-    @Inject
     private lateinit var inlinedOxstsOperationOptimizer: InlinedOxstsOperationOptimizer
 
     @Inject
@@ -49,19 +44,37 @@ class OxstsInliner {
     @Inject
     private lateinit var compilationStateManager: CompilationStateManager
 
+    @Inject
+    private lateinit var operationCallInlinerProvider: Provider<OperationCallInliner>
+
+    @Inject
+    private lateinit var expressionCallInlinerProvider: Provider<ExpressionCallInliner>
+
     fun inlineOxsts(inlinedOxsts: InlinedOxsts) {
         initializeInlining(inlinedOxsts)
 
         compilationStateManager.commitModelState()
 
-        operationInliner.inlineOperations(inlinedOxsts.rootInstance, inlinedOxsts.initTransition)
-        operationInliner.inlineOperations(inlinedOxsts.rootInstance, inlinedOxsts.mainTransition)
-
-        callExpressionInliner.inlineExpressions(inlinedOxsts.rootInstance, inlinedOxsts.initTransition)
-        callExpressionInliner.inlineExpressions(inlinedOxsts.rootInstance, inlinedOxsts.mainTransition)
-        callExpressionInliner.inlineExpressions(inlinedOxsts.rootInstance, inlinedOxsts.property)
+        inlineOperationCalls(inlinedOxsts, inlinedOxsts.initTransition)
+        inlineOperationCalls(inlinedOxsts, inlinedOxsts.mainTransition)
+        inlineExpressionCalls(inlinedOxsts, inlinedOxsts.property)
 
         inlinedOxstsOperationOptimizer.optimize(inlinedOxsts)
+    }
+
+    private fun inlineOperationCalls(inlinedOxsts: InlinedOxsts, transition: TransitionDeclaration) {
+        val processor = operationCallInlinerProvider.get()
+        processor.instance = inlinedOxsts.rootInstance
+
+        for (branch in transition.branches) {
+            processor.process(branch)
+        }
+    }
+
+    private fun inlineExpressionCalls(inlinedOxsts: InlinedOxsts, propertyDeclaration: PropertyDeclaration) {
+        val processor = expressionCallInlinerProvider.get()
+        processor.instance = inlinedOxsts.rootInstance
+        processor.process(propertyDeclaration.expression)
     }
 
     private fun initializeInlining(inlinedOxsts: InlinedOxsts) {

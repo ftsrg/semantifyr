@@ -7,38 +7,42 @@
 package hu.bme.mit.semantifyr.semantics.transformation.inliner
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.oxsts.lang.utils.ExpressionVisitor
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticBinaryOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.BinaryOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInfinity
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralNothing
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralReal
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.semantics.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.semantics.expression.MetaStaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.expression.evaluateTyped
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.copy
 import org.eclipse.xtext.EcoreUtil2
 import java.util.*
 
-@CompilationScoped
-class ExpressionInliner {
+class ExpressionCallInliner : ExpressionVisitor<Unit>() {
+
+    lateinit var instance: Instance
 
     @Inject
     private lateinit var staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider
@@ -55,64 +59,100 @@ class ExpressionInliner {
     @Inject
     private lateinit var instanceReferenceProvider: InstanceReferenceProvider
 
-    fun inlineExpressions(instance: Instance, transition: TransitionDeclaration) {
-        for (branch in transition.branches) {
-            inlineCallExpressions(instance, branch)
-        }
+    private val processorQueue: ArrayDeque<Expression> = ArrayDeque<Expression>()
+
+    fun process(expression: Expression) {
+        visit(expression)
+        processAll()
     }
 
-    fun inlineExpressions(instance: Instance, property: PropertyDeclaration) {
-        inlineCallExpressions(instance, property.expression)
-    }
-
-    private fun inlineCallExpressions(instance: Instance, element: Element) {
-        val processorQueue = LinkedList<Element?>()
-
-        processorQueue += element
-
+    private fun processAll() {
         while (processorQueue.any()) {
-            val nextElement = processorQueue.removeFirst()
-
-            when (nextElement) {
-                is SequenceOperation -> processorQueue.addAll(0, nextElement.steps)
-                is ChoiceOperation -> {
-                    processorQueue.add(0, nextElement.`else`)
-                    processorQueue.addAll(0, nextElement.branches)
-                }
-                is ForOperation -> processorQueue.add(0, nextElement.body)
-                is IfOperation -> {
-                    processorQueue.add(0, nextElement.`else`)
-                    processorQueue.add(0, nextElement.body)
-                }
-                is HavocOperation -> processorQueue.add(0, nextElement.reference)
-                is AssumptionOperation -> processorQueue.add(0, nextElement.expression)
-                is AssignmentOperation -> {
-                    processorQueue.add(0, nextElement.reference)
-                    processorQueue.add(0, nextElement.expression)
-                }
-
-                is BinaryOperator -> {
-                    processorQueue.add(0, nextElement.left)
-                    processorQueue.add(0, nextElement.right)
-                }
-                is UnaryOperator -> processorQueue.add(0, nextElement.body)
-
-                is ArrayLiteral -> processorQueue.addAll(0, nextElement.values)
-                is NavigationSuffixExpression -> processorQueue.add(0, nextElement.primary)
-                is IndexingSuffixExpression -> {
-                    processorQueue.add(0, nextElement.primary)
-                    processorQueue.add(0, nextElement.index)
-                }
-
-                is CallSuffixExpression -> {
-                    val inlined = createInlinedExpression(instance, nextElement)
-                    EcoreUtil2.replace(nextElement, inlined)
-                    processorQueue.add(0, inlined)
-
-                    compilationStateManager.commitModelState()
-                }
-            }
+            val next = processorQueue.removeFirst()
+            visit(next)
         }
+    }
+
+    override fun visit(expression: RangeExpression) {
+        processorQueue.addFirst(expression.left)
+        processorQueue.addFirst(expression.right)
+    }
+
+    override fun visit(expression: ComparisonOperator) {
+        processorQueue.addFirst(expression.left)
+        processorQueue.addFirst(expression.right)
+    }
+
+    override fun visit(expression: ArithmeticBinaryOperator) {
+        processorQueue.addFirst(expression.left)
+        processorQueue.addFirst(expression.right)
+    }
+
+    override fun visit(expression: BooleanOperator) {
+        processorQueue.addFirst(expression.left)
+        processorQueue.addFirst(expression.right)
+    }
+
+    override fun visit(expression: ArithmeticUnaryOperator) {
+        processorQueue.addFirst(expression.body)
+    }
+
+    override fun visit(expression: NegationOperator) {
+        processorQueue.addFirst(expression.body)
+    }
+
+    override fun visit(expression: ArrayLiteral) {
+        for (index in expression.values.indices.reversed()) {
+            processorQueue.addFirst(expression.values[index])
+        }
+    }
+
+    override fun visit(expression: LiteralInfinity) {
+        // NO-OP
+    }
+
+    override fun visit(expression: LiteralReal) {
+        // NO-OP
+    }
+
+    override fun visit(expression: LiteralInteger) {
+        // NO-OP
+    }
+
+    override fun visit(expression: LiteralString) {
+        // NO-OP
+    }
+
+    override fun visit(expression: LiteralBoolean) {
+        // NO-OP
+    }
+
+    override fun visit(expression: LiteralNothing) {
+        // NO-OP
+    }
+
+    override fun visit(expression: ElementReference) {
+        // NO-OP
+    }
+
+    override fun visit(expression: SelfReference) {
+        // NO-OP
+    }
+
+    override fun visit(expression: NavigationSuffixExpression) {
+        // NO-OP
+    }
+
+    override fun visit(expression: CallSuffixExpression) {
+        val inlined = createInlinedExpression(instance, expression)
+        EcoreUtil2.replace(expression, inlined)
+        processorQueue.addFirst(inlined)
+
+        compilationStateManager.commitModelState()
+    }
+
+    override fun visit(expression: IndexingSuffixExpression) {
+        processorQueue.addFirst(expression.index)
     }
 
     private fun createInlinedExpression(instance: Instance, callSuffixExpression: CallSuffixExpression): Expression {

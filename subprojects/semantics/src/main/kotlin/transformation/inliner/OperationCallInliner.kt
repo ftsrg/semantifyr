@@ -7,9 +7,13 @@
 package hu.bme.mit.semantifyr.semantics.transformation.inliner
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OperationVisitor
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineCall
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineChoiceFor
@@ -17,6 +21,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineIfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineSeqFor
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
@@ -27,16 +32,19 @@ import hu.bme.mit.semantifyr.semantics.expression.MetaStaticExpressionEvaluatorP
 import hu.bme.mit.semantifyr.semantics.expression.RedefinitionAwareReferenceResolver
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.expression.evaluateTyped
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
+import hu.bme.mit.semantifyr.semantics.utils.allBranches
 import hu.bme.mit.semantifyr.semantics.utils.copy
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
-import java.util.*
 
-@CompilationScoped
-class OperationInliner {
+class OperationCallInliner : OperationVisitor<Unit>() {
+
+    lateinit var instance: Instance
+
+    @Inject
+    private lateinit var expressionCallInliner: ExpressionCallInliner
 
     @Inject
     private lateinit var staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider
@@ -56,33 +64,86 @@ class OperationInliner {
     @Inject
     private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
 
-    fun inlineOperations(instance: Instance, transition: TransitionDeclaration) {
-        val processorQueue = LinkedList<Operation>(transition.branches)
+    private val processorQueue = ArrayDeque<Operation>()
 
+    fun process(operation: Operation) {
+        expressionCallInliner.instance = instance
+        visit(operation)
+        processAll()
+    }
+
+    private fun processAll() {
         while (processorQueue.any()) {
-            val operation: Operation? = processorQueue.removeFirst()
-
-            when (operation) {
-                is SequenceOperation -> processorQueue.addAll(0, operation.steps)
-                is ChoiceOperation -> {
-                    processorQueue.add(0, operation.`else`)
-                    processorQueue.addAll(0, operation.branches)
-                }
-                is ForOperation -> processorQueue.add(0, operation.body)
-                is IfOperation -> {
-                    processorQueue.add(0, operation.`else`)
-                    processorQueue.add(0, operation.body)
-                }
-                is InlineOperation -> {
-                    val inlined = createInlinedOperation(instance, operation)
-                    EcoreUtil2.replace(operation, inlined)
-
-                    processorQueue.addAll(0, simplifyInlinedOperation(inlined))
-
-                    compilationStateManager.commitModelState()
-                }
-            }
+            val next = processorQueue.removeFirst()
+            visit(next)
         }
+    }
+
+    override fun visit(operation: SequenceOperation) {
+        for (index in operation.steps.indices.reversed()) {
+            processorQueue.addFirst(operation.steps[index])
+        }
+    }
+
+    override fun visit(operation: ChoiceOperation) {
+        for (index in operation.allBranches.indices.reversed()) {
+            processorQueue.addFirst(operation.allBranches[index])
+        }
+    }
+
+    override fun visit(operation: LocalVarDeclarationOperation) {
+        expressionCallInliner.process(operation.expression)
+    }
+
+    override fun visit(operation: ForOperation) {
+        processorQueue.addFirst(operation.body)
+    }
+
+    override fun visit(operation: IfOperation) {
+        processorQueue.addFirst(operation.body)
+        if (operation.`else` != null) {
+            processorQueue.addFirst(operation.`else`)
+        }
+    }
+
+    override fun visit(operation: HavocOperation) {
+        // NO-OP
+    }
+
+    override fun visit(operation: AssumptionOperation) {
+        expressionCallInliner.process(operation.expression)
+    }
+
+    override fun visit(operation: AssignmentOperation) {
+        expressionCallInliner.process(operation.expression)
+    }
+
+    override fun visit(operation: InlineCall) {
+        performInlining(operation)
+    }
+
+    override fun visit(operation: InlineIfOperation) {
+        performInlining(operation)
+    }
+
+    override fun visit(operation: InlineSeqFor) {
+        performInlining(operation)
+    }
+
+    override fun visit(operation: InlineChoiceFor) {
+        performInlining(operation)
+    }
+
+    private fun performInlining(operation: InlineOperation) {
+        val inlined = createInlinedOperation(instance, operation)
+        EcoreUtil2.replace(operation, inlined)
+
+        val actualInlined = simplifyInlinedOperation(inlined)
+        for (index in actualInlined.indices.reversed()) {
+            processorQueue.addFirst(actualInlined[index])
+        }
+
+        compilationStateManager.commitModelState()
     }
 
     private fun simplifyNestedSequence(operation: Operation): Boolean {
