@@ -19,9 +19,9 @@ import java.util.List;
 public class BuiltinLibrary extends ResourceSourcePathLibrary {
 
     public static final QualifiedName BUILTIN_LIBRARY_NAME = QualifiedName.create("semantifyr");
-    public static final QualifiedName BUILTIN_TEST_LIBRARY_NAME = BUILTIN_LIBRARY_NAME.append("test");
+    public static final QualifiedName BUILTIN_VERIFICATION_LIBRARY_NAME = BUILTIN_LIBRARY_NAME.append("verification");
     private URI builtinLibraryUri;
-    private URI builtinTestLibraryUri;
+    private URI builtinVerificationLibraryUri;
 
     public BuiltinLibrary() {
         super(getHomePath().resolve(".semantifyr").resolve("builtin"));
@@ -39,12 +39,12 @@ public class BuiltinLibrary extends ResourceSourcePathLibrary {
         return builtinLibraryUri;
     }
 
-    public URI getBuiltinTestResourceUri() {
-        if (builtinTestLibraryUri == null) {
-            builtinTestLibraryUri = resolveUri(BUILTIN_TEST_LIBRARY_NAME);
+    public URI getBuiltinVerificationResourceUri() {
+        if (builtinVerificationLibraryUri == null) {
+            builtinVerificationLibraryUri = resolveUri(BUILTIN_VERIFICATION_LIBRARY_NAME);
         }
 
-        return builtinTestLibraryUri;
+        return builtinVerificationLibraryUri;
     }
 
     @Override
@@ -61,7 +61,7 @@ public class BuiltinLibrary extends ResourceSourcePathLibrary {
     @Override
     protected void saveResources() {
         saveResource("hu/bme/mit/semantifyr/oxsts/lang/library/semantifyr.oxsts", Path.of("semantifyr.oxsts"));
-        saveResource("hu/bme/mit/semantifyr/oxsts/lang/library/semantifyr/test.oxsts", Path.of("semantifyr/test.oxsts"));
+        saveResource("hu/bme/mit/semantifyr/oxsts/lang/library/semantifyr/verification.oxsts", Path.of("semantifyr/verification.oxsts"));
     }
 
     @Override

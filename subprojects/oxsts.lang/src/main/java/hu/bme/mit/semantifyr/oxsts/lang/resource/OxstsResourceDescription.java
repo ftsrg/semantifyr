@@ -67,6 +67,10 @@ public class OxstsResourceDescription extends DefaultResourceDescription {
             strategy.createEObjectDescriptions(variableDeclaration, acceptor);
         }
 
+        if (inlinedOxsts.getRootFeature() != null) {
+            strategy.createEObjectDescriptions(inlinedOxsts.getRootFeature(), acceptor);
+        }
+
         return exportedEObjects;
     }
 
@@ -78,10 +82,22 @@ public class OxstsResourceDescription extends DefaultResourceDescription {
 
         // only the top-level declarations should be exported
         for (var declaration : oxstsModelPackage.getDeclarations()) {
-            strategy.createEObjectDescriptions(declaration, acceptor);
+            computeExportedObjects(declaration, acceptor);
         }
 
         return exportedEObjects;
+    }
+
+    protected void computeExportedObjects(Declaration declaration, IAcceptor<IEObjectDescription> acceptor) {
+        final List<IEObjectDescription> exportedEObjects = newArrayList();
+
+        strategy.createEObjectDescriptions(declaration, acceptor);
+
+        if (declaration instanceof EnumDeclaration enumDeclaration) {
+            for (var literal : enumDeclaration.getLiterals()) {
+                strategy.createEObjectDescriptions(literal, acceptor);
+            }
+        }
     }
 
 }

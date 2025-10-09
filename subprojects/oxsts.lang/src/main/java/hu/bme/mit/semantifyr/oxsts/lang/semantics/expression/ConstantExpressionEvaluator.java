@@ -11,7 +11,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionEvaluation> {
 
     @Override
-    protected ExpressionEvaluation compute(RangeExpression expression) {
+    protected ExpressionEvaluation visit(RangeExpression expression) {
         var left = evaluate(expression.getLeft());
         var right = evaluate(expression.getRight());
 
@@ -19,7 +19,7 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
     }
 
     @Override
-    protected ExpressionEvaluation compute(ComparisonOperator expression) {
+    protected ExpressionEvaluation visit(ComparisonOperator expression) {
         var left = evaluate(expression.getLeft());
         var right = evaluate(expression.getRight());
 
@@ -46,7 +46,7 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
     }
 
     @Override
-    protected ExpressionEvaluation compute(ArithmeticBinaryOperator expression) {
+    protected ExpressionEvaluation visit(ArithmeticBinaryOperator expression) {
         // FIXME: real evaluations, auto casting, etc.
         var left = evaluate(expression.getLeft());
         var right = evaluate(expression.getRight());
@@ -64,7 +64,7 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
     }
 
     @Override
-    protected ExpressionEvaluation compute(BooleanOperator expression) {
+    protected ExpressionEvaluation visit(BooleanOperator expression) {
         var left = evaluate(expression.getLeft());
         var right = evaluate(expression.getRight());
 
@@ -80,7 +80,7 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
     }
 
     @Override
-    protected ExpressionEvaluation compute(ArithmeticUnaryOperator expression) {
+    protected ExpressionEvaluation visit(ArithmeticUnaryOperator expression) {
         var body = evaluate(expression.getBody());
 
         if (body instanceof IntegerEvaluation(int value)) {
@@ -101,7 +101,7 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
     }
 
     @Override
-    protected ExpressionEvaluation compute(NegationOperator expression) {
+    protected ExpressionEvaluation visit(NegationOperator expression) {
         var evaluation = evaluate(expression.getBody());
 
         if (evaluation instanceof BooleanEvaluation(boolean value)) {
@@ -112,64 +112,64 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
     }
 
     @Override
-    protected ExpressionEvaluation compute(ArrayLiteral expression) {
+    protected ExpressionEvaluation visit(ArrayLiteral expression) {
         return new ArrayEvaluation(expression.getValues().stream().map(this::evaluate).toList());
     }
 
     @Override
-    protected ExpressionEvaluation compute(LiteralInfinity expression) {
+    protected ExpressionEvaluation visit(LiteralInfinity expression) {
         return InfinityEvaluation.INSTANCE;
     }
 
     @Override
-    protected ExpressionEvaluation compute(LiteralReal expression) {
+    protected ExpressionEvaluation visit(LiteralReal expression) {
         return new RealEvaluation(expression.getValue());
     }
 
     @Override
-    protected ExpressionEvaluation compute(LiteralInteger expression) {
+    protected ExpressionEvaluation visit(LiteralInteger expression) {
         return new IntegerEvaluation(expression.getValue());
     }
 
     @Override
-    protected ExpressionEvaluation compute(LiteralString expression) {
+    protected ExpressionEvaluation visit(LiteralString expression) {
         return new StringEvaluation(expression.getValue());
     }
 
     @Override
-    protected ExpressionEvaluation compute(LiteralBoolean expression) {
+    protected ExpressionEvaluation visit(LiteralBoolean expression) {
         return new BooleanEvaluation(expression.isValue());
     }
 
     @Override
-    protected ExpressionEvaluation compute(LiteralNothing expression) {
+    protected ExpressionEvaluation visit(LiteralNothing expression) {
         throw new IllegalArgumentException("This evaluator can only evaluate non-contextual expressions!");
     }
 
     @Override
-    protected ExpressionEvaluation compute(ElementReference expression) {
+    protected ExpressionEvaluation visit(ElementReference expression) {
         // TODO: implement with global functions
         throw new IllegalArgumentException("This evaluator can only evaluate non-contextual expressions!");
     }
 
     @Override
-    protected ExpressionEvaluation compute(SelfReference expression) {
+    protected ExpressionEvaluation visit(SelfReference expression) {
         throw new IllegalArgumentException("This evaluator can only evaluate non-contextual expressions!");
     }
 
     @Override
-    protected ExpressionEvaluation compute(NavigationSuffixExpression expression) {
+    protected ExpressionEvaluation visit(NavigationSuffixExpression expression) {
         throw new IllegalArgumentException("This evaluator can only evaluate non-contextual expressions!");
     }
 
     @Override
-    protected ExpressionEvaluation compute(CallSuffixExpression expression) {
+    protected ExpressionEvaluation visit(CallSuffixExpression expression) {
         // TODO: implement with global functions
         throw new IllegalArgumentException("This evaluator can only evaluate non-contextual expressions!");
     }
 
     @Override
-    protected ExpressionEvaluation compute(IndexingSuffixExpression expression) {
+    protected ExpressionEvaluation visit(IndexingSuffixExpression expression) {
         throw new IllegalArgumentException("This evaluator can only evaluate non-contextual expressions!");
     }
 

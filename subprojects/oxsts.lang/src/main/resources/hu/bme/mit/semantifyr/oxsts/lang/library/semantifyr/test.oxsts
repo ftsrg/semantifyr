@@ -1,7 +1,0 @@
-package semantifyr::test
-
-enum TestResult {
-    SAFE, UNSAFE, UNKNOWN
-}
-
-annotation TestCase(expected: TestResult, summary: string)

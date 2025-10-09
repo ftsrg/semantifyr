@@ -10,11 +10,11 @@ import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import hu.bme.mit.semantifyr.backends.theta.verification.ThetaVerifier;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.PausableRequestManager;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
-import hu.bme.mit.semantifyr.semantics.transformation.OxstsToXstsTransformer;
-import org.eclipse.xtext.EcoreUtil2;
+import hu.bme.mit.semantifyr.semantics.verification.OxstsVerifier;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 
@@ -22,22 +22,22 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 @Singleton
-public class CompileOxstsCommandHandler extends AbstractCommandHandler<ClassDeclaration> {
+public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDeclaration> {
 
     @Inject
-    protected Provider<OxstsToXstsTransformer> xstsTransformerProvider;
+    protected Provider<ThetaVerifier> oxstsVerifierProvider;
 
     @Inject
     protected PausableRequestManager pausableRequestManager;
 
     @Override
     public String getId() {
-        return "oxsts.class.compile";
+        return "oxsts.case.verify";
     }
 
     @Override
     public String getTitle() {
-        return "Compile OXSTS class";
+        return "Verify";
     }
 
     @Override
@@ -68,7 +68,7 @@ public class CompileOxstsCommandHandler extends AbstractCommandHandler<ClassDecl
 
     @Override
     protected Object execute(ClassDeclaration arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
-        progressContext.begin("Compiling class " + arguments.getName(), "Initializing");
+        progressContext.begin("Verifying class " + arguments.getName(), "Initializing");
 
         pausableRequestManager.pause();
 
@@ -76,10 +76,10 @@ public class CompileOxstsCommandHandler extends AbstractCommandHandler<ClassDecl
             compilationScopeRunnable(() -> {
                 progressContext.checkIsCancelled();
 
-                xstsTransformerProvider.get().transform(progressContext, arguments, true);
+                oxstsVerifierProvider.get().verify(progressContext, arguments);
             });
 
-            progressContext.end("Compilation done!");
+            progressContext.end("Verification done!");
         } finally {
             pausableRequestManager.resume();
         }

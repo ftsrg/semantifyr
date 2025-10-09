@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.semantics.transformation.instantiation
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
@@ -68,6 +69,9 @@ class OxstsInflator {
     @Inject
     private lateinit var staticEvaluationTransformer: StaticEvaluationTransformer
 
+    @Inject
+    private lateinit var expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider
+
     private val variableInstanceDomain = mutableMapOf<VariableDeclaration, Set<Instance>>()
 
     fun inflateInstanceModel(inlinedOxsts: InlinedOxsts) {
@@ -98,18 +102,24 @@ class OxstsInflator {
             val instanceName = instanceNameProvider.getInstanceName(instance)
             val variables = instanceManager.actualVariables(instance)
 
+            inlinedOxsts.variables += variables
+
             for (variable in variables) {
+                if (variable.type == null) {
+                    val typeEvaluation = expressionTypeEvaluatorProvider.evaluate(variable.expression)
+                    variable.type = typeEvaluation.domain
+                }
+
                 if (variable.type is FeatureDeclaration) {
                     val instances = evaluator.evaluateInstances(OxstsFactory.createElementReference(variable.type))
                     variableInstanceDomain[variable] = instances
                     variable.type = builtinAnything
                 }
+
                 variable.name = "$instanceName$INSTANCE_NAME_SEPARATOR${variable.name}"
 
                 expressionRewriter.rewriteExpressionsToContext(variable, instanceReference.copy())
             }
-
-            inlinedOxsts.variables += variables
         }
     }
 

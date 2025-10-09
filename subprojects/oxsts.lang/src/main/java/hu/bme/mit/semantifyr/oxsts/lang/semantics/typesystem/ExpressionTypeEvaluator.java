@@ -21,72 +21,72 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
     protected BuiltinSymbolResolver builtinSymbolResolver;
 
     @Override
-    protected TypeEvaluation compute(RangeExpression expression) {
+    protected TypeEvaluation visit(RangeExpression expression) {
         return TypeEvaluation.INVALID;
     }
 
     @Override
-    protected TypeEvaluation compute(ComparisonOperator expression) {
+    protected TypeEvaluation visit(ComparisonOperator expression) {
         return TypeEvaluation.INVALID;
     }
 
     @Override
-    protected TypeEvaluation compute(ArithmeticBinaryOperator expression) {
+    protected TypeEvaluation visit(ArithmeticBinaryOperator expression) {
         return TypeEvaluation.INVALID;
     }
 
     @Override
-    protected TypeEvaluation compute(BooleanOperator expression) {
+    protected TypeEvaluation visit(BooleanOperator expression) {
         return TypeEvaluation.INVALID;
     }
 
     @Override
-    protected TypeEvaluation compute(ArithmeticUnaryOperator expression) {
+    protected TypeEvaluation visit(ArithmeticUnaryOperator expression) {
         return TypeEvaluation.INVALID;
     }
 
     @Override
-    protected TypeEvaluation compute(NegationOperator expression) {
+    protected TypeEvaluation visit(NegationOperator expression) {
         return TypeEvaluation.INVALID;
     }
 
     @Override
-    protected TypeEvaluation compute(ArrayLiteral expression) {
+    protected TypeEvaluation visit(ArrayLiteral expression) {
         return TypeEvaluation.INVALID;
     }
 
     @Override
-    protected TypeEvaluation compute(LiteralInfinity expression) {
+    protected TypeEvaluation visit(LiteralInfinity expression) {
         return TypeEvaluation.INVALID;
     }
 
     @Override
-    protected TypeEvaluation compute(LiteralReal expression) {
+    protected TypeEvaluation visit(LiteralReal expression) {
         return new ImmutableTypeEvaluation(builtinSymbolResolver.realDatatype(expression));
     }
 
     @Override
-    protected TypeEvaluation compute(LiteralInteger expression) {
+    protected TypeEvaluation visit(LiteralInteger expression) {
         return new ImmutableTypeEvaluation(builtinSymbolResolver.intDatatype(expression));
     }
 
     @Override
-    protected TypeEvaluation compute(LiteralString expression) {
+    protected TypeEvaluation visit(LiteralString expression) {
         return new ImmutableTypeEvaluation(builtinSymbolResolver.stringDatatype(expression));
     }
 
     @Override
-    protected TypeEvaluation compute(LiteralBoolean expression) {
+    protected TypeEvaluation visit(LiteralBoolean expression) {
         return new ImmutableTypeEvaluation(builtinSymbolResolver.boolDatatype(expression));
     }
 
     @Override
-    protected TypeEvaluation compute(LiteralNothing expression) {
+    protected TypeEvaluation visit(LiteralNothing expression) {
         return TypeEvaluation.INVALID;
     }
 
     @Override
-    protected TypeEvaluation compute(ElementReference expression) {
+    protected TypeEvaluation visit(ElementReference expression) {
         var referencedElement = expression.getElement();
 
         // TODO: add validation diagnostic
@@ -98,7 +98,7 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
     }
 
     @Override
-    protected TypeEvaluation compute(SelfReference expression) {
+    protected TypeEvaluation visit(SelfReference expression) {
         var classDeclaration = expression.getClass_();
 
         if (classDeclaration == null) {
@@ -114,7 +114,7 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
     }
 
     @Override
-    protected TypeEvaluation compute(NavigationSuffixExpression expression) {
+    protected TypeEvaluation visit(NavigationSuffixExpression expression) {
         var member = expression.getMember();
 
         return switch (member) {
@@ -125,13 +125,13 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
     }
 
     @Override
-    protected TypeEvaluation compute(CallSuffixExpression expression) {
+    protected TypeEvaluation visit(CallSuffixExpression expression) {
         // TODO: should compute the called type, and then compute its return type
         return TypeEvaluation.INVALID;
     }
 
     @Override
-    protected TypeEvaluation compute(IndexingSuffixExpression expression) {
+    protected TypeEvaluation visit(IndexingSuffixExpression expression) {
         return evaluate(expression.getPrimary());
     }
 

@@ -63,6 +63,8 @@ object GammaToOxstsSerializer {
         appendLine("package ${gammaPackage.name}")
         appendLine()
 
+
+        appendLine("import semantifyr::verification")
         appendLine("import semantifyr::gamma::expressions")
         appendLine("import semantifyr::gamma::variables")
         appendLine("import semantifyr::gamma::statecharts")
@@ -290,6 +292,7 @@ object GammaToOxstsSerializer {
     }
 
     private fun IndentationAwareStringWriter.serialize(verificationCase: VerificationCase) {
+        appendLine("@VerificationCase(VerificationResult::UNSAFE)")
         appendIndent("class ${verificationCase.name} : GammaVerificationCase") {
             appendLine("contains ${verificationCase.component.name}: ${verificationCase.component.component.name} redefines component")
 

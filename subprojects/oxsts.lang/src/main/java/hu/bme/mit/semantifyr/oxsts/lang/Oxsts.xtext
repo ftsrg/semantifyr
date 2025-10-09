@@ -31,8 +31,8 @@ RootFeature returns FeatureDeclaration:
 
 InlinedVariable returns VariableDeclaration:
     annotation=AnnotationContainer
-    control ?= 'ctrl'? 'var' name=Identifier
-    (':' type=[DomainDeclaration|QualifiedIdentifier])?
+    'var' name=Identifier
+    ':' type=[DomainDeclaration|QualifiedIdentifier]
     multiplicity=Multiplicity?
     (':=' expression=Expression)?
     ';'?
@@ -120,7 +120,7 @@ RecordMember returns Declaration:
 
     -> (
         {VariableDeclaration.annotation=current}
-        control ?= 'ctrl'? 'var' name=Identifier
+        'var' name=Identifier
         (':' type=[DomainDeclaration|QualifiedIdentifier])?
         multiplicity=Multiplicity?
         (':=' expression=Expression)?
@@ -141,7 +141,7 @@ ClassMember returns Declaration:
 
     -> (
         {VariableDeclaration.annotation=current}
-        control?='ctrl'? 'var' name=Identifier
+        'var' name=Identifier
         (':' type=[DomainDeclaration|QualifiedIdentifier])?
         multiplicity=Multiplicity?
         (':=' expression=Expression)?
@@ -352,7 +352,7 @@ OperatorExpression returns Expression:
 ;
 
 enum BooleanOp:
-    AND='&&' | OR='||' | XOR='^^'
+    AND='&&' | OR='||' | XOR='^^' // | IFF='<->' | imply='->'
 ;
 
 BooleanOperator returns Expression:
@@ -388,7 +388,7 @@ AdditiveOperator returns Expression:
 ;
 
 enum MultiplicativeOp returns ArithmeticOp:
-    MUL='*' | DIV='/'
+    MUL='*' | DIV='/' // | MOD='%' | REM='rem'
 ;
 
 MultiplicativeOperator returns Expression:

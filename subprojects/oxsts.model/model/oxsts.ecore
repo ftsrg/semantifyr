@@ -113,25 +113,10 @@
         containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="returnType" eType="#//TypeDeclaration"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="XSTS" eSuperTypes="#//Element">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="enums" upperBound="-1"
-        eType="#//EnumDeclaration" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="mainTransition" lowerBound="1"
-        eType="#//TransitionDeclaration" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="property" lowerBound="1"
-        eType="#//PropertyDeclaration" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="variables" upperBound="-1"
-        eType="#//VariableDeclaration" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="initTransition" lowerBound="1"
-        eType="#//TransitionDeclaration"/>
-  </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="VariableDeclaration" eSuperTypes="#//Declaration">
     <eStructuralFeatures xsi:type="ecore:EReference" name="expression" eType="#//Expression"
         containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="type" eType="#//DomainDeclaration"/>
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="control" lowerBound="1"
-        eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//Boolean"
-        defaultValueLiteral="false"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="multiplicity" eType="#//Multiplicity"
         containment="true"/>
   </eClassifiers>

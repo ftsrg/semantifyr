@@ -30,7 +30,7 @@ class CompilationStateManager {
     fun initArtifactManager(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext) {
         this.inlinedOxsts = inlinedOxsts
         this.progressContext = progressContext
-        basePath = File("/tmp/semantifyr-output")
+        basePath = File(inlinedOxsts.eResource().uri.toFileString().replace(".oxsts", "${File.separator}steps"))
         basePath.deleteRecursively()
     }
 
@@ -41,7 +41,7 @@ class CompilationStateManager {
     fun commitModelState() {
         progressContext.checkIsCancelled()
 
-//        val modelFile = basePath.resolve("state${id++}.oxsts")
+//        val modelFile = basePath.resolve("step${id++}.oxsts")
 //        modelFile.parentFile.mkdirs()
 //
 //        val fileWriter = modelFile.writer()

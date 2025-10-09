@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.transformation.xsts
+package hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
@@ -20,6 +20,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.semantics.optimization.XstsExpressionOptimizer
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.allBranches
 import hu.bme.mit.semantifyr.semantics.utils.copy
@@ -29,6 +30,9 @@ class ChoiceElseRewriter {
 
     @Inject
     private lateinit var xstsExpressionOptimizer: XstsExpressionOptimizer
+
+    @Inject
+    private lateinit var compilationStateManager: CompilationStateManager
 
     fun rewriteChoiceElse(declaration: TransitionDeclaration) {
         for (branch in declaration.branches) {
@@ -73,11 +77,13 @@ class ChoiceElseRewriter {
 
         val choiceElseAssumption = OxstsFactory.createAssumptionOperation(negatedAssumptionExpression)
 
-        xstsExpressionOptimizer.optimize(choiceElseAssumption)
-
         operationElse.steps.add(0, choiceElseAssumption)
 
         operation.branches += operationElse
+
+        compilationStateManager.commitModelState()
+
+        xstsExpressionOptimizer.optimize(choiceElseAssumption)
     }
 
     private fun calculateAssumption(operation: Operation): Expression {
@@ -97,14 +103,14 @@ class ChoiceElseRewriter {
         return operation.steps.map {
             calculateAssumption(it)
         }.fold<Expression, Expression>(OxstsFactory.createLiteralBoolean(true)) { left, right ->
-            OxstsFactory.createBooleanOperator(BooleanOp.OR, left, right)
+            OxstsFactory.createBooleanOperator(BooleanOp.AND, left, right)
         }
     }
 
     private fun calculateAssumption(operation: ChoiceOperation): Expression {
         return operation.branches.map {
             calculateAssumption(it)
-        }.fold<Expression, Expression>(OxstsFactory.createLiteralBoolean(true)) { left, right ->
+        }.fold<Expression, Expression>(OxstsFactory.createLiteralBoolean(false)) { left, right ->
             OxstsFactory.createBooleanOperator(BooleanOp.OR, left, right)
         }
     }

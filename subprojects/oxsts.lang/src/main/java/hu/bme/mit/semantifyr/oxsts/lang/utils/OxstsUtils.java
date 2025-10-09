@@ -60,4 +60,27 @@ public class OxstsUtils {
         return declaration.getInnerFeatures().stream().map(f -> (Declaration) f).toList();
     }
 
+    public static boolean isAnnotatedWith(AnnotatedElement element, AnnotationDeclaration annotationDeclaration) {
+        var annotationContainer = element.getAnnotation();
+
+        return annotationContainer.getAnnotations().stream().anyMatch(a -> a.getDeclaration() == annotationDeclaration);
+    }
+
+    public static Annotation getAnnotation(AnnotatedElement element, AnnotationDeclaration annotationDeclaration) {
+        var annotationContainer = element.getAnnotation();
+
+        return annotationContainer.getAnnotations().stream().filter(a -> a.getDeclaration() == annotationDeclaration).findFirst().orElse(null);
+    }
+
+    public static Expression getAnnotationValue(Annotation annotation, ParameterDeclaration parameterDeclaration) {
+        var argument = annotation.getArguments().stream().filter(a -> a.getParameter() == parameterDeclaration).findFirst().orElse(null);
+
+        if (argument == null) {
+            var position = annotation.getDeclaration().getParameters().indexOf(parameterDeclaration);
+            argument = annotation.getArguments().get(position);
+        }
+
+        return argument.getExpression();
+    }
+
 }

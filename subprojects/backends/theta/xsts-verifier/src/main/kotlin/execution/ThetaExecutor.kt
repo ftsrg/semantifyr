@@ -1,10 +1,10 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.semantifyr.theta
+package hu.bme.mit.semantifyr.backends.theta.verification.execution
 
 import com.github.dockerjava.api.command.CreateContainerResponse
 import com.github.dockerjava.api.model.Bind
@@ -14,10 +14,7 @@ import com.github.dockerjava.api.model.WaitResponse
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.StreamLoggerCallback
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.awaitAny
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.loggerFactory
-import hu.bme.mit.semantifyr.oxsts.semantifyr.utils.runAsync
+import hu.bme.mit.semantifyr.semantics.utils.loggerFactory
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -38,33 +35,84 @@ import kotlin.time.toDuration
 import kotlin.time.toDurationUnit
 
 class ThetaRuntimeDetails(
-    val id: Int,
     val workingDirectory: String,
-    val name: String
+    val name: String,
+    val id: Int,
 ) {
-    val modelFile = "$name.xsts"
-    val cexFile = "$name$id.cex"
-    val logFile = "theta$id.out"
-    val errFile = "theta$id.err"
+    val modelFileName = "$name.xsts"
+    val cexFileName = "out.cex"
+    val logFileName = "theta.out"
+    val errFileName = "theta.err"
 
-    val modelPath = "$workingDirectory${File.separator}$modelFile"
-    val cexPath = "$workingDirectory${File.separator}$cexFile"
-    val logPath = "$workingDirectory${File.separator}$logFile"
-    val errPath = "$workingDirectory${File.separator}$errFile"
+    val modelPath = "$workingDirectory${File.separator}$modelFileName"
+    val artifactsPath = "$workingDirectory${File.separator}verification${File.separator}artifacts$id"
+    val cexPath = "$workingDirectory${File.separator}$cexFileName"
+    val logPath = "$artifactsPath${File.separator}$logFileName"
+    val errPath = "$artifactsPath${File.separator}$errFileName"
 
     val isUnsafe: Boolean by lazy {
         Files.exists(Paths.get(cexPath))
     }
+    val isSafe: Boolean
+        get() = !isUnsafe
 }
 
-class ThetaExecutor(
-    private val version: String,
-    private val parameters: List<String>,
-    private val timeout: Long = 3,
-    private val timeUnit: TimeUnit = TimeUnit.MINUTES
-) {
+interface ThetaExecutor {
 
-    private val logger by loggerFactory()
+    fun initialize()
+
+    suspend fun runTheta(
+        workingDirectory: String,
+        name: String,
+        parameter: String,
+        id: Int,
+    ): ThetaRuntimeDetails
+
+}
+
+abstract class AbstractThetaExecutor(
+    protected val version: String,
+    protected val parameters: List<String>,
+    protected val timeout: Long = 3,
+    protected val timeUnit: TimeUnit = TimeUnit.MINUTES
+) : ThetaExecutor {
+
+    protected open val logger by loggerFactory()
+
+    private suspend fun runWorkflow(workingDirectory: String, name: String) = supervisorScope {
+        val jobs = parameters.indices.map { index ->
+            async(Dispatchers.IO) {
+                runTheta(workingDirectory, name, parameters[index], index)
+            }
+        }
+
+        try {
+            logger.debug("Awaiting jobs")
+            jobs.awaitAny()
+        } finally {
+            logger.debug("Canceling jobs")
+            jobs.forEach {
+                it.cancelAndJoin()
+            }
+        }
+    }
+
+    fun run(workingDirectory: String, name: String) = runBlocking {
+        val absoluteDirectory = Path.of(workingDirectory).absolute().toString()
+
+        runWorkflow(absoluteDirectory, name)
+    }
+
+}
+
+class DockerBasedThetaExecutor(
+    version: String,
+    parameters: List<String>,
+    timeout: Long = 3,
+    timeUnit: TimeUnit = TimeUnit.MINUTES
+) : AbstractThetaExecutor(version, parameters, timeout, timeUnit) {
+
+    override val logger by loggerFactory()
 
     private val config = DefaultDockerClientConfig.createDefaultConfigBuilder().build()
     private val httpClient = ApacheDockerHttpClient.Builder()
@@ -72,19 +120,21 @@ class ThetaExecutor(
         .sslConfig(config.sslConfig).build()
     private val dockerClient = DockerClientImpl.getInstance(config, httpClient);
 
-    fun initTheta() {
+    override fun initialize() {
         dockerClient.pullImageCmd("ftsrg/theta-xsts-cli").withTag(version).start().awaitCompletion()
     }
 
-    private suspend fun runTheta(
+    override suspend fun runTheta(
         workingDirectory: String,
         name: String,
         parameter: String,
-        id: Int
+        id: Int,
     ): ThetaRuntimeDetails {
         logger.info("Starting theta ($id)")
 
-        val thetaRuntimeDetails = ThetaRuntimeDetails(id, workingDirectory, name)
+        val thetaRuntimeDetails = ThetaRuntimeDetails(workingDirectory, name, id)
+
+        File(thetaRuntimeDetails.artifactsPath).mkdirs()
 
         val container = createContainer(thetaRuntimeDetails, parameter)
 
@@ -151,38 +201,14 @@ class ThetaExecutor(
         val container = dockerClient.createContainerCmd("ftsrg/theta-xsts-cli:$version")
             .withCmd(
                 "CEGAR",
-                "--model", "/host/${thetaRuntimeDetails.modelFile}",
-                "--cexfile", "/host/${thetaRuntimeDetails.cexFile}",
+                "--model", "/host/${thetaRuntimeDetails.modelFileName}",
+                "--cexfile", "/host/${thetaRuntimeDetails.cexFileName}",
                 *parameter.split(" ").toTypedArray(),
             )
             .withHostConfig(hostConfig)
             .exec()
 
         return container
-    }
-
-    private suspend fun runWorkflow(workingDirectory: String, name: String) = supervisorScope {
-        val jobs = parameters.indices.map { index ->
-            async(Dispatchers.IO) {
-                runTheta(workingDirectory, name, parameters[index], index)
-            }
-        }
-
-        try {
-            logger.debug("Awaiting jobs")
-            jobs.awaitAny()
-        } finally {
-            logger.debug("Canceling jobs")
-            jobs.forEach {
-                it.cancelAndJoin()
-            }
-        }
-    }
-
-    fun run(workingDirectory: String, name: String) = runBlocking {
-        val absoluteDirectory = Path.of(workingDirectory).absolute().toString()
-
-        runWorkflow(absoluteDirectory, name)
     }
 
 }

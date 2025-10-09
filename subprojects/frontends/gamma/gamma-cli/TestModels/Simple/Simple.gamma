@@ -11,27 +11,29 @@ statechart LeaderStatechart [
     in event stop
     out event start
 ] {
-    timeout t1
-
     region Main {
         state Idle
         state Operational
+        state Stopped
 
         entry transition to Idle
         transition Idle to Operational when event fire / raise start
-        transition Operational to Idle when event stop
+        transition Operational to Stopped when event stop
     }
 }
 
 statechart WorkerStatechart [
     in event start
+    in event stop
 ] {
     region Main {
         state Idle
         state Operational
+        state Stopped
 
         entry transition to Idle
         transition Idle to Operational when event start
+        transition Operational to Stopped when event stop
     }
 }
 
@@ -44,28 +46,33 @@ sync component System[
 
     channel fire to leader.fire
     channel stop to leader.stop
+    channel stop to worker.stop
     channel leader.start to worker.start
 }
 
 verification case WorkerStatechartIdleReachable {
+    expect reachable
     component system : System
 
     expression { state system.worker.Main.Idle }
 }
 
 verification case WorkerStatechartOperationalReachable {
+    expect reachable
     component system : System
 
     expression { state system.worker.Main.Operational }
 }
 
 verification case LeaderStatechartIdleReachable {
+    expect reachable
     component system : System
 
     expression { state system.leader.Main.Idle }
 }
 
 verification case LeaderStatechartOperationalReachable {
+    expect reachable
     component system : System
 
     expression { state system.leader.Main.Operational }

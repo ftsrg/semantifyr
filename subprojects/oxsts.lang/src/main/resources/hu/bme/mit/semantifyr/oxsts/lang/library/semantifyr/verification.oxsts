@@ -1,0 +1,7 @@
+package semantifyr::verification
+
+enum VerificationResult {
+    SAFE, UNSAFE, UNKNOWN
+}
+
+annotation VerificationCase(expected: VerificationResult, summary: string)

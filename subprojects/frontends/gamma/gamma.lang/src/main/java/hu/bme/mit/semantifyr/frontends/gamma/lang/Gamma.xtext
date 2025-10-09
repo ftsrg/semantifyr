@@ -163,6 +163,7 @@ Channel:
 
 VerificationCase:
     'verification' 'case' name=ID '{'
+        'expect' 'reachable'
         component = ComponentInstance
         'expression' '{' expression=Expression '}'
     '}'

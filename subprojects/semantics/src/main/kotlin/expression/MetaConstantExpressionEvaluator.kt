@@ -38,75 +38,75 @@ inline fun <reified T : A, A> ExpressionEvaluator<A>.evaluateTyped(clazz: Class<
 
 open class MetaConstantExpressionEvaluator : ExpressionEvaluator<NamedElement>() {
 
-    override fun compute(expression: RangeExpression): NamedElement {
+    override fun visit(expression: RangeExpression): NamedElement {
         error("This expression is not a meta-expression!")
     }
 
-    override fun compute(expression: ComparisonOperator): NamedElement {
+    override fun visit(expression: ComparisonOperator): NamedElement {
         error("This expression is not a meta-expression!")
     }
 
-    override fun compute(expression: ArithmeticBinaryOperator): NamedElement {
+    override fun visit(expression: ArithmeticBinaryOperator): NamedElement {
         error("This expression is not a meta-expression!")
     }
 
-    override fun compute(expression: BooleanOperator): NamedElement {
+    override fun visit(expression: BooleanOperator): NamedElement {
         error("This expression is not a meta-expression!")
     }
 
-    override fun compute(expression: ArithmeticUnaryOperator): NamedElement {
+    override fun visit(expression: ArithmeticUnaryOperator): NamedElement {
         error("This expression is not a meta-expression!")
     }
 
-    override fun compute(expression: NegationOperator): NamedElement {
+    override fun visit(expression: NegationOperator): NamedElement {
         error("This expression is not a meta-expression!")
     }
 
-    override fun compute(expression: ArrayLiteral): NamedElement {
+    override fun visit(expression: ArrayLiteral): NamedElement {
         error("This expression is not a meta-expression!")
     }
 
-    override fun compute(expression: LiteralInfinity): NamedElement {
+    override fun visit(expression: LiteralInfinity): NamedElement {
         error("This expression is not a meta-expression!")
     }
 
-    override fun compute(expression: LiteralReal): NamedElement {
+    override fun visit(expression: LiteralReal): NamedElement {
         error("This expression is not a meta-expression!")
     }
 
-    override fun compute(expression: LiteralInteger): NamedElement {
+    override fun visit(expression: LiteralInteger): NamedElement {
         error("This expression is not a meta-expression!")
     }
 
-    override fun compute(expression: LiteralString): NamedElement {
+    override fun visit(expression: LiteralString): NamedElement {
         error("This expression is not a meta-expression!")
     }
 
-    override fun compute(expression: LiteralBoolean): NamedElement {
+    override fun visit(expression: LiteralBoolean): NamedElement {
         error("This expression is not a meta-expression!")
     }
 
-    override fun compute(expression: LiteralNothing): NamedElement {
+    override fun visit(expression: LiteralNothing): NamedElement {
         error("This expression is not a meta-expression!")
     }
 
-    override fun compute(expression: ElementReference): NamedElement {
+    override fun visit(expression: ElementReference): NamedElement {
         return expression.element
     }
 
-    override fun compute(expression: SelfReference): NamedElement {
+    override fun visit(expression: SelfReference): NamedElement {
         error("This expression is not a meta-expression!")
     }
 
-    override fun compute(expression: NavigationSuffixExpression): NamedElement {
+    override fun visit(expression: NavigationSuffixExpression): NamedElement {
         error("This expression is a static meta-expression!")
     }
 
-    override fun compute(expression: CallSuffixExpression): NamedElement {
+    override fun visit(expression: CallSuffixExpression): NamedElement {
         error("This expression is not a meta-expression!")
     }
 
-    override fun compute(expression: IndexingSuffixExpression): NamedElement {
+    override fun visit(expression: IndexingSuffixExpression): NamedElement {
         error("This expression is not a meta-expression!")
     }
 

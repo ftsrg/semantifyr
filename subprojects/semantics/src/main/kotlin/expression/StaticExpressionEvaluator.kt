@@ -52,7 +52,7 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
     @Inject
     private lateinit var domainMemberCalculator: DomainMemberCalculator
 
-    override fun compute(expression: ComparisonOperator): ExpressionEvaluation {
+    override fun visit(expression: ComparisonOperator): ExpressionEvaluation {
         val left = evaluate(expression.getLeft())
         val right = evaluate(expression.getRight())
 
@@ -64,22 +64,22 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
             }
         }
 
-        return super.compute(expression)
+        return super.visit(expression)
     }
 
-    override fun compute(expression: ElementReference): ExpressionEvaluation {
+    override fun visit(expression: ElementReference): ExpressionEvaluation {
         return evaluateElement(expression.element)
     }
 
-    override fun compute(expression: SelfReference): ExpressionEvaluation {
+    override fun visit(expression: SelfReference): ExpressionEvaluation {
         return InstanceEvaluation(instance)
     }
 
-    override fun compute(expression: LiteralNothing?): ExpressionEvaluation {
+    override fun visit(expression: LiteralNothing?): ExpressionEvaluation {
         return InstanceEvaluation(emptySet())
     }
 
-    override fun compute(expression: NavigationSuffixExpression): ExpressionEvaluation {
+    override fun visit(expression: NavigationSuffixExpression): ExpressionEvaluation {
         val instance = evaluateInstances(expression.primary)
 
         if (instance.isEmpty()) {
@@ -98,15 +98,15 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
         return evaluator.evaluateElement(expression.member)
     }
 
-    override fun compute(expression: CallSuffixExpression): ExpressionEvaluation {
+    override fun visit(expression: CallSuffixExpression): ExpressionEvaluation {
         error("TODO: implement")
         val metaEvaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(instance)
         val calledElement = metaEvaluator.evaluate(expression.primary)
         // FIXME: evaluate the called element
-        return super.compute(expression)
+        return super.visit(expression)
     }
 
-    override fun compute(expression: IndexingSuffixExpression): ExpressionEvaluation {
+    override fun visit(expression: IndexingSuffixExpression): ExpressionEvaluation {
         TODO("TODO: implement")
     }
 

@@ -19,22 +19,37 @@ import java.util.List;
 public class OxstsCommandService implements IExecutableCommandService {
 
     @Inject
-    private CompileOxstsCommandHandler compileOxstsCommandHandler;
+    private InlineOxstsCommandHandler inlineOxstsCommandHandler;
+
+    @Inject
+    private VerifyOxstsCommandHandler verifyOxstsCommandHandler;
+
+    @Inject
+    private CompileInlinedOxstsCommandHandler compileInlinedOxstsCommandHandler;
+
+    private List<CommandHandler> commandHandlers;
+
+    protected List<CommandHandler> getCommandHandlers() {
+        if (commandHandlers == null) {
+            commandHandlers = List.of(
+                    inlineOxstsCommandHandler,
+                    compileInlinedOxstsCommandHandler,
+                    verifyOxstsCommandHandler
+            );
+        }
+        return commandHandlers;
+    }
 
     @Override
     public List<String> initialize() {
-        return List.of(
-                compileOxstsCommandHandler.getId()
-        );
+        return getCommandHandlers().stream().map(CommandHandler::getId).toList();
     }
 
     @Override
     public Object execute(ExecuteCommandParams params, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
-        if (! compileOxstsCommandHandler.getId().equals(params.getCommand())) {
-            return null;
-        }
+        var commandHandler = getCommandHandlers().stream().filter(c -> params.getCommand().equals(c.getId())).findFirst();
 
-        return compileOxstsCommandHandler.execute(params, access, cancelIndicator);
+        return commandHandler.map(handler -> handler.execute(params, access, cancelIndicator)).orElse(null);
     }
 
 }

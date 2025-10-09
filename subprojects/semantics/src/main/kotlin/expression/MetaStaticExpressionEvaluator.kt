@@ -22,11 +22,11 @@ class MetaStaticExpressionEvaluator : MetaConstantExpressionEvaluator() {
     @Inject
     private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
 
-    override fun compute(expression: ElementReference): NamedElement {
+    override fun visit(expression: ElementReference): NamedElement {
         return redefinitionAwareReferenceResolver.resolve(instance, expression.element)
     }
 
-    override fun compute(expression: NavigationSuffixExpression): NamedElement {
+    override fun visit(expression: NavigationSuffixExpression): NamedElement {
         val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
         val context = evaluator.evaluateSingleInstanceOrNull(expression.primary)
 

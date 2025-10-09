@@ -22,6 +22,7 @@ public class LibraryAdapter extends AdapterImpl {
     private ResourceSet resourceSet;
 
     private Resource builtinResource;
+    private Resource builtinVerificationResource;
 
     @Inject
     private BuiltinLibrary builtinLibrary;
@@ -85,6 +86,14 @@ public class LibraryAdapter extends AdapterImpl {
         }
 
         return builtinResource;
+    }
+
+    public Resource getBuiltinVerificationResource() {
+        if (builtinVerificationResource == null) {
+            builtinVerificationResource = resourceSet.getResource(builtinLibrary.getBuiltinVerificationResourceUri(), true);
+        }
+
+        return builtinVerificationResource;
     }
 
 }
