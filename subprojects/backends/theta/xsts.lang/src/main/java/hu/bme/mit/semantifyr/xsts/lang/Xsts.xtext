@@ -13,7 +13,7 @@ import "http://www.eclipse.org/emf/2002/Ecore" as Ecore
 XstsModel:
     {XstsModel}
     enumDeclarations+=EnumDeclaration*
-    variableDeclarations+=VariableDeclaration*
+    variableDeclarations+=TopLevelVariableDeclaration*
     tran=Transition?
     init=Init?
     env=Env?
@@ -31,27 +31,32 @@ EnumLiteral:
 ;
 
 VariableDeclaration:
+	TopLevelVariableDeclaration
+	| LocalVarDeclOperation
+;
+
+TopLevelVariableDeclaration:
 	control?='ctrl'? 'var' name=Identifier ':' type=Type ('=' expression=Expression)?
 ;
 
 Transition:
-	'trans' steps+=SequenceOperation
+	'trans' branches+=SequenceOperation
     (
-        'or' steps+=SequenceOperation
+        'or' branches+=SequenceOperation
     )*
 ;
 
 Init returns Transition:
-	'init' steps+=SequenceOperation
+	'init' branches+=SequenceOperation
     (
-        'or' steps+=SequenceOperation
+        'or' branches+=SequenceOperation
     )*
 ;
 
 Env returns Transition:
-	'env' steps+=SequenceOperation
+	'env' branches+=SequenceOperation
     (
-        'or' steps+=SequenceOperation
+        'or' branches+=SequenceOperation
     )*
 ;
 
@@ -107,20 +112,20 @@ AssignmentOperation:
 	reference=WriteReferenceExpression ':=' expression=Expression ';'
 ;
 
-LocalVarDeclOperation returns VariableDeclaration:
+LocalVarDeclOperation:
 	'local' 'var' name=Identifier ':' type=Type ('=' expression=Expression)? ';'
 ;
 
 SequenceOperation:
     {SequenceOperation} '{'
-		(operation+=Operation)*
+		(steps+=Operation)*
 	'}'
 ;
 
 ChoiceOperation:
-	'choice' operation+=Operation
+	'choice' branches+=Operation
 	(
-		'or' operation+=Operation
+		'or' branches+=Operation
 	)*
 	(
 		'else' else=Operation
@@ -146,12 +151,12 @@ Expression:
 ;
 
 OperatorExpression returns Expression:
-    BooleanOperator
+    IfThenElseExpression
+    | BooleanOperator
 ;
 
-IfThenElseExpression returns Expression:
+IfThenElseExpression:
     'if' guard=Expression 'then' then=Expression 'else' else=Expression
-    | BooleanOperator
 ;
 
 enum BooleanOp:
@@ -245,9 +250,13 @@ LiteralArray:
 	| DefaultLiteralArray
 ;
 
+LiteralArrayElement:
+    index=Expression '<-' value=Expression
+;
+
 ConcreteLiteralArray:
     '['
-        (indexExpression+=Expression '<-' valueExpression+=Expression ',')+
+        (values+=LiteralArrayElement ',')+
         ('<' indexType=Type '>')?
         'default' '<-' elseExpression=Expression
     ']'
