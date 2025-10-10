@@ -32,7 +32,7 @@ RootFeature returns FeatureDeclaration:
 InlinedVariable returns VariableDeclaration:
     annotation=AnnotationContainer
     'var' name=Identifier
-    ':' type=[DomainDeclaration|QualifiedIdentifier]
+    (':' type=[DomainDeclaration|QualifiedIdentifier])?
     multiplicity=Multiplicity?
     (':=' expression=Expression)?
     ';'?

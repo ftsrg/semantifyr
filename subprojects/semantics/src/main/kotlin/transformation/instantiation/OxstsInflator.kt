@@ -69,9 +69,6 @@ class OxstsInflator {
     @Inject
     private lateinit var staticEvaluationTransformer: StaticEvaluationTransformer
 
-    @Inject
-    private lateinit var expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider
-
     private val variableInstanceDomain = mutableMapOf<VariableDeclaration, Set<Instance>>()
 
     fun inflateInstanceModel(inlinedOxsts: InlinedOxsts) {
@@ -105,11 +102,6 @@ class OxstsInflator {
             inlinedOxsts.variables += variables
 
             for (variable in variables) {
-                if (variable.type == null) {
-                    val typeEvaluation = expressionTypeEvaluatorProvider.evaluate(variable.expression)
-                    variable.type = typeEvaluation.domain
-                }
-
                 if (variable.type is FeatureDeclaration) {
                     val instances = evaluator.evaluateInstances(OxstsFactory.createElementReference(variable.type))
                     variableInstanceDomain[variable] = instances
