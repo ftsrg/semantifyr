@@ -7,20 +7,15 @@
 package hu.bme.mit.semantifyr.semantics.optimization
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
-import hu.bme.mit.semantifyr.semantics.utils.allBranches
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import hu.bme.mit.semantifyr.semantics.utils.isConstantLiteralTrue
 import org.eclipse.xtext.EcoreUtil2
@@ -30,6 +25,9 @@ class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
 
     @Inject
     private lateinit var compilationStateManager: CompilationStateManager
+
+    @Inject
+    private lateinit var isAlwaysExecutableEvaluator: IsAlwaysExecutableEvaluator
 
     override fun doOptimizationStep(element: Element): Boolean {
         return removeConstantTrueAssumptions(element)
@@ -61,7 +59,7 @@ class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
 
     private fun removeRedundantChoiceElse(element: Element): Boolean {
         val redundantChoiceElse = element.eAllOfType<ChoiceOperation>().firstOrNull {
-            it.`else` != null && it.branches.any { it.isAlwaysExecutable() }
+            it.`else` != null && it.branches.any { isAlwaysExecutableEvaluator.isAlwaysExecutable(it) }
         }
 
         if (redundantChoiceElse == null) {
@@ -172,19 +170,4 @@ class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
         return true
     }
 
-}
-
-// Upper-approximation of if this operation is never not executable.
-// False does NOT mean this operation is never executable!
-private fun Operation.isAlwaysExecutable(): Boolean {
-    return when (this) {
-        is AssumptionOperation -> expression.isConstantLiteralTrue
-        is AssignmentOperation -> true
-        is HavocOperation -> true
-        is ForOperation -> body.isAlwaysExecutable()
-        is SequenceOperation -> steps.all { it.isAlwaysExecutable() }
-        is ChoiceOperation -> allBranches.any { it.isAlwaysExecutable() }
-        is IfOperation -> body.isAlwaysExecutable() && (`else` == null || `else`.isAlwaysExecutable())
-        else -> error("Unknown operation $this")
-    }
 }
