@@ -14,11 +14,13 @@ import hu.bme.mit.semantifyr.backends.theta.verification.ThetaVerifier;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.PausableRequestManager;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
-import hu.bme.mit.semantifyr.semantics.verification.OxstsVerifier;
+import hu.bme.mit.semantifyr.semantics.verification.VerificationCaseRunResult;
+import hu.bme.mit.semantifyr.semantics.verification.VerificationResult;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 @Singleton
@@ -72,19 +74,35 @@ public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
 
         pausableRequestManager.pause();
 
+        var result = new CompletableFuture<VerificationCaseRunResult>();
+
         try {
             compilationScopeRunnable(() -> {
                 progressContext.checkIsCancelled();
 
-                oxstsVerifierProvider.get().verify(progressContext, arguments);
+                result.complete(oxstsVerifierProvider.get().verify(progressContext, arguments));
             });
 
             progressContext.end("Verification done!");
+        } catch (Exception e) {
+            result.completeExceptionally(e);
         } finally {
             pausableRequestManager.resume();
         }
 
-        return null;
+        try {
+            var runResult = result.get();
+            var res = "passed";
+            if (runResult.component1().equals(VerificationResult.Passed)) {
+                res = "passed";
+            } else if (runResult.component1().equals(VerificationResult.Failed)) {
+                res = "failed";
+            }
+
+            return new VerificationCaseRunResultDto(res, runResult.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
