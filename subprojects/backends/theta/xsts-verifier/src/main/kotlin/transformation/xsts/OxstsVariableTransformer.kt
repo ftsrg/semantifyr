@@ -8,6 +8,8 @@ package hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.AnnotationHandler
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
@@ -27,6 +29,9 @@ class OxstsVariableTransformer {
 
     @Inject
     private lateinit var annotationHandler: AnnotationHandler
+
+    @Inject
+    private lateinit var expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider
 
     private val topVariableMap = mutableMapOf<VariableDeclaration, XstsTopLevelVariableDeclaration>()
     private val localVariableMap = mutableMapOf<LocalVarDeclarationOperation, XstsLocalVarDeclarationOperation>()
@@ -64,11 +69,18 @@ class OxstsVariableTransformer {
 
     private fun transformInternals(variable: XstsVariableDeclaration, variableDeclaration: VariableDeclaration) {
         variable.name = variableDeclaration.name
-        variable.type = oxstsTypeReferenceTransformer.transform(variableDeclaration.type, variableDeclaration.multiplicity)
+
+        val type = variableDeclaration.type ?: evaluateExpressionType(variableDeclaration)
+        variable.type = oxstsTypeReferenceTransformer.transform(type, variableDeclaration.multiplicity)
 
         if (variableDeclaration.expression != null) {
             variable.expression = oxstsExpressionTransformer.transform(variableDeclaration.expression)
         }
+    }
+
+    private fun evaluateExpressionType(variableDeclaration: VariableDeclaration): DomainDeclaration {
+        val typeEvaluation = expressionTypeEvaluatorProvider.evaluate(variableDeclaration.expression)
+        return typeEvaluation.domain
     }
 
 }
