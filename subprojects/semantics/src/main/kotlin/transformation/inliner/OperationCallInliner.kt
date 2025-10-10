@@ -64,6 +64,8 @@ class OperationCallInliner : OperationVisitor<Unit>() {
     @Inject
     private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
 
+    private var localVariableIndex: Int = 0
+
     private val processorQueue = ArrayDeque<Operation>()
 
     fun process(operation: Operation) {
@@ -136,6 +138,7 @@ class OperationCallInliner : OperationVisitor<Unit>() {
 
     private fun performInlining(operation: InlineOperation) {
         val inlined = createInlinedOperation(instance, operation)
+        rewriteLocalVariables(inlined)
         EcoreUtil2.replace(operation, inlined)
 
         val actualInlined = simplifyInlinedOperation(inlined)
@@ -146,8 +149,16 @@ class OperationCallInliner : OperationVisitor<Unit>() {
         compilationStateManager.commitModelState()
     }
 
+    private fun rewriteLocalVariables(operation: Operation) {
+        val localVars = operation.eAllOfType<LocalVarDeclarationOperation>().toList()
+
+        for (localVar in localVars) {
+            localVar.name += "$${localVariableIndex++}"
+        }
+    }
+
     private fun simplifyNestedSequence(operation: Operation): Boolean {
-        // TODO: this is duplicated from OperationFlattenerOptimizer -> should probably merge?
+        // TODO: this is duplicated from OperationFlattenerOptimizer -> should probably merge
         val sequenceOperation = operation.eAllOfType<SequenceOperation>().firstOrNull {
             it.steps.filterIsInstance<SequenceOperation>().any()
         }
