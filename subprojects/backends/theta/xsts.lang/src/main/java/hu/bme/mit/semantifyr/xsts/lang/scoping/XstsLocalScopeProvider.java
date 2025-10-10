@@ -7,12 +7,10 @@
 package hu.bme.mit.semantifyr.xsts.lang.scoping;
 
 import com.google.inject.Inject;
-import hu.bme.mit.semantifyr.xsts.lang.xsts.Operation;
 import hu.bme.mit.semantifyr.xsts.lang.xsts.SequenceOperation;
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
-import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.xtext.scoping.IScope;
 import org.eclipse.xtext.scoping.Scopes;
 import org.eclipse.xtext.scoping.impl.AbstractGlobalScopeDelegatingScopeProvider;
@@ -25,15 +23,15 @@ public class XstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopePr
     private GlobalResourceDescriptionProvider globalResourceDescriptionProvider;
 
     @Override
-    public IScope getScope(EObject context, EReference reference) {
-        var container = context.eContainer();
+    public IScope getScope(EObject child, EReference reference) {
+        var context = child.eContainer();
 
-        if (container instanceof XstsModel xstsModel) {
+        if (context instanceof XstsModel xstsModel) {
             return getXstsModelScope(xstsModel, reference);
         }
 
-        var containerScope = getScope(container, reference);
-        return getLocalScope(containerScope, container, context);
+        var containerScope = getScope(context, reference);
+        return getLocalScope(containerScope, context, child);
     }
 
     protected IScope getXstsModelScope(XstsModel xstsModel, EReference reference) {
@@ -42,9 +40,9 @@ public class XstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopePr
         return SelectableBasedScope.createScope(IScope.NULLSCOPE, resourceDescription, reference.getEReferenceType(), isIgnoreCase(reference));
     }
 
-    protected IScope getLocalScope(IScope containerScope, EObject container, EObject context) {
-        if (container instanceof SequenceOperation operation) {
-            var index = operation.getSteps().indexOf(context);
+    protected IScope getLocalScope(IScope containerScope, EObject context, EObject child) {
+        if (context instanceof SequenceOperation operation) {
+            var index = operation.getSteps().indexOf(child);
             return Scopes.scopeFor(operation.eContents().subList(0, index), containerScope);
         }
 

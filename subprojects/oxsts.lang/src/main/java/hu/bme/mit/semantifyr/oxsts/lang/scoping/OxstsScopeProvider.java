@@ -63,7 +63,7 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 
         if (reference == OxstsPackage.Literals.FEATURE_DECLARATION__TYPE
             || reference == OxstsPackage.Literals.VARIABLE_DECLARATION__TYPE) {
-            return super.getScope(context.eContainer(), reference);
+            return super.getScope(context, reference);
         }
 
         if (reference == OxstsPackage.Literals.ARGUMENT__PARAMETER) {

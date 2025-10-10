@@ -43,8 +43,10 @@ public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
             return getInlinedOxstsScope(inlinedOxsts, reference);
         }
 
-        var containerScope = getScope(context.eContainer(), reference);
-        return getLocalScope(containerScope, context, reference);
+        var parent = context.eContainer();
+
+        var containerScope = getScope(parent, reference);
+        return getLocalScope(containerScope, parent, context, reference);
     }
 
     protected IScope getPackageScope(OxstsModelPackage _package, EReference reference) {
@@ -70,12 +72,17 @@ public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
     }
 
     // caching feels unnecessary here, since most of the calculated instances are simple to create, or are cache anyway
-    protected IScope getLocalScope(IScope containerScope, EObject context, EReference reference) {
+    protected IScope getLocalScope(IScope containerScope, EObject context, EObject child, EReference reference) {
         if (
             reference == OxstsPackage.Literals.CLASS_DECLARATION__SUPER_TYPES
             || reference == OxstsPackage.Literals.FEATURE_DECLARATION__TYPE
         ) {
             return containerScope;
+        }
+
+        if (context instanceof SequenceOperation operation) {
+            var index = operation.getSteps().indexOf(child);
+            return Scopes.scopeFor(operation.eContents().subList(0, index), containerScope);
         }
 
         if (context instanceof DomainDeclaration declaration) {
