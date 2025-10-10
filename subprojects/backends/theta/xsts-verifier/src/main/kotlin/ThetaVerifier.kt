@@ -19,6 +19,8 @@ import hu.bme.mit.semantifyr.semantics.transformation.inliner.OxstsInliner
 import hu.bme.mit.semantifyr.semantics.transformation.instantiation.OxstsInflator
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.verification.AbstractOxstsVerifier
+import hu.bme.mit.semantifyr.semantics.verification.VerificationCaseRunResult
+import hu.bme.mit.semantifyr.semantics.verification.VerificationResult
 import java.io.File
 
 @CompilationScoped
@@ -53,7 +55,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
         5,
     )
 
-    override fun verify(progressContext: ProgressContext, classDeclaration: ClassDeclaration) {
+    override fun verify(progressContext: ProgressContext, classDeclaration: ClassDeclaration): VerificationCaseRunResult {
         val expected = builtinLibraryUtils.getExpectedResults(classDeclaration)
 
         val inlinedOxsts = inlinedOxstsModelManager.createInlinedOxsts(classDeclaration)
@@ -72,6 +74,8 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
 
         oxstsInflator.deflateInstanceModel(inlinedOxsts)
 
+        compilationStateManager.finalizeArtifactManager(inlinedOxsts)
+
         progressContext.reportProgress("Transforming to XSTS", 8)
 
         val xsts = oxstsTransformer.transform(inlinedOxsts, true)
@@ -79,8 +83,6 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
         xsts.eResource().save(emptyMap<Any, Any>())
 
         progressContext.reportProgress("Verifying XSTS", 10)
-
-        compilationStateManager.finalizeArtifactManager(inlinedOxsts)
 
         val path = xsts.eResource().uri.path().removeSuffix(".xsts")
         val name = path.split(File.separator).last()
@@ -90,11 +92,13 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
         val results = dockerBasedThetaExecutor.run(workingDirectory, name)
 
         if (expected == VerificationCaseExpectedResult.SAFE && !results.isSafe) {
-            error("Expected Safe result, got Unsafe instead!")
+            return VerificationCaseRunResult(VerificationResult.Failed, "Expected Safe result, got Unsafe instead!")
         }
         if (expected == VerificationCaseExpectedResult.UNSAFE && !results.isUnsafe) {
-            error("Expected Unsafe result, got Safe instead!")
+            return VerificationCaseRunResult(VerificationResult.Failed, "Expected Unsafe result, got Safe instead!")
         }
+
+        return VerificationCaseRunResult(VerificationResult.Passed)
     }
 
 }

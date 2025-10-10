@@ -9,9 +9,18 @@ package hu.bme.mit.semantifyr.semantics.verification
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.semantics.transformation.ProgressContext
 
+data class VerificationCaseRunResult(
+    val result: VerificationResult,
+    val message: String? = null
+)
+
+enum class VerificationResult {
+    Passed, Failed
+}
+
 interface OxstsVerifier {
 
-    fun verify(progressContext: ProgressContext, classDeclaration: ClassDeclaration)
+    fun verify(progressContext: ProgressContext, classDeclaration: ClassDeclaration): VerificationCaseRunResult
 
 }
 
