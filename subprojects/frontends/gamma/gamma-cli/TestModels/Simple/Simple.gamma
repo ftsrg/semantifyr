@@ -15,6 +15,7 @@ statechart LeaderStatechart [
         state Idle
         state Operational
         state Stopped
+        state Unreachable
 
         entry transition to Idle
         transition Idle to Operational when event fire / raise start
@@ -30,6 +31,7 @@ statechart WorkerStatechart [
         state Idle
         state Operational
         state Stopped
+        state Unreachable
 
         entry transition to Idle
         transition Idle to Operational when event start
@@ -76,4 +78,18 @@ verification case LeaderStatechartOperationalReachable {
     component system : System
 
     expression { state system.leader.Main.Operational }
+}
+
+verification case LeaderStatechartUnreachable {
+    expect unreachable
+    component system : System
+
+    expression { state system.leader.Main.Unreachable }
+}
+
+verification case LeaderStatechartUnrachable {
+    expect unreachable
+    component system : System
+
+    expression { state system.leader.Main.Unreachable }
 }

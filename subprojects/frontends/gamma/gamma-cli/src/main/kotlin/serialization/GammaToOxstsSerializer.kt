@@ -292,7 +292,11 @@ object GammaToOxstsSerializer {
     }
 
     private fun IndentationAwareStringWriter.serialize(verificationCase: VerificationCase) {
-        appendLine("@VerificationCase(VerificationResult::UNSAFE)")
+        if (verificationCase.isReachable) {
+            appendLine("@VerificationCase(VerificationResult::UNSAFE)")
+        } else {
+            appendLine("@VerificationCase(VerificationResult::SAFE)")
+        }
         appendIndent("class ${verificationCase.name} : GammaVerificationCase") {
             appendLine("contains ${verificationCase.component.name}: ${verificationCase.component.component.name} redefines component")
 
