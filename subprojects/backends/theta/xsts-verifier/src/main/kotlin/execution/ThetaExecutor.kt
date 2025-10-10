@@ -77,7 +77,7 @@ abstract class AbstractThetaExecutor(
     protected val timeUnit: TimeUnit = TimeUnit.MINUTES
 ) : ThetaExecutor {
 
-    protected open val logger by loggerFactory()
+//    protected open val logger by loggerFactory()
 
     private suspend fun runWorkflow(workingDirectory: String, name: String) = supervisorScope {
         val jobs = parameters.indices.map { index ->
@@ -87,10 +87,10 @@ abstract class AbstractThetaExecutor(
         }
 
         try {
-            logger.debug("Awaiting jobs")
+//            logger.debug("Awaiting jobs")
             jobs.awaitAny()
         } finally {
-            logger.debug("Canceling jobs")
+//            logger.debug("Canceling jobs")
             jobs.forEach {
                 it.cancelAndJoin()
             }
@@ -112,7 +112,7 @@ class DockerBasedThetaExecutor(
     timeUnit: TimeUnit = TimeUnit.MINUTES
 ) : AbstractThetaExecutor(version, parameters, timeout, timeUnit) {
 
-    override val logger by loggerFactory()
+//    override val logger by loggerFactory()
 
     private val config = DefaultDockerClientConfig.createDefaultConfigBuilder().build()
     private val httpClient = ApacheDockerHttpClient.Builder()
@@ -130,7 +130,7 @@ class DockerBasedThetaExecutor(
         parameter: String,
         id: Int,
     ): ThetaRuntimeDetails {
-        logger.info("Starting theta ($id)")
+//        logger.info("Starting theta ($id)")
 
         val thetaRuntimeDetails = ThetaRuntimeDetails(workingDirectory, name, id)
 
@@ -147,25 +147,25 @@ class DockerBasedThetaExecutor(
                 }
             }
         } catch (e: TimeoutCancellationException) {
-            logger.info("Theta timed out ($id)")
+//            logger.info("Theta timed out ($id)")
             throw e
         } catch (e: CancellationException) {
-            logger.info("Theta cancelled ($id)")
+//            logger.info("Theta cancelled ($id)")
             throw e
         } finally {
             withContext(NonCancellable) {
-                logger.debug("Saving theta logs ($id)")
+//                logger.debug("Saving theta logs ($id)")
                 saveContainerLogs(thetaRuntimeDetails, container)
 
-                logger.debug("Removing theta ($id)")
+//                logger.debug("Removing theta ($id)")
                 dockerClient.removeContainerCmd(container.id).withForce(true).exec()
             }
         }
 
         if (result.statusCode == 0) {
-            logger.info("Theta finished ($id)")
+//            logger.info("Theta finished ($id)")
         } else {
-            logger.error("Theta failed ($id)")
+//            logger.error("Theta failed ($id)")
             throw IllegalStateException("Theta execution failed with code ${result.statusCode}. See $thetaRuntimeDetails")
         }
 
@@ -187,7 +187,7 @@ class DockerBasedThetaExecutor(
                 .exec(StreamLoggerCallback(logFile.outputStream(), errFile.outputStream()))
                 .await()
         } catch (e: Throwable) {
-            logger.error("Exception during saving logging details (${thetaRuntimeDetails.id})", e)
+//            logger.error("Exception during saving logging details (${thetaRuntimeDetails.id})", e)
         }
     }
 
