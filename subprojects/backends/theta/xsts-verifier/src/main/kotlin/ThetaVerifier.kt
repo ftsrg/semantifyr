@@ -82,7 +82,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
 
         compilationStateManager.finalizeArtifactManager(inlinedOxsts)
 
-        val path = xsts.eResource().uri.toFileString().removeSuffix(".xsts")
+        val path = xsts.eResource().uri.path().removeSuffix(".xsts")
         val name = path.split(File.separator).last()
         val workingDirectory = path.replaceAfterLast(File.separator, "")
 
