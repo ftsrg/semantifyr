@@ -28,9 +28,6 @@ class OxstsTransformer {
     private lateinit var choiceElseRewriter: ChoiceElseRewriter
 
     @Inject
-    private lateinit var inlinedOxstsOperationOptimizer: InlinedOxstsOperationOptimizer
-
-    @Inject
     private lateinit var oxstsOperationTransformer: OxstsOperationTransformer
 
     @Inject
@@ -44,10 +41,7 @@ class OxstsTransformer {
 
     fun transform(inlinedOxsts: InlinedOxsts, rewriteChoice: Boolean): XstsModel {
         if (rewriteChoice) {
-            choiceElseRewriter.rewriteChoiceElse(inlinedOxsts.initTransition)
-            choiceElseRewriter.rewriteChoiceElse(inlinedOxsts.mainTransition)
-
-            inlinedOxstsOperationOptimizer.optimize(inlinedOxsts)
+            choiceElseRewriter.rewriteChoiceElse(inlinedOxsts)
         }
 
         return createXsts(inlinedOxsts)
