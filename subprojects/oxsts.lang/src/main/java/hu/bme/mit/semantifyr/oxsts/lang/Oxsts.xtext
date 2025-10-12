@@ -163,7 +163,7 @@ ClassMember returns Declaration:
         )?
         (':' returnType=[TypeDeclaration|QualifiedIdentifier])?
         '{'
-            'return' expression=Expression
+            'return' expression=Expression ';'?
         '}'
     |
         {TransitionDeclaration.annotation=current}

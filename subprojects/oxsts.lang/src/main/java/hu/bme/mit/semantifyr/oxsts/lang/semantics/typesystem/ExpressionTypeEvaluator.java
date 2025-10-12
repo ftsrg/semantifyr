@@ -93,6 +93,7 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
         return switch (referencedElement) {
             case VariableDeclaration variableDeclaration -> variableTypeEvaluator.evaluate(variableDeclaration);
             case DomainDeclaration domainDeclaration -> new ImmutableTypeEvaluation(domainDeclaration);
+            case ParameterDeclaration parameterDeclaration -> new ImmutableTypeEvaluation(parameterDeclaration.getType());
             default -> throw new IllegalStateException("Unexpected value: " + referencedElement);
         };
     }
