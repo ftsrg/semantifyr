@@ -11,7 +11,7 @@ import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
-//import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.PausableRequestManager;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.PausableRequestManager;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.semantics.transformation.OxstsToXstsTransformer;
 import org.eclipse.lsp4j.Location;
@@ -27,8 +27,8 @@ public class InlineOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
     @Inject
     protected Provider<OxstsToXstsTransformer> xstsTransformerProvider;
 
-//    @Inject
-//    protected PausableRequestManager pausableRequestManager;
+    @Inject
+    protected PausableRequestManager pausableRequestManager;
 
     @Override
     public String getId() {
@@ -65,7 +65,7 @@ public class InlineOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
     protected Object execute(ClassDeclaration arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
         progressContext.begin("Compiling class " + arguments.getName(), "Initializing");
 
-//        pausableRequestManager.pause();
+        pausableRequestManager.pause();
 
         try {
             compilationScopeRunnable(() -> {
@@ -76,7 +76,7 @@ public class InlineOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
 
             progressContext.end("Compilation done!");
         } finally {
-//            pausableRequestManager.resume();
+            pausableRequestManager.resume();
         }
 
         return null;

@@ -6,17 +6,14 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
-import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.backends.theta.verification.ThetaVerifier;
-//import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.PausableRequestManager;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.PausableRequestManager;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
 import hu.bme.mit.semantifyr.semantics.verification.VerificationCaseRunResult;
 import hu.bme.mit.semantifyr.semantics.verification.VerificationResult;
 import org.eclipse.lsp4j.Location;
@@ -33,8 +30,8 @@ public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
     @Inject
     protected Provider<ThetaVerifier> oxstsVerifierProvider;
 
-//    @Inject
-//    protected PausableRequestManager pausableRequestManager;
+    @Inject
+    protected PausableRequestManager pausableRequestManager;
 
     @Override
     public String getId() {
@@ -71,7 +68,7 @@ public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
     protected Object execute(ClassDeclaration arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
         progressContext.begin("Verifying class " + arguments.getName(), "Initializing");
 
-//        pausableRequestManager.pause();
+        pausableRequestManager.pause();
 
         var result = new CompletableFuture<VerificationCaseRunResult>();
 
@@ -86,7 +83,7 @@ public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
         } catch (Exception e) {
             result.completeExceptionally(e);
         } finally {
-//            pausableRequestManager.resume();
+            pausableRequestManager.resume();
         }
 
         try {
