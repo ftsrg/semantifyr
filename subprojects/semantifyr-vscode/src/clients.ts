@@ -4,16 +4,23 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import vscode, {ExtensionContext, Position, Range, TestController, workspace} from "vscode";
+import vscode, {ExtensionContext, Location, Position, Range, workspace} from "vscode";
 import path from "path";
 import {executablePostfix} from "./runnerUtils.js";
 import * as net from 'net';
-import { ExecuteCommandRequest, LanguageClient, LanguageClientOptions, ServerOptions} from "vscode-languageclient/node.js";
+import { LanguageClient, LanguageClientOptions, ServerOptions} from "vscode-languageclient/node.js";
+import { OxstsTestController } from "./OxstsTestController.js";
 
-let oxstsClient: LanguageClient;
+export let oxstsClient: LanguageClient;
 let xstsClient: LanguageClient;
 let gammaClient: LanguageClient;
 // let cexClient: LanguageClient;
+
+let oxstsTestController: OxstsTestController;
+
+type NavigateToParams = {
+    location: Location
+}
 
 export async function startClients(context: ExtensionContext) {
     const oxstsIdeExecutable = path.join(context.extensionPath, 'bin', 'oxsts.lang.ide', 'bin', `oxsts.lang.ide${executablePostfix}`);
@@ -38,158 +45,30 @@ export async function startClients(context: ExtensionContext) {
     // cexClient = createLspClient(cexIdeExecutable, "cex");
     gammaClient = createLspClient(gammaIdeExecutable, "gamma");
 
-    registerTestProvider(context);
-
     await oxstsClient.start();
     await xstsClient.start();
     // await cexClient.start();
     await gammaClient.start();
-}
 
-let controller: TestController
+    oxstsTestController = new OxstsTestController(oxstsClient);
+    oxstsTestController.registerTestProvider(context);
 
-function registerTestProvider(context: ExtensionContext) {
-    controller = vscode.tests.createTestController('oxsts.verification', 'Semantifyr Verification Cases')
-    context.subscriptions.push(controller)
+    oxstsClient.onNotification('workspace/navigateTo', (params: NavigateToParams) => {
+        void navigateToLocation(params.location);
+    });
 
-    // Discover tests when needed
-    controller.resolveHandler = async (item) => {
-        if (!item) {
-            for (const doc of vscode.workspace.textDocuments) {
-                await discoverTestsInDocument(doc)
-            }
-        } else if (item.uri) {
-            const doc = await vscode.workspace.openTextDocument(item.uri)
-            await discoverTestsInDocument(doc)
-        }
+    async function navigateToLocation(location: Location) {
+        const uri = vscode.Uri.parse(location.uri.toString());
+        const range = new Range(
+            new Position(location.range.start.line, location.range.start.character),
+            new Position(location.range.end.line, location.range.end.character),
+        )
+        const doc = await vscode.workspace.openTextDocument(uri);
+        const editor = await vscode.window.showTextDocument(doc);
+        editor.selection = new vscode.Selection(range.start, range.start);
+        editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
     }
 
-    // Run profile adds the gutter run triangle and Test Explorer actions
-    const runProfile = controller.createRunProfile(
-        'Run',
-        vscode.TestRunProfileKind.Run,
-        async (request, token) => await runTests(request, token),
-        true // isDefault
-    )
-    context.subscriptions.push(runProfile)
-
-    // Keep tests in sync as files open/change
-    context.subscriptions.push(
-        vscode.workspace.onDidChangeWorkspaceFolders(d => discoverTestsInFolder(d)),
-        vscode.workspace.onDidOpenTextDocument(d => discoverTestsInDocument(d)),
-        vscode.workspace.onDidChangeTextDocument(e => discoverTestsInDocument(e.document))
-    )
-}
-
-type VerificationCaseSpecification = {
-    id: string
-    label: string
-    range: vscode.Range
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function discoverTestsInFolder(changeEvent: vscode.WorkspaceFoldersChangeEvent) {
-
-}
-
-async function discoverTestsInDocument(doc: vscode.TextDocument) {
-    if (doc.languageId !== 'oxsts') {
-        return;
-    }
-
-    const documentTestItem = getOrCreateDocumentTestItem(doc.uri);
-
-    const args = {
-        command: 'oxsts.case.discover',
-        arguments: [doc.uri.toString()]
-    };
-    const verificationCases = await oxstsClient.sendRequest(ExecuteCommandRequest.type, args) as VerificationCaseSpecification[];
-
-    const seen = new Set<string>();
-
-    for (const verificationCase of verificationCases) {
-        seen.add(verificationCase.id);
-        let testItem = documentTestItem.children.get(verificationCase.id);
-        if (!testItem) {
-            testItem = controller.createTestItem(verificationCase.id, verificationCase.label, doc.uri);
-            documentTestItem.children.add(testItem);
-        }
-        testItem.range = new vscode.Range(
-            new vscode.Position(verificationCase.range.start.line, verificationCase.range.start.character),
-            new vscode.Position(verificationCase.range.end.line, verificationCase.range.end.character)
-        );
-    }
-
-    for (const [id] of documentTestItem.children) {
-        if (!seen.has(id)) {
-            documentTestItem.children.delete(id);
-        }
-    }
-}
-
-function getOrCreateDocumentTestItem(uri: vscode.Uri): vscode.TestItem {
-    let fileItem = controller.items.get(uri.toString());
-    if (!fileItem) {
-        fileItem = controller.createTestItem(uri.toString(), uri.path.split('/').pop() || uri.toString(), uri);
-        fileItem.range = new Range(new Position(0, 0), new Position(0, 0));
-        controller.items.add(fileItem);
-    }
-    return fileItem;
-}
-
-type VerificationCaseRunResult = { 
-    status: 'passed' | 'failed', 
-    message?: string
-};
-
-async function runTests(request: vscode.TestRunRequest, token: vscode.CancellationToken) {
-    const run = controller.createTestRun(request);
-    const testItems: vscode.TestItem[] = [];
-
-    const add = (testItem: vscode.TestItem) => {
-        if (request.exclude?.includes(testItem)) {
-            return;
-        }
-        if (testItem.children.size === 0) {
-            run.enqueued(testItem);
-            testItems.push(testItem);
-        } else { 
-            testItem.children.forEach(add);
-        }
-    }
-
-    if (request.include) {
-        request.include.forEach(add);
-    } else {
-        controller.items.forEach(add);
-    }
-
-    for (const testItem of testItems) {
-        if (token.isCancellationRequested) {
-            break;
-        }
-
-        run.started(testItem);
-        
-        try {
-            const args = {
-                command: 'oxsts.case.verify',
-                arguments: [testItem.uri!.toString(), testItem.id]
-            };
-            const result = await oxstsClient.sendRequest(ExecuteCommandRequest.type, args) as VerificationCaseRunResult;
-
-            if (result.status === 'passed') {
-                run.passed(testItem);
-            } else {
-                run.failed(testItem, new vscode.TestMessage(result.message ?? 'Failed'));
-            }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (e: unknown) {
-            run.errored(testItem, new vscode.TestMessage("Test run failed"));
-        }
-    }
-
-    run.end()
 }
 
 export async function stopClients() {
