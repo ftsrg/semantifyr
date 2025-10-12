@@ -6,9 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.client;
 
-import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
-import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageClient;
 
 import java.util.concurrent.CompletableFuture;

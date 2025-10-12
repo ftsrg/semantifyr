@@ -47,7 +47,7 @@ public class OxstsIdeSetup extends OxstsStandaloneSetup {
         Injector injector = new OxstsIdeSetup().createInjectorAndDoEMFRegistration();
         var languageServer = injector.getInstance(LanguageServerImpl.class);
 
-        var launcher = Launcher.createLauncher(languageServer, LanguageClient.class, System.in, System.out);
+        var launcher = Launcher.createLauncher(languageServer, OxstsLanguageClient.class, System.in, System.out);
         languageServer.connect(launcher.getRemoteProxy());
         launcher.startListening().get();
     }
