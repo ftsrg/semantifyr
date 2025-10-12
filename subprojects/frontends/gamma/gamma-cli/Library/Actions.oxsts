@@ -9,14 +9,17 @@ package semantifyr::gamma::actions
 import semantifyr::gamma::variables
 import semantifyr::gamma::expressions
 import semantifyr::gamma::events
+import semantifyr::gamma::ports
 
 class Action
 
 class RaiseEventAction : Action {
+    refers port: Port[1]
     refers event: Event[1]
+    // contains eventValue: EventValueHolder
 
     redefine tran {
-        inline event.set()
+        inline port.setOutputEvent(event)
     }
 }
 

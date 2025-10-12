@@ -18,6 +18,5 @@ class GammaFrontendCommand : CliktCommand("gamma-frontend") {
 fun main(args: Array<String>) {
     GammaFrontendCommand().subcommands(
         CompileCommand(),
-//        VerifyCommand(),
     ).main(args)
 }

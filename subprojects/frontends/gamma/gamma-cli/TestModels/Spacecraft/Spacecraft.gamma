@@ -6,179 +6,222 @@
 
 package Spacecraft
 
+interface Control {
+    out event start
+    out event shutdown
+}
+
+interface Data {
+    out event data
+    in event ping
+}
+
 statechart Station [
-    in event data
-    in event start
-    in event shutdown
-    out event ping
+    port control : requires Control,
+    port connection : requires Data
 ] {
     timeout pingTimeout
     timeout startTimeout
 
-    var receivedData : Integer = 0
+    var receivedData: Integer := 0
 
     region Main {
         state Idle {
-            entry / set startTimeout to 30;
+            entry / set startTimeout := 30 s;
         }
         state Operation {
-            entry / set pingTimeout to 10
-            entry / raise ping
+            entry / set pingTimeout := 10 s; raise connection.ping;
 
             region ReceiveData {
                 state Waiting
 
                 entry transition to Waiting
-                transition Waiting to Waiting when event data [receivedData > 10 or receivedData < 100] / raise ping; assign receivedData := receivedData + 10
+                transition Waiting to Waiting when event connection.data [receivedData > 10 or receivedData < 100] / raise connection.ping; assign receivedData := receivedData + 10;
             }
         }
 
         entry transition to Idle
-        transition Idle to Operation when event start
+        transition Idle to Operation when event control.start
         transition Idle to Operation when timeout startTimeout
-        transition Operation to Idle when event shutdown
+        transition Operation to Idle when event control.shutdown
         transition Operation to Operation when timeout pingTimeout
     }
 }
 
 statechart Spacecraft[
-    in event ping
-    out event dataEvent
+    port connection : provides Data
 ] {
     timeout checkBatteryTimeout
     timeout rechargeTimeout
     timeout consumeTimeout
     timeout transmitTimeout
     
-    var batteryCharge : Integer = 100
-    var recharging : Boolean = false
-    var data : Integer = 100
+    var batteryCharge : Integer := 100
+    var recharging : Boolean := false
+    var data : Integer := 100
 
     region Communication {
         state WaitingPing
         state Transmitting {
             region SendData {
                 state Sending {
-                    entry / set transmitTimeout to 4
+                    entry / set transmitTimeout := 4 s;
                 }
 
                 entry transition to Sending
-                transition Sending to Sending when timeout transmitTimeout [! (data <= 0 || batteryCharge < 40)] / assign data := data - 10; raise dataEvent
+                transition Sending to Sending when timeout transmitTimeout [! (data <= 0 or batteryCharge < 40)] / assign data := data - 10; raise connection.data;
             }
             region ConsumePower {
                 state Consuming {
-                    entry / set consumeTimeout to 2
+                    entry / set consumeTimeout := 2 s;
                 }
 
                 entry transition to Consuming
-                transition Consuming to Consuming when timeout consumeTimeout [! (batteryCharge < 40)] / assign batteryCharge := batteryCharge - 10
+                transition Consuming to Consuming when timeout consumeTimeout [! (batteryCharge < 40)] / assign batteryCharge := batteryCharge - 10;
             }
         }
 
         entry transition to WaitingPing
-        transition WaitingPing to Transmitting when event ping [recharging == false && ! (data <= 0 || batteryCharge < 40)]
+        transition WaitingPing to Transmitting when event connection.ping [recharging == false && ! (data <= 0 || batteryCharge < 40)]
         transition Transmitting to WaitingPing when timeout consumeTimeout [batteryCharge < 40]
         transition Transmitting to WaitingPing when timeout transmitTimeout [data <= 0 || batteryCharge < 40]
     }
 
     region Battery {
         state NotRecharging {
-            entry / set checkBatteryTimeout to 3
-            entry / assign recharging := false
+            entry / set checkBatteryTimeout := 3 s; assign recharging := false;
         }
 
         state Recharging {
-            entry / set rechargeTimeout to 3
-            entry / assign recharging := true
+            entry / set rechargeTimeout := 3 s; assign recharging := true;
         }
 
         entry transition to NotRecharging
         transition NotRecharging to Recharging when timeout checkBatteryTimeout [batteryCharge < 80]
-        transition Recharging to Recharging when timeout rechargeTimeout [batteryCharge < 100] / assign batteryCharge := batteryCharge + 10
+        transition Recharging to Recharging when timeout rechargeTimeout [batteryCharge < 100] / assign batteryCharge := batteryCharge + 10;
         transition Recharging to NotRecharging when timeout rechargeTimeout [batteryCharge >= 100]
     }
 }
 
 sync component SpaceMission [
-    in event start
-    in event shutdown
+    port control : requires Control
 ] {
     component station : Station
     component spacecraft : Spacecraft
 
-    channel start to station.start
-    channel shutdown to station.shutdown
+    bind control -> station.control
 
-    channel station.ping to spacecraft.ping
-    channel spacecraft.dataEvent to station.data
+    channel [ station.connection ] -> [ spacecraft.connection ]
 }
 
-verification case Station_OperationReachable {
-    expect reachable
-    component mission : SpaceMission
-
-    expression { state mission.station.Main.Operation }
-}
-
+@Reachable
 verification case Station_IdleReachable {
-    expect reachable
     component mission : SpaceMission
 
-    expression { state mission.station.Main.Idle }
+    invariant { state mission.station.Main.Idle }
 }
 
+@Reachable
 verification case Station_OperationReachable {
-    expect reachable
     component mission : SpaceMission
 
-    expression { state mission.station.Main.Operation }
+    invariant { state mission.station.Main.Operation }
 }
 
+@Reachable
 verification case Station_OperationReceiveDataWaitingReachable {
-    expect reachable
     component mission : SpaceMission
 
-    expression { state mission.station.Main.Operation.ReceiveData.Waiting }
+    invariant { state mission.station.Main.Operation.ReceiveData.Waiting }
 }
 
+@Reachable
 verification case Spacecraft_CommunicationWaitingPingReachable {
-    expect reachable
     component mission : SpaceMission
 
-    expression { state mission.spacecraft.Communication.WaitingPing }
+    invariant { state mission.spacecraft.Communication.WaitingPing }
 }
 
+@Reachable
 verification case Spacecraft_CommunicationTransmittingReachable {
-    expect reachable
     component mission : SpaceMission
 
-    expression { state mission.spacecraft.Communication.Transmitting }
+    invariant { state mission.spacecraft.Communication.Transmitting }
 }
 
+@Reachable
 verification case Spacecraft_CommunicationTransmittingSendDataSendingReachable {
-    expect reachable
     component mission : SpaceMission
 
-    expression { state mission.spacecraft.Communication.Transmitting.SendData.Sending }
+    invariant { state mission.spacecraft.Communication.Transmitting.SendData.Sending }
 }
 
+@Reachable
 verification case Spacecraft_CommunicationTransmittingConsumePowerConsumingReachable {
-    expect reachable
     component mission : SpaceMission
 
-    expression { state mission.spacecraft.Communication.Transmitting.ConsumePower.Consuming }
+    invariant { state mission.spacecraft.Communication.Transmitting.ConsumePower.Consuming }
 }
 
+@Reachable
 verification case Spacecraft_BatteryNotRechargingReachable {
-    expect reachable
     component mission : SpaceMission
 
-    expression { state mission.spacecraft.Battery.NotRecharging }
+    invariant { state mission.spacecraft.Battery.NotRecharging }
 }
 
+@Reachable
 verification case Spacecraft_BatteryRechargingReachable {
-    expect reachable
     component mission : SpaceMission
 
-    expression { state mission.spacecraft.Battery.Recharging }
+    invariant { state mission.spacecraft.Battery.Recharging }
+}
+
+@Reachable
+verification case Spacecraft_BatteryLT100 {
+    component mission : SpaceMission
+
+    invariant { mission.spacecraft.batteryCharge <= 100 }
+}
+
+@Reachable
+verification case Spacecraft_BatteryLT90 {
+    component mission : SpaceMission
+
+    invariant { mission.spacecraft.batteryCharge <= 90 }
+}
+
+@Reachable
+verification case Spacecraft_BatteryLT80 {
+    component mission : SpaceMission
+
+    invariant { mission.spacecraft.batteryCharge <= 80 }
+}
+
+@Reachable
+verification case Spacecraft_DataLT100 {
+    component mission : SpaceMission
+
+    invariant { mission.spacecraft.data <= 100 }
+}
+
+@Reachable
+verification case Spacecraft_DataLT90 {
+    component mission : SpaceMission
+
+    invariant { mission.spacecraft.data <= 90 }
+}
+
+@Reachable
+verification case Spacecraft_DataLT80 {
+    component mission : SpaceMission
+
+    invariant { mission.spacecraft.data <= 80 }
+}
+
+@Reachable
+verification case Spacecraft_DataLT70 {
+    component mission : SpaceMission
+
+    invariant { mission.spacecraft.data <= 70 }
 }

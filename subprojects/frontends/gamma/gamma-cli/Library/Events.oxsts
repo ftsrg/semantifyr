@@ -7,24 +7,32 @@
 package semantifyr::gamma::events
 
 class Event {
-    var isActive := false
-
-    tran set() {
-        isActive := true
-    }
-
-    tran reset() {
-        isActive := false
-    }
-
-    redefine havoc {
-        havoc (isActive)
-    }
-
-    tran assumeIsSet() {
-        assume (isActive)
-    }
 }
+
+/*
+class EventValue {
+
+    tran setValue(context: EventValueHolder) {
+        // NO-OP
+    }
+
+}
+
+class EventValueHolder {
+
+    refers event: Event[1]
+    contains eventValue: EventValue[1]
+
+    tran assumeForEvent(event: Event) {
+        assume (self.event == event)
+    }
+
+    tran setValue(context: EventValueHolder) {
+        inline eventValue.setValue(context.eventValue)
+    }
+
+}
+*/
 
 class Timeout {
     refers deltaTime: int = 1

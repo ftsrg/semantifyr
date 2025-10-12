@@ -35,24 +35,14 @@ artifacts {
 
 dependencies {
     implementation(project(":gamma.lang"))
-    implementation(project(":semantics"))
 
-    implementation(platform(libs.xtext.bom))
-    implementation(libs.xtext.core)
-
-    implementation(libs.guice)
     implementation(libs.slf4j.api)
-    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.clikt)
-    implementation(libs.ecore)
-    implementation(libs.ecore)
 
     runtimeOnly(libs.slf4j.log4j)
 
     testFixturesApi(project(":gamma.lang"))
     testFixturesApi(testFixtures(project(":gamma.lang")))
-    testFixturesApi(project(":semantics"))
-    testFixturesApi(testFixtures(project(":semantics")))
 }
 
 application {

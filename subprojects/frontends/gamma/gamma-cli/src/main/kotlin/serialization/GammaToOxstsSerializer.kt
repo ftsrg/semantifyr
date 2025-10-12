@@ -7,63 +7,61 @@
 package hu.bme.mit.semantifyr.frontends.gamma.cli.serialization
 
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Action
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.AndOperator
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ArithmeticBinaryOperator
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ArithmeticOp
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ArithmeticUnaryOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.AssignmentAction
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ChainingExpression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.BooleanOp
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.BooleanOperator
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.BooleanType
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Channel
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Component
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComparisonOp
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComparisonOperator
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComponentDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComponentInstance
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ElementReferenceExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EntryTransition
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EqualityOperator
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Event
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventDeclaration
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventDirection
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventTrigger
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Expression
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GreaterThanOperator
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GreaterThanOrEqualsOperator
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Guard
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.InequalityOperator
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.InputEvent
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.LessThanOperator
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.LessThanOrEqualsOperator
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.IntegerType
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.InterfaceDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.LiteralBoolean
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.LiteralExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.LiteralInteger
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.MinusOperator
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.NotOperator
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.OrOperator
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.OutputEvent
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Package
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.PlusOperator
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.NavigationSuffixExpression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.NegationOperator
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.PortBinding
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.PortDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RaiseEventAction
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ReachabilityExpression
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ReferenceExpression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RealizationMode
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Region
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SetTimeoutAction
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.State
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateReachabilityExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateTransition
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Statechart
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SyncComponent
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Timeout
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StatechartDeclaration
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SyncComponentDeclaration
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeoutDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeoutTrigger
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Transition
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Trigger
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Variable
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCase
-import hu.bme.mit.semantifyr.semantics.utils.IndentationAwareStringWriter
-import hu.bme.mit.semantifyr.semantics.utils.appendIndent
-import hu.bme.mit.semantifyr.semantics.utils.indent
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TypeReference
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.UnaryOp
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableDeclaration
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration
 import org.eclipse.emf.ecore.EObject
+import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 import kotlin.reflect.KProperty
 
-object GammaToOxstsSerializer {
+class GammaToOxstsSerializer {
 
-    fun serialize(gammaPackage: Package) = indent {
+    fun transformToOxsts(gammaPackage: GammaModelPackage) = indent {
         appendLine("package ${gammaPackage.name}")
         appendLine()
-
-
         appendLine("import semantifyr::verification")
         appendLine("import semantifyr::gamma::expressions")
         appendLine("import semantifyr::gamma::variables")
@@ -72,8 +70,13 @@ object GammaToOxstsSerializer {
         appendLine("import semantifyr::gamma::triggers")
         appendLine("import semantifyr::gamma::actions")
         appendLine("import semantifyr::gamma::events")
+        appendLine("import semantifyr::gamma::ports")
         appendLine("import semantifyr::gamma::verification")
         appendLine()
+
+        for (interfaceDeclaration in gammaPackage.interfaces) {
+            serialize(interfaceDeclaration)
+        }
 
         for (component in gammaPackage.components) {
             serialize(component)
@@ -84,24 +87,96 @@ object GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(component: Component) = when (component) {
-        is Statechart -> serialize(component)
-        is SyncComponent -> serialize(component)
+    private fun IndentationAwareStringWriter.serialize(interfaceDeclaration: InterfaceDeclaration) {
+        appendIndent("class ${interfaceDeclaration.name} : Interface") {
+            for (event in interfaceDeclaration.events) {
+                serialize(event)
+            }
+        }
+    }
+
+    private fun getEventDirection(event: EventDeclaration): String {
+        return when (event.direction) {
+            EventDirection.IN -> "inputEvents"
+            EventDirection.OUT -> "outputEvents"
+        }
+    }
+
+    private fun IndentationAwareStringWriter.serialize(event: EventDeclaration) {
+        appendLine("@Shared")
+        appendLine("contains ${event.name}: Event subsets ${getEventDirection(event)}")
+    }
+
+    private fun IndentationAwareStringWriter.serialize(component: ComponentDeclaration) = when (component) {
+        is SyncComponentDeclaration -> serialize(component)
+        is StatechartDeclaration -> serialize(component)
         else -> error("Unknown component type: $component")
     }
 
-    private fun IndentationAwareStringWriter.serialize(statechart: Statechart) {
+    private fun IndentationAwareStringWriter.serialize(component: SyncComponentDeclaration) {
+        appendIndent("class ${component.name} : SyncComponent") {
+            val unboundPorts = mutableSetOf<PortDeclaration>()
+            unboundPorts += component.ports
+            unboundPorts -= component.bindings.map { it.port }
+
+            for (port in unboundPorts) {
+                serialize(port)
+            }
+
+            for (portBinding in component.bindings) {
+                serialize(portBinding)
+            }
+
+            for (instance in component.components) {
+                serialize(instance)
+            }
+
+            for (channel in component.channels) {
+                serialize(channel)
+            }
+        }
+    }
+
+    private fun getPortType(port: PortDeclaration): String {
+        return when (port.realizationMode) {
+            RealizationMode.PROVIDED -> "ProvidedPort"
+            RealizationMode.REQUIRED -> "RequiredPort"
+        }
+    }
+
+    private fun IndentationAwareStringWriter.serialize(port: PortDeclaration) {
+        appendIndent("contains ${port.name}: ${getPortType(port)} subsets ports") {
+            appendLine("redefine contains interface: ${port.`interface`.name}")
+        }
+    }
+
+    private fun IndentationAwareStringWriter.serialize(portBinding: PortBinding) {
+        appendLine("refers ${portBinding.boundPort.port.name}: Port subsets ports = ${portBinding.boundPort.instance.name}.${portBinding.boundPort.port.name}")
+    }
+
+    private fun IndentationAwareStringWriter.serialize(instance: ComponentInstance) {
+        appendLine("contains ${instance.name}: ${instance.component.name} subsets components")
+    }
+
+    private fun IndentationAwareStringWriter.serialize(channel: Channel) {
+        appendIndent("contains ${channel.name}: Channel subsets channels") {
+            appendLine("redefine refers inputPort: Port = ${channel.providedPort.instance.name}.${channel.providedPort.port.name}")
+            appendLine("redefine refers outputPort: Port = ${channel.requiredPort.instance.name}.${channel.requiredPort.port.name}")
+        }
+    }
+
+    private fun IndentationAwareStringWriter.serialize(statechart: StatechartDeclaration) {
         appendIndent("class ${statechart.name} : Statechart") {
-            for (timeout in statechart.timeouts) {
-                serialize(timeout)
+            for (port in statechart.ports) {
+                serialize(port)
             }
 
             for (variable in statechart.variables) {
                 serialize(variable)
             }
 
-            for (event in statechart.events) {
-                serialize(event)
+            for (timeout in statechart.timeouts) {
+                serialize(timeout)
             }
 
             for (region in statechart.regions) {
@@ -110,45 +185,34 @@ object GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(variable: Variable) {
+    private fun getTypeReferenceName(typeReference: TypeReference): String {
+        return when (typeReference) {
+            is IntegerType -> "Integer"
+            is BooleanType -> "Boolean"
+            else -> error("Unknown type reference!")
+        }
+    }
 
-        appendIndent("contains ${variable.name}: ${variable.type}Variable subsets variables") {
+    private fun getTypeReferenceOxstsName(typeReference: TypeReference): String {
+        return when (typeReference) {
+            is IntegerType -> "int"
+            is BooleanType -> "bool"
+            else -> error("Unknown type reference!")
+        }
+    }
+
+    private fun IndentationAwareStringWriter.serialize(variable: VariableDeclaration) {
+        appendIndent("contains ${variable.name}: ${getTypeReferenceName(variable.type)}Variable subsets variables") {
             if (variable.default != null) {
-                val default = when (variable.default) {
-                    is LiteralInteger -> (variable.default as LiteralInteger).value.toString()
-                    is LiteralBoolean -> (variable.default as LiteralBoolean).isValue.toString()
-                    else -> ""
-                }
+                val default = serializeInline(variable.default)
 
-                appendLine("redefine refers defaultValue: ${transformVariableType(variable)} = $default")
+                appendLine("redefine refers defaultValue: ${getTypeReferenceOxstsName(variable.type)} = $default")
             }
         }
     }
 
-    private fun transformVariableType(variable: Variable): String {
-        return when (variable.type) {
-            "Integer" -> "int"
-            "Boolean" -> "bool"
-            else -> ""
-        }
-    }
-
-    private fun IndentationAwareStringWriter.serialize(timeout: Timeout) {
+    private fun IndentationAwareStringWriter.serialize(timeout: TimeoutDeclaration) {
         appendLine("contains ${timeout.name}: Timeout subsets timeouts")
-    }
-
-    private fun IndentationAwareStringWriter.serialize(event: Event) = when (event) {
-        is InputEvent -> serialize(event)
-        is OutputEvent -> serialize(event)
-        else -> error("Unknown event type: $event")
-    }
-
-    private fun IndentationAwareStringWriter.serialize(event: InputEvent) {
-        appendLine("contains ${event.name}: Event subsets inputEvents")
-    }
-
-    private fun IndentationAwareStringWriter.serialize(event: OutputEvent) {
-        appendLine("contains ${event.name}: Event subsets outputEvents")
     }
 
     private fun IndentationAwareStringWriter.serialize(region: Region) {
@@ -197,7 +261,9 @@ object GammaToOxstsSerializer {
             appendLine("redefine refers to: State = ${transition.to.name}")
 
             if (transition.guard != null) {
-                serialize(transition.guard)
+                appendIndent("redefine contains guard: Guard") {
+                    serialize(transition.guard, "expression")
+                }
             }
 
             if (transition.trigger != null) {
@@ -210,12 +276,6 @@ object GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(guard: Guard) {
-        appendIndent("redefine contains guard: Guard") {
-            serialize(guard.expression, "expression")
-        }
-    }
-
     private fun IndentationAwareStringWriter.serialize(trigger: Trigger) = when (trigger) {
         is EventTrigger -> serialize(trigger)
         is TimeoutTrigger -> serialize(trigger)
@@ -224,7 +284,8 @@ object GammaToOxstsSerializer {
 
     private fun IndentationAwareStringWriter.serialize(trigger: EventTrigger) {
         appendIndent("redefine contains trigger: EventTrigger") {
-            appendLine("redefine refers event: Event = ${trigger.event.name}")
+            appendLine("redefine refers port: Port = ${trigger.port.name}")
+            appendLine("redefine refers event: Event = ${trigger.port.name}.interface.${trigger.event.name}")
         }
     }
 
@@ -243,17 +304,15 @@ object GammaToOxstsSerializer {
 
     private fun IndentationAwareStringWriter.serialize(action: RaiseEventAction, subsets: String) {
         appendIndent("contains ${action.name}: RaiseEventAction subsets $subsets") {
-            appendLine("redefine refers event: Event = ${action.event.name}")
+            appendLine("redefine refers port: Port = ${action.port.name}")
+            appendLine("redefine refers event: Event = ${action.port.name}.interface.${action.event.name}")
         }
     }
 
-    private var a = 0
     private fun IndentationAwareStringWriter.serialize(action: SetTimeoutAction, subsets: String) {
         appendIndent("contains ${action.name}: SetTimeoutAction subsets $subsets") {
             appendLine("redefine refers timeout: Timeout = ${action.timeout.name}")
-            appendIndent("redefine contains expression: LiteralIntegerExpression") {
-                appendLine("redefine refers value: int = ${action.value}")
-            }
+            serialize(action.value, "expression")
         }
     }
 
@@ -264,34 +323,7 @@ object GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(component: SyncComponent) {
-        appendIndent("class ${component.name} : SyncComponent") {
-            for (event in component.events) {
-                serialize(event)
-            }
-
-            for (instance in component.components) {
-                serialize(instance)
-            }
-
-            for (channel in component.channels) {
-                serialize(channel)
-            }
-        }
-    }
-
-    private fun IndentationAwareStringWriter.serialize(instance: ComponentInstance) {
-        appendLine("contains ${instance.name}: ${instance.component.name} subsets components")
-    }
-
-    private fun IndentationAwareStringWriter.serialize(channel: Channel) {
-        appendIndent("contains ${channel.name}: Channel subsets channels") {
-            appendLine("redefine refers inputEvent: Event = ${channel.from.serialize()}")
-            appendLine("redefine refers outputEvent: Event = ${channel.to.serialize()}")
-        }
-    }
-
-    private fun IndentationAwareStringWriter.serialize(verificationCase: VerificationCase) {
+    private fun IndentationAwareStringWriter.serialize(verificationCase: VerificationCaseDeclaration) {
         if (verificationCase.isReachable) {
             appendLine("@VerificationCase(VerificationResult::UNSAFE)")
         } else {
@@ -300,56 +332,108 @@ object GammaToOxstsSerializer {
         appendIndent("class ${verificationCase.name} : GammaVerificationCase") {
             appendLine("contains ${verificationCase.component.name}: ${verificationCase.component.component.name} redefines component")
 
-            serialize(verificationCase.expression, "propertyExpression")
+            serialize(verificationCase.invariant, "propertyExpression")
         }
     }
 
     private fun IndentationAwareStringWriter.serialize(expression: Expression, redefines: String) = when (expression) {
-        is ReferenceExpression -> serializeVariable(expression, redefines)
-        is GreaterThanOperator -> serializeOperator(expression, expression.left, expression.right, "GreaterThanOperatorExpression", redefines)
-        is GreaterThanOrEqualsOperator -> serializeOperator(expression, expression.left, expression.right, "GreaterThanOrEqualsOperatorExpression", redefines)
-        is LessThanOperator -> serializeOperator(expression, expression.left, expression.right, "LessThanOperatorExpression", redefines)
-        is LessThanOrEqualsOperator -> serializeOperator(expression, expression.left, expression.right, "LessThanOrEqualsOperatorExpression", redefines)
+        is ArithmeticBinaryOperator -> serialize(expression, redefines)
+        is ArithmeticUnaryOperator -> serialize(expression, redefines)
+        is BooleanOperator -> serialize(expression, redefines)
+        is ComparisonOperator -> serialize(expression, redefines)
         is LiteralExpression -> serialize(expression, redefines)
-        is MinusOperator -> serializeOperator(expression, expression.left, expression.right, "MinusOperatorExpression", redefines)
-        is NotOperator -> serialize(expression, redefines)
-        is OrOperator -> serializeOperator(expression, expression.left, expression.right, "OrOperatorExpression", redefines)
-        is AndOperator -> serializeOperator(expression, expression.left, expression.right, "AndOperatorExpression", redefines)
-        is PlusOperator -> serializeOperator(expression, expression.left, expression.right, "PlusOperatorExpression", redefines)
-        is EqualityOperator -> serializeOperator(expression, expression.left, expression.right, "EqualityOperatorExpression", redefines)
-        is InequalityOperator -> serializeOperator(expression, expression.left, expression.right, "InequalityOperatorExpression", redefines)
+        is NegationOperator -> serialize(expression, redefines)
         is ReachabilityExpression -> serialize(expression, redefines)
+        is ElementReferenceExpression -> serializeVariableReference(expression, redefines)
+        is NavigationSuffixExpression -> serializeVariableReference(expression, redefines)
         else -> error("Unknown type of expression: $expression")
     }
 
-    private fun IndentationAwareStringWriter.serializeVariable(expression: ReferenceExpression, redefines: String) {
-        appendIndent("redefine contains $redefines: VariableExpression") {
-            appendLine("redefine refers variable: Variable = ${expression.serialize()}")
+    private fun getOpName(op: ArithmeticOp): String {
+        return when (op) {
+            ArithmeticOp.ADD -> "PlusOperatorExpression"
+            ArithmeticOp.SUB -> "MinusOperatorExpression"
+            ArithmeticOp.MUL -> "MultiplyOperatorExpression"
+            ArithmeticOp.DIV -> "DivideOperatorExpression"
         }
     }
 
-    private fun IndentationAwareStringWriter.serializeOperator(expression: Expression, left: Expression, right: Expression, type: String, redefines: String) {
-        appendIndent("redefine contains $redefines: $type") {
+    private fun getOpName(op: UnaryOp): String {
+        return when (op) {
+            UnaryOp.PLUS -> "UnaryPlusExpression"
+            UnaryOp.MINUS -> "UnaryMinusExpression"
+        }
+    }
+
+    private fun getOpName(op: BooleanOp): String {
+        return when (op) {
+            BooleanOp.AND -> "AndOperatorExpression"
+            BooleanOp.OR -> "OrOperatorExpression"
+        }
+    }
+
+    private fun getOpName(op: ComparisonOp): String {
+        return when (op) {
+            ComparisonOp.LESS -> "LessThanOperatorExpression"
+            ComparisonOp.LESS_EQ -> "LessThanOrEqualsOperatorExpression"
+            ComparisonOp.GREATER -> "GreaterThanOperatorExpression"
+            ComparisonOp.GREATER_EQ -> "GreaterThanOrEqualsOperatorExpression"
+            ComparisonOp.EQ -> "EqualityOperatorExpression"
+            ComparisonOp.NOT_EQ -> "InequalityOperatorExpression"
+        }
+    }
+
+    private fun IndentationAwareStringWriter.serialize(expression: ArithmeticBinaryOperator, redefines: String) {
+        serializeOperator(expression.left, expression.right, getOpName(expression.op), redefines)
+    }
+
+    private fun IndentationAwareStringWriter.serialize(expression: ArithmeticUnaryOperator, redefines: String) {
+        serializeOperator(expression.body, getOpName(expression.op), redefines)
+    }
+
+    private fun IndentationAwareStringWriter.serialize(expression: BooleanOperator, redefines: String) {
+        serializeOperator(expression.left, expression.right, getOpName(expression.op), redefines)
+    }
+
+    private fun IndentationAwareStringWriter.serialize(expression: ComparisonOperator, redefines: String) {
+        serializeOperator(expression.left, expression.right, getOpName(expression.op), redefines)
+    }
+
+    private fun IndentationAwareStringWriter.serializeOperator(left: Expression, right: Expression, name: String, redefines: String) {
+        appendIndent("redefine contains $redefines: $name") {
             serialize(left, "left")
             serialize(right, "right")
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(expression: NotOperator, redefines: String) {
-        appendIndent("redefine contains $redefines: NotExpression") {
-            serialize(expression.operand, "operand")
+    private fun IndentationAwareStringWriter.serializeOperator(body: Expression, name: String, redefines: String) {
+        appendIndent("redefine contains $redefines: $name") {
+            serialize(body, "body")
         }
     }
 
     private fun IndentationAwareStringWriter.serialize(expression: LiteralExpression, redefines: String) {
         when (expression) {
-            is LiteralInteger -> appendIndent("redefine contains $redefines: LiteralIntegerExpression") {
-                appendLine("redefine refers value: int = ${expression.value}")
-            }
-            is LiteralBoolean -> appendIndent("redefine contains $redefines: LiteralBooleanExpression") {
-                appendLine("redefine refers value: bool = ${expression.isValue}")
-            }
+            is LiteralInteger -> serialize(expression, redefines)
+            is LiteralBoolean -> serialize(expression, redefines)
+            else -> error("")
         }
+    }
+
+    private fun IndentationAwareStringWriter.serialize(expression: LiteralInteger, redefines: String) {
+        appendIndent("redefine contains $redefines: LiteralIntegerExpression") {
+            appendLine("redefine refers value: int = ${expression.value}")
+        }
+    }
+
+    private fun IndentationAwareStringWriter.serialize(expression: LiteralBoolean, redefines: String) {
+        appendIndent("redefine contains $redefines: LiteralBooleanExpression") {
+            appendLine("redefine refers value: bool = ${expression.isValue}")
+        }
+    }
+
+    private fun IndentationAwareStringWriter.serialize(expression: NegationOperator, redefines: String) {
+        serializeOperator(expression.body, "UnaryNotExpression", redefines)
     }
 
     private fun IndentationAwareStringWriter.serialize(expression: ReachabilityExpression, redefines: String) = when (expression) {
@@ -359,25 +443,25 @@ object GammaToOxstsSerializer {
 
     private fun IndentationAwareStringWriter.serialize(expression: StateReachabilityExpression, redefines: String) {
         appendIndent("redefine contains $redefines: StateReachabilityExpression") {
-            appendLine("redefine refers state: State = ${expression.expression.serialize()}")
+            appendLine("redefine refers state: State = ${serializeInline(expression.expression)}")
         }
     }
 
-    private fun ReferenceExpression.serialize() = when (this) {
-        is ChainingExpression -> serialize()
-        else -> error("Unknown reference expression: $this")
-    }
-
-    private fun ChainingExpression.serialize(): String {
-        return elements.serialize()
-    }
-
-    private fun List<ElementReferenceExpression>.serialize(): String {
-        return map {
-            it.element
-        }.joinToString(".") {
-            it.name
+    private fun IndentationAwareStringWriter.serializeVariableReference(expression: ElementReferenceExpression, redefines: String) {
+        appendIndent("redefine contains $redefines: VariableExpression") {
+            appendLine("redefine refers variable: Variable = ${serializeInline(expression)}")
         }
+    }
+
+    private fun IndentationAwareStringWriter.serializeVariableReference(expression: NavigationSuffixExpression, redefines: String) {
+        appendIndent("redefine contains $redefines: VariableExpression") {
+            appendLine("redefine refers variable: Variable = ${serializeInline(expression)}")
+        }
+    }
+
+    private fun serializeInline(expression: Expression): String {
+        val node = NodeModelUtils.getNode(expression);
+        return NodeModelUtils.getTokenText(node)
     }
 
 }
@@ -407,20 +491,11 @@ val Trigger.name by TriggerNameProvider
 object ChannelNameProvider : EObjectNameProvider("channel")
 val Channel.name by ChannelNameProvider
 
-object GuardNameProvider : EObjectNameProvider("guard")
-val Guard.name by GuardNameProvider
-
-object ExpressionNameProvider : EObjectNameProvider("expression")
-val Expression.name by ExpressionNameProvider
-
 val EObject.name
     get() = when (this) {
         is Action -> name
         is Transition -> name
-        is Trigger -> name
         is Channel -> name
-        is Guard -> name
-        is Expression -> name
         else -> {
             val nameFeature = eClass().getEStructuralFeature("name")
             eGet(nameFeature).toString()

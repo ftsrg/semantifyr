@@ -6,49 +6,98 @@
 
 grammar hu.bme.mit.semantifyr.frontends.gamma.lang.Gamma with org.eclipse.xtext.common.Terminals
 
-generate gamma "http://www.bme.hu/mit/2024/gamma"
+generate gamma "http://www.bme.hu/mit/2025/gamma"
 
 import "http://www.eclipse.org/emf/2002/Ecore" as Ecore
 
-Package:
-    'package' name=ID
+GammaModelPackage:
+    'package' name=Identifier
 
-    components += Component*
-
-    verificationCases += VerificationCase*
+    (
+        interfaces += InterfaceDeclaration
+        | components += ComponentDeclaration
+        | verificationCases += VerificationCaseDeclaration
+    )*
 ;
 
-Component:
-    Statechart
-    | SyncComponent
+InterfaceDeclaration:
+    'interface' name=Identifier '{'
+        events += EventDeclaration*
+    '}'
 ;
 
-Statechart:
-	'statechart' name=ID
-	('['
-	    (
-	        events += Event
+enum EventDirection:
+	IN = 'in' | OUT = 'out' // | INOUT = 'inout' | INTERNAL = 'internal'
+;
+
+EventDeclaration:
+    direction=EventDirection 'event' name=Identifier
+;
+
+ComponentDeclaration:
+    SyncComponentDeclaration
+    | StatechartDeclaration
+;
+
+SyncComponentDeclaration:
+    'sync' 'component' name=Identifier
+    ('[' (ports += PortDeclaration (',' ports += PortDeclaration)*)? ']')?
+    '{'
+        (
+            components += ComponentInstance
+            | channels += Channel
+            | bindings += PortBinding
         )*
-	']')?
+    '}'
+;
+
+ComponentInstance:
+    'component' name=ID ':' component=[ComponentDeclaration|Identifier]
+;
+
+enum RealizationMode:
+	PROVIDED = 'provides' | REQUIRED = 'requires'
+;
+
+PortDeclaration:
+    'port' name=Identifier ':' realizationMode=RealizationMode interface=[InterfaceDeclaration|Identifier]
+;
+
+StatechartDeclaration:
+	'statechart' name=Identifier
+    ('[' (ports += PortDeclaration (',' ports += PortDeclaration)*)? ']')?
 	'{'
         (
-            variables += Variable
-            | timeouts += Timeout
+            variables += VariableDeclaration
+            | timeouts += TimeoutDeclaration
             | regions += Region
         )*
 	'}'
 ;
 
-Variable:
-    'var' name=ID ':' (type = ('Integer' | 'Boolean')) ('=' default=LiteralExpression)?
+TypeReference:
+    IntegerType
+    | BooleanType
 ;
 
-Timeout:
-    'timeout' name=ID
+IntegerType:
+    {IntegerType} 'Integer'
+;
+
+BooleanType:
+    {BooleanType} 'Boolean'
+;
+
+VariableDeclaration:
+    'var' name=Identifier ':' type = TypeReference (':=' default=LiteralExpression)?
+;
+
+TimeoutDeclaration:
+    'timeout' name=Identifier
 ;
 
 Region:
-    'region' name=ID '{'
+    'region' name=Identifier '{'
         (
             states += State
             | transitions += Transition
@@ -57,12 +106,11 @@ Region:
 ;
 
 State:
-    'state' name=ID ( '{'
-        (
-            ('entry' '/' (entryActions += Action) (';' entryActions += Action)* (';')?)
-            | ('exit' '/' (exitActions += Action) (';' exitActions += Action)* (';')?)
-            | regions += Region
-        )*
+    'state' name=Identifier ('{'
+        ('entry' '/' entryActions+=Action+)?
+        ('exit' '/' exitActions+=Action+)?
+
+        regions+=Region*
     '}')?
 ;
 
@@ -72,33 +120,14 @@ Transition:
 ;
 
 EntryTransition:
-    'entry' 'transition' 'to' to=[State]
+    'entry' 'transition' 'to' to=[State|Identifier]
 ;
 
 StateTransition:
-    'transition' from=[State] 'to' to=[State]
-    (
-        'when' trigger=Trigger
-    )?
-    (
-        guard=Guard
-    )?
-    (
-        '/' (actions += Action) (';' actions += Action)* (';')?
-    )?
-;
-
-Event:
-    InputEvent
-    | OutputEvent
-;
-
-InputEvent:
-    'in' 'event' name=ID
-;
-
-OutputEvent:
-    'out' 'event' name=ID
+    'transition' from=[State] 'to' to=[State|Identifier]
+    ('when' trigger=Trigger)?
+    ('[' guard=Expression ']')?
+    ('/' actions+=Action+)?
 ;
 
 Trigger:
@@ -107,15 +136,11 @@ Trigger:
 ;
 
 TimeoutTrigger:
-    'timeout' timeout=[Timeout]
+    'timeout' timeout=[TimeoutDeclaration|Identifier]
 ;
 
 EventTrigger:
-    'event' event=[Event]
-;
-
-Guard:
-    '[' expression=Expression ']'
+    'event' port=[PortDeclaration|Identifier] '.' event=[EventDeclaration|Identifier]
 ;
 
 Action:
@@ -125,128 +150,40 @@ Action:
 ;
 
 RaiseEventAction:
-    'raise' event=[Event]
+    'raise' port=[PortDeclaration|Identifier] '.' event=[EventDeclaration|Identifier] ';'
 ;
 
 SetTimeoutAction:
-    'set' timeout=[Timeout] 'to' value=INT
+    'set' timeout=[TimeoutDeclaration|Identifier] ':=' value=Expression 's' ';'
 ;
 
 AssignmentAction:
-    'assign' variable=[Variable] ':=' expression=Expression
+    'assign' variable=[VariableDeclaration|Identifier] ':=' expression=Expression ';'
 ;
 
-SyncComponent:
-    'sync' 'component' name=ID
-    ('['
-        (
-            events += Event
-        )*
-    ']')?
-    '{'
-        (
-            components += ComponentInstance
-            | channels += Channel
-        )*
-    '}'
+InstancePortReference:
+	instance=[ComponentInstance|Identifier] '.' port=[PortDeclaration|Identifier]
 ;
 
-ComponentInstance:
-    'component' name=ID ':' component=[Component]
+PortBinding:
+	'bind' port=[PortDeclaration|Identifier] '->' boundPort=InstancePortReference
 ;
 
 Channel:
-    'channel'
-    from=ReferenceExpression 'to'
-    to=ReferenceExpression
+	'channel' '[' providedPort=InstancePortReference ']' '->' '[' requiredPort=InstancePortReference ']'
 ;
 
-VerificationCase:
-    'verification' 'case' name=ID '{'
-        'expect' (reachable?='reachable' | 'unreachable')
+VerificationCaseDeclaration:
+    (reachable?='@Reachable' | '@Unreachable')
+    'verification' 'case' name=Identifier '{'
         component = ComponentInstance
-        'expression' '{' expression=Expression '}'
+        'invariant' '{' invariant=VerificationCaseExpression '}'
     '}'
 ;
 
-Expression:
-	OperatorExpression
-;
-
-// Operator expressions
-
-OperatorExpression returns Expression:
-	OrOperator
-;
-
-OrOperator returns Expression:
-	AndOperator ({OrOperator.left=current} ('or' | '||') right=AndOperator)*
-;
-
-AndOperator returns Expression:
-	PlusOperator ({AndOperator.left=current} ('and' | '&&') right=PlusOperator)*
-;
-
-PlusOperator returns Expression:
-	MinusOperator ({PlusOperator.left=current} '+' right=MinusOperator)*
-;
-
-MinusOperator returns Expression:
-	EqualityOperator ({MinusOperator.left=current} '-' right=EqualityOperator)*
-;
-
-EqualityOperator returns Expression:
-	InequalityOperator ({EqualityOperator.left=current} '==' right=InequalityOperator)*
-;
-
-InequalityOperator returns Expression:
-	LessThanOperator ({InequalityOperator.left=current} '!=' right=LessThanOperator)*
-;
-
-LessThanOperator returns Expression:
-	LessThanOrEqualsOperator ({LessThanOperator.left=current} '<' right=LessThanOrEqualsOperator)*
-;
-
-LessThanOrEqualsOperator returns Expression:
-	GreaterThanOperator ({LessThanOrEqualsOperator.left=current} '<=' right=GreaterThanOperator)*
-;
-
-GreaterThanOperator returns Expression:
-	GreaterThanOrEqualsOperator ({GreaterThanOperator.left=current} '>' right=GreaterThanOrEqualsOperator)*
-;
-
-GreaterThanOrEqualsOperator returns Expression:
-	UnaryOperator ({GreaterThanOrEqualsOperator.left=current} '>=' right=UnaryOperator)*
-;
-
-UnaryOperator returns Expression:
-	NotOperator
-	| PrimaryExpression
-;
-
-NotOperator:
-	{NotOperator} => ('not' | '!') operand=UnaryOperator
-;
-
-// Reference expressions
-
-PrimaryExpression returns Expression:
-	  ReferenceExpression
-	| ReachabilityExpression
-	| LiteralExpression
-	| '(' Expression ')'
-;
-
-ReferenceExpression:
-    ChainingExpression
-;
-
-ChainingExpression:
-    elements += ElementReferenceExpression ('.' elements += ElementReferenceExpression)*
-;
-
-ElementReferenceExpression:
-    element = [Ecore::EObject]
+VerificationCaseExpression returns Expression:
+    Expression
+    | ReachabilityExpression
 ;
 
 ReachabilityExpression:
@@ -254,13 +191,92 @@ ReachabilityExpression:
 ;
 
 StateReachabilityExpression:
-    'state' expression=ReferenceExpression
+    'state' expression=Expression
+;
+
+Expression:
+	OperatorExpression
+;
+
+OperatorExpression returns Expression:
+    BooleanOperator
+;
+
+enum BooleanOp:
+    AND='&&' | OR='||'
+    | AND='and' | OR='or'
+;
+
+BooleanOperator returns Expression:
+    ComparisonOperator (
+        {BooleanOperator.left=current} op=BooleanOp right=ComparisonOperator
+    )*
+;
+
+enum ComparisonOp:
+	LESS="<" | LESS_EQ="<=" | GREATER=">" | GREATER_EQ=">=" | EQ="==" | NOT_EQ="!="
+;
+
+ComparisonOperator returns Expression:
+    AdditiveOperator (
+        {ComparisonOperator.left=current} op=ComparisonOp right=AdditiveOperator
+    )*
+;
+
+enum AdditiveOp returns ArithmeticOp:
+	ADD="+" | SUB="-"
+;
+
+AdditiveOperator returns Expression:
+    MultiplicativeOperator (
+        {ArithmeticBinaryOperator.left=current} op=AdditiveOp right=MultiplicativeOperator
+    )*
+;
+
+enum MultiplicativeOp returns ArithmeticOp:
+    MUL='*' | DIV='/'
+;
+
+MultiplicativeOperator returns Expression:
+    UnaryOperator (
+        {ArithmeticBinaryOperator.left=current} op=MultiplicativeOp right=UnaryOperator
+    )*
+;
+
+UnaryOperator returns Expression:
+	NegationOperator
+	| ArithmeticUnaryOperator
+	| PostfixUnaryExpression
+;
+
+NegationOperator:
+	'!' body=UnaryOperator
+;
+
+enum UnaryOp:
+	PLUS="+" | MINUS="-"
+;
+
+ArithmeticUnaryOperator:
+    op=UnaryOp body=UnaryOperator
+;
+
+PostfixUnaryExpression returns Expression:
+    PrimaryExpression -> (
+        ({NavigationSuffixExpression.primary=current} '.' member=[Ecore::EObject|Identifier])
+    )*
+;
+
+PrimaryExpression returns Expression:
+	  ElementReferenceExpression
+	| LiteralExpression
+	| '(' Expression ')'
 ;
 
 // Literal expressions
 
 LiteralExpression:
-	   LiteralBoolean
+	 LiteralBoolean
 	 | LiteralInteger
 ;
 
@@ -269,13 +285,19 @@ LiteralBoolean:
 ;
 
 LiteralInteger:
-	value = SignedInt
+	value = INT
 ;
 
 BooleanValue returns Ecore::EBoolean:
 	'true' | 'false'
 ;
 
-SignedInt returns Ecore::EInt:
-    ('-')? INT
+ElementReferenceExpression:
+	element=[Ecore::EObject|Identifier]
 ;
+
+Identifier:
+    ID
+;
+
+terminal ID: ('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')*;

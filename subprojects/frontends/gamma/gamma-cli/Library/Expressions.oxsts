@@ -20,74 +20,101 @@ class LiteralIntegerExpression : LiteralExpression {
     }
 }
 
-class OperatorExpression : Expression {
+class BinaryOperatorExpression : Expression {
     features left: Expression[1]
     features right: Expression[1]
 }
 
-class LessThanOperatorExpression : OperatorExpression {
+class LessThanOperatorExpression : BinaryOperatorExpression {
     redefine prop evaluate() {
         return left.evaluate() < right.evaluate()
     }
 }
 
-class LessThanOrEqualsOperatorExpression : OperatorExpression {
+class LessThanOrEqualsOperatorExpression : BinaryOperatorExpression {
     redefine prop evaluate() {
         return left.evaluate() <= right.evaluate()
     }
 }
 
-class GreaterThanOperatorExpression : OperatorExpression {
+class GreaterThanOperatorExpression : BinaryOperatorExpression {
     redefine prop evaluate() {
         return left.evaluate() > right.evaluate()
     }
 }
 
-class GreaterThanOrEqualsOperatorExpression : OperatorExpression {
+class GreaterThanOrEqualsOperatorExpression : BinaryOperatorExpression {
     redefine prop evaluate() {
         return left.evaluate() >= right.evaluate()
     }
 }
 
-class PlusOperatorExpression : OperatorExpression {
+class PlusOperatorExpression : BinaryOperatorExpression {
     redefine prop evaluate() {
         return left.evaluate() + right.evaluate()
     }
 }
 
-class MinusOperatorExpression : OperatorExpression {
+class MinusOperatorExpression : BinaryOperatorExpression {
     redefine prop evaluate() {
         return left.evaluate() - right.evaluate()
     }
 }
 
-class EqualityOperatorExpression : OperatorExpression {
+class MultiplyOperatorExpression : BinaryOperatorExpression {
+    redefine prop evaluate() {
+        return left.evaluate() * right.evaluate()
+    }
+}
+
+class DivideOperatorExpression : BinaryOperatorExpression {
+    redefine prop evaluate() {
+        return left.evaluate() / right.evaluate()
+    }
+}
+
+class EqualityOperatorExpression : BinaryOperatorExpression {
     redefine prop evaluate() {
         return left.evaluate() == right.evaluate()
     }
 }
 
-class InequalityOperatorExpression : OperatorExpression {
+class InequalityOperatorExpression : BinaryOperatorExpression {
     redefine prop evaluate() {
         return left.evaluate() != right.evaluate()
     }
 }
 
-class OrOperatorExpression : OperatorExpression {
+class OrOperatorExpression : BinaryOperatorExpression {
     redefine prop evaluate() {
         return left.evaluate() || right.evaluate()
     }
 }
 
-class AndOperatorExpression : OperatorExpression {
+class AndOperatorExpression : BinaryOperatorExpression {
     redefine prop evaluate() {
         return left.evaluate() && right.evaluate()
     }
 }
 
-class NotExpression : Expression {
-    features operand: Expression[1]
+class UnaryOperatorExpression : Expression {
+    features body: Expression[1]
+}
+
+class UnaryNotExpression : UnaryOperatorExpression {
     redefine prop evaluate() {
-        return !operand.evaluate()
+        return !body.evaluate()
+    }
+}
+
+class UnaryPlusExpression : UnaryOperatorExpression {
+    redefine prop evaluate() {
+        return body.evaluate()
+    }
+}
+
+class UnaryMinusExpression : UnaryOperatorExpression {
+    redefine prop evaluate() {
+        return - body.evaluate()
     }
 }

@@ -61,20 +61,22 @@ class Region {
     tran fireTransitions() {
         /*
         // bottom-up
-        var eventConsumed := false
+        var notConsumed := false
 
         inline for choice (state in states) {
             inline state.fireTransitions()
-            eventConsumed := true
+        } else {
+            notConsumed := true
         }
 
-        if (eventConsumed == false) {
+        if (notConsumed) {
             inline for choice (transition in transitions) {
                 inline transition.main()
             }
         }
-    */
+        //*/
     
+        ///*
         // top-down
         inline for choice (transition in transitions) {
             inline transition.main()
@@ -83,7 +85,7 @@ class Region {
                 inline state.fireTransitions()
             } else { }
         }
-     
+        //*/     
     }
 }
 

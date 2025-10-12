@@ -7,29 +7,29 @@
 package semantifyr::gamma::components
 
 import semantifyr::gamma::events
+import semantifyr::gamma::ports
 
 class Component {
-    contains events: Event[0..*]
-    contains inputEvents: Event[0..*] subsets events
-    contains outputEvents: Event[0..*] subsets events
+
+    contains ports: Port[0..*]
 
     contains timeouts: Timeout[0..*]
 
     tran resetInputEvents() {
-        inline for (event in inputEvents) {
-            inline event.reset()
+        inline for (port in ports) {
+            inline port.resetInputEvent()
         }
     }
 
     tran havocInputEvents() {
-        inline for (event in inputEvents) {
-            inline event.havoc()
+        inline for (port in ports) {
+            inline port.havocInputEvent()
         }
     }
 
     tran resetOutputEvents() {
-        inline for (event in outputEvents) {
-            inline event.reset()
+        inline for (port in ports) {
+            inline port.resetOutputEvent()
         }
     }
 
@@ -41,12 +41,12 @@ class Component {
 }
 
 class Channel {
-    refers inputEvent: Event[1]
-    refers outputEvent: Event[1]
+    refers inputPort: Port[1]
+    refers outputPort: Port[1]
 
     redefine tran {
-        if (inputEvent.isActive) {
-            inline outputEvent.set()
+        if (inputPort.hasOutput()) {
+            inline outputPort.setInputEvent(inputPort.outputEvent)
         }
     }
 }

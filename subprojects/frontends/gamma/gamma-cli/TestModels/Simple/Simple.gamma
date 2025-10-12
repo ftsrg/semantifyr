@@ -6,10 +6,14 @@
 
 package Simple
 
-statechart LeaderStatechart [
-    in event fire
-    in event stop
+interface Control {
     out event start
+    out event stop
+}
+
+statechart LeaderStatechart [
+    port control : requires Control,
+    port workerControl : provides Control
 ] {
     region Main {
         state Idle
@@ -18,14 +22,13 @@ statechart LeaderStatechart [
         state Unreachable
 
         entry transition to Idle
-        transition Idle to Operational when event fire / raise start
-        transition Operational to Stopped when event stop
+        transition Idle to Operational when event control.start / raise workerControl.start;
+        transition Operational to Stopped when event control.stop / raise workerControl.stop;
     }
 }
 
 statechart WorkerStatechart [
-    in event start
-    in event stop
+    port control : requires Control
 ] {
     region Main {
         state Idle
@@ -34,62 +37,59 @@ statechart WorkerStatechart [
         state Unreachable
 
         entry transition to Idle
-        transition Idle to Operational when event start
-        transition Operational to Stopped when event stop
+        transition Idle to Operational when event control.start
+        transition Operational to Stopped when event control.stop
     }
 }
 
 sync component System[
-    in event fire
-    in event stop
+    port control : requires Control
 ] {
     component leader : LeaderStatechart
     component worker : WorkerStatechart
 
-    channel fire to leader.fire
-    channel stop to leader.stop
-    channel stop to worker.stop
-    channel leader.start to worker.start
-}
+    bind control -> leader.control
+    channel [ leader.workerControl ] -> [ worker.control ]
+} 
 
+@Reachable
 verification case WorkerStatechartIdleReachable {
-    expect reachable
     component system : System
 
-    expression { state system.worker.Main.Idle }
+    invariant { state system.worker.Main.Idle }
 }
 
+@Reachable
 verification case WorkerStatechartOperationalReachable {
-    expect reachable
     component system : System
 
-    expression { state system.worker.Main.Operational }
+    invariant { state system.worker.Main.Operational }
 }
 
+@Reachable
 verification case LeaderStatechartIdleReachable {
-    expect reachable
     component system : System
 
-    expression { state system.leader.Main.Idle }
+    invariant { state system.leader.Main.Idle }
 }
 
+@Reachable
 verification case LeaderStatechartOperationalReachable {
-    expect reachable
     component system : System
 
-    expression { state system.leader.Main.Operational }
+    invariant { state system.leader.Main.Operational }
 }
 
+@Unreachable
 verification case LeaderStatechartUnreachable {
-    expect unreachable
     component system : System
 
-    expression { state system.leader.Main.Unreachable }
+    invariant { state system.leader.Main.Unreachable }
 }
 
+@Unreachable
 verification case LeaderStatechartUnrachable {
-    expect unreachable
     component system : System
 
-    expression { state system.leader.Main.Unreachable }
+    invariant { state system.leader.Main.Unreachable }
 }
