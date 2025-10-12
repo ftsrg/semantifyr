@@ -63,11 +63,19 @@ public class OxstsUtils {
     public static boolean isAnnotatedWith(AnnotatedElement element, AnnotationDeclaration annotationDeclaration) {
         var annotationContainer = element.getAnnotation();
 
+        if (annotationContainer == null) {
+            return false;
+        }
+
         return annotationContainer.getAnnotations().stream().anyMatch(a -> a.getDeclaration() == annotationDeclaration);
     }
 
     public static Annotation getAnnotation(AnnotatedElement element, AnnotationDeclaration annotationDeclaration) {
         var annotationContainer = element.getAnnotation();
+
+        if (annotationContainer == null) {
+            return null;
+        }
 
         return annotationContainer.getAnnotations().stream().filter(a -> a.getDeclaration() == annotationDeclaration).findFirst().orElse(null);
     }

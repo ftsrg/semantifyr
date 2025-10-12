@@ -9,7 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.codelens;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands.*;
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.AnnotationHandler;
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import org.eclipse.lsp4j.*;
 import org.eclipse.xtext.EcoreUtil2;
@@ -36,7 +36,7 @@ public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensServic
     private NavigateToRedefinedCommandHandler navigateToRedefinedCommandHandler;
 
     @Inject
-    private AnnotationHandler annotationHandler;
+    private BuiltinAnnotationHandler annotationHandler;
 
     @Override
     public CodeLens resolveCodeLens(Document document, XtextResource resource, CodeLens codeLens, CancelIndicator indicator) {

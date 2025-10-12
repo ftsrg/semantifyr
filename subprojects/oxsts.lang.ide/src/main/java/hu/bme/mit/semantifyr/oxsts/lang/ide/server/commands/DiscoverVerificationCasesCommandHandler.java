@@ -8,9 +8,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
 import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
-import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinLibraryUtils;
-import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.AnnotationHandler;
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
 import org.eclipse.emf.ecore.resource.Resource;
@@ -24,13 +22,7 @@ import java.util.concurrent.ExecutionException;
 public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHandler<Resource> {
 
     @Inject
-    private AnnotationHandler annotationHandler;
-
-    @Inject
-    private BuiltinSymbolResolver builtinSymbolResolver;
-
-    @Inject
-    private BuiltinLibraryUtils builtinLibraryUtils;
+    private BuiltinAnnotationHandler builtinAnnotationHandler;
 
     @Override
     public String getId() {
@@ -78,7 +70,7 @@ public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHand
                 continue;
             }
 
-            if (annotationHandler.isVerificationCase(classDeclaration)) {
+            if (builtinAnnotationHandler.isVerificationCase(classDeclaration)) {
                 verificationCases.add(createCase(classDeclaration));
                 verificationCases.add(createCase(classDeclaration));
             }
@@ -88,7 +80,7 @@ public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHand
     }
 
     private VerificationCaseSpecification createCase(ClassDeclaration classDeclaration) {
-        var summary = builtinLibraryUtils.getVerificationCaseSummary(classDeclaration);
+        var summary = builtinAnnotationHandler.getVerificationCaseSummary(classDeclaration);
         if (summary == null) {
             summary = classDeclaration.getName();
         }

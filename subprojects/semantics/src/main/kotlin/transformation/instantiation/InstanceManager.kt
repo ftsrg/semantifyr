@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.semantics.transformation.instantiation
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.OppositeHandler
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Association
@@ -83,12 +84,33 @@ class InstanceManager {
     @Inject
     private lateinit var oppositeHandler: OppositeHandler
 
+    @Inject
+    private lateinit var builtinAnnotationHandler: BuiltinAnnotationHandler
+
     private val variableManagers = mutableMapOf<Instance, VariableManager>()
     private val associationManagers = mutableMapOf<Instance, AssociationManager>()
+    private val sharedInstances = mutableMapOf<FeatureDeclaration, Instance>()
 
     fun createAndPlaceInstance(holder: Instance, featureDeclaration: FeatureDeclaration) {
+        if (builtinAnnotationHandler.isSharedFeature(featureDeclaration)) {
+            createAndPlaceSharedInstance(holder, featureDeclaration)
+        } else {
+            createAndPlaceIndividualInstance(holder, featureDeclaration)
+        }
+    }
+
+    fun createAndPlaceIndividualInstance(holder: Instance, featureDeclaration: FeatureDeclaration) {
         val instance = createInstance(featureDeclaration)
         holder.children += instance
+        placeInstance(holder, featureDeclaration, instance)
+    }
+
+    fun createAndPlaceSharedInstance(holder: Instance, featureDeclaration: FeatureDeclaration) {
+        val instance = sharedInstances.getOrPut(featureDeclaration) {
+            createInstance(featureDeclaration).also {
+                holder.children += it
+            }
+        }
         placeInstance(holder, featureDeclaration, instance)
     }
 

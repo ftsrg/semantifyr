@@ -9,15 +9,31 @@ package hu.bme.mit.semantifyr.oxsts.lang.library.builtin;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 
 @Singleton
-public class BuiltinLibraryUtils {
+public class BuiltinAnnotationHandler {
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
+
+    public boolean isControlVariable(VariableDeclaration variableDeclaration) {
+        var controlAnnotation = builtinSymbolResolver.controlAnnotation(variableDeclaration);
+
+        return OxstsUtils.isAnnotatedWith(variableDeclaration, controlAnnotation);
+    }
+
+    public boolean isSharedFeature(FeatureDeclaration featureDeclaration) {
+        var sharedAnnotation = builtinSymbolResolver.sharedAnnotation(featureDeclaration);
+
+        return OxstsUtils.isAnnotatedWith(featureDeclaration, sharedAnnotation);
+    }
+
+    public boolean isVerificationCase(ClassDeclaration classDeclaration) {
+        var verificationCaseAnnotation = builtinSymbolResolver.verificationCaseAnnotation(classDeclaration);
+
+        return OxstsUtils.isAnnotatedWith(classDeclaration, verificationCaseAnnotation);
+    }
 
     public VerificationCaseExpectedResult getExpectedResults(ClassDeclaration classDeclaration) {
         var annotationDeclaration = builtinSymbolResolver.verificationCaseAnnotation(classDeclaration);

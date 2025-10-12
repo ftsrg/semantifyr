@@ -18,3 +18,8 @@ class Anything {
     init { }
     havoc { }
 }
+
+/*
+ * Instances contained in Containment features annotated with @Shared are shared across all instances of the containing class.
+ */
+annotation Shared
