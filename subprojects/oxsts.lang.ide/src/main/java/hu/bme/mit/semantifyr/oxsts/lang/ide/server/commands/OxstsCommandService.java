@@ -30,6 +30,9 @@ public class OxstsCommandService implements IExecutableCommandService {
     @Inject
     private DiscoverVerificationCasesCommandHandler discoverVerificationCasesCommandHandler;
 
+    @Inject
+    private NavigateToRedefinedCommandHandler navigateToRedefinedCommandHandler;
+
     private List<CommandHandler> commandHandlers;
 
     protected List<CommandHandler> getCommandHandlers() {
@@ -38,7 +41,8 @@ public class OxstsCommandService implements IExecutableCommandService {
                     inlineOxstsCommandHandler,
                     compileInlinedOxstsCommandHandler,
                     verifyOxstsCommandHandler,
-                    discoverVerificationCasesCommandHandler
+                    discoverVerificationCasesCommandHandler,
+                    navigateToRedefinedCommandHandler
             );
         }
         return commandHandlers;

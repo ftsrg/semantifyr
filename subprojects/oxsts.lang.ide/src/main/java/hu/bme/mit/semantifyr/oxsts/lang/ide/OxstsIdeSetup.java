@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.client.OxstsLanguageClient;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.OxstsServerModule;
 import hu.bme.mit.semantifyr.semantics.SemantifyrRuntimeModule;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
@@ -63,7 +64,7 @@ public class OxstsIdeSetup extends OxstsStandaloneSetup {
                 var in = clientSocket.getInputStream();
                 var out = clientSocket.getOutputStream();
 
-                var launcher = Launcher.createLauncher(languageServer, LanguageClient.class, in, out);
+                var launcher = Launcher.createLauncher(languageServer, OxstsLanguageClient.class, in, out);
                 languageServer.connect(launcher.getRemoteProxy());
                 launcher.startListening().get();
             }

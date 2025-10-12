@@ -6,11 +6,11 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
-import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.Location;
 
 public record VerificationCaseSpecification(
         String id,
         String label,
-        Range range
+        Location location
 ) {
 }

@@ -25,9 +25,9 @@ public class AnnotationHandler {
     }
 
     public boolean isVerificationCase(ClassDeclaration classDeclaration) {
-        var controlAnnotation = builtinSymbolResolver.verificationCaseAnnotation(classDeclaration);
+        var verificationCaseAnnotation = builtinSymbolResolver.verificationCaseAnnotation(classDeclaration);
 
-        return OxstsUtils.isAnnotatedWith(classDeclaration, controlAnnotation);
+        return OxstsUtils.isAnnotatedWith(classDeclaration, verificationCaseAnnotation);
     }
 
 }

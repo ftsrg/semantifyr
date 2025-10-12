@@ -8,23 +8,29 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
 import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinLibraryUtils;
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.AnnotationHandler;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.Range;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
-import org.eclipse.xtext.nodemodel.util.NodeModelUtils;
 import org.eclipse.xtext.util.CancelIndicator;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHandler<OxstsModelPackage> {
+public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHandler<Resource> {
 
     @Inject
     private AnnotationHandler annotationHandler;
+
+    @Inject
+    private BuiltinSymbolResolver builtinSymbolResolver;
+
+    @Inject
+    private BuiltinLibraryUtils builtinLibraryUtils;
 
     @Override
     public String getId() {
@@ -37,32 +43,37 @@ public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHand
     }
 
     @Override
-    public List<Object> serializeArguments(OxstsModelPackage arguments) {
-        return List.of(arguments.eResource().getURI().toString());
+    public List<Object> serializeArguments(Resource arguments) {
+        return List.of(arguments.getURI().toString());
     }
 
     @Override
-    protected OxstsModelPackage parseArguments(List<Object> arguments, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
-        var uriJson = (JsonPrimitive) arguments.get(0);
+    protected Resource parseArguments(List<Object> arguments, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
+        var uriJson = (JsonPrimitive) arguments.getFirst();
         var uri = uriJson.getAsString();
 
-        var classDeclaration = access.doRead(uri, context -> {
-            var resource = context.getResource();
-            return (OxstsModelPackage) resource.getContents().getFirst();
-        });
+        var resource = access.doRead(uri, ILanguageServerAccess.Context::getResource);
 
         try {
-            return classDeclaration.get();
+            return resource.get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    protected Object execute(OxstsModelPackage arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
+    protected Object execute(Resource arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
+        if (arguments.getContents().isEmpty()) {
+            return List.of();
+        }
+
+        if (! (arguments.getContents().getFirst() instanceof OxstsModelPackage oxstsModel)) {
+            return List.of();
+        }
+
         var verificationCases = new ArrayList<VerificationCaseSpecification>();
 
-        for (var declaration : arguments.getDeclarations()) {
+        for (var declaration : oxstsModel.getDeclarations()) {
             if (!(declaration instanceof ClassDeclaration classDeclaration)) {
                 continue;
             }
@@ -77,12 +88,14 @@ public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHand
     }
 
     private VerificationCaseSpecification createCase(ClassDeclaration classDeclaration) {
+        var summary = builtinLibraryUtils.getVerificationCaseSummary(classDeclaration);
+        if (summary == null) {
+            summary = classDeclaration.getName();
+        }
         var id = classDeclaration.getName();
-        var classNode = NodeModelUtils.getNode(classDeclaration);
-        var start = new Position(classNode.getStartLine() - 1, 0);
-        var range = new Range(start, start);
+        var location = getLocation(classDeclaration);
 
-        return new VerificationCaseSpecification(id, id, range);
+        return new VerificationCaseSpecification(id, summary, location);
     }
 
 }

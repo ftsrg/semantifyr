@@ -11,11 +11,11 @@ import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryAdapterFinder;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.utils.NamedElementResolver;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.xtext.naming.QualifiedName;
-import org.eclipse.xtext.resource.IResourceDescription;
 
 @Singleton
 public class BuiltinSymbolResolver {
@@ -24,6 +24,7 @@ public class BuiltinSymbolResolver {
 
     public static final QualifiedName VERIFICATION_CASE_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_VERIFICATION_LIBRARY_NAME.append("VerificationCase");
     public static final String VERIFICATION_CASE_EXPECTED_RESULTS_NAME = "expected";
+    public static final String VERIFICATION_CASE_SUMMARY_NAME = "summary";
 
     public static final QualifiedName ANYTHING_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Anything");
 //    public static final String ANYTHING_CHILDREN_NAME = "children";
@@ -47,7 +48,7 @@ public class BuiltinSymbolResolver {
     private OxstsQualifiedNameProvider qualifiedNameProvider;
 
     @Inject
-    private IResourceDescription.Manager descriptionManager;
+    private NamedElementResolver namedElementResolver;
 
     public AnnotationDeclaration controlAnnotation(EObject context) {
         return findInBuiltin(context, AnnotationDeclaration.class, CONTROL_ANNOTATION_NAME);
@@ -60,6 +61,11 @@ public class BuiltinSymbolResolver {
     public ParameterDeclaration verificationCaseAnnotationExpectedResults(EObject context) {
         var verificationCase = verificationCaseAnnotation(context);
         return findInParameters(verificationCase, ParameterDeclaration.class, VERIFICATION_CASE_EXPECTED_RESULTS_NAME);
+    }
+
+    public ParameterDeclaration verificationCaseAnnotationSummary(EObject context) {
+        var verificationCase = verificationCaseAnnotation(context);
+        return findInParameters(verificationCase, ParameterDeclaration.class, VERIFICATION_CASE_SUMMARY_NAME);
     }
 
     public ClassDeclaration anythingClass(EObject context) {
@@ -152,26 +158,16 @@ public class BuiltinSymbolResolver {
 
     protected <T extends Declaration> T findInBuiltin(EObject context, Class<T> type, QualifiedName name) {
         var builtinResource = libraryAdapterFinder.getOrInstall(context).getBuiltinResource();
-        return findInResource(builtinResource, context, type, name);
+        return findInResource(builtinResource, type, name);
     }
 
     protected <T extends Declaration> T findInBuiltinVerification(EObject context, Class<T> type, QualifiedName name) {
         var builtinResource = libraryAdapterFinder.getOrInstall(context).getBuiltinVerificationResource();
-        return findInResource(builtinResource, context, type, name);
+        return findInResource(builtinResource, type, name);
     }
 
-    protected <T extends Declaration> T findInResource(Resource resource, EObject context, Class<T> type, QualifiedName name) {
-        var builtins = descriptionManager.getResourceDescription(resource);
-
-        for (var candidate : builtins.getExportedObjects(OxstsPackage.Literals.ELEMENT, name, false)) {
-            if (type.isInstance(candidate.getEObjectOrProxy())) {
-                // Will always be a loaded EObject, since we force load the resource
-                //noinspection unchecked
-                return (T) candidate.getEObjectOrProxy();
-            }
-        }
-
-        throw new IllegalArgumentException("Built-in declaration '" + name.toString("::") + "' was not found");
+    protected <T extends Declaration> T findInResource(Resource resource, Class<T> type, QualifiedName name) {
+        return namedElementResolver.findQualifiedElement(resource, type, name);
     }
 
 }

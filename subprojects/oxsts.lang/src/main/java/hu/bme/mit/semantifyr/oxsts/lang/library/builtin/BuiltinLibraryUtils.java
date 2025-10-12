@@ -11,6 +11,7 @@ import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString;
 
 @Singleton
 public class BuiltinLibraryUtils {
@@ -37,7 +38,20 @@ public class BuiltinLibraryUtils {
             }
         }
 
-        throw new IllegalStateException("Argument could not be resolved!");
+        return null;
+    }
+
+    public String getVerificationCaseSummary(ClassDeclaration classDeclaration) {
+        var verificationCaseAnnotation = builtinSymbolResolver.verificationCaseAnnotation(classDeclaration);
+        var verificationCaseAnnotationSummary = builtinSymbolResolver.verificationCaseAnnotationSummary(classDeclaration);
+        var annotation = OxstsUtils.getAnnotation(classDeclaration, verificationCaseAnnotation);
+        var value = OxstsUtils.getAnnotationValue(annotation, verificationCaseAnnotationSummary);
+
+        if (value instanceof LiteralString literalString) {
+            return literalString.getValue();
+        }
+
+        return null;
     }
 
 }

@@ -89,8 +89,6 @@ public class OxstsResourceDescription extends DefaultResourceDescription {
     }
 
     protected void computeExportedObjects(Declaration declaration, IAcceptor<IEObjectDescription> acceptor) {
-        final List<IEObjectDescription> exportedEObjects = newArrayList();
-
         strategy.createEObjectDescriptions(declaration, acceptor);
 
         if (declaration instanceof EnumDeclaration enumDeclaration) {

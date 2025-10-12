@@ -77,6 +77,9 @@ public class OxstsUtils {
 
         if (argument == null) {
             var position = annotation.getDeclaration().getParameters().indexOf(parameterDeclaration);
+            if (annotation.getArguments().size() <= position) {
+                return null;
+            }
             argument = annotation.getArguments().get(position);
         }
 

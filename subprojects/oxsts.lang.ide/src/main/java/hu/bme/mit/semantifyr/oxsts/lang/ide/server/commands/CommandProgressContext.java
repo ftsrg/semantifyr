@@ -9,31 +9,22 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.WorkManager;
 import hu.bme.mit.semantifyr.semantics.transformation.ProgressContext;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.eclipse.xtext.util.CancelIndicator;
 
 import java.util.Random;
-import java.util.concurrent.CancellationException;
 
 public class CommandProgressContext implements ProgressContext {
 
     private static final Random random = new Random();
 
-    private final CancelIndicator cancelIndicator;
     private final WorkManager workManager;
     private final Either<String, Integer> token = Either.forRight(random.nextInt());
 
-    public CommandProgressContext(CancelIndicator cancelIndicator, WorkManager workManager) {
-        this.cancelIndicator = cancelIndicator;
+    public CommandProgressContext(WorkManager workManager) {
         this.workManager = workManager;
     }
 
     @Override
     public void checkIsCancelled() {
-//        if (cancelIndicator.isCanceled()) {
-//            end("The command has been cancelled!");
-//            throw new CancellationException("This command has been cancelled!");
-//        }
-
         workManager.checkCanceled(token);
     }
 

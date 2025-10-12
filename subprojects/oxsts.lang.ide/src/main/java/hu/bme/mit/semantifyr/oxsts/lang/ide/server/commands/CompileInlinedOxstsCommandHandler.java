@@ -6,12 +6,15 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts.OxstsTransformer;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
+import org.eclipse.lsp4j.Location;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 
@@ -37,22 +40,20 @@ public class CompileInlinedOxstsCommandHandler extends AbstractCommandHandler<In
 
     @Override
     public List<Object> serializeArguments(InlinedOxsts arguments) {
-        return List.of(arguments.eResource().getURI().toString());
+        var location = getLocation(arguments);
+        return List.of(location);
     }
 
     @Override
     protected InlinedOxsts parseArguments(List<Object> arguments, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
-        var uriJson = (JsonPrimitive) arguments.get(0);
-
-        var uri = uriJson.getAsString();
-
-        var inlinedOxsts = access.doRead(uri, context -> {
-            var resource = context.getResource();
-            return(InlinedOxsts) resource.getContents().getFirst();
-        });
+        var gsonBuilder = new GsonBuilder();
+        var gson = gsonBuilder.create();
+        var locationJson = (JsonObject) arguments.get(0);
+        var location = gson.fromJson(locationJson, Location.class);
+        var element = getElement(access, location);
 
         try {
-            return inlinedOxsts.get();
+            return (InlinedOxsts) element.get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
