@@ -13,8 +13,6 @@ import org.eclipse.xtext.util.CancelIndicator;
 import org.eclipse.xtext.xbase.lib.Functions;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -22,9 +20,7 @@ import java.util.concurrent.ExecutorService;
 @Singleton
 public class PausableRequestManager extends RequestManager {
 
-    private final List<AbstractRequest<?>> requests = new ArrayList<>();
-
-    private final Object lock = new Object();
+    protected final Object lock = new Object();
     private boolean pausedFlag = false;
     private final Queue<DeferredRequest<?>> deferredRequests = new ArrayDeque<>();
 
@@ -49,12 +45,12 @@ public class PausableRequestManager extends RequestManager {
     }
 
     @Override
-    public synchronized <V> CompletableFuture<V> runRead(Functions.Function1<? super CancelIndicator, ? extends V> cancellable) {
+    public <V> CompletableFuture<V> runRead(Functions.Function1<? super CancelIndicator, ? extends V> cancellable) {
         synchronized (lock) {
-            Functions.Function0<AbstractRequest<V>> creator = () -> new ReadRequest<>(this, cancellable, getParallelExecutorService());
+            Functions.Function0<AbstractRequest<V>> creator = () -> getReadRequest(cancellable);
 
             if (pausedFlag) {
-                var deferred = new DeferredRequest<V>(this, creator);
+                var deferred = new DeferredRequest<>(this, creator);
                 deferredRequests.add(deferred);
                 return deferred.get();
             }
@@ -64,12 +60,12 @@ public class PausableRequestManager extends RequestManager {
     }
 
     @Override
-    public synchronized <U, V> CompletableFuture<V> runWrite(Functions.Function0<? extends U> nonCancellable, Functions.Function2<? super CancelIndicator, ? super U, ? extends V> cancellable) {
+    public <U, V> CompletableFuture<V> runWrite(Functions.Function0<? extends U> nonCancellable, Functions.Function2<? super CancelIndicator, ? super U, ? extends V> cancellable) {
         synchronized (lock) {
-            Functions.Function0<AbstractRequest<V>> creator = () -> new WriteRequest<>(this, nonCancellable, cancellable, CompletableFuture.completedFuture(null));
+            Functions.Function0<AbstractRequest<V>> creator = () -> getWriteRequest(nonCancellable, cancellable);
 
             if (pausedFlag) {
-                var deferred = new DeferredRequest<V>(this, creator);
+                var deferred = new DeferredRequest<>(this, creator);
                 deferredRequests.add(deferred);
                 return deferred.get();
             }
@@ -78,30 +74,13 @@ public class PausableRequestManager extends RequestManager {
         }
     }
 
-//    @Override
-//    protected void addRequest(AbstractRequest<?> request) {
-//        super.addRequest(request);
-//        requests.add(request);
-////        request.get().handle((v, t) -> {
-////            removeRequest(request);
-////            return null;
-////        });
-//    }
-
-    protected CompletableFuture<Void> waitForRequests() {
-        synchronized (lock) {
-            var futures = new CompletableFuture<?>[requests.size()];
-            for (int i = 0; i < futures.length; i++) {
-                futures[i] = requests.get(i).get();
-            }
-            return CompletableFuture.allOf(futures);
-        }
+    protected <V> ReadRequest<V> getReadRequest(Functions.Function1<? super CancelIndicator, ? extends V> cancellable) {
+        return new ReadRequest<>(this, cancellable, getParallelExecutorService());
     }
 
-    protected void removeRequest(AbstractRequest<?> request) {
-        synchronized (lock) {
-            requests.remove(request);
-        }
+    protected <U, V> WriteRequest<U, V> getWriteRequest(Functions.Function0<? extends U> nonCancellable, Functions.Function2<? super CancelIndicator, ? super U, ? extends V> cancellable) {
+        // Not cancelling now - is this correct?
+        return new WriteRequest<>(this, nonCancellable, cancellable, CompletableFuture.completedFuture(null));
     }
 
     public void pause() {
