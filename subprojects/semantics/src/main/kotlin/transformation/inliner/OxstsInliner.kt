@@ -11,6 +11,7 @@ import com.google.inject.Provider
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionKind
@@ -55,25 +56,25 @@ class OxstsInliner {
 
         compilationStateManager.commitModelState()
 
-        inlineOperationCalls(inlinedOxsts, inlinedOxsts.initTransition)
-        inlineOperationCalls(inlinedOxsts, inlinedOxsts.mainTransition)
-        inlineExpressionCalls(inlinedOxsts, inlinedOxsts.property)
+        inlineOperationCalls(inlinedOxsts.rootInstance, inlinedOxsts.initTransition)
+        inlineOperationCalls(inlinedOxsts.rootInstance, inlinedOxsts.mainTransition)
+        inlineExpressionCalls(inlinedOxsts.rootInstance, inlinedOxsts.property)
 
         inlinedOxstsOperationOptimizer.optimize(inlinedOxsts)
     }
 
-    private fun inlineOperationCalls(inlinedOxsts: InlinedOxsts, transition: TransitionDeclaration) {
+    private fun inlineOperationCalls(rootInstance: Instance, transition: TransitionDeclaration) {
         val processor = operationCallInlinerProvider.get()
-        processor.instance = inlinedOxsts.rootInstance
+        processor.instance = rootInstance
 
         for (branch in transition.branches) {
             processor.process(branch)
         }
     }
 
-    private fun inlineExpressionCalls(inlinedOxsts: InlinedOxsts, propertyDeclaration: PropertyDeclaration) {
+    private fun inlineExpressionCalls(rootInstance: Instance, propertyDeclaration: PropertyDeclaration) {
         val processor = expressionCallInlinerProvider.get()
-        processor.instance = inlinedOxsts.rootInstance
+        processor.instance = rootInstance
         processor.process(propertyDeclaration.expression)
     }
 

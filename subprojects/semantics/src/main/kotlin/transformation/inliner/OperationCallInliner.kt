@@ -98,10 +98,12 @@ class OperationCallInliner : OperationVisitor<Unit>() {
     }
 
     override fun visit(operation: ForOperation) {
+        expressionCallInliner.process(operation.rangeExpression)
         processorQueue.addFirst(operation.body)
     }
 
     override fun visit(operation: IfOperation) {
+        expressionCallInliner.process(operation.guard)
         processorQueue.addFirst(operation.body)
         if (operation.`else` != null) {
             processorQueue.addFirst(operation.`else`)
