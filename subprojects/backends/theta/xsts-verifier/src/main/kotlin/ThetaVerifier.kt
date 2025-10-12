@@ -9,7 +9,7 @@ package hu.bme.mit.semantifyr.backends.theta.verification
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backends.theta.verification.execution.DockerBasedThetaExecutor
 import hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts.OxstsTransformer
-import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinLibraryUtils
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.VerificationCaseExpectedResult
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.semantics.transformation.InlinedOxstsModelManager
@@ -42,7 +42,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
     private lateinit var compilationStateManager: CompilationStateManager
 
     @Inject
-    private lateinit var builtinLibraryUtils: BuiltinLibraryUtils
+    private lateinit var builtinAnnotationHandler: BuiltinAnnotationHandler
 
     private val dockerBasedThetaExecutor = DockerBasedThetaExecutor(
         "6.5.2",
@@ -56,7 +56,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
     )
 
     override fun verify(progressContext: ProgressContext, classDeclaration: ClassDeclaration): VerificationCaseRunResult {
-        val expected = builtinLibraryUtils.getExpectedResults(classDeclaration)
+        val expected = builtinAnnotationHandler.getExpectedResults(classDeclaration)
 
         val inlinedOxsts = inlinedOxstsModelManager.createInlinedOxsts(classDeclaration)
 

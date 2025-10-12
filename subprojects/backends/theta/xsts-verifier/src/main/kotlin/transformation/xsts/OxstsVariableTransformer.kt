@@ -7,7 +7,7 @@
 package hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.AnnotationHandler
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
@@ -28,7 +28,7 @@ class OxstsVariableTransformer {
     private lateinit var oxstsTypeReferenceTransformer: OxstsTypeReferenceTransformer
 
     @Inject
-    private lateinit var annotationHandler: AnnotationHandler
+    private lateinit var builtinAnnotationHandler: BuiltinAnnotationHandler
 
     @Inject
     private lateinit var expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider
@@ -47,7 +47,7 @@ class OxstsVariableTransformer {
         return topVariableMap.getOrPut(variableDeclaration) {
             val variable = XstsFactory.createTopLevelVariableDeclaration()
 
-            if (annotationHandler.isControlVariable(variableDeclaration)) {
+            if (builtinAnnotationHandler.isControlVariable(variableDeclaration)) {
                 variable.isControl = true
             }
 
