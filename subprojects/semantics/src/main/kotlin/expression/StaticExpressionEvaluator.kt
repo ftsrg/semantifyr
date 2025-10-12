@@ -117,10 +117,6 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
             error("This expression is not resolvable! (probably a meta-expression?)")
         }
 
-        if (resolvedElement.expression != null) {
-            return evaluateFeatureExpression(resolvedElement)
-        }
-
         return evaluateFeature(resolvedElement)
     }
 
@@ -131,13 +127,19 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
         return evaluator.evaluate(featureDeclaration.expression)
     }
 
-    private fun evaluateFeature(featureDeclaration: FeatureDeclaration): InstanceEvaluation {
+    private fun evaluateFeature(featureDeclaration: FeatureDeclaration): ExpressionEvaluation {
         val instances = mutableSetOf<Instance>()
+
+        if (featureDeclaration.expression != null) {
+            return evaluateFeatureExpression(featureDeclaration)
+        }
 
         instances += instanceManager.instancesAt(instance, featureDeclaration)
 
         for (feature in featureSubSettersFinder.getSubSetters(instance.domain, featureDeclaration)) {
-            instances += evaluateFeature(feature).instances
+            val evaluation = evaluateFeature(feature)
+            check(evaluation is InstanceEvaluation)
+            instances += evaluation.instances
         }
 
         return InstanceEvaluation(instances)
