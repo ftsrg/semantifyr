@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.frontends.gamma.cli.reader
+package hu.bme.mit.semantifyr.frontends.gamma.semantics.reader
 
 import com.google.inject.Inject
 import com.google.inject.Provider

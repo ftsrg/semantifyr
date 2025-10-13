@@ -6,8 +6,6 @@ class Interface {
     features events: Event[0..*]
     features inputEvents: Event[0..*] subsets events
     features outputEvents: Event[0..*] subsets events
-
-    // contains eventValueHolders: EventValueHolder[0..*]
 }
 
 class Port {

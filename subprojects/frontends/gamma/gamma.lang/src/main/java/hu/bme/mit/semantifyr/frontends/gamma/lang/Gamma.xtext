@@ -177,21 +177,8 @@ VerificationCaseDeclaration:
     (reachable?='@Reachable' | '@Unreachable')
     'verification' 'case' name=Identifier '{'
         component = ComponentInstance
-        'invariant' '{' invariant=VerificationCaseExpression '}'
+        'invariant' '{' invariant=Expression '}'
     '}'
-;
-
-VerificationCaseExpression returns Expression:
-    Expression
-    | ReachabilityExpression
-;
-
-ReachabilityExpression:
-    StateReachabilityExpression
-;
-
-StateReachabilityExpression:
-    'state' expression=Expression
 ;
 
 Expression:
@@ -268,9 +255,14 @@ PostfixUnaryExpression returns Expression:
 ;
 
 PrimaryExpression returns Expression:
-	  ElementReferenceExpression
+	ElementReferenceExpression
+	| IsStateActiveExpression
 	| LiteralExpression
 	| '(' Expression ')'
+;
+
+IsStateActiveExpression:
+    'isActive' '(' expression=Expression ')'
 ;
 
 // Literal expressions

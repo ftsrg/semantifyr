@@ -10,6 +10,10 @@ import semantifyr::gamma::events
 import semantifyr::gamma::ports
 
 class Trigger {
+    prop isTriggered() {
+        return false
+    }
+
     tran assumeIsTriggered() {
     }
 }
@@ -18,6 +22,10 @@ class EventTrigger : Trigger {
     refers port: Port[1]
     refers event: Event[1]
 
+    redefine prop isTriggered() {
+        return port.hasInputEvent(event)
+    }
+
     redefine tran assumeIsTriggered() {
         inline port.assumeHasInputEvent(event)
     }
@@ -25,6 +33,10 @@ class EventTrigger : Trigger {
 
 class TimeoutTrigger : Trigger {
     refers timeout: Timeout[1]
+
+    redefine prop isTriggered() {
+        return timeout.isUp()
+    }
 
     redefine tran assumeIsTriggered() {
         inline timeout.assumeIsUp()

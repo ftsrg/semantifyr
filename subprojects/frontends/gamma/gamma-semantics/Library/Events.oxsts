@@ -6,33 +6,7 @@
 
 package semantifyr::gamma::events
 
-class Event {
-}
-
-/*
-class EventValue {
-
-    tran setValue(context: EventValueHolder) {
-        // NO-OP
-    }
-
-}
-
-class EventValueHolder {
-
-    refers event: Event[1]
-    contains eventValue: EventValue[1]
-
-    tran assumeForEvent(event: Event) {
-        assume (self.event == event)
-    }
-
-    tran setValue(context: EventValueHolder) {
-        inline eventValue.setValue(context.eventValue)
-    }
-
-}
-*/
+class Event
 
 class Timeout {
     refers deltaTime: int = 1
@@ -43,6 +17,10 @@ class Timeout {
         if (remainingTime > 0) {
             remainingTime := remainingTime - deltaTime
         }
+    }
+
+    prop isUp() {
+        return remainingTime <= 0
     }
 
     tran assumeIsUp() {

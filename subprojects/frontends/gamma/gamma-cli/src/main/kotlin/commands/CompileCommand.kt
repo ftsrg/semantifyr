@@ -10,8 +10,8 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
-import hu.bme.mit.semantifyr.frontends.gamma.cli.reader.GammaReader
-import hu.bme.mit.semantifyr.frontends.gamma.cli.serialization.GammaToOxstsSerializer
+import hu.bme.mit.semantifyr.frontends.gamma.semantics.reader.GammaReader
+import hu.bme.mit.semantifyr.frontends.gamma.semantics.GammaToOxstsSerializer
 import hu.bme.mit.semantifyr.frontends.gamma.lang.GammaStandaloneSetup
 import java.io.File
 

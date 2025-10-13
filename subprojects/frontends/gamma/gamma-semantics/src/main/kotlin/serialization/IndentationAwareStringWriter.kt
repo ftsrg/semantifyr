@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.frontends.gamma.cli.serialization
+package hu.bme.mit.semantifyr.frontends.gamma.semantics.serialization
 
 class IndentationAwareStringWriter(
     private val indentation: String

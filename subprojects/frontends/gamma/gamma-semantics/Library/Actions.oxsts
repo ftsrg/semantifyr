@@ -16,7 +16,6 @@ class Action
 class RaiseEventAction : Action {
     refers port: Port[1]
     refers event: Event[1]
-    // contains eventValue: EventValueHolder
 
     redefine tran {
         inline port.setOutputEvent(event)
@@ -38,13 +37,5 @@ class AssignmentAction : Action {
 
     redefine tran {
         inline variable.set(expression.evaluate())
-    }
-}
-
-class Guard {
-    features expression: Expression[1]
-
-    tran assumeIsTrue() {
-        assume (expression.evaluate())
     }
 }

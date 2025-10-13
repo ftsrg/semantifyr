@@ -30,7 +30,8 @@ class Statechart : Component {
             inline for (region in regions) {
                 inline region.fireTransitions()
             }
-        } else {
+        } or {
+            // do nothing?
         }
 
         inline resetInputEvents()
@@ -76,8 +77,7 @@ class Region {
         }
         //*/
     
-        ///*
-        // top-down
+        //*
         inline for choice (transition in transitions) {
             inline transition.main()
         } else {
@@ -85,7 +85,7 @@ class Region {
                 inline state.fireTransitions()
             } else { }
         }
-        //*/     
+        //*/
     }
 }
 
@@ -104,7 +104,7 @@ class State {
     contains exitActions: Action[0..*]
 
     prop isActive() {
-        return parentRegion?.activeState == self
+        return parentRegion.activeState == self
     }
     tran deactivateRecursive() {
         inline for (region in regions) {
@@ -163,14 +163,21 @@ class State {
         inline if (regions == nothing) {
             assume (false)
         } else {
-            assume (isActive())
+            guard (isActive())
             choice {
                 inline for (region in regions) {
                     inline region.fireTransitions()
                 }
-            } else {
-            }
+            } else { }
         }
+    }
+}
+
+class Guard {
+    features expression: Expression[1]
+
+    prop isOpen() {
+        return expression.evaluate()
     }
 }
 
@@ -178,29 +185,40 @@ class AbstractTransition {
     container parentRegion: Region[1] opposite transitions
 
     refers to: State[1]
-}
 
-class EntryTransition : AbstractTransition {
-    redefine tran {
+    prop isEnabled() {
+        return true
+    }
+
+    tran fire() {
         inline to.enter(parentRegion)
     }
+
+    redefine tran {
+        guard (isEnabled())
+        inline fire()
+    }
 }
+
+class EntryTransition : AbstractTransition
 
 class Transition : AbstractTransition {
     refers from: State[1]
 
-    features trigger: Trigger[1]
-    features guard: Guard[0..1]
+    contains trigger: Trigger[1]
+    contains guard: Guard[1] { // default guard is true
+        redefine contains expression: LiteralBooleanExpression {
+            redefine refers value: bool = true
+        }
+    }
 
     contains actions: Action[0..*]
 
-    redefine tran {
-        inline trigger.assumeIsTriggered()
-        assume (from.isActive())
-        inline if (guard != nothing) {
-            inline guard.assumeIsTrue()
-        }
+    redefine prop isEnabled() {
+        return trigger.isTriggered() && from.isActive() && guard.isOpen()
+    }
 
+    redefine tran fire() {
         inline from.exit(parentRegion)
         inline for (action in actions) {
             inline action.main()
@@ -209,7 +227,7 @@ class Transition : AbstractTransition {
     }
 }
 
-class StateReachabilityExpression : Expression {
+class IsStateActiveExpression : Expression {
     refers state: State
 
     redefine prop evaluate() {

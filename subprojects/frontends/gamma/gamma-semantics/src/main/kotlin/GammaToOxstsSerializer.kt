@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.frontends.gamma.cli.serialization
+package hu.bme.mit.semantifyr.frontends.gamma.semantics
 
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Action
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ArithmeticBinaryOperator
@@ -28,6 +28,7 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Expression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.IntegerType
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.InterfaceDeclaration
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.IsStateActiveExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.LiteralBoolean
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.LiteralExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.LiteralInteger
@@ -36,12 +37,10 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.NegationOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.PortBinding
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.PortDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RaiseEventAction
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ReachabilityExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RealizationMode
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Region
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SetTimeoutAction
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.State
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateReachabilityExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateTransition
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StatechartDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SyncComponentDeclaration
@@ -53,9 +52,11 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TypeReference
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.UnaryOp
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration
-import org.eclipse.emf.ecore.EObject
+import hu.bme.mit.semantifyr.frontends.gamma.semantics.serialization.EObjectNameProvider
+import hu.bme.mit.semantifyr.frontends.gamma.semantics.serialization.IndentationAwareStringWriter
+import hu.bme.mit.semantifyr.frontends.gamma.semantics.serialization.appendIndent
+import hu.bme.mit.semantifyr.frontends.gamma.semantics.serialization.indent
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
-import kotlin.reflect.KProperty
 
 class GammaToOxstsSerializer {
 
@@ -151,7 +152,7 @@ class GammaToOxstsSerializer {
     }
 
     private fun IndentationAwareStringWriter.serialize(portBinding: PortBinding) {
-        appendLine("refers ${portBinding.boundPort.port.name}: Port subsets ports = ${portBinding.boundPort.instance.name}.${portBinding.boundPort.port.name}")
+        appendLine("refers ${portBinding.port.name}: Port subsets ports = ${portBinding.boundPort.instance.name}.${portBinding.boundPort.port.name}")
     }
 
     private fun IndentationAwareStringWriter.serialize(instance: ComponentInstance) {
@@ -343,7 +344,7 @@ class GammaToOxstsSerializer {
         is ComparisonOperator -> serialize(expression, redefines)
         is LiteralExpression -> serialize(expression, redefines)
         is NegationOperator -> serialize(expression, redefines)
-        is ReachabilityExpression -> serialize(expression, redefines)
+        is IsStateActiveExpression -> serialize(expression, redefines)
         is ElementReferenceExpression -> serializeVariableReference(expression, redefines)
         is NavigationSuffixExpression -> serializeVariableReference(expression, redefines)
         else -> error("Unknown type of expression: $expression")
@@ -436,13 +437,8 @@ class GammaToOxstsSerializer {
         serializeOperator(expression.body, "UnaryNotExpression", redefines)
     }
 
-    private fun IndentationAwareStringWriter.serialize(expression: ReachabilityExpression, redefines: String) = when (expression) {
-        is StateReachabilityExpression -> serialize(expression, redefines)
-        else -> error("Unknown reachability expression: $expression")
-    }
-
-    private fun IndentationAwareStringWriter.serialize(expression: StateReachabilityExpression, redefines: String) {
-        appendIndent("redefine contains $redefines: StateReachabilityExpression") {
+    private fun IndentationAwareStringWriter.serialize(expression: IsStateActiveExpression, redefines: String) {
+        appendIndent("redefine contains $redefines: IsStateActiveExpression") {
             appendLine("redefine refers state: State = ${serializeInline(expression.expression)}")
         }
     }
@@ -464,40 +460,13 @@ class GammaToOxstsSerializer {
         return NodeModelUtils.getTokenText(node)
     }
 
+    private val actionNameProvider = EObjectNameProvider("action")
+    private val Action.name by actionNameProvider
+
+    private val transitionNameProvider = EObjectNameProvider("transition")
+    private val Transition.name by transitionNameProvider
+
+    private val channelNameProvider = EObjectNameProvider("channel")
+    private val Channel.name by channelNameProvider
+
 }
-
-open class EObjectNameProvider(
-    private val prefix: String
-) {
-    private var number = 1
-    private val nameMap = mutableMapOf<EObject, String>()
-
-    fun getName(eObject: EObject) = nameMap.getOrPut(eObject) {
-        prefix + number++
-    }
-
-    operator fun getValue(eObject: EObject, property: KProperty<*>) = getName(eObject)
-}
-
-object ActionNameProvider : EObjectNameProvider("action")
-val Action.name by ActionNameProvider
-
-object TransitionNameProvider : EObjectNameProvider("transition")
-val Transition.name by TransitionNameProvider
-
-object TriggerNameProvider : EObjectNameProvider("trigger")
-val Trigger.name by TriggerNameProvider
-
-object ChannelNameProvider : EObjectNameProvider("channel")
-val Channel.name by ChannelNameProvider
-
-val EObject.name
-    get() = when (this) {
-        is Action -> name
-        is Transition -> name
-        is Channel -> name
-        else -> {
-            val nameFeature = eClass().getEStructuralFeature("name")
-            eGet(nameFeature).toString()
-        }
-    }

@@ -18,20 +18,9 @@ val distributionOutput by configurations.creating {
     isCanBeResolved = false
 }
 
-artifacts {
-    add(distributionOutput.name, layout.buildDirectory.dir("install")) {
-        builtBy(tasks.installDist)
-    }
-}
-
 dependencies {
-    implementation(project(":gamma-semantics"))
+    api(project(":gamma.lang"))
 
-    implementation(libs.clikt)
-
-    runtimeOnly(libs.slf4j.log4j)
-}
-
-application {
-    mainClass = "hu.bme.mit.semantifyr.frontends.gamma.cli.GammaFrontendCliKt"
+    testFixturesApi(project(":gamma.lang"))
+    testFixturesApi(testFixtures(project(":gamma.lang")))
 }
