@@ -51,7 +51,7 @@ public abstract class AbstractCommandHandler<T> implements CommandHandler {
 
         var argument = parseArguments(params.getArguments(), access, cancelIndicator);
 
-        var progressContext = new CommandProgressContext(workManager);
+        var progressContext = new CommandProgressContext(workManager, cancelIndicator);
 
         try {
             return execute(argument, access, progressContext);
