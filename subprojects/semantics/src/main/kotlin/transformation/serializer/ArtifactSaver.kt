@@ -13,6 +13,8 @@ import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.Compilatio
 import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
 import java.io.File
+import java.io.StringWriter
+import java.util.concurrent.Executors
 
 @CompilationScoped
 class CompilationStateManager {
@@ -22,10 +24,14 @@ class CompilationStateManager {
     private lateinit var inlinedOxsts: InlinedOxsts
     private lateinit var progressContext: ProgressContext
 
+    private val executorService = Executors.newVirtualThreadPerTaskExecutor()
+
     private var id = 0
 
     @Inject
     private lateinit var serializer: ISerializer
+
+    var isSerializeSteps = false
 
     fun initArtifactManager(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext) {
         this.inlinedOxsts = inlinedOxsts
@@ -41,11 +47,22 @@ class CompilationStateManager {
     fun commitModelState() {
         progressContext.checkIsCancelled()
 
-//        val modelFile = basePath.resolve("step${id++}.oxsts")
-//        modelFile.parentFile.mkdirs()
-//
-//        val fileWriter = modelFile.writer()
-//        serializer.serialize(inlinedOxsts, fileWriter, SaveOptions.defaultOptions())
+        if (isSerializeSteps) {
+            serializeStep()
+        }
+    }
+
+    fun serializeStep() {
+        val stringWriter = StringWriter()
+        serializer.serialize(inlinedOxsts, stringWriter, SaveOptions.defaultOptions())
+
+        executorService.submit {
+            val modelFile = basePath.resolve("step${id++}.oxsts")
+            modelFile.parentFile.mkdirs()
+            modelFile.bufferedWriter().use {
+                it.append(stringWriter.buffer)
+            }
+        }
     }
 
 }
