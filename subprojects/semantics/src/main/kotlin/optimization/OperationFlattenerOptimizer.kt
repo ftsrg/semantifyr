@@ -67,9 +67,10 @@ class OperationFlattenerOptimizer : AbstractLoopedOptimizer<Element>() {
             it.`else` == null
         }
 
+        val containerSequence = internalChoice.eContainer()
         choiceOperation.branches += internalChoice.branches
 
-        EcoreUtil2.remove(internalChoice)
+        EcoreUtil2.remove(containerSequence)
 
         compilationStateManager.commitModelState()
 
