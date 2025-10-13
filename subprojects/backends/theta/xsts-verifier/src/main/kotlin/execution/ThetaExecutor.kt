@@ -14,13 +14,17 @@ import com.github.dockerjava.api.model.WaitResponse
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
-import hu.bme.mit.semantifyr.semantics.utils.loggerFactory
+import hu.bme.mit.semantifyr.semantics.transformation.ProgressContext
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
@@ -97,10 +101,29 @@ abstract class AbstractThetaExecutor(
         }
     }
 
-    fun run(workingDirectory: String, name: String) = runBlocking {
+    protected fun CoroutineScope.startCancellationChecker(progressContext: ProgressContext): Deferred<Unit> {
+        return async {
+            while (true) {
+                try {
+                    progressContext.checkIsCancelled()
+                } catch (c: CancellationException) {
+                    this@startCancellationChecker.coroutineContext.cancel(c)
+                }
+                delay(100)
+            }
+        }
+    }
+
+    fun run(workingDirectory: String, name: String, progressContext: ProgressContext) = runBlocking {
         val absoluteDirectory = Path.of(workingDirectory).absolute().toString()
 
-        runWorkflow(absoluteDirectory, name)
+        val cancellationChecker = startCancellationChecker(progressContext)
+
+        val result = runWorkflow(absoluteDirectory, name)
+
+        cancellationChecker.cancel()
+
+        result
     }
 
 }
@@ -142,7 +165,7 @@ class DockerBasedThetaExecutor(
 
         val result = try {
             withTimeout(timeout.toDuration(timeUnit.toDurationUnit())) {
-                runAsync<WaitResponse> {
+                runAsync<WaitResponse>(Dispatchers.IO) {
                     dockerClient.waitContainerCmd(container.id).exec(it)
                 }
             }

@@ -89,7 +89,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
         val workingDirectory = path.replaceAfterLast(File.separator, "")
 
         dockerBasedThetaExecutor.initialize()
-        val results = dockerBasedThetaExecutor.run(workingDirectory, name)
+        val results = dockerBasedThetaExecutor.run(workingDirectory, name, progressContext)
 
         if (expected == VerificationCaseExpectedResult.SAFE && !results.isSafe) {
             return VerificationCaseRunResult(VerificationResult.Failed, "Expected Safe result, got Unsafe instead!")

@@ -15,6 +15,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runInterruptible
 import java.io.Closeable
 import java.io.OutputStream
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
 suspend fun <T> List<Deferred<T>>.awaitAny(): T {
@@ -70,10 +72,10 @@ class DefferedResultCallback<T : Any> : ResultCallback<T> {
 
 }
 
-suspend fun <T : Any> runAsync(block: (DefferedResultCallback<T>) -> Unit): T {
+suspend inline fun <T : Any> runAsync(context: CoroutineContext = EmptyCoroutineContext, crossinline block: (DefferedResultCallback<T>) -> Unit): T {
     val callback = DefferedResultCallback<T>()
 
-    runInterruptible {
+    runInterruptible(context) {
         block(callback)
     }
 
