@@ -5,6 +5,7 @@
  */
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.eclipse.xtext.ide.server.concurrent.*;
@@ -12,92 +13,64 @@ import org.eclipse.xtext.service.OperationCanceledManager;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.eclipse.xtext.xbase.lib.Functions;
 
-import java.util.ArrayDeque;
-import java.util.Queue;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.*;
 
 @Singleton
-public class PausableRequestManager extends RequestManager {
+public class PausableRequestManager extends AbstractRequestManager {
 
-    protected final Object lock = new Object();
-    private boolean pausedFlag = false;
-    private final Queue<DeferredRequest<?>> deferredRequests = new ArrayDeque<>();
+    private final ExecutorService readExecutorService;
 
-    @Override
-    public void shutdown() {
-        synchronized (lock) {
-            pausedFlag = false;
+    private final PausableThreadPoolExecutor writeExecutorService = PausableThreadPoolExecutor.newPausableSingleThreadExecutor(
+            new ThreadFactoryBuilder().setDaemon(true).setNameFormat(getThreadQueueNameFormat()).build());
 
-            while (deferredRequests.peek() != null) {
-                var next = deferredRequests.poll();
+    private final List<AbstractRequest<?>> requests = new ArrayList<>();
 
-                submit(next.getDeferred());
-            }
-
-            super.shutdown();
-        }
+    protected String getThreadQueueNameFormat() {
+        return "RequestManager-Queue-%d";
     }
 
     @Inject
     public PausableRequestManager(ExecutorService executorService, OperationCanceledManager operationCanceledManager) {
-        super(executorService, operationCanceledManager);
+        super(operationCanceledManager);
+        this.readExecutorService = executorService;
+    }
+
+    @Override
+    public void shutdown() {
+        writeExecutorService.shutdown();
+        readExecutorService.shutdown();
+        cancel();
     }
 
     @Override
     public <V> CompletableFuture<V> runRead(Functions.Function1<? super CancelIndicator, ? extends V> cancellable) {
-        synchronized (lock) {
-            Functions.Function0<AbstractRequest<V>> creator = () -> getReadRequest(cancellable);
-
-            if (pausedFlag) {
-                var deferred = new DeferredRequest<>(this, creator);
-                deferredRequests.add(deferred);
-                return deferred.get();
-            }
-
-            return submit(creator.apply());
-        }
+        return submit(new ReadRequest<>(this, cancellable, readExecutorService));
     }
 
     @Override
     public <U, V> CompletableFuture<V> runWrite(Functions.Function0<? extends U> nonCancellable, Functions.Function2<? super CancelIndicator, ? super U, ? extends V> cancellable) {
-        synchronized (lock) {
-            Functions.Function0<AbstractRequest<V>> creator = () -> getWriteRequest(nonCancellable, cancellable);
-
-            if (pausedFlag) {
-                var deferred = new DeferredRequest<>(this, creator);
-                deferredRequests.add(deferred);
-                return deferred.get();
-            }
-
-            return submit(creator.apply());
-        }
-    }
-
-    protected <V> ReadRequest<V> getReadRequest(Functions.Function1<? super CancelIndicator, ? extends V> cancellable) {
-        return new ReadRequest<>(this, cancellable, getParallelExecutorService());
-    }
-
-    protected <U, V> WriteRequest<U, V> getWriteRequest(Functions.Function0<? extends U> nonCancellable, Functions.Function2<? super CancelIndicator, ? super U, ? extends V> cancellable) {
-        // Not cancelling now - is this correct?
-        return new WriteRequest<>(this, nonCancellable, cancellable, CompletableFuture.completedFuture(null));
+        return submit(new WriteRequest<>(this, nonCancellable, cancellable, CompletableFuture.completedFuture(null)));
     }
 
     public void pause() {
-        synchronized (lock) {
-            pausedFlag = true;
-        }
+        writeExecutorService.pause();
     }
 
     public void resume() {
-        synchronized (lock) {
-            pausedFlag = false;
+        writeExecutorService.resume();
+    }
 
-            while (deferredRequests.peek() != null) {
-                var next = deferredRequests.poll();
+    protected <V> CompletableFuture<V> submit(AbstractRequest<V> request) {
+        requests.add(request);
+        writeExecutorService.submit(request);
+        return request.get();
+    }
 
-                submit(next.getDeferred());
-            }
+    protected void cancel() {
+        for (var request : requests) {
+            request.cancel();
         }
     }
 
