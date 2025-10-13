@@ -187,7 +187,7 @@ export class OxstsTestController {
                             },
                         }
                     } ]
-                }) as VerificationCaseRunResult;
+                }, token) as VerificationCaseRunResult;
 
                 if (result.status === 'passed') {
                     run.passed(testItem);
