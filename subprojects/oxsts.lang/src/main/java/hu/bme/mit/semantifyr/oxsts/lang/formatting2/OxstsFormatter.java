@@ -238,6 +238,16 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.format(assumptionOperation.getExpression());
     }
 
+    protected void format(GuardOperation guardOperation, IFormattableDocument document) {
+        formatSemicolonedLine(guardOperation, document);
+
+        document.append(regionFor(guardOperation).keyword("assume"), this::oneSpace);
+
+        formatCallLike(guardOperation, document);
+
+        document.format(guardOperation.getExpression());
+    }
+
     protected void format(AssignmentOperation assignmentOperation, IFormattableDocument document) {
         formatSemicolonedLine(assignmentOperation, document);
 

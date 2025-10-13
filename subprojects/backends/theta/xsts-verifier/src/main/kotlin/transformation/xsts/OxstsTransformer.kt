@@ -8,14 +8,18 @@ package hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.GuardOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.semantics.optimization.InlinedOxstsOperationOptimizer
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
+import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import hu.bme.mit.semantifyr.xsts.lang.XstsStandaloneSetup
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 import org.eclipse.emf.common.util.URI
+import org.eclipse.xtext.EcoreUtil2
 
 private typealias XstsTransition = hu.bme.mit.semantifyr.xsts.lang.xsts.Transition
 private typealias XstsProperty = hu.bme.mit.semantifyr.xsts.lang.xsts.Property
@@ -39,9 +43,21 @@ class OxstsTransformer {
     @Inject
     private lateinit var oxstsVariableTransformer: OxstsVariableTransformer
 
+    @Inject
+    private lateinit var inlinedOxstsOperationOptimizer: InlinedOxstsOperationOptimizer
+
     fun transform(inlinedOxsts: InlinedOxsts, rewriteChoice: Boolean): XstsModel {
         if (rewriteChoice) {
             choiceElseRewriter.rewriteChoiceElse(inlinedOxsts)
+
+            val guardOperations = inlinedOxsts.eAllOfType<GuardOperation>().toList()
+
+            for (guardOperation in guardOperations) {
+                val assumptionOperation = OxstsFactory.createAssumptionOperation(guardOperation.expression)
+                EcoreUtil2.replace(guardOperation, assumptionOperation)
+            }
+
+            inlinedOxstsOperationOptimizer.optimize(inlinedOxsts)
         }
 
         return createXsts(inlinedOxsts)

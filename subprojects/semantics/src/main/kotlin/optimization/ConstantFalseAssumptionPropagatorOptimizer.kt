@@ -21,7 +21,9 @@ import hu.bme.mit.semantifyr.semantics.utils.isConstantLiteralFalse
 import org.eclipse.xtext.EcoreUtil2
 
 private val Operation.isConstantFalseAssumption
-    get() = this is AssumptionOperation && expression.isConstantLiteralFalse
+    get() =
+        (this is AssumptionOperation && expression.isConstantLiteralFalse)
+        || (this is GuardOperation && expression.isConstantLiteralFalse)
 
 private val SequenceOperation.isSingleConstantFalseAssumption
     get() = steps.singleOrNull()?.isConstantFalseAssumption == true

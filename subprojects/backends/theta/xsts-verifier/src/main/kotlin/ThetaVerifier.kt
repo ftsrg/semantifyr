@@ -74,11 +74,11 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
 
         oxstsInflator.deflateInstanceModel(inlinedOxsts)
 
-        compilationStateManager.finalizeArtifactManager(inlinedOxsts)
-
         progressContext.reportProgress("Transforming to XSTS", 8)
 
         val xsts = oxstsTransformer.transform(inlinedOxsts, true)
+
+        compilationStateManager.finalizeArtifactManager(inlinedOxsts)
 
         xsts.eResource().save(emptyMap<Any, Any>())
 

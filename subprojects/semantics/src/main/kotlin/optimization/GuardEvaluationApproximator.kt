@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.GuardOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineCall
@@ -22,9 +23,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.semantics.utils.isConstantLiteralTrue
 
-class IsAlwaysExecutableEvaluator : OperationVisitor<Boolean>() {
+class GuardEvaluationApproximator : OperationVisitor<Boolean>() {
 
-    fun isAlwaysExecutable(operation: Operation): Boolean {
+    fun isOperationNotGuarded(operation: Operation): Boolean {
         return visit(operation)
     }
 
@@ -45,7 +46,7 @@ class IsAlwaysExecutableEvaluator : OperationVisitor<Boolean>() {
     }
 
     override fun visit(operation: ForOperation): Boolean {
-        return visit(operation.body)
+        return false // visit(operation.body)
     }
 
     override fun visit(operation: IfOperation): Boolean {
@@ -60,6 +61,10 @@ class IsAlwaysExecutableEvaluator : OperationVisitor<Boolean>() {
     }
 
     override fun visit(operation: AssumptionOperation): Boolean {
+        return true
+    }
+
+    override fun visit(operation: GuardOperation): Boolean {
         return operation.expression.isConstantLiteralTrue
     }
 
@@ -68,19 +73,19 @@ class IsAlwaysExecutableEvaluator : OperationVisitor<Boolean>() {
     }
 
     override fun visit(operation: InlineCall): Boolean {
-        return true
+        return false
     }
 
     override fun visit(operation: InlineIfOperation): Boolean {
-        return true
+        return false
     }
 
     override fun visit(operation: InlineSeqFor): Boolean {
-        return true
+        return false
     }
 
     override fun visit(operation: InlineChoiceFor): Boolean {
-        return true
+        return false
     }
 
 }

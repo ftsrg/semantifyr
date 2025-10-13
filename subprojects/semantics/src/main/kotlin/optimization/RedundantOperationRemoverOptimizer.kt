@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.GuardOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
@@ -27,10 +28,11 @@ class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
     private lateinit var compilationStateManager: CompilationStateManager
 
     @Inject
-    private lateinit var isAlwaysExecutableEvaluator: IsAlwaysExecutableEvaluator
+    private lateinit var guardEvaluationApproximator: GuardEvaluationApproximator
 
     override fun doOptimizationStep(element: Element): Boolean {
         return removeConstantTrueAssumptions(element)
+            || removeConstantTrueGuards(element)
             || removeRedundantChoiceElse(element)
             || removeRedundantEmptyChoiceBranches(element)
             || removeEmptyForOperations(element)
@@ -57,9 +59,27 @@ class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
         return true
     }
 
+    private fun removeConstantTrueGuards(element: Element): Boolean {
+        val constantTrueGuards = element.eAllOfType<GuardOperation>().filter {
+            it.expression.isConstantLiteralTrue
+        }.toList()
+
+        if (constantTrueGuards.isEmpty()) {
+            return false
+        }
+
+        for (assumption in constantTrueGuards) {
+            EcoreUtil2.remove(assumption)
+        }
+
+        compilationStateManager.commitModelState()
+
+        return true
+    }
+
     private fun removeRedundantChoiceElse(element: Element): Boolean {
         val redundantChoiceElse = element.eAllOfType<ChoiceOperation>().firstOrNull {
-            it.`else` != null && it.branches.any { isAlwaysExecutableEvaluator.isAlwaysExecutable(it) }
+            it.`else` != null && it.branches.any { guardEvaluationApproximator.isOperationNotGuarded(it) }
         }
 
         if (redundantChoiceElse == null) {

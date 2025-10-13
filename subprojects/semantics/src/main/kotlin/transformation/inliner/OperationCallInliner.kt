@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.GuardOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineCall
@@ -115,6 +116,10 @@ class OperationCallInliner : OperationVisitor<Unit>() {
     }
 
     override fun visit(operation: AssumptionOperation) {
+        expressionCallInliner.process(operation.expression)
+    }
+
+    override fun visit(operation: GuardOperation) {
         expressionCallInliner.process(operation.expression)
     }
 

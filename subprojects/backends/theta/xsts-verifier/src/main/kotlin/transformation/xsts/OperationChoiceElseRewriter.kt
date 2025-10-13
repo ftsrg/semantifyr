@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.GuardOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineCall
@@ -21,14 +22,10 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineSeqFor
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
-import hu.bme.mit.semantifyr.semantics.optimization.XstsExpressionOptimizer
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 
 class OperationChoiceElseRewriter : OperationVisitor<Unit>() {
-
-    @Inject
-    private lateinit var xstsExpressionOptimizer: XstsExpressionOptimizer
 
     @Inject
     private lateinit var compilationStateManager: CompilationStateManager
@@ -80,6 +77,10 @@ class OperationChoiceElseRewriter : OperationVisitor<Unit>() {
         // NO-OP
     }
 
+    override fun visit(operation: GuardOperation) {
+        // NO-OP
+    }
+
     override fun visit(operation: AssignmentOperation) {
         // NO-OP
     }
@@ -106,15 +107,13 @@ class OperationChoiceElseRewriter : OperationVisitor<Unit>() {
 
         val assumptionExpression = operationAssumptionCalculator.calculateAssumption(operation)
         val negatedAssumptionExpression = OxstsFactory.createNegationOperator(assumptionExpression)
-        val choiceElseAssumption = OxstsFactory.createAssumptionOperation(negatedAssumptionExpression)
+        val choiceElseAssumption = OxstsFactory.createGuardOperation(negatedAssumptionExpression)
 
         operationElse.steps.add(0, choiceElseAssumption)
 
         operation.branches += operationElse
 
         compilationStateManager.commitModelState()
-
-        xstsExpressionOptimizer.optimize(choiceElseAssumption)
     }
 
 }

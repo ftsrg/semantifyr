@@ -275,5 +275,8 @@
       <genFeatures children="true" createChild="true" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlinedOxsts/rootInstance"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlinedOxsts/rootFeature"/>
     </genClasses>
+    <genClasses ecoreClass="oxsts.ecore#//GuardOperation">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//GuardOperation/expression"/>
+    </genClasses>
   </genPackages>
 </genmodel:GenModel>

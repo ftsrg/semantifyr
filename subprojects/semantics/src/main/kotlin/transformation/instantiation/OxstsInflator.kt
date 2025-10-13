@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.semantics.transformation.instantiation
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
@@ -22,6 +21,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.semantics.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.semantics.expression.StaticEvaluationTransformer
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.semantics.optimization.InlinedOxstsOperationOptimizer
 import hu.bme.mit.semantifyr.semantics.transformation.constraints.ConstraintChecker
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.inliner.ExpressionRewriter
@@ -69,6 +69,9 @@ class OxstsInflator {
     @Inject
     private lateinit var staticEvaluationTransformer: StaticEvaluationTransformer
 
+    @Inject
+    private lateinit var inlinedOxstsOperationOptimizer: InlinedOxstsOperationOptimizer
+
     private val variableInstanceDomain = mutableMapOf<VariableDeclaration, Set<Instance>>()
 
     fun inflateInstanceModel(inlinedOxsts: InlinedOxsts) {
@@ -85,6 +88,8 @@ class OxstsInflator {
         compilationStateManager.commitModelState()
 
         rewriteStaticExpressions(inlinedOxsts)
+
+        inlinedOxstsOperationOptimizer.optimize(inlinedOxsts)
 
         compilationStateManager.commitModelState()
     }

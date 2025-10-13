@@ -13,12 +13,14 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.GuardOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineCall
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineChoiceFor
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineIfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineSeqFor
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
@@ -35,16 +37,56 @@ class OperationAssumptionCalculator : OperationVisitor<Expression>() {
         return operation.steps.map {
             visit(it)
         }.fold<Expression, Expression>(OxstsFactory.createLiteralBoolean(true)) { left, right ->
-            OxstsFactory.createBooleanOperator(BooleanOp.AND, left, right)
+            combineAnds(left, right)
         }
+    }
+
+    private fun combineAnds(left: Expression, right: Expression): Expression {
+        if (left is LiteralBoolean) {
+            return if (left.isValue) {
+                right
+            } else {
+                left
+            }
+        }
+
+        if (right is LiteralBoolean) {
+            return if (right.isValue) {
+                left
+            } else {
+                right
+            }
+        }
+
+        return OxstsFactory.createBooleanOperator(BooleanOp.AND, left, right)
     }
 
     override fun visit(operation: ChoiceOperation): Expression {
         return operation.branches.map {
             visit(it)
         }.fold<Expression, Expression>(OxstsFactory.createLiteralBoolean(false)) { left, right ->
-            OxstsFactory.createBooleanOperator(BooleanOp.OR, left, right)
+            combineOrs(left, right)
         }
+    }
+
+    private fun combineOrs(left: Expression, right: Expression): Expression {
+        if (left is LiteralBoolean) {
+            return if (left.isValue) {
+                left
+            } else {
+                right
+            }
+        }
+
+        if (right is LiteralBoolean) {
+            return if (right.isValue) {
+                right
+            } else {
+                left
+            }
+        }
+
+        return OxstsFactory.createBooleanOperator(BooleanOp.OR, left, right)
     }
 
     override fun visit(operation: LocalVarDeclarationOperation): Expression {
@@ -56,8 +98,6 @@ class OperationAssumptionCalculator : OperationVisitor<Expression>() {
     }
 
     override fun visit(operation: IfOperation): Expression {
-        val guardAssumption = operation.guard.copy()
-        val notGuardAssumption = OxstsFactory.createNegationOperator(operation.guard.copy())
         val bodyAssumption = visit(operation.body)
         val elseAssumption = if (operation.`else` != null) {
             visit(operation.`else`)
@@ -65,6 +105,12 @@ class OperationAssumptionCalculator : OperationVisitor<Expression>() {
             OxstsFactory.createLiteralBoolean(true)
         }
 
+        if (bodyAssumption is LiteralBoolean && elseAssumption is LiteralBoolean && bodyAssumption.isValue == elseAssumption.isValue) {
+            return bodyAssumption
+        }
+
+        val guardAssumption = operation.guard.copy()
+        val notGuardAssumption = OxstsFactory.createNegationOperator(operation.guard.copy())
         // it can be executed, if the guard is true and the body can be executed,
         //  or the guard is false and the else can be executed
         return OxstsFactory.createBooleanOperator(
@@ -79,6 +125,10 @@ class OperationAssumptionCalculator : OperationVisitor<Expression>() {
     }
 
     override fun visit(operation: AssumptionOperation): Expression {
+        return OxstsFactory.createLiteralBoolean(true)
+    }
+
+    override fun visit(operation: GuardOperation): Expression {
         return operation.expression.copy()
     }
 

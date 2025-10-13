@@ -233,6 +233,7 @@ Operation:
 	| ChoiceOperation
 	| SequenceOperation
 	| AssumptionOperation
+	| GuardOperation
 	| InlineOperation
 	| AssignmentOperation
 	| IfOperation
@@ -259,6 +260,10 @@ ChoiceOperation:
 
 AssumptionOperation:
     'assume' '(' expression=Expression ')' ';'?
+;
+
+GuardOperation:
+    'guard' '(' expression=Expression ')' ';'?
 ;
 
 AssignmentOperation:
@@ -513,6 +518,7 @@ KEYWORD:
     'init'
     | 'havoc'
     | 'prop'
+    | 'guard'
 ;
 
 // FIXME: Instead of allowing '$' in ID, enforce the serializer to use the QUOTED_ID when using '$'
