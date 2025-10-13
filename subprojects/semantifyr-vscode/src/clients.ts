@@ -42,8 +42,14 @@ export async function startClients(context: ExtensionContext) {
         xstsClient = createLspClient(xstsIdeExecutable, "xsts");
     }
 
+    if (process.env.DEBUG_GAMMA_LSP) {
+        const port = Number(process.env.DEBUG_GAMMA_LSP)
+        gammaClient = createRemoteLspClient(port, "gamma");
+    } else {
+        gammaClient = createLspClient(gammaIdeExecutable, "gamma");
+    }
+
     // cexClient = createLspClient(cexIdeExecutable, "cex");
-    gammaClient = createLspClient(gammaIdeExecutable, "gamma");
 
     await oxstsClient.start();
     await xstsClient.start();
