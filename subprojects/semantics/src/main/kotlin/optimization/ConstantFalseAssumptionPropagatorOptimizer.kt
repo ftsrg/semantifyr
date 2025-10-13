@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.GuardOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
@@ -36,7 +37,6 @@ class ConstantFalseAssumptionPropagatorOptimizer : AbstractLoopedOptimizer<Eleme
 
     override fun doOptimizationStep(element: Element): Boolean {
         return propagateInSequenceOperation(element)
-            || removeInChoiceElseBranch(element)
             || removeInChoiceBranch(element)
             || propagateSingleBranchChoiceOperation(element)
             || propagateIfOperation(element)
@@ -55,22 +55,6 @@ class ConstantFalseAssumptionPropagatorOptimizer : AbstractLoopedOptimizer<Eleme
 
         sequenceOperation.steps.clear()
         sequenceOperation.steps += assumption
-
-        compilationStateManager.commitModelState()
-
-        return true
-    }
-
-    private fun removeInChoiceElseBranch(element: Element): Boolean {
-        val choice = element.eAllOfType<ChoiceOperation>().firstOrNull {
-            it.`else`?.isSingleConstantFalseAssumption == true
-        }
-
-        if (choice == null) {
-            return false
-        }
-
-        choice.`else` = null
 
         compilationStateManager.commitModelState()
 

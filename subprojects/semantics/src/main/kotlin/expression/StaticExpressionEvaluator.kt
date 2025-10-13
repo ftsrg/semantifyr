@@ -58,8 +58,8 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
 
         if (left is InstanceEvaluation && right is InstanceEvaluation) {
             return when (expression.getOp()) {
-                ComparisonOp.EQ -> BooleanEvaluation(left.instances.containsAll(right.instances))
-                ComparisonOp.NOT_EQ -> BooleanEvaluation(!left.instances.containsAll(right.instances))
+                ComparisonOp.EQ -> BooleanEvaluation((left.instances - right.instances).isEmpty())
+                ComparisonOp.NOT_EQ -> BooleanEvaluation(! (left.instances - right.instances).isEmpty())
                 else -> error("Unsupported operator!")
             }
         }

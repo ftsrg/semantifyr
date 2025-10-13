@@ -42,7 +42,7 @@ class InlinedOxstsModelManager {
         inlinedOxsts.rootFeature = OxstsFactory.createFeatureDeclaration().also {
             it.kind = FeatureKind.CONTAINMENT
             it.type = inlinedOxsts.classDeclaration
-            it.name = "_${inlinedOxsts.classDeclaration.name}"
+            it.name = "root"
         }
 
         inlinedOxsts.rootInstance = instanceManager.createInstance(inlinedOxsts)
