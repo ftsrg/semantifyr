@@ -14,6 +14,7 @@ import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.PausableRequestManager;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.semantics.transformation.OxstsToXstsTransformer;
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
@@ -28,6 +29,9 @@ public class InlineOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
     protected Provider<OxstsToXstsTransformer> xstsTransformerProvider;
 
     @Inject
+    protected Provider<CompilationStateManager> compilationStateManagerProvider;
+
+    @Inject
     protected PausableRequestManager pausableRequestManager;
 
     @Override
@@ -37,7 +41,7 @@ public class InlineOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
 
     @Override
     public String getTitle() {
-        return "Inline";
+        return "Inline (with steps)";
     }
 
     @Override
@@ -71,6 +75,7 @@ public class InlineOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
             compilationScopeRunnable(() -> {
                 progressContext.checkIsCancelled();
 
+                compilationStateManagerProvider.get().setSerializeSteps(true);
                 xstsTransformerProvider.get().transform(progressContext, arguments);
             });
 

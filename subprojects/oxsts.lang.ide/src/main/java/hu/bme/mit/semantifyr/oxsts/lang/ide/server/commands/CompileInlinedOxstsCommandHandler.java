@@ -14,6 +14,7 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts.OxstsTransformer;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
@@ -27,6 +28,9 @@ public class CompileInlinedOxstsCommandHandler extends AbstractCommandHandler<In
 
     @Inject
     protected Provider<OxstsTransformer> oxstsTransformerProvider;
+
+    @Inject
+    protected Provider<CompilationStateManager> compilationStateManagerProvider;
 
     @Override
     public String getId() {
@@ -62,6 +66,7 @@ public class CompileInlinedOxstsCommandHandler extends AbstractCommandHandler<In
     @Override
     protected Object execute(InlinedOxsts arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
         compilationScopeRunnable(() -> {
+            compilationStateManagerProvider.get().setSerializeSteps(false);
             var xsts = oxstsTransformerProvider.get().transform(arguments, false);
 
             try {

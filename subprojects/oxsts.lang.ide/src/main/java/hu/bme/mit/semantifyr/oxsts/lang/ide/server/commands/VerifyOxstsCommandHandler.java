@@ -14,6 +14,7 @@ import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.backends.theta.verification.ThetaVerifier;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.PausableRequestManager;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager;
 import hu.bme.mit.semantifyr.semantics.verification.VerificationCaseRunResult;
 import hu.bme.mit.semantifyr.semantics.verification.VerificationResult;
 import org.eclipse.lsp4j.Location;
@@ -32,6 +33,9 @@ public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
 
     @Inject
     protected PausableRequestManager pausableRequestManager;
+
+    @Inject
+    protected Provider<CompilationStateManager> compilationStateManagerProvider;
 
     @Override
     public String getId() {
@@ -76,6 +80,7 @@ public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
             compilationScopeRunnable(() -> {
                 progressContext.checkIsCancelled();
 
+                compilationStateManagerProvider.get().setSerializeSteps(false);
                 result.complete(oxstsVerifierProvider.get().verify(progressContext, arguments));
             });
 
