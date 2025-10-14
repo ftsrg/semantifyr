@@ -24,8 +24,6 @@ class CompilationStateManager {
     private lateinit var inlinedOxsts: InlinedOxsts
     private lateinit var progressContext: ProgressContext
 
-    private val executorService = Executors.newVirtualThreadPerTaskExecutor()
-
     private var id = 0
 
     @Inject
@@ -53,16 +51,9 @@ class CompilationStateManager {
     }
 
     fun serializeStep() {
-        val stringWriter = StringWriter()
-        serializer.serialize(inlinedOxsts, stringWriter, SaveOptions.defaultOptions())
-
-        executorService.submit {
-            val modelFile = basePath.resolve("step${id++}.oxsts")
-            modelFile.parentFile.mkdirs()
-            modelFile.bufferedWriter().use {
-                it.append(stringWriter.buffer)
-            }
-        }
+        val modelFile = basePath.resolve("step${id++}.oxsts")
+        modelFile.parentFile.mkdirs()
+        serializer.serialize(inlinedOxsts, modelFile.bufferedWriter(), SaveOptions.defaultOptions())
     }
 
 }
