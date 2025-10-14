@@ -12,7 +12,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.GuardOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineCall
@@ -50,9 +49,6 @@ class OxstsOperationTransformer : OperationVisitor<XstsOperation>() {
         return XstsFactory.createChoiceOperation().also {
             for (branch in operation.branches) {
                 it.branches += transform(branch)
-            }
-            if (operation.`else` != null) {
-                it.`else` = transform(operation.`else`)
             }
         }
     }
@@ -95,10 +91,6 @@ class OxstsOperationTransformer : OperationVisitor<XstsOperation>() {
         return XstsFactory.createAssumptionOperation().also {
             it.expression = oxstsExpressionTransformer.transform(operation.expression)
         }
-    }
-
-    override fun visit(operation: GuardOperation): XstsOperation {
-        error("No equivalent in XSTS!")
     }
 
     override fun visit(operation: AssignmentOperation): XstsOperation {

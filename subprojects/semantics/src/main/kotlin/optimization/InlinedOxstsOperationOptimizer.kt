@@ -26,9 +26,9 @@ class InlinedOxstsOperationOptimizer : AbstractLoopedOptimizer<Element>() {
     private lateinit var xstsExpressionOptimizer: XstsExpressionOptimizer
 
     override fun doOptimizationStep(element: Element): Boolean {
-        return operationFlattenerOptimizer.optimize(element)
+        return constantFalseAssumptionPropagatorOptimizer.optimize(element)
+            || operationFlattenerOptimizer.optimize(element)
             || redundantOperationRemoverOptimizer.optimize(element)
-            || constantFalseAssumptionPropagatorOptimizer.optimize(element)
             || xstsExpressionOptimizer.optimize(element)
     }
 

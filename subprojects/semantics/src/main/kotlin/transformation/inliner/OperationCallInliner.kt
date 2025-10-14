@@ -13,7 +13,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.GuardOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineCall
@@ -35,7 +34,6 @@ import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvi
 import hu.bme.mit.semantifyr.semantics.expression.evaluateTyped
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
-import hu.bme.mit.semantifyr.semantics.utils.allBranches
 import hu.bme.mit.semantifyr.semantics.utils.copy
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
@@ -89,8 +87,8 @@ class OperationCallInliner : OperationVisitor<Unit>() {
     }
 
     override fun visit(operation: ChoiceOperation) {
-        for (index in operation.allBranches.indices.reversed()) {
-            processorQueue.addFirst(operation.allBranches[index])
+        for (index in operation.branches.indices.reversed()) {
+            processorQueue.addFirst(operation.branches[index])
         }
     }
 
@@ -116,10 +114,6 @@ class OperationCallInliner : OperationVisitor<Unit>() {
     }
 
     override fun visit(operation: AssumptionOperation) {
-        expressionCallInliner.process(operation.expression)
-    }
-
-    override fun visit(operation: GuardOperation) {
         expressionCallInliner.process(operation.expression)
     }
 
@@ -293,6 +287,14 @@ class OperationCallInliner : OperationVisitor<Unit>() {
             inlinedFor.steps += inlinedBody
         }
 
+        if (inlinedFor.steps.isEmpty()) {
+            return if (operation.`else` == null) {
+                inlinedFor
+            } else {
+                operation.`else`.copy()
+            }
+        }
+
         if (inlinedFor.steps.size == 1) {
             return inlinedFor.steps.single()
         }
@@ -314,11 +316,15 @@ class OperationCallInliner : OperationVisitor<Unit>() {
             inlinedChoice.branches += inlinedBody
         }
 
-        if (operation.`else` != null) {
-            inlinedChoice.`else` = operation.`else`.copy()
+        if (inlinedChoice.branches.isEmpty()) {
+            return if (operation.`else` == null) {
+                OxstsFactory.createSequenceOperation()
+            } else {
+                operation.`else`.copy()
+            }
         }
 
-        if (inlinedChoice.branches.size == 1 && inlinedChoice.`else` == null) {
+        if (inlinedChoice.branches.size == 1) {
             return inlinedChoice.branches.single()
         }
 

@@ -19,7 +19,6 @@ public abstract class OperationVisitor<T> {
             case IfOperation ifOperation -> visit(ifOperation);
             case HavocOperation havocOperation -> visit(havocOperation);
             case AssumptionOperation assumptionOperation -> visit(assumptionOperation);
-            case GuardOperation guardOperation -> visit(guardOperation);
             case AssignmentOperation assignmentOperation -> visit(assignmentOperation);
             case InlineOperation inlineOperation -> visit(inlineOperation);
             default -> throw new IllegalStateException("Unexpected value: " + operation);
@@ -33,7 +32,6 @@ public abstract class OperationVisitor<T> {
     protected abstract T visit(IfOperation operation);
     protected abstract T visit(HavocOperation operation);
     protected abstract T visit(AssumptionOperation operation);
-    protected abstract T visit(GuardOperation operation);
     protected abstract T visit(AssignmentOperation operation);
 
     protected T visit(InlineOperation operation) {

@@ -28,18 +28,6 @@ class OxstsToXstsTransformer {
     @Inject
     private lateinit var compilationStateManager: CompilationStateManager
 
-//    fun transform(model: SemantifyrModelContext, className: String, rewriteChoice: Boolean = false) {
-//        val classDeclaration = model.streamClasses().firstOrNull {
-//            it.name == className
-//        }
-//
-//        if (classDeclaration == null) {
-//            throw IllegalArgumentException("Could not find class named $className")
-//        }
-//
-//        transform(classDeclaration, rewriteChoice)
-//    }
-
     fun transform(progressContext: ProgressContext, classDeclaration: ClassDeclaration) {
         val inlinedOxsts = inlinedOxstsModelManager.createInlinedOxsts(classDeclaration)
 

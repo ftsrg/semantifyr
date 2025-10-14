@@ -29,8 +29,6 @@
         eType="#//Expression" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="ChoiceOperation" eSuperTypes="#//Operation">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="else" eType="#//SequenceOperation"
-        containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="branches" lowerBound="1"
         upperBound="-1" eType="#//SequenceOperation" containment="true"/>
   </eClassifiers>
@@ -284,10 +282,7 @@
         eType="#//Expression" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="InlineSeqFor" eSuperTypes="#//InlineForOperation"/>
-  <eClassifiers xsi:type="ecore:EClass" name="InlineChoiceFor" eSuperTypes="#//InlineForOperation">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="else" eType="#//SequenceOperation"
-        containment="true"/>
-  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="InlineChoiceFor" eSuperTypes="#//InlineForOperation"/>
   <eClassifiers xsi:type="ecore:EClass" name="AbstractForOperation" abstract="true"
       eSuperTypes="#//Operation #//Namespace">
     <eStructuralFeatures xsi:type="ecore:EReference" name="loopVariable" eType="#//VariableDeclaration"
@@ -300,7 +295,10 @@
   <eClassifiers xsi:type="ecore:EClass" name="LocalVarDeclarationOperation" eSuperTypes="#//VariableDeclaration #//Operation"/>
   <eClassifiers xsi:type="ecore:EClass" name="ForOperation" eSuperTypes="#//AbstractForOperation"/>
   <eClassifiers xsi:type="ecore:EClass" name="InlineForOperation" abstract="true"
-      eSuperTypes="#//AbstractForOperation #//InlineOperation"/>
+      eSuperTypes="#//AbstractForOperation #//InlineOperation">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="else" eType="#//SequenceOperation"
+        containment="true"/>
+  </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="RangeExpression" eSuperTypes="#//BinaryOperator">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="exclusive" lowerBound="1"
         eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//Boolean"
@@ -348,9 +346,5 @@
         transient="true" containment="true" eOpposite="#//Instance/model"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="rootFeature" eType="#//FeatureDeclaration"
         containment="true"/>
-  </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="GuardOperation" eSuperTypes="#//Operation">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="expression" lowerBound="1"
-        eType="#//Expression" containment="true"/>
   </eClassifiers>
 </ecore:EPackage>

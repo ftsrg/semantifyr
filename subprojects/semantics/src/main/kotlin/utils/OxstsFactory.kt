@@ -14,7 +14,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.GuardOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
@@ -40,12 +39,6 @@ object OxstsFactory : OxstsFactoryImpl() {
 
     fun createAssumptionOperation(expression: Expression): AssumptionOperation {
         return createAssumptionOperation().also {
-            it.expression = expression
-        }
-    }
-
-    fun createGuardOperation(expression: Expression): GuardOperation {
-        return createGuardOperation().also {
             it.expression = expression
         }
     }

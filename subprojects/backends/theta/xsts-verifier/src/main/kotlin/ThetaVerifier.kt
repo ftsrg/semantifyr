@@ -76,7 +76,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
 
         progressContext.reportProgress("Transforming to XSTS", 8)
 
-        val xsts = oxstsTransformer.transform(inlinedOxsts, true)
+        val xsts = oxstsTransformer.transform(inlinedOxsts)
 
         compilationStateManager.finalizeArtifactManager(inlinedOxsts)
 

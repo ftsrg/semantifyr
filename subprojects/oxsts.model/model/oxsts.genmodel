@@ -72,7 +72,6 @@
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//AssignmentOperation/expression"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//ChoiceOperation">
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//ChoiceOperation/else"/>
       <genFeatures children="true" createChild="true" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//ChoiceOperation/branches"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//FeatureDeclaration">
@@ -234,9 +233,7 @@
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//PostfixUnaryExpression/primary"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//InlineSeqFor"/>
-    <genClasses ecoreClass="oxsts.ecore#//InlineChoiceFor">
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlineChoiceFor/else"/>
-    </genClasses>
+    <genClasses ecoreClass="oxsts.ecore#//InlineChoiceFor"/>
     <genClasses image="false" ecoreClass="oxsts.ecore#//AbstractForOperation">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//AbstractForOperation/loopVariable"/>
       <genFeatures children="true" createChild="true" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//AbstractForOperation/rangeExpression"/>
@@ -244,7 +241,9 @@
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//LocalVarDeclarationOperation"/>
     <genClasses ecoreClass="oxsts.ecore#//ForOperation"/>
-    <genClasses ecoreClass="oxsts.ecore#//InlineForOperation"/>
+    <genClasses ecoreClass="oxsts.ecore#//InlineForOperation">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlineForOperation/else"/>
+    </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//RangeExpression">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute oxsts.ecore#//RangeExpression/exclusive"/>
     </genClasses>
@@ -274,9 +273,6 @@
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlinedOxsts/classDeclaration"/>
       <genFeatures children="true" createChild="true" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlinedOxsts/rootInstance"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlinedOxsts/rootFeature"/>
-    </genClasses>
-    <genClasses ecoreClass="oxsts.ecore#//GuardOperation">
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//GuardOperation/expression"/>
     </genClasses>
   </genPackages>
 </genmodel:GenModel>

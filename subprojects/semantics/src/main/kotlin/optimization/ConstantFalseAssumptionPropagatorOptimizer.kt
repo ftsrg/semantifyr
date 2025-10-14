@@ -10,7 +10,6 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.GuardOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
@@ -22,9 +21,7 @@ import hu.bme.mit.semantifyr.semantics.utils.isConstantLiteralFalse
 import org.eclipse.xtext.EcoreUtil2
 
 private val Operation.isConstantFalseAssumption
-    get() =
-        (this is AssumptionOperation && expression.isConstantLiteralFalse)
-        || (this is GuardOperation && expression.isConstantLiteralFalse)
+    get() = this is AssumptionOperation && expression.isConstantLiteralFalse
 
 private val SequenceOperation.isSingleConstantFalseAssumption
     get() = steps.singleOrNull()?.isConstantFalseAssumption == true
@@ -88,11 +85,7 @@ class ConstantFalseAssumptionPropagatorOptimizer : AbstractLoopedOptimizer<Eleme
             return false
         }
 
-        if (choiceOperation.`else` != null) {
-            EcoreUtil2.replace(choiceOperation, choiceOperation.`else`)
-        } else {
-            EcoreUtil2.replace(choiceOperation, OxstsFactory.createAssumptionOperation(false))
-        }
+        EcoreUtil2.replace(choiceOperation, OxstsFactory.createAssumptionOperation(false))
 
         compilationStateManager.commitModelState()
 

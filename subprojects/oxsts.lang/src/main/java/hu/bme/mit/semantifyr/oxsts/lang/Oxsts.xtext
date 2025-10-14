@@ -233,7 +233,6 @@ Operation:
 	| ChoiceOperation
 	| SequenceOperation
 	| AssumptionOperation
-	| GuardOperation
 	| InlineOperation
 	| AssignmentOperation
 	| IfOperation
@@ -255,15 +254,10 @@ HavocOperation:
 ChoiceOperation:
     'choice' branches+=SequenceOperation
     ('or' branches+=SequenceOperation)*
-    ('else' else=SequenceOperation)?
 ;
 
 AssumptionOperation:
     'assume' '(' expression=Expression ')' ';'?
-;
-
-GuardOperation:
-    'guard' '(' expression=Expression ')' ';'?
 ;
 
 AssignmentOperation:
@@ -310,6 +304,7 @@ InlineForOperation:
 
 InlineSeqFor:
     'inline' 'for' 'seq'? '(' loopVariable=LoopVariable 'in' rangeExpression=Expression ')' body=SequenceOperation
+    ('else' else=SequenceOperation)?
 ;
 
 InlineChoiceFor:
@@ -518,7 +513,6 @@ KEYWORD:
     'init'
     | 'havoc'
     | 'prop'
-    | 'guard'
 ;
 
 // FIXME: Instead of allowing '$' in ID, enforce the serializer to use the QUOTED_ID when using '$'

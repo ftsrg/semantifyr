@@ -50,22 +50,18 @@ class OperationFlattenerOptimizer : AbstractLoopedOptimizer<Element>() {
 
     private fun flattenNestedChoiceOperations(element: Element): Boolean {
         val choiceOperation = element.eAllOfType<ChoiceOperation>().firstOrNull {
-            it.branches.mapNotNull { // filter to branches that are single steps ...
+            it.branches.mapNotNull {
                 it.steps.singleOrNull()
-            }.filterIsInstance<ChoiceOperation>().any { // ... which single step is a choice without an else branch
-                it.`else` == null
-            }
+            }.filterIsInstance<ChoiceOperation>().any()
         }
 
         if (choiceOperation == null) {
             return false
         }
 
-        val internalChoice = choiceOperation.branches.mapNotNull { // filter to branches that are single steps ...
+        val internalChoice = choiceOperation.branches.mapNotNull {
             it.steps.singleOrNull()
-        }.filterIsInstance<ChoiceOperation>().first { // ... which single step is a choice without an else branch
-            it.`else` == null
-        }
+        }.filterIsInstance<ChoiceOperation>().first()
 
         val containerSequence = internalChoice.eContainer()
         choiceOperation.branches += internalChoice.branches
@@ -79,7 +75,7 @@ class OperationFlattenerOptimizer : AbstractLoopedOptimizer<Element>() {
 
     private fun flattenSingleBranchChoiceOperations(element: Element): Boolean {
         val choiceOperation = element.eAllOfType<ChoiceOperation>().firstOrNull {
-            it.branches.size == 1 && it.`else` == null
+            it.branches.size == 1
         }
 
         if (choiceOperation == null) {

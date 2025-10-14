@@ -138,7 +138,6 @@ public class XstsFormatter extends AbstractJavaFormatter {
         document.surround(regionFor(choiceOperation).keyword("else"), this::oneSpace);
 
         choiceOperation.getBranches().forEach(document::format);
-        document.format(choiceOperation.getElse());
     }
 
     protected void format(IfOperation ifOperation, IFormattableDocument document) {

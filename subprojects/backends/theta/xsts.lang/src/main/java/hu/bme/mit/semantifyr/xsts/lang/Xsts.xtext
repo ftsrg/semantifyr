@@ -127,9 +127,6 @@ ChoiceOperation:
 	(
 		'or' branches+=Operation
 	)*
-	(
-		'else' else=Operation
-	)?
 ;
 
 IfOperation:
