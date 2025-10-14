@@ -27,9 +27,30 @@ class Statechart : Component {
         inline resetOutputEvents()
 
         choice {
+            var anyRegionExecuted := false
+            inline for (region in regions) {
+                choice {
+                    inline region.fireLocalTransitions()
+                    anyRegionExecuted := true
+                } or {
+                    // fire state transitions if local transitions are not enabled
+                    inline region.assumeNoLocalTransitionEnabled()
+                    inline region.fireInnerTransitions()     
+                    anyRegionExecuted := true       
+                } or {
+                    // do nothing, if no transition is enabled
+                    inline assumeNoTransitionEnabled()
+                }
+
+                // inline region.fireTransitions()
+            }
+            assume (anyRegionExecuted) // at least one inner "parallel" region must be executed
+
+            /*
             inline for (region in regions) {
                 inline region.fireTransitions()
             }
+            */
         } or {
             inline assumeNoTransitionEnabled()
             // only do nothing, if the statechart cannot do anything, i.e., no fireable transitions
@@ -68,47 +89,49 @@ class Region {
             inline state.deactivateRecursive()
         }
     }
-    tran fireTransitions() {
-        /*
-        // bottom-up
-        var notConsumed := false
 
+    // tran fireTransitions(isParallel: bool) {
+    //     /*
+    //     choice {
+    //         // fire state transitions if inner transitions are not enabled
+    //         inline assumeNoInnerTransitionEnabled()
+    //         inline fireLocalTransitions()
+    //     } or {
+    //         inline fireInnerTransitions()            
+    //     } or {
+    //         // do nothing, if no transition is enabled
+    //         inline assumeNoTransitionEnabled()
+    //     }
+    //     //*/
+    
+    //     //*
+    //     choice {
+    //         inline fireLocalTransitions()
+    //     } or {
+    //         // fire state transitions if local transitions are not enabled
+    //         inline assumeNoLocalTransitionEnabled()
+    //         inline fireInnerTransitions()            
+    //     } or {
+    //         // do nothing, if no transition is enabled
+    //         inline assumeNoTransitionEnabled()
+    //     }
+    //     //*/
+    // }
+
+    tran fireLocalTransitions() {
+        inline for choice (transition in transitions) {
+            inline transition.main()
+        } else {
+            assume (false)
+        }
+    }
+
+    tran fireInnerTransitions() {
         inline for choice (state in states) {
             inline state.fireTransitions()
         } else {
-            notConsumed := true
+            assume (false)
         }
-
-        if (notConsumed) {
-            inline for choice (transition in transitions) {
-                inline transition.main()
-            }
-        }
-        //*/
-    
-        //*
-        choice {
-            // fire transitions
-            inline for choice (transition in transitions) {
-                inline transition.main()
-            } else {
-                // if there are no transitions
-                assume (false)
-            }
-        } or {
-            // fire state transitions if local transitions are not enabled
-            inline assumeNoLocalTransitionEnabled()
-            inline for choice (state in states) {
-                inline state.fireTransitions()
-            } else {
-                // if there are no states
-                assume (false)
-            }
-        } or {
-            // do nothing, if no transition is enabled
-            inline assumeNoTransitionEnabled()
-        }
-        //*/
     }
 
     tran assumeNoLocalTransitionEnabled() {
@@ -117,11 +140,15 @@ class Region {
         }
     }
 
-    tran assumeNoTransitionEnabled() {
-        inline assumeNoLocalTransitionEnabled()
+    tran assumeNoInnerTransitionEnabled() {
         inline for (state in states) {
             inline state.assumeNoTransitionEnabled()
         }
+    }
+
+    tran assumeNoTransitionEnabled() {
+        inline assumeNoLocalTransitionEnabled()
+        inline assumeNoInnerTransitionEnabled()
     }
 
 }
@@ -200,9 +227,24 @@ class State {
         inline if (regions == nothing) {
             assume (false)
         } else {
+            var anyRegionExecuted := false
             inline for (region in regions) {
-                inline region.fireTransitions()
+                choice {
+                    inline region.fireLocalTransitions()
+                    anyRegionExecuted := true
+                } or {
+                    // fire state transitions if local transitions are not enabled
+                    inline region.assumeNoLocalTransitionEnabled()
+                    inline region.fireInnerTransitions()     
+                    anyRegionExecuted := true       
+                } or {
+                    // do nothing, if no transition is enabled
+                    inline assumeNoTransitionEnabled()
+                }
+
+                // inline region.fireTransitions()
             }
+            assume (anyRegionExecuted) // at least one inner "parallel" region must be executed
         }
     }
 
