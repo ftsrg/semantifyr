@@ -25,13 +25,19 @@ statechart CentralController[
 
         state Operating {
             region OperatingRegion {
-                entry transition to Init
+                entry transition to BothYellow
 
-                state Init {
-                    entry / set toggleTimeout := 1 s; raise controlA.toggle; raise controlB.toggle; // switch A to Red, B to Red
+                state BothYellow {
+                    entry / set toggleTimeout := 1 s;
                 }
 
-                transition Init to TrafficOnA when timeout toggleTimeout / raise controlA.toggle; // switch A to Green
+                transition BothYellow to BothRed when timeout toggleTimeout / raise controlA.toggle; raise controlB.toggle; // switch A to Red, B to Red
+
+                state BothRed {
+                    entry / set toggleTimeout := 2 s;
+                }
+
+                transition BothRed to TrafficOnA when timeout toggleTimeout / raise controlA.toggle; // switch A to Green
 
                 state TrafficOnA {
                     entry / set toggleTimeout := 2 s;
@@ -55,13 +61,13 @@ statechart CentralController[
                     entry / set toggleTimeout := 1 s;
                 }
 
-                transition StoppingB to TrafficOnA when timeout toggleTimeout / raise controlA.toggle; raise controlB.toggle; // switch B to Red, A to Green
+                transition StoppingB to TrafficOnA when timeout toggleTimeout / raise controlA.toggle; raise controlB.toggle; // switch A to Green, B to Red
             }
         }
-
+        
         transition Operating to Interrupted when event control.police
         transition Interrupted to Operating when event control.police
-
+        
         state Interrupted {
             entry / raise controlA.police; raise controlB.police;
             exit / raise controlA.police; raise controlB.police;
@@ -103,6 +109,7 @@ statechart TrafficLightController[
         }
 
         transition Normal to Interrupted when event control.police
+        transition Interrupted to Normal when event control.police
 
         state Interrupted {
             region InterruptedRegion {
@@ -124,23 +131,24 @@ statechart TrafficLightController[
 }
 
 sync component CrossroadSystem [
-    port control : requires CentralControl,
+    port control : requires CentralControl/*,
     port lightControlA : provides LightControl,
-    port lightControlB : provides LightControl
+    port lightControlB : provides LightControl*/
 ] {
     component controller : CentralController
     component trafficLightA : TrafficLightController
     component trafficLightB : TrafficLightController
 
     bind control -> controller.control
-    bind lightControlA -> trafficLightA.lightControl
-    bind lightControlB -> trafficLightB.lightControl
+    //bind lightControlA -> trafficLightA.lightControl
+    //bind lightControlB -> trafficLightB.lightControl
 
     channel [ controller.controlA ] -> [ trafficLightA.control ]
     channel [ controller.controlB ] -> [ trafficLightB.control ]
 }
 
 // CentralController verification cases
+
 
 @Reachable
 verification case ControllerOperatingReachable {
@@ -149,9 +157,15 @@ verification case ControllerOperatingReachable {
 }
 
 @Reachable
-verification case ControllerOperatingInitReachable {
+verification case ControllerOperatingBothYellowReachable {
     component system : CrossroadSystem
-    invariant { isActive (system.controller.Main.Operating.OperatingRegion.Init) }
+    invariant { isActive (system.controller.Main.Operating.OperatingRegion.BothYellow) }
+}
+
+@Reachable
+verification case ControllerOperatingBothRedReachable {
+    component system : CrossroadSystem
+    invariant { isActive (system.controller.Main.Operating.OperatingRegion.BothRed) }
 }
 
 @Reachable
@@ -177,6 +191,7 @@ verification case ControllerOperatingTrafficOnBReachable {
     component system : CrossroadSystem
     invariant { isActive (system.controller.Main.Operating.OperatingRegion.TrafficOnB) }
 }
+
 
 @Reachable
 verification case ControllerInterruptedReachable {
