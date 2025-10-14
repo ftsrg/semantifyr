@@ -8,7 +8,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.library.builtin;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryAdapterFinder;
+import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryResourceResolver;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.NamedElementResolver;
@@ -40,16 +40,16 @@ public class BuiltinSymbolResolver {
     public static final QualifiedName STRING_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("string");
 
     @Inject
-    protected LibraryAdapterFinder libraryAdapterFinder;
-
-    @Inject
-    protected BuiltinLibrary builtinLibrary;
+    protected BuiltinLibrary builtinLibraryProvider;
 
     @Inject
     private OxstsQualifiedNameProvider qualifiedNameProvider;
 
     @Inject
     private NamedElementResolver namedElementResolver;
+
+    @Inject
+    protected LibraryResourceResolver libraryResourceResolver;
 
     public AnnotationDeclaration controlAnnotation(EObject context) {
         return findInBuiltin(context, AnnotationDeclaration.class, CONTROL_ANNOTATION_NAME);
@@ -120,7 +120,7 @@ public class BuiltinSymbolResolver {
     }
 
     public boolean isBuiltin(EObject eObject) {
-        return eObject.eResource().getURI() == builtinLibrary.getBuiltinResourceUri();
+        return eObject.eResource().getURI() == builtinLibraryProvider.getBuiltinResourceUri();
     }
 
     protected boolean isNamed(EObject eObject, QualifiedName name) {
@@ -162,12 +162,12 @@ public class BuiltinSymbolResolver {
     }
 
     protected <T extends Declaration> T findInBuiltin(EObject context, Class<T> type, QualifiedName name) {
-        var builtinResource = libraryAdapterFinder.getOrInstall(context).getBuiltinResource();
+        var builtinResource = libraryResourceResolver.resolveResource(builtinLibraryProvider.getBuiltinResourceUri(), context);
         return findInResource(builtinResource, type, name);
     }
 
     protected <T extends Declaration> T findInBuiltinVerification(EObject context, Class<T> type, QualifiedName name) {
-        var builtinResource = libraryAdapterFinder.getOrInstall(context).getBuiltinVerificationResource();
+        var builtinResource = libraryResourceResolver.resolveResource(builtinLibraryProvider.getBuiltinVerificationResourceUri(), context);
         return findInResource(builtinResource, type, name);
     }
 

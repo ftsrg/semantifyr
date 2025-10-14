@@ -6,22 +6,21 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.library;
 
+import org.eclipse.emf.ecore.resource.ResourceSet;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 
-public abstract class ResourceSourcePathLibrary extends PathLibrary {
+public abstract class ResourceBasedOxstsLibrary extends PathBasedOxstsLibrary {
 
-    public ResourceSourcePathLibrary(Path libraryPath) {
+    public ResourceBasedOxstsLibrary(Path libraryPath) {
         super(libraryPath);
     }
 
-    @Override
     public void prepareLoading() {
-        super.prepareLoading();
-
         // TODO: should be smarter in the future, should use some kind of versioning
         try (var files = Files.walk(libraryPath)) {
             files.sorted(Comparator.reverseOrder())
@@ -32,6 +31,13 @@ public abstract class ResourceSourcePathLibrary extends PathLibrary {
         }
 
         saveResources();
+    }
+
+    @Override
+    public void loadLibrary(ResourceSet resourceSet) {
+        prepareLoading();
+
+        super.loadLibrary(resourceSet);
     }
 
     protected abstract void saveResources();

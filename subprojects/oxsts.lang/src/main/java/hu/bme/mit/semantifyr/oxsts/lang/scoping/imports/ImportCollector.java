@@ -49,7 +49,7 @@ public class ImportCollector {
     }
 
     private void collectImplicitImports(List<Import> importCollection, LibraryAdapter adapter) {
-        for (var implicitUri : adapter.getLibrary().getImplicitImports()) {
+        for (var implicitUri : adapter.getLibraryProvider().getImplicitImports()) {
             importCollection.add(Import.implicit(implicitUri));
         }
     }

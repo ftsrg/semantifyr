@@ -8,7 +8,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.library.builtin;
 
 import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryResolutionUtil;
-import hu.bme.mit.semantifyr.oxsts.lang.library.ResourceSourcePathLibrary;
+import hu.bme.mit.semantifyr.oxsts.lang.library.ResourceBasedOxstsLibrary;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.xtext.naming.QualifiedName;
 
@@ -16,10 +16,11 @@ import java.nio.file.Path;
 import java.util.List;
 
 @Singleton
-public class BuiltinLibrary extends ResourceSourcePathLibrary {
+public class BuiltinLibrary extends ResourceBasedOxstsLibrary {
 
     public static final QualifiedName BUILTIN_LIBRARY_NAME = QualifiedName.create("semantifyr");
     public static final QualifiedName BUILTIN_VERIFICATION_LIBRARY_NAME = BUILTIN_LIBRARY_NAME.append("verification");
+
     private URI builtinLibraryUri;
     private URI builtinVerificationLibraryUri;
 

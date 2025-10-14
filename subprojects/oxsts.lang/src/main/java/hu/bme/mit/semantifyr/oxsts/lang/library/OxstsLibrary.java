@@ -8,22 +8,13 @@ package hu.bme.mit.semantifyr.oxsts.lang.library;
 
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils;
 import org.eclipse.emf.common.util.URI;
-
-import java.util.List;
+import org.eclipse.emf.ecore.resource.ResourceSet;
 
 public interface OxstsLibrary {
     String FILE_NAME_SUFFIX = "." + OxstsUtils.LIBRARY_EXTENSION;
 
-    default Iterable<URI> getImplicitImports() {
-        return List.of();
-    }
+    Iterable<URI> getImplicitImports();
 
-    default Iterable<URI> getIncludedResourceUris() {
-        return List.of();
-    }
-
-    default void prepareLoading() {
-        // NO-OP
-    }
+    void loadLibrary(ResourceSet resourceSet);
 
 }

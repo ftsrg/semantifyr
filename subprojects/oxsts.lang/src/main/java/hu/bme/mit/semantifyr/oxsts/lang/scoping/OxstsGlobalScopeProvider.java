@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.resource.ResourceDescriptionProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.imports.ImportCollector;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.selectables.CompositeSelectable;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.selectables.TrimPrefixSelectable;
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsPackage;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.resource.Resource;
@@ -38,15 +39,14 @@ public class OxstsGlobalScopeProvider extends ResourceSetGlobalScopeProvider {
     private ImportCollector importCollector;
 
     @Inject
-    private IResourceScopeCache cache;
+    private OnResourceSetChangeEvictingCache cache;
 
     @Inject
     private ResourceDescriptionProvider resourceDescriptionProvider;
 
     @Override
     public IScope getScope(Resource resource, EReference reference, Predicate<IEObjectDescription> filter) {
-        // TODO: should probably move to somewhere else, feels out of place here
-        libraryAdapterFinder.getOrInstall(resource).loadLibraryResources();
+        libraryAdapterFinder.getOrInstall(resource); // ensure Library resources are loaded
 
         var globalScope = super.getScope(resource, reference, filter);
 
@@ -55,15 +55,15 @@ public class OxstsGlobalScopeProvider extends ResourceSetGlobalScopeProvider {
             return globalScope;
         }
 
-        var loadedImports = cache.get(CACHE_KEY, resource, () -> computeLoadedImports(resource));
+        var importScopes = cache.get(CACHE_KEY, resource, () -> computeImportScopes(resource));
 
-        var implicitImportsScope = createScope(globalScope, loadedImports.implicitScopes(), reference, filter);
-        var explicitImportsScope = createScope(implicitImportsScope, loadedImports.explicitScopes(), reference, filter);
+        var implicitImportsScope = createScope(globalScope, importScopes.implicitScopes(), reference, filter);
+        var explicitImportsScope = createScope(implicitImportsScope, importScopes.explicitScopes(), reference, filter);
 
         return explicitImportsScope;
     }
 
-    protected LoadedImportScopes computeLoadedImports(Resource resource) {
+    protected LoadedImportScopes computeImportScopes(Resource resource) {
         var imports = importCollector.getDirectImports(resource);
         var implicitScopes = new ArrayList<ISelectable>();
         var explicitScopes = new ArrayList<ISelectable>();

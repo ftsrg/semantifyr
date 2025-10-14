@@ -9,6 +9,8 @@ package hu.bme.mit.semantifyr.oxsts.lang;
 import com.google.inject.Binder;
 import com.google.inject.name.Names;
 import hu.bme.mit.semantifyr.oxsts.lang.conversion.OxstsValueConverterService;
+import hu.bme.mit.semantifyr.oxsts.lang.library.OxstsLibraryProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinOxstsLibraryProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameConverter;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.resource.OxstsResourceDescriptionManager;
@@ -47,6 +49,11 @@ public class OxstsRuntimeModule extends AbstractOxstsRuntimeModule {
     @Override
     public Class<? extends IGlobalScopeProvider> bindIGlobalScopeProvider() {
         return OxstsGlobalScopeProvider.class;
+    }
+
+    @SuppressWarnings("unused")
+    public Class<? extends OxstsLibraryProvider> bindOxstsLibraryProvider() {
+        return BuiltinOxstsLibraryProvider.class;
     }
 
     @Override
