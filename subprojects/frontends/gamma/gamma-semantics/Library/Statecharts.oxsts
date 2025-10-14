@@ -30,10 +30,12 @@ class Statechart : Component {
             var anyRegionExecuted := false
             inline for (region in regions) {
                 choice {
+                    // fire state transitions if inner transitions are not enabled (bottom-up)
+                    // inline region.assumeNoInnerTransitionEnabled()
                     inline region.fireLocalTransitions()
                     anyRegionExecuted := true
                 } or {
-                    // fire state transitions if local transitions are not enabled
+                    // fire state transitions if local transitions are not enabled (top-down)
                     inline region.assumeNoLocalTransitionEnabled()
                     inline region.fireInnerTransitions()     
                     anyRegionExecuted := true       
@@ -41,16 +43,8 @@ class Statechart : Component {
                     // do nothing, if no transition is enabled
                     inline assumeNoTransitionEnabled()
                 }
-
-                // inline region.fireTransitions()
             }
             assume (anyRegionExecuted) // at least one inner "parallel" region must be executed
-
-            /*
-            inline for (region in regions) {
-                inline region.fireTransitions()
-            }
-            */
         } or {
             inline assumeNoTransitionEnabled()
             // only do nothing, if the statechart cannot do anything, i.e., no fireable transitions
@@ -90,34 +84,6 @@ class Region {
         }
     }
 
-    // tran fireTransitions(isParallel: bool) {
-    //     /*
-    //     choice {
-    //         // fire state transitions if inner transitions are not enabled
-    //         inline assumeNoInnerTransitionEnabled()
-    //         inline fireLocalTransitions()
-    //     } or {
-    //         inline fireInnerTransitions()            
-    //     } or {
-    //         // do nothing, if no transition is enabled
-    //         inline assumeNoTransitionEnabled()
-    //     }
-    //     //*/
-    
-    //     //*
-    //     choice {
-    //         inline fireLocalTransitions()
-    //     } or {
-    //         // fire state transitions if local transitions are not enabled
-    //         inline assumeNoLocalTransitionEnabled()
-    //         inline fireInnerTransitions()            
-    //     } or {
-    //         // do nothing, if no transition is enabled
-    //         inline assumeNoTransitionEnabled()
-    //     }
-    //     //*/
-    // }
-
     tran fireLocalTransitions() {
         inline for choice (transition in transitions) {
             inline transition.main()
@@ -153,12 +119,6 @@ class Region {
 
 }
 
-/*
- * pattern parentState(childState: State, parentState: State) {
- *     State.regions(parentState, parentRegion)
- *     Region.states(parentRegion, childState)
- * }
- */
 class State {
     container parentRegion: Region[1] opposite states
     contains regions: Region[0..*] opposite parentState
@@ -230,10 +190,12 @@ class State {
             var anyRegionExecuted := false
             inline for (region in regions) {
                 choice {
+                    // fire state transitions if inner transitions are not enabled (bottom-up)
+                    // inline region.assumeNoInnerTransitionEnabled()
                     inline region.fireLocalTransitions()
                     anyRegionExecuted := true
                 } or {
-                    // fire state transitions if local transitions are not enabled
+                    // fire state transitions if local transitions are not enabled (top-down)
                     inline region.assumeNoLocalTransitionEnabled()
                     inline region.fireInnerTransitions()     
                     anyRegionExecuted := true       
@@ -241,8 +203,6 @@ class State {
                     // do nothing, if no transition is enabled
                     inline assumeNoTransitionEnabled()
                 }
-
-                // inline region.fireTransitions()
             }
             assume (anyRegionExecuted) // at least one inner "parallel" region must be executed
         }
@@ -316,25 +276,3 @@ class IsStateActiveExpression : Expression {
         return state.isActive()
     }
 }
-
-/*
- * pattern parallelRegions(r1: Region, r2: Region) {
- *     State.regions(state, r1)
- *     State.regions(state, r2)
- *     r1 != r2
- * }
-
- * neg constraint noParallelRegionTransitions(t: Transition) {
- *     Transition.from(t, from)
- *     Transition.to(t, to)
- *     Region.states(fromR, from)
- *     Region.states(toR, to)
- *     fromR != toR
- * }
-
- * neg constraint noParallelRegions(state: State) {
- *     State.regions(state, r1)
- *     State.regions(state, r2)
- *     find parallelRegions(r1, r2)
- * }
- */
