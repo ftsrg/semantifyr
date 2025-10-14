@@ -31,10 +31,19 @@ class Statechart : Component {
                 inline region.fireTransitions()
             }
         } or {
-            // do nothing?
+            inline assumeNoTransitionEnabled()
+            // only do nothing, if the statechart cannot do anything, i.e., no fireable transitions
         }
 
         inline resetInputEvents()
+    }
+
+    // TODO: would be easier to implement if we had ...any { } and ...all { } lambda functions that could compose expressions
+
+    tran assumeNoTransitionEnabled() {
+        inline for (region in regions) {
+            inline region.assumeNoTransitionEnabled()
+        }
     }
 }
 
@@ -78,15 +87,43 @@ class Region {
         //*/
     
         //*
-        inline for choice (transition in transitions) {
-            inline transition.main()
-        } else {
+        choice {
+            // fire transitions
+            inline for choice (transition in transitions) {
+                inline transition.main()
+            } else {
+                // if there are no transitions
+                assume (false)
+            }
+        } or {
+            // fire state transitions if local transitions are not enabled
+            inline assumeNoLocalTransitionEnabled()
             inline for choice (state in states) {
                 inline state.fireTransitions()
-            } else { }
+            } else {
+                // if there are no states
+                assume (false)
+            }
+        } or {
+            // do nothing, if no transition is enabled
+            inline assumeNoTransitionEnabled()
         }
         //*/
     }
+
+    tran assumeNoLocalTransitionEnabled() {
+        inline for (transition in transitions) {
+            assume (! transition.isEnabled())
+        }
+    }
+
+    tran assumeNoTransitionEnabled() {
+        inline assumeNoLocalTransitionEnabled()
+        inline for (state in states) {
+            inline state.assumeNoTransitionEnabled()
+        }
+    }
+
 }
 
 /*
@@ -163,12 +200,15 @@ class State {
         inline if (regions == nothing) {
             assume (false)
         } else {
-            guard (isActive())
-            choice {
-                inline for (region in regions) {
-                    inline region.fireTransitions()
-                }
-            } else { }
+            inline for (region in regions) {
+                inline region.fireTransitions()
+            }
+        }
+    }
+
+    tran assumeNoTransitionEnabled() {
+        inline for (region in regions) {
+            inline region.assumeNoTransitionEnabled()
         }
     }
 }
@@ -195,7 +235,7 @@ class AbstractTransition {
     }
 
     redefine tran {
-        guard (isEnabled())
+        assume (isEnabled())
         inline fire()
     }
 }
