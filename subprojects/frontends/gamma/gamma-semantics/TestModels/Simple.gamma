@@ -18,12 +18,12 @@ statechart LeaderStatechart [
     region Main {
         state Idle
         state Operational
-        //state Stopped
-        //state Unreachable
+        state Stopped
+        state Unreachable
 
         entry transition to Idle
         transition Idle to Operational when event control.start / raise workerControl.start;
-        //transition Operational to Stopped when event control.stop / raise workerControl.stop;
+        transition Operational to Stopped when event control.stop / raise workerControl.stop;
     }
 }
 
@@ -33,12 +33,12 @@ statechart WorkerStatechart [
     region Main {
         state Idle
         state Operational
-        //state Stopped
-        //state Unreachable
+        state Stopped
+        state Unreachable
 
         entry transition to Idle
         transition Idle to Operational when event control.start
-        //transition Operational to Stopped when event control.stop
+        transition Operational to Stopped when event control.stop
     }
 }
 
@@ -50,20 +50,6 @@ sync component System[
 
     bind control -> leader.control
     channel [ leader.workerControl ] -> [ worker.control ]
-} 
-
-@Reachable
-verification case WorkerStatechartIdleReachable {
-    component system : System
-
-    invariant { isActive (system.worker.Main.Idle) }
-}
-
-@Reachable
-verification case WorkerStatechartOperationalReachable {
-    component system : System
-
-    invariant { isActive (system.worker.Main.Operational) }
 }
 
 @Reachable
@@ -80,7 +66,13 @@ verification case LeaderStatechartOperationalReachable {
     invariant { isActive (system.leader.Main.Operational) }
 }
 
-/*
+@Reachable
+verification case LeaderStatechartStoppedReachable {
+    component system : System
+
+    invariant { isActive (system.leader.Main.Stopped) }
+}
+
 @Unreachable
 verification case LeaderStatechartUnreachable {
     component system : System
@@ -88,10 +80,31 @@ verification case LeaderStatechartUnreachable {
     invariant { isActive (system.leader.Main.Unreachable) }
 }
 
-@Unreachable
-verification case LeaderStatechartUnrachable {
+
+@Reachable
+verification case WorkerStatechartIdleReachable {
     component system : System
 
-    invariant { isActive (system.leader.Main.Unreachable) }
+    invariant { isActive (system.worker.Main.Idle) }
 }
-*/
+
+@Reachable
+verification case WorkerStatechartOperationalReachable {
+    component system : System
+
+    invariant { isActive (system.worker.Main.Operational) }
+}
+
+@Reachable
+verification case WorkerStatechartStoppedReachable {
+    component system : System
+
+    invariant { isActive (system.worker.Main.Stopped) }
+}
+
+@Unreachable
+verification case WorkerStatechartUnrachable {
+    component system : System
+
+    invariant { isActive (system.worker.Main.Unreachable) }
+}
