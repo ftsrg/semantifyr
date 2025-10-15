@@ -7,7 +7,7 @@
 package hu.bme.mit.semantifyr.backends.theta.verification
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backends.theta.verification.execution.DockerBasedThetaExecutor
+import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaPortfolioExecutor
 import hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts.OxstsTransformer
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.VerificationCaseExpectedResult
@@ -44,7 +44,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
     @Inject
     private lateinit var builtinAnnotationHandler: BuiltinAnnotationHandler
 
-    private val dockerBasedThetaExecutor = DockerBasedThetaExecutor(
+    private val thetaExecutor = ThetaPortfolioExecutor(
         "6.5.2",
         listOf(
             "--domain EXPL --refinement SEQ_ITP --maxenum 250 --initprec CTRL --stacktrace",
@@ -88,8 +88,8 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
         val name = path.split(File.separator).last()
         val workingDirectory = path.replaceAfterLast(File.separator, "")
 
-        dockerBasedThetaExecutor.initialize()
-        val results = dockerBasedThetaExecutor.run(workingDirectory, name, progressContext)
+        thetaExecutor.initialize()
+        val results = thetaExecutor.run(workingDirectory, name, progressContext)
 
         if (expected == VerificationCaseExpectedResult.SAFE && !results.isSafe) {
             return VerificationCaseRunResult(VerificationResult.Failed, "Expected Safe result, got Unsafe instead!")
