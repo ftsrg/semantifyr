@@ -7,17 +7,15 @@
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.SemantifyrRequestManager;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.WorkManager;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration;
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScope;
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScopeContext;
+import hu.bme.mit.semantifyr.semantics.transformation.CompilationScopeManager;
+import hu.bme.mit.semantifyr.semantics.transformation.EObjectRunnable;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
-import org.eclipse.xtext.ide.server.Document;
 import org.eclipse.xtext.ide.server.DocumentExtensions;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.resource.EObjectAtOffsetHelper;
@@ -26,7 +24,6 @@ import org.eclipse.xtext.resource.XtextResource;
 import org.eclipse.xtext.util.CancelIndicator;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 public abstract class AbstractCommandHandler<T> implements CommandHandler {
 
@@ -34,8 +31,10 @@ public abstract class AbstractCommandHandler<T> implements CommandHandler {
     protected WorkManager workManager;
 
     @Inject
-    @Named("compilationScope")
-    protected CompilationScope compilationScope;
+    protected SemantifyrRequestManager semantifyrRequestManager;
+
+    @Inject
+    protected CompilationScopeManager compilationScopeManager;
 
     @Inject
     private IResourceServiceProvider.Registry resourceServiceProviderRegistry;
@@ -55,9 +54,8 @@ public abstract class AbstractCommandHandler<T> implements CommandHandler {
 
         try {
             return execute(argument, access, progressContext);
-        } catch (Exception e) {
-            progressContext.end("Failure!");
-            throw e;
+        } finally {
+            progressContext.end();
         }
     }
 
@@ -67,17 +65,11 @@ public abstract class AbstractCommandHandler<T> implements CommandHandler {
 
     protected abstract Object execute(T argument, ILanguageServerAccess access, CommandProgressContext progressContext);
 
-    /**
-     * Runs {@code runnable} in a new compilation scope.
-     */
-    protected void compilationScopeRunnable(Runnable runnable) {
-        var compilationScopeContext = new CompilationScopeContext();
-        compilationScope.enter(compilationScopeContext);
-        try {
-            runnable.run();
-        } finally {
-            compilationScope.exit();
-        }
+    protected <TArg extends EObject> void runLongRunningInCompilationScope(TArg eObject, EObjectRunnable<TArg> runnable) {
+        compilationScopeManager.runInCompilationScope(eObject, (copied) -> {
+            semantifyrRequestManager.releaseReadLock();
+            runnable.run(copied);
+        });
     }
 
     protected EObject getElement(final ILanguageServerAccess.Context context, Position position) {
@@ -85,8 +77,8 @@ public abstract class AbstractCommandHandler<T> implements CommandHandler {
         return eObjectAtOffsetHelper.getElementWithNameAt((XtextResource) context.getResource(), offset);
     }
 
-    protected CompletableFuture<EObject> getElement(final ILanguageServerAccess access, Location location) {
-        return access.doRead(location.getUri(), context -> getElement(context, location.getRange().getStart()));
+    protected EObject getElement(final ILanguageServerAccess access, Location location) {
+        return access.doSyncRead(location.getUri(), context -> getElement(context, location.getRange().getStart()));
     }
 
     protected Location getLocation(final EObject eObject) {

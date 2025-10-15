@@ -58,9 +58,8 @@ public class WorkManager {
         languageClient.notifyProgress(new ProgressParams(token, Either.forLeft(begin)));
     }
 
-    public void endWork(Either<String, Integer> token, String message) {
+    public void endWork(Either<String, Integer> token) {
         var end = new WorkDoneProgressEnd();
-        end.setMessage(message);
         languageClient.notifyProgress(new ProgressParams(token, Either.forLeft(end)));
 
         indicators.remove(token);

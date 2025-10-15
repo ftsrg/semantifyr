@@ -8,7 +8,6 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -21,7 +20,6 @@ import org.eclipse.xtext.util.CancelIndicator;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 @Singleton
 public class CompileInlinedOxstsCommandHandler extends AbstractCommandHandler<InlinedOxsts> {
@@ -56,18 +54,14 @@ public class CompileInlinedOxstsCommandHandler extends AbstractCommandHandler<In
         var location = gson.fromJson(locationJson, Location.class);
         var element = getElement(access, location);
 
-        try {
-            return (InlinedOxsts) element.get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        return (InlinedOxsts) element;
     }
 
     @Override
     protected Object execute(InlinedOxsts arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
-        compilationScopeRunnable(() -> {
+        runLongRunningInCompilationScope(arguments, (inlinedOxsts) -> {
             compilationStateManagerProvider.get().setSerializeSteps(false);
-            var xsts = oxstsTransformerProvider.get().transform(arguments, false);
+            var xsts = oxstsTransformerProvider.get().transform(inlinedOxsts);
 
             try {
                 xsts.eResource().save(null);

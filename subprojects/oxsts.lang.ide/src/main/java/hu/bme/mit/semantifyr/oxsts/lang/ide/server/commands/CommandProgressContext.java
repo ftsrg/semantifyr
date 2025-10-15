@@ -39,8 +39,8 @@ public class CommandProgressContext implements ProgressContext {
         workManager.beginWork(token, title, message);
     }
 
-    public void end(String message) {
-        workManager.endWork(token, message);
+    public void end() {
+        workManager.endWork(token);
     }
 
     @Override

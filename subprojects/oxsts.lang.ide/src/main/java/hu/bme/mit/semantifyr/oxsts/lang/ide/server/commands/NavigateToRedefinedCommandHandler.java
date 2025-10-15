@@ -18,7 +18,6 @@ import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 public class NavigateToRedefinedCommandHandler extends AbstractCommandHandler<RedefinableDeclaration> {
 
@@ -49,11 +48,7 @@ public class NavigateToRedefinedCommandHandler extends AbstractCommandHandler<Re
         var location = gson.fromJson(locationJson, Location.class);
         var element = getElement(access, location);
 
-        try {
-            return (RedefinableDeclaration) element.get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        return (RedefinableDeclaration) element;
     }
 
     @Override

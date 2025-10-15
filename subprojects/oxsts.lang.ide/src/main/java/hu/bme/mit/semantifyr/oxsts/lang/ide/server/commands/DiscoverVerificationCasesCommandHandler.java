@@ -17,7 +17,6 @@ import org.eclipse.xtext.util.CancelIndicator;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHandler<Resource> {
 
@@ -44,13 +43,7 @@ public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHand
         var uriJson = (JsonPrimitive) arguments.getFirst();
         var uri = uriJson.getAsString();
 
-        var resource = access.doRead(uri, ILanguageServerAccess.Context::getResource);
-
-        try {
-            return resource.get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        return access.doSyncRead(uri, ILanguageServerAccess.Context::getResource);
     }
 
     @Override

@@ -12,7 +12,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.backends.theta.verification.ThetaVerifier;
-import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.PausableRequestManager;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager;
 import hu.bme.mit.semantifyr.semantics.verification.VerificationCaseRunResult;
@@ -23,16 +22,12 @@ import org.eclipse.xtext.util.CancelIndicator;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 @Singleton
 public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDeclaration> {
 
     @Inject
     protected Provider<ThetaVerifier> oxstsVerifierProvider;
-
-    @Inject
-    protected PausableRequestManager pausableRequestManager;
 
     @Inject
     protected Provider<CompilationStateManager> compilationStateManagerProvider;
@@ -61,34 +56,24 @@ public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
         var location = gson.fromJson(locationJson, Location.class);
         var element = getElement(access, location);
 
-        try {
-            return (ClassDeclaration) element.get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        return (ClassDeclaration) element;
     }
 
     @Override
     protected Object execute(ClassDeclaration arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
         progressContext.begin("Verifying class " + arguments.getName(), "Initializing");
 
-        pausableRequestManager.pause();
-
         var result = new CompletableFuture<VerificationCaseRunResult>();
 
         try {
-            compilationScopeRunnable(() -> {
+            runLongRunningInCompilationScope(arguments, (classDelcaration) -> {
                 progressContext.checkIsCancelled();
 
                 compilationStateManagerProvider.get().setSerializeSteps(false);
-                result.complete(oxstsVerifierProvider.get().verify(progressContext, arguments));
+                result.complete(oxstsVerifierProvider.get().verify(progressContext, classDelcaration));
             });
-
-            progressContext.end("Verification done!");
         } catch (Exception e) {
             result.completeExceptionally(e);
-        } finally {
-            pausableRequestManager.resume();
         }
 
         try {

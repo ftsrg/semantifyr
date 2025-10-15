@@ -6,7 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server;
 
-import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.PausableRequestManager;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.SemantifyrRequestManager;
 import org.eclipse.lsp4j.services.LanguageServer;
 import org.eclipse.xtext.ide.ExecutorServiceProvider;
 import org.eclipse.xtext.ide.server.*;
@@ -30,7 +30,7 @@ public class OxstsServerModule extends ServerModule {
         bind(IMultiRootWorkspaceConfigFactory.class).to(MultiRootWorkspaceConfigFactory.class);
         bind(IProjectDescriptionFactory.class).to(DefaultProjectDescriptionFactory.class);
         bind(IContainer.Manager.class).to(ProjectDescriptionBasedContainerManager.class);
-        bind(IRequestManager.class).to(PausableRequestManager.class);
+        bind(IRequestManager.class).to(SemantifyrRequestManager.class);
     }
 
 }

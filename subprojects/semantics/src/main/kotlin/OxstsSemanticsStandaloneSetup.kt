@@ -16,7 +16,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScope
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 
-class SemantifyrRuntimeModule : OxstsRuntimeModule() {
+class OxstsSemanticsModule : OxstsRuntimeModule() {
 
     private val compilationScope = CompilationScope()
 
@@ -27,16 +27,16 @@ class SemantifyrRuntimeModule : OxstsRuntimeModule() {
 
     @Provides
     @Named("compilationScope")
-    fun provideBatchScope(): CompilationScope {
+    fun provideCompilationScope(): CompilationScope {
         return compilationScope
     }
 
 }
 
-class SemantifyrSetup : OxstsStandaloneSetup() {
+class OxstsSemanticsStandaloneSetup : OxstsStandaloneSetup() {
 
     override fun createInjector(): Injector {
-        return Guice.createInjector(SemantifyrRuntimeModule())
+        return Guice.createInjector(OxstsSemanticsModule())
     }
 
 }
@@ -44,7 +44,7 @@ class SemantifyrSetup : OxstsStandaloneSetup() {
 object StandaloneSemantifyrModule {
 
     val injector: Injector by lazy {
-        SemantifyrSetup().createInjectorAndDoEMFRegistration()
+        OxstsSemanticsStandaloneSetup().createInjectorAndDoEMFRegistration()
     }
 
     inline fun <reified T> getInstance(): T {
