@@ -122,15 +122,19 @@ class DockerBasedThetaExecutor(
         thetaRuntimeDetails: ThetaRuntimeDetails,
         container: CreateContainerResponse
     ) {
-        val logFile = File(thetaRuntimeDetails.logPath)
-        val errFile = File(thetaRuntimeDetails.errPath)
+        try {
+            val logFile = File(thetaRuntimeDetails.logPath)
+            val errFile = File(thetaRuntimeDetails.errPath)
 
-        dockerClient.logContainerCmd(container.id)
-            .withStdOut(true)
-            .withStdErr(true)
-            .withTailAll()
-            .exec(StreamLoggerCallback(logFile.outputStream(), errFile.outputStream()))
-            .await()
+            dockerClient.logContainerCmd(container.id)
+                .withStdOut(true)
+                .withStdErr(true)
+                .withTailAll()
+                .exec(StreamLoggerCallback(logFile.outputStream(), errFile.outputStream()))
+                .await()
+        } catch (t: Throwable) {
+            // NO-OP
+        }
     }
 
     private fun createContainer(
