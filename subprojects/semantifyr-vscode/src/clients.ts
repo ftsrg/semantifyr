@@ -69,10 +69,17 @@ export async function startClients(context: ExtensionContext) {
             new Position(location.range.start.line, location.range.start.character),
             new Position(location.range.end.line, location.range.end.character),
         )
-        const doc = await vscode.workspace.openTextDocument(uri);
-        const editor = await vscode.window.showTextDocument(doc);
-        editor.selection = new vscode.Selection(range.start, range.start);
-        editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
+
+        let editor = vscode.window.activeTextEditor;
+        if (editor === undefined) {
+            const doc = await vscode.workspace.openTextDocument(uri);
+            editor = await vscode.window.showTextDocument(doc);
+        }
+
+        const currentUri = editor.document.uri;
+        const currentPosition = editor.selection.start;
+        const locations = [new Location(uri, range)];
+        await commands.executeCommand('editor.action.goToLocations', currentUri, currentPosition, locations, "peek");
     }
 
 }

@@ -78,7 +78,7 @@ public abstract class AbstractCommandHandler<T> implements CommandHandler {
 
     protected EObject getElement(final ILanguageServerAccess.Context context, Position position) {
         var offset = context.getDocument().getOffSet(position);
-        return eObjectAtOffsetHelper.getElementWithNameAt((XtextResource) context.getResource(), offset);
+        return eObjectAtOffsetHelper.resolveElementAt((XtextResource) context.getResource(), offset);
     }
 
     protected EObject getElement(final ILanguageServerAccess access, Location location) {
