@@ -68,7 +68,11 @@ public abstract class AbstractCommandHandler<T> implements CommandHandler {
     protected <TArg extends EObject> void runLongRunningInCompilationScope(TArg eObject, EObjectRunnable<TArg> runnable) {
         compilationScopeManager.runInCompilationScope(eObject, (copied) -> {
             semantifyrRequestManager.releaseReadLock();
-            runnable.run(copied);
+            try {
+                runnable.run(copied);
+            } finally {
+                semantifyrRequestManager.acquireReadLock();
+            }
         });
     }
 
