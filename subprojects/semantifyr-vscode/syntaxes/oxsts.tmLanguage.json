@@ -26,7 +26,7 @@
       "patterns": [
         {
           "name": "keyword.control.oxsts",
-          "match": "\\b(return|inlined|oxsts|of|annotation|import|prop|package|extern|datatype|enum|record|control|var|abstract|class|redefine|redefines|tran|env|init|main|havoc|or|refers|in|contains|container|derived|features|subsets|opposite|havoc|choice|else|assume|if|inline|for)\\b"
+          "match": "\\b(return|inlined|oxsts|of|annotation|import|prop|package|extern|datatype|enum|record|var|abstract|class|redefine|redefines|tran|env|init|main|havoc|or|refers|in|contains|container|derived|features|subsets|opposite|havoc|choice|else|assume|if|inline|for)\\b"
         }
       ]
     },

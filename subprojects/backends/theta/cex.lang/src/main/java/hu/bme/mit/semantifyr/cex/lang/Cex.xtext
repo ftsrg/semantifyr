@@ -10,7 +10,7 @@ generate cex "http://www.bme.hu/mit/2024/cex"
 
 import "http://www.eclipse.org/emf/2002/Ecore" as Ecore
 
-Cex:
+CexModel:
 	"(" ("XstsStateSequence" | "XstsCliTracegen")
 	    (states += XstsState)*
 

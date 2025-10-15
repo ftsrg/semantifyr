@@ -15,9 +15,9 @@ val ideGeneratedClasspath by configurations.creating {
 }
 
 dependencies {
-    api(project(":cex.lang"))
+    api(project(":xsts.lang"))
 
-    implementation(libs.xtext.ide)
+    api(libs.xtext.ide)
     runtimeOnly(libs.slf4j.log4j)
 
     ideGeneratedClasspath(project(":cex.lang", configuration = "ideGeneratedOutput"))
