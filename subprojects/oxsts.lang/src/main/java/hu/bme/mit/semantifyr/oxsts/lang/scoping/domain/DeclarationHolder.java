@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain;
+package hu.bme.mit.semantifyr.oxsts.lang.scoping.domain;
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration;
 

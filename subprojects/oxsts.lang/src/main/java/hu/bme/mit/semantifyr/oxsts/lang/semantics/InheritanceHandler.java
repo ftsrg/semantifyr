@@ -33,11 +33,11 @@ public class InheritanceHandler {
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
 
-    public Iterable<DomainDeclaration> getSuperDomains(DomainDeclaration declaration) {
+    public List<? extends DomainDeclaration> getSuperDomains(DomainDeclaration declaration) {
         return cache.get(Tuples.create(CACHE_KEY, declaration), declaration.eResource(), () -> computeSuperDomains(declaration));
     }
 
-    protected Iterable<DomainDeclaration> computeSuperDomains(DomainDeclaration domainDeclaration) {
+    protected List<? extends DomainDeclaration> computeSuperDomains(DomainDeclaration domainDeclaration) {
         return switch (domainDeclaration) {
             case FeatureDeclaration domain -> computeSuperDomains(domain);
             case ClassDeclaration domain -> computeSuperDomains(domain);
@@ -49,7 +49,7 @@ public class InheritanceHandler {
         };
     }
 
-    protected Iterable<DomainDeclaration> computeSuperDomains(ClassDeclaration classDeclaration) {
+    protected List<? extends DomainDeclaration> computeSuperDomains(ClassDeclaration classDeclaration) {
         if (classDeclaration.getSuperTypes().isEmpty()) {
             if (builtinSymbolResolver.isAnythingClass(classDeclaration)) {
                 return List.of();
@@ -58,13 +58,16 @@ public class InheritanceHandler {
             return List.of(builtinSymbolResolver.anythingClass(classDeclaration));
         }
 
-        return Iterables.transform(classDeclaration.getSuperTypes(), i -> i);
+        return classDeclaration.getSuperTypes();
     }
 
-    protected Iterable<DomainDeclaration> computeSuperDomains(FeatureDeclaration featureDeclaration) {
+    protected List<? extends DomainDeclaration> computeSuperDomains(FeatureDeclaration featureDeclaration) {
         var superDomains = new ArrayList<DomainDeclaration>();
 
-        superDomains.add(featureDeclaration.getType());
+        var type = featureDeclaration.getType();
+        if (type != null) {
+            superDomains.add(type);
+        }
 
 //        var redefined = redefinitionHandler.getRedefinedDeclaration(featureDeclaration);
 //        if (redefined != null) {

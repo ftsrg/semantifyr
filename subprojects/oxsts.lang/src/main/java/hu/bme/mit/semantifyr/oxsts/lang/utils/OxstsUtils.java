@@ -6,8 +6,8 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.utils;
 
-import com.google.common.collect.Iterables;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
+import org.eclipse.emf.ecore.EObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +19,7 @@ public class OxstsUtils {
         throw new IllegalStateException("This is a static utility class and should not be instantiated directly");
     }
 
-    public static Iterable<Declaration> getDirectMembers(Declaration declaration) {
+    public static List<? extends Declaration> getDirectMembers(Declaration declaration) {
         return switch (declaration) {
             case InlinedOxsts decl -> getDirectMembers(decl);
             case RecordDeclaration decl -> getDirectMembers(decl);
@@ -29,35 +29,26 @@ public class OxstsUtils {
         };
     }
 
-    public static Iterable<Declaration> getDirectMembers(InlinedOxsts inlinedOxsts) {
-        var elements = new ArrayList<Declaration>();
+    public static List<? extends Declaration> getDirectMembers(InlinedOxsts inlinedOxsts) {
+        var elements = new ArrayList<Declaration>(inlinedOxsts.getVariables());
 
         if (inlinedOxsts.getRootFeature() != null) {
             elements.add(inlinedOxsts.getRootFeature());
         }
-        if (inlinedOxsts.getInitTransition() != null) {
-            elements.add(inlinedOxsts.getInitTransition());
-        }
-        if (inlinedOxsts.getMainTransition() != null) {
-            elements.add(inlinedOxsts.getMainTransition());
-        }
-        if (inlinedOxsts.getProperty() != null) {
-            elements.add(inlinedOxsts.getProperty());
-        }
 
-        return Iterables.concat(inlinedOxsts.getVariables(), elements);
+        return elements;
     }
 
-    public static Iterable<Declaration> getDirectMembers(RecordDeclaration declaration) {
+    public static List<? extends Declaration> getDirectMembers(RecordDeclaration declaration) {
         return declaration.getMembers();
     }
 
-    public static Iterable<Declaration> getDirectMembers(ClassDeclaration declaration) {
+    public static List<? extends Declaration> getDirectMembers(ClassDeclaration declaration) {
         return declaration.getMembers();
     }
 
-    public static Iterable<Declaration> getDirectMembers(FeatureDeclaration declaration) {
-        return declaration.getInnerFeatures().stream().map(f -> (Declaration) f).toList();
+    public static List<? extends Declaration> getDirectMembers(FeatureDeclaration declaration) {
+        return declaration.getInnerFeatures();
     }
 
     public static boolean isAnnotatedWith(AnnotatedElement element, AnnotationDeclaration annotationDeclaration) {

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain;
+package hu.bme.mit.semantifyr.oxsts.lang.scoping.domain;
 
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Iterables;
@@ -30,21 +30,21 @@ public class DomainMemberSelectable implements ISelectable {
 
     @Override
     public boolean isEmpty() {
-        return domainMemberCollection.declarations.isEmpty();
+        return domainMemberCollection.getDeclarations().isEmpty();
     }
 
     @Override
     public Iterable<IEObjectDescription> getExportedObjects() {
-        return FluentIterable.from(domainMemberCollection.declarations.reversed()).transform(declaration -> {
-            var element = domainMemberCollection.redefinitions.get(declaration);
-            if (element == null) {
-                return null;
-            }
+        return FluentIterable.from(domainMemberCollection.getDeclarations().reversed()).transform(declaration -> {
             var name = NamingUtil.getName(declaration);
             if (name == null) {
                 return null;
             }
-            return EObjectDescription.create(name, element.getDeclaration());
+            var element = domainMemberCollection.resolveElement(declaration);
+            if (element == null) {
+                return null;
+            }
+            return EObjectDescription.create(name, element);
         }).filter(Objects::nonNull);
     }
 

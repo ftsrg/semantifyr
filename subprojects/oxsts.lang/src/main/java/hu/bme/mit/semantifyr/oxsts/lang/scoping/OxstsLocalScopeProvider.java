@@ -6,21 +6,23 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.scoping;
 
+import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.resource.ResourceDescriptionProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.selectables.TrimPrefixSelectable;
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
 import org.eclipse.xtext.naming.QualifiedName;
-import org.eclipse.xtext.scoping.IGlobalScopeProvider;
 import org.eclipse.xtext.scoping.IScope;
 import org.eclipse.xtext.scoping.Scopes;
 import org.eclipse.xtext.scoping.impl.AbstractGlobalScopeDelegatingScopeProvider;
 import org.eclipse.xtext.scoping.impl.SelectableBasedScope;
+
+import java.util.List;
 
 public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeProvider {
 
@@ -28,7 +30,7 @@ public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
     private IQualifiedNameProvider qualifiedNameProvider;
 
     @Inject
-    private DomainMemberCalculator domainMemberCalculator;
+    private DomainMemberCollectionProvider domainMemberCollectionProvider;
 
     @Inject
     private ResourceDescriptionProvider resourceDescriptionProvider;
@@ -98,7 +100,7 @@ public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
         }
 
         if (context instanceof DomainDeclaration declaration) {
-            var memberCollection = domainMemberCalculator.getMemberCollection(declaration).getMembers();
+            var memberCollection = domainMemberCollectionProvider.getMemberCollection(declaration).getMemberSelectable();
             return SelectableBasedScope.createScope(containerScope, memberCollection, reference.getEReferenceType(), isIgnoreCase(reference));
         }
 

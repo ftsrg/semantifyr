@@ -8,10 +8,8 @@ package hu.bme.mit.semantifyr.oxsts.lang.semantics;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
-import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator;
+import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration;
 import org.eclipse.xtext.naming.QualifiedName;
@@ -26,13 +24,7 @@ public class RedefinitionHandler {
     private IResourceScopeCache cache;
 
     @Inject
-    protected BuiltinSymbolResolver builtinSymbolResolver;
-
-    @Inject
-    protected DomainMemberCalculator domainMemberCalculator;
-
-    @Inject
-    protected OxstsQualifiedNameProvider qualifiedNameProvider;
+    protected DomainMemberCollectionProvider domainMemberCollectionProvider;
 
     public RedefinableDeclaration getRedefinedDeclaration(RedefinableDeclaration declaration) {
         return cache.get(Tuples.create(CACHE_KEY, declaration), declaration.eResource(), () -> computeRedefinedDeclaration(declaration));
@@ -48,8 +40,8 @@ public class RedefinitionHandler {
         if (declaration.isRedefine()) {
             // find the other RedefinableDeclaration in the parent domain with the same name
             var surroundingFeature = (DomainDeclaration) declaration.eContainer();
-            var parentDomain = domainMemberCalculator.getParentCollection(surroundingFeature);
-            var found = parentDomain.getMembers().getExportedObjects(declaration.eClass(), QualifiedName.create(NamingUtil.getName(declaration)), false);
+            var parentDomain = domainMemberCollectionProvider.getParentCollection(surroundingFeature);
+            var found = parentDomain.getMemberSelectable().getExportedObjects(declaration.eClass(), QualifiedName.create(NamingUtil.getName(declaration)), false);
 
             for (var element : found) {
                 return (RedefinableDeclaration) element.getEObjectOrProxy();

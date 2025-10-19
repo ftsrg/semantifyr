@@ -40,7 +40,7 @@ public class BuiltinSymbolResolver {
     public static final QualifiedName STRING_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("string");
 
     @Inject
-    protected BuiltinLibrary builtinLibraryProvider;
+    protected BuiltinLibrary builtinLibrary;
 
     @Inject
     private OxstsQualifiedNameProvider qualifiedNameProvider;
@@ -120,7 +120,12 @@ public class BuiltinSymbolResolver {
     }
 
     public boolean isBuiltin(EObject eObject) {
-        return eObject.eResource().getURI() == builtinLibraryProvider.getBuiltinResourceUri();
+        var resource = eObject.eResource();
+        if (resource == null) {
+            throw new IllegalStateException("The object must reside in a resource!");
+        }
+
+        return resource.getURI() == builtinLibrary.getBuiltinResourceUri();
     }
 
     protected boolean isNamed(EObject eObject, QualifiedName name) {
@@ -162,12 +167,12 @@ public class BuiltinSymbolResolver {
     }
 
     protected <T extends Declaration> T findInBuiltin(EObject context, Class<T> type, QualifiedName name) {
-        var builtinResource = libraryResourceResolver.resolveResource(builtinLibraryProvider.getBuiltinResourceUri(), context);
+        var builtinResource = libraryResourceResolver.resolveResource(builtinLibrary.getBuiltinResourceUri(), context);
         return findInResource(builtinResource, type, name);
     }
 
     protected <T extends Declaration> T findInBuiltinVerification(EObject context, Class<T> type, QualifiedName name) {
-        var builtinResource = libraryResourceResolver.resolveResource(builtinLibraryProvider.getBuiltinVerificationResourceUri(), context);
+        var builtinResource = libraryResourceResolver.resolveResource(builtinLibrary.getBuiltinVerificationResourceUri(), context);
         return findInResource(builtinResource, type, name);
     }
 

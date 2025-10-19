@@ -8,9 +8,10 @@ package hu.bme.mit.semantifyr.oxsts.lang.scoping;
 
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
+import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ImmutableTypeEvaluation;
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator;
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
@@ -28,7 +29,7 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
     private ExpressionTypeEvaluatorProvider expressionTypeEvaluatorProvider;
 
     @Inject
-    private DomainMemberCalculator domainMemberCalculator;
+    private DomainMemberCollectionProvider domainMemberCollectionProvider;
 
     @Inject
     private ICaseInsensitivityHelper caseInsensitivityHelper;
@@ -87,11 +88,23 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
             var primaryEvaluation = expressionTypeEvaluatorProvider.evaluate(primary);
 
             if (primaryEvaluation instanceof ImmutableTypeEvaluation(DomainDeclaration domainDeclaration)) {
-                var members = domainMemberCalculator.getMembers(domainDeclaration);
+                var members = domainMemberCollectionProvider.getMembers(domainDeclaration);
                 return scopeFor(reference, members);
             }
 
             return IScope.NULLSCOPE;
+        }
+
+        if (reference == OxstsPackage.Literals.VARIABLE_DECLARATION__EXPRESSION
+            || reference == OxstsPackage.Literals.FEATURE_DECLARATION__EXPRESSION) {
+            return super.getScope(context.eContainer(), reference);
+        }
+
+        if (context instanceof Expression expression) {
+            var defaultExpressionContainer = OxstsUtils.getContainerIfDefaultExpression(expression);
+            if (defaultExpressionContainer != null) {
+                return super.getScope(defaultExpressionContainer, reference);
+            }
         }
 
         return super.getScope(context, reference);
@@ -107,19 +120,19 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
             return IScope.NULLSCOPE;
         }
 
-        return scopeFor(reference, domainMemberCalculator.getMembers(classDeclaration));
+        return scopeFor(reference, domainMemberCollectionProvider.getMembers(classDeclaration));
     }
 
     protected IScope calculateFeatureSuperSetsScope(EObject context, EReference reference) {
         var container = (DomainDeclaration) context.eContainer();
 
-        return scopeFor(reference, domainMemberCalculator.getMembers(container));
+        return scopeFor(reference, domainMemberCollectionProvider.getMembers(container));
     }
 
     protected IScope calculateFeatureRedefinedScope(EObject context, EReference reference) {
         var container = (DomainDeclaration) context.eContainer();
 
-        return scopeFor(reference, domainMemberCalculator.getParentCollection(container).getMembers());
+        return scopeFor(reference, domainMemberCollectionProvider.getParentCollection(container).getMemberSelectable());
     }
 
     protected IScope scopeFor(EReference reference, ISelectable selectable) {
