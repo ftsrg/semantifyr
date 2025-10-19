@@ -67,8 +67,20 @@ public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
             return globalScope;
         }
 
-        var resourceDescription = resourceDescriptionProvider.getResourceDescription(resource);
-        return SelectableBasedScope.createScope(globalScope, resourceDescription, reference.getEReferenceType(), isIgnoreCase(reference));
+        var elements = getInlinedOxstsElements(inlinedOxsts);
+
+        return Scopes.scopeFor(elements, QualifiedName.wrapper(NamingUtil::getName), globalScope);
+    }
+
+    protected Iterable<? extends EObject> getInlinedOxstsElements(InlinedOxsts inlinedOxsts) {
+        if (inlinedOxsts.getRootFeature() != null) {
+            return Iterables.concat(
+                    inlinedOxsts.getVariables(),
+                    List.of(inlinedOxsts.getRootFeature())
+            );
+        } else {
+            return inlinedOxsts.getVariables();
+        }
     }
 
     // caching feels unnecessary here, since most of the calculated instances are simple to create, or are cache anyway

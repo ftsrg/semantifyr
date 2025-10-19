@@ -48,8 +48,8 @@ public class OxstsResourceDescription extends DefaultResourceDescription {
         }
 
         var rootElement = getResource().getContents().getFirst();
-        if (rootElement instanceof InlinedOxsts inlinedOxsts) {
-            return computeExportedObjects(inlinedOxsts);
+        if (rootElement instanceof InlinedOxsts) {
+            return List.of();
         }
 
         if (rootElement instanceof OxstsModelPackage oxstsModelPackage) {
@@ -57,21 +57,6 @@ public class OxstsResourceDescription extends DefaultResourceDescription {
         }
 
         return super.computeExportedObjects();
-    }
-
-    protected List<IEObjectDescription> computeExportedObjects(InlinedOxsts inlinedOxsts) {
-        final List<IEObjectDescription> exportedEObjects = newArrayList();
-        IAcceptor<IEObjectDescription> acceptor = exportedEObjects::add;
-
-        for (var variableDeclaration : inlinedOxsts.getVariables()) {
-            strategy.createEObjectDescriptions(variableDeclaration, acceptor);
-        }
-
-        if (inlinedOxsts.getRootFeature() != null) {
-            strategy.createEObjectDescriptions(inlinedOxsts.getRootFeature(), acceptor);
-        }
-
-        return exportedEObjects;
     }
 
     protected List<IEObjectDescription> computeExportedObjects(OxstsModelPackage oxstsModelPackage) {
