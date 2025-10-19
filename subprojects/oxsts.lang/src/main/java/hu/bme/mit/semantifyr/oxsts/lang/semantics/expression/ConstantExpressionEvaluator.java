@@ -23,7 +23,7 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
         var left = evaluate(expression.getLeft());
         var right = evaluate(expression.getRight());
 
-        if (left instanceof IntegerEvaluation(int lValue) && right instanceof IntegerEvaluation(int rValue)) {
+        if (left instanceof IntegerEvaluation(var lValue) && right instanceof IntegerEvaluation(var rValue)) {
             return switch (expression.getOp()) {
                 case LESS -> new BooleanEvaluation(lValue < rValue);
                 case LESS_EQ -> new BooleanEvaluation(lValue <= rValue);
@@ -34,7 +34,7 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
             };
         }
 
-        if (left instanceof BooleanEvaluation(boolean lValue) && right instanceof BooleanEvaluation(boolean rValue)) {
+        if (left instanceof BooleanEvaluation(var lValue) && right instanceof BooleanEvaluation(var rValue)) {
             return switch (expression.getOp()) {
                 case EQ -> new BooleanEvaluation(lValue == rValue);
                 case NOT_EQ -> new BooleanEvaluation(lValue != rValue);
@@ -42,7 +42,15 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
             };
         }
 
-        throw new IllegalArgumentException("Left and right are not integer expressions!");
+        if (left instanceof EnumLiteralEvaluation(var lValue) && right instanceof EnumLiteralEvaluation(var rValue)) {
+            return switch (expression.getOp()) {
+                case EQ -> new BooleanEvaluation(lValue == rValue);
+                case NOT_EQ -> new BooleanEvaluation(lValue != rValue);
+                default -> throw  new IllegalArgumentException("Boolean expression can only be == or !=!");
+            };
+        }
+
+        throw new IllegalArgumentException("Left and right are not supported expressions!");
     }
 
     @Override
@@ -148,8 +156,15 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
 
     @Override
     protected ExpressionEvaluation visit(ElementReference expression) {
-        // TODO: implement with global functions
-        throw new IllegalArgumentException("This evaluator can only evaluate non-contextual expressions!");
+        return evaluateElement(expression.getElement());
+    }
+
+    protected ExpressionEvaluation evaluateElement(NamedElement element) {
+        //noinspection SwitchStatementWithTooFewBranches - expected to be extended with additional types
+        return switch (element) {
+            case EnumLiteral enumLiteral -> new EnumLiteralEvaluation(enumLiteral);
+            default -> throw new IllegalArgumentException("Unsupported type of referenced element!");
+        };
     }
 
     @Override
