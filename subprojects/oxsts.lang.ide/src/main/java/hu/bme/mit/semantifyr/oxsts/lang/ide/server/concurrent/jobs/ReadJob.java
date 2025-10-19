@@ -27,6 +27,8 @@ public class ReadJob<V> extends AbstractJob<V> {
 
         try {
             doRun();
+        } catch (Throwable throwable) {
+            getFuture().completeExceptionally(throwable);
         } finally {
             semantifyrRequestManager.releaseReadLock();
         }

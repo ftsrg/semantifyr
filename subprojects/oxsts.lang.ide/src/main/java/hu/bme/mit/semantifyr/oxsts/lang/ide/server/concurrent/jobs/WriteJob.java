@@ -38,6 +38,8 @@ public class WriteJob<U, V> extends AbstractJob<V> {
 
         try {
             doRun();
+        } catch (Throwable throwable) {
+            getFuture().completeExceptionally(throwable);
         } finally {
             semantifyrRequestManager.releaseWriteLock();
         }
