@@ -31,6 +31,7 @@ public class OxstsServerModule extends ServerModule {
         bind(IProjectDescriptionFactory.class).to(DefaultProjectDescriptionFactory.class);
         bind(IContainer.Manager.class).to(ProjectDescriptionBasedContainerManager.class);
         bind(IRequestManager.class).to(SemantifyrRequestManager.class);
+        bind(WorkspaceManager.class).to(OxstsWorkspaceManager.class);
     }
 
 }
