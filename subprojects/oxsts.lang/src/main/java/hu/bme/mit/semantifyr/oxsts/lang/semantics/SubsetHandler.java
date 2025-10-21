@@ -44,6 +44,10 @@ public class SubsetHandler {
 //            return builtinSymbolResolver.anythingChildrenFeature(feature);
         }
 
+        if (superSet != null && superSet.eIsProxy()) {
+            throw new IllegalStateException("Subset feature could not be resolved!");
+        }
+
         return superSet;
     }
 

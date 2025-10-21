@@ -72,6 +72,10 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
             if (parent instanceof Annotation annotation) {
                 var declaration = annotation.getDeclaration();
 
+                if (declaration.eIsProxy()) {
+                    throw new IllegalStateException("Annotation declaration could not be resolved!");
+                }
+
                 return scopeFor(declaration.getParameters());
             } else if (parent instanceof CallSuffixExpression callExpression) {
 //                var expression = callExpression.getExpression(); // TODO: implement static evaluator
@@ -112,6 +116,11 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
             return IScope.NULLSCOPE;
         }
         var type = featureDeclaration.getType();
+
+        if (type.eIsProxy()) {
+            throw new IllegalStateException("Class supertype could not be resolved!");
+        }
+
         if (!(type instanceof ClassDeclaration classDeclaration)) {
             return IScope.NULLSCOPE;
         }

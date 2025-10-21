@@ -147,9 +147,4 @@ public class DomainMemberCollection {
         redefinitions.put(declaration, redefinedHolder);
     }
 
-    @Override
-    public String toString() {
-        return "Impossible collection";
-    }
-
 }

@@ -23,6 +23,10 @@ class MetaStaticExpressionEvaluator : MetaConstantExpressionEvaluator() {
     private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
 
     override fun visit(expression: ElementReference): NamedElement {
+        if (expression.element.eIsProxy()) {
+            throw IllegalStateException("Element could not be resolved!");
+        }
+
         return redefinitionAwareReferenceResolver.resolve(instance.domain, expression.element)
     }
 

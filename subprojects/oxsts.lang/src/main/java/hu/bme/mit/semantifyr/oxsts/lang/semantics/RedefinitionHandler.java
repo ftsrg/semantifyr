@@ -34,6 +34,10 @@ public class RedefinitionHandler {
         var redefined = declaration.getRedefined();
 
         if (redefined != null) {
+            if (redefined.eIsProxy()) {
+                throw new IllegalStateException("Redefined feature could not be resolved!");
+            }
+
             return redefined;
         }
 

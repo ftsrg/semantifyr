@@ -91,6 +91,10 @@ open class MetaConstantExpressionEvaluator : ExpressionEvaluator<NamedElement>()
     }
 
     override fun visit(expression: ElementReference): NamedElement {
+        if (expression.element.eIsProxy()) {
+            throw IllegalStateException("Element could not be resolved!");
+        }
+
         return expression.element
     }
 

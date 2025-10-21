@@ -31,8 +31,13 @@ public class OppositeHandler {
     }
 
     protected FeatureDeclaration computeOppositeFeature(FeatureDeclaration feature) {
-        if (feature.getOpposite() != null) {
-            return feature.getOpposite();
+        var opposite = feature.getOpposite();
+
+        if (opposite != null) {
+            if (opposite.eIsProxy()) {
+                throw new IllegalStateException("Opposite feature could not be resolved!");
+            }
+            return opposite;
         }
 
         var redefined = redefinitionHandler.getRedefinedDeclaration(feature);

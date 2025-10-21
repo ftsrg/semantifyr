@@ -57,7 +57,7 @@ public class ImportCollector {
     private void collectExplicitImports(OxstsModelPackage _package, List<Import> collection) {
         for (var importStatement : _package.getImports()) {
             var importedPackage = importStatement.getImportedPackage();
-            if (importedPackage != null && importedPackage.eResource() != null && importedPackage.eResource().getURI() != null) {
+            if (importedPackage != null && !importedPackage.eIsProxy() && importedPackage.eResource() != null && importedPackage.eResource().getURI() != null) {
                 collection.add(Import.explicit(importedPackage.eResource().getURI()));
             }
         }

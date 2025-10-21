@@ -89,6 +89,10 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
     protected TypeEvaluation visit(ElementReference expression) {
         var referencedElement = expression.getElement();
 
+        if (referencedElement.eIsProxy()) {
+            throw new IllegalStateException("Element could not be resolved!");
+        }
+
         // TODO: add validation diagnostic
         return switch (referencedElement) {
             case VariableDeclaration variableDeclaration -> variableTypeEvaluator.evaluate(variableDeclaration);
@@ -111,12 +115,20 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
             return TypeEvaluation.INVALID;
         }
 
+        if (classDeclaration.eIsProxy()) {
+            throw new IllegalStateException("Class declaration could not be resolved!");
+        }
+
         return new ImmutableTypeEvaluation(classDeclaration);
     }
 
     @Override
     protected TypeEvaluation visit(NavigationSuffixExpression expression) {
         var member = expression.getMember();
+
+        if (member.eIsProxy()) {
+            throw new IllegalStateException("NavigationSuffix.member could not be resolved!");
+        }
 
         return switch (member) {
             case VariableDeclaration variableDeclaration -> variableTypeEvaluator.evaluate(variableDeclaration);

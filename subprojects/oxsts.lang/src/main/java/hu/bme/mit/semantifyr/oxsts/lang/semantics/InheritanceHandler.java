@@ -58,6 +58,12 @@ public class InheritanceHandler {
             return List.of(builtinSymbolResolver.anythingClass(classDeclaration));
         }
 
+        for (var klass : classDeclaration.getSuperTypes()) {
+            if (klass.eIsProxy()) {
+                throw new IllegalStateException("Class supertype could not be resolved!");
+            }
+        }
+
         return classDeclaration.getSuperTypes();
     }
 
@@ -66,6 +72,10 @@ public class InheritanceHandler {
 
         var type = featureDeclaration.getType();
         if (type != null) {
+            if (type.eIsProxy()) {
+                throw new IllegalStateException("Feature type could not be resolved!");
+            }
+
             superDomains.add(type);
         }
 

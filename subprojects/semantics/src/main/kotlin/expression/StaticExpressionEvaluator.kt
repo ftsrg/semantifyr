@@ -108,6 +108,10 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
     }
 
     override fun evaluateElement(element: NamedElement): ExpressionEvaluation {
+        if (element.eIsProxy()) {
+            throw IllegalStateException("Element could not be resolved!");
+        }
+
         val resolvedElement = redefinitionAwareReferenceResolver.resolve(instance.domain, element)
 
         if (resolvedElement is FeatureDeclaration) {

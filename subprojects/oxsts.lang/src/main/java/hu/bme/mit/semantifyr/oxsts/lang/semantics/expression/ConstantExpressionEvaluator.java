@@ -160,6 +160,10 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
     }
 
     protected ExpressionEvaluation evaluateElement(NamedElement element) {
+        if (element.eIsProxy()) {
+            throw new IllegalStateException("Element could not be resolved!");
+        }
+
         //noinspection SwitchStatementWithTooFewBranches - expected to be extended with additional types
         return switch (element) {
             case EnumLiteral enumLiteral -> new EnumLiteralEvaluation(enumLiteral);
