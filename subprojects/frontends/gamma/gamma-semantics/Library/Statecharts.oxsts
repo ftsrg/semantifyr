@@ -13,9 +13,70 @@ import semantifyr::gamma::triggers
 import semantifyr::gamma::actions
 import semantifyr::gamma::events
 
+enum RegionSchedule {
+    TopDown, 
+    BottomUp
+}
+
+class TransitionScheduler {
+    refers innerRegions: Region[0..*]
+
+    tran fireTransitions(regionSchedule: RegionSchedule) {
+        inline if (regionSchedule == RegionSchedule::BottomUp) {
+            inline fireTransitionsBottomUp()
+        } else {
+            inline fireTransitionsTopDown()
+        }
+    }
+
+    tran fireTransitionsTopDown() {
+        var anyRegionExecuted := false
+        inline for (region in innerRegions) {
+            choice {
+                inline region.fireLocalTransitions()
+                anyRegionExecuted := true
+            } or {
+                // fire state transitions if local transitions are not enabled (top-down)
+                inline region.assumeNoLocalTransitionEnabled()
+                inline region.fireInnerTransitions(RegionSchedule::TopDown)     
+                anyRegionExecuted := true       
+            } or {
+                // do nothing, if no transition is enabled
+                inline region.assumeNoTransitionEnabled()
+            }
+        }
+        assume (anyRegionExecuted) // at least one inner "parallel" region must be executed
+    }
+
+    tran fireTransitionsBottomUp() {
+        var anyRegionExecuted := false
+        inline for (region in innerRegions) {
+            choice {
+                // fire state transitions if inner transitions are not enabled (bottom-up)
+                inline region.assumeNoInnerTransitionEnabled()
+                inline region.fireLocalTransitions()
+                anyRegionExecuted := true
+            } or {
+                inline region.fireInnerTransitions(RegionSchedule::BottomUp)     
+                anyRegionExecuted := true       
+            } or {
+                // do nothing, if no transition is enabled
+                inline region.assumeNoTransitionEnabled()
+            }
+        }
+        assume (anyRegionExecuted) // at least one inner "parallel" region must be executed
+    }
+
+}
+
 class Statechart : Component {
     contains regions: Region[0..*]
     contains variables: Variable[0..*]
+    refers regionSchedule: RegionSchedule = RegionSchedule::BottomUp
+
+    contains transitionScheduler: TransitionScheduler {
+        redefine refers innerRegions: Region[0..*] = regions
+    }
 
     redefine init {
         inline for (region in regions) {
@@ -27,24 +88,7 @@ class Statechart : Component {
         inline resetOutputEvents()
 
         choice {
-            var anyRegionExecuted := false
-            inline for (region in regions) {
-                choice {
-                    // fire state transitions if inner transitions are not enabled (bottom-up)
-                    // inline region.assumeNoInnerTransitionEnabled()
-                    inline region.fireLocalTransitions()
-                    anyRegionExecuted := true
-                } or {
-                    // fire state transitions if local transitions are not enabled (top-down)
-                    inline region.assumeNoLocalTransitionEnabled()
-                    inline region.fireInnerTransitions()     
-                    anyRegionExecuted := true       
-                } or {
-                    // do nothing, if no transition is enabled
-                    inline assumeNoTransitionEnabled()
-                }
-            }
-            assume (anyRegionExecuted) // at least one inner "parallel" region must be executed
+            inline transitionScheduler.fireTransitions(regionSchedule)
         } or {
             inline assumeNoTransitionEnabled()
             // only do nothing, if the statechart cannot do anything, i.e., no fireable transitions
@@ -92,9 +136,9 @@ class Region {
         }
     }
 
-    tran fireInnerTransitions() {
+    tran fireInnerTransitions(regionSchedule: RegionSchedule) {
         inline for choice (state in states) {
-            inline state.fireTransitions()
+            inline state.fireTransitions(regionSchedule)
         } else {
             assume (false)
         }
@@ -126,6 +170,10 @@ class State {
     refers parentState: State[0..1] = parentRegion.parentState // as pattern parentState
     contains entryActions: Action[0..*]
     contains exitActions: Action[0..*]
+
+    contains transitionScheduler: TransitionScheduler {
+        redefine refers innerRegions: Region[0..*] = regions
+    }
 
     prop isActive() {
         return parentRegion.activeState == self
@@ -183,28 +231,11 @@ class State {
             inline region.activateRecursive()
         }
     }
-    tran fireTransitions() {
+    tran fireTransitions(regionSchedule: RegionSchedule) {
         inline if (regions == nothing) {
             assume (false)
         } else {
-            var anyRegionExecuted := false
-            inline for (region in regions) {
-                choice {
-                    // fire state transitions if inner transitions are not enabled (bottom-up)
-                    // inline region.assumeNoInnerTransitionEnabled()
-                    inline region.fireLocalTransitions()
-                    anyRegionExecuted := true
-                } or {
-                    // fire state transitions if local transitions are not enabled (top-down)
-                    inline region.assumeNoLocalTransitionEnabled()
-                    inline region.fireInnerTransitions()     
-                    anyRegionExecuted := true       
-                } or {
-                    // do nothing, if no transition is enabled
-                    inline assumeNoTransitionEnabled()
-                }
-            }
-            assume (anyRegionExecuted) // at least one inner "parallel" region must be executed
+            inline transitionScheduler.fireTransitions(regionSchedule)
         }
     }
 
