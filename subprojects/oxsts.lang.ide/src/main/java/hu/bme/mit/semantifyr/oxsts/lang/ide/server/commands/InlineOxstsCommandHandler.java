@@ -12,7 +12,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
-import hu.bme.mit.semantifyr.semantics.transformation.OxstsToXstsTransformer;
+import hu.bme.mit.semantifyr.semantics.transformation.OxstsClassInliner;
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
@@ -24,7 +24,7 @@ import java.util.List;
 public class InlineOxstsCommandHandler extends AbstractCommandHandler<ClassDeclaration> {
 
     @Inject
-    protected Provider<OxstsToXstsTransformer> xstsTransformerProvider;
+    protected Provider<OxstsClassInliner> xstsTransformerProvider;
 
     @Inject
     protected Provider<CompilationStateManager> compilationStateManagerProvider;
