@@ -87,6 +87,14 @@ public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
 
     // caching feels unnecessary here, since most of the calculated instances are simple to create, or are cache anyway
     protected IScope getLocalScope(IScope containerScope, EObject context, EObject child, EReference reference) {
+        if (context instanceof InlinedOxsts) {
+            return containerScope;
+        }
+
+        if (context instanceof OxstsModelPackage) {
+            return containerScope;
+        }
+
         if (
             reference == OxstsPackage.Literals.CLASS_DECLARATION__SUPER_TYPES
             || reference == OxstsPackage.Literals.FEATURE_DECLARATION__TYPE
