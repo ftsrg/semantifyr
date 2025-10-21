@@ -11,7 +11,6 @@ import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ImmutableTypeEvaluation;
-import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
@@ -95,17 +94,14 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
             return IScope.NULLSCOPE;
         }
 
-        if (reference == OxstsPackage.Literals.VARIABLE_DECLARATION__EXPRESSION
-            || reference == OxstsPackage.Literals.FEATURE_DECLARATION__EXPRESSION) {
-            return super.getScope(context.eContainer(), reference);
-        }
-
-        if (context instanceof Expression expression) {
-            var defaultExpressionContainer = OxstsUtils.getContainerIfDefaultExpression(expression);
-            if (defaultExpressionContainer != null) {
-                return super.getScope(defaultExpressionContainer, reference);
-            }
-        }
+//        if (context instanceof Expression expression) {
+//            var defaultExpressionContainer = OxstsUtils.containingVarOrFeatureIfDefaultExpression(expression);
+//            if (defaultExpressionContainer != null) {
+//                var originalScope = super.getScope(defaultExpressionContainer, reference);
+//
+//                return new FilteringScope(originalScope, e -> e.getEObjectOrProxy() != defaultExpressionContainer);
+//            }
+//        }
 
         return super.getScope(context, reference);
     }
