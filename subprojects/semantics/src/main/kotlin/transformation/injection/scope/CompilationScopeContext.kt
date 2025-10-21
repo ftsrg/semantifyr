@@ -59,7 +59,7 @@ class CompilationScope : Scope {
     }
 
     override fun toString(): String {
-        return "Scopes.GuiceCompilationScope"
+        return "Scopes.CompilationScope"
     }
 
 }

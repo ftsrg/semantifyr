@@ -139,7 +139,6 @@ class OperationCallInliner : OperationVisitor<Unit>() {
 
     private fun performInlining(operation: InlineOperation) {
         val inlined = createInlinedOperation(instance, operation)
-        rewriteLocalVariables(inlined)
         EcoreUtil2.replace(operation, inlined)
 
         val actualInlined = simplifyInlinedOperation(inlined)
@@ -239,7 +238,7 @@ class OperationCallInliner : OperationVisitor<Unit>() {
     private fun inlineTransitionCall(containerInstance: Instance, transitionDeclaration: TransitionDeclaration, callExpression: CallSuffixExpression): Operation {
         val containerInstanceReference = instanceReferenceProvider.getReference(containerInstance)
 
-        val actualTransition = redefinitionAwareReferenceResolver.resolve(containerInstance, transitionDeclaration) as TransitionDeclaration
+        val actualTransition = redefinitionAwareReferenceResolver.resolve(containerInstance.domain, transitionDeclaration) as TransitionDeclaration
 
         val inlined = OxstsFactory.createChoiceOperation().also {
             for (currentOperation in actualTransition.branches) {
@@ -251,6 +250,8 @@ class OperationCallInliner : OperationVisitor<Unit>() {
                 it.branches += inlinedOperation
             }
         }
+
+        rewriteLocalVariables(inlined)
 
         if (inlined.branches.size == 1) {
             return inlined.branches.single()

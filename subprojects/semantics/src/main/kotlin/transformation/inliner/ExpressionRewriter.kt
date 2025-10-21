@@ -7,9 +7,9 @@
 package hu.bme.mit.semantifyr.semantics.transformation.inliner
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ImmutableTypeEvaluation
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
@@ -31,7 +31,7 @@ import org.eclipse.xtext.EcoreUtil2
 class ExpressionRewriter {
 
     @Inject
-    private lateinit var domainMemberCalculator: DomainMemberCalculator
+    private lateinit var domainMemberCollectionProvider: DomainMemberCollectionProvider
 
     @Inject
     private lateinit var expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider
@@ -90,7 +90,7 @@ class ExpressionRewriter {
             if (member is Declaration) {
                 val primaryType = expressionTypeEvaluatorProvider.evaluate(expression.primary)
                 if (primaryType is ImmutableTypeEvaluation) {
-                    val memberCollection = domainMemberCalculator.getMemberCollection(primaryType.domainDeclaration)
+                    val memberCollection = domainMemberCollectionProvider.getMemberCollection(primaryType.domainDeclaration)
                     expression.member = memberCollection.resolveElement(member)
                 }
             }

@@ -7,9 +7,9 @@
 package hu.bme.mit.semantifyr.semantics.transformation.instantiation
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -21,7 +21,7 @@ import java.util.*
 class OxstsClassInstantiator {
 
     @Inject
-    private lateinit var domainMemberCalculator: DomainMemberCalculator
+    private lateinit var domainMemberCollectionProvider: DomainMemberCollectionProvider
 
     @Inject
     private lateinit var multiplicityRangeEvaluator: MultiplicityRangeEvaluator
@@ -45,11 +45,9 @@ class OxstsClassInstantiator {
     }
 
     private fun instantiateChildren(instance: Instance) {
-        val memberCollection = domainMemberCalculator.getMemberCollection(instance.domain)
+        val memberCollection = domainMemberCollectionProvider.getMemberCollection(instance.domain)
 
-        val allContainments = memberCollection.declarationHolders.map {
-            it.declaration
-        }.filterIsInstance<FeatureDeclaration>().filter {
+        val allContainments = memberCollection.declarations.filterIsInstance<FeatureDeclaration>().filter {
             it.kind == FeatureKind.CONTAINMENT
         }.filter {
             val multiplicityRange = multiplicityRangeEvaluator.evaluate(it)

@@ -8,8 +8,8 @@ package hu.bme.mit.semantifyr.semantics.transformation.instantiation
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
+import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.OppositeHandler
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Association
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
@@ -76,7 +76,7 @@ class AssociationManager(
 class InstanceManager {
 
     @Inject
-    private lateinit var domainMemberCalculator: DomainMemberCalculator
+    private lateinit var domainMemberCollectionProvider: DomainMemberCollectionProvider
 
     @Inject
     private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
@@ -124,21 +124,17 @@ class InstanceManager {
     }
 
     private fun createVariableMappings(instance: Instance) {
-        val memberCollection = domainMemberCalculator.getMemberCollection(instance.domain)
+        val memberCollection = domainMemberCollectionProvider.getMemberCollection(instance.domain)
 
-        val allVariables = memberCollection.declarationHolders.map {
-            it.declaration
-        }.filterIsInstance<VariableDeclaration>().distinct()
+        val allVariables = memberCollection.declarations.filterIsInstance<VariableDeclaration>().distinct()
 
         variableManagers.put(instance, VariableManager(instance, allVariables))
     }
 
     private fun createFeatureMappings(instance: Instance) {
-        val memberCollection = domainMemberCalculator.getMemberCollection(instance.domain)
+        val memberCollection = domainMemberCollectionProvider.getMemberCollection(instance.domain)
 
-        val allFeatures = memberCollection.declarationHolders.map {
-            it.declaration
-        }.filterIsInstance<FeatureDeclaration>().distinct()
+        val allFeatures = memberCollection.declarations.filterIsInstance<FeatureDeclaration>().distinct()
 
         associationManagers.put(instance, AssociationManager(instance, allFeatures))
     }
@@ -156,7 +152,7 @@ class InstanceManager {
     }
 
     private fun localPlaceInstance(holder: Instance, featureDeclaration: FeatureDeclaration, held: Instance) {
-        val feature = redefinitionAwareReferenceResolver.resolve(holder, featureDeclaration) as FeatureDeclaration
+        val feature = redefinitionAwareReferenceResolver.resolve(holder.domain, featureDeclaration) as FeatureDeclaration
 
         associationManagers[holder]!!.place(feature, held)
     }

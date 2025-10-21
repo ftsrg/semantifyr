@@ -15,7 +15,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.semantics.transformation.InlinedOxstsModelManager
 import hu.bme.mit.semantifyr.semantics.transformation.ProgressContext
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
-import hu.bme.mit.semantifyr.semantics.transformation.inliner.OxstsInliner
+import hu.bme.mit.semantifyr.semantics.transformation.inliner.OxstsCallInliner
 import hu.bme.mit.semantifyr.semantics.transformation.instantiation.OxstsInflator
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.verification.AbstractOxstsVerifier
@@ -33,7 +33,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
     private lateinit var oxstsInflator: OxstsInflator
 
     @Inject
-    private lateinit var oxstsInliner: OxstsInliner
+    private lateinit var oxstsCallInliner: OxstsCallInliner
 
     @Inject
     private lateinit var oxstsTransformer: OxstsTransformer
@@ -68,17 +68,17 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
 
         progressContext.reportProgress("Inlining calls", 2)
 
-        oxstsInliner.inlineOxsts(inlinedOxsts)
+        oxstsCallInliner.inlineCalls(inlinedOxsts)
 
         progressContext.reportProgress("Deflating instances and structure", 6)
 
         oxstsInflator.deflateInstanceModel(inlinedOxsts)
 
+        compilationStateManager.finalizeArtifactManager(inlinedOxsts)
+
         progressContext.reportProgress("Transforming to XSTS", 8)
 
         val xsts = oxstsTransformer.transform(inlinedOxsts)
-
-        compilationStateManager.finalizeArtifactManager(inlinedOxsts)
 
         xsts.eResource().save(emptyMap<Any, Any>())
 

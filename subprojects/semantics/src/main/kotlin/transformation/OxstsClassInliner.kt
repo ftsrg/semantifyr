@@ -9,12 +9,12 @@ package hu.bme.mit.semantifyr.semantics.transformation
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
-import hu.bme.mit.semantifyr.semantics.transformation.inliner.OxstsInliner
+import hu.bme.mit.semantifyr.semantics.transformation.inliner.OxstsCallInliner
 import hu.bme.mit.semantifyr.semantics.transformation.instantiation.OxstsInflator
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 
 @CompilationScoped
-class OxstsToXstsTransformer {
+class OxstsClassInliner {
 
     @Inject
     private lateinit var inlinedOxstsModelManager: InlinedOxstsModelManager
@@ -23,7 +23,7 @@ class OxstsToXstsTransformer {
     private lateinit var oxstsInflator: OxstsInflator
 
     @Inject
-    private lateinit var oxstsInliner: OxstsInliner
+    private lateinit var oxstsCallInliner: OxstsCallInliner
 
     @Inject
     private lateinit var compilationStateManager: CompilationStateManager
@@ -39,7 +39,7 @@ class OxstsToXstsTransformer {
 
         progressContext.reportProgress("Inlining calls", 20)
 
-        oxstsInliner.inlineOxsts(inlinedOxsts)
+        oxstsCallInliner.inlineCalls(inlinedOxsts)
 
         progressContext.reportProgress("Deflating instances and structure", 60)
 

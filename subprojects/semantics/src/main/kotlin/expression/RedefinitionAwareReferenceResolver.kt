@@ -7,9 +7,9 @@
 package hu.bme.mit.semantifyr.semantics.expression
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator
+import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsPackage
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration
@@ -20,22 +20,22 @@ import org.eclipse.xtext.naming.QualifiedName
 class RedefinitionAwareReferenceResolver {
 
     @Inject
-    private lateinit var domainMemberCalculator: DomainMemberCalculator
+    private lateinit var domainMemberCollectionProvider: DomainMemberCollectionProvider
 
-    fun resolve(instance: Instance, name: String): NamedElement {
-        return resolveOrNull(instance, name) ?: throw IllegalArgumentException("Could not find any element named $name!")
+    fun resolve(domain: DomainDeclaration, name: String): NamedElement {
+        return resolveOrNull(domain, name) ?: throw IllegalArgumentException("Could not find any element named $name!")
     }
 
-    fun resolveOrNull(instance: Instance, name: String): NamedElement? {
-        return resolveOrNull(instance, QualifiedName.create(name))
+    fun resolveOrNull(domain: DomainDeclaration, name: String): NamedElement? {
+        return resolveOrNull(domain, QualifiedName.create(name))
     }
 
-    fun resolve(instance: Instance, name: QualifiedName): NamedElement {
-        return resolveOrNull(instance, name) ?: throw IllegalArgumentException("Could not find any element named $name!")
+    fun resolve(domain: DomainDeclaration, name: QualifiedName): NamedElement {
+        return resolveOrNull(domain, name) ?: throw IllegalArgumentException("Could not find any element named $name!")
     }
 
-    fun resolveOrNull(instance: Instance, name: QualifiedName): NamedElement? {
-        val domain = domainMemberCalculator.getMembers(instance.domain)
+    fun resolveOrNull(domain: DomainDeclaration, name: QualifiedName): NamedElement? {
+        val domain = domainMemberCollectionProvider.getMembers(domain)
         val elements = domain.getExportedObjects(OxstsPackage.eINSTANCE.namedElement, name, false)
 
         for (element in elements) {
@@ -45,18 +45,18 @@ class RedefinitionAwareReferenceResolver {
         return null
     }
 
-    fun resolve(instance: Instance, reference: NamedElement): NamedElement {
+    fun resolve(domain: DomainDeclaration, reference: NamedElement): NamedElement {
         if (reference is RedefinableDeclaration) {
-            return resolve(instance, reference)
+            return resolve(domain, reference)
         }
 
         return reference
     }
 
-    fun resolve(instance: Instance, redefinableDeclaration: RedefinableDeclaration): Declaration {
-        val domain = domainMemberCalculator.getMemberCollection(instance.domain)
+    fun resolve(domain: DomainDeclaration, redefinableDeclaration: RedefinableDeclaration): Declaration {
+        val memberCollection = domainMemberCollectionProvider.getMemberCollection(domain)
 
-        return domain.resolveElement(redefinableDeclaration) as Declaration
+        return memberCollection.resolveElement(redefinableDeclaration) as Declaration
     }
 
 }

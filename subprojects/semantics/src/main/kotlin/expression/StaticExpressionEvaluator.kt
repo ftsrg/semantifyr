@@ -7,13 +7,14 @@
 package hu.bme.mit.semantifyr.semantics.expression
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.BooleanEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluator
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
@@ -50,7 +51,7 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
     private lateinit var featureSubSettersFinder: FeatureSubSettersFinder
 
     @Inject
-    private lateinit var domainMemberCalculator: DomainMemberCalculator
+    private lateinit var domainMemberCollectionProvider: DomainMemberCollectionProvider
 
     override fun visit(expression: ComparisonOperator): ExpressionEvaluation {
         val left = evaluate(expression.getLeft())
@@ -67,15 +68,11 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
         return super.visit(expression)
     }
 
-    override fun visit(expression: ElementReference): ExpressionEvaluation {
-        return evaluateElement(expression.element)
-    }
-
     override fun visit(expression: SelfReference): ExpressionEvaluation {
         return InstanceEvaluation(instance)
     }
 
-    override fun visit(expression: LiteralNothing?): ExpressionEvaluation {
+    override fun visit(expression: LiteralNothing): ExpressionEvaluation {
         return InstanceEvaluation(emptySet())
     }
 
@@ -110,14 +107,14 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
         TODO("TODO: implement")
     }
 
-    private fun evaluateElement(element: NamedElement): ExpressionEvaluation {
-        val resolvedElement = redefinitionAwareReferenceResolver.resolve(instance, element)
+    override fun evaluateElement(element: NamedElement): ExpressionEvaluation {
+        val resolvedElement = redefinitionAwareReferenceResolver.resolve(instance.domain, element)
 
-        if (resolvedElement !is FeatureDeclaration) {
-            error("This expression is not resolvable! (probably a meta-expression?)")
+        if (resolvedElement is FeatureDeclaration) {
+            return evaluateFeature(resolvedElement)
         }
 
-        return evaluateFeature(resolvedElement)
+        return super.evaluateElement(resolvedElement)
     }
 
     private fun evaluateFeatureExpression(featureDeclaration: FeatureDeclaration): ExpressionEvaluation {
@@ -197,9 +194,9 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
         }
 
         for (candidate in instance.parentSequence()) {
-            val members = domainMemberCalculator.getMemberCollection(candidate.domain)
+            val members = domainMemberCollectionProvider.getMemberCollection(candidate.domain)
 
-            if (members.declarations.contains(innerMostExpression.element)) {
+            if (members.resolveElementOrNull(innerMostExpression.element as Declaration) != null) {
                 return candidate
             }
         }

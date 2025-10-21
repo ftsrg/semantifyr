@@ -8,8 +8,8 @@ package hu.bme.mit.semantifyr.semantics.utils
 
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.SubsetHandler
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.domain.DomainMemberCalculator
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
@@ -24,7 +24,7 @@ class FeatureSubSettersFinder {
     private lateinit var resourceScopeCache: OnResourceSetChangeEvictingCache
 
     @Inject
-    private lateinit var domainMemberCalculator: DomainMemberCalculator
+    private lateinit var domainMemberCollectionProvider: DomainMemberCollectionProvider
 
     @Inject
     private lateinit var subsetHandler: SubsetHandler
@@ -36,11 +36,9 @@ class FeatureSubSettersFinder {
     }
 
     fun computeSubSetters(domain: DomainDeclaration, feature: FeatureDeclaration): Collection<FeatureDeclaration> {
-        val memberCollection = domainMemberCalculator.getMemberCollection(domain)
+        val memberCollection = domainMemberCollectionProvider.getMemberCollection(domain)
 
-        return memberCollection.declarationHolders.map {
-            it.declaration
-        }.filterIsInstance<FeatureDeclaration>().filter {
+        return memberCollection.declarations.filterIsInstance<FeatureDeclaration>().filter {
             subsetHandler.getSubsetFeature(it) == feature
         }.distinct()
     }

@@ -23,7 +23,7 @@ class MetaStaticExpressionEvaluator : MetaConstantExpressionEvaluator() {
     private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
 
     override fun visit(expression: ElementReference): NamedElement {
-        return redefinitionAwareReferenceResolver.resolve(instance, expression.element)
+        return redefinitionAwareReferenceResolver.resolve(instance.domain, expression.element)
     }
 
     override fun visit(expression: NavigationSuffixExpression): NamedElement {
@@ -37,7 +37,7 @@ class MetaStaticExpressionEvaluator : MetaConstantExpressionEvaluator() {
             return expression.member
         }
 
-        return redefinitionAwareReferenceResolver.resolve(context, expression.member)
+        return redefinitionAwareReferenceResolver.resolve(context.domain, expression.member)
     }
 
 }

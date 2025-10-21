@@ -36,6 +36,8 @@ class CompilationStateManager {
         this.progressContext = progressContext
         basePath = File(inlinedOxsts.eResource().uri.toFileString().replace(".oxsts", "${File.separator}steps"))
         basePath.deleteRecursively()
+
+        commitModelState()
     }
 
     fun finalizeArtifactManager(inlinedOxsts: InlinedOxsts) {

@@ -15,8 +15,6 @@ import org.eclipse.xtext.service.OperationCanceledManager;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.eclipse.xtext.xbase.lib.Functions;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -29,8 +27,7 @@ public class SemantifyrRequestManager extends AbstractRequestManager {
     private final Lock readLock = readWriteLock.readLock();
     private final Lock writeLock = readWriteLock.writeLock();
     private final ExecutorService executorService;
-    private final List<AbstractJob<?>> requests = new ArrayList<>();
-    private List<AbstractJob<?>> interruptableRequests = new ArrayList<>();
+    private WriteJob<?, ?> lastWriteJob;
 
     @Inject
     public SemantifyrRequestManager(ExecutorService executorService, OperationCanceledManager operationCanceledManager) {
@@ -57,8 +54,6 @@ public class SemantifyrRequestManager extends AbstractRequestManager {
     @Override
     public void shutdown() {
         executorService.shutdown();
-
-        cancel();
     }
 
     @Override
@@ -67,42 +62,26 @@ public class SemantifyrRequestManager extends AbstractRequestManager {
     }
 
     @Override
-    public <U, V> CompletableFuture<V> runWrite(Functions.Function0<? extends U> nonCancellable, Functions.Function2<? super CancelIndicator, ? super U, ? extends V> cancellable) {
-        return submit(new WriteJob<U, V>(this, nonCancellable, cancellable, CompletableFuture.completedFuture(null)));
-    }
+    public synchronized <U, V> CompletableFuture<V> runWrite(Functions.Function0<? extends U> nonCancellable, Functions.Function2<? super CancelIndicator, ? super U, ? extends V> cancellable) {
+        CompletableFuture<?> lastCancellation;
 
-    public <U, V> CompletableFuture<V> runInterruptableWrite(Functions.Function0<? extends U> nonCancellable, Functions.Function2<? super CancelIndicator, ? super U, ? extends V> cancellable) {
-        var lastCancellation = cancelInterruptibleRequests();
+        if (lastWriteJob != null) {
+            lastWriteJob.cancel();
+            lastCancellation = lastWriteJob.getFuture();
+        } else {
+            lastCancellation = CompletableFuture.completedFuture(null);
+        }
 
-        var writeRequest = new WriteJob<U, V>(this, nonCancellable, cancellable, lastCancellation);
+        var writeJob = new WriteJob<U, V>(this, nonCancellable, cancellable, lastCancellation);
 
-        interruptableRequests.add(writeRequest);
+        lastWriteJob = writeJob;
 
-        return submit(writeRequest);
+        return submit(writeJob);
     }
 
     private <V> CompletableFuture<V> submit(AbstractJob<V> request) {
-        requests.add(request);
         executorService.submit(request);
         return request.getFuture();
-    }
-
-    private void cancel() {
-        for (var request : requests) {
-            request.cancel();
-        }
-    }
-
-    private CompletableFuture<?> cancelInterruptibleRequests() {
-        List<AbstractJob<?>> localRequests = interruptableRequests;
-        interruptableRequests = new ArrayList<>();
-        CompletableFuture<?>[] cfs = new CompletableFuture<?>[localRequests.size()];
-        for (int i = 0; i < localRequests.size(); i++) {
-            var request = localRequests.get(i);
-            request.cancel();
-            cfs[i] = request.getFuture();
-        }
-        return CompletableFuture.allOf(cfs);
     }
 
 }

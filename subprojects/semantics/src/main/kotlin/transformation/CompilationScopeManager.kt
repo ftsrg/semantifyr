@@ -18,7 +18,12 @@ import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.emf.ecore.util.EcoreUtil
+import org.eclipse.xtext.EcoreUtil2
+import org.eclipse.xtext.diagnostics.Severity
 import org.eclipse.xtext.resource.XtextResourceSet
+import org.eclipse.xtext.util.CancelIndicator
+import org.eclipse.xtext.validation.CheckMode
+import org.eclipse.xtext.validation.IResourceValidator
 
 @FunctionalInterface
 interface ResourceSetRunnable {
@@ -53,6 +58,9 @@ class CompilationScopeManager {
 
     @Inject
     private lateinit var libraryAdapterFinder: LibraryAdapterFinder
+
+    @Inject
+    private lateinit var resourceValidator: IResourceValidator
 
     private fun createResourceSet(): XtextResourceSet {
         val resourceSet = resourceSetProvider.get()
@@ -113,11 +121,33 @@ class CompilationScopeManager {
             }
         }
 
+        resolveAndValidate(resourceSet)
+
         return compilationResourceSet
     }
 
     private fun openResource(resourceSet: ResourceSet, resource: Resource): Resource {
         return resourceSet.getResource(resource.uri, true)
+    }
+
+    private fun resolveAndValidate(resourceSet: ResourceSet) {
+        EcoreUtil2.resolveAll(resourceSet)
+        for (resource in resourceSet.resources) {
+            validateResource(resource)
+        }
+    }
+
+    fun validateResource(resource: Resource) {
+        val issues = resourceValidator.validate(resource, CheckMode.ALL, CancelIndicator.NullImpl)
+
+        if (resource.errors.any()) {
+            error("Errors found in file (${resource.uri.toFileString()})}")
+        }
+        if (issues.any()) {
+            if (issues.any { it.severity == Severity.ERROR || it.severity == Severity.WARNING }) {
+                error("Issues found in file!")
+            }
+        }
     }
 
 }
