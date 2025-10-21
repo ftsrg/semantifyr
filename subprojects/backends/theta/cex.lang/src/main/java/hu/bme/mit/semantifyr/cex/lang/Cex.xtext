@@ -6,68 +6,110 @@
 
 grammar hu.bme.mit.semantifyr.cex.lang.Cex with org.eclipse.xtext.common.Terminals
 
-generate cex "http://www.bme.hu/mit/2024/cex"
+generate cex 'http://www.bme.hu/mit/2024/cex'
 
-import "http://www.eclipse.org/emf/2002/Ecore" as Ecore
+import 'http://www.eclipse.org/emf/2002/Ecore' as Ecore
 
 CexModel:
-	"(" ("XstsStateSequence" | "XstsCliTracegen")
-	    (states += XstsState)*
-
-	    (edges += StateEdge)*
-	")"
+    SimpleCexModel
+    | SummaryCexModel
 ;
 
-StateEdge:
-    from=[XstsState] "->" to=[XstsState]
+SimpleCexModel:
+	'(' 'XstsStateSequence'
+	    states += NamelessXstsState*
+	')'
+;
+
+SummaryCexModel:
+	'(' 'XstsCliTracegen'
+	    states += NamedXstsState*
+	    edges += StateEdge*
+	')'
 ;
 
 XstsState:
-    "(" (name=ID ":")? "XstsState" (preInit?="pre_init")? (postInit?="post_init")? (lastEnv?="last_env")? (lastInternal?="last_internal")?
-        state = State
-    ")"
+    NamelessXstsState
+    | NamedXstsState
 ;
 
-State:
-    ExplState
+NamelessXstsState returns XstsState:
+    '(' 'XstsState' (preInit?='pre_init')? (postInit?='post_init')? (lastEnv?='last_env')? (lastInternal?='last_internal')?
+        stateValue = StateValue
+    ')'
 ;
 
-ExplState:
-    "(" "ExplState"
-        (variableStates += ExplVariableState)*
-    ")"
+NamedXstsState returns XstsState:
+    '(' name=Identifier ':' 'XstsState' (preInit?='pre_init')? (postInit?='post_init')? (lastEnv?='last_env')? (lastInternal?='last_internal')?
+        stateValue = StateValue
+    ')'
 ;
 
-ExplVariableState:
-    "("
-        variable=ID value=ExplVariableValue
-    ")"
+StateEdge:
+    from=[XstsState] '->' to=[XstsState]
+;
+
+StateValue:
+    ExplStateValue
+;
+
+ExplStateValue:
+    '(' 'ExplState'
+        variableValues+=ExplVariableValue*
+    ')'
 ;
 
 ExplVariableValue:
+    '('
+        variable=Identifier value=Expression
+    ')'
+;
+
+Expression:
+    UnaryOperator
+;
+
+UnaryOperator returns Expression:
+    ArithmeticUnaryOperator
+    | PrimaryExpression
+;
+
+enum UnaryOp:
+	PLUS="+" | MINUS="-"
+;
+
+ArithmeticUnaryOperator:
+    op=UnaryOp body=UnaryOperator
+;
+
+PrimaryExpression returns Expression:
+    LiteralExpression
+;
+
+LiteralExpression:
     LiteralInteger
     | LiteralBoolean
     | LiteralEnum
 ;
 
-LiteralEnum:
-    type=ID "." value=ID
+LiteralInteger:
+	value = INT
 ;
 
 LiteralBoolean:
 	value = BooleanValue
 ;
 
-LiteralInteger:
-	value = SignedInt
-;
-
 BooleanValue returns Ecore::EBoolean:
 	'true' | 'false'
 ;
 
-SignedInt returns Ecore::EInt:
-    ('-')? INT
+LiteralEnum:
+    type=Identifier '.' value=Identifier
+;
+
+Identifier:
+    ID
 ;
 
 terminal ID: '^'?('a'..'z'|'A'..'Z'|'_'|'$') ('a'..'z'|'A'..'Z'|'_'|'0'..'9'|'$')*;
