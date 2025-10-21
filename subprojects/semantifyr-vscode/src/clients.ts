@@ -14,7 +14,7 @@ import { OxstsTestController } from "./OxstsTestController.js";
 export let oxstsClient: LanguageClient;
 let xstsClient: LanguageClient;
 let gammaClient: LanguageClient;
-let cexClient: LanguageClient;
+// let cexClient: LanguageClient;
 
 let oxstsTestController: OxstsTestController;
 
@@ -25,7 +25,7 @@ type NavigateToParams = {
 export async function startClients(context: ExtensionContext) {
     const oxstsIdeExecutable = path.join(context.extensionPath, 'bin', 'oxsts.lang.ide', 'bin', `oxsts.lang.ide${executablePostfix}`);
     const xstsIdeExecutable = path.join(context.extensionPath, 'bin', 'xsts.lang.ide', 'bin', `xsts.lang.ide${executablePostfix}`);
-    const cexIdeExecutable = path.join(context.extensionPath, 'bin', 'cex.lang.ide', 'bin', `cex.lang.ide${executablePostfix}`);
+    // const cexIdeExecutable = path.join(context.extensionPath, 'bin', 'cex.lang.ide', 'bin', `cex.lang.ide${executablePostfix}`);
     const gammaIdeExecutable = path.join(context.extensionPath, 'bin', 'gamma.lang.ide', 'bin', `gamma.lang.ide${executablePostfix}`);
 
     if (process.env.DEBUG_OXSTS_LSP) {
@@ -49,11 +49,11 @@ export async function startClients(context: ExtensionContext) {
         gammaClient = createLspClient(gammaIdeExecutable, "gamma");
     }
 
-    cexClient = createLspClient(cexIdeExecutable, "cex");
+    // cexClient = createLspClient(cexIdeExecutable, "cex");
 
     await oxstsClient.start();
     await xstsClient.start();
-    await cexClient.start();
+    // await cexClient.start();
     await gammaClient.start();
 
     oxstsTestController = new OxstsTestController(oxstsClient);
@@ -109,7 +109,7 @@ function createRemoteLspClient(port: number, language: string): LanguageClient {
     const clientOptions: LanguageClientOptions = {
         documentSelector: [{ scheme: 'file', language: language }],
         synchronize: {
-            fileEvents: workspace.createFileSystemWatcher(`**/*.${language}`)
+            fileEvents: workspace.createFileSystemWatcher(`**`)
         }
     };
 
@@ -121,16 +121,16 @@ function createRemoteLspClient(port: number, language: string): LanguageClient {
     );
 }
 
-function createLspClient(oxstsIdeExecutable: string, language: string): LanguageClient {
+function createLspClient(lspExecutable: string, language: string): LanguageClient {
     const serverOptions: ServerOptions = {
-        run: {command: oxstsIdeExecutable, options: { shell: true }},
-        debug: {command: oxstsIdeExecutable, options: { shell: true }}
+        run: {command: lspExecutable, options: { shell: true }},
+        debug: {command: lspExecutable, options: { shell: true }}
     };
 
     const clientOptions: LanguageClientOptions = {
         documentSelector: [{scheme: 'file', language: language}],
         synchronize: {
-            fileEvents: workspace.createFileSystemWatcher(`**/.${language}`)
+            fileEvents: workspace.createFileSystemWatcher(`**`)
         }
     };
 
