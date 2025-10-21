@@ -47,18 +47,26 @@ export class OxstsTestController {
         );
         context.subscriptions.push(runProfile);
 
+        const watcher = vscode.workspace.createFileSystemWatcher(`**/*.oxsts`)
+        watcher.onDidChange(async (uri) => await this.refreshDocumentUriTests(uri));
+        watcher.onDidCreate(async (uri) => await this.refreshDocumentUriTests(uri));
+        watcher.onDidDelete((uri) => this.controller.items.delete(uri.toString()));
+
         context.subscriptions.push(
             vscode.workspace.onDidChangeWorkspaceFolders(async (event) => await this.updateWorkspaceTests(event)),
             vscode.workspace.onDidOpenTextDocument(async (document) => await this.refreshDocumentTests(document)),
-            vscode.workspace.onDidChangeTextDocument(async (event) => await this.refreshDocumentTests(event.document))
+            vscode.workspace.onDidRenameFiles(async (event) => {
+                for (const file of event.files) {
+                    this.controller.items.delete(file.oldUri.toString());
+                    await this.refreshDocumentUriTests(file.newUri);
+                }
+            }),
         );
     }
 
-    async refreshWorkspaceTests() {
+    protected async refreshWorkspaceTests() {
         const uris = await vscode.workspace.findFiles("**/*.oxsts");
-        for (const uri of uris) {
-            await this.refreshDocumentUriTests(uri);
-        }
+        await this.refreshDocumentsUri(uris);
     }
 
     protected async updateWorkspaceTests(changeEvent: WorkspaceFoldersChangeEvent) {
@@ -70,17 +78,25 @@ export class OxstsTestController {
         }
     }
 
-    async discoverFolderTests(folder: WorkspaceFolder) {
+    protected async forgetFolderTests(folder: WorkspaceFolder) {
         const uris = await vscode.workspace.findFiles(new RelativePattern(folder, "**/*.oxsts"));
+        this.forgetDocumentsUri(uris);
+    }
+
+    protected async discoverFolderTests(folder: WorkspaceFolder) {
+        const uris = await vscode.workspace.findFiles(new RelativePattern(folder, "**/*.oxsts"));
+        await this.refreshDocumentsUri(uris);
+    }
+
+    protected forgetDocumentsUri(uris: readonly Uri[]) {
         for (const uri of uris) {
-            await this.refreshDocumentUriTests(uri);
+            this.controller.items.delete(uri.toString());
         }
     }
 
-    async forgetFolderTests(folder: WorkspaceFolder) {
-        const uris = await vscode.workspace.findFiles(new RelativePattern(folder, "**/*.oxsts"));
+    protected async refreshDocumentsUri(uris: readonly Uri[]) {
         for (const uri of uris) {
-            this.controller.items.delete(uri.toString());
+            await this.refreshDocumentUriTests(uri);
         }
     }
 
