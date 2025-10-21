@@ -63,7 +63,12 @@ PortDeclaration:
     'port' name=Identifier ':' realizationMode=RealizationMode interface=[InterfaceDeclaration|Identifier]
 ;
 
+enum SchedulingOrder returns SchedulingOrder:
+	TOP_DOWN = 'top-down' | BOTTOM_UP = 'bottom-up'
+;
+
 StatechartDeclaration:
+    ('@RegionSchedule' '=' schedulingOrder=SchedulingOrder)?
 	'statechart' name=Identifier
     ('[' (ports += PortDeclaration (',' ports += PortDeclaration)*)? ']')?
 	'{'

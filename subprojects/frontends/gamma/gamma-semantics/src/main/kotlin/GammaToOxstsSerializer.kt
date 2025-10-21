@@ -39,6 +39,7 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.PortDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RaiseEventAction
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RealizationMode
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Region
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SchedulingOrder
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SetTimeoutAction
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.State
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateTransition
@@ -168,6 +169,13 @@ class GammaToOxstsSerializer {
 
     private fun IndentationAwareStringWriter.serialize(statechart: StatechartDeclaration) {
         appendIndent("class ${statechart.name} : Statechart") {
+            if (statechart.schedulingOrder == SchedulingOrder.BOTTOM_UP) {
+                appendLine("redefine refers regionSchedule: RegionSchedule = RegionSchedule::BottomUp")
+
+            } else if (statechart.schedulingOrder == SchedulingOrder.TOP_DOWN) {
+                appendLine("redefine refers regionSchedule: RegionSchedule = RegionSchedule::TopDown")
+            }
+
             for (port in statechart.ports) {
                 serialize(port)
             }
