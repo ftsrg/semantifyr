@@ -161,10 +161,12 @@ class DockerBasedThetaExecutor(
 class ThetaPortfolioExecutor(
     version: String,
     val parameters: List<String>,
+    limitedParallelism: Int = 4,
     timeout: Long = 3,
     timeUnit: TimeUnit = TimeUnit.MINUTES
 ) {
 
+    private val thetaDispatcher = Dispatchers.IO.limitedParallelism(limitedParallelism)
     private val thetaExecutor = DockerBasedThetaExecutor(version, timeout, timeUnit)
 
     fun initialize() {
@@ -173,7 +175,7 @@ class ThetaPortfolioExecutor(
 
     private suspend fun runWorkflow(workingDirectory: String, name: String) = supervisorScope {
         val jobs = parameters.indices.map { index ->
-            async(Dispatchers.IO) {
+            async(thetaDispatcher) {
                 thetaExecutor.runTheta(workingDirectory, name, parameters[index], index)
             }
         }

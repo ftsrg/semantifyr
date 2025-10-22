@@ -52,7 +52,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
             "CEGAR --domain PRED_CART --refinement SEQ_ITP --stacktrace",
             "BOUNDED --variant KINDUCTION --stacktrace",
         ),
-        5,
+        timeout = 5,
     )
 
     override fun verify(progressContext: ProgressContext, classDeclaration: ClassDeclaration): VerificationCaseRunResult {
