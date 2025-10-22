@@ -45,12 +45,12 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
     private lateinit var builtinAnnotationHandler: BuiltinAnnotationHandler
 
     private val thetaExecutor = ThetaPortfolioExecutor(
-        "6.5.2",
+        "6.19.3",
         listOf(
-            "--domain EXPL --refinement SEQ_ITP --maxenum 250 --initprec CTRL --stacktrace",
-            "--domain EXPL_PRED_COMBINED --autoexpl NEWOPERANDS --initprec CTRL --stacktrace",
-            "--domain PRED_CART --refinement SEQ_ITP --stacktrace",
-            "--stacktrace",
+            "CEGAR --domain EXPL --refinement SEQ_ITP --maxenum 250 --initprec CTRL --stacktrace",
+            "CEGAR --domain EXPL_PRED_COMBINED --autoexpl NEWOPERANDS --initprec CTRL --stacktrace",
+            "CEGAR --domain PRED_CART --refinement SEQ_ITP --stacktrace",
+            "BOUNDED --variant KINDUCTION --stacktrace",
         ),
         5,
     )

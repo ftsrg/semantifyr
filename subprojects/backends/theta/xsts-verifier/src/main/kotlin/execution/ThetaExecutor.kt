@@ -123,8 +123,8 @@ class DockerBasedThetaExecutor(
         container: CreateContainerResponse
     ) {
         try {
-            val logFile = File(thetaRuntimeDetails.logPath)
-            val errFile = File(thetaRuntimeDetails.errPath)
+            val logFile = File(thetaRuntimeDetails.workingDirectory, thetaRuntimeDetails.logPath)
+            val errFile = File(thetaRuntimeDetails.workingDirectory, thetaRuntimeDetails.errPath)
 
             dockerClient.logContainerCmd(container.id)
                 .withStdOut(true)
@@ -146,10 +146,9 @@ class DockerBasedThetaExecutor(
 
         val container = dockerClient.createContainerCmd("ftsrg/theta-xsts-cli:$version")
             .withCmd(
-                "CEGAR",
+                *parameter.split(" ").toTypedArray(),
                 "--model", "/host/${thetaRuntimeDetails.modelPath}",
                 "--cexfile", "/host/${thetaRuntimeDetails.cexPath}",
-                *parameter.split(" ").toTypedArray(),
             )
             .withHostConfig(hostConfig)
             .exec()
