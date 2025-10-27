@@ -4,16 +4,13 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.transformation
+package hu.bme.mit.semantifyr.semantics.transformation.injection.scope
 
 import com.google.inject.Inject
 import com.google.inject.Provider
 import com.google.inject.Singleton
-import com.google.inject.name.Named
 import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryAdapterFinder
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScope
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScopeContext
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.ResourceSet
@@ -50,10 +47,6 @@ interface EObjectRunnable<T : EObject> {
 class CompilationScopeManager {
 
     @Inject
-    @Named("compilationScope")
-    private lateinit var compilationScope: CompilationScope
-
-    @Inject
     private lateinit var resourceSetProvider: Provider<XtextResourceSet>
 
     @Inject
@@ -75,13 +68,10 @@ class CompilationScopeManager {
         resourceSet.resources.clear()
     }
 
-    private inline fun runCompilationScope(resourceSet: ResourceSet, block: () -> Unit) {
-        val compilationScopeContext = CompilationScopeContext()
-        compilationScope.enter(compilationScopeContext)
+    private fun runCompilationScope(resourceSet: ResourceSet, block: () -> Unit) {
         try {
-            block()
+            SemantifyrScopes.runInScope(block)
         } finally {
-            compilationScope.exit()
             unloadResourceSet(resourceSet)
         }
     }
@@ -138,11 +128,12 @@ class CompilationScopeManager {
     }
 
     fun validateResource(resource: Resource) {
-        val issues = resourceValidator.validate(resource, CheckMode.ALL, CancelIndicator.NullImpl)
-
         if (resource.errors.any()) {
             error("Errors found in file (${resource.uri.toFileString()})}")
         }
+
+        val issues = resourceValidator.validate(resource, CheckMode.ALL, CancelIndicator.NullImpl)
+
         if (issues.any()) {
             if (issues.any { it.severity == Severity.ERROR || it.severity == Severity.WARNING }) {
                 error("Issues found in file!")

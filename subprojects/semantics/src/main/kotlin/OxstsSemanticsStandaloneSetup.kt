@@ -9,26 +9,16 @@ package hu.bme.mit.semantifyr.semantics
 import com.google.inject.Binder
 import com.google.inject.Guice
 import com.google.inject.Injector
-import com.google.inject.Provides
-import com.google.inject.name.Named
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsRuntimeModule
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScope
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.SemantifyrScopes
 
 class OxstsSemanticsModule : OxstsRuntimeModule() {
 
-    private val compilationScope = CompilationScope()
-
     override fun configure(binder: Binder) {
-        binder.bindScope(CompilationScoped::class.java, compilationScope)
+        binder.bindScope(CompilationScoped::class.java, SemantifyrScopes.COMPILATION)
         super.configure(binder)
-    }
-
-    @Provides
-    @Named("compilationScope")
-    fun provideCompilationScope(): CompilationScope {
-        return compilationScope
     }
 
 }

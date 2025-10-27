@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.semantics.transformation.injection.scope
 
 import com.google.inject.Key
+import com.google.inject.OutOfScopeException
 import com.google.inject.Provider
 import com.google.inject.Scope
 import com.google.inject.ScopeAnnotation
@@ -17,49 +18,66 @@ import com.google.inject.Scopes
 @ScopeAnnotation
 annotation class CompilationScoped
 
-class CompilationScopeContext {
-    private val store = mutableMapOf<Key<*>, Any?>()
+object SemantifyrScopes {
 
-    fun <T> containsKey(key: Key<T>): Boolean {
-        return store.containsKey(key)
+    val COMPILATION: Scope = CompilationScope()
+
+    private val threadLocalContext = ThreadLocal<CompilationScopeContext>()
+
+    private class CompilationScopeContext {
+        val store = mutableMapOf<Key<*>, Any>()
     }
 
-    operator fun <T> get(key: Key<T>): T? {
-        return store[key] as T?
-    }
+    private class CompilationScope : Scope {
 
-    operator fun <T : Any> set(key: Key<T>, instance: T) {
-        store[key] = instance
-    }
-}
-
-class CompilationScope : Scope {
-    private var current: CompilationScopeContext? = null
-
-    override fun <T : Any> scope(key: Key<T>, unscoped: Provider<T>): Provider<T> {
-        return Provider<T> {
-            var instance = current?.get(key)
-            if (instance == null && current?.containsKey(key) == false) {
-                instance = unscoped.get()
-
-                if (!Scopes.isCircularProxy(instance)) {
-                    current?.set(key, instance)
-                }
-            }
-            instance
+        companion object {
+            private val NULL_INSTANCE = Any()
         }
+
+        override fun <T : Any> scope(key: Key<T>, unscoped: Provider<T>): Provider<T> {
+            return Provider<T> {
+                val current = threadLocalContext.get()
+                if (current == null) {
+                    throw OutOfScopeException("Compilation scope running without context!")
+                }
+
+                var instance = current.store[key]
+
+                if (instance == null) {
+                    instance = unscoped.get()
+
+                    if (!Scopes.isCircularProxy(instance)) {
+                        current.store[key] = instance ?: NULL_INSTANCE
+                    }
+                }
+
+                if (instance == NULL_INSTANCE) {
+                    instance = null
+                }
+
+                @Suppress("UNCHECKED_CAST")
+                instance as T
+            }
+        }
+
+        override fun toString(): String {
+            return "SemantifyrScopes.CompilationScope"
+        }
+
     }
 
-    fun enter(scope: CompilationScopeContext?) {
-        current = scope
-    }
-
-    fun exit() {
-        current = null
-    }
-
-    override fun toString(): String {
-        return "Scopes.CompilationScope"
+    fun runInScope(block: () -> Unit) {
+        val context = CompilationScopeContext()
+        val current = threadLocalContext.get()
+        if (current != null) {
+            throw IllegalStateException("A compilation scope context is already open!")
+        }
+        try {
+            threadLocalContext.set(context)
+            block()
+        } finally {
+            threadLocalContext.set(null)
+        }
     }
 
 }
