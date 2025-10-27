@@ -25,6 +25,7 @@ val libs = the<LibrariesForLibs>()
 
 dependencies {
     testFixturesApi(libs.junit.api)
+    testFixturesApi(libs.assertj.core)
     testFixturesApi(libs.junit.params)
     testFixturesApi(libs.mockito.core)
     testFixturesApi(libs.mockito.junit)
