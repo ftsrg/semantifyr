@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.semantics.loading
 import com.google.inject.Inject
 import com.google.inject.Provider
 import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryAdapterFinder
+import hu.bme.mit.semantifyr.oxsts.lang.utils.ResourceUriProvider
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
 import hu.bme.mit.semantifyr.semantics.utils.error
@@ -53,6 +54,9 @@ class SemantifyrLoader {
     @Inject
     private lateinit var libraryAdapterFinder: LibraryAdapterFinder
 
+    @Inject
+    private lateinit var resourceUriProvider: ResourceUriProvider
+
     private fun createResourceSet(): XtextResourceSet {
         val resourceSet = resourceSetProvider.get()
         libraryAdapterFinder.getOrInstall(resourceSet)
@@ -61,7 +65,7 @@ class SemantifyrLoader {
 
     private fun loadFile(resourceSet: ResourceSet, path: Path): Resource {
         logger.info { "Reading file: $path" }
-        val resource = resourceSet.getResource(URI.createFileURI(path.absolutePathString()), true)
+        val resource = resourceSet.getResource(resourceUriProvider.createFileUri(path), true)
         return resource
     }
 

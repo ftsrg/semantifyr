@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.oxsts.lang.library.builtin;
 
 import com.google.inject.Singleton;
-import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryResolutionUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.library.ResourceBasedOxstsLibrary;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.xtext.naming.QualifiedName;
@@ -26,10 +25,6 @@ public class BuiltinLibrary extends ResourceBasedOxstsLibrary {
 
     public BuiltinLibrary() {
         super(getHomePath().resolve(".semantifyr").resolve("builtin"));
-    }
-
-    protected URI resolveUri(QualifiedName name) {
-        return URI.createFileURI(libraryPath.resolve(LibraryResolutionUtil.qualifiedNameToPath(name)).toString());
     }
 
     public URI getBuiltinResourceUri() {
