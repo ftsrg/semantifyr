@@ -515,10 +515,9 @@ KEYWORD:
     | 'prop'
 ;
 
-// FIXME: Instead of allowing '$' in ID, enforce the serializer to use the QUOTED_ID when using '$'
 @Override
 terminal ID:
-	('a'..'z' | 'A'..'Z' | '_' | '$') ('a'..'z' | 'A'..'Z' | '_' | '0'..'9' | '$')*
+	('a'..'z' | 'A'..'Z' | '_') ('a'..'z' | 'A'..'Z' | '_' | '0'..'9')*
 ;
 
 terminal EXPONENTIAL:

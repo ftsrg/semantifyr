@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.oxsts.lang;
 
 import com.google.inject.Binder;
 import com.google.inject.name.Names;
+import hu.bme.mit.semantifyr.oxsts.lang.conversion.IDValueConverter;
 import hu.bme.mit.semantifyr.oxsts.lang.conversion.OxstsValueConverterService;
 import hu.bme.mit.semantifyr.oxsts.lang.library.OxstsLibraryProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinOxstsLibraryProvider;
@@ -17,6 +18,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.resource.OxstsResourceDescriptionManager
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.OxstsGlobalScopeProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.OxstsLocalScopeProvider;
 import org.eclipse.xtext.conversion.IValueConverterService;
+import org.eclipse.xtext.conversion.impl.AbstractIDValueConverter;
 import org.eclipse.xtext.naming.IQualifiedNameConverter;
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
 import org.eclipse.xtext.resource.IResourceDescription;
@@ -39,6 +41,10 @@ public class OxstsRuntimeModule extends AbstractOxstsRuntimeModule {
     @Override
     public Class<? extends IValueConverterService> bindIValueConverterService() {
         return OxstsValueConverterService.class;
+    }
+
+    public Class<? extends AbstractIDValueConverter> bindAbstractIDValueConverter() {
+        return IDValueConverter.class;
     }
 
     @SuppressWarnings("unused")
