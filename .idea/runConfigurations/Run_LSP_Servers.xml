@@ -1,0 +1,8 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run LSP Servers" type="CompoundRunConfigurationType">
+    <toRun name="Run Gamma LSP Server" type="Application" />
+    <toRun name="Run OXSTS LSP Server" type="Application" />
+    <toRun name="Run XSTS LSP Server" type="Application" />
+    <method v="2" />
+  </configuration>
+</component>

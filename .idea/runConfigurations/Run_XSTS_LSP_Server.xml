@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run XSTS LSP Server" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="hu.bme.mit.semantifyr.xsts.lang.ide.XstsIdeSetup" />
+    <module name="semantifyr.xsts.lang.ide.main" />
+    <option name="PROGRAM_PARAMETERS" value="--network 5008" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="hu.bme.mit.semantifyr.xsts.lang.ide.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
