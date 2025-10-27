@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.semantics.transformation
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.inliner.OxstsCallInliner
 import hu.bme.mit.semantifyr.semantics.transformation.instantiation.OxstsInflator
@@ -17,7 +18,7 @@ import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStat
 class OxstsClassInliner {
 
     @Inject
-    private lateinit var inlinedOxstsModelManager: InlinedOxstsModelManager
+    private lateinit var inlinedOxstsModelCreator: InlinedOxstsModelCreator
 
     @Inject
     private lateinit var oxstsInflator: OxstsInflator
@@ -26,28 +27,22 @@ class OxstsClassInliner {
     private lateinit var oxstsCallInliner: OxstsCallInliner
 
     @Inject
-    private lateinit var compilationStateManager: CompilationStateManager
+    private lateinit var oxstsInliningManager: CompilationStateManager
 
-    fun transform(progressContext: ProgressContext, classDeclaration: ClassDeclaration) {
-        val inlinedOxsts = inlinedOxstsModelManager.createInlinedOxsts(classDeclaration)
+    fun inline(progressContext: ProgressContext, classDeclaration: ClassDeclaration): InlinedOxsts {
+        val inlinedOxsts = inlinedOxstsModelCreator.createInlinedOxsts(classDeclaration)
 
-        compilationStateManager.initArtifactManager(inlinedOxsts, progressContext)
-
-        progressContext.reportProgress("Instantiating model", 10)
+        oxstsInliningManager.initialize(inlinedOxsts, progressContext)
 
         oxstsInflator.inflateInstanceModel(inlinedOxsts)
 
-        progressContext.reportProgress("Inlining calls", 20)
-
         oxstsCallInliner.inlineCalls(inlinedOxsts)
-
-        progressContext.reportProgress("Deflating instances and structure", 60)
 
         oxstsInflator.deflateInstanceModel(inlinedOxsts)
 
-        progressContext.reportProgress("Serializing final model", 90)
+        oxstsInliningManager.finalize(inlinedOxsts)
 
-        compilationStateManager.finalizeArtifactManager(inlinedOxsts)
+        return inlinedOxsts
     }
 
 }

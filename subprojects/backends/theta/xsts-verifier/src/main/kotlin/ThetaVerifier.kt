@@ -8,38 +8,25 @@ package hu.bme.mit.semantifyr.backends.theta.verification
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaPortfolioExecutor
+import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaRuntimeDetails
 import hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts.OxstsTransformer
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.VerificationCaseExpectedResult
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
-import hu.bme.mit.semantifyr.semantics.transformation.InlinedOxstsModelManager
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.semantics.transformation.ProgressContext
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
-import hu.bme.mit.semantifyr.semantics.transformation.inliner.OxstsCallInliner
-import hu.bme.mit.semantifyr.semantics.transformation.instantiation.OxstsInflator
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.verification.AbstractOxstsVerifier
 import hu.bme.mit.semantifyr.semantics.verification.VerificationCaseRunResult
 import hu.bme.mit.semantifyr.semantics.verification.VerificationResult
+import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 import java.io.File
 
 @CompilationScoped
 open class ThetaVerifier : AbstractOxstsVerifier() {
 
     @Inject
-    private lateinit var inlinedOxstsModelManager: InlinedOxstsModelManager
-
-    @Inject
-    private lateinit var oxstsInflator: OxstsInflator
-
-    @Inject
-    private lateinit var oxstsCallInliner: OxstsCallInliner
-
-    @Inject
     private lateinit var oxstsTransformer: OxstsTransformer
-
-    @Inject
-    private lateinit var compilationStateManager: CompilationStateManager
 
     @Inject
     private lateinit var builtinAnnotationHandler: BuiltinAnnotationHandler
@@ -55,46 +42,43 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
         timeout = 5,
     )
 
-    override fun verify(progressContext: ProgressContext, classDeclaration: ClassDeclaration): VerificationCaseRunResult {
-        val expected = builtinAnnotationHandler.getExpectedResults(classDeclaration)
+    protected fun transformToXsts(progressContext: ProgressContext, inlinedOxsts: InlinedOxsts): XstsModel {
+        return oxstsTransformer.transform(inlinedOxsts, progressContext)
+    }
 
-        val inlinedOxsts = inlinedOxstsModelManager.createInlinedOxsts(classDeclaration)
+    protected fun verifyXsts(progressContext: ProgressContext, xstsModel: XstsModel): ThetaRuntimeDetails {
+        xstsModel.eResource().save(emptyMap<Any, Any>())
 
-        compilationStateManager.initArtifactManager(inlinedOxsts, progressContext)
-
-        progressContext.reportProgress("Instantiating model", 1)
-
-        oxstsInflator.inflateInstanceModel(inlinedOxsts)
-
-        progressContext.reportProgress("Inlining calls", 2)
-
-        oxstsCallInliner.inlineCalls(inlinedOxsts)
-
-        progressContext.reportProgress("Deflating instances and structure", 6)
-
-        oxstsInflator.deflateInstanceModel(inlinedOxsts)
-
-        compilationStateManager.finalizeArtifactManager(inlinedOxsts)
-
-        progressContext.reportProgress("Transforming to XSTS", 8)
-
-        val xsts = oxstsTransformer.transform(inlinedOxsts)
-
-        xsts.eResource().save(emptyMap<Any, Any>())
-
-        progressContext.reportProgress("Verifying XSTS", 10)
-
-        val path = xsts.eResource().uri.path().removeSuffix(".xsts")
+        val path = xstsModel.eResource().uri.path().removeSuffix(".xsts")
         val name = path.split(File.separator).last()
         val workingDirectory = path.replaceAfterLast(File.separator, "")
 
         thetaExecutor.initialize()
-        val results = thetaExecutor.run(workingDirectory, name, progressContext)
+        return thetaExecutor.run(workingDirectory, name, progressContext)
+    }
 
-        if (expected == VerificationCaseExpectedResult.SAFE && !results.isSafe) {
+    override fun verify(progressContext: ProgressContext, classDeclaration: ClassDeclaration): VerificationCaseRunResult {
+        val expected = builtinAnnotationHandler.getExpectedResults(classDeclaration)
+
+        progressContext.reportProgress("Inlining class")
+
+        val inlinedOxsts = inlineClass(progressContext, classDeclaration)
+
+        progressContext.checkIsCancelled()
+        progressContext.reportProgress("Transforming to Xsts")
+
+        val xstsModel = transformToXsts(progressContext, inlinedOxsts)
+
+        progressContext.checkIsCancelled()
+        progressContext.reportProgress("Running Theta Portfolio")
+
+        val result = verifyXsts(progressContext, xstsModel)
+
+        if (expected == VerificationCaseExpectedResult.SAFE && !result.isSafe) {
             return VerificationCaseRunResult(VerificationResult.Failed, "Expected Safe result, got Unsafe instead!")
         }
-        if (expected == VerificationCaseExpectedResult.UNSAFE && !results.isUnsafe) {
+
+        if (expected == VerificationCaseExpectedResult.UNSAFE && !result.isUnsafe) {
             return VerificationCaseRunResult(VerificationResult.Failed, "Expected Unsafe result, got Safe instead!")
         }
 

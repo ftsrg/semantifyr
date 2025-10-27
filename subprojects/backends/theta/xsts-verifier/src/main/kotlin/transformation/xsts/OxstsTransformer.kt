@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
+import hu.bme.mit.semantifyr.semantics.transformation.ProgressContext
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.xsts.lang.XstsStandaloneSetup
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
@@ -35,12 +36,16 @@ class OxstsTransformer {
     @Inject
     private lateinit var oxstsVariableTransformer: OxstsVariableTransformer
 
-    fun transform(inlinedOxsts: InlinedOxsts): XstsModel {
+    fun transform(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext): XstsModel {
         val xsts = createEmptyXsts(inlinedOxsts)
+
+        progressContext.checkIsCancelled()
 
         for (variableDeclaration in inlinedOxsts.variables) {
             xsts.variableDeclarations += oxstsVariableTransformer.transformTopLevel(variableDeclaration)
         }
+
+        progressContext.checkIsCancelled()
 
         xsts.env = XstsFactory.createTransition().also {
             it.branches += XstsFactory.createSequenceOperation()
@@ -49,11 +54,15 @@ class OxstsTransformer {
         xsts.init = transform(inlinedOxsts.initTransition)
         xsts.property = transform(inlinedOxsts.property)
 
+        progressContext.checkIsCancelled()
+
         xsts.enumDeclarations += inlinedOxsts.variables.asSequence().map {
             it.type
         }.filterIsInstance<EnumDeclaration>().map {
             oxstsDomainTransformer.transform(it)
         }.distinct()
+
+        progressContext.checkIsCancelled()
 
         return xsts
     }

@@ -13,8 +13,6 @@ import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.Compilatio
 import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
 import java.io.File
-import java.io.StringWriter
-import java.util.concurrent.Executors
 
 @CompilationScoped
 class CompilationStateManager {
@@ -31,7 +29,7 @@ class CompilationStateManager {
 
     var isSerializeSteps = false
 
-    fun initArtifactManager(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext) {
+    fun initialize(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext) {
         this.inlinedOxsts = inlinedOxsts
         this.progressContext = progressContext
         basePath = File(inlinedOxsts.eResource().uri.toFileString().replace(".oxsts", "${File.separator}steps"))
@@ -40,7 +38,7 @@ class CompilationStateManager {
         commitModelState()
     }
 
-    fun finalizeArtifactManager(inlinedOxsts: InlinedOxsts) {
+    fun finalize(inlinedOxsts: InlinedOxsts) {
         inlinedOxsts.eResource().save(emptyMap<Any, Any>())
     }
 

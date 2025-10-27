@@ -52,7 +52,6 @@ public class WorkManager {
         var begin = new WorkDoneProgressBegin();
         begin.setTitle(title);
         begin.setMessage(message);
-        begin.setPercentage(1);
         begin.setCancellable(true);
 
         languageClient.notifyProgress(new ProgressParams(token, Either.forLeft(begin)));
@@ -67,9 +66,14 @@ public class WorkManager {
 
     public void reportProgressOnWork(Either<String, Integer> token, String message, int percentage) {
         var progress = new WorkDoneProgressReport();
-        progress.setCancellable(true);
         progress.setMessage(message);
         progress.setPercentage(percentage);
+        languageClient.notifyProgress(new ProgressParams(token, Either.forLeft(progress)));
+    }
+
+    public void reportProgressOnWork(Either<String, Integer> token, String message) {
+        var progress = new WorkDoneProgressReport();
+        progress.setMessage(message);
         languageClient.notifyProgress(new ProgressParams(token, Either.forLeft(progress)));
     }
 

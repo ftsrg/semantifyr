@@ -61,7 +61,7 @@ public class CompileInlinedOxstsCommandHandler extends AbstractCommandHandler<In
     protected Object execute(InlinedOxsts arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
         runLongRunningInCompilationScope(arguments, (inlinedOxsts) -> {
             compilationStateManagerProvider.get().setSerializeSteps(false);
-            var xsts = oxstsTransformerProvider.get().transform(inlinedOxsts);
+            var xsts = oxstsTransformerProvider.get().transform(inlinedOxsts, progressContext);
 
             try {
                 xsts.eResource().save(null);

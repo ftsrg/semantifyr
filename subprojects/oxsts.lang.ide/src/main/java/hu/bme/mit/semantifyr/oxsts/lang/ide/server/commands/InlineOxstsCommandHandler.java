@@ -58,13 +58,13 @@ public class InlineOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
 
     @Override
     protected Object execute(ClassDeclaration arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
-        progressContext.begin("Compiling class " + arguments.getName(), "Initializing");
+        progressContext.begin("Compiling class " + arguments.getName(), "Transforming");
 
         runLongRunningInCompilationScope(arguments, (inlinedOxsts) -> {
             progressContext.checkIsCancelled();
 
             compilationStateManagerProvider.get().setSerializeSteps(true);
-            xstsTransformerProvider.get().transform(progressContext, inlinedOxsts);
+            xstsTransformerProvider.get().inline(progressContext, inlinedOxsts);
         });
 
         return null;

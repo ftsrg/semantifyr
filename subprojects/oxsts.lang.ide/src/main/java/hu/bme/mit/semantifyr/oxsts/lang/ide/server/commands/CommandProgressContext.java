@@ -48,4 +48,9 @@ public class CommandProgressContext implements ProgressContext {
         workManager.reportProgressOnWork(token, message, percentage);
     }
 
+    @Override
+    public void reportProgress(String message) {
+        workManager.reportProgressOnWork(token, message);
+    }
+
 }

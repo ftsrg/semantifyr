@@ -12,4 +12,6 @@ interface ProgressContext {
 
     fun reportProgress(message: String, percentage: Int)
 
+    fun reportProgress(message: String)
+
 }
