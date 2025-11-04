@@ -99,6 +99,17 @@ TopLevelDeclaration returns Declaration:
         'annotation' name=Identifier
         ('(' (parameters += ParameterDeclaration (',' parameters += ParameterDeclaration)* ','?)? ')')?
         ';'?
+    |
+        {FeatureDeclaration.annotation=current}
+        kind=TopLevelFeatureKind name=Identifier ':' type=[TypeDeclaration|QualifiedIdentifier] multiplicity=Multiplicity?
+        ('subsets' superset=[FeatureDeclaration|Identifier])?
+        (
+            ';'?
+            | '=' expression=Expression ';'?
+            | '{'
+                innerFeatures += InnerFeature*
+            '}'
+        )
     // |
         // {FunctionDeclaration}
         // 'fun' name=Identifier
@@ -109,6 +120,12 @@ TopLevelDeclaration returns Declaration:
         // '}'
     // | PatternDeclaration
     )
+;
+
+enum TopLevelFeatureKind returns FeatureKind:
+    REFERENCE='global reference'
+    | CONTAINMENT='global containment'
+    | FEATURE='global feature'
 ;
 
 EnumLiteral:

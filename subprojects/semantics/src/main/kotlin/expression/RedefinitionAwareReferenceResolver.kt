@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.semantics.expression
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
@@ -46,7 +47,7 @@ class RedefinitionAwareReferenceResolver {
     }
 
     fun resolve(domain: DomainDeclaration, reference: NamedElement): NamedElement {
-        if (reference is RedefinableDeclaration) {
+        if (reference is RedefinableDeclaration && ! OxstsUtils.isElementContextual(reference)) {
             return resolve(domain, reference)
         }
 

@@ -81,12 +81,26 @@ public class OxstsUtils {
         };
     }
 
+    public static List<FeatureDeclaration> getGlobalFeatures(EObject context) {
+        var resourceSet = context.eResource().getResourceSet();
+
+        var globalFeatures = resourceSet.getResources().stream()
+                .flatMap(r -> Stream.of(r.getContents().getFirst()))
+                .filter(e -> e instanceof OxstsModelPackage).map(e -> (OxstsModelPackage) e)
+                .flatMap(p -> p.getDeclarations().stream())
+                .filter(e -> e instanceof FeatureDeclaration).map(e -> (FeatureDeclaration) e);
+
+        return globalFeatures.toList();
+    }
+
     public static List<? extends Declaration> getDirectMembers(InlinedOxsts inlinedOxsts) {
         var elements = new ArrayList<Declaration>(inlinedOxsts.getVariables());
 
         if (inlinedOxsts.getRootFeature() != null) {
             elements.add(inlinedOxsts.getRootFeature());
         }
+
+        elements.addAll(getGlobalFeatures(inlinedOxsts));
 
         return elements;
     }
