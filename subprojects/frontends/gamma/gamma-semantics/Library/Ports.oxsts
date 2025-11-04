@@ -41,19 +41,19 @@ class Port {
         outputEvent := event
     }
 
-    tran resetInputEvent(event: Event) {
+    tran resetInputEvent() {
         inputEvent := nothing
     }
 
-    tran resetOutputEvent(event: Event) {
+    tran resetOutputEvent() {
         outputEvent := nothing
     }
 
-    tran havocInputEvent(event: Event) {
+    tran havocInputEvent() {
         havoc (inputEvent)
     }
 
-    tran havocOutputEvent(event: Event) {
+    tran havocOutputEvent() {
         havoc (outputEvent)
     }
 
