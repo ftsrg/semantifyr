@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.semantics.optimization
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
@@ -21,8 +22,6 @@ import hu.bme.mit.semantifyr.semantics.expression.ConstantEvaluationTransformer
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
-import hu.bme.mit.semantifyr.semantics.utils.isConstantLiteralFalse
-import hu.bme.mit.semantifyr.semantics.utils.isConstantLiteralTrue
 import org.eclipse.xtext.EcoreUtil2
 
 @CompilationScoped
@@ -75,14 +74,14 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
     private fun rewriteConstantTrueOr(element: Element): Boolean {
         // any of its operands is true
         val constantTrueOr = element.eAllOfType<BooleanOperator>().firstOrNull {
-            it.op == BooleanOp.OR && (it.left.isConstantLiteralTrue || it.right.isConstantLiteralTrue)
+            it.op == BooleanOp.OR && (OxstsUtils.isConstantLiteralTrue(it.left) || OxstsUtils.isConstantLiteralTrue(it.right))
         }
 
         if (constantTrueOr == null) {
             return false
         }
 
-        if (constantTrueOr.left.isConstantLiteralTrue) {
+        if (OxstsUtils.isConstantLiteralTrue(constantTrueOr.left)) {
             EcoreUtil2.replace(constantTrueOr, constantTrueOr.left)
         } else {
             EcoreUtil2.replace(constantTrueOr, constantTrueOr.right)
@@ -97,14 +96,14 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
     private fun rewriteConstantFalseAnd(element: Element): Boolean {
         // any of its operands is false
         val constantFalseAnd = element.eAllOfType<BooleanOperator>().firstOrNull {
-            it.op == BooleanOp.AND && (it.left.isConstantLiteralFalse || it.right.isConstantLiteralFalse)
+            it.op == BooleanOp.AND && (OxstsUtils.isConstantLiteralFalse(it.left) || OxstsUtils.isConstantLiteralFalse(it.right))
         }
 
         if (constantFalseAnd == null) {
             return false
         }
 
-        if (constantFalseAnd.left.isConstantLiteralFalse) {
+        if (OxstsUtils.isConstantLiteralFalse(constantFalseAnd.left)) {
             EcoreUtil2.replace(constantFalseAnd, constantFalseAnd.left)
         } else {
             EcoreUtil2.replace(constantFalseAnd, constantFalseAnd.right)
@@ -118,14 +117,14 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
     private fun rewriteRedundantOr(element: Element): Boolean {
         // or, that only depends on one of its arguments, the other is "false"
         val redundantOr = element.eAllOfType<BooleanOperator>().firstOrNull {
-            it.op == BooleanOp.OR && (it.left.isConstantLiteralFalse || it.right.isConstantLiteralFalse)
+            it.op == BooleanOp.OR && (OxstsUtils.isConstantLiteralFalse(it.left) || OxstsUtils.isConstantLiteralFalse(it.right))
         }
 
         if (redundantOr == null) {
             return false
         }
 
-        if (redundantOr.left.isConstantLiteralFalse) {
+        if (OxstsUtils.isConstantLiteralFalse(redundantOr.left)) {
             EcoreUtil2.replace(redundantOr, redundantOr.right)
         } else {
             EcoreUtil2.replace(redundantOr, redundantOr.left)
@@ -139,14 +138,14 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
     private fun rewriteRedundantAnd(element: Element): Boolean {
         // and, that only depends on one of its arguments, the other is "true"
         val redundantAnd = element.eAllOfType<BooleanOperator>().firstOrNull {
-            it.op == BooleanOp.AND && (it.left.isConstantLiteralTrue || it.right.isConstantLiteralTrue)
+            it.op == BooleanOp.AND && (OxstsUtils.isConstantLiteralTrue(it.left) || OxstsUtils.isConstantLiteralTrue(it.right))
         }
 
         if (redundantAnd == null) {
             return false
         }
 
-        if (redundantAnd.left.isConstantLiteralTrue) {
+        if (OxstsUtils.isConstantLiteralTrue(redundantAnd.left)) {
             EcoreUtil2.replace(redundantAnd, redundantAnd.right)
         } else {
             EcoreUtil2.replace(redundantAnd, redundantAnd.left)

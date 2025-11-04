@@ -11,12 +11,64 @@ import org.eclipse.emf.ecore.EObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class OxstsUtils {
     public static final String LIBRARY_EXTENSION = "oxsts";
 
     private OxstsUtils() {
         throw new IllegalStateException("This is a static utility class and should not be instantiated directly");
+    }
+
+    public static boolean isConstantLiteralFalse(Expression expression) {
+        if (expression instanceof LiteralBoolean literalBoolean) {
+            return ! literalBoolean.isValue();
+        }
+
+        return false;
+    }
+
+    public static boolean isConstantLiteralTrue(Expression expression) {
+        if (expression instanceof LiteralBoolean literalBoolean) {
+            return literalBoolean.isValue();
+        }
+
+        return false;
+    }
+
+    public static boolean isGlobalFeature(EObject element) {
+        return element instanceof FeatureDeclaration featureDeclaration && featureDeclaration.eContainer() instanceof OxstsModelPackage;
+    }
+
+    public static boolean isLoopVariable(EObject element) {
+        var container = element.eContainer();
+
+        if (container instanceof AbstractForOperation forOperation) {
+            return forOperation.getLoopVariable() == element;
+        }
+
+        return false;
+    }
+
+    public static boolean isLocalVariable(EObject element) {
+        return element instanceof LocalVarDeclarationOperation;
+    }
+
+    public static boolean isReferenceContextual(ElementReference elementReference) {
+        var element = elementReference.getElement();
+
+        return isElementContextual(element);
+    }
+
+    public static boolean isElementContextual(Element element) {
+        if (isLoopVariable(element) || isLocalVariable(element) || isGlobalFeature(element)) {
+            return false;
+        }
+
+        return element instanceof FeatureDeclaration
+                || element instanceof VariableDeclaration
+                || element instanceof PropertyDeclaration
+                || element instanceof TransitionDeclaration;
     }
 
     public static List<? extends Declaration> getDirectMembers(Declaration declaration) {

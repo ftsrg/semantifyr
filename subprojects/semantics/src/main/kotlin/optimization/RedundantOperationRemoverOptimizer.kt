@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.semantics.optimization
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
@@ -17,7 +18,6 @@ import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.Compilatio
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
-import hu.bme.mit.semantifyr.semantics.utils.isConstantLiteralTrue
 import org.eclipse.xtext.EcoreUtil2
 
 @CompilationScoped
@@ -37,7 +37,7 @@ class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
 
     private fun removeConstantTrueAssumptions(element: Element): Boolean {
         val constantTrueAssumptions = element.eAllOfType<AssumptionOperation>().filter {
-            it.expression.isConstantLiteralTrue
+            OxstsUtils.isConstantLiteralTrue(it.expression)
         }.toList()
 
         if (constantTrueAssumptions.isEmpty()) {
@@ -137,7 +137,7 @@ class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
             return false
         }
 
-        if (ifOperation.guard.isConstantLiteralTrue) {
+        if (OxstsUtils.isConstantLiteralTrue(ifOperation.guard)) {
             EcoreUtil2.replace(ifOperation, ifOperation.body)
         } else if (ifOperation.`else` != null) {
             EcoreUtil2.replace(ifOperation, ifOperation.`else`)

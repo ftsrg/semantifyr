@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.semantics.optimization
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
@@ -17,11 +18,10 @@ import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.Compilatio
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
-import hu.bme.mit.semantifyr.semantics.utils.isConstantLiteralFalse
 import org.eclipse.xtext.EcoreUtil2
 
 private val Operation.isConstantFalseAssumption
-    get() = this is AssumptionOperation && expression.isConstantLiteralFalse
+    get() = this is AssumptionOperation && OxstsUtils.isConstantLiteralFalse(expression)
 
 private val SequenceOperation.isSingleConstantFalseAssumption
     get() = steps.singleOrNull()?.isConstantFalseAssumption == true

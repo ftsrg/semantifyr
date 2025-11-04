@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ImmutableTypeEvaluation
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
@@ -24,7 +25,6 @@ import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.Compilatio
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.copy
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
-import hu.bme.mit.semantifyr.semantics.utils.isReferenceContextual
 import org.eclipse.xtext.EcoreUtil2
 
 @CompilationScoped
@@ -59,7 +59,7 @@ class ExpressionRewriter {
 
     private fun rewriteContextualExpressionsToContext(rootElement: Element, newContext: Expression) {
         val contextualReferences = rootElement.eAllOfType<ElementReference>().filter {
-            isReferenceContextual(it)
+            OxstsUtils.isReferenceContextual(it)
         }.toList()
 
         for (contextualReference in contextualReferences) {

@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionPro
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.BooleanEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluator
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
@@ -28,7 +29,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 import hu.bme.mit.semantifyr.semantics.transformation.instantiation.InstanceManager
 import hu.bme.mit.semantifyr.semantics.utils.FeatureSubSettersFinder
-import hu.bme.mit.semantifyr.semantics.utils.isReferenceContextual
 import hu.bme.mit.semantifyr.semantics.utils.parentSequence
 
 class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
@@ -193,7 +193,7 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
         val innerMostExpression = expression.innerMostElementReference()
 
         @Suppress("SimplifyBooleanWithConstants") // more readable this way
-        if (isReferenceContextual(innerMostExpression) == false) {
+        if (OxstsUtils.isReferenceContextual(innerMostExpression) == false) {
             return instance
         }
 
