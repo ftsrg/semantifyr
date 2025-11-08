@@ -7,8 +7,14 @@
 package hu.bme.mit.semantifyr.backends.theta.verification
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.CexReader
+import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.cex.CexAssumptionWitnessTransformer
+import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.xsts.XstsAssumptionWitnessTransformer
+import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaErrorVerificationResult
 import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaPortfolioExecutor
-import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaRuntimeDetails
+import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaSafeVerificationResult
+import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaUnsafeVerificationResult
+import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaVerificationResult
 import hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts.OxstsTransformer
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.VerificationCaseExpectedResult
@@ -32,7 +38,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
     private lateinit var builtinAnnotationHandler: BuiltinAnnotationHandler
 
     private val thetaExecutor = ThetaPortfolioExecutor(
-        "6.19.3",
+        "6.21.4",
         listOf(
             "CEGAR --domain EXPL --refinement SEQ_ITP --maxenum 250 --initprec CTRL --stacktrace",
             "CEGAR --domain EXPL_PRED_COMBINED --autoexpl NEWOPERANDS --initprec CTRL --stacktrace",
@@ -46,7 +52,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
         return oxstsTransformer.transform(inlinedOxsts, progressContext)
     }
 
-    protected fun verifyXsts(progressContext: ProgressContext, xstsModel: XstsModel): ThetaRuntimeDetails {
+    protected fun verifyXsts(progressContext: ProgressContext, xstsModel: XstsModel): ThetaVerificationResult {
         xstsModel.eResource().save(emptyMap<Any, Any>())
 
         val path = xstsModel.eResource().uri.path().removeSuffix(".xsts")
@@ -74,11 +80,15 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
 
         val result = verifyXsts(progressContext, xstsModel)
 
-        if (expected == VerificationCaseExpectedResult.SAFE && !result.isSafe) {
+        if (result is ThetaErrorVerificationResult) {
+            return VerificationCaseRunResult(VerificationResult.Failed, result.failureMessage)
+        }
+
+        if (expected == VerificationCaseExpectedResult.SAFE && result is ThetaUnsafeVerificationResult) {
             return VerificationCaseRunResult(VerificationResult.Failed, "Expected Safe result, got Unsafe instead!")
         }
 
-        if (expected == VerificationCaseExpectedResult.UNSAFE && !result.isUnsafe) {
+        if (expected == VerificationCaseExpectedResult.UNSAFE && result is ThetaSafeVerificationResult) {
             return VerificationCaseRunResult(VerificationResult.Failed, "Expected Unsafe result, got Safe instead!")
         }
 
