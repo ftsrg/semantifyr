@@ -138,8 +138,10 @@ RecordMember returns Declaration:
     -> (
         {VariableDeclaration.annotation=current}
         'var' name=Identifier
-        (':' type=[DomainDeclaration|QualifiedIdentifier])?
-        multiplicity=Multiplicity?
+        (
+            ':' type=[DomainDeclaration|QualifiedIdentifier]
+            multiplicity=Multiplicity?
+        )?
         (':=' expression=Expression)?
         ';'?
     // |
@@ -159,8 +161,10 @@ ClassMember returns Declaration:
     -> (
         {VariableDeclaration.annotation=current}
         'var' name=Identifier
-        (':' type=[DomainDeclaration|QualifiedIdentifier])?
-        multiplicity=Multiplicity?
+        (
+            ':' type=[DomainDeclaration|QualifiedIdentifier]
+            multiplicity=Multiplicity?
+        )?
         (':=' expression=Expression)?
         ';'?
     // |
