@@ -9,14 +9,17 @@ package hu.bme.mit.semantifyr.oxsts.lang.validation;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
+import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.resource.ILocationInFileProvider;
 import org.eclipse.xtext.validation.Check;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -33,10 +36,14 @@ public class OxstsValidator extends AbstractOxstsValidator {
     @Inject
     private RedefinitionHandler redefinitionHandler;
 
+    @Inject
+    private DomainMemberCollectionProvider domainMemberCollectionProvider;
+
     private static final String ISSUE_PREFIX = "hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator.";
     public static final String DUPLICATE_NAME_ISSUE = ISSUE_PREFIX + "DUPLICATE_NAME";
     public static final String DATA_TYPE_NOT_IN_BUILTIN_ISSUE = ISSUE_PREFIX + "DATA_TYPE_NOT_IN_BUILTIN";
     public static final String REDEFINED_NOT_FOUND_ISSUE = ISSUE_PREFIX + "REDEFINED_NOT_FOUND";
+    public static final String ELEMENT_SHADOWED = ISSUE_PREFIX + "ELEMENT_SHADOWED";
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
@@ -52,11 +59,25 @@ public class OxstsValidator extends AbstractOxstsValidator {
             try {
                 var redefined = redefinitionHandler.getRedefinedDeclaration(redefinableDeclaration);
                 if (redefined == null) {
-                    acceptError("Could not find redefined declaration named " + NamingUtil.getName(redefinableDeclaration), redefinableDeclaration, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0, REDEFINED_NOT_FOUND_ISSUE);
+                    acceptError("Could not find redefined declaration.", redefinableDeclaration, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0, REDEFINED_NOT_FOUND_ISSUE);
                 }
             } catch (Exception e) {
-                acceptError("Could not find redefined declaration named " + NamingUtil.getName(redefinableDeclaration), redefinableDeclaration, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0, REDEFINED_NOT_FOUND_ISSUE);
+                acceptError("Could not find redefined declaration.", redefinableDeclaration, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0, REDEFINED_NOT_FOUND_ISSUE);
             }
+        }
+    }
+
+    @Check
+    public void checkShadowedNames(NamedElement namedElement) {
+        if (namedElement instanceof RedefinableDeclaration redefinableDeclaration && redefinableDeclaration.isRedefine()) {
+            return;
+        }
+
+        var parentDomain = EcoreUtil2.getContainerOfType(namedElement.eContainer(), DomainDeclaration.class);
+        var declarations = domainMemberCollectionProvider.getParentCollection(parentDomain).getDeclarations();
+
+        if (declarations.stream().anyMatch(d -> Objects.equals(NamingUtil.getName(d), namedElement.getName()))) {
+            acceptWarning("Name shadows another element.", namedElement, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0, ELEMENT_SHADOWED);
         }
     }
 
