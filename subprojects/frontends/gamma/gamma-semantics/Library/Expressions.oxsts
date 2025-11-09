@@ -115,6 +115,6 @@ class UnaryPlusExpression : UnaryOperatorExpression {
 
 class UnaryMinusExpression : UnaryOperatorExpression {
     redefine prop evaluate() {
-        return - body.evaluate()
+        return -body.evaluate()
     }
 }

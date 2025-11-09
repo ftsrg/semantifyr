@@ -30,7 +30,7 @@ class Port {
     }
 
     tran assumeHasInputEvent(event: Event) {
-        assume(hasInputEvent(event))
+        assume (hasInputEvent(event))
     }
 
     tran setInputEvent(event: Event) {
@@ -56,7 +56,6 @@ class Port {
     tran havocOutputEvent() {
         havoc (outputEvent)
     }
-
 }
 
 class RequiredPort : Port {
