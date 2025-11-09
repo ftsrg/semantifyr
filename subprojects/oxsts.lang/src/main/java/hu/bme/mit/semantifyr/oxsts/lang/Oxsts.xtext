@@ -15,7 +15,7 @@ Model returns Ecore::EObject:
 ;
 
 InlinedOxsts:
-    'inlined' 'oxsts' 'of' classDeclaration=[ClassDeclaration|QualifiedIdentifier]
+    ('inlined' 'oxsts' | witness?='witness') 'of' classDeclaration=[ClassDeclaration|QualifiedIdentifier]
 
     variables+=InlinedVariable*
     rootFeature=RootFeature?

@@ -148,7 +148,7 @@ class ExpressionCallInliner : ExpressionVisitor<Unit>() {
         EcoreUtil2.replace(expression, inlined)
         processorQueue.addFirst(inlined)
 
-//        compilationStateManager.commitModelState()
+        compilationStateManager.commitModelState()
     }
 
     override fun visit(expression: IndexingSuffixExpression) {

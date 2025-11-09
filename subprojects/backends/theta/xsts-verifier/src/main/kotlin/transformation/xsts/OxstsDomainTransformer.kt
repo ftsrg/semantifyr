@@ -54,4 +54,10 @@ class OxstsDomainTransformer {
         }
     }
 
+    fun getOriginal(enumLiteral: XstsEnumLiteral): EnumLiteral {
+        return enumLiteralMap.entries.firstOrNull { (_, value) ->
+            value == enumLiteral
+        }?.key ?: error("Corresponding enum literal was not transformed!")
+    }
+
 }

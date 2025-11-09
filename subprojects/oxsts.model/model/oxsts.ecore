@@ -346,5 +346,8 @@
         transient="true" containment="true" eOpposite="#//Instance/model"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="rootFeature" eType="#//FeatureDeclaration"
         containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="witness" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//Boolean"
+        defaultValueLiteral="false"/>
   </eClassifiers>
 </ecore:EPackage>

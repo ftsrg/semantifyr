@@ -53,13 +53,19 @@ class StaticEvaluationTransformer : ConstantEvaluationTransformer() {
 
     private var instanceId = 0
     private val instanceIds = mutableMapOf<Instance, Int>()
+    private val idInstance = mutableMapOf<Int, Instance>()
 
     override fun transformEvaluation(evaluation: InstanceEvaluation): Expression {
         val instance = evaluation.instances.single()
         val id = instanceIds.getOrPut(instance) {
             instanceId++
         }
+        idInstance[id] = instance
         return OxstsFactory.createLiteralInteger(id)
+    }
+
+    fun instanceOfId(id: Int): Instance {
+        return idInstance[id] ?: error("Unknown instance id!")
     }
 
 }

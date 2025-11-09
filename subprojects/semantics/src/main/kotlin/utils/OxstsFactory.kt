@@ -83,7 +83,7 @@ object OxstsFactory : OxstsFactoryImpl() {
         return createArithmeticUnaryOperator().also {
             it.op = UnaryOp.MINUS
             it.body = createLiteralInteger().also {
-                it.value = value
+                it.value = -value
             }
         }
     }

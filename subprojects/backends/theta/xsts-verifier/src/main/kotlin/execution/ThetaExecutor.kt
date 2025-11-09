@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.theta.verification.execution
 
 import com.github.dockerjava.api.command.CreateContainerResponse
+import com.github.dockerjava.api.exception.NotFoundException
 import com.github.dockerjava.api.model.Bind
 import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.Volume
@@ -30,9 +31,7 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import java.io.File
-import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.absolute
 import kotlin.time.toDuration
@@ -53,12 +52,41 @@ class ThetaRuntimeDetails(
     val cexPath = "$artifactsPath${File.separator}$cexFileName"
     val logPath = "$artifactsPath${File.separator}$logFileName"
     val errPath = "$artifactsPath${File.separator}$errFileName"
+}
 
-    val isUnsafe: Boolean by lazy {
-        Files.exists(Paths.get(workingDirectory, cexPath))
+sealed class ThetaVerificationResult(
+    val runtimeDetails: ThetaRuntimeDetails
+) {
+    val hasWitness = File(runtimeDetails.workingDirectory, runtimeDetails.cexPath).exists()
+}
+class ThetaUnknownVerificationResult(runtimeDetails: ThetaRuntimeDetails) : ThetaVerificationResult(runtimeDetails)
+class ThetaSafeVerificationResult(runtimeDetails: ThetaRuntimeDetails) : ThetaVerificationResult(runtimeDetails)
+class ThetaUnsafeVerificationResult(runtimeDetails: ThetaRuntimeDetails) : ThetaVerificationResult(runtimeDetails)
+class ThetaErrorVerificationResult(runtimeDetails: ThetaRuntimeDetails) : ThetaVerificationResult(runtimeDetails) {
+    val failureMessage = "Theta execution failed, see: ${runtimeDetails.workingDirectory}/${runtimeDetails.errPath}"
+}
+
+private fun ThetaRuntimeDetails.toVerificationResult(): ThetaVerificationResult {
+    val errorFile = File(workingDirectory, errPath)
+    if (errorFile.exists() && errorFile.useLines { it.any { it.isNotEmpty() } }) {
+        return ThetaErrorVerificationResult(this)
     }
-    val isSafe: Boolean
-        get() = !isUnsafe
+
+    val logFile = File(workingDirectory, logPath)
+    if (logFile.exists()) {
+        logFile.useLines { lines ->
+            for (line in lines) {
+                if (line.contains("SafetyResult Unsafe")) {
+                    return ThetaUnsafeVerificationResult(this)
+                }
+                if (line.contains("SafetyResult Safe")) {
+                    return ThetaSafeVerificationResult(this)
+                }
+            }
+        }
+    }
+
+    return ThetaUnknownVerificationResult(this)
 }
 
 class DockerBasedThetaExecutor(
@@ -74,7 +102,12 @@ class DockerBasedThetaExecutor(
     private val dockerClient = DockerClientImpl.getInstance(config, httpClient);
 
     fun initialize() {
-        dockerClient.pullImageCmd("ftsrg/theta-xsts-cli").withTag(version).start().awaitCompletion()
+        val imageId = "ftsrg/theta-xsts-cli:$version"
+        try {
+            dockerClient.inspectImageCmd(imageId).exec()
+        } catch (e: NotFoundException) {
+            dockerClient.pullImageCmd("ftsrg/theta-xsts-cli").withTag(version).start().awaitCompletion()
+        }
     }
 
     suspend fun runTheta(
@@ -82,7 +115,7 @@ class DockerBasedThetaExecutor(
         name: String,
         parameter: String,
         id: Int,
-    ): ThetaRuntimeDetails {
+    ): ThetaVerificationResult {
         val thetaRuntimeDetails = ThetaRuntimeDetails(workingDirectory, name, id)
 
         val artifactsDir = File(thetaRuntimeDetails.workingDirectory, thetaRuntimeDetails.artifactsPath)
@@ -115,7 +148,7 @@ class DockerBasedThetaExecutor(
             throw IllegalStateException("Theta execution failed with code ${result.statusCode}. See $thetaRuntimeDetails")
         }
 
-        return thetaRuntimeDetails
+        return thetaRuntimeDetails.toVerificationResult()
     }
 
     private suspend fun saveContainerLogs(

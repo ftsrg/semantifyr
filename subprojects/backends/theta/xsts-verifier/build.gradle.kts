@@ -25,6 +25,7 @@ repositories {
 dependencies {
     api(project(":semantics"))
     api(project(":xsts.lang"))
+    api(project(":cex.lang"))
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.docker.java.core)

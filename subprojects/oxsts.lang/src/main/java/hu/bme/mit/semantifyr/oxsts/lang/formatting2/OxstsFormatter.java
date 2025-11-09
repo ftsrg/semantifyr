@@ -177,6 +177,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.append(regionFor(propertyDeclaration).keyword("return"), this::oneSpace);
         document.prepend(regionFor(propertyDeclaration).keyword(":"), this::noSpace);
         document.append(regionFor(propertyDeclaration).keyword(":"), this::oneSpace);
+        document.append(regionFor(propertyDeclaration).keyword("{"), this::newLine);
 
         document.format(propertyDeclaration.getExpression());
         document.format(propertyDeclaration.getAnnotation());
@@ -449,6 +450,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void format(CallSuffixExpression postfixUnaryExpression, IFormattableDocument document) {
+        document.prepend(regionFor(postfixUnaryExpression).keyword("("), this::noSpace);
         formatCallBrackets(postfixUnaryExpression, document);
 
         document.format(postfixUnaryExpression.getPrimary());

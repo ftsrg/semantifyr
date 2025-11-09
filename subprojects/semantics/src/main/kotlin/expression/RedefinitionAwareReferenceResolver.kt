@@ -47,7 +47,7 @@ class RedefinitionAwareReferenceResolver {
     }
 
     fun resolve(domain: DomainDeclaration, reference: NamedElement): NamedElement {
-        if (reference is RedefinableDeclaration && ! OxstsUtils.isElementContextual(reference)) {
+        if (reference is RedefinableDeclaration && OxstsUtils.isElementRedefinable(reference)) {
             return resolve(domain, reference)
         }
 

@@ -39,6 +39,12 @@ class VariableManager(
         return variableMappings[variableDeclaration]!!.actual
     }
 
+    fun resolveOriginal(variableDeclaration: VariableDeclaration): VariableDeclaration {
+        return variableMappings.values.first {
+            it.actual == variableDeclaration
+        }.original
+    }
+
     fun actualVariables(): Collection<VariableDeclaration> {
         return variableMappings.values.map {
             it.actual
@@ -159,6 +165,10 @@ class InstanceManager {
 
     fun resolveVariable(holder: Instance, variableDeclaration: VariableDeclaration): VariableDeclaration {
         return variableManagers[holder]!!.resolve(variableDeclaration)
+    }
+
+    fun resolveOriginalVariable(holder: Instance, variableDeclaration: VariableDeclaration): VariableDeclaration {
+        return variableManagers[holder]!!.resolveOriginal(variableDeclaration)
     }
 
     fun instancesAt(holder: Instance, featureDeclaration: FeatureDeclaration): Set<Instance> {

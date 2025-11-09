@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.backends.theta.verification
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.CexReader
 import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.cex.CexAssumptionWitnessTransformer
+import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.oxsts.InlinedOxstsAssumptionWitnessTransformer
 import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.xsts.XstsAssumptionWitnessTransformer
 import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaErrorVerificationResult
 import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaPortfolioExecutor
@@ -27,6 +28,7 @@ import hu.bme.mit.semantifyr.semantics.verification.VerificationCaseRunResult
 import hu.bme.mit.semantifyr.semantics.verification.VerificationResult
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 import java.io.File
+import kotlin.io.path.Path
 
 @CompilationScoped
 open class ThetaVerifier : AbstractOxstsVerifier() {
@@ -36,6 +38,18 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
 
     @Inject
     private lateinit var builtinAnnotationHandler: BuiltinAnnotationHandler
+
+    @Inject
+    private lateinit var cexReader: CexReader
+
+    @Inject
+    private lateinit var cexAssumptionWitnessTransformer: CexAssumptionWitnessTransformer
+
+    @Inject
+    private lateinit var xstsAssumptionWitnessTransformer: XstsAssumptionWitnessTransformer
+
+    @Inject
+    private lateinit var inlinedOxstsAssumptionWitnessTransformer: InlinedOxstsAssumptionWitnessTransformer
 
     private val thetaExecutor = ThetaPortfolioExecutor(
         "6.21.4",
@@ -82,6 +96,16 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
 
         if (result is ThetaErrorVerificationResult) {
             return VerificationCaseRunResult(VerificationResult.Failed, result.failureMessage)
+        }
+
+        if (result.hasWitness) {
+            progressContext.reportProgress("Creating witness")
+            val cexPath = Path(result.runtimeDetails.workingDirectory, result.runtimeDetails.cexPath)
+            val cexModel = cexReader.loadCexModel(cexPath)
+            val cexWitness = cexAssumptionWitnessTransformer.transform(cexModel)
+            val xstsWitness = xstsAssumptionWitnessTransformer.transform(xstsModel, cexWitness)
+            val inlinedOxstsWitness = inlinedOxstsAssumptionWitnessTransformer.transform(inlinedOxsts, xstsWitness)
+            backAnnotateWitness(inlinedOxstsWitness)
         }
 
         if (expected == VerificationCaseExpectedResult.SAFE && result is ThetaUnsafeVerificationResult) {

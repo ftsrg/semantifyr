@@ -34,6 +34,7 @@ import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvi
 import hu.bme.mit.semantifyr.semantics.expression.evaluateTyped
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
+import hu.bme.mit.semantifyr.semantics.utils.SemantifyrUtils
 import hu.bme.mit.semantifyr.semantics.utils.copy
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
@@ -153,7 +154,7 @@ class OperationCallInliner : OperationVisitor<Unit>() {
         val localVars = operation.eAllOfType<LocalVarDeclarationOperation>().toList()
 
         for (localVar in localVars) {
-            localVar.name += "$${localVariableIndex++}"
+            localVar.name = SemantifyrUtils.xstsName(localVar, localVariableIndex++)
         }
     }
 
@@ -231,7 +232,15 @@ class OperationCallInliner : OperationVisitor<Unit>() {
         }
 
         val transitionDeclaration = metaEvaluator.evaluateTyped(TransitionDeclaration::class.java, transitionReferenceExpression)
-        val containerInstance = evaluator.evaluateSingleInstance(containerInstanceReference)
+        val containerInstance = evaluator.evaluateSingleInstanceOrNull(containerInstanceReference)
+
+        if (containerInstance == null) {
+            if (transitionReferenceExpression is NavigationSuffixExpression && transitionReferenceExpression.isOptional) {
+                return OxstsFactory.createSequenceOperation();
+            }
+            error("Transition holder is not an instance.")
+        }
+
         return inlineTransitionCall(containerInstance, transitionDeclaration, callExpression)
     }
 

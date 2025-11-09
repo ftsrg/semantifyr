@@ -60,6 +60,10 @@ public class OxstsUtils {
         return isElementContextual(element);
     }
 
+    public static boolean isElementRedefinable(Element element) {
+        return element instanceof RedefinableDeclaration && !isGlobalFeature(element);
+    }
+
     public static boolean isElementContextual(Element element) {
         if (isLoopVariable(element) || isLocalVariable(element) || isGlobalFeature(element)) {
             return false;

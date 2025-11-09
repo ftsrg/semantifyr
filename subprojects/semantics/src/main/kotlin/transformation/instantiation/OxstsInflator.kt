@@ -9,11 +9,14 @@ package hu.bme.mit.semantifyr.semantics.transformation.instantiation
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralNothing
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
@@ -74,6 +77,8 @@ class OxstsInflator {
 
     private val variableInstanceDomain = mutableMapOf<VariableDeclaration, Set<Instance>>()
 
+    private val variableHolders = mutableMapOf<VariableDeclaration, Instance>()
+
     fun inflateInstanceModel(inlinedOxsts: InlinedOxsts) {
         oxstsClassInstantiator.instantiateModel(inlinedOxsts)
 
@@ -114,6 +119,7 @@ class OxstsInflator {
                 }
 
                 variable.name = "$instanceName$INSTANCE_NAME_SEPARATOR${variable.name}"
+                variableHolders[variable] = instance
 
                 expressionRewriter.rewriteExpressionsToContext(variable, instanceReference.copy())
             }
@@ -239,6 +245,29 @@ class OxstsInflator {
 
             EcoreUtil2.replace(featureExpression, expression)
         }
+    }
+
+    fun holderOfInlinedVariable(variableDeclaration: VariableDeclaration): Instance {
+        return variableHolders[variableDeclaration] ?: error("Variable was not transformed!")
+    }
+
+    fun backAnnotateInstancePointers(variableDeclaration: VariableDeclaration, expression: Expression): Expression {
+        if (variableInstanceDomain[variableDeclaration] == null) {
+            return expression
+        }
+
+        if (expression is ArithmeticUnaryOperator && expression.op == UnaryOp.MINUS) {
+            val body = expression.body
+            if (body is LiteralInteger && body.value == 1) {
+                return OxstsFactory.createLiteralNothing()
+            }
+        }
+
+        require(expression is LiteralInteger)
+
+        val instance = staticEvaluationTransformer.instanceOfId(expression.value)
+
+        return instanceReferenceProvider.getReference(instance)
     }
 
 }
