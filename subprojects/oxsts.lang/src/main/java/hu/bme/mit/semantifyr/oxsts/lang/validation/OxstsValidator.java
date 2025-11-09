@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.validation;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.xtext.resource.ILocationInFileProvider;
@@ -29,9 +30,13 @@ public class OxstsValidator extends AbstractOxstsValidator {
     @Inject
     private ILocationInFileProvider locationInFileProvider;
 
+    @Inject
+    private RedefinitionHandler redefinitionHandler;
+
     private static final String ISSUE_PREFIX = "hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator.";
     public static final String DUPLICATE_NAME_ISSUE = ISSUE_PREFIX + "DUPLICATE_NAME";
     public static final String DATA_TYPE_NOT_IN_BUILTIN_ISSUE = ISSUE_PREFIX + "DATA_TYPE_NOT_IN_BUILTIN";
+    public static final String REDEFINED_NOT_FOUND_ISSUE = ISSUE_PREFIX + "REDEFINED_NOT_FOUND";
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
@@ -39,6 +44,20 @@ public class OxstsValidator extends AbstractOxstsValidator {
     @Override
     protected void handleExceptionDuringValidation(Throwable targetException) throws RuntimeException {
         // swallow all exceptions!
+    }
+
+    @Check
+    public void checkNoRedefinedDeclarations(RedefinableDeclaration redefinableDeclaration) {
+        if (redefinableDeclaration.isRedefine()) {
+            try {
+                var redefined = redefinitionHandler.getRedefinedDeclaration(redefinableDeclaration);
+                if (redefined == null) {
+                    acceptError("Could not find redefined declaration named " + NamingUtil.getName(redefinableDeclaration), redefinableDeclaration, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0, REDEFINED_NOT_FOUND_ISSUE);
+                }
+            } catch (Exception e) {
+                acceptError("Could not find redefined declaration named " + NamingUtil.getName(redefinableDeclaration), redefinableDeclaration, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0, REDEFINED_NOT_FOUND_ISSUE);
+            }
+        }
     }
 
     @Check
