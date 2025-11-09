@@ -7,11 +7,13 @@
 package hu.bme.mit.semantifyr.oxsts.lang.ide;
 
 import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.contentassist.FuzzyMatcher;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.contentassist.OxstsIdeContentProposalProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.quickfix.OxstsQuickFixProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.syntaxcoloring.OxstsSemanticHighlightingCalculator;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.codelens.OxstsCodeLensProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands.OxstsCommandService;
 import org.eclipse.xtext.ide.editor.contentassist.IPrefixMatcher;
+import org.eclipse.xtext.ide.editor.contentassist.IdeContentProposalProvider;
 import org.eclipse.xtext.ide.editor.quickfix.IQuickFixProvider;
 import org.eclipse.xtext.ide.editor.syntaxcoloring.ISemanticHighlightingCalculator;
 import org.eclipse.xtext.ide.server.codeActions.ICodeActionService2;
@@ -53,6 +55,11 @@ public class OxstsIdeModule extends AbstractOxstsIdeModule {
     @SuppressWarnings("unused")
     public Class<? extends IQuickFixProvider> bindIQuickFixProvider() {
         return OxstsQuickFixProvider.class;
+    }
+
+    @SuppressWarnings("unused")
+    public Class<? extends IdeContentProposalProvider> bindIdeContentProposalProvider() {
+        return OxstsIdeContentProposalProvider.class;
     }
 
     @SuppressWarnings("unused")
