@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.xtext.EcoreUtil2;
@@ -39,11 +40,15 @@ public class OxstsValidator extends AbstractOxstsValidator {
     @Inject
     private DomainMemberCollectionProvider domainMemberCollectionProvider;
 
-    private static final String ISSUE_PREFIX = "hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator.";
+    @Inject
+    private MetaConstantExpressionEvaluatorProvider metaConstantExpressionEvaluatorProvider;
+
+    private static final String ISSUE_PREFIX = "OXSTS.";
     public static final String DUPLICATE_NAME_ISSUE = ISSUE_PREFIX + "DUPLICATE_NAME";
     public static final String DATA_TYPE_NOT_IN_BUILTIN_ISSUE = ISSUE_PREFIX + "DATA_TYPE_NOT_IN_BUILTIN";
     public static final String REDEFINED_NOT_FOUND_ISSUE = ISSUE_PREFIX + "REDEFINED_NOT_FOUND";
     public static final String ELEMENT_SHADOWED = ISSUE_PREFIX + "ELEMENT_SHADOWED";
+    public static final String INVALID_CALL_ARGUMENTS_COUND = ISSUE_PREFIX + "INVALID_CALL_ARGUMENTS_COUNT";
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
@@ -112,6 +117,19 @@ public class OxstsValidator extends AbstractOxstsValidator {
     @Check
     public void checkUniqueMembers(FeatureDeclaration featureDeclaration) {
         checkUniqueSimpleNames(featureDeclaration.getInnerFeatures());
+    }
+
+    @Check
+    public void checkCallExpressionArgumentCount(CallSuffixExpression callSuffixExpression) {
+        var primary = metaConstantExpressionEvaluatorProvider.evaluate(callSuffixExpression.getPrimary());
+
+        if (! (primary instanceof ParametricDeclaration parametricDeclaration)) {
+            return;
+        }
+
+        if (parametricDeclaration.getParameters().size() != callSuffixExpression.getArguments().size()) {
+            acceptError("Expected " + parametricDeclaration.getParameters().size() + " arguments, found " + callSuffixExpression.getArguments().size(), callSuffixExpression, INVALID_CALL_ARGUMENTS_COUND);
+        }
     }
 
     protected void checkUniqueSimpleNames(Iterable<? extends NamedElement> namedElements) {
