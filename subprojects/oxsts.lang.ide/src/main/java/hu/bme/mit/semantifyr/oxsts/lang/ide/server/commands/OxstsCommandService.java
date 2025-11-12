@@ -33,6 +33,9 @@ public class OxstsCommandService implements IExecutableCommandService {
     @Inject
     private NavigateToRedefinedCommandHandler navigateToRedefinedCommandHandler;
 
+    @Inject
+    private NavigateToRedefinersCommandHandler navigateToRedefinersCommandHandler;
+
     private List<CommandHandler> commandHandlers;
 
     protected List<CommandHandler> getCommandHandlers() {
@@ -42,7 +45,8 @@ public class OxstsCommandService implements IExecutableCommandService {
                     compileInlinedOxstsCommandHandler,
                     verifyOxstsCommandHandler,
                     discoverVerificationCasesCommandHandler,
-                    navigateToRedefinedCommandHandler
+                    navigateToRedefinedCommandHandler,
+                    navigateToRedefinersCommandHandler
             );
         }
         return commandHandlers;

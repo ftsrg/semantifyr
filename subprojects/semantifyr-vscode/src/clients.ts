@@ -18,7 +18,7 @@ let gammaClient: LanguageClient;
 let oxstsTestController: OxstsTestController;
 
 type NavigateToParams = {
-    location: Location
+    locations: Location[]
 }
 
 export async function startClients(context: ExtensionContext) {
@@ -56,26 +56,30 @@ export async function startClients(context: ExtensionContext) {
     oxstsTestController.registerTestProvider(context);
 
     oxstsClient.onNotification('workspace/navigateTo', (params: NavigateToParams) => {
-        void navigateToLocation(params.location);
+        void navigateToLocation(params.locations);
     });
 
-    async function navigateToLocation(location: Location) {
-        const uri = vscode.Uri.parse(location.uri.toString());
-        const range = new Range(
-            new Position(location.range.start.line, location.range.start.character),
-            new Position(location.range.end.line, location.range.end.character),
-        )
-
+    async function navigateToLocation(locations: Location[]) {
+        const actualLocations = locations.map(location => {
+            const uri = vscode.Uri.parse(location.uri.toString());
+            const range = new Range(
+                new Position(location.range.start.line, location.range.start.character),
+                new Position(location.range.end.line, location.range.end.character),
+            )
+            return new Location(uri, range);
+        });
+        
         let editor = vscode.window.activeTextEditor;
         if (editor === undefined) {
+            const uri = locations[0].uri;
             const doc = await vscode.workspace.openTextDocument(uri);
             editor = await vscode.window.showTextDocument(doc);
         }
 
         const currentUri = editor.document.uri;
         const currentPosition = editor.selection.start;
-        const locations = [new Location(uri, range)];
-        await commands.executeCommand('editor.action.goToLocations', currentUri, currentPosition, locations, "peek");
+
+        await commands.executeCommand('editor.action.goToLocations', currentUri, currentPosition, actualLocations, "peek");
     }
 
 }

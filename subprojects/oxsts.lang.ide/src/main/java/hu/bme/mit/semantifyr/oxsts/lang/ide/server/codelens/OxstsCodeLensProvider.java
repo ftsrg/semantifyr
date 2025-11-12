@@ -10,6 +10,8 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands.*;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinersFinder;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import org.eclipse.lsp4j.*;
 import org.eclipse.xtext.EcoreUtil2;
@@ -36,7 +38,16 @@ public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensServic
     private NavigateToRedefinedCommandHandler navigateToRedefinedCommandHandler;
 
     @Inject
+    private NavigateToRedefinersCommandHandler navigateToRedefinersCommandHandler;
+
+    @Inject
     private BuiltinAnnotationHandler annotationHandler;
+
+    @Inject
+    private RedefinitionHandler redefinitionHandler;
+
+    @Inject
+    private RedefinersFinder redefinersFinder;
 
     @Override
     public CodeLens resolveCodeLens(Document document, XtextResource resource, CodeLens codeLens, CancelIndicator indicator) {
@@ -69,8 +80,11 @@ public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensServic
                     lenses.add(createCompileLense(classDeclaration));
                 }
             } else if (element instanceof RedefinableDeclaration redefinableDeclaration) {
-                if (redefinableDeclaration.isRedefine() || redefinableDeclaration.getRedefined() != null) {
+                if (redefinitionHandler.getRedefinedDeclaration(redefinableDeclaration) != null) {
                     lenses.add(createNavigateToRedefinedLense(redefinableDeclaration));
+                }
+                if (!redefinersFinder.getRedefinerDeclarations(redefinableDeclaration).isEmpty()) {
+                    lenses.add(createNavigateToRedefinersLense(redefinableDeclaration));
                 }
             }
         });
@@ -91,6 +105,16 @@ public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensServic
     private CodeLens createNavigateToRedefinedLense(RedefinableDeclaration redefinableDeclaration) {
         var codeLens = new CodeLens();
         var command = new Command(navigateToRedefinedCommandHandler.getTitle(), navigateToRedefinedCommandHandler.getId(), navigateToRedefinedCommandHandler.serializeArguments(redefinableDeclaration));
+        codeLens.setCommand(command);
+        var classNode = NodeModelUtils.getNode(redefinableDeclaration);
+        var start = new Position(classNode.getStartLine() - 1, 0);
+        codeLens.setRange(new Range(start, start));
+        return codeLens;
+    }
+
+    private CodeLens createNavigateToRedefinersLense(RedefinableDeclaration redefinableDeclaration) {
+        var codeLens = new CodeLens();
+        var command = new Command(navigateToRedefinersCommandHandler.getTitle(), navigateToRedefinersCommandHandler.getId(), navigateToRedefinersCommandHandler.serializeArguments(redefinableDeclaration));
         codeLens.setCommand(command);
         var classNode = NodeModelUtils.getNode(redefinableDeclaration);
         var start = new Position(classNode.getStartLine() - 1, 0);

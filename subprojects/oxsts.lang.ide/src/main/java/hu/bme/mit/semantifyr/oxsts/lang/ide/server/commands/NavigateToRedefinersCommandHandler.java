@@ -11,6 +11,7 @@ import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.client.NavigateToParams;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.client.OxstsLanguageClient;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinersFinder;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration;
 import org.eclipse.lsp4j.Location;
@@ -19,19 +20,19 @@ import org.eclipse.xtext.util.CancelIndicator;
 
 import java.util.List;
 
-public class NavigateToRedefinedCommandHandler extends AbstractCommandHandler<RedefinableDeclaration> {
+public class NavigateToRedefinersCommandHandler extends AbstractCommandHandler<RedefinableDeclaration> {
 
     @Inject
-    private RedefinitionHandler redefinitionHandler;
+    private RedefinersFinder redefinersFinder;
 
     @Override
     public String getId() {
-        return "oxsts.redefinable.redefined.navigate";
+        return "oxsts.redefinable.redefiners.navigate";
     }
 
     @Override
     public String getTitle() {
-        return "↑ Go To Redefined";
+        return "↓ Go To Redefiners";
     }
 
     @Override
@@ -55,11 +56,13 @@ public class NavigateToRedefinedCommandHandler extends AbstractCommandHandler<Re
     protected Object execute(RedefinableDeclaration arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
         var client = (OxstsLanguageClient) access.getLanguageClient();
 
-        var redefined = redefinitionHandler.getRedefinedDeclaration(arguments);
+        var redefiners = redefinersFinder.getRedefinerDeclarations(arguments);
 
-        var location = getLocation(redefined);
+        var locations = redefiners.stream().map(this::getLocation).toList();
 
-        client.navigateTo(new NavigateToParams(List.of(location)));
+        if (!locations.isEmpty()) {
+            client.navigateTo(new NavigateToParams(locations));
+        }
 
         return null;
     }

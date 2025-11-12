@@ -8,6 +8,8 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.client;
 
 import org.eclipse.lsp4j.Location;
 
-public record NavigateToParams(Location location) {
+import java.util.List;
+
+public record NavigateToParams(List<Location> locations) {
 
 }
