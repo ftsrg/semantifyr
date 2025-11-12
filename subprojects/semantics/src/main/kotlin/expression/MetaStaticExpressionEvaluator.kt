@@ -7,10 +7,21 @@
 package hu.bme.mit.semantifyr.semantics.expression
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluator
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
+
+inline fun <reified T : A, A> ExpressionEvaluator<A>.evaluateTypedOrNull(clazz: Class<T>, expression: Expression): T? {
+    return evaluate(expression) as? T
+}
+
+inline fun <reified T : A, A> ExpressionEvaluator<A>.evaluateTyped(clazz: Class<T>, expression: Expression): T {
+    return evaluateTypedOrNull(clazz, expression) ?: error("Expression does not evaluate to type ${T::class.qualifiedName}")
+}
 
 class MetaStaticExpressionEvaluator : MetaConstantExpressionEvaluator() {
 
