@@ -12,7 +12,6 @@ import semantifyr::gamma::ports
 class Component {
 
     contains ports: Port[0..*]
-
     contains timeouts: Timeout[0..*]
 
     tran resetInputEvents() {

@@ -18,6 +18,8 @@ import org.eclipse.xtext.util.Modules2;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -31,6 +33,8 @@ public class XstsIdeSetup extends XstsStandaloneSetup {
     }
 
     public static void main(String[] args) throws InterruptedException, ExecutionException, IOException {
+        Files.deleteIfExists(Path.of("xsts.lsp.log"));
+
         if (args.length == 2) {
             if (args[0].equals("--network")) {
                 int port = Integer.parseInt(args[1]);

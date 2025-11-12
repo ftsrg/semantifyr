@@ -42,3 +42,23 @@ class TimeoutTrigger : Trigger {
         inline timeout.assumeIsUp()
     }
 }
+
+class Timeout {
+    refers deltaTime: int = 1
+
+    var remainingTime: int := 0
+
+    tran passTime() {
+        if (remainingTime > 0) {
+            remainingTime := remainingTime - deltaTime
+        }
+    }
+
+    prop isUp() {
+        return remainingTime <= 0
+    }
+
+    tran assumeIsUp() {
+        assume (remainingTime <= 0)
+    }
+}
