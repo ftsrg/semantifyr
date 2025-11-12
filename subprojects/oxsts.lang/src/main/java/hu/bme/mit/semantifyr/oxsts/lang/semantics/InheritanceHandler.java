@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.semantics;
 
-import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
@@ -58,13 +57,7 @@ public class InheritanceHandler {
             return List.of(builtinSymbolResolver.anythingClass(classDeclaration));
         }
 
-        for (var klass : classDeclaration.getSuperTypes()) {
-            if (klass.eIsProxy()) {
-                throw new IllegalStateException("Class supertype could not be resolved!");
-            }
-        }
-
-        return classDeclaration.getSuperTypes();
+        return classDeclaration.getSuperTypes().stream().filter(k -> ! k.eIsProxy()).toList();
     }
 
     protected List<? extends DomainDeclaration> computeSuperDomains(FeatureDeclaration featureDeclaration) {
@@ -72,11 +65,9 @@ public class InheritanceHandler {
 
         var type = featureDeclaration.getType();
         if (type != null) {
-            if (type.eIsProxy()) {
-                throw new IllegalStateException("Feature type could not be resolved!");
+            if (! type.eIsProxy()) {
+                superDomains.add(type);
             }
-
-            superDomains.add(type);
         }
 
 //        var redefined = redefinitionHandler.getRedefinedDeclaration(featureDeclaration);

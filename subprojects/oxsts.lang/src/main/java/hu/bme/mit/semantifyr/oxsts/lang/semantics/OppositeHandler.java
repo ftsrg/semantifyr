@@ -35,7 +35,7 @@ public class OppositeHandler {
 
         if (opposite != null) {
             if (opposite.eIsProxy()) {
-                throw new IllegalStateException("Opposite feature could not be resolved!");
+                return null;
             }
             return opposite;
         }
@@ -48,11 +48,11 @@ public class OppositeHandler {
 
         var subsetFeature = subsetHandler.getSubsetFeature(feature);
 
-        if (subsetFeature != null) {
-            return getOppositeFeature(subsetFeature);
+        if (subsetFeature == null) {
+            return null;
         }
 
-        return null;
+        return getOppositeFeature(subsetFeature);
     }
 
 }

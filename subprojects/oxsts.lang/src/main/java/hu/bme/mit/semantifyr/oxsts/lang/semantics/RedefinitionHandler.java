@@ -30,12 +30,16 @@ public class RedefinitionHandler {
         return cache.get(Tuples.create(CACHE_KEY, declaration), declaration.eResource(), () -> computeRedefinedDeclaration(declaration));
     }
 
+    public RedefinableDeclaration getRedefinerDeclarations(RedefinableDeclaration declaration) {
+        return cache.get(Tuples.create(CACHE_KEY, declaration), declaration.eResource(), () -> computeRedefinerDeclarations(declaration));
+    }
+
     protected RedefinableDeclaration computeRedefinedDeclaration(RedefinableDeclaration declaration) {
         var redefined = declaration.getRedefined();
 
         if (redefined != null) {
             if (redefined.eIsProxy()) {
-                throw new IllegalStateException("Redefined feature could not be resolved!");
+                return null;
             }
 
             return redefined;
@@ -48,19 +52,43 @@ public class RedefinitionHandler {
             var found = parentDomain.getMemberSelectable().getExportedObjects(declaration.eClass(), QualifiedName.create(NamingUtil.getName(declaration)), false);
 
             for (var element : found) {
-                return (RedefinableDeclaration) element.getEObjectOrProxy();
+                var toReturn = (RedefinableDeclaration) element.getEObjectOrProxy();
+                if (toReturn.eIsProxy()) {
+                    return null;
+                }
+
+                return toReturn;
+            }
+        }
+
+        return null;
+    }
+
+    protected RedefinableDeclaration computeRedefinerDeclarations(RedefinableDeclaration declaration) {
+        var redefined = declaration.getRedefined();
+
+        if (redefined != null) {
+            if (redefined.eIsProxy()) {
+                return null;
             }
 
-            throw new IllegalStateException("Redefined feature could not be found!");
+            return redefined;
+        }
 
-//            if (declaration instanceof FeatureDeclaration featureDeclaration) {
-//
-//                if (builtinSymbolResolver.isAnythingParentFeature(featureDeclaration)) {
-//                    return null;
-//                }
-//
-//                return builtinSymbolResolver.anythingParentFeature(declaration);
-//            }
+        if (declaration.isRedefine()) {
+            // find the other RedefinableDeclaration in the parent domain with the same name
+            var surroundingFeature = (DomainDeclaration) declaration.eContainer();
+            var parentDomain = domainMemberCollectionProvider.getParentCollection(surroundingFeature);
+            var found = parentDomain.getMemberSelectable().getExportedObjects(declaration.eClass(), QualifiedName.create(NamingUtil.getName(declaration)), false);
+
+            for (var element : found) {
+                var toReturn = (RedefinableDeclaration) element.getEObjectOrProxy();
+                if (toReturn.eIsProxy()) {
+                    return null;
+                }
+
+                return toReturn;
+            }
         }
 
         return null;
