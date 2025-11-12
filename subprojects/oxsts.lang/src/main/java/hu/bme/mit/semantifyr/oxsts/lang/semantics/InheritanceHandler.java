@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.semantics;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import org.eclipse.xtext.util.IResourceScopeCache;
 import org.eclipse.xtext.util.Tuples;
@@ -21,7 +22,7 @@ public class InheritanceHandler {
     private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.semantics.InheritanceHandler.CACHE_KEY";
 
     @Inject
-    private IResourceScopeCache cache;
+    private OnResourceSetChangeEvictingCache cache;
 
     @Inject
     protected RedefinitionHandler redefinitionHandler;

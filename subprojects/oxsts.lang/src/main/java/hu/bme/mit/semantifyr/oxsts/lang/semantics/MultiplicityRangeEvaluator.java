@@ -11,6 +11,7 @@ import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.IntegerEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DefiniteMultiplicity;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnboundedMultiplicity;
@@ -23,7 +24,7 @@ public class MultiplicityRangeEvaluator {
     private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.MultiplicityRangeProvider.CACHE_KEY";
 
     @Inject
-    private IResourceScopeCache cache;
+    private OnResourceSetChangeEvictingCache cache;
 
     @Inject
     protected ConstantExpressionEvaluatorProvider constantExpressionEvaluatorProvider;
