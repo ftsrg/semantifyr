@@ -43,7 +43,7 @@ private fun XstsState.toCexState(): CexAssumptionWitnessState {
 
 class CexAssumptionWitness(
     override val initialState: CexAssumptionWitnessState,
-    override val initializedState: CexAssumptionWitnessState,
+    override val initializedState: CexAssumptionWitnessState?,
     override val transitionStates: List<CexAssumptionWitnessState>,
     override val nextStateMap: Map<CexAssumptionWitnessState, List<CexAssumptionWitnessState>>,
 ): AssumptionWitness<CexAssumptionWitnessState>()
@@ -59,29 +59,31 @@ class CexAssumptionWitnessTransformer {
 
     fun transform(cexModel: CexModel): CexAssumptionWitness {
         val initialState = cexModel.states.first()
-        val initializedState = cexModel.states[1]
+        val initializedState = cexModel.states.getOrNull(1)
         val states = cexModel.states.drop(2).filter {
             it.isTran
         }
 
         require(initialState.isInitial)
-        require(initializedState.isInitialized)
+        require(initializedState?.isInitialized != false)
 
         val initialCexState = initialState.toCexState()
-        val initializedCexState = initializedState.toCexState()
+        val initializedCexState = initializedState?.toCexState()
         val cexStates = states.map { it.toCexState() }
 
         val nextStateMap = buildMap {
-            put(initialCexState, listOf(initializedCexState))
+            if (initializedCexState != null) {
+                put(initialCexState, listOf(initializedCexState))
 
-            if (cexStates.isEmpty()) {
-                put(initializedCexState, emptyList())
-                return@buildMap
-            }
-            put(initializedCexState, listOf(cexStates.first()))
+                if (cexStates.isEmpty()) {
+                    put(initializedCexState, emptyList())
+                } else {
+                    put(initializedCexState, listOf(cexStates.first()))
 
-            for (index in cexStates.indices.drop(1)) {
-                put(cexStates[index - 1], listOf(cexStates[index]))
+                    for (index in cexStates.indices.drop(1)) {
+                        put(cexStates[index - 1], listOf(cexStates[index]))
+                    }
+                }
             }
         }
 

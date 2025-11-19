@@ -28,7 +28,7 @@ class XstsAssumptionWitnessState(
 
 class XstsAssumptionWitness(
     override val initialState: XstsAssumptionWitnessState,
-    override val initializedState: XstsAssumptionWitnessState,
+    override val initializedState: XstsAssumptionWitnessState?,
     override val transitionStates: List<XstsAssumptionWitnessState>,
     override val nextStateMap: Map<XstsAssumptionWitnessState, List<XstsAssumptionWitnessState>>,
     val xstsModel: XstsModel
@@ -71,7 +71,11 @@ class XstsAssumptionWitnessTransformer {
         val context = TransformerContext(xstsModel)
 
         val initialState = context.transform(cexAssumptionWitness.initialState)
-        val initializedState = context.transform(cexAssumptionWitness.initializedState)
+        val initializedState = if (cexAssumptionWitness.initializedState != null) {
+            context.transform(cexAssumptionWitness.initializedState)
+        } else {
+            null
+        }
         val transitionStates = cexAssumptionWitness.transitionStates.map {
             context.transform(it)
         }

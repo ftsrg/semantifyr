@@ -99,7 +99,9 @@ class AssumptionWitnessBackAnnotator {
                 it.kind = TransitionKind.INIT
                 it.branches += OxstsFactory.createSequenceOperation().also {
                     it.steps += createStateOperation(witness.initialState, transition).steps
-                    it.steps += createStateOperation(witness.initializedState, transition).steps
+                    if (witness.initializedState != null) {
+                        it.steps += createStateOperation(witness.initializedState, transition).steps
+                    }
                 }
             }
         }

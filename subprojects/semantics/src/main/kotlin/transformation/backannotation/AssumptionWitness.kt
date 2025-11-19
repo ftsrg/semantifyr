@@ -17,7 +17,7 @@ abstract class AssumptionWitnessState(
 abstract class AssumptionWitness<T : AssumptionWitnessState> {
 
     abstract val initialState: T
-    abstract val initializedState: T
+    abstract val initializedState: T?
     abstract val transitionStates: List<T>
     abstract val nextStateMap: Map<T, List<T>>
 
@@ -39,7 +39,7 @@ class InlinedOxstsAssumptionWitnessState(
 
 class InlinedOxstsAssumptionWitness(
     override val initialState: InlinedOxstsAssumptionWitnessState,
-    override val initializedState: InlinedOxstsAssumptionWitnessState,
+    override val initializedState: InlinedOxstsAssumptionWitnessState?,
     override val transitionStates: List<InlinedOxstsAssumptionWitnessState>,
     override val nextStateMap: Map<InlinedOxstsAssumptionWitnessState, List<InlinedOxstsAssumptionWitnessState>>,
     val inlinedOxsts: InlinedOxsts
@@ -57,7 +57,7 @@ class OxstsClassAssumptionWitnessState(
 
 class OxstsClassAssumptionWitness(
     override val initialState: OxstsClassAssumptionWitnessState,
-    override val initializedState: OxstsClassAssumptionWitnessState,
+    override val initializedState: OxstsClassAssumptionWitnessState?,
     override val transitionStates: List<OxstsClassAssumptionWitnessState>,
     override val nextStateMap: Map<OxstsClassAssumptionWitnessState, List<OxstsClassAssumptionWitnessState>>,
     val inlinedOxsts: InlinedOxsts

@@ -54,7 +54,11 @@ class InlinedOxstsAssumptionWitnessTransformer {
         val context = TransformerContext(inlinedOxsts)
 
         val initialState = context.transform(xstsAssumptionWitness.initialState)
-        val initializedState = context.transform(xstsAssumptionWitness.initializedState)
+        val initializedState = if (xstsAssumptionWitness.initializedState != null) {
+            context.transform(xstsAssumptionWitness.initializedState)
+        } else {
+            null
+        }
         val transitionStates = xstsAssumptionWitness.transitionStates.map {
             context.transform(it)
         }
