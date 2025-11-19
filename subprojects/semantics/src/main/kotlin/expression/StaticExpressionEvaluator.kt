@@ -57,11 +57,31 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
         val left = evaluate(expression.getLeft())
         val right = evaluate(expression.getRight())
 
-        if (left is InstanceEvaluation && right is InstanceEvaluation) {
-            return when (expression.getOp()) {
-                ComparisonOp.EQ -> BooleanEvaluation((left.instances - right.instances).isEmpty())
-                ComparisonOp.NOT_EQ -> BooleanEvaluation(! (left.instances - right.instances).isEmpty())
-                else -> error("Unsupported operator!")
+        if (left is InstanceEvaluation) {
+            if (right is InstanceEvaluation) {
+                return when (expression.getOp()) {
+                    ComparisonOp.EQ -> BooleanEvaluation((left.instances - right.instances).isEmpty())
+                    ComparisonOp.NOT_EQ -> BooleanEvaluation(!(left.instances - right.instances).isEmpty())
+                    else -> error("Unsupported operator!")
+                }
+            }
+
+            if (right is NothingEvaluation) {
+                return when (expression.getOp()) {
+                    ComparisonOp.EQ -> BooleanEvaluation(left.instances.isEmpty())
+                    ComparisonOp.NOT_EQ -> BooleanEvaluation(left.instances.any())
+                    else -> error("Unsupported operator!")
+                }
+            }
+        }
+
+        if (right is InstanceEvaluation) {
+            if (left is NothingEvaluation) {
+                return when (expression.getOp()) {
+                    ComparisonOp.EQ -> BooleanEvaluation(right.instances.isEmpty())
+                    ComparisonOp.NOT_EQ -> BooleanEvaluation(right.instances.any())
+                    else -> error("Unsupported operator!")
+                }
             }
         }
 
@@ -70,10 +90,6 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
 
     override fun visit(expression: SelfReference): ExpressionEvaluation {
         return InstanceEvaluation(instance)
-    }
-
-    override fun visit(expression: LiteralNothing): ExpressionEvaluation {
-        return InstanceEvaluation(emptySet())
     }
 
     override fun visit(expression: NavigationSuffixExpression): ExpressionEvaluation {

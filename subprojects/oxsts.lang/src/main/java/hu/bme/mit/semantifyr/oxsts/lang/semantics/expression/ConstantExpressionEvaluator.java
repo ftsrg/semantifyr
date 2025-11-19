@@ -151,7 +151,7 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
 
     @Override
     protected ExpressionEvaluation visit(LiteralNothing expression) {
-        throw new IllegalArgumentException("This evaluator can only evaluate non-contextual expressions!");
+        return NothingEvaluation.INSTANCE;
     }
 
     @Override
