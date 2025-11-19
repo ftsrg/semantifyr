@@ -45,22 +45,18 @@ public class DomainMemberCollection {
     }
 
     private final RedefinitionHandler redefinitionHandler;
-    private final List<DeclarationHolder> declarationHolders;
-    private final Map<Declaration, DeclarationHolder> redefinitions;
+    private final List<DeclarationHolder> declarationHolders = new ArrayList<>();
+    private final Map<Declaration, DeclarationHolder> redefinitions = new HashMap<>();
 
     private DomainMemberSelectable domainMemberSelectable;
     private List<Declaration> actualDeclarations;
 
     protected DomainMemberCollection(RedefinitionHandler redefinitionHandler) {
         this.redefinitionHandler = redefinitionHandler;
-        this.declarationHolders = new ArrayList<>();
-        this.redefinitions = new HashMap<>();
     }
 
     protected DomainMemberCollection(DomainMemberCollection parent, RedefinitionHandler redefinitionHandler) {
         this.redefinitionHandler = redefinitionHandler;
-        this.declarationHolders = new ArrayList<>();
-        this.redefinitions = new HashMap<>();
 
         var declarationHolderMap = new HashMap<DeclarationHolder, DeclarationHolder>();
 
