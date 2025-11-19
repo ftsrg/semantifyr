@@ -111,7 +111,7 @@ class CompilationScopeManager {
             }
         }
 
-        resolveAndValidate(resourceSet)
+        resolveAndValidate(compilationResourceSet)
 
         return compilationResourceSet
     }
