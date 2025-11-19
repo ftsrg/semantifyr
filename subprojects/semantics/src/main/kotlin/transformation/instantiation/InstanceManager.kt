@@ -31,18 +31,26 @@ class VariableManager(
         for (variable in variables) {
             val mapping = OxstsFactory.createVariableMapping(variable)
             instance.variableMappings += mapping
-            variableMappings.put(variable, mapping)
+            variableMappings[variable] = mapping
         }
     }
 
     fun resolve(variableDeclaration: VariableDeclaration): VariableDeclaration {
-        return variableMappings[variableDeclaration]!!.actual
+        val mapping = variableMappings[variableDeclaration]
+        require(mapping != null) {
+            "This instance does not have the following variable: ${variableDeclaration.name}"
+        }
+        return mapping.actual
     }
 
     fun resolveOriginal(variableDeclaration: VariableDeclaration): VariableDeclaration {
-        return variableMappings.values.first {
+        val mapping = variableMappings.values.firstOrNull {
             it.actual == variableDeclaration
-        }.original
+        }
+        require(mapping != null) {
+            "This instance does not have the following variable: ${variableDeclaration.name}"
+        }
+        return mapping.original
     }
 
     fun actualVariables(): Collection<VariableDeclaration> {
@@ -64,16 +72,24 @@ class AssociationManager(
         for (feature in features) {
             val association = OxstsFactory.createAssociation(feature)
             instance.associations += association
-            associations.put(feature, association)
+            associations[feature] = association
         }
     }
 
     fun instancesAt(featureDeclaration: FeatureDeclaration): Set<Instance> {
-        return associations[featureDeclaration]!!.instances.toSet()
+        val association = associations[featureDeclaration]
+        require(association != null) {
+            "This instance does not have an association corresponding with ${featureDeclaration.name}"
+        }
+        return association.instances.toSet()
     }
 
     fun place(featureDeclaration: FeatureDeclaration, instance: Instance) {
-        associations[featureDeclaration]!!.instances.add(instance)
+        val association = associations[featureDeclaration]
+        require(association != null) {
+            "This instance does not have an association corresponding with ${featureDeclaration.name}"
+        }
+        association.instances.add(instance)
     }
 
 }
