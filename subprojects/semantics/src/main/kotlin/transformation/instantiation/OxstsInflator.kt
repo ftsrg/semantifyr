@@ -19,9 +19,11 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralNothing
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.semantics.expression.InstanceReferenceProvider
+import hu.bme.mit.semantifyr.semantics.expression.MetaStaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.expression.StaticEvaluationTransformer
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.optimization.InlinedOxstsOperationOptimizer
@@ -74,6 +76,9 @@ class OxstsInflator {
 
     @Inject
     private lateinit var inlinedOxstsOperationOptimizer: InlinedOxstsOperationOptimizer
+
+    @Inject
+    private lateinit var metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider
 
     private val variableInstanceDomain = mutableMapOf<VariableDeclaration, Set<Instance>>()
 
@@ -232,8 +237,8 @@ class OxstsInflator {
         val evaluator = staticExpressionEvaluatorProvider.getEvaluator(inlinedOxsts.rootInstance)
 
         while (true) {
-            val featureExpression = inlinedOxsts.eAllOfType<NavigationSuffixExpression>().filter {
-                it.member is FeatureDeclaration
+            val featureExpression = inlinedOxsts.eAllOfType<ReferenceExpression>().filter {
+                metaStaticExpressionEvaluatorProvider.evaluate(inlinedOxsts.rootInstance, it) is FeatureDeclaration
             }.firstOrNull()
 
             if (featureExpression == null) {
