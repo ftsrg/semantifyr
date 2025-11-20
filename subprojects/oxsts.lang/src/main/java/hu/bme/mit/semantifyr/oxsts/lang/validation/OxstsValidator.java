@@ -79,6 +79,9 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
 
         var parentDomain = EcoreUtil2.getContainerOfType(namedElement.eContainer(), DomainDeclaration.class);
+        if (parentDomain == null) {
+            return;
+        }
         var declarations = domainMemberCollectionProvider.getParentCollection(parentDomain).getDeclarations();
 
         if (declarations.stream().anyMatch(d -> Objects.equals(NamingUtil.getName(d), namedElement.getName()))) {
