@@ -155,4 +155,9 @@ public class OxstsUtils {
         return argument.getExpression();
     }
 
+    public static boolean isWriteExpression(Expression expression) {
+        return expression.eContainmentFeature() == OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE
+            || expression.eContainmentFeature() == OxstsPackage.Literals.HAVOC_OPERATION__REFERENCE;
+    }
+
 }

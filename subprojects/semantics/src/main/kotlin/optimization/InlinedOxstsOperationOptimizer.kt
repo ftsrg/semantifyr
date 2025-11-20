@@ -7,11 +7,11 @@
 package hu.bme.mit.semantifyr.semantics.optimization
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 
 @CompilationScoped
-class InlinedOxstsOperationOptimizer : AbstractLoopedOptimizer<Element>() {
+class InlinedOxstsOperationOptimizer : AbstractLoopedOptimizer<InlinedOxsts>() {
 
     @Inject
     private lateinit var redundantOperationRemoverOptimizer: RedundantOperationRemoverOptimizer
@@ -25,11 +25,15 @@ class InlinedOxstsOperationOptimizer : AbstractLoopedOptimizer<Element>() {
     @Inject
     private lateinit var xstsExpressionOptimizer: XstsExpressionOptimizer
 
-    override fun doOptimizationStep(element: Element): Boolean {
+    @Inject
+    private lateinit var variableOptimizer: VariableOptimizer
+
+    override fun doOptimizationStep(element: InlinedOxsts): Boolean {
         return constantFalseAssumptionPropagatorOptimizer.optimize(element)
             || operationFlattenerOptimizer.optimize(element)
             || redundantOperationRemoverOptimizer.optimize(element)
             || xstsExpressionOptimizer.optimize(element)
+            || variableOptimizer.optimize(element)
     }
 
 }

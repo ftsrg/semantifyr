@@ -19,6 +19,14 @@ inline fun <reified T : A, A> ExpressionEvaluator<A>.evaluateTypedOrNull(clazz: 
     return evaluate(expression) as? T
 }
 
+inline fun <reified T : A, A> ExpressionEvaluator<A>.tryEvaluateTypedOrNull(clazz: Class<T>, expression: Expression): T? {
+    return try {
+        evaluate(expression) as? T
+    } catch (_: Exception) {
+        null
+    }
+}
+
 inline fun <reified T : A, A> ExpressionEvaluator<A>.evaluateTyped(clazz: Class<T>, expression: Expression): T {
     return evaluateTypedOrNull(clazz, expression) ?: error("Expression does not evaluate to type ${T::class.qualifiedName}")
 }
