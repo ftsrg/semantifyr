@@ -19,6 +19,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineCall
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PostfixUnaryExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
@@ -160,9 +161,15 @@ class AssumptionWitnessBackAnnotator {
             }
         }
 
-        private fun createNextStateTransitionOperation(state: OxstsClassAssumptionWitnessState): ChoiceOperation {
+        private fun createNextStateTransitionOperation(state: OxstsClassAssumptionWitnessState): Operation {
+            val nextStates = witness.getNextStates(state)
+
+            if (nextStates.size == 1) {
+                return createStateVariableAssignment(nextStates.single().stepValue)
+            }
+
             return OxstsFactory.createChoiceOperation().also {
-                for (nextState in witness.getNextStates(state)) {
+                for (nextState in nextStates) {
                     it.branches += OxstsFactory.createSequenceOperation().also {
                         it.steps += createStateVariableAssignment(nextState.stepValue)
                     }
