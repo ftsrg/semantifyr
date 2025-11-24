@@ -47,17 +47,25 @@ class RedefinitionAwareReferenceResolver {
     }
 
     fun resolve(domain: DomainDeclaration, reference: NamedElement): NamedElement {
+        return resolveOrNull(domain, reference) ?: throw IllegalArgumentException("Could not resolve element ${reference.name}!")
+    }
+
+    fun resolveOrNull(domain: DomainDeclaration, reference: NamedElement): NamedElement? {
         if (reference is RedefinableDeclaration && OxstsUtils.isElementRedefinable(reference)) {
-            return resolve(domain, reference)
+            return resolveOrNull(domain, reference)
         }
 
         return reference
     }
 
     fun resolve(domain: DomainDeclaration, redefinableDeclaration: RedefinableDeclaration): Declaration {
+        return resolveOrNull(domain, redefinableDeclaration) ?: throw IllegalArgumentException("Could not resolve element ${redefinableDeclaration.name}!")
+    }
+
+    fun resolveOrNull(domain: DomainDeclaration, redefinableDeclaration: RedefinableDeclaration): Declaration? {
         val memberCollection = domainMemberCollectionProvider.getMemberCollection(domain)
 
-        return memberCollection.resolveElement(redefinableDeclaration) as Declaration
+        return memberCollection.resolveElementOrNull(redefinableDeclaration)
     }
 
 }
