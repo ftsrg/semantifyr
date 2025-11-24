@@ -160,4 +160,14 @@ public class OxstsUtils {
             || expression.eContainmentFeature() == OxstsPackage.Literals.HAVOC_OPERATION__REFERENCE;
     }
 
+    public static boolean isInstanceFeature(FeatureDeclaration featureDeclaration) {
+        return featureDeclaration.getType() instanceof ClassDeclaration;
+    }
+
+    public static boolean isDataFeature(FeatureDeclaration featureDeclaration) {
+        return featureDeclaration.getType() instanceof DataTypeDeclaration
+            || featureDeclaration.getType() instanceof EnumDeclaration
+            || featureDeclaration.getType() instanceof RecordDeclaration;
+    }
+
 }

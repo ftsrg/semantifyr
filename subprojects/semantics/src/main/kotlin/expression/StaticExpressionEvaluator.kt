@@ -11,9 +11,12 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.BooleanEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluator
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.NothingEvaluation
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
@@ -21,6 +24,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
+import hu.bme.mit.semantifyr.semantics.utils.parentSequence
 
 class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
 
@@ -89,8 +93,11 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
             error("Left hand side contains more than a single instance!")
         }
 
-        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance.single())
-        return evaluator.evaluateElement(expression.member)
+        val context = instance.single()
+        val resolvedMember = redefinitionAwareReferenceResolver.resolve(context.domain, expression.member)
+
+        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(context)
+        return evaluator.evaluateElement(resolvedMember)
     }
 
     override fun visit(expression: CallSuffixExpression): ExpressionEvaluation {
@@ -101,18 +108,34 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
         TODO("TODO: implement")
     }
 
+    override fun visit(expression: ElementReference): ExpressionEvaluation {
+        val element = expression.element
+
+        if (element !is Declaration || ! OxstsUtils.isElementContextual(element)) {
+            return super.visit(expression)
+        }
+
+        for (candidate in instance.parentSequence()) {
+            val resolvedElement = redefinitionAwareReferenceResolver.resolveOrNull(candidate.domain, element)
+            if (resolvedElement != null) {
+                val candidateEvaluator = staticExpressionEvaluatorProvider.getEvaluator(candidate)
+                return candidateEvaluator.evaluateElement(resolvedElement)
+            }
+        }
+
+        error("Could not find appropriate context for contextual expression!")
+    }
+
     override fun evaluateElement(element: NamedElement): ExpressionEvaluation {
         if (element.eIsProxy()) {
             throw IllegalStateException("Element could not be resolved!");
         }
 
-        val resolvedElement = redefinitionAwareReferenceResolver.resolve(instance.domain, element)
-
-        if (resolvedElement is FeatureDeclaration) {
-            return featureEvaluator.evaluateFeature(instance, resolvedElement)
+        if (element is FeatureDeclaration) {
+            return featureEvaluator.evaluateFeature(instance, element)
         }
 
-        return super.evaluateElement(resolvedElement)
+        return super.evaluateElement(element)
     }
 
     fun evaluateInstances(expression: Expression): Set<Instance> {
