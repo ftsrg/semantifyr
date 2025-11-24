@@ -196,10 +196,10 @@ class DockerBasedThetaExecutor(
 class ThetaPortfolioExecutor {
     val version = "6.27.0"
     val parameters = listOf(
-        "CEGAR --domain EXPL --refinement SEQ_ITP --maxenum 250 --initprec CTRL --stacktrace",
-        "CEGAR --domain EXPL_PRED_COMBINED --autoexpl NEWOPERANDS --initprec CTRL --stacktrace",
-        "CEGAR --domain PRED_CART --refinement SEQ_ITP --stacktrace",
-        "BOUNDED --variant KINDUCTION --stacktrace",
+        "CEGAR --domain EXPL --flatten-depth 0 --refinement SEQ_ITP --maxenum 250 --initprec CTRL --stacktrace",
+        "CEGAR --domain EXPL_PRED_COMBINED --flatten-depth 0 --autoexpl NEWOPERANDS --initprec CTRL --stacktrace",
+        "CEGAR --domain PRED_CART --flatten-depth 0 --refinement SEQ_ITP --stacktrace",
+        "BOUNDED --flatten-depth 0 --variant KINDUCTION --stacktrace",
     )
     val limitedParallelism = 4
     val timeout = 5L
