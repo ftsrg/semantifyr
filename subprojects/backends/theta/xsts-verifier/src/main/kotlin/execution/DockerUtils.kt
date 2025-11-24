@@ -116,6 +116,7 @@ class StreamLoggerCallback(
 
     suspend fun await() {
         job.await()
+        close()
     }
 
 }
