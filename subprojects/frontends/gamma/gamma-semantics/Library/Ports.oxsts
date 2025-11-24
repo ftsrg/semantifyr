@@ -3,16 +3,16 @@ package semantifyr::gamma::ports
 import semantifyr::gamma::events
 
 class Interface {
-    features events: Event[0..*]
-    features inputEvents: Event[0..*] subsets events
-    features outputEvents: Event[0..*] subsets events
+    contains events: Event[0..*]
+    contains inputEvents: Event[0..*] subsets events
+    contains outputEvents: Event[0..*] subsets events
 }
 
 class Port {
     contains interface: Interface[1]
 
-    features inputEvents: Event[0..*]
-    features outputEvents: Event[0..*]
+    refers inputEvents: Event[0..*]
+    refers outputEvents: Event[0..*]
 
     var inputEvent: inputEvents[0..1] := nothing
     var outputEvent: outputEvents[0..1] := nothing
