@@ -51,16 +51,8 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
     @Inject
     private lateinit var inlinedOxstsAssumptionWitnessTransformer: InlinedOxstsAssumptionWitnessTransformer
 
-    private val thetaExecutor = ThetaPortfolioExecutor(
-        "6.21.4",
-        listOf(
-            "CEGAR --domain EXPL --refinement SEQ_ITP --maxenum 250 --initprec CTRL --stacktrace",
-            "CEGAR --domain EXPL_PRED_COMBINED --autoexpl NEWOPERANDS --initprec CTRL --stacktrace",
-            "CEGAR --domain PRED_CART --refinement SEQ_ITP --stacktrace",
-            "BOUNDED --variant KINDUCTION --stacktrace",
-        ),
-        timeout = 5,
-    )
+    @Inject
+    private lateinit var thetaExecutor: ThetaPortfolioExecutor
 
     protected fun transformToXsts(progressContext: ProgressContext, inlinedOxsts: InlinedOxsts): XstsModel {
         return oxstsTransformer.transform(inlinedOxsts, progressContext)

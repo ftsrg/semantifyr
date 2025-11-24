@@ -16,6 +16,7 @@ import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
 import hu.bme.mit.semantifyr.semantics.transformation.ProgressContext
+import jakarta.inject.Singleton
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -191,13 +192,18 @@ class DockerBasedThetaExecutor(
 
 }
 
-class ThetaPortfolioExecutor(
-    version: String,
-    val parameters: List<String>,
-    limitedParallelism: Int = 4,
-    timeout: Long = 3,
-    timeUnit: TimeUnit = TimeUnit.MINUTES
-) {
+@Singleton
+class ThetaPortfolioExecutor {
+    val version = "6.27.0"
+    val parameters = listOf(
+        "CEGAR --domain EXPL --refinement SEQ_ITP --maxenum 250 --initprec CTRL --stacktrace",
+        "CEGAR --domain EXPL_PRED_COMBINED --autoexpl NEWOPERANDS --initprec CTRL --stacktrace",
+        "CEGAR --domain PRED_CART --refinement SEQ_ITP --stacktrace",
+        "BOUNDED --variant KINDUCTION --stacktrace",
+    )
+    val limitedParallelism = 4
+    val timeout = 5L
+    val timeUnit = TimeUnit.MINUTES
 
     private val thetaDispatcher = Dispatchers.IO.limitedParallelism(limitedParallelism)
     private val thetaExecutor = DockerBasedThetaExecutor(version, timeout, timeUnit)
