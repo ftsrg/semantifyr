@@ -10,6 +10,7 @@ import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.OppositeHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
@@ -38,6 +39,9 @@ public class OxstsValidator extends AbstractOxstsValidator {
     private RedefinitionHandler redefinitionHandler;
 
     @Inject
+    private OppositeHandler oppositeHandler;
+
+    @Inject
     private DomainMemberCollectionProvider domainMemberCollectionProvider;
 
     @Inject
@@ -49,6 +53,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String REDEFINED_NOT_FOUND_ISSUE = ISSUE_PREFIX + "REDEFINED_NOT_FOUND";
     public static final String ELEMENT_SHADOWED = ISSUE_PREFIX + "ELEMENT_SHADOWED";
     public static final String INVALID_CALL_ARGUMENTS_COUND = ISSUE_PREFIX + "INVALID_CALL_ARGUMENTS_COUNT";
+    public static final String INCORRECT_OPPOSITE = ISSUE_PREFIX + "INCORRECT_OPPOSITE";
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
@@ -94,6 +99,31 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (! builtinSymbolResolver.isBuiltin(dataTypeDeclaration)) {
             var message = "Custom data types are not allowed!";
             acceptError(message, dataTypeDeclaration, DATA_TYPE_NOT_IN_BUILTIN_ISSUE);
+        }
+    }
+
+    @Check
+    public void checkOpposite(FeatureDeclaration featureDeclaration) {
+        var opposite = featureDeclaration.getOpposite();
+
+        if (opposite != null) {
+            var oppositeOpposite = opposite.getOpposite();
+
+            if (oppositeOpposite == null) {
+                var message = String.format("Expected feature to have opposite '%s'.", NamingUtil.getName(featureDeclaration));
+                acceptError(message, opposite, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0, INCORRECT_OPPOSITE);
+            } else if (oppositeOpposite != featureDeclaration) {
+                var oppositeMessage = String.format("Expected feature to have opposite '%s', got '%s' instead.", NamingUtil.getName(featureDeclaration), NamingUtil.getName(oppositeOpposite));
+                acceptError(oppositeMessage, opposite, OxstsPackage.Literals.FEATURE_DECLARATION__OPPOSITE, 0, INCORRECT_OPPOSITE);
+            } else {
+                if (featureDeclaration.getKind() == FeatureKind.CONTAINER && opposite.getKind() != FeatureKind.CONTAINMENT) {
+                    acceptError("Container's opposite must be containment.", featureDeclaration, OxstsPackage.Literals.FEATURE_DECLARATION__OPPOSITE, 0, INCORRECT_OPPOSITE);
+                } else if (featureDeclaration.getKind() == FeatureKind.CONTAINMENT && opposite.getKind() != FeatureKind.CONTAINER) {
+                    acceptError("Containment's opposite must be container.", featureDeclaration, OxstsPackage.Literals.FEATURE_DECLARATION__OPPOSITE, 0, INCORRECT_OPPOSITE);
+                }
+            }
+        } else if (featureDeclaration.getKind() == FeatureKind.CONTAINER) {
+            acceptError("Container feature must have an opposite.", featureDeclaration, INCORRECT_OPPOSITE);
         }
     }
 
