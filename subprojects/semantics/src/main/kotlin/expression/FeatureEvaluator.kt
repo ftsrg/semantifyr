@@ -7,16 +7,18 @@
 package hu.bme.mit.semantifyr.semantics.expression
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.OppositeHandler
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.instantiation.InstanceManager
 import hu.bme.mit.semantifyr.semantics.utils.FeatureSubSettersFinder
+import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
+import hu.bme.mit.semantifyr.semantics.utils.parentSequence
+import hu.bme.mit.semantifyr.semantics.utils.treeSequence
 
-@CompilationScoped
 class FeatureEvaluator {
 
     @Inject
@@ -27,6 +29,12 @@ class FeatureEvaluator {
 
     @Inject
     private lateinit var staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider
+
+    @Inject
+    private lateinit var oppositeHandler: OppositeHandler
+
+    @Inject
+    private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
 
     fun evaluateFeature(instance: Instance, featureDeclaration: FeatureDeclaration): ExpressionEvaluation {
         if (OxstsUtils.isDataFeature(featureDeclaration)) {
@@ -43,7 +51,7 @@ class FeatureEvaluator {
     private fun evaluateInstanceFeature(instance: Instance, featureDeclaration: FeatureDeclaration): ExpressionEvaluation {
         return when (featureDeclaration.kind) {
             FeatureKind.REFERENCE -> evaluateReferenceFeature(instance, featureDeclaration)
-            FeatureKind.CONTAINMENT -> evaluateContainmentFeature(instance, featureDeclaration)
+            FeatureKind.CONTAINMENT,
             FeatureKind.CONTAINER -> evaluateContainmentFeature(instance, featureDeclaration)
             FeatureKind.DERIVED -> evaluateDerivedFeature(instance, featureDeclaration)
             FeatureKind.FEATURE -> error("Abstract features can not be evaluated!")
@@ -51,7 +59,19 @@ class FeatureEvaluator {
     }
 
     private fun evaluateReferenceFeature(instance: Instance, featureDeclaration: FeatureDeclaration): ExpressionEvaluation {
-        return staticExpressionEvaluatorProvider.evaluate(instance, featureDeclaration.expression)
+        if (featureDeclaration.expression != null) {
+            return staticExpressionEvaluatorProvider.evaluate(instance, featureDeclaration.expression)
+        }
+
+        val instances = mutableSetOf<Instance>()
+
+        for (feature in featureSubSettersFinder.getSubSetters(instance.domain, featureDeclaration)) {
+            val evaluation = evaluateFeature(instance, feature)
+            check(evaluation is InstanceEvaluation)
+            instances += evaluation.instances
+        }
+
+        return InstanceEvaluation(instances)
     }
 
     private fun evaluateContainmentFeature(instance: Instance, featureDeclaration: FeatureDeclaration): ExpressionEvaluation {
@@ -67,7 +87,31 @@ class FeatureEvaluator {
     }
 
     private fun evaluateDerivedFeature(instance: Instance, featureDeclaration: FeatureDeclaration): ExpressionEvaluation {
-        return InstanceEvaluation(setOf())
+        val opposite = oppositeHandler.getOppositeFeature(featureDeclaration)
+
+        if (opposite == null) {
+            error("Only opposite derived features are supported right now!")
+        }
+
+        return evaluateOppositeDerivedFeature(instance, opposite)
+    }
+
+    private fun evaluateOppositeDerivedFeature(instance: Instance, opposite: FeatureDeclaration): ExpressionEvaluation {
+        val rootInstance = instance.parentSequence().last()
+        val allInstances = rootInstance.treeSequence()
+        val oppositeInstances = allInstances.filter { candidate ->
+            val resolved = redefinitionAwareReferenceResolver.resolveOrNull(candidate.domain, opposite) ?: return@filter false
+            val evaluator = staticExpressionEvaluatorProvider.getEvaluator(candidate)
+            val evaluation = evaluator.evaluate(OxstsFactory.createElementReference(resolved))
+
+            if (evaluation is InstanceEvaluation) {
+                evaluation.instances.contains(instance)
+            } else {
+                false
+            }
+        }.toSet()
+
+        return InstanceEvaluation(oppositeInstances)
     }
 
 }
