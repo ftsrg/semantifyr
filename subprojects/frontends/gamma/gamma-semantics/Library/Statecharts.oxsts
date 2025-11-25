@@ -111,7 +111,7 @@ class Region {
     container parentState: State[0..1] opposite regions
 
     contains abstractTransitions: AbstractTransition[0..*]
-    contains transitions: Transition[0..*] subsets abstractTransitions
+    contains transitions: Transition[0..*] subsets abstractTransitions opposite parentRegion
     contains entryTransitions: EntryTransition[0..*] subsets abstractTransitions
 
     @Control
