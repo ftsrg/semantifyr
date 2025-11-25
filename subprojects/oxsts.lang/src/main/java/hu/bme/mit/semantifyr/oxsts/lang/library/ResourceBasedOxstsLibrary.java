@@ -21,13 +21,15 @@ public abstract class ResourceBasedOxstsLibrary extends PathBasedOxstsLibrary {
     }
 
     public void prepareLoading() {
-        // TODO: should be smarter in the future, should use some kind of versioning
-        try (var files = Files.walk(libraryPath)) {
-            files.sorted(Comparator.reverseOrder())
-                .map(Path::toFile)
-                .forEach(File::delete);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (Files.exists(libraryPath)) {
+            // TODO: should be smarter in the future, should use some kind of versioning
+            try (var files = Files.walk(libraryPath)) {
+                files.sorted(Comparator.reverseOrder())
+                        .map(Path::toFile)
+                        .forEach(File::delete);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         saveResources();
