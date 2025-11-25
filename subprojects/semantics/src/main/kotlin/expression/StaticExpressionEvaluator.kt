@@ -11,6 +11,7 @@ import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.BooleanEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluator
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ElementValueEvaluator
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.NothingEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
@@ -20,13 +21,12 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 import hu.bme.mit.semantifyr.semantics.utils.parentSequence
+import org.eclipse.emf.ecore.EObject
 
 class StaticExpressionEvaluator @AssistedInject constructor(
     @param:Assisted val instance: Instance
@@ -39,7 +39,11 @@ class StaticExpressionEvaluator @AssistedInject constructor(
     private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
 
     @Inject
-    private lateinit var featureEvaluator: FeatureEvaluator
+    private lateinit var staticElementValueEvaluatorProvider: StaticElementValueEvaluatorProvider
+
+    override fun getElementValueEvaluator(context: EObject): ElementValueEvaluator<ExpressionEvaluation> {
+        return staticElementValueEvaluatorProvider.getEvaluator(instance)
+    }
 
     override fun visit(expression: ComparisonOperator): ExpressionEvaluation {
         val left = evaluate(expression.getLeft())
@@ -114,7 +118,8 @@ class StaticExpressionEvaluator @AssistedInject constructor(
         val element = expression.element
 
         if (element !is Declaration || ! OxstsUtils.isElementContextual(element)) {
-            return super.visit(expression)
+            val rootEvaluator = staticExpressionEvaluatorProvider.getEvaluator(instance.parentSequence().last())
+            return rootEvaluator.evaluateElement(element)
         }
 
         for (candidate in instance.parentSequence()) {
@@ -126,18 +131,6 @@ class StaticExpressionEvaluator @AssistedInject constructor(
         }
 
         error("Could not find appropriate context for contextual expression!")
-    }
-
-    override fun evaluateElement(element: NamedElement): ExpressionEvaluation {
-        if (element.eIsProxy()) {
-            throw IllegalStateException("Element could not be resolved!");
-        }
-
-        if (element is FeatureDeclaration) {
-            return featureEvaluator.evaluateFeature(instance, element)
-        }
-
-        return super.evaluateElement(element)
     }
 
     fun evaluateInstances(expression: Expression): Set<Instance> {

@@ -13,6 +13,7 @@ import com.google.inject.assistedinject.FactoryModuleBuilder
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsRuntimeModule
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.semantics.expression.MetaStaticExpressionEvaluator
+import hu.bme.mit.semantifyr.semantics.expression.StaticElementValueEvaluator
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluator
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.SemantifyrScopes
@@ -23,6 +24,7 @@ class OxstsSemanticsModule : OxstsRuntimeModule() {
         binder.bindScope(CompilationScoped::class.java, SemantifyrScopes.COMPILATION)
         binder.install(FactoryModuleBuilder().build(StaticExpressionEvaluator.Factory::class.java))
         binder.install(FactoryModuleBuilder().build(MetaStaticExpressionEvaluator.Factory::class.java))
+        binder.install(FactoryModuleBuilder().build(StaticElementValueEvaluator.Factory::class.java))
 
         super.configure(binder)
     }

@@ -6,9 +6,18 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.semantics.expression;
 
+import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
+import org.eclipse.emf.ecore.EObject;
 
 public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionEvaluation> {
+
+    @Inject
+    protected ConstantElementValueEvaluatorProvider elementValueEvaluatorProvider;
+
+    protected ElementValueEvaluator<ExpressionEvaluation> getElementValueEvaluator(EObject context) {
+        return elementValueEvaluatorProvider.getEvaluator(context);
+    }
 
     @Override
     protected ExpressionEvaluation visit(RangeExpression expression) {
@@ -164,11 +173,7 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
             throw new IllegalStateException("Element could not be resolved!");
         }
 
-        //noinspection SwitchStatementWithTooFewBranches - expected to be extended with additional types
-        return switch (element) {
-            case EnumLiteral enumLiteral -> new EnumLiteralEvaluation(enumLiteral);
-            default -> throw new IllegalArgumentException("Unsupported type of referenced element!");
-        };
+        return getElementValueEvaluator(element).evaluate(element);
     }
 
     @Override
