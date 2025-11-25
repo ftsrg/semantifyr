@@ -105,7 +105,9 @@ class CompilationScopeManager {
     private fun copyResourceSet(resourceSet: ResourceSet): ResourceSet {
         val compilationResourceSet = createResourceSet()
 
-        for (resource in resourceSet.resources) {
+        // For some reason resourceSet.resources may change in the loop leading to concurrent modification
+        val resourcesCopy = resourceSet.resources.toList()
+        for (resource in resourcesCopy) {
             if (resource.contents.singleOrNull() is OxstsModelPackage) {
                 openResource(compilationResourceSet, resource)
             }
