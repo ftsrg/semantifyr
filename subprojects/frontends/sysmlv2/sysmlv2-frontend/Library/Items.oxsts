@@ -4,15 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+package semantifyr::sysml::items
 
-trans {
-}
-
-init {
-}
-
-env {}
-
-prop {
-    false
-}
+class Item

@@ -1,0 +1,5 @@
+**/*.oxsts
+**/*.xsts
+**/*.cex
+**/theta.err
+**/theta.out

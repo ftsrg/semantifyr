@@ -1,0 +1,223 @@
+package semantifyr::sysml::states
+
+import semantifyr::sysml::actions
+import semantifyr::sysml::triggers
+import semantifyr::sysml::expressions
+
+class Transition {
+    container parentState: State[1] opposite transitions
+
+    refers from: AbstractState[1] opposite outgoingTransitions
+    refers to: AbstractState[1] opposite incomingTransitions
+
+    contains actions : Action
+    contains acceptActions: TriggerAction
+    contains guard: Guard[1] { // default guard is true
+        redefine contains expression: LiteralBooleanExpression {
+            redefine refers value: bool = true
+        }
+    }
+
+    redefine tran {
+        assume (isEnabled())
+        inline fire()
+    }
+
+    prop isEnabled() {
+        return acceptActions.isTriggered() && from.isActive() && guard.isOpen()
+    }
+
+    tran fire() {
+        inline from.exit(parentState)
+        inline actions.main()
+        inline to.enter(parentState)
+    }
+
+    tran passTime() {
+        inline acceptActions.passTime()
+    }
+
+    tran initialize() {
+        inline acceptActions.initialize()
+    }
+
+}
+
+class AbstractState {
+    container parent: State[0..1] opposite states
+
+    derived refers incomingTransitions: Transition[0..*] opposite to
+    derived refers outgoingTransitions: Transition[0..*] opposite from
+
+    prop isActive() {
+        return parent?.activeState == self
+    }
+
+    tran exit(commonState: AbstractState) { }
+    tran enter(commonState: AbstractState) { }
+
+}
+
+class State : AbstractState {
+    contains start: EntryState[1]
+
+    contains transitions: Transition[0..*] opposite parentState
+    contains entryAction: Action[1]
+    contains exitAction: Action[1]
+
+    contains states: State[0..*] opposite parent
+
+    var activeState: states[0..1] := nothing
+
+    redefine tran {
+        inline fireTransitions()
+    }
+
+    tran fireTransitions() {
+        choice {
+            inline assumeNoInnerTransitionEnabled()
+            inline fireLocalTransitions()
+        } or {
+            inline fireInnerTransitions()
+        }
+    }
+
+    tran fireLocalTransitions() {
+        inline for choice (transition in transitions) {
+            inline transition.main()
+        } else {
+            assume (false)
+        }
+    }
+
+    tran fireInnerTransitions() {
+        inline for choice (state in states) {
+            inline state.fireTransitions()
+        } else {
+            assume (false)
+        }
+    }
+
+    tran assumeNoTransitionEnabled() {
+        inline assumeNoLocalTransitionEnabled()
+        inline assumeNoInnerTransitionEnabled()
+    }
+
+    tran assumeNoLocalTransitionEnabled() {
+        inline for (transition in transitions) {
+            assume (!transition.isEnabled())
+        }
+    }
+
+    tran assumeNoInnerTransitionEnabled() {
+        inline for (state in states) {
+            inline state.assumeNoTransitionEnabled()
+        }
+    }
+
+    tran activateRecursive() {
+        inline for (transition in transitions) {
+            inline if (transition.from == start) {
+                inline transition.fire()
+            }
+        }
+    }
+
+    tran deactivateRecursive() {
+        inline for (state in states) {
+            inline state.deactivateRecursive()
+        }
+
+        inline if (parent != nothing) {
+            if (parent.activeState == self) {
+                parent.activeState := nothing
+
+                inline exitAction.main()
+            }
+        }
+    }
+
+    tran passTime() {
+        inline for (transition in transitions) {
+            inline transition.passTime()
+        }
+        inline for (state in states) {
+            inline state.passTime()
+        }
+    }
+
+    tran exitRecursive(commonState: AbstractState) {
+        inline exitAction.main()
+
+        parent.activeState := nothing
+
+        inline if (commonState != parent) {
+            inline parent?.exitRecursive(commonState)
+        }
+    }
+    redefine tran exit(commonState: AbstractState) {
+        inline exitRecursive(commonState)
+        inline deactivateRecursive()
+    }    
+    tran enterRecursive(commonState: AbstractState) {
+        inline if (commonState != parent) {
+            inline parent?.enterRecursive(commonState)
+        }
+
+        inline activate()
+
+        inline entryAction.main()
+    }
+    redefine tran enter(commonState: AbstractState) {
+        inline enterRecursive(commonState)
+        inline activateRecursive()
+    }
+
+    tran activate() {
+        parent?.activeState := self
+
+        inline for (transition in outgoingTransitions) {
+            inline transition.initialize()
+        }
+    }
+
+}
+
+class EntryState : AbstractState {
+
+    redefine prop isActive() {
+        // pseudo states are never active
+        return false
+    }
+
+}
+
+class ExhibitState : State {
+
+    redefine init {
+        inline activateRecursive()
+    }
+
+    redefine tran {
+        choice {
+            inline fireTransitions()
+        } or {
+            // do nothing, if no transition is enabled
+            inline assumeNoTransitionEnabled()
+        }
+    }
+
+    redefine prop isActive() {
+        // assume the exhibited behavior is always executing
+        return true
+    }
+
+}
+
+class IsStateActiveExpression : Expression {
+    refers state: State
+
+    redefine prop evaluate() {
+        return state.isActive()
+    }
+}

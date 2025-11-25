@@ -1,0 +1,66 @@
+/*
+ * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::sysml::triggers
+
+import semantifyr::sysml::attributes
+import semantifyr::sysml::expressions
+import semantifyr::sysml::ports
+import semantifyr::sysml::items
+import semantifyr::sysml::actions
+
+class TriggerAction {
+
+    prop isTriggered() {
+        return true
+    }
+
+    tran passTime() {
+    }
+
+    tran assumeIsTriggered() {
+        assume (isTriggered())
+    }
+
+    tran initialize() {
+        
+    }
+
+}
+
+class AcceptItemAction : TriggerAction {
+    
+    refers viaPort : Port
+    refers payload : Item
+
+    redefine prop isTriggered() {
+        return viaPort.hasIncomingItem(payload)
+    }
+
+}
+
+class AcceptTimeoutAction : TriggerAction {
+
+    refers deltaTime: int = 1
+    refers afterTime: int = 1
+
+    var remainingTime: int := 0
+
+    redefine tran passTime() {
+        if (remainingTime > 0) {
+            remainingTime := remainingTime - deltaTime
+        }
+    }
+
+    redefine prop isTriggered() {
+        return remainingTime <= 0
+    }
+
+    redefine tran initialize() {
+        remainingTime := afterTime
+    }
+
+}
