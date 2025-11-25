@@ -7,6 +7,8 @@
 package hu.bme.mit.semantifyr.semantics.expression
 
 import com.google.inject.Inject
+import com.google.inject.assistedinject.Assisted
+import com.google.inject.assistedinject.AssistedInject
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.BooleanEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluator
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
@@ -26,9 +28,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 import hu.bme.mit.semantifyr.semantics.utils.parentSequence
 
-class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
-
-    lateinit var instance: Instance
+class StaticExpressionEvaluator @AssistedInject constructor(
+    @param:Assisted val instance: Instance
+) : ConstantExpressionEvaluator() {
 
     @Inject
     private lateinit var staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider
@@ -174,6 +176,10 @@ class StaticExpressionEvaluator : ConstantExpressionEvaluator() {
         }
 
         error("This expression is not evaluable to boolean!")
+    }
+
+    interface Factory {
+        fun create(instance: Instance): StaticExpressionEvaluator
     }
 
 }

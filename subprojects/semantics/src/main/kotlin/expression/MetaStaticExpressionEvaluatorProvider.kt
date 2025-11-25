@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.semantics.expression
 
 import com.google.inject.Inject
-import com.google.inject.Provider
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
@@ -19,18 +18,12 @@ class MetaStaticExpressionEvaluatorProvider {
     private val cache = mutableMapOf<Instance, MetaStaticExpressionEvaluator>()
 
     @Inject
-    private lateinit var metaStaticExpressionEvaluatorProvider: Provider<MetaStaticExpressionEvaluator>
+    private lateinit var metaStaticExpressionEvaluatorFactory: MetaStaticExpressionEvaluator.Factory
 
     fun getEvaluator(context: Instance): MetaStaticExpressionEvaluator {
         return cache.getOrPut(context) {
-            createEvaluator(context)
+            metaStaticExpressionEvaluatorFactory.create(context)
         }
-    }
-
-    private fun createEvaluator(context: Instance): MetaStaticExpressionEvaluator {
-        val evaluator = metaStaticExpressionEvaluatorProvider.get()
-        evaluator.instance = context
-        return evaluator
     }
 
     fun evaluate(context: Instance, expression: Expression): NamedElement {

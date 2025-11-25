@@ -19,18 +19,12 @@ class StaticExpressionEvaluatorProvider {
     private val cache = mutableMapOf<Instance, StaticExpressionEvaluator>()
 
     @Inject
-    private lateinit var staticExpressionEvaluatorProvider: Provider<StaticExpressionEvaluator>
+    private lateinit var staticExpressionEvaluatorFactory: StaticExpressionEvaluator.Factory
 
     fun getEvaluator(context: Instance): StaticExpressionEvaluator {
         return cache.getOrPut(context) {
-            createEvaluator(context)
+            staticExpressionEvaluatorFactory.create(context)
         }
-    }
-
-    private fun createEvaluator(context: Instance): StaticExpressionEvaluator {
-        val evaluator = staticExpressionEvaluatorProvider.get()
-        evaluator.instance = context
-        return evaluator
     }
 
     fun evaluate(context: Instance, expression: Expression): ExpressionEvaluation {

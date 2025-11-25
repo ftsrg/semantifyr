@@ -7,6 +7,8 @@
 package hu.bme.mit.semantifyr.semantics.expression
 
 import com.google.inject.Inject
+import com.google.inject.assistedinject.Assisted
+import com.google.inject.assistedinject.AssistedInject
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluator
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
@@ -31,9 +33,9 @@ inline fun <reified T : A, A> ExpressionEvaluator<A>.evaluateTyped(clazz: Class<
     return evaluateTypedOrNull(clazz, expression) ?: error("Expression does not evaluate to type ${T::class.qualifiedName}")
 }
 
-class MetaStaticExpressionEvaluator : MetaConstantExpressionEvaluator() {
-
-    lateinit var instance: Instance
+class MetaStaticExpressionEvaluator @AssistedInject constructor(
+    @param:Assisted val instance: Instance
+) : MetaConstantExpressionEvaluator() {
 
     @Inject
     private lateinit var staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider
@@ -61,6 +63,10 @@ class MetaStaticExpressionEvaluator : MetaConstantExpressionEvaluator() {
         }
 
         return redefinitionAwareReferenceResolver.resolve(context.domain, expression.member)
+    }
+
+    interface Factory {
+        fun create(instance: Instance): MetaStaticExpressionEvaluator
     }
 
 }

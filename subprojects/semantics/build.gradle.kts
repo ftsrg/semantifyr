@@ -26,6 +26,7 @@ dependencies {
     api(project(":oxsts.lang"))
 
     api(libs.guice)
+    api(libs.guice.extensions.assistedinject)
 //    implementation(libs.kotlinx.coroutines.core)
 //    implementation(libs.viatra.query.language) {
 //        exclude("com.google.inject", "guice")
