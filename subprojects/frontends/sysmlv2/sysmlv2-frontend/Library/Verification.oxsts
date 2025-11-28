@@ -5,9 +5,9 @@ import semantifyr::sysml::states
 import semantifyr::sysml::expressions
 
 class Constraint : Expression {
-    contains expression : Expression
+    contains expression: Expression
 
-    redefine prop evaluate() {
+    redefine prop evaluate(): bool {
         return expression.evaluate()
     }
 }
@@ -15,17 +15,20 @@ class Constraint : Expression {
 class Requirement : Constraint {
     contains requiredConstraint: Constraint
 
-    redefine prop evaluate() {
+    redefine prop evaluate(): bool {
         return requiredConstraint.evaluate()
     }
 }
 
 class VerificationCaseDefinition {
-    contains subject : Part
-    contains objective : Requirement
+    contains subject: Part
+    contains objective: Requirement
+
+    refers deltaTimeMin: int = 1
+    refers deltaTimeMax: int = 1
 
     redefine init {
-        inline subject.init() 
+        inline subject.init()
     }
 
     redefine tran {
@@ -35,7 +38,7 @@ class VerificationCaseDefinition {
         inline subject.passTime()
     }
 
-    prop { 
-        return ! objective.evaluate()
+    prop {
+        return !objective.evaluate()
     }
 }

@@ -1,120 +1,118 @@
 package semantifyr::sysml::expressions
 
-class Expression {
-    prop evaluate() {
-        return false
-    }
+abstract class Expression {
+    abstract prop evaluate(): any
 }
 
-class LiteralExpression : Expression
+abstract class LiteralExpression : Expression
 class LiteralBooleanExpression : LiteralExpression {
     refers value: bool[1]
-    redefine prop evaluate() {
+    redefine prop evaluate(): bool {
         return value
     }
 }
 class LiteralIntegerExpression : LiteralExpression {
     refers value: int[1]
-    redefine prop evaluate() {
+    redefine prop evaluate(): int {
         return value
     }
 }
 
-class BinaryOperatorExpression : Expression {
+abstract class BinaryOperatorExpression : Expression {
     contains left: Expression[1]
     contains right: Expression[1]
 }
 
 class LessThanOperatorExpression : BinaryOperatorExpression {
-    redefine prop evaluate() {
+    redefine prop evaluate(): bool {
         return left.evaluate() < right.evaluate()
     }
 }
 
 class LessThanOrEqualsOperatorExpression : BinaryOperatorExpression {
-    redefine prop evaluate() {
+    redefine prop evaluate(): bool {
         return left.evaluate() <= right.evaluate()
     }
 }
 
 class GreaterThanOperatorExpression : BinaryOperatorExpression {
-    redefine prop evaluate() {
+    redefine prop evaluate(): bool {
         return left.evaluate() > right.evaluate()
     }
 }
 
 class GreaterThanOrEqualsOperatorExpression : BinaryOperatorExpression {
-    redefine prop evaluate() {
+    redefine prop evaluate(): bool {
         return left.evaluate() >= right.evaluate()
     }
 }
 
 class PlusOperatorExpression : BinaryOperatorExpression {
-    redefine prop evaluate() {
+    redefine prop evaluate(): any {
         return left.evaluate() + right.evaluate()
     }
 }
 
 class MinusOperatorExpression : BinaryOperatorExpression {
-    redefine prop evaluate() {
+    redefine prop evaluate(): any {
         return left.evaluate() - right.evaluate()
     }
 }
 
 class MultiplyOperatorExpression : BinaryOperatorExpression {
-    redefine prop evaluate() {
+    redefine prop evaluate(): any {
         return left.evaluate() * right.evaluate()
     }
 }
 
 class DivideOperatorExpression : BinaryOperatorExpression {
-    redefine prop evaluate() {
+    redefine prop evaluate(): any {
         return left.evaluate() / right.evaluate()
     }
 }
 
 class EqualityOperatorExpression : BinaryOperatorExpression {
-    redefine prop evaluate() {
+    redefine prop evaluate(): bool {
         return left.evaluate() == right.evaluate()
     }
 }
 
 class InequalityOperatorExpression : BinaryOperatorExpression {
-    redefine prop evaluate() {
+    redefine prop evaluate(): bool {
         return left.evaluate() != right.evaluate()
     }
 }
 
 class OrOperatorExpression : BinaryOperatorExpression {
-    redefine prop evaluate() {
+    redefine prop evaluate(): bool {
         return left.evaluate() || right.evaluate()
     }
 }
 
 class AndOperatorExpression : BinaryOperatorExpression {
-    redefine prop evaluate() {
+    redefine prop evaluate(): bool {
         return left.evaluate() && right.evaluate()
     }
 }
 
-class UnaryOperatorExpression : Expression {
+abstract class UnaryOperatorExpression : Expression {
     contains operand: Expression[1]
 }
 
 class UnaryNotExpression : UnaryOperatorExpression {
-    redefine prop evaluate() {
+    redefine prop evaluate(): bool {
         return !operand.evaluate()
     }
 }
 
 class UnaryPlusExpression : UnaryOperatorExpression {
-    redefine prop evaluate() {
+    redefine prop evaluate(): any {
         return operand.evaluate()
     }
 }
 
 class UnaryMinusExpression : UnaryOperatorExpression {
-    redefine prop evaluate() {
-        return - operand.evaluate()
+    redefine prop evaluate(): any {
+        return -operand.evaluate()
     }
 }

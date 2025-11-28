@@ -1,33 +1,32 @@
 package semantifyr::sysml::ports
 
-
 import semantifyr::sysml::items
 
 class Port {
-    refers items : Item[0..*]
+    refers items: Item[0..*]
     refers incomingItems: Item[0..*] subsets items
     refers outgoingItems: Item[0..*] subsets items
 
     refers actualInputItems: Item[0..*] = incomingItems
     refers actualOutputItems: Item[0..*] = outgoingItems
 
-    var incomingItem : actualInputItems[0..1] := nothing
-    var outgoingItem : actualOutputItems[0..1] := nothing
+    var incomingItem: actualInputItems[0..1] := nothing
+    var outgoingItem: actualOutputItems[0..1] := nothing
 
-    prop hasIncoming() {
+    prop hasIncoming(): bool {
         return incomingItem != nothing
     }
 
-    prop hasOutgoing() {
+    prop hasOutgoing(): bool {
         return outgoingItem != nothing
     }
 
-    prop hasIncomingItem(item: Item) {
+    prop hasIncomingItem(item: Item): bool {
         return incomingItem == item
     }
 
     tran assumeHasIncomingItem(item: Item) {
-        assume(hasIncomingItem(item))
+        assume (hasIncomingItem(item))
     }
 
     tran setIncomingItem(item: Item) {
@@ -53,5 +52,4 @@ class Port {
     tran havocOutgoingItem() {
         havoc (outgoingItem)
     }
-    
 }

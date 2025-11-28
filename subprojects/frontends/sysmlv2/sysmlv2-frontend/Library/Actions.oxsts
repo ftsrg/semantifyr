@@ -11,7 +11,7 @@ import semantifyr::sysml::expressions
 import semantifyr::sysml::ports
 import semantifyr::sysml::items
 
-class Action
+abstract class Action
 
 class SendAction : Action {
     refers viaPort: Port
@@ -41,8 +41,8 @@ class CompositeAction : Action {
 
 class Guard {
     contains expression: Expression
-    
-    prop isOpen() {
+
+    prop isOpen(): bool {
         return expression.evaluate()
     }
 }
