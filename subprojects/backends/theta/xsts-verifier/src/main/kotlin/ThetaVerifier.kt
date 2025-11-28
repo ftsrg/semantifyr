@@ -12,7 +12,7 @@ import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.
 import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.oxsts.InlinedOxstsAssumptionWitnessTransformer
 import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.xsts.XstsAssumptionWitnessTransformer
 import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaErrorVerificationResult
-import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaPortfolioExecutor
+import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaPortfolioRunner
 import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaSafeVerificationResult
 import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaUnsafeVerificationResult
 import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaVerificationResult
@@ -52,7 +52,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
     private lateinit var inlinedOxstsAssumptionWitnessTransformer: InlinedOxstsAssumptionWitnessTransformer
 
     @Inject
-    private lateinit var thetaExecutor: ThetaPortfolioExecutor
+    private lateinit var thetaExecutor: ThetaPortfolioRunner
 
     protected fun transformToXsts(progressContext: ProgressContext, inlinedOxsts: InlinedOxsts): XstsModel {
         return oxstsTransformer.transform(inlinedOxsts, progressContext)
