@@ -4,17 +4,20 @@ import semantifyr::gamma::components
 import semantifyr::gamma::expressions
 
 class GammaVerificationCase {
-    features component: Component
+    contains component: Component
+    contains propertyExpression: Expression
+
     redefine init {
         inline component.init()
     }
+    
     redefine tran {
         inline component.havocInputEvents()
         inline component.main()
         inline component.resetOutputEvents()
         inline component.passTime()
     }
-    features propertyExpression: Expression
+
     prop {
         return !(propertyExpression.evaluate())
     }

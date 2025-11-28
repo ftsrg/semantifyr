@@ -17,15 +17,15 @@ class Port {
     var inputEvent: inputEvents[0..1] := nothing
     var outputEvent: outputEvents[0..1] := nothing
 
-    prop hasInput() {
+    prop hasInput(): bool {
         return inputEvent != nothing
     }
 
-    prop hasOutput() {
+    prop hasOutput(): bool {
         return outputEvent != nothing
     }
 
-    prop hasInputEvent(event: Event) {
+    prop hasInputEvent(event: Event): bool {
         return inputEvent == event
     }
 

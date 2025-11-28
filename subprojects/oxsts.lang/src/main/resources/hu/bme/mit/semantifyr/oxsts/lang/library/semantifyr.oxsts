@@ -1,5 +1,6 @@
 package semantifyr
 
+extern datatype any;
 extern datatype int;
 extern datatype real;
 extern datatype bool;

@@ -11,7 +11,7 @@ import semantifyr::gamma::expressions
 import semantifyr::gamma::events
 import semantifyr::gamma::ports
 
-class Action
+abstract class Action
 
 class RaiseEventAction : Action {
     refers port: Port[1]
@@ -24,7 +24,7 @@ class RaiseEventAction : Action {
 
 class SetTimeoutAction : Action {
     refers timeout: Timeout[1]
-    features expression: Expression[1]
+    contains expression: Expression[1]
 
     redefine tran {
         timeout.remainingTime := expression.evaluate()
@@ -33,7 +33,7 @@ class SetTimeoutAction : Action {
 
 class AssignmentAction : Action {
     refers variable: Variable[1]
-    features expression: Expression[1]
+    contains expression: Expression[1]
 
     redefine tran {
         inline variable.set(expression.evaluate())

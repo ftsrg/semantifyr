@@ -125,7 +125,7 @@ TopLevelDeclaration returns Declaration:
 enum TopLevelFeatureKind returns FeatureKind:
     REFERENCE='global reference'
     | CONTAINMENT='global containment'
-    | FEATURE='global feature'
+//    | FEATURE='global feature'
 ;
 
 EnumLiteral:
@@ -177,24 +177,43 @@ ClassMember returns Declaration:
         // '}'
     |
         {PropertyDeclaration.annotation=current}
-        redefine?='redefine'? 'prop'
         (
-            name=Identifier
-            '(' (parameters += ParameterDeclaration (',' parameters += ParameterDeclaration)* ','?)? ')'
-        )?
-        (':' returnType=[TypeDeclaration|QualifiedIdentifier])?
-        '{'
-            'return' expression=Expression ';'?
-        '}'
+            redefine?='redefine'? 'prop'
+            (
+                name=Identifier
+                '(' (parameters += ParameterDeclaration (',' parameters += ParameterDeclaration)* ','?)? ')'
+                ':' returnType=[TypeDeclaration|QualifiedIdentifier]
+            )?
+            '{'
+                'return' expression=Expression ';'?
+            '}'
+        |
+            abstract?='abstract' 'prop'
+            (
+                name=Identifier
+                '(' (parameters += ParameterDeclaration (',' parameters += ParameterDeclaration)* ','?)? ')'
+                ':' returnType=[TypeDeclaration|QualifiedIdentifier]
+            )?
+            ';'?
+        )
     |
         {TransitionDeclaration.annotation=current}
-        redefine?='redefine'? kind=TransitionKind
         (
-            name=Identifier
-            '(' (parameters += ParameterDeclaration (',' parameters += ParameterDeclaration)* ','?)? ')'
-        )?
-        branches += SequenceOperation
-        ('or' branches += SequenceOperation)*
+            redefine?='redefine'? kind=TransitionKind
+            (
+                name=Identifier
+                '(' (parameters += ParameterDeclaration (',' parameters += ParameterDeclaration)* ','?)? ')'
+            )?
+            branches += SequenceOperation
+            ('or' branches += SequenceOperation)*
+        |
+            abstract?='abstract' kind=TransitionKind
+            (
+                name=Identifier
+                '(' (parameters += ParameterDeclaration (',' parameters += ParameterDeclaration)* ','?)? ')'
+            )?
+            ';'?
+        )
     |
         {FeatureDeclaration.annotation=current}
         redefine?='redefine'? kind=FeatureKind name=Identifier ':' type=[TypeDeclaration|QualifiedIdentifier] multiplicity=Multiplicity?

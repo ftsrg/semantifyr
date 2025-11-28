@@ -19,7 +19,7 @@ class Timeout {
         }
     }
 
-    prop isUp() {
+    prop isUp(): bool {
         return remainingTime <= 0
     }
 

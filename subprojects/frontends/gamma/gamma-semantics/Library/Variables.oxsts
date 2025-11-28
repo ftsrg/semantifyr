@@ -2,13 +2,10 @@ package semantifyr::gamma::variables
 
 import semantifyr::gamma::expressions
 
-class Variable {
-    prop evaluate() {
-        return false
-    }
+abstract class Variable {
+    abstract prop evaluate(): any
 
-    tran set(value: int) {
-    }
+    abstract tran set(value: any)
 }
 
 class IntegerVariable : Variable {
@@ -16,7 +13,7 @@ class IntegerVariable : Variable {
 
     var variable: int := defaultValue
 
-    redefine prop evaluate() {
+    redefine prop evaluate(): int {
         return variable
     }
 
@@ -30,7 +27,7 @@ class BooleanVariable : Variable {
 
     var variable: bool := defaultValue
 
-    redefine prop evaluate() {
+    redefine prop evaluate(): bool {
         return variable
     }
 
@@ -41,7 +38,7 @@ class BooleanVariable : Variable {
 
 class VariableExpression : Expression {
     refers variable: Variable
-    redefine prop evaluate() {
+    redefine prop evaluate(): any {
         return variable.evaluate()
     }
 }

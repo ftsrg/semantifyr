@@ -170,4 +170,25 @@ public class OxstsUtils {
             || featureDeclaration.getType() instanceof RecordDeclaration;
     }
 
+    public static boolean isMemberAbstract(Declaration declaration) {
+//        if (declaration instanceof FeatureDeclaration featureDeclaration) {
+//            return featureDeclaration.getKind() == FeatureKind.FEATURE;
+//        }
+        if (declaration instanceof PropertyDeclaration propertyDeclaration) {
+            return propertyDeclaration.isAbstract();
+        }
+        if (declaration instanceof TransitionDeclaration transitionDeclaration) {
+            return transitionDeclaration.isAbstract();
+        }
+        return false;
+    }
+
+    public static boolean isDeclarationAbstract(Declaration declaration) {
+        if (declaration instanceof ClassDeclaration classDeclaration) {
+            return classDeclaration.isAbstract();
+        }
+
+        return isMemberAbstract(declaration);
+    }
+
 }

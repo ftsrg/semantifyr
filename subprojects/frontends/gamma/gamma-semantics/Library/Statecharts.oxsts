@@ -175,7 +175,7 @@ class State {
         redefine refers innerRegions: Region[0..*] = regions
     }
 
-    prop isActive() {
+    prop isActive(): bool {
         return parentRegion.activeState == self
     }
     tran deactivateRecursive() {
@@ -247,21 +247,19 @@ class State {
 }
 
 class Guard {
-    features expression: Expression[1]
+    contains expression: Expression[1]
 
-    prop isOpen() {
+    prop isOpen(): bool {
         return expression.evaluate()
     }
 }
 
-class AbstractTransition {
+abstract class AbstractTransition {
     container parentRegion: Region[1] opposite transitions
 
     refers to: State[1]
 
-    prop isEnabled() {
-        return true
-    }
+    abstract prop isEnabled(): bool
 
     tran fire() {
         inline to.enter(parentRegion)
@@ -273,7 +271,11 @@ class AbstractTransition {
     }
 }
 
-class EntryTransition : AbstractTransition
+class EntryTransition : AbstractTransition {
+    redefine prop isEnabled(): bool {
+        return true
+    }
+}
 
 class Transition : AbstractTransition {
     refers from: State[1]
@@ -287,7 +289,7 @@ class Transition : AbstractTransition {
 
     contains actions: Action[0..*]
 
-    redefine prop isEnabled() {
+    redefine prop isEnabled(): bool {
         return trigger.isTriggered() && from.isActive() && guard.isOpen()
     }
 
@@ -303,7 +305,8 @@ class Transition : AbstractTransition {
 class IsStateActiveExpression : Expression {
     refers state: State
 
-    redefine prop evaluate() {
+    redefine prop evaluate(): bool {
         return state.isActive()
     }
+    
 }
