@@ -68,14 +68,14 @@ class AssumptionWitnessBackAnnotator {
         }
 
         fun createInlinedOxsts(): InlinedOxsts {
-            val resourceSet = witness.inlinedOxsts.eResource().resourceSet
-            val path = witness.inlinedOxsts.eResource().uri.toString().replace("inlined.oxsts", "witness.oxsts")
-            val uri = URI.createURI(path)
+//            val resourceSet = witness.inlinedOxsts.eResource().resourceSet
+//            val path = witness.inlinedOxsts.eResource().uri.toString().replace("inlined.oxsts", "witness.oxsts")
+//            val uri = URI.createURI(path)
 
             val inlinedOxsts = OxstsFactory.createInlinedOxsts()
 
-            resourceSet.getResource(uri, false)?.delete(mutableMapOf<Any, Any>())
-            resourceSet.createResource(uri).contents += inlinedOxsts
+//            resourceSet.getResource(uri, false)?.delete(mutableMapOf<Any, Any>())
+//            resourceSet.createResource(uri).contents += inlinedOxsts
 
             initializeInlinedOxstsModel(inlinedOxsts)
 
