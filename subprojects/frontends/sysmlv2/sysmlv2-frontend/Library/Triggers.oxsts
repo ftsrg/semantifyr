@@ -14,7 +14,9 @@ import semantifyr::sysml::actions
 
 abstract class AcceptAction {
 
-    abstract prop isTriggered(): bool
+    prop isTriggered(): bool {
+        return true // should be abstract, but no good way to specify defaults atm
+    }
 
     tran passTime() {
     }
