@@ -96,7 +96,7 @@
     "build": "npm run check && npm run assemble",
     "build:production": "npm run check && npm run assemble:production",
     "watch:all": "concurrently -k \"npm run typecheck:watch\" \"npm run assemble:watch\"",
-    "bundle": "npm run build:production && vsce package --out build/vscode"
+    "bundle": "npm run build:production && vsce package --out build/"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"
