@@ -5,11 +5,11 @@ import semantifyr::sysml::ports
 import semantifyr::sysml::states
 
 class Part {
-    contains parts : Part[0..*]
-    contains attributes : Attribute[0..*]
-    contains ports : Port[0..*]
-    contains exhibitState : ExhibitState[0..1]
-    contains flows : Flow[0..*]
+    contains parts: Part[0..*]
+    contains attributes: Attribute[0..*]
+    contains ports: Port[0..*]
+    contains exhibitState: AbstractState[0..1]
+    contains flows: Flow[0..*]
 
     tran resetInputEvents() {
         inline for (port in ports) {
@@ -37,8 +37,17 @@ class Part {
         inline exhibitState?.passTime()
     }
 
+    tran executeExhibitState() {
+        choice {
+            inline exhibitState?.fireTransitions()
+        } or {
+            // do nothing, if no transition is enabled
+            inline exhibitState?.assumeNoTransitionEnabled()
+        }
+    }
+
     redefine init {
-        inline exhibitState?.init()
+        inline exhibitState?.activateRecursive()
 
         inline for (part in parts) {
             inline part.init()
@@ -52,7 +61,7 @@ class Part {
             inline part.main()
         }
 
-        inline exhibitState?.main()
+        inline executeExhibitState()
 
         inline for (flow in flows) {
             inline flow.main()

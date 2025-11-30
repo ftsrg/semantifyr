@@ -55,20 +55,20 @@ class CentralController : Part {
     contains controlA: CentralControl subsets ports
     contains controlB: CentralControl subsets ports
 
-    contains Behaviour: ExhibitState redefines exhibitState {
+    contains Behaviour: State redefines exhibitState {
         contains _0: Transition subsets transitions {
-            redefine refers from: AbstractState = start
-            redefine refers to: AbstractState = Operating
+            redefine refers from: StateNode = start
+            redefine refers to: StateNode = Operating
         }
         contains Operating: State subsets states {
             contains _1: Transition subsets transitions {
-                redefine refers from: AbstractState = start
-                redefine refers to: AbstractState = BothYellow
+                redefine refers from: StateNode = start
+                redefine refers to: StateNode = BothYellow
             }
             contains BothYellow: State subsets states
             contains _2: Transition subsets transitions {
-                redefine refers from: AbstractState = BothYellow
-                redefine refers to: AbstractState = BothRed
+                redefine refers from: StateNode = BothYellow
+                redefine refers to: StateNode = BothRed
                 redefine contains actions: CompositeAction {
                     contains _a1: SendAction subsets children {
                         redefine refers viaPort: Port = controlA
@@ -79,42 +79,42 @@ class CentralController : Part {
                         redefine refers item: Item = global_Toggle
                     }
                 }
-                redefine contains acceptActions: AcceptTimeoutAction {
+                redefine contains acceptAction: AcceptTimeoutAction {
                     redefine refers afterTime: int = 1
                 }
             }
             contains BothRed: State subsets states
             contains _3: Transition subsets transitions {
-                redefine refers from: AbstractState = BothRed
-                redefine refers to: AbstractState = TrafficOnA
+                redefine refers from: StateNode = BothRed
+                redefine refers to: StateNode = TrafficOnA
                 redefine contains actions: CompositeAction {
                     contains _a1: SendAction subsets children {
                         redefine refers viaPort: Port = controlA
                         redefine refers item: Item = global_Toggle
                     }
                 }
-                redefine contains acceptActions: AcceptTimeoutAction {
+                redefine contains acceptAction: AcceptTimeoutAction {
                     redefine refers afterTime: int = 2
                 }
             }
             contains TrafficOnA: State subsets states
             contains _4: Transition subsets transitions {
-                redefine refers from: AbstractState = TrafficOnA
-                redefine refers to: AbstractState = StoppingA
+                redefine refers from: StateNode = TrafficOnA
+                redefine refers to: StateNode = StoppingA
                 redefine contains actions: CompositeAction {
                     contains _a1: SendAction subsets children {
                         redefine refers viaPort: Port = controlA
                         redefine refers item: Item = global_Toggle
                     }
                 }
-                redefine contains acceptActions: AcceptTimeoutAction {
+                redefine contains acceptAction: AcceptTimeoutAction {
                     redefine refers afterTime: int = 2
                 }
             }
             contains StoppingA: State subsets states
             contains _5: Transition subsets transitions {
-                redefine refers from: AbstractState = StoppingA
-                redefine refers to: AbstractState = TrafficOnB
+                redefine refers from: StateNode = StoppingA
+                redefine refers to: StateNode = TrafficOnB
                 redefine contains actions: CompositeAction {
                     contains _a1: SendAction subsets children {
                         redefine refers viaPort: Port = controlA
@@ -125,28 +125,28 @@ class CentralController : Part {
                         redefine refers item: Item = global_Toggle
                     }
                 }
-                redefine contains acceptActions: AcceptTimeoutAction {
+                redefine contains acceptAction: AcceptTimeoutAction {
                     redefine refers afterTime: int = 1
                 }
             }
             contains TrafficOnB: State subsets states
             contains _6: Transition subsets transitions {
-                redefine refers from: AbstractState = TrafficOnB
-                redefine refers to: AbstractState = StoppingB
+                redefine refers from: StateNode = TrafficOnB
+                redefine refers to: StateNode = StoppingB
                 redefine contains actions: CompositeAction {
                     contains _a2: SendAction subsets children {
                         redefine refers viaPort: Port = controlB
                         redefine refers item: Item = global_Toggle
                     }
                 }
-                redefine contains acceptActions: AcceptTimeoutAction {
+                redefine contains acceptAction: AcceptTimeoutAction {
                     redefine refers afterTime: int = 2
                 }
             }
             contains StoppingB: State subsets states
             contains _7: Transition subsets transitions {
-                redefine refers from: AbstractState = StoppingB
-                redefine refers to: AbstractState = TrafficOnA
+                redefine refers from: StateNode = StoppingB
+                redefine refers to: StateNode = TrafficOnA
                 redefine contains actions: CompositeAction {
                     contains _a1: SendAction subsets children {
                         redefine refers viaPort: Port = controlA
@@ -157,23 +157,23 @@ class CentralController : Part {
                         redefine refers item: Item = global_Toggle
                     }
                 }
-                redefine contains acceptActions: AcceptTimeoutAction {
+                redefine contains acceptAction: AcceptTimeoutAction {
                     redefine refers afterTime: int = 1
                 }
             }
         }
         contains _8: Transition subsets transitions {
-            redefine refers from: AbstractState = Operating
-            redefine refers to: AbstractState = Interrupted
-            redefine contains acceptActions: AcceptItemAction {
+            redefine refers from: StateNode = Operating
+            redefine refers to: StateNode = Interrupted
+            redefine contains acceptAction: AcceptItemAction {
                 redefine refers viaPort: Port = control
                 redefine refers payload: Item = global_Police
             }
         }
         contains _9: Transition subsets transitions {
-            redefine refers from: AbstractState = Interrupted
-            redefine refers to: AbstractState = Operating
-            redefine contains acceptActions: AcceptItemAction {
+            redefine refers from: StateNode = Interrupted
+            redefine refers to: StateNode = Operating
+            redefine contains acceptAction: AcceptItemAction {
                 redefine refers viaPort: Port = control
                 redefine refers payload: Item = global_Police
             }
@@ -206,77 +206,77 @@ class CentralController : Part {
 class TrafficLightController : Part {
     contains control: ConjugatedCentralControl subsets ports
     contains lightControl: LightControl subsets ports
-    contains Behaviour: ExhibitState redefines exhibitState {
+    contains Behaviour: State redefines exhibitState {
         contains _10: Transition subsets transitions {
-            redefine refers from: AbstractState = start
-            redefine refers to: AbstractState = Normal
+            redefine refers from: StateNode = start
+            redefine refers to: StateNode = Normal
         }
         contains Normal: State subsets states {
             contains _11: Transition subsets transitions {
-                redefine refers from: AbstractState = start
-                redefine refers to: AbstractState = Yellow
+                redefine refers from: StateNode = start
+                redefine refers to: StateNode = Yellow
             }
             contains Yellow: State subsets states
             contains _12: Transition subsets transitions {
-                redefine refers from: AbstractState = Yellow
-                redefine refers to: AbstractState = Red
-                redefine contains acceptActions: AcceptItemAction {
+                redefine refers from: StateNode = Yellow
+                redefine refers to: StateNode = Red
+                redefine contains acceptAction: AcceptItemAction {
                     redefine refers viaPort: Port = control
                     redefine refers payload: Item = global_Toggle
                 }
             }
             contains Red: State subsets states
             contains _13: Transition subsets transitions {
-                redefine refers from: AbstractState = Red
-                redefine refers to: AbstractState = Green
-                redefine contains acceptActions: AcceptItemAction {
+                redefine refers from: StateNode = Red
+                redefine refers to: StateNode = Green
+                redefine contains acceptAction: AcceptItemAction {
                     redefine refers viaPort: Port = control
                     redefine refers payload: Item = global_Toggle
                 }
             }
             contains Green: State subsets states
             contains _14: Transition subsets transitions {
-                redefine refers from: AbstractState = Green
-                redefine refers to: AbstractState = Yellow
-                redefine contains acceptActions: AcceptItemAction {
+                redefine refers from: StateNode = Green
+                redefine refers to: StateNode = Yellow
+                redefine contains acceptAction: AcceptItemAction {
                     redefine refers viaPort: Port = control
                     redefine refers payload: Item = global_Toggle
                 }
             }
         }
         contains _15: Transition subsets transitions {
-            redefine refers from: AbstractState = Normal
-            redefine refers to: AbstractState = Interrupted
-            redefine contains acceptActions: AcceptItemAction {
+            redefine refers from: StateNode = Normal
+            redefine refers to: StateNode = Interrupted
+            redefine contains acceptAction: AcceptItemAction {
                 redefine refers viaPort: Port = control
                 redefine refers payload: Item = global_Police
             }
         }
         contains _16: Transition subsets transitions {
-            redefine refers from: AbstractState = Interrupted
-            redefine refers to: AbstractState = Normal
-            redefine contains acceptActions: AcceptItemAction {
+            redefine refers from: StateNode = Interrupted
+            redefine refers to: StateNode = Normal
+            redefine contains acceptAction: AcceptItemAction {
                 redefine refers viaPort: Port = control
                 redefine refers payload: Item = global_Police
             }
         }
         contains Interrupted: State subsets states {
             contains _17: Transition subsets transitions {
-                redefine refers from: AbstractState = start
-                redefine refers to: AbstractState = Yellow
+                redefine refers from: StateNode = start
+                redefine refers to: StateNode = Yellow
             }
             contains Yellow: State subsets states
             contains _18: Transition subsets transitions {
-                redefine refers from: AbstractState = Yellow
-                redefine refers to: AbstractState = Black
-                redefine contains acceptActions: AcceptTimeoutAction {
+                redefine refers from: StateNode = Yellow
+                redefine refers to: StateNode = Black
+                redefine contains acceptAction: AcceptTimeoutAction {
                     redefine refers afterTime: int = 1
                 }
             }
             contains _19: Transition subsets transitions {
-                redefine refers from: AbstractState = Black
-                redefine refers to: AbstractState = Yellow
-                redefine contains acceptActions: AcceptTimeoutAction {
+                redefine refers from: StateNode = Black
+                redefine refers to: StateNode = Yellow
+                redefine contains acceptAction: AcceptTimeoutAction {
                     redefine refers afterTime: int = 1
                 }
             }
