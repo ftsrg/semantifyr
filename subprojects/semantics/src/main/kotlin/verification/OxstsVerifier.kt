@@ -50,13 +50,13 @@ abstract class AbstractOxstsVerifier : OxstsVerifier {
         val classWitness = oxstsClassAssumptionWitnessTransformer.transform(inlinedOxstsAssumptionWitness)
         val witness = assumptionWitnessBackAnnotator.createWitnessInlinedOxsts(classWitness)
 
-        val resourceSet = inlinedOxstsAssumptionWitness.inlinedOxsts.eResource().resourceSet
-        val path = inlinedOxstsAssumptionWitness.inlinedOxsts.eResource().uri.toString().replace("inlined.oxsts", "witness.oxsts")
-        val uri = URI.createURI(path)
-        resourceSet.getResource(uri, false)?.delete(mutableMapOf<Any, Any>())
-        val resource = resourceSet.createResource(uri)
-        resource.contents += witness
-        resource.save(emptyMap<Any, Any>())
+//        val resourceSet = inlinedOxstsAssumptionWitness.inlinedOxsts.eResource().resourceSet
+//        val path = inlinedOxstsAssumptionWitness.inlinedOxsts.eResource().uri.toString().replace("inlined.oxsts", "witness.oxsts")
+//        val uri = URI.createURI(path)
+//        resourceSet.getResource(uri, false)?.delete(mutableMapOf<Any, Any>())
+//        val resource = resourceSet.createResource(uri)
+//        resource.contents += witness
+        witness.eResource().save(emptyMap<Any, Any>())
     }
 
 }
