@@ -7,16 +7,10 @@
 package hu.bme.mit.semantifyr.backends.theta.verification.backannotation
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.cex.CexAssumptionWitnessTransformer
-import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.oxsts.InlinedOxstsAssumptionWitnessTransformer
-import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.xsts.XstsAssumptionWitnessTransformer
-import hu.bme.mit.semantifyr.backends.theta.verification.execution.VerificationDispatcher
 import hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts.OxstsTransformer
 import hu.bme.mit.semantifyr.backends.theta.verification.utils.ensureExistsOutputStream
 import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaExecutionSpecification
 import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaXstsExecutorProvider
-import hu.bme.mit.semantifyr.backends.theta.wrapper.utils.CexReader
-import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.semantics.transformation.OxstsClassInliner
@@ -24,8 +18,8 @@ import hu.bme.mit.semantifyr.semantics.transformation.ProgressContext
 import hu.bme.mit.semantifyr.semantics.transformation.backannotation.AssumptionWitnessBackAnnotator
 import hu.bme.mit.semantifyr.semantics.transformation.backannotation.InlinedOxstsAssumptionWitness
 import hu.bme.mit.semantifyr.semantics.transformation.backannotation.OxstsClassAssumptionWitnessTransformer
+import hu.bme.mit.semantifyr.semantics.verification.VerificationDispatcher
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
-import kotlinx.coroutines.runBlocking
 import org.eclipse.emf.common.util.URI
 import java.io.File
 
@@ -42,21 +36,6 @@ class ThetaSummaryGenerator {
 
     @Inject
     private lateinit var oxstsTransformer: OxstsTransformer
-
-    @Inject
-    private lateinit var builtinAnnotationHandler: BuiltinAnnotationHandler
-
-    @Inject
-    private lateinit var cexReader: CexReader
-
-    @Inject
-    private lateinit var cexAssumptionWitnessTransformer: CexAssumptionWitnessTransformer
-
-    @Inject
-    private lateinit var xstsAssumptionWitnessTransformer: XstsAssumptionWitnessTransformer
-
-    @Inject
-    private lateinit var inlinedOxstsAssumptionWitnessTransformer: InlinedOxstsAssumptionWitnessTransformer
 
     @Inject
     private lateinit var thetaXstsExecutorProvider: ThetaXstsExecutorProvider
@@ -99,7 +78,7 @@ class ThetaSummaryGenerator {
             errorStream,
         )
 
-        return runBlocking(verificationDispatcher.dispatcher) {
+        return verificationDispatcher.runBlocking {
             thetaExecutor.execute(thetaExecutionSpecification)
         }
     }

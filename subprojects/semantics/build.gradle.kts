@@ -27,6 +27,7 @@ dependencies {
 
     api(libs.guice)
     api(libs.guice.extensions.assistedinject)
+    api(libs.kotlinx.coroutines.core)
 //    implementation(libs.kotlinx.coroutines.core)
 //    implementation(libs.viatra.query.language) {
 //        exclude("com.google.inject", "guice")

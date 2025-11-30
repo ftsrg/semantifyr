@@ -17,6 +17,4 @@ dependencies {
     api(project(":semantics"))
     api(project(":xsts.lang"))
     api(project(":theta-wrapper"))
-
-    implementation(libs.kotlinx.coroutines.core)
 }

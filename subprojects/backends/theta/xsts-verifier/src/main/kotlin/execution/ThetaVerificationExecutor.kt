@@ -10,7 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backends.theta.verification.utils.ensureExistsOutputStream
 import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaExecutionSpecification
 import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaXstsExecutorProvider
-import kotlinx.coroutines.withContext
+import hu.bme.mit.semantifyr.semantics.verification.VerificationDispatcher
 import java.io.File
 import java.util.concurrent.TimeUnit
 
@@ -103,6 +103,7 @@ class ThetaVerificationExecutor {
         val thetaExecutionSpecification = thetaVerificationSpecification.toExecutionSpecification()
 
         withContext(verificationDispatcher.dispatcher) {
+        verificationDispatcher.execute {
             thetaExecutor.execute(thetaExecutionSpecification)
         }
 
