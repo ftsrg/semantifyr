@@ -102,11 +102,11 @@ class ThetaVerificationExecutor {
         val thetaExecutor = thetaXstsExecutorProvider.getExecutor()
         val thetaExecutionSpecification = thetaVerificationSpecification.toExecutionSpecification()
 
-        thetaExecutionSpecification.logStream.bufferedWriter().use {
-            it.appendLine("Executing with commands:")
-            it.appendLine(thetaExecutionSpecification.command.joinToString(" "))
-            it.appendLine()
-        }
+        val writer = thetaExecutionSpecification.logStream.bufferedWriter()
+        writer.appendLine("Executing with commands:")
+        writer.appendLine(thetaExecutionSpecification.command.joinToString(" "))
+        writer.appendLine()
+        writer.flush()
 
         verificationDispatcher.execute {
             thetaExecutor.execute(thetaExecutionSpecification)
