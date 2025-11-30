@@ -12,11 +12,9 @@ import semantifyr::sysml::ports
 import semantifyr::sysml::items
 import semantifyr::sysml::actions
 
-class TriggerAction {
+abstract class AcceptAction {
 
-    prop isTriggered() {
-        return true
-    }
+    abstract prop isTriggered(): bool
 
     tran passTime() {
     }
@@ -26,41 +24,37 @@ class TriggerAction {
     }
 
     tran initialize() {
-        
     }
-
 }
 
-class AcceptItemAction : TriggerAction {
-    
-    refers viaPort : Port
-    refers payload : Item
+class AcceptItemAction : AcceptAction {
 
-    redefine prop isTriggered() {
+    refers viaPort: Port
+    refers payload: Item
+
+    redefine prop isTriggered(): bool {
         return viaPort.hasIncomingItem(payload)
     }
-
 }
 
-class AcceptTimeoutAction : TriggerAction {
+class AcceptTimeoutAction : AcceptAction {
 
-    refers deltaTime: int = 1
     refers afterTime: int = 1
 
     var remainingTime: int := 0
 
     redefine tran passTime() {
         if (remainingTime > 0) {
-            remainingTime := remainingTime - deltaTime
+            remainingTime := remainingTime - 1
+            assume (remainingTime >= 0)
         }
     }
 
-    redefine prop isTriggered() {
+    redefine prop isTriggered(): bool {
         return remainingTime <= 0
     }
 
     redefine tran initialize() {
         remainingTime := afterTime
     }
-
 }
