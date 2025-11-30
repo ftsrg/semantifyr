@@ -25,6 +25,9 @@ public class OxstsCommandService implements IExecutableCommandService {
     private VerifyOxstsCommandHandler verifyOxstsCommandHandler;
 
     @Inject
+    private GenerateTracesOxstsCommandHandler generateTracesOxstsCommandHandler;
+
+    @Inject
     private CompileInlinedOxstsCommandHandler compileInlinedOxstsCommandHandler;
 
     @Inject
@@ -44,6 +47,7 @@ public class OxstsCommandService implements IExecutableCommandService {
                     inlineOxstsCommandHandler,
                     compileInlinedOxstsCommandHandler,
                     verifyOxstsCommandHandler,
+                    generateTracesOxstsCommandHandler,
                     discoverVerificationCasesCommandHandler,
                     navigateToRedefinedCommandHandler,
                     navigateToRedefinersCommandHandler

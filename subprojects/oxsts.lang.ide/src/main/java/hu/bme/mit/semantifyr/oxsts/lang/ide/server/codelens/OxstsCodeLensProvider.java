@@ -32,6 +32,9 @@ public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensServic
     private InlineOxstsCommandHandler inlineOxstsCommandHandler;
 
     @Inject
+    private GenerateTracesOxstsCommandHandler generateTracesOxstsCommandHandler;
+
+    @Inject
     private CompileInlinedOxstsCommandHandler compileInlinedOxstsCommandHandler;
 
     @Inject
@@ -78,6 +81,7 @@ public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensServic
             if (element instanceof ClassDeclaration classDeclaration) {
                 if (annotationHandler.isVerificationCase(classDeclaration)) {
                     lenses.add(createCompileLense(classDeclaration));
+                    lenses.add(createSummarizeLense(classDeclaration));
                 }
             } else if (element instanceof RedefinableDeclaration redefinableDeclaration) {
                 if (redefinitionHandler.getRedefinedDeclaration(redefinableDeclaration) != null) {
@@ -95,6 +99,16 @@ public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensServic
     private CodeLens createCompileLense(ClassDeclaration classDeclaration) {
         var codeLens = new CodeLens();
         var command = new Command(inlineOxstsCommandHandler.getTitle(), inlineOxstsCommandHandler.getId(), inlineOxstsCommandHandler.serializeArguments(classDeclaration));
+        codeLens.setCommand(command);
+        var classNode = NodeModelUtils.getNode(classDeclaration);
+        var start = new Position(classNode.getStartLine() - 1, 0);
+        codeLens.setRange(new Range(start, start));
+        return codeLens;
+    }
+
+    private CodeLens createSummarizeLense(ClassDeclaration classDeclaration) {
+        var codeLens = new CodeLens();
+        var command = new Command(generateTracesOxstsCommandHandler.getTitle(), generateTracesOxstsCommandHandler.getId(), generateTracesOxstsCommandHandler.serializeArguments(classDeclaration));
         codeLens.setCommand(command);
         var classNode = NodeModelUtils.getNode(classDeclaration);
         var start = new Position(classNode.getStartLine() - 1, 0);

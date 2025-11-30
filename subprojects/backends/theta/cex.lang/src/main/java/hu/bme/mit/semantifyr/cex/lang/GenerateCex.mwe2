@@ -42,7 +42,7 @@ Workflow {
 		}
 		language = StandardLanguage {
 			name = "hu.bme.mit.semantifyr.cex.lang.Cex"
-			fileExtensions = "cex"
+			fileExtensions = "cex,cexs,trace"
 			
 			fragment = ecore2xtext.Ecore2XtextValueConverterServiceFragment2 auto-inject {}
 
