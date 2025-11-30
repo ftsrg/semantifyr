@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.theta.verification.execution
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backends.theta.verification.utils.awaitFirstSuccess
 import hu.bme.mit.semantifyr.semantics.transformation.ProgressContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -27,31 +28,23 @@ class ThetaPortfolioRunner {
         "CEGAR --domain EXPL_PRED_COMBINED --flatten-depth 0 --autoexpl NEWOPERANDS --initprec CTRL --stacktrace",
         "CEGAR --domain PRED_CART --flatten-depth 0 --refinement SEQ_ITP --stacktrace",
         "BOUNDED --flatten-depth 0 --variant KINDUCTION --stacktrace",
-//        "TRACEGEN --flatten-depth 0 --stacktrace --solver Z3:new", //
     )
     val timeout = 5L
     val timeUnit = TimeUnit.MINUTES
 
     @Inject
-    private lateinit var thetaExecutor: DockerBasedThetaExecutor
-
-    @Inject
-    private lateinit var verificationDispatcher: VerificationDispatcher
-
-    fun initialize() {
-        thetaExecutor.initialize()
-    }
+    private lateinit var thetaVerificationExecutor: ThetaVerificationExecutor
 
     private suspend fun runWorkflow(workingDirectory: String, name: String) = supervisorScope {
         val jobs = parameters.indices.map { index ->
-            async(verificationDispatcher.dispatcher) {
-                val thetaRuntimeDetails = ThetaRuntimeDetails(workingDirectory, name, index)
-                thetaExecutor.execute(thetaRuntimeDetails, parameters[index], timeout, timeUnit)
+            async {
+                val thetaVerificationSpecification = ThetaVerificationSpecification(workingDirectory, name, index, parameters[index], timeout, timeUnit)
+                thetaVerificationExecutor.execute(thetaVerificationSpecification)
             }
         }
 
         try {
-            jobs.awaitAny()
+            jobs.awaitFirstSuccess()
         } finally {
             jobs.forEach {
                 it.cancelAndJoin()

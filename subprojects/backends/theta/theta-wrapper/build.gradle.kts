@@ -14,9 +14,10 @@ repositories {
 }
 
 dependencies {
-    api(project(":semantics"))
-    api(project(":xsts.lang"))
-    api(project(":theta-wrapper"))
+    api(project(":cex.lang"))
+    api(libs.guice)
 
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.docker.java.core)
+    implementation(libs.docker.java.transport)
 }

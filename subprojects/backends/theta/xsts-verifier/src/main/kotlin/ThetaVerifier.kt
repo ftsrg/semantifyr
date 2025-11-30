@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.backends.theta.verification
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.CexReader
 import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.cex.CexAssumptionWitnessTransformer
 import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.oxsts.InlinedOxstsAssumptionWitnessTransformer
 import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.xsts.XstsAssumptionWitnessTransformer
@@ -17,6 +16,7 @@ import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaSafeVeri
 import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaUnsafeVerificationResult
 import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaVerificationResult
 import hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts.OxstsTransformer
+import hu.bme.mit.semantifyr.backends.theta.wrapper.utils.CexReader
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.VerificationCaseExpectedResult
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
@@ -52,7 +52,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
     private lateinit var inlinedOxstsAssumptionWitnessTransformer: InlinedOxstsAssumptionWitnessTransformer
 
     @Inject
-    private lateinit var thetaExecutor: ThetaPortfolioRunner
+    private lateinit var thetaPortfolioRunner: ThetaPortfolioRunner
 
     protected fun transformToXsts(progressContext: ProgressContext, inlinedOxsts: InlinedOxsts): XstsModel {
         return oxstsTransformer.transform(inlinedOxsts, progressContext)
@@ -65,8 +65,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
         val name = path.split(File.separator).last()
         val workingDirectory = path.replaceAfterLast(File.separator, "")
 
-        thetaExecutor.initialize()
-        return thetaExecutor.run(workingDirectory, name, progressContext)
+        return thetaPortfolioRunner.run(workingDirectory, name, progressContext)
     }
 
     override fun verify(progressContext: ProgressContext, classDeclaration: ClassDeclaration): VerificationCaseRunResult {

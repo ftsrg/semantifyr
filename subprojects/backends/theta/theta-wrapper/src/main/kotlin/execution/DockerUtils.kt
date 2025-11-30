@@ -4,45 +4,19 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.verification.execution
+package hu.bme.mit.semantifyr.backends.theta.wrapper.execution
 
 import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.model.Frame
 import com.github.dockerjava.api.model.StreamType
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runInterruptible
 import java.io.Closeable
 import java.io.OutputStream
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-@OptIn(ExperimentalCoroutinesApi::class)
-suspend fun <T> List<Deferred<T>>.awaitAny(): T {
-    val firstCompleted = CompletableDeferred<T>()
-    var counter = 0
-
-    forEach { job ->
-        job.invokeOnCompletion { exception ->
-            synchronized(firstCompleted) {
-                val id = counter++
-
-                if (!firstCompleted.isCompleted) {
-                    if (exception == null) {
-                        firstCompleted.complete(job.getCompleted())
-                    } else if (id == size - 1) {
-                        firstCompleted.completeExceptionally(IllegalStateException("All executed jobs failed: ", exception))
-                    }
-                }
-            }
-        }
-    }
-
-    return firstCompleted.await()
-}
-
-class DefferedResultCallback<T : Any> : ResultCallback<T> {
+class DeferredResultCallback<T : Any> : ResultCallback<T> {
     private val job = CompletableDeferred<T>()
     private lateinit var item: T
 
@@ -72,8 +46,8 @@ class DefferedResultCallback<T : Any> : ResultCallback<T> {
 
 }
 
-suspend inline fun <T : Any> runAsync(context: CoroutineContext = EmptyCoroutineContext, crossinline block: (DefferedResultCallback<T>) -> Unit): T {
-    val callback = DefferedResultCallback<T>()
+suspend inline fun <T : Any> runAsync(context: CoroutineContext = EmptyCoroutineContext, crossinline block: (DeferredResultCallback<T>) -> Unit): T {
+    val callback = DeferredResultCallback<T>()
 
     runInterruptible(context) {
         block(callback)
