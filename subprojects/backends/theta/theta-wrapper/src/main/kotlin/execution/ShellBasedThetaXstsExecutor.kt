@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.backends.theta.wrapper.execution
 
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -26,7 +27,9 @@ class ShellBasedThetaXstsExecutor : ThetaXstsExecutor() {
 
         try {
             withTimeout(thetaExecutionSpecification) {
-                process.waitFor()
+                runInterruptible {
+                    process.waitFor()
+                }
             }
         } catch (e: TimeoutCancellationException) {
             throw e
@@ -36,6 +39,8 @@ class ShellBasedThetaXstsExecutor : ThetaXstsExecutor() {
             withContext(NonCancellable) {
                 process.inputStream.transferTo(thetaExecutionSpecification.logStream)
                 process.errorStream.transferTo(thetaExecutionSpecification.errorStream)
+
+                process.destroyForcibly()
             }
         }
 
