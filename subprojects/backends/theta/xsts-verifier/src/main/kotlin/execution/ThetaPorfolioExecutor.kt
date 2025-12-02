@@ -11,10 +11,11 @@ import hu.bme.mit.semantifyr.backends.theta.verification.utils.awaitFirstSuccess
 import hu.bme.mit.semantifyr.semantics.transformation.ProgressContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
 import java.nio.file.Path
@@ -47,18 +48,20 @@ class ThetaPortfolioRunner {
             jobs.awaitFirstSuccess()
         } finally {
             jobs.forEach {
-                it.cancelAndJoin()
+                it.cancel()
             }
+            jobs.joinAll()
         }
     }
 
     private fun CoroutineScope.startCancellationChecker(progressContext: ProgressContext): Deferred<Unit> {
-        return async {
+        return async(Dispatchers.IO) {
             while (true) {
                 try {
                     progressContext.checkIsCancelled()
                 } catch (c: CancellationException) {
                     this@startCancellationChecker.coroutineContext.cancel(c)
+                    cancel(c)
                 }
                 delay(100)
             }
