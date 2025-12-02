@@ -6,11 +6,17 @@
 
 package hu.bme.mit.semantifyr.backends.theta.wrapper.execution
 
+import hu.bme.mit.semantifyr.backends.theta.wrapper.utils.destroyTree
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.cancellation.CancellationException
+import java.io.InputStream
+import java.io.OutputStream
 
 class ShellBasedThetaXstsExecutor : ThetaXstsExecutor() {
 
@@ -21,30 +27,43 @@ class ShellBasedThetaXstsExecutor : ThetaXstsExecutor() {
         return exitCode == 0
     }
 
-    override suspend fun execute(thetaExecutionSpecification: ThetaExecutionSpecification): ThetaExecutionResult {
-        val processBuilder = createProcessBuilder(thetaExecutionSpecification)
-        val process = processBuilder.start()
+    fun CoroutineScope.startReaderJob(inputStream: InputStream, outputStream: OutputStream) = launch(Dispatchers.IO) {
+        val writer = outputStream.bufferedWriter()
+        try {
+            runInterruptible {
+                inputStream.bufferedReader().lineSequence().forEach {
+                    writer.appendLine(it)
+                }
+            }
+        } catch (_: Exception) {
+            // swallow IO and cancellation exceptions
+        } finally {
+            writer.flush()
+        }
+    }
+
+    override suspend fun execute(thetaExecutionSpecification: ThetaExecutionSpecification) = coroutineScope {
+        val process = createProcessBuilder(thetaExecutionSpecification).start()
+
+        val stdoutJob = startReaderJob(process.inputStream, thetaExecutionSpecification.logStream)
+        val stderrJob = startReaderJob(process.errorStream, thetaExecutionSpecification.errorStream)
 
         try {
             withTimeout(thetaExecutionSpecification) {
-                runInterruptible {
+                runInterruptible(Dispatchers.IO) {
                     process.waitFor()
                 }
             }
-        } catch (e: TimeoutCancellationException) {
-            throw e
-        } catch (e: CancellationException) {
-            throw e
         } finally {
             withContext(NonCancellable) {
-                process.inputStream.transferTo(thetaExecutionSpecification.logStream)
-                process.errorStream.transferTo(thetaExecutionSpecification.errorStream)
-
-                process.destroyForcibly()
+                process.destroyTree()
+                process.waitFor()
+                stdoutJob.cancelAndJoin()
+                stderrJob.cancelAndJoin()
             }
         }
 
-        return ThetaExecutionResult(process.exitValue())
+        ThetaExecutionResult(process.exitValue())
     }
 
     private fun createProcessBuilder(thetaExecutionSpecification: ThetaExecutionSpecification): ProcessBuilder {
