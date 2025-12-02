@@ -13,6 +13,7 @@ include(
     "oxsts.lang",
     "oxsts.lang.ide",
     "semantifyr-vscode",
+    "semantifyr-vscode-server",
 )
 
 rootProject.children.forEach { project ->

@@ -1,0 +1,44 @@
+package semantifyr::sysml::verification
+
+import semantifyr::sysml::parts
+import semantifyr::sysml::states
+import semantifyr::sysml::expressions
+
+class Constraint : Expression {
+    contains expression: Expression
+
+    redefine prop evaluate(): bool {
+        return expression.evaluate()
+    }
+}
+
+class Requirement : Constraint {
+    contains requiredConstraint: Constraint
+
+    redefine prop evaluate(): bool {
+        return requiredConstraint.evaluate()
+    }
+}
+
+class VerificationCaseDefinition {
+    contains subject: Part
+    contains objective: Requirement
+
+    refers deltaTimeMin: int = 1
+    refers deltaTimeMax: int = 1
+
+    redefine init {
+        inline subject.init()
+    }
+
+    redefine tran {
+        inline subject.havocInputEvents()
+        inline subject.main()
+        inline subject.resetOutputEvents()
+        inline subject.passTime()
+    }
+
+    prop {
+        return !objective.evaluate()
+    }
+}

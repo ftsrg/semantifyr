@@ -18,6 +18,11 @@ node {
     download = !isCi
 }
 
+val distributionOutput by configurations.creating {
+    isCanBeConsumed = true
+    isCanBeResolved = false
+}
+
 val distributionClasspath by configurations.creating {
     isCanBeConsumed = false
     isCanBeResolved = true
@@ -42,46 +47,46 @@ val cloneDistribution by tasks.registering(Sync::class) {
     into("bin")
 }
 
+val buildExtension by tasks.registering(NpmTask::class) {
+    inputs.dir(project.layout.projectDirectory.dir("src"))
+    inputs.file(project.layout.projectDirectory.file("esbuild.mjs"))
+    inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
+    inputs.file(project.layout.projectDirectory.file("package-lock.json"))
+    inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
+    inputs.files(tasks.npmInstall.get().outputs)
+
+    npmCommand.set(
+        listOf(
+            "run",
+            "build",
+        )
+    )
+
+    outputs.dir("dist")
+}
+
+val bundleExtension by tasks.registering(NpmTask::class) {
+    inputs.files(cloneDistribution.get().outputs)
+    inputs.dir(project.layout.projectDirectory.dir("src"))
+    inputs.dir(project.layout.projectDirectory.dir("syntaxes"))
+    inputs.file(project.layout.projectDirectory.file("esbuild.mjs"))
+    inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
+    inputs.file(project.layout.projectDirectory.file("language-configuration.json"))
+    inputs.file(project.layout.projectDirectory.file("package.json"))
+    inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
+    inputs.files(tasks.npmInstall.get().outputs)
+
+    npmCommand.set(
+        listOf(
+            "run",
+            "bundle",
+        )
+    )
+
+    outputs.dir(project.layout.buildDirectory)
+}
+
 tasks {
-    val buildExtension by registering(NpmTask::class) {
-        inputs.dir(project.layout.projectDirectory.dir("src"))
-        inputs.file(project.layout.projectDirectory.file("esbuild.mjs"))
-        inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
-        inputs.file(project.layout.projectDirectory.file("package-lock.json"))
-        inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
-        inputs.files(npmInstall.get().outputs)
-
-        npmCommand.set(
-            listOf(
-                "run",
-                "build",
-            )
-        )
-
-        outputs.dir("dist")
-    }
-
-    val bundleExtension by registering(NpmTask::class) {
-        inputs.files(cloneDistribution.get().outputs)
-        inputs.dir(project.layout.projectDirectory.dir("src"))
-        inputs.dir(project.layout.projectDirectory.dir("syntaxes"))
-        inputs.file(project.layout.projectDirectory.file("esbuild.mjs"))
-        inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
-        inputs.file(project.layout.projectDirectory.file("language-configuration.json"))
-        inputs.file(project.layout.projectDirectory.file("package.json"))
-        inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
-        inputs.files(npmInstall.get().outputs)
-
-        npmCommand.set(
-            listOf(
-                "run",
-                "bundle",
-            )
-        )
-
-        outputs.dir(project.layout.buildDirectory.dir("vscode"))
-    }
-
     assemble {
         inputs.files(cloneDistribution.get().outputs)
         inputs.files(buildExtension.get().outputs)
@@ -89,5 +94,11 @@ tasks {
 
     clean {
         delete("dist")
+    }
+}
+
+artifacts {
+    add(distributionOutput.name, layout.buildDirectory) {
+        builtBy(bundleExtension)
     }
 }

@@ -1,0 +1,56 @@
+package semantifyr::sysml::ports
+
+import semantifyr::sysml::items
+
+class Port {
+    refers items: Item[0..*]
+    refers incomingItems: Item[0..*] subsets items
+    refers outgoingItems: Item[0..*] subsets items
+
+    refers actualInputItems: Item[0..*] = incomingItems
+    refers actualOutputItems: Item[0..*] = outgoingItems
+
+    var incomingItem: actualInputItems[0..1] := nothing
+    var outgoingItem: actualOutputItems[0..1] := nothing
+
+    prop hasIncoming(): bool {
+        return incomingItem != nothing
+    }
+
+    prop hasOutgoing(): bool {
+        return outgoingItem != nothing
+    }
+
+    prop hasIncomingItem(item: Item): bool {
+        return incomingItem == item
+    }
+
+    tran assumeHasIncomingItem(item: Item) {
+        assume (hasIncomingItem(item))
+    }
+
+    tran setIncomingItem(item: Item) {
+        incomingItem := item
+    }
+
+    tran setOutgoingItem(item: Item) {
+        outgoingItem := item
+    }
+
+    tran resetIncomingItem() {
+        incomingItem := nothing
+    }
+
+    tran resetOutgoingItem() {
+        outgoingItem := nothing
+    }
+
+    tran havocIncomingItem() {
+        havoc (incomingItem)
+        assume (incomingItem != nothing)
+    }
+
+    tran havocOutgoingItem() {
+        havoc (outgoingItem)
+    }
+}

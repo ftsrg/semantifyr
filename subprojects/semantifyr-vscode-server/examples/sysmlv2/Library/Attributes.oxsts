@@ -1,0 +1,44 @@
+package semantifyr::sysml::attributes
+
+import semantifyr::sysml::expressions
+
+abstract class Attribute {
+    abstract prop evaluate(): any
+
+    abstract tran set(value: any)
+}
+
+class IntegerAttribute : Attribute {
+    refers defaultValue: int = 0
+
+    var value := defaultValue
+
+    redefine prop evaluate(): int {
+        return value
+    }
+
+    redefine tran set(value: int) {
+        self.value := value
+    }
+}
+
+class BooleanAttribute : Attribute {
+    refers defaultValue: bool = false
+
+    var value := defaultValue
+
+    redefine prop evaluate(): bool {
+        return value
+    }
+
+    redefine tran set(value: bool) {
+        self.value := value
+    }
+}
+
+class AttributeReferenceExpression : Expression {
+    refers attribute: Attribute
+    redefine prop evaluate(): any {
+        return attribute.evaluate()
+    }
+}
