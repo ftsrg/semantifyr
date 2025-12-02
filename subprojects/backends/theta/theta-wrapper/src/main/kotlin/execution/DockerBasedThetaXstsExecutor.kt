@@ -15,10 +15,10 @@ import com.github.dockerjava.api.model.WaitResponse
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.cancellation.CancellationException
 
 class DockerBasedThetaXstsExecutor : ThetaXstsExecutor() {
 
@@ -49,24 +49,20 @@ class DockerBasedThetaXstsExecutor : ThetaXstsExecutor() {
          }
     }
 
-    override suspend fun execute(thetaExecutionSpecification: ThetaExecutionSpecification): ThetaExecutionResult {
+    override suspend fun execute(thetaExecutionSpecification: ThetaExecutionSpecification) = coroutineScope {
         val container = createContainer(thetaExecutionSpecification)
 
         val result = try {
             runContainer(thetaExecutionSpecification, container)
-        } catch (e: TimeoutCancellationException) {
-            throw e
-        } catch (e: CancellationException) {
-            throw e
         } finally {
             withContext(NonCancellable) {
+                stopContainer(container)
                 saveContainerLogs(thetaExecutionSpecification, container)
-
-                dockerClient.removeContainerCmd(container.id).withForce(true).exec()
+                destroyContainer(container)
             }
         }
 
-        return ThetaExecutionResult(result.statusCode)
+        ThetaExecutionResult(result.statusCode)
     }
 
     private fun createContainer(thetaExecutionSpecification: ThetaExecutionSpecification): CreateContainerResponse {
@@ -87,13 +83,21 @@ class DockerBasedThetaXstsExecutor : ThetaXstsExecutor() {
         dockerClient.startContainerCmd(container.id).exec()
 
         return withTimeout(thetaExecutionSpecification) {
-            runAsync {
+            runAsync(Dispatchers.IO) {
                 dockerClient.waitContainerCmd(container.id).exec(it)
             }
         }
     }
 
-    private suspend fun saveContainerLogs(thetaExecutionSpecification: ThetaExecutionSpecification, container: CreateContainerResponse) {
+    private fun stopContainer(container: CreateContainerResponse) {
+        try {
+            dockerClient.stopContainerCmd(container.id).exec()
+        } catch (_: Exception) {
+            // swallow exceptions
+        }
+    }
+
+    private suspend fun saveContainerLogs(thetaExecutionSpecification: ThetaExecutionSpecification, container: CreateContainerResponse) = withContext(Dispatchers.IO) {
         try {
             dockerClient.logContainerCmd(container.id)
                 .withStdOut(true)
@@ -102,7 +106,15 @@ class DockerBasedThetaXstsExecutor : ThetaXstsExecutor() {
                 .exec(StreamLoggerCallback(thetaExecutionSpecification.logStream, thetaExecutionSpecification.errorStream))
                 .await()
         } catch (t: Throwable) {
-            // NO-OP
+            // swallow exceptions
+        }
+    }
+
+    private fun destroyContainer(container: CreateContainerResponse) {
+        try {
+            dockerClient.removeContainerCmd(container.id).withForce(true).exec()
+        } catch (_: Exception) {
+            // swallow exceptions
         }
     }
 
