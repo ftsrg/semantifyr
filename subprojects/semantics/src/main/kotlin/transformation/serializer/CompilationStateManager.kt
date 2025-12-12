@@ -50,8 +50,27 @@ class CompilationStateManager {
         }
     }
 
+    fun commitInflated() {
+        val modelFile = basePath.resolve("inlfated.oxsts")
+        serializeInto(modelFile)
+    }
+
+    fun commitInlined() {
+        val modelFile = basePath.resolve("inlined.oxsts")
+        serializeInto(modelFile)
+    }
+
+    fun commitDeflated() {
+        val modelFile = basePath.resolve("deflated.oxsts")
+        serializeInto(modelFile)
+    }
+
     fun serializeStep() {
         val modelFile = basePath.resolve("step${id++}.oxsts")
+        serializeInto(modelFile)
+    }
+
+    fun serializeInto(modelFile: File) {
         modelFile.parentFile.mkdirs()
         serializer.serialize(inlinedOxsts, modelFile.bufferedWriter(), SaveOptions.defaultOptions())
     }

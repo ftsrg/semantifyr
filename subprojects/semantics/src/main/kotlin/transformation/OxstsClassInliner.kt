@@ -36,9 +36,15 @@ class OxstsClassInliner {
 
         oxstsInflator.inflateInstanceModel(inlinedOxsts)
 
+        oxstsInliningManager.commitInflated()
+
         oxstsCallInliner.inlineCalls(inlinedOxsts)
 
+        oxstsInliningManager.commitInlined()
+
         oxstsInflator.deflateInstanceModel(inlinedOxsts)
+
+        oxstsInliningManager.commitDeflated()
 
         oxstsInliningManager.finalize(inlinedOxsts)
 
