@@ -18,9 +18,6 @@ abstract class AbstractState : StateNode {
     container parent: AbstractState[0..1] opposite states
     contains states: AbstractState[0..*] opposite parent
 
-    contains entryAction: Action[1]
-    contains exitAction: Action[1]
-
     redefine prop isActive(): bool {
         return parent?.isInnerStateActive(self)
     }
@@ -32,7 +29,7 @@ abstract class AbstractState : StateNode {
     abstract tran fireTransitions()
     abstract tran assumeNoTransitionEnabled()
     abstract tran activateRecursive()
-    abstract tran deactivateRecursive()
+    abstract tran deactivateRecursive(deactivate: bool)
     abstract tran passTime()
 
     abstract tran enterRecursive(commonState: StateNode)
@@ -45,6 +42,8 @@ class State : AbstractState {
     contains start: EntryState[1]
 
     contains transitions: Transition[0..*] opposite parentState
+    contains entryAction: Action[1]
+    contains exitAction: Action[1]
 
     var activeState: states[0..1] := nothing
 
@@ -102,12 +101,14 @@ class State : AbstractState {
         inline start.enter()
     }
 
-    redefine tran deactivateRecursive() {
+    redefine tran deactivateRecursive(_deactivate: bool) {
         inline for (state in states) {
-            inline state.deactivateRecursive()
+            inline state.deactivateRecursive(true)
         }
 
-        inline deactivate()
+        inline if (_deactivate) {
+            inline deactivate()
+        }
     }
 
     redefine tran passTime() {
@@ -139,8 +140,8 @@ class State : AbstractState {
         }
     }
     redefine tran exit(commonState: StateNode) {
+        inline deactivateRecursive(false)
         inline exitRecursive(commonState)
-        inline deactivateRecursive()
     }
 
     tran activate() {
@@ -173,7 +174,7 @@ class Transition {
     refers from: StateNode[1] opposite outgoingTransitions
     refers to: StateNode[1] opposite incomingTransitions
 
-    contains actions: Action
+    contains action: Action
     contains acceptAction: AcceptAction
     contains guard: Guard[1] { // default guard is true
         redefine contains expression: LiteralBooleanExpression {
@@ -192,7 +193,7 @@ class Transition {
 
     tran performTransition() {
 		inline from.exit(parentState)
-		inline actions.main()
+		inline action.main()
 		inline to.enter(parentState)
 	}
 
@@ -249,12 +250,14 @@ class ParallelState : AbstractState {
         }
     }
 
-    redefine tran deactivateRecursive() {
+    redefine tran deactivateRecursive(_deactivate: bool) {
         inline for (state in states) {
-            inline state.deactivateRecursive()
+            inline state.deactivateRecursive(true)
         }
 
-        inline deactivate()
+        inline if (_deactivate) {
+            inline deactivate()
+        }
     }
 
     redefine tran passTime() {
@@ -263,43 +266,46 @@ class ParallelState : AbstractState {
         }
     }
 
-    redefine tran exitRecursive(commonState: StateNode) {
-        // inline exitAction.main()
-
-        // parent.activeState := nothing
-
-        // inline if (commonState != parent) {
-        //     inline parent?.exitRecursive(commonState)
-        // }
-    }
-    redefine tran exit(commonState: StateNode) {
-        inline exitRecursive(commonState)
-        inline deactivateRecursive()
-    }    
     redefine tran enterRecursive(commonState: StateNode) {
         inline if (commonState != parent) {
             inline parent?.enterRecursive(commonState)
         }
 
         inline activate()
-
-        inline entryAction.main()
     }
     redefine tran enter(commonState: StateNode) {
         inline enterRecursive(commonState)
         inline activateRecursive()
     }
 
-    tran activate() {
-        // parent?.activeState := self
+    redefine tran exitRecursive(commonState: StateNode) {
+        inline deactivate()
 
-        // inline for (transition in outgoingTransitions) {
-        //     inline transition.initialize()
-        // }
+        inline if (commonState != parent) {
+            inline parent?.exitRecursive(commonState)
+        }
+    }
+    redefine tran exit(commonState: StateNode) {
+        inline deactivateRecursive(false)
+        inline exitRecursive(commonState)
     }
 
-    tran deactivate() {
+    tran activate() {
+        inline if (parent != nothing) {
+            inline parent.setActiveState(self)
 
+            inline for (transition in outgoingTransitions) {
+                inline transition.initialize()
+            }
+        }
+    }
+    
+    tran deactivate() {
+        inline if (parent != nothing) {
+            if (parent.getActiveState() == self) {
+                inline parent.setActiveState(nothing)
+            }
+        }
     }
 
 }

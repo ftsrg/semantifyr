@@ -21,10 +21,9 @@ ENV PATH="$PATH:/theta-xsts-cli/"
 
 USER jovyan
 
-ADD extensions/ /extensions/
-
-RUN openvscode-server --install-extension /extensions/*.vsix
 RUN pip3 install --no-cache-dir jupyter-server-proxy
-
-# ENTRYPOINT [ "/bin/sh", "-c", "exec ${OPENVSCODE_SERVER_ROOT}/bin/openvscode-server --host 0.0.0.0 --without-connection-token /home/workspace", "--" ]
 ADD jupyter_server_config.py /etc/jupyter/jupyter_server_config.py
+
+ADD extensions/ /extensions/
+RUN openvscode-server --install-extension /extensions/semantifyr-0.0.1.vsix
+RUN openvscode-server --install-extension /extensions/sysml-2ls-0.9.0.vsix

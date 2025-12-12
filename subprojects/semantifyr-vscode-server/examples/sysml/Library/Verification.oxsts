@@ -5,18 +5,18 @@ import semantifyr::sysml::states
 import semantifyr::sysml::expressions
 
 class Constraint : Expression {
-    contains expression: Expression
+    contains requiredConstraint: Expression
 
     redefine prop evaluate(): bool {
-        return expression.evaluate()
+        return requiredConstraint.evaluate()
     }
 }
 
 class Requirement : Constraint {
-    contains requiredConstraint: Constraint
+    contains verifyRequirement: Constraint
 
     redefine prop evaluate(): bool {
-        return requiredConstraint.evaluate()
+        return verifyRequirement.evaluate()
     }
 }
 
@@ -34,7 +34,7 @@ class VerificationCaseDefinition {
     redefine tran {
         inline subject.havocInputEvents()
         inline subject.main()
-        inline subject.resetOutputEvents()
+        // inline subject.resetOutputEvents()
         inline subject.passTime()
     }
 

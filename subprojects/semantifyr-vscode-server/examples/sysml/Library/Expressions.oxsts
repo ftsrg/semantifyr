@@ -59,13 +59,13 @@ class MinusOperatorExpression : BinaryOperatorExpression {
     }
 }
 
-class MultiplyOperatorExpression : BinaryOperatorExpression {
+class MultiplicationOperatorExpression : BinaryOperatorExpression {
     redefine prop evaluate(): any {
         return left.evaluate() * right.evaluate()
     }
 }
 
-class DivideOperatorExpression : BinaryOperatorExpression {
+class DivisionOperatorExpression : BinaryOperatorExpression {
     redefine prop evaluate(): any {
         return left.evaluate() / right.evaluate()
     }
