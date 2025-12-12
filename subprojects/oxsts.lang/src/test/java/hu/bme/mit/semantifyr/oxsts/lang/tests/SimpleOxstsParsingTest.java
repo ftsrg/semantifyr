@@ -35,7 +35,7 @@ public class SimpleOxstsParsingTest {
             }
             class Model {
                 var x: int := 10
-                prop p1() { return false }
+                prop p1(): bool { return false }
                 init { }
                 tran { x := 20 }
                 tran named() { }
