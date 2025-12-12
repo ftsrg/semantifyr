@@ -2,7 +2,7 @@ package semantifyr::sysml::ports
 
 import semantifyr::sysml::items
 
-class Port {
+abstract class Port {
     refers items: Item[0..*]
     refers incomingItems: Item[0..*] subsets items
     refers outgoingItems: Item[0..*] subsets items
@@ -52,4 +52,13 @@ class Port {
     tran havocOutgoingItem() {
         havoc (outgoingItem)
     }
+}
+
+class NormalPort : Port {
+
+}
+
+class ConjugatedPort : Port {
+    redefine refers actualInputItems: Item[0..*] = outgoingItems
+    redefine refers actualOutputItems: Item[0..*] = incomingItems
 }

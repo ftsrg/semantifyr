@@ -13,6 +13,10 @@ class IntegerAttribute : Attribute {
 
     var value := defaultValue
 
+    redefine init {
+        value := defaultValue
+    }
+
     redefine prop evaluate(): int {
         return value
     }
@@ -26,6 +30,10 @@ class BooleanAttribute : Attribute {
     refers defaultValue: bool = false
 
     var value := defaultValue
+
+    redefine init {
+        value := defaultValue
+    }
 
     redefine prop evaluate(): bool {
         return value

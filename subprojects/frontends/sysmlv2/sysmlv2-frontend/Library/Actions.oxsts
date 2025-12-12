@@ -15,10 +15,10 @@ abstract class Action
 
 class SendAction : Action {
     refers viaPort: Port
-    refers item: Item
+    refers payload: Item
 
     redefine tran {
-        inline viaPort.setOutgoingItem(item)
+        inline viaPort.setOutgoingItem(payload)
     }
 }
 

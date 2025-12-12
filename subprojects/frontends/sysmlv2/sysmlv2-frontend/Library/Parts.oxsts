@@ -47,6 +47,10 @@ class Part {
     }
 
     redefine init {
+        inline for (attribute in attributes) {
+            inline attribute.init()
+        }
+
         inline exhibitState?.activateRecursive()
 
         inline for (part in parts) {

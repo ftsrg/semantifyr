@@ -1,8 +1,4 @@
-private import ScalarValues::Integer;
-private import ScalarValues::Boolean;
 private import SI::s;
-
-
 
 item def Police;
 item def Toggle;
@@ -21,8 +17,6 @@ port def LightControl {
     out item green : GreenL;
     out item none : NoneL;
 }
-
-
 
 part def CentralController {
     port control : ~CentralControl;
@@ -83,6 +77,10 @@ part def CentralController {
                 send Police() via controlA;
                 send Police() via controlB;
             }
+            exit action {
+                send Police() via controlA;
+                send Police() via controlB;
+            }
         }
     }
 }
@@ -110,7 +108,7 @@ part def TrafficLightController {
             transition first Red accept Toggle via control then Green;
 
             state Green {
-                entry send YellowL() via lightControl;
+                entry send GreenL() via lightControl;
             }
 
             transition first Green accept Toggle via control then Yellow;
@@ -130,14 +128,14 @@ part def TrafficLightController {
             transition first Black accept after 1 [s] then Yellow;
 
             state Black {
-                entry send YellowL() via lightControl;
+                entry send NoneL() via lightControl;
             }
         }
     }
 }
 
 part def CrossroadSystem {
-    port control : CentralControl;
+    port control : ~CentralControl;
 
     part controller: CentralController;
     part trafficLightA: TrafficLightController;
@@ -149,27 +147,15 @@ part def CrossroadSystem {
     flow from controller.controlB to trafficLightB.control;
 }
 
-
-
-// Helper functions for verification
-calc def eventually {
-    in op: Boolean[1];
-    return : Boolean[1];
-}
-calc def isStateActive { 
-    in s: SysML::StateUsage[1];
-    return : Boolean[1];
-}
-
 verification def ControllerOperatingReachable {
     subject system : CrossroadSystem;
 
-    objective a {
-        verify requirement  a {
-            require constraint a  {
-                // eventually(
-                isStateActive(system.controller.Behaviour.Operating)
-                // )
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.controller.Behaviour.Operating)
+                )
             }
         }
     }
@@ -181,9 +167,310 @@ verification def ControllerOperatingBothYellowReachable {
     objective {
         verify requirement {
             require constraint {
-                // eventually(
-                isStateActive(system.controller.Behaviour.Operating.BothYellow)
-                // )
+                eventually(
+                    isStateActive(system.controller.Behaviour.Operating.BothYellow)
+                )
+            }
+        }
+    }
+}
+
+verification def ControllerOperatingBothRedReachable {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.controller.Behaviour.Operating.BothRed)
+                )
+            }
+        }
+    }
+}
+
+verification def ControllerOperatingTrafficOnAReachable {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.controller.Behaviour.Operating.TrafficOnA)
+                )
+            }
+        }
+    }
+}
+
+verification def ControllerOperatingStoppingAReachable {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.controller.Behaviour.Operating.StoppingA)
+                )
+            }
+        }
+    }
+}
+
+verification def ControllerOperatingTrafficOnBReachable {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.controller.Behaviour.Operating.TrafficOnB)
+                )
+            }
+        }
+    }
+}
+
+verification def ControllerOperatingStoppingBReachable {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.controller.Behaviour.Operating.StoppingB)
+                )
+            }
+        }
+    }
+}
+
+verification def ControllerInterruptedReachable {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.controller.Behaviour.Interrupted)
+                )
+            }
+        }
+    }
+}
+
+
+
+verification def TrafficLightABehaviorNormalReachable {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.trafficLightA.Behaviour.Normal)
+                )
+            }
+        }
+    }
+}
+
+verification def TrafficLightABehaviorNormalYellowReachable {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.trafficLightA.Behaviour.Normal.Yellow)
+                )
+            }
+        }
+    }
+}
+
+verification def TrafficLightABehaviorNormalRedReachable {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.trafficLightA.Behaviour.Normal.Red)
+                )
+            }
+        }
+    }
+}
+
+verification def TrafficLightABehaviorNormalGreenReachable {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.trafficLightA.Behaviour.Normal.Green)
+                )
+            }
+        }
+    }
+}
+
+verification def TrafficLightABehaviorInterruptedReachable {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.trafficLightA.Behaviour.Interrupted)
+                )
+            }
+        }
+    }
+}
+
+verification def TrafficLightABehaviorInterruptedYellowReachable {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.trafficLightA.Behaviour.Interrupted.Yellow)
+                )
+            }
+        }
+    }
+}
+
+verification def TrafficLightABehaviorInterruptedBlackReachable {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.trafficLightA.Behaviour.Interrupted.Black)
+                )
+            }
+        }
+    }
+}
+
+
+
+verification def TrafficLightBBehaviorNormalReachable {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.trafficLightB.Behaviour.Normal)
+                )
+            }
+        }
+    }
+}
+
+verification def TrafficLightBBehaviorNormalYellowReachable {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.trafficLightB.Behaviour.Normal.Yellow)
+                )
+            }
+        }
+    }
+}
+
+verification def TrafficLightBBehaviorNormalRedReachable {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.trafficLightB.Behaviour.Normal.Red)
+                )
+            }
+        }
+    }
+}
+
+verification def TrafficLightBBehaviorNormalGreenReachable {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.trafficLightB.Behaviour.Normal.Green)
+                )
+            }
+        }
+    }
+}
+
+verification def TrafficLightBBehaviorInterruptedReachable {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.trafficLightB.Behaviour.Interrupted)
+                )
+            }
+        }
+    }
+}
+
+verification def TrafficLightBBehaviorInterruptedYellowReachable {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.trafficLightB.Behaviour.Interrupted.Yellow)
+                )
+            }
+        }
+    }
+}
+
+verification def TrafficLightBBehaviorInterruptedBlackReachable {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.trafficLightB.Behaviour.Interrupted.Black)
+                )
+            }
+        }
+    }
+}
+
+
+
+verification def BothCannotBeGreen {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                never(
+                    isStateActive(system.trafficLightA.Behaviour.Normal.Green)
+                    and isStateActive(system.trafficLightB.Behaviour.Normal.Green)
+                )
             }
         }
     }
