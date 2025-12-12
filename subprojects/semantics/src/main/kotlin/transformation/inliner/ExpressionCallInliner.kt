@@ -7,6 +7,8 @@
 package hu.bme.mit.semantifyr.semantics.transformation.inliner
 
 import com.google.inject.Inject
+import com.google.inject.assistedinject.Assisted
+import com.google.inject.assistedinject.AssistedInject
 import hu.bme.mit.semantifyr.oxsts.lang.utils.ExpressionVisitor
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticBinaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
@@ -16,6 +18,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
@@ -32,6 +35,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.semantics.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.semantics.expression.MetaStaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.semantics.expression.StaticEvaluationTransformer
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.expression.evaluateTyped
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
@@ -40,9 +44,9 @@ import hu.bme.mit.semantifyr.semantics.utils.copy
 import org.eclipse.xtext.EcoreUtil2
 import java.util.*
 
-class ExpressionCallInliner : ExpressionVisitor<Unit>() {
-
-    lateinit var instance: Instance
+class ExpressionCallInliner @AssistedInject constructor(
+    @param:Assisted val instance: Instance
+) : ExpressionVisitor<Unit>() {
 
     @Inject
     private lateinit var staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider
@@ -58,6 +62,9 @@ class ExpressionCallInliner : ExpressionVisitor<Unit>() {
 
     @Inject
     private lateinit var instanceReferenceProvider: InstanceReferenceProvider
+
+    @Inject
+    private lateinit var staticEvaluationTransformer: StaticEvaluationTransformer
 
     private val processorQueue: ArrayDeque<Expression> = ArrayDeque<Expression>()
 
@@ -132,7 +139,7 @@ class ExpressionCallInliner : ExpressionVisitor<Unit>() {
     }
 
     override fun visit(expression: ElementReference) {
-        // NO-OP
+        rewriteFeatureExpression(expression)
     }
 
     override fun visit(expression: SelfReference) {
@@ -140,7 +147,7 @@ class ExpressionCallInliner : ExpressionVisitor<Unit>() {
     }
 
     override fun visit(expression: NavigationSuffixExpression) {
-        // NO-OP
+        rewriteFeatureExpression(expression)
     }
 
     override fun visit(expression: CallSuffixExpression) {
@@ -191,6 +198,23 @@ class ExpressionCallInliner : ExpressionVisitor<Unit>() {
         expressionRewriter.rewriteExpressionsToCall(expressionHolder.expression, property, callSuffixExpression)
 
         return expressionHolder.expression
+    }
+
+    private fun rewriteFeatureExpression(expression: Expression) {
+        if (metaStaticExpressionEvaluatorProvider.evaluate(instance, expression) !is FeatureDeclaration) {
+            return
+        }
+        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
+        val evaluation = evaluator.evaluate(expression)
+        val rewrittenExpression = staticEvaluationTransformer.transformEvaluation(evaluation)
+
+        EcoreUtil2.replace(expression, rewrittenExpression)
+
+        compilationStateManager.commitModelState()
+    }
+
+    interface Factory {
+        fun create(instance: Instance): ExpressionCallInliner
     }
 
 }

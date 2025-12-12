@@ -22,10 +22,10 @@ class OxstsCallInliner {
     private lateinit var inlinedOxstsOperationOptimizer: InlinedOxstsOperationOptimizer
 
     @Inject
-    private lateinit var operationCallInlinerProvider: Provider<OperationCallInliner>
+    private lateinit var operationCallInlinerProvider: OperationCallInliner.Factory
 
     @Inject
-    private lateinit var expressionCallInlinerProvider: Provider<ExpressionCallInliner>
+    private lateinit var expressionCallInlinerProvider: ExpressionCallInliner.Factory
 
     fun inlineCalls(inlinedOxsts: InlinedOxsts) {
         inlineOperationCalls(inlinedOxsts.rootInstance, inlinedOxsts.initTransition)
@@ -36,8 +36,7 @@ class OxstsCallInliner {
     }
 
     private fun inlineOperationCalls(rootInstance: Instance, transition: TransitionDeclaration) {
-        val processor = operationCallInlinerProvider.get()
-        processor.instance = rootInstance
+        val processor = operationCallInlinerProvider.create(rootInstance)
 
         for (branch in transition.branches) {
             processor.process(branch)
@@ -45,8 +44,7 @@ class OxstsCallInliner {
     }
 
     private fun inlineExpressionCalls(rootInstance: Instance, propertyDeclaration: PropertyDeclaration) {
-        val processor = expressionCallInlinerProvider.get()
-        processor.instance = rootInstance
+        val processor = expressionCallInlinerProvider.create(rootInstance)
         processor.process(propertyDeclaration.expression)
     }
 

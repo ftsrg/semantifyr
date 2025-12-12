@@ -17,6 +17,8 @@ import hu.bme.mit.semantifyr.semantics.expression.StaticElementValueEvaluator
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluator
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.SemantifyrScopes
+import hu.bme.mit.semantifyr.semantics.transformation.inliner.ExpressionCallInliner
+import hu.bme.mit.semantifyr.semantics.transformation.inliner.OperationCallInliner
 
 class OxstsSemanticsModule : OxstsRuntimeModule() {
 
@@ -25,6 +27,8 @@ class OxstsSemanticsModule : OxstsRuntimeModule() {
         binder.install(FactoryModuleBuilder().build(StaticExpressionEvaluator.Factory::class.java))
         binder.install(FactoryModuleBuilder().build(MetaStaticExpressionEvaluator.Factory::class.java))
         binder.install(FactoryModuleBuilder().build(StaticElementValueEvaluator.Factory::class.java))
+        binder.install(FactoryModuleBuilder().build(ExpressionCallInliner.Factory::class.java))
+        binder.install(FactoryModuleBuilder().build(OperationCallInliner.Factory::class.java))
 
         super.configure(binder)
     }

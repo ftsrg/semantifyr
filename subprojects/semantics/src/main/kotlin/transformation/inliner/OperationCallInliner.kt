@@ -7,6 +7,8 @@
 package hu.bme.mit.semantifyr.semantics.transformation.inliner
 
 import com.google.inject.Inject
+import com.google.inject.assistedinject.Assisted
+import com.google.inject.assistedinject.AssistedInject
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OperationVisitor
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
@@ -39,12 +41,12 @@ import hu.bme.mit.semantifyr.semantics.utils.copy
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
 
-class OperationCallInliner : OperationVisitor<Unit>() {
+class OperationCallInliner @AssistedInject @Inject constructor(
+    @param:Assisted val instance: Instance,
+    expressionCallInlinerFactory: ExpressionCallInliner.Factory
+) : OperationVisitor<Unit>() {
 
-    lateinit var instance: Instance
-
-    @Inject
-    private lateinit var expressionCallInliner: ExpressionCallInliner
+    private val expressionCallInliner = expressionCallInlinerFactory.create(instance)
 
     @Inject
     private lateinit var staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider
@@ -69,7 +71,6 @@ class OperationCallInliner : OperationVisitor<Unit>() {
     private val processorQueue = ArrayDeque<Operation>()
 
     fun process(operation: Operation) {
-        expressionCallInliner.instance = instance
         visit(operation)
         processAll()
     }
@@ -339,6 +340,10 @@ class OperationCallInliner : OperationVisitor<Unit>() {
         }
 
         return inlinedChoice
+    }
+
+    interface Factory {
+        fun create(instance: Instance): OperationCallInliner
     }
 
 }

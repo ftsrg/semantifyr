@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.semantics.expression
 
+import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.BooleanEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.IntegerEvaluation
@@ -49,7 +50,7 @@ open class ConstantEvaluationTransformer : EvaluationTransformer() {
 }
 
 @CompilationScoped
-class StaticEvaluationTransformer : ConstantEvaluationTransformer() {
+class DeflatedEvaluationTransformer : ConstantEvaluationTransformer() {
 
     private var instanceId = 0
     private val instanceIds = mutableMapOf<Instance, Int>()
@@ -66,6 +67,26 @@ class StaticEvaluationTransformer : ConstantEvaluationTransformer() {
 
     fun instanceOfId(id: Int): Instance {
         return idInstance[id] ?: error("Unknown instance id!")
+    }
+
+}
+
+@CompilationScoped
+class StaticEvaluationTransformer : ConstantEvaluationTransformer() {
+
+    @Inject
+    private lateinit var instanceReferenceProvider: InstanceReferenceProvider
+
+    override fun transformEvaluation(evaluation: InstanceEvaluation): Expression {
+        if (evaluation.instances.size == 1) {
+            return instanceReferenceProvider.getReference(evaluation.instances.single())
+        }
+
+        return OxstsFactory.createArrayLiteral().also {
+            for (instance in evaluation.instances) {
+                it.values += instanceReferenceProvider.getReference(instance)
+            }
+        }
     }
 
 }

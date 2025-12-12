@@ -24,7 +24,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.semantics.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.semantics.expression.MetaStaticExpressionEvaluatorProvider
-import hu.bme.mit.semantifyr.semantics.expression.StaticEvaluationTransformer
+import hu.bme.mit.semantifyr.semantics.expression.DeflatedEvaluationTransformer
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.optimization.InlinedOxstsOperationOptimizer
 import hu.bme.mit.semantifyr.semantics.transformation.constraints.ConstraintChecker
@@ -72,7 +72,7 @@ class OxstsInflator {
     private lateinit var instanceReferenceProvider: InstanceReferenceProvider
 
     @Inject
-    private lateinit var staticEvaluationTransformer: StaticEvaluationTransformer
+    private lateinit var deflatedEvaluationTransformer: DeflatedEvaluationTransformer
 
     @Inject
     private lateinit var inlinedOxstsOperationOptimizer: InlinedOxstsOperationOptimizer
@@ -246,7 +246,7 @@ class OxstsInflator {
             }
 
             val evaluation = evaluator.evaluate(featureExpression)
-            val expression = staticEvaluationTransformer.transformEvaluation(evaluation)
+            val expression = deflatedEvaluationTransformer.transformEvaluation(evaluation)
 
             EcoreUtil2.replace(featureExpression, expression)
         }
@@ -270,7 +270,7 @@ class OxstsInflator {
 
         require(expression is LiteralInteger)
 
-        val instance = staticEvaluationTransformer.instanceOfId(expression.value)
+        val instance = deflatedEvaluationTransformer.instanceOfId(expression.value)
 
         return instanceReferenceProvider.getReference(instance)
     }
