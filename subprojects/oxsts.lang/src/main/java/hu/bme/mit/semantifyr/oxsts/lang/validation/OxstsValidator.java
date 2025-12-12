@@ -59,6 +59,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String INCORRECT_OPPOSITE = ISSUE_PREFIX + "INCORRECT_OPPOSITE";
     public static final String ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED = ISSUE_PREFIX + "ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED";
     public static final String ABSTRACT_FEATURE_INHERITED_MEMBERS_NOT_REDEFINED = ISSUE_PREFIX + "ABSTRACT_FEATURE_INHERITED_MEMBERS_NOT_REDEFINED";
+    public static final String INCORRECT_ASSIGNMENT = ISSUE_PREFIX + "INCORRECT_ASSIGNMENT";
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
@@ -235,6 +236,15 @@ public class OxstsValidator extends AbstractOxstsValidator {
 
         if (parametricDeclaration.getParameters().size() != callSuffixExpression.getArguments().size()) {
             acceptError("Expected " + parametricDeclaration.getParameters().size() + " arguments, found " + callSuffixExpression.getArguments().size(), callSuffixExpression, INVALID_CALL_ARGUMENTS_COUND);
+        }
+    }
+
+    @Check
+    public void noAssignmentsToConstants(AssignmentOperation assignmentOperation) {
+        var assigned = metaConstantExpressionEvaluatorProvider.evaluate(assignmentOperation.getReference());
+
+        if (!(assigned instanceof VariableDeclaration)) {
+            acceptError("Only variables can be assigned to!", assignmentOperation, OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE, 0, INCORRECT_ASSIGNMENT);
         }
     }
 
