@@ -3,16 +3,18 @@
 # SPDX-License-Identifier: EPL-2.0
 
 [versions]
-ecore = "2.37.0"
-junit = "5.11.0"
-mockito = "5.14.0"
-mwe2 = "2.19.0"
-slf4j = "2.0.16"
-log4j = "2.24.1"
-xtext = "2.36.0"
-kotlin = "2.1.0"
-kotlinxCoroutines = "1.9.0"
-cliKt = "5.0.1"
+ecore = "2.40.0"
+junit = "5.12.2"
+assertj = "3.27.6"
+junitplatform = "1.13.4"
+mockito = "5.19.0"
+mwe2 = "2.23.0"
+slf4j = "2.0.17"
+log4j = "2.25.1"
+xtext = "2.40.0"
+kotlin = "2.2.20"
+kotlinxCoroutines = "1.10.2"
+cliKt = "5.0.3"
 viatra = "2.9.1"
 dockerJava = "3.4.0"
 guice = "7.0.0"
@@ -21,9 +23,11 @@ node = "7.1.0"
 [libraries]
 ecore = { group = "org.eclipse.emf", name = "org.eclipse.emf.ecore", version.ref = "ecore" }
 ecore-codegen = { group = "org.eclipse.emf", name = "org.eclipse.emf.codegen.ecore", version.ref = "ecore" }
+junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junitplatform" }
 junit-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit" }
 junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit" }
 junit-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junit" }
+assertj-core = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }
 mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
 mockito-junit = { group = "org.mockito", name = "mockito-junit-jupiter", version.ref = "mockito" }
 mwe-utils = { group = "org.eclipse.emf", name = "org.eclipse.emf.mwe.utils", version = "1.9.0" }
@@ -44,6 +48,7 @@ viatra-query-language = { group = "org.eclipse.viatra", name = "viatra-query-lan
 viatra-query-runtime = { group = "org.eclipse.viatra", name = "viatra-query-runtime", version.ref = "viatra" }
 viatra-transformation-runtime = { group = "org.eclipse.viatra", name = "viatra-transformation-runtime", version.ref = "viatra" }
 guice = { group = "com.google.inject", name = "guice", version.ref = "guice" }
+guice-extensions-assistedinject = { group = "com.google.inject.extensions", name = "guice-assistedinject", version.ref = "guice" }
 docker-java-core = { group = "com.github.docker-java" , name = "docker-java-core", version.ref = "dockerJava" }
 docker-java-transport = { group = "com.github.docker-java" , name = "docker-java-transport-httpclient5", version.ref = "dockerJava" }
 

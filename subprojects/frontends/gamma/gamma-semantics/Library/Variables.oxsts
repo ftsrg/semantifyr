@@ -1,0 +1,44 @@
+package semantifyr::gamma::variables
+
+import semantifyr::gamma::expressions
+
+abstract class Variable {
+    abstract prop evaluate(): any
+
+    abstract tran set(value: any)
+}
+
+class IntegerVariable : Variable {
+    refers defaultValue: int = 0
+
+    var variable: int := defaultValue
+
+    redefine prop evaluate(): int {
+        return variable
+    }
+
+    redefine tran set(value: int) {
+        variable := value
+    }
+}
+
+class BooleanVariable : Variable {
+    refers defaultValue: bool = false
+
+    var variable: bool := defaultValue
+
+    redefine prop evaluate(): bool {
+        return variable
+    }
+
+    redefine tran set(value: bool) {
+        variable := value
+    }
+}
+
+class VariableExpression : Expression {
+    refers variable: Variable
+    redefine prop evaluate(): any {
+        return variable.evaluate()
+    }
+}

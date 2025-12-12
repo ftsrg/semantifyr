@@ -1,0 +1,88 @@
+/*
+ * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::gamma::components
+
+import semantifyr::gamma::events
+import semantifyr::gamma::ports
+
+abstract class Component {
+
+    contains ports: Port[0..*]
+    contains timeouts: Timeout[0..*]
+
+    tran resetInputEvents() {
+        inline for (port in ports) {
+            inline port.resetInputEvent()
+        }
+    }
+
+    tran havocInputEvents() {
+        inline for (port in ports) {
+            inline port.havocInputEvent()
+        }
+    }
+
+    tran resetOutputEvents() {
+        inline for (port in ports) {
+            inline port.resetOutputEvent()
+        }
+    }
+
+    tran passTime() {
+        inline for (timeout in timeouts) {
+            inline timeout.passTime()
+        }
+    }
+}
+
+class Channel {
+    refers inputPort: Port[1]
+    refers outputPort: Port[1]
+
+    redefine tran {
+        if (inputPort.hasOutput()) {
+            inline outputPort.setInputEvent(inputPort.outputEvent)
+        }
+    }
+}
+
+class CompositeComponent : Component {
+    contains components: Component[0..*]
+    contains channels: Channel[0..*]
+
+    redefine tran passTime() {
+        inline for (timeout in timeouts) {
+            inline timeout.passTime()
+        }
+
+        inline for (component in components) {
+            inline component.passTime()
+        }
+    }
+}
+
+class SyncComponent : CompositeComponent {
+    redefine init {
+        inline for (component in components) {
+            inline component.init()
+        }
+    }
+
+    redefine tran {
+        inline resetOutputEvents()
+
+        inline for (component in components) {
+            inline component.main()
+        }
+
+        inline for (channel in channels) {
+            inline channel.main()
+        }
+
+        inline resetInputEvents()
+    }
+}

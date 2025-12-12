@@ -1,0 +1,29 @@
+/*
+ * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::gamma::events
+
+class Event
+
+class Timeout {
+    refers deltaTime: int = 1
+
+    var remainingTime: int := 0
+
+    tran passTime() {
+        if (remainingTime > 0) {
+            remainingTime := remainingTime - deltaTime
+        }
+    }
+
+    prop isUp(): bool {
+        return remainingTime <= 0
+    }
+
+    tran assumeIsUp() {
+        assume (remainingTime <= 0)
+    }
+}

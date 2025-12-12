@@ -9,8 +9,10 @@ plugins {
 }
 
 dependencies {
-    implementation(platform(libs.xtext.bom))
-    implementation(libs.xtext.core)
+    api(platform(libs.xtext.bom))
+    api(libs.xtext.core)
+    api(libs.guice)
+
     implementation(libs.xtext.xbase)
 
     testFixturesApi(libs.xtext.testing)

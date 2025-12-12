@@ -10,9 +10,10 @@ plugins {
 
 dependencies {
     api(project(":oxsts.model"))
+    api(libs.slf4j.api)
 
-    implementation(platform(libs.xtext.bom))
-    implementation(libs.xtext.core)
+    api(platform(libs.xtext.bom))
+    api(libs.xtext.core)
     implementation(libs.xtext.xbase)
 
     testFixturesApi(libs.xtext.testing)

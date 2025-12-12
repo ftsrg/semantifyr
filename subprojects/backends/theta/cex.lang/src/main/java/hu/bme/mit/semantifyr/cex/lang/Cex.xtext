@@ -1,0 +1,115 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+grammar hu.bme.mit.semantifyr.cex.lang.Cex with org.eclipse.xtext.common.Terminals
+
+generate cex 'http://www.bme.hu/mit/2024/cex'
+
+import 'http://www.eclipse.org/emf/2002/Ecore' as Ecore
+
+CexModel:
+    SimpleCexModel
+    | SummaryCexModel
+;
+
+SimpleCexModel:
+	'(' 'XstsStateSequence'
+	    states += NamelessXstsState*
+	')'
+;
+
+SummaryCexModel:
+	'(' 'XstsCliTracegen'
+	    states += NamedXstsState*
+	    edges += StateEdge*
+	')'
+;
+
+XstsState:
+    NamelessXstsState
+    | NamedXstsState
+;
+
+NamelessXstsState returns XstsState:
+    '(' 'XstsState' (preInit?='pre_init')? (postInit?='post_init')? (lastEnv?='last_env')? (lastInternal?='last_internal')?
+        stateValue = StateValue
+    ')'
+;
+
+NamedXstsState returns XstsState:
+    '(' name=Identifier ':' 'XstsState' (preInit?='pre_init')? (postInit?='post_init')? (lastEnv?='last_env')? (lastInternal?='last_internal')?
+        stateValue = StateValue
+    ')'
+;
+
+StateEdge:
+    from=[XstsState] '->' to=[XstsState]
+;
+
+StateValue:
+    ExplStateValue
+;
+
+ExplStateValue:
+    '(' 'ExplState'
+        variableValues+=ExplVariableValue*
+    ')'
+;
+
+ExplVariableValue:
+    '('
+        variable=Identifier value=Expression
+    ')'
+;
+
+Expression:
+    UnaryOperator
+;
+
+UnaryOperator returns Expression:
+    ArithmeticUnaryOperator
+    | PrimaryExpression
+;
+
+enum UnaryOp:
+	PLUS="+" | MINUS="-"
+;
+
+ArithmeticUnaryOperator:
+    op=UnaryOp body=UnaryOperator
+;
+
+PrimaryExpression returns Expression:
+    LiteralExpression
+;
+
+LiteralExpression:
+    LiteralInteger
+    | LiteralBoolean
+    | LiteralEnum
+;
+
+LiteralInteger:
+	value = INT
+;
+
+LiteralBoolean:
+	value = BooleanValue
+;
+
+BooleanValue returns Ecore::EBoolean:
+	'true' | 'false'
+;
+
+LiteralEnum:
+    type=Identifier '.' value=Identifier
+;
+
+Identifier:
+    ID
+;
+
+terminal ID: '^'?('a'..'z'|'A'..'Z'|'_'|'$') ('a'..'z'|'A'..'Z'|'_'|'0'..'9'|'$')*;

@@ -1,0 +1,70 @@
+package semantifyr::gamma::ports
+
+import semantifyr::gamma::events
+
+class Interface {
+    contains events: Event[0..*]
+    contains inputEvents: Event[0..*] subsets events
+    contains outputEvents: Event[0..*] subsets events
+}
+
+class Port {
+    contains interface: Interface[1]
+
+    refers inputEvents: Event[0..*]
+    refers outputEvents: Event[0..*]
+
+    var inputEvent: inputEvents[0..1] := nothing
+    var outputEvent: outputEvents[0..1] := nothing
+
+    prop hasInput(): bool {
+        return inputEvent != nothing
+    }
+
+    prop hasOutput(): bool {
+        return outputEvent != nothing
+    }
+
+    prop hasInputEvent(event: Event): bool {
+        return inputEvent == event
+    }
+
+    tran assumeHasInputEvent(event: Event) {
+        assume (hasInputEvent(event))
+    }
+
+    tran setInputEvent(event: Event) {
+        inputEvent := event
+    }
+
+    tran setOutputEvent(event: Event) {
+        outputEvent := event
+    }
+
+    tran resetInputEvent() {
+        inputEvent := nothing
+    }
+
+    tran resetOutputEvent() {
+        outputEvent := nothing
+    }
+
+    tran havocInputEvent() {
+        havoc (inputEvent)
+    }
+
+    tran havocOutputEvent() {
+        havoc (outputEvent)
+    }
+}
+
+class RequiredPort : Port {
+    // required ports flip the direction
+    redefine refers inputEvents: Event[0..*] = interface.outputEvents
+    redefine refers outputEvents: Event[0..*] = interface.inputEvents
+}
+
+class ProvidedPort : Port {
+    redefine refers inputEvents: Event[0..*] = interface.inputEvents
+    redefine refers outputEvents: Event[0..*] = interface.outputEvents
+}

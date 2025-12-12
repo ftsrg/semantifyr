@@ -1,0 +1,37 @@
+/*
+ * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::gamma::triggers
+
+import semantifyr::gamma::events
+import semantifyr::gamma::ports
+
+abstract class Trigger {
+    abstract prop isTriggered(): bool
+
+    tran assumeIsTriggered() {
+        assume (isTriggered())
+    }
+}
+
+class EventTrigger : Trigger {
+    refers port: Port[1]
+    refers event: Event[1]
+
+    redefine prop isTriggered(): bool {
+        return port.hasInputEvent(event)
+    }
+
+}
+
+class TimeoutTrigger : Trigger {
+    refers timeout: Timeout[1]
+
+    redefine prop isTriggered(): bool {
+        return timeout.isUp()
+    }
+
+}

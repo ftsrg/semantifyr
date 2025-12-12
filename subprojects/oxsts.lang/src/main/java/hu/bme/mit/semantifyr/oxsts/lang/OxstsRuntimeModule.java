@@ -6,16 +6,29 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang;
 
+import com.google.inject.Binder;
+import com.google.inject.name.Names;
+import hu.bme.mit.semantifyr.oxsts.lang.conversion.IDValueConverter;
+import hu.bme.mit.semantifyr.oxsts.lang.conversion.OxstsValueConverterService;
+import hu.bme.mit.semantifyr.oxsts.lang.library.OxstsLibraryProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinOxstsLibraryProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameConverter;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.resource.OxstsResourceDescriptionManager;
+import hu.bme.mit.semantifyr.oxsts.lang.scoping.OxstsGlobalScopeProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.scoping.OxstsLocalScopeProvider;
+import org.eclipse.xtext.conversion.IValueConverterService;
+import org.eclipse.xtext.conversion.impl.AbstractIDValueConverter;
 import org.eclipse.xtext.naming.IQualifiedNameConverter;
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
+import org.eclipse.xtext.resource.IResourceDescription;
+import org.eclipse.xtext.scoping.IGlobalScopeProvider;
+import org.eclipse.xtext.scoping.IScopeProvider;
+import org.eclipse.xtext.scoping.impl.AbstractDeclarativeScopeProvider;
 
-/**
- * Use this class to register components to be used at runtime / without the Equinox extension registry.
- */
 public class OxstsRuntimeModule extends AbstractOxstsRuntimeModule {
 
+    @SuppressWarnings("unused")
     public Class<? extends IQualifiedNameConverter> bindIQualifiedNameConverter() {
         return OxstsQualifiedNameConverter.class;
     }
@@ -23,6 +36,36 @@ public class OxstsRuntimeModule extends AbstractOxstsRuntimeModule {
     @Override
     public Class<? extends IQualifiedNameProvider> bindIQualifiedNameProvider() {
         return OxstsQualifiedNameProvider.class;
+    }
+
+    @Override
+    public Class<? extends IValueConverterService> bindIValueConverterService() {
+        return OxstsValueConverterService.class;
+    }
+
+    public Class<? extends AbstractIDValueConverter> bindAbstractIDValueConverter() {
+        return IDValueConverter.class;
+    }
+
+    @SuppressWarnings("unused")
+    public Class<? extends IResourceDescription.Manager> bindIResourceDescription$Manager() {
+        return OxstsResourceDescriptionManager.class;
+    }
+
+    @Override
+    public Class<? extends IGlobalScopeProvider> bindIGlobalScopeProvider() {
+        return OxstsGlobalScopeProvider.class;
+    }
+
+    @SuppressWarnings("unused")
+    public Class<? extends OxstsLibraryProvider> bindOxstsLibraryProvider() {
+        return BuiltinOxstsLibraryProvider.class;
+    }
+
+    @Override
+    public void configureIScopeProviderDelegate(Binder binder) {
+        binder.bind(IScopeProvider.class).annotatedWith(Names.named(AbstractDeclarativeScopeProvider.NAMED_DELEGATE))
+                .to(OxstsLocalScopeProvider.class);
     }
 
 }

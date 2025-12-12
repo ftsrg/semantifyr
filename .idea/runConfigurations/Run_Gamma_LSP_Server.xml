@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run Gamma LSP Server" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="hu.bme.mit.semantifyr.frontends.gamma.lang.ide.GammaIdeSetup" />
+    <module name="semantifyr.gamma.lang.ide.main" />
+    <option name="PROGRAM_PARAMETERS" value="--network 5010" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="hu.bme.mit.semantifyr.frontends.gamma.lang.ide.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

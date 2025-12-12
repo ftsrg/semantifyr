@@ -1,0 +1,48 @@
+/*
+ * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::sysml::actions
+
+import semantifyr::sysml::attributes
+import semantifyr::sysml::expressions
+import semantifyr::sysml::ports
+import semantifyr::sysml::items
+
+abstract class Action
+
+class SendAction : Action {
+    refers viaPort: Port
+    refers payload: Item
+
+    redefine tran {
+        inline viaPort.setOutgoingItem(payload)
+    }
+}
+
+class AssignmentAction : Action {
+    refers attribute: Attribute
+    contains expression: Expression
+    redefine tran {
+        inline attribute.set(expression.evaluate())
+    }
+}
+
+class CompositeAction : Action {
+    contains children: Action[0..*]
+    redefine tran {
+        inline for (child in children) {
+            inline child.main()
+        }
+    }
+}
+
+class Guard {
+    contains expression: Expression
+
+    prop isOpen(): bool {
+        return expression.evaluate()
+    }
+}

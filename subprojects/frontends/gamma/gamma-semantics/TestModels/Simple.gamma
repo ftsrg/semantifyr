@@ -1,0 +1,110 @@
+/*
+ * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package Simple
+
+interface Control {
+    out event start
+    out event stop
+}
+
+statechart LeaderStatechart [
+    port control : requires Control,
+    port workerControl : provides Control
+] {
+    region Main {
+        state Idle
+        state Operational
+        state Stopped
+        state Unreachable
+
+        entry transition to Idle
+        transition Idle to Operational when event control.start / raise workerControl.start;
+        transition Operational to Stopped when event control.stop / raise workerControl.stop;
+    }
+}
+
+statechart WorkerStatechart [
+    port control : requires Control
+] {
+    region Main {
+        state Idle
+        state Operational
+        state Stopped
+        state Unreachable
+
+        entry transition to Idle
+        transition Idle to Operational when event control.start
+        transition Operational to Stopped when event control.stop
+    }
+}
+
+sync component System[
+    port control : requires Control
+] {
+    component leader : LeaderStatechart
+    component worker : WorkerStatechart
+
+    bind control -> leader.control
+    channel [ leader.workerControl ] -> [ worker.control ]
+}
+
+@Reachable
+verification case LeaderStatechartIdleReachable {
+    component system : System
+
+    invariant { isActive (system.leader.Main.Idle) }
+}
+
+@Reachable
+verification case LeaderStatechartOperationalReachable {
+    component system : System
+
+    invariant { isActive (system.leader.Main.Operational) }
+}
+
+@Reachable
+verification case LeaderStatechartStoppedReachable {
+    component system : System
+
+    invariant { isActive (system.leader.Main.Stopped) }
+}
+
+@Unreachable
+verification case LeaderStatechartUnreachable {
+    component system : System
+
+    invariant { isActive (system.leader.Main.Unreachable) }
+}
+
+
+@Reachable
+verification case WorkerStatechartIdleReachable {
+    component system : System
+
+    invariant { isActive (system.worker.Main.Idle) }
+}
+
+@Reachable
+verification case WorkerStatechartOperationalReachable {
+    component system : System
+
+    invariant { isActive (system.worker.Main.Operational) }
+}
+
+@Reachable
+verification case WorkerStatechartStoppedReachable {
+    component system : System
+
+    invariant { isActive (system.worker.Main.Stopped) }
+}
+
+@Unreachable
+verification case WorkerStatechartUnrachable {
+    component system : System
+
+    invariant { isActive (system.worker.Main.Unreachable) }
+}

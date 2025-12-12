@@ -6,176 +6,189 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.utils;
 
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
-import org.eclipse.emf.common.util.EList;
-import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.xtext.util.OnChangeEvictingCache;
-import org.eclipse.xtext.util.Tuples;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public class OxstsUtils {
+    public static final String LIBRARY_EXTENSION = "oxsts";
 
-    private static final OnChangeEvictingCache cache = new OnChangeEvictingCache();
-    private static final String BASE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils";
-    private static final String getDirectlyAccessibleElementsReflective_KEY = BASE_KEY + ".getDirectlyAccessibleElementsReflective";
+    private OxstsUtils() {
+        throw new IllegalStateException("This is a static utility class and should not be instantiated directly");
+    }
 
-    public static Iterable<EObject> getAllContainers(final EObject eObject) {
-        return () -> new Iterator<>() {
-            private EObject next = eObject;
+    public static boolean isConstantLiteralFalse(Expression expression) {
+        if (expression instanceof LiteralBoolean literalBoolean) {
+            return ! literalBoolean.isValue();
+        }
 
-            @Override
-            public boolean hasNext() {
-                return next != null;
-            }
+        return false;
+    }
 
-            @Override
-            public EObject next() {
-                var current = next;
-                next = next.eContainer();
-                return current;
-            }
+    public static boolean isConstantLiteralTrue(Expression expression) {
+        if (expression instanceof LiteralBoolean literalBoolean) {
+            return literalBoolean.isValue();
+        }
+
+        return false;
+    }
+
+    public static boolean isGlobalFeature(EObject element) {
+        return element instanceof FeatureDeclaration featureDeclaration && featureDeclaration.eContainer() instanceof OxstsModelPackage;
+    }
+
+    public static boolean isLoopVariable(EObject element) {
+        var container = element.eContainer();
+
+        if (container instanceof AbstractForOperation forOperation) {
+            return forOperation.getLoopVariable() == element;
+        }
+
+        return false;
+    }
+
+    public static boolean isLocalVariable(EObject element) {
+        return element instanceof LocalVarDeclarationOperation;
+    }
+
+    public static boolean isReferenceContextual(ElementReference elementReference) {
+        var element = elementReference.getElement();
+
+        return isElementContextual(element);
+    }
+
+    public static boolean isElementRedefinable(Element element) {
+        return element instanceof RedefinableDeclaration && !isGlobalFeature(element);
+    }
+
+    public static boolean isElementContextual(Element element) {
+        if (isLoopVariable(element) || isLocalVariable(element) || isGlobalFeature(element)) {
+            return false;
+        }
+
+        return element instanceof FeatureDeclaration
+                || element instanceof VariableDeclaration
+                || element instanceof PropertyDeclaration
+                || element instanceof TransitionDeclaration;
+    }
+
+    public static List<? extends Declaration> getDirectMembers(Declaration declaration) {
+        return switch (declaration) {
+            case InlinedOxsts decl -> getDirectMembers(decl);
+            case RecordDeclaration decl -> getDirectMembers(decl);
+            case ClassDeclaration decl -> getDirectMembers(decl);
+            case FeatureDeclaration decl -> getDirectMembers(decl);
+            default -> List.of();
         };
     }
 
-    public static Iterable<Type> getAllSupertypes(final Type type) {
-        return () -> new Iterator<>() {
-            private Type next = type;
+    public static List<FeatureDeclaration> getGlobalFeatures(EObject context) {
+        var resourceSet = context.eResource().getResourceSet();
 
-            @Override
-            public boolean hasNext() {
-                return next != null;
-            }
+        var globalFeatures = resourceSet.getResources().stream()
+                .flatMap(r -> Stream.of(r.getContents().getFirst()))
+                .filter(e -> e instanceof OxstsModelPackage).map(e -> (OxstsModelPackage) e)
+                .flatMap(p -> p.getDeclarations().stream())
+                .filter(e -> e instanceof FeatureDeclaration).map(e -> (FeatureDeclaration) e);
 
-            @Override
-            public Type next() {
-                var current = next;
-                next = next.getSupertype();
-                return current;
-            }
-        };
+        return globalFeatures.toList();
     }
 
-    public static Stream<? extends Element> getAccessibleElements(EObject element, EClass eClass, boolean hierarchy) {
-        if (element == null) {
-            return Stream.empty();
+    public static List<? extends Declaration> getDirectMembers(InlinedOxsts inlinedOxsts) {
+        var elements = new ArrayList<Declaration>(inlinedOxsts.getVariables());
+
+        if (inlinedOxsts.getRootFeature() != null) {
+            elements.add(inlinedOxsts.getRootFeature());
         }
 
-        Stream<? extends Element> accessibleElements;
+        elements.addAll(getGlobalFeatures(inlinedOxsts));
 
-        if (hierarchy) {
-            var containers = getAllContainers(element).spliterator();
+        return elements;
+    }
 
-            accessibleElements = StreamSupport.stream(containers, false)
-                    .flatMap(e -> getDirectlyAccessibleElements(e, eClass));
-        } else {
-            accessibleElements = getDirectlyAccessibleElements(element, eClass);
+    public static List<? extends Declaration> getDirectMembers(RecordDeclaration declaration) {
+        return declaration.getMembers();
+    }
+
+    public static List<? extends Declaration> getDirectMembers(ClassDeclaration declaration) {
+        return declaration.getMembers();
+    }
+
+    public static List<? extends Declaration> getDirectMembers(FeatureDeclaration declaration) {
+        return declaration.getInnerFeatures();
+    }
+
+    public static boolean isAnnotatedWith(AnnotatedElement element, AnnotationDeclaration annotationDeclaration) {
+        var annotationContainer = element.getAnnotation();
+
+        if (annotationContainer == null) {
+            return false;
         }
 
-        return accessibleElements
-                .filter(Objects::nonNull)
-                .distinct();
+        return annotationContainer.getAnnotations().stream().anyMatch(a -> a.getDeclaration() == annotationDeclaration);
     }
 
-    private static Stream<? extends Element> getDirectlyAccessibleElements(EObject element, EClass eClass) {
-        if (element == null) {
-            return Stream.empty();
-        }
+    public static Annotation getAnnotation(AnnotatedElement element, AnnotationDeclaration annotationDeclaration) {
+        var annotationContainer = element.getAnnotation();
 
-        return switch (element) {
-            case Package _package -> Stream.concat(
-                    getDirectlyAccessibleElementsReflective(_package, eClass),
-                    getImportedElements(_package, eClass)
-            );
-            case Type type -> getInheritedElements(type, eClass);
-            case Containment containment -> Stream.concat(
-                    getDirectlyAccessibleElementsReflective(containment, eClass),
-                    getInheritedElements(containment.getTyping(), eClass)
-            );
-            case Feature feature -> getInheritedElements(feature.getTyping(), eClass);
-            case Parameter parameter -> getInheritedElements(parameter.getType(), eClass);
-            case Argument argument -> getInheritedElements(argument.getTyping(), eClass);
-            default -> getDirectlyAccessibleElementsReflective(element, eClass);
-        };
-    }
-
-    private static Stream<? extends Element> getImportedElements(Package _package, EClass eClass) {
-        return _package.getImports().stream().flatMap(it -> getDirectlyAccessibleElementsReflective(it.getPackage(), eClass));
-    }
-
-    private static Stream<? extends Element> getDirectlyAccessibleElementsReflective(EObject eObject, EClass eClass) {
-        return cache.get(Tuples.create(getDirectlyAccessibleElementsReflective_KEY, eObject, eClass), eObject.eResource(), () ->
-            collectDirectlyAccessibleElementsReflective(eObject, eClass)
-        ).stream(); // stream out the collection from cache
-    }
-
-    private static Collection<? extends Element> collectDirectlyAccessibleElementsReflective(EObject eObject, EClass eClass) {
-        return eObject.eClass().getEAllContainments().stream()
-            .filter(containment -> eClass.isSuperTypeOf(containment.getEReferenceType()))
-            .flatMap(containment -> {
-                try {
-                    var element = eObject.eGet(containment);
-
-                    if (element instanceof EList<?> list) {
-                        //noinspection unchecked
-                        return (Stream<? extends Element>) list.stream();
-                    }
-
-                    return Stream.of((Element) element);
-                } catch (Throwable throwable) {
-                    // If for some reason the features are not resolvable, fail gracefully.
-                    return Stream.empty();
-                }
-            }).toList();
-    }
-
-    private static Stream<? extends Element> getInheritedElements(Typing typing, EClass eClass) {
-        if (typing instanceof ReferenceTyping referenceTyping) {
-            var chain = referenceTyping.getReference();
-            var lastExpression = chain.getChains().getLast();
-            var referencedElement = getReferredElement(lastExpression);
-            if (referencedElement instanceof Type type) {
-                return getInheritedElements(type, eClass);
-            }
-        }
-
-        return Stream.empty();
-    }
-
-    private static Stream<? extends Element> getInheritedElements(Type type, EClass eClass) {
-        if (type == null) {
-            return Stream.empty();
-        }
-
-        var supertypes = getAllSupertypes(type).spliterator();
-
-        return StreamSupport.stream(supertypes, false).flatMap(it ->
-                getDirectlyAccessibleElementsReflective(it, eClass)
-        );
-    }
-
-    public static Element getReferredElement(ReferenceExpression expression) {
-        if (expression instanceof DeclarationReferenceExpression declarationReference) {
-            return declarationReference.getElement();
-        } else if (expression instanceof ChainReferenceExpression chainReference) {
-            return getReferredElement(chainReference.getChains().getLast());
-        } else {
+        if (annotationContainer == null) {
             return null;
         }
+
+        return annotationContainer.getAnnotations().stream().filter(a -> a.getDeclaration() == annotationDeclaration).findFirst().orElse(null);
     }
 
-    public static Element getReferredElement(ChainingExpression expression) {
-        if (expression instanceof DeclarationReferenceExpression declarationReferenceExpression) {
-            return declarationReferenceExpression.getElement();
+    public static Expression getAnnotationValue(Annotation annotation, ParameterDeclaration parameterDeclaration) {
+        var argument = annotation.getArguments().stream().filter(a -> a.getParameter() == parameterDeclaration).findFirst().orElse(null);
+
+        if (argument == null) {
+            var position = annotation.getDeclaration().getParameters().indexOf(parameterDeclaration);
+            if (annotation.getArguments().size() <= position) {
+                return null;
+            }
+            argument = annotation.getArguments().get(position);
         }
 
-        throw new IllegalStateException("");
+        return argument.getExpression();
+    }
+
+    public static boolean isWriteExpression(Expression expression) {
+        return expression.eContainmentFeature() == OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE
+            || expression.eContainmentFeature() == OxstsPackage.Literals.HAVOC_OPERATION__REFERENCE;
+    }
+
+    public static boolean isInstanceFeature(FeatureDeclaration featureDeclaration) {
+        return featureDeclaration.getType() instanceof ClassDeclaration;
+    }
+
+    public static boolean isDataFeature(FeatureDeclaration featureDeclaration) {
+        return featureDeclaration.getType() instanceof DataTypeDeclaration
+            || featureDeclaration.getType() instanceof EnumDeclaration
+            || featureDeclaration.getType() instanceof RecordDeclaration;
+    }
+
+    public static boolean isMemberAbstract(Declaration declaration) {
+//        if (declaration instanceof FeatureDeclaration featureDeclaration) {
+//            return featureDeclaration.getKind() == FeatureKind.FEATURE;
+//        }
+        if (declaration instanceof PropertyDeclaration propertyDeclaration) {
+            return propertyDeclaration.isAbstract();
+        }
+        if (declaration instanceof TransitionDeclaration transitionDeclaration) {
+            return transitionDeclaration.isAbstract();
+        }
+        return false;
+    }
+
+    public static boolean isDeclarationAbstract(Declaration declaration) {
+        if (declaration instanceof ClassDeclaration classDeclaration) {
+            return classDeclaration.isAbstract();
+        }
+
+        return isMemberAbstract(declaration);
     }
 
 }

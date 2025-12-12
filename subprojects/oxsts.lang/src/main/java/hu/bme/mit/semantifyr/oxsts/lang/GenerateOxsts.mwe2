@@ -47,6 +47,17 @@ Workflow {
 			
 			fragment = ecore2xtext.Ecore2XtextValueConverterServiceFragment2 auto-inject {}
 
+            parserGenerator = {
+                removeBacktrackingGuards = true
+                lookaheadThreshold = '5'
+                partialParsing = true
+                //debugGrammar = true
+                options = auto-inject {}
+
+                // options = {
+                //     backtrack = true
+                // }
+            }
             serializer = {
                 generateStub = true
             }
@@ -55,9 +66,6 @@ Workflow {
             }
 			validator = {
 				generateDeprecationValidation = true
-			}
-			generator = {
-				generateXtendStub = false
 			}
 			junitSupport = {
 				generateStub = false

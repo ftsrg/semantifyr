@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.gradle.conventions
 
 import org.gradle.accessors.dm.LibrariesForLibs
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.kotlin.dsl.registering
 
 plugins {
     `java-library`
@@ -24,15 +25,17 @@ val libs = the<LibrariesForLibs>()
 
 dependencies {
     testFixturesApi(libs.junit.api)
+    testFixturesApi(libs.assertj.core)
     testFixturesApi(libs.junit.params)
     testFixturesApi(libs.mockito.core)
     testFixturesApi(libs.mockito.junit)
 
     testRuntimeOnly(libs.junit.engine)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 java.toolchain {
-    languageVersion.set(JavaLanguageVersion.of(21))
+    languageVersion = JavaLanguageVersion.of(21)
 }
 
 tasks {
@@ -49,7 +52,7 @@ tasks {
         finalizedBy(tasks.jacocoTestReport)
     }
 
-    val allTests by tasks.creating(Test::class) {
+    val allTests by tasks.registering(Test::class) {
         useJUnitPlatform()
 
         minHeapSize = "512m"

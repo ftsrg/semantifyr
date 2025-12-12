@@ -1,0 +1,272 @@
+package Crossroads
+
+interface CentralControl {
+    out event police
+    out event toggle
+}
+
+// TODO: add enum value
+interface LightControl {
+    out event red
+    out event yellow
+    out event green
+    out event none
+}
+
+statechart CentralController[
+    port control : requires CentralControl,
+    port controlA : provides CentralControl,
+    port controlB : provides CentralControl
+] {
+    timeout toggleTimeout
+
+    region Main {
+        entry transition to Operating
+
+        state Operating {
+            region OperatingRegion {
+                entry transition to BothYellow
+
+                state BothYellow {
+                    entry / set toggleTimeout := 1 s;
+                }
+
+                transition BothYellow to BothRed when timeout toggleTimeout / raise controlA.toggle; raise controlB.toggle; // switch A to Red, B to Red
+
+                state BothRed {
+                    entry / set toggleTimeout := 2 s;
+                }
+
+                transition BothRed to TrafficOnA when timeout toggleTimeout / raise controlA.toggle; // switch A to Green
+
+                state TrafficOnA {
+                    entry / set toggleTimeout := 2 s;
+                }
+
+                transition TrafficOnA to StoppingA when timeout toggleTimeout / raise controlA.toggle; // switch A to Yellow
+
+                state StoppingA {
+                    entry / set toggleTimeout := 1 s;
+                }
+
+                transition StoppingA to TrafficOnB when timeout toggleTimeout / raise controlA.toggle; raise controlB.toggle; // switch A to Red, B to Green
+
+                state TrafficOnB {
+                    entry / set toggleTimeout := 2 s;
+                }
+
+                transition TrafficOnB to StoppingB when timeout toggleTimeout / raise controlB.toggle; // switch B to Yellow
+
+                state StoppingB {
+                    entry / set toggleTimeout := 1 s;
+                }
+
+                transition StoppingB to TrafficOnA when timeout toggleTimeout / raise controlA.toggle; raise controlB.toggle; // switch A to Green, B to Red
+            }
+        }
+        
+        transition Operating to Interrupted when event control.police
+        transition Interrupted to Operating when event control.police
+        
+        state Interrupted {
+            entry / raise controlA.police; raise controlB.police;
+            exit / raise controlA.police; raise controlB.police;
+        }
+    }
+}
+
+statechart TrafficLightController[
+    port control : requires CentralControl,
+    port lightControl : provides LightControl
+] {
+    timeout blinkingTimeout
+
+    region Main {
+        entry transition to Normal
+
+        state Normal {
+            region NormalRegion {
+                entry transition to Yellow
+
+                state Yellow {
+                    entry / raise lightControl.yellow;
+                }
+
+                transition Yellow to Red when event control.toggle
+
+                state Red {
+                    entry / raise lightControl.red;
+                }
+
+                transition Red to Green when event control.toggle
+
+                state Green {
+                    entry / raise lightControl.green;
+                }
+
+                transition Green to Yellow when event control.toggle
+            }
+        }
+
+        transition Normal to Interrupted when event control.police
+        transition Interrupted to Normal when event control.police
+
+        state Interrupted {
+            region InterruptedRegion {
+                entry transition to Yellow
+
+                state Yellow {
+                    entry / set blinkingTimeout := 1 s; raise lightControl.yellow;
+                }
+
+                transition Black to Yellow when timeout blinkingTimeout
+                transition Yellow to Black when timeout blinkingTimeout
+
+                state Black {
+                    entry / set blinkingTimeout := 1 s; raise lightControl.none;
+                }
+            }
+        }
+    }
+}
+
+sync component CrossroadSystem [
+    port control : requires CentralControl/*,
+    port lightControlA : provides LightControl,
+    port lightControlB : provides LightControl*/
+] {
+    component controller : CentralController
+    component trafficLightA : TrafficLightController
+    component trafficLightB : TrafficLightController
+
+    bind control -> controller.control
+    //bind lightControlA -> trafficLightA.lightControl
+    //bind lightControlB -> trafficLightB.lightControl
+
+    channel [ controller.controlA ] -> [ trafficLightA.control ]
+    channel [ controller.controlB ] -> [ trafficLightB.control ]
+}
+
+// CentralController verification cases
+
+
+@Reachable
+verification case ControllerOperatingReachable {
+    component system : CrossroadSystem
+    invariant { isActive (system.controller.Main.Operating) }
+}
+
+@Reachable
+verification case ControllerOperatingBothYellowReachable {
+    component system : CrossroadSystem
+    invariant { isActive (system.controller.Main.Operating.OperatingRegion.BothYellow) }
+}
+
+@Reachable
+verification case ControllerOperatingBothRedReachable {
+    component system : CrossroadSystem
+    invariant { isActive (system.controller.Main.Operating.OperatingRegion.BothRed) }
+}
+
+@Reachable
+verification case ControllerOperatingStoppingAReachable {
+    component system : CrossroadSystem
+    invariant { isActive (system.controller.Main.Operating.OperatingRegion.StoppingA) }
+}
+
+@Reachable
+verification case ControllerOperatingStoppingBReachable {
+    component system : CrossroadSystem
+    invariant { isActive (system.controller.Main.Operating.OperatingRegion.StoppingB) }
+}
+
+@Reachable
+verification case ControllerOperatingTrafficOnAReachable {
+    component system : CrossroadSystem
+    invariant { isActive (system.controller.Main.Operating.OperatingRegion.TrafficOnA) }
+}
+
+@Reachable
+verification case ControllerOperatingTrafficOnBReachable {
+    component system : CrossroadSystem
+    invariant { isActive (system.controller.Main.Operating.OperatingRegion.TrafficOnB) }
+}
+
+
+@Reachable
+verification case ControllerInterruptedReachable {
+    component system : CrossroadSystem
+    invariant { isActive (system.controller.Main.Interrupted) }
+}
+
+// TrafficLightController A verification cases
+
+@Reachable
+verification case ACanBeYellow {
+    component system : CrossroadSystem
+    invariant { isActive (system.trafficLightA.Main.Normal.NormalRegion.Yellow) }
+}
+
+@Reachable
+verification case ACanBeRed {
+    component system : CrossroadSystem
+    invariant { isActive (system.trafficLightA.Main.Normal.NormalRegion.Red) }
+}
+
+@Reachable
+verification case ACanBeGreen {
+    component system : CrossroadSystem
+    invariant { isActive (system.trafficLightA.Main.Normal.NormalRegion.Green) }
+}
+
+@Reachable
+verification case ACanBeBlinkingYellow {
+    component system : CrossroadSystem
+    invariant { isActive (system.trafficLightA.Main.Interrupted.InterruptedRegion.Yellow) }
+}
+
+@Reachable
+verification case ACanBeBlinkingBlack {
+    component system : CrossroadSystem
+    invariant { isActive (system.trafficLightA.Main.Interrupted.InterruptedRegion.Black) }
+}
+
+// TrafficLightController B verification cases
+
+@Reachable
+verification case BCanBeYellow {
+    component system : CrossroadSystem
+    invariant { isActive (system.trafficLightB.Main.Normal.NormalRegion.Yellow) }
+}
+
+@Reachable
+verification case BCanBeRed {
+    component system : CrossroadSystem
+    invariant { isActive (system.trafficLightB.Main.Normal.NormalRegion.Red) }
+}
+
+@Reachable
+verification case BCanBeGreen {
+    component system : CrossroadSystem
+    invariant { isActive (system.trafficLightB.Main.Normal.NormalRegion.Green) }
+}
+
+@Reachable
+verification case BCanBeBlinkingYellow {
+    component system : CrossroadSystem
+    invariant { isActive (system.trafficLightB.Main.Interrupted.InterruptedRegion.Yellow) }
+}
+
+@Reachable
+verification case BCanBeBlinkingBlack {
+    component system : CrossroadSystem
+    invariant { isActive (system.trafficLightB.Main.Interrupted.InterruptedRegion.Black) }
+}
+
+// Combined safety verification cases
+
+@Unreachable
+verification case BothCannotBeGreen {
+    component system : CrossroadSystem
+    invariant { isActive (system.trafficLightA.Main.Normal.NormalRegion.Green) && isActive (system.trafficLightB.Main.Normal.NormalRegion.Green) }
+}

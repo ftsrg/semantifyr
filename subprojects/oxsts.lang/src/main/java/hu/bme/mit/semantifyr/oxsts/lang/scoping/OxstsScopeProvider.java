@@ -7,27 +7,31 @@
 package hu.bme.mit.semantifyr.oxsts.lang.scoping;
 
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Package;
+import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
+import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ImmutableTypeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.naming.QualifiedName;
+import org.eclipse.xtext.resource.ISelectable;
+import org.eclipse.xtext.scoping.ICaseInsensitivityHelper;
 import org.eclipse.xtext.scoping.IScope;
-import org.eclipse.xtext.scoping.IScopeProvider;
 import org.eclipse.xtext.scoping.Scopes;
-import org.eclipse.xtext.scoping.impl.AbstractDeclarativeScopeProvider;
+import org.eclipse.xtext.scoping.impl.SelectableBasedScope;
 
-import static hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils.getAccessibleElements;
-import static hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils.getReferredElement;
-
-public class OxstsScopeProvider implements IScopeProvider {
+public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 
     @Inject
-    @Named(AbstractDeclarativeScopeProvider.NAMED_DELEGATE)
-    private IScopeProvider localScopeProvider;
+    private ExpressionTypeEvaluatorProvider expressionTypeEvaluatorProvider;
+
+    @Inject
+    private DomainMemberCollectionProvider domainMemberCollectionProvider;
+
+    @Inject
+    private ICaseInsensitivityHelper caseInsensitivityHelper;
 
     @Override
     public IScope getScope(EObject context, EReference reference) {
@@ -35,105 +39,113 @@ public class OxstsScopeProvider implements IScopeProvider {
             return IScope.NULLSCOPE;
         }
 
-        return calculateScope(context, reference);
+        try {
+            return calculateScope(context, reference);
+        } catch (RuntimeException e) {
+            // FIXME: should log here
+            e.printStackTrace();
+            return IScope.NULLSCOPE;
+        }
     }
 
     protected IScope calculateScope(EObject context, EReference reference) {
-        if (reference == OxstsPackage.Literals.IMPORT__PACKAGE) {
-            return calculateOuterScope(context, reference);
+        if (reference == OxstsPackage.Literals.FEATURE_DECLARATION__SUPERSET) {
+            return calculateFeatureSuperSetsScope(context, reference);
         }
 
-        if (isTypeReference(reference)) {
-            var _package = EcoreUtil2.getContainerOfType(context, Package.class);
-            return scopeElement(_package, reference, false);
+        if (reference == OxstsPackage.Literals.REDEFINABLE_DECLARATION__REDEFINED) {
+            return calculateFeatureRedefinedScope(context, reference);
         }
 
-        if (context instanceof ChainingExpression chain) {
-            return calculateChainScope(chain, reference);
+        if (reference == OxstsPackage.Literals.FEATURE_DECLARATION__OPPOSITE) {
+            return calculateOppositeScope(context, reference);
         }
 
-        if (context instanceof FeatureConstraint featureConstraint) {
-            return calculateFeatureConstraintScope(featureConstraint, reference);
+        if (reference == OxstsPackage.Literals.FEATURE_DECLARATION__TYPE
+            || reference == OxstsPackage.Literals.VARIABLE_DECLARATION__TYPE) {
+            return super.getScope(context, reference);
         }
 
-        return scopeElement(context, reference, true);
-    }
+        if (reference == OxstsPackage.Literals.ARGUMENT__PARAMETER) {
+            var parent = context.eContainer();
 
-    protected IScope calculateChainScope(ChainingExpression expression, EReference reference) {
-        var chain = EcoreUtil2.getContainerOfType(expression, ChainReferenceExpression.class);
+            if (parent instanceof Annotation annotation) {
+                var declaration = annotation.getDeclaration();
 
-        var index = chain.getChains().indexOf(expression);
+                if (declaration.eIsProxy()) {
+                    throw new IllegalStateException("Annotation declaration could not be resolved!");
+                }
 
-        if (index <= 0) {
-            return calculateFirstChainScope(chain, reference);
-        }
+                return scopeFor(declaration.getParameters());
+            } else if (parent instanceof CallSuffixExpression callExpression) {
+//                var expression = callExpression.getExpression(); // TODO: implement static evaluator
 
-        var lastExpression = chain.getChains().get(index - 1);
-        var referencedElement = getReferredElement(lastExpression);
+                return IScope.NULLSCOPE;
+            }
 
-        return scopeElement(referencedElement, reference, false);
-    }
-
-    protected IScope calculateFirstChainScope(ChainReferenceExpression chain, EReference reference) {
-        var inlineComposite = EcoreUtil2.getContainerOfType(chain, InlineComposite.class);
-        if (inlineComposite != null && inlineComposite.getTransition() == chain) {
-            return scopeElement(getReferredElement(inlineComposite.getFeature()), reference, false);
-        }
-
-        var referenceTyping = EcoreUtil2.getContainerOfType(chain, ReferenceTyping.class);
-        if (referenceTyping != null) {
-            var containingType = EcoreUtil2.getContainerOfType(chain, Type.class);
-            return scopeElement(containingType, reference, true);
-        }
-
-        return scopeElement(chain, reference, true);
-    }
-
-    protected IScope calculateFeatureConstraintScope(FeatureConstraint featureConstraint, EReference reference) {
-        return scopeElement(featureConstraint.getType(), reference, false);
-    }
-
-    private String customNameProvider(EObject eObject) {
-        if (eObject == null) {
-            return null;
-        }
-
-        var element = (Element) eObject;
-
-        if (element instanceof Transition transition) {
-            return OxstsQualifiedNameProvider.transitionWithImplicitName(transition);
-        }
-
-        return element.getName();
-    }
-
-    protected IScope scopeElement(EObject element, EReference reference, boolean hierarchy) {
-        if (element == null) {
             return IScope.NULLSCOPE;
         }
 
-        var accessibleElements = getAccessibleElements(element, reference.getEReferenceType(), hierarchy).toList();
+        if (context instanceof NavigationSuffixExpression navigationSuffixExpression) {
+            var primary = navigationSuffixExpression.getPrimary();
+            var primaryEvaluation = expressionTypeEvaluatorProvider.evaluate(primary);
 
-        var outer = calculateOuterScope(element, reference);
+            if (primaryEvaluation instanceof ImmutableTypeEvaluation(DomainDeclaration domainDeclaration)) {
+                var members = domainMemberCollectionProvider.getMembers(domainDeclaration);
+                return scopeFor(reference, members);
+            }
 
-        return Scopes.scopeFor(accessibleElements, QualifiedName.wrapper(this::customNameProvider), outer);
-    }
-
-    protected IScope calculateOuterScope(EObject element, EReference reference) {
-        if (element == null || element.eResource() == null) {
             return IScope.NULLSCOPE;
         }
 
-        return localScopeProvider.getScope(element, reference);
+//        if (context instanceof Expression expression) {
+//            var defaultExpressionContainer = OxstsUtils.containingVarOrFeatureIfDefaultExpression(expression);
+//            if (defaultExpressionContainer != null) {
+//                var originalScope = super.getScope(defaultExpressionContainer, reference);
+//
+//                return new FilteringScope(originalScope, e -> e.getEObjectOrProxy() != defaultExpressionContainer);
+//            }
+//        }
+
+        return super.getScope(context, reference);
     }
 
-    private boolean isTypeReference(EReference reference) {
-        return reference == OxstsPackage.Literals.TYPE__SUPERTYPE ||
-                reference == OxstsPackage.Literals.FEATURE__TYPING ||
-                reference == OxstsPackage.Literals.REFERENCE_TYPING__REFERENCE ||
-                reference == OxstsPackage.Literals.TYPE_CONSTRAINT__TYPE ||
-                reference == OxstsPackage.Literals.FEATURE_CONSTRAINT__TYPE ||
-                reference == OxstsPackage.Literals.PARAMETER__TYPE;
+    protected IScope calculateOppositeScope(EObject context, EReference reference) {
+        var featureDeclaration = EcoreUtil2.getContainerOfType(context, FeatureDeclaration.class);
+        if (featureDeclaration == null) {
+            return IScope.NULLSCOPE;
+        }
+        var type = featureDeclaration.getType();
+
+        if (type.eIsProxy()) {
+            throw new IllegalStateException("Class supertype could not be resolved!");
+        }
+
+        if (!(type instanceof ClassDeclaration classDeclaration)) {
+            return IScope.NULLSCOPE;
+        }
+
+        return scopeFor(reference, domainMemberCollectionProvider.getMembers(classDeclaration));
+    }
+
+    protected IScope calculateFeatureSuperSetsScope(EObject context, EReference reference) {
+        var container = (DomainDeclaration) context.eContainer();
+
+        return scopeFor(reference, domainMemberCollectionProvider.getMembers(container));
+    }
+
+    protected IScope calculateFeatureRedefinedScope(EObject context, EReference reference) {
+        var container = (DomainDeclaration) context.eContainer();
+
+        return scopeFor(reference, domainMemberCollectionProvider.getParentCollection(container).getMemberSelectable());
+    }
+
+    protected IScope scopeFor(EReference reference, ISelectable selectable) {
+        return SelectableBasedScope.createScope(IScope.NULLSCOPE, selectable, reference.getEReferenceType(), caseInsensitivityHelper.isIgnoreCase(reference));
+    }
+
+    protected IScope scopeFor(Iterable<? extends Element> elements) {
+        return Scopes.scopeFor(elements, QualifiedName.wrapper(NamingUtil::getName), IScope.NULLSCOPE);
     }
 
 }

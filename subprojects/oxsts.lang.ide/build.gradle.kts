@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -17,7 +17,10 @@ val ideGeneratedClasspath by configurations.creating {
 dependencies {
     api(project(":oxsts.lang"))
 
-    implementation(libs.xtext.ide)
+    implementation(project(":semantics"))
+    implementation(project(":xsts-verifier"))
+
+    api(libs.xtext.ide)
     runtimeOnly(libs.slf4j.log4j)
 
     ideGeneratedClasspath(project(":oxsts.lang", configuration = "ideGeneratedOutput"))

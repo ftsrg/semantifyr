@@ -1,0 +1,312 @@
+/*
+ * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::gamma::statecharts
+
+import semantifyr::gamma::expressions
+import semantifyr::gamma::variables
+import semantifyr::gamma::components
+import semantifyr::gamma::triggers
+import semantifyr::gamma::actions
+import semantifyr::gamma::events
+
+enum RegionSchedule {
+    TopDown, 
+    BottomUp
+}
+
+class TransitionScheduler {
+    refers innerRegions: Region[0..*]
+
+    tran fireTransitions(regionSchedule: RegionSchedule) {
+        inline if (regionSchedule == RegionSchedule::BottomUp) {
+            inline fireTransitionsBottomUp()
+        } else {
+            inline fireTransitionsTopDown()
+        }
+    }
+
+    tran fireTransitionsTopDown() {
+        var anyRegionExecuted := false
+        inline for (region in innerRegions) {
+            choice {
+                inline region.fireLocalTransitions()
+                anyRegionExecuted := true
+            } or {
+                // fire state transitions if local transitions are not enabled (top-down)
+                inline region.assumeNoLocalTransitionEnabled()
+                inline region.fireInnerTransitions(RegionSchedule::TopDown)     
+                anyRegionExecuted := true       
+            } or {
+                // do nothing, if no transition is enabled
+                inline region.assumeNoTransitionEnabled()
+            }
+        }
+        assume (anyRegionExecuted) // at least one inner "parallel" region must be executed
+    }
+
+    tran fireTransitionsBottomUp() {
+        var anyRegionExecuted := false
+        inline for (region in innerRegions) {
+            choice {
+                // fire state transitions if inner transitions are not enabled (bottom-up)
+                inline region.assumeNoInnerTransitionEnabled()
+                inline region.fireLocalTransitions()
+                anyRegionExecuted := true
+            } or {
+                inline region.fireInnerTransitions(RegionSchedule::BottomUp)     
+                anyRegionExecuted := true       
+            } or {
+                // do nothing, if no transition is enabled
+                inline region.assumeNoTransitionEnabled()
+            }
+        }
+        assume (anyRegionExecuted) // at least one inner "parallel" region must be executed
+    }
+
+}
+
+class Statechart : Component {
+    contains regions: Region[0..*]
+    contains variables: Variable[0..*]
+    refers regionSchedule: RegionSchedule = RegionSchedule::BottomUp
+
+    contains transitionScheduler: TransitionScheduler {
+        redefine refers innerRegions: Region[0..*] = regions
+    }
+
+    redefine init {
+        inline for (region in regions) {
+            inline region.activateRecursive()
+        }
+    }
+
+    redefine tran {
+        inline resetOutputEvents()
+
+        choice {
+            inline transitionScheduler.fireTransitions(regionSchedule)
+        } or {
+            inline assumeNoTransitionEnabled()
+            // only do nothing, if the statechart cannot do anything, i.e., no fireable transitions
+        }
+
+        inline resetInputEvents()
+    }
+
+    // TODO: would be easier to implement if we had ...any { } and ...all { } lambda functions that could compose expressions
+
+    tran assumeNoTransitionEnabled() {
+        inline for (region in regions) {
+            inline region.assumeNoTransitionEnabled()
+        }
+    }
+}
+
+class Region {
+    contains states: State[0..*] opposite parentRegion
+    container parentState: State[0..1] opposite regions
+
+    contains abstractTransitions: AbstractTransition[0..*]
+    contains transitions: Transition[0..*] subsets abstractTransitions opposite parentRegion
+    contains entryTransitions: EntryTransition[0..*] subsets abstractTransitions
+
+    @Control
+    var activeState: states[0..1] := nothing
+
+    tran activateRecursive() {
+        inline for (transition in entryTransitions) {
+            inline transition.main()
+        }
+    }
+    tran deactivateRecursive() {
+        inline for (state in states) {
+            inline state.deactivateRecursive()
+        }
+    }
+
+    tran fireLocalTransitions() {
+        inline for choice (transition in transitions) {
+            inline transition.main()
+        } else {
+            assume (false)
+        }
+    }
+
+    tran fireInnerTransitions(regionSchedule: RegionSchedule) {
+        inline for choice (state in states) {
+            inline state.fireTransitions(regionSchedule)
+        } else {
+            assume (false)
+        }
+    }
+
+    tran assumeNoLocalTransitionEnabled() {
+        inline for (transition in transitions) {
+            assume (! transition.isEnabled())
+        }
+    }
+
+    tran assumeNoInnerTransitionEnabled() {
+        inline for (state in states) {
+            inline state.assumeNoTransitionEnabled()
+        }
+    }
+
+    tran assumeNoTransitionEnabled() {
+        inline assumeNoLocalTransitionEnabled()
+        inline assumeNoInnerTransitionEnabled()
+    }
+
+}
+
+class State {
+    container parentRegion: Region[1] opposite states
+    contains regions: Region[0..*] opposite parentState
+
+    refers parentState: State[0..1] = parentRegion.parentState // as pattern parentState
+    contains entryActions: Action[0..*]
+    contains exitActions: Action[0..*]
+
+    contains transitionScheduler: TransitionScheduler {
+        redefine refers innerRegions: Region[0..*] = regions
+    }
+
+    prop isActive(): bool {
+        return parentRegion.activeState == self
+    }
+    tran deactivateRecursive() {
+        inline for (region in regions) {
+            inline region.deactivateRecursive()
+        }
+
+        if (parentRegion.activeState == self) {
+            parentRegion.activeState := nothing
+
+            inline for (exitAction in exitActions) {
+                inline exitAction.main()
+            }
+        }
+    }
+    tran exitRecursive(commonRegion: Region) {
+        inline for (exitAction in exitActions) {
+            inline exitAction.main()
+        }
+
+        parentRegion.activeState := nothing
+
+        inline if (commonRegion != parentRegion) {
+            inline if (parentState != nothing) {
+                inline parentState.exitRecursive(commonRegion)
+            }
+        }
+    }
+    tran exit(commonRegion: Region) {
+        inline exitRecursive(commonRegion)
+
+        inline for (region in regions) {
+            inline region.deactivateRecursive()
+        }
+    }
+    tran enterRecursive(commonRegion : Region) {
+        inline if (commonRegion != parentRegion) {
+            inline if (parentState != nothing) {
+                inline parentState.enterRecursive(commonRegion)
+            }
+        }
+
+        parentRegion.activeState := self
+
+        inline for (action in entryActions) {
+            inline action.main()
+        }
+    }
+    tran enter(commonRegion: Region) {
+        inline enterRecursive(commonRegion)
+
+        inline for (region in regions) {
+            inline region.activateRecursive()
+        }
+    }
+    tran fireTransitions(regionSchedule: RegionSchedule) {
+        inline if (regions == nothing) {
+            assume (false)
+        } else {
+            inline transitionScheduler.fireTransitions(regionSchedule)
+        }
+    }
+
+    tran assumeNoTransitionEnabled() {
+        inline for (region in regions) {
+            inline region.assumeNoTransitionEnabled()
+        }
+    }
+}
+
+class Guard {
+    contains expression: Expression[1]
+
+    prop isOpen(): bool {
+        return expression.evaluate()
+    }
+}
+
+abstract class AbstractTransition {
+    container parentRegion: Region[1] opposite transitions
+
+    refers to: State[1]
+
+    abstract prop isEnabled(): bool
+
+    tran fire() {
+        inline to.enter(parentRegion)
+    }
+
+    redefine tran {
+        assume (isEnabled())
+        inline fire()
+    }
+}
+
+class EntryTransition : AbstractTransition {
+    redefine prop isEnabled(): bool {
+        return true
+    }
+}
+
+class Transition : AbstractTransition {
+    refers from: State[1]
+
+    contains trigger: Trigger[1]
+    contains guard: Guard[1] { // default guard is true
+        redefine contains expression: LiteralBooleanExpression {
+            redefine refers value: bool = true
+        }
+    }
+
+    contains actions: Action[0..*]
+
+    redefine prop isEnabled(): bool {
+        return trigger.isTriggered() && from.isActive() && guard.isOpen()
+    }
+
+    redefine tran fire() {
+        inline from.exit(parentRegion)
+        inline for (action in actions) {
+            inline action.main()
+        }
+        inline to.enter(parentRegion)
+    }
+}
+
+class IsStateActiveExpression : Expression {
+    refers state: State
+
+    redefine prop evaluate(): bool {
+        return state.isActive()
+    }
+    
+}
