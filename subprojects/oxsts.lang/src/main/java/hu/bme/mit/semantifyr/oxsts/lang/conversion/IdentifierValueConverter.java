@@ -59,6 +59,9 @@ public class IdentifierValueConverter implements IValueConverter<String> {
 		if (NamingUtil.isSimpleId(value) && !keywords.contains(value)) {
 			return value;
 		}
+        if (NamingUtil.isQuotedId(value)) {
+            return value;
+        }
 		return quotedIdValueConverter.toString(value);
 	}
 }
