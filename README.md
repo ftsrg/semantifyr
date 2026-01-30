@@ -12,7 +12,7 @@ A framework to support the declarative definition of engineering model semantics
 
 ## Build
 
-Use Java 21 for building.
+Use Java 25 for building.
 
 Run `gradlew build` to assemble the whole project, and execute all automated test, including regression testing and formal verifications. The required environment (e.g., Theta binaries) is automatically constructed by Gradle. Tests should run in a few minutes.
 
@@ -26,7 +26,7 @@ Please, follow the instructions in [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## License
 
-Copyright (c) 2023-2025 [Semantifyr Authors](CONTRIBUTORS.md)
+Copyright (c) 2023-2026 [Semantifyr Authors](CONTRIBUTORS.md)
 
 Semantifyr is available under the [Eclipse Public License - v 2.0](https://www.eclipse.org/legal/epl-2.0/).
 
