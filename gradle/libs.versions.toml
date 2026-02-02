@@ -5,7 +5,7 @@
 [versions]
 ecore = "2.40.0"
 junit = "5.12.2"
-assertj = "3.27.6"
+assertj = "3.27.7"
 junitplatform = "1.13.4"
 mockito = "5.19.0"
 mwe2 = "2.23.0"
