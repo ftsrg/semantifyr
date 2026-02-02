@@ -28,7 +28,7 @@ jobs:
     - name: Test Docker
       run: docker run hello-world
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     - name: Set up JDK
       uses: actions/setup-java@v4
       with:
@@ -63,6 +63,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: REUSE Compliance Check
         uses: fsfe/reuse-action@v5
