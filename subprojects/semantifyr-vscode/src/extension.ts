@@ -6,7 +6,7 @@
 
 import {ExtensionContext} from 'vscode';
 import {registerOutputChannel} from "./outputChannel.js";
-import {startClients, stopClients} from "./clients.js";
+import {startClients, stopClients} from "./clients/clients.js";
 import { registerCommands } from './commands.js';
 
 export async function activate(context: ExtensionContext) {

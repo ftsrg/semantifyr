@@ -1,7 +1,64 @@
-import vscode, { TestController, ExtensionContext, Range, Position, RelativePattern, WorkspaceFolder, CancellationToken, TestItem, TestMessage, TestRunProfileKind, TestRunRequest, TextDocument, Uri, WorkspaceFoldersChangeEvent, Location } from "vscode";
+
+import vscode, { CancellationToken, commands, ExtensionContext, Location, Position, Range, RelativePattern, TestController, TestItem, TestMessage, TestRunProfileKind, TestRunRequest, TextDocument, Uri, WorkspaceFolder, WorkspaceFoldersChangeEvent } from "vscode";
+import path from "path";
+import { LanguageClient} from "vscode-languageclient/node.js";
+import { createRemoteLspClient, createLspClient } from "./client-utils.js";
+import { executablePostfix } from "../runner-utils.js";
 import { ExecuteCommandRequest } from "vscode-languageclient";
-import { LanguageClient } from "vscode-languageclient/node.js";
-import { oxstsClient } from "./clients.js";
+
+type NavigateToParams = {
+    locations: Location[]
+}
+
+let client: LanguageClient;
+
+export async function startOxstsClient(context: ExtensionContext) {
+    const oxstsIdeExecutable = path.join(context.extensionPath, 'bin', 'oxsts.lang.ide', 'bin', `oxsts.lang.ide${executablePostfix}`);
+
+    if (process.env.DEBUG_OXSTS_LSP) {
+        const port = Number(process.env.DEBUG_OXSTS_LSP)
+        client = createRemoteLspClient(port, "oxsts");
+    } else {
+        client = createLspClient(oxstsIdeExecutable, "oxsts");
+    }
+
+    client.onNotification('workspace/navigateTo', (params: NavigateToParams) => {
+        void navigateToLocation(params.locations);
+    });
+
+    await client.start();
+
+    const oxstsTestController = new OxstsTestController(client);
+    oxstsTestController.registerTestProvider(context);
+    await oxstsTestController.refreshWorkspaceTests();
+}
+
+export async function stopOxstsClient() {
+    await client.stop();
+}
+
+async function navigateToLocation(locations: Location[]) {
+    const actualLocations = locations.map(location => {
+        const uri = vscode.Uri.parse(location.uri.toString());
+        const range = new Range(
+            new Position(location.range.start.line, location.range.start.character),
+            new Position(location.range.end.line, location.range.end.character),
+        )
+        return new Location(uri, range);
+    });
+    
+    let editor = vscode.window.activeTextEditor;
+    if (editor === undefined) {
+        const uri = locations[0].uri;
+        const doc = await vscode.workspace.openTextDocument(uri);
+        editor = await vscode.window.showTextDocument(doc);
+    }
+
+    const currentUri = editor.document.uri;
+    const currentPosition = editor.selection.start;
+
+    await commands.executeCommand('editor.action.goToLocations', currentUri, currentPosition, actualLocations, "peek");
+}
 
 type VerificationCaseSpecification = {
     id: string
@@ -64,7 +121,7 @@ export class OxstsTestController {
         );
     }
 
-    protected async refreshWorkspaceTests() {
+    public async refreshWorkspaceTests() {
         const uris = await vscode.workspace.findFiles("**/*.oxsts");
         await this.refreshDocumentsUri(uris);
     }
@@ -111,7 +168,7 @@ export class OxstsTestController {
     protected async refreshDocumentUriTests(uri: Uri) {
         const documentTestItem = this.getDocumentTestItem(uri);
 
-        const verificationCases = await oxstsClient.sendRequest(ExecuteCommandRequest.type, {
+        const verificationCases = await client.sendRequest(ExecuteCommandRequest.type, {
             command: 'oxsts.case.discover',
             arguments: [uri.toString()]
         }) as VerificationCaseSpecification[];
@@ -188,7 +245,7 @@ export class OxstsTestController {
             run.started(testItem);
 
             try {
-                const result = await oxstsClient.sendRequest(ExecuteCommandRequest.type, {
+                const result = await client.sendRequest(ExecuteCommandRequest.type, {
                     command: 'oxsts.case.verify',
                     arguments: [ { 
                         uri: testItem.uri!.toString(), 

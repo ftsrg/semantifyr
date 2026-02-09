@@ -8,7 +8,7 @@ import vscode, {ExtensionContext} from "vscode";
 import path from "path";
 import childProcess from "child_process";
 import {outputChannel, writeErrorMessage, writeSuccessMessage, writeToOutputChannel} from "./outputChannel.js";
-import {executablePostfix} from "./runnerUtils.js";
+import {executablePostfix} from "./runner-utils.js";
 
 export async function executeProcess<R>(name: string, process: () => Thenable<R>) {
     vscode.window.showInformationMessage(name);
