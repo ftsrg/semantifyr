@@ -80,7 +80,8 @@ public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensServic
         EcoreUtil2.getAllProperContents(resource, false).forEachRemaining(element -> {
             if (element instanceof ClassDeclaration classDeclaration) {
                 if (annotationHandler.isVerificationCase(classDeclaration)) {
-                    lenses.add(createCompileLense(classDeclaration));
+                    lenses.add(createCompileLense(classDeclaration, false));
+                    lenses.add(createCompileLense(classDeclaration, true));
                     lenses.add(createSummarizeLense(classDeclaration));
                 }
             } else if (element instanceof RedefinableDeclaration redefinableDeclaration) {
@@ -96,9 +97,10 @@ public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensServic
         return lenses;
     }
 
-    private CodeLens createCompileLense(ClassDeclaration classDeclaration) {
+    private CodeLens createCompileLense(ClassDeclaration classDeclaration, boolean serializeStep) {
         var codeLens = new CodeLens();
-        var command = new Command(inlineOxstsCommandHandler.getTitle(), inlineOxstsCommandHandler.getId(), inlineOxstsCommandHandler.serializeArguments(classDeclaration));
+        var title = serializeStep ? inlineOxstsCommandHandler.getTitle() + " (with steps)" : inlineOxstsCommandHandler.getTitle();
+        var command = new Command(title, inlineOxstsCommandHandler.getId(), inlineOxstsCommandHandler.serializeArguments(new InlineOxstsCommandParams(classDeclaration, serializeStep)));
         codeLens.setCommand(command);
         var classNode = NodeModelUtils.getNode(classDeclaration);
         var start = new Position(classNode.getStartLine() - 1, 0);
