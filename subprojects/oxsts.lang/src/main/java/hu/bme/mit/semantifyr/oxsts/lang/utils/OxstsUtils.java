@@ -160,14 +160,18 @@ public class OxstsUtils {
             || expression.eContainmentFeature() == OxstsPackage.Literals.HAVOC_OPERATION__REFERENCE;
     }
 
+    public static boolean isCallable(Element declaration) {
+        return declaration instanceof TransitionDeclaration || declaration instanceof RecordDeclaration || declaration instanceof PropertyDeclaration;
+    }
+
     public static boolean isInstanceFeature(FeatureDeclaration featureDeclaration) {
-        return featureDeclaration.getType() instanceof ClassDeclaration;
+        return featureDeclaration.getTypeSpecification().getDomain() instanceof ClassDeclaration;
     }
 
     public static boolean isDataFeature(FeatureDeclaration featureDeclaration) {
-        return featureDeclaration.getType() instanceof DataTypeDeclaration
-            || featureDeclaration.getType() instanceof EnumDeclaration
-            || featureDeclaration.getType() instanceof RecordDeclaration;
+        return featureDeclaration.getTypeSpecification().getDomain() instanceof DataTypeDeclaration
+            || featureDeclaration.getTypeSpecification().getDomain() instanceof EnumDeclaration
+            || featureDeclaration.getTypeSpecification().getDomain() instanceof RecordDeclaration;
     }
 
     public static boolean isMemberAbstract(Declaration declaration) {

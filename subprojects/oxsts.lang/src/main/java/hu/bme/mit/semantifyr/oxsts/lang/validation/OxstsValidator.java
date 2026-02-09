@@ -60,6 +60,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED = ISSUE_PREFIX + "ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED";
     public static final String ABSTRACT_FEATURE_INHERITED_MEMBERS_NOT_REDEFINED = ISSUE_PREFIX + "ABSTRACT_FEATURE_INHERITED_MEMBERS_NOT_REDEFINED";
     public static final String INCORRECT_ASSIGNMENT = ISSUE_PREFIX + "INCORRECT_ASSIGNMENT";
+    public static final String INCORRECT_CALLED_ELEMENT = ISSUE_PREFIX + "INCORRECT_CALLED_ELEMENT";
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
@@ -245,6 +246,15 @@ public class OxstsValidator extends AbstractOxstsValidator {
 
         if (!(assigned instanceof VariableDeclaration)) {
             acceptError("Only variables can be assigned to!", assignmentOperation, OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE, 0, INCORRECT_ASSIGNMENT);
+        }
+    }
+
+    @Check
+    public void checkValidCalledElements(CallSuffixExpression callSuffixExpression) {
+        var called = metaConstantExpressionEvaluatorProvider.evaluate(callSuffixExpression.getPrimary());
+
+        if (! OxstsUtils.isCallable(called)) {
+            acceptError("Element " + called.getName() + " is not callable!", callSuffixExpression, OxstsPackage.Literals.POSTFIX_UNARY_EXPRESSION__PRIMARY, 0, INCORRECT_CALLED_ELEMENT);
         }
     }
 
