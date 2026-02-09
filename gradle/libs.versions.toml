@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: EPL-2.0
 
 [versions]
-ecore = "2.40.0"
+ecore = "2.41.0"
 junit = "6.0.2"
 assertj = "3.27.7"
 junitplatform = "1.13.4"
@@ -12,11 +12,11 @@ mwe2 = "2.24.0"
 slf4j = "2.0.17"
 log4j = "2.25.1"
 xtext = "2.41.0"
-kotlin = "2.3.0"
+kotlin = "2.3.10"
 kotlinxCoroutines = "1.10.2"
 cliKt = "5.1.0"
 viatra = "2.9.1"
-dockerJava = "3.4.0"
+dockerJava = "3.7.0"
 guice = "7.0.0"
 node = "7.1.0"
 
@@ -30,7 +30,7 @@ junit-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", ver
 assertj-core = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }
 mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
 mockito-junit = { group = "org.mockito", name = "mockito-junit-jupiter", version.ref = "mockito" }
-mwe-utils = { group = "org.eclipse.emf", name = "org.eclipse.emf.mwe.utils", version = "1.9.0" }
+mwe-utils = { group = "org.eclipse.emf", name = "org.eclipse.emf.mwe.utils", version = "1.18.0" }
 mwe2-launch = { group = "org.eclipse.emf", name = "org.eclipse.emf.mwe2.launch", version.ref = "mwe2" }
 mwe2-lib = { group = "org.eclipse.emf", name = "org.eclipse.emf.mwe2.lib", version.ref = "mwe2" }
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
