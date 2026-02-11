@@ -11,6 +11,8 @@ import { registerCommands } from './commands.js';
 
 export async function activate(context: ExtensionContext) {
     registerOutputChannel(context);
+    await startClients(context);
+
     registerCommands(context);
 
     await startClients(context);
