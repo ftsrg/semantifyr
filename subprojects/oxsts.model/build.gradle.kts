@@ -18,10 +18,8 @@ dependencies {
     mwe2(libs.xtext.xbase)
 }
 
-sourceSets {
-    main {
-        java.srcDir("src/main/emf-gen")
-    }
+sourceSets.main {
+    java.srcDir("src/main/emf-gen")
 }
 
 tasks {
@@ -39,10 +37,8 @@ tasks {
         args("./GenerateModel.mwe2", "-p", "rootPath=/$projectDir")
     }
 
-    listOf("compileJava", "processResources").forEach { task ->
-        named(task) {
-            inputs.files(generateEPackage.get().outputs)
-        }
+    compileJava {
+        inputs.files(generateEPackage.get().outputs)
     }
 
     clean {

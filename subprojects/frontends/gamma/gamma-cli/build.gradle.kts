@@ -13,17 +13,6 @@ repositories {
     mavenCentral()
 }
 
-val distributionOutput by configurations.creating {
-    isCanBeConsumed = true
-    isCanBeResolved = false
-}
-
-artifacts {
-    add(distributionOutput.name, layout.buildDirectory.dir("install")) {
-        builtBy(tasks.installDist)
-    }
-}
-
 dependencies {
     implementation(project(":gamma-semantics"))
 

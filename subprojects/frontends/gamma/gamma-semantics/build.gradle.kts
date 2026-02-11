@@ -13,11 +13,6 @@ repositories {
     mavenCentral()
 }
 
-val distributionOutput by configurations.creating {
-    isCanBeConsumed = true
-    isCanBeResolved = false
-}
-
 dependencies {
     api(project(":gamma.lang"))
 
