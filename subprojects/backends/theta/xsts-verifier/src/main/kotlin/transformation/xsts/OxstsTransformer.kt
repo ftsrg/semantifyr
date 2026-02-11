@@ -57,7 +57,7 @@ class OxstsTransformer {
         progressContext.checkIsCancelled()
 
         xsts.enumDeclarations += inlinedOxsts.variables.asSequence().map {
-            it.type
+            it.typeSpecification.domain
         }.filterIsInstance<EnumDeclaration>().map {
             oxstsDomainTransformer.transform(it)
         }.distinct()

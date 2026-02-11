@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.semantics.transformation.inliner
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OperationVisitor
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
@@ -34,7 +35,12 @@ import hu.bme.mit.semantifyr.semantics.expression.MetaStaticExpressionEvaluatorP
 import hu.bme.mit.semantifyr.semantics.expression.RedefinitionAwareReferenceResolver
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.expression.evaluateTyped
+import hu.bme.mit.semantifyr.semantics.optimization.ConstantFalseAssumptionPropagatorOptimizer
+import hu.bme.mit.semantifyr.semantics.optimization.OperationFlattenerOptimizer
+import hu.bme.mit.semantifyr.semantics.optimization.RedundantOperationRemoverOptimizer
+import hu.bme.mit.semantifyr.semantics.optimization.ExpressionOptimizer
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
+import hu.bme.mit.semantifyr.semantics.transformation.tracer.TraceAsf
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.SemantifyrUtils
 import hu.bme.mit.semantifyr.semantics.utils.copy
@@ -47,6 +53,18 @@ class OperationCallInliner @AssistedInject @Inject constructor(
 ) : OperationVisitor<Unit>() {
 
     private val expressionCallInliner = expressionCallInlinerFactory.create(instance)
+
+    @Inject
+    private lateinit var redundantOperationRemoverOptimizer: RedundantOperationRemoverOptimizer
+
+    @Inject
+    private lateinit var operationFlattenerOptimizer: OperationFlattenerOptimizer
+
+    @Inject
+    private lateinit var constantFalseAssumptionPropagatorOptimizer: ConstantFalseAssumptionPropagatorOptimizer
+
+    @Inject
+    private lateinit var expressionOptimizer: ExpressionOptimizer
 
     @Inject
     private lateinit var staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider
@@ -159,31 +177,14 @@ class OperationCallInliner @AssistedInject @Inject constructor(
         }
     }
 
-    private fun simplifyNestedSequence(operation: Operation): Boolean {
-        // TODO: this is duplicated from OperationFlattenerOptimizer -> should probably merge
-        val sequenceOperation = operation.eAllOfType<SequenceOperation>().firstOrNull {
-            it.steps.filterIsInstance<SequenceOperation>().any()
-        }
-
-        if (sequenceOperation == null) {
-            return false
-        }
-
-        val nestedSequenceOperation = sequenceOperation.steps.filterIsInstance<SequenceOperation>().first()
-
-        val index = sequenceOperation.steps.indexOf(nestedSequenceOperation)
-        sequenceOperation.steps.addAll(index, nestedSequenceOperation.steps)
-
-        EcoreUtil2.remove(nestedSequenceOperation)
-
-        return true
-    }
-
     private fun simplifyNestedOperation(operation: Operation) {
         var anyProgress = true
 
         while (anyProgress) {
-            anyProgress = simplifyNestedSequence(operation)
+            anyProgress = constantFalseAssumptionPropagatorOptimizer.optimize(operation)
+                    || operationFlattenerOptimizer.optimize(operation)
+                    || redundantOperationRemoverOptimizer.optimize(operation)
+                    || expressionOptimizer.optimize(operation)
         }
     }
 

@@ -77,12 +77,11 @@
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//FeatureDeclaration">
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//FeatureDeclaration/superset"/>
-      <genFeatures property="None" notify="false" createChild="false" ecoreFeature="ecore:EReference oxsts.ecore#//FeatureDeclaration/type"/>
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//FeatureDeclaration/multiplicity"/>
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//FeatureDeclaration/opposite"/>
       <genFeatures children="true" createChild="true" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//FeatureDeclaration/expression"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute oxsts.ecore#//FeatureDeclaration/kind"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//FeatureDeclaration/innerFeatures"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//FeatureDeclaration/typeSpecification"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//ClassDeclaration">
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//ClassDeclaration/superTypes"/>
@@ -131,13 +130,12 @@
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//PropertyDeclaration">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//PropertyDeclaration/expression"/>
-      <genFeatures property="None" notify="false" createChild="false" ecoreFeature="ecore:EReference oxsts.ecore#//PropertyDeclaration/returnType"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute oxsts.ecore#//PropertyDeclaration/abstract"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//PropertyDeclaration/returnType"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//VariableDeclaration">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//VariableDeclaration/expression"/>
-      <genFeatures property="None" notify="false" createChild="false" ecoreFeature="ecore:EReference oxsts.ecore#//VariableDeclaration/type"/>
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//VariableDeclaration/multiplicity"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//VariableDeclaration/typeSpecification"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//TargetDeclaration"/>
     <genClasses ecoreClass="oxsts.ecore#//RecordDeclaration">
@@ -155,8 +153,7 @@
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//Conjunction"/>
     <genClasses ecoreClass="oxsts.ecore#//ParameterDeclaration">
-      <genFeatures property="None" notify="false" createChild="false" ecoreFeature="ecore:EReference oxsts.ecore#//ParameterDeclaration/type"/>
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//ParameterDeclaration/multiplicity"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//ParameterDeclaration/typeSpecification"/>
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//BinaryOperator">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//BinaryOperator/left"/>
@@ -276,6 +273,10 @@
       <genFeatures children="true" createChild="true" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlinedOxsts/rootInstance"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//InlinedOxsts/rootFeature"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute oxsts.ecore#//InlinedOxsts/witness"/>
+    </genClasses>
+    <genClasses ecoreClass="oxsts.ecore#//TypeSpecification">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//TypeSpecification/multiplicity"/>
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//TypeSpecification/domain"/>
     </genClasses>
   </genPackages>
 </genmodel:GenModel>

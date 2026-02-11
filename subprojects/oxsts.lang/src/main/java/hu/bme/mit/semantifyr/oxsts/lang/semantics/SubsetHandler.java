@@ -16,13 +16,10 @@ import org.eclipse.xtext.util.Tuples;
 
 @Singleton
 public class SubsetHandler {
-    private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.semantics.SuperSetHandler.CACHE_KEY";
+    private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.semantics.SubsetHandler.CACHE_KEY";
 
     @Inject
     private OnResourceSetChangeEvictingCache cache;
-
-    @Inject
-    protected BuiltinSymbolResolver builtinSymbolResolver;
 
     public FeatureDeclaration getSubsetFeature(FeatureDeclaration feature) {
         return cache.get(Tuples.create(CACHE_KEY, feature), feature.eResource(), () -> computeSubsetFeature(feature));

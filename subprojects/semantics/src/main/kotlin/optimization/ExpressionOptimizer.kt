@@ -25,7 +25,7 @@ import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
 
 @CompilationScoped
-class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
+class ExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
 
     @Inject
     private lateinit var constantExpressionEvaluatorProvider: ConstantExpressionEvaluatorProvider
@@ -65,7 +65,7 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
 
         EcoreUtil2.replace(operator, constant)
 
-        compilationStateManager.commitModelState()
+//        compilationStateManager.commitModelState()
 
         return true
     }
@@ -87,7 +87,7 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
             EcoreUtil2.replace(constantTrueOr, constantTrueOr.right)
         }
 
-        compilationStateManager.commitModelState()
+//        compilationStateManager.commitModelState()
 
         return true
     }
@@ -109,7 +109,7 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
             EcoreUtil2.replace(constantFalseAnd, constantFalseAnd.right)
         }
 
-        compilationStateManager.commitModelState()
+//        compilationStateManager.commitModelState()
 
         return true
     }
@@ -130,7 +130,7 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
             EcoreUtil2.replace(redundantOr, redundantOr.left)
         }
 
-        compilationStateManager.commitModelState()
+//        compilationStateManager.commitModelState()
 
         return true
     }
@@ -151,7 +151,7 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
             EcoreUtil2.replace(redundantAnd, redundantAnd.left)
         }
 
-        compilationStateManager.commitModelState()
+//        compilationStateManager.commitModelState()
 
         return true
     }
@@ -169,7 +169,7 @@ class XstsExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
 
         EcoreUtil2.replace(redundantNegation, internalNegation.body)
 
-        compilationStateManager.commitModelState()
+//        compilationStateManager.commitModelState()
 
         return true
     }

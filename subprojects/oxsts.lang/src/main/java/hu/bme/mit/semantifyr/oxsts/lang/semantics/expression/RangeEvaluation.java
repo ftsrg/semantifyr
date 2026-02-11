@@ -54,6 +54,10 @@ public class RangeEvaluation implements ExpressionEvaluation {
         return new RangeEvaluation(leftValue, rightValue);
     }
 
+    public static RangeEvaluation of(int count) {
+        return of(count, count);
+    }
+
     // TODO: should this be protected?
     public static RangeEvaluation of(int lowerBound, int upperBound) {
         if (lowerBound == UNBOUNDED.getLowerBound() && upperBound == UNBOUNDED.getUpperBound()) {

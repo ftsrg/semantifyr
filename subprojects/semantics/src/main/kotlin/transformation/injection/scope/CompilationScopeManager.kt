@@ -95,6 +95,7 @@ class CompilationScopeManager {
 
     fun <T : EObject> runInCompilationScope(eObject: T, runnable: EObjectRunnable<T>) {
         val compilationResourceSet = copyResourceSet(eObject.eResource().resourceSet)
+        @Suppress("UNCHECKED_CAST")
         val compilationEObject = compilationResourceSet.getEObject(EcoreUtil.getURI(eObject), true) as T
 
         runCompilationScope(compilationResourceSet) {

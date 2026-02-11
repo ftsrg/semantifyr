@@ -23,7 +23,7 @@ class InlinedOxstsOperationOptimizer : AbstractLoopedOptimizer<InlinedOxsts>() {
     private lateinit var constantFalseAssumptionPropagatorOptimizer: ConstantFalseAssumptionPropagatorOptimizer
 
     @Inject
-    private lateinit var xstsExpressionOptimizer: XstsExpressionOptimizer
+    private lateinit var expressionOptimizer: ExpressionOptimizer
 
     @Inject
     private lateinit var variableOptimizer: VariableOptimizer
@@ -32,7 +32,7 @@ class InlinedOxstsOperationOptimizer : AbstractLoopedOptimizer<InlinedOxsts>() {
         return constantFalseAssumptionPropagatorOptimizer.optimize(element)
             || operationFlattenerOptimizer.optimize(element)
             || redundantOperationRemoverOptimizer.optimize(element)
-            || xstsExpressionOptimizer.optimize(element)
+            || expressionOptimizer.optimize(element)
             || variableOptimizer.optimize(element)
     }
 

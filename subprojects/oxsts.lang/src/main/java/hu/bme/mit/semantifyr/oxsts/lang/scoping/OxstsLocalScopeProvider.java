@@ -95,10 +95,7 @@ public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
             return containerScope;
         }
 
-        if (
-            reference == OxstsPackage.Literals.CLASS_DECLARATION__SUPER_TYPES
-            || reference == OxstsPackage.Literals.FEATURE_DECLARATION__TYPE
-        ) {
+        if (reference == OxstsPackage.Literals.CLASS_DECLARATION__SUPER_TYPES) {
             return containerScope;
         }
 

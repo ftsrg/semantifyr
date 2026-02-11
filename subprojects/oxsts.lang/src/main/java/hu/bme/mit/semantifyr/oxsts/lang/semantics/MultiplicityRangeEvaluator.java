@@ -12,16 +12,13 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionE
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.IntegerEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.DefiniteMultiplicity;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnboundedMultiplicity;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import org.eclipse.xtext.util.IResourceScopeCache;
 import org.eclipse.xtext.util.Tuples;
 
 @Singleton
 public class MultiplicityRangeEvaluator {
-    private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.MultiplicityRangeProvider.CACHE_KEY";
+    private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator.CACHE_KEY";
 
     @Inject
     private OnResourceSetChangeEvictingCache cache;
@@ -29,27 +26,12 @@ public class MultiplicityRangeEvaluator {
     @Inject
     protected ConstantExpressionEvaluatorProvider constantExpressionEvaluatorProvider;
 
-    public RangeEvaluation evaluate(FeatureDeclaration featureDeclaration) {
-        return cache.get(Tuples.create(CACHE_KEY, featureDeclaration), featureDeclaration.eResource(), () -> compute(featureDeclaration));
+    public RangeEvaluation evaluate(TypeSpecification typeSpecification) {
+        return cache.get(Tuples.create(CACHE_KEY, typeSpecification), typeSpecification.eResource(), () -> compute(typeSpecification));
     }
 
-    protected RangeEvaluation compute(FeatureDeclaration featureDeclaration) {
-        var multiplicity = featureDeclaration.getMultiplicity();
-
-        return switch (multiplicity) {
-            case null -> RangeEvaluation.ONE; // implicit multiplicity
-            case UnboundedMultiplicity ignored -> RangeEvaluation.UNBOUNDED;
-            case DefiniteMultiplicity definiteMultiplicity -> compute(definiteMultiplicity);
-            default -> throw new IllegalArgumentException("Unexpected type of multiplicity!");
-        };
-    }
-
-    public RangeEvaluation evaluate(VariableDeclaration variableDeclaration) {
-        return cache.get(Tuples.create(CACHE_KEY, variableDeclaration), variableDeclaration.eResource(), () -> compute(variableDeclaration));
-    }
-
-    protected RangeEvaluation compute(VariableDeclaration variableDeclaration) {
-        var multiplicity = variableDeclaration.getMultiplicity();
+    protected RangeEvaluation compute(TypeSpecification typeSpecification) {
+        var multiplicity = typeSpecification.getMultiplicity();
 
         return switch (multiplicity) {
             case null -> RangeEvaluation.ONE; // implicit multiplicity

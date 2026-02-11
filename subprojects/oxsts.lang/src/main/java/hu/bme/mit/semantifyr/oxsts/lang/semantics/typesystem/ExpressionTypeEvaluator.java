@@ -8,7 +8,11 @@ package hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem;
 
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.PropertyTypeHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluator;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluatorProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import org.eclipse.xtext.EcoreUtil2;
 
@@ -20,44 +24,53 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
 
+    @Inject
+    protected PropertyTypeHandler propertyTypeHandler;
+
+    @Inject
+    protected MetaConstantExpressionEvaluatorProvider metaConstantExpressionEvaluatorProvider;
+
+    @Inject
+    protected MultiplicityRangeEvaluator multiplicityRangeEvaluator;
+
     @Override
     protected TypeEvaluation visit(RangeExpression expression) {
-        return TypeEvaluation.INVALID;
+        return new ImmutableTypeEvaluation(builtinSymbolResolver.intDatatype(expression), RangeEvaluation.SOME);
     }
 
     @Override
     protected TypeEvaluation visit(ComparisonOperator expression) {
-        return TypeEvaluation.INVALID;
+        return new ImmutableTypeEvaluation(builtinSymbolResolver.boolDatatype(expression));
     }
 
     @Override
     protected TypeEvaluation visit(ArithmeticBinaryOperator expression) {
-        return TypeEvaluation.INVALID;
+        return new ImmutableTypeEvaluation(builtinSymbolResolver.anyDatatype(expression));
     }
 
     @Override
     protected TypeEvaluation visit(BooleanOperator expression) {
-        return TypeEvaluation.INVALID;
+        return new ImmutableTypeEvaluation(builtinSymbolResolver.boolDatatype(expression));
     }
 
     @Override
     protected TypeEvaluation visit(ArithmeticUnaryOperator expression) {
-        return TypeEvaluation.INVALID;
+        return new ImmutableTypeEvaluation(builtinSymbolResolver.anyDatatype(expression));
     }
 
     @Override
     protected TypeEvaluation visit(NegationOperator expression) {
-        return TypeEvaluation.INVALID;
+        return new ImmutableTypeEvaluation(builtinSymbolResolver.boolDatatype(expression));
     }
 
     @Override
     protected TypeEvaluation visit(ArrayLiteral expression) {
-        return TypeEvaluation.INVALID;
+        return new ImmutableTypeEvaluation(builtinSymbolResolver.anyDatatype(expression), RangeEvaluation.of(expression.getValues().size()));
     }
 
     @Override
     protected TypeEvaluation visit(LiteralInfinity expression) {
-        return TypeEvaluation.INVALID;
+        return new ImmutableTypeEvaluation(builtinSymbolResolver.anyDatatype(expression));
     }
 
     @Override
@@ -82,7 +95,7 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
 
     @Override
     protected TypeEvaluation visit(LiteralNothing expression) {
-        return TypeEvaluation.INVALID;
+        return NothingTypeEvaluation.Instance;
     }
 
     @Override
@@ -96,8 +109,8 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
         // TODO: add validation diagnostic
         return switch (referencedElement) {
             case VariableDeclaration variableDeclaration -> variableTypeEvaluator.evaluate(variableDeclaration);
-            case DomainDeclaration domainDeclaration -> new ImmutableTypeEvaluation(domainDeclaration);
-            case ParameterDeclaration parameterDeclaration -> new ImmutableTypeEvaluation(parameterDeclaration.getType());
+            case FeatureDeclaration featureDeclaration -> new ImmutableTypeEvaluation(featureDeclaration);
+            case ParameterDeclaration parameterDeclaration -> fromTypeSpecification(parameterDeclaration.getTypeSpecification());
             default -> throw new IllegalStateException("Unexpected value: " + referencedElement);
         };
     }
@@ -112,7 +125,7 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
 
         if (classDeclaration == null) {
             // TODO: add validation diagnostic
-            return TypeEvaluation.INVALID;
+            return InvalidTypeEvaluation.Instance;
         }
 
         if (classDeclaration.eIsProxy()) {
@@ -139,13 +152,25 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
 
     @Override
     protected TypeEvaluation visit(CallSuffixExpression expression) {
-        // TODO: should compute the called type, and then compute its return type
-        return TypeEvaluation.INVALID;
+        var called = metaConstantExpressionEvaluatorProvider.evaluate(expression.getPrimary());
+
+        return switch (called) {
+            case TransitionDeclaration ignored -> InvalidTypeEvaluation.Instance;
+            case PropertyDeclaration propertyDeclaration -> fromTypeSpecification(propertyTypeHandler.getPropertyReturnType(propertyDeclaration));
+            case RecordDeclaration recordDeclaration -> new ImmutableTypeEvaluation(recordDeclaration);
+            default -> throw new IllegalStateException("Unexpected value: " + called);
+        };
     }
 
     @Override
     protected TypeEvaluation visit(IndexingSuffixExpression expression) {
         return evaluate(expression.getPrimary());
+    }
+
+    public TypeEvaluation fromTypeSpecification(TypeSpecification typeSpecification) {
+        var rangeEvaluation = multiplicityRangeEvaluator.evaluate(typeSpecification);
+
+        return new ImmutableTypeEvaluation(typeSpecification.getDomain(), rangeEvaluation);
     }
 
 }

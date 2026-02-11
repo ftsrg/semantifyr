@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.scoping;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ImmutableTypeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
@@ -61,9 +62,19 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
             return calculateOppositeScope(context, reference);
         }
 
-        if (reference == OxstsPackage.Literals.FEATURE_DECLARATION__TYPE
-            || reference == OxstsPackage.Literals.VARIABLE_DECLARATION__TYPE) {
-            return super.getScope(context, reference);
+        if (reference == OxstsPackage.Literals.TYPE_SPECIFICATION__DOMAIN) {
+            if (context instanceof TypeSpecification) {
+                var container = context.eContainer();
+                if (container instanceof FeatureDeclaration) {
+                    // resolution of the feature or variable leads to cyclical dependency
+                    // since resolution is upwards, skipping them solves this issue
+                    return super.getScope(container.eContainer(), reference);
+                }
+            } else if (context instanceof FeatureDeclaration) {
+                // resolution of the feature or variable leads to cyclical dependency
+                // since resolution is upwards, skipping them solves this issue
+                return super.getScope(context.eContainer(), reference);
+            }
         }
 
         if (reference == OxstsPackage.Literals.ARGUMENT__PARAMETER) {
@@ -90,7 +101,7 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
             var primary = navigationSuffixExpression.getPrimary();
             var primaryEvaluation = expressionTypeEvaluatorProvider.evaluate(primary);
 
-            if (primaryEvaluation instanceof ImmutableTypeEvaluation(DomainDeclaration domainDeclaration)) {
+            if (primaryEvaluation instanceof ImmutableTypeEvaluation(DomainDeclaration domainDeclaration, RangeEvaluation rangeEvaluation)) {
                 var members = domainMemberCollectionProvider.getMembers(domainDeclaration);
                 return scopeFor(reference, members);
             }
@@ -115,13 +126,13 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
         if (featureDeclaration == null) {
             return IScope.NULLSCOPE;
         }
-        var type = featureDeclaration.getType();
+        var domain = featureDeclaration.getTypeSpecification().getDomain();
 
-        if (type.eIsProxy()) {
+        if (domain.eIsProxy()) {
             throw new IllegalStateException("Class supertype could not be resolved!");
         }
 
-        if (!(type instanceof ClassDeclaration classDeclaration)) {
+        if (!(domain instanceof ClassDeclaration classDeclaration)) {
             return IScope.NULLSCOPE;
         }
 

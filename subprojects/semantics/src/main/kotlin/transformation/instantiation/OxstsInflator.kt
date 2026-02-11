@@ -117,10 +117,10 @@ class OxstsInflator {
             inlinedOxsts.variables += variables
 
             for (variable in variables) {
-                if (variable.type is FeatureDeclaration) {
-                    val instances = evaluator.evaluateInstances(OxstsFactory.createElementReference(variable.type))
+                if (variable.typeSpecification.domain is FeatureDeclaration) {
+                    val instances = evaluator.evaluateInstances(OxstsFactory.createElementReference(variable.typeSpecification.domain))
                     variableInstanceDomain[variable] = instances
-                    variable.type = builtinAnything
+                    variable.typeSpecification.domain = builtinAnything
                 }
 
                 variable.name = "$instanceName$INSTANCE_NAME_SEPARATOR${variable.name}"
@@ -175,7 +175,7 @@ class OxstsInflator {
         val instances = variableInstanceDomain[variable]!!
         val havocChoice = OxstsFactory.createChoiceOperation()
 
-        val multiplicityRange = multiplicityRangeEvaluator.evaluate(variable)
+        val multiplicityRange = multiplicityRangeEvaluator.evaluate(variable.typeSpecification)
 
         if (multiplicityRange.lowerBound <= 0) {
             havocChoice.branches += OxstsFactory.createSequenceOperation().also {
@@ -211,8 +211,9 @@ class OxstsInflator {
         val featureTypedVariables = variableInstanceDomain.keys
 
         for (variable in featureTypedVariables) {
-            variable.type = builtinInt
-            variable.multiplicity = null
+            variable.typeSpecification = OxstsFactory.createTypeSpecification().also {
+                it.domain = builtinInt
+            }
         }
     }
 

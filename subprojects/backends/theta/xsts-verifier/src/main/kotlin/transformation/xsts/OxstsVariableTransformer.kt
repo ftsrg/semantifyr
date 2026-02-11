@@ -70,8 +70,8 @@ class OxstsVariableTransformer {
     private fun transformInternals(variable: XstsVariableDeclaration, variableDeclaration: VariableDeclaration) {
         variable.name = variableDeclaration.name
 
-        val type = variableDeclaration.type ?: evaluateExpressionType(variableDeclaration)
-        variable.type = oxstsTypeReferenceTransformer.transform(type, variableDeclaration.multiplicity)
+        val type = variableDeclaration.typeSpecification?.domain ?: evaluateExpressionType(variableDeclaration)
+        variable.type = oxstsTypeReferenceTransformer.transform(type, variableDeclaration.typeSpecification?.multiplicity)
 
         if (variableDeclaration.expression != null) {
             variable.expression = oxstsExpressionTransformer.transform(variableDeclaration.expression)

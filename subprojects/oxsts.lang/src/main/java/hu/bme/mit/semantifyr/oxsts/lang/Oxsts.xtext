@@ -26,15 +26,13 @@ InlinedOxsts:
 ;
 
 RootFeature returns FeatureDeclaration:
-    kind=FeatureKind name=Identifier ':' type=[TypeDeclaration|QualifiedIdentifier] multiplicity=Multiplicity?
+    kind=FeatureKind name=Identifier ':' typeSpecification=TypeSpecification
 ;
 
 InlinedVariable returns VariableDeclaration:
     annotation=AnnotationContainer
     'var' name=Identifier
-    (':' type=[DomainDeclaration|QualifiedIdentifier])?
-    multiplicity=Multiplicity?
-    (':=' expression=Expression)?
+    ':' typeSpecification=TypeSpecification ':=' expression=Expression
     ';'?
 ;
 
@@ -71,6 +69,11 @@ Annotation:
     ('(' (arguments += Argument (',' arguments += Argument)* ','?)? ')')?
 ;
 
+TypeSpecification:
+    domain=[DomainDeclaration|QualifiedIdentifier]
+    -> multiplicity=Multiplicity?
+;
+
 TopLevelDeclaration returns Declaration:
     {AnnotationContainer} annotations+=Annotation*
 
@@ -101,7 +104,7 @@ TopLevelDeclaration returns Declaration:
         ';'?
     |
         {FeatureDeclaration.annotation=current}
-        kind=TopLevelFeatureKind name=Identifier ':' type=[TypeDeclaration|QualifiedIdentifier] multiplicity=Multiplicity?
+        kind=TopLevelFeatureKind name=Identifier ':' typeSpecification=TypeSpecification
         ('subsets' superset=[FeatureDeclaration|Identifier])?
         (
             ';'?
@@ -114,7 +117,7 @@ TopLevelDeclaration returns Declaration:
         // {FunctionDeclaration}
         // 'fun' name=Identifier
         // '(' (parameters += ParameterDeclaration (',' parameters += ParameterDeclaration)* ','?)? ')'
-        // (':' returnType=[TypeDeclaration|QualifiedIdentifier])?
+        // ':' returnType=TypeSpecification
         // '{'
         //     expression=Expression
         // '}'
@@ -138,17 +141,13 @@ RecordMember returns Declaration:
     -> (
         {VariableDeclaration.annotation=current}
         'var' name=Identifier
-        (
-            ':' type=[DomainDeclaration|QualifiedIdentifier]
-            multiplicity=Multiplicity?
-        )?
-        (':=' expression=Expression)?
+        ':' typeSpecification=TypeSpecification ':=' expression=Expression
         ';'?
     // |
         // {FunctionDeclaration}
         // redefine?='redefine'? 'fun' name=Identifier
         // '(' (parameters += ParameterDeclaration (',' parameters += ParameterDeclaration)* ','?)? ')'
-        // (':' returnType=[TypeDeclaration|QualifiedIdentifier])?
+        // ':' returnType=TypeSpecification
         // '{'
         //     expression=Expression
         // '}'
@@ -161,17 +160,13 @@ ClassMember returns Declaration:
     -> (
         {VariableDeclaration.annotation=current}
         'var' name=Identifier
-        (
-            ':' type=[DomainDeclaration|QualifiedIdentifier]
-            multiplicity=Multiplicity?
-        )?
-        (':=' expression=Expression)?
+        ':' typeSpecification=TypeSpecification ':=' expression=Expression
         ';'?
     // |
         // {FunctionDeclaration}
         // -> redefine?='redefine'? 'fun' name=Identifier
         // '(' (parameters += ParameterDeclaration (',' parameters += ParameterDeclaration)* ','?)? ')'
-        // (':' returnType=[TypeDeclaration|QualifiedIdentifier])?
+        // ':' returnType=TypeSpecification
         // '{'
         //     expression=Expression
         // '}'
@@ -182,7 +177,7 @@ ClassMember returns Declaration:
             (
                 name=Identifier
                 '(' (parameters += ParameterDeclaration (',' parameters += ParameterDeclaration)* ','?)? ')'
-                ':' returnType=[TypeDeclaration|QualifiedIdentifier]
+                ':' returnType=TypeSpecification
             )?
             '{'
                 'return' expression=Expression ';'?
@@ -192,7 +187,7 @@ ClassMember returns Declaration:
             (
                 name=Identifier
                 '(' (parameters += ParameterDeclaration (',' parameters += ParameterDeclaration)* ','?)? ')'
-                ':' returnType=[TypeDeclaration|QualifiedIdentifier]
+                ':' returnType=TypeSpecification
             )?
             ';'?
         )
@@ -216,7 +211,7 @@ ClassMember returns Declaration:
         )
     |
         {FeatureDeclaration.annotation=current}
-        redefine?='redefine'? kind=FeatureKind name=Identifier ':' type=[TypeDeclaration|QualifiedIdentifier] multiplicity=Multiplicity?
+        redefine?='redefine'? kind=FeatureKind name=Identifier ':' typeSpecification=TypeSpecification
         (
             ('subsets' superset=[FeatureDeclaration|Identifier])?
             & ('opposite' opposite=[FeatureDeclaration|Identifier])?
@@ -238,7 +233,7 @@ AnnotationContainer:
 
 InnerFeature returns FeatureDeclaration:
     annotation = AnnotationContainer
-    redefine?='redefine'? kind=FeatureKind name=Identifier ':' type=[TypeDeclaration|QualifiedIdentifier] multiplicity=Multiplicity?
+    redefine?='redefine'? kind=FeatureKind name=Identifier ':' typeSpecification=TypeSpecification
     (
         ('subsets' superset=[FeatureDeclaration|Identifier])?
         & ('opposite' opposite=[FeatureDeclaration|Identifier])?
@@ -321,9 +316,10 @@ ForOperation:
 
 LocalVarDeclarationOperation:
     'var' name=Identifier
-    (':' type=[DomainDeclaration|QualifiedIdentifier])?
-    (-> multiplicity=Multiplicity)?
-    (':=' expression=Expression)?
+    (
+        ':=' expression=Expression
+        | ':' typeSpecification=TypeSpecification (':=' expression=Expression)?
+    )
     ';'?
 ;
 
@@ -359,8 +355,8 @@ InlineIfOperation:
 ;
 
 Multiplicity:
-    DefiniteMultiplicity
-    | UnboundedMultiplicity
+    -> UnboundedMultiplicity
+    | DefiniteMultiplicity
 ;
 
 UnboundedMultiplicity:
@@ -372,7 +368,7 @@ DefiniteMultiplicity:
 ;
 
 ParameterDeclaration:
-    name=Identifier ':' type=[TypeDeclaration|QualifiedIdentifier] (multiplicity=Multiplicity)?
+    name=Identifier ':' typeSpecification=TypeSpecification
 ;
 
 Argument:

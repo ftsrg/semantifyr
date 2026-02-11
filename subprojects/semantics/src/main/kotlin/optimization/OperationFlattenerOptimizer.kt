@@ -43,7 +43,7 @@ class OperationFlattenerOptimizer : AbstractLoopedOptimizer<Element>() {
 
         EcoreUtil2.remove(nestedSequenceOperation)
 
-        compilationStateManager.commitModelState()
+//        compilationStateManager.commitModelState()
 
         return true
     }
@@ -68,7 +68,7 @@ class OperationFlattenerOptimizer : AbstractLoopedOptimizer<Element>() {
 
         EcoreUtil2.remove(containerSequence)
 
-        compilationStateManager.commitModelState()
+//        compilationStateManager.commitModelState()
 
         return true
     }
@@ -84,7 +84,7 @@ class OperationFlattenerOptimizer : AbstractLoopedOptimizer<Element>() {
 
         EcoreUtil2.replace(choiceOperation, choiceOperation.branches.single())
 
-        compilationStateManager.commitModelState()
+//        compilationStateManager.commitModelState()
 
         return true
     }

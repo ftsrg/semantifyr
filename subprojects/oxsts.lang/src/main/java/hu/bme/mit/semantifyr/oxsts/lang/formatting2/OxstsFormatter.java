@@ -153,18 +153,21 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         annotationDeclaration.getParameters().forEach(document::format);
     }
 
+    protected void format(TypeSpecification typeSpecification, IFormattableDocument document) {
+        document.prepend(regionFor(typeSpecification).keyword(":"), this::noSpace);
+        document.append(regionFor(typeSpecification).keyword(":"), this::oneSpace);
+        if (typeSpecification.getMultiplicity() != null) {
+            document.set(previousHiddenRegion(typeSpecification.getMultiplicity()), this::noSpace);
+        }
+    }
+
     protected void format(VariableDeclaration variableDeclaration, IFormattableDocument document) {
         formatDeclaration(variableDeclaration, document);
 
         document.append(regionFor(variableDeclaration).keyword("var"), this::oneSpace);
-        document.prepend(regionFor(variableDeclaration).keyword(":"), this::noSpace);
-        document.append(regionFor(variableDeclaration).keyword(":"), this::oneSpace);
-        if (variableDeclaration.getMultiplicity() != null) {
-            document.set(previousHiddenRegion(variableDeclaration.getMultiplicity()), this::noSpace);
-        }
         document.surround(regionFor(variableDeclaration).keyword(":="), this::oneSpace);
 
-        document.format(variableDeclaration.getMultiplicity());
+        document.format(variableDeclaration.getTypeSpecification());
         document.format(variableDeclaration.getExpression());
         document.format(variableDeclaration.getAnnotation());
     }
@@ -213,17 +216,12 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.append(regionFor(featureDeclaration).keyword("containment"), this::oneSpace);
         document.append(regionFor(featureDeclaration).keyword("reference"), this::oneSpace);
 
-        document.prepend(regionFor(featureDeclaration).keyword(":"), this::noSpace);
-        document.append(regionFor(featureDeclaration).keyword(":"), this::oneSpace);
         document.surround(regionFor(featureDeclaration).keyword("="), this::oneSpace);
 
-        if (featureDeclaration.getMultiplicity() != null) {
-            document.set(previousHiddenRegion(featureDeclaration.getMultiplicity()), this::noSpace);
-        }
         document.prepend(allRegionsFor(featureDeclaration).keyword(","), this::noSpace);
         document.append(allRegionsFor(featureDeclaration).keyword(","), this::oneSpace);
 
-        document.format(featureDeclaration.getMultiplicity());
+        document.format(featureDeclaration.getTypeSpecification());
         document.format(featureDeclaration.getExpression());
         document.format(featureDeclaration.getAnnotation());
 
@@ -298,10 +296,9 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         formatOperation(localVarDeclarationOperation, document);
 
         document.append(regionFor(localVarDeclarationOperation).keyword("var"), this::oneSpace);
-        document.append(regionFor(localVarDeclarationOperation).keyword(":"), this::oneSpace);
         document.surround(regionFor(localVarDeclarationOperation).keyword(":="), this::oneSpace);
 
-        document.format(localVarDeclarationOperation.getMultiplicity());
+        document.format(localVarDeclarationOperation.getTypeSpecification());
         document.format(localVarDeclarationOperation.getExpression());
         document.format(localVarDeclarationOperation.getAnnotation());
     }
@@ -367,14 +364,9 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
     protected void format(ParameterDeclaration parameterDeclaration, IFormattableDocument document) {
         document.set(previousHiddenRegion(parameterDeclaration), this::optionalNewLine);
-        document.prepend(regionFor(parameterDeclaration).keyword(":"), this::noSpace);
-        document.append(regionFor(parameterDeclaration).keyword(":"), this::oneSpace);
-        if (parameterDeclaration.getMultiplicity() != null) {
-            document.set(previousHiddenRegion(parameterDeclaration.getMultiplicity()), this::noSpace);
-        }
         document.set(nextHiddenRegion(parameterDeclaration), this::noSpace);
 
-        document.format(parameterDeclaration.getMultiplicity());
+        document.format(parameterDeclaration.getTypeSpecification());
     }
 
     protected void format(Argument argument, IFormattableDocument document) {

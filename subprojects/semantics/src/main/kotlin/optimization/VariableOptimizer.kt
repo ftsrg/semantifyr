@@ -95,7 +95,7 @@ class VariableOptimizer {
             variableAssignments -= unreadVariable
             unreadVariables -= unreadVariable
 
-            compilationStateManager.commitModelState()
+//            compilationStateManager.commitModelState()
 
             return true
         }
@@ -116,7 +116,7 @@ class VariableOptimizer {
             unassignedInitializedVariables -= unassignedInitializedVariable
             variableReads -= unassignedInitializedVariable
 
-            compilationStateManager.commitModelState()
+//            compilationStateManager.commitModelState()
 
             return true
         }

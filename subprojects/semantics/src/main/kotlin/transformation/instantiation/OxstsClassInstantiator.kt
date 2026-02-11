@@ -8,8 +8,8 @@ package hu.bme.mit.semantifyr.semantics.transformation.instantiation
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -24,7 +24,7 @@ class OxstsClassInstantiator {
     private lateinit var domainMemberCollectionProvider: DomainMemberCollectionProvider
 
     @Inject
-    private lateinit var multiplicityRangeEvaluator: MultiplicityRangeEvaluator
+    private lateinit var expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider
 
     @Inject
     private lateinit var instanceManager: InstanceManager
@@ -50,7 +50,7 @@ class OxstsClassInstantiator {
         val allContainments = memberCollection.declarations.filterIsInstance<FeatureDeclaration>().filter {
             it.kind == FeatureKind.CONTAINMENT
         }.filter {
-            val multiplicityRange = multiplicityRangeEvaluator.evaluate(it)
+            val multiplicityRange = expressionTypeEvaluatorProvider.getEvaluator(it).fromTypeSpecification(it.typeSpecification).range
             multiplicityRange == RangeEvaluation.ONE // TODO: relax instantiation rules
         }.distinct()
 

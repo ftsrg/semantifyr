@@ -11,7 +11,6 @@ import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
@@ -30,7 +29,6 @@ import hu.bme.mit.semantifyr.semantics.expression.RedefinitionAwareReferenceReso
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.copy
-import org.eclipse.emf.common.util.URI
 
 @CompilationScoped
 class AssumptionWitnessBackAnnotator {
@@ -53,7 +51,9 @@ class AssumptionWitnessBackAnnotator {
         private val rootFeature by lazy {
             OxstsFactory.createFeatureDeclaration().also {
                 it.kind = FeatureKind.CONTAINMENT
-                it.type = witness.inlinedOxsts.classDeclaration
+                it.typeSpecification = OxstsFactory.createTypeSpecification().also {
+                    it.domain = witness.inlinedOxsts.classDeclaration
+                }
                 it.name = "root"
             }
         }
@@ -62,7 +62,9 @@ class AssumptionWitnessBackAnnotator {
             OxstsFactory.createVariableDeclaration().also {
                 it.name = "step"
                 it.annotation = OxstsFactory.createAnnotationContainer()
-                it.type = builtinSymbolResolver.intDatatype(witness.inlinedOxsts.classDeclaration)
+                it.typeSpecification = OxstsFactory.createTypeSpecification().also {
+                    it.domain = builtinSymbolResolver.intDatatype(witness.inlinedOxsts.classDeclaration)
+                }
                 it.expression = OxstsFactory.createLiteralInteger(-1)
             }
         }

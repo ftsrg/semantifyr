@@ -48,7 +48,7 @@ class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
             EcoreUtil2.remove(assumption)
         }
 
-        compilationStateManager.commitModelState()
+//        compilationStateManager.commitModelState()
 
         return true
     }
@@ -66,7 +66,7 @@ class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
 
         EcoreUtil2.remove(redundantBranch)
 
-        compilationStateManager.commitModelState()
+//        compilationStateManager.commitModelState()
 
         return true
     }
@@ -84,7 +84,7 @@ class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
             EcoreUtil2.remove(emptyForOperation)
         }
 
-        compilationStateManager.commitModelState()
+//        compilationStateManager.commitModelState()
 
         return true
     }
@@ -102,7 +102,7 @@ class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
             emptyIfElseBranch.`else` = null
         }
 
-        compilationStateManager.commitModelState()
+//        compilationStateManager.commitModelState()
 
         return true
     }
@@ -123,7 +123,7 @@ class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
             emptyIfBodyBranch.body = emptyIfBodyBranch.`else`
         }
 
-        compilationStateManager.commitModelState()
+//        compilationStateManager.commitModelState()
 
         return true
     }
@@ -145,7 +145,7 @@ class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
             EcoreUtil2.remove(ifOperation)
         }
 
-        compilationStateManager.commitModelState()
+//        compilationStateManager.commitModelState()
 
         return true
     }

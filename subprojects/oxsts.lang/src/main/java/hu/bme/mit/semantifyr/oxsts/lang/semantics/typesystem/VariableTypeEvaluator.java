@@ -29,13 +29,15 @@ public class VariableTypeEvaluator {
     }
 
     private TypeEvaluation computeTypeOf(VariableDeclaration variableDeclaration) {
-        var domainDeclaration = variableDeclaration.getType();
+        var typeSpecification = variableDeclaration.getTypeSpecification();
 
-        if (domainDeclaration == null) {
+        if (typeSpecification == null) {
             return computeImplicitTypeOf(variableDeclaration);
         }
 
-        return new ImmutableTypeEvaluation(domainDeclaration);
+        var evaluator = expressionTypeEvaluatorProvider.getEvaluator(typeSpecification);
+
+        return evaluator.fromTypeSpecification(typeSpecification);
     }
 
     private TypeEvaluation computeImplicitTypeOf(VariableDeclaration variableDeclaration) {
@@ -48,7 +50,7 @@ public class VariableTypeEvaluator {
             return expressionTypeEvaluatorProvider.evaluate(abstractForOperation.getRangeExpression());
         }
 
-        return TypeEvaluation.INVALID;
+        return InvalidTypeEvaluation.Instance;
     }
 
 }

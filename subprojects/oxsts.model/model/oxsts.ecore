@@ -37,9 +37,6 @@
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="FeatureDeclaration" eSuperTypes="#//DomainDeclaration #//Namespace #//RedefinableDeclaration">
     <eStructuralFeatures xsi:type="ecore:EReference" name="superset" eType="#//FeatureDeclaration"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="type" eType="#//TypeDeclaration"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="multiplicity" eType="#//Multiplicity"
-        containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="opposite" eType="#//FeatureDeclaration"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="expression" eType="#//Expression"
         containment="true"/>
@@ -47,6 +44,8 @@
         defaultValueLiteral="REFERENCE"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="innerFeatures" upperBound="-1"
         eType="#//FeatureDeclaration" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="typeSpecification" eType="#//TypeSpecification"
+        containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="ClassDeclaration" eSuperTypes="#//TopLevelDeclaration #//Namespace #//TypeDeclaration">
     <eStructuralFeatures xsi:type="ecore:EReference" name="superTypes" upperBound="-1"
@@ -112,16 +111,16 @@
   <eClassifiers xsi:type="ecore:EClass" name="PropertyDeclaration" eSuperTypes="#//ParametricDeclaration #//RedefinableDeclaration">
     <eStructuralFeatures xsi:type="ecore:EReference" name="expression" eType="#//Expression"
         containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="returnType" eType="#//TypeDeclaration"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="abstract" lowerBound="1"
         eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//Boolean"
         defaultValueLiteral="false"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="returnType" eType="#//TypeSpecification"
+        containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="VariableDeclaration" eSuperTypes="#//Declaration">
     <eStructuralFeatures xsi:type="ecore:EReference" name="expression" eType="#//Expression"
         containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="type" eType="#//DomainDeclaration"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="multiplicity" eType="#//Multiplicity"
+    <eStructuralFeatures xsi:type="ecore:EReference" name="typeSpecification" eType="#//TypeSpecification"
         containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="TargetDeclaration" eSuperTypes="#//ClassDeclaration"/>
@@ -150,8 +149,7 @@
     <eLiterals name="IncludeSelf" value="2"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="ParameterDeclaration" eSuperTypes="#//NamedElement">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="type" eType="#//TypeDeclaration"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="multiplicity" eType="#//Multiplicity"
+    <eStructuralFeatures xsi:type="ecore:EReference" name="typeSpecification" eType="#//TypeSpecification"
         containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="BinaryOperator" abstract="true" eSuperTypes="#//OperatorExpression">
@@ -355,5 +353,10 @@
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="witness" lowerBound="1"
         eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//Boolean"
         defaultValueLiteral="false"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="TypeSpecification">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="multiplicity" eType="#//Multiplicity"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="domain" eType="#//DomainDeclaration"/>
   </eClassifiers>
 </ecore:EPackage>

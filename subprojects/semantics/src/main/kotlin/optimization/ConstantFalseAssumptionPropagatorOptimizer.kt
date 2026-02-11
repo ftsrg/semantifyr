@@ -53,7 +53,7 @@ class ConstantFalseAssumptionPropagatorOptimizer : AbstractLoopedOptimizer<Eleme
         sequenceOperation.steps.clear()
         sequenceOperation.steps += assumption
 
-        compilationStateManager.commitModelState()
+//        compilationStateManager.commitModelState()
 
         return true
     }
@@ -71,7 +71,7 @@ class ConstantFalseAssumptionPropagatorOptimizer : AbstractLoopedOptimizer<Eleme
 
         EcoreUtil2.remove(constantFalseBranch)
 
-        compilationStateManager.commitModelState()
+//        compilationStateManager.commitModelState()
 
         return true
     }
@@ -87,7 +87,7 @@ class ConstantFalseAssumptionPropagatorOptimizer : AbstractLoopedOptimizer<Eleme
 
         EcoreUtil2.replace(choiceOperation, OxstsFactory.createAssumptionOperation(false))
 
-        compilationStateManager.commitModelState()
+//        compilationStateManager.commitModelState()
 
         return true
     }
@@ -103,7 +103,7 @@ class ConstantFalseAssumptionPropagatorOptimizer : AbstractLoopedOptimizer<Eleme
 
         EcoreUtil2.replace(ifOperation, ifOperation.body)
 
-        compilationStateManager.commitModelState()
+//        compilationStateManager.commitModelState()
 
         return true
     }
