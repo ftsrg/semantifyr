@@ -40,7 +40,6 @@ import hu.bme.mit.semantifyr.semantics.optimization.OperationFlattenerOptimizer
 import hu.bme.mit.semantifyr.semantics.optimization.RedundantOperationRemoverOptimizer
 import hu.bme.mit.semantifyr.semantics.optimization.ExpressionOptimizer
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
-import hu.bme.mit.semantifyr.semantics.transformation.tracer.TraceAsf
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.SemantifyrUtils
 import hu.bme.mit.semantifyr.semantics.utils.copy
