@@ -34,6 +34,7 @@ public class BuiltinSymbolResolver {
     public static final String ANYTHING_MAIN_NAME = "main";
     public static final String ANYTHING_HAVOC_NAME = "havoc";
 
+    public static final QualifiedName ANY_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("any");
     public static final QualifiedName BOOL_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("bool");
     public static final QualifiedName INT_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("int");
     public static final QualifiedName REAL_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("real");
@@ -75,6 +76,10 @@ public class BuiltinSymbolResolver {
 
     public ClassDeclaration anythingClass(EObject context) {
         return findInBuiltin(context, ClassDeclaration.class, ANYTHING_NAME);
+    }
+
+    public DataTypeDeclaration anyDatatype(EObject context) {
+        return findInBuiltin(context, DataTypeDeclaration.class, ANY_NAME);
     }
 
     public DataTypeDeclaration boolDatatype(EObject context) {
