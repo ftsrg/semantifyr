@@ -3,3 +3,4 @@
 **/*.cex
 **/theta.err
 **/theta.out
+**/trace.json
