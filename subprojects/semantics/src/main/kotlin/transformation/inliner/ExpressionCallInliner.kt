@@ -35,7 +35,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.semantics.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.semantics.expression.MetaStaticExpressionEvaluatorProvider
-import hu.bme.mit.semantifyr.semantics.expression.StaticEvaluationTransformer
+import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluationTransformer
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.expression.evaluateTyped
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
@@ -64,7 +64,7 @@ class ExpressionCallInliner @AssistedInject constructor(
     private lateinit var instanceReferenceProvider: InstanceReferenceProvider
 
     @Inject
-    private lateinit var staticEvaluationTransformer: StaticEvaluationTransformer
+    private lateinit var staticEvaluationTransformer: StaticExpressionEvaluationTransformer
 
     private val processorQueue: ArrayDeque<Expression> = ArrayDeque<Expression>()
 

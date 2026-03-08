@@ -24,7 +24,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.semantics.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.semantics.expression.MetaStaticExpressionEvaluatorProvider
-import hu.bme.mit.semantifyr.semantics.expression.DeflatedEvaluationTransformer
+import hu.bme.mit.semantifyr.semantics.expression.DeflatedExpressionEvaluationTransformer
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.optimization.InlinedOxstsOperationOptimizer
 import hu.bme.mit.semantifyr.semantics.transformation.constraints.ConstraintChecker
@@ -72,7 +72,7 @@ class OxstsInflator {
     private lateinit var instanceReferenceProvider: InstanceReferenceProvider
 
     @Inject
-    private lateinit var deflatedEvaluationTransformer: DeflatedEvaluationTransformer
+    private lateinit var deflatedEvaluationTransformer: DeflatedExpressionEvaluationTransformer
 
     @Inject
     private lateinit var inlinedOxstsOperationOptimizer: InlinedOxstsOperationOptimizer

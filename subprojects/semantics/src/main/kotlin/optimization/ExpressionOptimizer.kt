@@ -18,7 +18,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OperatorExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOperator
-import hu.bme.mit.semantifyr.semantics.expression.ConstantEvaluationTransformer
+import hu.bme.mit.semantifyr.semantics.expression.ConstantExpressionEvaluationTransformer
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
@@ -34,7 +34,7 @@ class ExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
     private lateinit var compilationStateManager: CompilationStateManager
 
     @Inject
-    private lateinit var constantEvaluationTransformer: ConstantEvaluationTransformer
+    private lateinit var constantEvaluationTransformer: ConstantExpressionEvaluationTransformer
 
     override fun doOptimizationStep(element: Element): Boolean {
         return rewriteConstantTrueOr(element)
