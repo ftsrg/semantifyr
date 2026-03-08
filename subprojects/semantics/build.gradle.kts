@@ -6,8 +6,8 @@
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
-    alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.kotlin.serialization)
+    kotlin("jvm")
+    kotlin("plugin.serialization")
 }
 
 tasks.withType(Test::class.java) {
