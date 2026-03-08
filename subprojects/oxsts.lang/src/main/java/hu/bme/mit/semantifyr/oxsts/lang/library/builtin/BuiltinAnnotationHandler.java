@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.library.builtin;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 
@@ -16,6 +17,9 @@ public class BuiltinAnnotationHandler {
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
+
+    @Inject
+    protected RedefinitionHandler redefinitionHandler;
 
     public boolean isControlVariable(VariableDeclaration variableDeclaration) {
         var controlAnnotation = builtinSymbolResolver.controlAnnotation(variableDeclaration);
@@ -68,6 +72,25 @@ public class BuiltinAnnotationHandler {
         }
 
         return null;
+    }
+
+    public boolean isTransitionTraced(TransitionDeclaration transitionDeclaration) {
+        var traceAnnotation = builtinSymbolResolver.traceAnnotation(transitionDeclaration);
+
+        return isTransitivelyAnnotatedWith(transitionDeclaration, traceAnnotation);
+    }
+
+    protected boolean isTransitivelyAnnotatedWith(RedefinableDeclaration annotatedElement, AnnotationDeclaration annotation) {
+        var element = annotatedElement;
+
+        while (element != null) {
+            if (OxstsUtils.isAnnotatedWith(annotatedElement, annotation)) {
+                return true;
+            }
+            element = redefinitionHandler.getRedefinedDeclaration(element);
+        }
+
+        return false;
     }
 
 }

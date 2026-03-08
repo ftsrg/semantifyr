@@ -278,5 +278,8 @@
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//TypeSpecification/multiplicity"/>
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference oxsts.ecore#//TypeSpecification/domain"/>
     </genClasses>
+    <genClasses ecoreClass="oxsts.ecore#//TraceOperation">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute oxsts.ecore#//TraceOperation/name"/>
+    </genClasses>
   </genPackages>
 </genmodel:GenModel>

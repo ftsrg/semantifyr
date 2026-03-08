@@ -24,3 +24,8 @@ class Anything {
  * Instances contained in Containment features annotated with @Shared are shared across all instances of the containing class.
  */
 annotation Shared
+
+/*
+ * Calls to transitions annotated with @Trace will be traced back in the verification case witness, containing the bindings of it's parameters at the call site.
+ */
+annotation Trace

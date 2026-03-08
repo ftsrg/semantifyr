@@ -15,7 +15,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 
 private typealias XstsVariableDeclaration = hu.bme.mit.semantifyr.xsts.lang.xsts.VariableDeclaration
-private typealias XstsTopLevelVariableDeclaration = hu.bme.mit.semantifyr.xsts.lang.xsts.TopLevelVariableDeclaration
+typealias XstsTopLevelVariableDeclaration = hu.bme.mit.semantifyr.xsts.lang.xsts.TopLevelVariableDeclaration
 private typealias XstsLocalVarDeclarationOperation = hu.bme.mit.semantifyr.xsts.lang.xsts.LocalVarDeclOperation
 
 @CompilationScoped

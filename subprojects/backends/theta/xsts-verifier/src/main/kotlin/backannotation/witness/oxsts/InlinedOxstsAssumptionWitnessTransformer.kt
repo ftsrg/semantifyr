@@ -11,11 +11,15 @@ import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.
 import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.xsts.XstsAssumptionWitness
 import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.xsts.XstsAssumptionWitnessState
 import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.xsts.XstsAssumptionWitnessStateVariableValue
+import hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts.TraceOperationTransformer
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.semantics.transformation.backannotation.InlinedOxstsAssumptionActivatedTrace
 import hu.bme.mit.semantifyr.semantics.transformation.backannotation.InlinedOxstsAssumptionWitness
 import hu.bme.mit.semantifyr.semantics.transformation.backannotation.InlinedOxstsAssumptionWitnessState
 import hu.bme.mit.semantifyr.semantics.transformation.backannotation.InlinedOxstsAssumptionWitnessStateValue
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.xsts.lang.xsts.LiteralBoolean
+import hu.bme.mit.semantifyr.xsts.lang.xsts.TopLevelVariableDeclaration
 
 @CompilationScoped
 class InlinedOxstsAssumptionWitnessTransformer {
@@ -23,15 +27,40 @@ class InlinedOxstsAssumptionWitnessTransformer {
     @Inject
     private lateinit var xstsExpressionToOxstsExpressionTransformer: XstsExpressionToOxstsExpressionTransformer
 
+    @Inject
+    private lateinit var traceOperationTransformer: TraceOperationTransformer
+
     private inner class TransformerContext(val inlinedOxsts: InlinedOxsts) {
         val mappings = mutableMapOf<XstsAssumptionWitnessState, InlinedOxstsAssumptionWitnessState>()
 
         fun transform(xstsAssumptionWitnessState: XstsAssumptionWitnessState) = mappings.getOrPut(xstsAssumptionWitnessState) {
+            val stateVariableValues = xstsAssumptionWitnessState.variableValues.filter {
+                traceOperationTransformer.isTracerVariable(it.variableDeclaration as TopLevelVariableDeclaration) == false
+            }
+            val traceVariableValues = xstsAssumptionWitnessState.variableValues.filter {
+                traceOperationTransformer.isTracerVariable(it.variableDeclaration as TopLevelVariableDeclaration)
+            }
+
             InlinedOxstsAssumptionWitnessState(
-                xstsAssumptionWitnessState.variableValues.map {
-                    transform(it)
-                }
+                transformStateValues(stateVariableValues),
+                transformTraceValues(traceVariableValues)
             )
+        }
+
+        private fun transformStateValues(stateVariableValues: List<XstsAssumptionWitnessStateVariableValue>): List<InlinedOxstsAssumptionWitnessStateValue> {
+            return stateVariableValues.map {
+                transform(it)
+            }
+        }
+
+        private fun transformTraceValues(traceVariableValues: List<XstsAssumptionWitnessStateVariableValue>): List<InlinedOxstsAssumptionActivatedTrace> {
+            return traceVariableValues.filter {
+                it.value is LiteralBoolean && it.value.isValue
+            }.map {
+                InlinedOxstsAssumptionActivatedTrace(
+                    traceOperationTransformer.getTraceOperation(it.variableDeclaration as TopLevelVariableDeclaration)
+                )
+            }
         }
 
         private fun transform(variableValue: XstsAssumptionWitnessStateVariableValue): InlinedOxstsAssumptionWitnessStateValue {

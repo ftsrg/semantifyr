@@ -28,6 +28,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.semantics.expression.InstanceReferenceProvider
@@ -40,6 +41,7 @@ import hu.bme.mit.semantifyr.semantics.optimization.OperationFlattenerOptimizer
 import hu.bme.mit.semantifyr.semantics.optimization.RedundantOperationRemoverOptimizer
 import hu.bme.mit.semantifyr.semantics.optimization.ExpressionOptimizer
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
+import hu.bme.mit.semantifyr.semantics.transformation.tracer.TransitionCallTracer
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.SemantifyrUtils
 import hu.bme.mit.semantifyr.semantics.utils.copy
@@ -82,6 +84,12 @@ class OperationCallInliner @AssistedInject @Inject constructor(
 
     @Inject
     private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
+
+    @Inject
+    private lateinit var builtinAnnotationHandler: BuiltinAnnotationHandler
+
+    @Inject
+    private lateinit var transitionCallTracer: TransitionCallTracer
 
     private var localVariableIndex: Int = 0
 
@@ -140,6 +148,10 @@ class OperationCallInliner @AssistedInject @Inject constructor(
         expressionCallInliner.process(operation.expression)
     }
 
+    override fun visit(operation: TraceOperation) {
+        // NO-OP
+    }
+
     override fun visit(operation: InlineCall) {
         performInlining(operation)
     }
@@ -157,7 +169,7 @@ class OperationCallInliner @AssistedInject @Inject constructor(
     }
 
     private fun performInlining(operation: InlineOperation) {
-        val inlined = createInlinedOperation(instance, operation)
+        val inlined = createInlinedOperation(operation)
         EcoreUtil2.replace(operation, inlined)
 
         val actualInlined = simplifyInlinedOperation(inlined)
@@ -204,17 +216,17 @@ class OperationCallInliner @AssistedInject @Inject constructor(
         return internalInlined
     }
 
-    private fun createInlinedOperation(instance: Instance, operation: InlineOperation): Operation {
+    private fun createInlinedOperation(operation: InlineOperation): Operation {
         return when (operation) {
-            is InlineCall -> createInlinedOperation(instance, operation)
-            is InlineIfOperation -> createInlinedOperation(instance, operation)
-            is InlineSeqFor -> createInlinedOperation(instance, operation)
-            is InlineChoiceFor -> createInlinedOperation(instance, operation)
+            is InlineCall -> createInlinedOperation(operation)
+            is InlineIfOperation -> createInlinedOperation(operation)
+            is InlineSeqFor -> createInlinedOperation(operation)
+            is InlineChoiceFor -> createInlinedOperation(operation)
             else -> error("Operation is not of known type: $operation")
         }
     }
 
-    private fun createInlinedOperation(instance: Instance, operation: InlineCall): Operation {
+    private fun createInlinedOperation(operation: InlineCall): Operation {
         val callExpression = operation.callExpression as CallSuffixExpression
 
         val metaEvaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(instance)
@@ -263,14 +275,35 @@ class OperationCallInliner @AssistedInject @Inject constructor(
 
         rewriteLocalVariables(inlined)
 
+        val tracerOperation = if (builtinAnnotationHandler.isTransitionTraced(actualTransition)) {
+            // trace this transition call with the static parameters
+            //  name of the transition, name-value pairs of the static call argument expressions, including self
+            //  somehow differentiate between transitions with the same name, i.e., recursive calls
+            transitionCallTracer.traceTransitionCall(instance, containerInstance, actualTransition, callExpression)
+        } else {
+            null
+        }
+
         if (inlined.branches.size == 1) {
-            return inlined.branches.single()
+            val singleBranch = inlined.branches.single()
+
+            if (tracerOperation != null) {
+                singleBranch.steps.addFirst(tracerOperation.copy())
+            }
+
+            return singleBranch
+        }
+
+        if (tracerOperation != null) {
+            for (branch in inlined.branches) {
+                branch.steps.addFirst(tracerOperation.copy())
+            }
         }
 
         return inlined
     }
 
-    private fun createInlinedOperation(instance: Instance, operation: InlineIfOperation): Operation {
+    private fun createInlinedOperation(operation: InlineIfOperation): Operation {
         val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
 
         if (evaluator.evaluateBoolean(operation.guard)) {
@@ -284,7 +317,7 @@ class OperationCallInliner @AssistedInject @Inject constructor(
         return OxstsFactory.createSequenceOperation()
     }
 
-    private fun createInlinedOperation(instance: Instance, operation: InlineSeqFor): Operation {
+    private fun createInlinedOperation(operation: InlineSeqFor): Operation {
         val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
 
         val featureInstances = evaluator.evaluateInstances(operation.rangeExpression)
@@ -313,7 +346,7 @@ class OperationCallInliner @AssistedInject @Inject constructor(
         return inlinedFor
     }
 
-    private fun createInlinedOperation(instance: Instance, operation: InlineChoiceFor): Operation {
+    private fun createInlinedOperation(operation: InlineChoiceFor): Operation {
         val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
 
         val featureInstances = evaluator.evaluateInstances(operation.rangeExpression)

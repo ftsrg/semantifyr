@@ -7,6 +7,7 @@
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 tasks.withType(Test::class.java) {
@@ -28,6 +29,9 @@ dependencies {
     api(libs.guice)
     api(libs.guice.extensions.assistedinject)
     api(libs.kotlinx.coroutines.core)
+//    api(libs.kotlinx.serialization.core)
+
+    implementation(libs.kotlinx.serialization.json)
 //    implementation(libs.kotlinx.coroutines.core)
 //    implementation(libs.viatra.query.language) {
 //        exclude("com.google.inject", "guice")
