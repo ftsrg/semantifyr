@@ -84,7 +84,7 @@ public class BuiltinAnnotationHandler {
         var element = annotatedElement;
 
         while (element != null) {
-            if (OxstsUtils.isAnnotatedWith(annotatedElement, annotation)) {
+            if (OxstsUtils.isAnnotatedWith(element, annotation)) {
                 return true;
             }
             element = redefinitionHandler.getRedefinedDeclaration(element);
