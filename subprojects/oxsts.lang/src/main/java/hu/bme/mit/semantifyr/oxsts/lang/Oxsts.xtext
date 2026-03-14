@@ -32,7 +32,10 @@ RootFeature returns FeatureDeclaration:
 InlinedVariable returns VariableDeclaration:
     annotation=AnnotationContainer
     'var' name=Identifier
-    ':' typeSpecification=TypeSpecification ':=' expression=Expression
+    (
+        ':=' expression=Expression
+        | ':' typeSpecification=TypeSpecification (':=' expression=Expression)?
+    )
     ';'?
 ;
 
@@ -141,7 +144,10 @@ RecordMember returns Declaration:
     -> (
         {VariableDeclaration.annotation=current}
         'var' name=Identifier
-        ':' typeSpecification=TypeSpecification ':=' expression=Expression
+        (
+            ':=' expression=Expression
+            | ':' typeSpecification=TypeSpecification (':=' expression=Expression)?
+        )
         ';'?
     // |
         // {FunctionDeclaration}
@@ -160,7 +166,10 @@ ClassMember returns Declaration:
     -> (
         {VariableDeclaration.annotation=current}
         'var' name=Identifier
-        ':' typeSpecification=TypeSpecification ':=' expression=Expression
+        (
+            ':=' expression=Expression
+            | ':' typeSpecification=TypeSpecification (':=' expression=Expression)?
+        )
         ';'?
     // |
         // {FunctionDeclaration}
@@ -272,6 +281,7 @@ Operation:
 	| AssignmentOperation
 	| IfOperation
 	| ForOperation
+	| TraceOperation
 	| LocalVarDeclarationOperation
 ;
 
@@ -312,6 +322,10 @@ LoopVariable returns VariableDeclaration:
 ForOperation:
     'for' '(' loopVariable=LoopVariable 'in' rangeExpression=Expression ')'
     body=SequenceOperation
+;
+
+TraceOperation:
+    'trace' name=Identifier
 ;
 
 LocalVarDeclarationOperation:

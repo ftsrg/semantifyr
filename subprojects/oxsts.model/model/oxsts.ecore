@@ -359,4 +359,7 @@
         containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="domain" eType="#//DomainDeclaration"/>
   </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="TraceOperation" eSuperTypes="#//Operation">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//String"/>
+  </eClassifiers>
 </ecore:EPackage>

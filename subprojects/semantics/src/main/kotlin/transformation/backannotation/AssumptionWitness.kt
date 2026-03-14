@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.semantics.transformation.backannotation
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
 abstract class AssumptionWitnessState(
@@ -32,9 +33,14 @@ class InlinedOxstsAssumptionWitnessStateValue(
     val value: Expression
 )
 
+class InlinedOxstsAssumptionActivatedTrace(
+    val traceOperation: TraceOperation
+)
+
 class InlinedOxstsAssumptionWitnessState(
 //    id: String,
-    val values: List<InlinedOxstsAssumptionWitnessStateValue>
+    val values: List<InlinedOxstsAssumptionWitnessStateValue>,
+    val activatedTraces: List<InlinedOxstsAssumptionActivatedTrace>,
 ) : AssumptionWitnessState()
 
 class InlinedOxstsAssumptionWitness(
@@ -50,9 +56,14 @@ class OxstsClassAssumptionWitnessStateValue(
     val value: Expression
 )
 
+class OxstsClassAssumptionActivatedTrace(
+    val traceOperation: TraceOperation
+)
+
 class OxstsClassAssumptionWitnessState(
 //    id: String,
-    val values: List<OxstsClassAssumptionWitnessStateValue>
+    val values: List<OxstsClassAssumptionWitnessStateValue>,
+    val activatedTraces: List<OxstsClassAssumptionActivatedTrace>,
 ) : AssumptionWitnessState()
 
 class OxstsClassAssumptionWitness(

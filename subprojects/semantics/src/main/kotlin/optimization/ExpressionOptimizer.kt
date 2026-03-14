@@ -18,7 +18,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OperatorExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOperator
-import hu.bme.mit.semantifyr.semantics.expression.ConstantEvaluationTransformer
+import hu.bme.mit.semantifyr.semantics.expression.ConstantExpressionEvaluationTransformer
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
@@ -34,7 +34,9 @@ class ExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
     private lateinit var compilationStateManager: CompilationStateManager
 
     @Inject
-    private lateinit var constantEvaluationTransformer: ConstantEvaluationTransformer
+    private lateinit var constantEvaluationTransformer: ConstantExpressionEvaluationTransformer
+
+    private val optimizedExpressions = mutableSetOf<Expression>()
 
     override fun doOptimizationStep(element: Element): Boolean {
         return rewriteConstantTrueOr(element)
@@ -48,7 +50,11 @@ class ExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
     // FIXME: replace with constant evaluator!
     private fun rewriteConstantExpression(element: Element): Boolean {
         val operatorResultPair = element.eAllOfType<OperatorExpression>().filterNot {
+            // skip optimizing expressions like -n
             it is UnaryOperator && it.body is LiteralInteger
+        }.filterNot {
+            // do not optimize the same expression again
+            optimizedExpressions.contains(it)
         }.map {
             it to evaluateOrNull(it)
         }.firstOrNull {
@@ -64,6 +70,8 @@ class ExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
         val constant = constantEvaluationTransformer.transformEvaluation(evaluation!!)
 
         EcoreUtil2.replace(operator, constant)
+
+        optimizedExpressions += constant
 
 //        compilationStateManager.commitModelState()
 

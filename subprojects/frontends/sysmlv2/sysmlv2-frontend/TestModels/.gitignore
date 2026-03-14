@@ -4,3 +4,5 @@
 **/*.trace
 **/theta.err
 **/theta.out
+**/trace.json
+**/mapping.json

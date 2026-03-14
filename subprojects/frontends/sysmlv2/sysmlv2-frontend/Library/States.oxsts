@@ -223,7 +223,7 @@ class ParallelState : AbstractState {
     }
     
     redefine tran fireTransitions() {
-        var anyStateExecuted := false
+        var anyStateExecuted: bool := false
 
         inline for (state in states) {
             choice {

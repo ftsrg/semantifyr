@@ -36,6 +36,9 @@ class OxstsTransformer {
     @Inject
     private lateinit var oxstsVariableTransformer: OxstsVariableTransformer
 
+    @Inject
+    private lateinit var traceOperationTransformer: TraceOperationTransformer
+
     fun transform(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext): XstsModel {
         val xsts = createEmptyXsts(inlinedOxsts)
 
@@ -61,6 +64,8 @@ class OxstsTransformer {
         }.filterIsInstance<EnumDeclaration>().map {
             oxstsDomainTransformer.transform(it)
         }.distinct()
+
+        traceOperationTransformer.finalizeTransformedTraceOperations(xsts)
 
         progressContext.checkIsCancelled()
 
