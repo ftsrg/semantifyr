@@ -24,8 +24,8 @@ class VerificationCaseDefinition {
     contains subject: Part
     contains objective: Requirement
 
-    refers deltaTimeMin: int = 1
-    refers deltaTimeMax: int = 1
+    // refers deltaTimeMin: int = 1
+    // refers deltaTimeMax: int = 1
 
     redefine init {
         inline subject.init()

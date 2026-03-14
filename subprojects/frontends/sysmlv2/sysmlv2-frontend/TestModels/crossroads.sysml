@@ -78,7 +78,7 @@ part def CentralController {
                 send Police() via controlB;
             }
             exit action {
-                send Police() via controlA;
+                // send Police() via controlA;
                 send Police() via controlB;
             }
         }
