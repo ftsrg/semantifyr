@@ -84,7 +84,7 @@ class Statechart : Component {
         }
     }
 
-    redefine tran {
+    redefine tran schedule() {
         inline resetOutputEvents()
 
         choice {
@@ -261,6 +261,7 @@ abstract class AbstractTransition {
 
     abstract prop isEnabled(): bool
 
+    // @Trace
     tran fire() {
         inline to.enter(parentRegion)
     }
@@ -293,6 +294,7 @@ class Transition : AbstractTransition {
         return trigger.isTriggered() && from.isActive() && guard.isOpen()
     }
 
+    // @Trace
     redefine tran fire() {
         inline from.exit(parentRegion)
         inline for (action in actions) {
