@@ -7,13 +7,13 @@
 package hu.bme.mit.semantifyr.semantics.transformation.tracer
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameConverter
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider
+import hu.bme.mit.semantifyr.oxsts.lang.serializer.ExpressionSerializer
 import hu.bme.mit.semantifyr.semantics.expression.ExpressionEvaluationSerializer
-import hu.bme.mit.semantifyr.semantics.transformation.backannotation.InlinedOxstsAssumptionActivatedTrace
-import hu.bme.mit.semantifyr.semantics.transformation.backannotation.InlinedOxstsAssumptionWitness
-import hu.bme.mit.semantifyr.semantics.transformation.backannotation.InlinedOxstsAssumptionWitnessState
-import hu.bme.mit.semantifyr.semantics.transformation.instantiation.InstanceNameProvider
+import hu.bme.mit.semantifyr.semantics.transformation.backannotation.OxstsClassAssumptionActivatedTrace
+import hu.bme.mit.semantifyr.semantics.transformation.backannotation.OxstsClassAssumptionWitness
+import hu.bme.mit.semantifyr.semantics.transformation.backannotation.OxstsClassAssumptionWitnessState
+import hu.bme.mit.semantifyr.semantics.transformation.backannotation.OxstsClassAssumptionWitnessStateValue
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
@@ -34,8 +34,15 @@ data class SerializableTrace(
 )
 
 @Serializable
+data class SerializableTraceValue(
+    val variable: String,
+    val value: String,
+)
+
+@Serializable
 data class SerializableTraceStep(
     val traces: List<SerializableTrace>,
+    val values: List<SerializableTraceValue>,
 )
 
 @Serializable
@@ -55,7 +62,10 @@ class TraceSerializer {
     @Inject
     private lateinit var expressionEvaluationSerializer: ExpressionEvaluationSerializer
 
-    private fun transformInlinedOxstsAssumptionActivatedTrace(trace: InlinedOxstsAssumptionActivatedTrace): SerializableTrace {
+    @Inject
+    private lateinit var expressionSerializer: ExpressionSerializer
+
+    private fun transformInlinedOxstsAssumptionActivatedTrace(trace: OxstsClassAssumptionActivatedTrace): SerializableTrace {
         val transitionCallTrace = transitionCallTracer.getTransitionCallTrace(trace.traceOperation)
 
         return SerializableTrace(
@@ -75,15 +85,25 @@ class TraceSerializer {
         )
     }
 
-    private fun transformInlinedOxstsAssumptionWitnessState(state: InlinedOxstsAssumptionWitnessState): SerializableTraceStep {
+    private fun transformInlinedOxstsAssumptionWitnessStateValue(value: OxstsClassAssumptionWitnessStateValue): SerializableTraceValue {
+        val variable = expressionSerializer.serialize(value.variableReference)
+        val value = expressionSerializer.serialize(value.value)
+
+        return SerializableTraceValue(variable, value)
+    }
+
+    private fun transformInlinedOxstsAssumptionWitnessState(state: OxstsClassAssumptionWitnessState): SerializableTraceStep {
         return SerializableTraceStep(
             state.activatedTraces.map {
                 transformInlinedOxstsAssumptionActivatedTrace(it)
+            },
+            state.values.map {
+                transformInlinedOxstsAssumptionWitnessStateValue(it)
             }
         )
     }
 
-    private fun transformWitness(inlinxOxstsAssumptionWitness: InlinedOxstsAssumptionWitness): SerializableTraceData {
+    private fun transformWitness(inlinxOxstsAssumptionWitness: OxstsClassAssumptionWitness): SerializableTraceData {
         return SerializableTraceData(
             transformInlinedOxstsAssumptionWitnessState(inlinxOxstsAssumptionWitness.initialState),
             inlinxOxstsAssumptionWitness.transitionStates.map {
@@ -92,9 +112,9 @@ class TraceSerializer {
         )
     }
 
-    fun serialize(inlinxOxstsAssumptionWitness: InlinedOxstsAssumptionWitness) {
-        val data = transformWitness(inlinxOxstsAssumptionWitness)
-        val path = inlinxOxstsAssumptionWitness.inlinedOxsts.eResource().uri.path().replace("inlined.oxsts", "trace.json")
+    fun serialize(inlinedOxstsAssumptionWitness: OxstsClassAssumptionWitness) {
+        val data = transformWitness(inlinedOxstsAssumptionWitness)
+        val path = inlinedOxstsAssumptionWitness.inlinedOxsts.eResource().uri.path().replace("inlined.oxsts", "trace.json")
         val file = File(path)
 
         val json = Json {

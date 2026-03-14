@@ -51,10 +51,10 @@ abstract class AbstractOxstsVerifier : OxstsVerifier {
     }
 
     open fun backAnnotateWitness(inlinedOxstsAssumptionWitness: InlinedOxstsAssumptionWitness) {
-        traceSerializer.serialize(inlinedOxstsAssumptionWitness)
-
         val classWitness = oxstsClassAssumptionWitnessTransformer.transform(inlinedOxstsAssumptionWitness)
         val witness = assumptionWitnessBackAnnotator.createWitnessInlinedOxsts(classWitness)
+
+        traceSerializer.serialize(classWitness)
 
         val resourceSet = inlinedOxstsAssumptionWitness.inlinedOxsts.eResource().resourceSet
         val path = inlinedOxstsAssumptionWitness.inlinedOxsts.eResource().uri.toString().replace("inlined.oxsts", "witness.oxsts")

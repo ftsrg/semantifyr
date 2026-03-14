@@ -56,9 +56,14 @@ class OxstsClassAssumptionWitnessStateValue(
     val value: Expression
 )
 
+class OxstsClassAssumptionActivatedTrace(
+    val traceOperation: TraceOperation
+)
+
 class OxstsClassAssumptionWitnessState(
 //    id: String,
-    val values: List<OxstsClassAssumptionWitnessStateValue>
+    val values: List<OxstsClassAssumptionWitnessStateValue>,
+    val activatedTraces: List<OxstsClassAssumptionActivatedTrace>,
 ) : AssumptionWitnessState()
 
 class OxstsClassAssumptionWitness(
