@@ -107,6 +107,11 @@ class DeflatedExpressionEvaluationTransformer : ConstantExpressionEvaluationTran
         return idInstance[id] ?: error("Unknown instance id!")
     }
 
+    // FIXME: refactor when explicit backing fields are supported: https://github.com/Kotlin/KEEP/discussions/430
+    fun evaluateMapping(): Map<Instance, Int> {
+        return instanceIds
+    }
+
 }
 
 @CompilationScoped
