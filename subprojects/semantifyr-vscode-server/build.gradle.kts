@@ -17,7 +17,7 @@ dependencies {
     distributionClasspath(project(":semantifyr-vscode", configuration = "distributionOutput"))
 }
 
-val cloneDistribution by tasks.registering(Sync::class) {
+val cloneDistribution by tasks.registering(Copy::class) {
     inputs.files(distributionClasspath)
 
     from (distributionClasspath.map {
