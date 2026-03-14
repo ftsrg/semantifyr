@@ -30,9 +30,6 @@ class OxstsVariableTransformer {
     @Inject
     private lateinit var builtinAnnotationHandler: BuiltinAnnotationHandler
 
-    @Inject
-    private lateinit var expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider
-
     private val topVariableMap = mutableMapOf<VariableDeclaration, XstsTopLevelVariableDeclaration>()
     private val localVariableMap = mutableMapOf<LocalVarDeclarationOperation, XstsLocalVarDeclarationOperation>()
 
@@ -70,17 +67,12 @@ class OxstsVariableTransformer {
     private fun transformInternals(variable: XstsVariableDeclaration, variableDeclaration: VariableDeclaration) {
         variable.name = variableDeclaration.name
 
-        val type = variableDeclaration.typeSpecification?.domain ?: evaluateExpressionType(variableDeclaration)
+        val type = variableDeclaration.typeSpecification.domain
         variable.type = oxstsTypeReferenceTransformer.transform(type, variableDeclaration.typeSpecification?.multiplicity)
 
         if (variableDeclaration.expression != null) {
             variable.expression = oxstsExpressionTransformer.transform(variableDeclaration.expression)
         }
-    }
-
-    private fun evaluateExpressionType(variableDeclaration: VariableDeclaration): DomainDeclaration {
-        val typeEvaluation = expressionTypeEvaluatorProvider.evaluate(variableDeclaration.expression)
-        return typeEvaluation.domain
     }
 
 }

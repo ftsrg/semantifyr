@@ -30,7 +30,7 @@ class TransitionScheduler {
     }
 
     tran fireTransitionsTopDown() {
-        var anyRegionExecuted := false
+        var anyRegionExecuted: bool := false
         inline for (region in innerRegions) {
             choice {
                 inline region.fireLocalTransitions()
@@ -49,7 +49,7 @@ class TransitionScheduler {
     }
 
     tran fireTransitionsBottomUp() {
-        var anyRegionExecuted := false
+        var anyRegionExecuted: bool := false
         inline for (region in innerRegions) {
             choice {
                 // fire state transitions if inner transitions are not enabled (bottom-up)

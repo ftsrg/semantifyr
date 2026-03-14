@@ -128,6 +128,23 @@ class OxstsInflator {
             inlinedOxsts.variables += variables
 
             for (variable in variables) {
+                // FIXME: this will now work for now, as the type of a "feature expression" is the feature itself
+                //  instead of the type of the feature. E.g., refers x: int <- type of x, not type of int
+                //  this makes sense, as the actual type domain of x will be a specific number in int, however
+                //  currently this does not help when specifying implicit types
+//                if (variable.typeSpecification == null) {
+//                    val typeEvaluation = expressionTypeEvaluatorProvider.evaluate(variable.expression)
+//                    variable.typeSpecification = OxstsFactory.createTypeSpecification().also {
+//                        it.domain = typeEvaluation.domain
+//                        it.multiplicity = OxstsFactory.createDefiniteMultiplicity().also {
+//                            it.expression = OxstsFactory.createRangeExpression().also {
+//                                it.left = OxstsFactory.createLiteralInteger(typeEvaluation.range.lowerBound)
+//                                it.right = OxstsFactory.createLiteralInteger(typeEvaluation.range.upperBound)
+//                            }
+//                        }
+//                    }
+//                }
+
                 if (variable.typeSpecification.domain is FeatureDeclaration) {
                     val instances = evaluator.evaluateInstances(OxstsFactory.createElementReference(variable.typeSpecification.domain))
                     variableInstanceDomain[variable] = instances
