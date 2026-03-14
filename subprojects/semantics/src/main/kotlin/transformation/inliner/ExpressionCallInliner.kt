@@ -190,6 +190,10 @@ class ExpressionCallInliner @AssistedInject constructor(
 
         val property = metaEvaluator.evaluateTyped(PropertyDeclaration::class.java, propertyReferenceExpression)
 
+        if (property.isAbstract) {
+            error("Abstract property can not be inlined!")
+        }
+
         // This trick ensures that the expression rewriter can rewrite the passed in expression itself as well
         val expressionHolder = OxstsFactory.createArgument()
         expressionHolder.expression = property.expression.copy()

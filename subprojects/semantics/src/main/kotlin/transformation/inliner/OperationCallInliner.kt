@@ -262,6 +262,10 @@ class OperationCallInliner @AssistedInject @Inject constructor(
 
         val actualTransition = redefinitionAwareReferenceResolver.resolve(containerInstance.domain, transitionDeclaration) as TransitionDeclaration
 
+        if (actualTransition.isAbstract) {
+            error("Abstract transition can not be inlined!")
+        }
+
         val inlined = OxstsFactory.createChoiceOperation().also {
             for (currentOperation in actualTransition.branches) {
                 val inlinedOperation = currentOperation.copy()
