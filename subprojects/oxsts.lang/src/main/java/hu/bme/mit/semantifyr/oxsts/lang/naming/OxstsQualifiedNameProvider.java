@@ -31,6 +31,10 @@ public class OxstsQualifiedNameProvider extends IQualifiedNameProvider.AbstractI
         return cache.get(Tuples.pair(obj, CACHE_KEY), obj.eResource(), () -> computeFullyQualifiedName(obj));
     }
 
+    public String getFullyQualifiedNameString(final EObject obj) {
+        return converter.toString(getFullyQualifiedName(obj));
+    }
+
     protected QualifiedName computeFullyQualifiedName(EObject obj) {
         var name = NamingUtil.getName(obj);
 

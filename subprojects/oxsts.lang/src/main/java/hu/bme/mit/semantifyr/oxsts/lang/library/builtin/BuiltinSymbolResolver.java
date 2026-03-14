@@ -22,6 +22,7 @@ public class BuiltinSymbolResolver {
 
     public static final QualifiedName CONTROL_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Control");
     public static final QualifiedName SHARED_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Shared");
+    public static final QualifiedName TRACE_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Trace");
 
     public static final QualifiedName VERIFICATION_CASE_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_VERIFICATION_LIBRARY_NAME.append("VerificationCase");
     public static final String VERIFICATION_CASE_EXPECTED_RESULTS_NAME = "expected";
@@ -58,6 +59,10 @@ public class BuiltinSymbolResolver {
 
     public AnnotationDeclaration sharedAnnotation(EObject context) {
         return findInBuiltin(context, AnnotationDeclaration.class, SHARED_ANNOTATION_NAME);
+    }
+
+    public AnnotationDeclaration traceAnnotation(EObject context) {
+        return findInBuiltin(context, AnnotationDeclaration.class, TRACE_ANNOTATION_NAME);
     }
 
     public AnnotationDeclaration verificationCaseAnnotation(EObject context) {

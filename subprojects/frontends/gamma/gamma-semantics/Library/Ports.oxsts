@@ -49,10 +49,12 @@ class Port {
         outputEvent := nothing
     }
 
+    // @Trace
     tran havocInputEvent() {
         havoc (inputEvent)
     }
 
+    // @Trace
     tran havocOutputEvent() {
         havoc (outputEvent)
     }

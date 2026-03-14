@@ -11,7 +11,7 @@ abstract class Attribute {
 class IntegerAttribute : Attribute {
     refers defaultValue: int = 0
 
-    var value := defaultValue
+    var value: int := defaultValue
 
     redefine init {
         value := defaultValue
@@ -29,7 +29,7 @@ class IntegerAttribute : Attribute {
 class BooleanAttribute : Attribute {
     refers defaultValue: bool = false
 
-    var value := defaultValue
+    var value: bool := defaultValue
 
     redefine init {
         value := defaultValue

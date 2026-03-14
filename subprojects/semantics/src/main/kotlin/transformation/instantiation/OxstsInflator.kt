@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.semantics.transformation.instantiation
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
@@ -22,9 +23,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
+import hu.bme.mit.semantifyr.semantics.expression.DeflatedExpressionEvaluationTransformer
 import hu.bme.mit.semantifyr.semantics.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.semantics.expression.MetaStaticExpressionEvaluatorProvider
-import hu.bme.mit.semantifyr.semantics.expression.DeflatedEvaluationTransformer
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.optimization.InlinedOxstsOperationOptimizer
 import hu.bme.mit.semantifyr.semantics.transformation.constraints.ConstraintChecker
@@ -32,6 +33,7 @@ import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.Compilatio
 import hu.bme.mit.semantifyr.semantics.transformation.inliner.ExpressionRewriter
 import hu.bme.mit.semantifyr.semantics.transformation.instantiation.NameHelper.INSTANCE_NAME_SEPARATOR
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.DomainMappingSerializer
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.copy
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
@@ -72,7 +74,7 @@ class OxstsInflator {
     private lateinit var instanceReferenceProvider: InstanceReferenceProvider
 
     @Inject
-    private lateinit var deflatedEvaluationTransformer: DeflatedEvaluationTransformer
+    private lateinit var deflatedEvaluationTransformer: DeflatedExpressionEvaluationTransformer
 
     @Inject
     private lateinit var inlinedOxstsOperationOptimizer: InlinedOxstsOperationOptimizer
@@ -80,7 +82,14 @@ class OxstsInflator {
     @Inject
     private lateinit var metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider
 
+    @Inject
+    private lateinit var domainMappingSerializer: DomainMappingSerializer
+
+    @Inject
+    private lateinit var expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider
+
     private val variableInstanceDomain = mutableMapOf<VariableDeclaration, Set<Instance>>()
+//    private val domainInstanceDomain = mutableMapOf<DomainDeclaration, Set<Instance>>()
 
     private val variableHolders = mutableMapOf<VariableDeclaration, Instance>()
 
@@ -102,6 +111,8 @@ class OxstsInflator {
         inlinedOxstsOperationOptimizer.optimize(inlinedOxsts)
 
         compilationStateManager.commitModelState()
+
+        domainMappingSerializer.serializeMapping(inlinedOxsts)
     }
 
     private fun pullDownVariables(inlinedOxsts: InlinedOxsts) {
@@ -117,6 +128,23 @@ class OxstsInflator {
             inlinedOxsts.variables += variables
 
             for (variable in variables) {
+                // FIXME: this will now work for now, as the type of a "feature expression" is the feature itself
+                //  instead of the type of the feature. E.g., refers x: int <- type of x, not type of int
+                //  this makes sense, as the actual type domain of x will be a specific number in int, however
+                //  currently this does not help when specifying implicit types
+//                if (variable.typeSpecification == null) {
+//                    val typeEvaluation = expressionTypeEvaluatorProvider.evaluate(variable.expression)
+//                    variable.typeSpecification = OxstsFactory.createTypeSpecification().also {
+//                        it.domain = typeEvaluation.domain
+//                        it.multiplicity = OxstsFactory.createDefiniteMultiplicity().also {
+//                            it.expression = OxstsFactory.createRangeExpression().also {
+//                                it.left = OxstsFactory.createLiteralInteger(typeEvaluation.range.lowerBound)
+//                                it.right = OxstsFactory.createLiteralInteger(typeEvaluation.range.upperBound)
+//                            }
+//                        }
+//                    }
+//                }
+
                 if (variable.typeSpecification.domain is FeatureDeclaration) {
                     val instances = evaluator.evaluateInstances(OxstsFactory.createElementReference(variable.typeSpecification.domain))
                     variableInstanceDomain[variable] = instances

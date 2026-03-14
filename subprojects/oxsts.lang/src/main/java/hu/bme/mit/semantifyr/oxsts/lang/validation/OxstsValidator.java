@@ -61,6 +61,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String ABSTRACT_FEATURE_INHERITED_MEMBERS_NOT_REDEFINED = ISSUE_PREFIX + "ABSTRACT_FEATURE_INHERITED_MEMBERS_NOT_REDEFINED";
     public static final String INCORRECT_ASSIGNMENT = ISSUE_PREFIX + "INCORRECT_ASSIGNMENT";
     public static final String INCORRECT_CALLED_ELEMENT = ISSUE_PREFIX + "INCORRECT_CALLED_ELEMENT";
+    public static final String VARIABLE_WITH_IMPLICIT_TYPE = ISSUE_PREFIX + "VARIABLE_WITH_IMPLICIT_TYPE";
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
@@ -255,6 +256,18 @@ public class OxstsValidator extends AbstractOxstsValidator {
 
         if (! OxstsUtils.isCallable(called)) {
             acceptError("Element " + called.getName() + " is not callable!", callSuffixExpression, OxstsPackage.Literals.POSTFIX_UNARY_EXPRESSION__PRIMARY, 0, INCORRECT_CALLED_ELEMENT);
+        }
+    }
+
+    // FIXME: this should be removed along with solving the problem in semantics#OxstsInflator#pullDownVariables()
+    @Check
+    public void checkNoImplicitlyTypeVariables(VariableDeclaration variableDeclaration) {
+        if (OxstsUtils.isLoopVariable(variableDeclaration)) {
+            return;
+        }
+
+        if (variableDeclaration.getTypeSpecification() == null) {
+            acceptError("Variables may not have implicit types!", variableDeclaration, VARIABLE_WITH_IMPLICIT_TYPE);
         }
     }
 

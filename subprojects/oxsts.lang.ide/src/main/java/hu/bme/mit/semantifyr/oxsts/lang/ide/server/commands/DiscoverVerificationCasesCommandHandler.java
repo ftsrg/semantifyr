@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler;
+import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
 import org.eclipse.emf.ecore.resource.Resource;
@@ -22,6 +23,9 @@ public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHand
 
     @Inject
     private BuiltinAnnotationHandler builtinAnnotationHandler;
+
+    @Inject
+    private OxstsQualifiedNameProvider oxstsQualifiedNameProvider;
 
     @Override
     public String getId() {
@@ -73,11 +77,11 @@ public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHand
     }
 
     private VerificationCaseSpecification createCase(ClassDeclaration classDeclaration) {
+        var id = oxstsQualifiedNameProvider.getFullyQualifiedNameString(classDeclaration);
         var summary = builtinAnnotationHandler.getVerificationCaseSummary(classDeclaration);
         if (summary == null) {
-            summary = classDeclaration.getName();
+            summary = id;
         }
-        var id = classDeclaration.getName();
         var location = getLocation(classDeclaration);
 
         return new VerificationCaseSpecification(id, summary, location);

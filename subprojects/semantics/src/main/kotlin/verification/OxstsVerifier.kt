@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.semantics.transformation.ProgressContext
 import hu.bme.mit.semantifyr.semantics.transformation.backannotation.AssumptionWitnessBackAnnotator
 import hu.bme.mit.semantifyr.semantics.transformation.backannotation.InlinedOxstsAssumptionWitness
 import hu.bme.mit.semantifyr.semantics.transformation.backannotation.OxstsClassAssumptionWitnessTransformer
+import hu.bme.mit.semantifyr.semantics.transformation.tracer.TraceSerializer
 import org.eclipse.emf.common.util.URI
 
 data class VerificationCaseRunResult(
@@ -42,6 +43,9 @@ abstract class AbstractOxstsVerifier : OxstsVerifier {
     @Inject
     private lateinit var oxstsClassAssumptionWitnessTransformer: OxstsClassAssumptionWitnessTransformer
 
+    @Inject
+    private lateinit var traceSerializer: TraceSerializer
+
     open fun inlineClass(progressContext: ProgressContext, classDeclaration: ClassDeclaration): InlinedOxsts {
         return oxstsClassInliner.inline(progressContext, classDeclaration)
     }
@@ -49,6 +53,8 @@ abstract class AbstractOxstsVerifier : OxstsVerifier {
     open fun backAnnotateWitness(inlinedOxstsAssumptionWitness: InlinedOxstsAssumptionWitness) {
         val classWitness = oxstsClassAssumptionWitnessTransformer.transform(inlinedOxstsAssumptionWitness)
         val witness = assumptionWitnessBackAnnotator.createWitnessInlinedOxsts(classWitness)
+
+        traceSerializer.serialize(classWitness)
 
         val resourceSet = inlinedOxstsAssumptionWitness.inlinedOxsts.eResource().resourceSet
         val path = inlinedOxstsAssumptionWitness.inlinedOxsts.eResource().uri.toString().replace("inlined.oxsts", "witness.oxsts")

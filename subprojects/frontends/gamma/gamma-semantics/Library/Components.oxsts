@@ -14,6 +14,13 @@ abstract class Component {
     contains ports: Port[0..*]
     contains timeouts: Timeout[0..*]
 
+    redefine tran {
+        inline schedule()
+    }
+
+    // @Trace
+    abstract tran schedule()
+
     tran resetInputEvents() {
         inline for (port in ports) {
             inline port.resetInputEvent()
@@ -43,14 +50,19 @@ class Channel {
     refers inputPort: Port[1]
     refers outputPort: Port[1]
 
+    // @Trace
+    tran doTransferEvent() {
+        inline outputPort.setInputEvent(inputPort.outputEvent)
+    }
+
     redefine tran {
         if (inputPort.hasOutput()) {
-            inline outputPort.setInputEvent(inputPort.outputEvent)
+            inline doTransferEvent()
         }
     }
 }
 
-class CompositeComponent : Component {
+abstract class CompositeComponent : Component {
     contains components: Component[0..*]
     contains channels: Channel[0..*]
 
@@ -72,7 +84,7 @@ class SyncComponent : CompositeComponent {
         }
     }
 
-    redefine tran {
+    redefine tran schedule() {
         inline resetOutputEvents()
 
         inline for (component in components) {

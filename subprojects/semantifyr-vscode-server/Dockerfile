@@ -3,7 +3,7 @@ FROM jupyterhub/singleuser:latest
 
 USER root
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends libgomp1 libmpfr-dev openjdk-21-jre && \
+    apt-get install -y --no-install-recommends libgomp1 libmpfr-dev openjdk-25-jre && \
     apt-get clean && sudo rm -rf /var/lib/apt/lists/*
 
 ARG OVS_VER=v1.106.3
