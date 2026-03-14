@@ -36,6 +36,8 @@ class ExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
     @Inject
     private lateinit var constantEvaluationTransformer: ConstantExpressionEvaluationTransformer
 
+    private val optimizedExpressions = mutableSetOf<Expression>()
+
     override fun doOptimizationStep(element: Element): Boolean {
         return rewriteConstantTrueOr(element)
             || rewriteConstantFalseAnd(element)
@@ -48,7 +50,11 @@ class ExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
     // FIXME: replace with constant evaluator!
     private fun rewriteConstantExpression(element: Element): Boolean {
         val operatorResultPair = element.eAllOfType<OperatorExpression>().filterNot {
+            // skip optimizing expressions like -n
             it is UnaryOperator && it.body is LiteralInteger
+        }.filterNot {
+            // do not optimize the same expression again
+            optimizedExpressions.contains(it)
         }.map {
             it to evaluateOrNull(it)
         }.firstOrNull {
@@ -64,6 +70,8 @@ class ExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
         val constant = constantEvaluationTransformer.transformEvaluation(evaluation!!)
 
         EcoreUtil2.replace(operator, constant)
+
+        optimizedExpressions += constant
 
 //        compilationStateManager.commitModelState()
 
