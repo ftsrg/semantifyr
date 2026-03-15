@@ -157,7 +157,7 @@ part def Mission {
 
     bind commandPort = groundStation.commandPort; 
 
-    flow from groundStation.commandPort to spacecraft.commandPort;
+    flow from groundStation.spacecraftCommandPort to spacecraft.commandPort;
     flow from spacecraft.dataPort to groundStation.dataPort;
 }
 
