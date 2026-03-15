@@ -23,7 +23,7 @@ import kotlinx.coroutines.withContext
 class DockerBasedThetaXstsExecutor : ThetaXstsExecutor() {
 
     private val imageName = "ftsrg/theta-xsts-cli"
-    private val version = "6.27.0"
+    private val version = "6.27.17"
     private val config = DefaultDockerClientConfig.createDefaultConfigBuilder().build()
     private val httpClient = ApacheDockerHttpClient.Builder()
         .dockerHost(config.dockerHost)
