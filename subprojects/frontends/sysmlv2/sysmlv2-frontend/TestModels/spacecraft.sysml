@@ -3,23 +3,26 @@ private import ScalarValues::Boolean;
 private import SI::s;
 
 part def GroundStation {   
-    port commandPort : CommandPort;
-    port spacecraftCommandPort : ~CommandPort;
-    port dataPort : ~DataPort;
+    port commandPort: CommandPort;
+    port spacecraftCommandPort: ~CommandPort;
+    port dataPort: ~DataPort;
     
-    attribute receivedData : Integer default 0;
+    attribute receivedData: Integer default 0;
 
     exhibit state Behaviour {
+        transition first start then Idle;
+
         state Idle;
 
-        transition first start then Idle;
+        transition first Idle accept after 30 [s] then Operation;
+        transition first Idle accept : StartCommand via commandPort then Operation;
 
         state Operation {
             entry send PingCommand() via spacecraftCommandPort;
 
-            state Waiting;
-
             transition first start then Waiting;
+
+            state Waiting;
 
             transition
                 first Waiting
@@ -29,21 +32,19 @@ part def GroundStation {
                 then Waiting;
         }
 
-        transition first Idle accept after 30 [s] then Operation;
-        transition first Idle accept : StartCommand via commandPort then Operation;
-
         transition first Operation accept after 10 [s] then Operation;
+
         transition first Operation accept : StopCommand via commandPort then Idle;
     }
 }
 
-part def Spacecraft {    
-    attribute batteryCharge : Integer default 100;
-    attribute recharging : Boolean default false;
-    attribute data : Integer default 100;
+part def Spacecraft {
+    port commandPort: CommandPort;
+    port dataPort: DataPort;
 
-    port commandPort : CommandPort;
-    port dataPort : DataPort;
+    attribute batteryCharge: Integer default 100;
+    attribute recharging: Boolean default false;
+    attribute data: Integer default 100;
 
     exhibit state Behaviour parallel {
         state Communication {
@@ -134,7 +135,7 @@ part def Spacecraft {
 
 item def Data {
     // Internal attributes are not yet supported!
-    //attribute value : Integer;
+    //attribute value: Integer;
 }
 
 item def Command;
@@ -143,17 +144,17 @@ item def StopCommand :> Command;
 item def StartCommand :> Command;
 
 port def CommandPort {
-    in item command : Command;
+    in item command: Command;
 }
 port def DataPort {
-    out item data : Data;
+    out item data: Data;
 }
 
 part def Mission {
-    port commandPort : CommandPort;
+    port commandPort: CommandPort;
 
-    part groundStation : GroundStation;
-    part spacecraft : Spacecraft;
+    part groundStation: GroundStation;
+    part spacecraft: Spacecraft;
 
     bind commandPort = groundStation.commandPort; 
 
@@ -162,7 +163,7 @@ part def Mission {
 }
 
 verification def StationBehaviorIdleReachable {
-    subject mission : Mission;
+    subject mission: Mission;
 
     objective {
         verify requirement {
@@ -176,7 +177,7 @@ verification def StationBehaviorIdleReachable {
 }
 
 verification def StationBehaviorOperationReachable {
-    subject mission : Mission;
+    subject mission: Mission;
 
     objective {
         verify requirement {
@@ -190,7 +191,7 @@ verification def StationBehaviorOperationReachable {
 }
 
 verification def StationBehaviorOperationWaitingReachable {
-    subject mission : Mission;
+    subject mission: Mission;
 
     objective {
         verify requirement {
@@ -206,7 +207,7 @@ verification def StationBehaviorOperationWaitingReachable {
 
 
 // verification def SpacecraftBehaviorCommunicationReachable {
-//     subject mission : Mission;
+//     subject mission: Mission;
 
 //     objective {
 //         verify requirement {
@@ -220,7 +221,7 @@ verification def StationBehaviorOperationWaitingReachable {
 // }
 
 verification def SpacecraftBehaviorCommunicationWaitingPingReachable {
-    subject mission : Mission;
+    subject mission: Mission;
 
     objective {
         verify requirement {
@@ -234,7 +235,7 @@ verification def SpacecraftBehaviorCommunicationWaitingPingReachable {
 }
 
 verification def SpacecraftBehaviorCommunicationTransmittingReachable {
-    subject mission : Mission;
+    subject mission: Mission;
 
     objective {
         verify requirement {
@@ -248,7 +249,7 @@ verification def SpacecraftBehaviorCommunicationTransmittingReachable {
 }
 
 verification def SpacecraftBehaviorCommunicationTransmittingSendDataReachable {
-    subject mission : Mission;
+    subject mission: Mission;
 
     objective {
         verify requirement {
@@ -262,7 +263,7 @@ verification def SpacecraftBehaviorCommunicationTransmittingSendDataReachable {
 }
 
 verification def SpacecraftBehaviorCommunicationTransmittingSendDataSendingReachable {
-    subject mission : Mission;
+    subject mission: Mission;
 
     objective {
         verify requirement {
@@ -276,7 +277,7 @@ verification def SpacecraftBehaviorCommunicationTransmittingSendDataSendingReach
 }
 
 verification def SpacecraftBehaviorCommunicationTransmittingConsumePowerReachable {
-    subject mission : Mission;
+    subject mission: Mission;
 
     objective {
         verify requirement {
@@ -290,7 +291,7 @@ verification def SpacecraftBehaviorCommunicationTransmittingConsumePowerReachabl
 }
 
 verification def SpacecraftBehaviorCommunicationTransmittingConsumePowerConsumingReachable {
-    subject mission : Mission;
+    subject mission: Mission;
 
     objective {
         verify requirement {
@@ -304,7 +305,7 @@ verification def SpacecraftBehaviorCommunicationTransmittingConsumePowerConsumin
 }
 
 // verification def SpacecraftBehaviorBatteryReachable {
-//     subject mission : Mission;
+//     subject mission: Mission;
 
 //     objective {
 //         verify requirement {
@@ -318,7 +319,7 @@ verification def SpacecraftBehaviorCommunicationTransmittingConsumePowerConsumin
 // }
 
 verification def SpacecraftBehaviorBatteryNotRechargingReachable {
-    subject mission : Mission;
+    subject mission: Mission;
 
     objective {
         verify requirement {
@@ -332,7 +333,7 @@ verification def SpacecraftBehaviorBatteryNotRechargingReachable {
 }
 
 verification def SpacecraftBehaviorBatteryRechargingReachable {
-    subject mission : Mission;
+    subject mission: Mission;
 
     objective {
         verify requirement {
