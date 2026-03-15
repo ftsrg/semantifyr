@@ -15,7 +15,7 @@ import semantifyr::sysml::actions
 abstract class AcceptAction {
 
     prop isTriggered(): bool {
-        return true // should be abstract, but no good way to specify defaults at the moment
+        return true // should be abstract, but no good way to specify defaults atm
     }
 
     tran passTime() {
@@ -48,7 +48,6 @@ class AcceptTimeoutAction : AcceptAction {
     redefine tran passTime() {
         if (remainingTime > 0) {
             remainingTime := remainingTime - 1
-            // assume (remainingTime >= 0)
         }
     }
 

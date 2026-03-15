@@ -11,18 +11,13 @@ import semantifyr::sysml::expressions
 import semantifyr::sysml::ports
 import semantifyr::sysml::items
 
-abstract class Action {
-    // @Trace
-    tran execute() {
-
-    }
-}
+abstract class Action
 
 class SendAction : Action {
     refers viaPort: Port
     refers payload: Item
 
-    redefine tran execute() {
+    redefine tran {
         inline viaPort.setOutgoingItem(payload)
     }
 }
@@ -30,16 +25,16 @@ class SendAction : Action {
 class AssignmentAction : Action {
     refers attribute: Attribute
     contains expression: Expression
-    redefine tran execute() {
+    redefine tran {
         inline attribute.set(expression.evaluate())
     }
 }
 
 class CompositeAction : Action {
     contains children: Action[0..*]
-    redefine tran execute() {
+    redefine tran {
         inline for (child in children) {
-            inline child.execute()
+            inline child.main()
         }
     }
 }

@@ -152,14 +152,14 @@ class State : AbstractState {
                 inline transition.initialize()
             }
 
-            inline entryAction.execute()
+            inline entryAction.main()
         }
     }
     
     tran deactivate() {
         inline if (parent != nothing) {
             if (parent.getActiveState() == self) {
-                inline exitAction.execute()
+                inline exitAction.main()
 
                 inline parent.setActiveState(nothing)
             }
@@ -193,7 +193,7 @@ class Transition {
 
     tran performTransition() {
 		inline from.exit(parentState)
-		inline action.execute()
+		inline action.main()
 		inline to.enter(parentState)
 	}
 

@@ -24,17 +24,13 @@ class VerificationCaseDefinition {
     contains subject: Part
     contains objective: Requirement
 
-    // refers deltaTimeMin: int = 1
-    // refers deltaTimeMax: int = 1
-
     redefine init {
         inline subject.init()
     }
 
     redefine tran {
         inline subject.havocInputEvents()
-        inline subject.main()
-        // inline subject.resetOutputEvents()
+        inline subject.executeMainComponent()
         inline subject.passTime()
     }
 

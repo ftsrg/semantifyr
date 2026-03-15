@@ -73,6 +73,20 @@ class Part {
 
         inline resetInputEvents()
     }
+
+    tran executeMainComponent() {
+        inline resetOutputEvents()
+
+        inline for (part in parts) {
+            inline part.main()
+        }
+
+        inline executeExhibitState()
+
+        inline for (flow in flows) {
+            inline flow.main()
+        }        
+    }
 }
 
 class Flow {
