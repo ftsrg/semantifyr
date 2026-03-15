@@ -24,8 +24,7 @@ public class BuiltinSymbolResolver {
     public static final QualifiedName SHARED_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Shared");
     public static final QualifiedName TRACE_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Trace");
 
-    public static final QualifiedName VERIFICATION_CASE_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_VERIFICATION_LIBRARY_NAME.append("VerificationCase");
-    public static final String VERIFICATION_CASE_EXPECTED_RESULTS_NAME = "expected";
+    public static final QualifiedName VERIFICATION_CASE_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("VerificationCase");
     public static final String VERIFICATION_CASE_SUMMARY_NAME = "summary";
 
     public static final QualifiedName ANYTHING_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Anything");
@@ -66,12 +65,7 @@ public class BuiltinSymbolResolver {
     }
 
     public AnnotationDeclaration verificationCaseAnnotation(EObject context) {
-        return findInBuiltinVerification(context, AnnotationDeclaration.class, VERIFICATION_CASE_ANNOTATION_NAME);
-    }
-
-    public ParameterDeclaration verificationCaseAnnotationExpectedResults(EObject context) {
-        var verificationCase = verificationCaseAnnotation(context);
-        return findInParameters(verificationCase, ParameterDeclaration.class, VERIFICATION_CASE_EXPECTED_RESULTS_NAME);
+        return findInBuiltin(context, AnnotationDeclaration.class, VERIFICATION_CASE_ANNOTATION_NAME);
     }
 
     public ParameterDeclaration verificationCaseAnnotationSummary(EObject context) {
@@ -178,11 +172,6 @@ public class BuiltinSymbolResolver {
 
     protected <T extends Declaration> T findInBuiltin(EObject context, Class<T> type, QualifiedName name) {
         var builtinResource = libraryResourceResolver.resolveResource(builtinLibrary.getBuiltinResourceUri(), context);
-        return findInResource(builtinResource, type, name);
-    }
-
-    protected <T extends Declaration> T findInBuiltinVerification(EObject context, Class<T> type, QualifiedName name) {
-        var builtinResource = libraryResourceResolver.resolveResource(builtinLibrary.getBuiltinVerificationResourceUri(), context);
         return findInResource(builtinResource, type, name);
     }
 

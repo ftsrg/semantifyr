@@ -31,6 +31,7 @@ part def CentralController {
 
             state BothYellow;
 
+            // switch A to Red, B to Red
             transition first BothYellow accept after 1[s] do action {
                 send Toggle() via controlA;
                 send Toggle() via controlB;
@@ -38,18 +39,21 @@ part def CentralController {
 
             state BothRed;
 
+            // switch A to Green
             transition first BothRed accept after 2[s] do action {
                 send Toggle() via controlA;
             } then TrafficOnA;
 
             state TrafficOnA;
 
+            // switch A to Yellow
             transition first TrafficOnA accept after 2[s] do action {
                 send Toggle() via controlA;
             } then StoppingA;
             
             state StoppingA;
 
+            // switch A to Red, B to Green
             transition first StoppingA accept after 1[s] do action {
                 send Toggle() via controlA;
                 send Toggle() via controlB;
@@ -57,12 +61,14 @@ part def CentralController {
             
             state TrafficOnB;
             
+            // switch B to Yellow
             transition first TrafficOnB accept after 2[s] do action {
                 send Toggle() via controlB;
             } then StoppingB;
             
             state StoppingB;
             
+            // switch A to Green, B to Red
             transition first StoppingB accept after 1[s] do action {
                 send Toggle() via controlA;
                 send Toggle() via controlB;
@@ -78,7 +84,7 @@ part def CentralController {
                 send Police() via controlB;
             }
             exit action {
-                // send Police() via controlA;
+                send Police() via controlA;
                 send Police() via controlB;
             }
         }
@@ -136,12 +142,16 @@ part def TrafficLightController {
 
 part def CrossroadSystem {
     port control : ~CentralControl;
+    // port lightControlA : LightControl;
+    // port lightControlB : LightControl;
 
     part controller: CentralController;
     part trafficLightA: TrafficLightController;
     part trafficLightB: TrafficLightController;
 
     bind control = controller.control; 
+    // bind lightControlA = trafficLightA.lightControl; 
+    // bind lightControlB = trafficLightB.lightControl; 
 
     flow from controller.controlA to trafficLightA.control;
     flow from controller.controlB to trafficLightB.control;
@@ -461,15 +471,137 @@ verification def TrafficLightBBehaviorInterruptedBlackReachable {
 
 
 
-verification def BothCannotBeGreen {
+verification def ReachableRedRed {
     subject system : CrossroadSystem;
 
     objective {
         verify requirement {
             require constraint {
-                never(
+                eventually(
+                    isStateActive(system.trafficLightA.Behaviour.Normal.Red)
+                    and isStateActive(system.trafficLightB.Behaviour.Normal.Red)
+                )
+            }
+        }
+    }
+}
+
+verification def ReachableRedGreen {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.trafficLightA.Behaviour.Normal.Red)
+                    and isStateActive(system.trafficLightB.Behaviour.Normal.Green)
+                )
+            }
+        }
+    }
+}
+
+verification def ReachableRedYellow {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.trafficLightA.Behaviour.Normal.Red)
+                    and isStateActive(system.trafficLightB.Behaviour.Normal.Yellow)
+                )
+            }
+        }
+    }
+}
+
+
+verification def ReachableGreenRed {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.trafficLightA.Behaviour.Normal.Green)
+                    and isStateActive(system.trafficLightB.Behaviour.Normal.Red)
+                )
+            }
+        }
+    }
+}
+
+verification def UnreachableGreenGreen {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                not eventually(
                     isStateActive(system.trafficLightA.Behaviour.Normal.Green)
                     and isStateActive(system.trafficLightB.Behaviour.Normal.Green)
+                )
+            }
+        }
+    }
+}
+
+verification def UnreachableGreenYellow {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                not eventually(
+                    isStateActive(system.trafficLightA.Behaviour.Normal.Green)
+                    and isStateActive(system.trafficLightB.Behaviour.Normal.Yellow)
+                )
+            }
+        }
+    }
+}
+
+
+verification def ReachableYellowRed {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.trafficLightA.Behaviour.Normal.Yellow)
+                    and isStateActive(system.trafficLightB.Behaviour.Normal.Red)
+                )
+            }
+        }
+    }
+}
+
+verification def UnreachableYellowGreen {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                not eventually(
+                    isStateActive(system.trafficLightA.Behaviour.Normal.Yellow)
+                    and isStateActive(system.trafficLightB.Behaviour.Normal.Green)
+                )
+            }
+        }
+    }
+}
+
+verification def ReachableYellowYellow {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.trafficLightA.Behaviour.Normal.Yellow)
+                    and isStateActive(system.trafficLightB.Behaviour.Normal.Yellow)
                 )
             }
         }

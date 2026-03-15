@@ -88,6 +88,16 @@ public class ExpressionSerializer extends ExpressionVisitor<String> {
     }
 
     @Override
+    protected String visit(AG expression) {
+        return "AG " + visit(expression.getBody());
+    }
+
+    @Override
+    protected String visit(EF expression) {
+        return "EF " + visit(expression.getBody());
+    }
+
+    @Override
     protected String visit(ArrayLiteral expression) {
         var values = expression.getValues().stream().map(this::visit).toList();
 

@@ -18,8 +18,9 @@ import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaVerifica
 import hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts.OxstsTransformer
 import hu.bme.mit.semantifyr.backends.theta.wrapper.utils.CexReader
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
-import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.VerificationCaseExpectedResult
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.semantics.transformation.ProgressContext
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
@@ -69,8 +70,6 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
     }
 
     override fun verify(progressContext: ProgressContext, classDeclaration: ClassDeclaration): VerificationCaseRunResult {
-        val expected = builtinAnnotationHandler.getExpectedResults(classDeclaration)
-
         progressContext.reportProgress("Inlining class")
 
         val inlinedOxsts = inlineClass(progressContext, classDeclaration)
@@ -99,11 +98,14 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
             backAnnotateWitness(inlinedOxstsWitness)
         }
 
-        if (expected == VerificationCaseExpectedResult.SAFE && result is ThetaUnsafeVerificationResult) {
+        // Because of the Temporal bubbling optimizations these are the only options
+        val property = inlinedOxsts.property.expression
+
+        if (property is AG && result is ThetaUnsafeVerificationResult) {
             return VerificationCaseRunResult(VerificationResult.Failed, "Expected Safe result, got Unsafe instead!")
         }
 
-        if (expected == VerificationCaseExpectedResult.UNSAFE && result is ThetaSafeVerificationResult) {
+        if (property is EF && result is ThetaSafeVerificationResult) {
             return VerificationCaseRunResult(VerificationResult.Failed, "Expected Unsafe result, got Safe instead!")
         }
 

@@ -18,12 +18,16 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
+import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.absolute
 
 class ThetaPortfolioRunner {
+
+    private val logger = LoggerFactory.getLogger(ThetaPortfolioRunner::class.java)
+
     val parameters = listOf(
         "CEGAR --domain EXPL --flatten-depth 0 --refinement SEQ_ITP --maxenum 250 --initprec CTRL --stacktrace",
         "CEGAR --domain EXPL_PRED_COMBINED --flatten-depth 0 --autoexpl NEWOPERANDS --initprec CTRL --stacktrace",
@@ -32,6 +36,7 @@ class ThetaPortfolioRunner {
     )
     val timeout = 5L
     val timeUnit = TimeUnit.MINUTES
+    val checkAllResults = false
 
     @Inject
     private lateinit var thetaVerificationExecutor: ThetaVerificationExecutor
@@ -47,10 +52,39 @@ class ThetaPortfolioRunner {
         try {
             jobs.awaitFirstSuccess()
         } finally {
-            jobs.forEach {
-                it.cancel()
+            if (checkAllResults) {
+                checkAllModelCheckerResults(jobs)
             }
+            cancelAllModelCheckers(jobs)
+
             jobs.joinAll()
+        }
+    }
+
+    private suspend fun checkAllModelCheckerResults(jobs: List<Deferred<ThetaVerificationResult>>) {
+        var safe = false
+        var unsafe = false
+
+        jobs.forEach {
+            val result = it.await()
+
+            if (result is ThetaSafeVerificationResult) {
+                logger.debug("Safe result for ${result.runtimeDetails.id}")
+                safe = true
+            } else if (result is ThetaUnsafeVerificationResult) {
+                logger.debug("Unsafe result for ${result.runtimeDetails.id}")
+                unsafe = true
+            }
+        }
+
+        if (safe && unsafe) {
+            logger.error("Conflicting results!")
+        }
+    }
+
+    private fun cancelAllModelCheckers(jobs: List<Deferred<ThetaVerificationResult>>) {
+        jobs.forEach {
+            it.cancel()
         }
     }
 

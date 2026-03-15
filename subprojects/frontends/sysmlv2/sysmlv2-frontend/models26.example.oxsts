@@ -4,7 +4,7 @@ import semantifyr::sysml::expressions
 import semantifyr::sysml::actions
 import semantifyr::sysml::attributes
 
-@semantifyr::verification::VerificationCase(semantifyr::verification::VerificationResult::UNSAFE)
+@VerificationCase
 class IncrementAttribute {
 
     contains x: IntegerAttribute {
@@ -52,11 +52,11 @@ class IncrementAttribute {
     }
 
     redefine tran {
-        inline composite.execute()
+        inline composite.main()
     }
 
     prop {
-        return xLTy.evaluate()
+        return EF xLTy.evaluate()
     }
 
 }

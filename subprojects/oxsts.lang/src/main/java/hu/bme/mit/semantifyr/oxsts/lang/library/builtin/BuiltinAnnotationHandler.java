@@ -39,28 +39,6 @@ public class BuiltinAnnotationHandler {
         return OxstsUtils.isAnnotatedWith(classDeclaration, verificationCaseAnnotation);
     }
 
-    public VerificationCaseExpectedResult getExpectedResults(ClassDeclaration classDeclaration) {
-        var annotationDeclaration = builtinSymbolResolver.verificationCaseAnnotation(classDeclaration);
-        var annotation = OxstsUtils.getAnnotation(classDeclaration, annotationDeclaration);
-        var expectedResultsParameter = builtinSymbolResolver.verificationCaseAnnotationExpectedResults(classDeclaration);
-
-        var value = OxstsUtils.getAnnotationValue(annotation, expectedResultsParameter);
-
-        if (value instanceof ElementReference elementReference) {
-            if ("SAFE".equals(elementReference.getElement().getName())) {
-                return VerificationCaseExpectedResult.SAFE;
-            }
-            if ("UNSAFE".equals(elementReference.getElement().getName())) {
-                return VerificationCaseExpectedResult.UNSAFE;
-            }
-            if ("UNKNOWN".equals(elementReference.getElement().getName())) {
-                return VerificationCaseExpectedResult.UNKNOWN;
-            }
-        }
-
-        return null;
-    }
-
     public String getVerificationCaseSummary(ClassDeclaration classDeclaration) {
         var verificationCaseAnnotation = builtinSymbolResolver.verificationCaseAnnotation(classDeclaration);
         var verificationCaseAnnotationSummary = builtinSymbolResolver.verificationCaseAnnotationSummary(classDeclaration);

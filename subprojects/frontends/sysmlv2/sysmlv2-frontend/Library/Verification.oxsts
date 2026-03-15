@@ -35,6 +35,6 @@ class VerificationCaseDefinition {
     }
 
     prop {
-        return !objective.evaluate()
+        return objective.evaluate()
     }
 }

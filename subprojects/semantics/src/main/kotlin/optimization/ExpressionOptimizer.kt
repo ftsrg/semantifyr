@@ -10,8 +10,10 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
@@ -21,6 +23,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOperator
 import hu.bme.mit.semantifyr.semantics.expression.ConstantExpressionEvaluationTransformer
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
+import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
 
@@ -45,6 +48,8 @@ class ExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
             || rewriteRedundantAnd(element)
             || rewriteDuplicateNegation(element)
             || rewriteConstantExpression(element)
+            || bubbleEF(element)
+            || bubbleAG(element)
     }
 
     // FIXME: replace with constant evaluator!
@@ -176,6 +181,60 @@ class ExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
         val internalNegation = redundantNegation.body as NegationOperator
 
         EcoreUtil2.replace(redundantNegation, internalNegation.body)
+
+//        compilationStateManager.commitModelState()
+
+        return true
+    }
+
+    private fun bubbleEF(element: Element): Boolean {
+        val redundantNegation = element.eAllOfType<NegationOperator>().firstOrNull {
+            it.body is EF
+        }
+
+        if (redundantNegation == null) {
+            return false
+        }
+
+        // not EF f => AG not f
+
+        val ef = redundantNegation.body as EF
+        val internalExpression = ef.body
+
+        val ag = OxstsFactory.createAG().also {
+            it.body = OxstsFactory.createNegationOperator().also {
+                it.body = internalExpression
+            }
+        }
+
+        EcoreUtil2.replace(redundantNegation, ag)
+
+//        compilationStateManager.commitModelState()
+
+        return true
+    }
+
+    private fun bubbleAG(element: Element): Boolean {
+        val redundantNegation = element.eAllOfType<NegationOperator>().firstOrNull {
+            it.body is AG
+        }
+
+        if (redundantNegation == null) {
+            return false
+        }
+
+        // not AG f => EF not f
+
+        val ag = redundantNegation.body as AG
+        val internalExpression = ag.body
+
+        val ef = OxstsFactory.createEF().also {
+            it.body = OxstsFactory.createNegationOperator().also {
+                it.body = internalExpression
+            }
+        }
+
+        EcoreUtil2.replace(redundantNegation, ef)
 
 //        compilationStateManager.commitModelState()
 

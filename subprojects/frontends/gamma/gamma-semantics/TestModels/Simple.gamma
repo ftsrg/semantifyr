@@ -52,59 +52,51 @@ sync component System[
     channel [ leader.workerControl ] -> [ worker.control ]
 }
 
-@Reachable
 verification case LeaderStatechartIdleReachable {
     component system : System
 
-    invariant { isActive (system.leader.Main.Idle) }
+    property { EF isActive (system.leader.Main.Idle) }
 }
 
-@Reachable
 verification case LeaderStatechartOperationalReachable {
     component system : System
 
-    invariant { isActive (system.leader.Main.Operational) }
+    property { EF isActive (system.leader.Main.Operational) }
 }
 
-@Reachable
 verification case LeaderStatechartStoppedReachable {
     component system : System
 
-    invariant { isActive (system.leader.Main.Stopped) }
+    property { EF isActive (system.leader.Main.Stopped) }
 }
 
-@Unreachable
 verification case LeaderStatechartUnreachable {
     component system : System
 
-    invariant { isActive (system.leader.Main.Unreachable) }
+    property { /* AG */ not isActive (system.leader.Main.Unreachable) }
 }
 
 
-@Reachable
 verification case WorkerStatechartIdleReachable {
     component system : System
 
-    invariant { isActive (system.worker.Main.Idle) }
+    property { EF isActive (system.worker.Main.Idle) }
 }
 
-@Reachable
 verification case WorkerStatechartOperationalReachable {
     component system : System
 
-    invariant { isActive (system.worker.Main.Operational) }
+    property { EF isActive (system.worker.Main.Operational) }
 }
 
-@Reachable
 verification case WorkerStatechartStoppedReachable {
     component system : System
 
-    invariant { isActive (system.worker.Main.Stopped) }
+    property { EF isActive (system.worker.Main.Stopped) }
 }
 
-@Unreachable
-verification case WorkerStatechartUnrachable {
+verification case WorkerStatechartUnreachable {
     component system : System
 
-    invariant { isActive (system.worker.Main.Unreachable) }
+    property { /* AG */ not isActive (system.worker.Main.Unreachable) }
 }

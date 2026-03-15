@@ -399,6 +399,20 @@ Expression:
 
 OperatorExpression returns Expression:
     BooleanOperator
+    | TemporalOperator
+;
+
+TemporalOperator returns Expression:
+    AG
+    | EF
+;
+
+AG:
+    'AG' body=BooleanOperator
+;
+
+EF:
+    'EF' body=BooleanOperator
 ;
 
 enum BooleanOp:

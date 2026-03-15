@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.frontends.gamma.semantics
 
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.AG
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Action
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ArithmeticBinaryOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ArithmeticOp
@@ -19,6 +20,7 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComparisonOp
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComparisonOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComponentDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComponentInstance
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EF
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ElementReferenceExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EntryTransition
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventDeclaration
@@ -45,6 +47,7 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.State
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateTransition
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StatechartDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SyncComponentDeclaration
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TemporalOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeoutDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeoutTrigger
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Transition
@@ -64,7 +67,6 @@ class GammaToOxstsSerializer {
     fun transformToOxsts(gammaPackage: GammaModelPackage) = indent {
         appendLine("package ${gammaPackage.name}")
         appendLine()
-        appendLine("import semantifyr::verification")
         appendLine("import semantifyr::gamma::expressions")
         appendLine("import semantifyr::gamma::variables")
         appendLine("import semantifyr::gamma::statecharts")
@@ -333,15 +335,11 @@ class GammaToOxstsSerializer {
     }
 
     private fun IndentationAwareStringWriter.serialize(verificationCase: VerificationCaseDeclaration) {
-        if (verificationCase.isReachable) {
-            appendLine("@VerificationCase(VerificationResult::UNSAFE)")
-        } else {
-            appendLine("@VerificationCase(VerificationResult::SAFE)")
-        }
+        appendLine("@VerificationCase")
         appendIndent("class ${verificationCase.name} : GammaVerificationCase") {
             appendLine("contains ${verificationCase.component.name}: ${verificationCase.component.component.name} redefines component")
 
-            serialize(verificationCase.invariant, "propertyExpression")
+            serialize(verificationCase.expression, "propertyExpression")
         }
     }
 
@@ -349,6 +347,7 @@ class GammaToOxstsSerializer {
         is ArithmeticBinaryOperator -> serialize(expression, redefines)
         is ArithmeticUnaryOperator -> serialize(expression, redefines)
         is BooleanOperator -> serialize(expression, redefines)
+        is TemporalOperator -> serialize(expression, redefines)
         is ComparisonOperator -> serialize(expression, redefines)
         is LiteralExpression -> serialize(expression, redefines)
         is NegationOperator -> serialize(expression, redefines)
@@ -402,6 +401,22 @@ class GammaToOxstsSerializer {
 
     private fun IndentationAwareStringWriter.serialize(expression: BooleanOperator, redefines: String) {
         serializeOperator(expression.left, expression.right, getOpName(expression.op), redefines)
+    }
+
+    private fun IndentationAwareStringWriter.serialize(expression: TemporalOperator, redefines: String) {
+        when (expression) {
+            is AG -> serialize(expression, redefines)
+            is EF -> serialize(expression, redefines)
+            else -> error("Unknown type of temporal expression: $expression")
+        }
+    }
+
+    private fun IndentationAwareStringWriter.serialize(expression: AG, redefines: String) {
+        serializeOperator(expression.body, "MustAlways", redefines)
+    }
+
+    private fun IndentationAwareStringWriter.serialize(expression: EF, redefines: String) {
+        serializeOperator(expression.body, "Eventually", redefines)
     }
 
     private fun IndentationAwareStringWriter.serialize(expression: ComparisonOperator, redefines: String) {

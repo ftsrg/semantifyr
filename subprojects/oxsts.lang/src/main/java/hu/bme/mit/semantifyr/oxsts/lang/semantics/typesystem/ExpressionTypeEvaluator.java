@@ -64,6 +64,16 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
     }
 
     @Override
+    protected TypeEvaluation visit(AG expression) {
+        return new ImmutableTypeEvaluation(builtinSymbolResolver.boolDatatype(expression));
+    }
+
+    @Override
+    protected TypeEvaluation visit(EF expression) {
+        return new ImmutableTypeEvaluation(builtinSymbolResolver.boolDatatype(expression));
+    }
+
+    @Override
     protected TypeEvaluation visit(ArrayLiteral expression) {
         return new ImmutableTypeEvaluation(builtinSymbolResolver.anyDatatype(expression), RangeEvaluation.of(expression.getValues().size()));
     }
