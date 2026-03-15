@@ -345,3 +345,315 @@ verification def SpacecraftBehaviorBatteryRechargingReachable {
         }
     }
 }
+
+verification def GroundStateReceivedData0 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.groundStation.receivedData >= 0
+                )
+            }
+        }
+    }
+}
+
+verification def GroundStateReceivedData10 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.groundStation.receivedData >= 10
+                )
+            }
+        }
+    }
+}
+
+verification def GroundStateReceivedData20 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.groundStation.receivedData >= 30
+                )
+            }
+        }
+    }
+}
+
+verification def GroundStateReceivedData30 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.groundStation.receivedData >= 30
+                )
+            }
+        }
+    }
+}
+
+verification def GroundStateReceivedData40 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.groundStation.receivedData >= 40
+                )
+            }
+        }
+    }
+}
+
+verification def GroundStateReceivedData50 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.groundStation.receivedData >= 50
+                )
+            }
+        }
+    }
+}
+
+verification def GroundStateReceivedData60 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.groundStation.receivedData >= 60
+                )
+            }
+        }
+    }
+}
+
+verification def GroundStateReceivedData70 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.groundStation.receivedData >= 70
+                )
+            }
+        }
+    }
+}
+
+/* Takes too long for the 5 minute timeout
+verification def GroundStateReceivedData80 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.groundStation.receivedData >= 80
+                )
+            }
+        }
+    }
+}
+
+verification def GroundStateReceivedData90 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.groundStation.receivedData >= 90
+                )
+            }
+        }
+    }
+}
+
+verification def GroundStateReceivedData100 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.groundStation.receivedData >= 100
+                )
+            }
+        }
+    }
+}
+*/
+
+verification def SpacecraftData100 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.spacecraft.data <= 100
+                )
+            }
+        }
+    }
+}
+
+verification def SpacecraftData90 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.spacecraft.data <= 90
+                )
+            }
+        }
+    }
+}
+
+verification def SpacecraftData80 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.spacecraft.data <= 80
+                )
+            }
+        }
+    }
+}
+
+verification def SpacecraftData70 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.spacecraft.data <= 70
+                )
+            }
+        }
+    }
+}
+
+verification def SpacecraftData60 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.spacecraft.data <= 60
+                )
+            }
+        }
+    }
+}
+
+verification def SpacecraftData50 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.spacecraft.data <= 50
+                )
+            }
+        }
+    }
+}
+
+verification def SpacecraftData40 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.spacecraft.data <= 40
+                )
+            }
+        }
+    }
+}
+
+verification def SpacecraftData30 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.spacecraft.data <= 30
+                )
+            }
+        }
+    }
+}
+
+/* Takes too long for the 5 minute timeout
+verification def SpacecraftData20 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.spacecraft.data <= 20
+                )
+            }
+        }
+    }
+}
+
+verification def SpacecraftData10 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.spacecraft.data <= 10
+                )
+            }
+        }
+    }
+}
+
+verification def SpacecraftData0 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    mission.spacecraft.data <= 0
+                )
+            }
+        }
+    }
+}
+*/
