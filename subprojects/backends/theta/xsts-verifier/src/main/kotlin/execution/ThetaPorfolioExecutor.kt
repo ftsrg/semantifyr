@@ -49,15 +49,27 @@ class ThetaPortfolioRunner {
             }
         }
 
+        // since verification is expensive, this hook ensures all verifiers are disposed of upon termination.
+        // putting it here to prevent forgetting it in the specific verifier executors.
+        // executors must only ensure to handle cancellation correctly.
+        val shutdownThread = Thread {
+            runBlocking {
+                cancelAllModelCheckers(jobs)
+            }
+        }
+
+        Runtime.getRuntime().addShutdownHook(shutdownThread)
+
         try {
             jobs.awaitFirstSuccess()
         } finally {
             if (checkAllResults) {
                 checkAllModelCheckerResults(jobs)
             }
+
             cancelAllModelCheckers(jobs)
 
-            jobs.joinAll()
+            Runtime.getRuntime().removeShutdownHook(shutdownThread)
         }
     }
 
@@ -82,10 +94,11 @@ class ThetaPortfolioRunner {
         }
     }
 
-    private fun cancelAllModelCheckers(jobs: List<Deferred<ThetaVerificationResult>>) {
+    private suspend fun cancelAllModelCheckers(jobs: List<Deferred<ThetaVerificationResult>>) {
         jobs.forEach {
             it.cancel()
         }
+        jobs.joinAll()
     }
 
     private fun CoroutineScope.startCancellationChecker(progressContext: ProgressContext): Deferred<Unit> {
