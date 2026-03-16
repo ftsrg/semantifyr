@@ -10,6 +10,8 @@ plugins {
 
 dependencies {
     api(project(":oxsts.model"))
+
+    testRuntimeOnly(libs.slf4j.log4j)
 }
 
 xtext {
