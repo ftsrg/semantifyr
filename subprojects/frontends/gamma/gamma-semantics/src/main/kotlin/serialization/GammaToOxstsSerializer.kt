@@ -1,10 +1,10 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.frontends.gamma.semantics
+package hu.bme.mit.semantifyr.frontends.gamma.semantics.serialization
 
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.AG
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Action
@@ -56,10 +56,6 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TypeReference
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.UnaryOp
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration
-import hu.bme.mit.semantifyr.frontends.gamma.semantics.serialization.EObjectNameProvider
-import hu.bme.mit.semantifyr.frontends.gamma.semantics.serialization.IndentationAwareStringWriter
-import hu.bme.mit.semantifyr.frontends.gamma.semantics.serialization.appendIndent
-import hu.bme.mit.semantifyr.frontends.gamma.semantics.serialization.indent
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 
 class GammaToOxstsSerializer {
