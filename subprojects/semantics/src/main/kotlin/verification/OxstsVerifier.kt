@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.semantics.transformation.backannotation.InlinedOxst
 import hu.bme.mit.semantifyr.semantics.transformation.backannotation.OxstsClassAssumptionWitnessTransformer
 import hu.bme.mit.semantifyr.semantics.transformation.tracer.TraceSerializer
 import org.eclipse.emf.common.util.URI
+import java.util.concurrent.TimeUnit
 
 data class VerificationCaseRunResult(
     val result: VerificationResult,
@@ -28,7 +29,12 @@ enum class VerificationResult {
 
 interface OxstsVerifier {
 
-    fun verify(progressContext: ProgressContext, classDeclaration: ClassDeclaration): VerificationCaseRunResult
+    fun verify(
+        progressContext: ProgressContext,
+        classDeclaration: ClassDeclaration,
+        timeout: Long = 10L,
+        timeUnit: TimeUnit = TimeUnit.MINUTES
+    ): VerificationCaseRunResult
 
 }
 

@@ -22,6 +22,7 @@ import org.eclipse.xtext.util.CancelIndicator;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDeclaration> {
@@ -70,7 +71,7 @@ public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
                 progressContext.checkIsCancelled();
 
                 compilationStateManagerProvider.get().setSerializeSteps(false);
-                result.complete(oxstsVerifierProvider.get().verify(progressContext, classDelcaration));
+                result.complete(oxstsVerifierProvider.get().verify(progressContext, classDelcaration, 3, TimeUnit.MINUTES));
             });
         } catch (Exception e) {
             result.completeExceptionally(e);

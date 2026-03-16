@@ -34,14 +34,17 @@ class ThetaPortfolioRunner {
         "CEGAR --domain PRED_CART --flatten-depth 0 --refinement SEQ_ITP --stacktrace",
         "BOUNDED --flatten-depth 0 --variant KINDUCTION --stacktrace",
     )
-    val timeout = 5L
-    val timeUnit = TimeUnit.MINUTES
     val checkAllResults = false
 
     @Inject
     private lateinit var thetaVerificationExecutor: ThetaVerificationExecutor
 
-    private suspend fun runWorkflow(workingDirectory: String, name: String) = supervisorScope {
+    private suspend fun runWorkflow(
+        workingDirectory: String,
+        name: String,
+        timeout: Long,
+        timeUnit: TimeUnit
+    ) = supervisorScope {
         val jobs = parameters.indices.map { index ->
             async {
                 val thetaVerificationSpecification = ThetaVerificationSpecification(workingDirectory, name, index, parameters[index], timeout, timeUnit)
@@ -115,12 +118,18 @@ class ThetaPortfolioRunner {
         }
     }
 
-    fun run(workingDirectory: String, name: String, progressContext: ProgressContext) = runBlocking {
+    fun run(
+        workingDirectory: String,
+        name: String,
+        progressContext: ProgressContext,
+        timeout: Long,
+        timeUnit: TimeUnit,
+    ) = runBlocking {
         val absoluteDirectory = Path.of(workingDirectory).absolute().toString()
 
         val cancellationChecker = startCancellationChecker(progressContext)
 
-        val result = runWorkflow(absoluteDirectory, name)
+        val result = runWorkflow(absoluteDirectory, name, timeout, timeUnit)
 
         cancellationChecker.cancel()
 
