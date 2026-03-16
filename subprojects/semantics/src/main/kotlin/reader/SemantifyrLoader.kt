@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.loading
+package hu.bme.mit.semantifyr.semantics.reader
 
 import com.google.inject.Inject
 import com.google.inject.Provider
@@ -12,21 +12,13 @@ import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryAdapterFinder
 import hu.bme.mit.semantifyr.oxsts.lang.utils.ResourceUriProvider
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
-import hu.bme.mit.semantifyr.semantics.utils.error
+import hu.bme.mit.semantifyr.semantics.utils.ResourceSetLoader
 import hu.bme.mit.semantifyr.semantics.utils.info
 import hu.bme.mit.semantifyr.semantics.utils.loggerFactory
-import hu.bme.mit.semantifyr.semantics.utils.warn
-import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.ResourceSet
-import org.eclipse.xtext.EcoreUtil2
-import org.eclipse.xtext.diagnostics.Severity
 import org.eclipse.xtext.resource.XtextResourceSet
-import org.eclipse.xtext.util.CancelIndicator
-import org.eclipse.xtext.validation.CheckMode
-import org.eclipse.xtext.validation.IResourceValidator
 import java.nio.file.Path
-import kotlin.io.path.absolutePathString
 
 class SemantifyrModelContext(
     val resourceSet: ResourceSet,
@@ -49,7 +41,7 @@ class SemantifyrLoader {
     private lateinit var resourceSetProvider: Provider<XtextResourceSet>
 
     @Inject
-    private lateinit var resourceValidator: IResourceValidator
+    private lateinit var resourceSetLoader: ResourceSetLoader
 
     @Inject
     private lateinit var libraryAdapterFinder: LibraryAdapterFinder
@@ -72,7 +64,7 @@ class SemantifyrLoader {
     fun loadStandaloneModelContext(model: Path): SemantifyrModelContext {
         val resourceSet = createResourceSet()
         val resource = loadFile(resourceSet, model)
-        resolveAndValidate(resourceSet)
+        resourceSetLoader.resolveAndValidate(resourceSet)
         return SemantifyrModelContext(
             resourceSet,
             listOf(resource)
@@ -82,61 +74,28 @@ class SemantifyrLoader {
     fun loadStandaloneModel(model: Path): Resource {
         val resourceSet = createResourceSet()
         val resource = loadFile(resourceSet, model)
-        resolveAndValidate(resourceSet)
+        resourceSetLoader.resolveAndValidate(resourceSet)
         return resource
     }
 
-    private fun resolveAndValidate(resourceSet: ResourceSet) {
-        EcoreUtil2.resolveAll(resourceSet)
-        for (resource in resourceSet.resources) {
-            validateResource(resource)
+    fun cloneOxstsPackagesInResourceSet(resourceSet: ResourceSet): ResourceSet {
+        val clone = createResourceSet()
+
+        // For some reason resourceSet.resources may change in the loop leading to concurrent modification
+        val resourcesCopy = resourceSet.resources.toList()
+        for (resource in resourcesCopy) {
+            if (resource.contents.singleOrNull() is OxstsModelPackage) {
+                openResource(clone, resource)
+            }
         }
+
+        resourceSetLoader.resolveAndValidate(clone)
+
+        return clone
     }
 
-    fun validateResource(resource: Resource) {
-        val issues = resourceValidator.validate(resource, CheckMode.ALL, CancelIndicator.NullImpl)
-
-        if (resource.errors.any()) {
-            logger.error { "Errors found in file (${resource.uri.toFileString()})" }
-
-            for (error in resource.errors) {
-                logger.error(error.message)
-            }
-
-            error("Errors found in file (${resource.uri.toFileString()})}")
-        }
-        if (resource.warnings.any()) {
-            logger.warn { "Warnings found in file (${resource.uri.toFileString()})" }
-
-            for (warning in resource.warnings) {
-                logger.warn(warning.message)
-            }
-        }
-        if (issues.any()) {
-            logger.info { "Issues found in file (${resource.uri.toFileString()})" }
-
-            for (issue in issues) {
-                when (issue.severity) {
-                    Severity.INFO -> {
-                        logger.info { "${issue.uriToProblem.toFileString()}[${issue.lineNumber}:${issue.column}] ${issue.message}" }
-                    }
-
-                    Severity.WARNING -> {
-                        logger.warn { "${issue.uriToProblem.toFileString()}[${issue.lineNumber}:${issue.column}] ${issue.message}" }
-                    }
-
-                    Severity.ERROR -> {
-                        logger.error { "${issue.uriToProblem.toFileString()}[${issue.lineNumber}:${issue.column}] ${issue.message}" }
-                    }
-
-                    else -> {}
-                }
-            }
-
-            if (issues.any { it.severity == Severity.ERROR || it.severity == Severity.WARNING }) {
-                error("Issues found in file!")
-            }
-        }
+    private fun openResource(resourceSet: ResourceSet, resource: Resource): Resource {
+        return resourceSet.getResource(resource.uri, true)
     }
 
 }

@@ -9,8 +9,8 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.SemantifyrRequestManager;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.WorkManager;
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScopeManager;
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.EObjectRunnable;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.utils.CompilationScopeRunner;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.utils.EObjectRunnable;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.lsp4j.ExecuteCommandParams;
@@ -34,7 +34,7 @@ public abstract class AbstractCommandHandler<T> implements CommandHandler {
     protected SemantifyrRequestManager semantifyrRequestManager;
 
     @Inject
-    protected CompilationScopeManager compilationScopeManager;
+    protected CompilationScopeRunner compilationScopeRunner;
 
     @Inject
     private IResourceServiceProvider.Registry resourceServiceProviderRegistry;
@@ -66,7 +66,7 @@ public abstract class AbstractCommandHandler<T> implements CommandHandler {
     protected abstract Object execute(T argument, ILanguageServerAccess access, CommandProgressContext progressContext);
 
     protected <TArg extends EObject> void runLongRunningInCompilationScope(TArg eObject, EObjectRunnable<TArg> runnable) {
-        compilationScopeManager.runInCompilationScope(eObject, (copied) -> {
+        compilationScopeRunner.runInCompilationScope(eObject, (copied) -> {
             semantifyrRequestManager.releaseReadLock();
             try {
                 runnable.run(copied);
