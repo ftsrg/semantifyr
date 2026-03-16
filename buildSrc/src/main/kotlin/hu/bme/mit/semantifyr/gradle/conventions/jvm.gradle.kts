@@ -49,6 +49,7 @@ val verificationTestServiceProvider = gradle.sharedServices.registerIfAbsent(ver
 }
 
 tasks {
+    // TODO: refactor tests to use test suites
     test {
         useJUnitPlatform {
             excludeTags("verification")
@@ -63,7 +64,7 @@ tasks {
         finalizedBy(tasks.jacocoTestReport)
     }
 
-    val verificationTest by tasks.registering(Test::class) {
+    val testVerificationCases by tasks.registering(Test::class) {
         group = "verification"
 
         useJUnitPlatform {
@@ -87,14 +88,43 @@ tasks {
         finalizedBy(jacocoTestReport)
     }
 
+    val testSlowVerificationCases by tasks.registering(Test::class) {
+        group = "verification"
+
+        useJUnitPlatform {
+//            includeTags("verification")
+            includeTags("slow")
+        }
+
+        testClassesDirs = sourceSets.test.get().output.classesDirs
+        classpath = sourceSets.test.get().runtimeClasspath
+
+        usesService(verificationTestServiceProvider)
+
+        minHeapSize = "512m"
+        maxHeapSize = "4G"
+        testLogging.showStandardStreams = true
+        testLogging.exceptionFormat = TestExceptionFormat.FULL
+
+        maxParallelForks = 1
+    }
+
+    val allTests by tasks.registering(DefaultTask::class) {
+        group = "verification"
+
+        dependsOn(test)
+        dependsOn(testVerificationCases)
+        dependsOn(testSlowVerificationCases)
+    }
+
     jacocoTestReport {
         inputs.files(test.get().outputs)
-        inputs.files(verificationTest.get().outputs)
+        inputs.files(testVerificationCases.get().outputs)
 
-        executionData(test.get(), verificationTest.get())
+        executionData(test.get(), testVerificationCases.get())
     }
 
     check {
-        inputs.files(verificationTest.get().outputs)
+        inputs.files(testVerificationCases.get().outputs)
     }
 }
