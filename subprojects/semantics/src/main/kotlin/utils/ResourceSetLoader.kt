@@ -22,7 +22,7 @@ class ResourceSetLoader {
     @Inject
     private lateinit var resourceValidator: IResourceValidator
 
-    fun resolveAndValidate(resourceSet: ResourceSet) {
+    fun resolveAllAndValidate(resourceSet: ResourceSet) {
         EcoreUtil2.resolveAll(resourceSet)
         for (resource in resourceSet.resources) {
             validateResource(resource)

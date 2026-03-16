@@ -20,7 +20,7 @@ import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.Semantifyr
 import hu.bme.mit.semantifyr.semantics.transformation.inliner.ExpressionCallInliner
 import hu.bme.mit.semantifyr.semantics.transformation.inliner.OperationCallInliner
 
-class OxstsSemanticsModule : OxstsRuntimeModule() {
+open class OxstsSemanticsRuntimeModule : OxstsRuntimeModule() {
 
     override fun configure(binder: Binder) {
         binder.bindScope(CompilationScoped::class.java, SemantifyrScopes.COMPILATION)
@@ -35,15 +35,15 @@ class OxstsSemanticsModule : OxstsRuntimeModule() {
 
 }
 
-class OxstsSemanticsStandaloneSetup : OxstsStandaloneSetup() {
+open class OxstsSemanticsStandaloneSetup : OxstsStandaloneSetup() {
 
     override fun createInjector(): Injector {
-        return Guice.createInjector(OxstsSemanticsModule())
+        return Guice.createInjector(OxstsSemanticsRuntimeModule())
     }
 
 }
 
-object StandaloneSemantifyrModule {
+object StandaloneOxstsSemanticsRuntimeModule {
 
     val injector: Injector by lazy {
         OxstsSemanticsStandaloneSetup().createInjectorAndDoEMFRegistration()

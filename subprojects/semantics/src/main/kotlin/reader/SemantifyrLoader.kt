@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.utils.ResourceUriProvider
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
 import hu.bme.mit.semantifyr.semantics.utils.ResourceSetLoader
+import hu.bme.mit.semantifyr.semantics.utils.SemantifyrUtils.modelPathsUnder
 import hu.bme.mit.semantifyr.semantics.utils.info
 import hu.bme.mit.semantifyr.semantics.utils.loggerFactory
 import org.eclipse.emf.ecore.resource.Resource
@@ -22,16 +23,9 @@ import java.nio.file.Path
 
 class SemantifyrModelContext(
     val resourceSet: ResourceSet,
-    val modelResource: List<Resource>
-) {
-    fun streamClasses(): Sequence<ClassDeclaration> {
-        return modelResource.asSequence().mapNotNull {
-            it.contents.first() as? OxstsModelPackage
-        }.flatMap {
-            it.declarations
-        }.filterIsInstance(ClassDeclaration::class.java)
-    }
-}
+    val libraryResources: List<Resource>,
+    val modelResources: List<Resource>,
+)
 
 class SemantifyrLoader {
 
@@ -55,27 +49,12 @@ class SemantifyrLoader {
         return resourceSet
     }
 
-    private fun loadFile(resourceSet: ResourceSet, path: Path): Resource {
-        logger.info { "Reading file: $path" }
-        val resource = resourceSet.getResource(resourceUriProvider.createFileUri(path), true)
-        return resource
+    fun loadStandaloneModel(path: Path): SemantifyrModelContext {
+        return startContext().loadModel(path).buildAndResolve()
     }
 
-    fun loadStandaloneModelContext(model: Path): SemantifyrModelContext {
-        val resourceSet = createResourceSet()
-        val resource = loadFile(resourceSet, model)
-        resourceSetLoader.resolveAndValidate(resourceSet)
-        return SemantifyrModelContext(
-            resourceSet,
-            listOf(resource)
-        )
-    }
-
-    fun loadStandaloneModel(model: Path): Resource {
-        val resourceSet = createResourceSet()
-        val resource = loadFile(resourceSet, model)
-        resourceSetLoader.resolveAndValidate(resourceSet)
-        return resource
+    fun startContext(): SemantifyrLoaderContext {
+        return SemantifyrLoaderContext()
     }
 
     fun cloneOxstsPackagesInResourceSet(resourceSet: ResourceSet): ResourceSet {
@@ -89,13 +68,61 @@ class SemantifyrLoader {
             }
         }
 
-        resourceSetLoader.resolveAndValidate(clone)
+        resourceSetLoader.resolveAllAndValidate(clone)
 
         return clone
     }
 
     private fun openResource(resourceSet: ResourceSet, resource: Resource): Resource {
         return resourceSet.getResource(resource.uri, true)
+    }
+
+    inner class SemantifyrLoaderContext {
+        val resourceSet = createResourceSet()
+        val libraryResources = mutableListOf<Resource>()
+        val modelResources = mutableListOf<Resource>()
+
+        fun buildAndResolve(): SemantifyrModelContext {
+            resourceSetLoader.resolveAllAndValidate(resourceSet)
+
+            return SemantifyrModelContext(resourceSet, libraryResources, modelResources)
+        }
+
+        fun loadModel(path: Path): SemantifyrLoaderContext {
+            val resource = loadFile(resourceSet, path)
+            modelResources += resource
+
+            return this
+        }
+
+        fun loadModels(path: Path): SemantifyrLoaderContext {
+            for (modelPath in modelPathsUnder(path)) {
+                loadModel(modelPath)
+            }
+
+            return this
+        }
+
+        fun loadLibrary(path: Path): SemantifyrLoaderContext {
+            val resource = loadFile(resourceSet, path)
+            libraryResources += resource
+
+            return this
+        }
+
+        fun loadLibraries(path: Path): SemantifyrLoaderContext {
+            for (libraryPath in modelPathsUnder(path)) {
+                loadLibrary(libraryPath)
+            }
+
+            return this
+        }
+
+        private fun loadFile(resourceSet: ResourceSet, path: Path): Resource {
+            logger.info { "Reading file: $path" }
+            return resourceSet.getResource(resourceUriProvider.createFileUri(path), true)
+        }
+
     }
 
 }
