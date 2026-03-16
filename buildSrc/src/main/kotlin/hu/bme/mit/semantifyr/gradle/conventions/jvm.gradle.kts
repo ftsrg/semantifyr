@@ -38,9 +38,20 @@ java.toolchain {
     languageVersion = JavaLanguageVersion.of(25)
 }
 
+/*
+ * Simple Build service that acts as a lock or throttling device preventing parallel execution
+ */
+abstract class VerificationTestService : BuildService<BuildServiceParameters.None>
+val verificationTestServiceName = "verificationTestService"
+val verificationTestServiceProvider = gradle.sharedServices.registerIfAbsent(verificationTestServiceName, VerificationTestService::class) {
+    // only allow at most 1 verification task per Gradle build
+    maxParallelUsages.set(1)
+}
+
 tasks {
     test {
         useJUnitPlatform {
+            excludeTags("verification")
             excludeTags("slow")
         }
 
@@ -52,17 +63,38 @@ tasks {
         finalizedBy(tasks.jacocoTestReport)
     }
 
-    val allTests by tasks.registering(Test::class) {
-        useJUnitPlatform()
+    val verificationTest by tasks.registering(Test::class) {
+        group = "verification"
+
+        useJUnitPlatform {
+            includeTags("verification")
+            excludeTags("slow")
+        }
+
+        testClassesDirs = sourceSets.test.get().output.classesDirs
+        classpath = sourceSets.test.get().runtimeClasspath
+
+        usesService(verificationTestServiceProvider)
 
         minHeapSize = "512m"
         maxHeapSize = "4G"
         testLogging.showStandardStreams = true
+        testLogging.exceptionFormat = TestExceptionFormat.FULL
 
-        finalizedBy(tasks.jacocoTestReport)
+        maxParallelForks = 1
+
+        shouldRunAfter(test)
+        finalizedBy(jacocoTestReport)
     }
 
     jacocoTestReport {
         inputs.files(test.get().outputs)
+        inputs.files(verificationTest.get().outputs)
+
+        executionData(test.get(), verificationTest.get())
+    }
+
+    check {
+        inputs.files(verificationTest.get().outputs)
     }
 }

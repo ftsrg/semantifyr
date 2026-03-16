@@ -14,12 +14,8 @@ repositories {
 }
 
 dependencies {
-    api(project(":semantics"))
-    api(project(":xsts.lang"))
-    api(project(":theta-wrapper"))
-
     testRuntimeOnly(libs.slf4j.log4j)
 
-    testFixturesApi(project(":semantics"))
-    testFixturesApi(testFixtures(project(":semantics")))
+    testFixturesApi(project(":xsts-verifier"))
+    testFixturesApi(testFixtures(project(":xsts-verifier")))
 }
