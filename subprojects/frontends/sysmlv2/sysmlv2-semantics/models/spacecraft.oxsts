@@ -843,3 +843,121 @@ class SpacecraftData30 : VerificationCaseDefinition {
         }
     }
 }
+
+// manually added slow verification cases
+
+@Tag("slow")
+@VerificationCase
+class GroundStateReceivedData80 : VerificationCaseDefinition {
+    contains mission: Mission[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        redefine contains verifyRequirement : Constraint[1] {
+            redefine contains requiredConstraint: Eventually {
+                redefine contains body: GreaterThanOrEqualsOperatorExpression {
+                    redefine contains left: AttributeReferenceExpression {
+                        redefine refers attribute: Attribute = mission.groundStation.receivedData
+                    }
+                    redefine contains right: LiteralIntegerExpression {
+                        redefine refers value: int = 80
+                    }
+                }
+            }
+        }
+    }
+}
+@Tag("slow")
+@VerificationCase
+class GroundStateReceivedData90 : VerificationCaseDefinition {
+    contains mission: Mission[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        redefine contains verifyRequirement : Constraint[1] {
+            redefine contains requiredConstraint: Eventually {
+                redefine contains body: GreaterThanOrEqualsOperatorExpression {
+                    redefine contains left: AttributeReferenceExpression {
+                        redefine refers attribute: Attribute = mission.groundStation.receivedData
+                    }
+                    redefine contains right: LiteralIntegerExpression {
+                        redefine refers value: int = 90
+                    }
+                }
+            }
+        }
+    }
+}
+@Tag("slow")
+@VerificationCase
+class GroundStateReceivedData100 : VerificationCaseDefinition {
+    contains mission: Mission[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        redefine contains verifyRequirement : Constraint[1] {
+            redefine contains requiredConstraint: Eventually {
+                redefine contains body: GreaterThanOrEqualsOperatorExpression {
+                    redefine contains left: AttributeReferenceExpression {
+                        redefine refers attribute: Attribute = mission.groundStation.receivedData
+                    }
+                    redefine contains right: LiteralIntegerExpression {
+                        redefine refers value: int = 100
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Tag("slow")
+@VerificationCase
+class SpacecraftData20 : VerificationCaseDefinition {
+    contains mission: Mission[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        redefine contains verifyRequirement : Constraint[1] {
+            redefine contains requiredConstraint: Eventually {
+                redefine contains body: LessThanOrEqualsOperatorExpression {
+                    redefine contains left: AttributeReferenceExpression {
+                        redefine refers attribute: Attribute = mission.spacecraft.data
+                    }
+                    redefine contains right: LiteralIntegerExpression {
+                        redefine refers value: int = 20
+                    }
+                }
+            }
+        }
+    }
+}
+@Tag("slow")
+@VerificationCase
+class SpacecraftData10 : VerificationCaseDefinition {
+    contains mission: Mission[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        redefine contains verifyRequirement : Constraint[1] {
+            redefine contains requiredConstraint: Eventually {
+                redefine contains body: LessThanOrEqualsOperatorExpression {
+                    redefine contains left: AttributeReferenceExpression {
+                        redefine refers attribute: Attribute = mission.spacecraft.data
+                    }
+                    redefine contains right: LiteralIntegerExpression {
+                        redefine refers value: int = 10
+                    }
+                }
+            }
+        }
+    }
+}
+@Tag("slow")
+@VerificationCase
+class SpacecraftData00 : VerificationCaseDefinition {
+    contains mission: Mission[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        redefine contains verifyRequirement : Constraint[1] {
+            redefine contains requiredConstraint: Eventually {
+                redefine contains body: LessThanOrEqualsOperatorExpression {
+                    redefine contains left: AttributeReferenceExpression {
+                        redefine refers attribute: Attribute = mission.spacecraft.data
+                    }
+                    redefine contains right: LiteralIntegerExpression {
+                        redefine refers value: int = 00
+                    }
+                }
+            }
+        }
+    }
+}

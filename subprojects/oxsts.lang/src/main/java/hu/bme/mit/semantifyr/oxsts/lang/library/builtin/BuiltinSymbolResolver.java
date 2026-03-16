@@ -27,6 +27,9 @@ public class BuiltinSymbolResolver {
     public static final QualifiedName VERIFICATION_CASE_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("VerificationCase");
     public static final String VERIFICATION_CASE_SUMMARY_NAME = "summary";
 
+    public static final QualifiedName TAG_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Tag");
+    public static final String TAG_ANNOTATION_CATEGORY_NAME = "category";
+
     public static final QualifiedName ANYTHING_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Anything");
 //    public static final String ANYTHING_CHILDREN_NAME = "children";
 //    public static final String ANYTHING_PARENT_NAME = "parent";
@@ -71,6 +74,15 @@ public class BuiltinSymbolResolver {
     public ParameterDeclaration verificationCaseAnnotationSummary(EObject context) {
         var verificationCase = verificationCaseAnnotation(context);
         return findInParameters(verificationCase, ParameterDeclaration.class, VERIFICATION_CASE_SUMMARY_NAME);
+    }
+
+    public AnnotationDeclaration tagAnnotation(EObject context) {
+        return findInBuiltin(context, AnnotationDeclaration.class, TAG_ANNOTATION_NAME);
+    }
+
+    public ParameterDeclaration tagAnnotationCategory(EObject context) {
+        var tag = tagAnnotation(context);
+        return findInParameters(tag, ParameterDeclaration.class, TAG_ANNOTATION_CATEGORY_NAME);
     }
 
     public ClassDeclaration anythingClass(EObject context) {
