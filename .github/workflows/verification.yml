@@ -1,5 +1,8 @@
+# SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
 
-name: Continuous Integration
+name: All Verification Tests
 on:
   push:
     branches: [ "main" ]
