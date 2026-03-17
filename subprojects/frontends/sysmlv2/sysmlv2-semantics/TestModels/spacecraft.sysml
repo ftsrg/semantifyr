@@ -34,7 +34,7 @@ part def GroundStation {
 
         transition first Operation accept after 10 [s] then Operation;
 
-        transition first Operation accept : StopCommand via commandPort then Idle;
+        // transition first Operation accept : StopCommand via commandPort then Idle;
     }
 }
 
@@ -48,30 +48,26 @@ part def Spacecraft {
 
     exhibit state Behaviour parallel {
         state Communication {
+            transition first start then WaitingPing;
+
             state WaitingPing;
 
             transition 
-                first Transmitting.SendData.Sending 
-                accept after 4 [s] 
-                if (data <= 0) or (batteryCharge < 40)
-                then WaitingPing;
-
-            transition 
-                first Transmitting.ConsumePower.Consuming 
-                accept after 4 [s] 
-                if batteryCharge < 40
-                then WaitingPing;
+                first WaitingPing 
+                accept : PingCommand via commandPort 
+                if (recharging == false and not (data <= 0 or batteryCharge <= 40))
+                then Transmitting;
 
             state Transmitting parallel {
                 state SendData {
-                    state Sending;
-
                     transition first start then Sending;
+
+                    state Sending;
 
                     transition 
                         first Sending 
                         accept after 4 [s] 
-                        if not (data <= 0 or batteryCharge < 40) 
+                        if not (data <= 0 or batteryCharge <= 40) 
                         do action {
                             assign data := data - 10;
                             send Data() via dataPort;
@@ -79,28 +75,35 @@ part def Spacecraft {
                         then Sending;
                 }
                 state ConsumePower {
-                    state Consuming;
-
                     transition first start then Consuming;
+
+                    state Consuming;
 
                     transition 
                         first Consuming 
                         accept after 2 [s] 
-                        if not (batteryCharge < 40) 
+                        if not (batteryCharge <= 40) 
                         do assign batteryCharge := batteryCharge - 10
                         then Consuming;
                 }
             }
 
-            transition first start then WaitingPing;
             transition 
-                first WaitingPing 
-                accept : PingCommand via commandPort 
-                if (recharging == false and not (data <= 0 or batteryCharge < 40))
-                then Transmitting;
+                first Transmitting
+                accept after 4 [s] 
+                if data <= 0 or batteryCharge <= 40
+                then WaitingPing;
+
+            transition 
+                first Transmitting
+                accept after 4 [s] 
+                if batteryCharge <= 40
+                then WaitingPing;
         }
 
         state Battery {
+            transition first start then NotRecharging;
+
             state NotRecharging {
                 entry assign recharging := false;
             }
@@ -108,8 +111,6 @@ part def Spacecraft {
             state Recharging {
                 entry assign recharging := true;
             }
-
-            transition first start then NotRecharging;
             
             transition 
                 first NotRecharging 
@@ -346,7 +347,7 @@ verification def SpacecraftBehaviorBatteryRechargingReachable {
     }
 }
 
-verification def GroundStateReceivedData0 {
+verification def GroundStationReceivedDataCanReach0 {
     subject mission: Mission;
 
     objective {
@@ -360,7 +361,7 @@ verification def GroundStateReceivedData0 {
     }
 }
 
-verification def GroundStateReceivedData10 {
+verification def GroundStationReceivedDataCanReach10 {
     subject mission: Mission;
 
     objective {
@@ -374,7 +375,7 @@ verification def GroundStateReceivedData10 {
     }
 }
 
-verification def GroundStateReceivedData20 {
+verification def GroundStationReceivedDataCanReach20 {
     subject mission: Mission;
 
     objective {
@@ -388,7 +389,7 @@ verification def GroundStateReceivedData20 {
     }
 }
 
-verification def GroundStateReceivedData30 {
+verification def GroundStationReceivedDataCanReach30 {
     subject mission: Mission;
 
     objective {
@@ -402,7 +403,7 @@ verification def GroundStateReceivedData30 {
     }
 }
 
-verification def GroundStateReceivedData40 {
+verification def GroundStationReceivedDataCanReach40 {
     subject mission: Mission;
 
     objective {
@@ -416,7 +417,7 @@ verification def GroundStateReceivedData40 {
     }
 }
 
-verification def GroundStateReceivedData50 {
+verification def GroundStationReceivedDataCanReach50 {
     subject mission: Mission;
 
     objective {
@@ -430,7 +431,7 @@ verification def GroundStateReceivedData50 {
     }
 }
 
-verification def GroundStateReceivedData60 {
+verification def GroundStationReceivedDataCanReach60 {
     subject mission: Mission;
 
     objective {
@@ -444,7 +445,7 @@ verification def GroundStateReceivedData60 {
     }
 }
 
-verification def GroundStateReceivedData70 {
+verification def GroundStationReceivedDataCanReach70 {
     subject mission: Mission;
 
     objective {
@@ -459,7 +460,7 @@ verification def GroundStateReceivedData70 {
 }
 
 /* Takes too long for the 5 minute timeout
-verification def GroundStateReceivedData80 {
+verification def GroundStationReceivedDataCanReach80 {
     subject mission: Mission;
 
     objective {
@@ -473,7 +474,7 @@ verification def GroundStateReceivedData80 {
     }
 }
 
-verification def GroundStateReceivedData90 {
+verification def GroundStationReceivedDataCanReach90 {
     subject mission: Mission;
 
     objective {
@@ -487,7 +488,7 @@ verification def GroundStateReceivedData90 {
     }
 }
 
-verification def GroundStateReceivedData100 {
+verification def GroundStationReceivedDataCanReach100 {
     subject mission: Mission;
 
     objective {
@@ -502,7 +503,7 @@ verification def GroundStateReceivedData100 {
 }
 */
 
-verification def SpacecraftData100 {
+verification def SpacecraftDataCanReach100 {
     subject mission: Mission;
 
     objective {
@@ -516,7 +517,7 @@ verification def SpacecraftData100 {
     }
 }
 
-verification def SpacecraftData90 {
+verification def SpacecraftDataCanReach90 {
     subject mission: Mission;
 
     objective {
@@ -530,7 +531,7 @@ verification def SpacecraftData90 {
     }
 }
 
-verification def SpacecraftData80 {
+verification def SpacecraftDataCanReach80 {
     subject mission: Mission;
 
     objective {
@@ -544,7 +545,7 @@ verification def SpacecraftData80 {
     }
 }
 
-verification def SpacecraftData70 {
+verification def SpacecraftDataCanReach70 {
     subject mission: Mission;
 
     objective {
@@ -558,7 +559,7 @@ verification def SpacecraftData70 {
     }
 }
 
-verification def SpacecraftData60 {
+verification def SpacecraftDataCanReach60 {
     subject mission: Mission;
 
     objective {
@@ -572,7 +573,7 @@ verification def SpacecraftData60 {
     }
 }
 
-verification def SpacecraftData50 {
+verification def SpacecraftDataCanReach50 {
     subject mission: Mission;
 
     objective {
@@ -586,7 +587,7 @@ verification def SpacecraftData50 {
     }
 }
 
-verification def SpacecraftData40 {
+verification def SpacecraftDataCanReach40 {
     subject mission: Mission;
 
     objective {
@@ -600,7 +601,7 @@ verification def SpacecraftData40 {
     }
 }
 
-verification def SpacecraftData30 {
+verification def SpacecraftDataCanReach30 {
     subject mission: Mission;
 
     objective {
@@ -615,7 +616,7 @@ verification def SpacecraftData30 {
 }
 
 /* Takes too long for the 5 minute timeout
-verification def SpacecraftData20 {
+verification def SpacecraftDataCanReach20 {
     subject mission: Mission;
 
     objective {
@@ -629,7 +630,7 @@ verification def SpacecraftData20 {
     }
 }
 
-verification def SpacecraftData10 {
+verification def SpacecraftDataCanReach10 {
     subject mission: Mission;
 
     objective {
@@ -643,7 +644,7 @@ verification def SpacecraftData10 {
     }
 }
 
-verification def SpacecraftData0 {
+verification def SpacecraftDataCanReach0 {
     subject mission: Mission;
 
     objective {
@@ -657,3 +658,63 @@ verification def SpacecraftData0 {
     }
 }
 */
+
+verification def SpacecraftBatteryAlwaysAbove0 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                mission.spacecraft.batteryCharge >= 0
+            }
+        }
+    }
+}
+
+verification def SpacecraftBatteryAlwaysAbove10 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                mission.spacecraft.batteryCharge >= 10
+            }
+        }
+    }
+}
+
+verification def SpacecraftBatteryAlwaysAbove20 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                mission.spacecraft.batteryCharge >= 20
+            }
+        }
+    }
+}
+
+verification def SpacecraftBatteryAlwaysAbove30 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                mission.spacecraft.batteryCharge >= 30
+            }
+        }
+    }
+}
+
+verification def SpacecraftBatteryAlwaysAbove40 {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                mission.spacecraft.batteryCharge >= 40
+            }
+        }
+    }
+}
