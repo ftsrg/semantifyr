@@ -88,7 +88,7 @@ public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
 
             return new VerificationCaseRunResultDto(res, runResult.getMessage());
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            return new VerificationCaseRunResultDto("error", e.getMessage());
         }
     }
 
