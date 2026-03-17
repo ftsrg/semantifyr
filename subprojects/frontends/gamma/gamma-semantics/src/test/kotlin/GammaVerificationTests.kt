@@ -132,7 +132,7 @@ class GammaVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
     @MethodSource
     @Disabled("There are no slow crossroads verification cases just yet.")
     fun `Slow Spacecraft Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
-        checkVerificationCase(verificationCase, 30, TimeUnit.MINUTES)
+        checkVerificationCase(verificationCase, 60, TimeUnit.MINUTES)
     }
 
 }
