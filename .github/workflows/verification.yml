@@ -1,0 +1,37 @@
+
+name: Continuous Integration
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+env:
+  CI: true
+jobs:
+  build:
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+    #          - macos-13
+    runs-on: ${{ matrix.os }}
+    steps:
+      #    - name: Setup Docker on MacOS
+      #      uses: douglascamata/setup-docker-macos-action@v1-alpha
+      #      if: ${{ matrix.os == 'macos-13' }}
+      - name: Test Docker
+        run: docker run hello-world
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: 25
+          distribution: adopt
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+      - name: Run verification tests
+        run: ./gradlew allTests --continue
