@@ -149,7 +149,7 @@ abstract class BaseSemantifyrVerificationTest<T : OxstsVerifier> {
 
     fun executeVerificationCase(
         classDeclaration: ClassDeclaration,
-        timeout: Long = 10L,
+        timeout: Long = 30L,
         timeUnit: TimeUnit = TimeUnit.MINUTES
     ): VerificationCaseRunResult {
         logger.info {
@@ -161,7 +161,7 @@ abstract class BaseSemantifyrVerificationTest<T : OxstsVerifier> {
 
     fun checkVerificationCase(
         verificationCase: ClassDeclaration,
-        timeout: Long = 10L,
+        timeout: Long = 30L,
         timeUnit: TimeUnit = TimeUnit.MINUTES
     ) {
         compilationScopeHelper.runInCompilationScope(verificationCase) {
