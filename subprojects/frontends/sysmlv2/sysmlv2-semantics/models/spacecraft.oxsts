@@ -21,7 +21,7 @@ class GroundStation : Part {
         contains UnnamedTransitionUsage0: Transition subsets transitions {
             redefine refers from: StateNode = start
             redefine refers to: StateNode = Idle
-}
+        }
         contains Idle: State subsets states
         contains UnnamedTransitionUsage1: Transition subsets transitions {
             redefine refers from: StateNode = Idle
@@ -46,7 +46,7 @@ class GroundStation : Part {
             contains UnnamedTransitionUsage3: Transition subsets transitions {
                 redefine refers from: StateNode = start
                 redefine refers to: StateNode = Waiting
-}
+            }
             contains Waiting: State subsets states
             contains UnnamedTransitionUsage4: Transition subsets transitions {
                 redefine refers from: StateNode = Waiting
@@ -85,14 +85,6 @@ class GroundStation : Part {
                 redefine refers afterTime: int = 10
             }
         }
-        contains UnnamedTransitionUsage6: Transition subsets transitions {
-            redefine refers from: StateNode = Operation
-            redefine refers to: StateNode = Idle
-            redefine contains acceptAction: AcceptItemAction {
-                redefine refers viaPort: Port = commandPort
-                redefine refers payload: Item = global_StopCommand
-            }
-        }
     }
 }
 class Spacecraft : Part {
@@ -109,59 +101,59 @@ class Spacecraft : Part {
     }
     contains Behaviour: ParallelState redefines exhibitState {
         contains Communication: State subsets states {
+            contains UnnamedTransitionUsage6: Transition subsets transitions {
+                redefine refers from: StateNode = start
+                redefine refers to: StateNode = WaitingPing
+            }
             contains WaitingPing: State subsets states
             contains UnnamedTransitionUsage7: Transition subsets transitions {
-                redefine refers from: StateNode = Transmitting.SendData.Sending
-                redefine refers to: StateNode = WaitingPing
-                redefine contains acceptAction: AcceptTimeoutAction {
-                    redefine refers afterTime: int = 4
+                redefine refers from: StateNode = WaitingPing
+                redefine refers to: StateNode = Transmitting
+                redefine contains acceptAction: AcceptItemAction {
+                    redefine refers viaPort: Port = commandPort
+                    redefine refers payload: Item = global_PingCommand
                 }
                 redefine contains guard: Guard {
-                    redefine contains expression: OrOperatorExpression {
-                        redefine contains left: LessThanOrEqualsOperatorExpression {
+                    redefine contains expression: AndOperatorExpression {
+                        redefine contains left: EqualityOperatorExpression {
                             redefine contains left: AttributeReferenceExpression {
-                                redefine refers attribute: Attribute = data
+                                redefine refers attribute: Attribute = recharging
                             }
-                            redefine contains right: LiteralIntegerExpression {
-                                redefine refers value: int = 0
-                            }
-                        }
-                        redefine contains right: LessThanOperatorExpression {
-                            redefine contains left: AttributeReferenceExpression {
-                                redefine refers attribute: Attribute = batteryCharge
-                            }
-                            redefine contains right: LiteralIntegerExpression {
-                                redefine refers value: int = 40
+                            redefine contains right: LiteralBooleanExpression {
+                                redefine refers value: bool = false
                             }
                         }
-                    }
-                }
-            }
-            contains UnnamedTransitionUsage8: Transition subsets transitions {
-                redefine refers from: StateNode = Transmitting.ConsumePower.Consuming
-                redefine refers to: StateNode = WaitingPing
-                redefine contains acceptAction: AcceptTimeoutAction {
-                    redefine refers afterTime: int = 4
-                }
-                redefine contains guard: Guard {
-                    redefine contains expression: LessThanOperatorExpression {
-                        redefine contains left: AttributeReferenceExpression {
-                            redefine refers attribute: Attribute = batteryCharge
-                        }
-                        redefine contains right: LiteralIntegerExpression {
-                            redefine refers value: int = 40
+                        redefine contains right: UnaryNotExpression {
+                            redefine contains operand: OrOperatorExpression {
+                                redefine contains left: LessThanOrEqualsOperatorExpression {
+                                    redefine contains left: AttributeReferenceExpression {
+                                        redefine refers attribute: Attribute = data
+                                    }
+                                    redefine contains right: LiteralIntegerExpression {
+                                        redefine refers value: int = 0
+                                    }
+                                }
+                                redefine contains right: LessThanOrEqualsOperatorExpression {
+                                    redefine contains left: AttributeReferenceExpression {
+                                        redefine refers attribute: Attribute = batteryCharge
+                                    }
+                                    redefine contains right: LiteralIntegerExpression {
+                                        redefine refers value: int = 40
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
             contains Transmitting: ParallelState subsets states {
                 contains SendData: State subsets states {
-                    contains Sending: State subsets states
-                    contains UnnamedTransitionUsage9: Transition subsets transitions {
+                    contains UnnamedTransitionUsage8: Transition subsets transitions {
                         redefine refers from: StateNode = start
                         redefine refers to: StateNode = Sending
-}
-                    contains UnnamedTransitionUsage10: Transition subsets transitions {
+                    }
+                    contains Sending: State subsets states
+                    contains UnnamedTransitionUsage9: Transition subsets transitions {
                         redefine refers from: StateNode = Sending
                         redefine refers to: StateNode = Sending
                         redefine contains acceptAction: AcceptTimeoutAction {
@@ -178,7 +170,7 @@ class Spacecraft : Part {
                                             redefine refers value: int = 0
                                         }
                                     }
-                                    redefine contains right: LessThanOperatorExpression {
+                                    redefine contains right: LessThanOrEqualsOperatorExpression {
                                         redefine contains left: AttributeReferenceExpression {
                                             redefine refers attribute: Attribute = batteryCharge
                                         }
@@ -209,12 +201,12 @@ class Spacecraft : Part {
                     }
                 }
                 contains ConsumePower: State subsets states {
-                    contains Consuming: State subsets states
-                    contains UnnamedTransitionUsage11: Transition subsets transitions {
+                    contains UnnamedTransitionUsage10: Transition subsets transitions {
                         redefine refers from: StateNode = start
                         redefine refers to: StateNode = Consuming
-}
-                    contains UnnamedTransitionUsage12: Transition subsets transitions {
+                    }
+                    contains Consuming: State subsets states
+                    contains UnnamedTransitionUsage11: Transition subsets transitions {
                         redefine refers from: StateNode = Consuming
                         redefine refers to: StateNode = Consuming
                         redefine contains acceptAction: AcceptTimeoutAction {
@@ -222,7 +214,7 @@ class Spacecraft : Part {
                         }
                         redefine contains guard: Guard {
                             redefine contains expression: UnaryNotExpression {
-                                redefine contains operand: LessThanOperatorExpression {
+                                redefine contains operand: LessThanOrEqualsOperatorExpression {
                                     redefine contains left: AttributeReferenceExpression {
                                         redefine refers attribute: Attribute = batteryCharge
                                     }
@@ -246,52 +238,56 @@ class Spacecraft : Part {
                     }
                 }
             }
-            contains UnnamedTransitionUsage13: Transition subsets transitions {
-                redefine refers from: StateNode = start
+            contains UnnamedTransitionUsage12: Transition subsets transitions {
+                redefine refers from: StateNode = Transmitting
                 redefine refers to: StateNode = WaitingPing
-}
-            contains UnnamedTransitionUsage14: Transition subsets transitions {
-                redefine refers from: StateNode = WaitingPing
-                redefine refers to: StateNode = Transmitting
-                redefine contains acceptAction: AcceptItemAction {
-                    redefine refers viaPort: Port = commandPort
-                    redefine refers payload: Item = global_PingCommand
+                redefine contains acceptAction: AcceptTimeoutAction {
+                    redefine refers afterTime: int = 4
                 }
                 redefine contains guard: Guard {
-                    redefine contains expression: AndOperatorExpression {
-                        redefine contains left: EqualityOperatorExpression {
+                    redefine contains expression: OrOperatorExpression {
+                        redefine contains left: LessThanOrEqualsOperatorExpression {
                             redefine contains left: AttributeReferenceExpression {
-                                redefine refers attribute: Attribute = recharging
+                                redefine refers attribute: Attribute = data
                             }
-                            redefine contains right: LiteralBooleanExpression {
-                                redefine refers value: bool = false
+                            redefine contains right: LiteralIntegerExpression {
+                                redefine refers value: int = 0
                             }
                         }
-                        redefine contains right: UnaryNotExpression {
-                            redefine contains operand: OrOperatorExpression {
-                                redefine contains left: LessThanOrEqualsOperatorExpression {
-                                    redefine contains left: AttributeReferenceExpression {
-                                        redefine refers attribute: Attribute = data
-                                    }
-                                    redefine contains right: LiteralIntegerExpression {
-                                        redefine refers value: int = 0
-                                    }
-                                }
-                                redefine contains right: LessThanOperatorExpression {
-                                    redefine contains left: AttributeReferenceExpression {
-                                        redefine refers attribute: Attribute = batteryCharge
-                                    }
-                                    redefine contains right: LiteralIntegerExpression {
-                                        redefine refers value: int = 40
-                                    }
-                                }
+                        redefine contains right: LessThanOrEqualsOperatorExpression {
+                            redefine contains left: AttributeReferenceExpression {
+                                redefine refers attribute: Attribute = batteryCharge
                             }
+                            redefine contains right: LiteralIntegerExpression {
+                                redefine refers value: int = 40
+                            }
+                        }
+                    }
+                }
+            }
+            contains UnnamedTransitionUsage13: Transition subsets transitions {
+                redefine refers from: StateNode = Transmitting
+                redefine refers to: StateNode = WaitingPing
+                redefine contains acceptAction: AcceptTimeoutAction {
+                    redefine refers afterTime: int = 4
+                }
+                redefine contains guard: Guard {
+                    redefine contains expression: LessThanOrEqualsOperatorExpression {
+                        redefine contains left: AttributeReferenceExpression {
+                            redefine refers attribute: Attribute = batteryCharge
+                        }
+                        redefine contains right: LiteralIntegerExpression {
+                            redefine refers value: int = 40
                         }
                     }
                 }
             }
         }
         contains Battery: State subsets states {
+            contains UnnamedTransitionUsage14: Transition subsets transitions {
+                redefine refers from: StateNode = start
+                redefine refers to: StateNode = NotRecharging
+            }
             contains NotRecharging: State subsets states {
                 redefine contains entryAction: AssignmentAction {
                     redefine refers attribute: Attribute = recharging
@@ -309,10 +305,6 @@ class Spacecraft : Part {
                 }
             }
             contains UnnamedTransitionUsage15: Transition subsets transitions {
-                redefine refers from: StateNode = start
-                redefine refers to: StateNode = NotRecharging
-}
-            contains UnnamedTransitionUsage16: Transition subsets transitions {
                 redefine refers from: StateNode = NotRecharging
                 redefine refers to: StateNode = Recharging
                 redefine contains acceptAction: AcceptTimeoutAction {
@@ -329,7 +321,7 @@ class Spacecraft : Part {
                     }
                 }
             }
-            contains UnnamedTransitionUsage17: Transition subsets transitions {
+            contains UnnamedTransitionUsage16: Transition subsets transitions {
                 redefine refers from: StateNode = Recharging
                 redefine refers to: StateNode = Recharging
                 redefine contains acceptAction: AcceptTimeoutAction {
@@ -357,7 +349,7 @@ class Spacecraft : Part {
                     }
                 }
             }
-            contains UnnamedTransitionUsage18: Transition subsets transitions {
+            contains UnnamedTransitionUsage17: Transition subsets transitions {
                 redefine refers from: StateNode = Recharging
                 redefine refers to: StateNode = NotRecharging
                 redefine contains acceptAction: AcceptTimeoutAction {
@@ -556,7 +548,7 @@ class SpacecraftBehaviorBatteryRechargingReachable : VerificationCaseDefinition 
     }
 }
 @VerificationCase
-class GroundStateReceivedData0 : VerificationCaseDefinition {
+class GroundStationReceivedDataCanReach0 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -574,7 +566,7 @@ class GroundStateReceivedData0 : VerificationCaseDefinition {
     }
 }
 @VerificationCase
-class GroundStateReceivedData10 : VerificationCaseDefinition {
+class GroundStationReceivedDataCanReach10 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -592,7 +584,7 @@ class GroundStateReceivedData10 : VerificationCaseDefinition {
     }
 }
 @VerificationCase
-class GroundStateReceivedData20 : VerificationCaseDefinition {
+class GroundStationReceivedDataCanReach20 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -610,7 +602,7 @@ class GroundStateReceivedData20 : VerificationCaseDefinition {
     }
 }
 @VerificationCase
-class GroundStateReceivedData30 : VerificationCaseDefinition {
+class GroundStationReceivedDataCanReach30 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -628,7 +620,7 @@ class GroundStateReceivedData30 : VerificationCaseDefinition {
     }
 }
 @VerificationCase
-class GroundStateReceivedData40 : VerificationCaseDefinition {
+class GroundStationReceivedDataCanReach40 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -646,7 +638,7 @@ class GroundStateReceivedData40 : VerificationCaseDefinition {
     }
 }
 @VerificationCase
-class GroundStateReceivedData50 : VerificationCaseDefinition {
+class GroundStationReceivedDataCanReach50 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -664,7 +656,7 @@ class GroundStateReceivedData50 : VerificationCaseDefinition {
     }
 }
 @VerificationCase
-class GroundStateReceivedData60 : VerificationCaseDefinition {
+class GroundStationReceivedDataCanReach60 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -682,7 +674,7 @@ class GroundStateReceivedData60 : VerificationCaseDefinition {
     }
 }
 @VerificationCase
-class GroundStateReceivedData70 : VerificationCaseDefinition {
+class GroundStationReceivedDataCanReach70 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -700,7 +692,7 @@ class GroundStateReceivedData70 : VerificationCaseDefinition {
     }
 }
 @VerificationCase
-class SpacecraftData100 : VerificationCaseDefinition {
+class SpacecraftDataCanReach100 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -718,7 +710,7 @@ class SpacecraftData100 : VerificationCaseDefinition {
     }
 }
 @VerificationCase
-class SpacecraftData90 : VerificationCaseDefinition {
+class SpacecraftDataCanReach90 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -736,7 +728,7 @@ class SpacecraftData90 : VerificationCaseDefinition {
     }
 }
 @VerificationCase
-class SpacecraftData80 : VerificationCaseDefinition {
+class SpacecraftDataCanReach80 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -754,7 +746,7 @@ class SpacecraftData80 : VerificationCaseDefinition {
     }
 }
 @VerificationCase
-class SpacecraftData70 : VerificationCaseDefinition {
+class SpacecraftDataCanReach70 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -772,7 +764,7 @@ class SpacecraftData70 : VerificationCaseDefinition {
     }
 }
 @VerificationCase
-class SpacecraftData60 : VerificationCaseDefinition {
+class SpacecraftDataCanReach60 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -790,7 +782,7 @@ class SpacecraftData60 : VerificationCaseDefinition {
     }
 }
 @VerificationCase
-class SpacecraftData50 : VerificationCaseDefinition {
+class SpacecraftDataCanReach50 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -808,7 +800,7 @@ class SpacecraftData50 : VerificationCaseDefinition {
     }
 }
 @VerificationCase
-class SpacecraftData40 : VerificationCaseDefinition {
+class SpacecraftDataCanReach40 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -826,7 +818,7 @@ class SpacecraftData40 : VerificationCaseDefinition {
     }
 }
 @VerificationCase
-class SpacecraftData30 : VerificationCaseDefinition {
+class SpacecraftDataCanReach30 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -838,6 +830,86 @@ class SpacecraftData30 : VerificationCaseDefinition {
                     redefine contains right: LiteralIntegerExpression {
                         redefine refers value: int = 30
                     }
+                }
+            }
+        }
+    }
+}
+@VerificationCase
+class SpacecraftBatteryAlwaysAbove0 : VerificationCaseDefinition {
+    contains mission: Mission[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        redefine contains verifyRequirement : Constraint[1] {
+            redefine contains requiredConstraint: GreaterThanOrEqualsOperatorExpression {
+                redefine contains left: AttributeReferenceExpression {
+                    redefine refers attribute: Attribute = mission.spacecraft.batteryCharge
+                }
+                redefine contains right: LiteralIntegerExpression {
+                    redefine refers value: int = 0
+                }
+            }
+        }
+    }
+}
+@VerificationCase
+class SpacecraftBatteryAlwaysAbove10 : VerificationCaseDefinition {
+    contains mission: Mission[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        redefine contains verifyRequirement : Constraint[1] {
+            redefine contains requiredConstraint: GreaterThanOrEqualsOperatorExpression {
+                redefine contains left: AttributeReferenceExpression {
+                    redefine refers attribute: Attribute = mission.spacecraft.batteryCharge
+                }
+                redefine contains right: LiteralIntegerExpression {
+                    redefine refers value: int = 10
+                }
+            }
+        }
+    }
+}
+@VerificationCase
+class SpacecraftBatteryAlwaysAbove20 : VerificationCaseDefinition {
+    contains mission: Mission[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        redefine contains verifyRequirement : Constraint[1] {
+            redefine contains requiredConstraint: GreaterThanOrEqualsOperatorExpression {
+                redefine contains left: AttributeReferenceExpression {
+                    redefine refers attribute: Attribute = mission.spacecraft.batteryCharge
+                }
+                redefine contains right: LiteralIntegerExpression {
+                    redefine refers value: int = 20
+                }
+            }
+        }
+    }
+}
+@VerificationCase
+class SpacecraftBatteryAlwaysAbove30 : VerificationCaseDefinition {
+    contains mission: Mission[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        redefine contains verifyRequirement : Constraint[1] {
+            redefine contains requiredConstraint: GreaterThanOrEqualsOperatorExpression {
+                redefine contains left: AttributeReferenceExpression {
+                    redefine refers attribute: Attribute = mission.spacecraft.batteryCharge
+                }
+                redefine contains right: LiteralIntegerExpression {
+                    redefine refers value: int = 30
+                }
+            }
+        }
+    }
+}
+@VerificationCase
+class SpacecraftBatteryAlwaysAbove40 : VerificationCaseDefinition {
+    contains mission: Mission[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        redefine contains verifyRequirement : Constraint[1] {
+            redefine contains requiredConstraint: GreaterThanOrEqualsOperatorExpression {
+                redefine contains left: AttributeReferenceExpression {
+                    redefine refers attribute: Attribute = mission.spacecraft.batteryCharge
+                }
+                redefine contains right: LiteralIntegerExpression {
+                    redefine refers value: int = 40
                 }
             }
         }
@@ -848,7 +920,7 @@ class SpacecraftData30 : VerificationCaseDefinition {
 
 @Tag("slow")
 @VerificationCase
-class GroundStateReceivedData80 : VerificationCaseDefinition {
+class GroundStationReceivedDataCanReach80 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -867,7 +939,7 @@ class GroundStateReceivedData80 : VerificationCaseDefinition {
 }
 @Tag("slow")
 @VerificationCase
-class GroundStateReceivedData90 : VerificationCaseDefinition {
+class GroundStationReceivedDataCanReach90 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -886,7 +958,7 @@ class GroundStateReceivedData90 : VerificationCaseDefinition {
 }
 @Tag("slow")
 @VerificationCase
-class GroundStateReceivedData100 : VerificationCaseDefinition {
+class GroundStationReceivedDataCanReach100 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -906,7 +978,7 @@ class GroundStateReceivedData100 : VerificationCaseDefinition {
 
 @Tag("slow")
 @VerificationCase
-class SpacecraftData20 : VerificationCaseDefinition {
+class SpacecraftDataCanReach20 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -925,7 +997,7 @@ class SpacecraftData20 : VerificationCaseDefinition {
 }
 @Tag("slow")
 @VerificationCase
-class SpacecraftData10 : VerificationCaseDefinition {
+class SpacecraftDataCanReach10 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -944,7 +1016,7 @@ class SpacecraftData10 : VerificationCaseDefinition {
 }
 @Tag("slow")
 @VerificationCase
-class SpacecraftData00 : VerificationCaseDefinition {
+class SpacecraftDataCanReach0 : VerificationCaseDefinition {
     contains mission: Mission[1] redefines subject
     redefine contains objective: Requirement[1] {
         redefine contains verifyRequirement : Constraint[1] {
@@ -954,7 +1026,7 @@ class SpacecraftData00 : VerificationCaseDefinition {
                         redefine refers attribute: Attribute = mission.spacecraft.data
                     }
                     redefine contains right: LiteralIntegerExpression {
-                        redefine refers value: int = 00
+                        redefine refers value: int = 0
                     }
                 }
             }
