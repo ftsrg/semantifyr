@@ -17,6 +17,14 @@ import java.io.File
 @CompilationScoped
 class CompilationStateManager {
 
+    // TODO: implement structured artifact management: the full base path is the output artifacts
+    // Make it extendable. Clean on initialization, etc. The Compilation scope manager should create the initial artifact mangaer. And also, probably, it should be configurable in the verification engine builder, so the path where the base path will be located can be configured
+    // base path:
+    //  - inlined -- inlined oxsts files
+    //  - verification -- verification outputs
+    //  - metrics -- metric data
+    //  - bare files
+
     private lateinit var basePath: File
 
     private lateinit var inlinedOxsts: InlinedOxsts
