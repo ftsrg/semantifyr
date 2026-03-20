@@ -92,7 +92,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
         val result = verifyXsts(progressContext, xstsModel, timeout, timeUnit)
 
         if (result is ThetaErrorVerificationResult) {
-            return VerificationCaseRunResult(VerificationResult.Errored, result.failureMessage)
+            error(result.failureMessage)
         }
 
         if (result.hasWitness) {
