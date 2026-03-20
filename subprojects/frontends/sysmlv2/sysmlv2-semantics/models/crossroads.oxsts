@@ -50,12 +50,12 @@ class CentralController : Part {
         contains UnnamedTransitionUsage0: Transition subsets transitions {
             redefine refers from: StateNode = start
             redefine refers to: StateNode = Operating
-}
+        }
         contains Operating: State subsets states {
             contains UnnamedTransitionUsage1: Transition subsets transitions {
                 redefine refers from: StateNode = start
                 redefine refers to: StateNode = BothYellow
-}
+            }
             contains BothYellow: State subsets states
             contains UnnamedTransitionUsage2: Transition subsets transitions {
                 redefine refers from: StateNode = BothYellow
@@ -200,12 +200,12 @@ class TrafficLightController : Part {
         contains UnnamedTransitionUsage10: Transition subsets transitions {
             redefine refers from: StateNode = start
             redefine refers to: StateNode = Normal
-}
+        }
         contains Normal: State subsets states {
             contains UnnamedTransitionUsage11: Transition subsets transitions {
                 redefine refers from: StateNode = start
                 redefine refers to: StateNode = Yellow
-}
+            }
             contains Yellow: State subsets states {
                 redefine contains entryAction: SendAction {
                     redefine refers viaPort: Port = lightControl
@@ -269,7 +269,7 @@ class TrafficLightController : Part {
             contains UnnamedTransitionUsage17: Transition subsets transitions {
                 redefine refers from: StateNode = start
                 redefine refers to: StateNode = Yellow
-}
+            }
             contains Yellow: State subsets states {
                 redefine contains entryAction: SendAction {
                     redefine refers viaPort: Port = lightControl
