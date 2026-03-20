@@ -47,7 +47,9 @@ class DockerBasedThetaXstsExecutor : ThetaXstsExecutor() {
 
     override fun check(): Boolean {
         return try {
-            dockerClient?.infoCmd()?.exec() != null
+            // try to initialize, if success we have docker :)
+            initialize()
+            true
         } catch (_: Exception) {
             false
         }
