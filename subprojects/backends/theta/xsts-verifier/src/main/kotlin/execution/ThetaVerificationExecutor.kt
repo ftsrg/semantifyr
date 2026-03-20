@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.backends.theta.verification.execution
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backends.theta.verification.utils.ensureExistsOutputStream
+import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaExecutionResult
 import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaExecutionSpecification
 import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaXstsExecutorProvider
 import hu.bme.mit.semantifyr.semantics.verification.VerificationDispatcher
@@ -46,9 +47,8 @@ class ThetaErrorVerificationResult(runtimeDetails: ThetaVerificationSpecificatio
     val failureMessage = "Theta execution failed, see: ${runtimeDetails.workingDirectory}/${runtimeDetails.errPath}"
 }
 
-fun ThetaVerificationSpecification.toVerificationResult(): ThetaVerificationResult {
-    val errorFile = File(workingDirectory, errPath)
-    if (errorFile.exists() && errorFile.useLines { it.any { it.isNotEmpty() } }) {
+fun ThetaVerificationSpecification.toVerificationResult(executionResult: ThetaExecutionResult): ThetaVerificationResult {
+    if (executionResult.exitCode != 0) {
         return ThetaErrorVerificationResult(this)
     }
 
@@ -108,11 +108,11 @@ class ThetaVerificationExecutor {
         writer.appendLine()
         writer.flush()
 
-        verificationDispatcher.execute {
+        val result = verificationDispatcher.execute {
             thetaExecutor.execute(thetaExecutionSpecification)
         }
 
-        return thetaVerificationSpecification.toVerificationResult()
+        return thetaVerificationSpecification.toVerificationResult(result)
     }
 
 }

@@ -24,7 +24,7 @@ data class VerificationCaseRunResult(
 )
 
 enum class VerificationResult {
-    Passed, Failed
+    Passed, Failed, Errored
 }
 
 interface OxstsVerifier {

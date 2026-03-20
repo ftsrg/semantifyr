@@ -17,7 +17,6 @@ import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaUnsafeVe
 import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaVerificationResult
 import hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts.OxstsTransformer
 import hu.bme.mit.semantifyr.backends.theta.wrapper.utils.CexReader
-import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
@@ -93,7 +92,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
         val result = verifyXsts(progressContext, xstsModel, timeout, timeUnit)
 
         if (result is ThetaErrorVerificationResult) {
-            return VerificationCaseRunResult(VerificationResult.Failed, result.failureMessage)
+            return VerificationCaseRunResult(VerificationResult.Errored, result.failureMessage)
         }
 
         if (result.hasWitness) {
