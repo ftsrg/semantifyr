@@ -121,11 +121,13 @@ class State : AbstractState {
     }
 
     redefine tran enterRecursive(commonState: StateNode) {
-        inline if (commonState != parent) {
-            inline parent?.enterRecursive(commonState)
-        }
+        inline if (parent != nothing) {
+            inline if (commonState != parent) {
+                inline parent.enterRecursive(commonState)
+            }
 
-        inline activate()
+            inline activate()
+        }
     }
     redefine tran enter(commonState: StateNode) {
         inline enterRecursive(commonState)
@@ -133,10 +135,12 @@ class State : AbstractState {
     }
 
     redefine tran exitRecursive(commonState: StateNode) {
-        inline deactivate()
+        inline if (parent != nothing) {
+            inline deactivate()
 
-        inline if (commonState != parent) {
-            inline parent?.exitRecursive(commonState)
+            inline if (commonState != parent) {
+                inline parent?.exitRecursive(commonState)
+            }
         }
     }
     redefine tran exit(commonState: StateNode) {
@@ -145,24 +149,20 @@ class State : AbstractState {
     }
 
     tran activate() {
-        inline if (parent != nothing) {
-            inline parent.setActiveState(self)
+        inline parent.setActiveState(self)
 
-            inline for (transition in outgoingTransitions) {
-                inline transition.initialize()
-            }
-
-            inline entryAction.main()
+        inline for (transition in outgoingTransitions) {
+            inline transition.initialize()
         }
+
+        inline entryAction.main()
     }
     
     tran deactivate() {
-        inline if (parent != nothing) {
-            if (parent.getActiveState() == self) {
-                inline exitAction.main()
+        if (parent.getActiveState() == self) {
+            inline exitAction.main()
 
-                inline parent.setActiveState(nothing)
-            }
+            inline parent.setActiveState(nothing)
         }
     }
 
