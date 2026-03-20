@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
@@ -24,6 +25,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.semantics.expression.DeflatedExpressionEvaluationTransformer
+import hu.bme.mit.semantifyr.semantics.expression.InstanceCollector
 import hu.bme.mit.semantifyr.semantics.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.semantics.expression.MetaStaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
@@ -88,6 +90,9 @@ class OxstsInflator {
     @Inject
     private lateinit var expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider
 
+    @Inject
+    private lateinit var instanceCollector: InstanceCollector
+
     private val variableInstanceDomain = mutableMapOf<VariableDeclaration, Set<Instance>>()
 //    private val domainInstanceDomain = mutableMapOf<DomainDeclaration, Set<Instance>>()
 
@@ -147,6 +152,13 @@ class OxstsInflator {
 
                 if (variable.typeSpecification.domain is FeatureDeclaration) {
                     val instances = evaluator.evaluateInstances(OxstsFactory.createElementReference(variable.typeSpecification.domain))
+                    variableInstanceDomain[variable] = instances
+                    variable.typeSpecification.domain = builtinAnything
+                }
+
+                if (variable.typeSpecification.domain is ClassDeclaration) {
+                    val classDeclaration = variable.typeSpecification.domain as ClassDeclaration
+                    val instances = instanceCollector.instancesOfType(inlinedOxsts.rootInstance, classDeclaration)
                     variableInstanceDomain[variable] = instances
                     variable.typeSpecification.domain = builtinAnything
                 }
