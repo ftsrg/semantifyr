@@ -10,7 +10,6 @@ plugins {
 }
 
 val thetaXstsCliVersion: String by project
-val thetaCliOutputDir = project.layout.buildDirectory.dir("theta-xsts-cli")
 
 val currentOs = when {
     System.getProperty("os.name").lowercase().contains("win") -> "windows"
@@ -42,6 +41,19 @@ repositories {
         }
         filter { includeGroup("hu.bme.mit.ftsrg.theta") }
     }
+    exclusiveContent {
+        forRepository {
+            ivy {
+                name = "Theta GitHub Raw"
+                url = uri("https://raw.githubusercontent.com/ftsrg/theta/")
+                patternLayout {
+                    artifact("v[revision]/lib/[artifact].[ext]")
+                }
+                metadataSources { artifact() }
+            }
+        }
+        filter { includeGroup("hu.bme.mit.ftsrg.theta.lib") }
+    }
 }
 
 val thetaCliJarClasspath by configurations.creating {
@@ -51,6 +63,12 @@ val thetaCliJarClasspath by configurations.creating {
 }
 
 val thetaNativeLibs by configurations.creating {
+    isTransitive = false
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
+
+val thetaZ3LegacyLibs by configurations.creating {
     isTransitive = false
     isCanBeConsumed = false
     isCanBeResolved = true
@@ -76,9 +94,6 @@ dependencies {
             thetaNativeLibs("org.sosy-lab:javasmt-solver-cvc5:1.2.1-g8594a8e4dc:libcvc5jni-x64@so")
             thetaNativeLibs("org.sosy-lab:javasmt-solver-bitwuzla:0.7.0-13.1-g595512ae:libbitwuzlaj-x64@so")
             thetaNativeLibs("org.sosy-lab:javasmt-solver-opensmt:2.9.0-gef441e1c:libopensmtj-x64@so")
-//            thetaNativeLibs("org.sosy-lab:javasmt-solver-cvc4:1.8-prerelease-2020-06-24-g7825d8f28:libcvc4-x64@so")
-//            thetaNativeLibs("org.sosy-lab:javasmt-solver-cvc4:1.8-prerelease-2020-06-24-g7825d8f28:libcvc4jni-x64@so")
-//            thetaNativeLibs("org.sosy-lab:javasmt-solver-cvc4:1.8-prerelease-2020-06-24-g7825d8f28:libcvc4parser-x64@so")
         }
         "windows" if currentArch == "x64" -> {
             thetaNativeLibs("org.sosy-lab:javasmt-solver-mathsat5:5.6.11-sosy1:mathsat5j-x64@dll")
@@ -88,29 +103,37 @@ dependencies {
             thetaNativeLibs("org.sosy-lab:javasmt-solver-bitwuzla:0.7.0-13.1-g595512ae:libbitwuzlaj-x64@dll")
         }
     }
+
+    // Z3 legacy — a custom Z3 4.5.0 fork with renamed library symbols, committed to the theta repo
+    thetaZ3LegacyLibs("hu.bme.mit.ftsrg.theta.lib:libz3legacy:${thetaXstsCliVersion}@$nativeExt")
+    thetaZ3LegacyLibs("hu.bme.mit.ftsrg.theta.lib:libz3javalegacy:${thetaXstsCliVersion}@$nativeExt")
 }
 
-val syncThetaJar by tasks.registering(Sync::class) {
-    from(thetaCliJarClasspath)
-    into(thetaCliOutputDir.get().dir("jars"))
-    rename { "theta-xsts-cli.jar" }
-}
-
-val syncThetaLibs by tasks.registering(Sync::class) {
-    from(thetaNativeLibs)
-    into(thetaCliOutputDir.get().dir("lib"))
-}
-
-val syncThetaScripts by tasks.registering(Sync::class) {
-    from(project.layout.projectDirectory.file("scripts"))
-    into(thetaCliOutputDir.get())
-    preserve {
-        include("lib", "jars")
+val prepareThetaXstsCli by tasks.registering(Sync::class) {
+    from(thetaNativeLibs) {
+        into("lib")
+        val arch = currentArch
+        rename { filename ->
+            val ext = filename.substringAfterLast('.')
+            val base = filename.substringBeforeLast('.').substringBeforeLast("-$arch")
+            "${base.substringAfterLast('-')}.$ext"
+        }
     }
-}
 
-val prepareThetaXstsCli by tasks.registering {
-    dependsOn(syncThetaJar)
-    dependsOn(syncThetaLibs)
-    dependsOn(syncThetaScripts)
+    from(thetaZ3LegacyLibs) {
+        into("lib")
+        rename { filename ->
+            val ext = filename.substringAfterLast('.')
+            "${filename.substringBeforeLast('.').substringBeforeLast('-')}.$ext"
+        }
+    }
+
+    from(thetaCliJarClasspath) {
+        into("jars")
+        rename { "theta-xsts-cli.jar" }
+    }
+
+    from(project.layout.projectDirectory.file("scripts"))
+
+    into(project.layout.buildDirectory.dir("theta-xsts-cli"))
 }
