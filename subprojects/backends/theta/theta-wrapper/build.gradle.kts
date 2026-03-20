@@ -74,6 +74,11 @@ val thetaZ3LegacyLibs by configurations.creating {
     isCanBeResolved = true
 }
 
+val thetaOutput by configurations.creating {
+    isCanBeConsumed = true
+    isCanBeResolved = false
+}
+
 dependencies {
     api(project(":cex.lang"))
     api(libs.guice)
@@ -136,4 +141,10 @@ val prepareThetaXstsCli by tasks.registering(Sync::class) {
     from(project.layout.projectDirectory.file("scripts"))
 
     into(project.layout.buildDirectory.dir("theta-xsts-cli"))
+}
+
+artifacts {
+    add(thetaOutput.name, layout.buildDirectory.dir("theta-xsts-cli")) {
+        builtBy(prepareThetaXstsCli)
+    }
 }

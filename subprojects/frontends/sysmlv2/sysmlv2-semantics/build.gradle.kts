@@ -6,7 +6,8 @@
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
-    alias(libs.plugins.kotlin.jvm)
+    id("hu.bme.mit.semantifyr.gradle.conventions.theta")
+    kotlin("jvm")
 }
 
 repositories {

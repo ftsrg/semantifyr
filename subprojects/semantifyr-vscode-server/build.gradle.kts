@@ -13,8 +13,15 @@ val distributionClasspath by configurations.creating {
     isCanBeResolved = true
 }
 
+val thetaClasspath by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
+
 dependencies {
     distributionClasspath(project(":semantifyr-vscode", configuration = "distributionOutput"))
+
+    thetaClasspath(project(":theta-wrapper", configuration = "thetaOutput"))
 }
 
 val cloneDistribution by tasks.registering(Copy::class) {
@@ -27,6 +34,15 @@ val cloneDistribution by tasks.registering(Copy::class) {
     into("extensions")
 }
 
+val cloneTheta by tasks.registering(Sync::class) {
+    inputs.files(thetaClasspath)
+
+    from (thetaClasspath)
+
+    into("theta-xsts-cli")
+}
+
 val prepareDockerBuild by tasks.registering() {
     inputs.files(cloneDistribution.get().outputs)
+    inputs.files(cloneTheta.get().outputs)
 }
