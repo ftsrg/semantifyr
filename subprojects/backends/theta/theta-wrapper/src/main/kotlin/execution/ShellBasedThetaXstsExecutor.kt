@@ -20,11 +20,14 @@ import java.io.OutputStream
 
 class ShellBasedThetaXstsExecutor : ThetaXstsExecutor() {
 
-    override fun check(): Boolean {
-        val process = ProcessBuilder("theta-xsts-cli", "--version").start()
-        val exitCode = process.waitFor()
+    private val isWindows = System.getProperty("os.name").lowercase().contains("windows")
 
-        return exitCode == 0
+    override fun check(): Boolean {
+        return try {
+            thetaProcessBuilder("--version").start().waitFor() == 0
+        } catch (e: Exception) {
+            false
+        }
     }
 
     fun CoroutineScope.startReaderJob(inputStream: InputStream, outputStream: OutputStream) = launch(Dispatchers.IO) {
@@ -67,13 +70,32 @@ class ShellBasedThetaXstsExecutor : ThetaXstsExecutor() {
     }
 
     private fun createProcessBuilder(thetaExecutionSpecification: ThetaExecutionSpecification): ProcessBuilder {
-        return ProcessBuilder(
-                "theta-xsts-cli",
-                *thetaExecutionSpecification.command.toTypedArray()
-            )
+        return thetaProcessBuilder(thetaExecutionSpecification.command)
             .directory(thetaExecutionSpecification.workingDirectory)
+    }
+
+    private fun thetaProcessBuilder(vararg args: String): ProcessBuilder {
+        val args = thetaCmd(args.toList())
+
+        return ProcessBuilder(args)
             .redirectOutput(ProcessBuilder.Redirect.PIPE)
             .redirectError(ProcessBuilder.Redirect.PIPE)
+    }
+
+    private fun thetaProcessBuilder(args: List<String>): ProcessBuilder {
+        val args = thetaCmd(args)
+
+        return ProcessBuilder(args)
+            .redirectOutput(ProcessBuilder.Redirect.PIPE)
+            .redirectError(ProcessBuilder.Redirect.PIPE)
+    }
+
+    private fun thetaCmd(args: List<String>): List<String> {
+        return if (isWindows) {
+            listOf("cmd", "/c", "theta-xsts-cli") + args
+        } else {
+            listOf("theta-xsts-cli") + args
+        }
     }
 
 }

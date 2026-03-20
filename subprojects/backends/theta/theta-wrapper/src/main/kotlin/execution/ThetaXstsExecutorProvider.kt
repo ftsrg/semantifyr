@@ -29,9 +29,9 @@ class ThetaXstsExecutorProvider {
     }
 
     private fun resolveExecutor(): ThetaXstsExecutor {
-        if (dockerBasedThetaXstsExecutor.check()) {
-            return dockerBasedThetaXstsExecutor
-        }
+//        if (dockerBasedThetaXstsExecutor.check()) {
+//            return dockerBasedThetaXstsExecutor
+//        }
 
         if (shellBasedThetaXstsExecutor.check()) {
             return shellBasedThetaXstsExecutor

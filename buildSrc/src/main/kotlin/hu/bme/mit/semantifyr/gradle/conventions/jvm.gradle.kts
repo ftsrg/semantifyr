@@ -128,3 +128,15 @@ tasks {
         inputs.files(testVerificationCases.get().outputs)
     }
 }
+
+val thetaCliDir = project(":theta-wrapper").layout.buildDirectory.dir("theta-xsts-cli")
+
+listOf("testVerificationCases", "testSlowVerificationCases").forEach { taskName ->
+    tasks.named<Test>(taskName) {
+        dependsOn(":theta-wrapper:prepareThetaXstsCli")
+
+        val thetaCliPath = thetaCliDir.get().asFile.absolutePath
+        val existingPath = environment["PATH"] ?: System.getenv("PATH") ?: ""
+        environment("PATH", "$thetaCliPath${File.pathSeparator}$existingPath")
+    }
+}
