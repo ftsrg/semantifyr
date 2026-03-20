@@ -538,10 +538,10 @@ verification def UnreachableGreenGreen {
     objective {
         verify requirement {
             require constraint {
-                not eventually(
+                mustAlways( not(
                     isStateActive(system.trafficLightA.Behaviour.Normal.Green)
                     and isStateActive(system.trafficLightB.Behaviour.Normal.Green)
-                )
+                ) )
             }
         }
     }
