@@ -6,7 +6,8 @@
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.application")
-    alias(libs.plugins.kotlin.jvm)
+    id("hu.bme.mit.semantifyr.gradle.conventions.theta")
+    kotlin("jvm")
 }
 
 repositories {
@@ -16,6 +17,11 @@ repositories {
 dependencies {
     api(project(":gamma.lang"))
 
+    testRuntimeOnly(libs.slf4j.log4j)
+
     testFixturesApi(project(":gamma.lang"))
     testFixturesApi(testFixtures(project(":gamma.lang")))
+
+    testFixturesApi(project(":xsts-verifier"))
+    testFixturesApi(testFixtures(project(":xsts-verifier")))
 }

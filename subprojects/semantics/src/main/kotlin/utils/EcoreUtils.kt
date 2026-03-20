@@ -7,8 +7,16 @@
 package hu.bme.mit.semantifyr.semantics.utils
 
 import org.eclipse.emf.ecore.EObject
+import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.xtext.EcoreUtil2
 
 fun <T : EObject> T.copy(): T = EcoreUtil2.copy(this)
 
 inline fun <reified T : EObject> EObject.eAllOfType() = EcoreUtil2.eAll(this).asSequence().filterIsInstance<T>()
+
+fun ResourceSet.unload() {
+    resources.forEach {
+        it.unload()
+    }
+    resources.clear()
+}

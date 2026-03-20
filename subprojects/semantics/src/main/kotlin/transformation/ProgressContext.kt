@@ -14,4 +14,18 @@ interface ProgressContext {
 
     fun reportProgress(message: String)
 
+    object NoOp : ProgressContext {
+        override fun checkIsCancelled() {
+            // NO-OP
+        }
+
+        override fun reportProgress(message: String, percentage: Int) {
+            // NO-OP
+        }
+
+        override fun reportProgress(message: String) {
+            // NO-OP
+        }
+    }
+
 }

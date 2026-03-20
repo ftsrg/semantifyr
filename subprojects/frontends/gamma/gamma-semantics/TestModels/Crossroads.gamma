@@ -150,123 +150,191 @@ sync component CrossroadSystem [
 // CentralController verification cases
 
 
-@Reachable
 verification case ControllerOperatingReachable {
     component system : CrossroadSystem
-    invariant { isActive (system.controller.Main.Operating) }
+    property { EF isActive (system.controller.Main.Operating) }
 }
 
-@Reachable
 verification case ControllerOperatingBothYellowReachable {
     component system : CrossroadSystem
-    invariant { isActive (system.controller.Main.Operating.OperatingRegion.BothYellow) }
+    property { EF isActive (system.controller.Main.Operating.OperatingRegion.BothYellow) }
 }
 
-@Reachable
 verification case ControllerOperatingBothRedReachable {
     component system : CrossroadSystem
-    invariant { isActive (system.controller.Main.Operating.OperatingRegion.BothRed) }
+    property { EF isActive (system.controller.Main.Operating.OperatingRegion.BothRed) }
 }
 
-@Reachable
 verification case ControllerOperatingStoppingAReachable {
     component system : CrossroadSystem
-    invariant { isActive (system.controller.Main.Operating.OperatingRegion.StoppingA) }
+    property { EF isActive (system.controller.Main.Operating.OperatingRegion.StoppingA) }
 }
 
-@Reachable
 verification case ControllerOperatingStoppingBReachable {
     component system : CrossroadSystem
-    invariant { isActive (system.controller.Main.Operating.OperatingRegion.StoppingB) }
+    property { EF isActive (system.controller.Main.Operating.OperatingRegion.StoppingB) }
 }
 
-@Reachable
 verification case ControllerOperatingTrafficOnAReachable {
     component system : CrossroadSystem
-    invariant { isActive (system.controller.Main.Operating.OperatingRegion.TrafficOnA) }
+    property { EF isActive (system.controller.Main.Operating.OperatingRegion.TrafficOnA) }
 }
 
-@Reachable
 verification case ControllerOperatingTrafficOnBReachable {
     component system : CrossroadSystem
-    invariant { isActive (system.controller.Main.Operating.OperatingRegion.TrafficOnB) }
+    property { EF isActive (system.controller.Main.Operating.OperatingRegion.TrafficOnB) }
 }
 
 
-@Reachable
 verification case ControllerInterruptedReachable {
     component system : CrossroadSystem
-    invariant { isActive (system.controller.Main.Interrupted) }
+    property { EF isActive (system.controller.Main.Interrupted) }
 }
 
 // TrafficLightController A verification cases
 
-@Reachable
 verification case ACanBeYellow {
     component system : CrossroadSystem
-    invariant { isActive (system.trafficLightA.Main.Normal.NormalRegion.Yellow) }
+    property { EF isActive (system.trafficLightA.Main.Normal.NormalRegion.Yellow) }
 }
 
-@Reachable
 verification case ACanBeRed {
     component system : CrossroadSystem
-    invariant { isActive (system.trafficLightA.Main.Normal.NormalRegion.Red) }
+    property { EF isActive (system.trafficLightA.Main.Normal.NormalRegion.Red) }
 }
 
-@Reachable
 verification case ACanBeGreen {
     component system : CrossroadSystem
-    invariant { isActive (system.trafficLightA.Main.Normal.NormalRegion.Green) }
+    property { EF isActive (system.trafficLightA.Main.Normal.NormalRegion.Green) }
 }
 
-@Reachable
 verification case ACanBeBlinkingYellow {
     component system : CrossroadSystem
-    invariant { isActive (system.trafficLightA.Main.Interrupted.InterruptedRegion.Yellow) }
+    property { EF isActive (system.trafficLightA.Main.Interrupted.InterruptedRegion.Yellow) }
 }
 
-@Reachable
 verification case ACanBeBlinkingBlack {
     component system : CrossroadSystem
-    invariant { isActive (system.trafficLightA.Main.Interrupted.InterruptedRegion.Black) }
+    property { EF isActive (system.trafficLightA.Main.Interrupted.InterruptedRegion.Black) }
 }
 
 // TrafficLightController B verification cases
 
-@Reachable
 verification case BCanBeYellow {
     component system : CrossroadSystem
-    invariant { isActive (system.trafficLightB.Main.Normal.NormalRegion.Yellow) }
+    property { EF isActive (system.trafficLightB.Main.Normal.NormalRegion.Yellow) }
 }
 
-@Reachable
 verification case BCanBeRed {
     component system : CrossroadSystem
-    invariant { isActive (system.trafficLightB.Main.Normal.NormalRegion.Red) }
+    property { EF isActive (system.trafficLightB.Main.Normal.NormalRegion.Red) }
 }
 
-@Reachable
 verification case BCanBeGreen {
     component system : CrossroadSystem
-    invariant { isActive (system.trafficLightB.Main.Normal.NormalRegion.Green) }
+    property { EF isActive (system.trafficLightB.Main.Normal.NormalRegion.Green) }
 }
 
-@Reachable
 verification case BCanBeBlinkingYellow {
     component system : CrossroadSystem
-    invariant { isActive (system.trafficLightB.Main.Interrupted.InterruptedRegion.Yellow) }
+    property { EF isActive (system.trafficLightB.Main.Interrupted.InterruptedRegion.Yellow) }
 }
 
-@Reachable
 verification case BCanBeBlinkingBlack {
     component system : CrossroadSystem
-    invariant { isActive (system.trafficLightB.Main.Interrupted.InterruptedRegion.Black) }
+    property { EF isActive (system.trafficLightB.Main.Interrupted.InterruptedRegion.Black) }
 }
 
 // Combined safety verification cases
 
-@Unreachable
-verification case BothCannotBeGreen {
+verification case ReachableRedRed {
     component system : CrossroadSystem
-    invariant { isActive (system.trafficLightA.Main.Normal.NormalRegion.Green) && isActive (system.trafficLightB.Main.Normal.NormalRegion.Green) }
+    property { 
+        EF (
+            isActive (system.trafficLightA.Main.Normal.NormalRegion.Red) 
+            && isActive (system.trafficLightB.Main.Normal.NormalRegion.Red) 
+        )
+    }
+}
+
+verification case ReachableRedGreen {
+    component system : CrossroadSystem
+    property { 
+        EF (
+            isActive (system.trafficLightA.Main.Normal.NormalRegion.Red) 
+            && isActive (system.trafficLightB.Main.Normal.NormalRegion.Green) 
+        )
+    }
+}
+
+verification case ReachableRedYellow {
+    component system : CrossroadSystem
+    property { 
+        EF (
+            isActive (system.trafficLightA.Main.Normal.NormalRegion.Red) 
+            && isActive (system.trafficLightB.Main.Normal.NormalRegion.Yellow) 
+        )
+    }
+}
+
+
+verification case ReachableGreenRed {
+    component system : CrossroadSystem
+    property { 
+        EF (
+            isActive (system.trafficLightA.Main.Normal.NormalRegion.Green) 
+            && isActive (system.trafficLightB.Main.Normal.NormalRegion.Red) 
+        )
+    }
+}
+
+verification case UnreachableGreenGreen {
+    component system : CrossroadSystem
+    property { 
+        AG not (
+            isActive (system.trafficLightA.Main.Normal.NormalRegion.Green) 
+            && isActive (system.trafficLightB.Main.Normal.NormalRegion.Green) 
+        )
+    }
+}
+
+verification case UnreachableGreenYellow {
+    component system : CrossroadSystem
+    property { 
+        /* AG */ not (
+            isActive (system.trafficLightA.Main.Normal.NormalRegion.Green) 
+            && isActive (system.trafficLightB.Main.Normal.NormalRegion.Yellow) 
+        )
+    }
+}
+
+
+verification case ReachableYellowRed {
+    component system : CrossroadSystem
+    property { 
+        EF (
+            isActive (system.trafficLightA.Main.Normal.NormalRegion.Yellow) 
+            && isActive (system.trafficLightB.Main.Normal.NormalRegion.Red) 
+        )
+    }
+}
+
+verification case UnreachableYellowGreen {
+    component system : CrossroadSystem
+    property { 
+        /* AG */ not (EF (
+            isActive (system.trafficLightA.Main.Normal.NormalRegion.Yellow) 
+            && isActive (system.trafficLightB.Main.Normal.NormalRegion.Green) 
+        ))
+    }
+}
+
+verification case ReachableYellowYellow {
+    component system : CrossroadSystem
+    property { 
+        EF (
+            isActive (system.trafficLightA.Main.Normal.NormalRegion.Yellow) 
+            && isActive (system.trafficLightB.Main.Normal.NormalRegion.Yellow) 
+        )
+    }
 }

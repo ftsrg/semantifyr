@@ -1,0 +1,158 @@
+package semantifyr::sysml::model
+
+import semantifyr::sysml::expressions
+import semantifyr::sysml::attributes
+import semantifyr::sysml::states
+import semantifyr::sysml::parts
+import semantifyr::sysml::ports
+import semantifyr::sysml::items
+import semantifyr::sysml::actions
+import semantifyr::sysml::triggers
+import semantifyr::sysml::verification
+
+class A : Item
+global containment global_A: A[1]
+class B : Item
+global containment global_B: B[1]
+class C : Item
+global containment global_C: C[1]
+class D : Item
+global containment global_D: D[1]
+class X : Item
+global containment global_X: X[1]
+class E : Item
+global containment global_E: E[1]
+class OutputEvents : NormalPort {
+    refers a: A subsets outgoingItems = global_A
+    refers b: B subsets outgoingItems = global_B
+    refers c: C subsets outgoingItems = global_C
+    refers d: D subsets outgoingItems = global_D
+    refers x: X subsets outgoingItems = global_X
+}
+class ConjugatedOutputEvents : ConjugatedPort {
+    refers a: A subsets outgoingItems = global_A
+    refers b: B subsets outgoingItems = global_B
+    refers c: C subsets outgoingItems = global_C
+    refers d: D subsets outgoingItems = global_D
+    refers x: X subsets outgoingItems = global_X
+}
+class InputEvents : NormalPort {
+    refers e: E subsets incomingItems = global_E
+}
+class ConjugatedInputEvents : ConjugatedPort {
+    refers e: E subsets incomingItems = global_E
+}
+class Stm31 : Part {
+    contains i: IntegerAttribute subsets attributes {
+        redefine refers defaultValue: int = 0
+    }
+    contains input: InputEvents subsets ports
+    contains output: OutputEvents subsets ports
+    contains Behaviour: State redefines exhibitState {
+        contains S1: State subsets states {
+            redefine contains entryAction: CompositeAction {
+                contains UnnamedSendActionUsage0: SendAction subsets children {
+                    redefine refers viaPort: Port = output
+                    redefine refers payload: Item = global_A
+                }
+            }
+            redefine contains exitAction: CompositeAction {
+                contains UnnamedAssignmentActionUsage0: AssignmentAction subsets children {
+                    redefine refers attribute: Attribute = i
+                    redefine contains expression: PlusOperatorExpression {
+                        redefine contains left: AttributeReferenceExpression {
+                            redefine refers attribute: Attribute = i
+                        }
+                        redefine contains right: LiteralIntegerExpression {
+                            redefine refers value: int = 1
+                        }
+                    }
+                }
+                contains UnnamedSendActionUsage1: SendAction subsets children {
+                    redefine refers viaPort: Port = output
+                    redefine refers payload: Item = global_B
+                }
+            }
+        }
+        contains S2: State subsets states {
+            redefine contains entryAction: CompositeAction {
+                contains UnnamedAssignmentActionUsage1: AssignmentAction subsets children {
+                    redefine refers attribute: Attribute = i
+                    redefine contains expression: MultiplicationOperatorExpression {
+                        redefine contains left: AttributeReferenceExpression {
+                            redefine refers attribute: Attribute = i
+                        }
+                        redefine contains right: LiteralIntegerExpression {
+                            redefine refers value: int = 2
+                        }
+                    }
+                }
+                contains UnnamedSendActionUsage2: SendAction subsets children {
+                    redefine refers viaPort: Port = output
+                    redefine refers payload: Item = global_C
+                }
+            }
+            redefine contains exitAction: CompositeAction {
+                contains UnnamedSendActionUsage3: SendAction subsets children {
+                    redefine refers viaPort: Port = output
+                    redefine refers payload: Item = global_D
+                }
+            }
+        }
+        contains UnnamedTransitionUsage0: Transition subsets transitions {
+            redefine refers from: StateNode = start
+            redefine refers to: StateNode = S1
+}
+        contains UnnamedTransitionUsage1: Transition subsets transitions {
+            redefine refers from: StateNode = S1
+            redefine refers to: StateNode = S2
+            redefine contains acceptAction: AcceptItemAction {
+                redefine refers viaPort: Port = input
+                redefine refers payload: Item = global_E
+            }
+            redefine contains action: CompositeAction {
+                contains UnnamedAssignmentActionUsage2: AssignmentAction subsets children {
+                    redefine refers attribute: Attribute = i
+                    redefine contains expression: PlusOperatorExpression {
+                        redefine contains left: AttributeReferenceExpression {
+                            redefine refers attribute: Attribute = i
+                        }
+                        redefine contains right: LiteralIntegerExpression {
+                            redefine refers value: int = 1
+                        }
+                    }
+                }
+                contains UnnamedSendActionUsage4: SendAction subsets children {
+                    redefine refers viaPort: Port = output
+                    redefine refers payload: Item = global_D
+                }
+            }
+        }
+    }
+}
+@VerificationCase
+class S1Reachable : VerificationCaseDefinition {
+    contains system: Stm31[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        redefine contains verifyRequirement : Constraint[1] {
+            redefine contains requiredConstraint: Eventually {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: State = system.Behaviour.S1
+                }
+            }
+        }
+    }
+}
+@VerificationCase
+class S2Reachable : VerificationCaseDefinition {
+    contains system: Stm31[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        redefine contains verifyRequirement : Constraint[1] {
+            redefine contains requiredConstraint: Eventually {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: State = system.Behaviour.S2
+                }
+            }
+        }
+    }
+}

@@ -179,10 +179,9 @@ Channel:
 ;
 
 VerificationCaseDeclaration:
-    (reachable?='@Reachable' | '@Unreachable')
     'verification' 'case' name=Identifier '{'
         component = ComponentInstance
-        'invariant' '{' invariant=Expression '}'
+        'property' '{' expression=Expression '}'
     '}'
 ;
 
@@ -192,6 +191,20 @@ Expression:
 
 OperatorExpression returns Expression:
     BooleanOperator
+    | TemporalOperator
+;
+
+TemporalOperator:
+    AG
+    | EF
+;
+
+AG:
+    'AG' body=BooleanOperator
+;
+
+EF:
+    'EF' body=BooleanOperator
 ;
 
 enum BooleanOp:
@@ -242,7 +255,7 @@ UnaryOperator returns Expression:
 ;
 
 NegationOperator:
-	'!' body=UnaryOperator
+	('!' | 'not') body=UnaryOperator
 ;
 
 enum UnaryOp:

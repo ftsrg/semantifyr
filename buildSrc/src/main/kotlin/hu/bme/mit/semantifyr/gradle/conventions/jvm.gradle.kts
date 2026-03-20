@@ -39,8 +39,10 @@ java.toolchain {
 }
 
 tasks {
+    // TODO: refactor tests to use test suites
     test {
         useJUnitPlatform {
+            excludeTags("verification")
             excludeTags("slow")
         }
 
@@ -52,17 +54,8 @@ tasks {
         finalizedBy(tasks.jacocoTestReport)
     }
 
-    val allTests by tasks.registering(Test::class) {
-        useJUnitPlatform()
-
-        minHeapSize = "512m"
-        maxHeapSize = "4G"
-        testLogging.showStandardStreams = true
-
-        finalizedBy(tasks.jacocoTestReport)
-    }
-
     jacocoTestReport {
         inputs.files(test.get().outputs)
+        executionData(test.get())
     }
 }

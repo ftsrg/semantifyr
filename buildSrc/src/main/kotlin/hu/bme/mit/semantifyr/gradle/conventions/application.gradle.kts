@@ -11,10 +11,6 @@ plugins {
     application
 }
 
-tasks.startScripts {
-    classpath = files("%APP_HOME%/lib/*")
-}
-
 val distributionOutput by configurations.creating {
     isCanBeConsumed = true
     isCanBeResolved = false

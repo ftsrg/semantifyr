@@ -114,65 +114,56 @@ sync component SpaceMission [
     channel [ station.connection ] -> [ spacecraft.connection ]
 }
 
-@Reachable
 verification case Station_IdleReachable {
     component mission : SpaceMission
 
-    invariant { isActive (mission.station.Main.Idle) }
+    property { EF isActive (mission.station.Main.Idle) }
 }
 
-@Reachable
 verification case Station_OperationReachable {
     component mission : SpaceMission
 
-    invariant { isActive (mission.station.Main.Operation) }
+    property { EF isActive (mission.station.Main.Operation) }
 }
 
-@Reachable
 verification case Station_OperationReceiveDataWaitingReachable {
     component mission : SpaceMission
 
-    invariant { isActive (mission.station.Main.Operation.ReceiveData.Waiting) }
+    property { EF isActive (mission.station.Main.Operation.ReceiveData.Waiting) }
 }
 
-@Reachable
 verification case Spacecraft_CommunicationWaitingPingReachable {
     component mission : SpaceMission
 
-    invariant { isActive (mission.spacecraft.Communication.WaitingPing) }
+    property { EF isActive (mission.spacecraft.Communication.WaitingPing) }
 }
 
-@Reachable
 verification case Spacecraft_CommunicationTransmittingReachable {
     component mission : SpaceMission
 
-    invariant { isActive (mission.spacecraft.Communication.Transmitting) }
+    property { EF isActive (mission.spacecraft.Communication.Transmitting) }
 }
 
-@Reachable
 verification case Spacecraft_CommunicationTransmittingSendDataSendingReachable {
     component mission : SpaceMission
 
-    invariant { isActive (mission.spacecraft.Communication.Transmitting.SendData.Sending) }
+    property { EF isActive (mission.spacecraft.Communication.Transmitting.SendData.Sending) }
 }
 
-@Reachable
 verification case Spacecraft_CommunicationTransmittingConsumePowerConsumingReachable {
     component mission : SpaceMission
 
-    invariant { isActive (mission.spacecraft.Communication.Transmitting.ConsumePower.Consuming) }
+    property { EF isActive (mission.spacecraft.Communication.Transmitting.ConsumePower.Consuming) }
 }
 
-@Reachable
 verification case Spacecraft_BatteryNotRechargingReachable {
     component mission : SpaceMission
 
-    invariant { isActive (mission.spacecraft.Battery.NotRecharging) }
+    property { EF isActive (mission.spacecraft.Battery.NotRecharging) }
 }
 
-@Reachable
 verification case Spacecraft_BatteryRechargingReachable {
     component mission : SpaceMission
 
-    invariant { isActive (mission.spacecraft.Battery.Recharging) }
+    property { EF isActive (mission.spacecraft.Battery.Recharging) }
 }

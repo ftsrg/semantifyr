@@ -10,11 +10,13 @@ plugins {
 
 dependencies {
     api(project(":oxsts.model"))
+
+    testRuntimeOnly(libs.slf4j.log4j)
 }
 
 xtext {
-    mweFile = layout.projectDirectory.file("src/main/java/hu/bme/mit/semantifyr/oxsts/lang/GenerateOxsts.mwe2")
-    xtextFile = layout.projectDirectory.file("src/main/java/hu/bme/mit/semantifyr/oxsts/lang/Oxsts.xtext")
+    mweFile = "src/main/java/hu/bme/mit/semantifyr/oxsts/lang/GenerateOxsts.mwe2"
+    xtextFile = "src/main/java/hu/bme/mit/semantifyr/oxsts/lang/Oxsts.xtext"
 }
 
 val syncModel by tasks.registering(Sync::class) {

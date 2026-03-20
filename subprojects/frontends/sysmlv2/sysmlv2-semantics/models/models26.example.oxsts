@@ -1,0 +1,62 @@
+package models26::example
+
+import semantifyr::sysml::expressions
+import semantifyr::sysml::actions
+import semantifyr::sysml::attributes
+
+@VerificationCase
+class IncrementAttribute {
+
+    contains x: IntegerAttribute {
+        redefine refers defaultValue: int = 10
+    }
+    contains y: IntegerAttribute {
+        redefine refers defaultValue: int = 100
+    }
+    contains xLTy : LessThanOperatorExpression {
+        redefine contains left: AttributeReferenceExpression {
+            redefine refers attribute: IntegerAttribute = x
+        }
+        redefine contains right: AttributeReferenceExpression {
+            redefine refers attribute: IntegerAttribute = y
+        }
+    }
+    contains composite: CompositeAction {
+        contains incX: AssignmentAction subsets children {
+            redefine refers attribute: IntegerAttribute = x
+            redefine contains expression: PlusOperatorExpression {
+                redefine contains left: AttributeReferenceExpression {
+                    redefine refers attribute: IntegerAttribute = x
+                }
+                redefine contains right: LiteralIntegerExpression {
+                    redefine refers value: int = 10
+                }
+            }
+        }
+        contains decY: AssignmentAction subsets children {
+            redefine refers attribute: IntegerAttribute = y
+            redefine contains expression: MinusOperatorExpression {
+                redefine contains left: AttributeReferenceExpression {
+                    redefine refers attribute: IntegerAttribute = y
+                }
+                redefine contains right: LiteralIntegerExpression {
+                    redefine refers value: int = 10
+                }
+            }
+        }
+    }
+
+    redefine init {
+        inline x.init()
+        inline y.init()
+    }
+
+    redefine tran {
+        inline composite.main()
+    }
+
+    prop {
+        return EF xLTy.evaluate()
+    }
+
+}

@@ -10,9 +10,12 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.TemporalOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.semantics.optimization.InlinedOxstsOperationOptimizer
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
+import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 
 @CompilationScoped
 class OxstsCallInliner {
@@ -32,6 +35,21 @@ class OxstsCallInliner {
         inlineExpressionCalls(inlinedOxsts.rootInstance, inlinedOxsts.property)
 
         inlinedOxstsOperationOptimizer.optimize(inlinedOxsts)
+
+        ensureTemporalExpressions(inlinedOxsts)
+    }
+
+    private fun ensureTemporalExpressions(inlinedOxsts: InlinedOxsts) {
+        if (inlinedOxsts.property.expression !is TemporalOperator) {
+            // all expressions are implicitly AG expressions
+            inlinedOxsts.property.expression = OxstsFactory.createAG().also {
+                it.body = inlinedOxsts.property.expression
+            }
+        }
+
+        if (inlinedOxsts.eAllOfType<TemporalOperator>().count() > 1) {
+            error("Temporal operators may only appear inside property blocks!")
+        }
     }
 
     private fun inlineOperationCalls(rootInstance: Instance, transition: TransitionDeclaration) {

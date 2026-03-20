@@ -129,6 +129,16 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
     }
 
     @Override
+    protected ExpressionEvaluation visit(AG expression) {
+        throw new IllegalArgumentException("AG expressions are not constant evaluable!");
+    }
+
+    @Override
+    protected ExpressionEvaluation visit(EF expression) {
+        throw new IllegalArgumentException("EF expressions are not constant evaluable!");
+    }
+
+    @Override
     protected ExpressionEvaluation visit(ArrayLiteral expression) {
         return new ArrayEvaluation(expression.getValues().stream().map(this::evaluate).toList());
     }

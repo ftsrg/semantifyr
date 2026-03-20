@@ -25,6 +25,10 @@ abstract class Port {
         return incomingItem == item
     }
 
+    prop hasOutgoingItem(item: Item): bool {
+        return outgoingItem == item
+    }
+
     tran assumeHasIncomingItem(item: Item) {
         assume (hasIncomingItem(item))
     }
@@ -47,6 +51,9 @@ abstract class Port {
 
     tran havocIncomingItem() {
         havoc (incomingItem)
+        inline if (actualInputItems != nothing) {
+            assume (incomingItem != nothing)
+        }
     }
 
     tran havocOutgoingItem() {

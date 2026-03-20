@@ -1,17 +1,11 @@
 private import ScalarValues::Boolean;
 
-/*
- * Verification constraints with this calculation will be transformed into a 'UNSAFE' expecting verification case.
- */
-calc def eventually {
+calc def <EF> eventually {
     in op: Boolean[1];
     return : Boolean[1];
 }
 
-/*
- * Verification constraints with this calculation will be transformed into a 'SAFE' expecting verification case.
- */
-calc def never {
+calc def <AG> mustAlways {
     in op: Boolean[1];
     return : Boolean[1];
 }

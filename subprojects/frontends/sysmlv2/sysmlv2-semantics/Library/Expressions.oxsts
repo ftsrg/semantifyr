@@ -116,3 +116,19 @@ class UnaryMinusExpression : UnaryOperatorExpression {
         return -operand.evaluate()
     }
 }
+
+abstract class TemporalOperatorExpression : Expression {
+    contains body: Expression[1]
+}
+
+class Eventually : TemporalOperatorExpression {
+    redefine prop evaluate(): any {
+        return EF body.evaluate()
+    }
+}
+
+class MustAlways : TemporalOperatorExpression {
+    redefine prop evaluate(): any {
+        return AG body.evaluate()
+    }
+}

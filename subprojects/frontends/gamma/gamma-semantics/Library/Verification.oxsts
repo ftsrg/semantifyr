@@ -19,6 +19,6 @@ class GammaVerificationCase {
     }
 
     prop {
-        return !(propertyExpression.evaluate())
+        return propertyExpression.evaluate()
     }
 }

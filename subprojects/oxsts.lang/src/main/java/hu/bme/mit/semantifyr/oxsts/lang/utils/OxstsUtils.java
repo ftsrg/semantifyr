@@ -141,6 +141,16 @@ public class OxstsUtils {
         return annotationContainer.getAnnotations().stream().filter(a -> a.getDeclaration() == annotationDeclaration).findFirst().orElse(null);
     }
 
+    public static Stream<Annotation> getAnnotations(AnnotatedElement element, AnnotationDeclaration annotationDeclaration) {
+        var annotationContainer = element.getAnnotation();
+
+        if (annotationContainer == null) {
+            return null;
+        }
+
+        return annotationContainer.getAnnotations().stream().filter(a -> a.getDeclaration() == annotationDeclaration);
+    }
+
     public static Expression getAnnotationValue(Annotation annotation, ParameterDeclaration parameterDeclaration) {
         var argument = annotation.getArguments().stream().filter(a -> a.getParameter() == parameterDeclaration).findFirst().orElse(null);
 

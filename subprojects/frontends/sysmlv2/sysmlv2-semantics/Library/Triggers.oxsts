@@ -48,7 +48,6 @@ class AcceptTimeoutAction : AcceptAction {
     redefine tran passTime() {
         if (remainingTime > 0) {
             remainingTime := remainingTime - 1
-            assume (remainingTime >= 0)
         }
     }
 

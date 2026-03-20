@@ -14,9 +14,11 @@ A framework to support the declarative definition of engineering model semantics
 
 Use Java 25 for building.
 
-Run `gradlew build` to assemble the whole project, and execute all automated test, including regression testing and formal verifications. The required environment (e.g., Theta binaries) is automatically constructed by Gradle. Tests should run in a few minutes.
+Run `gradlew build` to assemble and test the project, including regression testing and formal verifications. The required environment (e.g., Theta binaries) is automatically constructed by Gradle. Tests should run in 10-20 minutes.
 
-To execute all tests (even extremely slow, several days long tests!), run `gradlew allTests`.
+To execute slow verification cases (the longest may take ~1 hour), run `gradlew testSlowVerificationCases`. 
+
+Or run `gradlew allTests` for all tests.
 
 NOTE: Verification tests use Docker to run Theta. To run the build locally, ensure you have docker installed!
 

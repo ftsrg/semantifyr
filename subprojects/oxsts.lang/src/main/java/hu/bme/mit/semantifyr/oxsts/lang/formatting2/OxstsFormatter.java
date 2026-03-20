@@ -416,6 +416,14 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.format(booleanOperator.getRight());
     }
 
+    protected void format(TemporalOperator temporalOperator, IFormattableDocument document) {
+        allRegionsFor(temporalOperator).keywords(
+                "EF", "AG"
+        ).forEach(r -> document.append(r, this::oneSpace));
+
+        document.format(temporalOperator.getBody());
+    }
+
     protected void format(ArithmeticUnaryOperator unaryOperator, IFormattableDocument document) {
         document.set(previousHiddenRegion(unaryOperator.getBody()), this::noSpace);
 

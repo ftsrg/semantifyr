@@ -18,25 +18,33 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
+import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.absolute
 
 class ThetaPortfolioRunner {
+
+    private val logger = LoggerFactory.getLogger(ThetaPortfolioRunner::class.java)
+
     val parameters = listOf(
         "CEGAR --domain EXPL --flatten-depth 0 --refinement SEQ_ITP --maxenum 250 --initprec CTRL --stacktrace",
         "CEGAR --domain EXPL_PRED_COMBINED --flatten-depth 0 --autoexpl NEWOPERANDS --initprec CTRL --stacktrace",
         "CEGAR --domain PRED_CART --flatten-depth 0 --refinement SEQ_ITP --stacktrace",
         "BOUNDED --flatten-depth 0 --variant KINDUCTION --stacktrace",
     )
-    val timeout = 5L
-    val timeUnit = TimeUnit.MINUTES
+    val checkAllResults = false
 
     @Inject
     private lateinit var thetaVerificationExecutor: ThetaVerificationExecutor
 
-    private suspend fun runWorkflow(workingDirectory: String, name: String) = supervisorScope {
+    private suspend fun runWorkflow(
+        workingDirectory: String,
+        name: String,
+        timeout: Long,
+        timeUnit: TimeUnit
+    ) = supervisorScope {
         val jobs = parameters.indices.map { index ->
             async {
                 val thetaVerificationSpecification = ThetaVerificationSpecification(workingDirectory, name, index, parameters[index], timeout, timeUnit)
@@ -44,14 +52,56 @@ class ThetaPortfolioRunner {
             }
         }
 
+        // since verification is expensive, this hook ensures all verifiers are disposed of upon termination.
+        // putting it here to prevent forgetting it in the specific verifier executors.
+        // executors must only ensure to handle cancellation correctly.
+        val shutdownThread = Thread {
+            runBlocking {
+                cancelAllModelCheckers(jobs)
+            }
+        }
+
+        Runtime.getRuntime().addShutdownHook(shutdownThread)
+
         try {
             jobs.awaitFirstSuccess()
         } finally {
-            jobs.forEach {
-                it.cancel()
+            if (checkAllResults) {
+                checkAllModelCheckerResults(jobs)
             }
-            jobs.joinAll()
+
+            cancelAllModelCheckers(jobs)
+
+            Runtime.getRuntime().removeShutdownHook(shutdownThread)
         }
+    }
+
+    private suspend fun checkAllModelCheckerResults(jobs: List<Deferred<ThetaVerificationResult>>) {
+        var safe = false
+        var unsafe = false
+
+        jobs.forEach {
+            val result = it.await()
+
+            if (result is ThetaSafeVerificationResult) {
+                logger.debug("Safe result for ${result.runtimeDetails.id}")
+                safe = true
+            } else if (result is ThetaUnsafeVerificationResult) {
+                logger.debug("Unsafe result for ${result.runtimeDetails.id}")
+                unsafe = true
+            }
+        }
+
+        if (safe && unsafe) {
+            logger.error("Conflicting results!")
+        }
+    }
+
+    private suspend fun cancelAllModelCheckers(jobs: List<Deferred<ThetaVerificationResult>>) {
+        jobs.forEach {
+            it.cancel()
+        }
+        jobs.joinAll()
     }
 
     private fun CoroutineScope.startCancellationChecker(progressContext: ProgressContext): Deferred<Unit> {
@@ -68,12 +118,18 @@ class ThetaPortfolioRunner {
         }
     }
 
-    fun run(workingDirectory: String, name: String, progressContext: ProgressContext) = runBlocking {
+    fun run(
+        workingDirectory: String,
+        name: String,
+        progressContext: ProgressContext,
+        timeout: Long,
+        timeUnit: TimeUnit,
+    ) = runBlocking {
         val absoluteDirectory = Path.of(workingDirectory).absolute().toString()
 
         val cancellationChecker = startCancellationChecker(progressContext)
 
-        val result = runWorkflow(absoluteDirectory, name)
+        val result = runWorkflow(absoluteDirectory, name, timeout, timeUnit)
 
         cancellationChecker.cancel()
 

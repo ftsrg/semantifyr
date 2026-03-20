@@ -66,7 +66,8 @@ object SemantifyrScopes {
 
     }
 
-    fun runInScope(block: () -> Unit) {
+    @JvmStatic
+    fun runInScope(block: Runnable) {
         val context = CompilationScopeContext()
         val current = threadLocalContext.get()
         if (current != null) {
@@ -74,7 +75,7 @@ object SemantifyrScopes {
         }
         try {
             threadLocalContext.set(context)
-            block()
+            block.run()
         } finally {
             threadLocalContext.set(null)
         }

@@ -39,28 +39,6 @@ public class BuiltinAnnotationHandler {
         return OxstsUtils.isAnnotatedWith(classDeclaration, verificationCaseAnnotation);
     }
 
-    public VerificationCaseExpectedResult getExpectedResults(ClassDeclaration classDeclaration) {
-        var annotationDeclaration = builtinSymbolResolver.verificationCaseAnnotation(classDeclaration);
-        var annotation = OxstsUtils.getAnnotation(classDeclaration, annotationDeclaration);
-        var expectedResultsParameter = builtinSymbolResolver.verificationCaseAnnotationExpectedResults(classDeclaration);
-
-        var value = OxstsUtils.getAnnotationValue(annotation, expectedResultsParameter);
-
-        if (value instanceof ElementReference elementReference) {
-            if ("SAFE".equals(elementReference.getElement().getName())) {
-                return VerificationCaseExpectedResult.SAFE;
-            }
-            if ("UNSAFE".equals(elementReference.getElement().getName())) {
-                return VerificationCaseExpectedResult.UNSAFE;
-            }
-            if ("UNKNOWN".equals(elementReference.getElement().getName())) {
-                return VerificationCaseExpectedResult.UNKNOWN;
-            }
-        }
-
-        return null;
-    }
-
     public String getVerificationCaseSummary(ClassDeclaration classDeclaration) {
         var verificationCaseAnnotation = builtinSymbolResolver.verificationCaseAnnotation(classDeclaration);
         var verificationCaseAnnotationSummary = builtinSymbolResolver.verificationCaseAnnotationSummary(classDeclaration);
@@ -72,6 +50,28 @@ public class BuiltinAnnotationHandler {
         }
 
         return null;
+    }
+
+    public boolean isTaggedWith(ClassDeclaration classDeclaration, String category) {
+        var tagAnnotation = builtinSymbolResolver.tagAnnotation(classDeclaration);
+        var tagAnnotationCategory = builtinSymbolResolver.tagAnnotationCategory(classDeclaration);
+        var annotations = OxstsUtils.getAnnotations(classDeclaration, tagAnnotation);
+
+        assert annotations != null;
+
+        var values = annotations.map(annotation ->
+                OxstsUtils.getAnnotationValue(annotation, tagAnnotationCategory)
+        ).filter(value ->
+                value instanceof LiteralString
+        ).map(value ->
+                ((LiteralString) value).getValue()
+        );
+
+        return values.anyMatch(category::equals);
+    }
+
+    public boolean isNotTaggedWith(ClassDeclaration classDeclaration, String category) {
+        return ! isTaggedWith(classDeclaration, category);
     }
 
     public boolean isTransitionTraced(TransitionDeclaration transitionDeclaration) {
