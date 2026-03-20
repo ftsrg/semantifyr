@@ -11,7 +11,7 @@ on:
 env:
   CI: true
 jobs:
-  build:
+  run-verification:
     permissions:
       contents: read
     strategy:
