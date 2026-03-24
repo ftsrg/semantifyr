@@ -20,11 +20,12 @@ val thetaClasspath by configurations.creating {
 
 dependencies {
     distributionClasspath(project(":semantifyr-vscode", configuration = "distributionOutput"))
+    distributionClasspath(project(":sysmlv2-frontend", configuration = "distributionOutput"))
 
     thetaClasspath(project(":theta-wrapper", configuration = "thetaOutput"))
 }
 
-val cloneDistribution by tasks.registering(Copy::class) {
+val cloneDistribution by tasks.registering(Sync::class) {
     inputs.files(distributionClasspath)
 
     from (distributionClasspath.map {

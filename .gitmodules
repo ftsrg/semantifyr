@@ -1,0 +1,3 @@
+[submodule "subprojects/frontends/sysmlv2/sysmlv2-frontend/sysml-2ls"]
+	path = subprojects/frontends/sysmlv2/sysmlv2-frontend/sysml-2ls
+	url = git@github.com:arminzavada/sysml-2ls.git
