@@ -25,6 +25,11 @@ val distributionOutput by configurations.creating {
     isCanBeResolved = false
 }
 
+val cliOutput by configurations.creating {
+    isCanBeConsumed = true
+    isCanBeResolved = false
+}
+
 val buildExtension by tasks.registering(PnpmTask::class) {
     dependsOn(tasks.pnpmInstall) // node_modules directory is not reliable
     inputs.files(fileTree("sysml-2ls") {
@@ -65,6 +70,20 @@ val bundleExtension by tasks.registering(PnpmTask::class) {
     )
 }
 
+val bundleCli by tasks.registering(PnpmTask::class) {
+    dependsOn(buildExtension)
+    outputs.file("sysml-2ls/packages/syside-cli/out/index.js")
+
+    workingDir = project.layout.projectDirectory.dir("sysml-2ls/packages/syside-cli")
+
+    pnpmCommand.set(
+        listOf(
+            "run",
+            "esbuild",
+        )
+    )
+}
+
 tasks {
     assemble {
         inputs.files(buildExtension.get().outputs)
@@ -78,5 +97,8 @@ tasks {
 artifacts {
     add(distributionOutput.name, bundleExtension.get().outputs.files.singleFile) {
         builtBy(bundleExtension)
+    }
+    add(cliOutput.name, bundleCli.get().outputs.files.singleFile) {
+        builtBy(bundleCli)
     }
 }
