@@ -12,11 +12,9 @@ plugins {
     alias(libs.plugins.gradle.node)
 }
 
-val isCi: Boolean = System.getenv("CI") != null
-
 node {
     version = "22.14.0"
-    download = !isCi
+    download = true
     nodeProjectDir = project.layout.projectDirectory.dir("sysml-2ls")
 }
 

@@ -11,11 +11,9 @@ plugins {
     alias(libs.plugins.gradle.node)
 }
 
-val isCi: Boolean = System.getenv("CI") != null
-
 node {
     version = "22.14.0"
-    download = !isCi
+    download = true
 }
 
 val distributionOutput by configurations.creating {
