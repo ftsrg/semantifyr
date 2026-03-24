@@ -160,9 +160,9 @@ val bundleCli by tasks.registering(Sync::class) {
     dependsOn(checkoutLibrary)
     dependsOn(buildCli)
     from(sysmlDir.file("packages/syside-cli/out/index.js"))
-    from(sysmlDir.dir("SysML-v2-Release")) {
-        include("*.sysml")
-        include("*.kerml")
+    from(fileTree(sysmlDir.dir("SysML-v2-Release/sysml.library"))) {
+        include("**/*.sysml")
+        include("**/*.kerml")
         into("sysml.library")
     }
     into(project.layout.buildDirectory.dir("cli-bundle"))
