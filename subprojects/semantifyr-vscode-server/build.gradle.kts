@@ -60,21 +60,43 @@ val cloneLibraries by tasks.registering {
     dependsOn(cloneSysMLLibrary)
 }
 
+val cloneGammaTestModels by tasks.registering(Sync::class) {
+    from (project(":gamma-semantics").layout.projectDirectory.dir("TestModels")) {
+        include("*.gamma")
+    }
+    into ("examples/gamma/TestModels")
+}
+
+val cloneSysMLTestModels by tasks.registering(Sync::class) {
+    from (project(":sysmlv2-semantics").layout.projectDirectory.dir("TestModels")) {
+        include("*.sysml")
+    }
+    into ("examples/sysml/TestModels")
+}
+
+val cloneTestModels by tasks.registering {
+    dependsOn(cloneGammaTestModels)
+    dependsOn(cloneSysMLTestModels)
+}
+
 val prepareDockerBuild by tasks.registering() {
     dependsOn(cloneDistribution)
     dependsOn(cloneTheta)
     dependsOn(cloneLibraries)
+    dependsOn(cloneTestModels)
 }
 
 val dockerBuildImage by tasks.registering(DockerBuildImage::class) {
     dependsOn(prepareDockerBuild)
     inputDir.set(projectDir)
     images.add("ftsrgbot/semantifyr-vscode-server:${project.version}")
+    images.add("ftsrgbot/semantifyr-vscode-server:testing")
     images.add("ftsrgbot/semantifyr-vscode-server:preview")
 }
 
 val dockerPushImage by tasks.registering(DockerPushImage::class) {
     dependsOn(dockerBuildImage)
     images.add("ftsrgbot/semantifyr-vscode-server:${project.version}")
+    images.add("ftsrgbot/semantifyr-vscode-server:testing")
     images.add("ftsrgbot/semantifyr-vscode-server:preview")
 }
