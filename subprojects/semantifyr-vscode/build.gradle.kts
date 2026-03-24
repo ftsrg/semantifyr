@@ -5,6 +5,7 @@
  */
 
 import com.github.gradle.node.npm.task.NpmTask
+import com.github.gradle.node.task.NodeTask
 
 plugins {
     base
@@ -14,6 +15,19 @@ plugins {
 node {
     version = "22.14.0"
     download = true
+}
+
+abstract class NpmService : BuildService<BuildServiceParameters.None>
+val npmService = gradle.sharedServices.registerIfAbsent("npmService", NpmService::class.java) {
+    maxParallelUsages.set(1)
+}
+
+// node tasks must not run in parallel, as pnpm is sensitive to that
+tasks.withType<NpmTask>().configureEach {
+    usesService(npmService)
+}
+tasks.withType<NodeTask>().configureEach {
+    usesService(npmService)
 }
 
 val distributionOutput by configurations.creating {

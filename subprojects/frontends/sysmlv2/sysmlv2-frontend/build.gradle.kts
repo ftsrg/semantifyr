@@ -24,7 +24,7 @@ node {
 }
 
 abstract class PnpmService : BuildService<BuildServiceParameters.None>
-val pnpmService = gradle.sharedServices.registerIfAbsent("pnpmService", NpmService::class.java) {
+val pnpmService = gradle.sharedServices.registerIfAbsent("pnpmService", PnpmService::class.java) {
     maxParallelUsages.set(1)
 }
 
