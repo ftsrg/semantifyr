@@ -5,30 +5,35 @@
  */
 
 import com.github.gradle.node.pnpm.task.PnpmTask
+import com.github.gradle.node.task.NodeTask
+import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
     base
     alias(libs.plugins.gradle.node)
 }
 
-val sysml2lsCommit = "e9d675777390deabae2e620722288a2177271ab6"
-val sysml2lsUrl = "git@github.com:arminzavada/sysml-2ls.git"
-val sysml2lsDir = layout.projectDirectory.dir("sysml-2ls").asFile
-
-val checkoutSysml2ls by tasks.registering(Exec::class) {
-    inputs.property("sysml2lsUrl", sysml2lsUrl)
-    inputs.property("sysml2lsCommit", sysml2lsCommit)
-    outputs.dir(layout.projectDirectory.dir("sysml-2ls").dir(".git"))
-
-    val isWindows = System.getProperty("os.name").lowercase().contains("win")
-    val script = if (isWindows) "scripts\\checkout.cmd" else "scripts/checkout.sh"
-    commandLine(script, sysml2lsDir.absolutePath, sysml2lsUrl, sysml2lsCommit)
-}
+val sysmlCommit = "e9d675777390deabae2e620722288a2177271ab6"
+val sysmlUrl = "git@github.com:arminzavada/sysml-2ls.git"
+val sysmlDir = layout.buildDirectory.dir("sysml-2ls").get()
 
 node {
     version = "22.14.0"
     download = true
-    nodeProjectDir = project.layout.projectDirectory.dir("sysml-2ls")
+    nodeProjectDir = sysmlDir
+}
+
+abstract class PnpmService : BuildService<BuildServiceParameters.None>
+val pnpmService = gradle.sharedServices.registerIfAbsent("pnpmService", NpmService::class.java) {
+    maxParallelUsages.set(1)
+}
+
+// node tasks must not run in parallel, as pnpm is sensitive to that
+tasks.withType<PnpmTask>().configureEach {
+    usesService(pnpmService)
+}
+tasks.withType<NodeTask>().configureEach {
+    usesService(pnpmService)
 }
 
 val distributionOutput by configurations.creating {
@@ -41,13 +46,45 @@ val cliOutput by configurations.creating {
     isCanBeResolved = false
 }
 
+val checkoutSysml by tasks.registering(Exec::class) {
+    inputs.property("sysmlUrl", sysmlUrl)
+    inputs.property("sysmlCommit", sysmlCommit)
+    inputs.dir("scripts")
+    outputs.dir(sysmlDir.dir(".git"))
+
+    val script = if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        "scripts\\checkout.cmd"
+    } else {
+        "scripts/checkout.sh"
+    }
+
+    commandLine(script, sysmlDir.asFile.absolutePath, sysmlUrl, sysmlCommit)
+}
+
 tasks.pnpmInstall {
-    dependsOn(checkoutSysml2ls)
+    usesService(pnpmService)
+
+    dependsOn(checkoutSysml)
+}
+
+val checkoutLibrary by tasks.registering(PnpmTask::class) {
+    dependsOn(tasks.pnpmInstall) // node_modules directory is not reliable
+    inputs.file(sysmlDir.file("packages/syside-languageserver/scripts/clone-sysml-release.mjs"))
+    outputs.dir(sysmlDir.dir("SysML-v2-Release"))
+
+    pnpmCommand = listOf(
+        "run",
+        "prepare-validation",
+    )
 }
 
 val buildExtension by tasks.registering(PnpmTask::class) {
     dependsOn(tasks.pnpmInstall) // node_modules directory is not reliable
-    inputs.files(fileTree("sysml-2ls") {
+    inputs.file(sysmlDir.file("package.json"))
+    inputs.file(sysmlDir.file("tsconfig.json"))
+    inputs.file(sysmlDir.file("tsconfig.build.json"))
+    inputs.file(sysmlDir.file("tsconfig.eslint.json"))
+    inputs.files(fileTree(sysmlDir.dir("packages")) {
         include("**/src/**/*.ts")
         include("**/tsconfig.json")
         include("**/package.json")
@@ -55,7 +92,7 @@ val buildExtension by tasks.registering(PnpmTask::class) {
         include("**/scripts/*.*")
         include("**/scripts/*.*")
     })
-    outputs.files(fileTree("sysml-2ls") {
+    outputs.files(fileTree(sysmlDir.dir("packages")) {
         exclude("**/node_modules/**")
         include("**/lib/**")
         include("**/dist/**")
@@ -71,7 +108,19 @@ val buildExtension by tasks.registering(PnpmTask::class) {
 
 val bundleExtension by tasks.registering(PnpmTask::class) {
     dependsOn(buildExtension)
-    outputs.file("sysml-2ls/packages/syside-vscode/sysml-2ls-0.9.0.vsix")
+    inputs.file(sysmlDir.file("package.json"))
+    inputs.file(sysmlDir.file("tsconfig.json"))
+    inputs.file(sysmlDir.file("tsconfig.build.json"))
+    inputs.file(sysmlDir.file("tsconfig.eslint.json"))
+    inputs.files(fileTree(sysmlDir.dir("packages")) {
+        include("**/src/**/*.ts")
+        include("**/tsconfig.json")
+        include("**/package.json")
+        include("**/package-lock.json")
+        include("**/scripts/*.*")
+        include("**/scripts/*.*")
+    })
+    outputs.file(sysmlDir.file("packages/syside-vscode/sysml-2ls-0.9.0.vsix"))
 
     pnpmCommand.set(
         listOf(
@@ -81,11 +130,13 @@ val bundleExtension by tasks.registering(PnpmTask::class) {
     )
 }
 
-val bundleCli by tasks.registering(PnpmTask::class) {
-    // not needed, but it would be difficult to exclude the outputs of building the extension
-    dependsOn(buildExtension)
+val buildCli by tasks.registering(PnpmTask::class) {
     dependsOn(tasks.pnpmInstall)
-    inputs.files(fileTree("sysml-2ls") {
+    inputs.file(sysmlDir.file("package.json"))
+    inputs.file(sysmlDir.file("tsconfig.json"))
+    inputs.file(sysmlDir.file("tsconfig.build.json"))
+    inputs.file(sysmlDir.file("tsconfig.eslint.json"))
+    inputs.files(fileTree(sysmlDir.dir("packages")) {
         include("**/src/**/*.ts")
         include("**/tsconfig.json")
         include("**/package.json")
@@ -93,9 +144,9 @@ val bundleCli by tasks.registering(PnpmTask::class) {
         include("**/scripts/*.*")
         include("**/scripts/*.*")
     })
-    outputs.file("sysml-2ls/packages/syside-cli/out/index.js")
+    outputs.file(sysmlDir.file("packages/syside-cli/out/index.js"))
 
-    workingDir = project.layout.projectDirectory.dir("sysml-2ls/packages/syside-cli")
+    workingDir = sysmlDir.dir("packages/syside-cli")
 
     pnpmCommand.set(
         listOf(
@@ -105,20 +156,13 @@ val bundleCli by tasks.registering(PnpmTask::class) {
     )
 }
 
-tasks {
-    assemble {
-        inputs.files(buildExtension.get().outputs)
-    }
-
-    clean {
-        delete("dist")
-    }
-}
-
-val assembleCliBundle by tasks.registering(Sync::class) {
-    dependsOn(bundleCli)
-    from(file("sysml-2ls/packages/syside-cli/out/index.js"))
-    from(project.layout.projectDirectory.dir("sysml-2ls/packages/syside-vscode/sysml.library")) {
+val bundleCli by tasks.registering(Sync::class) {
+    dependsOn(checkoutLibrary)
+    dependsOn(buildCli)
+    from(sysmlDir.file("packages/syside-cli/out/index.js"))
+    from(sysmlDir.dir("SysML-v2-Release")) {
+        include("*.sysml")
+        include("*.kerml")
         into("sysml.library")
     }
     into(project.layout.buildDirectory.dir("cli-bundle"))
@@ -129,6 +173,6 @@ artifacts {
         builtBy(bundleExtension)
     }
     add(cliOutput.name, project.layout.buildDirectory.dir("cli-bundle").get().asFile) {
-        builtBy(assembleCliBundle)
+        builtBy(bundleCli)
     }
 }

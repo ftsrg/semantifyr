@@ -20,18 +20,14 @@ echo Usage: checkout.cmd ^<target-dir^> ^<remote-url^> ^<commit^>
 exit /b 1
 
 :main
-if not exist "%TARGET_DIR%\.git" (
-    git clone "%REMOTE_URL%" "%TARGET_DIR%"
-    if errorlevel 1 exit /b 1
-)
-
 cd /d "%TARGET_DIR%"
-if errorlevel 1 exit /b 1
 
-git fetch origin "%COMMIT%"
-if errorlevel 1 exit /b 1
-
+git init
+echo Adding remote
+git remote add origin "%REMOTE_URL%" || rem
+echo Fetch latest
+git fetch
+echo Checkout commit
 git checkout "%COMMIT%"
-if errorlevel 1 exit /b 1
 
 endlocal
