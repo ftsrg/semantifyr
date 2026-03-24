@@ -37,7 +37,7 @@ jobs:
       run: ./gradlew build
     - name: Bundle Extension
       shell: bash
-      run: ./gradlew bundleExtension
+      run: ./gradlew :semantifyr-vscode:bundleExtension
     - name: Upload Artifacts
       if: ${{ matrix.os == 'ubuntu-latest' }}
       uses: actions/upload-artifact@v7
