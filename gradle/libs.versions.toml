@@ -19,6 +19,7 @@ viatra = "2.9.1"
 dockerJava = "3.7.0"
 guice = "7.0.0"
 node = "7.1.0"
+bmuschkoDocker = "9.4.0"
 
 [libraries]
 ecore = { group = "org.eclipse.emf", name = "org.eclipse.emf.ecore", version.ref = "ecore" }
@@ -58,3 +59,4 @@ docker-java-transport = { group = "com.github.docker-java" , name = "docker-java
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 gradle-node = { id = "com.github.node-gradle.node", version.ref = "node" }
+bmuschko-docker = { id = "com.bmuschko.docker-remote-api", version.ref = "bmuschkoDocker" }
