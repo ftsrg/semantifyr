@@ -3,15 +3,8 @@ package semantifyr::sysml::ports
 import semantifyr::sysml::items
 
 abstract class Port {
-    refers items: Item[0..*]
-    refers incomingItems: Item[0..*] subsets items
-    refers outgoingItems: Item[0..*] subsets items
-
-    refers actualInputItems: Item[0..*] = incomingItems
-    refers actualOutputItems: Item[0..*] = outgoingItems
-
-    var incomingItem: actualInputItems[0..1] := nothing
-    var outgoingItem: actualOutputItems[0..1] := nothing
+    var incomingItem: Item[0..1] := nothing
+    var outgoingItem: Item[0..1] := nothing
 
     prop hasIncoming(): bool {
         return incomingItem != nothing
@@ -23,6 +16,10 @@ abstract class Port {
 
     prop hasIncomingItem(item: Item): bool {
         return incomingItem == item
+    }
+
+    prop hasOutgoingItem(item: Item): bool {
+        return outgoingItem == item
     }
 
     tran assumeHasIncomingItem(item: Item) {
@@ -54,11 +51,5 @@ abstract class Port {
     }
 }
 
-class NormalPort : Port {
-
-}
-
-class ConjugatedPort : Port {
-    redefine refers actualInputItems: Item[0..*] = outgoingItems
-    redefine refers actualOutputItems: Item[0..*] = incomingItems
-}
+class NormalPort : Port
+class ConjugatedPort : Port
