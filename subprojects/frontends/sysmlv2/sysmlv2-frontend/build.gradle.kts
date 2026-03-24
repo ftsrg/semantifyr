@@ -13,7 +13,7 @@ plugins {
     alias(libs.plugins.gradle.node)
 }
 
-val sysmlCommit = "48a149d73370a3212a24d58436fa58127556b4c0" // Added error redirect
+val sysmlCommit = "f469c8e21fd61348858e7b8cb1a726a6792b57e3" // Improved cloning logic
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.buildDirectory.dir("sysml-2ls").get()
 
@@ -55,10 +55,8 @@ val checkoutSysml by tasks.registering(Exec::class) {
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
         commandLine("cmd.exe", "/d", "/c", "scripts\\checkout.cmd", sysmlDir.asFile.absolutePath, sysmlUrl, sysmlCommit)
     } else {
-        commandLine("cmd.exe", "scripts/checkout.sh", sysmlDir.asFile.absolutePath, sysmlUrl, sysmlCommit)
+        commandLine("scripts/checkout.sh", sysmlDir.asFile.absolutePath, sysmlUrl, sysmlCommit)
     }
-
-    
 }
 
 tasks.pnpmInstall {
