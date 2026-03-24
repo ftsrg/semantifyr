@@ -13,7 +13,7 @@ plugins {
     alias(libs.plugins.gradle.node)
 }
 
-val sysmlCommit = "e9d675777390deabae2e620722288a2177271ab6"
+val sysmlCommit = "aecd217b0ebf5877c92fa3d16a79e98c73417b69"
 val sysmlUrl = "git@github.com:arminzavada/sysml-2ls.git"
 val sysmlDir = layout.buildDirectory.dir("sysml-2ls").get()
 
