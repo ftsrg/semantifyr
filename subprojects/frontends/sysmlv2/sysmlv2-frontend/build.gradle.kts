@@ -5,11 +5,24 @@
  */
 
 import com.github.gradle.node.pnpm.task.PnpmTask
-import kotlin.io.path.isSymbolicLink
 
 plugins {
     base
     alias(libs.plugins.gradle.node)
+}
+
+val sysml2lsCommit = "e9d675777390deabae2e620722288a2177271ab6"
+val sysml2lsUrl = "git@github.com:arminzavada/sysml-2ls.git"
+val sysml2lsDir = layout.projectDirectory.dir("sysml-2ls").asFile
+
+val checkoutSysml2ls by tasks.registering(Exec::class) {
+    inputs.property("sysml2lsUrl", sysml2lsUrl)
+    inputs.property("sysml2lsCommit", sysml2lsCommit)
+    outputs.dir(layout.projectDirectory.dir("sysml-2ls").dir(".git"))
+
+    val isWindows = System.getProperty("os.name").lowercase().contains("win")
+    val script = if (isWindows) "scripts\\checkout.cmd" else "scripts/checkout.sh"
+    commandLine(script, sysml2lsDir.absolutePath, sysml2lsUrl, sysml2lsCommit)
 }
 
 node {
@@ -26,6 +39,10 @@ val distributionOutput by configurations.creating {
 val cliOutput by configurations.creating {
     isCanBeConsumed = true
     isCanBeResolved = false
+}
+
+tasks.pnpmInstall {
+    dependsOn(checkoutSysml2ls)
 }
 
 val buildExtension by tasks.registering(PnpmTask::class) {
