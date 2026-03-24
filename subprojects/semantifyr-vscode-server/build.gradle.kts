@@ -4,8 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
+import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
+
 plugins {
     base
+    alias(libs.plugins.bmuschko.docker)
 }
 
 val distributionClasspath by configurations.creating {
@@ -28,9 +32,7 @@ dependencies {
 val cloneDistribution by tasks.registering(Sync::class) {
     inputs.files(distributionClasspath)
 
-    from (distributionClasspath.map {
-        fileTree(it)
-    })
+    from (distributionClasspath)
 
     into("extensions")
 }
@@ -43,7 +45,36 @@ val cloneTheta by tasks.registering(Sync::class) {
     into("theta-xsts-cli")
 }
 
+val cloneGammaLibrary by tasks.registering(Sync::class) {
+    from (project(":gamma-semantics").layout.projectDirectory.dir("Library"))
+    into ("examples/gamma/Library")
+}
+
+val cloneSysMLLibrary by tasks.registering(Sync::class) {
+    from (project(":sysmlv2-semantics").layout.projectDirectory.dir("Library"))
+    into ("examples/sysml/Library")
+}
+
+val cloneLibraries by tasks.registering {
+    dependsOn(cloneGammaLibrary)
+    dependsOn(cloneSysMLLibrary)
+}
+
 val prepareDockerBuild by tasks.registering() {
-    inputs.files(cloneDistribution.get().outputs)
-    inputs.files(cloneTheta.get().outputs)
+    dependsOn(cloneDistribution)
+    dependsOn(cloneTheta)
+    dependsOn(cloneLibraries)
+}
+
+val dockerBuildImage by tasks.registering(DockerBuildImage::class) {
+    dependsOn(prepareDockerBuild)
+    inputDir.set(projectDir)
+    images.add("ftsrgbot/semantifyr-vscode-server:${project.version}")
+    images.add("ftsrgbot/semantifyr-vscode-server:preview")
+}
+
+val dockerPushImage by tasks.registering(DockerPushImage::class) {
+    dependsOn(dockerBuildImage)
+    images.add("ftsrgbot/semantifyr-vscode-server:${project.version}")
+    images.add("ftsrgbot/semantifyr-vscode-server:preview")
 }
