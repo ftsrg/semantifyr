@@ -76,7 +76,7 @@ tasks {
 }
 
 artifacts {
-    add(distributionOutput.name, layout.buildDirectory) {
+    add(distributionOutput.name, bundleExtension.get().outputs.files.singleFile) {
         builtBy(bundleExtension)
     }
 }

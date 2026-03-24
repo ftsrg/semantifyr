@@ -83,7 +83,7 @@ val bundleExtension by tasks.registering(NpmTask::class) {
         )
     )
 
-    outputs.dir(project.layout.buildDirectory)
+    outputs.file(project.layout.buildDirectory.file("semantifyr-0.0.1.vsix"))
 }
 
 tasks {
@@ -98,7 +98,7 @@ tasks {
 }
 
 artifacts {
-    add(distributionOutput.name, layout.buildDirectory) {
+    add(distributionOutput.name, project.layout.buildDirectory.file("semantifyr-0.0.1.vsix")) {
         builtBy(bundleExtension)
     }
 }
