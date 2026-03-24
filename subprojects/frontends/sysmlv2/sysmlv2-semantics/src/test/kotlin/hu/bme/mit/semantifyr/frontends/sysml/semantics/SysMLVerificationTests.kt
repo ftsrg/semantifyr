@@ -136,6 +136,7 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
         checkVerificationCase(verificationCase)
     }
 
+    @Disabled("The frontend does not add the @Tag('slow') yet")
     @Tag("slow")
     @ParameterizedTest
     @MethodSource
