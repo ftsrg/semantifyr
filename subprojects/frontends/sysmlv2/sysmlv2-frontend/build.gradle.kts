@@ -14,7 +14,7 @@ plugins {
 }
 
 val sysmlCommit = "aecd217b0ebf5877c92fa3d16a79e98c73417b69"
-val sysmlUrl = "git@github.com:arminzavada/sysml-2ls.git"
+val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.buildDirectory.dir("sysml-2ls").get()
 
 node {
