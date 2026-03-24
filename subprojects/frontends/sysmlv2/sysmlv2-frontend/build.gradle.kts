@@ -71,7 +71,9 @@ val bundleExtension by tasks.registering(PnpmTask::class) {
 }
 
 val bundleCli by tasks.registering(PnpmTask::class) {
-    dependsOn(tasks.pnpmInstall) // node_modules directory is not reliable
+    // not needed, but it would be difficult to exclude the outputs of building the extension
+    dependsOn(buildExtension)
+    dependsOn(tasks.pnpmInstall)
     inputs.files(fileTree("sysml-2ls") {
         include("**/src/**/*.ts")
         include("**/tsconfig.json")
