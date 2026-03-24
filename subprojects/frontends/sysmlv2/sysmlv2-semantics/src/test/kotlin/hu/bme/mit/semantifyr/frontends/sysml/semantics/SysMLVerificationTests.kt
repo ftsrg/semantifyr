@@ -44,44 +44,53 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
             return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
         }
 
-        private fun loadModel(path: String): SemantifyrModelContext {
+        val transformer = StandaloneSysMLTransformer()
+
+        private fun loadModel(model: String): SemantifyrModelContext {
+            val sysmlModelPath = Path(model)
+            val sysmlModel = sysmlModelPath.toFile()
+            val oxstsModelPath = Path(sysmlModel.absolutePath.replace(".sysml", ".oxsts"))
+            val oxstsModel = oxstsModelPath.toFile()
+
+            transformer.transformModel(sysmlModel, oxstsModel)
+
             return semantifyrVerificationHelper.semantifyrLoader.startContext()
                 .loadLibraries(Path("Library"))
-                .loadModel(Path(path))
+                .loadModel(oxstsModelPath)
                 .buildAndResolve()
         }
 
         @JvmStatic
         fun `STM21 Model Verification Cases Should Pass`(): Stream<Arguments> {
-            val model = loadModel("models/stm21.oxsts")
+            val model = loadModel("TestModels/stm21.sysml")
 
             return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
         }
 
         @JvmStatic
         fun `STM31 Model Verification Cases Should Pass`(): Stream<Arguments> {
-            val model = loadModel("models/stm31.oxsts")
+            val model = loadModel("TestModels/stm31.sysml")
 
             return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
         }
 
         @JvmStatic
         fun `Crossroads Model Verification Cases Should Pass`(): Stream<Arguments> {
-            val model = loadModel("models/crossroads.oxsts")
+            val model = loadModel("TestModels/crossroads.sysml")
 
             return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
         }
 
         @JvmStatic
         fun `Spacecraft Model Verification Cases Should Pass`(): Stream<Arguments> {
-            val model = loadModel("models/spacecraft.oxsts")
+            val model = loadModel("TestModels/spacecraft.sysml")
 
             return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
         }
 
         @JvmStatic
         fun `Slow Spacecraft Model Verification Cases Should Pass`(): Stream<Arguments> {
-            val model = loadModel("models/spacecraft.oxsts")
+            val model = loadModel("TestModels/spacecraft.sysml")
 
             return semantifyrVerificationHelper.collectSlowVerificationCases(model).asStream()
         }

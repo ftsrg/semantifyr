@@ -71,7 +71,15 @@ val bundleExtension by tasks.registering(PnpmTask::class) {
 }
 
 val bundleCli by tasks.registering(PnpmTask::class) {
-    dependsOn(buildExtension)
+    dependsOn(tasks.pnpmInstall) // node_modules directory is not reliable
+    inputs.files(fileTree("sysml-2ls") {
+        include("**/src/**/*.ts")
+        include("**/tsconfig.json")
+        include("**/package.json")
+        include("**/package-lock.json")
+        include("**/scripts/*.*")
+        include("**/scripts/*.*")
+    })
     outputs.file("sysml-2ls/packages/syside-cli/out/index.js")
 
     workingDir = project.layout.projectDirectory.dir("sysml-2ls/packages/syside-cli")
@@ -94,11 +102,20 @@ tasks {
     }
 }
 
+val assembleCliBundle by tasks.registering(Sync::class) {
+    dependsOn(bundleCli)
+    from(file("sysml-2ls/packages/syside-cli/out/index.js"))
+    from(project.layout.projectDirectory.dir("sysml-2ls/packages/syside-vscode/sysml.library")) {
+        into("sysml.library")
+    }
+    into(project.layout.buildDirectory.dir("cli-bundle"))
+}
+
 artifacts {
     add(distributionOutput.name, bundleExtension.get().outputs.files.singleFile) {
         builtBy(bundleExtension)
     }
-    add(cliOutput.name, bundleCli.get().outputs.files.singleFile) {
-        builtBy(bundleCli)
+    add(cliOutput.name, project.layout.buildDirectory.dir("cli-bundle").get().asFile) {
+        builtBy(assembleCliBundle)
     }
 }
