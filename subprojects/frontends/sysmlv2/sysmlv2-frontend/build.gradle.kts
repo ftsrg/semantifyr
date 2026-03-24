@@ -56,11 +56,7 @@ val buildExtension by tasks.registering(PnpmTask::class) {
 
 val bundleExtension by tasks.registering(PnpmTask::class) {
     dependsOn(buildExtension)
-    outputs.file(
-        fileTree("sysml-2ls") {
-            include("packages/syside-vscode/*.vsix")
-        }
-    )
+    outputs.file("sysml-2ls/packages/syside-vscode/sysml-2ls-0.9.0.vsix")
 
     pnpmCommand.set(
         listOf(
