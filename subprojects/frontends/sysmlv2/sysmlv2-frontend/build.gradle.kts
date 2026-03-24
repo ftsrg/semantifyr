@@ -52,13 +52,13 @@ val checkoutSysml by tasks.registering(Exec::class) {
     inputs.dir("scripts")
     outputs.dir(sysmlDir.dir(".git"))
 
-    val script = if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        "scripts\\checkout.cmd"
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        commandLine("cmd.exe", "/d", "/c", "scripts\\checkout.cmd", sysmlDir.asFile.absolutePath, sysmlUrl, sysmlCommit)
     } else {
-        "scripts/checkout.sh"
+        commandLine("cmd.exe", "scripts/checkout.sh", sysmlDir.asFile.absolutePath, sysmlUrl, sysmlCommit)
     }
 
-    commandLine(script, sysmlDir.asFile.absolutePath, sysmlUrl, sysmlCommit)
+    
 }
 
 tasks.pnpmInstall {

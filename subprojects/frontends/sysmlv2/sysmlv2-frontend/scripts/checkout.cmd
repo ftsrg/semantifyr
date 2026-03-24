@@ -24,7 +24,7 @@ cd /d "%TARGET_DIR%"
 
 git init
 echo Adding remote
-git remote add origin "%REMOTE_URL%" || rem
+git remote add origin "%REMOTE_URL%" 2> nul || rem
 echo Fetch latest
 git fetch
 echo Checkout commit
