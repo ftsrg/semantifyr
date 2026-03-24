@@ -19,7 +19,7 @@ cd "$TARGET_DIR"
 
 git init
 echo "Adding remote"
-git remote add origin "$REMOTE_URL" || true
+git remote add origin "$REMOTE_URL" 2> /dev/null || true
 echo "Fetch latest"
 git fetch
 echo "Checkout commit"

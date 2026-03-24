@@ -13,7 +13,7 @@ plugins {
     alias(libs.plugins.gradle.node)
 }
 
-val sysmlCommit = "aecd217b0ebf5877c92fa3d16a79e98c73417b69"
+val sysmlCommit = "48a149d73370a3212a24d58436fa58127556b4c0" // Added error redirect
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.buildDirectory.dir("sysml-2ls").get()
 
