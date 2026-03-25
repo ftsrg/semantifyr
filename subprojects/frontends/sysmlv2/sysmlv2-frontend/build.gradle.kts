@@ -65,15 +65,12 @@ tasks.pnpmInstall {
     dependsOn(checkoutSysml)
 }
 
-val checkoutLibrary by tasks.registering(PnpmTask::class) {
+val checkoutLibrary by tasks.registering(NodeTask::class) {
     dependsOn(tasks.pnpmInstall) // node_modules directory is not reliable
     inputs.file(sysmlDir.file("packages/syside-languageserver/scripts/clone-sysml-release.mjs"))
     outputs.dir(sysmlDir.dir("SysML-v2-Release"))
 
-    pnpmCommand = listOf(
-        "run",
-        "prepare-validation",
-    )
+    script = sysmlDir.file("packages/syside-languageserver/scripts/clone-sysml-release.mjs")
 }
 
 val buildExtension by tasks.registering(PnpmTask::class) {
