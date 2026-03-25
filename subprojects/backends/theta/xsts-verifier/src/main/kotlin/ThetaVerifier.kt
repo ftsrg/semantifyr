@@ -10,7 +10,6 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.cex.CexAssumptionWitnessTransformer
 import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.oxsts.InlinedOxstsAssumptionWitnessTransformer
 import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.xsts.XstsAssumptionWitnessTransformer
-import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaErrorVerificationResult
 import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaPortfolioRunner
 import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaSafeVerificationResult
 import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaUnsafeVerificationResult
@@ -90,10 +89,6 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
         progressContext.reportProgress("Running Theta Portfolio")
 
         val result = verifyXsts(progressContext, xstsModel, timeout, timeUnit)
-
-        if (result is ThetaErrorVerificationResult) {
-            error(result.failureMessage)
-        }
 
         if (result.hasWitness) {
             progressContext.reportProgress("Creating witness")

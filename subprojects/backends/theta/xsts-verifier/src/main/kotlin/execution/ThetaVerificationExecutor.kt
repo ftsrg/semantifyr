@@ -43,13 +43,10 @@ sealed class ThetaVerificationResult(
 class ThetaUnknownVerificationResult(runtimeDetails: ThetaVerificationSpecification) : ThetaVerificationResult(runtimeDetails)
 class ThetaSafeVerificationResult(runtimeDetails: ThetaVerificationSpecification) : ThetaVerificationResult(runtimeDetails)
 class ThetaUnsafeVerificationResult(runtimeDetails: ThetaVerificationSpecification) : ThetaVerificationResult(runtimeDetails)
-class ThetaErrorVerificationResult(runtimeDetails: ThetaVerificationSpecification) : ThetaVerificationResult(runtimeDetails) {
-    val failureMessage = "Theta execution failed, see: ${runtimeDetails.workingDirectory}/${runtimeDetails.errPath}"
-}
 
 fun ThetaVerificationSpecification.toVerificationResult(executionResult: ThetaExecutionResult): ThetaVerificationResult {
     if (executionResult.exitCode != 0) {
-        return ThetaErrorVerificationResult(this)
+        error("Theta execution failed: $this")
     }
 
     val logFile = File(workingDirectory, logPath)
