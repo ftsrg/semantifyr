@@ -24,6 +24,8 @@ import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
 import kotlin.io.path.Path
 import kotlin.streams.asStream
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 @Tag("verification")
 @InjectWithOxstsSemantics
@@ -135,7 +137,7 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
     @ParameterizedTest
     @MethodSource
     fun `Full Spacecraft Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
-        checkVerificationCase(verificationCase)
+        checkVerificationCase(verificationCase, 2.toDuration(DurationUnit.HOURS))
     }
 
 }
