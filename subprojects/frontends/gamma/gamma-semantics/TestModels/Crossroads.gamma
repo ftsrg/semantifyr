@@ -193,6 +193,16 @@ verification case ControllerInterruptedReachable {
 
 // TrafficLightController A verification cases
 
+verification case ANormalReachable {
+    component system : CrossroadSystem
+    property { EF isActive (system.trafficLightA.Main.Normal) }
+}
+
+verification case AInterruptedReachable {
+    component system : CrossroadSystem
+    property { EF isActive (system.trafficLightA.Main.Interrupted) }
+}
+
 verification case ACanBeYellow {
     component system : CrossroadSystem
     property { EF isActive (system.trafficLightA.Main.Normal.NormalRegion.Yellow) }
@@ -219,6 +229,16 @@ verification case ACanBeBlinkingBlack {
 }
 
 // TrafficLightController B verification cases
+
+verification case BNormalReachable {
+    component system : CrossroadSystem
+    property { EF isActive (system.trafficLightB.Main.Normal) }
+}
+
+verification case BInterruptedReachable {
+    component system : CrossroadSystem
+    property { EF isActive (system.trafficLightB.Main.Interrupted) }
+}
 
 verification case BCanBeYellow {
     component system : CrossroadSystem
