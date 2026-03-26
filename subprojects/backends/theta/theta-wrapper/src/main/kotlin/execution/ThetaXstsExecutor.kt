@@ -11,6 +11,8 @@ import org.apache.commons.io.output.NullOutputStream
 import java.io.File
 import java.io.OutputStream
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import kotlin.time.toDurationUnit
 
@@ -23,8 +25,7 @@ class ThetaExecutionSpecification(
     val command: List<String>,
     val logStream: OutputStream = NullOutputStream.INSTANCE,
     val errorStream: OutputStream = NullOutputStream.INSTANCE,
-    val timeout: Long = 3,
-    val timeUnit: TimeUnit = TimeUnit.MINUTES
+    val timeout: Duration,
 )
 
 abstract class ThetaXstsExecutor {
@@ -38,7 +39,7 @@ abstract class ThetaXstsExecutor {
     abstract suspend fun execute(thetaExecutionSpecification: ThetaExecutionSpecification): ThetaExecutionResult
 
     protected suspend inline fun <T> withTimeout(thetaExecutionSpecification: ThetaExecutionSpecification, crossinline block: suspend () -> T): T {
-        return withTimeout(thetaExecutionSpecification.timeout.toDuration(thetaExecutionSpecification.timeUnit.toDurationUnit())) {
+        return withTimeout(thetaExecutionSpecification.timeout) {
             block()
         }
     }

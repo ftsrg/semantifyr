@@ -27,6 +27,8 @@ import java.util.concurrent.TimeUnit
 import java.util.stream.Stream
 import kotlin.io.path.Path
 import kotlin.streams.asStream
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 @Tag("verification")
 @InjectWithOxstsSemantics
@@ -132,7 +134,7 @@ class GammaVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
     @MethodSource
     @Disabled("There are no slow crossroads verification cases just yet.")
     fun `Slow Spacecraft Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
-        checkVerificationCase(verificationCase, 60, TimeUnit.MINUTES)
+        checkVerificationCase(verificationCase, 60.toDuration(DurationUnit.MINUTES))
     }
 
 }

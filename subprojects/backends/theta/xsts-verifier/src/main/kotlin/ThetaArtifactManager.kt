@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.theta.verification
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaVerificationSpecification
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.ArtifactManager
 import hu.bme.mit.semantifyr.semantics.verification.VerificationCaseRunResult
@@ -23,8 +24,15 @@ data class VerificationReport(
     var className: String,
     var modelPath: String,
     var startedAt: Instant,
+    var totalDuration: Duration,
     var result: VerificationCaseRunResult,
-    var timeout: Duration
+    var timeout: Duration,
+)
+
+@Serializable
+data class VerificationPortfolioResult(
+    val winningSpecification: ThetaVerificationSpecification,
+    val allArguments: List<String>,
 )
 
 @Serializable
@@ -70,6 +78,20 @@ class ThetaArtifactManager {
             prettyPrint = true
             prettyPrintIndent = "  "
             explicitNulls = false
+        }
+
+        file.outputStream().buffered().use {
+            json.encodeToStream(data, it)
+        }
+    }
+
+    fun serialize(data: VerificationPortfolioResult) {
+        val file = artifactManager.resolve("metrics${File.separator}portfolio.json")
+        file.parentFile.mkdirs()
+
+        val json = Json {
+            prettyPrint = true
+            prettyPrintIndent = "  "
         }
 
         file.outputStream().buffered().use {

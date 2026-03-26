@@ -32,6 +32,7 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
 import kotlin.time.Clock
+import kotlin.time.Duration
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 import kotlin.time.toDuration
@@ -74,22 +75,20 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
     protected fun verifyXsts(
         progressContext: ProgressContext,
         xstsModel: XstsModel,
-        timeout: Long,
-        timeUnit: TimeUnit,
+        timeout: Duration
     ): ThetaVerificationResult {
         xstsModel.eResource().save(emptyMap<Any, Any>())
 
         val workingDirectory = thetaArtifactManager.xstsFile.parent
         val name = thetaArtifactManager.xstsFile.nameWithoutExtension
 
-        return thetaPortfolioRunner.run(workingDirectory, name, progressContext, timeout, timeUnit)
+        return thetaPortfolioRunner.run(workingDirectory, name, progressContext, timeout)
     }
 
     override fun verify(
         progressContext: ProgressContext,
         classDeclaration: ClassDeclaration,
-        timeout: Long,
-        timeUnit: TimeUnit,
+        timeout: Duration
     ): VerificationCaseRunResult {
         // TODO: the artifact manager should be created with this base path already initialized -> see scope helper
         val filePath = File(classDeclaration.eResource().uri.toFileString())
@@ -100,14 +99,17 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
 
         val startedAt = Clock.System.now()
 
-        val result = doRunVerification(progressContext, classDeclaration, timeout, timeUnit)
+        val (result, duration) = measureTimedValue {
+            doRunVerification(progressContext, classDeclaration, timeout)
+        }
 
         val verificationReport = VerificationReport(
             oxstsQualifiedNameProvider.getFullyQualifiedNameString(classDeclaration),
             classDeclaration.eResource().uri.toFileString(),
             startedAt,
+            duration,
             result,
-            timeout.toDuration(timeUnit.toDurationUnit())
+            timeout
         )
 
         thetaArtifactManager.serialize(verificationReport)
@@ -118,8 +120,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
     private fun doRunVerification(
         progressContext: ProgressContext,
         classDeclaration: ClassDeclaration,
-        timeout: Long,
-        timeUnit: TimeUnit
+        timeout: Duration
     ): VerificationCaseRunResult {
         val verificationTimeMetrics = VerificationTimeMetrics()
 
@@ -143,7 +144,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
                 // Because of the Temporal bubbling optimizations these are the only options
                 val property = inlinedOxsts.property.expression
 
-                val result = verifyXsts(progressContext, xstsModel, timeout, timeUnit)
+                val result = verifyXsts(progressContext, xstsModel, timeout)
 
                 if (result.hasWitness) {
                     progressContext.reportProgress("Creating witness")

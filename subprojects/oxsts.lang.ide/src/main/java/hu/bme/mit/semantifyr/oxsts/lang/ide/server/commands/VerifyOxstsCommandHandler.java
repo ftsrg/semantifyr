@@ -20,6 +20,7 @@ import org.eclipse.lsp4j.Location;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -71,7 +72,7 @@ public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
                 progressContext.checkIsCancelled();
 
                 compilationStateManagerProvider.get().setSerializeSteps(false);
-                result.complete(oxstsVerifierProvider.get().verify(progressContext, classDelcaration, 3, TimeUnit.MINUTES));
+                result.complete(oxstsVerifierProvider.get().verify(progressContext, classDelcaration, Duration.ofMinutes(5)));
             });
         } catch (Exception e) {
             result.completeExceptionally(e);

@@ -18,6 +18,8 @@ import hu.bme.mit.semantifyr.semantics.transformation.serializer.ArtifactManager
 import hu.bme.mit.semantifyr.semantics.transformation.tracer.TraceSerializer
 import kotlinx.serialization.Serializable
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
+import kotlin.time.toKotlinDuration
 
 @Serializable
 data class VerificationCaseRunResult(
@@ -34,8 +36,7 @@ interface OxstsVerifier {
     fun verify(
         progressContext: ProgressContext,
         classDeclaration: ClassDeclaration,
-        timeout: Long = 10L,
-        timeUnit: TimeUnit = TimeUnit.MINUTES
+        timeout: Duration
     ): VerificationCaseRunResult
 
 }
@@ -73,6 +74,14 @@ abstract class AbstractOxstsVerifier : OxstsVerifier {
         val resource = resourceSet.createResource(uri)
         resource.contents += witness
         resource.save(emptyMap<Any, Any>())
+    }
+
+    fun verify(
+        progressContext: ProgressContext,
+        classDeclaration: ClassDeclaration,
+        timeout: java.time.Duration
+    ): VerificationCaseRunResult {
+        return verify(progressContext, classDeclaration, timeout.toKotlinDuration())
     }
 
 }

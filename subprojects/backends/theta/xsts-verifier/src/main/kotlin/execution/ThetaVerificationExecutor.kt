@@ -12,16 +12,18 @@ import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaExecutionResu
 import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaExecutionSpecification
 import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaXstsExecutorProvider
 import hu.bme.mit.semantifyr.semantics.verification.VerificationDispatcher
+import kotlinx.serialization.Serializable
 import java.io.File
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
 
+@Serializable
 class ThetaVerificationSpecification(
     val workingDirectory: String,
     val name: String,
     val id: Int,
     val parameter: String,
-    val timeout: Long = 3,
-    val timeUnit: TimeUnit = TimeUnit.MINUTES
+    val timeout: Duration,
 ) {
     val modelFileName = "$name.xsts"
     val cexFileName = "out.cex"
@@ -91,7 +93,6 @@ class ThetaVerificationExecutor {
             logStream,
             errorStream,
             timeout,
-            timeUnit,
         )
     }
 

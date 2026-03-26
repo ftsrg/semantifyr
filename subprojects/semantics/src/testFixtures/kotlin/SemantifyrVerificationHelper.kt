@@ -28,6 +28,9 @@ import org.junit.jupiter.params.provider.Arguments
 import org.slf4j.Logger
 import java.util.concurrent.TimeUnit
 import kotlin.streams.asSequence
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 /**
  * Helper class to be instantiated from a Global injector such as StandaloneOxstsSemanticsRuntimeModule#injector
@@ -149,23 +152,21 @@ abstract class BaseSemantifyrVerificationTest<T : OxstsVerifier> {
 
     fun executeVerificationCase(
         classDeclaration: ClassDeclaration,
-        timeout: Long = 30L,
-        timeUnit: TimeUnit = TimeUnit.MINUTES
+        timeout: Duration = 30.toDuration(DurationUnit.MINUTES)
     ): VerificationCaseRunResult {
         logger.info {
             "Verifying class: ${oxstsQualifiedNameProvider.getFullyQualifiedNameString(classDeclaration)}"
         }
 
-        return oxstsVerifierProvider.get().verify(loggerContext, classDeclaration, timeout, timeUnit)
+        return oxstsVerifierProvider.get().verify(loggerContext, classDeclaration, timeout)
     }
 
     fun checkVerificationCase(
         verificationCase: ClassDeclaration,
-        timeout: Long = 30L,
-        timeUnit: TimeUnit = TimeUnit.MINUTES
+        timeout: Duration = 30.toDuration(DurationUnit.MINUTES)
     ) {
         compilationScopeHelper.runInCompilationScope(verificationCase) {
-            val result = executeVerificationCase(it, timeout, timeUnit)
+            val result = executeVerificationCase(it, timeout)
 
             Assertions.assertEquals(VerificationResult.Passed, result.result)
         }

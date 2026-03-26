@@ -7,6 +7,8 @@
 package hu.bme.mit.semantifyr.backends.theta.verification.execution
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backends.theta.verification.ThetaArtifactManager
+import hu.bme.mit.semantifyr.backends.theta.verification.VerificationPortfolioResult
 import hu.bme.mit.semantifyr.backends.theta.verification.utils.awaitFirstSuccess
 import hu.bme.mit.semantifyr.semantics.transformation.ProgressContext
 import kotlinx.coroutines.CoroutineScope
@@ -23,6 +25,7 @@ import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.absolute
+import kotlin.time.Duration
 
 class ThetaPortfolioRunner {
 
@@ -39,15 +42,17 @@ class ThetaPortfolioRunner {
     @Inject
     private lateinit var thetaVerificationExecutor: ThetaVerificationExecutor
 
+    @Inject
+    private lateinit var thetaArtifactManager: ThetaArtifactManager
+
     private suspend fun runWorkflow(
         workingDirectory: String,
         name: String,
-        timeout: Long,
-        timeUnit: TimeUnit
+        timeout: Duration
     ) = supervisorScope {
         val jobs = parameters.indices.map { index ->
             async {
-                val thetaVerificationSpecification = ThetaVerificationSpecification(workingDirectory, name, index, parameters[index], timeout, timeUnit)
+                val thetaVerificationSpecification = ThetaVerificationSpecification(workingDirectory, name, index, parameters[index], timeout)
                 thetaVerificationExecutor.execute(thetaVerificationSpecification)
             }
         }
@@ -122,16 +127,22 @@ class ThetaPortfolioRunner {
         workingDirectory: String,
         name: String,
         progressContext: ProgressContext,
-        timeout: Long,
-        timeUnit: TimeUnit,
+        timeout: Duration
     ) = runBlocking {
         val absoluteDirectory = Path.of(workingDirectory).absolute().toString()
 
         val cancellationChecker = startCancellationChecker(progressContext)
 
-        val result = runWorkflow(absoluteDirectory, name, timeout, timeUnit)
+        val result = runWorkflow(absoluteDirectory, name, timeout)
 
         cancellationChecker.cancel()
+
+        thetaArtifactManager.serialize(
+            VerificationPortfolioResult(
+                result.runtimeDetails,
+                parameters
+            )
+        )
 
         result
     }
