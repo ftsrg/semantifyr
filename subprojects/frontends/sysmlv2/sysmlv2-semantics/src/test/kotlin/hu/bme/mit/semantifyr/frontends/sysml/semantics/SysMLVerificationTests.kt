@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import java.util.concurrent.TimeUnit
 import java.util.stream.Stream
 import kotlin.io.path.Path
 import kotlin.streams.asStream
@@ -82,25 +81,22 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
         }
 
         @JvmStatic
-        fun `Spacecraft Model Verification Cases Should Pass`(): Stream<Arguments> {
-            val model = loadModel("TestModels/spacecraft.sysml")
+        fun `Compressed Spacecraft Model Verification Cases Should Pass`(): Stream<Arguments> {
+            val model = loadModel("TestModels/compressedspacecraft.sysml")
 
             return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
         }
 
         @JvmStatic
-        fun `Slow Spacecraft Model Verification Cases Should Pass`(): Stream<Arguments> {
+        fun `Full Spacecraft Model Verification Cases Should Pass`(): Stream<Arguments> {
             val model = loadModel("TestModels/spacecraft.sysml")
 
-            return semantifyrVerificationHelper.collectSlowVerificationCases(model).asStream()
+            return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
         }
 
     }
 
     override val logger by loggerFactory()
-
-    @Inject
-    lateinit var semantifyrLoader: SemantifyrLoader
 
     @Inject
     override lateinit var oxstsVerifierProvider: Provider<ThetaVerifier>
@@ -132,16 +128,15 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
 
     @ParameterizedTest
     @MethodSource
-    fun `Spacecraft Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
+    fun `Compressed Spacecraft Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
         checkVerificationCase(verificationCase)
     }
 
-    @Disabled("The frontend does not add the @Tag('slow') yet")
     @Tag("slow")
     @ParameterizedTest
     @MethodSource
-    fun `Slow Spacecraft Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
-        checkVerificationCase(verificationCase, 60, TimeUnit.MINUTES)
+    fun `Full Spacecraft Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
+        checkVerificationCase(verificationCase)
     }
 
 }

@@ -28,7 +28,7 @@ part def GroundStation {
                 first Waiting
                 accept Data via dataPort
                 if receivedData < 100
-                do assign receivedData := receivedData + 1
+                do assign receivedData := receivedData + 10
                 then Waiting;
         }
 
@@ -69,7 +69,7 @@ part def Spacecraft {
                         accept after 4 [s] 
                         if not (data <= 0 or batteryCharge <= 40) 
                         do action {
-                            assign data := data - 1;
+                            assign data := data - 10;
                             send Data() via dataPort;
                         }
                         then Sending;
@@ -83,7 +83,7 @@ part def Spacecraft {
                         first Consuming 
                         accept after 2 [s] 
                         if not (batteryCharge <= 40) 
-                        do assign batteryCharge := batteryCharge - 1
+                        do assign batteryCharge := batteryCharge - 10
                         then Consuming;
                 }
             }
@@ -122,7 +122,7 @@ part def Spacecraft {
                 first Recharging 
                 accept after 3 [s]
                 if batteryCharge < 100
-                do assign batteryCharge := batteryCharge + 1
+                do assign batteryCharge := batteryCharge + 10 
                 then Recharging;
 
             transition 
