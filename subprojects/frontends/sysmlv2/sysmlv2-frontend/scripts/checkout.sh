@@ -23,4 +23,4 @@ git remote add origin "$REMOTE_URL" 2> /dev/null || true
 echo "Fetch latest"
 git fetch
 echo "Checkout commit"
-git checkout "$COMMIT"
+git reset "$COMMIT" --hard
