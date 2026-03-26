@@ -36,8 +36,7 @@ class InlinedOxstsModelCreator {
 
     fun createInlinedOxsts(classDeclaration: ClassDeclaration): InlinedOxsts {
         val resourceSet = classDeclaration.eResource().resourceSet
-        val path = artifactManager.resolve("inlined.oxsts").path
-        val uri = URI.createURI(path)
+        val uri = artifactManager.resolveUri("inlined.oxsts")
 
         val inlinedOxsts = OxstsFactory.createInlinedOxsts()
         inlinedOxsts.classDeclaration = classDeclaration
