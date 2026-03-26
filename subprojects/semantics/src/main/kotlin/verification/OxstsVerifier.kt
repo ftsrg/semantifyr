@@ -17,7 +17,6 @@ import hu.bme.mit.semantifyr.semantics.transformation.backannotation.OxstsClassA
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.ArtifactManager
 import hu.bme.mit.semantifyr.semantics.transformation.tracer.TraceSerializer
 import kotlinx.serialization.Serializable
-import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 import kotlin.time.toKotlinDuration
 

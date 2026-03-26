@@ -22,46 +22,46 @@ import static org.eclipse.xtext.EcoreUtil2.eAllContentsAsList;
 import static org.eclipse.xtext.EcoreUtil2.typeSelect;
 
 public class IdentifierValueConverter implements IValueConverter<String> {
-	private final Set<String> keywords;
+    private final Set<String> keywords;
 
     @Inject
-	private QUOTED_IDValueConverter quotedIdValueConverter;
+    private QUOTED_IDValueConverter quotedIdValueConverter;
 
-	@Inject
-	public IdentifierValueConverter(OxstsGrammarAccess grammarAccess, QUOTED_IDValueConverter quotedIdValueConverter) {
-		this.quotedIdValueConverter = quotedIdValueConverter;
-		quotedIdValueConverter.setRule(grammarAccess.getQUOTED_IDRule());
+    @Inject
+    public IdentifierValueConverter(OxstsGrammarAccess grammarAccess, QUOTED_IDValueConverter quotedIdValueConverter) {
+        this.quotedIdValueConverter = quotedIdValueConverter;
+        quotedIdValueConverter.setRule(grammarAccess.getQUOTED_IDRule());
 
-		keywords = new LinkedHashSet<>(GrammarUtil.getAllKeywords(grammarAccess.getGrammar()));
+        keywords = new LinkedHashSet<>(GrammarUtil.getAllKeywords(grammarAccess.getGrammar()));
         List<Keyword> list = typeSelect(eAllContentsAsList(grammarAccess.getKEYWORDRule()), Keyword.class);
         for (Keyword keyword : list) {
             keywords.remove(keyword.getValue());
         }
 
-	}
+    }
 
-	@Override
-	public String toValue(String string, INode node) throws ValueConverterException {
-		if (string == null) {
-			return null;
-		}
-		if (NamingUtil.isQuotedId(string)) {
-			return quotedIdValueConverter.toValue(string, node);
-		}
-		return string;
-	}
+    @Override
+    public String toValue(String string, INode node) throws ValueConverterException {
+        if (string == null) {
+            return null;
+        }
+        if (NamingUtil.isQuotedId(string)) {
+            return quotedIdValueConverter.toValue(string, node);
+        }
+        return string;
+    }
 
-	@Override
-	public String toString(String value) throws ValueConverterException {
-		if (value == null) {
-			throw new ValueConverterException("Identifier may not be null.", null, null);
-		}
-		if (NamingUtil.isSimpleId(value) && !keywords.contains(value)) {
-			return value;
-		}
+    @Override
+    public String toString(String value) throws ValueConverterException {
+        if (value == null) {
+            throw new ValueConverterException("Identifier may not be null.", null, null);
+        }
+        if (NamingUtil.isSimpleId(value) && !keywords.contains(value)) {
+            return value;
+        }
         if (NamingUtil.isQuotedId(value)) {
             return value;
         }
-		return quotedIdValueConverter.toString(value);
-	}
+        return quotedIdValueConverter.toString(value);
+    }
 }

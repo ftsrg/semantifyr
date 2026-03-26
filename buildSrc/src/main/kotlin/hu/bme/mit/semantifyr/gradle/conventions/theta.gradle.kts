@@ -25,6 +25,7 @@ dependencies {
  * Simple Build service that acts as a lock or throttling device preventing parallel execution
  */
 abstract class VerificationTestService : BuildService<BuildServiceParameters.None>
+
 val verificationTestServiceName = "verificationTestService"
 val verificationTestServiceProvider = gradle.sharedServices.registerIfAbsent(verificationTestServiceName, VerificationTestService::class) {
     // only allow at most 1 verification task per Gradle build

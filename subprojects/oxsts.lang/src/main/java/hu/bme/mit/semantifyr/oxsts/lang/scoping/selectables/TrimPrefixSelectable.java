@@ -41,8 +41,8 @@ public class TrimPrefixSelectable implements ISelectable {
     public Iterable<IEObjectDescription> getExportedObjects(EClass type, QualifiedName name, boolean ignoreCase) {
         var originalName = prefix.append(name);
         return Iterables.transform(
-            delegateSelectable.getExportedObjects(type, originalName, ignoreCase),
-            description -> new AliasedEObjectDescription(description.getName().skipFirst(prefix.getSegmentCount()), description)
+                delegateSelectable.getExportedObjects(type, originalName, ignoreCase),
+                description -> new AliasedEObjectDescription(description.getName().skipFirst(prefix.getSegmentCount()), description)
         );
     }
 

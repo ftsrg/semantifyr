@@ -22,8 +22,6 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import java.nio.file.Path
-import java.util.concurrent.TimeUnit
 import java.util.stream.Stream
 import kotlin.io.path.Path
 import kotlin.streams.asStream
@@ -33,8 +31,6 @@ import kotlin.time.toDuration
 @Tag("verification")
 @InjectWithOxstsSemantics
 class GammaVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
-
-
 
     companion object {
 

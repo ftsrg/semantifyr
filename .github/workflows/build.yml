@@ -23,30 +23,18 @@ jobs:
           - macos-latest
     runs-on: ${{ matrix.os }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-    - name: Set up JDK
-      uses: actions/setup-java@v5
-      with:
-        java-version: 25
-        distribution: adopt
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v5
-    - name: Gradle build
-      shell: bash
-      run: ./gradlew build
-    - name: Bundle Extension
-      shell: bash
-      run: ./gradlew :semantifyr-vscode:bundleExtension
-    - name: Upload Artifacts
-      if: ${{ matrix.os == 'ubuntu-latest' }}
-      uses: actions/upload-artifact@v7
-      with:
-        path: |
-          **/build/vscode/
-          **/build/distributions/
-          **/build/reports/
-          **/build/test-results/
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: 25
+          distribution: adopt
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+      - name: Gradle build
+        shell: bash
+        run: ./gradlew build
 
   reuse-check:
     name: REUSE Compliance Check

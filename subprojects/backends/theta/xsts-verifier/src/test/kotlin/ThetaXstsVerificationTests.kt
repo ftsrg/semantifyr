@@ -13,10 +13,8 @@ import hu.bme.mit.semantifyr.semantics.BaseSemantifyrVerificationTest
 import hu.bme.mit.semantifyr.semantics.InjectWithOxstsSemantics
 import hu.bme.mit.semantifyr.semantics.SemantifyrVerificationHelper
 import hu.bme.mit.semantifyr.semantics.StandaloneOxstsSemanticsRuntimeModule
-import hu.bme.mit.semantifyr.semantics.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.semantics.utils.loggerFactory
 import org.junit.jupiter.api.Tag
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource

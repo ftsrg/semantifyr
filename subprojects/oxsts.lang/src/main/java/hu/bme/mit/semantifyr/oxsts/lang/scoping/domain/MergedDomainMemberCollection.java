@@ -20,6 +20,6 @@ public class MergedDomainMemberCollection extends DomainMemberCollection {
 
     @Override
     public String toString() {
-        return "MERGED#" ;
+        return "MERGED#";
     }
 }

@@ -22,7 +22,7 @@ class CexAssumptionWitnessStateVariableValue(
 private fun ExplVariableValue.toCexVariable(): CexAssumptionWitnessStateVariableValue {
     return CexAssumptionWitnessStateVariableValue(
         variable,
-        value
+        value,
     )
 }
 
@@ -37,7 +37,7 @@ private fun XstsState.toCexState(): CexAssumptionWitnessState {
     require(state is ExplStateValue)
 
     return CexAssumptionWitnessState(
-        state.variableValues.map { it.toCexVariable() }
+        state.variableValues.map { it.toCexVariable() },
     )
 }
 
@@ -46,7 +46,7 @@ class CexAssumptionWitness(
     override val initializedState: CexAssumptionWitnessState?,
     override val transitionStates: List<CexAssumptionWitnessState>,
     override val nextStateMap: Map<CexAssumptionWitnessState, List<CexAssumptionWitnessState>>,
-): AssumptionWitness<CexAssumptionWitnessState>()
+) : AssumptionWitness<CexAssumptionWitnessState>()
 
 private val XstsState.isTran
     get() = isPostInit && isLastInternal
@@ -91,7 +91,7 @@ class CexAssumptionWitnessTransformer {
             initialCexState,
             initializedCexState,
             cexStates,
-            nextStateMap
+            nextStateMap,
         )
     }
 

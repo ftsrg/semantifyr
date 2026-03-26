@@ -52,8 +52,8 @@ viatra-query-runtime = { group = "org.eclipse.viatra", name = "viatra-query-runt
 viatra-transformation-runtime = { group = "org.eclipse.viatra", name = "viatra-transformation-runtime", version.ref = "viatra" }
 guice = { group = "com.google.inject", name = "guice", version.ref = "guice" }
 guice-extensions-assistedinject = { group = "com.google.inject.extensions", name = "guice-assistedinject", version.ref = "guice" }
-docker-java-core = { group = "com.github.docker-java" , name = "docker-java-core", version.ref = "dockerJava" }
-docker-java-transport = { group = "com.github.docker-java" , name = "docker-java-transport-httpclient5", version.ref = "dockerJava" }
+docker-java-core = { group = "com.github.docker-java", name = "docker-java-core", version.ref = "dockerJava" }
+docker-java-transport = { group = "com.github.docker-java", name = "docker-java-transport-httpclient5", version.ref = "dockerJava" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

@@ -11,6 +11,6 @@
 **Project leader** Vince, Molnár <molnar.vince@vik.bme.hu>
 
 Contributors (in alphabetical order):
- 
- - Ármin, Zavada <zavadaarmin@edu.bme.hu>
- - Marussy, Kristóf <marussy@mit.bme.hu>
+
+- Ármin, Zavada <zavadaarmin@edu.bme.hu>
+- Marussy, Kristóf <marussy@mit.bme.hu>

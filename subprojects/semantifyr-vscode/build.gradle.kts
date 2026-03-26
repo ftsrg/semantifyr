@@ -18,6 +18,7 @@ node {
 }
 
 abstract class NpmService : BuildService<BuildServiceParameters.None>
+
 val npmService = gradle.sharedServices.registerIfAbsent("npmService", NpmService::class.java) {
     maxParallelUsages.set(1)
 }
@@ -52,9 +53,11 @@ dependencies {
 val cloneDistribution by tasks.registering(Sync::class) {
     inputs.files(distributionClasspath)
 
-    from (distributionClasspath.map {
-        fileTree(it)
-    })
+    from(
+        distributionClasspath.map {
+            fileTree(it)
+        },
+    )
 
     into("bin")
 }
@@ -71,7 +74,7 @@ val buildExtension by tasks.registering(NpmTask::class) {
         listOf(
             "run",
             "build",
-        )
+        ),
     )
 
     outputs.dir("dist")
@@ -92,7 +95,7 @@ val bundleExtension by tasks.registering(NpmTask::class) {
         listOf(
             "run",
             "bundle",
-        )
+        ),
     )
 
     outputs.file(project.layout.buildDirectory.file("semantifyr-0.0.1.vsix"))

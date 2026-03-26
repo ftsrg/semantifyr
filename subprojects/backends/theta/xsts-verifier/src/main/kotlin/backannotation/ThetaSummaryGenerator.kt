@@ -84,7 +84,7 @@ class ThetaSummaryGenerator {
             "--model", "inlined.xsts",
             "--flatten-depth", "0",
             "--stacktrace",
-            "--trace-dir", "traces"
+            "--trace-dir", "traces",
         )
 
         val logStream = workingDirectory.resolve("tracing/log.out").ensureExistsOutputStream()
@@ -95,7 +95,7 @@ class ThetaSummaryGenerator {
             command,
             logStream,
             errorStream,
-            10.toDuration(DurationUnit.MINUTES)
+            10.toDuration(DurationUnit.MINUTES),
         )
 
         val result = verificationDispatcher.runBlocking {

@@ -9,7 +9,7 @@ package hu.bme.mit.semantifyr.cex.lang;
  */
 public class CexStandaloneSetup extends CexStandaloneSetupGenerated {
 
-	public static void doSetup() {
-		new CexStandaloneSetup().createInjectorAndDoEMFRegistration();
-	}
+    public static void doSetup() {
+        new CexStandaloneSetup().createInjectorAndDoEMFRegistration();
+    }
 }

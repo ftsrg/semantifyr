@@ -28,11 +28,11 @@ class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
 
     override fun doOptimizationStep(element: Element): Boolean {
         return removeConstantTrueAssumptions(element)
-            || removeRedundantEmptyChoiceBranches(element)
-            || removeEmptyForOperations(element)
-            || removeEmptyIfElseBranches(element)
-            || removeEmptyIfBodyBranches(element)
-            || rewriteConstantGuardIfOperations(element)
+                || removeRedundantEmptyChoiceBranches(element)
+                || removeEmptyForOperations(element)
+                || removeEmptyIfElseBranches(element)
+                || removeEmptyIfBodyBranches(element)
+                || rewriteConstantGuardIfOperations(element)
     }
 
     private fun removeConstantTrueAssumptions(element: Element): Boolean {

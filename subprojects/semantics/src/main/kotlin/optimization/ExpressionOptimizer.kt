@@ -43,13 +43,13 @@ class ExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
 
     override fun doOptimizationStep(element: Element): Boolean {
         return rewriteConstantTrueOr(element)
-            || rewriteConstantFalseAnd(element)
-            || rewriteRedundantOr(element)
-            || rewriteRedundantAnd(element)
-            || rewriteDuplicateNegation(element)
-            || rewriteConstantExpression(element)
-            || bubbleEF(element)
-            || bubbleAG(element)
+                || rewriteConstantFalseAnd(element)
+                || rewriteRedundantOr(element)
+                || rewriteRedundantAnd(element)
+                || rewriteDuplicateNegation(element)
+                || rewriteConstantExpression(element)
+                || bubbleEF(element)
+                || bubbleAG(element)
     }
 
     // FIXME: replace with constant evaluator!

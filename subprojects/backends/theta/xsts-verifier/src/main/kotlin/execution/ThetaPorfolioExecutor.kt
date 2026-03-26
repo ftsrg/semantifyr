@@ -22,7 +22,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
-import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.absolute
 import kotlin.time.Duration
@@ -140,8 +139,8 @@ class ThetaPortfolioRunner {
         thetaArtifactManager.serialize(
             VerificationPortfolioResult(
                 result.runtimeDetails,
-                parameters
-            )
+                parameters,
+            ),
         )
 
         result

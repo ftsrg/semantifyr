@@ -10,7 +10,10 @@ import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.serializer.ExpressionSerializer;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement;
 import org.eclipse.emf.ecore.EObject;
 
 import java.util.ArrayList;

@@ -5,8 +5,8 @@ package hu.bme.mit.semantifyr.xsts.lang.validation;
 
 
 /**
- * This class contains custom validation rules. 
- *
+ * This class contains custom validation rules.
+ * <p>
  * See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#validation
  */
 public class XstsValidator extends AbstractXstsValidator {

@@ -83,10 +83,10 @@ class TraceSerializer {
                         expressionEvaluationSerializer.serialize(it.evaluation)
                     } else {
                         ""
-                    }
+                    },
                 )
             },
-            null // TODO: implement structural tracing -> call stack
+            null, // TODO: implement structural tracing -> call stack
         )
     }
 
@@ -104,7 +104,7 @@ class TraceSerializer {
             },
             state.values.map {
                 transformInlinedOxstsAssumptionWitnessStateValue(it)
-            }
+            },
         )
     }
 
@@ -113,7 +113,7 @@ class TraceSerializer {
             transformInlinedOxstsAssumptionWitnessState(inlinxOxstsAssumptionWitness.initialState),
             inlinxOxstsAssumptionWitness.transitionStates.map {
                 transformInlinedOxstsAssumptionWitnessState(it)
-            }
+            },
         )
     }
 

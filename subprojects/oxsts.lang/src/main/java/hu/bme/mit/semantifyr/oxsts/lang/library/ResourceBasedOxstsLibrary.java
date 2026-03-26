@@ -43,6 +43,7 @@ public abstract class ResourceBasedOxstsLibrary extends PathBasedOxstsLibrary {
     }
 
     protected abstract void saveResources();
+
     protected abstract ClassLoader getClassLoader();
 
     protected void saveResource(String resourceKey, Path subPath) {

@@ -10,12 +10,13 @@ import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.jobs.AbstractJob;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.jobs.ReadJob;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.jobs.WriteJob;
-import org.eclipse.xtext.ide.server.concurrent.*;
+import org.eclipse.xtext.ide.server.concurrent.AbstractRequestManager;
 import org.eclipse.xtext.service.OperationCanceledManager;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.eclipse.xtext.xbase.lib.Functions;
 
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;

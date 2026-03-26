@@ -8,7 +8,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.ide.server.commands.IExecutableCommandService;
 import org.eclipse.xtext.util.CancelIndicator;

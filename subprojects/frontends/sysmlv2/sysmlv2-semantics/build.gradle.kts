@@ -29,8 +29,8 @@ dependencies {
 }
 
 val prepareCli by tasks.registering(Sync::class) {
-    from (cliClasspath)
-    into ("build/cli")
+    from(cliClasspath)
+    into("build/cli")
 }
 
 tasks.withType(Test::class) {

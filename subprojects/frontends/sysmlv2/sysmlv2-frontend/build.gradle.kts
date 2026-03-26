@@ -24,6 +24,7 @@ node {
 }
 
 abstract class PnpmService : BuildService<BuildServiceParameters.None>
+
 val pnpmService = gradle.sharedServices.registerIfAbsent("pnpmService", PnpmService::class.java) {
     maxParallelUsages.set(1)
 }
@@ -79,25 +80,29 @@ val buildExtension by tasks.registering(PnpmTask::class) {
     inputs.file(sysmlDir.file("tsconfig.json"))
     inputs.file(sysmlDir.file("tsconfig.build.json"))
     inputs.file(sysmlDir.file("tsconfig.eslint.json"))
-    inputs.files(fileTree(sysmlDir.dir("packages")) {
-        include("**/src/**/*.ts")
-        include("**/tsconfig.json")
-        include("**/package.json")
-        include("**/package-lock.json")
-        include("**/scripts/*.*")
-        include("**/scripts/*.*")
-    })
-    outputs.files(fileTree(sysmlDir.dir("packages")) {
-        exclude("**/node_modules/**")
-        include("**/lib/**")
-        include("**/dist/**")
-    })
+    inputs.files(
+        fileTree(sysmlDir.dir("packages")) {
+            include("**/src/**/*.ts")
+            include("**/tsconfig.json")
+            include("**/package.json")
+            include("**/package-lock.json")
+            include("**/scripts/*.*")
+            include("**/scripts/*.*")
+        },
+    )
+    outputs.files(
+        fileTree(sysmlDir.dir("packages")) {
+            exclude("**/node_modules/**")
+            include("**/lib/**")
+            include("**/dist/**")
+        },
+    )
 
     pnpmCommand.set(
         listOf(
             "run",
             "build",
-        )
+        ),
     )
 }
 
@@ -107,21 +112,23 @@ val bundleExtension by tasks.registering(PnpmTask::class) {
     inputs.file(sysmlDir.file("tsconfig.json"))
     inputs.file(sysmlDir.file("tsconfig.build.json"))
     inputs.file(sysmlDir.file("tsconfig.eslint.json"))
-    inputs.files(fileTree(sysmlDir.dir("packages")) {
-        include("**/src/**/*.ts")
-        include("**/tsconfig.json")
-        include("**/package.json")
-        include("**/package-lock.json")
-        include("**/scripts/*.*")
-        include("**/scripts/*.*")
-    })
+    inputs.files(
+        fileTree(sysmlDir.dir("packages")) {
+            include("**/src/**/*.ts")
+            include("**/tsconfig.json")
+            include("**/package.json")
+            include("**/package-lock.json")
+            include("**/scripts/*.*")
+            include("**/scripts/*.*")
+        },
+    )
     outputs.file(sysmlDir.file("packages/syside-vscode/sysml-2ls-0.9.0.vsix"))
 
     pnpmCommand.set(
         listOf(
             "run",
             "vscode:package",
-        )
+        ),
     )
 }
 
@@ -131,14 +138,16 @@ val buildCli by tasks.registering(PnpmTask::class) {
     inputs.file(sysmlDir.file("tsconfig.json"))
     inputs.file(sysmlDir.file("tsconfig.build.json"))
     inputs.file(sysmlDir.file("tsconfig.eslint.json"))
-    inputs.files(fileTree(sysmlDir.dir("packages")) {
-        include("**/src/**/*.ts")
-        include("**/tsconfig.json")
-        include("**/package.json")
-        include("**/package-lock.json")
-        include("**/scripts/*.*")
-        include("**/scripts/*.*")
-    })
+    inputs.files(
+        fileTree(sysmlDir.dir("packages")) {
+            include("**/src/**/*.ts")
+            include("**/tsconfig.json")
+            include("**/package.json")
+            include("**/package-lock.json")
+            include("**/scripts/*.*")
+            include("**/scripts/*.*")
+        },
+    )
     outputs.file(sysmlDir.file("packages/syside-cli/out/index.js"))
 
     workingDir = sysmlDir.dir("packages/syside-cli")
@@ -147,7 +156,7 @@ val buildCli by tasks.registering(PnpmTask::class) {
         listOf(
             "run",
             "esbuild",
-        )
+        ),
     )
 }
 

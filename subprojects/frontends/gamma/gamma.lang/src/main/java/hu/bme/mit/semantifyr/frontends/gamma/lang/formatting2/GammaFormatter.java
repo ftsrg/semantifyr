@@ -9,5 +9,5 @@ package hu.bme.mit.semantifyr.frontends.gamma.lang.formatting2;
 import org.eclipse.xtext.formatting2.AbstractJavaFormatter;
 
 public class GammaFormatter extends AbstractJavaFormatter {
-	
+
 }

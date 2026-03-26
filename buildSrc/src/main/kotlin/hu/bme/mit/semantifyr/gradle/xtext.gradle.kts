@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.gradle
 
 import org.gradle.accessors.dm.LibrariesForLibs
-import org.gradle.kotlin.dsl.the
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.mwe2")

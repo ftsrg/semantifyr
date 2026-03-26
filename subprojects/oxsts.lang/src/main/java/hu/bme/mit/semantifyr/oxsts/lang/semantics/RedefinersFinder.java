@@ -10,10 +10,9 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.eclipse.xtext.util.Tuples;
 
 import java.util.*;
 

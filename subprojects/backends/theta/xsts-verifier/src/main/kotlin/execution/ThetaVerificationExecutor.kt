@@ -14,7 +14,6 @@ import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaXstsExecutorP
 import hu.bme.mit.semantifyr.semantics.verification.VerificationDispatcher
 import kotlinx.serialization.Serializable
 import java.io.File
-import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 
 @Serializable
@@ -42,6 +41,7 @@ sealed class ThetaVerificationResult(
 ) {
     val hasWitness = File(runtimeDetails.workingDirectory, runtimeDetails.cexPath).exists()
 }
+
 class ThetaUnknownVerificationResult(runtimeDetails: ThetaVerificationSpecification) : ThetaVerificationResult(runtimeDetails)
 class ThetaSafeVerificationResult(runtimeDetails: ThetaVerificationSpecification) : ThetaVerificationResult(runtimeDetails)
 class ThetaUnsafeVerificationResult(runtimeDetails: ThetaVerificationSpecification) : ThetaVerificationResult(runtimeDetails)

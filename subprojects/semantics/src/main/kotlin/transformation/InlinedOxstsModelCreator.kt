@@ -18,8 +18,6 @@ import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.Compilatio
 import hu.bme.mit.semantifyr.semantics.transformation.instantiation.InstanceManager
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.ArtifactManager
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
-import org.eclipse.emf.common.util.URI
-import java.io.File
 
 @CompilationScoped
 class InlinedOxstsModelCreator {

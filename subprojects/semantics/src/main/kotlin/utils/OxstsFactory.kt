@@ -60,6 +60,7 @@ object OxstsFactory : OxstsFactoryImpl() {
             it.feature = feature
         }
     }
+
     fun createVariableMapping(variableDeclaration: VariableDeclaration): VariableMapping {
         return createVariableMapping().also {
             it.original = variableDeclaration

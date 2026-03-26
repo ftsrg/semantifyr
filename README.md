@@ -16,7 +16,7 @@ Use Java 25 for building.
 
 Run `gradlew build` to assemble and test the project, including regression testing and formal verifications. The required environment (e.g., Theta binaries) is automatically constructed by Gradle. Tests should run in 10-20 minutes.
 
-To execute slow verification cases (the longest may take ~1 hour), run `gradlew testSlowVerificationCases`. 
+To execute slow verification cases (the longest may take ~1 hour), run `gradlew testSlowVerificationCases`.
 
 Or run `gradlew allTests` for all tests.
 

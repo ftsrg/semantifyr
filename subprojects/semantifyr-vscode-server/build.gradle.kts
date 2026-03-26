@@ -32,7 +32,7 @@ dependencies {
 val cloneDistribution by tasks.registering(Sync::class) {
     inputs.files(distributionClasspath)
 
-    from (distributionClasspath)
+    from(distributionClasspath)
 
     into("extensions")
 }
@@ -40,19 +40,19 @@ val cloneDistribution by tasks.registering(Sync::class) {
 val cloneTheta by tasks.registering(Sync::class) {
     inputs.files(thetaClasspath)
 
-    from (thetaClasspath)
+    from(thetaClasspath)
 
     into("theta-xsts-cli")
 }
 
 val cloneGammaLibrary by tasks.registering(Sync::class) {
-    from (project(":gamma-semantics").layout.projectDirectory.dir("Library"))
-    into ("examples/gamma/Library")
+    from(project(":gamma-semantics").layout.projectDirectory.dir("Library"))
+    into("examples/gamma/Library")
 }
 
 val cloneSysMLLibrary by tasks.registering(Sync::class) {
-    from (project(":sysmlv2-semantics").layout.projectDirectory.dir("Library"))
-    into ("examples/sysml/Library")
+    from(project(":sysmlv2-semantics").layout.projectDirectory.dir("Library"))
+    into("examples/sysml/Library")
 }
 
 val cloneLibraries by tasks.registering {
@@ -61,17 +61,17 @@ val cloneLibraries by tasks.registering {
 }
 
 val cloneGammaTestModels by tasks.registering(Sync::class) {
-    from (project(":gamma-semantics").layout.projectDirectory.dir("TestModels")) {
+    from(project(":gamma-semantics").layout.projectDirectory.dir("TestModels")) {
         include("*.gamma")
     }
-    into ("examples/gamma/TestModels")
+    into("examples/gamma/TestModels")
 }
 
 val cloneSysMLTestModels by tasks.registering(Sync::class) {
-    from (project(":sysmlv2-semantics").layout.projectDirectory.dir("TestModels")) {
+    from(project(":sysmlv2-semantics").layout.projectDirectory.dir("TestModels")) {
         include("*.sysml")
     }
-    into ("examples/sysml/TestModels")
+    into("examples/sysml/TestModels")
 }
 
 val cloneTestModels by tasks.registering {

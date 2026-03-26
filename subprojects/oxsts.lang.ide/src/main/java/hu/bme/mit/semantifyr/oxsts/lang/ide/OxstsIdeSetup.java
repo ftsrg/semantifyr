@@ -27,10 +27,10 @@ import java.util.concurrent.ExecutionException;
  */
 public class OxstsIdeSetup extends OxstsStandaloneSetup {
 
-	@Override
-	public Injector createInjector() {
-		return Guice.createInjector(Modules2.mixin(new OxstsServerModule(), new OxstsSemanticsRuntimeModule(), new OxstsIdeModule()));
-	}
+    @Override
+    public Injector createInjector() {
+        return Guice.createInjector(Modules2.mixin(new OxstsServerModule(), new OxstsSemanticsRuntimeModule(), new OxstsIdeModule()));
+    }
 
     public static void main(String[] args) throws InterruptedException, ExecutionException, IOException {
         Files.deleteIfExists(Path.of("oxsts.lsp.log"));

@@ -8,7 +8,6 @@ package hu.bme.mit.semantifyr.gradle.conventions
 
 import org.gradle.accessors.dm.LibrariesForLibs
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import org.gradle.kotlin.dsl.registering
 
 plugins {
     `java-library`

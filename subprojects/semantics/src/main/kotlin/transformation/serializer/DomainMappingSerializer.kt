@@ -55,7 +55,7 @@ class DomainMappingSerializer {
             instanceIds.map { (instance, id) ->
                 val reference = instanceReferenceProvider.getReference(instance)
                 InstanceIdMapping(
-                    expressionSerializer.serialize(reference), id
+                    expressionSerializer.serialize(reference), id,
                 )
             },
         )

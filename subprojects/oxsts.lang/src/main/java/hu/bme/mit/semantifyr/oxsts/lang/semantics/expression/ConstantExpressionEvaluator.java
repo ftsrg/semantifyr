@@ -47,7 +47,7 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
             return switch (expression.getOp()) {
                 case EQ -> new BooleanEvaluation(lValue == rValue);
                 case NOT_EQ -> new BooleanEvaluation(lValue != rValue);
-                default -> throw  new IllegalArgumentException("Boolean expression can only be == or !=!");
+                default -> throw new IllegalArgumentException("Boolean expression can only be == or !=!");
             };
         }
 
@@ -55,7 +55,7 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
             return switch (expression.getOp()) {
                 case EQ -> new BooleanEvaluation(lValue == rValue);
                 case NOT_EQ -> new BooleanEvaluation(lValue != rValue);
-                default -> throw  new IllegalArgumentException("Boolean expression can only be == or !=!");
+                default -> throw new IllegalArgumentException("Boolean expression can only be == or !=!");
             };
         }
 

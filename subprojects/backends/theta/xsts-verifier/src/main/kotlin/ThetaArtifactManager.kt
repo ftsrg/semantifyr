@@ -11,11 +11,11 @@ import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaVerifica
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.ArtifactManager
 import hu.bme.mit.semantifyr.semantics.verification.VerificationCaseRunResult
-import org.eclipse.emf.common.util.URI
-import java.io.File
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
+import org.eclipse.emf.common.util.URI
+import java.io.File
 import kotlin.time.Duration
 import kotlin.time.Instant
 

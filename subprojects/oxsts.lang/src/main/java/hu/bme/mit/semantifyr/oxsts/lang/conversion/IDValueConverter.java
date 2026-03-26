@@ -12,14 +12,14 @@ import java.util.Set;
 
 public class IDValueConverter extends AbstractIDValueConverter {
 
-	@Override
-	protected Set<String> computeValuesToEscape(Grammar grammar) {
-		return Set.of();
-	}
+    @Override
+    protected Set<String> computeValuesToEscape(Grammar grammar) {
+        return Set.of();
+    }
 
-	@Override
-	protected boolean mustEscape(String value) {
-		return false;
-	}
+    @Override
+    protected boolean mustEscape(String value) {
+        return false;
+    }
 
 }

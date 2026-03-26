@@ -6,7 +6,10 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.resource;
 
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
 import org.apache.log4j.Logger;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.xtext.resource.IDefaultResourceDescriptionStrategy;

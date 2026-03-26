@@ -12,7 +12,6 @@ import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.client.NavigateToParams;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.client.OxstsLanguageClient;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinersFinder;
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;

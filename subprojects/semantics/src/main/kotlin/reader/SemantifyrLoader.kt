@@ -10,7 +10,6 @@ import com.google.inject.Inject
 import com.google.inject.Provider
 import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryAdapterFinder
 import hu.bme.mit.semantifyr.oxsts.lang.utils.ResourceUriProvider
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
 import hu.bme.mit.semantifyr.semantics.utils.ResourceSetLoader
 import hu.bme.mit.semantifyr.semantics.utils.SemantifyrUtils.modelPathsUnder

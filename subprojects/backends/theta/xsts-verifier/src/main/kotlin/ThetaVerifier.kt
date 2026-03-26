@@ -29,14 +29,11 @@ import hu.bme.mit.semantifyr.semantics.verification.VerificationCaseRunResult
 import hu.bme.mit.semantifyr.semantics.verification.VerificationResult
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 import java.io.File
-import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
-import kotlin.time.toDuration
-import kotlin.time.toDurationUnit
 
 @CompilationScoped
 open class ThetaVerifier : AbstractOxstsVerifier() {
@@ -109,7 +106,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
             startedAt,
             duration,
             result,
-            timeout
+            timeout,
         )
 
         thetaArtifactManager.serialize(verificationReport)

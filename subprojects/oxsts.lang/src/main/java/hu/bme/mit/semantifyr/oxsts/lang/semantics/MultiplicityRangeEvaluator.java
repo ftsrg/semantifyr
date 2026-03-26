@@ -12,8 +12,9 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionE
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.IntegerEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
-import org.eclipse.xtext.util.IResourceScopeCache;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DefiniteMultiplicity;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.TypeSpecification;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnboundedMultiplicity;
 import org.eclipse.xtext.util.Tuples;
 
 @Singleton

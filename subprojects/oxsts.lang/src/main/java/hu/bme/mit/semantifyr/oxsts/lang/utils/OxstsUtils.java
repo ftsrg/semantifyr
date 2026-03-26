@@ -167,7 +167,7 @@ public class OxstsUtils {
 
     public static boolean isWriteExpression(Expression expression) {
         return expression.eContainmentFeature() == OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE
-            || expression.eContainmentFeature() == OxstsPackage.Literals.HAVOC_OPERATION__REFERENCE;
+                || expression.eContainmentFeature() == OxstsPackage.Literals.HAVOC_OPERATION__REFERENCE;
     }
 
     public static boolean isCallable(Element declaration) {
@@ -180,8 +180,8 @@ public class OxstsUtils {
 
     public static boolean isDataFeature(FeatureDeclaration featureDeclaration) {
         return featureDeclaration.getTypeSpecification().getDomain() instanceof DataTypeDeclaration
-            || featureDeclaration.getTypeSpecification().getDomain() instanceof EnumDeclaration
-            || featureDeclaration.getTypeSpecification().getDomain() instanceof RecordDeclaration;
+                || featureDeclaration.getTypeSpecification().getDomain() instanceof EnumDeclaration
+                || featureDeclaration.getTypeSpecification().getDomain() instanceof RecordDeclaration;
     }
 
     public static boolean isMemberAbstract(Declaration declaration) {

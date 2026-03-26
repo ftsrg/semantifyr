@@ -14,7 +14,6 @@ import hu.bme.mit.semantifyr.semantics.transformation.inliner.OxstsCallInliner
 import hu.bme.mit.semantifyr.semantics.transformation.instantiation.OxstsInflator
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.ArtifactManager
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
-import java.io.File
 
 @CompilationScoped
 class OxstsClassInliner {
