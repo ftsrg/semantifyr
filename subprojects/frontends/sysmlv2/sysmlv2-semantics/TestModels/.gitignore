@@ -1,8 +1,2 @@
-**/*.oxsts
-**/*.xsts
-**/*.cex
-**/*.trace
-**/theta.err
-**/theta.out
-**/trace.json
-**/mapping.json
+out/
+*.oxsts

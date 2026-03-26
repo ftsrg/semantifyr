@@ -6,7 +6,7 @@
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
-    alias(libs.plugins.kotlin.jvm)
+    kotlin("jvm")
 }
 
 val thetaXstsCliVersion: String by project

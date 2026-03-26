@@ -8,14 +8,12 @@ package hu.bme.mit.semantifyr.semantics.transformation.serializer
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.serializer.ExpressionSerializer
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.semantics.expression.DeflatedExpressionEvaluationTransformer
 import hu.bme.mit.semantifyr.semantics.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
-import java.io.File
 
 @Serializable
 data class DomainIdMapping(
@@ -47,7 +45,10 @@ class DomainMappingSerializer {
     @Inject
     private lateinit var expressionSerializer: ExpressionSerializer
 
-    fun serializeMapping(inlinedOxsts: InlinedOxsts) {
+    @Inject
+    private lateinit var artifactManager: ArtifactManager
+
+    fun serializeMapping() {
         val instanceIds = deflatedEvaluationTransformer.evaluateMapping()
 
         val data = SerializableDomainMapping(
@@ -59,8 +60,7 @@ class DomainMappingSerializer {
             },
         )
 
-        val path = inlinedOxsts.eResource().uri.path().replace("inlined.oxsts", "mapping.json")
-        val file = File(path)
+        val file = artifactManager.resolve("mapping.json")
 
         val json = Json {
             prettyPrint = true

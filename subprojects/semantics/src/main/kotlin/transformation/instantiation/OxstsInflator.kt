@@ -117,7 +117,7 @@ class OxstsInflator {
 
         compilationStateManager.commitModelState()
 
-        domainMappingSerializer.serializeMapping(inlinedOxsts)
+        domainMappingSerializer.serializeMapping()
     }
 
     private fun pullDownVariables(inlinedOxsts: InlinedOxsts) {

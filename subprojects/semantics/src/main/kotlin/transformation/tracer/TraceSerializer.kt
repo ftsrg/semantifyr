@@ -14,10 +14,11 @@ import hu.bme.mit.semantifyr.semantics.transformation.backannotation.OxstsClassA
 import hu.bme.mit.semantifyr.semantics.transformation.backannotation.OxstsClassAssumptionWitness
 import hu.bme.mit.semantifyr.semantics.transformation.backannotation.OxstsClassAssumptionWitnessState
 import hu.bme.mit.semantifyr.semantics.transformation.backannotation.OxstsClassAssumptionWitnessStateValue
+import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.ArtifactManager
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
-import java.io.File
 
 @Serializable
 data class SerializableTraceArgument(
@@ -51,6 +52,7 @@ data class SerializableTraceData(
     val steps: List<SerializableTraceStep>,
 )
 
+@CompilationScoped
 class TraceSerializer {
 
     @Inject
@@ -64,6 +66,9 @@ class TraceSerializer {
 
     @Inject
     private lateinit var expressionSerializer: ExpressionSerializer
+
+    @Inject
+    private lateinit var artifactManager: ArtifactManager
 
     private fun transformInlinedOxstsAssumptionActivatedTrace(trace: OxstsClassAssumptionActivatedTrace): SerializableTrace {
         val transitionCallTrace = transitionCallTracer.getTransitionCallTrace(trace.traceOperation)
@@ -114,8 +119,7 @@ class TraceSerializer {
 
     fun serialize(inlinedOxstsAssumptionWitness: OxstsClassAssumptionWitness) {
         val data = transformWitness(inlinedOxstsAssumptionWitness)
-        val path = inlinedOxstsAssumptionWitness.inlinedOxsts.eResource().uri.path().replace("inlined.oxsts", "trace.json")
-        val file = File(path)
+        val file = artifactManager.resolve("trace.json")
 
         val json = Json {
             prettyPrint = true

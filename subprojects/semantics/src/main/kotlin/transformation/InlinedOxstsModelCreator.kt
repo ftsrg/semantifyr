@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.semantics.expression.RedefinitionAwareReferenceResolver
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.instantiation.InstanceManager
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.ArtifactManager
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import org.eclipse.emf.common.util.URI
 import java.io.File
@@ -32,15 +33,17 @@ class InlinedOxstsModelCreator {
     @Inject
     private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
 
+    @Inject
+    private lateinit var artifactManager: ArtifactManager
+
     fun createInlinedOxsts(classDeclaration: ClassDeclaration): InlinedOxsts {
         val resourceSet = classDeclaration.eResource().resourceSet
-        val path = classDeclaration.eResource().uri.toString().replace(".oxsts", "${File.separator}${classDeclaration.name}${File.separator}inlined.oxsts")
+        val path = artifactManager.resolve("inlined.oxsts").path
         val uri = URI.createURI(path)
 
         val inlinedOxsts = OxstsFactory.createInlinedOxsts()
         inlinedOxsts.classDeclaration = classDeclaration
 
-        resourceSet.getResource(uri, false)?.delete(mutableMapOf<Any, Any>())
         resourceSet.createResource(uri).contents += inlinedOxsts
 
         initializeInlinedOxstsModel(inlinedOxsts)
