@@ -19,6 +19,9 @@ public class OxstsValueConverterService extends DefaultTerminalConverters {
     @Inject
     private IdentifierValueConverter identifierValueConverter;
 
+    @Inject
+    private QualifiedIdentifierValueConverter qualifiedIdentifierValueConverter;
+
     @ValueConverter(rule = "QUOTED_ID")
     public IValueConverter<String> QUOTED_ID() {
         return quotedIdValueConverter;
@@ -27,6 +30,11 @@ public class OxstsValueConverterService extends DefaultTerminalConverters {
     @ValueConverter(rule = "Identifier")
     public IValueConverter<String> Identifier() {
         return identifierValueConverter;
+    }
+
+    @ValueConverter(rule = "QualifiedIdentifier")
+    public IValueConverter<String> QualifiedIdentifier() {
+        return qualifiedIdentifierValueConverter;
     }
 
 }
