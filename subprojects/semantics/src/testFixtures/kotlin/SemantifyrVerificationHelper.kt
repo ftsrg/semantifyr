@@ -126,21 +126,6 @@ abstract class BaseSemantifyrVerificationTest<T : OxstsVerifier> {
 
     abstract val logger: Logger
 
-    val loggerContext = object : ProgressContext {
-        override fun checkIsCancelled() {
-            // never cancelled
-        }
-
-        override fun reportProgress(message: String, percentage: Int) {
-            logger.info { "$message - $percentage%" }
-        }
-
-        override fun reportProgress(message: String) {
-            logger.info { message }
-        }
-
-    }
-
     @Inject
     lateinit var oxstsQualifiedNameProvider: OxstsQualifiedNameProvider
 
@@ -157,7 +142,7 @@ abstract class BaseSemantifyrVerificationTest<T : OxstsVerifier> {
             "Verifying class: ${oxstsQualifiedNameProvider.getFullyQualifiedNameString(classDeclaration)}"
         }
 
-        return oxstsVerifierProvider.get().verify(loggerContext, classDeclaration, timeout)
+        return oxstsVerifierProvider.get().verify(ProgressContext.NoOp, classDeclaration, timeout)
     }
 
     fun checkVerificationCase(

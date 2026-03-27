@@ -24,6 +24,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.semantics.transformation.ProgressContext
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.ArtifactManager
+import hu.bme.mit.semantifyr.semantics.utils.loggerFactory
 import hu.bme.mit.semantifyr.semantics.verification.AbstractOxstsVerifier
 import hu.bme.mit.semantifyr.semantics.verification.VerificationCaseRunResult
 import hu.bme.mit.semantifyr.semantics.verification.VerificationResult
@@ -37,6 +38,8 @@ import kotlin.time.measureTimedValue
 
 @CompilationScoped
 open class ThetaVerifier : AbstractOxstsVerifier() {
+
+    val logger by loggerFactory()
 
     @Inject
     private lateinit var oxstsTransformer: OxstsTransformer
@@ -121,21 +124,26 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
     ): VerificationCaseRunResult {
         val verificationTimeMetrics = VerificationTimeMetrics()
 
+        logger.info("Inlining class")
         progressContext.reportProgress("Inlining class")
         val (inlinedOxsts, inliningDuration) = measureTimedValue {
             inlineClass(progressContext, classDeclaration)
         }
         verificationTimeMetrics.inliningMs = inliningDuration
+        logger.info("Inlining took: $inliningDuration")
 
         progressContext.checkIsCancelled()
+        logger.info("Transforming to Xsts")
         progressContext.reportProgress("Transforming to Xsts")
         val (xstsModel, xstsDuration) = measureTimedValue {
             transformToXsts(progressContext, inlinedOxsts)
         }
         verificationTimeMetrics.xstsTransformationMs = xstsDuration
+        logger.info("Xsts transformation took: $xstsDuration")
 
         progressContext.checkIsCancelled()
-        progressContext.reportProgress("Running Theta Portfolio")
+        logger.info("Running verification")
+        progressContext.reportProgress("Running verification")
         val (result, verifyDuration) = measureTimedValue {
             try {
                 // Because of the Temporal bubbling optimizations these are the only options
@@ -144,6 +152,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
                 val result = verifyXsts(progressContext, xstsModel, timeout)
 
                 if (result.hasWitness) {
+                    logger.info("Creating witness")
                     progressContext.reportProgress("Creating witness")
                     val backAnnotationDuration = measureTime {
                         val cexPath = Path(result.runtimeDetails.workingDirectory, result.runtimeDetails.cexPath)
@@ -154,6 +163,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
                         backAnnotateWitness(inlinedOxstsWitness)
                     }
                     verificationTimeMetrics.backAnnotationMs = backAnnotationDuration
+                    logger.info("Back annotation took: $backAnnotationDuration")
                 }
 
                 when (property) {
@@ -168,12 +178,16 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
                     }
                 }
             } catch (e: Exception) {
+                logger.error("Exception during verification: ", e)
                 VerificationCaseRunResult(VerificationResult.Errored, e.message)
             }
         }
         verificationTimeMetrics.verificationMs = verifyDuration
+        logger.info("Verification took: $verifyDuration")
 
         thetaArtifactManager.serialize(verificationTimeMetrics)
+
+        logger.info("Result is ${result.result} - ${result.message ?: "No message"}")
 
         return result
     }
