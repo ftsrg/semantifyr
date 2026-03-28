@@ -49,8 +49,12 @@ class ThetaPortfolioRunner {
         name: String,
         timeout: Duration
     ) = supervisorScope {
+        logger.info("Starting verification portfolio")
+
         val jobs = parameters.indices.map { index ->
             async {
+                logger.info("Starting configuration: ($index) ${parameters[index]}")
+
                 val thetaVerificationSpecification = ThetaVerificationSpecification(workingDirectory, name, index, parameters[index], timeout)
                 thetaVerificationExecutor.execute(thetaVerificationSpecification)
             }
@@ -70,6 +74,8 @@ class ThetaPortfolioRunner {
         try {
             jobs.awaitFirstSuccess()
         } finally {
+            logger.info("Portfolio finished, cancelling remaining jobs")
+
             if (checkAllResults) {
                 checkAllModelCheckerResults(jobs)
             }
@@ -135,6 +141,8 @@ class ThetaPortfolioRunner {
         val result = runWorkflow(absoluteDirectory, name, timeout)
 
         cancellationChecker.cancel()
+
+        logger.info("Winning configuration: (${result.runtimeDetails.id}) ${result.runtimeDetails.parameter}")
 
         thetaArtifactManager.serialize(
             VerificationPortfolioResult(
