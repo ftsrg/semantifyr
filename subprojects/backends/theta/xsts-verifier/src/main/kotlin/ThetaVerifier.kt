@@ -141,49 +141,49 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
         verificationTimeMetrics.xstsTransformationMs = xstsDuration
         logger.info("Xsts transformation took: $xstsDuration")
 
-        progressContext.checkIsCancelled()
-        logger.info("Running verification")
-        progressContext.reportProgress("Running verification")
-        val (result, verifyDuration) = measureTimedValue {
-            try {
-                // Because of the Temporal bubbling optimizations these are the only options
-                val property = inlinedOxsts.property.expression
+        val result = try {
+            // Because of the Temporal bubbling optimizations these are the only options
+            val property = inlinedOxsts.property.expression
 
-                val result = verifyXsts(progressContext, xstsModel, timeout)
-
-                if (result.hasWitness) {
-                    logger.info("Creating witness")
-                    progressContext.reportProgress("Creating witness")
-                    val backAnnotationDuration = measureTime {
-                        val cexPath = Path(result.runtimeDetails.workingDirectory, result.runtimeDetails.cexPath)
-                        val cexModel = cexReader.loadCexModel(cexPath)
-                        val cexWitness = cexAssumptionWitnessTransformer.transform(cexModel)
-                        val xstsWitness = xstsAssumptionWitnessTransformer.transform(xstsModel, cexWitness)
-                        val inlinedOxstsWitness = inlinedOxstsAssumptionWitnessTransformer.transform(inlinedOxsts, xstsWitness)
-                        backAnnotateWitness(inlinedOxstsWitness)
-                    }
-                    verificationTimeMetrics.backAnnotationMs = backAnnotationDuration
-                    logger.info("Back annotation took: $backAnnotationDuration")
-                }
-
-                when (property) {
-                    is AG if result is ThetaUnsafeVerificationResult -> {
-                        VerificationCaseRunResult(VerificationResult.Failed, "Expected Safe result, got Unsafe instead!")
-                    }
-                    is EF if result is ThetaSafeVerificationResult -> {
-                        VerificationCaseRunResult(VerificationResult.Failed, "Expected Unsafe result, got Safe instead!")
-                    }
-                    else -> {
-                        VerificationCaseRunResult(VerificationResult.Passed)
-                    }
-                }
-            } catch (e: Exception) {
-                logger.error("Exception during verification: ", e)
-                VerificationCaseRunResult(VerificationResult.Errored, e.message)
+            progressContext.checkIsCancelled()
+            logger.info("Running verification")
+            progressContext.reportProgress("Running verification")
+            val (result, verifyDuration) = measureTimedValue {
+                verifyXsts(progressContext, xstsModel, timeout)
             }
+            verificationTimeMetrics.verificationMs = verifyDuration
+            logger.info("Verification took: $verifyDuration")
+
+            if (result.hasWitness) {
+                logger.info("Creating witness")
+                progressContext.reportProgress("Creating witness")
+                val backAnnotationDuration = measureTime {
+                    val cexPath = Path(result.runtimeDetails.workingDirectory, result.runtimeDetails.cexPath)
+                    val cexModel = cexReader.loadCexModel(cexPath)
+                    val cexWitness = cexAssumptionWitnessTransformer.transform(cexModel)
+                    val xstsWitness = xstsAssumptionWitnessTransformer.transform(xstsModel, cexWitness)
+                    val inlinedOxstsWitness = inlinedOxstsAssumptionWitnessTransformer.transform(inlinedOxsts, xstsWitness)
+                    backAnnotateWitness(inlinedOxstsWitness)
+                }
+                verificationTimeMetrics.backAnnotationMs = backAnnotationDuration
+                logger.info("Back annotation took: $backAnnotationDuration")
+            }
+
+            when (property) {
+                is AG if result is ThetaUnsafeVerificationResult -> {
+                    VerificationCaseRunResult(VerificationResult.Failed, "Expected Safe result, got Unsafe instead!")
+                }
+                is EF if result is ThetaSafeVerificationResult -> {
+                    VerificationCaseRunResult(VerificationResult.Failed, "Expected Unsafe result, got Safe instead!")
+                }
+                else -> {
+                    VerificationCaseRunResult(VerificationResult.Passed)
+                }
+            }
+        } catch (e: Exception) {
+            logger.error("Exception during verification: ", e)
+            VerificationCaseRunResult(VerificationResult.Errored, e.message)
         }
-        verificationTimeMetrics.verificationMs = verifyDuration
-        logger.info("Verification took: $verifyDuration")
 
         thetaArtifactManager.serialize(verificationTimeMetrics)
 
