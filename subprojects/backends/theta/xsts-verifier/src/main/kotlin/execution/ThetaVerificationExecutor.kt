@@ -17,7 +17,7 @@ import java.io.File
 import kotlin.time.Duration
 
 @Serializable
-class ThetaVerificationSpecification(
+data class ThetaVerificationSpecification(
     val workingDirectory: String,
     val name: String,
     val id: Int,

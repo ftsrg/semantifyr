@@ -55,8 +55,16 @@ class ThetaPortfolioRunner {
             async {
                 logger.info("Starting configuration: ($index) ${parameters[index]}")
 
-                val thetaVerificationSpecification = ThetaVerificationSpecification(workingDirectory, name, index, parameters[index], timeout)
-                thetaVerificationExecutor.execute(thetaVerificationSpecification)
+                try {
+                    val thetaVerificationSpecification = ThetaVerificationSpecification(workingDirectory, name, index, parameters[index], timeout)
+                    thetaVerificationExecutor.execute(thetaVerificationSpecification)
+                } catch (t: CancellationException) {
+                    // cancellation is not logged
+                    throw t
+                } catch (t: Throwable) {
+                    logger.error("Configuration failed: ($index)", t)
+                    throw t
+                }
             }
         }
 
