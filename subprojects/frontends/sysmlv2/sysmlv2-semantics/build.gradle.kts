@@ -63,6 +63,6 @@ val benchmarkVerificationCases by tasks.registering(Test::class) {
     val existingPath = environment["PATH"] ?: System.getenv("PATH") ?: ""
     environment("PATH", "$thetaCliPath${File.pathSeparator}$existingPath")
 
-    val benchmarkRuns = providers.gradleProperty("benchmark.runs").orElse("3")
+    val benchmarkRuns = providers.gradleProperty("benchmark.runs").orElse("5")
     systemProperty("benchmark.runs", benchmarkRuns.get())
 }
