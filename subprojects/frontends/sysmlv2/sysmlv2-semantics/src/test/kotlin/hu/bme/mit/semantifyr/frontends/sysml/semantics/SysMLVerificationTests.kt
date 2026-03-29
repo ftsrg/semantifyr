@@ -137,7 +137,7 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
     @ParameterizedTest
     @MethodSource
     fun `Full Spacecraft Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
-        checkVerificationCase(verificationCase, 2.toDuration(DurationUnit.HOURS))
+        checkVerificationCase(verificationCase)
     }
 
 }
