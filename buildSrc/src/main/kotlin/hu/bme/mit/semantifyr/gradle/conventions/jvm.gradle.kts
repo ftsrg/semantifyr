@@ -41,6 +41,8 @@ tasks {
     // TODO: refactor tests to use test suites
     test {
         useJUnitPlatform {
+            // we should use source sets instead
+            excludeTags("benchmark")
             excludeTags("verification")
             excludeTags("slow")
         }

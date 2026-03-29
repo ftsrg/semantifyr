@@ -39,6 +39,8 @@ tasks {
         group = "verification"
 
         useJUnitPlatform {
+            // we should use source sets instead
+            excludeTags("benchmark")
             includeTags("verification")
             excludeTags("slow")
         }
@@ -69,6 +71,8 @@ tasks {
         group = "verification"
 
         useJUnitPlatform {
+            // we should use source sets instead
+            excludeTags("benchmark")
 //            includeTags("verification")
             includeTags("slow")
         }
