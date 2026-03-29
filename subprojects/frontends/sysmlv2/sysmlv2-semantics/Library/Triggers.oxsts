@@ -59,3 +59,13 @@ class AcceptTimeoutAction : AcceptAction {
         remainingTime := afterTime
     }
 }
+
+class AcceptWhenAction : AcceptAction {
+
+    contains expression: Expression
+
+    redefine prop isTriggered(): bool {
+        return expression.evaluate()
+    }
+
+}

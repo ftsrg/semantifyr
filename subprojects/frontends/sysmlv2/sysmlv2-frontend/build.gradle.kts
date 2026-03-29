@@ -13,7 +13,7 @@ plugins {
     alias(libs.plugins.gradle.node)
 }
 
-val sysmlCommit = "f86a90c6a585df970d34bdcdfbbdb892a3d9d3dc" // Improved expression mapping
+val sysmlCommit = "f829c1307799c278242ab456b8c6cd7adf44f156" // Added support for AcceptWhen triggers
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.buildDirectory.dir("sysml-2ls").get()
 
