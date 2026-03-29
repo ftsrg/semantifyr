@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaVerifica
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.ArtifactManager
 import hu.bme.mit.semantifyr.semantics.verification.VerificationCaseRunResult
+import hu.bme.mit.semantifyr.semantics.verification.VerificationTimeMetrics
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
@@ -33,15 +34,6 @@ data class VerificationReport(
 data class VerificationPortfolioResult(
     val winningSpecification: ThetaVerificationSpecification,
     val allArguments: List<String>,
-)
-
-@Serializable
-data class VerificationTimeMetrics(
-    var inliningMs: Duration = Duration.ZERO,
-    var xstsTransformationMs: Duration = Duration.ZERO,
-    var verificationMs: Duration = Duration.ZERO,
-    var backAnnotationMs: Duration = Duration.ZERO,
-    var totalMs: Duration = Duration.ZERO,
 )
 
 @CompilationScoped

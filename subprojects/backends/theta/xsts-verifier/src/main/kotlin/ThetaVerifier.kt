@@ -28,6 +28,7 @@ import hu.bme.mit.semantifyr.semantics.utils.loggerFactory
 import hu.bme.mit.semantifyr.semantics.verification.AbstractOxstsVerifier
 import hu.bme.mit.semantifyr.semantics.verification.VerificationCaseRunResult
 import hu.bme.mit.semantifyr.semantics.verification.VerificationResult
+import hu.bme.mit.semantifyr.semantics.verification.VerificationTimeMetrics
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 import java.io.File
 import kotlin.io.path.Path
@@ -129,7 +130,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
         val (inlinedOxsts, inliningDuration) = measureTimedValue {
             inlineClass(progressContext, classDeclaration)
         }
-        verificationTimeMetrics.inliningMs = inliningDuration
+        verificationTimeMetrics.inliningDuration = inliningDuration
         logger.info("Inlining took: $inliningDuration")
 
         progressContext.checkIsCancelled()
@@ -138,7 +139,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
         val (xstsModel, xstsDuration) = measureTimedValue {
             transformToXsts(progressContext, inlinedOxsts)
         }
-        verificationTimeMetrics.xstsTransformationMs = xstsDuration
+        verificationTimeMetrics.xstsTransformationDuration = xstsDuration
         logger.info("Xsts transformation took: $xstsDuration")
 
         val result = try {
@@ -151,7 +152,7 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
             val (result, verifyDuration) = measureTimedValue {
                 verifyXsts(progressContext, xstsModel, timeout)
             }
-            verificationTimeMetrics.verificationMs = verifyDuration
+            verificationTimeMetrics.verificationDuration = verifyDuration
             logger.info("Verification took: $verifyDuration")
 
             if (result.hasWitness) {
@@ -165,24 +166,24 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
                     val inlinedOxstsWitness = inlinedOxstsAssumptionWitnessTransformer.transform(inlinedOxsts, xstsWitness)
                     backAnnotateWitness(inlinedOxstsWitness)
                 }
-                verificationTimeMetrics.backAnnotationMs = backAnnotationDuration
+                verificationTimeMetrics.backAnnotationDuration = backAnnotationDuration
                 logger.info("Back annotation took: $backAnnotationDuration")
             }
 
             when (property) {
                 is AG if result is ThetaUnsafeVerificationResult -> {
-                    VerificationCaseRunResult(VerificationResult.Failed, "Expected Safe result, got Unsafe instead!")
+                    VerificationCaseRunResult(VerificationResult.Failed, verificationTimeMetrics, "Expected Safe result, got Unsafe instead!")
                 }
                 is EF if result is ThetaSafeVerificationResult -> {
-                    VerificationCaseRunResult(VerificationResult.Failed, "Expected Unsafe result, got Safe instead!")
+                    VerificationCaseRunResult(VerificationResult.Failed, verificationTimeMetrics, "Expected Unsafe result, got Safe instead!")
                 }
                 else -> {
-                    VerificationCaseRunResult(VerificationResult.Passed)
+                    VerificationCaseRunResult(VerificationResult.Passed, verificationTimeMetrics)
                 }
             }
         } catch (e: Exception) {
             logger.error("Exception during verification: ", e)
-            VerificationCaseRunResult(VerificationResult.Errored, e.message)
+            VerificationCaseRunResult(VerificationResult.Errored, verificationTimeMetrics, e.message)
         }
 
         thetaArtifactManager.serialize(verificationTimeMetrics)

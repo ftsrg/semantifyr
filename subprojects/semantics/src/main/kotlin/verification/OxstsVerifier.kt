@@ -21,8 +21,18 @@ import kotlin.time.Duration
 import kotlin.time.toKotlinDuration
 
 @Serializable
+data class VerificationTimeMetrics(
+    var inliningDuration: Duration = Duration.ZERO,
+    var xstsTransformationDuration: Duration = Duration.ZERO,
+    var verificationDuration: Duration = Duration.ZERO,
+    var backAnnotationDuration: Duration = Duration.ZERO,
+    var totalDuration: Duration = Duration.ZERO,
+)
+
+@Serializable
 data class VerificationCaseRunResult(
     val result: VerificationResult,
+    val metrics: VerificationTimeMetrics,
     val message: String? = null
 )
 
