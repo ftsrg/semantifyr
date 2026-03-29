@@ -27,11 +27,21 @@ part def EntryActionModel {
     }
 }
 
-verification def EntryActionModelEntered {
+verification def EntryActionFiresOnActivationTestCase {
     subject system : EntryActionModel;
     objective {
         verify requirement {
             require constraint { eventually(system.entered == true) }
+        }
+    }
+}
+
+// Entry flag must already be set whenever S1 is the active state.
+verification def EntryFlagAlwaysSetWhileStateIsActiveTestCase {
+    subject system : EntryActionModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (isStateActive(system.Behaviour.S1) and system.entered == false)) }
         }
     }
 }
@@ -53,11 +63,21 @@ part def ExitActionModel {
     }
 }
 
-verification def ExitActionExited {
+verification def ExitActionFiresOnDeactivationTestCase {
     subject system : ExitActionModel;
     objective {
         verify requirement {
             require constraint { eventually(system.exited == true) }
+        }
+    }
+}
+
+// S2 can only be active if S1's exit action already fired.
+verification def ExitFlagAlwaysSetWhenSuccessorIsActiveTestCase {
+    subject system : ExitActionModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (isStateActive(system.Behaviour.S2) and system.exited == false)) }
         }
     }
 }
@@ -81,11 +101,21 @@ part def TransitionDoActionModel {
     }
 }
 
-verification def TransitionDoActionModelFired {
+verification def DoActionFiresOnTransitionTestCase {
     subject system : TransitionDoActionModel;
     objective {
         verify requirement {
             require constraint { eventually(system.actionFired == true) }
+        }
+    }
+}
+
+// S2 can only be active if the do-action on the transition already fired.
+verification def DoActionAlwaysFiredWhenTargetIsActiveTestCase {
+    subject system : TransitionDoActionModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (isStateActive(system.Behaviour.S2) and system.actionFired == false)) }
         }
     }
 }
@@ -103,11 +133,21 @@ part def HierarchicalEntryModel {
     }
 }
 
-verification def HierarchicalEntryModelInner {
+verification def CompositeEntryActivatesInitialSubstateTestCase {
     subject system : HierarchicalEntryModel;
     objective {
         verify requirement {
             require constraint { eventually(isStateActive(system.Behaviour.Outer.Inner)) }
+        }
+    }
+}
+
+// A composite state being active implies its active substate is also active.
+verification def CompositeActiveAlwaysImpliesSubstateActiveTestCase {
+    subject system : HierarchicalEntryModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (isStateActive(system.Behaviour.Outer) and not isStateActive(system.Behaviour.Outer.Inner))) }
         }
     }
 }
@@ -132,7 +172,7 @@ part def HierarchicalExitModel {
     }
 }
 
-verification def HierarchicalExitModelDone {
+verification def CompositeExitReachesDoneStateTestCase {
     subject system : HierarchicalExitModel;
     objective {
         verify requirement {
@@ -141,11 +181,21 @@ verification def HierarchicalExitModelDone {
     }
 }
 
-verification def HierarchicalExitModelExited {
+verification def CompositeExitFiresExitActionTestCase {
     subject system : HierarchicalExitModel;
     objective {
         verify requirement {
             require constraint { eventually(system.outerExited == true) }
+        }
+    }
+}
+
+// Done can only be active if the composite exit action already fired.
+verification def ExitActionAlwaysFiredWhenDoneIsActiveTestCase {
+    subject system : HierarchicalExitModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (isStateActive(system.Behaviour.Done) and system.outerExited == false)) }
         }
     }
 }
@@ -181,7 +231,7 @@ part def TransitionPriorityModel {
 }
 
 // Inner transition fires first (from Inner, E takes Inner→InnerDone).
-verification def TransitionPriorityModelInnerFires {
+verification def TransitionsHaveBottomUpPriorityTestCase {
     subject system : TransitionPriorityModel;
     objective {
         verify requirement {
@@ -191,7 +241,7 @@ verification def TransitionPriorityModelInnerFires {
 }
 
 // Inner→InnerDone is reachable (would not be so under top-down priority).
-verification def TransitionPriorityModelInnerDoneReachable {
+verification def InnerDoneReachableWithBottomUpPriorityTestCase {
     subject system : TransitionPriorityModel;
     objective {
         verify requirement {
@@ -201,7 +251,7 @@ verification def TransitionPriorityModelInnerDoneReachable {
 }
 
 // Once InnerDone is active (no inner transition on E), the outer transition fires.
-verification def TransitionPriorityModelOuterFires {
+verification def OuterTransitionFiresAfterInnerExhaustedTestCase {
     subject system : TransitionPriorityModel;
     objective {
         verify requirement {
@@ -211,7 +261,7 @@ verification def TransitionPriorityModelOuterFires {
 }
 
 // Safety: the outer transition never fires while Inner is the active inner state.
-verification def TransitionPriorityModelBottomUpSafety {
+verification def OuterTransitionBlockedWhileInnerEnabledTestCase {
     subject system : TransitionPriorityModel;
     objective {
         verify requirement {
@@ -221,6 +271,16 @@ verification def TransitionPriorityModelBottomUpSafety {
                          and system.outerFired == true)
                 )
             }
+        }
+    }
+}
+
+// OuterDone can only be reached after the inner transition exhausted first.
+verification def OuterDoneAlwaysImpliesInnerFiredFirstTestCase {
+    subject system : TransitionPriorityModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (isStateActive(system.Behaviour.OuterDone) and system.innerFired == false)) }
         }
     }
 }
@@ -247,7 +307,7 @@ part def ParallelRegionsModel {
     }
 }
 
-verification def ParallelRegionsModelR1B {
+verification def FirstParallelRegionAdvancesIndependentlyTestCase {
     subject system : ParallelRegionsModel;
     objective {
         verify requirement {
@@ -256,7 +316,7 @@ verification def ParallelRegionsModelR1B {
     }
 }
 
-verification def ParallelRegionsModelR2D {
+verification def SecondParallelRegionAdvancesIndependentlyTestCase {
     subject system : ParallelRegionsModel;
     objective {
         verify requirement {
@@ -265,7 +325,7 @@ verification def ParallelRegionsModelR2D {
     }
 }
 
-verification def ParallelRegionsModelBothAdvanced {
+verification def BothParallelRegionsCanAdvanceSimultaneouslyTestCase {
     subject system : ParallelRegionsModel;
     objective {
         verify requirement {
@@ -275,6 +335,16 @@ verification def ParallelRegionsModelBothAdvanced {
                     and isStateActive(system.Behaviour.R2.D)
                 )
             }
+        }
+    }
+}
+
+// Substates within a single region are mutually exclusive.
+verification def RegionSubstatesAreMutuallyExclusiveTestCase {
+    subject system : ParallelRegionsModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (isStateActive(system.Behaviour.R1.A) and isStateActive(system.Behaviour.R1.B))) }
         }
     }
 }
@@ -291,11 +361,21 @@ part def TimeoutTransitionModel {
     }
 }
 
-verification def TimeoutTransitionModelDone {
+verification def TimeoutTransitionFiresAfterDelayTestCase {
     subject system : TimeoutTransitionModel;
     objective {
         verify requirement {
             require constraint { eventually(isStateActive(system.Behaviour.Done)) }
+        }
+    }
+}
+
+// Waiting and Done are mutually exclusive — the system cannot be in both simultaneously.
+verification def WaitingAndDoneAreMutuallyExclusiveTestCase {
+    subject system : TimeoutTransitionModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (isStateActive(system.Behaviour.Waiting) and isStateActive(system.Behaviour.Done))) }
         }
     }
 }
@@ -323,7 +403,7 @@ part def GuardedTransitionModel {
     }
 }
 
-verification def GuardedTransitionModelDone {
+verification def GuardConditionGatesTransitionTestCase {
     subject system : GuardedTransitionModel;
     objective {
         verify requirement {
@@ -332,11 +412,21 @@ verification def GuardedTransitionModelDone {
     }
 }
 
-verification def GuardedTransitionModelCount {
+verification def GuardAccumulatesCounterTestCase {
     subject system : GuardedTransitionModel;
     objective {
         verify requirement {
             require constraint { eventually(system.counter >= 3) }
+        }
+    }
+}
+
+// Done is unreachable until the guard (counter >= 3) is satisfied.
+verification def DoneNotReachableBeforeGuardSatisfiedTestCase {
+    subject system : GuardedTransitionModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (isStateActive(system.Behaviour.Done) and system.counter < 3)) }
         }
     }
 }
@@ -376,7 +466,7 @@ part def ItemFlowModel {
     flow from sender.output to receiver.input;
 }
 
-verification def ItemFlowReceived {
+verification def ItemFlowDeliversToReceiverTestCase {
     subject system : ItemFlowModel;
     objective {
         verify requirement {
@@ -385,11 +475,21 @@ verification def ItemFlowReceived {
     }
 }
 
-verification def ItemFlowAttribute {
+verification def ReceiverAttributeSetByItemFlowTestCase {
     subject system : ItemFlowModel;
     objective {
         verify requirement {
             require constraint { eventually(system.receiver.received == true) }
+        }
+    }
+}
+
+// The received flag must already be set whenever Got is the active state.
+verification def ReceivedFlagAlwaysSetWhenGotIsActiveTestCase {
+    subject system : ItemFlowModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (isStateActive(system.receiver.Behaviour.Got) and system.receiver.received == false)) }
         }
     }
 }
@@ -431,7 +531,7 @@ part def CrossHierarchyTransitionModel {
 }
 
 // Three-level deep initial state is reachable (active config before transition).
-verification def CrossHierarchyInitialDeep {
+verification def ThreeLevelDeepInitialStateReachableTestCase {
     subject system : CrossHierarchyTransitionModel;
     objective {
         verify requirement {
@@ -441,7 +541,7 @@ verification def CrossHierarchyInitialDeep {
 }
 
 // After the cross-hierarchy transition, the two-level deep target is active.
-verification def CrossHierarchyTargetDeep {
+verification def CrossHierarchyTransitionReachesTwoLevelDeepStateTestCase {
     subject system : CrossHierarchyTransitionModel;
     objective {
         verify requirement {
@@ -451,7 +551,7 @@ verification def CrossHierarchyTargetDeep {
 }
 
 // Both exit actions along the departure chain (Middle, Outer) fire.
-verification def CrossHierarchyExitChain {
+verification def CrossHierarchyExitActionsFireAtAllLevelsTestCase {
     subject system : CrossHierarchyTransitionModel;
     objective {
         verify requirement {
@@ -463,13 +563,23 @@ verification def CrossHierarchyExitChain {
 }
 
 // Both entry actions along the arrival chain (Other, Deep) fire.
-verification def CrossHierarchyEntryChain {
+verification def CrossHierarchyEntryActionsFireAtAllLevelsTestCase {
     subject system : CrossHierarchyTransitionModel;
     objective {
         verify requirement {
             require constraint {
                 eventually(system.otherEntered == true and system.deepEntered == true)
             }
+        }
+    }
+}
+
+// Outer and Other are mutually exclusive — the cross-hierarchy transition is atomic.
+verification def OuterAndOtherAreMutuallyExclusiveTestCase {
+    subject system : CrossHierarchyTransitionModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (isStateActive(system.Behaviour.Outer) and isStateActive(system.Behaviour.Other))) }
         }
     }
 }
@@ -507,7 +617,7 @@ part def ExitActionOrderModel {
     }
 }
 
-verification def ExitActionOrderModelInnerBeforeMiddle {
+verification def InnerExitActionFiresBeforeMiddleExitActionTestCase {
     subject system : ExitActionOrderModel;
     objective {
         verify requirement {
@@ -516,11 +626,31 @@ verification def ExitActionOrderModelInnerBeforeMiddle {
     }
 }
 
-verification def ExitActionOrderModelMiddleBeforeOuter {
+verification def MiddleExitActionFiresBeforeOuterExitActionTestCase {
     subject system : ExitActionOrderModel;
     objective {
         verify requirement {
             require constraint { eventually(system.middleExitStep < system.outerExitStep) }
+        }
+    }
+}
+
+// Middle never exits before inner (outermost-first order is always wrong).
+verification def MiddleNeverExitsBeforeInnerTestCase {
+    subject system : ExitActionOrderModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (system.middleExitStep < system.innerExitStep)) }
+        }
+    }
+}
+
+// Outer never exits before middle.
+verification def OuterNeverExitsBeforeMiddleTestCase {
+    subject system : ExitActionOrderModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (system.outerExitStep < system.middleExitStep)) }
         }
     }
 }
@@ -556,7 +686,7 @@ part def EntryActionOrderModel {
     }
 }
 
-verification def EntryActionOrderModelTargetBeforeMiddle {
+verification def OutermostEntryActionFiresBeforeMiddleEntryActionTestCase {
     subject system : EntryActionOrderModel;
     objective {
         verify requirement {
@@ -565,11 +695,31 @@ verification def EntryActionOrderModelTargetBeforeMiddle {
     }
 }
 
-verification def EntryActionOrderModelMiddleBeforeInner {
+verification def MiddleEntryActionFiresBeforeInnermostEntryActionTestCase {
     subject system : EntryActionOrderModel;
     objective {
         verify requirement {
             require constraint { eventually(system.middleEntryStep < system.innerEntryStep) }
+        }
+    }
+}
+
+// Middle never enters before target (innermost-first order is always wrong).
+verification def MiddleNeverEntersBeforeTargetTestCase {
+    subject system : EntryActionOrderModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (system.middleEntryStep < system.targetEntryStep)) }
+        }
+    }
+}
+
+// Inner never enters before middle.
+verification def InnerNeverEntersBeforeMiddleTestCase {
+    subject system : EntryActionOrderModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (system.innerEntryStep < system.middleEntryStep)) }
         }
     }
 }
@@ -600,7 +750,7 @@ part def ParallelStateExitModel {
 }
 
 // Both regions are concurrently active before the exit transition.
-verification def ParallelStateExitModelBothActive {
+verification def BothParallelRegionsActiveBeforeExitTestCase {
     subject system : ParallelStateExitModel;
     objective {
         verify requirement {
@@ -615,7 +765,7 @@ verification def ParallelStateExitModelBothActive {
 }
 
 // Done is reachable (parallel state can be exited).
-verification def ParallelStateExitModelDone {
+verification def ParallelStateCanBeExitedTestCase {
     subject system : ParallelStateExitModel;
     objective {
         verify requirement {
@@ -625,7 +775,7 @@ verification def ParallelStateExitModelDone {
 }
 
 // After exiting the parallel state, neither region is active (safety).
-verification def ParallelStateExitModelR1Deactivated {
+verification def AllParallelRegionsDeactivatedOnExitTestCase {
     subject system : ParallelStateExitModel;
     objective {
         verify requirement {
@@ -668,7 +818,7 @@ part def ParallelNestedInSequentialModel {
 }
 
 // Both parallel sub-regions are active while inside the sequential Outer state.
-verification def ParallelNestedBothActive {
+verification def ParallelRegionsActiveInsideSequentialStateTestCase {
     subject system : ParallelNestedInSequentialModel;
     objective {
         verify requirement {
@@ -683,11 +833,125 @@ verification def ParallelNestedBothActive {
 }
 
 // The sequential state can be exited even when a parallel state is active inside.
-verification def ParallelNestedExitDone {
+verification def SequentialStateWithNestedParallelExitableTestCase {
     subject system : ParallelNestedInSequentialModel;
     objective {
         verify requirement {
             require constraint { eventually(isStateActive(system.Behaviour.Done)) }
+        }
+    }
+}
+
+// Done and the nested parallel substates are mutually exclusive — all regions are deactivated on exit.
+verification def DoneAndNestedParallelSubstatesAreMutuallyExclusiveTestCase {
+    subject system : ParallelNestedInSequentialModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (isStateActive(system.Behaviour.Done) and isStateActive(system.Behaviour.Outer.Inner.P1.P1A))) }
+        }
+    }
+}
+
+// ── 16. SpontaneousTransitionModel ───────────────────────────────────────────────
+// Verifies that an `accept when true` (unconditional spontaneous transition)
+// fires without any external event or timeout, executing its do-action.
+
+part def SpontaneousTransitionModel {
+    attribute transitioned : Boolean default false;
+
+    exhibit state Behaviour {
+        state S1;
+        state S2;
+        transition first start then S1;
+        transition
+            first S1
+            accept when true
+            do action { assign transitioned := true; }
+            then S2;
+    }
+}
+
+// The spontaneous transition fires, reaching S2 without any external stimulus.
+verification def SpontaneousTransitionReachesTargetTestCase {
+    subject system : SpontaneousTransitionModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(isStateActive(system.Behaviour.S2)) }
+        }
+    }
+}
+
+// The do-action on the spontaneous transition fires.
+verification def SpontaneousTransitionDoActionFiresTestCase {
+    subject system : SpontaneousTransitionModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(system.transitioned == true) }
+        }
+    }
+}
+
+// S2 can only be active if the do-action on the spontaneous transition already fired.
+verification def SpontaneousDoActionAlwaysFiredWhenTargetIsActiveTestCase {
+    subject system : SpontaneousTransitionModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (isStateActive(system.Behaviour.S2) and system.transitioned == false)) }
+        }
+    }
+}
+
+// ── 17. GuardedSpontaneousTransitionModel ────────────────────────────────────────
+// Verifies that `accept when <condition>` (guarded spontaneous transition) fires
+// only when its guard is satisfied, without any external event.
+// A self-loop with `accept when counter < 3` increments a counter; when the
+// counter reaches 3, an `accept when counter >= 3` transition exits.
+
+part def GuardedSpontaneousTransitionModel {
+    attribute counter : Integer default 0;
+
+    exhibit state Behaviour {
+        state Incrementing;
+        state Done;
+        transition first start then Incrementing;
+        transition
+            first Incrementing
+            accept when counter < 3
+            do action { assign counter := counter + 1; }
+            then Incrementing;
+        transition
+            first Incrementing
+            accept when counter >= 3
+            then Done;
+    }
+}
+
+// The guarded spontaneous exit transition eventually fires.
+verification def GuardedSpontaneousTransitionReachesDoneTestCase {
+    subject system : GuardedSpontaneousTransitionModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(isStateActive(system.Behaviour.Done)) }
+        }
+    }
+}
+
+// The counter accumulates to the threshold.
+verification def GuardedSpontaneousCounterReachesThresholdTestCase {
+    subject system : GuardedSpontaneousTransitionModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(system.counter >= 3) }
+        }
+    }
+}
+
+// Done is unreachable until the guard (counter >= 3) is satisfied.
+verification def GuardedSpontaneousDoneNotReachableBeforeThresholdTestCase {
+    subject system : GuardedSpontaneousTransitionModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (isStateActive(system.Behaviour.Done) and system.counter < 3)) }
         }
     }
 }

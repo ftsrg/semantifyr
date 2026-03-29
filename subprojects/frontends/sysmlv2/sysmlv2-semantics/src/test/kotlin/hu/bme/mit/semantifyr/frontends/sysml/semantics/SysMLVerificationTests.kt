@@ -100,7 +100,41 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
         fun `Full Spacecraft Model Verification Cases Should Pass`(): Stream<Arguments> {
             val model = loadModel("TestModels/spacecraft.sysml")
 
-            return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
+            return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
+        }
+
+        @JvmStatic
+        fun `Door Access Model Verification Cases Should Pass`(): Stream<Arguments> {
+            val model = loadModel("TestModels/door_access.sysml")
+
+            return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
+        }
+
+        @JvmStatic
+        fun `Power Subsystems Model Verification Cases Should Pass`(): Stream<Arguments> {
+            val model = loadModel("TestModels/power_subsystems.sysml")
+
+            return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
+        }
+
+        @JvmStatic
+        fun `Aircraft Engine Model Verification Cases Should Pass`(): Stream<Arguments> {
+            val model = loadModel("TestModels/aircraft_engine.sysml")
+
+            return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
+        }
+
+        @JvmStatic
+        fun `Autonomous Driving Model Verification Cases Should Pass`(): Stream<Arguments> {
+            val model = loadModel("TestModels/autonomous_driving.sysml")
+
+            return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
+        }
+
+        @JvmStatic
+        fun `Orion Protocol Model Verification Cases Should Pass`(): Stream<Arguments> {
+            val model = loadModel("TestModels/orion_protocol.sysml")
+
             return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
         }
 
@@ -152,6 +186,36 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
     @ParameterizedTest
     @MethodSource
     fun `Full Spacecraft Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
+        checkVerificationCase(verificationCase)
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    fun `Door Access Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
+        checkVerificationCase(verificationCase)
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    fun `Power Subsystems Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
+        checkVerificationCase(verificationCase)
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    fun `Aircraft Engine Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
+        checkVerificationCase(verificationCase)
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    fun `Autonomous Driving Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
+        checkVerificationCase(verificationCase)
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    fun `Orion Protocol Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
         checkVerificationCase(verificationCase)
     }
 
