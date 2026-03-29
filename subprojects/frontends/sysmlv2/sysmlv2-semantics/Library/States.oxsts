@@ -18,6 +18,9 @@ abstract class AbstractState : StateNode {
     container parent: AbstractState[0..1] opposite states
     contains states: AbstractState[0..*] opposite parent
 
+    contains entryAction: Action[1]
+    contains exitAction: Action[1]
+
     redefine prop isActive(): bool {
         return parent?.isInnerStateActive(self)
     }
@@ -42,8 +45,6 @@ class State : AbstractState {
     contains start: EntryState[1]
 
     contains transitions: Transition[0..*] opposite parentState
-    contains entryAction: Action[1]
-    contains exitAction: Action[1]
 
     var activeState: states[0..1] := nothing
 
@@ -297,11 +298,15 @@ class ParallelState : AbstractState {
             inline for (transition in outgoingTransitions) {
                 inline transition.initialize()
             }
+
+            inline entryAction.main()
         }
     }
     
     tran deactivate() {
         inline if (parent != nothing) {
+            inline exitAction.main()
+
             if (parent.getActiveState() == self) {
                 inline parent.setActiveState(nothing)
             }
