@@ -46,7 +46,7 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
 
         val transformer = StandaloneSysMLTransformer()
 
-        private fun loadModel(model: String): SemantifyrModelContext {
+        private fun loadModel(model: String, library: String = "Library"): SemantifyrModelContext {
             val sysmlModelPath = Path(model)
             val sysmlModel = sysmlModelPath.toFile()
             val oxstsModelPath = Path(sysmlModel.absolutePath.replace(".sysml", ".oxsts"))
@@ -55,7 +55,7 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
             transformer.transformModel(sysmlModel, oxstsModel)
 
             return semantifyrVerificationHelper.semantifyrLoader.startContext()
-                .loadLibraries(Path("Library"))
+                .loadLibraries(Path(library))
                 .loadModel(oxstsModelPath)
                 .buildAndResolve()
         }
@@ -78,7 +78,6 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
         fun `Semantics Test Model Verification Cases Should Pass`(): Stream<Arguments> {
             val model = loadModel("TestModels/semanticstest.sysml")
 
-            return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
             return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
         }
 
@@ -134,6 +133,13 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
         @JvmStatic
         fun `Orion Protocol Model Verification Cases Should Pass`(): Stream<Arguments> {
             val model = loadModel("TestModels/orion_protocol.sysml")
+
+            return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
+        }
+
+        @JvmStatic
+        fun `Top Down Transition Test Model Verification Cases Should Pass`(): Stream<Arguments> {
+            val model = loadModel("TestModels/topdowntransition.sysml", "LibraryVariants/TopDownLibrary")
 
             return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
         }
@@ -216,6 +222,12 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
     @ParameterizedTest
     @MethodSource
     fun `Orion Protocol Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
+        checkVerificationCase(verificationCase)
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    fun `Top Down Transition Test Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
         checkVerificationCase(verificationCase)
     }
 
