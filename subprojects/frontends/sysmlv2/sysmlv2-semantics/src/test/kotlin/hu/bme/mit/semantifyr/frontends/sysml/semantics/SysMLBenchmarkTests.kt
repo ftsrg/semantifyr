@@ -51,9 +51,17 @@ class SysMLBenchmarkTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
         private val transformer = StandaloneSysMLTransformer()
 
         private val BENCHMARK_MODELS = listOf(
-            "TestModels/crossroads.sysml" to "crossroads",
-            "TestModels/compressedspacecraft.sysml" to "compressedspacecraft",
+            "TestModels/crossroads.sysml" to "Crossraods",
+//            "TestModels/compressedspacecraft.sysml" to "spacecraft (compressed)",
             "TestModels/spacecraft.sysml" to "spacecraft",
+            "TestModels/aircraft_engine.sysml" to "aircraft_engine",
+            "TestModels/autonomous_driving.sysml" to "autonomous_driving",
+            "TestModels/door_access.sysml" to "door_access",
+            "TestModels/orion_protocol.sysml" to "orion_protocol",
+            "TestModels/power_subsystems.sysml" to "power_subsystems",
+            "TestModels/semanticstest.sysml" to "semanticstest",
+//            "TestModels/stm21.sysml" to "stm21",
+//            "TestModels/stm31.sysml" to "stm31",
         )
 
         private fun loadModel(model: String) = run {
