@@ -42,7 +42,7 @@ class GammaVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
                 .loadModels(Path("Library"))
                 .buildAndResolve()
 
-            return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
+            return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
         }
 
         val transformer = StandaloneGammaTransformer()
@@ -65,28 +65,21 @@ class GammaVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
         fun `Simple Model Verification Cases Should Pass`(): Stream<Arguments> {
             val model = loadModel("TestModels/Simple.gamma")
 
-            return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
+            return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
         }
 
         @JvmStatic
         fun `Crossroads Model Verification Cases Should Pass`(): Stream<Arguments> {
             val model = loadModel("TestModels/Crossroads.gamma")
 
-            return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
+            return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
         }
 
         @JvmStatic
         fun `Spacecraft Model Verification Cases Should Pass`(): Stream<Arguments> {
             val model = loadModel("TestModels/Spacecraft.gamma")
 
-            return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
-        }
-
-        @JvmStatic
-        fun `Slow Spacecraft Model Verification Cases Should Pass`(): Stream<Arguments> {
-            val model = loadModel("TestModels/Spacecraft.gamma")
-
-            return semantifyrVerificationHelper.collectSlowVerificationCases(model).asStream()
+            return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
         }
 
     }
@@ -123,14 +116,6 @@ class GammaVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
     @MethodSource
     fun `Spacecraft Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
         checkVerificationCase(verificationCase)
-    }
-
-    @Tag("slow")
-    @ParameterizedTest
-    @MethodSource
-    @Disabled("There are no slow crossroads verification cases just yet.")
-    fun `Slow Spacecraft Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
-        checkVerificationCase(verificationCase, 60.toDuration(DurationUnit.MINUTES))
     }
 
 }

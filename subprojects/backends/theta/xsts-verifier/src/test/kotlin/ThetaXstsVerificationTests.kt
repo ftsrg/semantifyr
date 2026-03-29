@@ -36,7 +36,7 @@ class ThetaXstsVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>
                 .loadModels(Path("test-models/Simple/simple.oxsts"))
                 .buildAndResolve()
 
-            return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
+            return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
         }
 
     }

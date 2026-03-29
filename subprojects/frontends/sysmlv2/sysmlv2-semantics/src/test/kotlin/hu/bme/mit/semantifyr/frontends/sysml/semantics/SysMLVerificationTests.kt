@@ -41,7 +41,7 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
                 .loadModels(Path("Library"))
                 .buildAndResolve()
 
-            return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
+            return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
         }
 
         val transformer = StandaloneSysMLTransformer()
@@ -64,14 +64,14 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
         fun `STM21 Model Verification Cases Should Pass`(): Stream<Arguments> {
             val model = loadModel("TestModels/stm21.sysml")
 
-            return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
+            return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
         }
 
         @JvmStatic
         fun `STM31 Model Verification Cases Should Pass`(): Stream<Arguments> {
             val model = loadModel("TestModels/stm31.sysml")
 
-            return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
+            return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
         }
 
         @JvmStatic
@@ -79,20 +79,21 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
             val model = loadModel("TestModels/semanticstest.sysml")
 
             return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
+            return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
         }
 
         @JvmStatic
         fun `Crossroads Model Verification Cases Should Pass`(): Stream<Arguments> {
             val model = loadModel("TestModels/crossroads.sysml")
 
-            return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
+            return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
         }
 
         @JvmStatic
         fun `Compressed Spacecraft Model Verification Cases Should Pass`(): Stream<Arguments> {
             val model = loadModel("TestModels/compressedspacecraft.sysml")
 
-            return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
+            return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
         }
 
         @JvmStatic
@@ -100,6 +101,7 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
             val model = loadModel("TestModels/spacecraft.sysml")
 
             return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
+            return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
         }
 
     }
