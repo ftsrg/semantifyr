@@ -18,6 +18,7 @@ import hu.bme.mit.semantifyr.semantics.transformation.serializer.ArtifactManager
 import hu.bme.mit.semantifyr.semantics.transformation.tracer.TraceSerializer
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
+import kotlin.time.Instant
 import kotlin.time.toKotlinDuration
 
 @Serializable
@@ -30,10 +31,19 @@ data class VerificationTimeMetrics(
 )
 
 @Serializable
+data class VerificationMetaData(
+    val className: String,
+    val modelPath: String,
+    val startedAt: Instant,
+    val timeout: Duration,
+)
+
+@Serializable
 data class VerificationCaseRunResult(
     val result: VerificationResult,
     val metrics: VerificationTimeMetrics,
-    val message: String? = null
+    val metaData: VerificationMetaData,
+    val message: String? = null,
 )
 
 enum class VerificationResult {

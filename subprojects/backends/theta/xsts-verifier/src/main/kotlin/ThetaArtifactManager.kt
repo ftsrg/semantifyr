@@ -17,18 +17,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
 import org.eclipse.emf.common.util.URI
 import java.io.File
-import kotlin.time.Duration
-import kotlin.time.Instant
-
-@Serializable
-data class VerificationReport(
-    var className: String,
-    var modelPath: String,
-    var startedAt: Instant,
-    var totalDuration: Duration,
-    var result: VerificationCaseRunResult,
-    var timeout: Duration,
-)
 
 @Serializable
 data class VerificationPortfolioResult(
@@ -48,21 +36,7 @@ class ThetaArtifactManager {
     val xstsUri: URI
         get() = URI.createFileURI(xstsFile.absolutePath)
 
-    fun serialize(data: VerificationTimeMetrics) {
-        val file = artifactManager.resolve("metrics${File.separator}verification-metrics.json")
-        file.parentFile.mkdirs()
-
-        val json = Json {
-            prettyPrint = true
-            prettyPrintIndent = "  "
-        }
-
-        file.outputStream().buffered().use {
-            json.encodeToStream(data, it)
-        }
-    }
-
-    fun serialize(data: VerificationReport) {
+    fun serialize(result: VerificationCaseRunResult) {
         val file = artifactManager.resolve("report.json")
         file.parentFile.mkdirs()
 
@@ -73,12 +47,12 @@ class ThetaArtifactManager {
         }
 
         file.outputStream().buffered().use {
-            json.encodeToStream(data, it)
+            json.encodeToStream(result, it)
         }
     }
 
     fun serialize(data: VerificationPortfolioResult) {
-        val file = artifactManager.resolve("metrics${File.separator}portfolio.json")
+        val file = artifactManager.resolve("portfolio.json")
         file.parentFile.mkdirs()
 
         val json = Json {

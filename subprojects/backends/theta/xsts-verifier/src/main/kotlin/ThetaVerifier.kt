@@ -27,6 +27,7 @@ import hu.bme.mit.semantifyr.semantics.transformation.serializer.ArtifactManager
 import hu.bme.mit.semantifyr.semantics.utils.loggerFactory
 import hu.bme.mit.semantifyr.semantics.verification.AbstractOxstsVerifier
 import hu.bme.mit.semantifyr.semantics.verification.VerificationCaseRunResult
+import hu.bme.mit.semantifyr.semantics.verification.VerificationMetaData
 import hu.bme.mit.semantifyr.semantics.verification.VerificationResult
 import hu.bme.mit.semantifyr.semantics.verification.VerificationTimeMetrics
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
@@ -34,6 +35,7 @@ import java.io.File
 import kotlin.io.path.Path
 import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.TimeSource.Monotonic.markNow
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
@@ -98,22 +100,12 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
         val basePath = outPath.resolve(filePath.nameWithoutExtension + File.separator + classDeclaration.name)
         artifactManager.initialize(basePath)
 
-        val startedAt = Clock.System.now()
 
         val (result, duration) = measureTimedValue {
             doRunVerification(progressContext, classDeclaration, timeout)
         }
 
-        val verificationReport = VerificationReport(
-            oxstsQualifiedNameProvider.getFullyQualifiedNameString(classDeclaration),
-            classDeclaration.eResource().uri.toFileString(),
-            startedAt,
-            duration,
-            result,
-            timeout,
-        )
-
-        thetaArtifactManager.serialize(verificationReport)
+        thetaArtifactManager.serialize(result)
 
         return result
     }
@@ -124,6 +116,16 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
         timeout: Duration
     ): VerificationCaseRunResult {
         val verificationTimeMetrics = VerificationTimeMetrics()
+
+        val startedAt = Clock.System.now()
+        val mark = markNow()
+
+        val verificationMetaData = VerificationMetaData(
+            oxstsQualifiedNameProvider.getFullyQualifiedNameString(classDeclaration),
+            classDeclaration.eResource().uri.toFileString(),
+            startedAt,
+            timeout,
+        )
 
         logger.info("Inlining class")
         progressContext.reportProgress("Inlining class")
@@ -172,21 +174,21 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
 
             when (property) {
                 is AG if result is ThetaUnsafeVerificationResult -> {
-                    VerificationCaseRunResult(VerificationResult.Failed, verificationTimeMetrics, "Expected Safe result, got Unsafe instead!")
+                    VerificationCaseRunResult(VerificationResult.Failed, verificationTimeMetrics, verificationMetaData, "Expected Safe result, got Unsafe instead!")
                 }
                 is EF if result is ThetaSafeVerificationResult -> {
-                    VerificationCaseRunResult(VerificationResult.Failed, verificationTimeMetrics, "Expected Unsafe result, got Safe instead!")
+                    VerificationCaseRunResult(VerificationResult.Failed, verificationTimeMetrics, verificationMetaData, "Expected Unsafe result, got Safe instead!")
                 }
                 else -> {
-                    VerificationCaseRunResult(VerificationResult.Passed, verificationTimeMetrics)
+                    VerificationCaseRunResult(VerificationResult.Passed, verificationTimeMetrics, verificationMetaData)
                 }
             }
         } catch (e: Exception) {
             logger.error("Exception during verification: ", e)
-            VerificationCaseRunResult(VerificationResult.Errored, verificationTimeMetrics, e.message)
+            VerificationCaseRunResult(VerificationResult.Errored, verificationTimeMetrics, verificationMetaData, e.message)
         }
 
-        thetaArtifactManager.serialize(verificationTimeMetrics)
+        verificationTimeMetrics.totalDuration = mark.elapsedNow()
 
         logger.info("Result is ${result.result} - ${result.message ?: "No message"}")
 
