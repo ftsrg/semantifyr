@@ -74,7 +74,7 @@ class SysMLBenchmarkTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
     @Inject
     override lateinit var oxstsVerifierProvider: Provider<ThetaVerifier>
 
-    @Test
+//    @Test
     fun `Benchmark Verification Cases`() {
         val runs = System.getProperty("benchmark.runs", "5").toInt()
         val rows = mutableListOf<BenchmarkRow>()

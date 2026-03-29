@@ -75,6 +75,13 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
         }
 
         @JvmStatic
+        fun `Semantics Test Model Verification Cases Should Pass`(): Stream<Arguments> {
+            val model = loadModel("TestModels/semanticstest.sysml")
+
+            return semantifyrVerificationHelper.collectNotSlowVerificationCases(model).asStream()
+        }
+
+        @JvmStatic
         fun `Crossroads Model Verification Cases Should Pass`(): Stream<Arguments> {
             val model = loadModel("TestModels/crossroads.sysml")
 
@@ -118,6 +125,12 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
     @ParameterizedTest
     @MethodSource
     fun `STM31 Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
+        checkVerificationCase(verificationCase)
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    fun `Semantics Test Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
         checkVerificationCase(verificationCase)
     }
 

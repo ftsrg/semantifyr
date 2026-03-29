@@ -40,29 +40,29 @@ tasks.withType(Test::class) {
     dependsOn(prepareCli)
 }
 
-val benchmarkVerificationCases by tasks.registering(Test::class) {
-    group = "verification"
-    description = "Run each verification case N times and aggregate timing. Pass -Pbenchmark.runs=N to override (default 3)."
-
-    dependsOn(prepareCli)
-
-    useJUnitPlatform {
-        includeTags("benchmark")
-    }
-
-    testClassesDirs = sourceSets.test.get().output.classesDirs
-    classpath = sourceSets.test.get().runtimeClasspath
-
-    minHeapSize = "512m"
-    maxHeapSize = "4G"
-    maxParallelForks = 1
-    testLogging.showStandardStreams = true
-    testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-
-    val thetaCliPath = project(":theta-wrapper").layout.buildDirectory.dir("theta-xsts-cli").get().asFile.absolutePath
-    val existingPath = environment["PATH"] ?: System.getenv("PATH") ?: ""
-    environment("PATH", "$thetaCliPath${File.pathSeparator}$existingPath")
-
-    val benchmarkRuns = providers.gradleProperty("benchmark.runs").orElse("5")
-    systemProperty("benchmark.runs", benchmarkRuns.get())
-}
+//val benchmarkVerificationCases by tasks.registering(Test::class) {
+//    group = "verification"
+//    description = "Run each verification case N times and aggregate timing. Pass -Pbenchmark.runs=N to override (default 3)."
+//
+//    dependsOn(prepareCli)
+//
+//    useJUnitPlatform {
+//        includeTags("benchmark")
+//    }
+//
+//    testClassesDirs = sourceSets.test.get().output.classesDirs
+//    classpath = sourceSets.test.get().runtimeClasspath
+//
+//    minHeapSize = "512m"
+//    maxHeapSize = "4G"
+//    maxParallelForks = 1
+//    testLogging.showStandardStreams = true
+//    testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+//
+//    val thetaCliPath = project(":theta-wrapper").layout.buildDirectory.dir("theta-xsts-cli").get().asFile.absolutePath
+//    val existingPath = environment["PATH"] ?: System.getenv("PATH") ?: ""
+//    environment("PATH", "$thetaCliPath${File.pathSeparator}$existingPath")
+//
+//    val benchmarkRuns = providers.gradleProperty("benchmark.runs").orElse("5")
+//    systemProperty("benchmark.runs", benchmarkRuns.get())
+//}
