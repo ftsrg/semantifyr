@@ -14,7 +14,10 @@ import org.eclipse.emf.common.util.WrappedException;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.eclipse.xtext.util.*;
+import org.eclipse.xtext.util.IResourceScopeCache;
+import org.eclipse.xtext.util.NonRecursiveEContentAdapter;
+import org.eclipse.xtext.util.Pair;
+import org.eclipse.xtext.util.Tuples;
 import org.eclipse.xtext.util.concurrent.IUnitOfWork;
 
 import java.util.Map;
@@ -41,7 +44,7 @@ public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
 
     @Override
     public <T> T get(Object key, Resource resource, Provider<T> provider) {
-        if(resource == null) {
+        if (resource == null) {
             return provider.get();
         }
         var adapter = getOrCreate(resource.getResourceSet());
@@ -191,7 +194,7 @@ public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
                 return false;
             }
             if (notification.getNotifier() instanceof Resource) {
-                switch(notification.getFeatureID(Resource.class)) {
+                switch (notification.getFeatureID(Resource.class)) {
                     case Resource.RESOURCE__IS_MODIFIED:
                     case Resource.RESOURCE__IS_TRACKING_MODIFICATION:
                     case Resource.RESOURCE__TIME_STAMP:

@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.gradle
 
 import org.gradle.accessors.dm.LibrariesForLibs
-import org.gradle.kotlin.dsl.the
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.mwe2")
@@ -66,7 +65,7 @@ val generateXtextLanguage by tasks.registering(JavaExec::class) {
     outputs.dir(extension.testFixtureGenPath)
     outputs.dir(extension.ideOutput)
 
-    args(extension.mweFile.asFile.get(), "-p", "rootPath=/$projectDir/..")
+    args(extension.mweFile.get(), "-p", "rootPath=/$projectDir/..")
 }
 
 artifacts {
@@ -99,7 +98,7 @@ tasks {
 interface XtextPluginConfiguration {
     val genPath: DirectoryProperty
     val testFixtureGenPath: DirectoryProperty
-    val mweFile: RegularFileProperty
-    val xtextFile: RegularFileProperty
+    val mweFile: Property<String>
+    val xtextFile: Property<String>
     val ideOutput: DirectoryProperty
 }

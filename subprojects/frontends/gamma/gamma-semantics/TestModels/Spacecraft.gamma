@@ -16,6 +16,7 @@ interface Data {
     in event ping
 }
 
+@RegionSchedule=bottom-up
 statechart Station [
     port control : requires Control,
     port connection : requires Data
@@ -36,18 +37,19 @@ statechart Station [
                 state Waiting
 
                 entry transition to Waiting
-                transition Waiting to Waiting when event connection.data [receivedData > 10 or receivedData < 100] / raise connection.ping; assign receivedData := receivedData + 10;
+                transition Waiting to Waiting when event connection.data [receivedData < 100] / raise connection.ping; assign receivedData := receivedData + 10;
             }
         }
 
         entry transition to Idle
         transition Idle to Operation when event control.start
         transition Idle to Operation when timeout startTimeout
-        transition Operation to Idle when event control.shutdown
+        // transition Operation to Idle when event control.shutdown
         transition Operation to Operation when timeout pingTimeout
     }
 }
 
+@RegionSchedule=bottom-up
 statechart Spacecraft[
     port connection : provides Data
 ] {
@@ -114,65 +116,220 @@ sync component SpaceMission [
     channel [ station.connection ] -> [ spacecraft.connection ]
 }
 
-@Reachable
 verification case Station_IdleReachable {
     component mission : SpaceMission
 
-    invariant { isActive (mission.station.Main.Idle) }
+    property { EF isActive (mission.station.Main.Idle) }
 }
 
-@Reachable
 verification case Station_OperationReachable {
     component mission : SpaceMission
 
-    invariant { isActive (mission.station.Main.Operation) }
+    property { EF isActive (mission.station.Main.Operation) }
 }
 
-@Reachable
 verification case Station_OperationReceiveDataWaitingReachable {
     component mission : SpaceMission
 
-    invariant { isActive (mission.station.Main.Operation.ReceiveData.Waiting) }
+    property { EF isActive (mission.station.Main.Operation.ReceiveData.Waiting) }
 }
 
-@Reachable
 verification case Spacecraft_CommunicationWaitingPingReachable {
     component mission : SpaceMission
 
-    invariant { isActive (mission.spacecraft.Communication.WaitingPing) }
+    property { EF isActive (mission.spacecraft.Communication.WaitingPing) }
 }
 
-@Reachable
 verification case Spacecraft_CommunicationTransmittingReachable {
     component mission : SpaceMission
 
-    invariant { isActive (mission.spacecraft.Communication.Transmitting) }
+    property { EF isActive (mission.spacecraft.Communication.Transmitting) }
 }
 
-@Reachable
 verification case Spacecraft_CommunicationTransmittingSendDataSendingReachable {
     component mission : SpaceMission
 
-    invariant { isActive (mission.spacecraft.Communication.Transmitting.SendData.Sending) }
+    property { EF isActive (mission.spacecraft.Communication.Transmitting.SendData.Sending) }
 }
 
-@Reachable
 verification case Spacecraft_CommunicationTransmittingConsumePowerConsumingReachable {
     component mission : SpaceMission
 
-    invariant { isActive (mission.spacecraft.Communication.Transmitting.ConsumePower.Consuming) }
+    property { EF isActive (mission.spacecraft.Communication.Transmitting.ConsumePower.Consuming) }
 }
 
-@Reachable
 verification case Spacecraft_BatteryNotRechargingReachable {
     component mission : SpaceMission
 
-    invariant { isActive (mission.spacecraft.Battery.NotRecharging) }
+    property { EF isActive (mission.spacecraft.Battery.NotRecharging) }
 }
 
-@Reachable
 verification case Spacecraft_BatteryRechargingReachable {
     component mission : SpaceMission
 
-    invariant { isActive (mission.spacecraft.Battery.Recharging) }
+    property { EF isActive (mission.spacecraft.Battery.Recharging) }
 }
+
+/*
+verification case Station_ReceivedDataCanReach0 {
+    component mission : SpaceMission
+
+    property { EF (mission.station.receivedData >= 0) }
+}
+
+verification case Station_ReceivedDataCanReach10 {
+    component mission : SpaceMission
+
+    property { EF (mission.station.receivedData >= 10) }
+}
+
+verification case Station_ReceivedDataCanReach20 {
+    component mission : SpaceMission
+
+    property { EF (mission.station.receivedData >= 20) }
+}
+
+verification case Station_ReceivedDataCanReach30 {
+    component mission : SpaceMission
+
+    property { EF (mission.station.receivedData >= 30) }
+}
+
+verification case Station_ReceivedDataCanReach40 {
+    component mission : SpaceMission
+
+    property { EF (mission.station.receivedData >= 40) }
+}
+
+verification case Station_ReceivedDataCanReach50 {
+    component mission : SpaceMission
+
+    property { EF (mission.station.receivedData >= 50) }
+}
+
+verification case Station_ReceivedDataCanReach60 {
+    component mission : SpaceMission
+
+    property { EF (mission.station.receivedData >= 60) }
+}
+
+verification case Station_ReceivedDataCanReach70 {
+    component mission : SpaceMission
+
+    property { EF (mission.station.receivedData >= 70) }
+}
+
+verification case Station_ReceivedDataCanReach80 {
+    component mission : SpaceMission
+
+    property { EF (mission.station.receivedData >= 80) }
+}
+
+verification case Station_ReceivedDataCanReach90 {
+    component mission : SpaceMission
+
+    property { EF (mission.station.receivedData >= 90) }
+}
+
+verification case Station_ReceivedDataCanReach100 {
+    component mission : SpaceMission
+
+    property { EF (mission.station.receivedData >= 100) }
+}
+
+verification case Spacecraft_DataCanReach100 {
+    component mission : SpaceMission
+
+    property { EF (mission.spacecraft.data <= 100) }
+}
+
+verification case Spacecraft_DataCanReach90 {
+    component mission : SpaceMission
+
+    property { EF (mission.spacecraft.data <= 90) }
+}
+
+verification case Spacecraft_DataCanReach80 {
+    component mission : SpaceMission
+
+    property { EF (mission.spacecraft.data <= 80) }
+}
+
+verification case Spacecraft_DataCanReach70 {
+    component mission : SpaceMission
+
+    property { EF (mission.spacecraft.data <= 70) }
+}
+
+verification case Spacecraft_DataCanReach60 {
+    component mission : SpaceMission
+
+    property { EF (mission.spacecraft.data <= 60) }
+}
+
+verification case Spacecraft_DataCanReach50 {
+    component mission : SpaceMission
+
+    property { EF (mission.spacecraft.data <= 50) }
+}
+
+verification case Spacecraft_DataCanReach40 {
+    component mission : SpaceMission
+
+    property { EF (mission.spacecraft.data <= 40) }
+}
+
+verification case Spacecraft_DataCanReach30 {
+    component mission : SpaceMission
+
+    property { EF (mission.spacecraft.data <= 30) }
+}
+
+verification case Spacecraft_DataCanReach20 {
+    component mission : SpaceMission
+
+    property { EF (mission.spacecraft.data <= 20) }
+}
+
+verification case Spacecraft_DataCanReach10 {
+    component mission : SpaceMission
+
+    property { EF (mission.spacecraft.data <= 10) }
+}
+
+verification case Spacecraft_DataCanReach0 {
+    component mission : SpaceMission
+
+    property { EF (mission.spacecraft.data <= 0) }
+}
+
+verification case Spacecraft_BatteryAlwaysAbove0 {
+    component mission : SpaceMission
+
+    property { AG (mission.spacecraft.batteryCharge >= 0) }
+}
+
+verification case Spacecraft_BatteryAlwaysAbove10 {
+    component mission : SpaceMission
+
+    property { AG (mission.spacecraft.batteryCharge >= 10) }
+}
+
+verification case Spacecraft_BatteryAlwaysAbove20 {
+    component mission : SpaceMission
+
+    property { AG (mission.spacecraft.batteryCharge >= 20) }
+}
+
+verification case Spacecraft_BatteryAlwaysAbove30 {
+    component mission : SpaceMission
+
+    property { AG (mission.spacecraft.batteryCharge >= 30) }
+}
+
+verification case Spacecraft_BatteryAlwaysAbove40 {
+    component mission : SpaceMission
+
+    property { AG (mission.spacecraft.batteryCharge >= 40) }
+}
+*/

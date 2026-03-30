@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.transformation.inliner.OxstsCallInliner
 import hu.bme.mit.semantifyr.semantics.transformation.instantiation.OxstsInflator
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.ArtifactManager
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 
 @CompilationScoped
@@ -28,6 +29,9 @@ class OxstsClassInliner {
 
     @Inject
     private lateinit var oxstsInliningManager: CompilationStateManager
+
+    @Inject
+    private lateinit var artifactManager: ArtifactManager
 
     fun inline(progressContext: ProgressContext, classDeclaration: ClassDeclaration): InlinedOxsts {
         val inlinedOxsts = inlinedOxstsModelCreator.createInlinedOxsts(classDeclaration)

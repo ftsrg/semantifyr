@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.utils.ExpressionVisitor
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticBinaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
@@ -17,6 +18,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
@@ -138,6 +140,20 @@ class OxstsExpressionTransformer : ExpressionVisitor<XstsExpression>() {
     override fun visit(expression: NegationOperator): XstsExpression {
         return XstsFactory.createNegationOperator().also {
             it.body = transform(expression.body)
+        }
+    }
+
+    override fun visit(expression: AG): XstsExpression {
+        // AG is implicit in XSTS
+        return visit(expression.body)
+    }
+
+    override fun visit(expression: EF): XstsExpression {
+        // De-morgan: EF f === not AG not f
+        //  the outermost negation is handled on the verifier-side
+        //  and AG is implicit -> not f is enough
+        return XstsFactory.createNegationOperator().also {
+            it.body = visit(expression.body)
         }
     }
 

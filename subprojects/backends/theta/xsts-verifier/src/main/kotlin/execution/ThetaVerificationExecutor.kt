@@ -8,19 +8,21 @@ package hu.bme.mit.semantifyr.backends.theta.verification.execution
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backends.theta.verification.utils.ensureExistsOutputStream
+import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaExecutionResult
 import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaExecutionSpecification
 import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaXstsExecutorProvider
 import hu.bme.mit.semantifyr.semantics.verification.VerificationDispatcher
+import kotlinx.serialization.Serializable
 import java.io.File
-import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
 
-class ThetaVerificationSpecification(
+@Serializable
+data class ThetaVerificationSpecification(
     val workingDirectory: String,
     val name: String,
     val id: Int,
     val parameter: String,
-    val timeout: Long = 3,
-    val timeUnit: TimeUnit = TimeUnit.MINUTES
+    val timeout: Duration,
 ) {
     val modelFileName = "$name.xsts"
     val cexFileName = "out.cex"
@@ -39,17 +41,14 @@ sealed class ThetaVerificationResult(
 ) {
     val hasWitness = File(runtimeDetails.workingDirectory, runtimeDetails.cexPath).exists()
 }
+
 class ThetaUnknownVerificationResult(runtimeDetails: ThetaVerificationSpecification) : ThetaVerificationResult(runtimeDetails)
 class ThetaSafeVerificationResult(runtimeDetails: ThetaVerificationSpecification) : ThetaVerificationResult(runtimeDetails)
 class ThetaUnsafeVerificationResult(runtimeDetails: ThetaVerificationSpecification) : ThetaVerificationResult(runtimeDetails)
-class ThetaErrorVerificationResult(runtimeDetails: ThetaVerificationSpecification) : ThetaVerificationResult(runtimeDetails) {
-    val failureMessage = "Theta execution failed, see: ${runtimeDetails.workingDirectory}/${runtimeDetails.errPath}"
-}
 
-fun ThetaVerificationSpecification.toVerificationResult(): ThetaVerificationResult {
-    val errorFile = File(workingDirectory, errPath)
-    if (errorFile.exists() && errorFile.useLines { it.any { it.isNotEmpty() } }) {
-        return ThetaErrorVerificationResult(this)
+fun ThetaVerificationSpecification.toVerificationResult(executionResult: ThetaExecutionResult): ThetaVerificationResult {
+    if (executionResult.exitCode != 0) {
+        error("Theta execution failed: $this")
     }
 
     val logFile = File(workingDirectory, logPath)
@@ -94,7 +93,6 @@ class ThetaVerificationExecutor {
             logStream,
             errorStream,
             timeout,
-            timeUnit,
         )
     }
 
@@ -108,11 +106,11 @@ class ThetaVerificationExecutor {
         writer.appendLine()
         writer.flush()
 
-        verificationDispatcher.execute {
+        val result = verificationDispatcher.execute {
             thetaExecutor.execute(thetaExecutionSpecification)
         }
 
-        return thetaVerificationSpecification.toVerificationResult()
+        return thetaVerificationSpecification.toVerificationResult(result)
     }
 
 }

@@ -50,12 +50,12 @@ class VariableOptimizer {
         }
 
         val variableAssignments = (
-            inlinedOxsts.eAllOfType<AssignmentOperation>().groupBy {
-                evaluator.evaluateTyped(VariableDeclaration::class.java, it.reference)
-            } + inlinedOxsts.eAllOfType<HavocOperation>().groupBy {
-                evaluator.evaluateTyped(VariableDeclaration::class.java, it.reference)
-            }
-        ).toMutableMap()
+                inlinedOxsts.eAllOfType<AssignmentOperation>().groupBy {
+                    evaluator.evaluateTyped(VariableDeclaration::class.java, it.reference)
+                } + inlinedOxsts.eAllOfType<HavocOperation>().groupBy {
+                    evaluator.evaluateTyped(VariableDeclaration::class.java, it.reference)
+                }
+                ).toMutableMap()
 
         val unreadVariables: MutableSet<VariableDeclaration>
         val unassignedInitializedVariables: MutableSet<VariableDeclaration>
@@ -71,7 +71,7 @@ class VariableOptimizer {
 
         override fun doOptimizationStep(element: Element): Boolean {
             return removeUnreadVariable()
-                || removeUnassignedInitializedVariables()
+                    || removeUnassignedInitializedVariables()
         }
 
         private fun removeUnreadVariable(): Boolean {

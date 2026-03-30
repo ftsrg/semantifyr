@@ -9,6 +9,6 @@ plugins {
 }
 
 xtext {
-    mweFile = layout.projectDirectory.file("src/main/java/hu/bme/mit/semantifyr/xsts/lang/GenerateXsts.mwe2")
-    xtextFile = layout.projectDirectory.file("src/main/java/hu/bme/mit/semantifyr/xsts/lang/Xsts.xtext")
+    mweFile = "src/main/java/hu/bme/mit/semantifyr/xsts/lang/GenerateXsts.mwe2"
+    xtextFile = "src/main/java/hu/bme/mit/semantifyr/xsts/lang/Xsts.xtext"
 }

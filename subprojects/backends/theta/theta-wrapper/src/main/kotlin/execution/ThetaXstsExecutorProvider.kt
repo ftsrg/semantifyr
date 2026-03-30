@@ -29,12 +29,13 @@ class ThetaXstsExecutorProvider {
     }
 
     private fun resolveExecutor(): ThetaXstsExecutor {
-        if (dockerBasedThetaXstsExecutor.check()) {
-            return dockerBasedThetaXstsExecutor
-        }
-
         if (shellBasedThetaXstsExecutor.check()) {
             return shellBasedThetaXstsExecutor
+        }
+
+        // docker-based executor.check is still unreliable... FIXME
+        if (dockerBasedThetaXstsExecutor.check()) {
+            return dockerBasedThetaXstsExecutor
         }
 
         throw IllegalStateException("Could not find any working Theta Xsts executor.")

@@ -17,8 +17,6 @@ import java.io.File
 @CompilationScoped
 class CompilationStateManager {
 
-    private lateinit var basePath: File
-
     private lateinit var inlinedOxsts: InlinedOxsts
     private lateinit var progressContext: ProgressContext
 
@@ -27,13 +25,14 @@ class CompilationStateManager {
     @Inject
     private lateinit var serializer: ISerializer
 
+    @Inject
+    private lateinit var inlinedArtifactManager: InlinedArtifactManager
+
     var isSerializeSteps = false
 
     fun initialize(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext) {
         this.inlinedOxsts = inlinedOxsts
         this.progressContext = progressContext
-        basePath = File(inlinedOxsts.eResource().uri.toFileString().replace(".oxsts", "${File.separator}steps"))
-        basePath.deleteRecursively()
 
         commitModelState()
     }
@@ -51,23 +50,19 @@ class CompilationStateManager {
     }
 
     fun commitInflated() {
-        val modelFile = basePath.resolve("inlfated.oxsts")
-        serializeInto(modelFile)
+        serializeInto(inlinedArtifactManager.inflatedOxstsFile)
     }
 
     fun commitInlined() {
-        val modelFile = basePath.resolve("inlined.oxsts")
-        serializeInto(modelFile)
+        serializeInto(inlinedArtifactManager.inlinedOxstsFile)
     }
 
     fun commitDeflated() {
-        val modelFile = basePath.resolve("deflated.oxsts")
-        serializeInto(modelFile)
+        serializeInto(inlinedArtifactManager.deflatedOxstsFile)
     }
 
     fun serializeStep() {
-        val modelFile = basePath.resolve("step${id++}.oxsts")
-        serializeInto(modelFile)
+        serializeInto(inlinedArtifactManager.stepOxstsFile(id++))
     }
 
     fun serializeInto(modelFile: File) {

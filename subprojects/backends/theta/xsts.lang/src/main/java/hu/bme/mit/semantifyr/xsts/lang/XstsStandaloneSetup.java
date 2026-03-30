@@ -6,11 +6,6 @@
 
 package hu.bme.mit.semantifyr.xsts.lang;
 
-
-import com.google.inject.Injector;
-import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsPackage;
-import org.eclipse.emf.ecore.EPackage;
-
 /**
  * Initialization support for running Xtext languages without Equinox extension registry.
  */

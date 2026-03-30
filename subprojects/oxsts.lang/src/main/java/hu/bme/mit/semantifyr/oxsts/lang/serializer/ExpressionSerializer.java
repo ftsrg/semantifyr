@@ -43,6 +43,7 @@ public class ExpressionSerializer extends ExpressionVisitor<String> {
     protected String visit(ComparisonOperator expression) {
         return visit(expression.getLeft()) + stringifyOperator(expression.getOp()) + visit(expression.getRight());
     }
+
     protected String stringifyOperator(ArithmeticOp operator) {
         return switch (operator) {
             case ADD -> " + ";
@@ -85,6 +86,16 @@ public class ExpressionSerializer extends ExpressionVisitor<String> {
     @Override
     protected String visit(NegationOperator expression) {
         return "! " + visit(expression.getBody());
+    }
+
+    @Override
+    protected String visit(AG expression) {
+        return "AG " + visit(expression.getBody());
+    }
+
+    @Override
+    protected String visit(EF expression) {
+        return "EF " + visit(expression.getBody());
     }
 
     @Override

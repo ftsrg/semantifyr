@@ -10,7 +10,7 @@ package hu.bme.mit.semantifyr.cex.lang.validation;
  * See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#validation
  */
 public class CexValidator extends AbstractCexValidator {
-	
+
 //	public static final String INVALID_NAME = "invalidName";
 //
 //	@Check
@@ -21,5 +21,5 @@ public class CexValidator extends AbstractCexValidator {
 //					INVALID_NAME);
 //		}
 //	}
-	
+
 }

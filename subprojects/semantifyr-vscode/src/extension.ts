@@ -14,8 +14,6 @@ export async function activate(context: ExtensionContext) {
     await startClients(context);
 
     registerCommands(context);
-
-    await startClients(context);
 }
 
 export async function deactivate() {

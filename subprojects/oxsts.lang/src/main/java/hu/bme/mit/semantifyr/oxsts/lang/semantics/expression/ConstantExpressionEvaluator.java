@@ -47,7 +47,7 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
             return switch (expression.getOp()) {
                 case EQ -> new BooleanEvaluation(lValue == rValue);
                 case NOT_EQ -> new BooleanEvaluation(lValue != rValue);
-                default -> throw  new IllegalArgumentException("Boolean expression can only be == or !=!");
+                default -> throw new IllegalArgumentException("Boolean expression can only be == or !=!");
             };
         }
 
@@ -55,7 +55,7 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
             return switch (expression.getOp()) {
                 case EQ -> new BooleanEvaluation(lValue == rValue);
                 case NOT_EQ -> new BooleanEvaluation(lValue != rValue);
-                default -> throw  new IllegalArgumentException("Boolean expression can only be == or !=!");
+                default -> throw new IllegalArgumentException("Boolean expression can only be == or !=!");
             };
         }
 
@@ -126,6 +126,16 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
         }
 
         throw new IllegalArgumentException("Expression body is not a boolean expression!");
+    }
+
+    @Override
+    protected ExpressionEvaluation visit(AG expression) {
+        throw new IllegalArgumentException("AG expressions are not constant evaluable!");
+    }
+
+    @Override
+    protected ExpressionEvaluation visit(EF expression) {
+        throw new IllegalArgumentException("EF expressions are not constant evaluable!");
     }
 
     @Override

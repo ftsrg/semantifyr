@@ -6,7 +6,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends libgomp1 libmpfr-dev openjdk-25-jre && \
     apt-get clean && sudo rm -rf /var/lib/apt/lists/*
 
-ARG OVS_VER=v1.106.3
+ARG OVS_VER=v1.109.5
 RUN wget -q https://github.com/gitpod-io/openvscode-server/releases/download/openvscode-server-${OVS_VER}/openvscode-server-${OVS_VER}-linux-x64.tar.gz \
  && tar xzf openvscode-server-${OVS_VER}-linux-x64.tar.gz \
  && mv openvscode-server-${OVS_VER}-linux-x64 /opt/openvscode-server \

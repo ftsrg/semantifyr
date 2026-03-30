@@ -8,7 +8,6 @@ package hu.bme.mit.semantifyr.gradle.conventions
 
 import org.gradle.accessors.dm.LibrariesForLibs
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import org.gradle.kotlin.dsl.registering
 
 plugins {
     `java-library`
@@ -39,8 +38,12 @@ java.toolchain {
 }
 
 tasks {
+    // TODO: refactor tests to use test suites
     test {
         useJUnitPlatform {
+            // we should use source sets instead
+            excludeTags("benchmark")
+            excludeTags("verification")
             excludeTags("slow")
         }
 
@@ -52,17 +55,8 @@ tasks {
         finalizedBy(tasks.jacocoTestReport)
     }
 
-    val allTests by tasks.registering(Test::class) {
-        useJUnitPlatform()
-
-        minHeapSize = "512m"
-        maxHeapSize = "4G"
-        testLogging.showStandardStreams = true
-
-        finalizedBy(tasks.jacocoTestReport)
-    }
-
     jacocoTestReport {
         inputs.files(test.get().outputs)
+        executionData(test.get())
     }
 }

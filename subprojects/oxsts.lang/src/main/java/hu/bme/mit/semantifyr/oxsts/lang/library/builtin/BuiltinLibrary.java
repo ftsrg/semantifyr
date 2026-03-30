@@ -18,10 +18,8 @@ import java.util.List;
 public class BuiltinLibrary extends ResourceBasedOxstsLibrary {
 
     public static final QualifiedName BUILTIN_LIBRARY_NAME = QualifiedName.create("semantifyr");
-    public static final QualifiedName BUILTIN_VERIFICATION_LIBRARY_NAME = BUILTIN_LIBRARY_NAME.append("verification");
 
     private URI builtinLibraryUri;
-    private URI builtinVerificationLibraryUri;
 
     public BuiltinLibrary() {
         super(getHomePath().resolve(".semantifyr").resolve("builtin"));
@@ -33,14 +31,6 @@ public class BuiltinLibrary extends ResourceBasedOxstsLibrary {
         }
 
         return builtinLibraryUri;
-    }
-
-    public URI getBuiltinVerificationResourceUri() {
-        if (builtinVerificationLibraryUri == null) {
-            builtinVerificationLibraryUri = resolveUri(BUILTIN_VERIFICATION_LIBRARY_NAME);
-        }
-
-        return builtinVerificationLibraryUri;
     }
 
     @Override
@@ -57,7 +47,6 @@ public class BuiltinLibrary extends ResourceBasedOxstsLibrary {
     @Override
     protected void saveResources() {
         saveResource("hu/bme/mit/semantifyr/oxsts/lang/library/semantifyr.oxsts", Path.of("semantifyr.oxsts"));
-        saveResource("hu/bme/mit/semantifyr/oxsts/lang/library/semantifyr/verification.oxsts", Path.of("semantifyr/verification.oxsts"));
     }
 
     @Override

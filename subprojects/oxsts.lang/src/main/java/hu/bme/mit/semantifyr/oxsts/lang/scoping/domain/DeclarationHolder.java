@@ -10,15 +10,15 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration;
 
 public class DeclarationHolder {
     protected Declaration declaration;
-    
+
     public DeclarationHolder(Declaration declaration) {
         this.declaration = declaration;
     }
-    
+
     public Declaration getDeclaration() {
         return this.declaration;
     }
-    
+
     public void setDeclaration(Declaration declaration) {
         this.declaration = declaration;
     }

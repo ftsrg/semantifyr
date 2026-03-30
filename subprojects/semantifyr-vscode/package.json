@@ -49,20 +49,32 @@
     "languages": [
       {
         "id": "oxsts",
-        "extensions": [".oxsts"],
-        "aliases": ["OXSTS"],
+        "extensions": [
+          ".oxsts"
+        ],
+        "aliases": [
+          "OXSTS"
+        ],
         "configuration": "./language-configuration.json"
       },
       {
         "id": "xsts",
-        "extensions": [".xsts"],
-        "aliases": ["XSTS"],
+        "extensions": [
+          ".xsts"
+        ],
+        "aliases": [
+          "XSTS"
+        ],
         "configuration": "./language-configuration.json"
       },
       {
         "id": "gamma",
-        "extensions": [".gamma"],
-        "aliases": ["Gamma"],
+        "extensions": [
+          ".gamma"
+        ],
+        "aliases": [
+          "Gamma"
+        ],
         "configuration": "./language-configuration.json"
       }
     ],

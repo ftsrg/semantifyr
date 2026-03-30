@@ -24,7 +24,7 @@ public class GammaStandaloneSetup extends GammaStandaloneSetupGenerated {
         return super.createInjectorAndDoEMFRegistration();
     }
 
-	public static void doSetup() {
-		new GammaStandaloneSetup().createInjectorAndDoEMFRegistration();
-	}
+    public static void doSetup() {
+        new GammaStandaloneSetup().createInjectorAndDoEMFRegistration();
+    }
 }

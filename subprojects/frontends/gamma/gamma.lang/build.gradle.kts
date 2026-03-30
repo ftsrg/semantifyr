@@ -9,6 +9,6 @@ plugins {
 }
 
 xtext {
-    mweFile = layout.projectDirectory.file("src/main/java/hu/bme/mit/semantifyr/frontends/gamma/lang/GenerateGamma.mwe2")
-    xtextFile = layout.projectDirectory.file("src/main/java/hu/bme/mit/semantifyr/frontends/gamma/lang/Gamma.xtext")
+    mweFile = "src/main/java/hu/bme/mit/semantifyr/frontends/gamma/lang/GenerateGamma.mwe2"
+    xtextFile = "src/main/java/hu/bme/mit/semantifyr/frontends/gamma/lang/Gamma.xtext"
 }

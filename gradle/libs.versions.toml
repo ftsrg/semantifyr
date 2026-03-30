@@ -6,7 +6,6 @@
 ecore = "2.41.0"
 junit = "6.0.3"
 assertj = "3.27.7"
-junitplatform = "6.0.3"
 mockito = "5.21.0"
 mwe2 = "2.25.0"
 slf4j = "2.0.17"
@@ -20,11 +19,12 @@ viatra = "2.9.1"
 dockerJava = "3.7.0"
 guice = "7.0.0"
 node = "7.1.0"
+bmuschkoDocker = "9.4.0"
 
 [libraries]
 ecore = { group = "org.eclipse.emf", name = "org.eclipse.emf.ecore", version.ref = "ecore" }
 ecore-codegen = { group = "org.eclipse.emf", name = "org.eclipse.emf.codegen.ecore", version.ref = "ecore" }
-junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junitplatform" }
+junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junit" }
 junit-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit" }
 junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit" }
 junit-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junit" }
@@ -52,10 +52,11 @@ viatra-query-runtime = { group = "org.eclipse.viatra", name = "viatra-query-runt
 viatra-transformation-runtime = { group = "org.eclipse.viatra", name = "viatra-transformation-runtime", version.ref = "viatra" }
 guice = { group = "com.google.inject", name = "guice", version.ref = "guice" }
 guice-extensions-assistedinject = { group = "com.google.inject.extensions", name = "guice-assistedinject", version.ref = "guice" }
-docker-java-core = { group = "com.github.docker-java" , name = "docker-java-core", version.ref = "dockerJava" }
-docker-java-transport = { group = "com.github.docker-java" , name = "docker-java-transport-httpclient5", version.ref = "dockerJava" }
+docker-java-core = { group = "com.github.docker-java", name = "docker-java-core", version.ref = "dockerJava" }
+docker-java-transport = { group = "com.github.docker-java", name = "docker-java-transport-httpclient5", version.ref = "dockerJava" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 gradle-node = { id = "com.github.node-gradle.node", version.ref = "node" }
+bmuschko-docker = { id = "com.bmuschko.docker-remote-api", version.ref = "bmuschkoDocker" }

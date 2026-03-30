@@ -22,7 +22,6 @@ import org.eclipse.xtext.resource.ISelectable;
 import org.eclipse.xtext.scoping.IScope;
 import org.eclipse.xtext.scoping.impl.ResourceSetGlobalScopeProvider;
 import org.eclipse.xtext.scoping.impl.SelectableBasedScope;
-import org.eclipse.xtext.util.IResourceScopeCache;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -94,6 +93,7 @@ public class OxstsGlobalScopeProvider extends ResourceSetGlobalScopeProvider {
     protected record LoadedImportScopes(
             List<ISelectable> implicitScopes,
             List<ISelectable> explicitScopes
-    ) { }
+    ) {
+    }
 
 }

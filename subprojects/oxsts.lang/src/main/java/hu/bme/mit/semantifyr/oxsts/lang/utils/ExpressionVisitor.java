@@ -23,6 +23,7 @@ public abstract class ExpressionVisitor<T> {
         return switch (expression) {
             case BinaryOperator binaryOperator -> visit(binaryOperator);
             case UnaryOperator unaryOperator -> visit(unaryOperator);
+            case TemporalOperator temporalOperator -> visit(temporalOperator);
             default -> throw new IllegalStateException("Unexpected value: " + expression);
         };
     }
@@ -52,6 +53,17 @@ public abstract class ExpressionVisitor<T> {
 
     protected abstract T visit(ArithmeticUnaryOperator expression);
     protected abstract T visit(NegationOperator expression);
+
+    protected T visit(TemporalOperator expression) {
+        return switch (expression) {
+            case AG ag -> visit(ag);
+            case EF ef -> visit(ef);
+            default -> throw new IllegalStateException("Unexpected value: " + expression);
+        };
+    }
+
+    protected abstract T visit(AG expression);
+    protected abstract T visit(EF expression);
 
     protected T visit(LiteralExpression expression) {
         return switch (expression) {

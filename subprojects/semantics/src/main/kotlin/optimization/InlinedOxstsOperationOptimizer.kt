@@ -30,10 +30,10 @@ class InlinedOxstsOperationOptimizer : AbstractLoopedOptimizer<InlinedOxsts>() {
 
     override fun doOptimizationStep(element: InlinedOxsts): Boolean {
         return constantFalseAssumptionPropagatorOptimizer.optimize(element)
-            || operationFlattenerOptimizer.optimize(element)
-            || redundantOperationRemoverOptimizer.optimize(element)
-            || expressionOptimizer.optimize(element)
-            || variableOptimizer.optimize(element)
+                || operationFlattenerOptimizer.optimize(element)
+                || redundantOperationRemoverOptimizer.optimize(element)
+                || expressionOptimizer.optimize(element)
+                || variableOptimizer.optimize(element)
     }
 
 }

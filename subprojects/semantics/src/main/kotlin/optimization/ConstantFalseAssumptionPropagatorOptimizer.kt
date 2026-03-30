@@ -34,9 +34,9 @@ class ConstantFalseAssumptionPropagatorOptimizer : AbstractLoopedOptimizer<Eleme
 
     override fun doOptimizationStep(element: Element): Boolean {
         return propagateInSequenceOperation(element)
-            || removeInChoiceBranch(element)
-            || propagateSingleBranchChoiceOperation(element)
-            || propagateIfOperation(element)
+                || removeInChoiceBranch(element)
+                || propagateSingleBranchChoiceOperation(element)
+                || propagateIfOperation(element)
     }
 
     private fun propagateInSequenceOperation(element: Element): Boolean {

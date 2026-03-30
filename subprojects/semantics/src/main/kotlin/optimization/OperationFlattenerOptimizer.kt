@@ -23,8 +23,8 @@ class OperationFlattenerOptimizer : AbstractLoopedOptimizer<Element>() {
 
     override fun doOptimizationStep(element: Element): Boolean {
         return flattenNestedSequenceOperations(element)
-            || flattenNestedChoiceOperations(element)
-            || flattenSingleBranchChoiceOperations(element)
+                || flattenNestedChoiceOperations(element)
+                || flattenSingleBranchChoiceOperations(element)
     }
 
     private fun flattenNestedSequenceOperations(element: Element): Boolean {

@@ -4,42 +4,27 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.loading
+package hu.bme.mit.semantifyr.semantics.reader
 
 import com.google.inject.Inject
 import com.google.inject.Provider
 import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryAdapterFinder
 import hu.bme.mit.semantifyr.oxsts.lang.utils.ResourceUriProvider
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
-import hu.bme.mit.semantifyr.semantics.utils.error
+import hu.bme.mit.semantifyr.semantics.utils.ResourceSetLoader
+import hu.bme.mit.semantifyr.semantics.utils.SemantifyrUtils.modelPathsUnder
 import hu.bme.mit.semantifyr.semantics.utils.info
 import hu.bme.mit.semantifyr.semantics.utils.loggerFactory
-import hu.bme.mit.semantifyr.semantics.utils.warn
-import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.ResourceSet
-import org.eclipse.xtext.EcoreUtil2
-import org.eclipse.xtext.diagnostics.Severity
 import org.eclipse.xtext.resource.XtextResourceSet
-import org.eclipse.xtext.util.CancelIndicator
-import org.eclipse.xtext.validation.CheckMode
-import org.eclipse.xtext.validation.IResourceValidator
 import java.nio.file.Path
-import kotlin.io.path.absolutePathString
 
 class SemantifyrModelContext(
     val resourceSet: ResourceSet,
-    val modelResource: List<Resource>
-) {
-    fun streamClasses(): Sequence<ClassDeclaration> {
-        return modelResource.asSequence().mapNotNull {
-            it.contents.first() as? OxstsModelPackage
-        }.flatMap {
-            it.declarations
-        }.filterIsInstance(ClassDeclaration::class.java)
-    }
-}
+    val libraryResources: List<Resource>,
+    val modelResources: List<Resource>,
+)
 
 class SemantifyrLoader {
 
@@ -49,7 +34,7 @@ class SemantifyrLoader {
     private lateinit var resourceSetProvider: Provider<XtextResourceSet>
 
     @Inject
-    private lateinit var resourceValidator: IResourceValidator
+    private lateinit var resourceSetLoader: ResourceSetLoader
 
     @Inject
     private lateinit var libraryAdapterFinder: LibraryAdapterFinder
@@ -63,80 +48,80 @@ class SemantifyrLoader {
         return resourceSet
     }
 
-    private fun loadFile(resourceSet: ResourceSet, path: Path): Resource {
-        logger.info { "Reading file: $path" }
-        val resource = resourceSet.getResource(resourceUriProvider.createFileUri(path), true)
-        return resource
+    fun loadStandaloneModel(path: Path): SemantifyrModelContext {
+        return startContext().loadModel(path).buildAndResolve()
     }
 
-    fun loadStandaloneModelContext(model: Path): SemantifyrModelContext {
+    fun startContext(): SemantifyrLoaderContext {
+        return SemantifyrLoaderContext()
+    }
+
+    fun cloneOxstsPackagesInResourceSet(resourceSet: ResourceSet): ResourceSet {
+        val clone = createResourceSet()
+
+        // For some reason resourceSet.resources may change in the loop leading to concurrent modification
+        val resourcesCopy = resourceSet.resources.toList()
+        for (resource in resourcesCopy) {
+            if (resource.contents.singleOrNull() is OxstsModelPackage) {
+                openResource(clone, resource)
+            }
+        }
+
+        resourceSetLoader.resolveAllAndValidate(clone)
+
+        return clone
+    }
+
+    private fun openResource(resourceSet: ResourceSet, resource: Resource): Resource {
+        return resourceSet.getResource(resource.uri, true)
+    }
+
+    inner class SemantifyrLoaderContext {
         val resourceSet = createResourceSet()
-        val resource = loadFile(resourceSet, model)
-        resolveAndValidate(resourceSet)
-        return SemantifyrModelContext(
-            resourceSet,
-            listOf(resource)
-        )
-    }
+        val libraryResources = mutableListOf<Resource>()
+        val modelResources = mutableListOf<Resource>()
 
-    fun loadStandaloneModel(model: Path): Resource {
-        val resourceSet = createResourceSet()
-        val resource = loadFile(resourceSet, model)
-        resolveAndValidate(resourceSet)
-        return resource
-    }
+        fun buildAndResolve(): SemantifyrModelContext {
+            resourceSetLoader.resolveAllAndValidate(resourceSet)
 
-    private fun resolveAndValidate(resourceSet: ResourceSet) {
-        EcoreUtil2.resolveAll(resourceSet)
-        for (resource in resourceSet.resources) {
-            validateResource(resource)
+            return SemantifyrModelContext(resourceSet, libraryResources, modelResources)
         }
-    }
 
-    fun validateResource(resource: Resource) {
-        val issues = resourceValidator.validate(resource, CheckMode.ALL, CancelIndicator.NullImpl)
+        fun loadModel(path: Path): SemantifyrLoaderContext {
+            val resource = loadFile(resourceSet, path)
+            modelResources += resource
 
-        if (resource.errors.any()) {
-            logger.error { "Errors found in file (${resource.uri.toFileString()})" }
+            return this
+        }
 
-            for (error in resource.errors) {
-                logger.error(error.message)
+        fun loadModels(path: Path): SemantifyrLoaderContext {
+            for (modelPath in modelPathsUnder(path)) {
+                loadModel(modelPath)
             }
 
-            error("Errors found in file (${resource.uri.toFileString()})}")
+            return this
         }
-        if (resource.warnings.any()) {
-            logger.warn { "Warnings found in file (${resource.uri.toFileString()})" }
 
-            for (warning in resource.warnings) {
-                logger.warn(warning.message)
-            }
+        fun loadLibrary(path: Path): SemantifyrLoaderContext {
+            val resource = loadFile(resourceSet, path)
+            libraryResources += resource
+
+            return this
         }
-        if (issues.any()) {
-            logger.info { "Issues found in file (${resource.uri.toFileString()})" }
 
-            for (issue in issues) {
-                when (issue.severity) {
-                    Severity.INFO -> {
-                        logger.info { "${issue.uriToProblem.toFileString()}[${issue.lineNumber}:${issue.column}] ${issue.message}" }
-                    }
-
-                    Severity.WARNING -> {
-                        logger.warn { "${issue.uriToProblem.toFileString()}[${issue.lineNumber}:${issue.column}] ${issue.message}" }
-                    }
-
-                    Severity.ERROR -> {
-                        logger.error { "${issue.uriToProblem.toFileString()}[${issue.lineNumber}:${issue.column}] ${issue.message}" }
-                    }
-
-                    else -> {}
-                }
+        fun loadLibraries(path: Path): SemantifyrLoaderContext {
+            for (libraryPath in modelPathsUnder(path)) {
+                loadLibrary(libraryPath)
             }
 
-            if (issues.any { it.severity == Severity.ERROR || it.severity == Severity.WARNING }) {
-                error("Issues found in file!")
-            }
+            return this
         }
+
+        private fun loadFile(resourceSet: ResourceSet, path: Path): Resource {
+            logger.info { "Reading file: $path" }
+            return resourceSet.getResource(resourceUriProvider.createFileUri(path), true)
+        }
+
     }
 
 }

@@ -43,7 +43,7 @@ class InlinedOxstsAssumptionWitnessTransformer {
 
             InlinedOxstsAssumptionWitnessState(
                 transformStateValues(stateVariableValues),
-                transformTraceValues(traceVariableValues)
+                transformTraceValues(traceVariableValues),
             )
         }
 
@@ -58,7 +58,7 @@ class InlinedOxstsAssumptionWitnessTransformer {
                 it.value is LiteralBoolean && it.value.isValue
             }.map {
                 InlinedOxstsAssumptionActivatedTrace(
-                    traceOperationTransformer.getTraceOperation(it.variableDeclaration as TopLevelVariableDeclaration)
+                    traceOperationTransformer.getTraceOperation(it.variableDeclaration as TopLevelVariableDeclaration),
                 )
             }
         }
@@ -73,7 +73,7 @@ class InlinedOxstsAssumptionWitnessTransformer {
 
             return InlinedOxstsAssumptionWitnessStateValue(
                 variable,
-                xstsExpressionToOxstsExpressionTransformer.transform(variableValue.value)
+                xstsExpressionToOxstsExpressionTransformer.transform(variableValue.value),
             )
         }
 
@@ -100,7 +100,7 @@ class InlinedOxstsAssumptionWitnessTransformer {
             initializedState,
             transitionStates,
             nextStateMap,
-            inlinedOxsts
+            inlinedOxsts,
         )
     }
 

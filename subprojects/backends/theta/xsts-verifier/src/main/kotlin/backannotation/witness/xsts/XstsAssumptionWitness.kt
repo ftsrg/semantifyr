@@ -32,7 +32,7 @@ class XstsAssumptionWitness(
     override val transitionStates: List<XstsAssumptionWitnessState>,
     override val nextStateMap: Map<XstsAssumptionWitnessState, List<XstsAssumptionWitnessState>>,
     val xstsModel: XstsModel
-): AssumptionWitness<XstsAssumptionWitnessState>()
+) : AssumptionWitness<XstsAssumptionWitnessState>()
 
 class XstsAssumptionWitnessTransformer {
 
@@ -47,7 +47,7 @@ class XstsAssumptionWitnessTransformer {
                     SemantifyrUtils.isLocalVar(it.variableName)
                 }.map {
                     transform(it)
-                }
+                },
             )
         }
 
@@ -61,7 +61,7 @@ class XstsAssumptionWitnessTransformer {
 
             return XstsAssumptionWitnessStateVariableValue(
                 variable,
-                cexExpressionToXstsExpressionTransformer.transform(variableValue.value)
+                cexExpressionToXstsExpressionTransformer.transform(variableValue.value),
             )
         }
 
@@ -88,7 +88,7 @@ class XstsAssumptionWitnessTransformer {
             initializedState,
             transitionStates,
             nextStateMap,
-            xstsModel
+            xstsModel,
         )
     }
 

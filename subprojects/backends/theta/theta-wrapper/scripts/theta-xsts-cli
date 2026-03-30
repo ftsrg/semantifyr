@@ -1,0 +1,8 @@
+#!/bin/bash
+set -e
+SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ "$1" = "--version" ]; then
+    LD_LIBRARY_PATH="$SCRIPTDIR/lib" DYLD_LIBRARY_PATH="$SCRIPTDIR/lib" java "-Djava.library.path=$SCRIPTDIR/lib" -jar "$SCRIPTDIR/jars/theta-xsts-cli.jar" CEGAR --version
+    exit
+fi
+LD_LIBRARY_PATH="$SCRIPTDIR/lib" DYLD_LIBRARY_PATH="$SCRIPTDIR/lib" java -Xss512M -Xms1G -Xmx4G "-Djava.library.path=$SCRIPTDIR/lib" -jar "$SCRIPTDIR/jars/theta-xsts-cli.jar" "$@"

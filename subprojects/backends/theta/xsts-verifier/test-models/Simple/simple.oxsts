@@ -1,0 +1,35 @@
+package semantifyr::theta::xsts::simple
+
+@VerificationCase
+class Incrementing {
+    // x is zero initially
+    var x: int := 0
+
+    // initialize it to 1 as the first step
+    redefine init {
+        x := 1
+    }
+
+    // increment on every step
+    redefine tran {
+        x := x + 1
+    }
+
+    // assert that x will reach 10
+    prop {
+        return EF x == 10
+    }
+}
+
+@VerificationCase
+class Decrementing {
+    var x: int := 10
+
+    redefine tran {
+        x := x - 1
+    }
+
+    prop {
+        return EF x == 0
+    }
+}

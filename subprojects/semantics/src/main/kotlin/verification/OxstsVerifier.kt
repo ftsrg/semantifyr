@@ -14,21 +14,49 @@ import hu.bme.mit.semantifyr.semantics.transformation.ProgressContext
 import hu.bme.mit.semantifyr.semantics.transformation.backannotation.AssumptionWitnessBackAnnotator
 import hu.bme.mit.semantifyr.semantics.transformation.backannotation.InlinedOxstsAssumptionWitness
 import hu.bme.mit.semantifyr.semantics.transformation.backannotation.OxstsClassAssumptionWitnessTransformer
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.ArtifactManager
 import hu.bme.mit.semantifyr.semantics.transformation.tracer.TraceSerializer
-import org.eclipse.emf.common.util.URI
+import kotlinx.serialization.Serializable
+import kotlin.time.Duration
+import kotlin.time.Instant
+import kotlin.time.toKotlinDuration
 
+@Serializable
+data class VerificationTimeMetrics(
+    var inliningDuration: Duration = Duration.ZERO,
+    var xstsTransformationDuration: Duration = Duration.ZERO,
+    var verificationDuration: Duration = Duration.ZERO,
+    var backAnnotationDuration: Duration = Duration.ZERO,
+    var totalDuration: Duration = Duration.ZERO,
+)
+
+@Serializable
+data class VerificationMetaData(
+    val className: String,
+    val modelPath: String,
+    val startedAt: Instant,
+    val timeout: Duration,
+)
+
+@Serializable
 data class VerificationCaseRunResult(
     val result: VerificationResult,
-    val message: String? = null
+    val metrics: VerificationTimeMetrics,
+    val metaData: VerificationMetaData,
+    val message: String? = null,
 )
 
 enum class VerificationResult {
-    Passed, Failed
+    Passed, Failed, Errored
 }
 
 interface OxstsVerifier {
 
-    fun verify(progressContext: ProgressContext, classDeclaration: ClassDeclaration): VerificationCaseRunResult
+    fun verify(
+        progressContext: ProgressContext,
+        classDeclaration: ClassDeclaration,
+        timeout: Duration
+    ): VerificationCaseRunResult
 
 }
 
@@ -46,6 +74,9 @@ abstract class AbstractOxstsVerifier : OxstsVerifier {
     @Inject
     private lateinit var traceSerializer: TraceSerializer
 
+    @Inject
+    private lateinit var artifactManager: ArtifactManager
+
     open fun inlineClass(progressContext: ProgressContext, classDeclaration: ClassDeclaration): InlinedOxsts {
         return oxstsClassInliner.inline(progressContext, classDeclaration)
     }
@@ -57,12 +88,19 @@ abstract class AbstractOxstsVerifier : OxstsVerifier {
         traceSerializer.serialize(classWitness)
 
         val resourceSet = inlinedOxstsAssumptionWitness.inlinedOxsts.eResource().resourceSet
-        val path = inlinedOxstsAssumptionWitness.inlinedOxsts.eResource().uri.toString().replace("inlined.oxsts", "witness.oxsts")
-        val uri = URI.createURI(path)
+        val uri = artifactManager.resolveUri("witness.oxsts")
         resourceSet.getResource(uri, false)?.delete(mutableMapOf<Any, Any>())
         val resource = resourceSet.createResource(uri)
         resource.contents += witness
         resource.save(emptyMap<Any, Any>())
+    }
+
+    fun verify(
+        progressContext: ProgressContext,
+        classDeclaration: ClassDeclaration,
+        timeout: java.time.Duration
+    ): VerificationCaseRunResult {
+        return verify(progressContext, classDeclaration, timeout.toKotlinDuration())
     }
 
 }

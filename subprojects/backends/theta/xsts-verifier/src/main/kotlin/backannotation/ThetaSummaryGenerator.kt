@@ -26,6 +26,8 @@ import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 import org.eclipse.emf.common.util.URI
 import java.io.File
 import kotlin.io.path.pathString
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 class ThetaSummaryGenerator {
 
@@ -82,7 +84,7 @@ class ThetaSummaryGenerator {
             "--model", "inlined.xsts",
             "--flatten-depth", "0",
             "--stacktrace",
-            "--trace-dir", "traces"
+            "--trace-dir", "traces",
         )
 
         val logStream = workingDirectory.resolve("tracing/log.out").ensureExistsOutputStream()
@@ -93,6 +95,7 @@ class ThetaSummaryGenerator {
             command,
             logStream,
             errorStream,
+            10.toDuration(DurationUnit.MINUTES),
         )
 
         val result = verificationDispatcher.runBlocking {

@@ -54,7 +54,7 @@ class TransitionCallTracer {
             transitionDeclaration,
             callExpression.arguments.map {
                 ArgumentTrace(it.parameter, evaluator.tryEvaluateTypedOrNull(ExpressionEvaluation::class.java, it.expression))
-            }
+            },
         )
         transitionCallTraceMap[transitionTraceOperation.name] = transitionCallTrace
 

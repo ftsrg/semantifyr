@@ -37,9 +37,9 @@ import hu.bme.mit.semantifyr.semantics.expression.RedefinitionAwareReferenceReso
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.expression.evaluateTyped
 import hu.bme.mit.semantifyr.semantics.optimization.ConstantFalseAssumptionPropagatorOptimizer
+import hu.bme.mit.semantifyr.semantics.optimization.ExpressionOptimizer
 import hu.bme.mit.semantifyr.semantics.optimization.OperationFlattenerOptimizer
 import hu.bme.mit.semantifyr.semantics.optimization.RedundantOperationRemoverOptimizer
-import hu.bme.mit.semantifyr.semantics.optimization.ExpressionOptimizer
 import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
 import hu.bme.mit.semantifyr.semantics.transformation.tracer.TransitionCallTracer
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory

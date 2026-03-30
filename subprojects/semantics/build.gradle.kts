@@ -10,14 +10,6 @@ plugins {
     kotlin("plugin.serialization")
 }
 
-tasks.withType(Test::class.java) {
-    inputs.dir("TestModels")
-
-    if (environment["thetaVersion"] == null) {
-        environment("thetaVersion", findProperty("thetaVersion")!!)
-    }
-}
-
 repositories {
     mavenCentral()
     maven("https://repo.eclipse.org/content/groups/viatra/")

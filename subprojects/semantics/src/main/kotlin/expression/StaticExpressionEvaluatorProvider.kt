@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.semantics.expression
 
 import com.google.inject.Inject
-import com.google.inject.Provider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance

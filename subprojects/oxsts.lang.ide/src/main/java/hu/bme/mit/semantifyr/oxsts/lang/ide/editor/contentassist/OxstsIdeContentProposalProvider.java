@@ -31,9 +31,9 @@ public class OxstsIdeContentProposalProvider extends IdeContentProposalProvider 
     @Override
     protected void _createProposals(RuleCall ruleCall, ContentAssistContext context, IIdeContentProposalAcceptor acceptor) {
         if (
-            this.oxstsGrammarAccess.getIdentifierRule().equals(ruleCall.getRule())
-            && context.getCurrentModel() instanceof RedefinableDeclaration redefinableDeclaration
-            && redefinableDeclaration.isRedefine()
+                this.oxstsGrammarAccess.getIdentifierRule().equals(ruleCall.getRule())
+                        && context.getCurrentModel() instanceof RedefinableDeclaration redefinableDeclaration
+                        && redefinableDeclaration.isRedefine()
         ) {
             // we should redefine some existing element
             var containerDomain = EcoreUtil2.getContainerOfType(redefinableDeclaration.eContainer(), DomainDeclaration.class);

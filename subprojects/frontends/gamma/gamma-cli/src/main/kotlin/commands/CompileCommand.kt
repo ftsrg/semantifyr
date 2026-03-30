@@ -10,10 +10,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
-import hu.bme.mit.semantifyr.frontends.gamma.semantics.reader.GammaReader
-import hu.bme.mit.semantifyr.frontends.gamma.semantics.GammaToOxstsSerializer
-import hu.bme.mit.semantifyr.frontends.gamma.lang.GammaStandaloneSetup
-import java.io.File
+import hu.bme.mit.semantifyr.frontends.gamma.semantics.StandaloneGammaTransformer
 
 class CompileCommand : CliktCommand("compile") {
 
@@ -21,16 +18,8 @@ class CompileCommand : CliktCommand("compile") {
     val outputPath by option("-o", "--output").file(mustExist = false, canBeFile = true)
 
     override fun run() {
-        val injector = GammaStandaloneSetup().createInjectorAndDoEMFRegistration()
-        val reader = injector.getInstance(GammaReader::class.java)
-
-        val gammaModel = reader.readGammaFile(modelPath)
-
-        val serializer = injector.getInstance(GammaToOxstsSerializer::class.java)
-        val oxstsModel = serializer.transformToOxsts(gammaModel)
-        val outputFile = outputPath ?: File(modelPath.absolutePath.replace(".gamma", ".oxsts"))
-
-        outputFile.writeText(oxstsModel)
+        val transformer = StandaloneGammaTransformer()
+        transformer.transformModel(modelPath, outputPath)
     }
 
 }

@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backends.theta.verification.ThetaArtifactManager
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
@@ -15,7 +16,6 @@ import hu.bme.mit.semantifyr.semantics.transformation.ProgressContext
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 import hu.bme.mit.semantifyr.xsts.lang.XstsStandaloneSetup
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
-import org.eclipse.emf.common.util.URI
 
 private typealias XstsTransition = hu.bme.mit.semantifyr.xsts.lang.xsts.Transition
 private typealias XstsProperty = hu.bme.mit.semantifyr.xsts.lang.xsts.Property
@@ -38,6 +38,9 @@ class OxstsTransformer {
 
     @Inject
     private lateinit var traceOperationTransformer: TraceOperationTransformer
+
+    @Inject
+    private lateinit var thetaArtifactManager: ThetaArtifactManager
 
     fun transform(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext): XstsModel {
         val xsts = createEmptyXsts(inlinedOxsts)
@@ -76,8 +79,7 @@ class OxstsTransformer {
         XstsStandaloneSetup.doSetup();
 
         val resourceSet = inlinedOxsts.eResource().resourceSet
-        val path = inlinedOxsts.eResource().uri.toString().replace(".oxsts", ".xsts")
-        val uri = URI.createURI(path)
+        val uri = thetaArtifactManager.xstsUri
 
         val xstsModel = XstsFactory.createXstsModel()
 

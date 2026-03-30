@@ -10,34 +10,45 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.cex.CexAssumptionWitnessTransformer
 import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.oxsts.InlinedOxstsAssumptionWitnessTransformer
 import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.xsts.XstsAssumptionWitnessTransformer
-import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaErrorVerificationResult
 import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaPortfolioRunner
 import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaSafeVerificationResult
 import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaUnsafeVerificationResult
 import hu.bme.mit.semantifyr.backends.theta.verification.execution.ThetaVerificationResult
 import hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts.OxstsTransformer
 import hu.bme.mit.semantifyr.backends.theta.wrapper.utils.CexReader
-import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
-import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.VerificationCaseExpectedResult
+import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.semantics.transformation.ProgressContext
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.transformation.serializer.ArtifactManager
+import hu.bme.mit.semantifyr.semantics.utils.loggerFactory
 import hu.bme.mit.semantifyr.semantics.verification.AbstractOxstsVerifier
 import hu.bme.mit.semantifyr.semantics.verification.VerificationCaseRunResult
+import hu.bme.mit.semantifyr.semantics.verification.VerificationMetaData
 import hu.bme.mit.semantifyr.semantics.verification.VerificationResult
+import hu.bme.mit.semantifyr.semantics.verification.VerificationTimeMetrics
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 import java.io.File
 import kotlin.io.path.Path
+import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.TimeSource.Monotonic.markNow
+import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 
 @CompilationScoped
 open class ThetaVerifier : AbstractOxstsVerifier() {
+
+    val logger by loggerFactory()
 
     @Inject
     private lateinit var oxstsTransformer: OxstsTransformer
 
     @Inject
-    private lateinit var builtinAnnotationHandler: BuiltinAnnotationHandler
+    private lateinit var oxstsQualifiedNameProvider: OxstsQualifiedNameProvider
 
     @Inject
     private lateinit var cexReader: CexReader
@@ -54,60 +65,134 @@ open class ThetaVerifier : AbstractOxstsVerifier() {
     @Inject
     private lateinit var thetaPortfolioRunner: ThetaPortfolioRunner
 
+    @Inject
+    private lateinit var artifactManager: ArtifactManager
+
+    @Inject
+    private lateinit var thetaArtifactManager: ThetaArtifactManager
+
     protected fun transformToXsts(progressContext: ProgressContext, inlinedOxsts: InlinedOxsts): XstsModel {
         return oxstsTransformer.transform(inlinedOxsts, progressContext)
     }
 
-    protected fun verifyXsts(progressContext: ProgressContext, xstsModel: XstsModel): ThetaVerificationResult {
+    protected fun verifyXsts(
+        progressContext: ProgressContext,
+        xstsModel: XstsModel,
+        timeout: Duration
+    ): ThetaVerificationResult {
         xstsModel.eResource().save(emptyMap<Any, Any>())
 
-        val path = xstsModel.eResource().uri.path().removeSuffix(".xsts")
-        val name = path.split(File.separator).last()
-        val workingDirectory = path.replaceAfterLast(File.separator, "")
+        val workingDirectory = thetaArtifactManager.xstsFile.parent
+        val name = thetaArtifactManager.xstsFile.nameWithoutExtension
 
-        return thetaPortfolioRunner.run(workingDirectory, name, progressContext)
+        return thetaPortfolioRunner.run(workingDirectory, name, progressContext, timeout)
     }
 
-    override fun verify(progressContext: ProgressContext, classDeclaration: ClassDeclaration): VerificationCaseRunResult {
-        val expected = builtinAnnotationHandler.getExpectedResults(classDeclaration)
+    override fun verify(
+        progressContext: ProgressContext,
+        classDeclaration: ClassDeclaration,
+        timeout: Duration
+    ): VerificationCaseRunResult {
+        // TODO: the artifact manager should be created with this base path already initialized -> see scope helper
+        val filePath = File(classDeclaration.eResource().uri.toFileString())
+        val parentPath = filePath.parentFile
+        val outPath = parentPath.resolve("out")
+        val basePath = outPath.resolve(filePath.nameWithoutExtension + File.separator + classDeclaration.name)
+        artifactManager.initialize(basePath)
 
+
+        val (result, duration) = measureTimedValue {
+            doRunVerification(progressContext, classDeclaration, timeout)
+        }
+
+        thetaArtifactManager.serialize(result)
+
+        return result
+    }
+
+    private fun doRunVerification(
+        progressContext: ProgressContext,
+        classDeclaration: ClassDeclaration,
+        timeout: Duration
+    ): VerificationCaseRunResult {
+        val verificationTimeMetrics = VerificationTimeMetrics()
+
+        val startedAt = Clock.System.now()
+        val mark = markNow()
+
+        val verificationMetaData = VerificationMetaData(
+            oxstsQualifiedNameProvider.getFullyQualifiedNameString(classDeclaration),
+            classDeclaration.eResource().uri.toFileString(),
+            startedAt,
+            timeout,
+        )
+
+        logger.info("Inlining class")
         progressContext.reportProgress("Inlining class")
-
-        val inlinedOxsts = inlineClass(progressContext, classDeclaration)
+        val (inlinedOxsts, inliningDuration) = measureTimedValue {
+            inlineClass(progressContext, classDeclaration)
+        }
+        verificationTimeMetrics.inliningDuration = inliningDuration
+        logger.info("Inlining took: $inliningDuration")
 
         progressContext.checkIsCancelled()
+        logger.info("Transforming to Xsts")
         progressContext.reportProgress("Transforming to Xsts")
+        val (xstsModel, xstsDuration) = measureTimedValue {
+            transformToXsts(progressContext, inlinedOxsts)
+        }
+        verificationTimeMetrics.xstsTransformationDuration = xstsDuration
+        logger.info("Xsts transformation took: $xstsDuration")
 
-        val xstsModel = transformToXsts(progressContext, inlinedOxsts)
+        val result = try {
+            // Because of the Temporal bubbling optimizations these are the only options
+            val property = inlinedOxsts.property.expression
 
-        progressContext.checkIsCancelled()
-        progressContext.reportProgress("Running Theta Portfolio")
+            progressContext.checkIsCancelled()
+            logger.info("Running verification")
+            progressContext.reportProgress("Running verification")
+            val (result, verifyDuration) = measureTimedValue {
+                verifyXsts(progressContext, xstsModel, timeout)
+            }
+            verificationTimeMetrics.verificationDuration = verifyDuration
+            logger.info("Verification took: $verifyDuration")
 
-        val result = verifyXsts(progressContext, xstsModel)
+            if (result.hasWitness) {
+                logger.info("Creating witness")
+                progressContext.reportProgress("Creating witness")
+                val backAnnotationDuration = measureTime {
+                    val cexPath = Path(result.runtimeDetails.workingDirectory, result.runtimeDetails.cexPath)
+                    val cexModel = cexReader.loadCexModel(cexPath)
+                    val cexWitness = cexAssumptionWitnessTransformer.transform(cexModel)
+                    val xstsWitness = xstsAssumptionWitnessTransformer.transform(xstsModel, cexWitness)
+                    val inlinedOxstsWitness = inlinedOxstsAssumptionWitnessTransformer.transform(inlinedOxsts, xstsWitness)
+                    backAnnotateWitness(inlinedOxstsWitness)
+                }
+                verificationTimeMetrics.backAnnotationDuration = backAnnotationDuration
+                logger.info("Back annotation took: $backAnnotationDuration")
+            }
 
-        if (result is ThetaErrorVerificationResult) {
-            return VerificationCaseRunResult(VerificationResult.Failed, result.failureMessage)
+            when (property) {
+                is AG if result is ThetaUnsafeVerificationResult -> {
+                    VerificationCaseRunResult(VerificationResult.Failed, verificationTimeMetrics, verificationMetaData, "Expected Safe result, got Unsafe instead!")
+                }
+                is EF if result is ThetaSafeVerificationResult -> {
+                    VerificationCaseRunResult(VerificationResult.Failed, verificationTimeMetrics, verificationMetaData, "Expected Unsafe result, got Safe instead!")
+                }
+                else -> {
+                    VerificationCaseRunResult(VerificationResult.Passed, verificationTimeMetrics, verificationMetaData)
+                }
+            }
+        } catch (e: Exception) {
+            logger.error("Exception during verification: ", e)
+            VerificationCaseRunResult(VerificationResult.Errored, verificationTimeMetrics, verificationMetaData, e.message)
         }
 
-        if (result.hasWitness) {
-            progressContext.reportProgress("Creating witness")
-            val cexPath = Path(result.runtimeDetails.workingDirectory, result.runtimeDetails.cexPath)
-            val cexModel = cexReader.loadCexModel(cexPath)
-            val cexWitness = cexAssumptionWitnessTransformer.transform(cexModel)
-            val xstsWitness = xstsAssumptionWitnessTransformer.transform(xstsModel, cexWitness)
-            val inlinedOxstsWitness = inlinedOxstsAssumptionWitnessTransformer.transform(inlinedOxsts, xstsWitness)
-            backAnnotateWitness(inlinedOxstsWitness)
-        }
+        verificationTimeMetrics.totalDuration = mark.elapsedNow()
 
-        if (expected == VerificationCaseExpectedResult.SAFE && result is ThetaUnsafeVerificationResult) {
-            return VerificationCaseRunResult(VerificationResult.Failed, "Expected Safe result, got Unsafe instead!")
-        }
+        logger.info("Result is ${result.result} - ${result.message ?: "No message"}")
 
-        if (expected == VerificationCaseExpectedResult.UNSAFE && result is ThetaSafeVerificationResult) {
-            return VerificationCaseRunResult(VerificationResult.Failed, "Expected Unsafe result, got Safe instead!")
-        }
-
-        return VerificationCaseRunResult(VerificationResult.Passed)
+        return result
     }
 
 }

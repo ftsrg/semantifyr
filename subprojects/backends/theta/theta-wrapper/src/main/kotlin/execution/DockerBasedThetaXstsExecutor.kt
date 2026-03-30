@@ -23,30 +23,36 @@ import kotlinx.coroutines.withContext
 class DockerBasedThetaXstsExecutor : ThetaXstsExecutor() {
 
     private val imageName = "ftsrg/theta-xsts-cli"
-    private val version = "6.27.0"
-    private val config = DefaultDockerClientConfig.createDefaultConfigBuilder().build()
-    private val httpClient = ApacheDockerHttpClient.Builder()
-        .dockerHost(config.dockerHost)
-        .sslConfig(config.sslConfig).build()
-    private val dockerClient = DockerClientImpl.getInstance(config, httpClient);
+    private val version = "6.27.17"
+    private val dockerClient by lazy {
+        try {
+            val config = DefaultDockerClientConfig.createDefaultConfigBuilder().build()
+            val httpClient = ApacheDockerHttpClient.Builder()
+                .dockerHost(config.dockerHost)
+                .sslConfig(config.sslConfig).build()
+            DockerClientImpl.getInstance(config, httpClient)
+        } catch (_: Exception) {
+            null
+        }
+    }
 
     override fun initialize() {
         val imageId = "$imageName:$version"
         try {
-            dockerClient.inspectImageCmd(imageId).exec()
+            dockerClient!!.inspectImageCmd(imageId).exec()
         } catch (e: NotFoundException) {
-            dockerClient.pullImageCmd(imageName).withTag(version).start().awaitCompletion()
+            dockerClient!!.pullImageCmd(imageName).withTag(version).start().awaitCompletion()
         }
     }
 
     override fun check(): Boolean {
-         try {
-             dockerClient.infoCmd().exec()
-
-             return true
-         } catch (_: Exception) {
-             return false
-         }
+        return try {
+            // try to initialize, if success we have docker :)
+            initialize()
+            true
+        } catch (_: Exception) {
+            false
+        }
     }
 
     override suspend fun execute(thetaExecutionSpecification: ThetaExecutionSpecification) = coroutineScope {
@@ -62,6 +68,8 @@ class DockerBasedThetaXstsExecutor : ThetaXstsExecutor() {
             }
         }
 
+        // TODO: handle theta errors if any
+
         ThetaExecutionResult(result.statusCode)
     }
 
@@ -69,7 +77,7 @@ class DockerBasedThetaXstsExecutor : ThetaXstsExecutor() {
         val hostConfig = HostConfig.newHostConfig()
             .withBinds(Bind(thetaExecutionSpecification.workingDirectory.absolutePath, Volume("/host/working_directory")))
 
-        val container = dockerClient.createContainerCmd("$imageName:$version")
+        val container = dockerClient!!.createContainerCmd("$imageName:$version")
             .withHostConfig(hostConfig)
             .withWorkingDir("/host/working_directory")
             .withCmd(thetaExecutionSpecification.command)
@@ -80,18 +88,18 @@ class DockerBasedThetaXstsExecutor : ThetaXstsExecutor() {
     }
 
     private suspend fun runContainer(thetaExecutionSpecification: ThetaExecutionSpecification, container: CreateContainerResponse): WaitResponse {
-        dockerClient.startContainerCmd(container.id).exec()
+        dockerClient!!.startContainerCmd(container.id).exec()
 
         return withTimeout(thetaExecutionSpecification) {
             runAsync(Dispatchers.IO) {
-                dockerClient.waitContainerCmd(container.id).exec(it)
+                dockerClient!!.waitContainerCmd(container.id).exec(it)
             }
         }
     }
 
     private fun stopContainer(container: CreateContainerResponse) {
         try {
-            dockerClient.stopContainerCmd(container.id).exec()
+            dockerClient!!.stopContainerCmd(container.id).exec()
         } catch (_: Exception) {
             // swallow exceptions
         }
@@ -99,7 +107,7 @@ class DockerBasedThetaXstsExecutor : ThetaXstsExecutor() {
 
     private suspend fun saveContainerLogs(thetaExecutionSpecification: ThetaExecutionSpecification, container: CreateContainerResponse) = withContext(Dispatchers.IO) {
         try {
-            dockerClient.logContainerCmd(container.id)
+            dockerClient!!.logContainerCmd(container.id)
                 .withStdOut(true)
                 .withStdErr(true)
                 .withTailAll()
@@ -112,7 +120,7 @@ class DockerBasedThetaXstsExecutor : ThetaXstsExecutor() {
 
     private fun destroyContainer(container: CreateContainerResponse) {
         try {
-            dockerClient.removeContainerCmd(container.id).withForce(true).exec()
+            dockerClient!!.removeContainerCmd(container.id).withForce(true).exec()
         } catch (_: Exception) {
             // swallow exceptions
         }

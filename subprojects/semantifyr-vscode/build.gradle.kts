@@ -5,17 +5,30 @@
  */
 
 import com.github.gradle.node.npm.task.NpmTask
+import com.github.gradle.node.task.NodeTask
 
 plugins {
     base
     alias(libs.plugins.gradle.node)
 }
 
-val isCi: Boolean = System.getenv("CI") != null
-
 node {
     version = "22.14.0"
-    download = !isCi
+    download = true
+}
+
+abstract class NpmService : BuildService<BuildServiceParameters.None>
+
+val npmService = gradle.sharedServices.registerIfAbsent("npmService", NpmService::class.java) {
+    maxParallelUsages.set(1)
+}
+
+// node tasks must not run in parallel, as pnpm is sensitive to that
+tasks.withType<NpmTask>().configureEach {
+    usesService(npmService)
+}
+tasks.withType<NodeTask>().configureEach {
+    usesService(npmService)
 }
 
 val distributionOutput by configurations.creating {
@@ -40,9 +53,11 @@ dependencies {
 val cloneDistribution by tasks.registering(Sync::class) {
     inputs.files(distributionClasspath)
 
-    from (distributionClasspath.map {
-        fileTree(it)
-    })
+    from(
+        distributionClasspath.map {
+            fileTree(it)
+        },
+    )
 
     into("bin")
 }
@@ -59,7 +74,7 @@ val buildExtension by tasks.registering(NpmTask::class) {
         listOf(
             "run",
             "build",
-        )
+        ),
     )
 
     outputs.dir("dist")
@@ -80,10 +95,10 @@ val bundleExtension by tasks.registering(NpmTask::class) {
         listOf(
             "run",
             "bundle",
-        )
+        ),
     )
 
-    outputs.dir(project.layout.buildDirectory)
+    outputs.file(project.layout.buildDirectory.file("semantifyr-0.0.1.vsix"))
 }
 
 tasks {
@@ -98,7 +113,7 @@ tasks {
 }
 
 artifacts {
-    add(distributionOutput.name, layout.buildDirectory) {
+    add(distributionOutput.name, project.layout.buildDirectory.file("semantifyr-0.0.1.vsix")) {
         builtBy(bundleExtension)
     }
 }

@@ -48,13 +48,13 @@ class OxstsClassAssumptionWitnessTransformer {
 
             return OxstsClassAssumptionWitnessStateValue(
                 variableReference,
-                oxstsInflator.backAnnotateInstancePointers(variableValue.variable, variableValue.value)
+                oxstsInflator.backAnnotateInstancePointers(variableValue.variable, variableValue.value),
             )
         }
 
         private fun transform(trace: InlinedOxstsAssumptionActivatedTrace): OxstsClassAssumptionActivatedTrace {
             return OxstsClassAssumptionActivatedTrace(
-                trace.traceOperation
+                trace.traceOperation,
             )
         }
 
@@ -81,7 +81,7 @@ class OxstsClassAssumptionWitnessTransformer {
             initializedState,
             transitionStates,
             nextStateMap,
-            inlinedOxstsAssumptionWitness.inlinedOxsts
+            inlinedOxstsAssumptionWitness.inlinedOxsts,
         )
     }
 

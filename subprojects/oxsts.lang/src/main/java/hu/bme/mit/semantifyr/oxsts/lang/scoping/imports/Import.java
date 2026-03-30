@@ -15,7 +15,7 @@ public record Import(URI uri, boolean isImplicit) {
     }
 
     public static Import explicit(URI uri) {
-        return new Import(uri,false);
+        return new Import(uri, false);
     }
 
 }

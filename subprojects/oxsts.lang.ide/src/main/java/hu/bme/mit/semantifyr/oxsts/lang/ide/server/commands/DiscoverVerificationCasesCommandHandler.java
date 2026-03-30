@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
 import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltInLibraryUtils;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
@@ -23,6 +24,9 @@ public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHand
 
     @Inject
     private BuiltinAnnotationHandler builtinAnnotationHandler;
+
+    @Inject
+    private BuiltInLibraryUtils builtInLibraryUtils;
 
     @Inject
     private OxstsQualifiedNameProvider oxstsQualifiedNameProvider;
@@ -61,17 +65,9 @@ public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHand
         }
 
         var verificationCases = new ArrayList<VerificationCaseSpecification>();
-
-        for (var declaration : oxstsModel.getDeclarations()) {
-            if (!(declaration instanceof ClassDeclaration classDeclaration)) {
-                continue;
-            }
-
-            if (builtinAnnotationHandler.isVerificationCase(classDeclaration)) {
-                verificationCases.add(createCase(classDeclaration));
-                verificationCases.add(createCase(classDeclaration));
-            }
-        }
+        builtInLibraryUtils.streamTestCases(oxstsModel).forEach(testCase ->
+                verificationCases.add(createCase(testCase))
+        );
 
         return verificationCases;
     }
