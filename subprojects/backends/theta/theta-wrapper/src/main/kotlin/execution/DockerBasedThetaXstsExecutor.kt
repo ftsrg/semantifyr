@@ -68,6 +68,8 @@ class DockerBasedThetaXstsExecutor : ThetaXstsExecutor() {
             }
         }
 
+        // TODO: handle theta errors if any
+
         ThetaExecutionResult(result.statusCode)
     }
 

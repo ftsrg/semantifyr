@@ -66,6 +66,8 @@ class ShellBasedThetaXstsExecutor : ThetaXstsExecutor() {
             }
         }
 
+        // TODO: handle theta errors if any
+
         ThetaExecutionResult(process.exitValue())
     }
 
