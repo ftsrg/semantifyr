@@ -1,9 +1,9 @@
 # Top-down transition priority
 
-Changes compared to the Library:
+This directory contains an example top-down transition scheduling implementation. Changes compared to the shown Library:
 
 States.oxsts:
-
+```oxsts
 redefine tran fireTransitions() {
     choice {
         // commented out
@@ -16,3 +16,4 @@ redefine tran fireTransitions() {
         inline fireInnerTransitions()
     }
 }
+```

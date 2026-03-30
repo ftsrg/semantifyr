@@ -125,7 +125,7 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
 
         @JvmStatic
         fun `Top Down Transition Test Model Verification Cases Should Pass`(): Stream<Arguments> {
-            val model = loadModel("TestModels/topdowntransition.sysml", "LibraryVariants/TopDownLibrary")
+            val model = loadModel("TestModels/topdowntransition.sysml", "TopDownLibrary")
 
             return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
         }
