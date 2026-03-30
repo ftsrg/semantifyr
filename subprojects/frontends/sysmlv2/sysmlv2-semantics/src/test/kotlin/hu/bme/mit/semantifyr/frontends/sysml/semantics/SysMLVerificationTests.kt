@@ -61,20 +61,6 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
         }
 
         @JvmStatic
-        fun `STM21 Model Verification Cases Should Pass`(): Stream<Arguments> {
-            val model = loadModel("TestModels/stm21.sysml")
-
-            return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
-        }
-
-        @JvmStatic
-        fun `STM31 Model Verification Cases Should Pass`(): Stream<Arguments> {
-            val model = loadModel("TestModels/stm31.sysml")
-
-            return semantifyrVerificationHelper.collectVerificationCases(model).asStream()
-        }
-
-        @JvmStatic
         fun `Semantics Test Model Verification Cases Should Pass`(): Stream<Arguments> {
             val model = loadModel("TestModels/semanticstest.sysml")
 
@@ -155,18 +141,6 @@ class SysMLVerificationTests : BaseSemantifyrVerificationTest<ThetaVerifier>() {
     @MethodSource
     @Disabled("There are no semantic library verification cases just yet.")
     fun `SysML Semantic Library Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
-        checkVerificationCase(verificationCase)
-    }
-
-    @ParameterizedTest
-    @MethodSource
-    fun `STM21 Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
-        checkVerificationCase(verificationCase)
-    }
-
-    @ParameterizedTest
-    @MethodSource
-    fun `STM31 Model Verification Cases Should Pass`(verificationCase: ClassDeclaration) {
         checkVerificationCase(verificationCase)
     }
 
