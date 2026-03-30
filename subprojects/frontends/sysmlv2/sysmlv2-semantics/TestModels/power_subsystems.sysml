@@ -1,24 +1,24 @@
 private import ScalarValues::Integer;
 
-item def BatteryLowAlert;
+item def BatteryCriticalAlert;
 
-port def PowerPort {
-    in item batteryLow : BatteryLowAlert;
+port def AlertPort {
+    in item batteryCritical : BatteryCriticalAlert;
 }
 
 part def PowerManager {
-    attribute batteryLevel: Integer default 100;
-    port powerPort: PowerPort;
+    attribute charge: Integer default 100;
+    port alertPort: AlertPort;
 
     exhibit state Behaviour {
         state On {
             entry action {
-                assign batteryLevel := batteryLevel - 1;
+                assign charge := charge - 1;
             }
         }
-        state LowPower {
+        state PowerCritical {
             entry action {
-                assign batteryLevel := batteryLevel - 1;
+                assign charge := charge - 1;
             }
         }
         state Off;
@@ -26,24 +26,24 @@ part def PowerManager {
         transition first start then On;
 
         transition first On
-            accept : BatteryLowAlert via powerPort
-            if batteryLevel < 20
-            then LowPower;
+            accept : BatteryCriticalAlert via alertPort
+            if charge < 20
+            then PowerCritical;
 
         transition first On
-            accept : BatteryLowAlert via powerPort
-            if batteryLevel >= 20
+            accept : BatteryCriticalAlert via alertPort
+            if charge >= 20
             then On;
 
-        transition first LowPower
-            accept : BatteryLowAlert via powerPort
-            if batteryLevel < 5
+        transition first PowerCritical
+            accept : BatteryCriticalAlert via alertPort
+            if charge < 5
             then Off;
 
-        transition first LowPower
-            accept : BatteryLowAlert via powerPort
-            if batteryLevel >= 5
-            then LowPower;
+        transition first PowerCritical
+            accept : BatteryCriticalAlert via alertPort
+            if charge >= 5
+            then PowerCritical;
     }
 }
 
@@ -68,7 +68,7 @@ verification def LowPowerReachable {
         verify requirement {
             require constraint {
                 eventually(
-                    isStateActive(system.Behaviour.LowPower)
+                    isStateActive(system.Behaviour.PowerCritical)
                 )
             }
         }
@@ -97,7 +97,7 @@ verification def OnAndLowPowerNeverSimultaneous {
             require constraint {
                 mustAlways(not(
                     isStateActive(system.Behaviour.On)
-                    and isStateActive(system.Behaviour.LowPower)
+                    and isStateActive(system.Behaviour.PowerCritical)
                 ))
             }
         }
@@ -126,7 +126,7 @@ verification def LowPowerAndOffNeverSimultaneous {
         verify requirement {
             require constraint {
                 mustAlways(not(
-                    isStateActive(system.Behaviour.LowPower)
+                    isStateActive(system.Behaviour.PowerCritical)
                     and isStateActive(system.Behaviour.Off)
                 ))
             }
