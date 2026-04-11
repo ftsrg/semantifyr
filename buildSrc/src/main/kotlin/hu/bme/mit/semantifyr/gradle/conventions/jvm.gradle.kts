@@ -22,15 +22,20 @@ repositories {
 
 val libs = the<LibrariesForLibs>()
 
+val mockitoAgent by configurations.creating
+
 dependencies {
     testFixturesApi(libs.junit.api)
     testFixturesApi(libs.assertj.core)
     testFixturesApi(libs.junit.params)
     testFixturesApi(libs.mockito.core)
     testFixturesApi(libs.mockito.junit)
+    testFixturesApi(libs.mockito.kotlin)
 
     testRuntimeOnly(libs.junit.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
+
+    mockitoAgent(libs.mockito.core) { isTransitive = false }
 }
 
 java.toolchain {
@@ -40,6 +45,8 @@ java.toolchain {
 tasks {
     // TODO: refactor tests to use test suites
     test {
+        jvmArgs.add("-javaagent:${mockitoAgent.asPath}")
+
         useJUnitPlatform {
             // we should use source sets instead
             excludeTags("benchmark")

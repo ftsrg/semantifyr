@@ -1,0 +1,106 @@
+{
+  "scopeName": "source.oxsts",
+  "name": "Oxsts",
+  "patterns": [
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#operators"
+    },
+    {
+      "include": "#types"
+    },
+    {
+      "include": "#literals"
+    },
+    {
+      "include": "#string"
+    },
+    {
+      "include": "#comments"
+    }
+  ],
+  "repository": {
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.oxsts",
+          "match": "\\b(return|inlined|oxsts|of|annotation|import|prop|package|extern|datatype|enum|record|var|abstract|class|redefine|redefines|tran|env|init|main|havoc|or|refers|in|contains|container|derived|features|subsets|opposite|havoc|choice|else|assume|if|inline|trace|for|global|containment|feature|reference|witness)\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.oxsts",
+          "match": "(==|!=|<=|>=|<|>|\\+|-|&&|\\|\\|)"
+        },
+        {
+          "name": "keyword.operator.assignment.oxsts",
+          "match": ":="
+        },
+        {
+          "name": "keyword.operator.transitive.oxsts",
+          "match": "(\\+|\\*)"
+        }
+      ]
+    },
+    "literals": {
+      "patterns": [
+        {
+          "name": "constant.numeric.oxsts",
+          "match": "\\b((\\d+)|(\\d+\\.\\d+)|\\*)\\b"
+        },
+        {
+          "name": "constant.string.oxsts",
+          "match": "\\b\".*\"\\b"
+        },
+        {
+          "name": "constant.language.boolean.oxsts",
+          "match": "\\b(true|false)\\b"
+        },
+        {
+          "name": "constant.language.contextual.oxsts",
+          "match": "\\b(nothing|self)\\b"
+        }
+      ]
+    },
+    "string": {
+      "comment": "\"begin\" & \"end\" can create a multi-line region",
+      "begin": "\"",
+      "end": "\"",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.begin.languageId"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.end.languageId"
+        }
+      },
+      "name": "string.quoted.double.languageId",
+      "patterns": [
+        {
+          "comment": "Quad backslash required to match one literal backslash",
+          "match": "\\\\.",
+          "name": "constant.character.escape.languageId"
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.oxsts",
+          "begin": "/\\*",
+          "end": "\\*/"
+        },
+        {
+          "name": "comment.line.double-slash.oxsts",
+          "match": "//.*$"
+        }
+      ]
+    }
+  }
+}

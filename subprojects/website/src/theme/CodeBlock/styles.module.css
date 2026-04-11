@@ -1,0 +1,245 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+.tryButtonContainer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -0.75rem;
+  margin-bottom: 1rem;
+}
+
+.tryButton {
+  background: var(--ifm-color-primary);
+  color: white;
+  border: none;
+  border-radius: 0 0 6px 6px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.15s ease;
+}
+
+.tryButton:hover {
+  background: var(--ifm-color-primary-dark);
+}
+
+.editorPanel {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 6px;
+  margin-top: -0.5rem;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  background: var(--ifm-background-color);
+}
+
+.editorPanelFill {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.editorPanelFill .editorContainer {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+}
+
+.editorToolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--ifm-color-emphasis-100);
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+  font-size: 0.85rem;
+}
+
+.editorToolbarSpacer {
+  flex: 1;
+}
+
+.editorStatus {
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.editorStatusReady {
+  color: var(--ifm-color-success-darker);
+}
+
+.editorStatusError {
+  color: var(--ifm-color-danger-darker);
+}
+
+.toolbarButton {
+  background: var(--ifm-color-emphasis-200);
+  color: var(--ifm-font-color-base);
+  border: none;
+  border-radius: 4px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.toolbarButton:hover:not(:disabled) {
+  background: var(--ifm-color-emphasis-300);
+}
+
+.toolbarButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toolbarButtonPrimary {
+  background: var(--ifm-color-primary);
+  color: white;
+}
+
+.toolbarButtonPrimary:hover:not(:disabled) {
+  background: var(--ifm-color-primary-dark);
+}
+
+.editorContainer {
+  height: 320px;
+  width: 100%;
+}
+
+.editorLoading {
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.9rem;
+}
+
+.verifyResult {
+  padding: 0.6rem 0.9rem;
+  border-top: 1px solid var(--ifm-color-emphasis-200);
+  font-size: 0.85rem;
+  font-family: var(--ifm-font-family-monospace);
+  white-space: pre-wrap;
+  max-height: 12rem;
+  overflow-y: auto;
+}
+
+.verifyResultPassed {
+  background: rgba(0, 200, 100, 0.08);
+  color: var(--ifm-color-success-darker);
+}
+
+.verifyResultFailed {
+  background: rgba(220, 60, 60, 0.08);
+  color: var(--ifm-color-danger-darker);
+}
+
+/* ---- lightweight VerifyButton (no Monaco) ---- */
+
+.verifyContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: -0.5rem;
+  margin-bottom: 1rem;
+}
+
+.verifyButton {
+  /* Standalone variant of toolbarButton with a bit more breathing room. */
+  padding: 0.4rem 0.95rem;
+}
+
+.verifyContainer .verifyResult {
+  width: 100%;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 6px;
+  padding: 0.6rem 0.9rem;
+  margin: 0;
+}
+
+.verifyCaseList {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.verifyCaseList li {
+  margin: 0.15rem 0;
+}
+
+/* While verification is running we render an inline busy row: spinner + status
+   message + Cancel button. The progress detail (the latest LSP $/progress message)
+   shows up underneath in a smaller, secondary style. */
+.verifyBusyRow {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.4rem 0.6rem 0.4rem 0.5rem;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 6px;
+  background: var(--ifm-color-emphasis-100);
+}
+
+.verifyBusyLabel {
+  font-size: 0.85rem;
+  color: var(--ifm-font-color-base);
+}
+
+.verifyProgress {
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-700);
+  font-family: var(--ifm-font-family-monospace);
+  padding-left: 0.5rem;
+  border-left: 2px solid var(--ifm-color-emphasis-300);
+}
+
+.verifySpinner {
+  display: inline-block;
+  width: 0.95rem;
+  height: 0.95rem;
+  border: 2px solid var(--ifm-color-emphasis-300);
+  border-top-color: var(--ifm-color-primary);
+  border-radius: 50%;
+  animation: verifySpinnerSpin 0.85s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes verifySpinnerSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.verifyOffline {
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-600);
+  font-style: italic;
+}
+
+/* ---- lightweight OpenInLiveLink ---- */
+
+.openLinkContainer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -0.5rem;
+  margin-bottom: 1rem;
+}
+
+.openLink {
+  font-size: 0.85rem;
+  color: var(--ifm-color-emphasis-700);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--ifm-color-emphasis-400);
+  padding-bottom: 1px;
+}
+
+.openLink:hover {
+  color: var(--ifm-color-primary);
+  border-bottom-color: var(--ifm-color-primary);
+  text-decoration: none;
+}

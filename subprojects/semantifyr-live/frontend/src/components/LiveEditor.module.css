@@ -1,0 +1,21 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * The LiveEditor component is now headless: it only renders the Monaco host div.
+ * The page-level controls (status pill, verify button, progress bar, result
+ * panel, …) all live in EditorPage and use EditorPage.module.css.
+ */
+
+.editorPanel {
+  background: var(--surface-bg);
+  height: 320px;
+  width: 100%;
+}
+
+.editorPanelFill {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+}

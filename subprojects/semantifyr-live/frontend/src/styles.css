@@ -1,0 +1,68 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+:root {
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-sans: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+:root[data-theme='dark'] {
+  --page-bg: #1e1e1e;
+  --surface-bg: #252526;
+  --surface-panel-bg: #232325;
+  --surface-toolbar-bg: #2d2d30;
+  --surface-border: #3e3e42;
+  --surface-border-soft: #2a2a2a;
+  --text: #e8e8e8;
+  --text-muted: #9b9b9b;
+  --button-bg: #333337;
+  --button-bg-hover: #3f3f44;
+  --accent: #ff5252;
+  --accent-fg: #ffffff;
+  --accent-hover: #e23e3e;
+  --success: #4ade80;
+  --danger: #f87171;
+  --warning: #fbbf24;
+}
+
+:root[data-theme='light'] {
+  --page-bg: #fafafa;
+  --surface-bg: #ffffff;
+  --surface-panel-bg: #f7f7f7;
+  --surface-toolbar-bg: #f3f3f3;
+  --surface-border: #d8d8d8;
+  --surface-border-soft: #e8e8e8;
+  --text: #1f1f1f;
+  --text-muted: #686868;
+  --button-bg: #ececec;
+  --button-bg-hover: #dedede;
+  --accent: #c00000;
+  --accent-fg: #ffffff;
+  --accent-hover: #a30000;
+  --success: #15803d;
+  --danger: #b91c1c;
+  --warning: #d97706;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--text);
+  background: var(--page-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

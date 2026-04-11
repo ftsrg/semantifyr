@@ -18,8 +18,10 @@ cliKt = "5.1.0"
 viatra = "2.9.1"
 dockerJava = "3.7.0"
 guice = "7.0.0"
+lsp4j = "0.24.0"
 node = "7.1.0"
 bmuschkoDocker = "9.4.0"
+ktor = "3.4.2"
 
 [libraries]
 ecore = { group = "org.eclipse.emf", name = "org.eclipse.emf.ecore", version.ref = "ecore" }
@@ -31,6 +33,7 @@ junit-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", ver
 assertj-core = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }
 mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
 mockito-junit = { group = "org.mockito", name = "mockito-junit-jupiter", version.ref = "mockito" }
+mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version = "5.4.0" }
 mwe-utils = { group = "org.eclipse.emf", name = "org.eclipse.emf.mwe.utils", version = "1.19.0" }
 mwe2-launch = { group = "org.eclipse.emf", name = "org.eclipse.emf.mwe2.launch", version.ref = "mwe2" }
 mwe2-lib = { group = "org.eclipse.emf", name = "org.eclipse.emf.mwe2.lib", version.ref = "mwe2" }
@@ -45,6 +48,7 @@ xtext-testing = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.testing
 xtext-xbase = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.xbase", version.ref = "xtext" }
 clikt = { group = "com.github.ajalt.clikt", name = "clikt", version.ref = "cliKt" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 kotlinx-serialization-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core", version.ref = "kotlinxSerialization" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 viatra-query-language = { group = "org.eclipse.viatra", name = "viatra-query-language", version.ref = "viatra" }
@@ -54,6 +58,16 @@ guice = { group = "com.google.inject", name = "guice", version.ref = "guice" }
 guice-extensions-assistedinject = { group = "com.google.inject.extensions", name = "guice-assistedinject", version.ref = "guice" }
 docker-java-core = { group = "com.github.docker-java", name = "docker-java-core", version.ref = "dockerJava" }
 docker-java-transport = { group = "com.github.docker-java", name = "docker-java-transport-httpclient5", version.ref = "dockerJava" }
+lsp4j = { group = "org.eclipse.lsp4j", name = "org.eclipse.lsp4j", version.ref = "lsp4j" }
+lsp4j-jsonrpc = { group = "org.eclipse.lsp4j", name = "org.eclipse.lsp4j.jsonrpc", version.ref = "lsp4j" }
+ktor-server-core = { group = "io.ktor", name = "ktor-server-core", version.ref = "ktor" }
+ktor-server-netty = { group = "io.ktor", name = "ktor-server-netty", version.ref = "ktor" }
+ktor-server-websockets = { group = "io.ktor", name = "ktor-server-websockets", version.ref = "ktor" }
+ktor-server-cors = { group = "io.ktor", name = "ktor-server-cors", version.ref = "ktor" }
+ktor-server-host-common = { group = "io.ktor", name = "ktor-server-host-common", version.ref = "ktor" }
+ktor-server-content-negotiation = { group = "io.ktor", name = "ktor-server-content-negotiation", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-server-test-host = { group = "io.ktor", name = "ktor-server-test-host", version.ref = "ktor" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
