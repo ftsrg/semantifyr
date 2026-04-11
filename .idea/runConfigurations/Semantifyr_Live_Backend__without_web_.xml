@@ -1,0 +1,18 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Semantifyr Live Backend (without web)" type="JetRunConfigurationType">
+    <envs>
+      <env name="SEMANTIFYR_LIVE_ALLOWED_ORIGINS" value="localhost:5173,localhost:3000,localhost:18080" />
+      <env name="SEMANTIFYR_LIVE_LSP_BINARIES_DIR" value="build/staging/lsp" />
+      <env name="SEMANTIFYR_LIVE_PORT" value="18080" />
+      <env name="SEMANTIFYR_LIVE_ROOT_WORK_DIR" value="build/work" />
+    </envs>
+    <option name="MAIN_CLASS_NAME" value="hu.bme.mit.semantifyr.live.backend.SemantifyrLiveCliKt" />
+    <module name="semantifyr.semantifyr-live-backend.main" />
+    <option name="PROGRAM_PARAMETERS" value="start" />
+    <shortenClasspath name="NONE" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/subprojects/semantifyr-live/backend" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
