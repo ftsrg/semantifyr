@@ -19,7 +19,7 @@
   "bugs": {
     "url": "https://github.com/ftsrg/semantifyr/issues"
   },
-  "icon": "icon.png",
+  "icon": "icons/icon.png",
   "galleryBanner": {
     "color": "#1e1e1e",
     "theme": "dark"
