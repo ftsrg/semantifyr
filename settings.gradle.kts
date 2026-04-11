@@ -14,6 +14,7 @@ include(
     "oxsts.lang.ide",
     "semantifyr-vscode",
     "semantifyr-vscode-server",
+    "website",
 )
 
 rootProject.children.forEach { project ->
