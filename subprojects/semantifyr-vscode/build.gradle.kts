@@ -89,6 +89,11 @@ val bundleExtension by tasks.registering(NpmTask::class) {
     inputs.file(project.layout.projectDirectory.file("language-configuration.json"))
     inputs.file(project.layout.projectDirectory.file("package.json"))
     inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
+    inputs.file(project.layout.projectDirectory.file("icon.png"))
+    inputs.file(project.layout.projectDirectory.file("file-icon.png"))
+    inputs.file(project.layout.projectDirectory.file("gamma-file-icon.png"))
+    inputs.file(project.layout.projectDirectory.file("README.md"))
+    inputs.file(project.layout.projectDirectory.file("CHANGELOG.md"))
     inputs.files(tasks.npmInstall.get().outputs)
 
     npmCommand.set(

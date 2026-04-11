@@ -1,25 +1,58 @@
 {
   "name": "semantifyr",
-  "displayName": "Semantifyr VS Code",
-  "description": "VS Code integration for the Semantifyr tool",
+  "displayName": "Semantifyr",
+  "description": "Language support and verification tooling for Semantifyr. Semantic library-driven formal verification of engineering models.",
   "version": "0.0.1",
   "type": "module",
   "publisher": "ftsrg",
+  "license": "EPL-2.0",
+  "author": {
+    "name": "The Semantifyr Authors",
+    "url": "https://github.com/ftsrg/semantifyr/blob/main/CONTRIBUTORS.md"
+  },
+  "homepage": "https://ftsrg.mit.bme.hu/semantifyr/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ftsrg/semantifyr.git"
+    "url": "https://github.com/ftsrg/semantifyr.git",
+    "directory": "subprojects/semantifyr-vscode"
+  },
+  "bugs": {
+    "url": "https://github.com/ftsrg/semantifyr/issues"
+  },
+  "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
   },
   "engines": {
     "vscode": "^1.93.0"
   },
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Linters",
+    "Formatters",
+    "Testing"
+  ],
+  "keywords": [
+    "semantifyr",
+    "oxsts",
+    "xsts",
+    "gamma",
+    "formal verification",
+    "model checking",
+    "theta",
+    "language server"
   ],
   "files": [
     "dist/extension.cjs",
     "bin",
     "syntaxes/*.json",
     "language-configuration.json",
+    "icons/icon.png",
+    "icons/semantifyr-file-icon.png",
+    "icons/gamma-file-icon.png",
+    "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "main": "./dist/extension.cjs",
@@ -27,22 +60,26 @@
     "commands": [
       {
         "command": "semantifyr.verifyXsts",
-        "title": "Verify XSTS File"
+        "title": "Verify XSTS File",
+        "category": "Semantifyr"
       },
       {
         "command": "gamma.compile",
-        "title": "Compile Gamma File"
+        "title": "Compile Gamma File",
+        "category": "Semantifyr"
       }
     ],
     "menus": {
       "explorer/context": [
         {
           "command": "semantifyr.verifyXsts",
-          "when": "resourceExtname == .xsts"
+          "when": "resourceExtname == .xsts",
+          "group": "semantifyr"
         },
         {
           "command": "gamma.compile",
-          "when": "resourceExtname == .gamma"
+          "when": "resourceExtname == .gamma",
+          "group": "semantifyr"
         }
       ]
     },
@@ -53,9 +90,14 @@
           ".oxsts"
         ],
         "aliases": [
-          "OXSTS"
+          "OXSTS",
+          "oxsts"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/semantifyr-file-icon.png",
+          "dark": "./icons/semantifyr-file-icon.png"
+        }
       },
       {
         "id": "xsts",
@@ -63,9 +105,14 @@
           ".xsts"
         ],
         "aliases": [
-          "XSTS"
+          "XSTS",
+          "xsts"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/semantifyr-file-icon.png",
+          "dark": "./icons/semantifyr-file-icon.png"
+        }
       },
       {
         "id": "gamma",
@@ -73,9 +120,14 @@
           ".gamma"
         ],
         "aliases": [
-          "Gamma"
+          "Gamma",
+          "gamma"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/gamma-file-icon.png",
+          "dark": "./icons/gamma-file-icon.png"
+        }
       }
     ],
     "grammars": [
