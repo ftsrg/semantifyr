@@ -21,6 +21,12 @@ rootProject.children.forEach { project ->
     project.projectDir = file("subprojects/${project.name}")
 }
 
+include("semantifyr-live-backend")
+project(":semantifyr-live-backend").projectDir = file("subprojects/semantifyr-live/backend")
+
+include("semantifyr-live-frontend")
+project(":semantifyr-live-frontend").projectDir = file("subprojects/semantifyr-live/frontend")
+
 fun includeDirectory(dirPath: String) {
     val dir = file(dirPath)
     val projects = dir.listFiles()?.filter { it.isDirectory } ?: emptyList()
