@@ -30,34 +30,6 @@ function ArrowForwardIcon(): React.ReactNode {
 import styles from './index.module.css';
 
 const LIVE_URL = 'https://live.semantifyr.org';
-const HUB_URL = 'https://hub.semantifyr.org';
-
-type HealthStatus = 'checking' | 'online' | 'offline';
-
-function useHealthCheck(healthUrl: string): HealthStatus {
-  const [status, setStatus] = React.useState<HealthStatus>('checking');
-
-  React.useEffect(() => {
-    let cancelled = false;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 5000);
-    fetch(healthUrl, { signal: controller.signal, mode: 'no-cors' })
-      .then(() => { if (!cancelled) setStatus('online'); })
-      .catch(() => { if (!cancelled) setStatus('offline'); })
-      .finally(() => clearTimeout(timer));
-    return () => { cancelled = true; controller.abort(); };
-  }, [healthUrl]);
-
-  return status;
-}
-
-function HealthDot({ status }: { status: HealthStatus }): React.ReactNode {
-  if (status === 'checking') return null;
-  const cls = status === 'online' ? styles['health-dot--online'] : styles['health-dot--offline'];
-  const label = status === 'online' ? 'Service is online' : 'Service appears offline';
-  return <span className={clsx(styles['health-dot'], cls)} title={label} aria-label={label} />;
-}
-
 function Hero() {
   const lightLogo = useBaseUrl('/img/logo-full-light.svg');
   const darkLogo = useBaseUrl('/img/logo-full-dark.svg');
@@ -105,9 +77,35 @@ function Hero() {
   );
 }
 
+type HealthStatus = 'checking' | 'online' | 'offline';
+
+function useHealthCheck(healthUrl: string): HealthStatus {
+  const [status, setStatus] = React.useState<HealthStatus>('checking');
+
+  React.useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    fetch(healthUrl, { signal: controller.signal })
+      .then((res) => { if (!cancelled) setStatus(res.ok ? 'online' : 'offline'); })
+      .catch(() => { if (!cancelled) setStatus('offline'); })
+      .finally(() => clearTimeout(timer));
+    return () => { cancelled = true; controller.abort(); };
+  }, [healthUrl]);
+
+  return status;
+}
+
+function HealthDot({ status }: { status: HealthStatus }): React.ReactNode {
+  if (status === 'checking') return null;
+  const cls = status === 'online' ? styles['health-dot--online'] : styles['health-dot--offline'];
+  const label = status === 'online' ? 'Service is online' : 'Service appears offline';
+  return <span className={clsx(styles['health-dot'], cls)} title={label} aria-label={label} />;
+}
+
 function TryIt() {
   const liveHealth = useHealthCheck(`${LIVE_URL}/api/health`);
-  const hubHealth = useHealthCheck(`${HUB_URL}/hub/health`);
+  const hubHealth = useHealthCheck('https://jupyter.semantifyr.org/hub/health');
 
   return (
     <section className={styles['section']}>
@@ -149,7 +147,7 @@ function TryIt() {
               if you don&apos;t have one yet.
             </p>
             <Link
-              href="https://hub.semantifyr.org"
+              href="https://jupyter.semantifyr.org"
               className={clsx('button', 'button--primary', 'button--block', styles['card__button'])}
             >
               Launch JupyterHub <OpenInNewIcon />

@@ -19,7 +19,7 @@ Sessions are ephemeral. Use the **Copy link** button in the toolbar to save your
 
 If you want a full-fledged VS Code environment with multi-file project support, the hosted JupyterHub environment is a good fit. It runs a VS Code instance in your browser with the Semantifyr extension, the Theta backend, and example models for SysML v2 and Gamma already in place.
 
-[Launch the JupyterHub environment](https://hub.semantifyr.org)
+[Launch the JupyterHub environment](https://jupyter.semantifyr.org)
 
 You'll get a personal workspace with everything wired up: no Java install, no extension setup, no project scaffolding.
 
