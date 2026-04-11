@@ -74,9 +74,17 @@ val cloneSysMLTestModels by tasks.registering(Sync::class) {
     into("examples/sysml/TestModels")
 }
 
+val cloneTutorialModels by tasks.registering(Sync::class) {
+    from(project(":xsts-verifier").layout.projectDirectory.dir("test-models/Tutorial")) {
+        include("*.oxsts")
+    }
+    into("examples/tutorial/")
+}
+
 val cloneTestModels by tasks.registering {
     dependsOn(cloneGammaTestModels)
     dependsOn(cloneSysMLTestModels)
+    dependsOn(cloneTutorialModels)
 }
 
 val prepareDockerBuild by tasks.registering {
