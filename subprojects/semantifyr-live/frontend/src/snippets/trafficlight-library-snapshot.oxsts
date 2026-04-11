@@ -1,0 +1,118 @@
+package example::trafficlight::intermediate
+
+class State {
+    container parent: Statechart opposite states
+
+    prop isActive(): bool {
+        return parent.activeState == self
+    }
+
+    tran activate() {
+        parent.activeState := self
+    }
+}
+
+class Transition {
+    refers from: State
+    refers to: State
+
+    prop isEnabled(): bool {
+        return from.isActive()
+    }
+
+    redefine tran {
+        assume (isEnabled())
+        inline to.activate()
+    }
+}
+
+class Statechart {
+    contains states: State[0..*] opposite parent
+    contains transitions: Transition[0..*]
+
+    @Control
+    var activeState: states[0..1] := nothing
+
+    redefine tran {
+        inline for choice (transition in transitions) {
+            inline transition.main()
+        }
+    }
+}
+
+class TrafficLight : Statechart {
+    contains red: State subsets states
+    contains yellow: State subsets states
+    contains green: State subsets states
+
+    contains redToGreen: Transition subsets transitions {
+        redefine refers from: State[1] = red
+        redefine refers to: State[1] = green
+    }
+    contains greenToYellow: Transition subsets transitions {
+        redefine refers from: State[1] = green
+        redefine refers to: State[1] = yellow
+    }
+    contains yellowToRed: Transition subsets transitions {
+        redefine refers from: State[1] = yellow
+        redefine refers to: State[1] = red
+    }
+
+    redefine init {
+        activeState := red
+    }
+}
+
+class Intersection {
+    contains north: TrafficLight
+    contains east: TrafficLight
+
+    redefine init {
+        inline north.init()
+        inline east.init()
+    }
+
+    redefine tran {
+        choice {
+            assume (!east.green.isActive())
+            inline north.main()
+        } or {
+            assume (!north.green.isActive())
+            inline east.main()
+        }
+    }
+}
+
+@VerificationCase
+class GreenColorIsReachable {
+    contains light: TrafficLight[1]
+
+    redefine init {
+        inline light.init()
+    }
+
+    redefine tran {
+        inline light.main()
+    }
+
+    prop {
+        return EF light.green.isActive()
+    }
+}
+
+@VerificationCase
+class IntersectionNeverBothGreen {
+    contains intersection: Intersection
+
+    redefine init {
+        inline intersection.init()
+    }
+
+    redefine tran {
+        inline intersection.main()
+    }
+
+    prop {
+        return AG !(intersection.north.green.isActive() && intersection.east.green.isActive())
+    }
+}
