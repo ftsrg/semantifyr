@@ -12,7 +12,7 @@ Features define the **structural relationships** between classes. Unlike [variab
 | Kind | Meaning |
 |------|---------|
 | `contains` | The class **owns** instances of the target type. |
-| `refers` | A cross-reference to isntances owned elsewhere. |
+| `refers` | A cross-reference to instances owned elsewhere. |
 | `container` | The reverse of `contains`; must be paired via `opposite`. |
 | `derived refers` | A reference whose value is derived from the model structure. |
 | `features` | An **abstract** feature that subclasses must redefine as `contains` or `refers`. |

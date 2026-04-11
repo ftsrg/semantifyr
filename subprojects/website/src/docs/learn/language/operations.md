@@ -7,7 +7,7 @@ sidebar_position: 11
 
 Operations are the statements inside [transition](transitions.md) bodies. They divide into **runtime operations** (described on this page, present in the final XSTS model) and **[inline operations](inline-operations.md)** (expanded at compile time during unfolding).
 
-Operations (and whole transtions) are atomic in nature, which means either the whole is executed as one, or not at all.
+Operations (and whole transitions) are atomic in nature, which means either the whole is executed as one, or not at all.
 
 ## Primitive Operations
 

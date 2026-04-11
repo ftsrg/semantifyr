@@ -129,7 +129,7 @@ prop pairAtLimit(): bool {
 
 ## Temporal Operators
 
-Temporal operators uses to denote logical formulae over the possible executions of the system.
+Temporal operators denote logical formulae over the possible executions of the system.
 
 | Operator | Meaning |
 |----------|---------|

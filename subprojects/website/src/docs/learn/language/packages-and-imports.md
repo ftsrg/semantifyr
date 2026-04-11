@@ -39,7 +39,7 @@ package example::application
 import semantifyr // implicit
 ```
 
-{/* TODO: this is not yet true, but shuld be
+{/* TODO: this is not yet true, but should be
 ## Multiple Files per Package
 
 Multiple files may contribute to the same package. Declaring the same `package` in two files merges their declarations into a single namespace.

@@ -45,7 +45,7 @@ function Hero() {
           />
         </h1>
         <p className={styles['hero__tagline']}>
-          A framework to support the declarative definition of engineering language semantics.
+          Semantic library-driven formal verification of engineering models.
         </p>
         <div className={styles['hero__buttons']}>
           <Link
