@@ -79,7 +79,7 @@ val cloneTestModels by tasks.registering {
     dependsOn(cloneSysMLTestModels)
 }
 
-val prepareDockerBuild by tasks.registering() {
+val prepareDockerBuild by tasks.registering {
     dependsOn(cloneDistribution)
     dependsOn(cloneTheta)
     dependsOn(cloneLibraries)
@@ -90,13 +90,9 @@ val dockerBuildImage by tasks.registering(DockerBuildImage::class) {
     dependsOn(prepareDockerBuild)
     inputDir.set(projectDir)
     images.add("ftsrgbot/semantifyr-vscode-server:${project.version}")
-    images.add("ftsrgbot/semantifyr-vscode-server:testing")
-    images.add("ftsrgbot/semantifyr-vscode-server:preview")
 }
 
 val dockerPushImage by tasks.registering(DockerPushImage::class) {
     dependsOn(dockerBuildImage)
     images.add("ftsrgbot/semantifyr-vscode-server:${project.version}")
-    images.add("ftsrgbot/semantifyr-vscode-server:testing")
-    images.add("ftsrgbot/semantifyr-vscode-server:preview")
 }
