@@ -37,7 +37,7 @@ jobs:
         run: ./gradlew build
       - name: Upload GithHub Pages artifact
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: subprojects/website/build/docusaurus
           retention-days: 90
