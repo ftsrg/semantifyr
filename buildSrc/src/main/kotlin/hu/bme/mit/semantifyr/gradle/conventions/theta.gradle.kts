@@ -18,7 +18,7 @@ val thetaClasspath by configurations.creating {
 }
 
 dependencies {
-    thetaClasspath(project(":theta-wrapper", configuration = "thetaOutput"))
+    thetaClasspath(project(":theta-executor", configuration = "thetaOutput"))
 }
 
 /*
@@ -57,7 +57,7 @@ tasks {
 
         maxParallelForks = 1
 
-        val thetaCliPath = project(":theta-wrapper").layout.buildDirectory.dir("theta-xsts-cli").get().asFile.absolutePath
+        val thetaCliPath = project(":theta-executor").layout.buildDirectory.dir("theta-xsts-cli").get().asFile.absolutePath
         val existingPath = environment["PATH"] ?: System.getenv("PATH") ?: ""
         environment("PATH", "$thetaCliPath${File.pathSeparator}$existingPath")
 
@@ -87,7 +87,7 @@ tasks {
         testLogging.showStandardStreams = true
         testLogging.exceptionFormat = TestExceptionFormat.FULL
 
-        val thetaCliPath = project(":theta-wrapper").layout.buildDirectory.dir("theta-xsts-cli").get().asFile.absolutePath
+        val thetaCliPath = project(":theta-executor").layout.buildDirectory.dir("theta-xsts-cli").get().asFile.absolutePath
         val existingPath = environment["PATH"] ?: System.getenv("PATH") ?: ""
         environment("PATH", "$thetaCliPath${File.pathSeparator}$existingPath")
 

@@ -26,7 +26,7 @@ dependencies {
     distributionClasspath(project(":semantifyr-vscode", configuration = "distributionOutput"))
     distributionClasspath(project(":sysmlv2-frontend", configuration = "distributionOutput"))
 
-    thetaClasspath(project(":theta-wrapper", configuration = "thetaOutput"))
+    thetaClasspath(project(":theta-executor", configuration = "thetaOutput"))
 }
 
 val cloneDistribution by tasks.registering(Sync::class) {
@@ -75,7 +75,7 @@ val cloneSysMLTestModels by tasks.registering(Sync::class) {
 }
 
 val cloneTutorialModels by tasks.registering(Sync::class) {
-    from(project(":xsts-verifier").layout.projectDirectory.dir("test-models/Tutorial")) {
+    from(project(":theta-backend").layout.projectDirectory.dir("test-models/Tutorial")) {
         include("*.oxsts")
     }
     into("examples/tutorial/")
