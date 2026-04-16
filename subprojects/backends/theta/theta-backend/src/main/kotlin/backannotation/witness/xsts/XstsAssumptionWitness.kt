@@ -9,9 +9,9 @@ package hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness
 import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.cex.CexAssumptionWitness
 import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.cex.CexAssumptionWitnessState
 import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.cex.CexAssumptionWitnessStateVariableValue
-import hu.bme.mit.semantifyr.semantics.transformation.backannotation.AssumptionWitness
-import hu.bme.mit.semantifyr.semantics.transformation.backannotation.AssumptionWitnessState
-import hu.bme.mit.semantifyr.semantics.utils.SemantifyrUtils
+import hu.bme.mit.semantifyr.semantics.witness.AssumptionWitness
+import hu.bme.mit.semantifyr.semantics.witness.AssumptionWitnessState
+import hu.bme.mit.semantifyr.semantics.compilation.inliner.LocalVarNaming
 import hu.bme.mit.semantifyr.xsts.lang.xsts.Expression
 import hu.bme.mit.semantifyr.xsts.lang.xsts.VariableDeclaration
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
@@ -44,7 +44,7 @@ class XstsAssumptionWitnessTransformer {
         fun transform(cexAssumptionWitnessState: CexAssumptionWitnessState) = mappings.getOrPut(cexAssumptionWitnessState) {
             XstsAssumptionWitnessState(
                 cexAssumptionWitnessState.variableValues.filterNot {
-                    SemantifyrUtils.isLocalVar(it.variableName)
+                    LocalVarNaming.isLocalVar(it.variableName)
                 }.map {
                     transform(it)
                 },

@@ -10,7 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 
 private typealias XstsVariableDeclaration = hu.bme.mit.semantifyr.xsts.lang.xsts.VariableDeclaration
 typealias XstsTopLevelVariableDeclaration = hu.bme.mit.semantifyr.xsts.lang.xsts.TopLevelVariableDeclaration

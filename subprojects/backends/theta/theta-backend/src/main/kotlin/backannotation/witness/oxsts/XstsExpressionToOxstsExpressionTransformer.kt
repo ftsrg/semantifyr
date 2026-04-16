@@ -8,7 +8,7 @@ package hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts.OxstsDomainTransformer
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.xsts.lang.utils.XstsExpressionVisitor
 import hu.bme.mit.semantifyr.xsts.lang.xsts.ArithmeticBinaryOperator

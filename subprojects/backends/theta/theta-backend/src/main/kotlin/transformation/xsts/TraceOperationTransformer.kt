@@ -7,7 +7,7 @@
 package hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.utils.copy
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 

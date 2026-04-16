@@ -12,8 +12,8 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
-import hu.bme.mit.semantifyr.semantics.transformation.ProgressContext
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.progress.ProgressContext
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import hu.bme.mit.semantifyr.xsts.lang.XstsStandaloneSetup
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 

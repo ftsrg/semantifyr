@@ -13,11 +13,11 @@ import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.
 import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.xsts.XstsAssumptionWitnessStateVariableValue
 import hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts.TraceOperationTransformer
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.semantics.transformation.backannotation.InlinedOxstsAssumptionActivatedTrace
-import hu.bme.mit.semantifyr.semantics.transformation.backannotation.InlinedOxstsAssumptionWitness
-import hu.bme.mit.semantifyr.semantics.transformation.backannotation.InlinedOxstsAssumptionWitnessState
-import hu.bme.mit.semantifyr.semantics.transformation.backannotation.InlinedOxstsAssumptionWitnessStateValue
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.witness.InlinedOxstsAssumptionActivatedTrace
+import hu.bme.mit.semantifyr.semantics.witness.InlinedOxstsAssumptionWitness
+import hu.bme.mit.semantifyr.semantics.witness.InlinedOxstsAssumptionWitnessState
+import hu.bme.mit.semantifyr.semantics.witness.InlinedOxstsAssumptionWitnessStateValue
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import hu.bme.mit.semantifyr.xsts.lang.xsts.LiteralBoolean
 import hu.bme.mit.semantifyr.xsts.lang.xsts.TopLevelVariableDeclaration
 

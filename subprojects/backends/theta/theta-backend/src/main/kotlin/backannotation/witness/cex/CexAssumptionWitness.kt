@@ -11,8 +11,8 @@ import hu.bme.mit.semantifyr.cex.lang.cex.ExplStateValue
 import hu.bme.mit.semantifyr.cex.lang.cex.ExplVariableValue
 import hu.bme.mit.semantifyr.cex.lang.cex.Expression
 import hu.bme.mit.semantifyr.cex.lang.cex.XstsState
-import hu.bme.mit.semantifyr.semantics.transformation.backannotation.AssumptionWitness
-import hu.bme.mit.semantifyr.semantics.transformation.backannotation.AssumptionWitnessState
+import hu.bme.mit.semantifyr.semantics.witness.AssumptionWitness
+import hu.bme.mit.semantifyr.semantics.witness.AssumptionWitnessState
 
 class CexAssumptionWitnessStateVariableValue(
     val variableName: String,

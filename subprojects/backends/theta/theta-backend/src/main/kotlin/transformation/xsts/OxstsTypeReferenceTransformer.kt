@@ -11,7 +11,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.DataTypeDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Multiplicity
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 
 @CompilationScoped
 class OxstsTypeReferenceTransformer {

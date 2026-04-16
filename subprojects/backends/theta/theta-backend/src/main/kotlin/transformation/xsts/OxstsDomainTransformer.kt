@@ -11,7 +11,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DataTypeDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 
 typealias XstsType = hu.bme.mit.semantifyr.xsts.lang.xsts.Type
 private typealias XstsEnumDeclaration = hu.bme.mit.semantifyr.xsts.lang.xsts.EnumDeclaration

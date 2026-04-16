@@ -17,11 +17,10 @@ import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaXstsExecutorP
 import hu.bme.mit.semantifyr.backends.theta.wrapper.utils.CexReader
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.semantics.transformation.OxstsClassInliner
-import hu.bme.mit.semantifyr.semantics.transformation.ProgressContext
-import hu.bme.mit.semantifyr.semantics.transformation.backannotation.AssumptionWitnessBackAnnotator
-import hu.bme.mit.semantifyr.semantics.transformation.backannotation.OxstsClassAssumptionWitnessTransformer
-import hu.bme.mit.semantifyr.semantics.verification.VerificationDispatcher
+import hu.bme.mit.semantifyr.semantics.compilation.OxstsClassInliner
+import hu.bme.mit.semantifyr.semantics.progress.ProgressContext
+import hu.bme.mit.semantifyr.semantics.witness.AssumptionWitnessBackAnnotator
+import hu.bme.mit.semantifyr.semantics.witness.OxstsClassAssumptionWitnessTransformer
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 import org.eclipse.emf.common.util.URI
 import java.io.File
@@ -47,9 +46,6 @@ class ThetaSummaryGenerator {
     private lateinit var thetaXstsExecutorProvider: ThetaXstsExecutorProvider
 
     @Inject
-    private lateinit var verificationDispatcher: VerificationDispatcher
-
-    @Inject
     private lateinit var cexReader: CexReader
 
     @Inject
@@ -62,8 +58,8 @@ class ThetaSummaryGenerator {
     private lateinit var inlinedOxstsAssumptionWitnessTransformer: InlinedOxstsAssumptionWitnessTransformer
 
 
-    fun inlineClass(progressContext: ProgressContext, classDeclaration: ClassDeclaration): InlinedOxsts {
-        return oxstsClassInliner.inline(progressContext, classDeclaration)
+    fun inlineClass(classDeclaration: ClassDeclaration): InlinedOxsts {
+        return oxstsClassInliner.inline(classDeclaration)
     }
 
     fun transformToXsts(progressContext: ProgressContext, inlinedOxsts: InlinedOxsts): XstsModel {
@@ -98,7 +94,7 @@ class ThetaSummaryGenerator {
             10.toDuration(DurationUnit.MINUTES),
         )
 
-        val result = verificationDispatcher.runBlocking {
+        val result = kotlinx.coroutines.runBlocking {
             thetaExecutor.execute(thetaExecutionSpecification)
         }
 
@@ -133,7 +129,7 @@ class ThetaSummaryGenerator {
     fun createSummary(progressContext: ProgressContext, classDeclaration: ClassDeclaration) {
         progressContext.reportProgress("Inlining class")
 
-        val inlinedOxsts = inlineClass(progressContext, classDeclaration)
+        val inlinedOxsts = inlineClass(classDeclaration)
 
         progressContext.checkIsCancelled()
         progressContext.reportProgress("Transforming to Xsts")
