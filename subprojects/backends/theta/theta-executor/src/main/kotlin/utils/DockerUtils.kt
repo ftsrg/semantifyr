@@ -1,10 +1,10 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.wrapper.execution
+package hu.bme.mit.semantifyr.backends.theta.wrapper.utils
 
 import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.model.Frame
