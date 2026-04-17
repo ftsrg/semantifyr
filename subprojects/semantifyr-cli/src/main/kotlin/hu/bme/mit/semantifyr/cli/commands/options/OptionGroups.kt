@@ -8,27 +8,26 @@ package hu.bme.mit.semantifyr.cli.commands.options
 
 import com.github.ajalt.clikt.parameters.groups.OptionGroup
 import com.github.ajalt.clikt.parameters.options.default
-import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.long
 import com.github.ajalt.clikt.parameters.types.path
+import hu.bme.mit.semantifyr.backends.theta.ThetaExecutorSpec
 import hu.bme.mit.semantifyr.backends.theta.verification.theta
-import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaExecutorSpec
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.semantics.StandaloneOxstsSemanticsRuntimeModule
 import hu.bme.mit.semantifyr.semantics.artifact.ArtifactConfig
-import hu.bme.mit.semantifyr.semantics.artifact.ArtifactLocation
+import hu.bme.mit.semantifyr.semantics.artifact.ArtifactKind
+import hu.bme.mit.semantifyr.semantics.optimization.OptimizationCategory
 import hu.bme.mit.semantifyr.semantics.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.semantics.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.semantics.verification.ExecutionEnvironment
 import hu.bme.mit.semantifyr.semantics.verification.VerificationCase
 import hu.bme.mit.semantifyr.semantics.verification.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.semantics.verification.portfolio.Portfolio
+import java.nio.file.Files
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -51,32 +50,45 @@ class VerificationCaseSpecificationOptionGroup : OptionGroup("Verification case 
 
     fun collectVerificationCases(context: SemantifyrModelContext): List<VerificationCase> {
         if (caseNames.isNotEmpty()) {
-            return caseNames.map { verificationCaseDiscoverer.findByName(context, it) }
+            return caseNames.map {
+                verificationCaseDiscoverer.findByName(context, it)
+            }
         }
         return verificationCaseDiscoverer.discover(context, including = includeTags.toSet(), excluding = excludeTags.toSet())
     }
 }
 
+enum class ArtifactPreset { None, Report, All }
+
 class ArtifactOptionGroup : OptionGroup("Artifact options") {
     val artifactDirectory by option("-d", "--artifact-directory")
         .path(canBeFile = false, canBeDir = true)
-        .help("Write artifacts under this directory.")
+        .help("Write artifacts under this directory. Defaults to a temporary directory.")
 
-    val artifactUseTemporaryDirectory by option("--artifact-tmp")
-        .flag()
-        .help("Use a temporary directory for artifacts. Deleted on exit.")
+    val artifactPreset by option("--artifacts")
+        .enum<ArtifactPreset>(ignoreCase = true)
+        .default(ArtifactPreset.All)
+        .help("Artifact preset. Default: 'all'.")
 
-    val artifactNone by option("--artifact-none")
-        .flag()
-        .help("Disable artifact storage entirely.")
+    val enableArtifacts by option("--enable-artifact")
+        .enum<ArtifactKind>(ignoreCase = true)
+        .multiple()
+        .help("Enable a specific artifact kind (can be repeated).")
 
-    fun resolve(): ArtifactConfig {
-        val location: ArtifactLocation = when {
-            artifactNone -> ArtifactLocation.None
-            artifactUseTemporaryDirectory -> ArtifactLocation.Temporary(cleanup = true)
-            else -> artifactDirectory?.let { ArtifactLocation.InRoot(it) } ?: ArtifactLocation.Temporary(cleanup = true)
+    val disableArtifacts by option("--disable-artifact")
+        .enum<ArtifactKind>(ignoreCase = true)
+        .multiple()
+        .help("Disable a specific artifact kind (can be repeated).")
+
+    val resolved by lazy {
+        val outputDirectory = artifactDirectory ?: Files.createTempDirectory("semantifyr-")
+        val base = when (artifactPreset) {
+            ArtifactPreset.None -> ArtifactConfig.none(outputDirectory)
+            ArtifactPreset.Report -> ArtifactConfig.reportOnly(outputDirectory)
+            ArtifactPreset.All -> ArtifactConfig.all(outputDirectory)
         }
-        return ArtifactConfig.ALL.copy(location = location)
+        val resolved = base.enabled + enableArtifacts.toSet() - disableArtifacts.toSet()
+        base.copy(enabled = resolved)
     }
 }
 
@@ -110,26 +122,40 @@ class BackendOptionGroup : OptionGroup("Backend options") {
         return Portfolios.byId(portfolioId) ?: error("Unknown portfolio '$portfolioId'. Options: ${Portfolios.all.joinToString { it.id }}")
     }
 
-    fun resolveEnvironment(): ExecutionEnvironment {
+    val resolved by lazy {
         val spec = when (thetaExecutor) {
             ThetaExecutor.Auto -> ThetaExecutorSpec.Auto
             ThetaExecutor.Shell -> ThetaExecutorSpec.Shell
             ThetaExecutor.Docker -> ThetaExecutorSpec.Docker(image = thetaDockerImage)
         }
-        return ExecutionEnvironment.builder().theta(spec).build()
+        ExecutionEnvironment.builder().theta(spec).build()
     }
 }
 
-class CompilationOptionGroup : OptionGroup("Compilation options") {
-    val optimizationLevel by option("--optimization")
-        .choice("O0", "O1")
-        .default("O1")
-        .help("Compiler optimization level. 'O0' disables all passes; 'O1' enables the default bundle.")
+enum class OptimizationPreset { None, All }
 
-    fun resolveOptimization(): OptimizationConfig {
-        return when (optimizationLevel) {
-            "O0" -> OptimizationConfig.NONE
-            else -> OptimizationConfig.DEFAULT
+class CompilationOptionGroup : OptionGroup("Compilation options") {
+    val optimizationPreset by option("--optimization")
+        .enum<OptimizationPreset>(ignoreCase = true)
+        .default(OptimizationPreset.All)
+        .help("Optimization preset. Default: 'all'.")
+
+    val enableOptimizations by option("--enable-optimization")
+        .enum<OptimizationCategory>(ignoreCase = true)
+        .multiple()
+        .help("Enable a specific optimization category (can be repeated).")
+
+    val disableOptimizations by option("--disable-optimization")
+        .enum<OptimizationCategory>(ignoreCase = true)
+        .multiple()
+        .help("Disable a specific optimization category (can be repeated).")
+
+    val resolved by lazy {
+        val base = when (optimizationPreset) {
+            OptimizationPreset.None -> OptimizationConfig.NONE.enabled
+            OptimizationPreset.All -> OptimizationConfig.ALL.enabled
         }
+        val resolved = base + enableOptimizations.toSet() - disableOptimizations.toSet()
+        OptimizationConfig(enabled = resolved)
     }
 }

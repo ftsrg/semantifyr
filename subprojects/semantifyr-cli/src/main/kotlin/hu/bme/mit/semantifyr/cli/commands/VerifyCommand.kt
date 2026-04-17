@@ -40,7 +40,7 @@ class VerifyCommand : BaseSemantifyrCommand("verify") {
     }
 
     override fun run() {
-        val environment = backendOptions.resolveEnvironment()
+        val environment = backendOptions.resolved
         val portfolio = backendOptions.resolvePortfolio()
         logger.info { "verify model=$model libraries=$libraries portfolio=${portfolio.id} environment=$environment timeout=${backendOptions.timeout}" }
         ensurePortfolio(portfolio, environment)
@@ -52,7 +52,7 @@ class VerifyCommand : BaseSemantifyrCommand("verify") {
             exitProcess(1)
         }
 
-        val artifacts = artifactOptions.resolve()
+        val artifacts = artifactOptions.resolved
 
         verifyCases(semantifyrModelContext, portfolio, environment, artifacts, cases)
     }
@@ -85,7 +85,7 @@ class VerifyCommand : BaseSemantifyrCommand("verify") {
             .environment(environment)
             .timeout(backendOptions.timeout)
             .artifacts(artifacts)
-            .optimization(compilationOptions.resolveOptimization())
+            .optimization(compilationOptions.resolved)
             .build()
             .use { verifier ->
                 var anyNonPass = false
@@ -98,7 +98,6 @@ class VerifyCommand : BaseSemantifyrCommand("verify") {
             }
     }
 
-    /** Run one case, echo the result line, and return `true` when the verdict was not `Passed`. */
     private fun verifyCase(verifier: SemantifyrVerifier, case: VerificationCase): Boolean {
         echo("Verifying ${case.fqn} ...")
         val result = verifier.verifyBlocking(case)

@@ -11,11 +11,11 @@ import com.github.ajalt.clikt.parameters.groups.provideDelegate
 import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path
+import hu.bme.mit.semantifyr.cli.commands.options.ArtifactOptionGroup
 import hu.bme.mit.semantifyr.cli.commands.options.CompilationOptionGroup
 import hu.bme.mit.semantifyr.cli.commands.options.VerificationCaseSpecificationOptionGroup
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
-import hu.bme.mit.semantifyr.semantics.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.semantics.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.semantics.verification.SemantifyrCompiler
 import hu.bme.mit.semantifyr.semantics.verification.VerificationCase
@@ -30,6 +30,7 @@ class CompileCommand : BaseSemantifyrCommand("compile") {
 
     private val caseSpecificationOptions by VerificationCaseSpecificationOptionGroup()
     private val compilationOptions by CompilationOptionGroup()
+    private val artifactOptions by ArtifactOptionGroup()
 
     private val outputPath by option("-o", "--output")
         .path(mustExist = false, canBeFile = true, canBeDir = true)
@@ -97,8 +98,8 @@ class CompileCommand : BaseSemantifyrCommand("compile") {
     private inline fun runCompiler(context: SemantifyrModelContext, block: (SemantifyrCompiler) -> Unit) {
         SemantifyrCompiler.builder()
             .context(context)
-            .artifacts(ArtifactConfig.NONE)
-            .optimization(compilationOptions.resolveOptimization())
+            .artifacts(artifactOptions.resolved)
+            .optimization(compilationOptions.resolved)
             .build()
             .use(block)
     }
