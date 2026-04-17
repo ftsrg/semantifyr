@@ -23,10 +23,14 @@ import org.eclipse.xtext.EcoreUtil2
 
 @CompilationScoped
 class RedundantOperationRemoverOptimizer @Inject constructor(
+    private val config: OptimizationConfig,
     private val compilationArtifactManager: CompilationArtifactManager,
 ) : AbstractLoopedOptimizer<Element>() {
 
     override fun doOptimizationStep(element: Element): Boolean {
+        if (!config.isAnyEnabled(OptimizationCategory.RedundantOperationRemoval)) {
+            return false
+        }
         return removeConstantTrueAssumptions(element)
                 || removeRedundantEmptyChoiceBranches(element)
                 || removeEmptyForOperations(element)

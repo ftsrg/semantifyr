@@ -8,11 +8,10 @@ package hu.bme.mit.semantifyr.semantics.optimization
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 
 @CompilationScoped
 class InlinedOxstsOperationOptimizer @Inject constructor(
-    private val config: OptimizationConfig,
     private val redundantOperationRemoverOptimizer: RedundantOperationRemoverOptimizer,
     private val operationFlattenerOptimizer: OperationFlattenerOptimizer,
     private val constantFalseAssumptionPropagatorOptimizer: ConstantFalseAssumptionPropagatorOptimizer,
@@ -22,10 +21,10 @@ class InlinedOxstsOperationOptimizer @Inject constructor(
 
     override fun doOptimizationStep(element: InlinedOxsts): Boolean {
         return constantFalseAssumptionPropagatorOptimizer.optimize(element)
-                || operationFlattenerOptimizer.optimize(element)
-                || redundantOperationRemoverOptimizer.optimize(element)
-                || expressionOptimizer.optimize(element)
-                || variableOptimizer.optimize(element)
+            || operationFlattenerOptimizer.optimize(element)
+            || redundantOperationRemoverOptimizer.optimize(element)
+            || expressionOptimizer.optimize(element)
+            || variableOptimizer.optimize(element)
     }
 
 }

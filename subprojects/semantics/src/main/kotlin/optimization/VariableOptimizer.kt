@@ -24,11 +24,15 @@ import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
 
 class VariableOptimizer @Inject constructor(
+    private val config: OptimizationConfig,
     private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
     private val compilationArtifactManager: CompilationArtifactManager,
 ) {
 
     fun optimize(element: InlinedOxsts): Boolean {
+        if (!config.isEnabled(OptimizationCategory.UnusedVariableElimination)) {
+            return false
+        }
         val optimizer = Optimizer(element)
         return optimizer.optimize(element)
     }

@@ -18,10 +18,14 @@ import org.eclipse.xtext.EcoreUtil2
 
 @CompilationScoped
 class OperationFlattenerOptimizer @Inject constructor(
+    private val config: OptimizationConfig,
     private val compilationArtifactManager: CompilationArtifactManager,
 ) : AbstractLoopedOptimizer<Element>() {
 
     override fun doOptimizationStep(element: Element): Boolean {
+        if (!config.isEnabled(OptimizationCategory.OperationFlattening)) {
+            return false
+        }
         return flattenNestedSequenceOperations(element)
                 || flattenNestedChoiceOperations(element)
                 || flattenSingleBranchChoiceOperations(element)

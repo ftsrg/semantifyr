@@ -30,6 +30,7 @@ import org.eclipse.xtext.EcoreUtil2
 
 @CompilationScoped
 class ExpressionOptimizer @Inject constructor(
+    private val config: OptimizationConfig,
     private val constantExpressionEvaluatorProvider: ConstantExpressionEvaluatorProvider,
     private val compilationArtifactManager: CompilationArtifactManager,
     private val constantEvaluationTransformer: ConstantExpressionEvaluationTransformer,
@@ -38,6 +39,9 @@ class ExpressionOptimizer @Inject constructor(
     private val optimizedExpressions = mutableSetOf<Expression>()
 
     override fun doOptimizationStep(element: Element): Boolean {
+        if (!config.isAnyEnabled(OptimizationCategory.ConstantFolding, OptimizationCategory.ExpressionSimplification)) {
+            return false
+        }
         return rewriteConstantTrueOr(element)
                 || rewriteConstantFalseAnd(element)
                 || rewriteRedundantOr(element)

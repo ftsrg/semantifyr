@@ -29,10 +29,14 @@ private val SequenceOperation.isSingleConstantFalseAssumption
 
 @CompilationScoped
 class ConstantFalseAssumptionPropagatorOptimizer @Inject constructor(
+    private val config: OptimizationConfig,
     private val compilationArtifactManager: CompilationArtifactManager,
 ) : AbstractLoopedOptimizer<Element>() {
 
     override fun doOptimizationStep(element: Element): Boolean {
+        if (!config.isAnyEnabled(OptimizationCategory.AssumptionPropagation)) {
+            return false
+        }
         return propagateInSequenceOperation(element)
                 || removeInChoiceBranch(element)
                 || propagateSingleBranchChoiceOperation(element)
