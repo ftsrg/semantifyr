@@ -50,7 +50,16 @@ class SemantifyrLoader @Inject constructor(
         return SemantifyrLoaderContext()
     }
 
-    fun cloneOxstsPackagesInResourceSet(resourceSet: ResourceSet): ResourceSet {
+    fun fromResourceSet(resourceSet: ResourceSet): SemantifyrModelContext {
+        val clonedResourceSet = cloneOxstsPackagesInResourceSet(resourceSet)
+        return SemantifyrModelContext(
+            resourceSet = clonedResourceSet,
+            libraryResources = emptyList(),
+            modelResources = clonedResourceSet.resources.toList(),
+        )
+    }
+
+    private fun cloneOxstsPackagesInResourceSet(resourceSet: ResourceSet): ResourceSet {
         val clone = createResourceSet()
 
         // For some reason resourceSet.resources may change in the loop leading to concurrent modification
@@ -108,6 +117,28 @@ class SemantifyrLoader @Inject constructor(
                 loadLibrary(libraryPath)
             }
 
+            return this
+        }
+
+        fun loadLibraryPaths(paths: List<Path>): SemantifyrLoaderContext {
+            for (path in paths) {
+                if (NioFiles.isDirectory(path)) {
+                    loadLibraries(path)
+                } else {
+                    loadLibrary(path)
+                }
+            }
+            return this
+        }
+
+        fun loadModelPaths(paths: List<Path>): SemantifyrLoaderContext {
+            for (path in paths) {
+                if (NioFiles.isDirectory(path)) {
+                    loadModels(path)
+                } else {
+                    loadModel(path)
+                }
+            }
             return this
         }
 
