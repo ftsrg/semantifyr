@@ -6,23 +6,44 @@
 
 package hu.bme.mit.semantifyr.portfolios
 
-import hu.bme.mit.semantifyr.backends.theta.verification.ThetaBackendProvider
+import hu.bme.mit.semantifyr.backends.theta.verification.ThetaBackend
 import hu.bme.mit.semantifyr.backends.theta.verification.ThetaConfig
-import hu.bme.mit.semantifyr.backends.theta.verification.theta
-import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaExecutorSpec
 import hu.bme.mit.semantifyr.semantics.verification.AvailabilityReport
 import hu.bme.mit.semantifyr.semantics.verification.BackendExecutor
 import hu.bme.mit.semantifyr.semantics.verification.ExecutionEnvironment
 import hu.bme.mit.semantifyr.semantics.verification.VerificationRequest
 import hu.bme.mit.semantifyr.semantics.verification.VerificationResult
 import hu.bme.mit.semantifyr.semantics.verification.portfolio.Portfolio
+import hu.bme.mit.semantifyr.semantics.verification.portfolio.PortfolioScope
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 internal const val THETA_FAMILY_ID = "theta"
 
+fun PortfolioScope.runTheta(
+    config: ThetaConfig,
+    request: VerificationRequest,
+    environment: ExecutionEnvironment,
+) {
+    async {
+        executor.withPermit {
+            ThetaBackend.verify(config, request, environment)
+        }
+    }
+}
+
+suspend fun BackendExecutor.runTheta(
+    config: ThetaConfig,
+    request: VerificationRequest,
+    environment: ExecutionEnvironment,
+): VerificationResult {
+    return withPermit {
+        ThetaBackend.verify(config, request, environment)
+    }
+}
+
 class ThetaFullPortfolio(
-    private val internalConcurrency: Int = Int.MAX_VALUE,
-    private val stageTimeout: Duration = Duration.INFINITE,
+    private val stageTimeout: Duration = 10.minutes,
 ) : Portfolio() {
 
     override val id: String = "theta-full"
@@ -31,7 +52,8 @@ class ThetaFullPortfolio(
     override val familyId: String = THETA_FAMILY_ID
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
-        return ThetaBackendProvider.probeExecutor(environment.theta ?: ThetaExecutorSpec.Auto)
+        return ThetaBackend.probeAvailability(ThetaConfig.CegarExpl, environment)
+        // should probe all and return if at least one can run -> all ord together
     }
 
     override suspend fun verify(
@@ -39,12 +61,12 @@ class ThetaFullPortfolio(
         executor: BackendExecutor,
         environment: ExecutionEnvironment,
     ): VerificationResult {
-        return firstDecisive(request, executor, environment, maxConcurrency = internalConcurrency, timeout = stageTimeout) {
-            theta(ThetaConfig.Companion.CegarExpl)
-            theta(ThetaConfig.Companion.CegarExplPredCombined)
-            theta(ThetaConfig.Companion.CegarPredCart)
-            theta(ThetaConfig.Companion.BoundedKInduction)
-        }
+        return firstDecisive(executor, stageTimeout) {
+            runTheta(ThetaConfig.CegarExpl, request, environment)
+            runTheta(ThetaConfig.CegarExplPredCombined, request, environment)
+            runTheta(ThetaConfig.CegarPredCart, request, environment)
+            runTheta(ThetaConfig.BoundedKInduction, request, environment)
+        } ?: VerificationResult.inconclusive("$id: no decisive result within $stageTimeout")
     }
 }
 
@@ -55,7 +77,7 @@ class ThetaSinglePortfolio(val config: ThetaConfig) : Portfolio() {
     override val familyId: String = THETA_FAMILY_ID
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
-        return ThetaBackendProvider.probeAvailability(config, environment)
+        return ThetaBackend.probeAvailability(config, environment)
     }
 
     override suspend fun verify(
@@ -63,8 +85,6 @@ class ThetaSinglePortfolio(val config: ThetaConfig) : Portfolio() {
         executor: BackendExecutor,
         environment: ExecutionEnvironment,
     ): VerificationResult {
-        return firstDecisive(request, executor, environment) {
-            theta(config)
-        }
+        return executor.runTheta(config, request, environment)
     }
 }
