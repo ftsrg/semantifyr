@@ -10,8 +10,9 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.artifact.CompilationArtifactManager
+import hu.bme.mit.semantifyr.semantics.artifact.CompilationPass
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
 
@@ -42,7 +43,7 @@ class OperationFlattenerOptimizer @Inject constructor(
 
         EcoreUtil2.remove(nestedSequenceOperation)
 
-//        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.OperationFlattening)
 
         return true
     }
@@ -67,7 +68,7 @@ class OperationFlattenerOptimizer @Inject constructor(
 
         EcoreUtil2.remove(containerSequence)
 
-//        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.OperationFlattening)
 
         return true
     }
@@ -83,7 +84,7 @@ class OperationFlattenerOptimizer @Inject constructor(
 
         EcoreUtil2.replace(choiceOperation, choiceOperation.branches.single())
 
-//        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.OperationFlattening)
 
         return true
     }

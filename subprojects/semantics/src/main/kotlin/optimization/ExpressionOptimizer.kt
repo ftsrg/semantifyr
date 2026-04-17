@@ -21,8 +21,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OperatorExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOperator
 import hu.bme.mit.semantifyr.semantics.expression.ConstantExpressionEvaluationTransformer
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.artifact.CompilationArtifactManager
+import hu.bme.mit.semantifyr.semantics.artifact.CompilationPass
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
@@ -73,7 +74,7 @@ class ExpressionOptimizer @Inject constructor(
 
         optimizedExpressions += constant
 
-//        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.ExpressionSimplification)
 
         return true
     }
@@ -95,7 +96,7 @@ class ExpressionOptimizer @Inject constructor(
             EcoreUtil2.replace(constantTrueOr, constantTrueOr.right)
         }
 
-//        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.ExpressionSimplification)
 
         return true
     }
@@ -117,7 +118,7 @@ class ExpressionOptimizer @Inject constructor(
             EcoreUtil2.replace(constantFalseAnd, constantFalseAnd.right)
         }
 
-//        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.ExpressionSimplification)
 
         return true
     }
@@ -138,7 +139,7 @@ class ExpressionOptimizer @Inject constructor(
             EcoreUtil2.replace(redundantOr, redundantOr.left)
         }
 
-//        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.ExpressionSimplification)
 
         return true
     }
@@ -159,7 +160,7 @@ class ExpressionOptimizer @Inject constructor(
             EcoreUtil2.replace(redundantAnd, redundantAnd.left)
         }
 
-//        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.ExpressionSimplification)
 
         return true
     }
@@ -177,7 +178,7 @@ class ExpressionOptimizer @Inject constructor(
 
         EcoreUtil2.replace(redundantNegation, internalNegation.body)
 
-//        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.ExpressionSimplification)
 
         return true
     }
@@ -204,7 +205,7 @@ class ExpressionOptimizer @Inject constructor(
 
         EcoreUtil2.replace(redundantNegation, ag)
 
-//        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.ExpressionSimplification)
 
         return true
     }
@@ -231,7 +232,7 @@ class ExpressionOptimizer @Inject constructor(
 
         EcoreUtil2.replace(redundantNegation, ef)
 
-//        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.ExpressionSimplification)
 
         return true
     }

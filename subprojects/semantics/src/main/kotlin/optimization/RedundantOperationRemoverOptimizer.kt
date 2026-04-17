@@ -14,8 +14,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.artifact.CompilationArtifactManager
+import hu.bme.mit.semantifyr.semantics.artifact.CompilationPass
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
@@ -47,7 +48,7 @@ class RedundantOperationRemoverOptimizer @Inject constructor(
             EcoreUtil2.remove(assumption)
         }
 
-//        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.RedundantOperationRemoval)
 
         return true
     }
@@ -65,7 +66,7 @@ class RedundantOperationRemoverOptimizer @Inject constructor(
 
         EcoreUtil2.remove(redundantBranch)
 
-//        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.RedundantOperationRemoval)
 
         return true
     }
@@ -83,7 +84,7 @@ class RedundantOperationRemoverOptimizer @Inject constructor(
             EcoreUtil2.remove(emptyForOperation)
         }
 
-//        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.RedundantOperationRemoval)
 
         return true
     }
@@ -101,7 +102,7 @@ class RedundantOperationRemoverOptimizer @Inject constructor(
             emptyIfElseBranch.`else` = null
         }
 
-//        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.RedundantOperationRemoval)
 
         return true
     }
@@ -122,7 +123,7 @@ class RedundantOperationRemoverOptimizer @Inject constructor(
             emptyIfBodyBranch.body = emptyIfBodyBranch.`else`
         }
 
-//        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.RedundantOperationRemoval)
 
         return true
     }
@@ -144,7 +145,7 @@ class RedundantOperationRemoverOptimizer @Inject constructor(
             EcoreUtil2.remove(ifOperation)
         }
 
-//        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.RedundantOperationRemoval)
 
         return true
     }

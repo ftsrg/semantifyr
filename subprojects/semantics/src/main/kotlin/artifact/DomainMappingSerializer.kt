@@ -53,16 +53,16 @@ class DomainMappingSerializer @Inject constructor(
             },
         )
 
-        val file = artifactManager.resolve("mapping.json")
+        artifactManager.withFile(ArtifactKind.Mapping) {
+            val json = Json {
+                prettyPrint = true
+                prettyPrintIndent = "  "
+                explicitNulls = false
+            }
 
-        val json = Json {
-            prettyPrint = true
-            prettyPrintIndent = "  "
-            explicitNulls = false
-        }
-
-        file.outputStream().buffered().use {
-            json.encodeToStream(data, it)
+            it.outputStream().buffered().use {
+                json.encodeToStream(data, it)
+            }
         }
 
     }

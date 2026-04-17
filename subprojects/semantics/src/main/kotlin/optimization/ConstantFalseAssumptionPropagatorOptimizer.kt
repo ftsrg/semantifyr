@@ -14,8 +14,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.artifact.CompilationArtifactManager
+import hu.bme.mit.semantifyr.semantics.artifact.CompilationPass
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
@@ -52,7 +53,7 @@ class ConstantFalseAssumptionPropagatorOptimizer @Inject constructor(
         sequenceOperation.steps.clear()
         sequenceOperation.steps += assumption
 
-//        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.AssumptionPropagation)
 
         return true
     }
@@ -70,7 +71,7 @@ class ConstantFalseAssumptionPropagatorOptimizer @Inject constructor(
 
         EcoreUtil2.remove(constantFalseBranch)
 
-//        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.AssumptionPropagation)
 
         return true
     }
@@ -86,7 +87,7 @@ class ConstantFalseAssumptionPropagatorOptimizer @Inject constructor(
 
         EcoreUtil2.replace(choiceOperation, OxstsFactory.createAssumptionOperation(false))
 
-//        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.AssumptionPropagation)
 
         return true
     }
@@ -102,7 +103,7 @@ class ConstantFalseAssumptionPropagatorOptimizer @Inject constructor(
 
         EcoreUtil2.replace(ifOperation, ifOperation.body)
 
-//        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.AssumptionPropagation)
 
         return true
     }

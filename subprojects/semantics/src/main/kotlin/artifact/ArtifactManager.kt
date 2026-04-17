@@ -24,12 +24,30 @@ class ArtifactManager @Inject constructor(
         basePath.mkdirs()
     }
 
-    fun resolve(relativePath: String): File {
+    private fun resolve(relativePath: String): File {
         return basePath.resolve(relativePath)
+    }
+
+    private fun resolve(kind: ArtifactKind): File {
+        return resolve(ArtifactKindFiles.pathOf(kind))
     }
 
     fun resolveUri(relativePath: String): URI {
         return URI.createFileURI(resolve(relativePath).absolutePath)
+    }
+
+    fun resolveUri(kind: ArtifactKind): URI {
+        return resolveUri(ArtifactKindFiles.pathOf(kind))
+    }
+
+    fun withFile(kind: ArtifactKind, block: (File) -> Unit) {
+        if (!config.isEnabled(kind)) {
+            return
+        }
+        val path = ArtifactKindFiles.pathOf(kind)
+        val file = resolve(path)
+        file.parentFile?.mkdirs()
+        block(file)
     }
 
 }

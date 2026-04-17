@@ -108,17 +108,18 @@ class TraceSerializer @Inject constructor(
     }
 
     fun serialize(inlinedOxstsAssumptionWitness: OxstsClassAssumptionWitness) {
-        val data = transformWitness(inlinedOxstsAssumptionWitness)
-        val file = artifactManager.resolve(ArtifactKindFiles.trace)
+        artifactManager.withFile(ArtifactKind.Trace) {
+            val data = transformWitness(inlinedOxstsAssumptionWitness)
 
-        val json = Json {
-            prettyPrint = true
-            prettyPrintIndent = "  "
-            explicitNulls = false
-        }
+            val json = Json {
+                prettyPrint = true
+                prettyPrintIndent = "  "
+                explicitNulls = false
+            }
 
-        file.outputStream().buffered().use {
-            json.encodeToStream(data, it)
+            it.outputStream().buffered().use {
+                json.encodeToStream(data, it)
+            }
         }
     }
 

@@ -17,7 +17,8 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.semantics.expression.MetaStaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.expression.evaluateTyped
 import hu.bme.mit.semantifyr.semantics.expression.tryEvaluateTypedOrNull
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
+import hu.bme.mit.semantifyr.semantics.artifact.CompilationArtifactManager
+import hu.bme.mit.semantifyr.semantics.artifact.CompilationPass
 import hu.bme.mit.semantifyr.semantics.utils.copy
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
@@ -92,7 +93,7 @@ class VariableOptimizer @Inject constructor(
             variableAssignments -= unreadVariable
             unreadVariables -= unreadVariable
 
-//            compilationStateManager.commitModelState()
+            compilationArtifactManager.commitStep(CompilationPass.UnusedVariableElimination)
 
             return true
         }
@@ -113,7 +114,7 @@ class VariableOptimizer @Inject constructor(
             unassignedInitializedVariables -= unassignedInitializedVariable
             variableReads -= unassignedInitializedVariable
 
-//            compilationStateManager.commitModelState()
+            compilationArtifactManager.commitStep(CompilationPass.UnusedVariableElimination)
 
             return true
         }
