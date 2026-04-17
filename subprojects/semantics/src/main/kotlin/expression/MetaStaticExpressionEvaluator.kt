@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.semantics.expression
 
-import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluator
@@ -34,14 +33,10 @@ inline fun <reified T : A, A> ExpressionEvaluator<A>.evaluateTyped(clazz: Class<
 }
 
 class MetaStaticExpressionEvaluator @AssistedInject constructor(
-    @param:Assisted val instance: Instance
+    @param:Assisted val instance: Instance,
+    private val staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider,
+    private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
 ) : MetaConstantExpressionEvaluator() {
-
-    @Inject
-    private lateinit var staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider
-
-    @Inject
-    private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
 
     override fun visit(expression: ElementReference): NamedElement {
         if (expression.element.eIsProxy()) {

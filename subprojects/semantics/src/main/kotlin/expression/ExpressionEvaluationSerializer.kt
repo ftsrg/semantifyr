@@ -19,14 +19,13 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RealEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.StringEvaluation
 
-class ExpressionEvaluationSerializer : StaticExpressionEvaluationVisitor<String>() {
+class ExpressionEvaluationSerializer @Inject constructor(
+    private val oxstsQualifiedNameProvider: OxstsQualifiedNameProvider,
+) : StaticExpressionEvaluationVisitor<String>() {
 
     fun serialize(evaluation: ExpressionEvaluation): String {
         return visit(evaluation)
     }
-
-    @Inject
-    private lateinit var oxstsQualifiedNameProvider: OxstsQualifiedNameProvider
 
     override fun visit(evaluation: ArrayEvaluation): String {
         val values = evaluation.elements.joinToString(", ") {

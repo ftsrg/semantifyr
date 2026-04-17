@@ -14,14 +14,13 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsPackage
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import org.eclipse.xtext.naming.QualifiedName
 
 @CompilationScoped
-class RedefinitionAwareReferenceResolver {
-
-    @Inject
-    private lateinit var domainMemberCollectionProvider: DomainMemberCollectionProvider
+class RedefinitionAwareReferenceResolver @Inject constructor(
+    private val domainMemberCollectionProvider: DomainMemberCollectionProvider,
+) {
 
     fun resolve(domain: DomainDeclaration, name: String): NamedElement {
         return resolveOrNull(domain, name) ?: throw IllegalArgumentException("Could not find any element named $name!")

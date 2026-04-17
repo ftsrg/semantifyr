@@ -4,18 +4,17 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.transformation.tracer
+package hu.bme.mit.semantifyr.semantics.artifact
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider
 import hu.bme.mit.semantifyr.oxsts.lang.serializer.ExpressionSerializer
 import hu.bme.mit.semantifyr.semantics.expression.ExpressionEvaluationSerializer
-import hu.bme.mit.semantifyr.semantics.transformation.backannotation.OxstsClassAssumptionActivatedTrace
-import hu.bme.mit.semantifyr.semantics.transformation.backannotation.OxstsClassAssumptionWitness
-import hu.bme.mit.semantifyr.semantics.transformation.backannotation.OxstsClassAssumptionWitnessState
-import hu.bme.mit.semantifyr.semantics.transformation.backannotation.OxstsClassAssumptionWitnessStateValue
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.ArtifactManager
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.witness.OxstsClassAssumptionActivatedTrace
+import hu.bme.mit.semantifyr.semantics.witness.OxstsClassAssumptionWitness
+import hu.bme.mit.semantifyr.semantics.witness.OxstsClassAssumptionWitnessState
+import hu.bme.mit.semantifyr.semantics.witness.OxstsClassAssumptionWitnessStateValue
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
@@ -53,22 +52,13 @@ data class SerializableTraceData(
 )
 
 @CompilationScoped
-class TraceSerializer {
-
-    @Inject
-    private lateinit var oxstsQualifiedNameProvider: OxstsQualifiedNameProvider
-
-    @Inject
-    private lateinit var transitionCallTracer: TransitionCallTracer
-
-    @Inject
-    private lateinit var expressionEvaluationSerializer: ExpressionEvaluationSerializer
-
-    @Inject
-    private lateinit var expressionSerializer: ExpressionSerializer
-
-    @Inject
-    private lateinit var artifactManager: ArtifactManager
+class TraceSerializer @Inject constructor(
+    private val oxstsQualifiedNameProvider: OxstsQualifiedNameProvider,
+    private val transitionCallTracer: TransitionCallTracer,
+    private val expressionEvaluationSerializer: ExpressionEvaluationSerializer,
+    private val expressionSerializer: ExpressionSerializer,
+    private val artifactManager: ArtifactManager,
+) {
 
     private fun transformInlinedOxstsAssumptionActivatedTrace(trace: OxstsClassAssumptionActivatedTrace): SerializableTrace {
         val transitionCallTrace = transitionCallTracer.getTransitionCallTrace(trace.traceOperation)
@@ -119,7 +109,7 @@ class TraceSerializer {
 
     fun serialize(inlinedOxstsAssumptionWitness: OxstsClassAssumptionWitness) {
         val data = transformWitness(inlinedOxstsAssumptionWitness)
-        val file = artifactManager.resolve("trace.json")
+        val file = artifactManager.resolve(ArtifactKindFiles.trace)
 
         val json = Json {
             prettyPrint = true

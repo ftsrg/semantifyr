@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.transformation.instantiation
+package hu.bme.mit.semantifyr.semantics.compilation.instantiation
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
@@ -30,12 +30,13 @@ import hu.bme.mit.semantifyr.semantics.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.semantics.expression.MetaStaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.optimization.InlinedOxstsOperationOptimizer
-import hu.bme.mit.semantifyr.semantics.transformation.constraints.ConstraintChecker
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
-import hu.bme.mit.semantifyr.semantics.transformation.inliner.ExpressionRewriter
-import hu.bme.mit.semantifyr.semantics.transformation.instantiation.NameHelper.INSTANCE_NAME_SEPARATOR
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.DomainMappingSerializer
+import hu.bme.mit.semantifyr.semantics.compilation.constraints.ConstraintChecker
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.compilation.inliner.ExpressionRewriter
+import hu.bme.mit.semantifyr.semantics.compilation.instantiation.NameHelper.INSTANCE_NAME_SEPARATOR
+import hu.bme.mit.semantifyr.semantics.artifact.CompilationArtifactManager
+import hu.bme.mit.semantifyr.semantics.artifact.CompilationPass
+import hu.bme.mit.semantifyr.semantics.artifact.DomainMappingSerializer
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.copy
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
@@ -43,55 +44,24 @@ import hu.bme.mit.semantifyr.semantics.utils.treeSequence
 import org.eclipse.xtext.EcoreUtil2
 
 @CompilationScoped
-class OxstsInflator {
-
-    @Inject
-    lateinit var oxstsClassInstantiator: OxstsClassInstantiator
-
-    @Inject
-    lateinit var builtinSymbolResolver: BuiltinSymbolResolver
-
-    @Inject
-    private lateinit var instanceManager: InstanceManager
-
-    @Inject
-    private lateinit var constraintChecker: ConstraintChecker
-
-    @Inject
-    private lateinit var staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider
-
-    @Inject
-    private lateinit var compilationStateManager: CompilationStateManager
-
-    @Inject
-    private lateinit var instanceNameProvider: InstanceNameProvider
-
-    @Inject
-    private lateinit var multiplicityRangeEvaluator: MultiplicityRangeEvaluator
-
-    @Inject
-    private lateinit var expressionRewriter: ExpressionRewriter
-
-    @Inject
-    private lateinit var instanceReferenceProvider: InstanceReferenceProvider
-
-    @Inject
-    private lateinit var deflatedEvaluationTransformer: DeflatedExpressionEvaluationTransformer
-
-    @Inject
-    private lateinit var inlinedOxstsOperationOptimizer: InlinedOxstsOperationOptimizer
-
-    @Inject
-    private lateinit var metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider
-
-    @Inject
-    private lateinit var domainMappingSerializer: DomainMappingSerializer
-
-    @Inject
-    private lateinit var expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider
-
-    @Inject
-    private lateinit var instanceCollector: InstanceCollector
+class OxstsInflator @Inject constructor(
+    val oxstsClassInstantiator: OxstsClassInstantiator,
+    val builtinSymbolResolver: BuiltinSymbolResolver,
+    private val instanceManager: InstanceManager,
+    private val constraintChecker: ConstraintChecker,
+    private val staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider,
+    private val compilationArtifactManager: CompilationArtifactManager,
+    private val instanceNameProvider: InstanceNameProvider,
+    private val multiplicityRangeEvaluator: MultiplicityRangeEvaluator,
+    private val expressionRewriter: ExpressionRewriter,
+    private val instanceReferenceProvider: InstanceReferenceProvider,
+    private val deflatedEvaluationTransformer: DeflatedExpressionEvaluationTransformer,
+    private val inlinedOxstsOperationOptimizer: InlinedOxstsOperationOptimizer,
+    private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
+    private val domainMappingSerializer: DomainMappingSerializer,
+    private val expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider,
+    private val instanceCollector: InstanceCollector,
+) {
 
     private val variableInstanceDomain = mutableMapOf<VariableDeclaration, Set<Instance>>()
 //    private val domainInstanceDomain = mutableMapOf<DomainDeclaration, Set<Instance>>()
@@ -109,13 +79,13 @@ class OxstsInflator {
         rewriteVariableReferences(inlinedOxsts)
         rewriteFeatureTypedVariables(inlinedOxsts)
 
-        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.Inflation)
 
         rewriteStaticExpressions(inlinedOxsts)
 
         inlinedOxstsOperationOptimizer.optimize(inlinedOxsts)
 
-        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.Inflation)
 
         domainMappingSerializer.serializeMapping()
     }

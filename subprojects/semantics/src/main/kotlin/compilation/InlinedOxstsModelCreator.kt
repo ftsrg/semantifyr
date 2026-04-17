@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.transformation
+package hu.bme.mit.semantifyr.semantics.compilation
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
@@ -14,29 +14,23 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.semantics.expression.RedefinitionAwareReferenceResolver
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
-import hu.bme.mit.semantifyr.semantics.transformation.instantiation.InstanceManager
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.ArtifactManager
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.compilation.instantiation.InstanceManager
+import hu.bme.mit.semantifyr.semantics.artifact.ArtifactKindFiles
+import hu.bme.mit.semantifyr.semantics.artifact.ArtifactManager
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 
 @CompilationScoped
-class InlinedOxstsModelCreator {
-
-    @Inject
-    private lateinit var instanceManager: InstanceManager
-
-    @Inject
-    private lateinit var builtinSymbolResolver: BuiltinSymbolResolver
-
-    @Inject
-    private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
-
-    @Inject
-    private lateinit var artifactManager: ArtifactManager
+class InlinedOxstsModelCreator @Inject constructor(
+    private val instanceManager: InstanceManager,
+    private val builtinSymbolResolver: BuiltinSymbolResolver,
+    private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
+    private val artifactManager: ArtifactManager,
+) {
 
     fun createInlinedOxsts(classDeclaration: ClassDeclaration): InlinedOxsts {
         val resourceSet = classDeclaration.eResource().resourceSet
-        val uri = artifactManager.resolveUri("inlined.oxsts")
+        val uri = artifactManager.resolveUri(ArtifactKindFiles.inlinedModel)
 
         val inlinedOxsts = OxstsFactory.createInlinedOxsts()
         inlinedOxsts.classDeclaration = classDeclaration

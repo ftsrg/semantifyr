@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.transformation.instantiation
+package hu.bme.mit.semantifyr.semantics.compilation.instantiation
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider
@@ -14,20 +14,15 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import java.util.*
 
 @CompilationScoped
-class OxstsClassInstantiator {
-
-    @Inject
-    private lateinit var domainMemberCollectionProvider: DomainMemberCollectionProvider
-
-    @Inject
-    private lateinit var expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider
-
-    @Inject
-    private lateinit var instanceManager: InstanceManager
+class OxstsClassInstantiator @Inject constructor(
+    private val domainMemberCollectionProvider: DomainMemberCollectionProvider,
+    private val expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider,
+    private val instanceManager: InstanceManager,
+) {
 
     fun instantiateModel(inlinedOxsts: InlinedOxsts) {
         instantiateTree(inlinedOxsts)

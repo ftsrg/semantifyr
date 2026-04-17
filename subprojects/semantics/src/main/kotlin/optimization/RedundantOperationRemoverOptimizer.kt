@@ -21,10 +21,9 @@ import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
 
 @CompilationScoped
-class RedundantOperationRemoverOptimizer : AbstractLoopedOptimizer<Element>() {
-
-    @Inject
-    private lateinit var compilationStateManager: CompilationStateManager
+class RedundantOperationRemoverOptimizer @Inject constructor(
+    private val compilationArtifactManager: CompilationArtifactManager,
+) : AbstractLoopedOptimizer<Element>() {
 
     override fun doOptimizationStep(element: Element): Boolean {
         return removeConstantTrueAssumptions(element)

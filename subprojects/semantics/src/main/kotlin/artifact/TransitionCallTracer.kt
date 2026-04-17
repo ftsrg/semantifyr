@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.transformation.tracer
+package hu.bme.mit.semantifyr.semantics.artifact
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
@@ -17,7 +17,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.semantics.expression.InstanceEvaluation
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.expression.tryEvaluateTypedOrNull
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 
 class ArgumentTrace(
@@ -32,10 +32,9 @@ class TransitionCallTrace(
 )
 
 @CompilationScoped
-class TransitionCallTracer {
-
-    @Inject
-    private lateinit var staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider
+class TransitionCallTracer @Inject constructor(
+    private val staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider,
+) {
 
     private var tracerCount = 0
 

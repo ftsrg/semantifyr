@@ -10,15 +10,14 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 
 @CompilationScoped
-class StaticExpressionEvaluatorProvider {
+class StaticExpressionEvaluatorProvider @Inject constructor(
+    private val staticExpressionEvaluatorFactory: StaticExpressionEvaluator.Factory,
+) {
 
     private val cache = mutableMapOf<Instance, StaticExpressionEvaluator>()
-
-    @Inject
-    private lateinit var staticExpressionEvaluatorFactory: StaticExpressionEvaluator.Factory
 
     fun getEvaluator(context: Instance): StaticExpressionEvaluator {
         return cache.getOrPut(context) {

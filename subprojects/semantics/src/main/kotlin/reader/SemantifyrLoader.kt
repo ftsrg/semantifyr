@@ -11,13 +11,14 @@ import com.google.inject.Provider
 import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryAdapterFinder
 import hu.bme.mit.semantifyr.oxsts.lang.utils.ResourceUriProvider
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
-import hu.bme.mit.semantifyr.semantics.utils.ResourceSetLoader
 import hu.bme.mit.semantifyr.semantics.utils.SemantifyrUtils.modelPathsUnder
-import hu.bme.mit.semantifyr.semantics.utils.info
-import hu.bme.mit.semantifyr.semantics.utils.loggerFactory
+import hu.bme.mit.semantifyr.logging.info
+import hu.bme.mit.semantifyr.logging.loggerFactory
+
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.xtext.resource.XtextResourceSet
+import java.nio.file.Files as NioFiles
 import java.nio.file.Path
 
 class SemantifyrModelContext(
@@ -26,21 +27,14 @@ class SemantifyrModelContext(
     val modelResources: List<Resource>,
 )
 
-class SemantifyrLoader {
+class SemantifyrLoader @Inject constructor(
+    private val resourceSetProvider: Provider<XtextResourceSet>,
+    private val resourceSetLoader: ResourceSetLoader,
+    private val libraryAdapterFinder: LibraryAdapterFinder,
+    private val resourceUriProvider: ResourceUriProvider,
+) {
 
     private val logger by loggerFactory()
-
-    @Inject
-    private lateinit var resourceSetProvider: Provider<XtextResourceSet>
-
-    @Inject
-    private lateinit var resourceSetLoader: ResourceSetLoader
-
-    @Inject
-    private lateinit var libraryAdapterFinder: LibraryAdapterFinder
-
-    @Inject
-    private lateinit var resourceUriProvider: ResourceUriProvider
 
     private fun createResourceSet(): XtextResourceSet {
         val resourceSet = resourceSetProvider.get()

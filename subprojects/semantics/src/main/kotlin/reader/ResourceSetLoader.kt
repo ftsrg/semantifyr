@@ -4,9 +4,13 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.utils
+package hu.bme.mit.semantifyr.semantics.reader
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.logging.error
+import hu.bme.mit.semantifyr.logging.info
+import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.logging.warn
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.xtext.EcoreUtil2
@@ -15,12 +19,11 @@ import org.eclipse.xtext.util.CancelIndicator
 import org.eclipse.xtext.validation.CheckMode
 import org.eclipse.xtext.validation.IResourceValidator
 
-class ResourceSetLoader {
+class ResourceSetLoader @Inject constructor(
+    private val resourceValidator: IResourceValidator,
+) {
 
     private val logger by loggerFactory()
-
-    @Inject
-    private lateinit var resourceValidator: IResourceValidator
 
     fun resolveAllAndValidate(resourceSet: ResourceSet) {
         EcoreUtil2.resolveAll(resourceSet)

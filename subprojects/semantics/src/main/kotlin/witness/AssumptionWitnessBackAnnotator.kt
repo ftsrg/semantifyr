@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.transformation.backannotation
+package hu.bme.mit.semantifyr.semantics.witness
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
@@ -26,18 +26,15 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionKind
 import hu.bme.mit.semantifyr.semantics.expression.RedefinitionAwareReferenceResolver
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.copy
 
 @CompilationScoped
-class AssumptionWitnessBackAnnotator {
-
-    @Inject
-    private lateinit var builtinSymbolResolver: BuiltinSymbolResolver
-
-    @Inject
-    private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
+class AssumptionWitnessBackAnnotator @Inject constructor(
+    private val builtinSymbolResolver: BuiltinSymbolResolver,
+    private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
+) {
 
     private inner class WitnessContext(val witness: OxstsClassAssumptionWitness) {
 

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.transformation.inliner
+package hu.bme.mit.semantifyr.semantics.compilation.inliner
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider
@@ -21,20 +21,17 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParameterDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParametricDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.copy
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
 
 @CompilationScoped
-class ExpressionRewriter {
-
-    @Inject
-    private lateinit var domainMemberCollectionProvider: DomainMemberCollectionProvider
-
-    @Inject
-    private lateinit var expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider
+class ExpressionRewriter @Inject constructor(
+    private val domainMemberCollectionProvider: DomainMemberCollectionProvider,
+    private val expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider,
+) {
 
     fun rewriteExpressionsToContext(rootElement: Element, newContext: Expression) {
         rewriteContextualExpressionsToContext(rootElement, newContext)

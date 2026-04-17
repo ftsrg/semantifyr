@@ -4,14 +4,17 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.transformation.serializer
+package hu.bme.mit.semantifyr.semantics.artifact
 
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import com.google.inject.Inject
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import org.eclipse.emf.common.util.URI
 import java.io.File
 
 @CompilationScoped
-class ArtifactManager {
+class ArtifactManager @Inject constructor(
+    private val config: ArtifactConfig
+) {
 
     private lateinit var basePath: File
 

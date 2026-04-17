@@ -28,16 +28,11 @@ import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
 
 @CompilationScoped
-class ExpressionOptimizer : AbstractLoopedOptimizer<Element>() {
-
-    @Inject
-    private lateinit var constantExpressionEvaluatorProvider: ConstantExpressionEvaluatorProvider
-
-    @Inject
-    private lateinit var compilationStateManager: CompilationStateManager
-
-    @Inject
-    private lateinit var constantEvaluationTransformer: ConstantExpressionEvaluationTransformer
+class ExpressionOptimizer @Inject constructor(
+    private val constantExpressionEvaluatorProvider: ConstantExpressionEvaluatorProvider,
+    private val compilationArtifactManager: CompilationArtifactManager,
+    private val constantEvaluationTransformer: ConstantExpressionEvaluationTransformer,
+) : AbstractLoopedOptimizer<Element>() {
 
     private val optimizedExpressions = mutableSetOf<Expression>()
 

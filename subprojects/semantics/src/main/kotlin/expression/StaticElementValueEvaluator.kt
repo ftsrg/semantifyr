@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.semantics.expression
 
-import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantElementValueEvaluator
@@ -16,11 +15,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 
 class StaticElementValueEvaluator @AssistedInject constructor(
-    @param:Assisted val instance: Instance
+    @param:Assisted val instance: Instance,
+    private val featureEvaluator: FeatureEvaluator,
 ) : ConstantElementValueEvaluator() {
-
-    @Inject
-    private lateinit var featureEvaluator: FeatureEvaluator
 
     override fun visit(element: Element): ExpressionEvaluation {
         if (element is FeatureDeclaration) {

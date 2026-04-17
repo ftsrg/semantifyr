@@ -4,24 +4,19 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.transformation.backannotation
+package hu.bme.mit.semantifyr.semantics.witness
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.semantics.expression.InstanceReferenceProvider
-import hu.bme.mit.semantifyr.semantics.transformation.instantiation.InstanceManager
-import hu.bme.mit.semantifyr.semantics.transformation.instantiation.OxstsInflator
+import hu.bme.mit.semantifyr.semantics.compilation.instantiation.InstanceManager
+import hu.bme.mit.semantifyr.semantics.compilation.instantiation.OxstsInflator
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 
-class OxstsClassAssumptionWitnessTransformer {
-
-    @Inject
-    private lateinit var instanceReferenceProvider: InstanceReferenceProvider
-
-    @Inject
-    private lateinit var instanceManager: InstanceManager
-
-    @Inject
-    private lateinit var oxstsInflator: OxstsInflator
+class OxstsClassAssumptionWitnessTransformer @Inject constructor(
+    private val instanceReferenceProvider: InstanceReferenceProvider,
+    private val instanceManager: InstanceManager,
+    private val oxstsInflator: OxstsInflator,
+) {
 
     private inner class TransformerContext() {
         val mappings = mutableMapOf<InlinedOxstsAssumptionWitnessState, OxstsClassAssumptionWitnessState>()

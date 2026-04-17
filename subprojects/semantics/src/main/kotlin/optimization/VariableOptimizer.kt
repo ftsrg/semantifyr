@@ -22,13 +22,10 @@ import hu.bme.mit.semantifyr.semantics.utils.copy
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
 
-class VariableOptimizer {
-
-    @Inject
-    private lateinit var metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider
-
-    @Inject
-    private lateinit var compilationStateManager: CompilationStateManager
+class VariableOptimizer @Inject constructor(
+    private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
+    private val compilationArtifactManager: CompilationArtifactManager,
+) {
 
     fun optimize(element: InlinedOxsts): Boolean {
         val optimizer = Optimizer(element)

@@ -11,22 +11,14 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
 
 @CompilationScoped
-class InlinedOxstsOperationOptimizer : AbstractLoopedOptimizer<InlinedOxsts>() {
-
-    @Inject
-    private lateinit var redundantOperationRemoverOptimizer: RedundantOperationRemoverOptimizer
-
-    @Inject
-    private lateinit var operationFlattenerOptimizer: OperationFlattenerOptimizer
-
-    @Inject
-    private lateinit var constantFalseAssumptionPropagatorOptimizer: ConstantFalseAssumptionPropagatorOptimizer
-
-    @Inject
-    private lateinit var expressionOptimizer: ExpressionOptimizer
-
-    @Inject
-    private lateinit var variableOptimizer: VariableOptimizer
+class InlinedOxstsOperationOptimizer @Inject constructor(
+    private val config: OptimizationConfig,
+    private val redundantOperationRemoverOptimizer: RedundantOperationRemoverOptimizer,
+    private val operationFlattenerOptimizer: OperationFlattenerOptimizer,
+    private val constantFalseAssumptionPropagatorOptimizer: ConstantFalseAssumptionPropagatorOptimizer,
+    private val expressionOptimizer: ExpressionOptimizer,
+    private val variableOptimizer: VariableOptimizer,
+) : AbstractLoopedOptimizer<InlinedOxsts>() {
 
     override fun doOptimizationStep(element: InlinedOxsts): Boolean {
         return constantFalseAssumptionPropagatorOptimizer.optimize(element)

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.transformation.inliner
+package hu.bme.mit.semantifyr.semantics.compilation.inliner
 
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
@@ -40,33 +40,22 @@ import hu.bme.mit.semantifyr.semantics.expression.MetaStaticExpressionEvaluatorP
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluationTransformer
 import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.semantics.expression.evaluateTyped
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
+import hu.bme.mit.semantifyr.semantics.artifact.CompilationArtifactManager
+import hu.bme.mit.semantifyr.semantics.artifact.CompilationPass
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.copy
 import org.eclipse.xtext.EcoreUtil2
 import java.util.*
 
 class ExpressionCallInliner @AssistedInject constructor(
-    @param:Assisted val instance: Instance
+    @param:Assisted val instance: Instance,
+    private val staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider,
+    private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
+    private val expressionRewriter: ExpressionRewriter,
+    private val compilationArtifactManager: CompilationArtifactManager,
+    private val instanceReferenceProvider: InstanceReferenceProvider,
+    private val staticEvaluationTransformer: StaticExpressionEvaluationTransformer,
 ) : ExpressionVisitor<Unit>() {
-
-    @Inject
-    private lateinit var staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider
-
-    @Inject
-    private lateinit var metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider
-
-    @Inject
-    private lateinit var expressionRewriter: ExpressionRewriter
-
-    @Inject
-    private lateinit var compilationStateManager: CompilationStateManager
-
-    @Inject
-    private lateinit var instanceReferenceProvider: InstanceReferenceProvider
-
-    @Inject
-    private lateinit var staticEvaluationTransformer: StaticExpressionEvaluationTransformer
 
     private val processorQueue: ArrayDeque<Expression> = ArrayDeque<Expression>()
 
@@ -165,7 +154,7 @@ class ExpressionCallInliner @AssistedInject constructor(
         EcoreUtil2.replace(expression, inlined)
         processorQueue.addFirst(inlined)
 
-        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.ExpressionCallInlining)
     }
 
     override fun visit(expression: IndexingSuffixExpression) {
@@ -224,7 +213,7 @@ class ExpressionCallInliner @AssistedInject constructor(
 
         EcoreUtil2.replace(expression, rewrittenExpression)
 
-        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.ExpressionCallInlining)
     }
 
     interface Factory {

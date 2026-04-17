@@ -10,15 +10,14 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 
 @CompilationScoped
-class MetaStaticExpressionEvaluatorProvider {
+class MetaStaticExpressionEvaluatorProvider @Inject constructor(
+    private val metaStaticExpressionEvaluatorFactory: MetaStaticExpressionEvaluator.Factory,
+) {
 
     private val cache = mutableMapOf<Instance, MetaStaticExpressionEvaluator>()
-
-    @Inject
-    private lateinit var metaStaticExpressionEvaluatorFactory: MetaStaticExpressionEvaluator.Factory
 
     fun getEvaluator(context: Instance): MetaStaticExpressionEvaluator {
         return cache.getOrPut(context) {

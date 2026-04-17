@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.transformation.inliner
+package hu.bme.mit.semantifyr.semantics.compilation.inliner
 
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
@@ -40,56 +40,32 @@ import hu.bme.mit.semantifyr.semantics.optimization.ConstantFalseAssumptionPropa
 import hu.bme.mit.semantifyr.semantics.optimization.ExpressionOptimizer
 import hu.bme.mit.semantifyr.semantics.optimization.OperationFlattenerOptimizer
 import hu.bme.mit.semantifyr.semantics.optimization.RedundantOperationRemoverOptimizer
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager
-import hu.bme.mit.semantifyr.semantics.transformation.tracer.TransitionCallTracer
+import hu.bme.mit.semantifyr.semantics.artifact.CompilationArtifactManager
+import hu.bme.mit.semantifyr.semantics.artifact.CompilationPass
+import hu.bme.mit.semantifyr.semantics.artifact.TransitionCallTracer
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
-import hu.bme.mit.semantifyr.semantics.utils.SemantifyrUtils
 import hu.bme.mit.semantifyr.semantics.utils.copy
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
 
 class OperationCallInliner @AssistedInject @Inject constructor(
     @param:Assisted val instance: Instance,
-    expressionCallInlinerFactory: ExpressionCallInliner.Factory
+    expressionCallInlinerFactory: ExpressionCallInliner.Factory,
+    private val redundantOperationRemoverOptimizer: RedundantOperationRemoverOptimizer,
+    private val operationFlattenerOptimizer: OperationFlattenerOptimizer,
+    private val constantFalseAssumptionPropagatorOptimizer: ConstantFalseAssumptionPropagatorOptimizer,
+    private val expressionOptimizer: ExpressionOptimizer,
+    private val staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider,
+    private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
+    private val expressionRewriter: ExpressionRewriter,
+    private val compilationArtifactManager: CompilationArtifactManager,
+    private val instanceReferenceProvider: InstanceReferenceProvider,
+    private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
+    private val builtinAnnotationHandler: BuiltinAnnotationHandler,
+    private val transitionCallTracer: TransitionCallTracer,
 ) : OperationVisitor<Unit>() {
 
     private val expressionCallInliner = expressionCallInlinerFactory.create(instance)
-
-    @Inject
-    private lateinit var redundantOperationRemoverOptimizer: RedundantOperationRemoverOptimizer
-
-    @Inject
-    private lateinit var operationFlattenerOptimizer: OperationFlattenerOptimizer
-
-    @Inject
-    private lateinit var constantFalseAssumptionPropagatorOptimizer: ConstantFalseAssumptionPropagatorOptimizer
-
-    @Inject
-    private lateinit var expressionOptimizer: ExpressionOptimizer
-
-    @Inject
-    private lateinit var staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider
-
-    @Inject
-    private lateinit var metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider
-
-    @Inject
-    private lateinit var expressionRewriter: ExpressionRewriter
-
-    @Inject
-    private lateinit var compilationStateManager: CompilationStateManager
-
-    @Inject
-    private lateinit var instanceReferenceProvider: InstanceReferenceProvider
-
-    @Inject
-    private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
-
-    @Inject
-    private lateinit var builtinAnnotationHandler: BuiltinAnnotationHandler
-
-    @Inject
-    private lateinit var transitionCallTracer: TransitionCallTracer
 
     private var localVariableIndex: Int = 0
 
@@ -177,14 +153,14 @@ class OperationCallInliner @AssistedInject @Inject constructor(
             processorQueue.addFirst(actualInlined[index])
         }
 
-        compilationStateManager.commitModelState()
+        compilationArtifactManager.commitStep(CompilationPass.OperationCallInlining)
     }
 
     private fun rewriteLocalVariables(operation: Operation) {
         val localVars = operation.eAllOfType<LocalVarDeclarationOperation>().toList()
 
         for (localVar in localVars) {
-            localVar.name = SemantifyrUtils.xstsName(localVar, localVariableIndex++)
+            localVar.name = LocalVarNaming.inlinedName(localVar, localVariableIndex++)
         }
     }
 

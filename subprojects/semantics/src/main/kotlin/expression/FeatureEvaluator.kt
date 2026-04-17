@@ -13,28 +13,19 @@ import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
-import hu.bme.mit.semantifyr.semantics.transformation.instantiation.InstanceManager
-import hu.bme.mit.semantifyr.semantics.utils.FeatureSubSettersFinder
+import hu.bme.mit.semantifyr.semantics.compilation.instantiation.InstanceManager
+import hu.bme.mit.semantifyr.semantics.language.semantics.FeatureSubSettersFinder
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.parentSequence
 import hu.bme.mit.semantifyr.semantics.utils.treeSequence
 
-class FeatureEvaluator {
-
-    @Inject
-    private lateinit var instanceManager: InstanceManager
-
-    @Inject
-    private lateinit var featureSubSettersFinder: FeatureSubSettersFinder
-
-    @Inject
-    private lateinit var staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider
-
-    @Inject
-    private lateinit var oppositeHandler: OppositeHandler
-
-    @Inject
-    private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
+class FeatureEvaluator @Inject constructor(
+    private val instanceManager: InstanceManager,
+    private val featureSubSettersFinder: FeatureSubSettersFinder,
+    private val staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider,
+    private val oppositeHandler: OppositeHandler,
+    private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
+) {
 
     fun evaluateFeature(instance: Instance, featureDeclaration: FeatureDeclaration): ExpressionEvaluation {
         if (OxstsUtils.isDataFeature(featureDeclaration)) {

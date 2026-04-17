@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.transformation.inliner
+package hu.bme.mit.semantifyr.semantics.compilation.inliner
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -13,21 +13,16 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TemporalOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.semantics.optimization.InlinedOxstsOperationOptimizer
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 
 @CompilationScoped
-class OxstsCallInliner {
-
-    @Inject
-    private lateinit var inlinedOxstsOperationOptimizer: InlinedOxstsOperationOptimizer
-
-    @Inject
-    private lateinit var operationCallInlinerProvider: OperationCallInliner.Factory
-
-    @Inject
-    private lateinit var expressionCallInlinerProvider: ExpressionCallInliner.Factory
+class OxstsCallInliner @Inject constructor(
+    private val inlinedOxstsOperationOptimizer: InlinedOxstsOperationOptimizer,
+    private val operationCallInlinerProvider: OperationCallInliner.Factory,
+    private val expressionCallInlinerProvider: ExpressionCallInliner.Factory,
+) {
 
     fun inlineCalls(inlinedOxsts: InlinedOxsts) {
         inlineOperationCalls(inlinedOxsts.rootInstance, inlinedOxsts.initTransition)

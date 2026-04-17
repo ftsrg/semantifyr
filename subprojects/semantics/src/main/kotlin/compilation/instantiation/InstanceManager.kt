@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.transformation.instantiation
+package hu.bme.mit.semantifyr.semantics.compilation.instantiation
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
@@ -17,7 +17,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableMapping
 import hu.bme.mit.semantifyr.semantics.expression.RedefinitionAwareReferenceResolver
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 
 class VariableManager(
@@ -95,19 +95,12 @@ class AssociationManager(
 }
 
 @CompilationScoped
-class InstanceManager {
-
-    @Inject
-    private lateinit var domainMemberCollectionProvider: DomainMemberCollectionProvider
-
-    @Inject
-    private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
-
-    @Inject
-    private lateinit var oppositeHandler: OppositeHandler
-
-    @Inject
-    private lateinit var builtinAnnotationHandler: BuiltinAnnotationHandler
+class InstanceManager @Inject constructor(
+    private val domainMemberCollectionProvider: DomainMemberCollectionProvider,
+    private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
+    private val oppositeHandler: OppositeHandler,
+    private val builtinAnnotationHandler: BuiltinAnnotationHandler,
+) {
 
     private val variableManagers = mutableMapOf<Instance, VariableManager>()
     private val associationManagers = mutableMapOf<Instance, AssociationManager>()

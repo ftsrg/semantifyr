@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.transformation.serializer
+package hu.bme.mit.semantifyr.semantics.artifact
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.serializer.ExpressionSerializer
 import hu.bme.mit.semantifyr.semantics.expression.DeflatedExpressionEvaluationTransformer
 import hu.bme.mit.semantifyr.semantics.expression.InstanceReferenceProvider
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
@@ -34,19 +34,12 @@ data class SerializableDomainMapping(
 )
 
 @CompilationScoped
-class DomainMappingSerializer {
-
-    @Inject
-    private lateinit var deflatedEvaluationTransformer: DeflatedExpressionEvaluationTransformer
-
-    @Inject
-    private lateinit var instanceReferenceProvider: InstanceReferenceProvider
-
-    @Inject
-    private lateinit var expressionSerializer: ExpressionSerializer
-
-    @Inject
-    private lateinit var artifactManager: ArtifactManager
+class DomainMappingSerializer @Inject constructor(
+    private val deflatedEvaluationTransformer: DeflatedExpressionEvaluationTransformer,
+    private val instanceReferenceProvider: InstanceReferenceProvider,
+    private val expressionSerializer: ExpressionSerializer,
+    private val artifactManager: ArtifactManager,
+) {
 
     fun serializeMapping() {
         val instanceIds = deflatedEvaluationTransformer.evaluateMapping()

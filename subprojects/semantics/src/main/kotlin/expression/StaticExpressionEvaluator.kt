@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.semantics.expression
 
-import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.BooleanEvaluation
@@ -29,17 +28,11 @@ import hu.bme.mit.semantifyr.semantics.utils.parentSequence
 import org.eclipse.emf.ecore.EObject
 
 class StaticExpressionEvaluator @AssistedInject constructor(
-    @param:Assisted val instance: Instance
+    @param:Assisted val instance: Instance,
+    private val staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider,
+    private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
+    private val staticElementValueEvaluatorProvider: StaticElementValueEvaluatorProvider,
 ) : ConstantExpressionEvaluator() {
-
-    @Inject
-    private lateinit var staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider
-
-    @Inject
-    private lateinit var redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver
-
-    @Inject
-    private lateinit var staticElementValueEvaluatorProvider: StaticElementValueEvaluatorProvider
 
     override fun getElementValueEvaluator(context: EObject): ElementValueEvaluator<ExpressionEvaluation> {
         return staticElementValueEvaluatorProvider.getEvaluator(instance)

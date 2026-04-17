@@ -27,10 +27,9 @@ private val SequenceOperation.isSingleConstantFalseAssumption
     get() = steps.singleOrNull()?.isConstantFalseAssumption == true
 
 @CompilationScoped
-class ConstantFalseAssumptionPropagatorOptimizer : AbstractLoopedOptimizer<Element>() {
-
-    @Inject
-    private lateinit var compilationStateManager: CompilationStateManager
+class ConstantFalseAssumptionPropagatorOptimizer @Inject constructor(
+    private val compilationArtifactManager: CompilationArtifactManager,
+) : AbstractLoopedOptimizer<Element>() {
 
     override fun doOptimizationStep(element: Element): Boolean {
         return propagateInSequenceOperation(element)

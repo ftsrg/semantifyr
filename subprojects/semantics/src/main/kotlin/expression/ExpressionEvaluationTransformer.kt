@@ -19,7 +19,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RealEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.StringEvaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
-import hu.bme.mit.semantifyr.semantics.transformation.injection.scope.CompilationScoped
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 
 abstract class ExpressionEvaluationTransformer : StaticExpressionEvaluationVisitor<Expression>() {
@@ -115,10 +115,9 @@ class DeflatedExpressionEvaluationTransformer : ConstantExpressionEvaluationTran
 }
 
 @CompilationScoped
-class StaticExpressionEvaluationTransformer : ConstantExpressionEvaluationTransformer() {
-
-    @Inject
-    private lateinit var instanceReferenceProvider: InstanceReferenceProvider
+class StaticExpressionEvaluationTransformer @Inject constructor(
+    private val instanceReferenceProvider: InstanceReferenceProvider,
+) : ConstantExpressionEvaluationTransformer() {
 
     override fun visit(evaluation: InstanceEvaluation): Expression {
         if (evaluation.instances.size == 1) {
