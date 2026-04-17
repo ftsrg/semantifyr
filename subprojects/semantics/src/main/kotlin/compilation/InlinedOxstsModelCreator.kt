@@ -13,11 +13,11 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
-import hu.bme.mit.semantifyr.semantics.expression.RedefinitionAwareReferenceResolver
-import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
-import hu.bme.mit.semantifyr.semantics.compilation.instantiation.InstanceManager
-import hu.bme.mit.semantifyr.semantics.artifact.ArtifactKindFiles
+import hu.bme.mit.semantifyr.semantics.artifact.ArtifactKind
 import hu.bme.mit.semantifyr.semantics.artifact.ArtifactManager
+import hu.bme.mit.semantifyr.semantics.compilation.instantiation.InstanceManager
+import hu.bme.mit.semantifyr.semantics.compilation.expression.RedefinitionAwareReferenceResolver
+import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 
 @CompilationScoped

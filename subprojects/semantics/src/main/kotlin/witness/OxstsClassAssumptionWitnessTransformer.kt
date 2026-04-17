@@ -7,7 +7,7 @@
 package hu.bme.mit.semantifyr.semantics.witness
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.semantics.expression.InstanceReferenceProvider
+import hu.bme.mit.semantifyr.semantics.compilation.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.semantics.compilation.instantiation.InstanceManager
 import hu.bme.mit.semantifyr.semantics.compilation.instantiation.OxstsInflator
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory

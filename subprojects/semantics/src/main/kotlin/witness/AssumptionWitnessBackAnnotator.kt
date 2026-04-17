@@ -25,7 +25,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionKind
-import hu.bme.mit.semantifyr.semantics.expression.RedefinitionAwareReferenceResolver
+import hu.bme.mit.semantifyr.semantics.compilation.expression.RedefinitionAwareReferenceResolver
 import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.semantics.utils.copy

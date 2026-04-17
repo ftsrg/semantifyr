@@ -16,7 +16,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableMapping
-import hu.bme.mit.semantifyr.semantics.expression.RedefinitionAwareReferenceResolver
+import hu.bme.mit.semantifyr.semantics.compilation.expression.RedefinitionAwareReferenceResolver
 import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 

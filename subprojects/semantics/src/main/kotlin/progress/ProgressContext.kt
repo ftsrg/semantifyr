@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.transformation
+package hu.bme.mit.semantifyr.semantics.progress
 
 interface ProgressContext {
 

@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.semantics.compilation.inliner
 
-import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
 import hu.bme.mit.semantifyr.oxsts.lang.utils.ExpressionVisitor
@@ -35,11 +34,11 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
-import hu.bme.mit.semantifyr.semantics.expression.InstanceReferenceProvider
-import hu.bme.mit.semantifyr.semantics.expression.MetaStaticExpressionEvaluatorProvider
-import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluationTransformer
-import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
-import hu.bme.mit.semantifyr.semantics.expression.evaluateTyped
+import hu.bme.mit.semantifyr.semantics.compilation.expression.InstanceReferenceProvider
+import hu.bme.mit.semantifyr.semantics.compilation.expression.MetaStaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.semantics.compilation.expression.StaticExpressionEvaluationTransformer
+import hu.bme.mit.semantifyr.semantics.compilation.expression.StaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.semantics.compilation.expression.evaluateTyped
 import hu.bme.mit.semantifyr.semantics.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.semantics.artifact.CompilationPass
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
