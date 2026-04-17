@@ -8,8 +8,8 @@ package hu.bme.mit.semantifyr.semantics.artifact
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.serializer.ExpressionSerializer
-import hu.bme.mit.semantifyr.semantics.expression.DeflatedExpressionEvaluationTransformer
-import hu.bme.mit.semantifyr.semantics.expression.InstanceReferenceProvider
+import hu.bme.mit.semantifyr.semantics.compilation.expression.DeflatedExpressionEvaluationTransformer
+import hu.bme.mit.semantifyr.semantics.compilation.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json

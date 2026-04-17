@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.optimization
+package hu.bme.mit.semantifyr.semantics.compilation.optimization
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
@@ -20,7 +20,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OperatorExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOperator
-import hu.bme.mit.semantifyr.semantics.expression.ConstantExpressionEvaluationTransformer
+import hu.bme.mit.semantifyr.semantics.compilation.expression.ConstantExpressionEvaluationTransformer
 import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.semantics.artifact.CompilationPass

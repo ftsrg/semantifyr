@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.optimization
+package hu.bme.mit.semantifyr.semantics.compilation.optimization
 
 enum class OptimizationCategory {
     ConstantFolding,

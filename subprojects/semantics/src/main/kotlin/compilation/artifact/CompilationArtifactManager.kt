@@ -76,21 +76,15 @@ class CompilationArtifactManager @Inject constructor(
     }
 
     fun commitInflated() {
-        artifactManager.withFile(ArtifactKind.InflatedModel) {
-            serializeInto(it)
-        }
+        artifactManager.withFile(ArtifactKind.InflatedModel) { serializeInto(it) }
     }
 
     fun commitInlined() {
-        artifactManager.withFile(ArtifactKind.InlinedModel) {
-            serializeInto(it)
-        }
+        artifactManager.withFile(ArtifactKind.InlinedModel) { serializeInto(it) }
     }
 
     fun commitDeflated() {
-        artifactManager.withFile(ArtifactKind.DeflatedModel) {
-            serializeInto(it)
-        }
+        artifactManager.withFile(ArtifactKind.DeflatedModel) { serializeInto(it) }
     }
 
     private fun serializeInto(modelFile: File) {

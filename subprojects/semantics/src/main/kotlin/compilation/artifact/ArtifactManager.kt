@@ -13,16 +13,10 @@ import java.io.File
 
 @CompilationScoped
 class ArtifactManager @Inject constructor(
-    private val config: ArtifactConfig
+    private val config: ArtifactConfig,
 ) {
 
-    private lateinit var basePath: File
-
-    fun initialize(basePath: File) {
-        this.basePath = basePath
-        basePath.deleteRecursively()
-        basePath.mkdirs()
-    }
+    private val basePath: File = config.outputDirectory.toFile()
 
     private fun resolve(relativePath: String): File {
         return basePath.resolve(relativePath)

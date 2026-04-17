@@ -9,7 +9,7 @@ package hu.bme.mit.semantifyr.semantics.artifact
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider
 import hu.bme.mit.semantifyr.oxsts.lang.serializer.ExpressionSerializer
-import hu.bme.mit.semantifyr.semantics.expression.ExpressionEvaluationSerializer
+import hu.bme.mit.semantifyr.semantics.compilation.expression.ExpressionEvaluationSerializer
 import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.witness.OxstsClassAssumptionActivatedTrace
 import hu.bme.mit.semantifyr.semantics.witness.OxstsClassAssumptionWitness

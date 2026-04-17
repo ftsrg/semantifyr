@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.optimization
+package hu.bme.mit.semantifyr.semantics.compilation.optimization
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation

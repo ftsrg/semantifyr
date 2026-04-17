@@ -1,10 +1,10 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.semantics.optimization
+package hu.bme.mit.semantifyr.semantics.compilation.optimization
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
@@ -14,14 +14,15 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
-import hu.bme.mit.semantifyr.semantics.expression.MetaStaticExpressionEvaluatorProvider
-import hu.bme.mit.semantifyr.semantics.expression.evaluateTyped
-import hu.bme.mit.semantifyr.semantics.expression.tryEvaluateTypedOrNull
+import hu.bme.mit.semantifyr.semantics.compilation.expression.MetaStaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.semantics.compilation.expression.evaluateTyped
+import hu.bme.mit.semantifyr.semantics.compilation.expression.tryEvaluateTypedOrNull
 import hu.bme.mit.semantifyr.semantics.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.semantics.artifact.CompilationPass
 import hu.bme.mit.semantifyr.semantics.utils.copy
 import hu.bme.mit.semantifyr.semantics.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
+import kotlin.collections.iterator
 
 class VariableOptimizer @Inject constructor(
     private val config: OptimizationConfig,

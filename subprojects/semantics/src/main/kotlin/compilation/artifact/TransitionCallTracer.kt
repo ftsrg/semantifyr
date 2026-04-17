@@ -14,9 +14,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParameterDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
-import hu.bme.mit.semantifyr.semantics.expression.InstanceEvaluation
-import hu.bme.mit.semantifyr.semantics.expression.StaticExpressionEvaluatorProvider
-import hu.bme.mit.semantifyr.semantics.expression.tryEvaluateTypedOrNull
+import hu.bme.mit.semantifyr.semantics.compilation.expression.InstanceEvaluation
+import hu.bme.mit.semantifyr.semantics.compilation.expression.StaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.semantics.compilation.expression.tryEvaluateTypedOrNull
 import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 
