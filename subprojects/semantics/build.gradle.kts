@@ -16,23 +16,15 @@ repositories {
 }
 
 dependencies {
+    api(project(":semantifyr-logging"))
     api(project(":oxsts.lang"))
 
     api(libs.guice)
     api(libs.guice.extensions.assistedinject)
     api(libs.kotlinx.coroutines.core)
-//    api(libs.kotlinx.serialization.core)
 
     implementation(libs.kotlinx.serialization.json)
-//    implementation(libs.kotlinx.coroutines.core)
-//    implementation(libs.viatra.query.language) {
-//        exclude("com.google.inject", "guice")
-//    }
 
-//    runtimeOnly(libs.viatra.query.runtime)
-//    runtimeOnly(libs.viatra.transformation.runtime)
-
-    testFixturesApi(libs.slf4j.api)
     testFixturesApi(project(":oxsts.lang"))
     testFixturesApi(testFixtures(project(":oxsts.lang")))
 }

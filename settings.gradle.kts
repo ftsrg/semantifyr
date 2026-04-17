@@ -7,6 +7,7 @@
 rootProject.name = "semantifyr"
 
 include(
+    "semantifyr-logging",
     "semantics",
 //    "semantifyr-cli",
     "oxsts.model",

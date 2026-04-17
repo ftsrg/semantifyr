@@ -1,10 +1,10 @@
 /*
- * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.live.backend.utils
+package hu.bme.mit.semantifyr.logging
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
