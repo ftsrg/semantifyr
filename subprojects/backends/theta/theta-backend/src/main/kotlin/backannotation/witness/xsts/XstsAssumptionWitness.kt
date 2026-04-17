@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.xsts
+package hu.bme.mit.semantifyr.backends.theta.backannotation.witness.xsts
 
-import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.cex.CexAssumptionWitness
-import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.cex.CexAssumptionWitnessState
-import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.cex.CexAssumptionWitnessStateVariableValue
+import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.cex.CexAssumptionWitness
+import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.cex.CexAssumptionWitnessState
+import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.cex.CexAssumptionWitnessStateVariableValue
 import hu.bme.mit.semantifyr.semantics.witness.AssumptionWitness
 import hu.bme.mit.semantifyr.semantics.witness.AssumptionWitnessState
 import hu.bme.mit.semantifyr.semantics.compilation.inliner.LocalVarNaming

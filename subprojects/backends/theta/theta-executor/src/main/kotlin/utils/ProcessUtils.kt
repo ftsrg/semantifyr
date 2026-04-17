@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.wrapper.utils
+package hu.bme.mit.semantifyr.backends.theta.utils
 
 fun Process.destroyTree() {
     val handle = toHandle()

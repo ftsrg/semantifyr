@@ -19,9 +19,11 @@ dependencies {
     api(project(":semantics"))
     api(project(":xsts.lang"))
     api(project(":theta-executor"))
+    api(libs.guice.extensions.assistedinject)
 
     implementation(libs.kotlinx.serialization.json)
 
+    testImplementation(project(":semantifyr-portfolios"))
     testRuntimeOnly(libs.slf4j.log4j)
 
     testFixturesApi(project(":semantics"))

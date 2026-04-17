@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts
+package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
+import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation
-import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.utils.copy
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 
-@CompilationScoped
+@Singleton
 class TraceOperationTransformer {
 
     private val traceOperationMap = mutableMapOf<XstsTopLevelVariableDeclaration, TraceOperation>()

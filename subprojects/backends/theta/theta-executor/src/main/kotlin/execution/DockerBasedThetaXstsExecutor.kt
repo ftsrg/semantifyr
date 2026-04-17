@@ -1,10 +1,10 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.wrapper.execution
+package hu.bme.mit.semantifyr.backends.theta.execution
 
 import com.github.dockerjava.api.command.CreateContainerResponse
 import com.github.dockerjava.api.exception.NotFoundException
@@ -15,8 +15,12 @@ import com.github.dockerjava.api.model.WaitResponse
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
-import hu.bme.mit.semantifyr.backends.theta.wrapper.utils.StreamLoggerCallback
-import hu.bme.mit.semantifyr.backends.theta.wrapper.utils.runAsync
+import hu.bme.mit.semantifyr.backends.theta.ThetaExecutionResult
+import hu.bme.mit.semantifyr.backends.theta.ThetaExecutionSpecification
+import hu.bme.mit.semantifyr.backends.theta.ThetaExecutorSpec
+import hu.bme.mit.semantifyr.backends.theta.ThetaXstsExecutor
+import hu.bme.mit.semantifyr.backends.theta.utils.StreamLoggerCallback
+import hu.bme.mit.semantifyr.backends.theta.utils.runAsync
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
@@ -27,7 +31,6 @@ import kotlinx.coroutines.withContext
 import org.apache.commons.io.output.NullOutputStream
 import java.io.File
 import java.io.FileOutputStream
-import java.io.OutputStream
 
 class DockerBasedThetaXstsExecutor(
     private val image: String = ThetaExecutorSpec.Docker.DEFAULT_IMAGE,

@@ -4,14 +4,13 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.oxsts
+package hu.bme.mit.semantifyr.backends.theta.backannotation.witness.oxsts
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.inlinedoxsts.XstsExpressionToOxstsExpressionTransformer
-import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.xsts.XstsAssumptionWitness
-import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.xsts.XstsAssumptionWitnessState
-import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.xsts.XstsAssumptionWitnessStateVariableValue
-import hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts.TraceOperationTransformer
+import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.xsts.XstsAssumptionWitness
+import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.xsts.XstsAssumptionWitnessState
+import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.xsts.XstsAssumptionWitnessStateVariableValue
+import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.TraceOperationTransformer
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.semantics.witness.InlinedOxstsAssumptionActivatedTrace
 import hu.bme.mit.semantifyr.semantics.witness.InlinedOxstsAssumptionWitness

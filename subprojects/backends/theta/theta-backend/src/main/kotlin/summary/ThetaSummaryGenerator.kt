@@ -1,20 +1,19 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.verification.backannotation
+package hu.bme.mit.semantifyr.backends.theta.summary
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.cex.CexAssumptionWitnessTransformer
-import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.oxsts.InlinedOxstsAssumptionWitnessTransformer
-import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.xsts.XstsAssumptionWitnessTransformer
-import hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts.OxstsTransformer
-import hu.bme.mit.semantifyr.backends.theta.verification.utils.ensureExistsOutputStream
+import hu.bme.mit.semantifyr.backends.theta.backannotation.CexReader
+import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.cex.CexAssumptionWitnessTransformer
+import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.oxsts.InlinedOxstsAssumptionWitnessTransformer
+import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.xsts.XstsAssumptionWitnessTransformer
+import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.OxstsTransformer
 import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaExecutionSpecification
-import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaXstsExecutorProvider
-import hu.bme.mit.semantifyr.backends.theta.wrapper.utils.CexReader
+import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaXstsExecutor
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.semantics.compilation.OxstsClassInliner
@@ -22,11 +21,12 @@ import hu.bme.mit.semantifyr.semantics.progress.ProgressContext
 import hu.bme.mit.semantifyr.semantics.witness.AssumptionWitnessBackAnnotator
 import hu.bme.mit.semantifyr.semantics.witness.OxstsClassAssumptionWitnessTransformer
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.eclipse.emf.common.util.URI
 import java.io.File
 import kotlin.io.path.pathString
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
+import kotlin.time.Duration.Companion.minutes
 
 class ThetaSummaryGenerator {
 
@@ -41,9 +41,6 @@ class ThetaSummaryGenerator {
 
     @Inject
     private lateinit var oxstsTransformer: OxstsTransformer
-
-    @Inject
-    private lateinit var thetaXstsExecutorProvider: ThetaXstsExecutorProvider
 
     @Inject
     private lateinit var cexReader: CexReader
@@ -62,18 +59,18 @@ class ThetaSummaryGenerator {
         return oxstsClassInliner.inline(classDeclaration)
     }
 
-    fun transformToXsts(progressContext: ProgressContext, inlinedOxsts: InlinedOxsts): XstsModel {
-        return oxstsTransformer.transform(inlinedOxsts, progressContext)
+    fun transformToXsts(inlinedOxsts: InlinedOxsts): XstsModel {
+        return oxstsTransformer.transform(inlinedOxsts)
     }
 
-    fun runThetaTracegen(progressContext: ProgressContext, inlinedOxsts: InlinedOxsts, xstsModel: XstsModel) {
+    fun runThetaTracegen(inlinedOxsts: InlinedOxsts, xstsModel: XstsModel) {
         xstsModel.property = null
         xstsModel.eResource().save(emptyMap<Any, Any>())
 
         val path = xstsModel.eResource().uri.path().removeSuffix(".xsts")
         val workingDirectory = File(path.replaceAfterLast(File.separator, ""))
 
-        val thetaExecutor = thetaXstsExecutorProvider.getExecutor()
+        val thetaExecutor = ThetaXstsExecutor.Companion.of()
 
         val command = listOf(
             "TRACEGEN",
@@ -83,23 +80,18 @@ class ThetaSummaryGenerator {
             "--trace-dir", "traces",
         )
 
-        val logStream = workingDirectory.resolve("tracing/log.out").ensureExistsOutputStream()
-        val errorStream = workingDirectory.resolve("tracing/log.err").ensureExistsOutputStream()
-
         val thetaExecutionSpecification = ThetaExecutionSpecification(
-            workingDirectory,
-            command,
-            logStream,
-            errorStream,
-            10.toDuration(DurationUnit.MINUTES),
+            workingDirectory = workingDirectory,
+            command = command,
+            logFile = workingDirectory.resolve("tracing/log.out"),
+            errorFile = workingDirectory.resolve("tracing/log.err"),
         )
 
-        val result = kotlinx.coroutines.runBlocking {
-            thetaExecutor.execute(thetaExecutionSpecification)
+        val result = runBlocking {
+            withTimeout(10.minutes) { thetaExecutor.execute(thetaExecutionSpecification) }
         }
 
         if (result.exitCode == 0) {
-            progressContext.reportProgress("Creating witnesses")
             workingDirectory.resolve("traces").walkTopDown().filter {
                 it.extension == "trace"
             }.forEach {
@@ -134,12 +126,12 @@ class ThetaSummaryGenerator {
         progressContext.checkIsCancelled()
         progressContext.reportProgress("Transforming to Xsts")
 
-        val xstsModel = transformToXsts(progressContext, inlinedOxsts)
+        val xstsModel = transformToXsts(inlinedOxsts)
 
         progressContext.checkIsCancelled()
         progressContext.reportProgress("Running Theta Tracegen")
 
-        runThetaTracegen(progressContext, inlinedOxsts, xstsModel)
+        runThetaTracegen(inlinedOxsts, xstsModel)
     }
 
 }

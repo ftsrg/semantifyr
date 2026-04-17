@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.xsts
+package hu.bme.mit.semantifyr.backends.theta.backannotation.witness.xsts
 
 import hu.bme.mit.semantifyr.cex.lang.cex.ArithmeticUnaryOperator
 import hu.bme.mit.semantifyr.cex.lang.cex.LiteralBoolean

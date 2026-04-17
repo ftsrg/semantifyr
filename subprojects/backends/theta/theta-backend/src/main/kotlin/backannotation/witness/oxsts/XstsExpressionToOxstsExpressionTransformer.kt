@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.inlinedoxsts
+package hu.bme.mit.semantifyr.backends.theta.backannotation.witness.oxsts
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts.OxstsDomainTransformer
+import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.OxstsDomainTransformer
 import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
 import hu.bme.mit.semantifyr.xsts.lang.utils.XstsExpressionVisitor

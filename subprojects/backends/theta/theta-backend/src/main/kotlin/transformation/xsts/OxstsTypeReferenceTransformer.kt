@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts
+package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
 import com.google.inject.Inject
+import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DataTypeDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Multiplicity
-import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 
-@CompilationScoped
+@Singleton
 class OxstsTypeReferenceTransformer {
 
     @Inject

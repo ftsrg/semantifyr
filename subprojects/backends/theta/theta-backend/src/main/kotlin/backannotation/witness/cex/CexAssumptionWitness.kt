@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.verification.backannotation.witness.cex
+package hu.bme.mit.semantifyr.backends.theta.backannotation.witness.cex
 
 import hu.bme.mit.semantifyr.cex.lang.cex.CexModel
 import hu.bme.mit.semantifyr.cex.lang.cex.ExplStateValue

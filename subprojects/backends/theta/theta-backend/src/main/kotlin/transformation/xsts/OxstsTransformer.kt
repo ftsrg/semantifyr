@@ -4,25 +4,33 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts
+package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backends.theta.verification.ThetaArtifactManager
+import com.google.inject.Singleton
+import hu.bme.mit.semantifyr.backends.theta.artifacts.ThetaArtifactManager
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
-import hu.bme.mit.semantifyr.semantics.progress.ProgressContext
-import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 import hu.bme.mit.semantifyr.xsts.lang.XstsStandaloneSetup
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
+import org.eclipse.xtext.resource.XtextResourceSet
 
 private typealias XstsTransition = hu.bme.mit.semantifyr.xsts.lang.xsts.Transition
 private typealias XstsProperty = hu.bme.mit.semantifyr.xsts.lang.xsts.Property
 private typealias XstsSequenceOperation = hu.bme.mit.semantifyr.xsts.lang.xsts.SequenceOperation
 
-@CompilationScoped
+@Singleton
 class OxstsTransformer {
+
+    private val xstsInjector by lazy {
+        XstsStandaloneSetup().createInjectorAndDoEMFRegistration()
+    }
+
+    private val resourceSetProvider by lazy {
+        xstsInjector.getProvider(XtextResourceSet::class.java)
+    }
 
     @Inject
     private lateinit var oxstsOperationTransformer: OxstsOperationTransformer
@@ -42,16 +50,12 @@ class OxstsTransformer {
     @Inject
     private lateinit var thetaArtifactManager: ThetaArtifactManager
 
-    fun transform(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext): XstsModel {
-        val xsts = createEmptyXsts(inlinedOxsts)
-
-        progressContext.checkIsCancelled()
+    fun transform(inlinedOxsts: InlinedOxsts): XstsModel {
+        val xsts = createEmptyXsts()
 
         for (variableDeclaration in inlinedOxsts.variables) {
             xsts.variableDeclarations += oxstsVariableTransformer.transformTopLevel(variableDeclaration)
         }
-
-        progressContext.checkIsCancelled()
 
         xsts.env = XstsFactory.createTransition().also {
             it.branches += XstsFactory.createSequenceOperation()
@@ -59,8 +63,6 @@ class OxstsTransformer {
         xsts.tran = transform(inlinedOxsts.mainTransition)
         xsts.init = transform(inlinedOxsts.initTransition)
         xsts.property = transform(inlinedOxsts.property)
-
-        progressContext.checkIsCancelled()
 
         xsts.enumDeclarations += inlinedOxsts.variables.asSequence().map {
             it.typeSpecification.domain
@@ -70,21 +72,15 @@ class OxstsTransformer {
 
         traceOperationTransformer.finalizeTransformedTraceOperations(xsts)
 
-        progressContext.checkIsCancelled()
-
         return xsts
     }
 
-    private fun createEmptyXsts(inlinedOxsts: InlinedOxsts): XstsModel {
-        XstsStandaloneSetup.doSetup();
-
-        val resourceSet = inlinedOxsts.eResource().resourceSet
-        val uri = thetaArtifactManager.xstsUri
+    private fun createEmptyXsts(): XstsModel {
+        val resourceSet = resourceSetProvider.get()
+        val resource = resourceSet.createResource(thetaArtifactManager.xstsUri)
 
         val xstsModel = XstsFactory.createXstsModel()
-
-        resourceSet.getResource(uri, false)?.delete(mutableMapOf<Any, Any>())
-        resourceSet.createResource(uri).contents += xstsModel
+        resource.contents += xstsModel
 
         return xstsModel
     }

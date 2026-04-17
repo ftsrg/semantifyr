@@ -4,19 +4,19 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts
+package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
 import com.google.inject.Inject
+import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
-import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
 
 private typealias XstsVariableDeclaration = hu.bme.mit.semantifyr.xsts.lang.xsts.VariableDeclaration
 typealias XstsTopLevelVariableDeclaration = hu.bme.mit.semantifyr.xsts.lang.xsts.TopLevelVariableDeclaration
 private typealias XstsLocalVarDeclarationOperation = hu.bme.mit.semantifyr.xsts.lang.xsts.LocalVarDeclOperation
 
-@CompilationScoped
+@Singleton
 class OxstsVariableTransformer {
 
     @Inject

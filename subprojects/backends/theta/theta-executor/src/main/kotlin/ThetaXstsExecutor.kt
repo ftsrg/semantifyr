@@ -4,12 +4,29 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.wrapper.execution
+package hu.bme.mit.semantifyr.backends.theta
 
+import hu.bme.mit.semantifyr.backends.theta.execution.DockerBasedThetaXstsExecutor
+import hu.bme.mit.semantifyr.backends.theta.execution.ShellBasedThetaXstsExecutor
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import org.slf4j.Logger
 import java.io.File
+
+sealed interface ThetaExecutorSpec {
+
+    object Auto : ThetaExecutorSpec
+
+    object Shell : ThetaExecutorSpec
+
+    data class Docker(
+        val image: String = DEFAULT_IMAGE,
+    ) : ThetaExecutorSpec {
+        companion object {
+            const val DEFAULT_IMAGE = "ftsrg/theta-xsts-cli:latest"
+        }
+    }
+}
 
 class ThetaExecutionResult(
     val exitCode: Int,
