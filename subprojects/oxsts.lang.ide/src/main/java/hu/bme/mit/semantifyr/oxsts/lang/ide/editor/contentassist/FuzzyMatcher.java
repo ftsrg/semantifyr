@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.editor.contentassist;
 
-import com.google.inject.Singleton;
 import org.eclipse.xtext.ide.editor.contentassist.IPrefixMatcher;
 
 import java.util.Locale;
@@ -25,7 +24,6 @@ import java.util.Locale;
  *
  * @author Kristóf Marussy
  */
-@Singleton
 public class FuzzyMatcher implements IPrefixMatcher {
     @Override
     public boolean isCandidateMatchingPrefix(String name, String prefix) {

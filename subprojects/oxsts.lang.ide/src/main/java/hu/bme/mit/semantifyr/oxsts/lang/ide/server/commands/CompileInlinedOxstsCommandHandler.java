@@ -6,17 +6,22 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
+import hu.bme.mit.semantifyr.semantics.progress.ProgressContext;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.inject.Singleton;
-import hu.bme.mit.semantifyr.backends.theta.verification.transformation.xsts.OxstsTransformer;
+import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.OxstsTransformer;
+import hu.bme.mit.semantifyr.semantics.StandaloneOxstsSemanticsRuntimeModule;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.ServerSettings;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager;
+import hu.bme.mit.semantifyr.semantics.reader.SemantifyrLoader;
+import hu.bme.mit.semantifyr.semantics.verification.SemantifyrCompiler;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -24,11 +29,13 @@ import java.util.List;
 @Singleton
 public class CompileInlinedOxstsCommandHandler extends AbstractCommandHandler<InlinedOxsts> {
 
-    @Inject
-    protected Provider<OxstsTransformer> oxstsTransformerProvider;
+    private static final Logger LOG = LoggerFactory.getLogger(CompileInlinedOxstsCommandHandler.class);
 
     @Inject
-    protected Provider<CompilationStateManager> compilationStateManagerProvider;
+    protected SemantifyrLoader semantifyrLoader;
+
+    @Inject
+    protected ServerSettings serverSettings;
 
     @Override
     public String getId() {
@@ -59,16 +66,31 @@ public class CompileInlinedOxstsCommandHandler extends AbstractCommandHandler<In
 
     @Override
     protected Object execute(InlinedOxsts arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
-        runLongRunningInCompilationScope(arguments, (inlinedOxsts) -> {
-            compilationStateManagerProvider.get().setSerializeSteps(false);
-            var xsts = oxstsTransformerProvider.get().transform(inlinedOxsts, progressContext);
+        LOG.info("LSP compile-inlined request");
+        var context = semantifyrLoader.fromResourceSet(arguments.eResource().getResourceSet());
 
-            try {
-                xsts.eResource().save(null);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        semantifyrRequestManager.releaseReadLock();
+        try (SemantifyrCompiler compiler = SemantifyrCompiler.builder()
+                .context(context)
+                .artifacts(serverSettings.resolveArtifactConfig())
+                .optimization(serverSettings.resolveOptimizationConfig())
+                .progress(progressContext)
+                .build()) {
+            compiler.withElementBlocking(arguments, clonedInlined -> {
+                var xsts = StandaloneOxstsSemanticsRuntimeModule.INSTANCE
+                        .getInjector()
+                        .getInstance(OxstsTransformer.class)
+                        .transform(clonedInlined);
+                try {
+                    xsts.eResource().save(null);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                return null;
+            });
+        } finally {
+            semantifyrRequestManager.acquireReadLock();
+        }
 
         return null;
     }

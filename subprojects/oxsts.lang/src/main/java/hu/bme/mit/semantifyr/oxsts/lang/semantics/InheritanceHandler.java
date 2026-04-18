@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.oxsts.lang.semantics;
 
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
@@ -17,7 +16,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-@Singleton
 public class InheritanceHandler {
     private static final String BASE_CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.semantics.InheritanceHandler";
     private static final String SUPER_CACHE_KEY = BASE_CACHE_KEY + ".SUPER_CACHE_KEY";

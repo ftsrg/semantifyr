@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.oxsts.lang.library.builtin;
 
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryResourceResolver;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
@@ -17,7 +16,6 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.xtext.naming.QualifiedName;
 
-@Singleton
 public class BuiltinSymbolResolver {
 
     public static final QualifiedName CONTROL_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Control");

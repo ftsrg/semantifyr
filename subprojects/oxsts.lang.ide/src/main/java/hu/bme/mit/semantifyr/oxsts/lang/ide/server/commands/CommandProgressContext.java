@@ -7,7 +7,7 @@
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.WorkManager;
-import hu.bme.mit.semantifyr.semantics.transformation.ProgressContext;
+import hu.bme.mit.semantifyr.semantics.progress.ProgressContext;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.xtext.util.CancelIndicator;
 

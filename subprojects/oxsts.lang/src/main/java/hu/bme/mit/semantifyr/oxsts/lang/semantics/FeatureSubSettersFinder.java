@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.oxsts.lang.semantics;
 
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration;
@@ -17,7 +16,6 @@ import org.eclipse.xtext.util.Tuples;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-@Singleton
 public class FeatureSubSettersFinder {
     private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.semantics.FeatureSubSettersFinder.CACHE_KEY";
 

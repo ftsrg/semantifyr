@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.codelens;
 
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands.*;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinersFinder;
@@ -27,7 +26,6 @@ import org.eclipse.xtext.util.CancelIndicator;
 import java.util.ArrayList;
 import java.util.List;
 
-@Singleton
 public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensService {
 
     @Inject

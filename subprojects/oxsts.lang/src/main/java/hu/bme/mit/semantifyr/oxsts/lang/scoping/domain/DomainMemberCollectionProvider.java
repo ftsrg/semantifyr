@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.oxsts.lang.scoping.domain;
 
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.InheritanceHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache;
@@ -15,7 +14,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration;
 import org.eclipse.xtext.resource.ISelectable;
 import org.eclipse.xtext.util.Tuples;
 
-@Singleton
 public class DomainMemberCollectionProvider {
     private final static String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.typesystem.domain.DomainMemberCollector.CACHE_KEY";
     private final static String MEMBER_KEY = CACHE_KEY + "MEMBER";

@@ -6,29 +6,35 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
+import hu.bme.mit.semantifyr.semantics.progress.ProgressContext;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.inject.Singleton;
-import hu.bme.mit.semantifyr.backends.theta.verification.backannotation.ThetaSummaryGenerator;
+import hu.bme.mit.semantifyr.backends.theta.summary.ThetaSummaryGenerator;
+import hu.bme.mit.semantifyr.semantics.StandaloneOxstsSemanticsRuntimeModule;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.ServerSettings;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager;
+import hu.bme.mit.semantifyr.semantics.reader.SemantifyrLoader;
+import hu.bme.mit.semantifyr.semantics.verification.SemantifyrCompiler;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @Singleton
 public class GenerateTracesOxstsCommandHandler extends AbstractCommandHandler<ClassDeclaration> {
 
-    @Inject
-    protected Provider<ThetaSummaryGenerator> thetaSummaryGeneratorProvider;
+    private static final Logger LOG = LoggerFactory.getLogger(GenerateTracesOxstsCommandHandler.class);
 
     @Inject
-    protected Provider<CompilationStateManager> compilationStateManagerProvider;
+    protected SemantifyrLoader semantifyrLoader;
+
+    @Inject
+    protected ServerSettings serverSettings;
 
     @Override
     public String getId() {
@@ -60,25 +66,27 @@ public class GenerateTracesOxstsCommandHandler extends AbstractCommandHandler<Cl
     @Override
     protected Object execute(ClassDeclaration arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
         progressContext.begin("Summarizing class " + arguments.getName(), "Initializing");
+        LOG.info("LSP tracegen request for case '{}'", arguments.getName());
 
-        var result = new CompletableFuture<Void>();
+        var context = semantifyrLoader.fromResourceSet(arguments.eResource().getResourceSet());
 
-        try {
-            runLongRunningInCompilationScope(arguments, (classDeclaration) -> {
+        semantifyrRequestManager.releaseReadLock();
+        try (SemantifyrCompiler compiler = SemantifyrCompiler.builder()
+                .context(context)
+                .artifacts(serverSettings.resolveArtifactConfig())
+                .optimization(serverSettings.resolveOptimizationConfig())
+                .progress(progressContext)
+                .build()) {
+            compiler.withElementBlocking(arguments, clonedClass -> {
                 progressContext.checkIsCancelled();
-
-                compilationStateManagerProvider.get().setSerializeSteps(false);
-                thetaSummaryGeneratorProvider.get().createSummary(progressContext, classDeclaration);
-                result.complete(null);
+                StandaloneOxstsSemanticsRuntimeModule.INSTANCE
+                        .getInjector()
+                        .getInstance(ThetaSummaryGenerator.class)
+                        .createSummary(progressContext, clonedClass);
+                return null;
             });
-        } catch (Exception e) {
-            result.completeExceptionally(e);
-        }
-
-        try {
-            result.get();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } finally {
+            semantifyrRequestManager.acquireReadLock();
         }
 
         return null;

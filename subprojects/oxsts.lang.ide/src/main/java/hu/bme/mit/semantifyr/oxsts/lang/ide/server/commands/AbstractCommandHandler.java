@@ -6,11 +6,10 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
+import hu.bme.mit.semantifyr.semantics.progress.ProgressContext;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.SemantifyrRequestManager;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.WorkManager;
-import hu.bme.mit.semantifyr.semantics.verification.CompilationScopeHelper;
-import hu.bme.mit.semantifyr.semantics.verification.EObjectRunnable;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.lsp4j.ExecuteCommandParams;
@@ -32,9 +31,6 @@ public abstract class AbstractCommandHandler<T> implements CommandHandler {
 
     @Inject
     protected SemantifyrRequestManager semantifyrRequestManager;
-
-    @Inject
-    protected CompilationScopeHelper compilationScopeHelper;
 
     @Inject
     private IResourceServiceProvider.Registry resourceServiceProviderRegistry;
@@ -64,17 +60,6 @@ public abstract class AbstractCommandHandler<T> implements CommandHandler {
     protected abstract T parseArguments(List<Object> arguments, ILanguageServerAccess access, CancelIndicator cancelIndicator);
 
     protected abstract Object execute(T argument, ILanguageServerAccess access, CommandProgressContext progressContext);
-
-    protected <TArg extends EObject> void runLongRunningInCompilationScope(TArg eObject, EObjectRunnable<TArg> runnable) {
-        compilationScopeHelper.runInCompilationScope(eObject, (copied) -> {
-            semantifyrRequestManager.releaseReadLock();
-            try {
-                runnable.run(copied);
-            } finally {
-                semantifyrRequestManager.acquireReadLock();
-            }
-        });
-    }
 
     protected EObject getElement(final ILanguageServerAccess.Context context, Position position) {
         var offset = context.getDocument().getOffSet(position);

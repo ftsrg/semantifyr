@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.oxsts.lang.semantics;
 
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache;
@@ -16,7 +15,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration;
 import org.eclipse.xtext.naming.QualifiedName;
 import org.eclipse.xtext.util.Tuples;
 
-@Singleton
 public class RedefinitionHandler {
     private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler.CACHE_KEY";
 

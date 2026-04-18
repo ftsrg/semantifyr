@@ -6,29 +6,40 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
+import hu.bme.mit.semantifyr.semantics.progress.ProgressContext;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.ServerSettings;
+import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
-import hu.bme.mit.semantifyr.semantics.transformation.OxstsClassInliner;
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager;
+import hu.bme.mit.semantifyr.semantics.reader.SemantifyrLoader;
+import hu.bme.mit.semantifyr.semantics.verification.CaseFilter;
+import hu.bme.mit.semantifyr.semantics.verification.SemantifyrCompiler;
+import hu.bme.mit.semantifyr.semantics.verification.VerificationCase;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 @Singleton
 public class InlineOxstsCommandHandler extends AbstractCommandHandler<InlineOxstsCommandParams> {
 
-    @Inject
-    protected Provider<OxstsClassInliner> xstsTransformerProvider;
+    private static final Logger LOG = LoggerFactory.getLogger(InlineOxstsCommandHandler.class);
 
     @Inject
-    protected Provider<CompilationStateManager> compilationStateManagerProvider;
+    protected OxstsQualifiedNameProvider oxstsQualifiedNameProvider;
+
+    @Inject
+    protected SemantifyrLoader semantifyrLoader;
+
+    @Inject
+    protected ServerSettings serverSettings;
 
     @Override
     public String getId() {
@@ -64,12 +75,32 @@ public class InlineOxstsCommandHandler extends AbstractCommandHandler<InlineOxst
     protected Object execute(InlineOxstsCommandParams arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
         progressContext.begin("Compiling class " + arguments.classDeclaration().getName(), "Transforming");
 
-        runLongRunningInCompilationScope(arguments.classDeclaration(), (inlinedOxsts) -> {
+        var targetFqn = oxstsQualifiedNameProvider.getFullyQualifiedNameString(arguments.classDeclaration());
+        LOG.info("LSP inline request for case '{}' (serializeSteps={})", targetFqn, arguments.serializeSteps());
+        var context = semantifyrLoader.fromResourceSet(arguments.classDeclaration().eResource().getResourceSet());
+
+        // serializeSteps is accepted at the LSP boundary but not yet honored;
+        // re-attach when ArtifactConfig.compilationSteps is wired through the builder.
+
+        semantifyrRequestManager.releaseReadLock();
+        try (SemantifyrCompiler compiler = SemantifyrCompiler.builder()
+                .context(context)
+                .artifacts(serverSettings.resolveArtifactConfig())
+                .optimization(serverSettings.resolveOptimizationConfig())
+                .progress(progressContext)
+                .build()) {
             progressContext.checkIsCancelled();
 
-            compilationStateManagerProvider.get().setSerializeSteps(arguments.serializeSteps());
-            xstsTransformerProvider.get().inline(progressContext, inlinedOxsts);
-        });
+            VerificationCase match = compiler.verificationCases(CaseFilter.All.INSTANCE).stream()
+                    .filter(c -> targetFqn.equals(c.getFqn()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException(
+                            "No verification case found for fqn '" + targetFqn + "'"));
+
+            compiler.inlineBlocking(match);
+        } finally {
+            semantifyrRequestManager.acquireReadLock();
+        }
 
         return null;
     }

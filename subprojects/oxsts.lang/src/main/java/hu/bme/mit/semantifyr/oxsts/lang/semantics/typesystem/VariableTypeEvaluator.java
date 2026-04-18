@@ -7,13 +7,11 @@
 package hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem;
 
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AbstractForOperation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration;
 import org.eclipse.xtext.util.IResourceScopeCache;
 import org.eclipse.xtext.util.Tuples;
 
-@Singleton
 public class VariableTypeEvaluator {
 
     private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.VariableTypeEvaluator.CACHE_KEY";

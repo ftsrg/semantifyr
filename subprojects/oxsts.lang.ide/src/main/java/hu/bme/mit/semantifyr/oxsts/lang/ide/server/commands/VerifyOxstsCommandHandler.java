@@ -9,29 +9,37 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.Singleton;
-import hu.bme.mit.semantifyr.backends.theta.verification.ThetaVerifier;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.ServerSettings;
+import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
-import hu.bme.mit.semantifyr.semantics.transformation.serializer.CompilationStateManager;
-import hu.bme.mit.semantifyr.semantics.verification.VerificationCaseRunResult;
+import hu.bme.mit.semantifyr.semantics.reader.SemantifyrLoader;
+import hu.bme.mit.semantifyr.semantics.verification.CaseFilter;
+import hu.bme.mit.semantifyr.semantics.verification.ExecutionEnvironment;
+import hu.bme.mit.semantifyr.semantics.verification.SemantifyrVerifier;
+import hu.bme.mit.semantifyr.semantics.verification.VerificationCase;
 import hu.bme.mit.semantifyr.semantics.verification.VerificationResult;
+import hu.bme.mit.semantifyr.semantics.verification.VerificationVerdict;
+import hu.bme.mit.semantifyr.semantics.verification.portfolio.Portfolio;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
-@Singleton
 public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDeclaration> {
 
-    @Inject
-    protected Provider<ThetaVerifier> oxstsVerifierProvider;
+    private static final Logger LOG = LoggerFactory.getLogger(VerifyOxstsCommandHandler.class);
 
     @Inject
-    protected Provider<CompilationStateManager> compilationStateManagerProvider;
+    protected OxstsQualifiedNameProvider oxstsQualifiedNameProvider;
+
+    @Inject
+    protected SemantifyrLoader semantifyrLoader;
+
+    @Inject
+    protected ServerSettings serverSettings;
 
     @Override
     public String getId() {
@@ -64,32 +72,55 @@ public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
     protected Object execute(ClassDeclaration arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
         progressContext.begin("Verifying class " + arguments.getName(), "Initializing");
 
-        var result = new CompletableFuture<VerificationCaseRunResult>();
+        var targetFqn = oxstsQualifiedNameProvider.getFullyQualifiedNameString(arguments);
+        LOG.info("LSP verify request for case '{}'", targetFqn);
+        var context = semantifyrLoader.fromResourceSet(arguments.eResource().getResourceSet());
 
-        try {
-            runLongRunningInCompilationScope(arguments, (classDelcaration) -> {
-                progressContext.checkIsCancelled();
-
-                compilationStateManagerProvider.get().setSerializeSteps(false);
-                result.complete(oxstsVerifierProvider.get().verify(progressContext, classDelcaration, Duration.ofMinutes(5)));
-            });
-        } catch (Exception e) {
-            result.completeExceptionally(e);
+        semantifyrRequestManager.releaseReadLock();
+        Portfolio portfolio = serverSettings.resolvePortfolio();
+        ExecutionEnvironment environment = serverSettings.resolveExecutionEnvironment();
+        SemantifyrVerifier.Builder builder = SemantifyrVerifier.builder()
+                .context(context)
+                .portfolio(portfolio)
+                .environment(environment)
+                .timeout(serverSettings.resolveTimeout())
+                .artifacts(serverSettings.resolveArtifactConfig())
+                .optimization(serverSettings.resolveOptimizationConfig())
+                .progress(progressContext);
+        Integer maxConcurrency = serverSettings.resolveMaxConcurrencyOrNull();
+        if (maxConcurrency != null) {
+            builder.maxConcurrency(maxConcurrency);
         }
+        try (SemantifyrVerifier verifier = builder.build()) {
+            progressContext.checkIsCancelled();
 
-        try {
-            var runResult = result.get();
-            var res = "passed";
-            if (runResult.component1().equals(VerificationResult.Passed)) {
-                res = "passed";
-            } else if (runResult.component1().equals(VerificationResult.Failed)) {
-                res = "failed";
-            }
+            VerificationCase match = verifier.verificationCases(CaseFilter.All.INSTANCE).stream()
+                    .filter(c -> targetFqn.equals(c.getFqn()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException(
+                            "No verification case found for fqn '" + targetFqn + "'"));
 
-            return new VerificationCaseRunResultDto(res, runResult.getMessage());
+            VerificationResult result = verifier.verifyBlocking(match);
+            LOG.info("LSP verify '{}' -> {}", targetFqn, result.getVerdict());
+            return toDto(result);
         } catch (Exception e) {
+            LOG.error("LSP verify '{}' threw {}", targetFqn, e.getClass().getSimpleName(), e);
             return new VerificationCaseRunResultDto("error", e.getMessage());
+        } finally {
+            semantifyrRequestManager.acquireReadLock();
         }
+    }
+
+    private VerificationCaseRunResultDto toDto(VerificationResult result) {
+        String status;
+        if (result.getVerdict() == VerificationVerdict.Passed) {
+            status = "passed";
+        } else if (result.getVerdict() == VerificationVerdict.Failed) {
+            status = "failed";
+        } else {
+            status = "error";
+        }
+        return new VerificationCaseRunResultDto(status, result.getMessage());
     }
 
 }

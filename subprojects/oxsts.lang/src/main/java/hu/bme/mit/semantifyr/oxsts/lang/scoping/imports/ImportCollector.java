@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.oxsts.lang.scoping.imports;
 
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryAdapter;
 import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryAdapterFinder;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
@@ -18,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@Singleton
 public class ImportCollector {
     private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.scoping.imports.ImportCollector.IMPORTS";
 
