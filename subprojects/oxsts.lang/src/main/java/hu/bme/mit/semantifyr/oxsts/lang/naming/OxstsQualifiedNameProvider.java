@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.oxsts.lang.naming;
 
 import com.google.inject.Inject;
-import jakarta.inject.Singleton;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.xtext.naming.IQualifiedNameConverter;
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
@@ -16,7 +15,6 @@ import org.eclipse.xtext.util.IResourceScopeCache;
 import org.eclipse.xtext.util.Strings;
 import org.eclipse.xtext.util.Tuples;
 
-@Singleton
 public class OxstsQualifiedNameProvider extends IQualifiedNameProvider.AbstractImpl {
     private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider.FQN";
 
