@@ -1,0 +1,87 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes
+
+import org.junit.jupiter.api.Test
+
+class VariableLivenessPassTest : PassTestBase() {
+
+    @Test
+    fun `unread variable and its assignments are removed`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            var b : int := 0
+            init { }
+            tran {
+                a := 1
+                b := 2
+            }
+            prop { AG (a == 1) }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            init { }
+            tran { a := 1 }
+            prop { AG (a == 1) }
+        """,
+    ) { injector ->
+        injector.getInstance(VariableLivenessPass::class.java)
+    }
+
+    @Test
+    fun `initializer-only variable is substituted into its reads`() = assertPassTransforms(
+        // A var with an initializer and no assignments is effectively constant;
+        // the pass substitutes its reads with the init value and removes the var.
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 7
+            init { }
+            tran { }
+            prop { AG (a == 7) }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            init { }
+            tran { }
+            prop { AG (7 == 7) }
+        """,
+    ) { injector ->
+        injector.getInstance(VariableLivenessPass::class.java)
+    }
+
+    // Regression: VariableLivenessPass used to build its assignment index via
+    // Map.plus over separate AssignmentOperation / HavocOperation groupBys,
+    // which silently dropped one group for variables with both kinds of writes.
+    // With the variable still read, the pass should leave the IR untouched.
+    @Test
+    fun `variable with both havoc and assignment is left alone when read`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            init { }
+            tran {
+                havoc(a)
+                a := 1
+            }
+            prop { AG (a == 1) }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            init { }
+            tran {
+                havoc(a)
+                a := 1
+            }
+            prop { AG (a == 1) }
+        """,
+    ) { injector ->
+        injector.getInstance(VariableLivenessPass::class.java)
+    }
+}
