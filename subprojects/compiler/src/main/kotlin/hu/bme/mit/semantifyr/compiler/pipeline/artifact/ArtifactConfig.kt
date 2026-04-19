@@ -58,7 +58,7 @@ sealed interface CompilationStepsConfig {
 
 data class ArtifactConfig(
     val outputDirectory: Path,
-    val enabled: Set<ArtifactKind> = ArtifactKind.entries.toSet(),
+    val enabled: Set<ArtifactKind> = ReportOnlyArtifacts,
     val enabledCompilationSteps: CompilationStepsConfig = CompilationStepsConfig.Off,
 ) {
     fun isEnabled(kind: ArtifactKind): Boolean {
@@ -66,25 +66,31 @@ data class ArtifactConfig(
     }
 
     companion object {
+        private val ReportOnlyArtifacts = ArtifactKind.entries.toSet() - ArtifactKind.CompilationStep
+
+        /**
+         * Disables artifact emission.
+         */
         fun none(outputDirectory: Path) = ArtifactConfig(
             outputDirectory = outputDirectory,
             enabled = emptySet()
         )
 
-        fun reportOnly(outputDirectory: Path) = ArtifactConfig(
+        /**
+         * Emits every non-debug artifact (models, witness, trace, mapping, report).
+         */
+        fun all(outputDirectory: Path) = ArtifactConfig(
             outputDirectory = outputDirectory,
-            enabled = setOf(
-                ArtifactKind.Witness,
-                ArtifactKind.Trace,
-                ArtifactKind.Report,
-            )
+            enabled = ReportOnlyArtifacts,
         )
 
-        fun all(outputDirectory: Path) = ArtifactConfig(
+        /**
+         * Emits every artifact including per-pass step dumps.
+         */
+        fun debug(outputDirectory: Path) = ArtifactConfig(
             outputDirectory = outputDirectory,
             enabled = ArtifactKind.entries.toSet(),
             enabledCompilationSteps = CompilationStepsConfig.All,
         )
     }
 }
-

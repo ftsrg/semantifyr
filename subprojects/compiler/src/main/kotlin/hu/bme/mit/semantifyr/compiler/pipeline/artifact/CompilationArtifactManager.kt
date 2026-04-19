@@ -35,7 +35,8 @@ class CompilationArtifactManager @Inject constructor(
 
         artifactManager.withFile(ArtifactKind.CompilationStep) { stepsDir ->
             stepsDir.mkdirs()
-            serializeInto(inlinedOxsts, stepsDir.resolve("${pass.name.lowercase()}_${stepId++}.oxsts"))
+            val id = stepId++.toString().padStart(6, '0')
+            serializeInto(inlinedOxsts, stepsDir.resolve("${id}_${pass.name.lowercase()}.oxsts"))
         }
     }
 
