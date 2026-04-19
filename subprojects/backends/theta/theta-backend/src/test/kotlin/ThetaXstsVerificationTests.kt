@@ -6,42 +6,39 @@
 
 package hu.bme.mit.semantifyr.backends.theta.verification
 
+import hu.bme.mit.semantifyr.backend.VerificationCase
+import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
+import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.portfolios.Portfolios
-import hu.bme.mit.semantifyr.semantics.InjectWithOxstsSemantics
-import hu.bme.mit.semantifyr.semantics.SemantifyrVerifierTestHelper
-import hu.bme.mit.semantifyr.semantics.StandaloneOxstsSemanticsRuntimeModule
-import hu.bme.mit.semantifyr.semantics.reader.SemantifyrModelContext
-import hu.bme.mit.semantifyr.semantics.verification.VerificationCase
-import org.junit.jupiter.api.Tag
+import hu.bme.mit.semantifyr.verification.SemantifyrVerifierTestHelper
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import java.util.stream.Stream
 import kotlin.io.path.Path
-import kotlin.streams.asStream
 
-@Tag("verification")
-@InjectWithOxstsSemantics
+@InjectWithOxsts
 class ThetaXstsVerificationTests {
 
     companion object {
 
-        private val helper = StandaloneOxstsSemanticsRuntimeModule.getInstance<SemantifyrVerifierTestHelper>()
+        private val injector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
+        private val helper = injector.getInstance(SemantifyrVerifierTestHelper::class.java)
 
-        private val simpleModel: SemantifyrModelContext by lazy {
+        private val simpleModel by lazy {
             helper.semantifyrLoader.startContext()
                 .loadModel(Path("test-models/Simple/simple.oxsts"))
                 .buildAndResolve()
         }
 
         @JvmStatic
-        fun `Simple Model Verification Cases Should Pass`(): Stream<Arguments> =
-            helper.collectVerificationCases(simpleModel).asStream()
+        fun `Simple Model Verification Cases Should Pass`(): List<Arguments> {
+            return helper.collectVerificationCasesAsArguments(simpleModel)
+        }
     }
 
     @ParameterizedTest
     @MethodSource
-    fun `Simple Model Verification Cases Should Pass`(verificationCase: VerificationCase) {
+    suspend fun `Simple Model Verification Cases Should Pass`(verificationCase: VerificationCase) {
         helper.checkVerificationCase(simpleModel, verificationCase, Portfolios.ThetaFull)
     }
 

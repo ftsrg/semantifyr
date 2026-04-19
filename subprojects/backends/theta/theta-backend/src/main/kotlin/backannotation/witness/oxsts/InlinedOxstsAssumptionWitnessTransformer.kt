@@ -7,20 +7,20 @@
 package hu.bme.mit.semantifyr.backends.theta.backannotation.witness.oxsts
 
 import com.google.inject.Inject
+import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.xsts.XstsAssumptionWitness
 import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.xsts.XstsAssumptionWitnessState
 import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.xsts.XstsAssumptionWitnessStateVariableValue
 import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.TraceOperationTransformer
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.semantics.witness.InlinedOxstsAssumptionActivatedTrace
-import hu.bme.mit.semantifyr.semantics.witness.InlinedOxstsAssumptionWitness
-import hu.bme.mit.semantifyr.semantics.witness.InlinedOxstsAssumptionWitnessState
-import hu.bme.mit.semantifyr.semantics.witness.InlinedOxstsAssumptionWitnessStateValue
-import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
+import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionActivatedTrace
+import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitness
+import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitnessState
+import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitnessStateValue
 import hu.bme.mit.semantifyr.xsts.lang.xsts.LiteralBoolean
 import hu.bme.mit.semantifyr.xsts.lang.xsts.TopLevelVariableDeclaration
 
-@CompilationScoped
+@Singleton
 class InlinedOxstsAssumptionWitnessTransformer {
 
     @Inject

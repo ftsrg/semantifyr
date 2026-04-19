@@ -16,16 +16,17 @@ repositories {
 }
 
 dependencies {
-    api(project(":semantics"))
+    api(project(":backend"))
     api(project(":xsts.lang"))
     api(project(":theta-executor"))
     api(libs.guice.extensions.assistedinject)
 
+    implementation(project(":logging"))
     implementation(libs.kotlinx.serialization.json)
 
-    testImplementation(project(":semantifyr-portfolios"))
+    testImplementation(project(":portfolios"))
     testRuntimeOnly(libs.slf4j.log4j)
 
-    testFixturesApi(project(":semantics"))
-    testFixturesApi(testFixtures(project(":semantics")))
+    testFixturesApi(project(":verification"))
+    testFixturesApi(testFixtures(project(":verification")))
 }

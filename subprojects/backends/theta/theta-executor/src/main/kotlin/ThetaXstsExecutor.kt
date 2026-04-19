@@ -23,7 +23,7 @@ sealed interface ThetaExecutorSpec {
         val image: String = DEFAULT_IMAGE,
     ) : ThetaExecutorSpec {
         companion object {
-            const val DEFAULT_IMAGE = "ftsrg/theta-xsts-cli:latest"
+            const val DEFAULT_IMAGE = "ftsrg/theta-xsts-cli:6.28.1"
         }
     }
 }

@@ -7,8 +7,8 @@
 package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
 import com.google.inject.Singleton
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation
-import hu.bme.mit.semantifyr.semantics.utils.copy
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 
 @Singleton

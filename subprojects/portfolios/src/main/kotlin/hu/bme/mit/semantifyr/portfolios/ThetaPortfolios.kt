@@ -6,17 +6,23 @@
 
 package hu.bme.mit.semantifyr.portfolios
 
-import hu.bme.mit.semantifyr.backends.theta.verification.ThetaBackend
-import hu.bme.mit.semantifyr.backends.theta.verification.ThetaConfig
-import hu.bme.mit.semantifyr.semantics.verification.AvailabilityReport
-import hu.bme.mit.semantifyr.semantics.verification.BackendExecutor
-import hu.bme.mit.semantifyr.semantics.verification.ExecutionEnvironment
-import hu.bme.mit.semantifyr.semantics.verification.VerificationRequest
-import hu.bme.mit.semantifyr.semantics.verification.VerificationResult
-import hu.bme.mit.semantifyr.semantics.verification.portfolio.Portfolio
-import hu.bme.mit.semantifyr.semantics.verification.portfolio.PortfolioScope
+import hu.bme.mit.semantifyr.backend.AvailabilityReport
+import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.VerificationMetrics
+import hu.bme.mit.semantifyr.backend.VerificationRequest
+import hu.bme.mit.semantifyr.backend.VerificationResult
+import hu.bme.mit.semantifyr.backend.VerificationRunMetadata
+import hu.bme.mit.semantifyr.backends.theta.hu.bme.mit.semantifyr.verification.ThetaBackend
+import hu.bme.mit.semantifyr.backends.theta.hu.bme.mit.semantifyr.verification.ThetaConfig
+import hu.bme.mit.semantifyr.verification.ProgressContext
+import hu.bme.mit.semantifyr.verification.portfolio.BackendExecutor
+import hu.bme.mit.semantifyr.verification.portfolio.PortfolioScope
+import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
+import hu.bme.mit.semantifyr.verification.portfolio.withSubPath
+import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
 
 internal const val THETA_FAMILY_ID = "theta"
 
@@ -44,7 +50,7 @@ suspend fun BackendExecutor.runTheta(
 
 class ThetaFullPortfolio(
     private val stageTimeout: Duration = 10.minutes,
-) : Portfolio() {
+) : VerificationPortfolio() {
 
     override val id: String = "theta-full"
     override val displayName: String = "Theta full portfolio"
@@ -60,17 +66,29 @@ class ThetaFullPortfolio(
         request: VerificationRequest,
         executor: BackendExecutor,
         environment: ExecutionEnvironment,
+        progress: ProgressContext,
     ): VerificationResult {
         return firstDecisive(executor, stageTimeout) {
-            runTheta(ThetaConfig.CegarExpl, request, environment)
-            runTheta(ThetaConfig.CegarExplPredCombined, request, environment)
-            runTheta(ThetaConfig.CegarPredCart, request, environment)
-            runTheta(ThetaConfig.BoundedKInduction, request, environment)
-        } ?: VerificationResult.inconclusive("$id: no decisive result within $stageTimeout")
+            runTheta(ThetaConfig.CegarExpl, request.withSubPath("cegarexpl"), environment)
+            runTheta(ThetaConfig.CegarExplPredCombined, request.withSubPath("cegarexplpred"), environment)
+            runTheta(ThetaConfig.CegarPredCart, request.withSubPath("cegarexplcart"), environment)
+            runTheta(ThetaConfig.BoundedKInduction, request.withSubPath("kinduction"), environment)
+        } ?: VerificationResult.inconclusive(
+            metadata = VerificationRunMetadata(
+                backendId = "",
+                startedAt = Clock.System.now(),
+                caseQualifiedName = ""
+            ),
+            metrics = VerificationMetrics(
+
+            ),
+            message = "$id: no decisive result within $stageTimeout"
+        )
     }
+
 }
 
-class ThetaSinglePortfolio(val config: ThetaConfig) : Portfolio() {
+class ThetaSinglePortfolio(val config: ThetaConfig) : VerificationPortfolio() {
     override val id: String = "theta-${config.id}"
     override val displayName: String = "Theta ${config.id}"
     override val description: String = "Single Theta configuration: ${config.parameters}"
@@ -84,7 +102,9 @@ class ThetaSinglePortfolio(val config: ThetaConfig) : Portfolio() {
         request: VerificationRequest,
         executor: BackendExecutor,
         environment: ExecutionEnvironment,
+        progress: ProgressContext,
     ): VerificationResult {
         return executor.runTheta(config, request, environment)
     }
+
 }

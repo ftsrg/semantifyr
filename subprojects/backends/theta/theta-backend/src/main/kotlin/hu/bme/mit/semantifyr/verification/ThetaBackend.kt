@@ -4,43 +4,44 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.verification
+package hu.bme.mit.semantifyr.backends.theta.hu.bme.mit.semantifyr.verification
 
 import com.google.inject.AbstractModule
 import com.google.inject.Guice
+import com.google.inject.Injector
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
+import com.google.inject.assistedinject.FactoryModuleBuilder
 import hu.bme.mit.semantifyr.backends.theta.artifacts.ThetaArtifactManager
 import hu.bme.mit.semantifyr.backends.theta.backannotation.CexReader
 import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.cex.CexAssumptionWitnessTransformer
 import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.oxsts.InlinedOxstsAssumptionWitnessTransformer
 import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.xsts.XstsAssumptionWitnessTransformer
 import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.OxstsTransformer
-import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.DockerBasedThetaXstsExecutor
-import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ShellBasedThetaXstsExecutor
-import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaExecutionSpecification
-import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaExecutorSpec
-import hu.bme.mit.semantifyr.backends.theta.wrapper.execution.ThetaXstsExecutor
-import hu.bme.mit.semantifyr.logging.debug
-import hu.bme.mit.semantifyr.logging.info
-import hu.bme.mit.semantifyr.logging.loggerFactory
-import hu.bme.mit.semantifyr.logging.warn
+import hu.bme.mit.semantifyr.backends.theta.ThetaExecutionSpecification
+import hu.bme.mit.semantifyr.backends.theta.ThetaExecutorSpec
+import hu.bme.mit.semantifyr.backends.theta.ThetaXstsExecutor
+import hu.bme.mit.semantifyr.backends.theta.execution.DockerBasedThetaXstsExecutor
+import hu.bme.mit.semantifyr.backends.theta.execution.ShellBasedThetaXstsExecutor
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.semantics.verification.AvailabilityReport
-import hu.bme.mit.semantifyr.semantics.verification.Backend
-import hu.bme.mit.semantifyr.semantics.verification.ExecutionEnvironment
-import hu.bme.mit.semantifyr.semantics.verification.Trace
-import hu.bme.mit.semantifyr.semantics.verification.VerificationMetrics
-import hu.bme.mit.semantifyr.semantics.verification.VerificationRequest
-import hu.bme.mit.semantifyr.semantics.verification.VerificationResult
-import hu.bme.mit.semantifyr.semantics.verification.VerificationRunMetadata
-import hu.bme.mit.semantifyr.semantics.verification.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.AvailabilityReport
+import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.VerificationBackend
+import hu.bme.mit.semantifyr.backend.VerificationMetrics
+import hu.bme.mit.semantifyr.backend.VerificationRequest
+import hu.bme.mit.semantifyr.backend.VerificationResult
+import hu.bme.mit.semantifyr.backend.VerificationRunMetadata
+import hu.bme.mit.semantifyr.backend.VerificationTrace
+import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.logging.debug
+import hu.bme.mit.semantifyr.logging.info
+import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.logging.warn
+import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.eclipse.emf.common.util.URI
 import java.io.File
 import java.nio.file.Path
@@ -52,14 +53,16 @@ import kotlin.time.TimeSource.Monotonic.markNow
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
-object ThetaBackend : Backend<ThetaConfig> {
+object ThetaBackend : VerificationBackend<hu.bme.mit.semantifyr.backends.theta.hu.bme.mit.semantifyr.verification.ThetaConfig> {
 
     override val id: String = "theta"
 
     private val logger by loggerFactory()
 
-    private fun createInjector(artifactRootPath: Path): com.google.inject.Injector {
-        return Guice.createInjector(ThetaBackendModule(artifactRootPath))
+    private fun createInjector(artifactRootPath: Path): Injector {
+        // TODO: shared InlinedOxsts EObjects may still race on eAdapters during parallel transforms.
+        val parentInjector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
+        return parentInjector.createChildInjector(ThetaBackendModule(artifactRootPath))
     }
 
     override fun probeAvailability(config: ThetaConfig, environment: ExecutionEnvironment): AvailabilityReport {
@@ -111,7 +114,7 @@ fun ExecutionEnvironment.Builder.theta(spec: ThetaExecutorSpec): ExecutionEnviro
 private class ThetaBackendModule(private val artifactRootPath: Path) : AbstractModule() {
     override fun configure() {
         bind(ThetaArtifactManager::class.java).toInstance(ThetaArtifactManager(artifactRootPath))
-        install(com.google.inject.assistedinject.FactoryModuleBuilder().build(ThetaVerificationContext.Factory::class.java))
+        install(FactoryModuleBuilder().build(ThetaVerificationContext.Factory::class.java))
     }
 }
 
@@ -137,13 +140,13 @@ internal class ThetaVerificationContext @AssistedInject constructor(
 
     suspend fun execute(): VerificationResult {
         val metadata = VerificationRunMetadata(
-            verifierId = configId,
+            backendId = configId,
             startedAt = Clock.System.now(),
-            caseSourceId = request.case.sourceId,
+            caseQualifiedName = request.case.qualifiedName,
         )
         val totalMark = markNow()
 
-        logger.info { "[$configId] starting verification of '${request.case.fqn}'" }
+        logger.info { "[$configId] starting verification of '${request.case.qualifiedName}'" }
 
         return try {
             runVerification(totalMark, metadata)
@@ -151,7 +154,7 @@ internal class ThetaVerificationContext @AssistedInject constructor(
             logger.debug { "[$configId] cancelled (peer won the portfolio race or outer timeout)" }
             throw c
         } catch (e: Exception) {
-            logger.warn { "[$configId] verification of '${request.case.fqn}' threw ${e::class.simpleName}: ${e.message ?: ""}" }
+            logger.warn { "[$configId] verification of '${request.case.qualifiedName}' threw ${e::class.simpleName}: ${e.message ?: ""}" }
             VerificationResult(
                 verdict = VerificationVerdict.Errored,
                 metadata = metadata,
@@ -174,7 +177,7 @@ internal class ThetaVerificationContext @AssistedInject constructor(
         logger.info { "[$configId] Theta returned $thetaVerdict in $verifyDuration" }
 
         val cexFile = artifactDir.resolve("out.cex")
-        var trace: Trace.OxstsWitness? = null
+        var trace: VerificationTrace.OxstsWitness? = null
         var backAnnotationDuration = Duration.ZERO
         if (cexFile.exists()) {
             backAnnotationDuration = measureTime {
@@ -183,18 +186,18 @@ internal class ThetaVerificationContext @AssistedInject constructor(
         }
 
         val verdict = interpretVerdict(request.input.property.expression, thetaVerdict)
-        logger.info { "[$configId] verdict $verdict for '${request.case.fqn}' (total ${totalMark.elapsedNow()})" }
+        logger.info { "[$configId] verdict $verdict for '${request.case.qualifiedName}' (total ${totalMark.elapsedNow()})" }
 
         return VerificationResult(
             verdict = verdict,
             metadata = metadata,
             metrics = VerificationMetrics(
-                backendTransformationDuration = transformDuration,
+                preparationDuration = transformDuration,
                 verificationDuration = verifyDuration,
                 backAnnotationDuration = backAnnotationDuration,
                 totalDuration = totalMark.elapsedNow(),
             ),
-            trace = trace,
+            verificationTrace = trace,
             message = null,
         )
     }
@@ -229,9 +232,7 @@ internal class ThetaVerificationContext @AssistedInject constructor(
         logger.debug { "[$configId] invoking Theta: ${config.parameters}" }
         val thetaExecutor = ThetaXstsExecutor.of(executorSpec)
 
-        val result = withContext(Dispatchers.IO) {
-            thetaExecutor.execute(spec)
-        }
+        val result = thetaExecutor.execute(spec)
 
         if (result.exitCode != 0) {
             error("Theta execution failed with exit code ${result.exitCode}")
@@ -240,13 +241,13 @@ internal class ThetaVerificationContext @AssistedInject constructor(
         return spec.logFile?.takeIf { it.exists() }?.useLines { lines -> lines.firstNotNullOfOrNull(::detectSafety) }
     }
 
-    private fun backAnnotateWitness(input: InlinedOxsts, xsts: XstsModel, cexPath: Path): Trace.OxstsWitness {
+    private fun backAnnotateWitness(input: InlinedOxsts, xsts: XstsModel, cexPath: Path): VerificationTrace.OxstsWitness {
         logger.info { "[$configId] back-annotating witness" }
         val cexModel = cexReader.loadCexModel(cexPath)
         val cexWitness = cexAssumptionWitnessTransformer.transform(cexModel)
         val xstsWitness = xstsAssumptionWitnessTransformer.transform(xsts, cexWitness)
         val inlinedWitness = inlinedOxstsAssumptionWitnessTransformer.transform(input, xstsWitness)
-        return Trace.OxstsWitness(inlinedWitness)
+        return VerificationTrace.OxstsWitness(inlinedWitness)
     }
 
     private fun interpretVerdict(property: Expression, thetaVerdict: ThetaVerdict?): VerificationVerdict {

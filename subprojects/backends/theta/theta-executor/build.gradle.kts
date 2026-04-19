@@ -83,7 +83,7 @@ dependencies {
     api(project(":cex.lang"))
     api(libs.guice)
 
-    implementation(project(":semantifyr-logging"))
+    implementation(project(":logging"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.docker.java.core)
     implementation(libs.docker.java.transport)

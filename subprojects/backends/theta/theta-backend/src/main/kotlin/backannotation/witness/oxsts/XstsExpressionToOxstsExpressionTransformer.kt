@@ -7,9 +7,9 @@
 package hu.bme.mit.semantifyr.backends.theta.backannotation.witness.oxsts
 
 import com.google.inject.Inject
+import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.OxstsDomainTransformer
-import hu.bme.mit.semantifyr.semantics.scope.CompilationScoped
-import hu.bme.mit.semantifyr.semantics.utils.OxstsFactory
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.xsts.lang.utils.XstsExpressionVisitor
 import hu.bme.mit.semantifyr.xsts.lang.xsts.ArithmeticBinaryOperator
 import hu.bme.mit.semantifyr.xsts.lang.xsts.ArithmeticOp
@@ -32,7 +32,7 @@ import hu.bme.mit.semantifyr.xsts.lang.xsts.ReadIndexingSuffixExpression
 import hu.bme.mit.semantifyr.xsts.lang.xsts.UnaryOp
 import hu.bme.mit.semantifyr.xsts.lang.xsts.WriteIndexingSuffixExpression
 
-@CompilationScoped
+@Singleton
 class XstsExpressionToOxstsExpressionTransformer : XstsExpressionVisitor<hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression>() {
 
     @Inject

@@ -14,6 +14,8 @@ repositories {
 }
 
 dependencies {
-    api(project(":semantics"))
+    implementation(project(":logging"))
+
+    api(project(":verification"))
     api(project(":theta-backend"))
 }

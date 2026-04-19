@@ -6,23 +6,23 @@
 
 package hu.bme.mit.semantifyr.portfolios
 
-import hu.bme.mit.semantifyr.backends.theta.verification.ThetaConfig
+import hu.bme.mit.semantifyr.backends.theta.hu.bme.mit.semantifyr.verification.ThetaConfig
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
-import hu.bme.mit.semantifyr.semantics.verification.portfolio.Portfolio
+import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
 
 object Portfolios {
 
     private val logger by loggerFactory()
 
-    val ThetaFull: Portfolio = ThetaFullPortfolio()
-    val ThetaCegarExpl: Portfolio = ThetaSinglePortfolio(ThetaConfig.CegarExpl)
-    val ThetaCegarExplPredCombined: Portfolio = ThetaSinglePortfolio(ThetaConfig.CegarExplPredCombined)
-    val ThetaCegarPredCart: Portfolio = ThetaSinglePortfolio(ThetaConfig.CegarPredCart)
-    val ThetaBoundedKInduction: Portfolio = ThetaSinglePortfolio(ThetaConfig.BoundedKInduction)
+    val ThetaFull: VerificationPortfolio = ThetaFullPortfolio()
+    val ThetaCegarExpl: VerificationPortfolio = ThetaSinglePortfolio(ThetaConfig.CegarExpl)
+    val ThetaCegarExplPredCombined: VerificationPortfolio = ThetaSinglePortfolio(ThetaConfig.CegarExplPredCombined)
+    val ThetaCegarPredCart: VerificationPortfolio = ThetaSinglePortfolio(ThetaConfig.CegarPredCart)
+    val ThetaBoundedKInduction: VerificationPortfolio = ThetaSinglePortfolio(ThetaConfig.BoundedKInduction)
 
-    val all: List<Portfolio> = listOf(
+    val all: List<VerificationPortfolio> = listOf(
         ThetaFull,
         ThetaCegarExpl,
         ThetaCegarExplPredCombined,
@@ -30,7 +30,7 @@ object Portfolios {
         ThetaBoundedKInduction,
     )
 
-    fun byId(id: String): Portfolio? {
+    fun byIdOrNull(id: String): VerificationPortfolio? {
         val match = all.firstOrNull { it.id == id }
         if (match == null) {
             logger.warn { "Unknown portfolio '$id' (known: ${all.joinToString { it.id }})" }
@@ -39,4 +39,5 @@ object Portfolios {
         }
         return match
     }
+
 }
