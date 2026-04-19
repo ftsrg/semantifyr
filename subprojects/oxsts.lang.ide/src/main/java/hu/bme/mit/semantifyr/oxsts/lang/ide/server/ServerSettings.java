@@ -11,13 +11,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.inject.Singleton;
-import hu.bme.mit.semantifyr.backends.theta.verification.ThetaBackendKt;
+import hu.bme.mit.semantifyr.backend.ExecutionEnvironment;
 import hu.bme.mit.semantifyr.backends.theta.ThetaExecutorSpec;
+import hu.bme.mit.semantifyr.backends.theta.hu.bme.mit.semantifyr.verification.ThetaBackendKt;
+import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig;
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig;
 import hu.bme.mit.semantifyr.portfolios.Portfolios;
-import hu.bme.mit.semantifyr.semantics.compilation.artifact.ArtifactConfig;
-import hu.bme.mit.semantifyr.semantics.compilation.optimization.OptimizationConfig;
-import hu.bme.mit.semantifyr.semantics.verification.ExecutionEnvironment;
-import hu.bme.mit.semantifyr.semantics.verification.portfolio.Portfolio;
+import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicReference;
@@ -38,7 +38,8 @@ public class ServerSettings {
     public static final long DEFAULT_TIMEOUT_SECONDS = 300L;
     public static final String DEFAULT_THETA_EXECUTOR = "auto";
     public static final String DEFAULT_ARTIFACTS_LOCATION = "temporary";
-    public static final String DEFAULT_OPTIMIZATION_LEVEL = "O1";
+    public static final String DEFAULT_ARTIFACTS_PRESET = "all";
+    public static final String DEFAULT_OPTIMIZATION_LEVEL = "all";
 
     private final AtomicReference<Snapshot> snapshot = new AtomicReference<>(Snapshot.defaults());
 
@@ -58,12 +59,12 @@ public class ServerSettings {
         LOG.info("LSP settings applied: {}", next);
     }
 
-    public Portfolio resolvePortfolio() {
+    public VerificationPortfolio resolvePortfolio() {
         String id = snapshot.get().portfolio();
-        Portfolio portfolio = Portfolios.INSTANCE.byId(id);
+        VerificationPortfolio portfolio = Portfolios.INSTANCE.byIdOrNull(id);
         if (portfolio == null) {
             LOG.warn("Unknown portfolio '{}', falling back to '{}'", id, DEFAULT_PORTFOLIO_ID);
-            return Portfolios.INSTANCE.byId(DEFAULT_PORTFOLIO_ID);
+            return Portfolios.INSTANCE.byIdOrNull(DEFAULT_PORTFOLIO_ID);
         }
         return portfolio;
     }
@@ -91,7 +92,11 @@ public class ServerSettings {
                     : createTempDir();
             default -> createTempDir();
         };
-        return ArtifactConfig.Companion.all(outputDirectory);
+        return switch (s.artifactsPreset()) {
+            case "none" -> ArtifactConfig.Companion.none(outputDirectory);
+            case "debug" -> ArtifactConfig.Companion.debug(outputDirectory);
+            default -> ArtifactConfig.Companion.all(outputDirectory);
+        };
     }
 
     private static Path createTempDir() {
@@ -105,8 +110,9 @@ public class ServerSettings {
     public OptimizationConfig resolveOptimizationConfig() {
         String preset = snapshot.get().optimizationLevel();
         return switch (preset) {
-            case "none" -> OptimizationConfig.NONE;
-            default -> OptimizationConfig.DEFAULT;
+            case "none" -> OptimizationConfig.Companion.getNONE();
+            case "all" -> OptimizationConfig.Companion.getALL();
+            default -> OptimizationConfig.Companion.getDEFAULT();
         };
     }
 
@@ -129,6 +135,7 @@ public class ServerSettings {
             String thetaDockerImage,
             String artifactsLocation,
             String artifactsDirectory,
+            String artifactsPreset,
             String optimizationLevel
     ) {
         static Snapshot defaults() {
@@ -140,6 +147,7 @@ public class ServerSettings {
                     ThetaExecutorSpec.Docker.DEFAULT_IMAGE,
                     DEFAULT_ARTIFACTS_LOCATION,
                     null,
+                    DEFAULT_ARTIFACTS_PRESET,
                     DEFAULT_OPTIMIZATION_LEVEL
             );
         }
@@ -154,6 +162,7 @@ public class ServerSettings {
                     stringAt(o, "theta.dockerImage", d.thetaDockerImage()),
                     stringAt(o, "artifacts.location", d.artifactsLocation()),
                     stringAt(o, "artifacts.directory", d.artifactsDirectory()),
+                    stringAt(o, "artifacts.preset", d.artifactsPreset()),
                     stringAt(o, "optimization.level", d.optimizationLevel())
             );
         }

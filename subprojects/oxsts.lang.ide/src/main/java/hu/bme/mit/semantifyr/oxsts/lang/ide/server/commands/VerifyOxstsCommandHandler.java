@@ -9,17 +9,18 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
+import hu.bme.mit.semantifyr.backend.ExecutionEnvironment;
+import hu.bme.mit.semantifyr.backend.VerificationCase;
+import hu.bme.mit.semantifyr.backend.VerificationResult;
+import hu.bme.mit.semantifyr.backend.VerificationVerdict;
+import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.ServerSettings;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
-import hu.bme.mit.semantifyr.semantics.reader.SemantifyrLoader;
-import hu.bme.mit.semantifyr.semantics.verification.CaseFilter;
-import hu.bme.mit.semantifyr.semantics.verification.ExecutionEnvironment;
-import hu.bme.mit.semantifyr.semantics.verification.SemantifyrVerifier;
-import hu.bme.mit.semantifyr.semantics.verification.VerificationCase;
-import hu.bme.mit.semantifyr.semantics.verification.VerificationResult;
-import hu.bme.mit.semantifyr.semantics.verification.VerificationVerdict;
-import hu.bme.mit.semantifyr.semantics.verification.portfolio.Portfolio;
+import hu.bme.mit.semantifyr.verification.SemantifyrVerifier;
+import hu.bme.mit.semantifyr.verification.discovery.CaseFilter;
+import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
@@ -40,6 +41,9 @@ public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
 
     @Inject
     protected ServerSettings serverSettings;
+
+    @Inject
+    protected Injector injector;
 
     @Override
     public String getId() {
@@ -72,21 +76,21 @@ public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
     protected Object execute(ClassDeclaration arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
         progressContext.begin("Verifying class " + arguments.getName(), "Initializing");
 
-        var targetFqn = oxstsQualifiedNameProvider.getFullyQualifiedNameString(arguments);
-        LOG.info("LSP verify request for case '{}'", targetFqn);
+        var targetQualifiedName = oxstsQualifiedNameProvider.getFullyQualifiedNameString(arguments);
+        LOG.info("LSP verify request for case '{}'", targetQualifiedName);
         var context = semantifyrLoader.fromResourceSet(arguments.eResource().getResourceSet());
 
         semantifyrRequestManager.releaseReadLock();
-        Portfolio portfolio = serverSettings.resolvePortfolio();
+        VerificationPortfolio portfolio = serverSettings.resolvePortfolio();
         ExecutionEnvironment environment = serverSettings.resolveExecutionEnvironment();
         SemantifyrVerifier.Builder builder = SemantifyrVerifier.builder()
+                .injector(injector)
                 .context(context)
                 .portfolio(portfolio)
                 .environment(environment)
                 .timeout(serverSettings.resolveTimeout())
                 .artifacts(serverSettings.resolveArtifactConfig())
-                .optimization(serverSettings.resolveOptimizationConfig())
-                .progress(progressContext);
+                .optimization(serverSettings.resolveOptimizationConfig());
         Integer maxConcurrency = serverSettings.resolveMaxConcurrencyOrNull();
         if (maxConcurrency != null) {
             builder.maxConcurrency(maxConcurrency);
@@ -95,16 +99,16 @@ public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
             progressContext.checkIsCancelled();
 
             VerificationCase match = verifier.verificationCases(CaseFilter.All.INSTANCE).stream()
-                    .filter(c -> targetFqn.equals(c.getFqn()))
+                    .filter(c -> targetQualifiedName.equals(c.getQualifiedName()))
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException(
-                            "No verification case found for fqn '" + targetFqn + "'"));
+                            "No verification case found for qualified name '" + targetQualifiedName + "'"));
 
-            VerificationResult result = verifier.verifyBlocking(match);
-            LOG.info("LSP verify '{}' -> {}", targetFqn, result.getVerdict());
+            VerificationResult result = verifier.verifyBlocking(match, progressContext);
+            LOG.info("LSP verify '{}' -> {}", targetQualifiedName, result.getVerdict());
             return toDto(result);
         } catch (Exception e) {
-            LOG.error("LSP verify '{}' threw {}", targetFqn, e.getClass().getSimpleName(), e);
+            LOG.error("LSP verify '{}' threw {}", targetQualifiedName, e.getClass().getSimpleName(), e);
             return new VerificationCaseRunResultDto("error", e.getMessage());
         } finally {
             semantifyrRequestManager.acquireReadLock();

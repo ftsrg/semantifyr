@@ -7,7 +7,7 @@
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.WorkManager;
-import hu.bme.mit.semantifyr.semantics.progress.ProgressContext;
+import hu.bme.mit.semantifyr.verification.ProgressContext;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.xtext.util.CancelIndicator;
 
@@ -41,11 +41,6 @@ public class CommandProgressContext implements ProgressContext {
 
     public void end() {
         workManager.endWork(token);
-    }
-
-    @Override
-    public void reportProgress(String message, int percentage) {
-        workManager.reportProgressOnWork(token, message, percentage);
     }
 
     @Override

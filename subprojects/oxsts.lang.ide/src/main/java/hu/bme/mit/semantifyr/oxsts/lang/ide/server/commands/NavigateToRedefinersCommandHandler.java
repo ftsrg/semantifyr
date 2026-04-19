@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
-import hu.bme.mit.semantifyr.semantics.progress.ProgressContext;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
