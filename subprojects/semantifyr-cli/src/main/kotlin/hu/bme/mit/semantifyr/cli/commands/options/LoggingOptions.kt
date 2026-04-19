@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.cli.commands.options
 
+import com.github.ajalt.clikt.command.SuspendingCliktCommand
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.OptionWithValues
 import com.github.ajalt.clikt.parameters.options.default
@@ -15,7 +16,7 @@ import com.github.ajalt.clikt.parameters.types.choice
 
 const val LOG_LEVEL_SYSTEM_PROPERTY = "semantifyr.log.level"
 
-fun CliktCommand.logLevelOption() =
+fun SuspendingCliktCommand.logLevelOption() =
     option("--log-level")
     .choice("ERROR", "WARN", "INFO", "DEBUG", "TRACE", ignoreCase = true)
     .default("WARN")

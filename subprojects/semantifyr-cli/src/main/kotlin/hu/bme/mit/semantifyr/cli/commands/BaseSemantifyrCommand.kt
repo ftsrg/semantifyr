@@ -6,7 +6,7 @@
 
 package hu.bme.mit.semantifyr.cli.commands
 
-import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.command.SuspendingCliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.check
 import com.github.ajalt.clikt.parameters.arguments.help
@@ -16,24 +16,21 @@ import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.versionOption
 import com.github.ajalt.clikt.parameters.types.path
-import hu.bme.mit.semantifyr.semantics.StandaloneOxstsSemanticsRuntimeModule
-import hu.bme.mit.semantifyr.semantics.reader.SemantifyrLoader
-import hu.bme.mit.semantifyr.semantics.reader.SemantifyrModelContext
+import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
+import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
+import hu.bme.mit.semantifyr.oxsts.lang.library.OxstsLibrary
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.extension
 
-private const val OXSTS_EXTENSION = "oxsts"
-
 private fun isOxstsFileOrDirectory(path: Path): Boolean {
-    return Files.isDirectory(path) || path.extension == OXSTS_EXTENSION
+    return Files.isDirectory(path) || path.extension == OxstsLibrary.FILE_NAME_SUFFIX
 }
 
-private val semantifyrLoader by lazy {
-    StandaloneOxstsSemanticsRuntimeModule.getInstance<SemantifyrLoader>()
-}
-
-abstract class BaseSemantifyrCommand(name: String) : CliktCommand(name) {
+abstract class BaseSemantifyrCommand(
+    name: String,
+    private val semantifyrLoader: SemantifyrLoader,
+) : SuspendingCliktCommand(name) {
 
     override val printHelpOnEmptyArgs = true
 

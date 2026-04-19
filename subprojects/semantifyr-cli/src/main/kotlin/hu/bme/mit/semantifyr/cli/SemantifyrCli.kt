@@ -6,37 +6,49 @@
 
 package hu.bme.mit.semantifyr.cli
 
-import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.command.SuspendingCliktCommand
+import com.github.ajalt.clikt.command.main
 import com.github.ajalt.clikt.core.Context
-import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.core.subcommands
+import com.google.inject.Inject
 import hu.bme.mit.semantifyr.cli.commands.CompileCommand
 import hu.bme.mit.semantifyr.cli.commands.ListCommand
 import hu.bme.mit.semantifyr.cli.commands.PortfoliosCommand
 import hu.bme.mit.semantifyr.cli.commands.VerifyCommand
 import hu.bme.mit.semantifyr.cli.commands.options.applyLogLevel
 import hu.bme.mit.semantifyr.cli.commands.options.logLevelOption
+import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 
-class SemantifyrCommand : CliktCommand("semantifyr") {
+class SemantifyrCommand @Inject constructor(
+    verifyCommand: VerifyCommand,
+    compileCommand: CompileCommand,
+    listCommand: ListCommand,
+    portfoliosCommand: PortfoliosCommand,
+) : SuspendingCliktCommand("semantifyr") {
+
     @Suppress("unused")
     private val logLevel by logLevelOption()
+
+    init {
+        subcommands(
+            verifyCommand,
+            compileCommand,
+            listCommand,
+            portfoliosCommand,
+        )
+    }
 
     override fun help(context: Context): String {
         return "The Semantifyr command-line interface. See --help for more details."
     }
 
-    override fun run() {
+    override suspend fun run() {
         applyLogLevel(logLevel)
     }
 }
 
-fun main(args: Array<String>) {
-    SemantifyrCommand()
-        .subcommands(
-            VerifyCommand(),
-            CompileCommand(),
-            ListCommand(),
-            PortfoliosCommand(),
-        )
-        .main(args)
+suspend fun main(args: Array<String>) {
+    val injector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
+    val semantifyrCommand = injector.getInstance(SemantifyrCommand::class.java)
+    semantifyrCommand.main(args)
 }

@@ -14,28 +14,31 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.long
 import com.github.ajalt.clikt.parameters.types.path
+import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.VerificationCase
+import hu.bme.mit.semantifyr.backends.nuxmv.NuxmvExecutorSpec
+import hu.bme.mit.semantifyr.backends.nuxmv.verification.nuxmv
+import hu.bme.mit.semantifyr.backends.spin.SpinExecutorSpec
+import hu.bme.mit.semantifyr.backends.spin.verification.spin
 import hu.bme.mit.semantifyr.backends.theta.ThetaExecutorSpec
-import hu.bme.mit.semantifyr.backends.theta.verification.theta
+import hu.bme.mit.semantifyr.backends.theta.hu.bme.mit.semantifyr.verification.theta
+import hu.bme.mit.semantifyr.backends.uppaal.UppaalExecutorSpec
+import hu.bme.mit.semantifyr.backends.uppaal.verification.uppaal
+import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
+import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactKind
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationCategory
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
+import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.portfolios.Portfolios
-import hu.bme.mit.semantifyr.semantics.StandaloneOxstsSemanticsRuntimeModule
-import hu.bme.mit.semantifyr.semantics.artifact.ArtifactConfig
-import hu.bme.mit.semantifyr.semantics.artifact.ArtifactKind
-import hu.bme.mit.semantifyr.semantics.optimization.OptimizationCategory
-import hu.bme.mit.semantifyr.semantics.optimization.OptimizationConfig
-import hu.bme.mit.semantifyr.semantics.reader.SemantifyrModelContext
-import hu.bme.mit.semantifyr.semantics.verification.ExecutionEnvironment
-import hu.bme.mit.semantifyr.semantics.verification.VerificationCase
-import hu.bme.mit.semantifyr.semantics.verification.VerificationCaseDiscoverer
-import hu.bme.mit.semantifyr.semantics.verification.portfolio.Portfolio
+import hu.bme.mit.semantifyr.verification.discovery.VerificationCaseDiscoverer
+import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
 import java.nio.file.Files
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-private val verificationCaseDiscoverer by lazy {
-    StandaloneOxstsSemanticsRuntimeModule.getInstance<VerificationCaseDiscoverer>()
-}
-
-class VerificationCaseSpecificationOptionGroup : OptionGroup("Verification case specification") {
+class VerificationCaseSpecificationOptionGroup(
+    private val verificationCaseDiscoverer: VerificationCaseDiscoverer,
+) : OptionGroup("Verification case specification") {
     val caseNames by option("--case-name")
         .multiple()
         .help("The fully qualified name(s) of the verification case to be verified. Repeat the flag to add multiple. Overrides tag filters when set.")
@@ -51,14 +54,18 @@ class VerificationCaseSpecificationOptionGroup : OptionGroup("Verification case 
     fun collectVerificationCases(context: SemantifyrModelContext): List<VerificationCase> {
         if (caseNames.isNotEmpty()) {
             return caseNames.map {
-                verificationCaseDiscoverer.findByName(context, it)
+                verificationCaseDiscoverer.findByQualifiedName(context, it)
             }
         }
-        return verificationCaseDiscoverer.discover(context, including = includeTags.toSet(), excluding = excludeTags.toSet())
+        return verificationCaseDiscoverer.discover(
+            context,
+            including = includeTags.toSet(),
+            excluding = excludeTags.toSet(),
+        )
     }
 }
 
-enum class ArtifactPreset { None, Report, All }
+enum class ArtifactPreset { None, All, Debug }
 
 class ArtifactOptionGroup : OptionGroup("Artifact options") {
     val artifactDirectory by option("-d", "--artifact-directory")
@@ -68,7 +75,7 @@ class ArtifactOptionGroup : OptionGroup("Artifact options") {
     val artifactPreset by option("--artifacts")
         .enum<ArtifactPreset>(ignoreCase = true)
         .default(ArtifactPreset.All)
-        .help("Artifact preset. Default: 'all'.")
+        .help("Artifact preset. Default: 'all'. Use 'debug' to also write per-pass step dumps (slow; only for bisecting compiler regressions).")
 
     val enableArtifacts by option("--enable-artifact")
         .enum<ArtifactKind>(ignoreCase = true)
@@ -84,8 +91,8 @@ class ArtifactOptionGroup : OptionGroup("Artifact options") {
         val outputDirectory = artifactDirectory ?: Files.createTempDirectory("semantifyr-")
         val base = when (artifactPreset) {
             ArtifactPreset.None -> ArtifactConfig.none(outputDirectory)
-            ArtifactPreset.Report -> ArtifactConfig.reportOnly(outputDirectory)
             ArtifactPreset.All -> ArtifactConfig.all(outputDirectory)
+            ArtifactPreset.Debug -> ArtifactConfig.debug(outputDirectory)
         }
         val resolved = base.enabled + enableArtifacts.toSet() - disableArtifacts.toSet()
         base.copy(enabled = resolved)
@@ -118,17 +125,23 @@ class BackendOptionGroup : OptionGroup("Backend options") {
     val timeout: Duration
         get() = timeoutSeconds.seconds
 
-    fun resolvePortfolio(): Portfolio {
-        return Portfolios.byId(portfolioId) ?: error("Unknown portfolio '$portfolioId'. Options: ${Portfolios.all.joinToString { it.id }}")
+    fun resolvePortfolio(): VerificationPortfolio {
+        return Portfolios.byIdOrNull(portfolioId)
+            ?: error("Unknown portfolio '$portfolioId'. Options: ${Portfolios.all.joinToString { it.id }}")
     }
 
     val resolved by lazy {
-        val spec = when (thetaExecutor) {
+        val thetaSpec = when (thetaExecutor) {
             ThetaExecutor.Auto -> ThetaExecutorSpec.Auto
             ThetaExecutor.Shell -> ThetaExecutorSpec.Shell
             ThetaExecutor.Docker -> ThetaExecutorSpec.Docker(image = thetaDockerImage)
         }
-        ExecutionEnvironment.builder().theta(spec).build()
+        ExecutionEnvironment.builder()
+            .theta(thetaSpec)
+            .uppaal(UppaalExecutorSpec.Auto)
+            .nuxmv(NuxmvExecutorSpec.Auto)
+            .spin(SpinExecutorSpec.Auto)
+            .build()
     }
 }
 

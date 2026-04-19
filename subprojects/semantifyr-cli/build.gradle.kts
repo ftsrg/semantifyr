@@ -14,8 +14,10 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":semantics"))
-    implementation(project(":semantifyr-portfolios"))
+    implementation(project(":logging"))
+    implementation(project(":compiler"))
+    implementation(project(":verification"))
+    implementation(project(":portfolios"))
 
     implementation(libs.clikt)
     implementation(libs.kotlinx.coroutines.core)

@@ -11,36 +11,48 @@ import com.github.ajalt.clikt.parameters.groups.provideDelegate
 import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path
+import com.google.inject.Inject
+import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.VerificationCase
 import hu.bme.mit.semantifyr.cli.commands.options.ArtifactOptionGroup
 import hu.bme.mit.semantifyr.cli.commands.options.CompilationOptionGroup
 import hu.bme.mit.semantifyr.cli.commands.options.VerificationCaseSpecificationOptionGroup
+import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
+import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
-import hu.bme.mit.semantifyr.semantics.reader.SemantifyrModelContext
-import hu.bme.mit.semantifyr.semantics.verification.SemantifyrCompiler
-import hu.bme.mit.semantifyr.semantics.verification.VerificationCase
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.verification.discovery.VerificationCaseDiscoverer
+import org.eclipse.xtext.resource.SaveOptions
+import org.eclipse.xtext.serializer.ISerializer
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.bufferedWriter
 import kotlin.io.path.nameWithoutExtension
 import kotlin.system.exitProcess
 
-class CompileCommand : BaseSemantifyrCommand("compile") {
+class CompileCommand @Inject constructor(
+    semantifyrLoader: SemantifyrLoader,
+    verificationCaseDiscoverer: VerificationCaseDiscoverer,
+    private val serializer: ISerializer,
+    private val injector: Injector,
+) : BaseSemantifyrCommand("compile", semantifyrLoader) {
 
     private val logger by loggerFactory()
 
-    private val caseSpecificationOptions by VerificationCaseSpecificationOptionGroup()
+    private val caseSpecificationOptions by VerificationCaseSpecificationOptionGroup(verificationCaseDiscoverer)
     private val compilationOptions by CompilationOptionGroup()
     private val artifactOptions by ArtifactOptionGroup()
 
     private val outputPath by option("-o", "--output")
         .path(mustExist = false, canBeFile = true, canBeDir = true)
-        .help("Where to write the inlined OXSTS. With a single selected case: a file path; with multiple: a directory holding `<case-fqn>.oxsts`. Defaults to a sibling of the input model.")
+        .help("Where to write the inlined OXSTS. With a single selected case: a file path; with multiple: a directory holding `<case-qualified-name>.oxsts`. Defaults to a sibling of the input model.")
 
     override fun help(context: Context): String {
         return "Run the inlining pipeline for one or more verification cases and write the inlined OXSTS."
     }
 
-    override fun run() {
+    override suspend fun run() {
         logger.info { "compile model=$model libraries=$libraries" }
 
         val semantifyrModelContext = readModelContext()
@@ -52,10 +64,10 @@ class CompileCommand : BaseSemantifyrCommand("compile") {
 
         if (cases.size == 1) {
             val target = validateSingleCaseOutput()
-            compileSingleCase(semantifyrModelContext, cases.single(), target)
+            compileSingleCase(cases.single(), target)
         } else {
             val directory = validateMultipleCasesOutput(cases.size)
-            compileMultipleCases(semantifyrModelContext, cases, directory)
+            compileMultipleCases(cases, directory)
         }
     }
 
@@ -78,29 +90,35 @@ class CompileCommand : BaseSemantifyrCommand("compile") {
         return directory
     }
 
-    private fun compileSingleCase(context: SemantifyrModelContext, case: VerificationCase, target: Path) {
-        runCompiler(context) { compiler ->
-            echo("Compiling ${case.fqn} to $target")
-            compiler.inlineToBlocking(case, target)
+    private fun compileSingleCase(case: VerificationCase, target: Path) {
+        runCompiler { compiler ->
+            echo("Compiling ${case.qualifiedName} to $target")
+            val compiled = compiler.compile(case.classDeclaration)
+            writeInlinedOxsts(compiled.inlinedOxsts, target)
         }
     }
 
-    private fun compileMultipleCases(context: SemantifyrModelContext, cases: List<VerificationCase>, directory: Path) {
-        runCompiler(context) { compiler ->
+    private fun compileMultipleCases(cases: List<VerificationCase>, directory: Path) {
+        runCompiler { compiler ->
             for (case in cases) {
-                val target = directory.resolve("${case.fqn}.oxsts")
-                echo("Compiling ${case.fqn} to $target")
-                compiler.inlineToBlocking(case, target)
+                val target = directory.resolve("${case.qualifiedName}.oxsts")
+                echo("Compiling ${case.qualifiedName} to $target")
+                val compiled = compiler.compile(case.classDeclaration)
+                writeInlinedOxsts(compiled.inlinedOxsts, target)
             }
         }
     }
 
-    private inline fun runCompiler(context: SemantifyrModelContext, block: (SemantifyrCompiler) -> Unit) {
-        SemantifyrCompiler.builder()
-            .context(context)
-            .artifacts(artifactOptions.resolved)
-            .optimization(compilationOptions.resolved)
-            .build()
-            .use(block)
+    private inline fun runCompiler(block: (SemantifyrCompiler) -> Unit) {
+        SemantifyrCompiler(injector, artifactOptions.resolved, compilationOptions.resolved).use {
+            block(it)
+        }
+    }
+
+    private fun writeInlinedOxsts(inlinedOxsts: InlinedOxsts, target: Path) {
+        Files.createDirectories(target.parent)
+        target.bufferedWriter().use {
+            serializer.serialize(inlinedOxsts, it, SaveOptions.defaultOptions())
+        }
     }
 }

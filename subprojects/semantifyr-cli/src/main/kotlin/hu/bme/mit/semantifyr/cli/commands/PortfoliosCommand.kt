@@ -1,26 +1,27 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
 package hu.bme.mit.semantifyr.cli.commands
 
-import com.github.ajalt.clikt.core.CliktCommand
-import hu.bme.mit.semantifyr.portfolios.Portfolios
+import com.github.ajalt.clikt.command.SuspendingCliktCommand
+import com.github.ajalt.clikt.core.Context
+import hu.bme.mit.semantifyr.backend.AvailabilityReport
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.loggerFactory
-import hu.bme.mit.semantifyr.semantics.verification.AvailabilityReport
+import hu.bme.mit.semantifyr.portfolios.Portfolios
 
-class PortfoliosCommand : CliktCommand("portfolios") {
+class PortfoliosCommand : SuspendingCliktCommand("portfolios") {
 
     private val logger by loggerFactory()
 
-    override fun help(context: com.github.ajalt.clikt.core.Context): String {
+    override fun help(context: Context): String {
         return "List the backend portfolios including their backing provider and availability."
     }
 
-    override fun run() {
+    override suspend fun run() {
         logger.debug { "portfolios: enumerating ${Portfolios.all.size} portfolios and probing each" }
         val portfolios = Portfolios.all
         if (portfolios.isEmpty()) {

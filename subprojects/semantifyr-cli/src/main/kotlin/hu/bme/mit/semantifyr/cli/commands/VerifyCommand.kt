@@ -8,29 +8,36 @@ package hu.bme.mit.semantifyr.cli.commands
 
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
+import com.google.inject.Inject
+import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.AvailabilityReport
+import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.VerificationCase
+import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.cli.commands.options.ArtifactOptionGroup
 import hu.bme.mit.semantifyr.cli.commands.options.BackendOptionGroup
 import hu.bme.mit.semantifyr.cli.commands.options.CompilationOptionGroup
 import hu.bme.mit.semantifyr.cli.commands.options.VerificationCaseSpecificationOptionGroup
+import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
+import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
+import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.semantics.artifact.ArtifactConfig
-import hu.bme.mit.semantifyr.semantics.reader.SemantifyrModelContext
-import hu.bme.mit.semantifyr.semantics.verification.AvailabilityReport
-import hu.bme.mit.semantifyr.semantics.verification.ExecutionEnvironment
-import hu.bme.mit.semantifyr.semantics.verification.SemantifyrVerifier
-import hu.bme.mit.semantifyr.semantics.verification.VerificationCase
-import hu.bme.mit.semantifyr.semantics.verification.VerificationVerdict
-import hu.bme.mit.semantifyr.semantics.verification.portfolio.Portfolio
+import hu.bme.mit.semantifyr.verification.SemantifyrVerifier
+import hu.bme.mit.semantifyr.verification.discovery.VerificationCaseDiscoverer
+import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
 import kotlin.system.exitProcess
 
-class VerifyCommand : BaseSemantifyrCommand("verify") {
+class VerifyCommand @Inject constructor(
+    semantifyrLoader: SemantifyrLoader,
+    verificationCaseDiscoverer: VerificationCaseDiscoverer,
+    private val injector: Injector,
+) : BaseSemantifyrCommand("verify", semantifyrLoader) {
 
     private val logger by loggerFactory()
 
-    private val caseSpecificationOptions by VerificationCaseSpecificationOptionGroup()
+    private val caseSpecificationOptions by VerificationCaseSpecificationOptionGroup(verificationCaseDiscoverer)
     private val backendOptions by BackendOptionGroup()
     private val compilationOptions by CompilationOptionGroup()
     private val artifactOptions by ArtifactOptionGroup()
@@ -39,10 +46,12 @@ class VerifyCommand : BaseSemantifyrCommand("verify") {
         return "Verify one or more verification cases of an OXSTS model with the chosen backend preset."
     }
 
-    override fun run() {
+    override suspend fun run() {
         val environment = backendOptions.resolved
         val portfolio = backendOptions.resolvePortfolio()
-        logger.info { "verify model=$model libraries=$libraries portfolio=${portfolio.id} environment=$environment timeout=${backendOptions.timeout}" }
+        logger.info {
+            "verify model=$model libraries=$libraries portfolio=${portfolio.id} environment=$environment timeout=${backendOptions.timeout}"
+        }
         ensurePortfolio(portfolio, environment)
 
         val semantifyrModelContext = readModelContext()
@@ -57,7 +66,7 @@ class VerifyCommand : BaseSemantifyrCommand("verify") {
         verifyCases(semantifyrModelContext, portfolio, environment, artifacts, cases)
     }
 
-    private fun ensurePortfolio(portfolio: Portfolio, environment: ExecutionEnvironment) {
+    private fun ensurePortfolio(portfolio: VerificationPortfolio, environment: ExecutionEnvironment) {
         val availability = portfolio.availability(environment)
         if (availability !is AvailabilityReport.Unavailable) return
 
@@ -72,14 +81,15 @@ class VerifyCommand : BaseSemantifyrCommand("verify") {
         exitProcess(2)
     }
 
-    private fun verifyCases(
+    private suspend fun verifyCases(
         semantifyrModelContext: SemantifyrModelContext,
-        portfolio: Portfolio,
+        portfolio: VerificationPortfolio,
         environment: ExecutionEnvironment,
         artifacts: ArtifactConfig,
         cases: List<VerificationCase>,
     ) {
         SemantifyrVerifier.builder()
+            .injector(injector)
             .context(semantifyrModelContext)
             .portfolio(portfolio)
             .environment(environment)
@@ -98,9 +108,9 @@ class VerifyCommand : BaseSemantifyrCommand("verify") {
             }
     }
 
-    private fun verifyCase(verifier: SemantifyrVerifier, case: VerificationCase): Boolean {
-        echo("Verifying ${case.fqn} ...")
-        val result = verifier.verifyBlocking(case)
+    private suspend fun verifyCase(verifier: SemantifyrVerifier, case: VerificationCase): Boolean {
+        echo("Verifying ${case.qualifiedName} ...")
+        val result = verifier.verify(case)
         val resultTag = when (result.verdict) {
             VerificationVerdict.Passed -> "PASSED"
             VerificationVerdict.Failed -> "FAILED"
