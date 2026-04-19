@@ -17,8 +17,13 @@ class Instance(
 
     private val slots = mutableMapOf<FeatureDeclaration, MutableSet<Instance>>()
 
-    val children: Collection<Instance>
-        get() = slots.values.flatten()
+    private val mutableChildren = mutableListOf<Instance>()
+    val children: List<Instance>
+        get() = mutableChildren
+
+    init {
+        parent?.mutableChildren += this
+    }
 
     val name: String by lazy {
         if (parent == null) {
