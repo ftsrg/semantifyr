@@ -6,6 +6,7 @@
 package hu.bme.mit.semantifyr.oxsts.lang.conversion;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.services.OxstsGrammarAccess;
 import org.eclipse.xtext.GrammarUtil;
@@ -21,6 +22,7 @@ import java.util.Set;
 import static org.eclipse.xtext.EcoreUtil2.eAllContentsAsList;
 import static org.eclipse.xtext.EcoreUtil2.typeSelect;
 
+@Singleton
 public class IdentifierValueConverter implements IValueConverter<String> {
     private final Set<String> keywords;
 
