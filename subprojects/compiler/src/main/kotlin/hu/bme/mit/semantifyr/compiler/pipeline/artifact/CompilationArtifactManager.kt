@@ -1,0 +1,58 @@
+/*
+ * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package hu.bme.mit.semantifyr.compiler.pipeline.artifact
+
+import com.google.inject.Inject
+import com.google.inject.Singleton
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import org.eclipse.xtext.resource.SaveOptions
+import org.eclipse.xtext.serializer.ISerializer
+import java.io.File
+
+@Singleton
+class CompilationArtifactManager @Inject constructor(
+    val serializer: ISerializer,
+    val artifactManager: ArtifactManager,
+    val artifactConfig: ArtifactConfig
+) {
+
+    private lateinit var inlinedOxsts: InlinedOxsts
+
+    private var stepId = 0
+
+    fun setTarget(inlinedOxsts: InlinedOxsts) {
+        this.inlinedOxsts = inlinedOxsts
+    }
+
+    fun commitStep(pass: CompilationPass) {
+        if (!artifactConfig.enabledCompilationSteps.shouldEmit(pass)) {
+            return
+        }
+
+        artifactManager.withFile(ArtifactKind.CompilationStep) { stepsDir ->
+            stepsDir.mkdirs()
+            serializeInto(inlinedOxsts, stepsDir.resolve("${pass.name.lowercase()}_${stepId++}.oxsts"))
+        }
+    }
+
+    fun commitInstantiated() {
+        artifactManager.withFile(ArtifactKind.InflatedModel) { serializeInto(inlinedOxsts, it) }
+    }
+
+    fun commitInlined() {
+        artifactManager.withFile(ArtifactKind.InlinedModel) { serializeInto(inlinedOxsts, it) }
+    }
+
+    fun commitFlattened() {
+        artifactManager.withFile(ArtifactKind.DeflatedModel) { serializeInto(inlinedOxsts, it) }
+    }
+
+    private fun serializeInto(inlinedOxsts: InlinedOxsts, modelFile: File) {
+        serializer.serialize(inlinedOxsts, modelFile.bufferedWriter(), SaveOptions.defaultOptions())
+    }
+
+}
