@@ -2,7 +2,7 @@
 import vscode, { CancellationToken, commands, ExtensionContext, Location, Position, Range, RelativePattern, TestController, TestItem, TestMessage, TestRunProfileKind, TestRunRequest, TextDocument, Uri, WorkspaceFolder, WorkspaceFoldersChangeEvent } from "vscode";
 import path from "path";
 import { LanguageClient} from "vscode-languageclient/node.js";
-import { createRemoteLspClient, createLspClient } from "./client-utils.js";
+import { createRemoteLspClient, createLspClient, registerSemantifyrSettingsSync } from "./client-utils.js";
 import { executablePostfix } from "../runner-utils.js";
 import { ExecuteCommandRequest } from "vscode-languageclient";
 
@@ -27,6 +27,9 @@ export async function startOxstsClient(context: ExtensionContext) {
     });
 
     await client.start();
+
+    const settingsSubscription = registerSemantifyrSettingsSync(client);
+    context.subscriptions.push(settingsSubscription);
 
     const oxstsTestController = new OxstsTestController(client);
     oxstsTestController.registerTestProvider(context);

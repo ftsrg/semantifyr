@@ -23,7 +23,7 @@ val npmService = gradle.sharedServices.registerIfAbsent("npmService", NpmService
     maxParallelUsages.set(1)
 }
 
-// node tasks must not run in parallel, as pnpm is sensitive to that
+// node tasks must not run in parallel, as npm is sensitive to that
 tasks.withType<NpmTask>().configureEach {
     usesService(npmService)
 }

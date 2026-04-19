@@ -146,7 +146,70 @@
         "scopeName": "source.gamma",
         "path": "./syntaxes/gamma.tmLanguage.json"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Semantifyr",
+      "properties": {
+        "semantifyr.portfolio": {
+          "type": "string",
+          "default": "theta-full",
+          "enum": [
+            "theta-full",
+            "theta-cegar-expl",
+            "theta-cegar-expl-pred-combined",
+            "theta-cegar-pred-cart",
+            "theta-bounded-kinduction"
+          ],
+          "markdownDescription": "Backend portfolio used when running verification. `theta-full` runs the curated full Theta portfolio; other choices pick a single-configuration Theta run."
+        },
+        "semantifyr.timeoutSeconds": {
+          "type": "number",
+          "default": 300,
+          "minimum": 1,
+          "markdownDescription": "Per-case wall-clock timeout, in seconds."
+        },
+        "semantifyr.maxConcurrency": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "markdownDescription": "Maximum number of concurrent backend runs. `0` lets the server decide (defaults to available processor count)."
+        },
+        "semantifyr.theta.executor": {
+          "type": "string",
+          "default": "auto",
+          "enum": ["auto", "shell", "docker"],
+          "markdownDescription": "Which Theta executor to use. `auto` picks shell first then Docker; `shell` requires `theta-xsts-cli` on PATH; `docker` uses the configured image."
+        },
+        "semantifyr.theta.dockerImage": {
+          "type": "string",
+          "default": "ftsrg/theta-xsts-cli:6.28.1",
+          "markdownDescription": "Docker image reference (repository:tag or @digest) for the Theta image. Only used when `semantifyr.theta.executor` is `docker`."
+        },
+        "semantifyr.artifacts.location": {
+          "type": "string",
+          "default": "temporary",
+          "enum": ["temporary", "directory"],
+          "markdownDescription": "Where to retain compiled/generated artifacts. `temporary`: a short-lived temp directory cleaned on exit; `directory`: write under `semantifyr.artifacts.directory`."
+        },
+        "semantifyr.artifacts.directory": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Directory that receives artifacts when `semantifyr.artifacts.location` is `directory`. Leave empty to fall back to a temporary directory."
+        },
+        "semantifyr.artifacts.preset": {
+          "type": "string",
+          "default": "all",
+          "enum": ["none", "all", "debug"],
+          "markdownDescription": "Artifact preset. `none` disables artifact emission, `all` writes the usual artifacts (models, witness, trace, mapping, report), `debug` additionally writes per-pass step dumps (slow; only for bisecting compiler regressions)."
+        },
+        "semantifyr.optimization.level": {
+          "type": "string",
+          "default": "all",
+          "enum": ["none", "all"],
+          "markdownDescription": "Compiler optimization preset. `none` disables all passes; `all` enables the default bundle."
+        }
+      }
+    }
   },
   "scripts": {
     "typecheck": "tsc",
