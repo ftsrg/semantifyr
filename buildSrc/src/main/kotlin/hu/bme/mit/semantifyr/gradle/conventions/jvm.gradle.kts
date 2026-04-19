@@ -45,7 +45,7 @@ java.toolchain {
 tasks {
     // TODO: refactor tests to use test suites
     test {
-        jvmArgs.add("-javaagent:${mockitoAgent.asPath}")
+        jvmArgs("-javaagent:${mockitoAgent.asPath}")
 
         useJUnitPlatform {
             // we should use source sets instead
