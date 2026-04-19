@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.verification.internal
 
+import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.VerificationCase
 import hu.bme.mit.semantifyr.backend.VerificationRequest
@@ -19,7 +20,6 @@ import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
-import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verification.ProgressContext
 import hu.bme.mit.semantifyr.verification.SemantifyrVerifier
@@ -41,6 +41,7 @@ import kotlin.time.Duration
  * lifetime of one verification session. Discovered cases are cached on first use.
  */
 class SemantifyrVerifierImpl(
+    private val injector: Injector,
     private val context: SemantifyrModelContext,
     private val verificationPortfolio: VerificationPortfolio,
     private val artifacts: ArtifactConfig,
@@ -52,13 +53,11 @@ class SemantifyrVerifierImpl(
 
     private val logger by loggerFactory()
 
-    private val injector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
-
     private val discoverer = injector.getInstance(VerificationCaseDiscoverer::class.java)
 
     private val executor = LimitedBackendExecutor(maxConcurrency)
 
-    private val compiler = SemantifyrCompiler(artifacts, optimization)
+    private val compiler = SemantifyrCompiler(injector, artifacts, optimization)
 
     private val cases: List<VerificationCase> by lazy {
         val discovered = discoverer.discover(context)
@@ -84,13 +83,18 @@ class SemantifyrVerifierImpl(
             progress.reportProgress("Compiling ${case.qualifiedName}")
             progress.checkIsCancelled()
 
+            logger.info { "Compiling case '${case.qualifiedName}'" }
             val compilation = compiler.compile(case.classDeclaration)
+            logger.info { "Compilation of '${case.qualifiedName}' complete; dispatching to portfolio '${verificationPortfolio.id}'" }
 
             val request = VerificationRequest(
                 case = case,
                 input = compilation.inlinedOxsts,
                 artifactOutputPath = workingDir,
             )
+
+            progress.reportProgress("Running portfolio ${verificationPortfolio.id}")
+
             val result = withTimeout(timeout) {
                 verificationPortfolio.verify(request, executor, environment, progress)
             }

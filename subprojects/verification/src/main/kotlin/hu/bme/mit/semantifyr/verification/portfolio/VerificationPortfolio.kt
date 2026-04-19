@@ -10,18 +10,19 @@ import hu.bme.mit.semantifyr.backend.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.VerificationRequest
 import hu.bme.mit.semantifyr.backend.VerificationResult
-import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.verification.ProgressContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
-import org.slf4j.Logger
 import kotlin.time.Duration
 
 class PortfolioScope internal constructor(
@@ -65,50 +66,41 @@ abstract class VerificationPortfolio {
 
     /**
      * Launch every job registered in [block] in parallel. Returns the first decisive result
-     * and cancels the rest. Returns null if no decisive result within [timeout].
-     *
-     * As each result arrives, emits `"result N/M: verdict"` on [progress].
+     * and cancels every still-running child. If no job produces a decisive result within
+     * [timeout] returns the best non-decisive result observed, or `null` if every
+     * job failed with an exception.
      */
     protected suspend fun firstDecisive(
         executor: BackendExecutor,
         timeout: Duration = Duration.INFINITE,
         progress: ProgressContext = ProgressContext.NoOp,
         block: PortfolioScope.() -> Unit,
-    ) = coroutineScope {
+    ): VerificationResult? = supervisorScope {
         val scope = PortfolioScope(this, executor)
         scope.block()
 
         require(scope.jobs.isNotEmpty()) { "$id: firstDecisive requires at least one job" }
-        logger.debug { "$id: firstDecisive over ${scope.jobs.size} job(s), timeout=$timeout" }
+        logger.info { "$id: firstDecisive over ${scope.jobs.size} job(s), timeout=$timeout" }
 
-        val results = Channel<VerificationResult>(Channel.UNLIMITED)
-        scope.jobs.forEach {
-            launch {
-                results.send(it.await())
+        val output = receiveResultsWithTimeout(scope, timeout, progress) { result ->
+            if (result.isDecisive) {
+                logger.info { "$id: job produced decisive ${result.verdict}" }
+                result
+            } else {
+                null
             }
         }
 
-        withTimeoutOrNull(timeout) {
-            var fallback: VerificationResult? = null
-            val total = scope.jobs.size
-            repeat(total) { i ->
-                val result = results.receive()
-                progress.reportProgress("result ${i + 1}/$total: ${result.verdict}")
-                if (result.isDecisive) {
-                    logger.info { "$id: job produced decisive ${result.verdict}" }
-                    return@withTimeoutOrNull result
-                }
-                fallback = result
-            }
-            fallback
-        }
+        cancelRemainingJobs()
+        output
     }
 
     /**
      * Launch every job registered in [block] in parallel. Waits for [count] decisive results.
-     * If they all agree, returns that verdict. Returns null on disagreement or if fewer
-     * than [count] decisive results arrive within [timeout]. The caller decides how to interpret
-     * that (typically mapping to [hu.bme.mit.semantifyr.backend.VerificationVerdict.Inconclusive]).
+     * If they all agree, returns that verdict. Returns `null` on disagreement, if fewer than
+     * [count] decisive results arrive within [timeout], or if too many jobs fail with exceptions
+     * to reach [count]. The caller decides how to interpret a null (typically mapping to
+     * [hu.bme.mit.semantifyr.backend.VerificationVerdict.Inconclusive]).
      */
     protected suspend fun firstNDecisive(
         count: Int,
@@ -116,85 +108,116 @@ abstract class VerificationPortfolio {
         timeout: Duration = Duration.INFINITE,
         progress: ProgressContext = ProgressContext.NoOp,
         block: PortfolioScope.() -> Unit,
-    ) = coroutineScope {
+    ): VerificationResult? = supervisorScope {
         val scope = PortfolioScope(this, executor)
         scope.block()
 
         require(scope.jobs.isNotEmpty()) { "$id: firstNDecisive requires at least one job" }
-        logger.debug { "$id: firstNDecisive(n=$count) over ${scope.jobs.size} job(s), timeout=$timeout" }
+        logger.info { "$id: firstNDecisive(n=$count) over ${scope.jobs.size} job(s), timeout=$timeout" }
 
-        val results = Channel<VerificationResult>(Channel.UNLIMITED)
-        scope.jobs.forEach {
-            launch {
-                results.send(it.await())
-            }
+        val decisive = mutableListOf<VerificationResult>()
+        val output = receiveResultsWithTimeout(scope, timeout, progress) { result ->
+            if (!result.isDecisive) return@receiveResultsWithTimeout null
+            decisive += result
+            if (decisive.size < count) return@receiveResultsWithTimeout null
+            val allAgree = decisive.map { it.verdict }.distinct().size == 1
+            if (allAgree) decisive.first() else null
         }
 
-        withTimeoutOrNull(timeout) {
-            val decisive = mutableListOf<VerificationResult>()
-            val total = scope.jobs.size
-            repeat(total) { i ->
-                val result = results.receive()
-                progress.reportProgress("result ${i + 1}/$total: ${result.verdict}")
-                if (result.isDecisive) {
-                    decisive += result
-                    if (decisive.size >= count) {
-                        val allAgree = decisive.map { it.verdict }.distinct().size == 1
-                        return@withTimeoutOrNull if (allAgree) {
-                            decisive.first()
-                        } else {
-                            null
-                        }
-                    }
-                }
-            }
-            null
-        }
+        cancelRemainingJobs()
+        output
     }
 
     /**
-     * Launch every job registered in [block] in parallel. All must complete within [timeout].
-     * If all agree on a decisive verdict, returns it. Otherwise, it returns the first decisive
-     * result, or null if none are decisive.
+     * Launch every job registered in [block] in parallel and wait for all of them (or [timeout]).
+     * If every decisive result agrees, returns that verdict; otherwise returns the first decisive
+     * result observed, or the first non-decisive result, or `null` if every job failed with an
+     * exception. On timeout, outstanding jobs are cancelled.
      */
     protected suspend fun all(
         executor: BackendExecutor,
         timeout: Duration = Duration.INFINITE,
         progress: ProgressContext = ProgressContext.NoOp,
         block: PortfolioScope.() -> Unit,
-    ) = coroutineScope {
+    ): VerificationResult? = supervisorScope {
         val scope = PortfolioScope(this, executor)
         scope.block()
 
         require(scope.jobs.isNotEmpty()) { "$id: all requires at least one job" }
-        logger.debug { "$id: all over ${scope.jobs.size} job(s), timeout=$timeout" }
+        logger.info { "$id: all over ${scope.jobs.size} job(s), timeout=$timeout" }
 
-        val results = Channel<VerificationResult>(Channel.UNLIMITED)
-        scope.jobs.forEach {
+        val collected = mutableListOf<VerificationResult>()
+        receiveResultsWithTimeout(scope, timeout, progress) { result ->
+            collected += result
+            null
+        }
+
+        cancelRemainingJobs()
+
+        val decisive = collected.filter { it.isDecisive }
+        when {
+            decisive.isEmpty() -> collected.firstOrNull()
+            decisive.map { it.verdict }.distinct().size == 1 -> decisive.first()
+            else -> decisive.first()
+        }
+    }
+
+    /**
+     * Wires the [scope]'s jobs onto a channel and drains the channel, feeding each successful
+     * result to [onResult]. Returns the first non-null value [onResult] produces (short-circuiting
+     * the remaining results) or `null` if [timeout] fires or every job has reported without a
+     * decision. Failures and cancellations are logged and skipped so one errored backend can't
+     * starve the portfolio.
+     */
+    private suspend fun CoroutineScope.receiveResultsWithTimeout(
+        scope: PortfolioScope,
+        timeout: Duration,
+        progress: ProgressContext,
+        onResult: (VerificationResult) -> VerificationResult?,
+    ): VerificationResult? {
+        val results = funnelJobsIntoChannel(scope)
+        val total = scope.jobs.size
+        return withTimeoutOrNull(timeout) {
+            var done = 0
+            while (done < total) {
+                val received = results.receive()
+                done++
+                val result = received.getOrNull()
+                if (result == null) {
+                    logger.warn { "$id: job errored: ${received.exceptionOrNull()?.message ?: ""}" }
+                    continue
+                }
+                progress.reportProgress("result $done/$total: ${result.verdict}")
+                onResult(result)?.let { return@withTimeoutOrNull it }
+            }
+            null
+        }
+    }
+
+    /**
+     * Runs the jobs in the Scope by routing their results into a channel -> simple handling of concurrent results
+     */
+    private fun CoroutineScope.funnelJobsIntoChannel(scope: PortfolioScope): Channel<Result<VerificationResult>> {
+        val results = Channel<Result<VerificationResult>>(Channel.UNLIMITED)
+        scope.jobs.forEach { deferred ->
             launch {
-                results.send(it.await())
-            }
-        }
+                val outcome = try {
+                    Result.success(deferred.await())
+                } catch (c: CancellationException) {
+                    throw c
+                } catch (e: Exception) {
+                    logger.warn { "$id: job threw ${e::class.simpleName}: ${e.message ?: ""}" }
+                    Result.failure(e)
+                }
 
-        withTimeoutOrNull(timeout) {
-            val collected = mutableListOf<VerificationResult>()
-            val total = scope.jobs.size
-            repeat(total) { i ->
-                val result = results.receive()
-                progress.reportProgress("result ${i + 1}/$total: ${result.verdict}")
-                collected += result
-            }
-            val decisive = collected.filter { it.isDecisive }
-            if (decisive.isEmpty()) {
-                return@withTimeoutOrNull collected.firstOrNull()
-            }
-            val allAgree = decisive.map { it.verdict }.distinct().size == 1
-            if (allAgree) {
-                decisive.first()
-            } else {
-                collected.firstOrNull { it.isDecisive }
+                results.send(outcome)
             }
         }
+        return results
+    }
+
+    private fun CoroutineScope.cancelRemainingJobs() {
+        coroutineContext.cancelChildren()
     }
 
 }

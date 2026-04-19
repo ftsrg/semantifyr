@@ -6,12 +6,14 @@
 
 package hu.bme.mit.semantifyr.verification
 
+import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.VerificationCase
 import hu.bme.mit.semantifyr.backend.VerificationResult
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
+import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verification.discovery.CaseFilter
 import hu.bme.mit.semantifyr.verification.internal.SemantifyrVerifierImpl
@@ -95,6 +97,7 @@ interface SemantifyrVerifier : AutoCloseable {
     override fun close()
 
     class Builder internal constructor() {
+        private var injector: Injector? = null
         private var context: SemantifyrModelContext? = null
         private var verificationPortfolio: VerificationPortfolio? = null
         private var artifacts: ArtifactConfig? = null
@@ -102,6 +105,16 @@ interface SemantifyrVerifier : AutoCloseable {
         private var timeout: Duration = 5.minutes
         private var maxConcurrency: Int = Runtime.getRuntime().availableProcessors().coerceAtLeast(1)
         private var optimization: OptimizationConfig = OptimizationConfig.DEFAULT
+
+        /**
+         * Share an existing [Injector] (typically the one that already loaded the model) with the verifier.
+         * When omitted, the builder creates a fresh OXSTS standalone injector. Reusing an injector avoids
+         * concurrent Guice injector-creation races under heavy Xtext / EMF activity (e.g. in the LSP).
+         */
+        fun injector(injector: Injector): Builder {
+            this.injector = injector
+            return this
+        }
 
         fun context(context: SemantifyrModelContext): Builder {
             this.context = context
@@ -153,8 +166,10 @@ interface SemantifyrVerifier : AutoCloseable {
             val resolvedArtifacts = requireNotNull(artifacts) {
                 "SemantifyrVerifier.Builder requires .artifacts(...)."
             }
+            val resolvedInjector = injector ?: OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
 
             return SemantifyrVerifierImpl(
+                injector = resolvedInjector,
                 context = resolvedContext,
                 verificationPortfolio = resolvedPortfolio,
                 artifacts = resolvedArtifacts,
