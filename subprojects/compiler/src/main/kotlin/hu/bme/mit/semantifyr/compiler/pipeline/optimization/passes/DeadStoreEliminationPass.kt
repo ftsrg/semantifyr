@@ -16,8 +16,8 @@ import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationCo
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.AnalysisManager
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationCategory
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Pass
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PassResult
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.Pass
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.PassResult
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ReachingDefinitionsAnalysis
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
@@ -46,6 +46,9 @@ class DeadStoreEliminationPass @Inject constructor(
         val rd = analyses.get(ReachingDefinitionsAnalysis::class.java, input)
 
         // "Live" writes: those that are the reaching definition for some read.
+        // The set may also contain VariableDeclarations (initializers); we keep
+        // them as sentinels here without narrowing since the dead-write filter
+        // below only looks at assignment/havoc operations anyway.
         val liveWrites = rd.defsOf.values.flatten().toSet()
 
         val deadWrites = input.inlinedOxsts.eAllOfType<Operation>()

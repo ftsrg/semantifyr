@@ -29,20 +29,34 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.tryEvaluateTypedOrNull
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import org.eclipse.emf.ecore.EObject
 import kotlin.collections.iterator
 
 /**
  * Result of reaching-definitions analysis: for each variable read expression,
- * the set of writing operations (assignments or havocs) that could have
- * produced its value at that program point.
+ * the set of definitions that could have produced its value at that program
+ * point.
  *
- * An empty set means the read is "uninitialized" (only possible for local
- * variables; global variables have initializers or havocs at the entry).
- * A set with one element means the value is uniquely determined by that
- * write, enabling copy propagation.
+ * A definition is one of:
+ *  - an [AssignmentOperation] whose target is the variable,
+ *  - a [HavocOperation] on the variable, or
+ *  - a [LocalVarDeclarationOperation] when the read is within the local's
+ *    lexical scope and no later write in the same iteration has overwritten
+ *    it yet. A local variable is re-initialized every time its declaration
+ *    runs, so the declaration is a fresh def at that program point.
+ *
+ * Class-level / inlinedOxsts-level [VariableDeclaration]s are NOT reaching
+ * defs: after the init transition runs the property only sees post-init
+ * state, and the declared initializer value is only observable if the
+ * init transition preserves it (captured by init having no write to the
+ * variable, which [hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.VariableLivenessPass]'s
+ * init-only substitution handles separately).
+ *
+ * A single-element set means the value is uniquely determined by that
+ * definition, enabling copy propagation.
  */
 data class ReachingDefinitionsInfo(
-    val defsOf: Map<Expression, Set<Operation>>,
+    val defsOf: Map<Expression, Set<EObject>>,
 )
 
 /**
@@ -71,18 +85,27 @@ class ReachingDefinitionsAnalysis @Inject constructor(
         val evaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(input.instanceTree.rootInstance)
         val inlinedOxsts = input.inlinedOxsts
 
-        // Initial definitions: the global initial state = every variable's
-        // initializer assignment (if any), plus the first transition's effects.
-        // We approximate by treating all writes to a variable at the IR root
-        // as the initial incoming set. This is conservative but safe.
-        val allWrites = (
-            inlinedOxsts.eAllOfType<AssignmentOperation>().map { it as Operation } +
-            inlinedOxsts.eAllOfType<HavocOperation>().map { it as Operation }
-        ).toSet()
-        val initialIn = allWrites.groupBy { variableOfWrite(it, evaluator) }
+        // Initial definitions: approximate the transition-entry state as
+        // "every write in the IR could have produced the current value".
+        // This is conservative but safe.
+        //
+        // Class-level variable declarations are NOT added here: after init
+        // runs, the declaration's initializer value is only observable to
+        // the property if init leaves the variable untouched, and that case
+        // is handled by VariableLivenessPass (init-only substitution) rather
+        // than here.
+        //
+        // Local variable declarations are also not added here: they are not
+        // visible at transition entry (they do not exist yet), and the
+        // walker seeds them at their LocalVarDeclarationOperation site.
+        val assignmentWrites: Sequence<EObject> =
+            inlinedOxsts.eAllOfType<AssignmentOperation>().map { it as EObject } +
+                inlinedOxsts.eAllOfType<HavocOperation>().map { it as EObject }
+        val initialIn: Map<VariableDeclaration, Set<EObject>> = assignmentWrites
+            .groupBy { variableOfWrite(it as Operation, evaluator) }
             .mapValues { it.value.toSet() }
 
-        val defsOf = mutableMapOf<Expression, Set<Operation>>()
+        val defsOf = mutableMapOf<Expression, Set<EObject>>()
 
         // Analyse each transition independently - assignments between transitions
         // are joined via the conservative initialIn.
@@ -111,10 +134,10 @@ class ReachingDefinitionsAnalysis @Inject constructor(
      */
     private fun walkOperation(
         operation: Operation,
-        incoming: Map<VariableDeclaration, Set<Operation>>,
+        incoming: Map<VariableDeclaration, Set<EObject>>,
         evaluator: MetaStaticExpressionEvaluator,
-        defsOf: MutableMap<Expression, Set<Operation>>,
-    ): Map<VariableDeclaration, Set<Operation>> = when (operation) {
+        defsOf: MutableMap<Expression, Set<EObject>>,
+    ): Map<VariableDeclaration, Set<EObject>> = when (operation) {
         is SequenceOperation -> {
             var state = incoming
             for (step in operation.steps) {
@@ -126,7 +149,7 @@ class ReachingDefinitionsAnalysis @Inject constructor(
             // All branches see `incoming`; merge outputs.
             operation.branches
                 .map { walkOperation(it, incoming, evaluator, defsOf) }
-                .fold(emptyMap<VariableDeclaration, Set<Operation>>()) { acc, branchOut -> mergeDefs(acc, branchOut) }
+                .fold(emptyMap<VariableDeclaration, Set<EObject>>()) { acc, branchOut -> mergeDefs(acc, branchOut) }
         }
         is IfOperation -> {
             recordReads(operation.guard, incoming, evaluator, defsOf)
@@ -153,20 +176,24 @@ class ReachingDefinitionsAnalysis @Inject constructor(
             val variable = evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, operation.reference)
                 ?: return incoming
             // Kill previous defs of this variable; add this assignment.
-            incoming + (variable to setOf(operation as Operation))
+            incoming + (variable to setOf<EObject>(operation))
         }
         is HavocOperation -> {
             val variable = evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, operation.reference)
                 ?: return incoming
-            incoming + (variable to setOf(operation as Operation))
+            incoming + (variable to setOf<EObject>(operation))
         }
         is AssumptionOperation -> {
             recordReads(operation.expression, incoming, evaluator, defsOf)
             incoming
         }
         is LocalVarDeclarationOperation -> {
+            // A local variable is re-initialized every time its declaration
+            // runs. Kill any incoming defs (from initialIn's conservative
+            // "every write reaches" approximation) and seed the declaration
+            // itself as the sole reaching def at the declaration point.
             recordReads(operation.expression, incoming, evaluator, defsOf)
-            incoming
+            incoming + (operation to setOf<EObject>(operation))
         }
         is TraceOperation -> incoming
         else -> incoming
@@ -175,9 +202,9 @@ class ReachingDefinitionsAnalysis @Inject constructor(
     /** For every read expression in [expression], record its reaching definitions. */
     private fun recordReads(
         expression: Expression,
-        incoming: Map<VariableDeclaration, Set<Operation>>,
+        incoming: Map<VariableDeclaration, Set<EObject>>,
         evaluator: MetaStaticExpressionEvaluator,
-        defsOf: MutableMap<Expression, Set<Operation>>,
+        defsOf: MutableMap<Expression, Set<EObject>>,
     ) {
         val candidates = sequenceOf(expression) + expression.eAllOfType<Expression>()
         for (candidate in candidates) {
@@ -188,12 +215,12 @@ class ReachingDefinitionsAnalysis @Inject constructor(
     }
 
     private fun mergeDefs(
-        a: Map<VariableDeclaration, Set<Operation>>,
-        b: Map<VariableDeclaration, Set<Operation>>,
-    ): Map<VariableDeclaration, Set<Operation>> {
+        a: Map<VariableDeclaration, Set<EObject>>,
+        b: Map<VariableDeclaration, Set<EObject>>,
+    ): Map<VariableDeclaration, Set<EObject>> {
         if (a.isEmpty()) return b
         if (b.isEmpty()) return a
-        val result = HashMap<VariableDeclaration, Set<Operation>>(a)
+        val result = HashMap<VariableDeclaration, Set<EObject>>(a)
         for ((variable, defs) in b) {
             result[variable] = (result[variable].orEmpty()) + defs
         }

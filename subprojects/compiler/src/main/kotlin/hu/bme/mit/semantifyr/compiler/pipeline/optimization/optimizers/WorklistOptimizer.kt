@@ -9,7 +9,10 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.logging.debug
+import hu.bme.mit.semantifyr.logging.loggerFactory
 import org.eclipse.emf.ecore.EObject
+import kotlin.time.TimeSource.Monotonic.markNow
 
 class Worklist<T> {
     private val queue = ArrayDeque<T>()
@@ -40,27 +43,46 @@ class WorklistOptimizer(
     private val artifactManager: CompilationArtifactManager,
 ) : Optimizer<EObject>() {
 
+    private val logger by loggerFactory()
+
     override fun optimize(input: EObject): Boolean {
         if (patterns.isEmpty()) {
             return false
         }
+
+        val totalMark = markNow()
 
         val worklist = Worklist<EObject>()
         worklist.add(input)
         input.eAllOfType<EObject>().forEach {
             worklist.add(it)
         }
+        val seedElapsed = totalMark.elapsedNow()
 
         var changed = false
+        var pops = 0
+        var applications = 0
         while (worklist.isNotEmpty()) {
             val current = worklist.pop()
+            pops++
+            // A prior pattern may have reparented this node's ancestor into a new container or
+            // dropped it entirely. Such nodes linger in the worklist but have null containment
+            // slots and would NPE the next pattern that touches them. Skip them.
+            if (current !== input && current.eResource() == null) continue
             for (pattern in patterns) {
                 if (pattern.tryApply(current, worklist)) {
                     changed = true
+                    applications++
                     artifactManager.commitStep(pass)
                     break
                 }
             }
+        }
+
+        val totalElapsed = totalMark.elapsedNow()
+        logger.debug {
+            "WorklistOptimizer[${pass.name}]: ${totalElapsed} total (seed ${seedElapsed}), " +
+                "${pops} pop(s), ${applications} application(s), ${patterns.size} pattern(s), changed=${changed}"
         }
         return changed
     }

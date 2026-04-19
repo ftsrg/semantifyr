@@ -60,14 +60,22 @@ class LivenessAnalysis @Inject constructor(
             .filter { evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, it) != null }
             .groupBy { evaluator.evaluateTyped(VariableDeclaration::class.java, it) }
 
-        val assignments = (
-            inlinedOxsts.eAllOfType<AssignmentOperation>()
-                .groupBy { evaluator.evaluateTyped(VariableDeclaration::class.java, it.reference) } +
-            inlinedOxsts.eAllOfType<HavocOperation>()
-                .groupBy { evaluator.evaluateTyped(VariableDeclaration::class.java, it.reference) }
-        )
+        // Concat before groupBy - using Map.plus would silently drop one side's
+        // entries when a variable has both assignments and havocs.
+        val writes: Sequence<Operation> =
+            inlinedOxsts.eAllOfType<AssignmentOperation>().map { it as Operation } +
+                inlinedOxsts.eAllOfType<HavocOperation>().map { it as Operation }
+        val assignments = writes.groupBy {
+            evaluator.evaluateTyped(VariableDeclaration::class.java, referenceOf(it))
+        }
 
         return LivenessInfo(reads, assignments)
+    }
+
+    private fun referenceOf(operation: Operation): Expression = when (operation) {
+        is AssignmentOperation -> operation.reference
+        is HavocOperation -> operation.reference
+        else -> error("Unexpected write operation: ${operation::class.simpleName}")
     }
 
 }

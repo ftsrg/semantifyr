@@ -7,22 +7,37 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization
 
 import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
+import hu.bme.mit.semantifyr.logging.debug
+import hu.bme.mit.semantifyr.logging.loggerFactory
+import kotlin.collections.getOrPut
+import kotlin.time.TimeSource.Monotonic.markNow
 
 interface Analysis<T : Any> {
+    val key: Class<Analysis<T>>
+        get() = javaClass
+
     fun compute(input: InstantiatedCompilationContext): T
 }
 
 class AnalysisManager(
-    private val analyses: Map<Class<out Analysis<*>>, Analysis<*>>,
+    val analyses: List<Analysis<*>>
 ) {
+    private val logger by loggerFactory()
+
+    private val analysisMap: Map<Class<out Analysis<*>>, Analysis<*>> = analyses.associateBy {
+        it.key
+    }
 
     private val cache = mutableMapOf<Class<*>, Any>()
 
     @Suppress("UNCHECKED_CAST")
     fun <T : Any, A : Analysis<T>> get(type: Class<A>, input: InstantiatedCompilationContext): T {
         return cache.getOrPut(type) {
-            val analysis = analyses[type] ?: error("Analysis ${type.simpleName} is not registered in this AnalysisManager")
-            (analysis as Analysis<T>).compute(input)
+            val analysis = analysisMap[type] ?: error("Analysis ${type.simpleName} is not registered in this AnalysisManager")
+            val mark = markNow()
+            val result = (analysis as Analysis<T>).compute(input)
+            logger.debug { "Analysis ${type.simpleName} computed in ${mark.elapsedNow()}" }
+            result
         } as T
     }
 

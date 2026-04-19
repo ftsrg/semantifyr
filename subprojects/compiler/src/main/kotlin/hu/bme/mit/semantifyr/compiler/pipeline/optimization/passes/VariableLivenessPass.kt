@@ -22,8 +22,8 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.tryEvaluateTypedOrNull
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.AnalysisManager
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationCategory
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Pass
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PassResult
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.Pass
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.PassResult
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
@@ -66,12 +66,14 @@ class VariableLivenessPass @Inject constructor(
                 .groupBy { evaluator.evaluateTyped(VariableDeclaration::class.java, it) }
                 .mapValuesTo(mutableMapOf()) { it.value.toMutableList() }
 
-            variableAssignments = (
-                inlinedOxsts.eAllOfType<AssignmentOperation>()
-                    .groupBy { evaluator.evaluateTyped(VariableDeclaration::class.java, it.reference) } +
-                inlinedOxsts.eAllOfType<HavocOperation>()
-                    .groupBy { evaluator.evaluateTyped(VariableDeclaration::class.java, it.reference) }
-            ).mapValuesTo(mutableMapOf()) { it.value.toMutableList() }
+            // Concat before groupBy - using Map.plus would silently drop one side's
+            // entries when a variable has both assignments and havocs.
+            val writes: Sequence<Operation> =
+                inlinedOxsts.eAllOfType<AssignmentOperation>().map { it as Operation } +
+                    inlinedOxsts.eAllOfType<HavocOperation>().map { it as Operation }
+            variableAssignments = writes
+                .groupBy { evaluator.evaluateTyped(VariableDeclaration::class.java, referenceOfWrite(it)) }
+                .mapValuesTo(mutableMapOf()) { it.value.toMutableList() }
 
             val allVariables = inlinedOxsts.eAllOfType<VariableDeclaration>().toSet()
 
@@ -146,6 +148,12 @@ class VariableLivenessPass @Inject constructor(
                     worklist.add(WorkItem.Unread(variable))
                 }
             }
+        }
+
+        private fun referenceOfWrite(operation: Operation): Expression = when (operation) {
+            is AssignmentOperation -> operation.reference
+            is HavocOperation -> operation.reference
+            else -> error("Unexpected write operation: ${operation::class.simpleName}")
         }
 
         private fun readsIn(expression: Expression): Sequence<Expression> {

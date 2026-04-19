@@ -8,9 +8,8 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Optimizer
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PassOptimizer
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.AnalysisManager
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Optimizer
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ConeOfInfluenceAnalysis
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ConstantValueAnalysis
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.LivenessAnalysis
@@ -25,7 +24,18 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.OperationFlat
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.RedundantOperationRemovalPass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.VariableLivenessPass
 
-class InstantiatedPhaseOptimizer @Inject constructor(
+/**
+ * Optimizer applied after flattening, when each underlying variable has a
+ * single canonical [hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration].
+ *
+ * Runs the full pass set, including every analysis-driven and
+ * variable-manipulating pass. Running these here (instead of also in
+ * [InlinedPhaseOptimizer]) is what keeps the analyses' grouping by variable
+ * identity sound: after flattening, two expressions that refer to the same
+ * underlying variable always resolve to the same declaration, so writes and
+ * reads are grouped correctly.
+ */
+class FlattenedPhaseOptimizer @Inject constructor(
     livenessAnalysis: LivenessAnalysis,
     coneOfInfluenceAnalysis: ConeOfInfluenceAnalysis,
     constantValueAnalysis: ConstantValueAnalysis,
@@ -42,17 +52,17 @@ class InstantiatedPhaseOptimizer @Inject constructor(
 ) : Optimizer<InstantiatedCompilationContext>() {
 
     private val analysisManager = AnalysisManager(
-        mapOf(
-            LivenessAnalysis::class.java to livenessAnalysis,
-            ConeOfInfluenceAnalysis::class.java to coneOfInfluenceAnalysis,
-            ConstantValueAnalysis::class.java to constantValueAnalysis,
-            ReachingDefinitionsAnalysis::class.java to reachingDefinitionsAnalysis,
+        listOf(
+            livenessAnalysis,
+            coneOfInfluenceAnalysis,
+            constantValueAnalysis,
+            reachingDefinitionsAnalysis,
         )
     )
 
     private val pipeline = PassOptimizer(
         passes = listOf(
-            // Cheap simplifications first
+            // Cheap simplifications first.
             expressionSimplification,
             operationFlattening,
             redundantOperationRemoval,
@@ -70,7 +80,7 @@ class InstantiatedPhaseOptimizer @Inject constructor(
     )
 
     override fun optimize(input: InstantiatedCompilationContext): Boolean {
-        return pipeline.run(input)
+        return pipeline.optimize(input)
     }
 
 }

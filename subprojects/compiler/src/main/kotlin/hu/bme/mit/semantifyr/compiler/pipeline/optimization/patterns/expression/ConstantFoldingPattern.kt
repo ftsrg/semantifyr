@@ -29,7 +29,11 @@ class ConstantFoldingPattern(
         if (element is UnaryOperator && element.body is LiteralInteger) return false
         if (element in folded) return false
 
-        val evaluation = try { evaluator.evaluate(element) } catch (_: Exception) { return false }
+        val evaluation = try {
+            evaluator.evaluate(element)
+        } catch (_: Exception) {
+            return false
+        }
         val constant = transformer.transformEvaluation(evaluation)
         val parent = element.eContainer() ?: return false
 

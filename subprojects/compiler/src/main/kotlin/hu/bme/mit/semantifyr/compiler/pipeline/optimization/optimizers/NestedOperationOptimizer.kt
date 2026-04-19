@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.ConstantExpressionEvaluationTransformer
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Optimizer
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.WorklistOptimizer
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.ConstantGuardIfPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.FlattenNestedChoicePattern
@@ -39,7 +40,7 @@ class NestedOperationOptimizer @Inject constructor(
     evaluator: ConstantExpressionEvaluatorProvider,
     transformer: ConstantExpressionEvaluationTransformer,
     artifactManager: CompilationArtifactManager,
-) {
+) : Optimizer<Operation>() {
 
     private val worklistOptimizer = WorklistOptimizer(
         patterns = listOf(
@@ -73,8 +74,8 @@ class NestedOperationOptimizer @Inject constructor(
         artifactManager = artifactManager,
     )
 
-    fun optimize(operation: Operation): Boolean {
-        return worklistOptimizer.optimize(operation)
+    override fun optimize(input: Operation): Boolean {
+        return worklistOptimizer.optimize(input)
     }
 
 }

@@ -21,8 +21,8 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.tryEvaluateTypedOrNull
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.AnalysisManager
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationCategory
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Pass
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PassResult
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.Pass
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.PassResult
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ReachingDefinitionsAnalysis
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import org.eclipse.xtext.EcoreUtil2

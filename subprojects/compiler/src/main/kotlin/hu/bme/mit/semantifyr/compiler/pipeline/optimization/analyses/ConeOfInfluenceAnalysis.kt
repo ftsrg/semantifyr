@@ -14,6 +14,8 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluator
@@ -69,12 +71,13 @@ class ConeOfInfluenceAnalysis @Inject constructor(
         val inlinedOxsts = input.inlinedOxsts
 
         // Pre-index: for each variable, the operations that assign to it.
-        val assignmentsByVariable: Map<VariableDeclaration, List<Operation>> = (
-            inlinedOxsts.eAllOfType<AssignmentOperation>()
-                .groupBy { evaluator.evaluateTyped(VariableDeclaration::class.java, it.reference) } +
-            inlinedOxsts.eAllOfType<HavocOperation>()
-                .groupBy { evaluator.evaluateTyped(VariableDeclaration::class.java, it.reference) }
-        )
+        // We must concat the write lists before groupBy - using Map.plus would
+        // silently drop one list when a variable has both assignments and havocs.
+        val allWrites: Sequence<Operation> =
+            inlinedOxsts.eAllOfType<AssignmentOperation>().map { it as Operation } +
+                inlinedOxsts.eAllOfType<HavocOperation>().map { it as Operation }
+        val assignmentsByVariable: Map<VariableDeclaration, List<Operation>> = allWrites
+            .groupBy { evaluator.evaluateTyped(VariableDeclaration::class.java, referenceOfWrite(it)) }
 
         val relevantVariables = mutableSetOf<VariableDeclaration>()
         val relevantAssignments = mutableSetOf<Operation>()
@@ -119,6 +122,12 @@ class ConeOfInfluenceAnalysis @Inject constructor(
         )
     }
 
+    private fun referenceOfWrite(operation: Operation): Expression = when (operation) {
+        is AssignmentOperation -> operation.reference
+        is HavocOperation -> operation.reference
+        else -> error("Unexpected write operation: ${operation::class.simpleName}")
+    }
+
     /** Variables appearing as reads inside [expression] (including [expression] itself if it is a read). */
     private fun variablesReadIn(
         expression: Expression,
@@ -134,12 +143,30 @@ class ConeOfInfluenceAnalysis @Inject constructor(
         return result
     }
 
-    /** Variables read in the guard expressions of `if`/`assume` operations enclosing [operation]. */
+    /**
+     * Variables read in the guards that decide whether [operation] commits.
+     *
+     * Under OXSTS's atomic-transition semantics, a transition body commits
+     * as a unit: if **any** `assume` in the body fails, every write in the
+     * body is rolled back. So every `assume` in the enclosing transition is
+     * a control dependency of every write in that transition - including
+     * assumes that textually follow the write, at any nesting depth.
+     *
+     * Concretely we collect:
+     *  - [IfOperation.guard] on every enclosing `if` (the write only runs on
+     *    one arm; the guard decides which).
+     *  - [AssumptionOperation.expression] on every enclosing `assume`.
+     *  - The expression of every [AssumptionOperation] anywhere inside the
+     *    containing transition body (sibling assumes at any position, at any
+     *    nesting depth). This captures the atomic-commit control dep.
+     */
     private fun guardVariablesFor(
         operation: Operation,
         evaluator: MetaStaticExpressionEvaluator,
     ): Set<VariableDeclaration> {
         val result = mutableSetOf<VariableDeclaration>()
+
+        // Ancestor if/assume guards.
         var current: EObject? = operation.eContainer()
         while (current != null) {
             when (current) {
@@ -148,7 +175,32 @@ class ConeOfInfluenceAnalysis @Inject constructor(
             }
             current = current.eContainer()
         }
+
+        // Atomic commit: every assume anywhere in the enclosing transition
+        // body is a control dep, even if it textually follows the write.
+        val transitionBody = transitionBodyContaining(operation) ?: return result
+        for (assume in transitionBody.eAllOfType<AssumptionOperation>()) {
+            if (assume === operation) continue
+            result += variablesReadIn(assume.expression, evaluator)
+        }
         return result
+    }
+
+    /**
+     * The top-level body of the transition containing [operation], or `null`
+     * if [operation] is not within a transition. The returned object is the
+     * child of the [TransitionDeclaration] that contains [operation] - every
+     * op inside it commits-or-rolls-back as one atomic unit.
+     */
+    private fun transitionBodyContaining(operation: Operation): EObject? {
+        var child: EObject = operation
+        var current: EObject? = operation.eContainer()
+        while (current != null) {
+            if (current is TransitionDeclaration) return child
+            child = current
+            current = current.eContainer()
+        }
+        return null
     }
 
 }
