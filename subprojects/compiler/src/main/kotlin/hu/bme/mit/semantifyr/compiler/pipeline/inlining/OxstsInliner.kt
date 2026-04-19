@@ -7,34 +7,45 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.compiler.pipeline.artifact.TransitionCallTraceBuilder
+import hu.bme.mit.semantifyr.compiler.pipeline.context.InlinedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.InlinedPhaseOptimizer
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.logging.debug
+import hu.bme.mit.semantifyr.logging.info
+import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TemporalOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
-import hu.bme.mit.semantifyr.compiler.pipeline.artifact.TransitionCallTraceBuilder
-import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
-import hu.bme.mit.semantifyr.compiler.pipeline.context.InlinedCompilationContext
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.InstantiatedPhaseOptimizer
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 
 class OxstsInliner @Inject constructor(
-    private val instantiatedPhaseOptimizer: InstantiatedPhaseOptimizer,
+    private val inlinedPhaseOptimizer: InlinedPhaseOptimizer,
     private val operationCallInlinerProvider: OperationCallInliner.Factory,
     private val expressionCallInlinerProvider: ExpressionCallInliner.Factory,
     private val transitionCallTraceBuilder: TransitionCallTraceBuilder,
 ) {
 
+    private val logger by loggerFactory()
+
     fun inline(instantiatedContext: InstantiatedCompilationContext): InlinedCompilationContext {
         val inlinedOxsts = instantiatedContext.inlinedOxsts
         val instanceTree = instantiatedContext.instanceTree
 
+        logger.debug { "Inlining init transition" }
         inlineOperationCalls(instanceTree.rootInstance, inlinedOxsts.initTransition)
+
+        logger.debug { "Inlining main transition" }
         inlineOperationCalls(instanceTree.rootInstance, inlinedOxsts.mainTransition)
+
+        logger.debug { "Inlining property expression" }
         inlineExpressionCalls(instanceTree.rootInstance, inlinedOxsts.property)
 
-        instantiatedPhaseOptimizer.optimize(instantiatedContext)
+        logger.info { "Running post-inlining optimizers" }
+        inlinedPhaseOptimizer.optimize(instantiatedContext)
 
         ensureTemporalExpressions(inlinedOxsts)
 

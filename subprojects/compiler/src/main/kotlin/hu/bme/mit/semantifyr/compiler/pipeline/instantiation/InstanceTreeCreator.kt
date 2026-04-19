@@ -7,6 +7,10 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.instantiation
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.RedefinitionAwareReferenceResolver
+import hu.bme.mit.semantifyr.logging.debug
+import hu.bme.mit.semantifyr.logging.info
+import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.OppositeHandler
@@ -15,7 +19,6 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvalu
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.RedefinitionAwareReferenceResolver
 import java.util.*
 
 class InstanceTreeCreator @Inject constructor(
@@ -26,17 +29,25 @@ class InstanceTreeCreator @Inject constructor(
     private val expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider,
 ) {
 
+    private val logger by loggerFactory()
+
     fun create(domainDeclaration: DomainDeclaration): InstanceTree {
+        logger.info { "Instantiating '${domainDeclaration.name}'" }
         val instanceTree = MutableInstanceTree(domainDeclaration)
 
         val instanceQueue = LinkedList<Instance>()
         instanceQueue += instanceTree.rootInstance
 
+        var visited = 0
         while (instanceQueue.any()) {
             val instance = instanceQueue.removeFirst()
+            logger.debug { "Expanding instance '${instance.name}' (queue=${instanceQueue.size})" }
             instantiateChildren(instance, instanceTree)
             instanceQueue += instance.children
+            visited++
         }
+
+        logger.info { "Instantiation produced $visited instance(s)" }
 
         return instanceTree.asInstanceTree()
     }

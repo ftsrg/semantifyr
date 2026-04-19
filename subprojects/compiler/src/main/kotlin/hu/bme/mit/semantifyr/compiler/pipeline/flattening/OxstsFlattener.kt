@@ -34,7 +34,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceReferenceProvi
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.ExpressionRewriter
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.InstantiatedPhaseOptimizer
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.FlattenedPhaseOptimizer
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
@@ -43,6 +43,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceCollector
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceTree
+import hu.bme.mit.semantifyr.logging.debug
+import hu.bme.mit.semantifyr.logging.info
+import hu.bme.mit.semantifyr.logging.loggerFactory
 import org.eclipse.xtext.EcoreUtil2
 
 private class FlatExpressionEvaluationTransformer : ConstantExpressionEvaluationTransformer() {
@@ -73,11 +76,13 @@ class OxstsFlattener @Inject constructor(
     private val multiplicityRangeEvaluator: MultiplicityRangeEvaluator,
     private val expressionRewriter: ExpressionRewriter,
     private val instanceReferenceProvider: InstanceReferenceProvider,
-    private val instantiatedPhaseOptimizer: InstantiatedPhaseOptimizer,
+    private val flattenedPhaseOptimizer: FlattenedPhaseOptimizer,
     private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
     private val domainMappingSerializer: DomainMappingSerializer,
     private val instanceCollector: InstanceCollector,
 ) {
+
+    private val logger by loggerFactory()
 
     fun flatten(inlinedCompilationContext: InlinedCompilationContext): FlattenedCompilationContext {
         val inlinedOxsts = inlinedCompilationContext.inlinedOxsts
@@ -88,15 +93,20 @@ class OxstsFlattener @Inject constructor(
         val variableMappings = mutableMapOf<Instance, Map<VariableDeclaration, VariableDeclaration>>()
         val deflatedEvaluationTransformer = FlatExpressionEvaluationTransformer()
 
+        logger.debug { "Pulling down variables" }
         pullDownVariables(inlinedOxsts, instanceTree, variableInstanceDomain, variableHolders, variableMappings)
+        logger.debug { "Rewriting variable references (${inlinedOxsts.variables.size} variable(s))" }
         rewriteVariableReferences(inlinedOxsts, instanceTree, variableMappings)
+        logger.debug { "Rewriting feature-typed variables" }
         rewriteFeatureTypedVariables(inlinedOxsts, variableInstanceDomain)
 
         compilationArtifactManager.commitStep(CompilationPass.Deflation)
 
+        logger.debug { "Rewriting static expressions" }
         rewriteStaticExpressions(inlinedOxsts, instanceTree, variableInstanceDomain, deflatedEvaluationTransformer)
 
-        instantiatedPhaseOptimizer.optimize(inlinedCompilationContext)
+        logger.info { "Running post-flattening optimizers" }
+        flattenedPhaseOptimizer.optimize(inlinedCompilationContext)
 
         compilationArtifactManager.commitStep(CompilationPass.Deflation)
 
@@ -270,10 +280,12 @@ class OxstsFlattener @Inject constructor(
     }
 
     private fun rewriteNothingExpressions(inlinedOxsts: InlinedOxsts) {
+        var iteration = 0
         while (true) {
             val nothingExpression = inlinedOxsts.eAllOfType<LiteralNothing>().firstOrNull()
 
             if (nothingExpression == null) {
+                logger.debug { "rewriteNothingExpressions finished after $iteration iteration(s)" }
                 return
             }
 
@@ -283,6 +295,7 @@ class OxstsFlattener @Inject constructor(
             }
 
             EcoreUtil2.replace(nothingExpression, minusOne)
+            iteration++
         }
     }
 
@@ -293,12 +306,14 @@ class OxstsFlattener @Inject constructor(
     ) {
         val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instanceTree.rootInstance)
 
+        var iteration = 0
         while (true) {
             val featureExpression = inlinedOxsts.eAllOfType<ReferenceExpression>().filter {
                 metaStaticExpressionEvaluatorProvider.evaluate(instanceTree.rootInstance, it) is FeatureDeclaration
             }.firstOrNull()
 
             if (featureExpression == null) {
+                logger.debug { "rewriteFeatureExpressions finished after $iteration iteration(s)" }
                 return
             }
 
@@ -306,6 +321,7 @@ class OxstsFlattener @Inject constructor(
             val expression = deflatedEvaluationTransformer.transformEvaluation(evaluation)
 
             EcoreUtil2.replace(featureExpression, expression)
+            iteration++
         }
     }
 

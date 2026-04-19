@@ -43,7 +43,12 @@ import hu.bme.mit.semantifyr.compiler.pipeline.artifact.TransitionCallTraceBuild
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.logging.info
+import hu.bme.mit.semantifyr.logging.loggerFactory
 import org.eclipse.xtext.EcoreUtil2
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.ZERO
+import kotlin.time.TimeSource.Monotonic.markNow
 
 class OperationCallInliner @AssistedInject @Inject constructor(
     @param:Assisted val instance: Instance,
@@ -59,15 +64,34 @@ class OperationCallInliner @AssistedInject @Inject constructor(
     private val transitionCallTracer: TransitionCallTraceBuilder,
 ) : OperationVisitor<Unit>() {
 
+    private val logger by loggerFactory()
+
     private val expressionCallInliner = expressionCallInlinerFactory.create(instance)
 
     private var localVariableIndex: Int = 0
 
     private val processorQueue = ArrayDeque<Operation>()
 
+    // Aggregate stats for the nested-operation optimizer. The inliner calls it
+    // once per inlined call expansion; per-call timing lives at debug on the
+    // WorklistOptimizer. This is the info-level summary for the whole `process`
+    // invocation - usually the dominant cost in compilation.
+    private var nestedOptimizeCalls: Int = 0
+    private var nestedOptimizeTotal: Duration = ZERO
+
     fun process(operation: Operation) {
+        nestedOptimizeCalls = 0
+        nestedOptimizeTotal = ZERO
+
+        val mark = markNow()
         visit(operation)
         processAll()
+        val elapsed = mark.elapsedNow()
+
+        logger.info {
+            "OperationCallInliner.process: ${elapsed} total, " +
+                "${nestedOptimizeCalls} nested-optimize call(s), ${nestedOptimizeTotal} inside"
+        }
     }
 
     private fun processAll() {
@@ -158,12 +182,11 @@ class OperationCallInliner @AssistedInject @Inject constructor(
         }
     }
 
-    private fun simplifyNestedOperation(operation: Operation) {
-        nestedOperationOptimizer.optimize(operation)
-    }
-
     private fun simplifyInlinedOperation(inlinedOperation: Operation): List<Operation> {
-        simplifyNestedOperation(inlinedOperation)
+        val mark = markNow()
+        nestedOperationOptimizer.optimize(inlinedOperation)
+        nestedOptimizeTotal += mark.elapsedNow()
+        nestedOptimizeCalls++
 
         val parent = inlinedOperation.eContainer()
 
