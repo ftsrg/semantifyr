@@ -81,6 +81,7 @@ val thetaOutput by configurations.creating {
 
 dependencies {
     api(project(":cex.lang"))
+    api(project(":backend"))
     api(libs.guice)
 
     implementation(project(":logging"))

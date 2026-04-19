@@ -17,8 +17,11 @@ repositories {
 dependencies {
     api(project(":compiler"))
 
+    implementation(project(":logging"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.docker.java.core)
+    implementation(libs.docker.java.transport)
 
     testFixturesApi(project(":compiler"))
     testFixturesApi(testFixtures(project(":compiler")))

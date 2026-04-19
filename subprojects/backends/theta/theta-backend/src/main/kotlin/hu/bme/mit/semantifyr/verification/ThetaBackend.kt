@@ -30,6 +30,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.backend.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.VerificationBackend
+import hu.bme.mit.semantifyr.backend.VerificationContextBase
 import hu.bme.mit.semantifyr.backend.VerificationMetrics
 import hu.bme.mit.semantifyr.backend.VerificationRequest
 import hu.bme.mit.semantifyr.backend.VerificationResult
@@ -45,15 +46,12 @@ import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 import org.eclipse.emf.common.util.URI
 import java.io.File
 import java.nio.file.Path
-import kotlin.coroutines.cancellation.CancellationException
-import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.TimeSource
-import kotlin.time.TimeSource.Monotonic.markNow
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
-object ThetaBackend : VerificationBackend<hu.bme.mit.semantifyr.backends.theta.hu.bme.mit.semantifyr.verification.ThetaConfig> {
+object ThetaBackend : VerificationBackend<hu.bme.mit.semantifyr.backends.theta.hu.bme.mit.semantifyr.verification.ThetaConfig>() {
 
     override val id: String = "theta"
 
@@ -121,15 +119,16 @@ private class ThetaBackendModule(private val artifactRootPath: Path) : AbstractM
 internal class ThetaVerificationContext @AssistedInject constructor(
     @param:Assisted private val config: ThetaConfig,
     @param:Assisted private val executorSpec: ThetaExecutorSpec,
-    @param:Assisted private val request: VerificationRequest,
+    @param:Assisted request: VerificationRequest,
     private val oxstsTransformer: OxstsTransformer,
     private val cexReader: CexReader,
     private val cexAssumptionWitnessTransformer: CexAssumptionWitnessTransformer,
     private val xstsAssumptionWitnessTransformer: XstsAssumptionWitnessTransformer,
     private val inlinedOxstsAssumptionWitnessTransformer: InlinedOxstsAssumptionWitnessTransformer,
-) {
+) : VerificationContextBase(backendId = "theta:${config.id}", request = request) {
+
     private val logger by loggerFactory()
-    private val configId = "theta:${config.id}"
+    private val configId = backendId
     private val artifactDir: File get() = request.artifactOutputPath.toFile()
     private val xstsFile: File get() = artifactDir.resolve("inlined.xsts")
     private val xstsUri: URI get() = URI.createFileURI(xstsFile.absolutePath)
@@ -138,35 +137,9 @@ internal class ThetaVerificationContext @AssistedInject constructor(
         fun create(config: ThetaConfig, executorSpec: ThetaExecutorSpec, request: VerificationRequest): ThetaVerificationContext
     }
 
-    suspend fun execute(): VerificationResult {
-        val metadata = VerificationRunMetadata(
-            backendId = configId,
-            startedAt = Clock.System.now(),
-            caseQualifiedName = request.case.qualifiedName,
-        )
-        val totalMark = markNow()
-
-        logger.info { "[$configId] starting verification of '${request.case.qualifiedName}'" }
-
-        return try {
-            runVerification(totalMark, metadata)
-        } catch (c: CancellationException) {
-            logger.debug { "[$configId] cancelled (peer won the portfolio race or outer timeout)" }
-            throw c
-        } catch (e: Exception) {
-            logger.warn { "[$configId] verification of '${request.case.qualifiedName}' threw ${e::class.simpleName}: ${e.message ?: ""}" }
-            VerificationResult(
-                verdict = VerificationVerdict.Errored,
-                metadata = metadata,
-                metrics = VerificationMetrics(totalDuration = totalMark.elapsedNow()),
-                message = e.message ?: e::class.simpleName,
-            )
-        }
-    }
-
-    private suspend fun runVerification(
+    override suspend fun runVerification(
+        metadata: VerificationRunMetadata,
         totalMark: TimeSource.Monotonic.ValueTimeMark,
-        metadata: VerificationRunMetadata
     ): VerificationResult {
         val (xsts, transformDuration) = measureTimedValue { transformToXsts() }
         logger.info { "[$configId] OXSTS -> XSTS transform took $transformDuration" }

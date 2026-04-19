@@ -89,10 +89,10 @@ enum class VerificationVerdict(
     Inconclusive(false),
 }
 
-interface VerificationBackend<T : Any> {
-    val id: String
+abstract class VerificationBackend<T : Any> {
+    abstract val id: String
 
-    suspend fun verify(config: T, request: VerificationRequest, environment: ExecutionEnvironment): VerificationResult
+    abstract suspend fun verify(config: T, request: VerificationRequest, environment: ExecutionEnvironment): VerificationResult
 
-    fun probeAvailability(config: T, environment: ExecutionEnvironment = ExecutionEnvironment.Empty): AvailabilityReport
+    abstract fun probeAvailability(config: T, environment: ExecutionEnvironment = ExecutionEnvironment.Empty): AvailabilityReport
 }

@@ -8,9 +8,7 @@ package hu.bme.mit.semantifyr.backends.theta
 
 import hu.bme.mit.semantifyr.backends.theta.execution.DockerBasedThetaXstsExecutor
 import hu.bme.mit.semantifyr.backends.theta.execution.ShellBasedThetaXstsExecutor
-import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
-import org.slf4j.Logger
 import java.io.File
 
 sealed interface ThetaExecutorSpec {
@@ -39,35 +37,11 @@ class ThetaExecutionSpecification(
     val errorFile: File? = null,
 )
 
-abstract class ThetaXstsExecutor {
+interface ThetaXstsExecutor {
 
-    protected abstract val logger: Logger
+    fun isAvailable(): Boolean
 
-    abstract fun isAvailable(): Boolean
-
-    abstract suspend fun execute(thetaExecutionSpecification: ThetaExecutionSpecification): ThetaExecutionResult
-
-    protected fun prepareOutputFiles(spec: ThetaExecutionSpecification) {
-        spec.logFile?.let {
-            it.ensureExists()
-            it.bufferedWriter().use { writer ->
-                writer.appendLine("Running theta with command:")
-                writer.appendLine(spec.command.joinToString(" "))
-                writer.appendLine()
-            }
-            logger.info { "Writing theta stdout to ${it.absolutePath}" }
-        }
-        spec.errorFile?.let {
-            it.ensureExists()
-            logger.info { "Writing theta stderr to ${it.absolutePath}" }
-        }
-    }
-
-    protected fun File.ensureExists(): File {
-        parentFile?.mkdirs()
-        createNewFile()
-        return this
-    }
+    suspend fun execute(thetaExecutionSpecification: ThetaExecutionSpecification): ThetaExecutionResult
 
     companion object {
         val logger by loggerFactory()
@@ -75,8 +49,12 @@ abstract class ThetaXstsExecutor {
         fun of(spec: ThetaExecutorSpec = ThetaExecutorSpec.Auto): ThetaXstsExecutor {
             return when (spec) {
                 ThetaExecutorSpec.Auto -> autoDetect()
-                ThetaExecutorSpec.Shell -> ShellBasedThetaXstsExecutor().requireAvailable("Shell-based Theta executor: theta-xsts-cli is not on PATH.")
-                is ThetaExecutorSpec.Docker -> DockerBasedThetaXstsExecutor(spec.image).requireAvailable("Docker-based Theta executor (image ${spec.image}): the Docker CLI is not on PATH.")
+                ThetaExecutorSpec.Shell -> ShellBasedThetaXstsExecutor().also {
+                    check(it.isAvailable()) { "Shell-based Theta executor: theta-xsts-cli is not on PATH." }
+                }
+                is ThetaExecutorSpec.Docker -> DockerBasedThetaXstsExecutor(spec.image).also {
+                    check(it.isAvailable()) { "Docker-based Theta executor (image ${spec.image}): the Docker CLI is not on PATH." }
+                }
             }
         }
 
@@ -95,11 +73,6 @@ abstract class ThetaXstsExecutor {
                 return docker
             }
             error("Could not find any working Theta XSTS executor (tried shell and docker).")
-        }
-
-        private fun <T : ThetaXstsExecutor> T.requireAvailable(message: String): T {
-            check(isAvailable()) { message }
-            return this
         }
     }
 }
