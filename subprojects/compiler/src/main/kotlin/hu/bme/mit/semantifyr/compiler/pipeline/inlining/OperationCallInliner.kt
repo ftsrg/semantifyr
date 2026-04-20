@@ -10,11 +10,13 @@ import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OperationVisitor
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
@@ -31,6 +33,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.RedefinitionAwareReferenceResolver
@@ -43,6 +46,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.artifact.TransitionCallTraceBuild
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import org.eclipse.xtext.EcoreUtil2
@@ -308,16 +312,13 @@ class OperationCallInliner @AssistedInject @Inject constructor(
     }
 
     private fun createInlinedOperation(operation: InlineSeqFor): Operation {
-        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
-
-        val featureInstances = evaluator.evaluateInstances(operation.rangeExpression)
+        val values = enumerateLoopRange(operation.rangeExpression)
 
         val inlinedFor = OxstsFactory.createSequenceOperation()
 
-        for (featureInstance in featureInstances) {
-            val instanceReference = instanceReferenceProvider.getReference(featureInstance)
+        for (value in values) {
             val inlinedBody = operation.body.copy()
-            expressionRewriter.rewriteReferencesTo(operation.loopVariable, inlinedBody, instanceReference)
+            expressionRewriter.rewriteReferencesTo(operation.loopVariable, inlinedBody, value)
             inlinedFor.steps += inlinedBody
         }
 
@@ -337,16 +338,13 @@ class OperationCallInliner @AssistedInject @Inject constructor(
     }
 
     private fun createInlinedOperation(operation: InlineChoiceFor): Operation {
-        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
-
-        val featureInstances = evaluator.evaluateInstances(operation.rangeExpression)
+        val values = enumerateLoopRange(operation.rangeExpression)
 
         val inlinedChoice = OxstsFactory.createChoiceOperation()
 
-        for (featureInstance in featureInstances) {
-            val instanceReference = instanceReferenceProvider.getReference(featureInstance)
+        for (value in values) {
             val inlinedBody = operation.body.copy()
-            expressionRewriter.rewriteReferencesTo(operation.loopVariable, inlinedBody, instanceReference)
+            expressionRewriter.rewriteReferencesTo(operation.loopVariable, inlinedBody, value)
             inlinedChoice.branches += inlinedBody
         }
 
@@ -363,6 +361,24 @@ class OperationCallInliner @AssistedInject @Inject constructor(
         }
 
         return inlinedChoice
+    }
+
+    private fun enumerateLoopRange(rangeExpression: Expression): List<Expression> {
+        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
+        val evaluation = evaluator.evaluate(rangeExpression)
+        return when (evaluation) {
+            is InstanceEvaluation -> evaluation.instances.map { instanceReferenceProvider.getReference(it) }
+            is RangeEvaluation -> {
+                if (evaluation.lowerBound == RangeEvaluation.INFINITY || evaluation.upperBound == RangeEvaluation.INFINITY) {
+                    sourceError(rangeExpression, "inline for requires a bounded range; the range is unbounded")
+                }
+                (evaluation.lowerBound..evaluation.upperBound).map { OxstsFactory.createLiteralInteger(it) }
+            }
+            else -> sourceError(
+                rangeExpression,
+                "inline for range must evaluate to instances or a bounded range; got ${evaluation::class.simpleName}",
+            )
+        }
     }
 
     interface Factory {
