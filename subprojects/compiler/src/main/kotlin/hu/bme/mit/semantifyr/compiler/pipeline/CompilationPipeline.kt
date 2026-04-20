@@ -8,7 +8,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
-import hu.bme.mit.semantifyr.compiler.pipeline.context.CompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.CreatedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.flattening.OxstsFlattener
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.OxstsInliner
@@ -35,8 +35,8 @@ class CompilationPipeline @Inject constructor(
 
     fun compileDeflated(classDeclaration: ClassDeclaration): FlattenedCompilationContext {
         logger.info { "Starting compilation of class '${classDeclaration.name}'" }
-        val compilationContext = inlinedOxstsModelCreator.create(classDeclaration)
-        return compilePipeline(compilationContext)
+        val created = inlinedOxstsModelCreator.create(classDeclaration)
+        return compilePipeline(created)
     }
 
     fun compile(inlinedOxsts: InlinedOxsts): InlinedOxsts {
@@ -45,18 +45,18 @@ class CompilationPipeline @Inject constructor(
 
     fun compileDeflated(inlinedOxsts: InlinedOxsts): FlattenedCompilationContext {
         logger.info { "Starting compilation of pre-inlined OXSTS '${inlinedOxsts.classDeclaration.name}'" }
-        val compilationContext = CompilationContext(inlinedOxsts)
-        return compilePipeline(compilationContext)
+        val created = CreatedCompilationContext(inlinedOxsts)
+        return compilePipeline(created)
     }
 
-    private fun compilePipeline(compilationContext: CompilationContext): FlattenedCompilationContext {
-        compilationArtifactManager.setTarget(compilationContext.inlinedOxsts)
+    private fun compilePipeline(created: CreatedCompilationContext): FlattenedCompilationContext {
+        compilationArtifactManager.setTarget(created.inlinedOxsts)
 
         val totalMark = markNow()
 
         logger.info { "Phase: instantiation" }
         val instantiationMark = markNow()
-        val instantiatedContext = oxstsInstantiator.instantiate(compilationContext)
+        val instantiatedContext = oxstsInstantiator.instantiate(created)
         compilationArtifactManager.commitInstantiated()
         logger.info { "Phase: instantiation done in ${instantiationMark.elapsedNow()}" }
 

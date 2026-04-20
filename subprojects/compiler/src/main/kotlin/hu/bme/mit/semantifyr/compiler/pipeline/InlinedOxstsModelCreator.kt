@@ -7,7 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.compiler.pipeline.context.CompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.CreatedCompilationContext
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind
@@ -25,7 +25,7 @@ class InlinedOxstsModelCreator @Inject constructor(
     private val artifactManager: ArtifactManager,
 ) {
 
-    fun create(classDeclaration: ClassDeclaration): CompilationContext {
+    fun create(classDeclaration: ClassDeclaration): CreatedCompilationContext {
         val resourceSet = classDeclaration.eResource().resourceSet
         val uri = artifactManager.resolveUri(ArtifactKind.OutputModel)
 
@@ -36,7 +36,7 @@ class InlinedOxstsModelCreator @Inject constructor(
 
         initializeInlinedOxstsModel(inlinedOxsts)
 
-        return CompilationContext(inlinedOxsts)
+        return CreatedCompilationContext(inlinedOxsts)
     }
 
     private fun initializeInlinedOxstsModel(inlinedOxsts: InlinedOxsts) {
