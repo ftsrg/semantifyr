@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -7,9 +7,14 @@
 rootProject.name = "semantifyr"
 
 include(
-    "semantifyr-logging",
-    "semantics",
-//    "semantifyr-cli",
+    "logging",
+    "compiler",
+    "verification",
+    "portfolios",
+    "frontend",
+    "backend",
+    "lang-ide-common",
+    "semantifyr-cli",
     "oxsts.model",
     "oxsts.lang",
     "oxsts.lang.ide",
@@ -40,4 +45,8 @@ fun includeDirectory(dirPath: String) {
 
 includeDirectory("subprojects/frontends/gamma")
 includeDirectory("subprojects/frontends/sysmlv2")
+
 includeDirectory("subprojects/backends/theta")
+includeDirectory("subprojects/backends/uppaal")
+includeDirectory("subprojects/backends/nuxmv")
+includeDirectory("subprojects/backends/spin")
