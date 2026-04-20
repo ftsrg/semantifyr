@@ -34,6 +34,7 @@ dependencies {
 
     testRuntimeOnly(libs.junit.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
+    testRuntimeOnly(libs.slf4j.log4j)
 
     mockitoAgent(libs.mockito.core) { isTransitive = false }
 }
