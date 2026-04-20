@@ -10,20 +10,22 @@ import com.google.inject.Inject
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.compiler.pipeline.CompilationModule
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
-import hu.bme.mit.semantifyr.compiler.pipeline.context.CompilationContext
-import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.CreatedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceTree
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.AnalysisManager
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.Pass
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.verifyInjectedDependenciesAreBound
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.InlinedOxstsParseHelper
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
+import org.junit.jupiter.api.BeforeEach
 import java.io.StringWriter
 import java.nio.file.Files
 
@@ -31,7 +33,7 @@ import java.nio.file.Files
  * Base class for analysis-driven pass tests.
  *
  * Fixtures are inlined-oxsts snippets in the same form as [PatternTestBase] uses.
- * The pass runs against an [InstantiatedCompilationContext] that wraps the
+ * The pass runs against an [EvaluableCompilationContext] that wraps the
  * parsed [InlinedOxsts] with a single-root [InstanceTree] - tests declare only
  * top-level variables, so the root instance has no children and the
  * evaluator-backed analyses resolve references directly.
@@ -53,13 +55,18 @@ abstract class PassTestBase {
     @Inject
     protected lateinit var injector: Injector
 
+    @BeforeEach
+    fun verifyInjectedDependencies() {
+        verifyInjectedDependenciesAreBound(this)
+    }
+
     protected data class CompiledFixture(
-        val context: InstantiatedCompilationContext,
+        val context: EvaluableCompilationContext,
         val inlinedOxsts: InlinedOxsts,
     )
 
     /**
-     * Parse the snippet and wrap it into a minimal [InstantiatedCompilationContext].
+     * Parse the snippet and wrap it into a minimal [EvaluableCompilationContext].
      * The instance tree has a single root, whose domain is the [InlinedOxsts]'s
      * declared class (conventionally `semantifyr::Anything`).
      */
@@ -68,7 +75,7 @@ abstract class PassTestBase {
         val classDeclaration = inlined.classDeclaration
             ?: error("InlinedOxsts fixture must reference a class declaration (use 'inlined oxsts of semantifyr::Anything')")
         val tree = SingleRootInstanceTree(classDeclaration)
-        val context = CompilationContext(inlined).instantiated(tree)
+        val context = CreatedCompilationContext(inlined).instantiated(tree)
         return CompiledFixture(context, inlined)
     }
 
@@ -82,7 +89,7 @@ abstract class PassTestBase {
         source: String,
         expectedSource: String,
         analysisClasses: List<Class<out Analysis<*>>> = emptyList(),
-        buildPass: (Injector) -> Pass<InstantiatedCompilationContext>,
+        buildPass: (Injector) -> Pass<EvaluableCompilationContext>,
     ) {
         val actual = compile(source)
         val expected = compile(expectedSource)

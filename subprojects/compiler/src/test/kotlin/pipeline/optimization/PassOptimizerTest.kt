@@ -6,7 +6,7 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization
 
-import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.Pass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.PassOptimizer
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.PassResult
@@ -24,7 +24,7 @@ import org.mockito.kotlin.verify
 class PassOptimizerTest {
 
     private class StubAnalysis : Analysis<Any> {
-        override fun compute(input: InstantiatedCompilationContext): Any = Unit
+        override fun compute(input: EvaluableCompilationContext): Any = Unit
     }
 
     private class Bag(var value: Int = 0)

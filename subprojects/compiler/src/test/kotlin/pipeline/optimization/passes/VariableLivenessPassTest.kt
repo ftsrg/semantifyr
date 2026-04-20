@@ -55,6 +55,29 @@ class VariableLivenessPassTest : PassTestBase() {
         injector.getInstance(VariableLivenessPass::class.java)
     }
 
+    // Q2: the optimizer used to keep one variable around as a theta workaround;
+    // that's been removed, so a single unused variable with no reads should be
+    // eliminated cleanly, producing a zero-variable model. This is a valid
+    // semantic outcome.
+    @Test
+    fun `single unused variable is fully eliminated, yielding a zero-variable model`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var dummy : int := 0
+            init { }
+            tran { }
+            prop { AG true }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            init { }
+            tran { }
+            prop { AG true }
+        """,
+    ) { injector ->
+        injector.getInstance(VariableLivenessPass::class.java)
+    }
+
     // Regression: VariableLivenessPass used to build its assignment index via
     // Map.plus over separate AssignmentOperation / HavocOperation groupBys,
     // which silently dropped one group for variables with both kinds of writes.

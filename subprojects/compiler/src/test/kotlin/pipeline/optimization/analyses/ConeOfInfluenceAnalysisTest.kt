@@ -207,6 +207,139 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         }
     }
 
+    // A4: deeply nested choice-in-if-in-choice structure. Every assume in the
+    // enclosing transition is a control dep of every relevant write under
+    // atomic-commit semantics, even when nesting is several layers deep.
+    @Test
+    fun `nested choice inside if inside choice propagates guards correctly`() {
+        val run = runAnalysis(
+            source = """
+                inlined oxsts of semantifyr::Anything
+                var a : int := 0
+                var b : int := 0
+                var c : int := 0
+                var d : int := 0
+                init { }
+                tran {
+                    choice {
+                        assume(b == 0)
+                        if (c == 1) {
+                            choice {
+                                assume(d == 1)
+                                a := 1
+                            } or {
+                                assume(d == 2)
+                                a := 2
+                            }
+                        } else {
+                            a := 3
+                        }
+                    } or {
+                        assume(b != 0)
+                        a := 4
+                    }
+                }
+                prop { AG (a == 1) }
+            """,
+            analysisClass = ConeOfInfluenceAnalysis::class.java,
+        )
+
+        val a = run.inlinedOxsts.varNamed("a")
+        val b = run.inlinedOxsts.varNamed("b")
+        val c = run.inlinedOxsts.varNamed("c")
+        val d = run.inlinedOxsts.varNamed("d")
+        assertThat(run.result.isRelevant(a)).isTrue
+        assertThat(run.result.isRelevant(b))
+            .`as`("outer choice's assume guards ('b') must be in the cone")
+            .isTrue
+        assertThat(run.result.isRelevant(c))
+            .`as`("nested if-guard ('c') must be in the cone")
+            .isTrue
+        assertThat(run.result.isRelevant(d))
+            .`as`("deeply nested inner-choice assume guards ('d') must be in the cone under atomic commit")
+            .isTrue
+        for (write in run.inlinedOxsts.assignmentsTo(a)) {
+            assertThat(run.result.isRelevant(write))
+                .`as`("every nested write to relevant var 'a' must stay relevant")
+                .isTrue
+        }
+    }
+
+    // A4: an outer assume guards inner writes. The outer assume's variables
+    // must be pulled into the cone because the inner writes are relevant.
+    @Test
+    fun `outer assume guarding inner writes pulls its reads into the cone`() {
+        val run = runAnalysis(
+            source = """
+                inlined oxsts of semantifyr::Anything
+                var a : int := 0
+                var guard : int := 0
+                init { }
+                tran {
+                    assume(guard == 1)
+                    choice {
+                        a := 1
+                    } or {
+                        a := 2
+                    }
+                }
+                prop { AG (a == 1) }
+            """,
+            analysisClass = ConeOfInfluenceAnalysis::class.java,
+        )
+
+        val guard = run.inlinedOxsts.varNamed("guard")
+        assertThat(run.result.isRelevant(guard))
+            .`as`("an outer assume that gates relevant inner writes must be in the cone")
+            .isTrue
+    }
+
+    // A4: a write to a non-relevant variable in one branch must not pull its
+    // guard into the cone (the branch itself carries no relevant writes).
+    @Test
+    fun `writes to irrelevant variables in a sibling branch stay out of the cone`() {
+        val run = runAnalysis(
+            source = """
+                inlined oxsts of semantifyr::Anything
+                var a : int := 0
+                var y : int := 0
+                var siblingGuard : int := 0
+                init { }
+                tran {
+                    choice {
+                        a := 1
+                    } or {
+                        assume(siblingGuard == 7)
+                        y := 5
+                    }
+                }
+                prop { AG (a == 1) }
+            """,
+            analysisClass = ConeOfInfluenceAnalysis::class.java,
+        )
+
+        val y = run.inlinedOxsts.varNamed("y")
+        val siblingGuard = run.inlinedOxsts.varNamed("siblingGuard")
+        assertThat(run.result.isRelevant(y))
+            .`as`("'y' is not read by the property and has no transitive dependence on it")
+            .isFalse
+        val yWrites = run.inlinedOxsts.assignmentsTo(y)
+        for (write in yWrites) {
+            assertThat(run.result.isRelevant(write))
+                .`as`("irrelevant 'y := 5' must not gate anything in the cone")
+                .isFalse
+        }
+        // The sibling guard IS pulled in because atomic-commit semantics make
+        // every assume in the transition a control dep of every relevant write.
+        // This documents (not asserts incorrect) the current conservative
+        // behavior: an assume that happens to fail rolls back the whole
+        // transition, so guards of sibling branches can affect whether the
+        // relevant write commits.
+        assertThat(run.result.isRelevant(siblingGuard))
+            .`as`("under atomic commit, sibling assume variables are control deps")
+            .isTrue
+    }
+
     private fun InlinedOxsts.varNamed(name: String): VariableDeclaration {
         return eAllOfType<VariableDeclaration>().firstOrNull { it.name == name }
             ?: error("No variable named '$name' in inlined oxsts")

@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManag
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.WorklistOptimizer
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.verifyInjectedDependenciesAreBound
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.InlinedOxstsParseHelper
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -18,6 +19,7 @@ import org.assertj.core.api.Assertions
 import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
+import org.junit.jupiter.api.BeforeEach
 import org.mockito.kotlin.mock
 import java.io.StringWriter
 
@@ -58,6 +60,11 @@ abstract class PatternTestBase {
 
     @Inject
     protected lateinit var serializer: ISerializer
+
+    @BeforeEach
+    fun verifyInjectedDependencies() {
+        verifyInjectedDependenciesAreBound(this)
+    }
 
     protected fun assertPatternTransforms(
         pattern: OptimizationPattern,

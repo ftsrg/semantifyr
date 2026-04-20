@@ -8,10 +8,10 @@ package hu.bme.mit.semantifyr.compiler.pipeline.artifact
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.mockito.kotlin.any
-import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
@@ -128,18 +128,34 @@ class CompilationArtifactManagerTest {
     }
 
     @Test
-    fun `commitStep serializes the currently targeted model even after setTarget is called again`() {
+    fun `setTarget rejects a second call with a descriptive message`() {
         val manager = managerWith(steps = CompilationStepsConfig.All)
         val first: InlinedOxsts = mock()
         val second: InlinedOxsts = mock()
 
         manager.setTarget(first)
-        manager.commitStep(CompilationPass.ConstantFolding)
-        manager.setTarget(second)
-        manager.commitStep(CompilationPass.OperationFlattening)
 
-        val targetCaptor = argumentCaptor<InlinedOxsts>()
-        verify(serializer, times(2)).serialize(targetCaptor.capture(), any<java.io.Writer>(), any())
-        assertThat(targetCaptor.allValues).containsExactly(first, second)
+        assertThatThrownBy { manager.setTarget(second) }
+            .isInstanceOf(IllegalStateException::class.java)
+            .hasMessageContaining("setTarget")
+            .hasMessageContaining("already")
+    }
+
+    @Test
+    fun `commitStep fails with a descriptive message if setTarget was never called`() {
+        val manager = managerWith(steps = CompilationStepsConfig.All)
+
+        assertThatThrownBy { manager.commitStep(CompilationPass.ConstantFolding) }
+            .isInstanceOf(IllegalStateException::class.java)
+            .hasMessageContaining("setTarget")
+    }
+
+    @Test
+    fun `commitInstantiated fails with a descriptive message if setTarget was never called`() {
+        val manager = managerWith()
+
+        assertThatThrownBy { manager.commitInstantiated() }
+            .isInstanceOf(IllegalStateException::class.java)
+            .hasMessageContaining("setTarget")
     }
 }

@@ -6,7 +6,7 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization
 
-import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -21,7 +21,7 @@ class AnalysisManagerTest {
         var computeCount = 0
             private set
 
-        override fun compute(input: InstantiatedCompilationContext): ResultA {
+        override fun compute(input: EvaluableCompilationContext): ResultA {
             computeCount++
             return result
         }
@@ -31,13 +31,13 @@ class AnalysisManagerTest {
         var computeCount = 0
             private set
 
-        override fun compute(input: InstantiatedCompilationContext): ResultB {
+        override fun compute(input: EvaluableCompilationContext): ResultB {
             computeCount++
             return result
         }
     }
 
-    private val context: InstantiatedCompilationContext = mock()
+    private val context: EvaluableCompilationContext = mock()
 
     @Test
     fun `get computes and returns the analysis result`() {

@@ -114,10 +114,19 @@ class OxstsFlattener @Inject constructor(
 
         domainMappingSerializer.serializeMapping(instanceIdMapping)
 
+        // Snapshot FlatteningInfo against the *post-optimization* IR. Variables
+        // that the optimizer eliminated never reach the backend and therefore
+        // never appear in a witness, so retaining them in these traceability
+        // maps is pure dead weight. Filtering here keeps FlatteningInfo
+        // consistent with inlinedOxsts.variables.
+        val survivingVariables = inlinedOxsts.variables.toSet()
+        val survivingMappings = variableMappings.mapValues { (_, inner) ->
+            inner.filterValues { it in survivingVariables }
+        }
         val flatteningInfo = FlatteningInfo(
-            variableHolders = variableHolders.toMap(),
-            variableInstanceDomains = variableInstanceDomain.toMap(),
-            variableMappings = variableMappings,
+            variableHolders = variableHolders.filterKeys { it in survivingVariables },
+            variableInstanceDomains = variableInstanceDomain.filterKeys { it in survivingVariables },
+            variableMappings = survivingMappings,
             instanceIdMapping = instanceIdMapping,
         )
 

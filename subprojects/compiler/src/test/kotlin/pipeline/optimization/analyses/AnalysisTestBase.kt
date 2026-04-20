@@ -10,16 +10,18 @@ import com.google.inject.Inject
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.compiler.pipeline.CompilationModule
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
-import hu.bme.mit.semantifyr.compiler.pipeline.context.CompilationContext
-import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.CreatedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceTree
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.verifyInjectedDependenciesAreBound
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.InlinedOxstsParseHelper
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import org.junit.jupiter.api.BeforeEach
 import java.nio.file.Files
 
 /**
@@ -28,7 +30,7 @@ import java.nio.file.Files
  * A fixture is an inlined-oxsts snippet (same form as [hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.PassTestBase])
  * that references `semantifyr::Anything` and declares only top-level variables
  * (no root feature, no nested instances). The base parses the snippet, wraps
- * it in a minimal [InstantiatedCompilationContext] with a single-root instance
+ * it in a minimal [EvaluableCompilationContext] with a single-root instance
  * tree, then runs the requested [Analysis] against it.
  *
  * Tests inspect the analysis result directly rather than observing a pass's
@@ -44,8 +46,13 @@ abstract class AnalysisTestBase {
     @Inject
     protected lateinit var injector: Injector
 
+    @BeforeEach
+    fun verifyInjectedDependencies() {
+        verifyInjectedDependenciesAreBound(this)
+    }
+
     protected data class CompiledFixture(
-        val context: InstantiatedCompilationContext,
+        val context: EvaluableCompilationContext,
         val inlinedOxsts: InlinedOxsts,
     )
 
@@ -54,7 +61,7 @@ abstract class AnalysisTestBase {
         val classDeclaration = inlined.classDeclaration
             ?: error("InlinedOxsts fixture must reference a class declaration (use 'inlined oxsts of semantifyr::Anything')")
         val tree = SingleRootInstanceTree(classDeclaration)
-        val context = CompilationContext(inlined).instantiated(tree)
+        val context = CreatedCompilationContext(inlined).instantiated(tree)
         return CompiledFixture(context, inlined)
     }
 

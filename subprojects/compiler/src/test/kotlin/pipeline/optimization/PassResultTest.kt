@@ -6,7 +6,7 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization
 
-import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.PassResult
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -14,11 +14,11 @@ import org.junit.jupiter.api.Test
 class PassResultTest {
 
     private class FakeAnalysisA : Analysis<Any> {
-        override fun compute(input: InstantiatedCompilationContext): Any = Unit
+        override fun compute(input: EvaluableCompilationContext): Any = Unit
     }
 
     private class FakeAnalysisB : Analysis<Any> {
-        override fun compute(input: InstantiatedCompilationContext): Any = Unit
+        override fun compute(input: EvaluableCompilationContext): Any = Unit
     }
 
     @Test
