@@ -10,6 +10,7 @@ import hu.bme.mit.semantifyr.backend.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.VerificationRequest
 import hu.bme.mit.semantifyr.backend.VerificationResult
+import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
@@ -130,9 +131,11 @@ abstract class VerificationPortfolio {
 
     /**
      * Launch every job registered in [block] in parallel and wait for all of them (or [timeout]).
-     * If every decisive result agrees, returns that verdict; otherwise returns the first decisive
-     * result observed, or the first non-decisive result, or `null` if every job failed with an
-     * exception. On timeout, outstanding jobs are cancelled.
+     * If every decisive result agrees, returns that verdict; if decisive results disagree
+     * (e.g. one backend returns Passed and another Failed), returns Inconclusive and logs the
+     * conflict, because at most one of the disagreeing verdicts can be sound. Otherwise returns
+     * the first non-decisive result, or `null` if every job failed with an exception.
+     * On timeout, outstanding jobs are cancelled.
      */
     protected suspend fun all(
         executor: BackendExecutor,
@@ -158,7 +161,17 @@ abstract class VerificationPortfolio {
         when {
             decisive.isEmpty() -> collected.firstOrNull()
             decisive.map { it.verdict }.distinct().size == 1 -> decisive.first()
-            else -> decisive.first()
+            else -> {
+                val breakdown = decisive.joinToString(", ") { "${it.metadata.backendId}=${it.verdict}" }
+                logger.warn { "$id: decisive verdicts disagree ($breakdown); returning Inconclusive (at least one backend must be unsound or report a bug)" }
+                val reference = decisive.first()
+                VerificationResult(
+                    verdict = VerificationVerdict.Inconclusive,
+                    metadata = reference.metadata,
+                    metrics = reference.metrics,
+                    message = "Portfolio '$id' saw disagreeing decisive verdicts: $breakdown",
+                )
+            }
         }
     }
 
