@@ -25,12 +25,19 @@ class CompilationArtifactManager @Inject constructor(
     private var stepId = 0
 
     fun setTarget(inlinedOxsts: InlinedOxsts) {
+        check(!::inlinedOxsts.isInitialized) {
+            "CompilationArtifactManager.setTarget() was already called on this instance. Each compilation must use a fresh manager (the verifier / compiler builder creates per-compilation injectors)."
+        }
         this.inlinedOxsts = inlinedOxsts
     }
 
     fun commitStep(pass: CompilationPass) {
         if (!artifactConfig.enabledCompilationSteps.shouldEmit(pass)) {
             return
+        }
+
+        check(::inlinedOxsts.isInitialized) {
+            "CompilationArtifactManager.commitStep($pass) called before setTarget(). The orchestrator must call setTarget() before any pass runs."
         }
 
         artifactManager.withFile(ArtifactKind.CompilationStep) { stepsDir ->
@@ -41,14 +48,23 @@ class CompilationArtifactManager @Inject constructor(
     }
 
     fun commitInstantiated() {
+        check(::inlinedOxsts.isInitialized) {
+            "CompilationArtifactManager.commitInstantiated() called before setTarget()."
+        }
         artifactManager.withFile(ArtifactKind.InflatedModel) { serializeInto(inlinedOxsts, it) }
     }
 
     fun commitInlined() {
+        check(::inlinedOxsts.isInitialized) {
+            "CompilationArtifactManager.commitInlined() called before setTarget()."
+        }
         artifactManager.withFile(ArtifactKind.InlinedModel) { serializeInto(inlinedOxsts, it) }
     }
 
     fun commitFlattened() {
+        check(::inlinedOxsts.isInitialized) {
+            "CompilationArtifactManager.commitFlattened() called before setTarget()."
+        }
         artifactManager.withFile(ArtifactKind.DeflatedModel) { serializeInto(inlinedOxsts, it) }
     }
 
