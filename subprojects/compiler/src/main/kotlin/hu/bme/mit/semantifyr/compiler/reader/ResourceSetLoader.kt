@@ -68,7 +68,7 @@ class ResourceSetLoader @Inject constructor(
                         logger.error { "${issue.uriToProblem.toFileString()}[${issue.lineNumber}:${issue.column}] ${issue.message}" }
                     }
 
-                    else -> {}
+                    Severity.IGNORE -> {}
                 }
             }
 
