@@ -14,6 +14,8 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
+import hu.bme.mit.semantifyr.logging.debug
+import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 
@@ -39,6 +41,8 @@ class MetaStaticExpressionEvaluator @AssistedInject constructor(
     private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
 ) : MetaConstantExpressionEvaluator() {
 
+    private val logger by loggerFactory()
+
     override fun visit(expression: ElementReference): NamedElement {
         if (expression.element.eIsProxy()) {
             throw IllegalStateException("Element could not be resolved!");
@@ -54,7 +58,7 @@ class MetaStaticExpressionEvaluator @AssistedInject constructor(
         if (context == null) {
             // Found no instance, so we must assume this member will not be used
             // If used, it will throw an exception in the non-meta evaluator anyway
-            // TODO: log this!
+            logger.debug { "Meta-evaluator: navigation '${expression.member.name}' has no concrete context at instance '${instance.name}'. Returning grammar-level member for meta navigation." }
             return expression.member
         }
 
