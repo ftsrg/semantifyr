@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.utils.ResourceUriProvider
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.lang.library.OxstsLibrary
 
 import org.eclipse.emf.ecore.resource.Resource
@@ -104,6 +105,10 @@ class SemantifyrLoader @Inject constructor(
          * Loads the model file at the specified [path].
          */
         fun loadModel(path: Path): SemantifyrLoaderContext {
+            if (! isOxstsFile(path)) {
+                logger.warn { "Tried to load non-oxsts file, skipping: $path" }
+            }
+
             val resource = loadFile(resourceSet, path)
             modelResources += resource
 
@@ -125,6 +130,10 @@ class SemantifyrLoader @Inject constructor(
          * Loads the model file at the specified [path] as a Library resource.
          */
         fun loadLibrary(path: Path): SemantifyrLoaderContext {
+            if (! isOxstsFile(path)) {
+                logger.warn { "Tried to load non-oxsts file, skipping: $path" }
+            }
+
             val resource = loadFile(resourceSet, path)
             libraryResources += resource
 
@@ -177,9 +186,13 @@ class SemantifyrLoader @Inject constructor(
 
     }
 
+    private fun isOxstsFile(path: Path): Boolean {
+        return path.name.endsWith(OxstsLibrary.FILE_NAME_SUFFIX)
+    }
+
     private fun modelPathsUnder(path: Path): Sequence<Path> {
         return path.walk(PathWalkOption.FOLLOW_LINKS).filter {
-            it.isRegularFile() && it.name.endsWith(OxstsLibrary.FILE_NAME_SUFFIX)
+            it.isRegularFile() && isOxstsFile(it)
         }
     }
 

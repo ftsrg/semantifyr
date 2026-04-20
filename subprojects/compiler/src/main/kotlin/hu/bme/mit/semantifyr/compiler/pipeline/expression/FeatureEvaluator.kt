@@ -15,6 +15,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.parentSequence
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.treeSequence
 
 class FeatureEvaluator(
@@ -42,7 +43,7 @@ class FeatureEvaluator(
             FeatureKind.CONTAINMENT,
             FeatureKind.CONTAINER -> evaluateContainmentFeature(instance, featureDeclaration)
             FeatureKind.DERIVED -> evaluateDerivedFeature(instance, featureDeclaration)
-            FeatureKind.FEATURE -> error("Abstract features can not be evaluated!")
+            FeatureKind.FEATURE -> sourceError(featureDeclaration, "Abstract features can not be evaluated!")
         }
     }
 
@@ -78,7 +79,7 @@ class FeatureEvaluator(
         val opposite = oppositeHandler.getOppositeFeature(featureDeclaration)
 
         if (opposite == null) {
-            error("Only opposite derived features are supported right now!")
+            sourceError(featureDeclaration, "Only opposite derived features are supported right now!")
         }
 
         return evaluateOppositeDerivedFeature(instance, opposite)

@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpress
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 
@@ -29,7 +30,7 @@ inline fun <reified T : A, A> ExpressionEvaluator<A>.tryEvaluateTypedOrNull(claz
 }
 
 inline fun <reified T : A, A> ExpressionEvaluator<A>.evaluateTyped(clazz: Class<T>, expression: Expression): T {
-    return evaluateTypedOrNull(clazz, expression) ?: error("Expression does not evaluate to type ${T::class.qualifiedName}")
+    return evaluateTypedOrNull(clazz, expression) ?: sourceError(expression, "Expression does not evaluate to type ${T::class.qualifiedName}")
 }
 
 class MetaStaticExpressionEvaluator @AssistedInject constructor(

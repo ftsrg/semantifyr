@@ -25,6 +25,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.parentSequence
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import org.eclipse.emf.ecore.EObject
 
 class StaticExpressionEvaluator @AssistedInject constructor(
@@ -47,7 +48,7 @@ class StaticExpressionEvaluator @AssistedInject constructor(
                 return when (expression.getOp()) {
                     ComparisonOp.EQ -> BooleanEvaluation((left.instances - right.instances).isEmpty())
                     ComparisonOp.NOT_EQ -> BooleanEvaluation(!(left.instances - right.instances).isEmpty())
-                    else -> error("Unsupported operator!")
+                    else -> sourceError(expression, "Unsupported comparison operator for instance operands: ${expression.getOp()}")
                 }
             }
 
@@ -55,7 +56,7 @@ class StaticExpressionEvaluator @AssistedInject constructor(
                 return when (expression.getOp()) {
                     ComparisonOp.EQ -> BooleanEvaluation(left.instances.isEmpty())
                     ComparisonOp.NOT_EQ -> BooleanEvaluation(left.instances.any())
-                    else -> error("Unsupported operator!")
+                    else -> sourceError(expression, "Unsupported comparison operator when comparing instance to nothing: ${expression.getOp()}")
                 }
             }
         }
@@ -65,7 +66,7 @@ class StaticExpressionEvaluator @AssistedInject constructor(
                 return when (expression.getOp()) {
                     ComparisonOp.EQ -> BooleanEvaluation(right.instances.isEmpty())
                     ComparisonOp.NOT_EQ -> BooleanEvaluation(right.instances.any())
-                    else -> error("Unsupported operator!")
+                    else -> sourceError(expression, "Unsupported comparison operator when comparing nothing to instance: ${expression.getOp()}")
                 }
             }
         }
@@ -85,11 +86,11 @@ class StaticExpressionEvaluator @AssistedInject constructor(
                 return InstanceEvaluation(setOf())
             }
 
-            error("The left side is evaluated to an empty evaluation!")
+            sourceError(expression, "The left side is evaluated to an empty evaluation!")
         }
 
         if (instance.size != 1) {
-            error("Left hand side contains more than a single instance!")
+            sourceError(expression, "Left hand side contains more than a single instance!")
         }
 
         val context = instance.single()
@@ -100,11 +101,11 @@ class StaticExpressionEvaluator @AssistedInject constructor(
     }
 
     override fun visit(expression: CallSuffixExpression): ExpressionEvaluation {
-        error("CallSuffixExpression is not supported by StaticExpressionEvaluator. Method/operation calls must be inlined before static evaluation.")
+        sourceError(expression, "CallSuffixExpression is not supported by StaticExpressionEvaluator. Method/operation calls must be inlined before static evaluation.")
     }
 
     override fun visit(expression: IndexingSuffixExpression): ExpressionEvaluation {
-        error("IndexingSuffixExpression is not supported by StaticExpressionEvaluator. Array/map indexing is not statically evaluable in the general case.")
+        sourceError(expression, "IndexingSuffixExpression is not supported by StaticExpressionEvaluator. Array/map indexing is not statically evaluable in the general case.")
     }
 
     override fun visit(expression: ElementReference): ExpressionEvaluation {
@@ -123,11 +124,11 @@ class StaticExpressionEvaluator @AssistedInject constructor(
             }
         }
 
-        error("Could not find appropriate context for contextual expression!")
+        sourceError(expression, "Could not find appropriate context for contextual expression!")
     }
 
     fun evaluateInstances(expression: Expression): Set<Instance> {
-        return evaluateInstancesOrNull(expression) ?: error("This expression is not evaluable to instances!")
+        return evaluateInstancesOrNull(expression) ?: sourceError(expression, "This expression is not evaluable to instances!")
     }
 
     fun evaluateInstancesOrNull(expression: Expression): Set<Instance>? {
@@ -141,7 +142,7 @@ class StaticExpressionEvaluator @AssistedInject constructor(
     }
 
     fun evaluateSingleInstance(expression: Expression): Instance {
-        return evaluateSingleInstanceOrNull(expression) ?: error("This expression is not evaluable to a single instance!")
+        return evaluateSingleInstanceOrNull(expression) ?: sourceError(expression, "This expression is not evaluable to a single instance!")
     }
 
     fun evaluateSingleInstanceOrNull(expression: Expression): Instance? {
@@ -161,7 +162,7 @@ class StaticExpressionEvaluator @AssistedInject constructor(
             return evaluation.value
         }
 
-        error("This expression is not evaluable to boolean!")
+        sourceError(expression, "This expression is not evaluable to boolean!")
     }
 
     interface Factory {

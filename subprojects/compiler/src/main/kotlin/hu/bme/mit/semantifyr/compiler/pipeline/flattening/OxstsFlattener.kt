@@ -226,7 +226,9 @@ class OxstsFlattener @Inject constructor(
         variableInstanceDomain: Map<VariableDeclaration, Set<Instance>>,
     ) {
         val variable = elementReference.element as VariableDeclaration
-        val instances = variableInstanceDomain[variable]!!
+        val instances = checkNotNull(variableInstanceDomain[variable]) {
+            "No instance domain registered for feature-typed variable '${variable.name}'."
+        }
         val havocChoice = OxstsFactory.createChoiceOperation()
 
         val multiplicityRange = multiplicityRangeEvaluator.evaluate(variable.typeSpecification)
