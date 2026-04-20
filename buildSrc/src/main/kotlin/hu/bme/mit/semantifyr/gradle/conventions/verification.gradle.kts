@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.gradle.conventions
 
+import org.gradle.accessors.dm.LibrariesForLibs
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
 plugins {
@@ -23,42 +24,37 @@ val verificationTestServiceProvider = gradle.sharedServices.registerIfAbsent(ver
     maxParallelUsages.set(1)
 }
 
-tasks {
-    val testVerificationCases by tasks.registering(Test::class) {
-        group = "verification"
+val libs = the<LibrariesForLibs>()
 
-        useJUnitPlatform {
-            // we should use source sets instead
-            excludeTags("benchmark")
-            includeTags("verification")
+testing {
+    suites {
+        val verificationTest by registering(JvmTestSuite::class) {
+            useJUnitJupiter()
+
+            dependencies {
+                implementation(project())
+                implementation(testFixtures(project()))
+
+                runtimeOnly(libs.slf4j.log4j)
+            }
+
+            targets.all {
+                testTask.configure {
+                    group = "verification"
+                    usesService(verificationTestServiceProvider)
+                    failFast = true
+                    maxParallelForks = 1
+
+                    minHeapSize = "512m"
+                    maxHeapSize = "4G"
+
+                    shouldRunAfter(suites.named("test"))
+                }
+            }
         }
-
-        testClassesDirs = sourceSets.test.get().output.classesDirs
-        classpath = sourceSets.test.get().runtimeClasspath
-
-        usesService(verificationTestServiceProvider)
-
-        // Stop on the first failing verification case so optimizer regressions
-        // surface immediately instead of waiting through the full suite.
-        failFast = true
-
-        minHeapSize = "512m"
-        maxHeapSize = "4G"
-        testLogging.showStandardStreams = true
-        testLogging.exceptionFormat = TestExceptionFormat.FULL
-
-        maxParallelForks = 1
-
-        shouldRunAfter(test)
-        finalizedBy(jacocoTestReport)
     }
+}
 
-    jacocoTestReport {
-        inputs.files(testVerificationCases.get().outputs)
-        executionData(testVerificationCases.get())
-    }
-
-    check {
-        inputs.files(testVerificationCases.get().outputs)
-    }
+tasks.named("check") {
+    dependsOn(testing.suites.named("verificationTest"))
 }

@@ -21,12 +21,19 @@ dependencies {
     thetaClasspath(project(":theta-executor", configuration = "thetaOutput"))
 }
 
-tasks {
-    val testVerificationCases by tasks.getting(Test::class) {
-        inputs.files(thetaClasspath)
+testing {
+    suites {
+        val verificationTest by getting(JvmTestSuite::class) {
+            targets.all {
+                testTask.configure {
+                    inputs.files(thetaClasspath)
 
-        val thetaCliPath = project(":theta-executor").layout.buildDirectory.dir("theta-xsts-cli").get().asFile.absolutePath
-        val existingPath = environment["PATH"] ?: System.getenv("PATH") ?: ""
-        environment("PATH", "$thetaCliPath${File.pathSeparator}$existingPath")
+                    val thetaCliDir = project(":theta-executor").layout.buildDirectory.dir("theta-xsts-cli").get().asFile
+                    val existingPath = environment["PATH"] ?: System.getenv("PATH") ?: ""
+
+                    environment("PATH", "${thetaCliDir.absolutePath}${File.pathSeparator}$existingPath")
+                }
+            }
+        }
     }
 }

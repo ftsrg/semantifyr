@@ -32,10 +32,6 @@ dependencies {
     testFixturesApi(libs.mockito.junit)
     testFixturesApi(libs.mockito.kotlin)
 
-    testRuntimeOnly(libs.junit.engine)
-    testRuntimeOnly(libs.junit.platform.launcher)
-    testRuntimeOnly(libs.slf4j.log4j)
-
     mockitoAgent(libs.mockito.core) { isTransitive = false }
 }
 
@@ -43,28 +39,27 @@ java.toolchain {
     languageVersion = JavaLanguageVersion.of(25)
 }
 
-tasks {
-    // TODO: refactor tests to use test suites
-    test {
-        jvmArgs("-javaagent:${mockitoAgent.asPath}", "-Xshare:off")
+testing {
+    suites {
+        val test by getting(JvmTestSuite::class) {
+            useJUnitJupiter()
 
-        useJUnitPlatform {
-            // we should use source sets instead
-            excludeTags("benchmark")
-            excludeTags("verification")
-            excludeTags("slow")
+            dependencies {
+                runtimeOnly(libs.junit.engine)
+                runtimeOnly(libs.junit.platform.launcher)
+                runtimeOnly(libs.slf4j.log4j)
+            }
+
+            targets.all {
+                testTask.configure {
+                    jvmArgs("-javaagent:${mockitoAgent.asPath}", "-Xshare:off")
+                    minHeapSize = "512m"
+                    maxHeapSize = "4G"
+                    testLogging.showStandardStreams = true
+                    testLogging.exceptionFormat = TestExceptionFormat.FULL
+                    finalizedBy(tasks.jacocoTestReport)
+                }
+            }
         }
-
-        minHeapSize = "512m"
-        maxHeapSize = "4G"
-        testLogging.showStandardStreams = true
-        testLogging.exceptionFormat = TestExceptionFormat.FULL
-
-        finalizedBy(tasks.jacocoTestReport)
-    }
-
-    jacocoTestReport {
-        inputs.files(test.get().outputs)
-        executionData(test.get())
     }
 }
