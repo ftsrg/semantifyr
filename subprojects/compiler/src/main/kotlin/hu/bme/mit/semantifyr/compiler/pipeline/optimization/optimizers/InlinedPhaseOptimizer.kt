@@ -7,7 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.AnalysisManager
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Optimizer
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.ConstantAssumptionPropagationPass
@@ -43,7 +43,7 @@ class InlinedPhaseOptimizer @Inject constructor(
     operationFlattening: OperationFlatteningPass,
     redundantOperationRemoval: RedundantOperationRemovalPass,
     constantAssumptionPropagation: ConstantAssumptionPropagationPass,
-) : Optimizer<InstantiatedCompilationContext>() {
+) : Optimizer<EvaluableCompilationContext>() {
 
     private val pipeline = PassOptimizer(
         passes = listOf(
@@ -55,7 +55,7 @@ class InlinedPhaseOptimizer @Inject constructor(
         analysisManager = AnalysisManager(emptyList()),
     )
 
-    override fun optimize(input: InstantiatedCompilationContext): Boolean {
+    override fun optimize(input: EvaluableCompilationContext): Boolean {
         return pipeline.optimize(input)
     }
 

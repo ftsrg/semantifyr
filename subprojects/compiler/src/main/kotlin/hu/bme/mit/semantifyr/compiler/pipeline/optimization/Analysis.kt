@@ -6,7 +6,7 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization
 
-import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import kotlin.collections.getOrPut
@@ -16,7 +16,7 @@ interface Analysis<T : Any> {
     val key: Class<Analysis<T>>
         get() = javaClass
 
-    fun compute(input: InstantiatedCompilationContext): T
+    fun compute(input: EvaluableCompilationContext): T
 }
 
 class AnalysisManager(
@@ -31,7 +31,7 @@ class AnalysisManager(
     private val cache = mutableMapOf<Class<*>, Any>()
 
     @Suppress("UNCHECKED_CAST")
-    fun <T : Any, A : Analysis<T>> get(type: Class<A>, input: InstantiatedCompilationContext): T {
+    fun <T : Any, A : Analysis<T>> get(type: Class<A>, input: EvaluableCompilationContext): T {
         return cache.getOrPut(type) {
             val analysis = analysisMap[type] ?: error("Analysis ${type.simpleName} is not registered in this AnalysisManager")
             val mark = markNow()

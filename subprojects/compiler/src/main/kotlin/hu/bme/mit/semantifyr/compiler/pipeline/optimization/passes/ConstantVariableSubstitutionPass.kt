@@ -12,7 +12,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
-import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.tryEvaluateTypedOrNull
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.AnalysisManager
@@ -37,9 +37,9 @@ class ConstantVariableSubstitutionPass @Inject constructor(
     private val config: OptimizationConfig,
     private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
     private val artifactManager: CompilationArtifactManager,
-) : Pass<InstantiatedCompilationContext> {
+) : Pass<EvaluableCompilationContext> {
 
-    override fun run(input: InstantiatedCompilationContext, analyses: AnalysisManager): PassResult {
+    override fun run(input: EvaluableCompilationContext, analyses: AnalysisManager): PassResult {
         if (!config.isEnabled(OptimizationCategory.ConstantFolding)) {
             return PassResult.Unchanged
         }
@@ -47,7 +47,7 @@ class ConstantVariableSubstitutionPass @Inject constructor(
         val constants = analyses.get(ConstantValueAnalysis::class.java, input)
         if (constants.constants.isEmpty()) return PassResult.Unchanged
 
-        val evaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(input.instanceTree.rootInstance)
+        val evaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
 
         val substitutions = input.inlinedOxsts.eAllOfType<Expression>()
             .filterNot { OxstsUtils.isWriteExpression(it) }

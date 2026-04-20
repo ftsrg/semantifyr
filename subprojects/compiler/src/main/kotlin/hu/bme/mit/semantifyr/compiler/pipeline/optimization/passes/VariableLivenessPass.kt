@@ -15,7 +15,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
-import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.tryEvaluateTypedOrNull
@@ -34,9 +34,9 @@ class VariableLivenessPass @Inject constructor(
     private val config: OptimizationConfig,
     private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
     private val compilationArtifactManager: CompilationArtifactManager,
-) : Pass<InstantiatedCompilationContext> {
+) : Pass<EvaluableCompilationContext> {
 
-    override fun run(input: InstantiatedCompilationContext, analyses: AnalysisManager): PassResult {
+    override fun run(input: EvaluableCompilationContext, analyses: AnalysisManager): PassResult {
         if (!config.isEnabled(OptimizationCategory.UnusedVariableElimination)) {
             return PassResult.Unchanged
         }
@@ -50,9 +50,9 @@ class VariableLivenessPass @Inject constructor(
         data class UnassignedInitialized(override val variable: VariableDeclaration) : WorkItem
     }
 
-    private inner class Run(compilation: InstantiatedCompilationContext) {
+    private inner class Run(compilation: EvaluableCompilationContext) {
         private val inlinedOxsts = compilation.inlinedOxsts
-        private val evaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(compilation.instanceTree.rootInstance)
+        private val evaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(compilation.rootInstance)
 
         private val variableReads: MutableMap<VariableDeclaration, MutableList<Expression>>
         private val variableAssignments: MutableMap<VariableDeclaration, MutableList<Operation>>

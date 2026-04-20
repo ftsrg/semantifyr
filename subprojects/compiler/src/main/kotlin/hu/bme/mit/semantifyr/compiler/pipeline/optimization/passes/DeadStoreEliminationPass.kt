@@ -12,7 +12,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
-import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.AnalysisManager
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationCategory
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
@@ -36,9 +36,9 @@ import org.eclipse.xtext.EcoreUtil2
 class DeadStoreEliminationPass @Inject constructor(
     private val config: OptimizationConfig,
     private val artifactManager: CompilationArtifactManager,
-) : Pass<InstantiatedCompilationContext> {
+) : Pass<EvaluableCompilationContext> {
 
-    override fun run(input: InstantiatedCompilationContext, analyses: AnalysisManager): PassResult {
+    override fun run(input: EvaluableCompilationContext, analyses: AnalysisManager): PassResult {
         if (!config.isEnabled(OptimizationCategory.RedundantOperationRemoval)) {
             return PassResult.Unchanged
         }

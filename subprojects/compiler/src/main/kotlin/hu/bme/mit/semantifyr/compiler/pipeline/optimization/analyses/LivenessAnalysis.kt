@@ -13,7 +13,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
-import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.tryEvaluateTypedOrNull
@@ -35,7 +35,7 @@ data class LivenessInfo(
 }
 
 /**
- * Computes variable liveness information over an [InstantiatedCompilationContext].
+ * Computes variable liveness information over an [EvaluableCompilationContext].
  *
  * The analysis walks the IR and resolves navigation expressions via the
  * meta-static evaluator to map them back to their target [VariableDeclaration].
@@ -51,8 +51,8 @@ class LivenessAnalysis @Inject constructor(
     private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
 ) : Analysis<LivenessInfo> {
 
-    override fun compute(input: InstantiatedCompilationContext): LivenessInfo {
-        val evaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(input.instanceTree.rootInstance)
+    override fun compute(input: EvaluableCompilationContext): LivenessInfo {
+        val evaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
         val inlinedOxsts = input.inlinedOxsts
 
         val reads = inlinedOxsts.eAllOfType<Expression>()

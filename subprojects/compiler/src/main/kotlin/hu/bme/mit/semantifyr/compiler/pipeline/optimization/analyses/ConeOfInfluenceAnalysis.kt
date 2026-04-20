@@ -7,17 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
-import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluator
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
@@ -25,6 +15,16 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.tryEvaluateTypedOrNull
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
 
 /**
@@ -66,10 +66,25 @@ class ConeOfInfluenceAnalysis @Inject constructor(
     private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
 ) : Analysis<ConeOfInfluenceInfo> {
 
-    override fun compute(input: InstantiatedCompilationContext): ConeOfInfluenceInfo {
-        val evaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(input.instanceTree.rootInstance)
-        val inlinedOxsts = input.inlinedOxsts
+    override fun compute(input: EvaluableCompilationContext): ConeOfInfluenceInfo {
+        val evaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
+        return ConeOfInfluenceComputation(input.inlinedOxsts, evaluator).compute()
+    }
 
+}
+
+/**
+ * Stateless per-compute engine for cone-of-influence analysis. Factored out of
+ * [ConeOfInfluenceAnalysis] so the backward-slicing logic can be exercised
+ * directly without the DI-bound analysis wrapper. Holds no mutable public
+ * state - [compute] returns the full result.
+ */
+class ConeOfInfluenceComputation(
+    private val inlinedOxsts: InlinedOxsts,
+    private val evaluator: MetaStaticExpressionEvaluator,
+) {
+
+    fun compute(): ConeOfInfluenceInfo {
         // Pre-index: for each variable, the operations that assign to it.
         // We must concat the write lists before groupBy - using Map.plus would
         // silently drop one list when a variable has both assignments and havocs.
@@ -82,13 +97,9 @@ class ConeOfInfluenceAnalysis @Inject constructor(
         val relevantVariables = mutableSetOf<VariableDeclaration>()
         val relevantAssignments = mutableSetOf<Operation>()
 
-        // Worklist of variables to analyze - when a variable enters the cone,
-        // its assignments (and their enclosing guards) also enter the cone,
-        // and their read dependencies propagate backward.
         val variableWorklist = Worklist<VariableDeclaration>()
 
-        // Seed from the property expression.
-        for (variable in variablesReadIn(inlinedOxsts.property.expression, evaluator)) {
+        for (variable in variablesReadIn(inlinedOxsts.property.expression)) {
             if (relevantVariables.add(variable)) variableWorklist.add(variable)
         }
 
@@ -98,27 +109,24 @@ class ConeOfInfluenceAnalysis @Inject constructor(
             for (assignment in assignmentsByVariable[variable] ?: emptyList()) {
                 if (!relevantAssignments.add(assignment)) continue
 
-                // Data dependence: variables read by the assignment's RHS.
                 val reads = when (assignment) {
-                    is AssignmentOperation -> variablesReadIn(assignment.expression, evaluator)
+                    is AssignmentOperation -> variablesReadIn(assignment.expression)
                     is HavocOperation -> emptySet()
-                    else -> emptySet()
+                    else -> error("Unexpected write operation: ${assignment::class.simpleName}")
                 }
                 for (read in reads) {
                     if (relevantVariables.add(read)) variableWorklist.add(read)
                 }
 
-                // Control dependence: guards of enclosing `if`/`assume` that
-                // gate whether this assignment executes.
-                for (guardVariable in guardVariablesFor(assignment, evaluator)) {
+                for (guardVariable in guardVariablesFor(assignment)) {
                     if (relevantVariables.add(guardVariable)) variableWorklist.add(guardVariable)
                 }
             }
         }
 
         return ConeOfInfluenceInfo(
-            relevantVariables = relevantVariables,
-            relevantAssignments = relevantAssignments,
+            relevantVariables = relevantVariables.toSet(),
+            relevantAssignments = relevantAssignments.toSet(),
         )
     }
 
@@ -128,11 +136,7 @@ class ConeOfInfluenceAnalysis @Inject constructor(
         else -> error("Unexpected write operation: ${operation::class.simpleName}")
     }
 
-    /** Variables appearing as reads inside [expression] (including [expression] itself if it is a read). */
-    private fun variablesReadIn(
-        expression: Expression,
-        evaluator: MetaStaticExpressionEvaluator,
-    ): Set<VariableDeclaration> {
+    private fun variablesReadIn(expression: Expression): Set<VariableDeclaration> {
         val result = mutableSetOf<VariableDeclaration>()
         val candidates = sequenceOf(expression) + expression.eAllOfType<Expression>()
         for (candidate in candidates) {
@@ -147,51 +151,31 @@ class ConeOfInfluenceAnalysis @Inject constructor(
      * Variables read in the guards that decide whether [operation] commits.
      *
      * Under OXSTS's atomic-transition semantics, a transition body commits
-     * as a unit: if **any** `assume` in the body fails, every write in the
-     * body is rolled back. So every `assume` in the enclosing transition is
-     * a control dependency of every write in that transition - including
+     * as a unit: if any `assume` in the body fails, every write in the body
+     * is rolled back. So every `assume` in the enclosing transition is a
+     * control dependency of every write in that transition - including
      * assumes that textually follow the write, at any nesting depth.
-     *
-     * Concretely we collect:
-     *  - [IfOperation.guard] on every enclosing `if` (the write only runs on
-     *    one arm; the guard decides which).
-     *  - [AssumptionOperation.expression] on every enclosing `assume`.
-     *  - The expression of every [AssumptionOperation] anywhere inside the
-     *    containing transition body (sibling assumes at any position, at any
-     *    nesting depth). This captures the atomic-commit control dep.
      */
-    private fun guardVariablesFor(
-        operation: Operation,
-        evaluator: MetaStaticExpressionEvaluator,
-    ): Set<VariableDeclaration> {
+    private fun guardVariablesFor(operation: Operation): Set<VariableDeclaration> {
         val result = mutableSetOf<VariableDeclaration>()
 
-        // Ancestor if/assume guards.
         var current: EObject? = operation.eContainer()
         while (current != null) {
             when (current) {
-                is IfOperation -> result += variablesReadIn(current.guard, evaluator)
-                is AssumptionOperation -> result += variablesReadIn(current.expression, evaluator)
+                is IfOperation -> result += variablesReadIn(current.guard)
+                is AssumptionOperation -> result += variablesReadIn(current.expression)
             }
             current = current.eContainer()
         }
 
-        // Atomic commit: every assume anywhere in the enclosing transition
-        // body is a control dep, even if it textually follows the write.
         val transitionBody = transitionBodyContaining(operation) ?: return result
         for (assume in transitionBody.eAllOfType<AssumptionOperation>()) {
             if (assume === operation) continue
-            result += variablesReadIn(assume.expression, evaluator)
+            result += variablesReadIn(assume.expression)
         }
         return result
     }
 
-    /**
-     * The top-level body of the transition containing [operation], or `null`
-     * if [operation] is not within a transition. The returned object is the
-     * child of the [TransitionDeclaration] that contains [operation] - every
-     * op inside it commits-or-rolls-back as one atomic unit.
-     */
     private fun transitionBodyContaining(operation: Operation): EObject? {
         var child: EObject = operation
         var current: EObject? = operation.eContainer()

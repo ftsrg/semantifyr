@@ -7,10 +7,12 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
-import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.ConstantExpressionEvaluationTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.AnalysisManager
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationCategory
@@ -26,6 +28,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.DeMorganPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.DoubleNegationPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.DoubleUnaryMinusPattern
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.FeatureTypedNothingComparisonPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.IdempotentBooleanPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.NegatedComparisonPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.RedundantAndPattern
@@ -37,9 +40,11 @@ import hu.bme.mit.semantifyr.semantics.compilation.optimization.patterns.express
 class ExpressionSimplificationPass @Inject constructor(
     private val config: OptimizationConfig,
     evaluator: ConstantExpressionEvaluatorProvider,
+    metaEvaluatorProvider: MetaConstantExpressionEvaluatorProvider,
+    multiplicityRangeEvaluator: MultiplicityRangeEvaluator,
     transformer: ConstantExpressionEvaluationTransformer,
     artifactManager: CompilationArtifactManager,
-) : Pass<InstantiatedCompilationContext> {
+) : Pass<EvaluableCompilationContext> {
 
     private val worklistOptimizer = WorklistOptimizer(
         patterns = listOf(
@@ -58,6 +63,8 @@ class ExpressionSimplificationPass @Inject constructor(
             IdempotentBooleanPattern(),
             SelfComparisonPattern(),
             SelfArithmeticPattern(),
+            // Type-driven comparisons against 'nothing'
+            FeatureTypedNothingComparisonPattern(metaEvaluatorProvider, multiplicityRangeEvaluator),
             // Temporal operator rewrites
             BubbleNotEFPattern(),
             BubbleNotAGPattern(),
@@ -68,7 +75,7 @@ class ExpressionSimplificationPass @Inject constructor(
         artifactManager = artifactManager,
     )
 
-    override fun run(input: InstantiatedCompilationContext, analyses: AnalysisManager): PassResult {
+    override fun run(input: EvaluableCompilationContext, analyses: AnalysisManager): PassResult {
         if (!config.isAnyEnabled(OptimizationCategory.ExpressionSimplification, OptimizationCategory.ConstantFolding)) {
             return PassResult.Unchanged
         }

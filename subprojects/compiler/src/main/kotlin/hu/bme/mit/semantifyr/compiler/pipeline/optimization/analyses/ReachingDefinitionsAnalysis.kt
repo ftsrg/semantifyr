@@ -22,7 +22,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
-import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluator
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
@@ -81,10 +81,28 @@ class ReachingDefinitionsAnalysis @Inject constructor(
     private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
 ) : Analysis<ReachingDefinitionsInfo> {
 
-    override fun compute(input: InstantiatedCompilationContext): ReachingDefinitionsInfo {
-        val evaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(input.instanceTree.rootInstance)
-        val inlinedOxsts = input.inlinedOxsts
+    override fun compute(input: EvaluableCompilationContext): ReachingDefinitionsInfo {
+        val evaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
+        return ReachingDefinitionsComputation(input.inlinedOxsts, evaluator).compute()
+    }
 
+}
+
+/**
+ * Stateless per-compute engine for reaching-definitions analysis. Holds no
+ * mutable public state - [compute] returns the full result, and the
+ * intermediate [defsOf] is scoped to this instance. Factored out of
+ * [ReachingDefinitionsAnalysis] so the algorithm can be exercised directly
+ * without the DI-bound analysis wrapper.
+ */
+class ReachingDefinitionsComputation(
+    private val inlinedOxsts: InlinedOxsts,
+    private val evaluator: MetaStaticExpressionEvaluator,
+) {
+
+    private val defsOf = mutableMapOf<Expression, Set<EObject>>()
+
+    fun compute(): ReachingDefinitionsInfo {
         // Initial definitions: approximate the transition-entry state as
         // "every write in the IR could have produced the current value".
         // This is conservative but safe.
@@ -102,29 +120,27 @@ class ReachingDefinitionsAnalysis @Inject constructor(
             inlinedOxsts.eAllOfType<AssignmentOperation>().map { it as EObject } +
                 inlinedOxsts.eAllOfType<HavocOperation>().map { it as EObject }
         val initialIn: Map<VariableDeclaration, Set<EObject>> = assignmentWrites
-            .groupBy { variableOfWrite(it as Operation, evaluator) }
+            .groupBy { variableOfWrite(it as Operation) }
             .mapValues { it.value.toSet() }
-
-        val defsOf = mutableMapOf<Expression, Set<EObject>>()
 
         // Analyse each transition independently - assignments between transitions
         // are joined via the conservative initialIn.
         for (transition in transitionsOf(inlinedOxsts)) {
             for (branch in transition.branches) {
-                walkOperation(branch, initialIn, evaluator, defsOf)
+                walkOperation(branch, initialIn)
             }
         }
 
         // Reads outside any transition (e.g., property expression, variable
         // initializers) see the full set of writes as reaching them.
-        val visitedReads = defsOf.keys
-        for (read in readsIn(inlinedOxsts, evaluator)) {
+        val visitedReads = defsOf.keys.toSet()
+        for (read in readsIn(inlinedOxsts)) {
             if (read in visitedReads) continue
             val variable = evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, read) ?: continue
             defsOf[read] = initialIn[variable].orEmpty()
         }
 
-        return ReachingDefinitionsInfo(defsOf)
+        return ReachingDefinitionsInfo(defsOf.toMap())
     }
 
     /**
@@ -135,47 +151,41 @@ class ReachingDefinitionsAnalysis @Inject constructor(
     private fun walkOperation(
         operation: Operation,
         incoming: Map<VariableDeclaration, Set<EObject>>,
-        evaluator: MetaStaticExpressionEvaluator,
-        defsOf: MutableMap<Expression, Set<EObject>>,
     ): Map<VariableDeclaration, Set<EObject>> = when (operation) {
         is SequenceOperation -> {
             var state = incoming
             for (step in operation.steps) {
-                state = walkOperation(step, state, evaluator, defsOf)
+                state = walkOperation(step, state)
             }
             state
         }
         is ChoiceOperation -> {
-            // All branches see `incoming`; merge outputs.
             operation.branches
-                .map { walkOperation(it, incoming, evaluator, defsOf) }
+                .map { walkOperation(it, incoming) }
                 .fold(emptyMap<VariableDeclaration, Set<EObject>>()) { acc, branchOut -> mergeDefs(acc, branchOut) }
         }
         is IfOperation -> {
-            recordReads(operation.guard, incoming, evaluator, defsOf)
-            val bodyOut = walkOperation(operation.body, incoming, evaluator, defsOf)
-            val elseOut = operation.`else`?.let { walkOperation(it, incoming, evaluator, defsOf) } ?: incoming
+            recordReads(operation.guard, incoming)
+            val bodyOut = walkOperation(operation.body, incoming)
+            val elseOut = operation.`else`?.let { walkOperation(it, incoming) } ?: incoming
             mergeDefs(bodyOut, elseOut)
         }
         is ForOperation -> {
-            recordReads(operation.rangeExpression, incoming, evaluator, defsOf)
-            // Fixed point: body may execute 0 or more times. Each iteration
-            // sees previous iterations' defs.
+            recordReads(operation.rangeExpression, incoming)
             var state = incoming
             var changed = true
             while (changed) {
                 val before = state
-                val after = walkOperation(operation.body, state, evaluator, defsOf)
+                val after = walkOperation(operation.body, state)
                 state = mergeDefs(before, after)
                 changed = state != before
             }
             state
         }
         is AssignmentOperation -> {
-            recordReads(operation.expression, incoming, evaluator, defsOf)
+            recordReads(operation.expression, incoming)
             val variable = evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, operation.reference)
                 ?: return incoming
-            // Kill previous defs of this variable; add this assignment.
             incoming + (variable to setOf<EObject>(operation))
         }
         is HavocOperation -> {
@@ -184,27 +194,20 @@ class ReachingDefinitionsAnalysis @Inject constructor(
             incoming + (variable to setOf<EObject>(operation))
         }
         is AssumptionOperation -> {
-            recordReads(operation.expression, incoming, evaluator, defsOf)
+            recordReads(operation.expression, incoming)
             incoming
         }
         is LocalVarDeclarationOperation -> {
-            // A local variable is re-initialized every time its declaration
-            // runs. Kill any incoming defs (from initialIn's conservative
-            // "every write reaches" approximation) and seed the declaration
-            // itself as the sole reaching def at the declaration point.
-            recordReads(operation.expression, incoming, evaluator, defsOf)
+            recordReads(operation.expression, incoming)
             incoming + (operation to setOf<EObject>(operation))
         }
         is TraceOperation -> incoming
         else -> incoming
     }
 
-    /** For every read expression in [expression], record its reaching definitions. */
     private fun recordReads(
         expression: Expression,
         incoming: Map<VariableDeclaration, Set<EObject>>,
-        evaluator: MetaStaticExpressionEvaluator,
-        defsOf: MutableMap<Expression, Set<EObject>>,
     ) {
         val candidates = sequenceOf(expression) + expression.eAllOfType<Expression>()
         for (candidate in candidates) {
@@ -229,7 +232,6 @@ class ReachingDefinitionsAnalysis @Inject constructor(
 
     private fun variableOfWrite(
         operation: Operation,
-        evaluator: MetaStaticExpressionEvaluator,
     ): VariableDeclaration = when (operation) {
         is AssignmentOperation -> evaluator.evaluateTyped(VariableDeclaration::class.java, operation.reference)
         is HavocOperation -> evaluator.evaluateTyped(VariableDeclaration::class.java, operation.reference)
@@ -243,7 +245,6 @@ class ReachingDefinitionsAnalysis @Inject constructor(
 
     private fun readsIn(
         inlinedOxsts: InlinedOxsts,
-        evaluator: MetaStaticExpressionEvaluator,
     ): Sequence<Expression> = inlinedOxsts.eAllOfType<Expression>()
         .filterNot { OxstsUtils.isWriteExpression(it) }
         .filter { evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, it) != null }

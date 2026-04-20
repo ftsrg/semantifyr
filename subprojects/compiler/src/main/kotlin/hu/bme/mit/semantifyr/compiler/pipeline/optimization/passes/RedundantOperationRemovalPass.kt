@@ -9,7 +9,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
-import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.AnalysisManager
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationCategory
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
@@ -26,7 +26,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.RemoveRedun
 class RedundantOperationRemovalPass @Inject constructor(
     private val config: OptimizationConfig,
     artifactManager: CompilationArtifactManager,
-) : Pass<InstantiatedCompilationContext> {
+) : Pass<EvaluableCompilationContext> {
 
     private val worklistOptimizer = WorklistOptimizer(
         patterns = listOf(
@@ -41,7 +41,7 @@ class RedundantOperationRemovalPass @Inject constructor(
         artifactManager = artifactManager,
     )
 
-    override fun run(input: InstantiatedCompilationContext, analyses: AnalysisManager): PassResult {
+    override fun run(input: EvaluableCompilationContext, analyses: AnalysisManager): PassResult {
         if (!config.isEnabled(OptimizationCategory.RedundantOperationRemoval)) {
             return PassResult.Unchanged
         }

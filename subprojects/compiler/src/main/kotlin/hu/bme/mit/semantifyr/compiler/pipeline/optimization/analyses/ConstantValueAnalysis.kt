@@ -13,7 +13,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
-import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
@@ -50,8 +50,8 @@ class ConstantValueAnalysis @Inject constructor(
     private val constantExpressionEvaluatorProvider: ConstantExpressionEvaluatorProvider,
 ) : Analysis<ConstantValueInfo> {
 
-    override fun compute(input: InstantiatedCompilationContext): ConstantValueInfo {
-        val evaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(input.instanceTree.rootInstance)
+    override fun compute(input: EvaluableCompilationContext): ConstantValueInfo {
+        val evaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
         val inlinedOxsts = input.inlinedOxsts
 
         // Variables that have havoc operations can't be constant.
