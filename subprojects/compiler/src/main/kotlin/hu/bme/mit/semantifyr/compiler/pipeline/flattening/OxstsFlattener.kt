@@ -38,6 +38,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.Flattened
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.treeSequence
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
@@ -108,7 +109,8 @@ class OxstsFlattener @Inject constructor(
         logger.info { "Running post-flattening optimizers" }
         flattenedPhaseOptimizer.optimize(inlinedCompilationContext)
 
-        compilationArtifactManager.commitStep(CompilationPass.Deflation)
+        // The final post-deflation state is emitted by the orchestrator via
+        // commitFlattened(); no step-level duplicate needed here.
 
         val instanceIdMapping = deflatedEvaluationTransformer.buildMapping()
 
@@ -141,44 +143,64 @@ class OxstsFlattener @Inject constructor(
         variableMappings: MutableMap<Instance, Map<VariableDeclaration, VariableDeclaration>>,
     ) {
         val builtinAnything = builtinSymbolResolver.anythingClass(inlinedOxsts)
-        val instances = instanceTree.rootInstance.treeSequence()
 
-        for (instance in instances) {
-            val instanceReference = instanceReferenceProvider.getReference(instance)
-            val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
-            val instanceName = instance.name
-
+        for (instance in instanceTree.rootInstance.treeSequence()) {
             val memberCollection = domainMemberCollectionProvider.getMemberCollection(instance.domain)
             val domainVariables = memberCollection.declarations.filterIsInstance<VariableDeclaration>().distinct()
+
             val instanceMappings = mutableMapOf<VariableDeclaration, VariableDeclaration>()
-
             for (domainVariable in domainVariables) {
-                val actualVariable = domainVariable.copy()
-
-                if (actualVariable.typeSpecification.domain is FeatureDeclaration) {
-                    val featureInstances = evaluator.evaluateInstances(OxstsFactory.createElementReference(actualVariable.typeSpecification.domain))
-                    variableInstanceDomain[actualVariable] = featureInstances
-                    actualVariable.typeSpecification.domain = builtinAnything
-                }
-
-                if (actualVariable.typeSpecification.domain is ClassDeclaration) {
-                    val classDeclaration = actualVariable.typeSpecification.domain as ClassDeclaration
-                    val classInstances = instanceCollector.instancesOfType(instanceTree.rootInstance, classDeclaration)
-                    variableInstanceDomain[actualVariable] = classInstances
-                    actualVariable.typeSpecification.domain = builtinAnything
-                }
-
-                actualVariable.name = "$instanceName${InstanceNames.INSTANCE_NAME_SEPARATOR}${actualVariable.name}"
+                val actualVariable = pullDownVariable(
+                    domainVariable = domainVariable,
+                    instance = instance,
+                    instanceTree = instanceTree,
+                    builtinAnything = builtinAnything,
+                    variableInstanceDomain = variableInstanceDomain,
+                )
                 variableHolders[actualVariable] = instance
                 instanceMappings[domainVariable] = actualVariable
-
-                expressionRewriter.rewriteExpressionsToContext(actualVariable, instanceReference.copy())
-
                 inlinedOxsts.variables += actualVariable
             }
-
             variableMappings[instance] = instanceMappings
         }
+    }
+
+    /**
+     * Clone [domainVariable] into an instance-specific variable named with the
+     * [instance]'s prefix. If the declared domain is a feature or a class,
+     * capture the eligible instance set in [variableInstanceDomain] and retype
+     * to `Anything` (the erased int-domain marker used downstream).
+     */
+    private fun pullDownVariable(
+        domainVariable: VariableDeclaration,
+        instance: Instance,
+        instanceTree: InstanceTree,
+        builtinAnything: ClassDeclaration,
+        variableInstanceDomain: MutableMap<VariableDeclaration, Set<Instance>>,
+    ): VariableDeclaration {
+        val actualVariable = domainVariable.copy()
+        val declaredDomain = actualVariable.typeSpecification.domain
+
+        when (declaredDomain) {
+            is FeatureDeclaration -> {
+                val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
+                val featureInstances = evaluator.evaluateInstances(OxstsFactory.createElementReference(declaredDomain))
+                variableInstanceDomain[actualVariable] = featureInstances
+                actualVariable.typeSpecification.domain = builtinAnything
+            }
+            is ClassDeclaration -> {
+                val classInstances = instanceCollector.instancesOfType(instanceTree.rootInstance, declaredDomain)
+                variableInstanceDomain[actualVariable] = classInstances
+                actualVariable.typeSpecification.domain = builtinAnything
+            }
+            else -> {
+                // Primitive-domain variable (int/bool/enum/etc.); no retyping.
+            }
+        }
+
+        actualVariable.name = "${instance.name}${InstanceNames.INSTANCE_NAME_SEPARATOR}${actualVariable.name}"
+        expressionRewriter.rewriteExpressionsToContext(actualVariable, instanceReferenceProvider.getReference(instance))
+        return actualVariable
     }
 
     private fun rewriteVariableReferences(
@@ -195,7 +217,12 @@ class OxstsFlattener @Inject constructor(
         for (variableReference in variableReferences) {
             val originalVariable = variableReference.member as VariableDeclaration
             val containerInstance = evaluator.evaluateSingleInstance(variableReference.primary)
-            val instanceVariable = variableMappings[containerInstance]?.get(originalVariable) ?: error("Variable '${originalVariable.name}' not found for instance")
+            val instanceVariable = variableMappings[containerInstance]?.get(originalVariable)
+                ?: sourceError(
+                    variableReference,
+                    "Variable '${originalVariable.name}' not found for instance '${containerInstance.name}'. " +
+                        "pullDownVariables should have registered every in-scope variable on every instance before reference rewriting.",
+                )
             val instanceVariableReference = OxstsFactory.createElementReference(instanceVariable)
             EcoreUtil2.replace(variableReference, instanceVariableReference)
         }

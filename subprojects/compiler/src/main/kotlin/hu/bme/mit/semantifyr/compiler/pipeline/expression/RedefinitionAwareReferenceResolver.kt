@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.expression
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration
@@ -44,7 +45,7 @@ class RedefinitionAwareReferenceResolver @Inject constructor(
     }
 
     fun resolve(domain: DomainDeclaration, reference: NamedElement): NamedElement {
-        return resolveOrNull(domain, reference) ?: throw IllegalArgumentException("Could not resolve element ${reference.name}!")
+        return resolveOrNull(domain, reference) ?: sourceError(reference, "Could not resolve element '${reference.name}' in domain '${domain.name}'")
     }
 
     fun resolveOrNull(domain: DomainDeclaration, reference: NamedElement): NamedElement? {
@@ -56,7 +57,7 @@ class RedefinitionAwareReferenceResolver @Inject constructor(
     }
 
     fun resolve(domain: DomainDeclaration, redefinableDeclaration: RedefinableDeclaration): Declaration {
-        return resolveOrNull(domain, redefinableDeclaration) ?: throw IllegalArgumentException("Could not resolve element ${redefinableDeclaration.name}!")
+        return resolveOrNull(domain, redefinableDeclaration) ?: sourceError(redefinableDeclaration, "Could not resolve element '${redefinableDeclaration.name}' in domain '${domain.name}'")
     }
 
     fun resolveOrNull(domain: DomainDeclaration, redefinableDeclaration: RedefinableDeclaration): Declaration? {

@@ -60,7 +60,7 @@ class DeadStoreEliminationPass @Inject constructor(
 
         for (operation in deadWrites) {
             EcoreUtil2.remove(operation)
-            artifactManager.commitStep(CompilationPass.RedundantOperationRemoval)
+            artifactManager.commitStep(CompilationPass.DeadStoreElimination)
         }
         return PassResult.changed()
     }

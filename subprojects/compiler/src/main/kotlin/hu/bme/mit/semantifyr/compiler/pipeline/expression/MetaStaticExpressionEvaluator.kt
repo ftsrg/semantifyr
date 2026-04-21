@@ -45,7 +45,7 @@ class MetaStaticExpressionEvaluator @AssistedInject constructor(
 
     override fun visit(expression: ElementReference): NamedElement {
         if (expression.element.eIsProxy()) {
-            throw IllegalStateException("Element could not be resolved!");
+            sourceError(expression, "Element reference could not be resolved (unresolved proxy)")
         }
 
         return redefinitionAwareReferenceResolver.resolve(instance.domain, expression.element)

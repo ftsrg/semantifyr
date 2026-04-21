@@ -122,7 +122,13 @@ abstract class VerificationPortfolio {
             decisive += result
             if (decisive.size < count) return@receiveResultsWithTimeout null
             val allAgree = decisive.map { it.verdict }.distinct().size == 1
-            if (allAgree) decisive.first() else null
+            if (allAgree) {
+                decisive.first()
+            } else {
+                val breakdown = decisive.joinToString(", ") { "${it.metadata.backendId}=${it.verdict}" }
+                logger.warn { "$id: firstNDecisive(n=$count) disagreement among the first $count decisive results ($breakdown); returning null so the caller can map to Inconclusive" }
+                null
+            }
         }
 
         cancelRemainingJobs()
@@ -211,7 +217,11 @@ abstract class VerificationPortfolio {
      * Runs the jobs in the Scope by routing their results into a channel -> simple handling of concurrent results
      */
     private fun CoroutineScope.funnelJobsIntoChannel(scope: PortfolioScope): Channel<Result<VerificationResult>> {
-        val results = Channel<Result<VerificationResult>>(Channel.UNLIMITED)
+        // Bound the channel at the job count: every job will enqueue exactly
+        // one result, and the drainer reads all of them, so this capacity
+        // never forces a sender to suspend. A bounded channel makes the
+        // intent explicit vs an unlimited buffer that grows with job count.
+        val results = Channel<Result<VerificationResult>>(scope.jobs.size)
         scope.jobs.forEach { deferred ->
             launch {
                 val outcome = try {

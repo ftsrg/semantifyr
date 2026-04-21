@@ -6,6 +6,7 @@
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
+    id("hu.bme.mit.semantifyr.gradle.conventions.theta")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }
@@ -25,4 +26,14 @@ dependencies {
 
     testFixturesApi(project(":oxsts.lang"))
     testFixturesApi(testFixtures(project(":oxsts.lang")))
+}
+
+testing {
+    suites {
+        val verificationTest by getting(JvmTestSuite::class) {
+            dependencies {
+                implementation(project(":portfolios"))
+            }
+        }
+    }
 }

@@ -19,8 +19,11 @@ inline fun <reified T : EObject> EObject.eAllOfType(): Sequence<T> {
 }
 
 fun sourceLocationPrefix(eObject: EObject): String {
-    val node = NodeModelUtils.findActualNodeFor(eObject)
-    val resource = eObject.eResource()
+    // NodeModelUtils / EcoreUtil.getExistingAdapter can NPE when handed a test
+    // mock that lacks the EMF adapter machinery. Guard the lookup so test
+    // fixtures can trigger sourceError without standing up a full resource set.
+    val node = runCatching { NodeModelUtils.findActualNodeFor(eObject) }.getOrNull()
+    val resource = runCatching { eObject.eResource() }.getOrNull()
     val fileName = resource?.uri?.lastSegment()
     if (node == null && fileName == null) {
         return ""

@@ -1,0 +1,102 @@
+package semantifyr::verification::lang::expressions
+
+// Arithmetic operators: + - * /. Each step recomputes `a` from two
+// havoc'd and bounded operands so the state space stays small and
+// the invariant is obvious.
+@VerificationCase
+class ArithmeticOperators {
+    var a: int := 0
+
+    redefine tran {
+        var x: int := 0
+        var y: int := 0
+        havoc(x)
+        havoc(y)
+        assume(x >= 1 && x <= 5)
+        assume(y >= 1 && y <= 5)
+        choice {
+            a := x + y
+        } or {
+            a := x - y
+        } or {
+            a := x * y
+        } or {
+            a := x / y
+        }
+    }
+
+    prop {
+        return AG (a >= -5 && a <= 25)
+    }
+}
+
+// Boolean operators: && || ^^ !
+@VerificationCase
+class BooleanOperators {
+    var p: bool := true
+    var q: bool := false
+
+    redefine tran {
+        choice {
+            p := p && q
+        } or {
+            p := p || q
+        } or {
+            p := p ^^ q
+        } or {
+            p := !p
+        } or {
+            havoc(q)
+        }
+    }
+
+    prop {
+        return AG (p == true || p == false)
+    }
+}
+
+// Comparison operators: < <= > >= == !=
+@VerificationCase
+class ComparisonOperators {
+    var x: int := 0
+    var y: int := 0
+    var result: bool := false
+
+    redefine tran {
+        havoc(x)
+        assume(x >= 0 && x <= 10)
+        havoc(y)
+        assume(y >= 0 && y <= 10)
+        choice {
+            result := x < y
+        } or {
+            result := x <= y
+        } or {
+            result := x > y
+        } or {
+            result := x >= y
+        } or {
+            result := x == y
+        } or {
+            result := x != y
+        }
+    }
+
+    prop {
+        return AG (x >= 0 && x <= 10 && y >= 0 && y <= 10)
+    }
+}
+
+// Unary minus.
+@VerificationCase
+class UnaryMinus {
+    var x: int := 5
+
+    redefine tran {
+        x := -x
+    }
+
+    prop {
+        return EF (x == -5)
+    }
+}

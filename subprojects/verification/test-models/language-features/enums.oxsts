@@ -1,0 +1,48 @@
+package semantifyr::verification::lang::enums
+
+enum Color {
+    Red,
+    Green,
+    Blue
+}
+
+// Basic enum variable with assignment; reachability check.
+@VerificationCase
+class EnumAssignment {
+    var c: Color := Color::Red
+
+    redefine tran {
+        choice {
+            assume(c == Color::Red)
+            c := Color::Green
+        } or {
+            assume(c == Color::Green)
+            c := Color::Blue
+        }
+    }
+
+    prop {
+        return EF (c == Color::Blue)
+    }
+}
+
+// Safety invariant over enums: colour is always one of the declared literals.
+// Written as a disjunction to exercise enum-literal comparisons in AG.
+@VerificationCase
+class EnumSafety {
+    var c: Color := Color::Red
+
+    redefine tran {
+        choice {
+            c := Color::Red
+        } or {
+            c := Color::Green
+        } or {
+            c := Color::Blue
+        }
+    }
+
+    prop {
+        return AG (c == Color::Red || c == Color::Green || c == Color::Blue)
+    }
+}

@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.InlinedPhaseOptimizer
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
@@ -21,6 +22,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TemporalOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
+import org.eclipse.xtext.EcoreUtil2
 
 class OxstsInliner @Inject constructor(
     private val inlinedPhaseOptimizer: InlinedPhaseOptimizer,
@@ -59,8 +61,10 @@ class OxstsInliner @Inject constructor(
             }
         }
 
-        if (inlinedOxsts.eAllOfType<TemporalOperator>().count() > 1) {
-            error("Temporal operators may only appear inside property blocks!")
+        val temporalOutsideProperty = inlinedOxsts.eAllOfType<TemporalOperator>()
+            .firstOrNull { EcoreUtil2.getContainerOfType(it, PropertyDeclaration::class.java) == null }
+        if (temporalOutsideProperty != null) {
+            sourceError(temporalOutsideProperty, "Temporal operators may only appear inside property blocks!")
         }
     }
 

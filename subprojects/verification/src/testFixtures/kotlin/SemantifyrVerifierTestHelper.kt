@@ -72,13 +72,29 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         verificationPortfolio: VerificationPortfolio,
         timeout: Duration = 30.toDuration(DurationUnit.MINUTES),
         environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
+        expectedVerdict: VerificationVerdict = VerificationVerdict.Passed,
     ) {
         val result = runVerificationCase(context, case, verificationPortfolio, timeout, environment)
         Assertions.assertEquals(
-            VerificationVerdict.Passed,
+            expectedVerdict,
             result.verdict,
-            "Expected ${case.qualifiedName} to pass, got ${result.verdict} (${result.message ?: "no message"})",
+            "Expected ${case.qualifiedName} verdict $expectedVerdict, got ${result.verdict} (${result.message ?: "no message"})",
         )
+    }
+
+    fun <T> productAsArguments(
+        cases: List<VerificationCase>,
+        configs: List<T>,
+        configName: (T) -> String,
+    ): List<Arguments> {
+        return cases.flatMap { case ->
+            configs.map { config ->
+                Arguments.of(
+                    Named.of(case.qualifiedName, case),
+                    Named.of(configName(config), config),
+                )
+            }
+        }
     }
 
     suspend fun runVerificationCase(

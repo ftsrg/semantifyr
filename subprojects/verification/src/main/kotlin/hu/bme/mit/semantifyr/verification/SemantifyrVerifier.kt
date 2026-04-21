@@ -137,6 +137,7 @@ interface SemantifyrVerifier : AutoCloseable {
         }
 
         fun timeout(timeout: Duration): Builder {
+            require(timeout.isPositive()) { "timeout must be positive, got $timeout" }
             this.timeout = timeout
             return this
         }

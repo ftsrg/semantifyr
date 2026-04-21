@@ -115,8 +115,16 @@ class FlatteningInfo(
         }
 
     fun resolveOriginalVariable(holder: Instance, actualVariable: VariableDeclaration): VariableDeclaration {
-        val reverse = reverseVariableMappings[holder] ?: error("No variable mappings for instance")
-        return reverse[actualVariable] ?: error("Variable '${actualVariable.name}' not found in reverse mapping")
+        val reverse = reverseVariableMappings[holder]
+            ?: hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError(
+                actualVariable,
+                "No variable mappings for instance '${holder.name}'",
+            )
+        return reverse[actualVariable]
+            ?: hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError(
+                actualVariable,
+                "Variable '${actualVariable.name}' not found in reverse mapping for instance '${holder.name}'",
+            )
     }
 
 }

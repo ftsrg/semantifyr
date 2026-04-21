@@ -63,7 +63,7 @@ class ConstantVariableSubstitutionPass @Inject constructor(
 
         for ((readExpression, constantExpression) in substitutions) {
             EcoreUtil2.replace(readExpression, constantExpression.copy())
-            artifactManager.commitStep(CompilationPass.ConstantFolding)
+            artifactManager.commitStep(CompilationPass.ConstantVariableSubstitution)
         }
         return PassResult.changed()
     }

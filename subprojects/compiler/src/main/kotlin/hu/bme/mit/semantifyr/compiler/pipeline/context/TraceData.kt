@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.context
 
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.TransitionCallTrace
 
@@ -15,7 +16,8 @@ class TransitionCallTraceMap(
 ) {
 
     fun getTransitionCallTrace(traceOperation: TraceOperation): TransitionCallTrace {
-        return traceMap[traceOperation.name] ?: error("No transition call trace was found for '${traceOperation.name}'!")
+        return traceMap[traceOperation.name]
+            ?: sourceError(traceOperation, "No transition call trace was found for '${traceOperation.name}'")
     }
 
 }

@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactKind
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactManager
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.RedefinitionAwareReferenceResolver
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 
@@ -74,7 +75,15 @@ class InlinedOxstsModelCreator @Inject constructor(
     }
 
     private fun createPropertyDeclaration(inlinedOxsts: InlinedOxsts): PropertyDeclaration {
-        val property = redefinitionAwareReferenceResolver.resolveOrNull(inlinedOxsts.rootFeature, "prop") as? PropertyDeclaration
+        val resolved = redefinitionAwareReferenceResolver.resolveOrNull(inlinedOxsts.rootFeature, "prop")
+        if (resolved != null && resolved !is PropertyDeclaration) {
+            sourceError(
+                resolved,
+                "Expected an element named 'prop' to be a property declaration, found ${resolved::class.simpleName}. " +
+                    "Verification cases identify their property by the name 'prop'.",
+            )
+        }
+        val property = resolved as? PropertyDeclaration
 
         if (property == null) {
             return OxstsFactory.createPropertyDeclaration().also {

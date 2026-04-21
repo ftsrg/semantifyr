@@ -21,12 +21,14 @@ enum class ArtifactKind {
 }
 
 enum class CompilationPass {
-    Inflation,
     ExpressionCallInlining,
     OperationCallInlining,
     ConstantFolding,
+    ConstantVariableSubstitution,
+    CopyPropagation,
     ExpressionSimplification,
     RedundantOperationRemoval,
+    DeadStoreElimination,
     OperationFlattening,
     AssumptionPropagation,
     DeadCodeRemoval,

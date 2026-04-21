@@ -74,7 +74,7 @@ class CopyPropagationPass @Inject constructor(
 
         for ((read, source) in substitutions) {
             EcoreUtil2.replace(read, source.copy())
-            artifactManager.commitStep(CompilationPass.ConstantFolding)
+            artifactManager.commitStep(CompilationPass.CopyPropagation)
         }
         return PassResult.changed()
     }

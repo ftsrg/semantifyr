@@ -1,0 +1,58 @@
+package semantifyr::verification::lang::navigation
+
+class Leaf {
+    var v: int := 0
+    tran bump() {
+        v := v + 1
+    }
+}
+
+// Optional navigation on an empty containment - the inline call is
+// dropped by the call-target resolver and the tran becomes a no-op.
+@VerificationCase
+class OptionalNavDrop {
+    contains leaf: Leaf[0..1]
+
+    redefine tran {
+        inline leaf?.bump()
+    }
+
+    // No reachable state can observe anything about `leaf` because it has
+    // no instance; the tran is a safe no-op.
+    prop {
+        return AG true
+    }
+}
+
+// Class-typed variable dispatch - variable's type is a class, not a
+// feature. The dispatch resolves via InstanceCollector.instancesOfType.
+class ClassWorker {
+    var done: bool := false
+    tran step() {
+        done := true
+    }
+}
+
+@VerificationCase
+class ClassTypedDispatch {
+    contains a: ClassWorker[1]
+    contains b: ClassWorker[1]
+
+    var current: ClassWorker[0..1] := nothing
+
+    redefine init {
+        choice {
+            current := a
+        } or {
+            current := b
+        }
+    }
+
+    redefine tran {
+        inline current.step()
+    }
+
+    prop {
+        return EF (a.done || b.done)
+    }
+}

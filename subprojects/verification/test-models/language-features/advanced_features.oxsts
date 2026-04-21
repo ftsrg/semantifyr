@@ -1,0 +1,113 @@
+package semantifyr::verification::lang::advanced_features
+
+// Abstract property redefined in the concrete subclass. The anonymous
+// prop body calls the named one; inlining picks up the subclass body.
+abstract class Sensor {
+    var count: int := 0
+    abstract prop threshold(): bool
+}
+
+@VerificationCase
+class ThresholdSensor : Sensor {
+    redefine prop threshold(): bool {
+        return count >= 3
+    }
+
+    redefine tran {
+        count := count + 1
+    }
+
+    prop {
+        return EF threshold()
+    }
+}
+
+// Parametric transition invoked with a computed non-literal argument.
+@VerificationCase
+class NonLiteralArg {
+    var x: int := 0
+    var base: int := 3
+
+    tran addBy(n: int) {
+        x := x + n
+    }
+
+    redefine tran {
+        inline addBy(base + 2)
+    }
+
+    prop {
+        return EF x == 5
+    }
+}
+
+// Parametric transition invoked with an enum argument. Exercises
+// enum-literal substitution through the inliner into the body.
+enum Command { Inc, Dec }
+
+@VerificationCase
+class EnumArgDispatch {
+    var lastCmd: Command := Command::Dec
+
+    tran apply(cmd: Command) {
+        lastCmd := cmd
+    }
+
+    redefine tran {
+        inline apply(Command::Inc)
+    }
+
+    prop {
+        return EF lastCmd == Command::Inc
+    }
+}
+
+// Inline for over a negative range unrolls in the natural order.
+@VerificationCase
+class NegativeRangeFor {
+    var total: int := 0
+
+    redefine init {
+        inline for (n in -2..0) {
+            total := total + n
+        }
+    }
+
+    prop {
+        return EF total == -3
+    }
+}
+
+// Global containment: a package-level singleton instance that verification
+// cases can reference. Covers the `global containment` feature kind.
+class GlobalCounter {
+    var tick: int := 0
+}
+
+global containment counter: GlobalCounter[1]
+
+@VerificationCase
+class GlobalContainmentTick {
+    redefine tran {
+        counter.tick := counter.tick + 1
+    }
+
+    prop {
+        return EF counter.tick == 3
+    }
+}
+
+// Deeply nested negation + boolean combinators stays satisfiable.
+@VerificationCase
+class NestedNegation {
+    var a: bool := false
+    var b: bool := false
+
+    redefine tran {
+        choice { a := !a } or { b := !b }
+    }
+
+    prop {
+        return AG !(!(a || b) && (a || b))
+    }
+}

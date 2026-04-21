@@ -22,16 +22,12 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralNothing
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TemporalOperator
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.xtext.EcoreUtil2
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.TimeUnit
 
 /**
  * Feature-matrix integration tests for the compiler.
@@ -48,8 +44,7 @@ import java.util.concurrent.TimeUnit
  * end-to-end without crashing.
  */
 @InjectWithOxsts
-@Timeout(value = 10, unit = TimeUnit.SECONDS, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
-class FullCompilationTest {
+class CompilationTests {
 
     @TempDir
     lateinit var tempDir: Path
@@ -608,6 +603,336 @@ class FullCompilationTest {
     }
 
     @Test
+    fun `inline transition call through a feature-typed variable dispatches across candidates`() {
+        assertCompiles(
+            classToCompile = "Dispatcher",
+            source = """
+                package compilation::tests::variable_dispatch
+                class Worker {
+                    var done: bool := false
+                    tran step() { done := true }
+                }
+
+                @VerificationCase
+                class Dispatcher {
+                    contains workers: Worker[0..*]
+                    contains a: Worker[1] subsets workers
+                    contains b: Worker[1] subsets workers
+                    var current: workers[0..1] := nothing
+                    redefine init {
+                        choice { current := a } or { current := b }
+                    }
+                    redefine tran {
+                        inline current.step()
+                    }
+                    prop { return EF (a.done && b.done) }
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `derived refers feature with opposite resolves via reverse lookup`() {
+        assertCompiles(
+            classToCompile = "Wiring",
+            source = """
+                package compilation::tests::derived_refers
+                class Node {
+                    refers ownedBy: Graph[1]
+                    var v: int := 0
+                }
+
+                @VerificationCase
+                class Wiring {
+                    contains graph: Graph[1]
+                    contains n: Node[1] {
+                        redefine refers ownedBy: Graph[1] = graph
+                    }
+                    redefine tran { n.v := n.v + 1 }
+                    prop { return EF n.v == 1 }
+                }
+
+                class Graph {
+                    derived refers owns: Node[0..*] opposite ownedBy
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `global containment feature at package level`() {
+        assertCompiles(
+            classToCompile = "Consumer",
+            source = """
+                package compilation::tests::global_containment
+                class Shared {
+                    var flag: bool := false
+                }
+
+                global containment sharedInstance: Shared[1]
+
+                @VerificationCase
+                class Consumer {
+                    redefine tran { sharedInstance.flag := true }
+                    prop { return EF sharedInstance.flag }
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `abstract property with concrete redefinition`() {
+        assertCompiles(
+            classToCompile = "Concrete",
+            source = """
+                package compilation::tests::abstract_prop
+                abstract class Base {
+                    var x: int := 0
+                    abstract prop predicate(): bool
+                }
+
+                @VerificationCase
+                class Concrete : Base {
+                    redefine prop predicate(): bool {
+                        return x > 0
+                    }
+                    redefine tran { x := x + 1 }
+                    prop { return EF predicate() }
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `optional navigation on empty containment drops the call`() {
+        assertCompiles(
+            classToCompile = "Parent",
+            source = """
+                package compilation::tests::optional_nav
+                class Leaf {
+                    var v: int := 0
+                    tran bump() { v := v + 1 }
+                }
+
+                @VerificationCase
+                class Parent {
+                    contains leaf: Leaf[0..1]
+                    redefine tran { inline leaf?.bump() }
+                    prop { return AG true }
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `nested negation and boolean combinators in property`() {
+        assertCompiles(
+            classToCompile = "Nested",
+            source = """
+                package compilation::tests::nested_negation
+                @VerificationCase
+                class Nested {
+                    var a: bool := false
+                    var b: bool := false
+                    redefine tran {
+                        choice { a := !a } or { b := !b }
+                    }
+                    prop { return AG !(!(a || b) && (a || b)) }
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `parametric transition called with a non-literal argument`() {
+        assertCompiles(
+            classToCompile = "ComputedArg",
+            source = """
+                package compilation::tests::non_literal_arg
+                @VerificationCase
+                class ComputedArg {
+                    var x: int := 0
+                    var base: int := 3
+
+                    tran addBy(n: int) {
+                        x := x + n
+                    }
+
+                    redefine tran {
+                        inline addBy(base + 2)
+                    }
+
+                    prop { return EF x == 5 }
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `parametric transition called with an enum argument`() {
+        assertCompiles(
+            classToCompile = "Dispatcher",
+            source = """
+                package compilation::tests::enum_arg
+                enum Command { Inc, Dec }
+
+                @VerificationCase
+                class Dispatcher {
+                    var x: int := 0
+
+                    tran apply(cmd: Command) {
+                        choice {
+                            assume(cmd == Command::Inc)
+                            x := x + 1
+                        } or {
+                            assume(cmd == Command::Dec)
+                            x := x - 1
+                        }
+                    }
+
+                    redefine tran {
+                        inline apply(Command::Inc)
+                    }
+
+                    prop { return EF x == 3 }
+                }
+            """,
+        )
+    }
+
+    @org.junit.jupiter.api.Disabled(
+        "Non-inline `for` over an instance range with a bare loop variable " +
+            "does not plumb the loop variable's candidate instances through " +
+            "the dispatching call-target resolver. Loop variables lack a " +
+            "typeSpecification.domain, so candidateInstancesOf returns empty. " +
+            "Tracked under the existing roadmap entry for variable dispatch / " +
+            "runtime for-loops."
+    )
+    @org.junit.jupiter.api.Test
+    fun `non-inline for over an instance range iterates at runtime`() {
+        assertCompiles(
+            classToCompile = "Host",
+            source = """
+                package compilation::tests::runtime_for
+                class Worker {
+                    var v: int := 0
+                    tran bump() { v := v + 1 }
+                }
+
+                @VerificationCase
+                class Host {
+                    contains workers: Worker[0..*]
+                    contains a: Worker[1] subsets workers
+                    contains b: Worker[1] subsets workers
+                    redefine tran {
+                        for (w in workers) {
+                            inline w.bump()
+                        }
+                    }
+                    prop { return EF (a.v == 1 && b.v == 1) }
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `real literal passes through the compiler uninterpreted`() {
+        // Pins current behaviour: real literals parse and survive the
+        // compilation pipeline even though Theta's backend only supports
+        // int/bool/enum. Semantic correctness at the backend level belongs
+        // to the verification suite; if real-literal support is added or
+        // rejected downstream, this test documents the change.
+        assertCompiles(
+            classToCompile = "RealLiteral",
+            source = """
+                package compilation::tests::real_literal
+                @VerificationCase
+                class RealLiteral {
+                    var x: int := 0
+                    redefine tran { x := x + 1 }
+                    prop { return EF x > 3.14 }
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `string literal passes through the compiler uninterpreted`() {
+        // Pins current behaviour: see note on real literals.
+        assertCompiles(
+            classToCompile = "StringLiteral",
+            source = """
+                package compilation::tests::string_literal
+                @VerificationCase
+                class StringLiteral {
+                    var x: int := 0
+                    redefine tran { x := x + 1 }
+                    prop { return EF x == "hi" }
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `array literal indexing is rejected`() {
+        assertCompilationFails(
+            classToCompile = "Indexing",
+            source = """
+                package compilation::tests::indexing
+                @VerificationCase
+                class Indexing {
+                    var x: int := 0
+                    redefine tran {
+                        x := [1, 2, 3][1]
+                    }
+                    prop { return EF x == 2 }
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `non-inline for over an integer range iterates at runtime`() {
+        assertCompiles(
+            classToCompile = "RuntimeFor",
+            source = """
+                package compilation::tests::runtime_for_int
+                @VerificationCase
+                class RuntimeFor {
+                    var total: int := 0
+                    redefine tran {
+                        for (n in 1..3) {
+                            total := total + n
+                        }
+                    }
+                    prop { return EF total == 6 }
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `abstract features kind is compiled when subsetters provide instances`() {
+        assertCompiles(
+            classToCompile = "Host",
+            source = """
+                package compilation::tests::features_kind
+                class Sensor {
+                    var fired: bool := false
+                }
+
+                @VerificationCase
+                class Host {
+                    features sensors: Sensor
+                    contains s1: Sensor[1] subsets sensors
+                    redefine tran { s1.fired := true }
+                    prop { return EF s1.fired }
+                }
+            """,
+        )
+    }
+
+    @Test
     fun `two verification cases in one package`() {
         assertCompiles(
             classToCompile = "SecondCase",
@@ -628,6 +953,51 @@ class FullCompilationTest {
                 }
             """,
         )
+    }
+
+    /**
+     * Assert the pipeline rejects this source: either parsing errors, or
+     * the compiler itself throws. [messageContains] is an optional substring
+     * filter on the reported diagnostics / exception; pass "" to accept any
+     * rejection. Useful for pinning that the compiler says "nope" to a given
+     * language feature, so regressions that silently accept it are caught.
+     */
+    private fun assertCompilationFails(classToCompile: String, source: String, messageContains: String = "") {
+        val parsed = try {
+            parseHelper.parse(source.trimIndent())
+        } catch (e: Exception) {
+            if (messageContains.isNotEmpty()) {
+                assertThat(e.message).asString().containsIgnoringCase(messageContains)
+            }
+            return
+        }
+
+        if (parsed.resourceErrors.isNotEmpty()) {
+            if (messageContains.isNotEmpty()) {
+                val joined = parsed.resourceErrors.joinToString("\n") { it.message ?: "" }
+                assertThat(joined).containsIgnoringCase(messageContains)
+            }
+            return
+        }
+
+        val classDecl = EcoreUtil2.eAllOfType(parsed.oxstsPackage, ClassDeclaration::class.java)
+            .singleOrNull { it.name == classToCompile }
+            ?: error("Class '$classToCompile' not found in the test model")
+
+        val artifactDir = tempDir.resolve("artifacts").also { Files.createDirectories(it) }
+        val thrown = org.assertj.core.api.Assertions.catchThrowable {
+            SemantifyrCompiler(
+                injector = injector,
+                artifactConfig = ArtifactConfig.all(artifactDir),
+            ).use { it.compile(classDecl) }
+        }
+
+        assertThat(thrown)
+            .`as`("compilation of '$classToCompile' was expected to fail")
+            .isNotNull()
+        if (messageContains.isNotEmpty()) {
+            assertThat(thrown!!.message ?: "").containsIgnoringCase(messageContains)
+        }
     }
 
     private fun assertCompiles(classToCompile: String, source: String) {

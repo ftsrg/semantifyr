@@ -1,0 +1,91 @@
+package semantifyr::verification::lang::classes_and_inheritance
+
+// Simple containment - root navigates into its worker via a feature.
+class Worker {
+    var done: bool := false
+}
+
+@VerificationCase
+class SingleContainment {
+    contains w: Worker[1]
+
+    redefine tran {
+        w.done := true
+    }
+
+    prop {
+        return EF w.done == true
+    }
+}
+
+// Single-level inheritance with a redefined transition. The base class's
+// behaviour is empty; the child's sets a variable.
+class Base {
+    tran act() { }
+}
+
+class Child : Base {
+    var x: int := 0
+    redefine tran act() {
+        x := 10
+    }
+}
+
+@VerificationCase
+class ChildRedefinition {
+    contains c: Child[1]
+
+    redefine tran {
+        inline c.act()
+    }
+
+    prop {
+        return EF c.x == 10
+    }
+}
+
+// Multi-level inheritance: Base <- Mid <- Leaf. Each level redefines `act`.
+// We call through a Leaf instance and check the Leaf's body wins.
+class MidLevel : Base {
+    var m: int := 0
+    redefine tran act() {
+        m := 1
+    }
+}
+
+class LeafLevel : MidLevel {
+    var l: int := 0
+    redefine tran act() {
+        l := 2
+    }
+}
+
+@VerificationCase
+class MultiLevelRedefinition {
+    contains leaf: LeafLevel[1]
+
+    redefine tran {
+        inline leaf.act()
+    }
+
+    prop {
+        return EF leaf.l == 2
+    }
+}
+
+// Redefinition reached polymorphically via a parent-typed containment.
+// `b` is a Base-typed containment; `c` is the Child placed in it via subsetting.
+// Inlining `b.act()` must pick the Child's redefinition.
+@VerificationCase
+class PolymorphicDispatch {
+    contains b: Base[0..*]
+    contains c: Child[1] subsets b
+
+    redefine tran {
+        inline b.act()
+    }
+
+    prop {
+        return EF c.x == 10
+    }
+}

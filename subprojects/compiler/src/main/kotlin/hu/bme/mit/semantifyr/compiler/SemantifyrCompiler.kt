@@ -40,11 +40,32 @@ class SemantifyrCompiler(
         logger.info { "Compiler artifacts will be written to: ${artifactConfig.outputDirectory.toAbsolutePath()}" }
     }
 
+    /**
+     * Compiles a top-level [ClassDeclaration] through the full pipeline
+     * (instantiation -> inlining -> deflation, with optimizer passes at the
+     * inlined and flattened phases).
+     *
+     * Each call creates a fresh [CompilationPipeline] in a child injector, so
+     * per-compilation services (artifact manager, instance tree, optimizer
+     * state) start clean. Safe to call concurrently from different threads.
+     *
+     * Use this entrypoint for normal verification: the caller has a loaded
+     * model and wants the deflated IR to feed a backend.
+     */
     fun compile(classDeclaration: ClassDeclaration): FlattenedCompilationContext {
         logger.info { "Compiling class '${classDeclaration.name}'" }
         return freshPipeline().compileDeflated(classDeclaration)
     }
 
+    /**
+     * Compiles an already-inlined [InlinedOxsts] through the pipeline. Used
+     * primarily to replay witness models: a counterexample captured from a
+     * backend can be re-compiled and re-verified.
+     *
+     * The pipeline still runs instantiation, inlining, and deflation on the
+     * input. "Already inlined" refers to its serialized form, not skipping
+     * any compilation stage.
+     */
     fun compile(inlinedOxsts: InlinedOxsts): FlattenedCompilationContext {
         logger.info { "Compiling inlined oxsts of '${inlinedOxsts.classDeclaration.name}'" }
         return freshPipeline().compileDeflated(inlinedOxsts)

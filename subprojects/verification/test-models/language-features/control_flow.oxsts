@@ -1,0 +1,100 @@
+package semantifyr::verification::lang::control_flow
+
+// Nondeterministic choice between two assignments - both states are reachable.
+@VerificationCase
+class ChoiceOneSide {
+    var x: int := 0
+
+    redefine tran {
+        choice {
+            x := 1
+        } or {
+            x := 2
+        }
+    }
+
+    prop {
+        return EF x == 2
+    }
+}
+
+// Assumption limits which branches are taken.
+@VerificationCase
+class AssumeGuard {
+    var x: int := 0
+
+    redefine tran {
+        assume(x < 3)
+        x := x + 1
+    }
+
+    prop {
+        return AG (x <= 3)
+    }
+}
+
+// Havoc sets a variable to an arbitrary value within bounds;
+// the next assume narrows it. The prop checks the narrowing holds.
+@VerificationCase
+class HavocNarrowed {
+    var x: int := 0
+
+    redefine tran {
+        havoc(x)
+        assume(x >= 0 && x <= 5)
+    }
+
+    prop {
+        return AG (x >= 0 && x <= 5)
+    }
+}
+
+// Inline if with a true static guard always takes the then branch.
+@VerificationCase
+class InlineIfTrue {
+    var taken: int := 0
+
+    redefine tran {
+        inline if (1 < 2) {
+            taken := 1
+        } else {
+            taken := 2
+        }
+    }
+
+    prop {
+        return AG (taken == 0 || taken == 1)
+    }
+}
+
+// Inline sequential for unrolls three increments at compile time.
+@VerificationCase
+class InlineSeqForUnrolled {
+    var total: int := 0
+
+    redefine init {
+        inline for (n in 1..3) {
+            total := total + n
+        }
+    }
+
+    prop {
+        return EF (total == 6)
+    }
+}
+
+// Inline choice-for produces a nondeterministic choice over each value.
+@VerificationCase
+class InlineChoiceFor {
+    var chosen: int := 0
+
+    redefine tran {
+        inline for choice (n in 1..3) {
+            chosen := n
+        }
+    }
+
+    prop {
+        return EF chosen == 3
+    }
+}

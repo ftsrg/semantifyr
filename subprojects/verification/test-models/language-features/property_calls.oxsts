@@ -1,0 +1,58 @@
+package semantifyr::verification::lang::property_calls
+
+// Named property called from the main prop via bare self-call.
+@VerificationCase
+class PropSelfBareCall {
+    var x: int := 0
+
+    prop isPositive(): bool {
+        return x > 0
+    }
+
+    redefine tran {
+        x := x + 1
+    }
+
+    prop {
+        return EF isPositive()
+    }
+}
+
+// Named property called from the main prop via self-navigation.
+@VerificationCase
+class PropSelfNavCall {
+    var x: int := 0
+
+    prop isPositive(): bool {
+        return x > 0
+    }
+
+    redefine tran {
+        x := x + 1
+    }
+
+    prop {
+        return EF self.isPositive()
+    }
+}
+
+// Property call through a single-level navigation.
+class PropWorker {
+    var done: bool := false
+    prop isDone(): bool {
+        return done
+    }
+}
+
+@VerificationCase
+class PropNavigationCall {
+    contains w: PropWorker[1]
+
+    redefine tran {
+        w.done := true
+    }
+
+    prop {
+        return EF w.isDone()
+    }
+}
