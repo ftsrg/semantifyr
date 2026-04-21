@@ -35,6 +35,18 @@ jobs:
       - name: Gradle build
         shell: bash
         run: ./gradlew build
+      - name: Aggregate coverage reports
+        if: ${{ matrix.os == 'ubuntu-latest' && always() }}
+        shell: bash
+        run: ./gradlew testCodeCoverageReport verificationTestCodeCoverageReport
+      - name: Upload coverage reports
+        if: ${{ matrix.os == 'ubuntu-latest' && always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage-reports
+          path: build/reports/jacoco/**/html/
+          if-no-files-found: warn
+          retention-days: 30
       - name: Upload GithHub Pages artifact
         if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: actions/upload-pages-artifact@v3
