@@ -42,11 +42,11 @@ testing {
                 testTask.configure {
                     group = "verification"
                     usesService(verificationTestServiceProvider)
-                    failFast = true
+
                     maxParallelForks = 1
 
-                    minHeapSize = "512m"
-                    maxHeapSize = "4G"
+                    testLogging.showStandardStreams = true
+                    testLogging.exceptionFormat = TestExceptionFormat.FULL
 
                     shouldRunAfter(suites.named("test"))
                 }

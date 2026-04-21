@@ -13,7 +13,6 @@ plugins {
     `java-library`
     `java-test-fixtures`
     jacoco
-    java
 }
 
 repositories {
@@ -25,12 +24,9 @@ val libs = the<LibrariesForLibs>()
 val mockitoAgent by configurations.creating
 
 dependencies {
-    testFixturesApi(libs.junit.api)
+    testFixturesApi(libs.bundles.junit.fixtures)
     testFixturesApi(libs.assertj.core)
-    testFixturesApi(libs.junit.params)
-    testFixturesApi(libs.mockito.core)
-    testFixturesApi(libs.mockito.junit)
-    testFixturesApi(libs.mockito.kotlin)
+    testFixturesApi(libs.bundles.mockito)
 
     mockitoAgent(libs.mockito.core) { isTransitive = false }
 }
@@ -45,16 +41,13 @@ testing {
             useJUnitJupiter()
 
             dependencies {
-                runtimeOnly(libs.junit.engine)
-                runtimeOnly(libs.junit.platform.launcher)
+                runtimeOnly.bundle(libs.bundles.junit.runtime)
                 runtimeOnly(libs.slf4j.log4j)
             }
 
             targets.all {
                 testTask.configure {
                     jvmArgs("-javaagent:${mockitoAgent.asPath}", "-Xshare:off")
-                    minHeapSize = "512m"
-                    maxHeapSize = "4G"
                     testLogging.showStandardStreams = true
                     testLogging.exceptionFormat = TestExceptionFormat.FULL
                     finalizedBy(tasks.jacocoTestReport)
