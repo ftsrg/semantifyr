@@ -9,6 +9,7 @@ import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.application")
+    id("hu.bme.mit.semantifyr.gradle.conventions.theta")
     alias(libs.plugins.bmuschko.docker)
     kotlin("jvm")
     kotlin("plugin.serialization")
@@ -28,7 +29,7 @@ val frontendDistribution by configurations.creating {
     isCanBeResolved = true
 }
 
-val thetaClasspath by configurations.creating {
+val thetaClasspath by configurations.getting {
     isCanBeConsumed = false
     isCanBeResolved = true
 }
@@ -53,8 +54,6 @@ dependencies {
 
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlinx.coroutines.test)
-
-    runtimeOnly(libs.slf4j.log4j)
 
     lspDistributions(project(":oxsts.lang.ide", configuration = "distributionOutput"))
     lspDistributions(project(":xsts.lang.ide", configuration = "distributionOutput"))
@@ -134,21 +133,15 @@ val endToEndTest by tasks.registering(Test::class) {
     group = "verification"
     description = "Run backend end-to-end tests (boot real LSP, drive verification over WS)"
 
-    inputs.files(cloneLspDistributions)
-    inputs.files(cloneWebDistributions)
+                    inputs.files(cloneLspDistributions)
+                    inputs.files(cloneWebDistributions)
 
-    useJUnitPlatform {
-        includeTags("slow")
+                    val stagingDir = layout.buildDirectory.dir("staging").get().asFile
+                    systemProperty("semantifyr.live.lsp", stagingDir.resolve("lsp").absolutePath)
+                }
+            }
+        }
     }
-    testClassesDirs = sourceSets["test"].output.classesDirs
-    classpath = sourceSets["test"].runtimeClasspath
-
-    val stagingDir = layout.buildDirectory.dir("staging").get().asFile
-    systemProperty("semantifyr.live.lsp", stagingDir.resolve("lsp").absolutePath)
-
-    minHeapSize = "512m"
-    maxHeapSize = "4G"
-    testLogging.showStandardStreams = true
 }
 
 val prepareDocker by tasks.registering {
@@ -158,13 +151,23 @@ val prepareDocker by tasks.registering {
     inputs.files(tasks.installDist)
 }
 
+val dockerImageRepo = "ftsrgbot/semantifyr-server"
+val dockerGitSha = providers.exec {
+    commandLine("git", "rev-parse", "--short", "HEAD")
+    isIgnoreExitValue = true
+}.standardOutput.asText.map { it.trim() }
+
 val dockerBuildImage by tasks.registering(DockerBuildImage::class) {
     dependsOn(prepareDocker)
     inputDir.set(projectDir)
-    images.add("ftsrgbot/semantifyr-server:${project.version}")
+    images.add("$dockerImageRepo:${project.version}")
+    images.add("$dockerImageRepo:latest")
+    images.add(dockerGitSha.map { "$dockerImageRepo:$it" })
 }
 
 val dockerPushImage by tasks.registering(DockerPushImage::class) {
     dependsOn(dockerBuildImage)
-    images.add("ftsrgbot/semantifyr-server:${project.version}")
+    images.add("$dockerImageRepo:${project.version}")
+    images.add("$dockerImageRepo:latest")
+    images.add(dockerGitSha.map { "$dockerImageRepo:$it" })
 }

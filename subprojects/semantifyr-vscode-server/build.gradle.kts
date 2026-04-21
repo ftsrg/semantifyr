@@ -94,13 +94,23 @@ val prepareDockerBuild by tasks.registering {
     dependsOn(cloneTestModels)
 }
 
+val dockerImageRepo = "ftsrgbot/semantifyr-vscode-server"
+val dockerGitSha = providers.exec {
+    commandLine("git", "rev-parse", "--short", "HEAD")
+    isIgnoreExitValue = true
+}.standardOutput.asText.map { it.trim() }
+
 val dockerBuildImage by tasks.registering(DockerBuildImage::class) {
     dependsOn(prepareDockerBuild)
     inputDir.set(projectDir)
-    images.add("ftsrgbot/semantifyr-vscode-server:${project.version}")
+    images.add("$dockerImageRepo:${project.version}")
+    images.add("$dockerImageRepo:latest")
+    images.add(dockerGitSha.map { "$dockerImageRepo:$it" })
 }
 
 val dockerPushImage by tasks.registering(DockerPushImage::class) {
     dependsOn(dockerBuildImage)
-    images.add("ftsrgbot/semantifyr-vscode-server:${project.version}")
+    images.add("$dockerImageRepo:${project.version}")
+    images.add("$dockerImageRepo:latest")
+    images.add(dockerGitSha.map { "$dockerImageRepo:$it" })
 }
