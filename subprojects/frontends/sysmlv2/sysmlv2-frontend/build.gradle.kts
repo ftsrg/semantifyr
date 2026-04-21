@@ -9,8 +9,7 @@ import com.github.gradle.node.task.NodeTask
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-    base
-    alias(libs.plugins.gradle.node)
+    id("hu.bme.mit.semantifyr.gradle.conventions.frontend")
 }
 
 val sysmlCommit = "f829c1307799c278242ab456b8c6cd7adf44f156" // Added support for AcceptWhen triggers
@@ -18,23 +17,7 @@ val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.buildDirectory.dir("sysml-2ls").get()
 
 node {
-    version = "22.14.0"
-    download = true
     nodeProjectDir = sysmlDir
-}
-
-abstract class PnpmService : BuildService<BuildServiceParameters.None>
-
-val pnpmService = gradle.sharedServices.registerIfAbsent("pnpmService", PnpmService::class.java) {
-    maxParallelUsages.set(1)
-}
-
-// node tasks must not run in parallel, as pnpm is sensitive to that
-tasks.withType<PnpmTask>().configureEach {
-    usesService(pnpmService)
-}
-tasks.withType<NodeTask>().configureEach {
-    usesService(pnpmService)
 }
 
 val distributionOutput by configurations.creating {
@@ -61,8 +44,6 @@ val checkoutSysml by tasks.registering(Exec::class) {
 }
 
 tasks.pnpmInstall {
-    usesService(pnpmService)
-
     dependsOn(checkoutSysml)
 }
 

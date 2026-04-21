@@ -5,30 +5,9 @@
  */
 
 import com.github.gradle.node.npm.task.NpmTask
-import com.github.gradle.node.task.NodeTask
 
 plugins {
-    base
-    alias(libs.plugins.gradle.node)
-}
-
-node {
-    version = "22.14.0"
-    download = true
-}
-
-abstract class NpmService : BuildService<BuildServiceParameters.None>
-
-val npmService = gradle.sharedServices.registerIfAbsent("npmService", NpmService::class.java) {
-    maxParallelUsages.set(1)
-}
-
-// node tasks must not run in parallel, as npm is sensitive to that
-tasks.withType<NpmTask>().configureEach {
-    usesService(npmService)
-}
-tasks.withType<NodeTask>().configureEach {
-    usesService(npmService)
+    id("hu.bme.mit.semantifyr.gradle.conventions.frontend")
 }
 
 val distributionOutput by configurations.creating {
@@ -80,7 +59,19 @@ val buildExtension by tasks.registering(NpmTask::class) {
     outputs.dir("dist")
 }
 
+val syncPackageVersion by tasks.registering(NpmTask::class) {
+    description = "Rewrite package.json version to match project.version"
+    dependsOn(tasks.npmInstall)
+    inputs.property("version", project.version.toString())
+    outputs.file(project.layout.projectDirectory.file("package.json"))
+    npmCommand.set(listOf("pkg", "set", "version=${project.version}"))
+}
+
+val vsixFile = project.layout.buildDirectory.file("semantifyr-${project.version}.vsix")
+
 val bundleExtension by tasks.registering(NpmTask::class) {
+    dependsOn(syncPackageVersion)
+
     inputs.files(cloneDistribution.get().outputs)
     inputs.dir(project.layout.projectDirectory.dir("src"))
     inputs.dir(project.layout.projectDirectory.dir("syntaxes"))
@@ -103,7 +94,7 @@ val bundleExtension by tasks.registering(NpmTask::class) {
         ),
     )
 
-    outputs.file(project.layout.buildDirectory.file("semantifyr-0.0.1.vsix"))
+    outputs.file(vsixFile)
 }
 
 tasks {
@@ -118,7 +109,7 @@ tasks {
 }
 
 artifacts {
-    add(distributionOutput.name, project.layout.buildDirectory.file("semantifyr-0.0.1.vsix")) {
+    add(distributionOutput.name, vsixFile) {
         builtBy(bundleExtension)
     }
 }

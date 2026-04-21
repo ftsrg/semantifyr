@@ -7,23 +7,7 @@
 import com.github.gradle.node.npm.task.NpmTask
 
 plugins {
-    base
-    alias(libs.plugins.gradle.node)
-}
-
-node {
-    version = "22.14.0"
-    download = true
-}
-
-abstract class NpmService : BuildService<BuildServiceParameters.None>
-
-val npmService = gradle.sharedServices.registerIfAbsent("npmService", NpmService::class.java) {
-    maxParallelUsages.set(1)
-}
-
-tasks.withType<NpmTask>().configureEach {
-    usesService(npmService)
+    id("hu.bme.mit.semantifyr.gradle.conventions.frontend")
 }
 
 val assembleFrontend by tasks.registering(NpmTask::class) {
