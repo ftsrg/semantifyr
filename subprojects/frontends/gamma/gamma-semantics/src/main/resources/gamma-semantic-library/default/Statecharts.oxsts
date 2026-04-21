@@ -250,7 +250,7 @@ class Guard {
     contains expression: Expression[1]
 
     prop isOpen(): bool {
-        return expression.evaluate()
+        return expression.evaluate() as bool
     }
 }
 

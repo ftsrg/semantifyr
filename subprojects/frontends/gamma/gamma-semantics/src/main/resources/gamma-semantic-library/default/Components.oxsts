@@ -52,7 +52,7 @@ class Channel {
 
     // @Trace
     tran doTransferEvent() {
-        inline outputPort.setInputEvent(inputPort.outputEvent)
+        inline outputPort.setInputEvent(inputPort.outputEvent as Event)
     }
 
     redefine tran {

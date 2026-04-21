@@ -27,7 +27,7 @@ class SetTimeoutAction : Action {
     contains expression: Expression[1]
 
     redefine tran {
-        timeout.remainingTime := expression.evaluate()
+        timeout.remainingTime := expression.evaluate() as int
     }
 }
 
