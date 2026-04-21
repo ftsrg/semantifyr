@@ -62,6 +62,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String INCORRECT_ASSIGNMENT = ISSUE_PREFIX + "INCORRECT_ASSIGNMENT";
     public static final String INCORRECT_CALLED_ELEMENT = ISSUE_PREFIX + "INCORRECT_CALLED_ELEMENT";
     public static final String VARIABLE_WITH_IMPLICIT_TYPE = ISSUE_PREFIX + "VARIABLE_WITH_IMPLICIT_TYPE";
+    public static final String UNSUPPORTED_FEATURE = ISSUE_PREFIX + "UNSUPPORTED_FEATURE";
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
@@ -216,6 +217,21 @@ public class OxstsValidator extends AbstractOxstsValidator {
     @Check
     public void checkUniqueMembers(RecordDeclaration recordDeclaration) {
         checkUniqueSimpleNames(recordDeclaration.getMembers());
+    }
+
+    // Records are in the grammar but not yet handled by the compilation pipeline
+    // (no flattener strategy, no backend mapping). Until the record-support work
+    // lands, reject any record declaration upfront with a pointed error rather
+    // than letting downstream passes silently ignore records or crash.
+    @Check
+    public void checkRecordDeclarationNotYetSupported(RecordDeclaration recordDeclaration) {
+        acceptError(
+                "Record types are not yet supported by the compiler. Use a class or a primitive type instead.",
+                recordDeclaration,
+                OxstsPackage.Literals.NAMED_ELEMENT__NAME,
+                0,
+                UNSUPPORTED_FEATURE
+        );
     }
 
     @Check
