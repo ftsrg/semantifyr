@@ -2,7 +2,7 @@
   "name": "semantifyr",
   "displayName": "Semantifyr",
   "description": "Language support and verification tooling for Semantifyr. Semantic library-driven formal verification of engineering models.",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "publisher": "ftsrg",
   "license": "EPL-2.0",
