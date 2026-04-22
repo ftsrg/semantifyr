@@ -7,35 +7,7 @@
 package hu.bme.mit.semantifyr.oxsts.lang.semantics.modality;
 
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluator;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticBinaryOperator;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOperator;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.CastExpression;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfThenElse;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInfinity;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralNothing;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralReal;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParameterDeclaration;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 
 public class ExpressionModalityEvaluator extends ExpressionEvaluator<Modality> {
 
@@ -145,7 +117,13 @@ public class ExpressionModalityEvaluator extends ExpressionEvaluator<Modality> {
 
     @Override
     protected Modality visit(CallSuffixExpression expression) {
-        return Modality.RUNTIME;
+        var result = evaluate(expression.getPrimary());
+        for (Argument arg : expression.getArguments()) {
+            if (arg.getExpression() != null) {
+                result = result.leastUpperBound(evaluate(arg.getExpression()));
+            }
+        }
+        return result;
     }
 
     @Override
@@ -181,10 +159,25 @@ public class ExpressionModalityEvaluator extends ExpressionEvaluator<Modality> {
             return Modality.RUNTIME;
         }
         return switch (element) {
+            // Constant - no context needed at all.
             case EnumLiteral ignored -> Modality.CONSTANT;
+            case EnumDeclaration ignored -> Modality.CONSTANT;
+            case DataTypeDeclaration ignored -> Modality.CONSTANT;
+            // Compile-time - needs an instance context but no runtime state.
             case FeatureDeclaration ignored -> Modality.COMPILE_TIME;
-            case ParameterDeclaration ignored -> Modality.RUNTIME;
+            case ClassDeclaration ignored -> Modality.COMPILE_TIME;
+            case RecordDeclaration ignored -> Modality.COMPILE_TIME;
+            // Parameters: optimistic. A parameter's effective modality is
+            // the modality of the argument at the call site, which we
+            // validate separately. Treating them as COMPILE_TIME lets
+            // parametric compile-time calls pass the body-level check.
+            case ParameterDeclaration ignored -> Modality.COMPILE_TIME;
+            // Runtime - reading state that only exists when the model executes.
             case VariableDeclaration ignored -> Modality.RUNTIME;
+            // Calls resolve through CallSuffixExpression; a direct reference
+            // to a transition / property declaration (without a call) is
+            // unusual. Treat conservatively.
+            case TransitionDeclaration ignored -> Modality.RUNTIME;
             case PropertyDeclaration ignored -> Modality.RUNTIME;
             default -> Modality.RUNTIME;
         };
