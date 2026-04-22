@@ -22,22 +22,22 @@ public class OxstsPackageParseHelper {
     @Inject
     private ParseHelper<OxstsModelPackage> parseHelper;
 
-    public OxstsPackageWrapper parse(String text) {
+    public WrappedOxstsPackage parse(String text) {
         try {
             var oxstsPackage = parseHelper.parse(text);
             EcoreUtil.resolveAll(oxstsPackage);
-            return new OxstsPackageWrapper(oxstsPackage, null);
+            return new WrappedOxstsPackage(oxstsPackage, null);
         } catch (Exception e) {
             throw new AssertionError("Unexpected exception while parsing Oxsts Package", e);
         }
     }
 
-    public OxstsPackageWrapper parse(String text, CheckMode checkMode) {
+    public WrappedOxstsPackage parse(String text, CheckMode checkMode) {
         try {
             var oxstsPackage = parseHelper.parse(text);
             EcoreUtil.resolveAll(oxstsPackage);
             var issues = resourceValidator.validate(oxstsPackage.eResource(), checkMode, CancelIndicator.NullImpl);
-            return new OxstsPackageWrapper(oxstsPackage, issues);
+            return new WrappedOxstsPackage(oxstsPackage, issues);
         } catch (Exception e) {
             throw new AssertionError("Unexpected exception while parsing Oxsts Package", e);
         }
