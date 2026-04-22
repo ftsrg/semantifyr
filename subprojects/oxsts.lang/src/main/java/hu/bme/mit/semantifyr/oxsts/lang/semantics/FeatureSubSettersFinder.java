@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration;
 import org.eclipse.xtext.util.Tuples;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
 
 public class FeatureSubSettersFinder {
@@ -35,11 +36,15 @@ public class FeatureSubSettersFinder {
     public Collection<FeatureDeclaration>  computeSubSetters(DomainDeclaration domain, FeatureDeclaration feature) {
         var memberCollection = domainMemberCollectionProvider.getMemberCollection(domain);
 
+        // Preserve declaration order via LinkedHashSet. HashSet here would
+        // make downstream IR shape depend on hash order, which the
+        // golden-output tests catch as non-determinism (see
+        // variable_dispatch fixture).
         return memberCollection.getDeclarations().stream()
                 .filter(d -> d instanceof FeatureDeclaration)
                 .map(d -> (FeatureDeclaration)d)
                 .filter(f -> subsetHandler.getSubsetFeature(f) == feature)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
 }
