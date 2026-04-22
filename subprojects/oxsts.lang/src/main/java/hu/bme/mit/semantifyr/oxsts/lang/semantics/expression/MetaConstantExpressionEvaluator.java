@@ -118,4 +118,14 @@ public class MetaConstantExpressionEvaluator extends ExpressionEvaluator<NamedEl
         throw new IllegalStateException("This expression is not a meta-expression!");
     }
 
+    @Override
+    protected NamedElement visit(CastExpression expression) {
+        throw new IllegalStateException("This expression is not a meta-expression!");
+    }
+
+    @Override
+    protected NamedElement visit(IfThenElse expression) {
+        throw new IllegalStateException("This expression is not a meta-expression!");
+    }
+
 }

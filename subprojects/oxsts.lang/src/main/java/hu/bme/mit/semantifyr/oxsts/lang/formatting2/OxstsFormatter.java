@@ -424,6 +424,23 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.format(temporalOperator.getBody());
     }
 
+    protected void format(IfThenElse ifThenElse, IFormattableDocument document) {
+        document.surround(regionFor(ifThenElse).keyword("if"), this::oneSpace);
+        document.surround(regionFor(ifThenElse).keyword("then"), this::oneSpace);
+        document.surround(regionFor(ifThenElse).keyword("else"), this::oneSpace);
+
+        document.format(ifThenElse.getGuard());
+        document.format(ifThenElse.getThen());
+        document.format(ifThenElse.getElse());
+    }
+
+    protected void format(CastExpression castExpression, IFormattableDocument document) {
+        document.surround(regionFor(castExpression).keyword("as"), this::oneSpace);
+
+        document.format(castExpression.getBody());
+        document.format(castExpression.getTypespecification());
+    }
+
     protected void format(ArithmeticUnaryOperator unaryOperator, IFormattableDocument document) {
         document.set(previousHiddenRegion(unaryOperator.getBody()), this::noSpace);
 
@@ -449,6 +466,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
     protected void format(NavigationSuffixExpression postfixUnaryExpression, IFormattableDocument document) {
         document.surround(regionFor(postfixUnaryExpression).keyword("."), this::noSpace);
+        document.surround(regionFor(postfixUnaryExpression).keyword("?"), this::noSpace);
 
         document.format(postfixUnaryExpression.getPrimary());
     }

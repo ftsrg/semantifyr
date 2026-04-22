@@ -207,4 +207,23 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
         throw new IllegalArgumentException("This evaluator can only evaluate non-contextual expressions!");
     }
 
+    @Override
+    protected ExpressionEvaluation visit(CastExpression expression) {
+        // A cast preserves the runtime value; only the static type changes.
+        // The validator catches incompatible casts ahead of time.
+        return evaluate(expression.getBody());
+    }
+
+    @Override
+    protected ExpressionEvaluation visit(IfThenElse expression) {
+        var guard = evaluate(expression.getGuard());
+        if (guard instanceof BooleanEvaluation(var value)) {
+            return value ? evaluate(expression.getThen()) : evaluate(expression.getElse());
+        }
+        // A non-constant guard cannot be evaluated at this level; the
+        // backend handles runtime ite. Callers that need a constant result
+        // should guard their use (static evaluator vs backend translation).
+        throw new IllegalArgumentException("Guard of if-then-else expression is not a constant boolean!");
+    }
+
 }

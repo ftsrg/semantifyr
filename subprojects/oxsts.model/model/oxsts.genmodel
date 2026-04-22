@@ -268,5 +268,13 @@
     </genClasses>
     <genClasses ecoreClass="oxsts.ecore#//AG"/>
     <genClasses ecoreClass="oxsts.ecore#//EF"/>
+    <genClasses ecoreClass="oxsts.ecore#//CastExpression">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//CastExpression/typespecification"/>
+    </genClasses>
+    <genClasses ecoreClass="oxsts.ecore#//IfThenElse">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//IfThenElse/guard"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//IfThenElse/then"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference oxsts.ecore#//IfThenElse/else"/>
+    </genClasses>
   </genPackages>
 </genmodel:GenModel>

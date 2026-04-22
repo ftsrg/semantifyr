@@ -161,4 +161,20 @@ public class ExpressionSerializer extends ExpressionVisitor<String> {
     protected String visit(IndexingSuffixExpression expression) {
         return visit(expression.getPrimary()) + "[" + visit(expression.getIndex()) + "]";
     }
+
+    @Override
+    protected String visit(CastExpression expression) {
+        var typeSpec = expression.getTypespecification();
+        var domainName = typeSpec != null && typeSpec.getDomain() != null
+            ? oxstsQualifiedNameProvider.getFullyQualifiedNameString(typeSpec.getDomain())
+            : "?";
+        return visit(expression.getBody()) + " as " + domainName;
+    }
+
+    @Override
+    protected String visit(IfThenElse expression) {
+        return "if " + visit(expression.getGuard())
+            + " then " + visit(expression.getThen())
+            + " else " + visit(expression.getElse());
+    }
 }
