@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.scoping;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ImmutableTypeEvaluation;
@@ -30,6 +31,9 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 
     @Inject
     private DomainMemberCollectionProvider domainMemberCollectionProvider;
+
+    @Inject
+    private MetaConstantExpressionEvaluatorProvider metaConstantExpressionEvaluatorProvider;
 
     @Inject
     private ICaseInsensitivityHelper caseInsensitivityHelper;
@@ -89,8 +93,10 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 
                 return scopeFor(declaration.getParameters());
             } else if (parent instanceof CallSuffixExpression callExpression) {
-//                var expression = callExpression.getExpression(); // TODO: implement static evaluator
-
+                var called = metaConstantExpressionEvaluatorProvider.evaluate(callExpression.getPrimary());
+                if (called instanceof ParametricDeclaration parametricDeclaration) {
+                    return scopeFor(parametricDeclaration.getParameters());
+                }
                 return IScope.NULLSCOPE;
             }
 
