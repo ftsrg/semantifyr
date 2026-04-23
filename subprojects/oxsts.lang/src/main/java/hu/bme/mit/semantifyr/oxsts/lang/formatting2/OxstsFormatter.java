@@ -454,8 +454,8 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void format(ArrayLiteral arrayLiteral, IFormattableDocument document) {
-        document.surround(regionFor(arrayLiteral).keyword("["), this::noSpace);
-        document.surround(regionFor(arrayLiteral).keyword("]"), this::noSpace);
+        document.append(regionFor(arrayLiteral).keyword("["), this::noSpace);
+        document.prepend(regionFor(arrayLiteral).keyword("]"), this::noSpace);
 
         arrayLiteral.getValues().forEach(document::format);
     }
@@ -482,7 +482,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
     protected void format(IndexingSuffixExpression postfixUnaryExpression, IFormattableDocument document) {
         document.surround(regionFor(postfixUnaryExpression).keyword("["), this::noSpace);
-        document.surround(regionFor(postfixUnaryExpression).keyword("]"), this::noSpace);
+        document.prepend(regionFor(postfixUnaryExpression).keyword("]"), this::noSpace);
 
         document.format(postfixUnaryExpression.getPrimary());
         document.format(postfixUnaryExpression.getIndex());
