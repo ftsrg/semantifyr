@@ -45,6 +45,10 @@ testing {
 
                     maxParallelForks = 1
 
+                    useJUnitPlatform {
+                        excludeTags("slow")
+                    }
+
                     testLogging.showStandardStreams = true
                     testLogging.exceptionFormat = TestExceptionFormat.FULL
 
@@ -53,6 +57,26 @@ testing {
             }
         }
     }
+}
+
+val slowVerificationTest by tasks.registering(Test::class) {
+    description = "Runs the verification cases tagged with @Tag(\"slow\"). Sequenced with other verification tasks."
+    group = "verification"
+    usesService(verificationTestServiceProvider)
+
+    val verificationTestSuite = testing.suites.named("verificationTest", JvmTestSuite::class)
+    val target = verificationTestSuite.get().targets.first()
+    testClassesDirs = target.testTask.get().testClassesDirs
+    classpath = target.testTask.get().classpath
+
+    maxParallelForks = 1
+
+    useJUnitPlatform {
+        includeTags("slow")
+    }
+
+    testLogging.showStandardStreams = true
+    testLogging.exceptionFormat = TestExceptionFormat.FULL
 }
 
 tasks.named("check") {
