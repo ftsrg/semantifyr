@@ -56,13 +56,15 @@ class DeadStoreEliminationPass @Inject constructor(
             .filter { it !in liveWrites }
             .toList()
 
-        if (deadWrites.isEmpty()) return PassResult.Unchanged
+        if (deadWrites.isEmpty()) {
+            return PassResult.Unchanged
+        }
 
         for (operation in deadWrites) {
             EcoreUtil2.remove(operation)
             artifactManager.commitStep(CompilationPass.DeadStoreElimination)
         }
-        return PassResult.changed()
+        return PassResult.Changed()
     }
 
 }

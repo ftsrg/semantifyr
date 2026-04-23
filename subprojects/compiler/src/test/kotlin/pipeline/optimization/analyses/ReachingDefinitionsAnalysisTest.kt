@@ -26,29 +26,28 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
     fun `property read after a single init write sees exactly that write`() {
         // Non-local variable declarations are NOT reaching defs: after init
         // runs the property only observes post-init state.
-        val run = runAnalysis(
-            source = """
+        val (inlined, result) = runReachingDefinitions(
+            """
                 inlined oxsts of semantifyr::Anything
                 var a : int := 0
                 init { a := 1 }
                 tran { }
                 prop { AG (a != 27) }
             """,
-            analysisClass = ReachingDefinitionsAnalysis::class.java,
         )
 
-        val a = run.inlinedOxsts.varNamed("a")
-        val propertyRead = run.inlinedOxsts.findPropertyReadOf(a)
-        val defs = run.result.defsOf[propertyRead]!!
+        val a = inlined.varNamed("a")
+        val propertyRead = inlined.findPropertyReadOf(a)
+        val defs = result.defsOf[propertyRead]!!
 
-        val initWrite = run.inlinedOxsts.assignmentsTo(a).single()
+        val initWrite = inlined.assignmentsTo(a).single()
         assertThat(defs).containsExactly(initWrite as EObject)
     }
 
     @Test
     fun `property read sees every write to a variable`() {
-        val run = runAnalysis(
-            source = """
+        val (inlined, result) = runReachingDefinitions(
+            """
                 inlined oxsts of semantifyr::Anything
                 var a : int := 0
                 init { a := 1 }
@@ -58,14 +57,13 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
                 }
                 prop { AG (a != 27) }
             """,
-            analysisClass = ReachingDefinitionsAnalysis::class.java,
         )
 
-        val a = run.inlinedOxsts.varNamed("a")
-        val propertyRead = run.inlinedOxsts.findPropertyReadOf(a)
-        val defs = run.result.defsOf[propertyRead]!!
+        val a = inlined.varNamed("a")
+        val propertyRead = inlined.findPropertyReadOf(a)
+        val defs = result.defsOf[propertyRead]!!
 
-        val writes = run.inlinedOxsts.assignmentsTo(a)
+        val writes = inlined.assignmentsTo(a)
         assertThat(writes).hasSize(3)
         for (write in writes) {
             assertThat(defs).contains(write as EObject)
@@ -78,8 +76,8 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         // b := a reads 'a' at a point where only 'a := 5' has executed in the
         // current iteration of this transition. The walker kills earlier defs
         // and gens this one, so CopyPropagation can fire.
-        val run = runAnalysis(
-            source = """
+        val (inlined, result) = runReachingDefinitions(
+            """
                 inlined oxsts of semantifyr::Anything
                 var a : int := 0
                 var b : int := 0
@@ -90,17 +88,16 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
                 }
                 prop { AG true }
             """,
-            analysisClass = ReachingDefinitionsAnalysis::class.java,
         )
 
-        val a = run.inlinedOxsts.varNamed("a")
-        val aWrite = run.inlinedOxsts.assignmentsTo(a).single()
+        val a = inlined.varNamed("a")
+        val aWrite = inlined.assignmentsTo(a).single()
 
-        val bAssignment = run.inlinedOxsts.assignmentsTo(run.inlinedOxsts.varNamed("b")).single()
+        val bAssignment = inlined.assignmentsTo(inlined.varNamed("b")).single()
         val aReadInBRhs = bAssignment.expression as ElementReference
         assertThat(aReadInBRhs.element).isSameAs(a)
 
-        val defs = run.result.defsOf[aReadInBRhs]
+        val defs = result.defsOf[aReadInBRhs]
             ?: error("RHS read of 'a' in 'b := a' not in defsOf map")
 
         assertThat(defs).containsExactly(aWrite as EObject)
@@ -108,8 +105,8 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
 
     @Test
     fun `havoc counts as a reaching definition`() {
-        val run = runAnalysis(
-            source = """
+        val (inlined, result) = runReachingDefinitions(
+            """
                 inlined oxsts of semantifyr::Anything
                 var a : int := 0
                 init { }
@@ -118,21 +115,20 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
                 }
                 prop { AG (a != 27) }
             """,
-            analysisClass = ReachingDefinitionsAnalysis::class.java,
         )
 
-        val a = run.inlinedOxsts.varNamed("a")
-        val propertyRead = run.inlinedOxsts.findPropertyReadOf(a)
-        val defs = run.result.defsOf[propertyRead]!!
+        val a = inlined.varNamed("a")
+        val propertyRead = inlined.findPropertyReadOf(a)
+        val defs = result.defsOf[propertyRead]!!
 
-        val havoc = run.inlinedOxsts.havocsOn(a).single()
+        val havoc = inlined.havocsOn(a).single()
         assertThat(defs).containsExactly(havoc as EObject)
     }
 
     @Test
     fun `guard read in assume sees reaching defs at that program point`() {
-        val run = runAnalysis(
-            source = """
+        val (inlined, result) = runReachingDefinitions(
+            """
                 inlined oxsts of semantifyr::Anything
                 var a : int := 0
                 var b : int := 0
@@ -144,16 +140,15 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
                 }
                 prop { AG true }
             """,
-            analysisClass = ReachingDefinitionsAnalysis::class.java,
         )
 
-        val a = run.inlinedOxsts.varNamed("a")
-        val aWrite = run.inlinedOxsts.assignmentsTo(a).single()
+        val a = inlined.varNamed("a")
+        val aWrite = inlined.assignmentsTo(a).single()
 
-        val assume = run.inlinedOxsts.assumesReading(a).single()
+        val assume = inlined.assumesReading(a).single()
         val aReadInGuard = (assume.expression as ComparisonOperator).left as ElementReference
 
-        val defs = run.result.defsOf[aReadInGuard]
+        val defs = result.defsOf[aReadInGuard]
             ?: error("Read of 'a' inside assume guard not in defsOf map")
 
         assertThat(defs).containsExactly(aWrite as EObject)
@@ -165,8 +160,8 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
     // do not incorrectly treat any single write as the unique reaching def.
     @Test
     fun `state-machine-style consecutive writes all reach the property read`() {
-        val run = runAnalysis(
-            source = """
+        val (inlined, result) = runReachingDefinitions(
+            """
                 inlined oxsts of semantifyr::Anything
                 var activeState : int := -1
                 init { activeState := 0 }
@@ -179,14 +174,13 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
                 }
                 prop { AG (activeState != 25) }
             """,
-            analysisClass = ReachingDefinitionsAnalysis::class.java,
         )
 
-        val activeState = run.inlinedOxsts.varNamed("activeState")
-        val propertyRead = run.inlinedOxsts.findPropertyReadOf(activeState)
-        val defs = run.result.defsOf[propertyRead]!!
+        val activeState = inlined.varNamed("activeState")
+        val propertyRead = inlined.findPropertyReadOf(activeState)
+        val defs = result.defsOf[propertyRead]!!
 
-        val writes = run.inlinedOxsts.assignmentsTo(activeState)
+        val writes = inlined.assignmentsTo(activeState)
         assertThat(writes).hasSize(3)  // init + two inside the branch
         for (write in writes) {
             assertThat(defs)

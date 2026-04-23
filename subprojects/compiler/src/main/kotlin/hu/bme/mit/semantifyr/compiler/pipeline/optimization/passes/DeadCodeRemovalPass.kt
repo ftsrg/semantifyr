@@ -38,10 +38,11 @@ class DeadCodeRemovalPass @Inject constructor(
 
         val cone = analysisManager.get(ConeOfInfluenceAnalysis::class.java, input)
 
-        val deadOperations = input.inlinedOxsts.eAllOfType<Operation>()
-            .filter { it is AssignmentOperation || it is HavocOperation }
-            .filterNot { cone.isRelevant(it) }
-            .toList()
+        val deadOperations = input.inlinedOxsts.eAllOfType<Operation>().filter {
+            it is AssignmentOperation || it is HavocOperation
+        }.filterNot {
+            cone.isRelevant(it)
+        }.toList()
 
         if (deadOperations.isEmpty()) {
             return PassResult.Unchanged
@@ -51,7 +52,7 @@ class DeadCodeRemovalPass @Inject constructor(
             EcoreUtil2.remove(operation)
             artifactManager.commitStep(CompilationPass.DeadCodeRemoval)
         }
-        return PassResult.changed()
+        return PassResult.Changed()
     }
 
 }

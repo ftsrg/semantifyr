@@ -25,13 +25,16 @@ fun verifyInjectedDependenciesAreBound(target: Any) {
     var current: Class<*>? = targetClass
     while (current != null && current != Any::class.java) {
         for (field in current.declaredFields) {
-            if (Modifier.isStatic(field.modifiers)) continue
-            if (!field.isAnnotationPresent(Inject::class.java)) continue
+            if (Modifier.isStatic(field.modifiers)) {
+                continue
+            }
+            if (!field.isAnnotationPresent(Inject::class.java)) {
+                continue
+            }
             field.isAccessible = true
             val value = field.get(target)
             check(value != null) {
-                "Unbound dependency: ${targetClass.simpleName}.${field.name} was not set by the injector. " +
-                    "Check that ${field.type.simpleName} has a Guice binding in the test module."
+                "Unbound dependency: ${targetClass.simpleName}.${field.name} was not set by the injector. Check that ${field.type.simpleName} has a Guice binding in the test module."
             }
         }
         current = current.superclass

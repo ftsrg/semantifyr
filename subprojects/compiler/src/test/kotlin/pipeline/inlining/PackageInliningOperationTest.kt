@@ -7,21 +7,11 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.serializeFormatted
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineOperation
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * Operation-level inlining tests against full OXSTS packages - self-calls,
- * navigation calls, polymorphism / redefinition, multi-level navigation,
- * multi-level inheritance, and variable dispatching.
- *
- * Each test compiles a small package via [PackageExpanderTestBase.prepare]
- * and drives the full inliner. "Inlining succeeded" means the main
- * transition contains no residual [InlineOperation] nodes. Where the test
- * also cares about the specific body picked, it asserts on the serialized
- * text of the inlined main transition.
- */
 class PackageInliningOperationTest : PackageExpanderTestBase() {
 
     @Test
@@ -221,7 +211,7 @@ class PackageInliningOperationTest : PackageExpanderTestBase() {
         inlineAll(prepared)
         assertNoInlineOperationsInMain(prepared)
         // Both candidates should appear: the dispatch fans out across a and b.
-        val mainText = serializeNormalized(prepared.inlinedOxsts.mainTransition)
+        val mainText = serializer.serializeFormatted(prepared.inlinedOxsts.mainTransition)
         assertThat(mainText)
             .`as`("dispatch should produce branches referring to both candidates")
             .contains("a")
@@ -255,7 +245,7 @@ class PackageInliningOperationTest : PackageExpanderTestBase() {
         assertNoInlineOperationsInMain(prepared)
         // Class-typed variable dispatch goes through InstanceCollector.instancesOfType;
         // the dispatch should fan out to both a and b (instances of Worker).
-        val mainText = serializeNormalized(prepared.inlinedOxsts.mainTransition)
+        val mainText = serializer.serializeFormatted(prepared.inlinedOxsts.mainTransition)
         assertThat(mainText)
             .`as`("class-typed dispatch should guard each branch with an equality to a candidate")
             .contains("a")
@@ -285,7 +275,7 @@ class PackageInliningOperationTest : PackageExpanderTestBase() {
         // With multiplicity [0..1] and no subsetter, `leaf` resolves to no
         // instance; the optional navigation drops the inline call, leaving
         // the main body free of any `leaf` or `bump` references.
-        val mainText = serializeNormalized(prepared.inlinedOxsts.mainTransition)
+        val mainText = serializer.serializeFormatted(prepared.inlinedOxsts.mainTransition)
         assertThat(mainText)
             .`as`("optional navigation on empty container should produce an empty main body")
             .doesNotContain("bump")
@@ -309,7 +299,7 @@ class PackageInliningOperationTest : PackageExpanderTestBase() {
         )
         inlineAll(prepared)
         assertNoInlineOperationsInMain(prepared)
-        val mainText = serializeNormalized(prepared.inlinedOxsts.mainTransition)
+        val mainText = serializer.serializeFormatted(prepared.inlinedOxsts.mainTransition)
         assertThat(mainText)
             .`as`("inlined body must carry the caller's expression in place of the parameter")
             .contains("base + 2")
@@ -341,7 +331,7 @@ class PackageInliningOperationTest : PackageExpanderTestBase() {
         )
         inlineAll(prepared)
         assertNoInlineOperationsInMain(prepared)
-        val mainText = serializeNormalized(prepared.inlinedOxsts.mainTransition)
+        val mainText = serializer.serializeFormatted(prepared.inlinedOxsts.mainTransition)
         assertThat(mainText)
             .`as`("enum argument must be substituted into the inlined assumption")
             .contains("Command::Inc")
@@ -371,7 +361,7 @@ class PackageInliningOperationTest : PackageExpanderTestBase() {
         )
         inlineAll(prepared)
         assertNoInlineOperationsInMain(prepared)
-        val mainText = serializeNormalized(prepared.inlinedOxsts.mainTransition)
+        val mainText = serializer.serializeFormatted(prepared.inlinedOxsts.mainTransition)
         // Two inlined copies of `step` means two local `tmp` declarations in
         // the same scope; they must have been renamed apart by the expander.
         // The renamer introduces characters that the serializer escapes with
@@ -394,7 +384,7 @@ class PackageInliningOperationTest : PackageExpanderTestBase() {
     }
 
     private fun assertMainContains(prepared: Prepared, substring: String) {
-        val mainText = serializeNormalized(prepared.inlinedOxsts.mainTransition)
+        val mainText = serializer.serializeFormatted(prepared.inlinedOxsts.mainTransition)
         assertThat(mainText)
             .`as`("inlined main transition should contain '$substring'")
             .contains(substring)

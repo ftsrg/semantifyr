@@ -106,8 +106,9 @@ class AnalysisManagerTest {
     fun `get for unregistered analysis type throws a descriptive error`() {
         val manager = AnalysisManager(emptyList())
 
-        assertThatThrownBy { manager.get(AnalysisA::class.java, context) }
-            .isInstanceOf(IllegalStateException::class.java)
+        assertThatThrownBy {
+            manager.get(AnalysisA::class.java, context)
+        }.isInstanceOf(IllegalStateException::class.java)
             .hasMessageContaining("AnalysisA")
             .hasMessageContaining("not registered")
     }

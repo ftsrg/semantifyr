@@ -31,9 +31,9 @@ class TransitionCallTraceMapTest {
         val map = TransitionCallTraceMap(emptyMap())
         val op = factory.createTraceOperation().also { it.name = "missing" }
 
-        assertThatThrownBy { map.getTransitionCallTrace(op) }
-            .isInstanceOf(IllegalStateException::class.java)
-            .hasMessageContaining("missing")
+        assertThatThrownBy {
+            map.getTransitionCallTrace(op)
+        }.isInstanceOf(IllegalStateException::class.java).hasMessageContaining("missing")
     }
 
     @Test
@@ -41,7 +41,8 @@ class TransitionCallTraceMapTest {
         val map = TransitionCallTraceMap(emptyMap())
         val op = factory.createTraceOperation().also { it.name = "x" }
 
-        assertThatThrownBy { map.getTransitionCallTrace(op) }
-            .isInstanceOf(IllegalStateException::class.java)
+        assertThatThrownBy {
+            map.getTransitionCallTrace(op)
+        }.isInstanceOf(IllegalStateException::class.java)
     }
 }

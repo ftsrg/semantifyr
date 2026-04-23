@@ -79,8 +79,7 @@ class InlinedOxstsModelCreator @Inject constructor(
         if (resolved != null && resolved !is PropertyDeclaration) {
             sourceError(
                 resolved,
-                "Expected an element named 'prop' to be a property declaration, found ${resolved::class.simpleName}. " +
-                    "Verification cases identify their property by the name 'prop'.",
+                "Expected an element named 'prop' to be a property declaration, found ${resolved::class.simpleName}. Verification cases identify their property by the name 'prop'.",
             )
         }
 

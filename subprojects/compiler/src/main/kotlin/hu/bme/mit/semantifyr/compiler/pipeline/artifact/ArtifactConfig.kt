@@ -70,29 +70,32 @@ data class ArtifactConfig(
     companion object {
         private val ReportOnlyArtifacts = ArtifactKind.entries.toSet() - ArtifactKind.CompilationStep
 
-        /**
-         * Disables artifact emission.
-         */
-        fun none(outputDirectory: Path) = ArtifactConfig(
-            outputDirectory = outputDirectory,
-            enabled = emptySet()
-        )
+        fun none(outputDirectory: Path): ArtifactConfig {
+            return ArtifactConfig(
+                outputDirectory = outputDirectory,
+                enabled = emptySet(),
+            )
+        }
 
         /**
          * Emits every non-debug artifact (models, witness, trace, mapping, report).
          */
-        fun all(outputDirectory: Path) = ArtifactConfig(
-            outputDirectory = outputDirectory,
-            enabled = ReportOnlyArtifacts,
-        )
+        fun all(outputDirectory: Path): ArtifactConfig {
+            return ArtifactConfig(
+                outputDirectory = outputDirectory,
+                enabled = ReportOnlyArtifacts,
+            )
+        }
 
         /**
          * Emits every artifact including per-pass step dumps.
          */
-        fun debug(outputDirectory: Path) = ArtifactConfig(
-            outputDirectory = outputDirectory,
-            enabled = ArtifactKind.entries.toSet(),
-            enabledCompilationSteps = CompilationStepsConfig.All,
-        )
+        fun debug(outputDirectory: Path): ArtifactConfig {
+            return ArtifactConfig(
+                outputDirectory = outputDirectory,
+                enabled = ArtifactKind.entries.toSet(),
+                enabledCompilationSteps = CompilationStepsConfig.All,
+            )
+        }
     }
 }

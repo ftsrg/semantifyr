@@ -16,23 +16,20 @@ interface Pass<T> {
     fun run(input: T, analysisManager: AnalysisManager): PassResult
 }
 
-data class PassResult(
-    val changed: Boolean,
-    val preserved: Set<Class<out Analysis<*>>>,
-) {
-    companion object {
-        private val PreservedAll: Set<Class<out Analysis<*>>> = emptySet()
+sealed interface PassResult {
 
-        val Unchanged = PassResult(changed = false, preserved = PreservedAll)
+    object Unchanged : PassResult
 
-        fun changed(): PassResult {
-            return PassResult(changed = true, preserved = emptySet())
-        }
-
-        fun changed(vararg preserved: Class<out Analysis<*>>): PassResult {
-            return PassResult(changed = true, preserved = preserved.toSet())
+    data class Changed(
+        val preserved: Set<Class<out Analysis<*>>> = emptySet(),
+    ) : PassResult {
+        companion object {
+            fun preserving(vararg analyses: Class<out Analysis<*>>): Changed {
+                return Changed(analyses.toSet())
+            }
         }
     }
+
 }
 
 class PassOptimizer<T>(
@@ -47,10 +44,9 @@ class PassOptimizer<T>(
 
         val totalMark = markNow()
 
-        // Per-pass aggregate timing and firing counts, for the end-of-run report.
-        val passTotal = HashMap<String, Duration>()
-        val passFires = HashMap<String, Int>()
-        val passRuns = HashMap<String, Int>()
+        val passTotal = LinkedHashMap<String, Duration>()
+        val passFires = LinkedHashMap<String, Int>()
+        val passRuns = LinkedHashMap<String, Int>()
 
         var changed = false
         var iteration = true
@@ -68,15 +64,18 @@ class PassOptimizer<T>(
                 val passElapsed = passMark.elapsedNow()
                 passTotal[passName] = (passTotal[passName] ?: Duration.ZERO) + passElapsed
                 passRuns[passName] = (passRuns[passName] ?: 0) + 1
-                if (result.changed) {
-                    passFires[passName] = (passFires[passName] ?: 0) + 1
-                    roundFires++
-                    logger.debug { "  $passName changed the model in ${passElapsed}" }
-                    changed = true
-                    iteration = true
-                    analysisManager.invalidateExcept(result.preserved)
-                } else {
-                    logger.debug { "  $passName unchanged (${passElapsed})" }
+                when (result) {
+                    is PassResult.Changed -> {
+                        passFires[passName] = (passFires[passName] ?: 0) + 1
+                        roundFires++
+                        logger.debug { "  $passName changed the model in ${passElapsed}" }
+                        changed = true
+                        iteration = true
+                        analysisManager.invalidateExcept(result.preserved)
+                    }
+                    PassResult.Unchanged -> {
+                        logger.debug { "  $passName unchanged (${passElapsed})" }
+                    }
                 }
             }
             logger.debug { "Round $round done in ${roundMark.elapsedNow()} with $roundFires pass(es) changed" }

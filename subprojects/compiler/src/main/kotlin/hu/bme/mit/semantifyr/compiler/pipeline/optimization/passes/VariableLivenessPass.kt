@@ -41,7 +41,11 @@ class VariableLivenessPass @Inject constructor(
             return PassResult.Unchanged
         }
         val changed = Run(input).execute()
-        return if (changed) PassResult.changed() else PassResult.Unchanged
+        return if (changed) {
+            PassResult.Changed()
+        } else {
+            PassResult.Unchanged
+        }
     }
 
     private sealed interface WorkItem {
@@ -60,29 +64,37 @@ class VariableLivenessPass @Inject constructor(
         private val worklist = Worklist<WorkItem>()
 
         init {
-            variableReads = inlinedOxsts.eAllOfType<Expression>()
-                .filterNot { OxstsUtils.isWriteExpression(it) }
-                .filter { evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, it) != null }
-                .groupBy { evaluator.evaluateTyped(VariableDeclaration::class.java, it) }
-                .mapValuesTo(mutableMapOf()) { it.value.toMutableList() }
+            variableReads = inlinedOxsts.eAllOfType<Expression>().filterNot {
+                OxstsUtils.isWriteExpression(it)
+            }.filter {
+                evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, it) != null
+            }.groupBy {
+                evaluator.evaluateTyped(VariableDeclaration::class.java, it)
+            }.mapValuesTo(mutableMapOf()) {
+                it.value.toMutableList()
+            }
 
             // Concat before groupBy - using Map.plus would silently drop one side's
             // entries when a variable has both assignments and havocs.
             val writes: Sequence<Operation> =
                 inlinedOxsts.eAllOfType<AssignmentOperation>().map { it as Operation } +
                     inlinedOxsts.eAllOfType<HavocOperation>().map { it as Operation }
-            variableAssignments = writes
-                .groupBy { evaluator.evaluateTyped(VariableDeclaration::class.java, referenceOfWrite(it)) }
-                .mapValuesTo(mutableMapOf()) { it.value.toMutableList() }
+            variableAssignments = writes.groupBy {
+                evaluator.evaluateTyped(VariableDeclaration::class.java, referenceOfWrite(it))
+            }.mapValuesTo(mutableMapOf()) {
+                it.value.toMutableList()
+            }
 
             val allVariables = inlinedOxsts.eAllOfType<VariableDeclaration>().toSet()
 
             (allVariables - variableReads.keys).forEach {
                 worklist.add(WorkItem.Unread(it))
             }
-            allVariables
-                .filter { it.expression != null && it !in variableAssignments }
-                .forEach { worklist.add(WorkItem.UnassignedInitialized(it)) }
+            allVariables.filter {
+                it.expression != null && it !in variableAssignments
+            }.forEach {
+                worklist.add(WorkItem.UnassignedInitialized(it))
+            }
         }
 
         fun execute(): Boolean {
@@ -96,9 +108,11 @@ class VariableLivenessPass @Inject constructor(
             return didAnyWork
         }
 
-        private fun process(item: WorkItem): Boolean = when (item) {
-            is WorkItem.Unread -> removeUnread(item.variable)
-            is WorkItem.UnassignedInitialized -> substituteUnassignedInitialized(item.variable)
+        private fun process(item: WorkItem): Boolean {
+            return when (item) {
+                is WorkItem.Unread -> removeUnread(item.variable)
+                is WorkItem.UnassignedInitialized -> substituteUnassignedInitialized(item.variable)
+            }
         }
 
         private fun removeUnread(variable: VariableDeclaration): Boolean {
@@ -132,13 +146,16 @@ class VariableLivenessPass @Inject constructor(
         private fun trackReadsIn(expression: Expression) {
             for (read in readsIn(expression)) {
                 val variable = evaluator.evaluateTyped(VariableDeclaration::class.java, read)
-                variableReads.getOrPut(variable) { mutableListOf() }.add(read)
+                variableReads.getOrPut(variable) {
+                    mutableListOf()
+                }.add(read)
             }
         }
 
         private fun dropReadsIn(expression: Expression) {
-            val readsByVar = readsIn(expression)
-                .groupBy { evaluator.evaluateTyped(VariableDeclaration::class.java, it) }
+            val readsByVar = readsIn(expression).groupBy {
+                evaluator.evaluateTyped(VariableDeclaration::class.java, it)
+            }
 
             for ((variable, dropped) in readsByVar) {
                 val list = variableReads[variable] ?: continue
@@ -150,10 +167,12 @@ class VariableLivenessPass @Inject constructor(
             }
         }
 
-        private fun referenceOfWrite(operation: Operation): Expression = when (operation) {
-            is AssignmentOperation -> operation.reference
-            is HavocOperation -> operation.reference
-            else -> error("Unexpected write operation: ${operation::class.simpleName}")
+        private fun referenceOfWrite(operation: Operation): Expression {
+            return when (operation) {
+                is AssignmentOperation -> operation.reference
+                is HavocOperation -> operation.reference
+                else -> error("Unexpected write operation: ${operation::class.simpleName}")
+            }
         }
 
         private fun readsIn(expression: Expression): Sequence<Expression> {
@@ -165,9 +184,11 @@ class VariableLivenessPass @Inject constructor(
             } else {
                 emptySequence()
             }
-            val descendants = expression.eAllOfType<Expression>()
-                .filterNot { OxstsUtils.isWriteExpression(it) }
-                .filter { evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, it) != null }
+            val descendants = expression.eAllOfType<Expression>().filterNot {
+                OxstsUtils.isWriteExpression(it)
+            }.filter {
+                evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, it) != null
+            }
             return self + descendants
         }
     }

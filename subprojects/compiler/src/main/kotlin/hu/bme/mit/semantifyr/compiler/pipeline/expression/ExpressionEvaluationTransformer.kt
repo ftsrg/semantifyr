@@ -65,9 +65,11 @@ open class ConstantExpressionEvaluationTransformer : ExpressionEvaluationTransfo
         }
     }
 
-    private fun rangeBound(value: Int): Expression = when (value) {
-        RangeEvaluation.INFINITY -> OxstsFactory.createLiteralInfinity()
-        else -> OxstsFactory.createLiteralInteger(value)
+    private fun rangeBound(value: Int): Expression {
+        return when (value) {
+            RangeEvaluation.INFINITY -> OxstsFactory.createLiteralInfinity()
+            else -> OxstsFactory.createLiteralInteger(value)
+        }
     }
 
     override fun visit(evaluation: RealEvaluation): Expression {

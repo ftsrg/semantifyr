@@ -26,18 +26,12 @@ import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 import kotlin.io.path.walk
 
-/**
- * An entire Semantifyr model context, including the libraries and the actual model resources.
- */
 class SemantifyrModelContext(
     val resourceSet: ResourceSet,
     val libraryResources: List<Resource>,
     val modelResources: List<Resource>,
 )
 
-/**
- * Full Semantifyr model context loader with builder pattern. Use for specifying the model sources, then build.
- */
 class SemantifyrLoader @Inject constructor(
     private val resourceSetProvider: Provider<XtextResourceSet>,
     private val resourceSetLoader: ResourceSetLoader,
@@ -101,9 +95,6 @@ class SemantifyrLoader @Inject constructor(
             return SemantifyrModelContext(resourceSet, libraryResources, modelResources)
         }
 
-        /**
-         * Loads the model file at the specified [path].
-         */
         fun loadModel(path: Path): SemantifyrLoaderContext {
             if (! isOxstsFile(path)) {
                 logger.warn { "Tried to load non-oxsts file, skipping: $path" }
@@ -115,9 +106,6 @@ class SemantifyrLoader @Inject constructor(
             return this
         }
 
-        /**
-         * Loads all model files in the specified [path] directory by traversing it recursively.
-         */
         fun loadModels(path: Path): SemantifyrLoaderContext {
             for (modelPath in modelPathsUnder(path)) {
                 loadModel(modelPath)
@@ -126,9 +114,6 @@ class SemantifyrLoader @Inject constructor(
             return this
         }
 
-        /**
-         * Loads the model file at the specified [path] as a Library resource.
-         */
         fun loadLibrary(path: Path): SemantifyrLoaderContext {
             if (! isOxstsFile(path)) {
                 logger.warn { "Tried to load non-oxsts file, skipping: $path" }
@@ -140,9 +125,6 @@ class SemantifyrLoader @Inject constructor(
             return this
         }
 
-        /**
-         * Loads all model files in the specified [path] directory as Library resources by traversing it recursively.
-         */
         fun loadLibraries(path: Path): SemantifyrLoaderContext {
             for (libraryPath in modelPathsUnder(path)) {
                 loadLibrary(libraryPath)
@@ -151,9 +133,6 @@ class SemantifyrLoader @Inject constructor(
             return this
         }
 
-        /**
-         * Loads all models under the specified [paths] as Library resources.
-         */
         fun loadLibraryPaths(paths: List<Path>): SemantifyrLoaderContext {
             for (path in paths) {
                 if (NioFiles.isDirectory(path)) {
@@ -165,9 +144,6 @@ class SemantifyrLoader @Inject constructor(
             return this
         }
 
-        /**
-         * Loads all models under the specified [paths].
-         */
         fun loadModelPaths(paths: List<Path>): SemantifyrLoaderContext {
             for (path in paths) {
                 if (NioFiles.isDirectory(path)) {

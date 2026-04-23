@@ -8,18 +8,11 @@ package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
-import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.eclipse.xtext.EcoreUtil2
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
-/**
- * Single-step tests for [InlineOperationExpander]. Each test exercises one
- * inline-operation kind, calls the expander on the first matching node in
- * the input's main transition, substitutes the result in place, and compares
- * the whole inlined-oxsts against an expected serialization.
- */
 class InlineOperationExpanderTest : ExpanderTestBase() {
 
     @Test
@@ -190,12 +183,8 @@ class InlineOperationExpanderTest : ExpanderTestBase() {
         """,
     )
 
-    @org.junit.jupiter.api.Disabled(
-        "Needs an OxstsPackage-based ExpanderTestBase. The dispatching logic " +
-            "is implemented (CallTarget.VariableDispatch branch in " +
-            "InlineOperationExpander); covered end-to-end via " +
-            "gamma/sysmlv2 verification suites when a model uses " +
-            "inline-through-feature-var."
+    @Disabled(
+        "Needs an OxstsPackage-based ExpanderTestBase. The dispatching logic is implemented (CallTarget.VariableDispatch branch in InlineOperationExpander); covered end-to-end via gamma/sysmlv2 verification suites when a model uses inline-through-feature-var.",
     )
     @Test
     fun `inline call through a feature-typed variable dispatches over every candidate instance`() {

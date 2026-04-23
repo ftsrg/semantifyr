@@ -8,9 +8,8 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.ConstantExpressionEvaluationTransformer
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PatternTestBase
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
-import hu.bme.mit.semantifyr.semantics.compilation.optimization.patterns.expression.ConstantFoldingPattern
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.ConstantFoldingPattern
 import org.junit.jupiter.api.Test
 
 class ConstantFoldingPatternTest : PatternTestBase() {
@@ -18,7 +17,9 @@ class ConstantFoldingPatternTest : PatternTestBase() {
     @Inject
     private lateinit var evaluatorProvider: ConstantExpressionEvaluatorProvider
 
-    private fun pattern() = ConstantFoldingPattern(evaluatorProvider, ConstantExpressionEvaluationTransformer())
+    private fun pattern(): ConstantFoldingPattern {
+        return ConstantFoldingPattern(evaluatorProvider, ConstantExpressionEvaluationTransformer())
+    }
 
     @Test
     fun `pure operator expression over literals folds to a literal`() = assertPatternTransforms(

@@ -32,9 +32,9 @@ class InstanceIdMappingTest {
     fun `instanceOfId throws for an unknown id`() {
         val mapping = InstanceIdMapping(emptyMap(), emptyMap())
 
-        assertThatThrownBy { mapping.instanceOfId(42) }
-            .isInstanceOf(IllegalStateException::class.java)
-            .hasMessageContaining("42")
+        assertThatThrownBy {
+            mapping.instanceOfId(42)
+        }.isInstanceOf(IllegalStateException::class.java).hasMessageContaining("42")
     }
 
     @Test

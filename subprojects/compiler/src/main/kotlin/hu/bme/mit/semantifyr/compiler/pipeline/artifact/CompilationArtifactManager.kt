@@ -51,21 +51,27 @@ class CompilationArtifactManager @Inject constructor(
         check(::inlinedOxsts.isInitialized) {
             "CompilationArtifactManager.commitInstantiated() called before setTarget()."
         }
-        artifactManager.withFile(ArtifactKind.InflatedModel) { serializeInto(inlinedOxsts, it) }
+        artifactManager.withFile(ArtifactKind.InflatedModel) {
+            serializeInto(inlinedOxsts, it)
+        }
     }
 
     fun commitInlined() {
         check(::inlinedOxsts.isInitialized) {
             "CompilationArtifactManager.commitInlined() called before setTarget()."
         }
-        artifactManager.withFile(ArtifactKind.InlinedModel) { serializeInto(inlinedOxsts, it) }
+        artifactManager.withFile(ArtifactKind.InlinedModel) {
+            serializeInto(inlinedOxsts, it)
+        }
     }
 
     fun commitFlattened() {
         check(::inlinedOxsts.isInitialized) {
             "CompilationArtifactManager.commitFlattened() called before setTarget()."
         }
-        artifactManager.withFile(ArtifactKind.DeflatedModel) { serializeInto(inlinedOxsts, it) }
+        artifactManager.withFile(ArtifactKind.DeflatedModel) {
+            serializeInto(inlinedOxsts, it)
+        }
     }
 
     private fun serializeInto(inlinedOxsts: InlinedOxsts, modelFile: File) {

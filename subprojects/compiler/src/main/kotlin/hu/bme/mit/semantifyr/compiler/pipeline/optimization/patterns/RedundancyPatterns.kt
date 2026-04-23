@@ -34,8 +34,12 @@ class RedundancyPatterns : CompositeOptimizationPattern() {
 
 class ConstantGuardIfPattern : OptimizationPattern {
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
-        if (element !is IfOperation) return false
-        if (element.guard !is LiteralBoolean) return false
+        if (element !is IfOperation) {
+            return false
+        }
+        if (element.guard !is LiteralBoolean) {
+            return false
+        }
         val parent = element.eContainer() ?: return false
 
         when {
@@ -56,8 +60,12 @@ class ConstantGuardIfPattern : OptimizationPattern {
 
 class RemoveConstantTrueAssumptionPattern : OptimizationPattern {
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
-        if (element !is AssumptionOperation) return false
-        if (!OxstsUtils.isConstantLiteralTrue(element.expression)) return false
+        if (element !is AssumptionOperation) {
+            return false
+        }
+        if (!OxstsUtils.isConstantLiteralTrue(element.expression)) {
+            return false
+        }
         val parent = element.eContainer() ?: return false
         EcoreUtil2.remove(element)
         worklist.add(parent)
@@ -67,8 +75,12 @@ class RemoveConstantTrueAssumptionPattern : OptimizationPattern {
 
 class RemoveEmptyForPattern : OptimizationPattern {
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
-        if (element !is ForOperation) return false
-        if (element.body.steps.isNotEmpty()) return false
+        if (element !is ForOperation) {
+            return false
+        }
+        if (element.body.steps.isNotEmpty()) {
+            return false
+        }
         val parent = element.eContainer() ?: return false
         EcoreUtil2.remove(element)
         worklist.add(parent)
@@ -78,8 +90,12 @@ class RemoveEmptyForPattern : OptimizationPattern {
 
 class RemoveEmptyIfBodyPattern : OptimizationPattern {
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
-        if (element !is IfOperation) return false
-        if (element.body.steps.isNotEmpty()) return false
+        if (element !is IfOperation) {
+            return false
+        }
+        if (element.body.steps.isNotEmpty()) {
+            return false
+        }
         val parent = element.eContainer() ?: return false
 
         if (element.`else` == null) {
@@ -97,8 +113,12 @@ class RemoveEmptyIfBodyPattern : OptimizationPattern {
 
 class RemoveEmptyIfElsePattern : OptimizationPattern {
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
-        if (element !is IfOperation) return false
-        if (element.`else`?.steps?.isEmpty() != true) return false
+        if (element !is IfOperation) {
+            return false
+        }
+        if (element.`else`?.steps?.isEmpty() != true) {
+            return false
+        }
         element.`else` = null
         worklist.add(element)
         return true
@@ -107,9 +127,15 @@ class RemoveEmptyIfElsePattern : OptimizationPattern {
 
 class RemoveRedundantEmptyChoiceBranchPattern : OptimizationPattern {
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
-        if (element !is ChoiceOperation) return false
-        val emptyBranches = element.branches.filter { it.steps.isEmpty() }
-        if (emptyBranches.size < 2) return false
+        if (element !is ChoiceOperation) {
+            return false
+        }
+        val emptyBranches = element.branches.filter {
+            it.steps.isEmpty()
+        }
+        if (emptyBranches.size < 2) {
+            return false
+        }
         EcoreUtil2.remove(emptyBranches.first())
         worklist.add(element)
         return true

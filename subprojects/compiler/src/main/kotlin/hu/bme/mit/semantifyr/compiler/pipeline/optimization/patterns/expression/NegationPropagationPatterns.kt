@@ -19,7 +19,9 @@ import org.eclipse.xtext.EcoreUtil2
 
 class NegatedComparisonPattern : OptimizationPattern {
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
-        if (element !is NegationOperator) return false
+        if (element !is NegationOperator) {
+            return false
+        }
         val comparison = element.body as? ComparisonOperator ?: return false
         val parent = element.eContainer() ?: return false
 
@@ -35,19 +37,23 @@ class NegatedComparisonPattern : OptimizationPattern {
         return true
     }
 
-    private fun invert(op: ComparisonOp): ComparisonOp = when (op) {
-        ComparisonOp.EQ -> ComparisonOp.NOT_EQ
-        ComparisonOp.NOT_EQ -> ComparisonOp.EQ
-        ComparisonOp.LESS -> ComparisonOp.GREATER_EQ
-        ComparisonOp.LESS_EQ -> ComparisonOp.GREATER
-        ComparisonOp.GREATER -> ComparisonOp.LESS_EQ
-        ComparisonOp.GREATER_EQ -> ComparisonOp.LESS
+    private fun invert(op: ComparisonOp): ComparisonOp {
+        return when (op) {
+            ComparisonOp.EQ -> ComparisonOp.NOT_EQ
+            ComparisonOp.NOT_EQ -> ComparisonOp.EQ
+            ComparisonOp.LESS -> ComparisonOp.GREATER_EQ
+            ComparisonOp.LESS_EQ -> ComparisonOp.GREATER
+            ComparisonOp.GREATER -> ComparisonOp.LESS_EQ
+            ComparisonOp.GREATER_EQ -> ComparisonOp.LESS
+        }
     }
 }
 
 class DoubleNegationPattern : OptimizationPattern {
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
-        if (element !is NegationOperator) return false
+        if (element !is NegationOperator) {
+            return false
+        }
         val inner = element.body as? NegationOperator ?: return false
         val parent = element.eContainer() ?: return false
         EcoreUtil2.replace(element, inner.body)
@@ -58,7 +64,9 @@ class DoubleNegationPattern : OptimizationPattern {
 
 class DeMorganPattern : OptimizationPattern {
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
-        if (element !is NegationOperator) return false
+        if (element !is NegationOperator) {
+            return false
+        }
         val boolean = element.body as? BooleanOperator ?: return false
         val parent = element.eContainer() ?: return false
 

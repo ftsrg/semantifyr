@@ -8,13 +8,9 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses
 
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.emf.ecore.EObject
@@ -41,8 +37,8 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
 
     @Test
     fun `local var declaration is recognized as a variable`() {
-        val run = runAnalysis(
-            source = """
+        val (inlined, result) = runLiveness(
+            """
                 inlined oxsts of semantifyr::Anything
                 init { }
                 tran {
@@ -51,10 +47,9 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
                 }
                 prop { AG true }
             """,
-            analysisClass = LivenessAnalysis::class.java,
         )
-        val local: VariableDeclaration = run.inlinedOxsts.localVarNamed("x")
-        assertThat(run.result.isRead(local)).isTrue
+        val local: VariableDeclaration = inlined.localVarNamed("x")
+        assertThat(result.isRead(local)).isTrue
     }
 
     @Test
@@ -62,8 +57,8 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
         // ConstantValueAnalysis defers init-only vars to VariableLivenessPass's
         // substitution rule. Local vars with only their declarator should
         // behave the same way as class-level vars with only an initializer.
-        val run = runAnalysis(
-            source = """
+        val (inlined, result) = runConstantValue(
+            """
                 inlined oxsts of semantifyr::Anything
                 init { }
                 tran {
@@ -72,10 +67,9 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
                 }
                 prop { AG true }
             """,
-            analysisClass = ConstantValueAnalysis::class.java,
         )
-        val local: VariableDeclaration = run.inlinedOxsts.localVarNamed("x")
-        assertThat(run.result.isConstant(local)).isFalse
+        val local: VariableDeclaration = inlined.localVarNamed("x")
+        assertThat(result.isConstant(local)).isFalse
     }
 
     @Test
@@ -83,8 +77,8 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
         // Assumption: within the same transition, after `var x := 5; x := 10`,
         // a subsequent read sees only the assignment - the declaration's
         // initializer no longer reaches.
-        val run = runAnalysis(
-            source = """
+        val (inlined, result) = runReachingDefinitions(
+            """
                 inlined oxsts of semantifyr::Anything
                 var y : int := 0
                 init { }
@@ -95,16 +89,15 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
                 }
                 prop { AG true }
             """,
-            analysisClass = ReachingDefinitionsAnalysis::class.java,
         )
-        val x = run.inlinedOxsts.localVarNamed("x")
-        val y = run.inlinedOxsts.varNamed("y")
+        val x = inlined.localVarNamed("x")
+        val y = inlined.varNamed("y")
 
-        val xWrite = run.inlinedOxsts.assignmentsTo(x).single()
-        val yWrite = run.inlinedOxsts.assignmentsTo(y).single()
+        val xWrite = inlined.assignmentsTo(x).single()
+        val yWrite = inlined.assignmentsTo(y).single()
         val xReadInYRhs = yWrite.expression as ElementReference
 
-        assertThat(run.result.defsOf[xReadInYRhs]!!).containsExactly(xWrite as EObject)
+        assertThat(result.defsOf[xReadInYRhs]!!).containsExactly(xWrite as EObject)
     }
 
     @Test
@@ -116,8 +109,8 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
         // a read positioned earlier: by the time those writes execute,
         // control has already moved past the earlier read, and at the next
         // iteration the local is reset.
-        val run = runAnalysis(
-            source = """
+        val (inlined, result) = runReachingDefinitions(
+            """
                 inlined oxsts of semantifyr::Anything
                 var y : int := 0
                 init { }
@@ -128,14 +121,13 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
                 }
                 prop { AG true }
             """,
-            analysisClass = ReachingDefinitionsAnalysis::class.java,
         )
-        val x = run.inlinedOxsts.localVarNamed("x")
-        val y = run.inlinedOxsts.varNamed("y")
-        val yWrite = run.inlinedOxsts.assignmentsTo(y).single()
+        val x = inlined.localVarNamed("x")
+        val y = inlined.varNamed("y")
+        val yWrite = inlined.assignmentsTo(y).single()
         val xReadInYRhs = yWrite.expression as ElementReference
 
-        val defs = run.result.defsOf[xReadInYRhs]!!
+        val defs = result.defsOf[xReadInYRhs]!!
         // Only the declaration reaches - the later write is not visible to
         // this earlier read.
         assertThat(defs).containsExactly(x as EObject)
@@ -148,8 +140,8 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
         // the trailing `assume` fails and the whole tran rolls back.
         // Under my model (no atomicity), every branch's write to the flag
         // is in the cone because the trailing assume reads the flag.
-        val run = runAnalysis(
-            source = """
+        val (inlined, result) = runConeOfInfluence(
+            """
                 inlined oxsts of semantifyr::Anything
                 var activeState : int := -1
                 init { activeState := 0 }
@@ -168,24 +160,23 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
                 }
                 prop { AG (activeState != 25) }
             """,
-            analysisClass = ConeOfInfluenceAnalysis::class.java,
         )
 
-        val activeState = run.inlinedOxsts.varNamed("activeState")
-        val anyRegionExecuted = run.inlinedOxsts.localVarNamed("anyRegionExecuted")
+        val activeState = inlined.varNamed("activeState")
+        val anyRegionExecuted = inlined.localVarNamed("anyRegionExecuted")
 
-        assertThat(run.result.isRelevant(activeState)).isTrue
-        assertThat(run.result.isRelevant(anyRegionExecuted as VariableDeclaration))
+        assertThat(result.isRelevant(activeState)).isTrue
+        assertThat(result.isRelevant(anyRegionExecuted as VariableDeclaration))
             .`as`("the local 'anyRegionExecuted' flag guards a relevant write chain and must be in the cone")
             .isTrue
 
-        for (write in run.inlinedOxsts.assignmentsTo(activeState)) {
-            assertThat(run.result.isRelevant(write))
+        for (write in inlined.assignmentsTo(activeState)) {
+            assertThat(result.isRelevant(write))
                 .`as`("every write to 'activeState' should stay relevant")
                 .isTrue
         }
-        for (flagWrite in run.inlinedOxsts.assignmentsTo(anyRegionExecuted)) {
-            assertThat(run.result.isRelevant(flagWrite))
+        for (flagWrite in inlined.assignmentsTo(anyRegionExecuted)) {
+            assertThat(result.isRelevant(flagWrite))
                 .`as`("every write to the local flag should stay relevant")
                 .isTrue
         }
@@ -193,8 +184,8 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
 
     @Test
     fun `local var with no assignments - only its declaration contributes a def`() {
-        val run = runAnalysis(
-            source = """
+        val (inlined, result) = runReachingDefinitions(
+            """
                 inlined oxsts of semantifyr::Anything
                 var y : int := 0
                 init { }
@@ -204,14 +195,13 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
                 }
                 prop { AG true }
             """,
-            analysisClass = ReachingDefinitionsAnalysis::class.java,
         )
-        val x = run.inlinedOxsts.localVarNamed("x")
-        val yWrite = run.inlinedOxsts.assignmentsTo(run.inlinedOxsts.varNamed("y")).single()
+        val x = inlined.localVarNamed("x")
+        val yWrite = inlined.assignmentsTo(inlined.varNamed("y")).single()
         val xRead = yWrite.expression as ElementReference
 
         // No assignments to x, so the only def is the declaration itself.
-        assertThat(run.result.defsOf[xRead]!!).containsExactly(x as EObject)
+        assertThat(result.defsOf[xRead]!!).containsExactly(x as EObject)
     }
 
     @Test
@@ -219,8 +209,8 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
         // Each LocalVarDeclarationOperation is a distinct VariableDeclaration
         // regardless of textual name, so writes in one branch do not group
         // with writes in another branch.
-        val run = runAnalysis(
-            source = """
+        val (inlined, result) = runLiveness(
+            """
                 inlined oxsts of semantifyr::Anything
                 init { }
                 tran {
@@ -234,20 +224,15 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
                 }
                 prop { AG true }
             """,
-            analysisClass = LivenessAnalysis::class.java,
         )
-        val locals = run.inlinedOxsts.eAllOfType<LocalVarDeclarationOperation>().toList()
+        val locals = inlined.eAllOfType<LocalVarDeclarationOperation>().toList()
         assertThat(locals).hasSize(2)
         for (local in locals) {
-            assertThat(run.result.isRead(local))
+            assertThat(result.isRead(local))
                 .`as`("each local $local is read by its own assume guard")
                 .isTrue
         }
     }
-
-    // ------------------------------------------------------------------
-    // Helpers
-    // ------------------------------------------------------------------
 
     private fun InlinedOxsts.varNamed(name: String): VariableDeclaration {
         return eAllOfType<VariableDeclaration>().firstOrNull { it.name == name }

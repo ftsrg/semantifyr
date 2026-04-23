@@ -14,19 +14,20 @@ import hu.bme.mit.semantifyr.compiler.pipeline.context.CreatedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceTree
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.AnalysisManager
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.Pass
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Pass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.verifyInjectedDependenciesAreBound
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.normalizedFixtureSource
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.serializeFormatted
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.InlinedOxstsParseHelper
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.assertj.core.api.Assertions.assertThat
-import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
 import org.junit.jupiter.api.BeforeEach
-import java.io.StringWriter
 import java.nio.file.Files
 
 /**
@@ -38,10 +39,9 @@ import java.nio.file.Files
  * top-level variables, so the root instance has no children and the
  * evaluator-backed analyses resolve references directly.
  *
- * Comparison is by serialized OXSTS text (whitespace-normalized) because the
- * input and expected snippets are parsed independently - their cross-references
- * point to different EMF objects and [org.eclipse.emf.ecore.util.EcoreUtil.equals]
- * would always report them unequal.
+ * Comparison is by formatted serialization, with actual and expected going
+ * through the same whitespace-collapsed parse so the formatter picks its
+ * minimum hidden-token ranges and the two sides match canonically.
  */
 @InjectWithOxsts
 abstract class PassTestBase {
@@ -65,13 +65,8 @@ abstract class PassTestBase {
         val inlinedOxsts: InlinedOxsts,
     )
 
-    /**
-     * Parse the snippet and wrap it into a minimal [EvaluableCompilationContext].
-     * The instance tree has a single root, whose domain is the [InlinedOxsts]'s
-     * declared class (conventionally `semantifyr::Anything`).
-     */
     protected fun compile(source: String): CompiledFixture {
-        val inlined = parseHelper.parse(source.trimIndent())
+        val inlined = parseHelper.parse(source.normalizedFixtureSource())
         val classDeclaration = inlined.classDeclaration
             ?: error("InlinedOxsts fixture must reference a class declaration (use 'inlined oxsts of semantifyr::Anything')")
         val tree = SingleRootInstanceTree(classDeclaration)
@@ -101,29 +96,18 @@ abstract class PassTestBase {
             ),
         )
 
-        val analyses = analysisClasses.map { child.getInstance(it) }
+        val analyses = analysisClasses.map {
+            child.getInstance(it)
+        }
         val analysisManager = AnalysisManager(analyses)
         val pass = buildPass(child)
         pass.run(actual.context, analysisManager)
 
-        val actualText = normalize(serialize(actual.inlinedOxsts))
-        val expectedText = normalize(serialize(expected.inlinedOxsts))
+        val actualText = serializer.serializeFormatted(actual.inlinedOxsts)
+        val expectedText = serializer.serializeFormatted(expected.inlinedOxsts)
         assertThat(actualText)
             .describedAs("Pass ${pass::class.simpleName} should have rewritten the input to the expected form")
             .isEqualTo(expectedText)
-    }
-
-    private fun serialize(model: InlinedOxsts): String {
-        val writer = StringWriter()
-        serializer.serialize(model, writer, SaveOptions.defaultOptions())
-        return writer.toString()
-    }
-
-    private fun normalize(text: String): String {
-        return text
-            .replace(WHITESPACE_RUN, " ")
-            .replace(WHITESPACE_AROUND_PUNCT, "$1")
-            .trim()
     }
 
     /**
@@ -133,17 +117,8 @@ abstract class PassTestBase {
      * variable references; it never has to navigate through child instances.
      */
     private class SingleRootInstanceTree(
-        domain: hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration,
+        domain: DomainDeclaration,
     ) : InstanceTree {
         override val rootInstance: Instance = Instance(domain, parent = null, tree = this)
-    }
-
-    private companion object {
-        private val WHITESPACE_RUN = Regex("\\s+")
-        // Spaces the serializer inserts next to punctuation depend on whether
-        // the node came from the parse tree or from a factory-built substitute.
-        // Collapse both forms so serializer-specific whitespace doesn't cause
-        // spurious test failures.
-        private val WHITESPACE_AROUND_PUNCT = Regex(" ?([(){}\\[\\],;]) ?")
     }
 }

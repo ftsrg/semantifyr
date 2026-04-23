@@ -58,7 +58,7 @@ class OptimizationConfigTest {
         assertThat(
             config.isAnyEnabled(
                 OptimizationCategory.ConstantFolding,
-                OptimizationCategory.AssumptionPropagation,
+                OptimizationCategory.AssumeFalsePropagation,
             ),
         ).isFalse
     }

@@ -17,7 +17,9 @@ import org.eclipse.xtext.EcoreUtil2
 
 class BubbleNotAGPattern : OptimizationPattern {
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
-        if (element !is NegationOperator) return false
+        if (element !is NegationOperator) {
+            return false
+        }
         val ag = element.body as? AG ?: return false
         val parent = element.eContainer() ?: return false
 
@@ -33,7 +35,9 @@ class BubbleNotAGPattern : OptimizationPattern {
 
 class BubbleNotEFPattern : OptimizationPattern {
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
-        if (element !is NegationOperator) return false
+        if (element !is NegationOperator) {
+            return false
+        }
         val ef = element.body as? EF ?: return false
         val parent = element.eContainer() ?: return false
 

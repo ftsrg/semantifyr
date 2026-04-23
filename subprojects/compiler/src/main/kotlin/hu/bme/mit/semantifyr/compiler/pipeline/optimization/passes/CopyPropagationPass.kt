@@ -59,29 +59,37 @@ class CopyPropagationPass @Inject constructor(
             for ((read, defs) in rd.defsOf) {
                 val definition = defs.singleOrNull() as? AssignmentOperation ?: continue
                 val candidate = definition.expression
-                if (!isSimplyCopyable(candidate)) continue
+                if (!isSimplyCopyable(candidate)) {
+                    continue
+                }
 
                 // Avoid infinite self-copy: don't replace a read of x with x.
                 val readVariable = evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, read)
                 val rhsVariable = evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, candidate)
-                if (readVariable != null && rhsVariable == readVariable) continue
+                if (readVariable != null && rhsVariable == readVariable) {
+                    continue
+                }
 
                 add(read to candidate)
             }
         }
 
-        if (substitutions.isEmpty()) return PassResult.Unchanged
+        if (substitutions.isEmpty()) {
+            return PassResult.Unchanged
+        }
 
         for ((read, source) in substitutions) {
             EcoreUtil2.replace(read, source.copy())
             artifactManager.commitStep(CompilationPass.CopyPropagation)
         }
-        return PassResult.changed()
+        return PassResult.Changed()
     }
 
     /** A copyable expression is one we can freely duplicate at a read site. */
     private fun isSimplyCopyable(expression: Expression): Boolean {
-        if (OxstsUtils.isWriteExpression(expression)) return false
+        if (OxstsUtils.isWriteExpression(expression)) {
+            return false
+        }
         return expression is LiteralExpression || expression is ElementReference
     }
 

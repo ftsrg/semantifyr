@@ -181,7 +181,7 @@ class ExpressionCallInliner @AssistedInject constructor(
         }
     }
 
-    private fun formatType(type: hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.TypeEvaluation): String {
+    private fun formatType(type: TypeEvaluation): String {
         return type.domain?.name ?: "<unknown>"
     }
 

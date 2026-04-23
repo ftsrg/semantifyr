@@ -38,7 +38,9 @@ class Instance(
     }
 
     internal fun placeInSlot(feature: FeatureDeclaration, instance: Instance) {
-        slots.getOrPut(feature) { mutableSetOf() }.add(instance)
+        slots.getOrPut(feature) {
+            mutableSetOf()
+        }.add(instance)
     }
 
 }

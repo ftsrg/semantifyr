@@ -72,7 +72,7 @@ class ComplexDeadStoreEliminationScenariosTest : PassTestBase() {
 
     @Test
     fun `consecutive writes - the earlier write stays because it reaches via the loop back-edge`() = assertPassTransforms(
-        // `state := -1; state := 25` — both writes appear in the reaching-def
+        // `state := -1; state := 25` - both writes appear in the reaching-def
         // set of a subsequent read at the start of the next iteration.
         // Conservatively, both are live.
         source = """

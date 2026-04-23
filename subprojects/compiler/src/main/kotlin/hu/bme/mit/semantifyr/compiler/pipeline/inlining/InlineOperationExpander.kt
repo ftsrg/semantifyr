@@ -211,7 +211,11 @@ class InlineOperationExpander @Inject constructor(
         }
 
         if (inlinedFor.steps.isEmpty()) {
-            return if (operation.`else` == null) inlinedFor else operation.`else`.copy()
+            return if (operation.`else` == null) {
+                inlinedFor
+            } else {
+                operation.`else`.copy()
+            }
         }
 
         if (inlinedFor.steps.size == 1) {
@@ -232,7 +236,11 @@ class InlineOperationExpander @Inject constructor(
         }
 
         if (inlinedChoice.branches.isEmpty()) {
-            return if (operation.`else` == null) OxstsFactory.createSequenceOperation() else operation.`else`.copy()
+            return if (operation.`else` == null) {
+                OxstsFactory.createSequenceOperation()
+            } else {
+                operation.`else`.copy()
+            }
         }
 
         if (inlinedChoice.branches.size == 1) {
@@ -246,12 +254,16 @@ class InlineOperationExpander @Inject constructor(
         val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
         val evaluation = evaluator.evaluate(rangeExpression)
         return when (evaluation) {
-            is InstanceEvaluation -> evaluation.instances.map { instanceReferenceProvider.getReference(it) }
+            is InstanceEvaluation -> evaluation.instances.map {
+                instanceReferenceProvider.getReference(it)
+            }
             is RangeEvaluation -> {
                 if (evaluation.lowerBound == RangeEvaluation.INFINITY || evaluation.upperBound == RangeEvaluation.INFINITY) {
                     sourceError(rangeExpression, "inline for requires a bounded range; the range is unbounded")
                 }
-                (evaluation.lowerBound..evaluation.upperBound).map { OxstsFactory.createLiteralInteger(it) }
+                (evaluation.lowerBound..evaluation.upperBound).map {
+                    OxstsFactory.createLiteralInteger(it)
+                }
             }
             else -> sourceError(
                 rangeExpression,

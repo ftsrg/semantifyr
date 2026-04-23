@@ -212,8 +212,7 @@ class OxstsFlattener @Inject constructor(
             val instanceVariable = variableMappings[containerInstance]?.get(originalVariable)
                 ?: sourceError(
                     variableReference,
-                    "Variable '${originalVariable.name}' not found for instance '${containerInstance.name}'. " +
-                        "pullDownVariables should have registered every in-scope variable on every instance before reference rewriting.",
+                    "Variable '${originalVariable.name}' not found for instance '${containerInstance.name}'. pullDownVariables should have registered every in-scope variable on every instance before reference rewriting.",
                 )
             val instanceVariableReference = OxstsFactory.createElementReference(instanceVariable)
             EcoreUtil2.replace(variableReference, instanceVariableReference)

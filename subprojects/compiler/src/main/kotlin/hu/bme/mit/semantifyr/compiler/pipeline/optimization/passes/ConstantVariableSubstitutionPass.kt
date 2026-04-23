@@ -45,27 +45,30 @@ class ConstantVariableSubstitutionPass @Inject constructor(
         }
 
         val constants = analysisManager.get(ConstantValueAnalysis::class.java, input)
-        if (constants.constants.isEmpty()) return PassResult.Unchanged
+        if (constants.constants.isEmpty()) {
+            return PassResult.Unchanged
+        }
 
         val evaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
 
-        val substitutions = input.inlinedOxsts.eAllOfType<Expression>()
-            .filterNot { OxstsUtils.isWriteExpression(it) }
-            .mapNotNull { expression ->
-                val variable = evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, expression)
-                    ?: return@mapNotNull null
-                val constant = constants.valueOf(variable) ?: return@mapNotNull null
-                expression to constant
-            }
-            .toList()
+        val substitutions = input.inlinedOxsts.eAllOfType<Expression>().filterNot {
+            OxstsUtils.isWriteExpression(it)
+        }.mapNotNull { expression ->
+            val variable = evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, expression)
+                ?: return@mapNotNull null
+            val constant = constants.valueOf(variable) ?: return@mapNotNull null
+            expression to constant
+        }.toList()
 
-        if (substitutions.isEmpty()) return PassResult.Unchanged
+        if (substitutions.isEmpty()) {
+            return PassResult.Unchanged
+        }
 
         for ((readExpression, constantExpression) in substitutions) {
             EcoreUtil2.replace(readExpression, constantExpression.copy())
             artifactManager.commitStep(CompilationPass.ConstantVariableSubstitution)
         }
-        return PassResult.changed()
+        return PassResult.Changed()
     }
 
 }

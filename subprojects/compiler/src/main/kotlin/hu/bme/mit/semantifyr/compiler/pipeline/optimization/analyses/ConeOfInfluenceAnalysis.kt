@@ -28,40 +28,23 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
 
 /**
- * Result of cone-of-influence analysis.
- *
- * - [relevantVariables]: variables that (transitively) affect the property
- *   expression.
- * - [relevantAssignments]: assignment/havoc operations whose target is in
- *   [relevantVariables]. Assignments to other variables do not affect the
- *   property and may be safely removed.
- *
- * The cone is a **data-dependence** slice: control-flow dependencies (an
- * `assume` or `if` guard that restricts whether a relevant assignment
- * executes) are captured indirectly by including variables read in those
- * guards when the guards contain a relevant assignment in their scope.
+ * Variable reads and writes that are relevant to the 'prop' expression
  */
 data class ConeOfInfluenceInfo(
     val relevantVariables: Set<VariableDeclaration>,
     val relevantAssignments: Set<Operation>,
 ) {
-    fun isRelevant(variable: VariableDeclaration): Boolean = variable in relevantVariables
-    fun isRelevant(operation: Operation): Boolean = operation in relevantAssignments
+
+    fun isRelevant(variable: VariableDeclaration): Boolean {
+        return variable in relevantVariables
+    }
+
+    fun isRelevant(operation: Operation): Boolean {
+        return operation in relevantAssignments
+    }
+
 }
 
-/**
- * Computes the set of IR elements that can affect the property expression.
- *
- * Starting from the property, the analysis traces data dependencies
- * backwards: every variable read in the property is relevant, every
- * assignment/havoc targeting a relevant variable is relevant, and every
- * variable read in such an assignment's right-hand side is transitively
- * relevant.
- *
- * Guard expressions (on `if` and `assume` operations containing relevant
- * assignments) are also traced, so control dependencies of relevant writes
- * are captured.
- */
 class ConeOfInfluenceAnalysis @Inject constructor(
     private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
 ) : Analysis<ConeOfInfluenceInfo> {
@@ -73,26 +56,21 @@ class ConeOfInfluenceAnalysis @Inject constructor(
 
 }
 
-/**
- * Stateless per-compute engine for cone-of-influence analysis. Factored out of
- * [ConeOfInfluenceAnalysis] so the backward-slicing logic can be exercised
- * directly without the DI-bound analysis wrapper. Holds no mutable public
- * state - [compute] returns the full result.
- */
 class ConeOfInfluenceComputation(
     private val inlinedOxsts: InlinedOxsts,
     private val evaluator: MetaStaticExpressionEvaluator,
 ) {
 
     fun compute(): ConeOfInfluenceInfo {
-        // Pre-index: for each variable, the operations that assign to it.
-        // We must concat the write lists before groupBy - using Map.plus would
-        // silently drop one list when a variable has both assignments and havocs.
-        val allWrites: Sequence<Operation> =
-            inlinedOxsts.eAllOfType<AssignmentOperation>().map { it as Operation } +
-                inlinedOxsts.eAllOfType<HavocOperation>().map { it as Operation }
-        val assignmentsByVariable: Map<VariableDeclaration, List<Operation>> = allWrites
-            .groupBy { evaluator.evaluateTyped(VariableDeclaration::class.java, referenceOfWrite(it)) }
+        val allWrites = inlinedOxsts.eAllOfType<AssignmentOperation>().map {
+            it as Operation
+        } + inlinedOxsts.eAllOfType<HavocOperation>().map {
+            it as Operation
+        }
+
+        val assignmentsByVariable = allWrites .groupBy {
+            evaluator.evaluateTyped(VariableDeclaration::class.java, referenceOfWrite(it))
+        }
 
         val relevantVariables = mutableSetOf<VariableDeclaration>()
         val relevantAssignments = mutableSetOf<Operation>()
@@ -100,26 +78,36 @@ class ConeOfInfluenceComputation(
         val variableWorklist = Worklist<VariableDeclaration>()
 
         for (variable in variablesReadIn(inlinedOxsts.property.expression)) {
-            if (relevantVariables.add(variable)) variableWorklist.add(variable)
+            if (relevantVariables.add(variable)) {
+                variableWorklist.add(variable)
+            }
         }
 
         while (variableWorklist.isNotEmpty()) {
             val variable = variableWorklist.pop()
+            val assignments = assignmentsByVariable[variable] ?: emptyList()
 
-            for (assignment in assignmentsByVariable[variable] ?: emptyList()) {
-                if (!relevantAssignments.add(assignment)) continue
+            for (assignment in assignments) {
+                if (!relevantAssignments.add(assignment)) {
+                    continue
+                }
 
                 val reads = when (assignment) {
                     is AssignmentOperation -> variablesReadIn(assignment.expression)
                     is HavocOperation -> emptySet()
                     else -> error("Unexpected write operation: ${assignment::class.simpleName}")
                 }
+
                 for (read in reads) {
-                    if (relevantVariables.add(read)) variableWorklist.add(read)
+                    if (relevantVariables.add(read)) {
+                        variableWorklist.add(read)
+                    }
                 }
 
                 for (guardVariable in guardVariablesFor(assignment)) {
-                    if (relevantVariables.add(guardVariable)) variableWorklist.add(guardVariable)
+                    if (relevantVariables.add(guardVariable)) {
+                        variableWorklist.add(guardVariable)
+                    }
                 }
             }
         }
@@ -130,36 +118,33 @@ class ConeOfInfluenceComputation(
         )
     }
 
-    private fun referenceOfWrite(operation: Operation): Expression = when (operation) {
-        is AssignmentOperation -> operation.reference
-        is HavocOperation -> operation.reference
-        else -> error("Unexpected write operation: ${operation::class.simpleName}")
+    private fun referenceOfWrite(operation: Operation): Expression {
+        return when (operation) {
+            is AssignmentOperation -> operation.reference
+            is HavocOperation -> operation.reference
+            else -> error("Unexpected write operation: ${operation::class.simpleName}")
+        }
     }
 
     private fun variablesReadIn(expression: Expression): Set<VariableDeclaration> {
         val result = mutableSetOf<VariableDeclaration>()
         val candidates = sequenceOf(expression) + expression.eAllOfType<Expression>()
         for (candidate in candidates) {
-            if (OxstsUtils.isWriteExpression(candidate)) continue
+            if (OxstsUtils.isWriteExpression(candidate)) {
+                continue
+            }
             val variable = evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, candidate)
-            if (variable != null) result += variable
+            if (variable != null) {
+                result += variable
+            }
         }
         return result
     }
 
-    /**
-     * Variables read in the guards that decide whether [operation] commits.
-     *
-     * Under OXSTS's atomic-transition semantics, a transition body commits
-     * as a unit: if any `assume` in the body fails, every write in the body
-     * is rolled back. So every `assume` in the enclosing transition is a
-     * control dependency of every write in that transition - including
-     * assumes that textually follow the write, at any nesting depth.
-     */
     private fun guardVariablesFor(operation: Operation): Set<VariableDeclaration> {
         val result = mutableSetOf<VariableDeclaration>()
 
-        var current: EObject? = operation.eContainer()
+        var current = operation.eContainer()
         while (current != null) {
             when (current) {
                 is IfOperation -> result += variablesReadIn(current.guard)
@@ -170,7 +155,9 @@ class ConeOfInfluenceComputation(
 
         val transitionBody = transitionBodyContaining(operation) ?: return result
         for (assume in transitionBody.eAllOfType<AssumptionOperation>()) {
-            if (assume === operation) continue
+            if (assume === operation) {
+                continue
+            }
             result += variablesReadIn(assume.expression)
         }
         return result
@@ -180,7 +167,9 @@ class ConeOfInfluenceComputation(
         var child: EObject = operation
         var current: EObject? = operation.eContainer()
         while (current != null) {
-            if (current is TransitionDeclaration) return child
+            if (current is TransitionDeclaration) {
+                return child
+            }
             child = current
             current = current.eContainer()
         }

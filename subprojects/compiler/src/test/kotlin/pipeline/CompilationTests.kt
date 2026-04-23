@@ -23,6 +23,8 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TemporalOperator
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.catchThrowable
+import org.junit.jupiter.api.Disabled
 import org.eclipse.xtext.EcoreUtil2
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -800,15 +802,7 @@ class CompilationTests {
         )
     }
 
-    @org.junit.jupiter.api.Disabled(
-        "Non-inline `for` over an instance range with a bare loop variable " +
-            "does not plumb the loop variable's candidate instances through " +
-            "the dispatching call-target resolver. Loop variables lack a " +
-            "typeSpecification.domain, so candidateInstancesOf returns empty. " +
-            "Tracked under the existing roadmap entry for variable dispatch / " +
-            "runtime for-loops."
-    )
-    @org.junit.jupiter.api.Test
+    @Test
     fun `non-inline for over an instance range iterates at runtime`() {
         assertCompiles(
             classToCompile = "Host",
@@ -830,6 +824,42 @@ class CompilationTests {
                         }
                     }
                     prop { return EF (a.v == 1 && b.v == 1) }
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `fixed-size integer array with array literal initializer compiles`() {
+        assertCompiles(
+            classToCompile = "ArrayHolder",
+            source = """
+                package compilation::tests::array_fixed
+                @VerificationCase
+                class ArrayHolder {
+                    var slots: int[3] := [10, 20, 30]
+                    redefine tran {
+                        slots[0] := slots[0] + 1
+                    }
+                    prop { return EF slots[0] == 11 }
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `array with constant index reads and writes compiles`() {
+        assertCompiles(
+            classToCompile = "ArrayAccess",
+            source = """
+                package compilation::tests::array_access
+                @VerificationCase
+                class ArrayAccess {
+                    var values: int[4] := [0, 0, 0, 0]
+                    redefine tran {
+                        values[0] := values[1] + values[2]
+                    }
+                    prop { return AG values[3] == 0 }
                 }
             """,
         )
@@ -868,6 +898,31 @@ class CompilationTests {
                     var x: int := 0
                     redefine tran { x := x + 1 }
                     prop { return EF x == "hi" }
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `array with runtime index reads and writes compiles`() {
+        // Runtime-index access was previously rejected; ArrayFlatteningPass
+        // now rewrites it to an if-chain over the per-slot variables.
+        assertCompiles(
+            classToCompile = "RuntimeArray",
+            source = """
+                package compilation::tests::runtime_array
+                @VerificationCase
+                class RuntimeArray {
+                    var values: int[3] := [0, 0, 0]
+                    var idx: int := 0
+                    var seen: int := 0
+                    redefine tran {
+                        havoc(idx)
+                        assume(idx >= 0 && idx < 3)
+                        values[idx] := values[idx] + 1
+                        seen := values[idx]
+                    }
+                    prop { return EF seen == 1 }
                 }
             """,
         )
@@ -933,6 +988,68 @@ class CompilationTests {
     }
 
     @Test
+    fun `if-then-else expression in assignment compiles`() {
+        assertCompiles(
+            classToCompile = "IfThenElseAssign",
+            source = """
+                package compilation::tests::ite_assign
+                @VerificationCase
+                class IfThenElseAssign {
+                    var n: int := 0
+                    var result: int := 0
+                    redefine tran {
+                        n := n + 1
+                        result := if n > 0 then 1 else -1
+                    }
+                    prop { return EF result == 1 }
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `if-then-else expression inside a temporal property compiles`() {
+        assertCompiles(
+            classToCompile = "IfThenElseProp",
+            source = """
+                package compilation::tests::ite_prop
+                @VerificationCase
+                class IfThenElseProp {
+                    var n: int := 0
+                    redefine tran { n := n + 1 }
+                    prop { return EF (if n > 0 then true else false) }
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `cast expression narrows a base-typed reference to its child`() {
+        // Narrowing downcast: `ref` statically typed as Base is cast to Child
+        // where the programmer knows the concrete instance is a Child.
+        assertCompiles(
+            classToCompile = "CastNarrow",
+            source = """
+                package compilation::tests::cast_narrow
+                class Base { }
+                class Child : Base { }
+                @VerificationCase
+                class CastNarrow {
+                    contains children: Base[0..*]
+                    contains child: Child[1] subsets children
+                    var ref: children[0..1] := nothing
+                    redefine init { ref := child }
+                    redefine tran {
+                        var c: Child[0..1] := nothing
+                        c := ref as Child
+                    }
+                    prop { return EF ref == child }
+                }
+            """,
+        )
+    }
+
+    @Test
     fun `two verification cases in one package`() {
         assertCompiles(
             classToCompile = "SecondCase",
@@ -984,12 +1101,16 @@ class CompilationTests {
             .singleOrNull { it.name == classToCompile }
             ?: error("Class '$classToCompile' not found in the test model")
 
-        val artifactDir = tempDir.resolve("artifacts").also { Files.createDirectories(it) }
-        val thrown = org.assertj.core.api.Assertions.catchThrowable {
+        val artifactDir = tempDir.resolve("artifacts").also {
+            Files.createDirectories(it)
+        }
+        val thrown = catchThrowable {
             SemantifyrCompiler(
                 injector = injector,
                 artifactConfig = ArtifactConfig.all(artifactDir),
-            ).use { it.compile(classDecl) }
+            ).use {
+                it.compile(classDecl)
+            }
         }
 
         assertThat(thrown)
@@ -1013,17 +1134,25 @@ class CompilationTests {
             .singleOrNull { it.name == classToCompile }
             ?: error("Class '$classToCompile' not found in the test model")
 
-        val artifactDir = tempDir.resolve("artifacts").also { Files.createDirectories(it) }
+        val artifactDir = tempDir.resolve("artifacts").also {
+            Files.createDirectories(it)
+        }
         val compiled = SemantifyrCompiler(
             injector = injector,
             artifactConfig = ArtifactConfig.all(artifactDir),
-        ).use { it.compile(classDecl) }
+        ).use {
+            it.compile(classDecl)
+        }
 
         assertThat(compiled.inlinedOxsts.classDeclaration).isNotNull
         assertThat(compiled.flatteningInfo).isNotNull
         assertFlattenedContract(compiled)
 
-        val emitted = artifactDir.toFile().walkTopDown().filter { it.isFile }.map { it.name }.toSet()
+        val emitted = artifactDir.toFile().walkTopDown().filter {
+            it.isFile
+        }.map {
+            it.name
+        }.toSet()
         assertThat(emitted)
             .`as`("default config should emit the three staged model artifacts")
             .contains("inflated.oxsts", "inlined.oxsts", "deflated.oxsts")
@@ -1052,14 +1181,18 @@ class CompilationTests {
 
         val reachableRoots = transitions + property
 
-        val remainingNothing = reachableRoots.flatMap { EcoreUtil2.eAllOfType(it, LiteralNothing::class.java) }
+        val remainingNothing = reachableRoots.flatMap {
+            EcoreUtil2.eAllOfType(it, LiteralNothing::class.java)
+        }
         assertThat(remainingNothing)
             .`as`("post-flatten IR must not contain LiteralNothing (encoded as -1)")
             .isEmpty()
 
-        val featureNavigations = reachableRoots
-            .flatMap { EcoreUtil2.eAllOfType(it, NavigationSuffixExpression::class.java) }
-            .filter { it.member is FeatureDeclaration }
+        val featureNavigations = reachableRoots.flatMap {
+            EcoreUtil2.eAllOfType(it, NavigationSuffixExpression::class.java)
+        }.filter {
+            it.member is FeatureDeclaration
+        }
         assertThat(featureNavigations)
             .`as`("post-flatten IR must not navigate through feature members")
             .isEmpty()
@@ -1077,8 +1210,12 @@ class CompilationTests {
             .`as`("property expression must be a temporal operator or a literal boolean after optimization")
             .isNotNull
             .satisfiesAnyOf(
-                { assertThat(it).isInstanceOf(TemporalOperator::class.java) },
-                { assertThat(it).isInstanceOf(LiteralBoolean::class.java) },
+                {
+                    assertThat(it).isInstanceOf(TemporalOperator::class.java)
+                },
+                {
+                    assertThat(it).isInstanceOf(LiteralBoolean::class.java)
+                },
             )
 
         val declaredVariables = inlined.variables.toSet()

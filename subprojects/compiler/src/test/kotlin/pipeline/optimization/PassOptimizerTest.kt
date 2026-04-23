@@ -7,9 +7,6 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization
 
 import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.Pass
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.PassOptimizer
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.PassResult
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -24,7 +21,9 @@ import org.mockito.kotlin.verify
 class PassOptimizerTest {
 
     private class StubAnalysis : Analysis<Any> {
-        override fun compute(input: EvaluableCompilationContext): Any = Unit
+        override fun compute(input: EvaluableCompilationContext): Any {
+            return Unit
+        }
     }
 
     private class Bag(var value: Int = 0)
@@ -40,8 +39,16 @@ class PassOptimizerTest {
     @Test
     fun `passes that return Unchanged cause one iteration and report no change`() {
         val manager = mock<AnalysisManager>()
-        val pass1: Pass<Bag> = mock { on { run(any(), any()) } doReturn PassResult.Unchanged }
-        val pass2: Pass<Bag> = mock { on { run(any(), any()) } doReturn PassResult.Unchanged }
+        val pass1: Pass<Bag> = mock {
+            on {
+                run(any(), any())
+            } doReturn PassResult.Unchanged
+        }
+        val pass2: Pass<Bag> = mock {
+            on {
+                run(any(), any())
+            } doReturn PassResult.Unchanged
+        }
 
         val optimizer = PassOptimizer(listOf(pass1, pass2), manager)
         val changed = optimizer.optimize(Bag())
@@ -58,10 +65,12 @@ class PassOptimizerTest {
         val manager = mock<AnalysisManager>()
         var firstCall = true
         val pass: Pass<Bag> = mock {
-            on { run(any(), any()) } doAnswer {
+            on {
+                run(any(), any())
+            } doAnswer {
                 if (firstCall) {
                     firstCall = false
-                    PassResult.changed()
+                    PassResult.Changed()
                 } else {
                     PassResult.Unchanged
                 }
@@ -83,10 +92,12 @@ class PassOptimizerTest {
         val preserved: Set<Class<out Analysis<*>>> = setOf(StubAnalysis::class.java)
         var first = true
         val pass: Pass<Bag> = mock {
-            on { run(any(), any()) } doAnswer {
+            on {
+                run(any(), any())
+            } doAnswer {
                 if (first) {
                     first = false
-                    PassResult(changed = true, preserved = preserved)
+                    PassResult.Changed(preserved)
                 } else {
                     PassResult.Unchanged
                 }
@@ -103,12 +114,22 @@ class PassOptimizerTest {
         val manager = mock<AnalysisManager>()
         var runs = 0
         val pass1: Pass<Bag> = mock {
-            on { run(any(), any()) } doAnswer {
+            on {
+                run(any(), any())
+            } doAnswer {
                 runs++
-                if (runs <= 2) PassResult.changed() else PassResult.Unchanged
+                if (runs <= 2) {
+                    PassResult.Changed()
+                } else {
+                    PassResult.Unchanged
+                }
             }
         }
-        val pass2: Pass<Bag> = mock { on { run(any(), any()) } doReturn PassResult.Unchanged }
+        val pass2: Pass<Bag> = mock {
+            on {
+                run(any(), any())
+            } doReturn PassResult.Unchanged
+        }
 
         val changed = PassOptimizer(listOf(pass1, pass2), manager).optimize(Bag())
 

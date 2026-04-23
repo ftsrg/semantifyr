@@ -26,7 +26,7 @@ class WorklistOptimizerTest {
 
     @Test
     fun `empty pattern list reports no change and never commits`() {
-        val optimizer = WorklistOptimizer(emptyList(), CompilationPass.ExpressionSimplification, artifacts)
+        val optimizer = PatternOptimizer(emptyList(), CompilationPass.ExpressionSimplification, artifacts)
         val input = OxstsFactory.createLiteralBoolean(true)
 
         assertThat(optimizer.optimize(input)).isFalse
@@ -38,7 +38,7 @@ class WorklistOptimizerTest {
         val pattern: OptimizationPattern = mock()
         whenever(pattern.tryApply(any(), any())).thenReturn(false)
 
-        val optimizer = WorklistOptimizer(listOf(pattern), CompilationPass.ExpressionSimplification, artifacts)
+        val optimizer = PatternOptimizer(listOf(pattern), CompilationPass.ExpressionSimplification, artifacts)
         val input = OxstsFactory.createLiteralBoolean(true)
 
         assertThat(optimizer.optimize(input)).isFalse
@@ -59,7 +59,7 @@ class WorklistOptimizerTest {
             }
         }
 
-        val optimizer = WorklistOptimizer(listOf(pattern), CompilationPass.ExpressionSimplification, artifacts)
+        val optimizer = PatternOptimizer(listOf(pattern), CompilationPass.ExpressionSimplification, artifacts)
         val input = OxstsFactory.createLiteralBoolean(true)
 
         assertThat(optimizer.optimize(input)).isTrue
@@ -82,7 +82,7 @@ class WorklistOptimizerTest {
         }
         whenever(second.tryApply(any(), any())).thenReturn(false)
 
-        val optimizer = WorklistOptimizer(
+        val optimizer = PatternOptimizer(
             listOf(first, second),
             CompilationPass.ExpressionSimplification,
             artifacts,

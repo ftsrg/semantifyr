@@ -57,8 +57,12 @@ class PropagateBothBranchesConstantFalsePattern : OptimizationPattern {
 
 class PropagateConstantFalseInSequencePattern : OptimizationPattern {
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
-        if (element !is SequenceOperation) return false
-        if (element.steps.size < 2) return false
+        if (element !is SequenceOperation) {
+            return false
+        }
+        if (element.steps.size < 2) {
+            return false
+        }
         val assumption = element.steps.firstOrNull { it.isConstantFalseAssumption } ?: return false
         element.steps.clear()
         element.steps += assumption
@@ -69,8 +73,12 @@ class PropagateConstantFalseInSequencePattern : OptimizationPattern {
 
 class PropagateSingleBranchConstantFalsePattern : OptimizationPattern {
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
-        if (element !is ChoiceOperation) return false
-        if (element.branches.singleOrNull()?.isSingleConstantFalseAssumption != true) return false
+        if (element !is ChoiceOperation) {
+            return false
+        }
+        if (element.branches.singleOrNull()?.isSingleConstantFalseAssumption != true) {
+            return false
+        }
         val parent = element.eContainer() ?: return false
         EcoreUtil2.replace(element, OxstsFactory.createAssumptionOperation(false))
         worklist.add(parent)
@@ -80,8 +88,12 @@ class PropagateSingleBranchConstantFalsePattern : OptimizationPattern {
 
 class RemoveConstantFalseChoiceBranchPattern : OptimizationPattern {
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
-        if (element !is ChoiceOperation) return false
-        if (element.branches.size < 2) return false
+        if (element !is ChoiceOperation) {
+            return false
+        }
+        if (element.branches.size < 2) {
+            return false
+        }
         val constantFalseBranch = element.branches.firstOrNull { it.isSingleConstantFalseAssumption } ?: return false
         EcoreUtil2.remove(constantFalseBranch)
         worklist.add(element)

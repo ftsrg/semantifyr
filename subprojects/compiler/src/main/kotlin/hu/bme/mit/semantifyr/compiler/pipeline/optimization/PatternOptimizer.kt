@@ -30,7 +30,9 @@ class Worklist<T> {
         return item
     }
 
-    fun isNotEmpty(): Boolean = queue.isNotEmpty()
+    fun isNotEmpty(): Boolean {
+        return queue.isNotEmpty()
+    }
 }
 
 interface OptimizationPattern {

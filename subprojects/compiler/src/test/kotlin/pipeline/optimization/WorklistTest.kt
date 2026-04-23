@@ -62,8 +62,9 @@ class WorklistTest {
     @Test
     fun `pop on empty worklist throws`() {
         val worklist = Worklist<String>()
-        assertThatThrownBy { worklist.pop() }
-            .isInstanceOf(NoSuchElementException::class.java)
+        assertThatThrownBy {
+            worklist.pop()
+        }.isInstanceOf(NoSuchElementException::class.java)
     }
 
     @Test

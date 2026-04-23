@@ -9,37 +9,18 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
-import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.AnalysisManager
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationCategory
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Pass
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PassResult
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PatternOptimizer
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.FlattenNestedChoicePattern
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.FlattenNestedSequencePattern
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.FlattenSingleBranchChoicePattern
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PatternOptimizationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.FlatteningPattern
 
 class OperationFlatteningPass @Inject constructor(
-    private val config: OptimizationConfig,
+    config: OptimizationConfig,
     artifactManager: CompilationArtifactManager,
-) : Pass<EvaluableCompilationContext> {
-
-    private val patternOptimizer = PatternOptimizer(
-        patterns = listOf(
-            FlatteningPattern(),
-        ),
-        pass = CompilationPass.OperationFlattening,
-        artifactManager = artifactManager,
-    )
-
-    override fun run(input: EvaluableCompilationContext, analysisManager: AnalysisManager): PassResult {
-        if (!config.isEnabled(OptimizationCategory.OperationFlattening)) {
-            return PassResult.Unchanged
-        }
-        val changed = patternOptimizer.optimize(input.inlinedOxsts)
-        return if (changed) PassResult.changed() else PassResult.Unchanged
-    }
-
-}
+) : PatternOptimizationPass(
+    config = config,
+    category = OptimizationCategory.OperationFlattening,
+    compilationPass = CompilationPass.OperationFlattening,
+    patterns = listOf(FlatteningPattern()),
+    artifactManager = artifactManager,
+)

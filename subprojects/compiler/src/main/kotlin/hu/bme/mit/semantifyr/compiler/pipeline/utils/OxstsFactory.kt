@@ -17,9 +17,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.impl.OxstsFactoryImpl
 
-/**
- * Shared [OxstsFactoryImpl] singleton with helper functions.
- */
 object OxstsFactory : OxstsFactoryImpl() {
 
     fun createBooleanOperator(op: BooleanOp, left: Expression, right: Expression): BooleanOperator {

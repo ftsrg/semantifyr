@@ -16,25 +16,24 @@ class LivenessAnalysisTest : AnalysisTestBase() {
 
     @Test
     fun `variable read by the property is marked read`() {
-        val run = runAnalysis(
-            source = """
+        val (inlined, result) = runLiveness(
+            """
                 inlined oxsts of semantifyr::Anything
                 var a : int := 0
                 init { }
                 tran { }
                 prop { AG (a == 1) }
             """,
-            analysisClass = LivenessAnalysis::class.java,
         )
 
-        val a = run.inlinedOxsts.varNamed("a")
-        assertThat(run.result.isRead(a)).isTrue
+        val a = inlined.varNamed("a")
+        assertThat(result.isRead(a)).isTrue
     }
 
     @Test
     fun `variable with no reads is not marked read`() {
-        val run = runAnalysis(
-            source = """
+        val (inlined, result) = runLiveness(
+            """
                 inlined oxsts of semantifyr::Anything
                 var a : int := 0
                 var b : int := 0
@@ -42,12 +41,11 @@ class LivenessAnalysisTest : AnalysisTestBase() {
                 tran { b := 1 }
                 prop { AG (a == 1) }
             """,
-            analysisClass = LivenessAnalysis::class.java,
         )
 
-        val b = run.inlinedOxsts.varNamed("b")
-        assertThat(run.result.isRead(b)).isFalse
-        assertThat(run.result.isAssigned(b)).isTrue
+        val b = inlined.varNamed("b")
+        assertThat(result.isRead(b)).isFalse
+        assertThat(result.isAssigned(b)).isTrue
     }
 
     // Regression: assignments and havocs used to be merged via Map.plus in the
@@ -55,8 +53,8 @@ class LivenessAnalysisTest : AnalysisTestBase() {
     // both. The fix concatenates writes before groupBy; this test guards it.
     @Test
     fun `variable with both assignment and havoc has both in the assignments set`() {
-        val run = runAnalysis(
-            source = """
+        val (inlined, result) = runLiveness(
+            """
                 inlined oxsts of semantifyr::Anything
                 var a : int := 0
                 init { }
@@ -66,19 +64,18 @@ class LivenessAnalysisTest : AnalysisTestBase() {
                 }
                 prop { AG (a == 1) }
             """,
-            analysisClass = LivenessAnalysis::class.java,
         )
 
-        val a = run.inlinedOxsts.varNamed("a")
-        assertThat(run.result.assignmentCount(a))
+        val a = inlined.varNamed("a")
+        assertThat(result.assignmentCount(a))
             .`as`("assignments map must include both the havoc and the assignment")
             .isEqualTo(2)
     }
 
     @Test
     fun `guard expression reads count as reads`() {
-        val run = runAnalysis(
-            source = """
+        val (inlined, result) = runLiveness(
+            """
                 inlined oxsts of semantifyr::Anything
                 var a : int := 0
                 var b : int := 0
@@ -89,11 +86,10 @@ class LivenessAnalysisTest : AnalysisTestBase() {
                 }
                 prop { AG true }
             """,
-            analysisClass = LivenessAnalysis::class.java,
         )
 
-        val a = run.inlinedOxsts.varNamed("a")
-        assertThat(run.result.isRead(a))
+        val a = inlined.varNamed("a")
+        assertThat(result.isRead(a))
             .`as`("'a' is read inside the assume guard - must be marked read")
             .isTrue
     }

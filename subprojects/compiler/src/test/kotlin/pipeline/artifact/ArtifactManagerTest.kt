@@ -32,7 +32,9 @@ class ArtifactManagerTest {
     fun `pathOf returns distinct paths for distinct kinds`() {
         val manager = ArtifactManager(ArtifactConfig.debug(tempDir))
 
-        val paths = ArtifactKind.entries.map { manager.pathOf(it) }
+        val paths = ArtifactKind.entries.map {
+            manager.pathOf(it)
+        }
         assertThat(paths).doesNotHaveDuplicates()
     }
 

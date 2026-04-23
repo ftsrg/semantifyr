@@ -20,6 +20,7 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.eclipse.xtext.serializer.ISerializer
 import java.io.File
+import java.io.Writer
 import java.nio.file.Path
 
 class CompilationArtifactManagerTest {
@@ -60,7 +61,7 @@ class CompilationArtifactManagerTest {
 
         manager.commitStep(CompilationPass.ConstantFolding)
 
-        verify(serializer, never()).serialize(any(), any<java.io.Writer>(), any())
+        verify(serializer, never()).serialize(any(), any<Writer>(), any())
     }
 
     @Test
@@ -70,7 +71,7 @@ class CompilationArtifactManagerTest {
 
         manager.commitStep(CompilationPass.ConstantFolding)
 
-        verify(serializer, times(1)).serialize(eq(inlinedOxsts), any<java.io.Writer>(), any())
+        verify(serializer, times(1)).serialize(eq(inlinedOxsts), any<Writer>(), any())
     }
 
     @Test
@@ -83,7 +84,7 @@ class CompilationArtifactManagerTest {
         manager.commitStep(CompilationPass.OperationFlattening)
         manager.commitStep(CompilationPass.ConstantFolding)
 
-        verify(serializer, times(1)).serialize(eq(inlinedOxsts), any<java.io.Writer>(), any())
+        verify(serializer, times(1)).serialize(eq(inlinedOxsts), any<Writer>(), any())
     }
 
     @Test
@@ -94,7 +95,7 @@ class CompilationArtifactManagerTest {
         manager.commitStep(CompilationPass.ConstantFolding)
         manager.commitStep(CompilationPass.ConstantFolding)
 
-        verify(serializer, times(2)).serialize(eq(inlinedOxsts), any<java.io.Writer>(), any())
+        verify(serializer, times(2)).serialize(eq(inlinedOxsts), any<Writer>(), any())
     }
 
     @Test
@@ -104,7 +105,7 @@ class CompilationArtifactManagerTest {
 
         manager.commitInstantiated()
 
-        verify(serializer, times(1)).serialize(eq(inlinedOxsts), any<java.io.Writer>(), any())
+        verify(serializer, times(1)).serialize(eq(inlinedOxsts), any<Writer>(), any())
     }
 
     @Test
@@ -114,7 +115,7 @@ class CompilationArtifactManagerTest {
 
         manager.commitInlined()
 
-        verify(serializer, times(1)).serialize(eq(inlinedOxsts), any<java.io.Writer>(), any())
+        verify(serializer, times(1)).serialize(eq(inlinedOxsts), any<Writer>(), any())
     }
 
     @Test
@@ -124,7 +125,7 @@ class CompilationArtifactManagerTest {
 
         manager.commitFlattened()
 
-        verify(serializer, times(1)).serialize(eq(inlinedOxsts), any<java.io.Writer>(), any())
+        verify(serializer, times(1)).serialize(eq(inlinedOxsts), any<Writer>(), any())
     }
 
     @Test
@@ -135,8 +136,9 @@ class CompilationArtifactManagerTest {
 
         manager.setTarget(first)
 
-        assertThatThrownBy { manager.setTarget(second) }
-            .isInstanceOf(IllegalStateException::class.java)
+        assertThatThrownBy {
+            manager.setTarget(second)
+        }.isInstanceOf(IllegalStateException::class.java)
             .hasMessageContaining("setTarget")
             .hasMessageContaining("already")
     }
@@ -145,8 +147,9 @@ class CompilationArtifactManagerTest {
     fun `commitStep fails with a descriptive message if setTarget was never called`() {
         val manager = managerWith(steps = CompilationStepsConfig.All)
 
-        assertThatThrownBy { manager.commitStep(CompilationPass.ConstantFolding) }
-            .isInstanceOf(IllegalStateException::class.java)
+        assertThatThrownBy {
+            manager.commitStep(CompilationPass.ConstantFolding)
+        }.isInstanceOf(IllegalStateException::class.java)
             .hasMessageContaining("setTarget")
     }
 
@@ -154,8 +157,9 @@ class CompilationArtifactManagerTest {
     fun `commitInstantiated fails with a descriptive message if setTarget was never called`() {
         val manager = managerWith()
 
-        assertThatThrownBy { manager.commitInstantiated() }
-            .isInstanceOf(IllegalStateException::class.java)
+        assertThatThrownBy {
+            manager.commitInstantiated()
+        }.isInstanceOf(IllegalStateException::class.java)
             .hasMessageContaining("setTarget")
     }
 }

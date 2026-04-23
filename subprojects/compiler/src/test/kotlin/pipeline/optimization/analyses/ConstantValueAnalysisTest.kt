@@ -16,25 +16,24 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
 
     @Test
     fun `variable whose initializer and only write agree is considered constant`() {
-        val run = runAnalysis(
-            source = """
+        val (inlined, result) = runConstantValue(
+            """
                 inlined oxsts of semantifyr::Anything
                 var a : int := 7
                 init { a := 7 }
                 tran { }
                 prop { AG (a == 7) }
             """,
-            analysisClass = ConstantValueAnalysis::class.java,
         )
 
-        val a = run.inlinedOxsts.varNamed("a")
-        assertThat(run.result.isConstant(a)).isTrue
+        val a = inlined.varNamed("a")
+        assertThat(result.isConstant(a)).isTrue
     }
 
     @Test
     fun `variable with differing writes is not constant`() {
-        val run = runAnalysis(
-            source = """
+        val (inlined, result) = runConstantValue(
+            """
                 inlined oxsts of semantifyr::Anything
                 var a : int := 0
                 init { }
@@ -43,28 +42,26 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
                 }
                 prop { AG (a != 3) }
             """,
-            analysisClass = ConstantValueAnalysis::class.java,
         )
 
-        val a = run.inlinedOxsts.varNamed("a")
-        assertThat(run.result.isConstant(a)).isFalse
+        val a = inlined.varNamed("a")
+        assertThat(result.isConstant(a)).isFalse
     }
 
     @Test
     fun `havoced variable is not constant even when non-havoc writes agree`() {
-        val run = runAnalysis(
-            source = """
+        val (inlined, result) = runConstantValue(
+            """
                 inlined oxsts of semantifyr::Anything
                 var a : int := 7
                 init { a := 7 }
                 tran { havoc(a) }
                 prop { AG (a == 7) }
             """,
-            analysisClass = ConstantValueAnalysis::class.java,
         )
 
-        val a = run.inlinedOxsts.varNamed("a")
-        assertThat(run.result.isConstant(a))
+        val a = inlined.varNamed("a")
+        assertThat(result.isConstant(a))
             .`as`("havoc introduces non-determinism - variable is not constant")
             .isFalse
     }
@@ -73,19 +70,18 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
     fun `variable with only an initializer is not reported constant here`() {
         // ConstantValueAnalysis intentionally defers init-only variables to
         // VariableLivenessPass's substituteUnassignedInitialized rule.
-        val run = runAnalysis(
-            source = """
+        val (inlined, result) = runConstantValue(
+            """
                 inlined oxsts of semantifyr::Anything
                 var a : int := 7
                 init { }
                 tran { }
                 prop { AG (a == 7) }
             """,
-            analysisClass = ConstantValueAnalysis::class.java,
         )
 
-        val a = run.inlinedOxsts.varNamed("a")
-        assertThat(run.result.isConstant(a)).isFalse
+        val a = inlined.varNamed("a")
+        assertThat(result.isConstant(a)).isFalse
     }
 
     private fun InlinedOxsts.varNamed(name: String): VariableDeclaration {

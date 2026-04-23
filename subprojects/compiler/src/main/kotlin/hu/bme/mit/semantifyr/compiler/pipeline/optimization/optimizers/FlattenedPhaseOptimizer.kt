@@ -25,17 +25,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.OperationFlat
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.RedundantOperationRemovalPass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.VariableLivenessPass
 
-/**
- * Optimizer applied after flattening, when each underlying variable has a
- * single canonical [hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration].
- *
- * Runs the full pass set, including every analysis-driven and
- * variable-manipulating pass. Running these here (instead of also in
- * [InlinedPhaseOptimizer]) is what keeps the analyses' grouping by variable
- * identity sound: after flattening, two expressions that refer to the same
- * underlying variable always resolve to the same declaration, so writes and
- * reads are grouped correctly.
- */
 class FlattenedPhaseOptimizer @Inject constructor(
     livenessAnalysis: LivenessAnalysis,
     coneOfInfluenceAnalysis: ConeOfInfluenceAnalysis,

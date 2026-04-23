@@ -19,9 +19,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 
-/**
- * The main Compiler entrypoint that runs the whole Semantifyr compilation pipeline on the input models.
- */
 class SemantifyrCompiler(
     private val injector: Injector,
     private val artifactConfig: ArtifactConfig,

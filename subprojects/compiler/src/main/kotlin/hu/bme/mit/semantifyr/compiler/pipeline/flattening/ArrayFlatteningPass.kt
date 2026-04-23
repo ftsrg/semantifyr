@@ -34,10 +34,6 @@ class ArrayFlatteningPass @Inject constructor(
     private val constantExpressionEvaluatorProvider: ConstantExpressionEvaluatorProvider,
 ) {
 
-    /**
-     * Flatten every fixed-size array variable in the inlined model. Returns
-     * the number of variables that were flattened.
-     */
     fun flattenArrays(inlinedOxsts: InlinedOxsts): Int {
         val arrayVariables = collectArrayVariables(inlinedOxsts)
         for (variable in arrayVariables) {
@@ -109,7 +105,11 @@ class ArrayFlatteningPass @Inject constructor(
                     )
                 }
                 List(slotCount) { index ->
-                    if (index < values.size) values[index].copy() else null
+                    if (index < values.size) {
+                        values[index].copy()
+                    } else {
+                        null
+                    }
                 }
             }
             else -> sourceError(
@@ -127,7 +127,9 @@ class ArrayFlatteningPass @Inject constructor(
         val allIndexings = EcoreUtil2.eAllOfType(root, IndexingSuffixExpression::class.java).filter {
             referencesArrayVariable(it.primary, arrayVariable)
         }.toList()
-        val (writes, reads) = allIndexings.partition { isWriteSite(it) }
+        val (writes, reads) = allIndexings.partition {
+            isWriteSite(it)
+        }
         for (indexing in reads) {
             rewriteIndexing(indexing, arrayVariable, slotVariables)
         }

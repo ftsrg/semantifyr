@@ -28,7 +28,9 @@ class TransitionCallTraceBuilderTest {
 
     private val emptyCallExpression: CallSuffixExpression = OxstsFactoryImpl().createCallSuffixExpression()
 
-    private fun mockTransitionDeclaration(): TransitionDeclaration = mock()
+    private fun mockTransitionDeclaration(): TransitionDeclaration {
+        return mock()
+    }
 
     private fun newBuilder(): TransitionCallTraceBuilder {
         whenever(evaluatorProvider.getEvaluator(any())).thenReturn(evaluator)
@@ -42,7 +44,9 @@ class TransitionCallTraceBuilderTest {
         // Looking up anything in the empty map must raise.
         val traceOperation: TraceOperation = OxstsFactoryImpl().createTraceOperation().also { it.name = "missing" }
 
-        assertThat(runCatching { map.getTransitionCallTrace(traceOperation) }.isFailure).isTrue
+        assertThat(runCatching {
+            map.getTransitionCallTrace(traceOperation)
+        }.isFailure).isTrue
     }
 
     @Test
@@ -57,7 +61,9 @@ class TransitionCallTraceBuilderTest {
 
         assertThat(names).hasSize(3)
         assertThat(names).doesNotHaveDuplicates()
-        names.forEach { assertThat(it).startsWith("__transition_tracer") }
+        names.forEach {
+            assertThat(it).startsWith("__transition_tracer")
+        }
     }
 
     @Test
@@ -96,6 +102,8 @@ class TransitionCallTraceBuilderTest {
             instance, container, mockTransitionDeclaration(), emptyCallExpression,
         ) as TraceOperation
 
-        assertThat(runCatching { snapshot.getTransitionCallTrace(traced) }.isFailure).isTrue
+        assertThat(runCatching {
+            snapshot.getTransitionCallTrace(traced)
+        }.isFailure).isTrue
     }
 }

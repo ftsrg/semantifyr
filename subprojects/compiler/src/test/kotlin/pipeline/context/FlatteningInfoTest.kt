@@ -46,8 +46,9 @@ class FlatteningInfoTest {
             instanceIdMapping = InstanceIdMapping(emptyMap(), emptyMap()),
         )
 
-        assertThatThrownBy { info.resolveOriginalVariable(holder, variable("x")) }
-            .isInstanceOf(IllegalStateException::class.java)
+        assertThatThrownBy {
+            info.resolveOriginalVariable(holder, variable("x"))
+        }.isInstanceOf(IllegalStateException::class.java)
             .hasMessageContaining("No variable mappings")
     }
 
@@ -63,8 +64,9 @@ class FlatteningInfoTest {
             instanceIdMapping = InstanceIdMapping(emptyMap(), emptyMap()),
         )
 
-        assertThatThrownBy { info.resolveOriginalVariable(holder, missingActual) }
-            .isInstanceOf(IllegalStateException::class.java)
+        assertThatThrownBy {
+            info.resolveOriginalVariable(holder, missingActual)
+        }.isInstanceOf(IllegalStateException::class.java)
             .hasMessageContaining("missing")
     }
 
@@ -104,7 +106,8 @@ class FlatteningInfoTest {
             instanceIdMapping = InstanceIdMapping(emptyMap(), emptyMap()),
         )
 
-        assertThatThrownBy { info.resolveOriginalVariable(otherHolder, actualA) }
-            .isInstanceOf(IllegalStateException::class.java)
+        assertThatThrownBy {
+            info.resolveOriginalVariable(otherHolder, actualA)
+        }.isInstanceOf(IllegalStateException::class.java)
     }
 }
