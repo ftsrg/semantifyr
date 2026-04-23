@@ -34,25 +34,29 @@ class ResourceSetLoader @Inject constructor(
 
     fun validateResource(resource: Resource) {
         val issues = resourceValidator.validate(resource, CheckMode.ALL, CancelIndicator.NullImpl)
+        val fileLabel = resource.uri.toFileString() ?: resource.uri.toString()
 
         if (resource.errors.any()) {
-            logger.error { "Errors found in file (${resource.uri.toFileString()})" }
+            logger.error { "Parse errors in file $fileLabel:" }
 
             for (error in resource.errors) {
                 logger.error(error.message)
             }
 
-            error("Errors found in file (${resource.uri.toFileString()})}")
+            val parseErrorSummary = resource.errors.joinToString("\n  ") { diag ->
+                "$fileLabel:${diag.line}:${diag.column}: ${diag.message}"
+            }
+            error("Parse errors in $fileLabel:\n  $parseErrorSummary")
         }
         if (resource.warnings.any()) {
-            logger.warn { "Warnings found in file (${resource.uri.toFileString()})" }
+            logger.warn { "Warnings found in file $fileLabel" }
 
             for (warning in resource.warnings) {
                 logger.warn(warning.message)
             }
         }
         if (issues.any()) {
-            logger.info { "Issues found in file (${resource.uri.toFileString()})" }
+            logger.info { "Issues found in file $fileLabel" }
 
             for (issue in issues) {
                 when (issue.severity) {
@@ -72,8 +76,17 @@ class ResourceSetLoader @Inject constructor(
                 }
             }
 
-            if (issues.any { it.severity == Severity.ERROR || it.severity == Severity.WARNING }) {
-                error("Issues found in file!")
+            val blockingIssues = issues.filter {
+                it.severity == Severity.ERROR || it.severity == Severity.WARNING
+            }
+            if (blockingIssues.isNotEmpty()) {
+                val summary = blockingIssues.joinToString("\n  ") { issue ->
+                    val loc = issue.uriToProblem?.toFileString() ?: fileLabel
+                    "$loc:${issue.lineNumber}:${issue.column}: ${issue.severity} ${issue.code ?: ""} ${issue.message}".trim()
+                }
+                error(
+                    "${blockingIssues.size} validation issue(s) in $fileLabel:\n  $summary"
+                )
             }
         }
     }

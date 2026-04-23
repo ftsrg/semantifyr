@@ -21,8 +21,8 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.tryEvaluateTypedOrNull
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.AnalysisManager
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationCategory
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.Pass
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.PassResult
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Pass
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PassResult
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ReachingDefinitionsAnalysis
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import org.eclipse.xtext.EcoreUtil2
@@ -47,12 +47,12 @@ class CopyPropagationPass @Inject constructor(
     private val artifactManager: CompilationArtifactManager,
 ) : Pass<EvaluableCompilationContext> {
 
-    override fun run(input: EvaluableCompilationContext, analyses: AnalysisManager): PassResult {
+    override fun run(input: EvaluableCompilationContext, analysisManager: AnalysisManager): PassResult {
         if (!config.isEnabled(OptimizationCategory.ConstantFolding)) {
             return PassResult.Unchanged
         }
 
-        val rd = analyses.get(ReachingDefinitionsAnalysis::class.java, input)
+        val rd = analysisManager.get(ReachingDefinitionsAnalysis::class.java, input)
         val evaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
 
         val substitutions = buildList {

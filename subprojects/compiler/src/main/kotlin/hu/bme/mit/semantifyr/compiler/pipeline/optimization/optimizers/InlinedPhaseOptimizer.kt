@@ -10,7 +10,8 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.AnalysisManager
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Optimizer
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.ConstantAssumptionPropagationPass
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PassOptimizer
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.AssumeFalsePropagationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.ExpressionSimplificationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.OperationFlatteningPass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.RedundantOperationRemovalPass
@@ -42,7 +43,7 @@ class InlinedPhaseOptimizer @Inject constructor(
     expressionSimplification: ExpressionSimplificationPass,
     operationFlattening: OperationFlatteningPass,
     redundantOperationRemoval: RedundantOperationRemovalPass,
-    constantAssumptionPropagation: ConstantAssumptionPropagationPass,
+    constantAssumptionPropagation: AssumeFalsePropagationPass,
 ) : Optimizer<EvaluableCompilationContext>() {
 
     private val pipeline = PassOptimizer(

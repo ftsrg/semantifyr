@@ -10,11 +10,12 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.AnalysisManager
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Optimizer
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PassOptimizer
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ConeOfInfluenceAnalysis
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ConstantValueAnalysis
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.LivenessAnalysis
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ReachingDefinitionsAnalysis
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.ConstantAssumptionPropagationPass
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.AssumeFalsePropagationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.ConstantVariableSubstitutionPass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.CopyPropagationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.DeadCodeRemovalPass
@@ -43,7 +44,7 @@ class FlattenedPhaseOptimizer @Inject constructor(
     expressionSimplification: ExpressionSimplificationPass,
     operationFlattening: OperationFlatteningPass,
     redundantOperationRemoval: RedundantOperationRemovalPass,
-    constantAssumptionPropagation: ConstantAssumptionPropagationPass,
+    constantAssumptionPropagation: AssumeFalsePropagationPass,
     constantVariableSubstitution: ConstantVariableSubstitutionPass,
     copyPropagation: CopyPropagationPass,
     deadStoreElimination: DeadStoreEliminationPass,

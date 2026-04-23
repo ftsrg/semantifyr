@@ -81,6 +81,7 @@ class OxstsFlattener @Inject constructor(
     private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
     private val domainMappingSerializer: DomainMappingSerializer,
     private val instanceCollector: InstanceCollector,
+    private val arrayFlatteningPass: ArrayFlatteningPass,
 ) {
 
     private val logger by loggerFactory()
@@ -98,6 +99,11 @@ class OxstsFlattener @Inject constructor(
         pullDownVariables(inlinedOxsts, instanceTree, variableInstanceDomain, variableHolders, variableMappings)
         logger.debug { "Rewriting variable references (${inlinedOxsts.variables.size} variable(s))" }
         rewriteVariableReferences(inlinedOxsts, instanceTree, variableMappings)
+
+        logger.debug { "Flattening array variables" }
+        val flattenedArrayCount = arrayFlatteningPass.flattenArrays(inlinedOxsts)
+        logger.debug { "Flattened $flattenedArrayCount array variable(s)" }
+
         logger.debug { "Rewriting feature-typed variables" }
         rewriteFeatureTypedVariables(inlinedOxsts, variableInstanceDomain)
 
@@ -109,18 +115,10 @@ class OxstsFlattener @Inject constructor(
         logger.info { "Running post-flattening optimizers" }
         flattenedPhaseOptimizer.optimize(inlinedCompilationContext)
 
-        // The final post-deflation state is emitted by the orchestrator via
-        // commitFlattened(); no step-level duplicate needed here.
-
         val instanceIdMapping = deflatedEvaluationTransformer.buildMapping()
 
         domainMappingSerializer.serializeMapping(instanceIdMapping)
 
-        // Snapshot FlatteningInfo against the *post-optimization* IR. Variables
-        // that the optimizer eliminated never reach the backend and therefore
-        // never appear in a witness, so retaining them in these traceability
-        // maps is pure dead weight. Filtering here keeps FlatteningInfo
-        // consistent with inlinedOxsts.variables.
         val survivingVariables = inlinedOxsts.variables.toSet()
         val survivingMappings = variableMappings.mapValues { (_, inner) ->
             inner.filterValues { it in survivingVariables }
@@ -165,12 +163,6 @@ class OxstsFlattener @Inject constructor(
         }
     }
 
-    /**
-     * Clone [domainVariable] into an instance-specific variable named with the
-     * [instance]'s prefix. If the declared domain is a feature or a class,
-     * capture the eligible instance set in [variableInstanceDomain] and retype
-     * to `Anything` (the erased int-domain marker used downstream).
-     */
     private fun pullDownVariable(
         domainVariable: VariableDeclaration,
         instance: Instance,

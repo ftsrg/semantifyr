@@ -37,7 +37,23 @@ interface OptimizationPattern {
     fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean
 }
 
-class WorklistOptimizer(
+abstract class CompositeOptimizationPattern : OptimizationPattern {
+
+    protected abstract val patterns: Collection<OptimizationPattern>
+
+    override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
+        for (pattern in patterns) {
+            if (pattern.tryApply(element, worklist)) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+}
+
+class PatternOptimizer(
     private val patterns: List<OptimizationPattern>,
     private val pass: CompilationPass,
     private val artifactManager: CompilationArtifactManager,
@@ -68,7 +84,9 @@ class WorklistOptimizer(
             // A prior pattern may have reparented this node's ancestor into a new container or
             // dropped it entirely. Such nodes linger in the worklist but have null containment
             // slots and would NPE the next pattern that touches them. Skip them.
-            if (current !== input && current.eResource() == null) continue
+            if (current !== input && current.eResource() == null) {
+                continue
+            }
             for (pattern in patterns) {
                 if (pattern.tryApply(current, worklist)) {
                     changed = true
@@ -81,8 +99,7 @@ class WorklistOptimizer(
 
         val totalElapsed = totalMark.elapsedNow()
         logger.debug {
-            "WorklistOptimizer[${pass.name}]: ${totalElapsed} total (seed ${seedElapsed}), " +
-                "${pops} pop(s), ${applications} application(s), ${patterns.size} pattern(s), changed=${changed}"
+            "WorklistOptimizer[${pass.name}]: $totalElapsed total (seed $seedElapsed), $pops pop(s), $applications application(s), ${patterns.size} pattern(s), changed=$changed"
         }
         return changed
     }

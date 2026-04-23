@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns
 
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.CompositeOptimizationPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
@@ -24,11 +25,29 @@ private val Operation.isConstantFalseAssumption: Boolean
 private val SequenceOperation.isSingleConstantFalseAssumption: Boolean
     get() = steps.singleOrNull()?.isConstantFalseAssumption == true
 
+class AssumeFalsePropagationPattern : CompositeOptimizationPattern() {
+
+    override val patterns: Collection<OptimizationPattern> = listOf(
+        PropagateBothBranchesConstantFalsePattern(),
+        PropagateConstantFalseInSequencePattern(),
+        PropagateSingleBranchConstantFalsePattern(),
+        RemoveConstantFalseChoiceBranchPattern(),
+    )
+
+}
+
 class PropagateBothBranchesConstantFalsePattern : OptimizationPattern {
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
-        if (element !is IfOperation) return false
-        if (!element.body.isSingleConstantFalseAssumption) return false
-        if (element.`else`?.isSingleConstantFalseAssumption != true) return false
+        if (element !is IfOperation) {
+            return false
+        }
+        if (!element.body.isSingleConstantFalseAssumption) {
+            return false
+        }
+        if (element.`else`?.isSingleConstantFalseAssumption != true) {
+            return false
+        }
+
         val parent = element.eContainer() ?: return false
         EcoreUtil2.replace(element, element.body)
         worklist.add(parent)

@@ -83,9 +83,8 @@ class InlinedOxstsModelCreator @Inject constructor(
                     "Verification cases identify their property by the name 'prop'.",
             )
         }
-        val property = resolved as? PropertyDeclaration
 
-        if (property == null) {
+        if (resolved == null) {
             return OxstsFactory.createPropertyDeclaration().also {
                 it.expression = OxstsFactory.createLiteralBoolean(true)
             }
@@ -97,7 +96,7 @@ class InlinedOxstsModelCreator @Inject constructor(
                     it.primary = OxstsFactory.createElementReference().also {
                         it.element = inlinedOxsts.rootFeature
                     }
-                    it.member = property
+                    it.member = resolved
                 }
             }
         }

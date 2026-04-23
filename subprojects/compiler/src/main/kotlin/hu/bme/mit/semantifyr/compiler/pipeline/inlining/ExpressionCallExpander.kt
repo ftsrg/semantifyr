@@ -17,24 +17,12 @@ import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 
-/**
- * Expands expression-level calls (inlined property invocations like
- * `foo.bar(args)`) into their body expressions, and rewrites feature-valued
- * references to their static equivalents.
- *
- * Stateless w.r.t. walking: the orchestrator hands over a single
- * [CallSuffixExpression] or feature reference, the expander returns the
- * rewritten [Expression]. Handles:
- *  - [CallSuffixExpression] to a [PropertyDeclaration]: resolves the target
- *    instance, clones the property's expression body, rewrites self /
- *    argument references.
- *  - Feature-valued reference expressions: evaluates to an instance or
- *    instance set, transforms back to the rewritten expression form.
- */
 class ExpressionCallExpander @Inject constructor(
     private val staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider,
     private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
@@ -45,24 +33,29 @@ class ExpressionCallExpander @Inject constructor(
     private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
 ) {
 
-    /**
-     * Expand a property call to the inlined expression body with self / args
-     * substituted.
-     */
     fun expandCall(callExpression: CallSuffixExpression, instance: Instance): Expression {
-        val target = callTargetResolver.resolve(callExpression, instance)
-        val (containerInstance, baseTargetDeclaration) = when (target) {
-            is CallTarget.DirectInstance -> target.containerInstance to target.targetDeclaration
-            is CallTarget.VariableDispatch -> sourceError(
-                callExpression,
-                "Variable dispatching in property expressions is not yet implemented (would require if-expression support).",
+        return when (val target = callTargetResolver.resolve(callExpression, instance)) {
+            is CallTarget.DirectInstance -> expandForContainer(
+                containerInstance = target.containerInstance,
+                baseTargetDeclaration = target.targetDeclaration,
+                callExpression = callExpression,
+            )
+            is CallTarget.VariableDispatch -> dispatchOverVariable(
+                target = target,
+                callExpression = callExpression,
             )
             is CallTarget.MissingOptional -> sourceError(
                 callExpression,
                 "Container instance of the property is empty!",
             )
         }
+    }
 
+    private fun expandForContainer(
+        containerInstance: Instance,
+        baseTargetDeclaration: NamedElement,
+        callExpression: CallSuffixExpression,
+    ): Expression {
         val actualContainerInstanceReference = instanceReferenceProvider.getReference(containerInstance)
 
         val property = redefinitionAwareReferenceResolver.resolve(
@@ -87,12 +80,50 @@ class ExpressionCallExpander @Inject constructor(
         return expressionHolder.expression
     }
 
-    /**
-     * If [expression] is a reference that evaluates to a feature, return the
-     * transformed expression (typically an instance-id literal form). Returns
-     * `null` if the expression is not feature-valued, so the caller can skip
-     * rewriting.
-     */
+    private fun dispatchOverVariable(
+        target: CallTarget.VariableDispatch,
+        callExpression: CallSuffixExpression,
+    ): Expression {
+        if (target.candidateInstances.isEmpty()) {
+            sourceError(
+                callExpression,
+                "Variable '${target.variable.name}' has no candidate instances to dispatch the property call over.",
+            )
+        }
+
+        val candidates = target.candidateInstances.toList()
+
+        // Start with the last candidate's expansion as the final else branch.
+        // The instance tree invariant guarantees `var` holds one of these
+        // candidates, so the fallthrough is safe.
+        var result = expandForContainer(
+            containerInstance = candidates.last(),
+            baseTargetDeclaration = target.targetDeclaration,
+            callExpression = callExpression,
+        )
+
+        for (index in candidates.size - 2 downTo 0) {
+            val candidate = candidates[index]
+            val candidateReference = instanceReferenceProvider.getReference(candidate)
+            val thenExpr = expandForContainer(
+                containerInstance = candidate,
+                baseTargetDeclaration = target.targetDeclaration,
+                callExpression = callExpression,
+            )
+            val guard = OxstsFactory.createComparisonOperator().also {
+                it.op = ComparisonOp.EQ
+                it.left = target.containerReferenceExpression.copy()
+                it.right = candidateReference
+            }
+            result = OxstsFactory.createIfThenElse().also {
+                it.guard = guard
+                it.then = thenExpr
+                it.`else` = result
+            }
+        }
+        return result
+    }
+
     fun expandFeatureReferenceOrNull(expression: Expression, instance: Instance): Expression? {
         if (metaStaticExpressionEvaluatorProvider.evaluate(instance, expression) !is FeatureDeclaration) {
             return null

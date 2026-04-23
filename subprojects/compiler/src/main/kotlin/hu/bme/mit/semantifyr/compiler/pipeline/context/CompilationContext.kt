@@ -8,32 +8,18 @@ package hu.bme.mit.semantifyr.compiler.pipeline.context
 
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceTree
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
-/**
- * Common contract across every compilation phase: the IR being compiled.
- * Implemented by every phase context. Does not imply any shared state beyond
- * the model itself - each phase class is independent.
- */
 interface CompilationContext {
     val inlinedOxsts: InlinedOxsts
 }
 
-/**
- * Contract for contexts that carry an anchor [rootInstance] suitable for
- * constructing expression evaluators. All post-instantiation contexts provide
- * this; the post-flatten context exposes only the root (no feature tree), which
- * is enough to build evaluators over the flat IR.
- */
 interface EvaluableCompilationContext : CompilationContext {
     val rootInstance: Instance
 }
 
-/**
- * Initial context: the model exists but instantiation has not run yet.
- * Upgrade to [InstantiatedCompilationContext] via [instantiated].
- */
 class CreatedCompilationContext(
     override val inlinedOxsts: InlinedOxsts,
 ) : CompilationContext {
@@ -44,10 +30,6 @@ class CreatedCompilationContext(
 
 }
 
-/**
- * Post-instantiation context: the instance tree is built, call inlining has not
- * yet run. Upgrade to [InlinedCompilationContext] via [inlined].
- */
 class InstantiatedCompilationContext(
     override val inlinedOxsts: InlinedOxsts,
     val instanceTree: InstanceTree,
@@ -62,12 +44,6 @@ class InstantiatedCompilationContext(
 
 }
 
-/**
- * Post-inlining context: transitions and property calls have been inlined. The
- * instance tree is still the authoritative source for evaluator construction.
- * Upgrade to [FlattenedCompilationContext] via [deflated]; the instance tree
- * is discarded at that point.
- */
 class InlinedCompilationContext(
     override val inlinedOxsts: InlinedOxsts,
     val instanceTree: InstanceTree,
@@ -88,14 +64,6 @@ class InlinedCompilationContext(
 
 }
 
-/**
- * Post-flatten context. The IR is strictly flat at this point: all features,
- * containment structure, and instance navigation have been eliminated.
- *
- * The [rootInstance] is retained (not the full [InstanceTree]) as the anchor for
- * constructing expression evaluators. All feature-shaped bookkeeping lives in
- * [flatteningInfo].
- */
 class FlattenedCompilationContext(
     override val inlinedOxsts: InlinedOxsts,
     override val rootInstance: Instance,
@@ -115,16 +83,14 @@ class FlatteningInfo(
         }
 
     fun resolveOriginalVariable(holder: Instance, actualVariable: VariableDeclaration): VariableDeclaration {
-        val reverse = reverseVariableMappings[holder]
-            ?: hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError(
-                actualVariable,
-                "No variable mappings for instance '${holder.name}'",
-            )
-        return reverse[actualVariable]
-            ?: hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError(
-                actualVariable,
-                "Variable '${actualVariable.name}' not found in reverse mapping for instance '${holder.name}'",
-            )
+        val reverse = reverseVariableMappings[holder] ?: sourceError(
+            actualVariable,
+            "No variable mappings for instance '${holder.name}'",
+        )
+        return reverse[actualVariable] ?: sourceError(
+            actualVariable,
+            "Variable '${actualVariable.name}' not found in reverse mapping for instance '${holder.name}'",
+        )
     }
 
 }

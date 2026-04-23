@@ -27,7 +27,9 @@ fun Expression.asIntegerValueOrNull(): Int? {
 
 class ArithmeticIdentityPattern : OptimizationPattern {
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
-        if (element !is ArithmeticBinaryOperator) return false
+        if (element !is ArithmeticBinaryOperator) {
+            return false
+        }
 
         val leftValue = element.left.asIntegerValueOrNull()
         val rightValue = element.right.asIntegerValueOrNull()
@@ -37,7 +39,7 @@ class ArithmeticIdentityPattern : OptimizationPattern {
             ArithmeticOp.ADD -> when {
                 leftValue == 0 -> element.right
                 rightValue == 0 -> element.left
-                else -> null
+                else -> return false
             }
             ArithmeticOp.SUB -> when {
                 rightValue == 0 -> element.left
@@ -45,20 +47,20 @@ class ArithmeticIdentityPattern : OptimizationPattern {
                     it.op = UnaryOp.MINUS
                     it.body = element.right
                 }
-                else -> null
+                else -> return false
             }
             ArithmeticOp.MUL -> when {
                 leftValue == 0 || rightValue == 0 -> OxstsFactory.createLiteralInteger(0)
                 leftValue == 1 -> element.right
                 rightValue == 1 -> element.left
-                else -> null
+                else -> return false
             }
             ArithmeticOp.DIV -> when {
                 rightValue == 1 -> element.left
-                else -> null
+                else -> return false
             }
-            else -> null
-        } ?: return false
+            else -> return false
+        }
 
         EcoreUtil2.replace(element, replacement)
         worklist.add(replacement)
@@ -69,10 +71,15 @@ class ArithmeticIdentityPattern : OptimizationPattern {
 
 class DoubleUnaryMinusPattern : OptimizationPattern {
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
-        if (element !is ArithmeticUnaryOperator || element.op != UnaryOp.MINUS) return false
+        if (element !is ArithmeticUnaryOperator || element.op != UnaryOp.MINUS) {
+            return false
+        }
         val inner = element.body as? ArithmeticUnaryOperator ?: return false
-        if (inner.op != UnaryOp.MINUS) return false
+        if (inner.op != UnaryOp.MINUS) {
+            return false
+        }
         val parent = element.eContainer() ?: return false
+
         EcoreUtil2.replace(element, inner.body)
         worklist.add(parent)
         return true

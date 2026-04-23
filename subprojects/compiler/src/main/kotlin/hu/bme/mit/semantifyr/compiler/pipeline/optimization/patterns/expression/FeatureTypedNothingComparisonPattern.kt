@@ -20,43 +20,43 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
 
-/**
- * Folds `x == nothing` to `false` (and `x != nothing` to `true`) when `x` is a
- * feature-typed variable whose multiplicity lower bound is at least 1. Such a
- * variable can never hold `nothing`, so the comparison has a compile-time answer.
- *
- * Runs pre-flatten: post-flatten, feature-typed variables have been retyped to
- * `int` and `nothing` to `-1`, erasing the information this pattern depends on.
- * Attempting to match post-flatten is harmless (types don't match), but the
- * pattern is designed for the inlined-phase optimizer.
- */
 class FeatureTypedNothingComparisonPattern(
     private val metaEvaluatorProvider: MetaConstantExpressionEvaluatorProvider,
     private val multiplicityRangeEvaluator: MultiplicityRangeEvaluator,
 ) : OptimizationPattern {
 
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
-        if (element !is ComparisonOperator) return false
+        if (element !is ComparisonOperator) {
+            return false
+        }
         val op = element.op
-        if (op != ComparisonOp.EQ && op != ComparisonOp.NOT_EQ) return false
+        if (op != ComparisonOp.EQ && op != ComparisonOp.NOT_EQ) {
+            return false
+        }
 
         val variableSide = variableSideFacingNothing(element.left, element.right) ?: return false
-
         val resolved = try {
             metaEvaluatorProvider.evaluate(variableSide)
         } catch (_: Exception) {
             return false
         }
-        if (resolved !is VariableDeclaration) return false
+        if (resolved !is VariableDeclaration) {
+            return false
+        }
+
         val typeSpecification = resolved.typeSpecification ?: return false
-        if (typeSpecification.domain !is FeatureDeclaration) return false
+        if (typeSpecification.domain !is FeatureDeclaration) {
+            return false
+        }
 
         val range = try {
             multiplicityRangeEvaluator.evaluate(typeSpecification)
         } catch (_: Exception) {
             return false
         }
-        if (range.lowerBound < 1) return false
+        if (range.lowerBound < 1) {
+            return false
+        }
 
         val parent = element.eContainer() ?: return false
         val folded = OxstsFactory.createLiteralBoolean(op == ComparisonOp.NOT_EQ)

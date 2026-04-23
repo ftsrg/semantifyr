@@ -16,8 +16,7 @@ class TransitionCallTraceMap(
 ) {
 
     fun getTransitionCallTrace(traceOperation: TraceOperation): TransitionCallTrace {
-        return traceMap[traceOperation.name]
-            ?: sourceError(traceOperation, "No transition call trace was found for '${traceOperation.name}'")
+        return traceMap[traceOperation.name] ?: sourceError(traceOperation, "No transition call trace was found for '${traceOperation.name}'")
     }
 
 }

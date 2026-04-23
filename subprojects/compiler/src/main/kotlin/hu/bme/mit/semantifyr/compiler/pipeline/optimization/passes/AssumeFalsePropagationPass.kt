@@ -16,30 +16,31 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Pass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PassResult
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PatternOptimizer
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.FlattenNestedChoicePattern
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.FlattenNestedSequencePattern
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.FlattenSingleBranchChoicePattern
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.FlatteningPattern
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.AssumeFalsePropagationPattern
 
-class OperationFlatteningPass @Inject constructor(
+class AssumeFalsePropagationPass @Inject constructor(
     private val config: OptimizationConfig,
     artifactManager: CompilationArtifactManager,
 ) : Pass<EvaluableCompilationContext> {
 
     private val patternOptimizer = PatternOptimizer(
         patterns = listOf(
-            FlatteningPattern(),
+            AssumeFalsePropagationPattern(),
         ),
-        pass = CompilationPass.OperationFlattening,
+        pass = CompilationPass.AssumptionPropagation,
         artifactManager = artifactManager,
     )
 
     override fun run(input: EvaluableCompilationContext, analysisManager: AnalysisManager): PassResult {
-        if (!config.isEnabled(OptimizationCategory.OperationFlattening)) {
+        if (!config.isEnabled(OptimizationCategory.AssumeFalsePropagation)) {
             return PassResult.Unchanged
         }
         val changed = patternOptimizer.optimize(input.inlinedOxsts)
-        return if (changed) PassResult.changed() else PassResult.Unchanged
+        return if (changed) {
+            PassResult.changed()
+        } else {
+            PassResult.Unchanged
+        }
     }
 
 }

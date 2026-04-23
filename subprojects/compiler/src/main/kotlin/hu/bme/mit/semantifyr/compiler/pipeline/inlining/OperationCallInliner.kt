@@ -36,12 +36,6 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.TimeSource.Monotonic.markNow
 
-/**
- * Orchestrator that walks operations in a transition body, delegates expansion
- * of each [InlineOperation] to [InlineOperationExpander], and drives the nested
- * optimizer to clean up intermediate results. Pure BFS walking + dispatch; no
- * per-kind expansion logic lives here.
- */
 class OperationCallInliner @AssistedInject @Inject constructor(
     @param:Assisted val instance: Instance,
     expressionCallInlinerFactory: ExpressionCallInliner.Factory,
@@ -58,10 +52,6 @@ class OperationCallInliner @AssistedInject @Inject constructor(
 
     private val processorQueue = ArrayDeque<Operation>()
 
-    // Aggregate stats for the nested-operation optimizer. The inliner calls it
-    // once per inlined call expansion; per-call timing lives at debug on the
-    // WorklistOptimizer. This is the info-level summary for the whole `process`
-    // invocation - usually the dominant cost in compilation.
     private var nestedOptimizeCalls: Int = 0
     private var nestedOptimizeTotal: Duration = ZERO
 
@@ -75,8 +65,7 @@ class OperationCallInliner @AssistedInject @Inject constructor(
         val elapsed = mark.elapsedNow()
 
         logger.info {
-            "OperationCallInliner.process: ${elapsed} total, " +
-                "${nestedOptimizeCalls} nested-optimize call(s), ${nestedOptimizeTotal} inside"
+            "OperationCallInliner.process: $elapsed total, $nestedOptimizeCalls nested-optimize call(s), $nestedOptimizeTotal inside"
         }
     }
 

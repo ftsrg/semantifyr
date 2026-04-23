@@ -13,10 +13,11 @@ import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationConte
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.AnalysisManager
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationCategory
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.Pass
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.PassResult
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.WorklistOptimizer
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Pass
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PassResult
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PatternOptimizer
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.ConstantGuardIfPattern
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.RedundancyPatterns
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.RemoveConstantTrueAssumptionPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.RemoveEmptyForPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.RemoveEmptyIfBodyPattern
@@ -28,24 +29,19 @@ class RedundantOperationRemovalPass @Inject constructor(
     artifactManager: CompilationArtifactManager,
 ) : Pass<EvaluableCompilationContext> {
 
-    private val worklistOptimizer = WorklistOptimizer(
+    private val patternOptimizer = PatternOptimizer(
         patterns = listOf(
-            RemoveConstantTrueAssumptionPattern(),
-            RemoveRedundantEmptyChoiceBranchPattern(),
-            RemoveEmptyForPattern(),
-            RemoveEmptyIfElsePattern(),
-            RemoveEmptyIfBodyPattern(),
-            ConstantGuardIfPattern(),
+            RedundancyPatterns(),
         ),
         pass = CompilationPass.RedundantOperationRemoval,
         artifactManager = artifactManager,
     )
 
-    override fun run(input: EvaluableCompilationContext, analyses: AnalysisManager): PassResult {
+    override fun run(input: EvaluableCompilationContext, analysisManager: AnalysisManager): PassResult {
         if (!config.isEnabled(OptimizationCategory.RedundantOperationRemoval)) {
             return PassResult.Unchanged
         }
-        val changed = worklistOptimizer.optimize(input.inlinedOxsts)
+        val changed = patternOptimizer.optimize(input.inlinedOxsts)
         return if (changed) PassResult.changed() else PassResult.Unchanged
     }
 

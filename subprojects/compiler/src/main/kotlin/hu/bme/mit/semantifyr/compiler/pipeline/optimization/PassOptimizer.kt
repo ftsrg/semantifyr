@@ -4,20 +4,16 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers
+package hu.bme.mit.semantifyr.compiler.pipeline.optimization
 
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.AnalysisManager
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Optimizer
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.TimeSource.Monotonic.markNow
 
 interface Pass<T> {
-    fun run(input: T, analyses: AnalysisManager): PassResult
+    fun run(input: T, analysisManager: AnalysisManager): PassResult
 }
 
 data class PassResult(
@@ -70,7 +66,7 @@ class PassOptimizer<T>(
                 val passMark = markNow()
                 val result = pass.run(input, analysisManager)
                 val passElapsed = passMark.elapsedNow()
-                passTotal[passName] = (passTotal[passName] ?: ZERO) + passElapsed
+                passTotal[passName] = (passTotal[passName] ?: Duration.ZERO) + passElapsed
                 passRuns[passName] = (passRuns[passName] ?: 0) + 1
                 if (result.changed) {
                     passFires[passName] = (passFires[passName] ?: 0) + 1
@@ -90,7 +86,7 @@ class PassOptimizer<T>(
         logger.info { "Optimizer fixpoint: ${round} round(s), ${total} total, changed=$changed" }
         for ((name, dur) in passTotal.entries.sortedByDescending { it.value }) {
             logger.info {
-                "  $name: ${dur} total, ${passRuns[name]} run(s), ${passFires[name] ?: 0} firing(s)"
+                "  $name: $dur total, ${passRuns[name]} run(s), ${passFires[name] ?: 0} firing(s)"
             }
         }
         return changed

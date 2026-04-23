@@ -32,22 +32,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 
-/**
- * Expands a single [InlineOperation] into its inlined [Operation] body.
- *
- * Stateless with respect to IR traversal - the caller (orchestrator) finds
- * [InlineOperation] sites via whatever walking strategy it likes and hands
- * them here one at a time. The expander handles the four inline kinds:
- *  - [InlineCall]: resolve target transition, clone its body, rewrite self /
- *    argument references, rename local variables to be globally unique.
- *  - [InlineIfOperation]: statically evaluate the guard, pick a branch.
- *  - [InlineSeqFor] / [InlineChoiceFor]: enumerate the loop range (instances
- *    or integer range), clone the body per value, substitute the loop var.
- *
- * Local-variable renaming in [InlineCall] needs a globally-unique counter
- * across one compilation run; the orchestrator owns it and passes
- * [allocateLocalVarIndex] per expansion call.
- */
 class InlineOperationExpander @Inject constructor(
     private val staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider,
     private val expressionRewriter: ExpressionRewriter,
@@ -101,12 +85,6 @@ class InlineOperationExpander @Inject constructor(
         )
     }
 
-    /**
-     * Expand `inline a.b()` where `a` is a feature- or class-typed variable.
-     * The expansion is a nondeterministic choice over every instance `a` can
-     * hold: each branch assumes `a == concreteInstance` and inlines
-     * `concreteInstance.b()`.
-     */
     private fun dispatchOverVariable(
         operation: InlineCall,
         transitionDeclaration: TransitionDeclaration,
@@ -264,13 +242,6 @@ class InlineOperationExpander @Inject constructor(
         return inlinedChoice
     }
 
-    /**
-     * Materializes the concrete iteration values for an `inline for` loop.
-     * Supported forms: instance sets (yields one instance reference per
-     * instance) and bounded integer [RangeEvaluation] (yields one integer
-     * literal per value). Unbounded ranges and other evaluation kinds are
-     * rejected with a source-annotated error.
-     */
     private fun enumerateLoopRange(rangeExpression: Expression, instance: Instance): List<Expression> {
         val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
         val evaluation = evaluator.evaluate(rangeExpression)

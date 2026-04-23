@@ -13,14 +13,17 @@ import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManag
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.ConstantExpressionEvaluationTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Optimizer
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.WorklistOptimizer
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PatternOptimizer
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.AssumeFalsePropagationPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.ConstantGuardIfPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.FlattenNestedChoicePattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.FlattenNestedSequencePattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.FlattenSingleBranchChoicePattern
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.FlatteningPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PropagateBothBranchesConstantFalsePattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PropagateConstantFalseInSequencePattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PropagateSingleBranchConstantFalsePattern
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.RedundancyPatterns
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.RemoveConstantFalseChoiceBranchPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.RemoveConstantTrueAssumptionPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.RemoveEmptyForPattern
@@ -34,7 +37,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.DoubleNegationPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.RedundantAndPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.RedundantOrPattern
-import hu.bme.mit.semantifyr.semantics.compilation.optimization.patterns.expression.ConstantFoldingPattern
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.ConstantFoldingPattern
 
 class NestedOperationOptimizer @Inject constructor(
     evaluator: ConstantExpressionEvaluatorProvider,
@@ -42,24 +45,11 @@ class NestedOperationOptimizer @Inject constructor(
     artifactManager: CompilationArtifactManager,
 ) : Optimizer<Operation>() {
 
-    private val worklistOptimizer = WorklistOptimizer(
+    private val patternOptimizer = PatternOptimizer(
         patterns = listOf(
-            // Assumption propagation first - may make branches unreachable
-            PropagateConstantFalseInSequencePattern(),
-            RemoveConstantFalseChoiceBranchPattern(),
-            PropagateSingleBranchConstantFalsePattern(),
-            PropagateBothBranchesConstantFalsePattern(),
-            // Operation flattening
-            FlattenNestedSequencePattern(),
-            FlattenNestedChoicePattern(),
-            FlattenSingleBranchChoicePattern(),
-            // Redundant operation removal
-            RemoveConstantTrueAssumptionPattern(),
-            RemoveRedundantEmptyChoiceBranchPattern(),
-            RemoveEmptyForPattern(),
-            RemoveEmptyIfElsePattern(),
-            RemoveEmptyIfBodyPattern(),
-            ConstantGuardIfPattern(),
+            AssumeFalsePropagationPattern(),
+            FlatteningPattern(),
+            RedundancyPatterns(),
             // Expression simplification
             DoubleNegationPattern(),
             ConstantTrueOrPattern(),
@@ -75,7 +65,7 @@ class NestedOperationOptimizer @Inject constructor(
     )
 
     override fun optimize(input: Operation): Boolean {
-        return worklistOptimizer.optimize(input)
+        return patternOptimizer.optimize(input)
     }
 
 }

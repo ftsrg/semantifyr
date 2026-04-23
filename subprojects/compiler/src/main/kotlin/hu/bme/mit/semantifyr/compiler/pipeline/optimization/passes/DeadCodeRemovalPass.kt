@@ -16,8 +16,8 @@ import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationConte
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.AnalysisManager
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationCategory
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.Pass
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.PassResult
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Pass
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PassResult
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ConeOfInfluenceAnalysis
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
@@ -31,12 +31,12 @@ class DeadCodeRemovalPass @Inject constructor(
     private val artifactManager: CompilationArtifactManager,
 ) : Pass<EvaluableCompilationContext> {
 
-    override fun run(input: EvaluableCompilationContext, analyses: AnalysisManager): PassResult {
+    override fun run(input: EvaluableCompilationContext, analysisManager: AnalysisManager): PassResult {
         if (!config.isEnabled(OptimizationCategory.DeadCodeElimination)) {
             return PassResult.Unchanged
         }
 
-        val cone = analyses.get(ConeOfInfluenceAnalysis::class.java, input)
+        val cone = analysisManager.get(ConeOfInfluenceAnalysis::class.java, input)
 
         val deadOperations = input.inlinedOxsts.eAllOfType<Operation>()
             .filter { it is AssignmentOperation || it is HavocOperation }

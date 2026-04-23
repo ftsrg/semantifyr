@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns
 
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.CompositeOptimizationPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
@@ -17,6 +18,19 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
+
+class RedundancyPatterns : CompositeOptimizationPattern() {
+
+    override val patterns: Collection<OptimizationPattern> = listOf(
+        ConstantGuardIfPattern(),
+        RemoveConstantTrueAssumptionPattern(),
+        RemoveEmptyForPattern(),
+        RemoveEmptyIfBodyPattern(),
+        RemoveEmptyIfElsePattern(),
+        RemoveRedundantEmptyChoiceBranchPattern(),
+    )
+
+}
 
 class ConstantGuardIfPattern : OptimizationPattern {
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {

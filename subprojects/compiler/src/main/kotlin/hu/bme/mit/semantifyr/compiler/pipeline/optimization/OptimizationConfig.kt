@@ -11,7 +11,7 @@ enum class OptimizationCategory {
     ExpressionSimplification,
     RedundantOperationRemoval,
     OperationFlattening,
-    AssumptionPropagation,
+    AssumeFalsePropagation,
     UnusedVariableElimination,
     DeadCodeElimination,
 }
