@@ -1124,8 +1124,8 @@ class CompilationTests {
     private fun assertCompiles(classToCompile: String, source: String) {
         val parsed = parseHelper.parse(source.trimIndent())
         if (parsed.resourceErrors.isNotEmpty()) {
-            val formatted = parsed.resourceErrors.joinToString("\n") { diagnostic ->
-                "  ${diagnostic.location ?: "<unknown>"}:${diagnostic.line}:${diagnostic.column}: ${diagnostic.message}"
+            val formatted = parsed.resourceErrors.joinToString("\n") {
+                "  ${it.location ?: "<unknown>"}:${it.line}:${it.column}: ${it.message}"
             }
             error("Test fixture failed to parse:\n$formatted")
         }

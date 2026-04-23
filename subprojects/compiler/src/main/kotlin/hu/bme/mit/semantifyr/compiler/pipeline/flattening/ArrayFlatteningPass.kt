@@ -43,8 +43,8 @@ class ArrayFlatteningPass @Inject constructor(
     }
 
     private fun collectArrayVariables(inlinedOxsts: InlinedOxsts): List<VariableDeclaration> {
-        return inlinedOxsts.eAllOfType<VariableDeclaration>().filter { variable ->
-            val typeSpec = variable.typeSpecification ?: return@filter false
+        return inlinedOxsts.eAllOfType<VariableDeclaration>().filter {
+            val typeSpec = it.typeSpecification ?: return@filter false
             val range = multiplicityRangeEvaluator.evaluate(typeSpec)
             val upper = range.upperBound
 
@@ -78,13 +78,13 @@ class ArrayFlatteningPass @Inject constructor(
         val initializer = arrayVariable.expression
         val slotInitializers = splitInitializer(arrayVariable, initializer, slotCount)
 
-        return (0 until slotCount).map { index ->
+        return (0 until slotCount).map {
             val slot = arrayVariable.copy()
-            slot.name = "${arrayVariable.name}_$index"
-            slot.typeSpecification = OxstsFactory.createTypeSpecification().also {
-                it.domain = elementDomain
+            slot.name = "${arrayVariable.name}_$it"
+            slot.typeSpecification = OxstsFactory.createTypeSpecification().also { typeSpec ->
+                typeSpec.domain = elementDomain
             }
-            slot.expression = slotInitializers[index] as Expression?
+            slot.expression = slotInitializers[it] as Expression?
             slot
         }
     }
@@ -104,9 +104,9 @@ class ArrayFlatteningPass @Inject constructor(
                         "Array literal has ${values.size} values but the array holds only $slotCount slots.",
                     )
                 }
-                List(slotCount) { index ->
-                    if (index < values.size) {
-                        values[index].copy()
+                List(slotCount) {
+                    if (it < values.size) {
+                        values[it].copy()
                     } else {
                         null
                     }
@@ -251,10 +251,10 @@ class ArrayFlatteningPass @Inject constructor(
             val elseBranch = OxstsFactory.createSequenceOperation().also {
                 it.steps += elseOp
             }
-            elseOp = OxstsFactory.createIfOperation().also { ifOp ->
-                ifOp.guard = guard
-                ifOp.body = body
-                ifOp.`else` = elseBranch
+            elseOp = OxstsFactory.createIfOperation().also {
+                it.guard = guard
+                it.body = body
+                it.`else` = elseBranch
             }
         }
         EcoreUtil2.replace(assignment, elseOp)
@@ -263,10 +263,10 @@ class ArrayFlatteningPass @Inject constructor(
     private fun slotRead(indexing: IndexingSuffixExpression, slot: VariableDeclaration): Expression {
         return when (val primary = indexing.primary) {
             is ElementReference -> OxstsFactory.createElementReference(slot)
-            is NavigationSuffixExpression -> OxstsFactory.createNavigationSuffixExpression().also { nav ->
-                nav.primary = primary.primary.copy()
-                nav.member = slot
-                nav.isOptional = primary.isOptional
+            is NavigationSuffixExpression -> OxstsFactory.createNavigationSuffixExpression().also {
+                it.primary = primary.primary.copy()
+                it.member = slot
+                it.isOptional = primary.isOptional
             }
             else -> sourceError(
                 indexing,

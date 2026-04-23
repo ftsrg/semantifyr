@@ -28,19 +28,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import org.eclipse.xtext.EcoreUtil2
 import kotlin.collections.iterator
 
-/**
- * Copy propagation using [ReachingDefinitionsAnalysis].
- *
- * If a variable read has exactly one reaching definition, and that definition
- * is an [AssignmentOperation] whose RHS is a simple "copyable" expression
- * (literal or variable reference), the read can be replaced with a copy of
- * the RHS. This removes a layer of indirection and often exposes further
- * constant folding or simplification opportunities.
- *
- * Conservative about what's copyable: only literals and direct element
- * references. Complex expressions are not propagated because they might
- * reference variables that change between the assignment and the read.
- */
 class CopyPropagationPass @Inject constructor(
     private val config: OptimizationConfig,
     private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
@@ -85,7 +72,7 @@ class CopyPropagationPass @Inject constructor(
         return PassResult.Changed()
     }
 
-    /** A copyable expression is one we can freely duplicate at a read site. */
+    // A copyable expression is one we can freely duplicate at a read site.
     private fun isSimplyCopyable(expression: Expression): Boolean {
         if (OxstsUtils.isWriteExpression(expression)) {
             return false

@@ -88,9 +88,9 @@ class FeatureEvaluator(
     private fun evaluateOppositeDerivedFeature(instance: Instance, opposite: FeatureDeclaration): ExpressionEvaluation {
         val rootInstance = instance.parentSequence().last()
         val allInstances = rootInstance.treeSequence()
-        val oppositeInstances = allInstances.filter { candidate ->
-            val resolved = redefinitionAwareReferenceResolver.resolveOrNull(candidate.domain, opposite) ?: return@filter false
-            val evaluator = staticExpressionEvaluatorProvider.getEvaluator(candidate)
+        val oppositeInstances = allInstances.filter {
+            val resolved = redefinitionAwareReferenceResolver.resolveOrNull(it.domain, opposite) ?: return@filter false
+            val evaluator = staticExpressionEvaluatorProvider.getEvaluator(it)
             val evaluation = evaluator.evaluate(OxstsFactory.createElementReference(resolved))
 
             if (evaluation is InstanceEvaluation) {

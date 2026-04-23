@@ -195,15 +195,15 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
     }
 
     private fun InlinedOxsts.assignmentsTo(variable: VariableDeclaration): List<AssignmentOperation> {
-        return eAllOfType<AssignmentOperation>().filter { operation ->
-            val ref = operation.reference
+        return eAllOfType<AssignmentOperation>().filter {
+            val ref = it.reference
             ref is ElementReference && ref.element === variable
         }.toList()
     }
 
     private fun InlinedOxsts.havocsOn(variable: VariableDeclaration): List<HavocOperation> {
-        return eAllOfType<HavocOperation>().filter { operation ->
-            val ref = operation.reference
+        return eAllOfType<HavocOperation>().filter {
+            val ref = it.reference
             ref is ElementReference && ref.element === variable
         }.toList()
     }

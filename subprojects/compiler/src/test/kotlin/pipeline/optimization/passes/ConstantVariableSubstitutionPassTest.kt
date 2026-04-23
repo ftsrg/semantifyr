@@ -31,8 +31,8 @@ class ConstantVariableSubstitutionPassTest : PassTestBase() {
             prop { AG (7 == 7) }
         """,
         analysisClasses = listOf(ConstantValueAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(ConstantVariableSubstitutionPass::class.java)
+    ) {
+        it.getInstance(ConstantVariableSubstitutionPass::class.java)
     }
 
     @Test
@@ -58,8 +58,8 @@ class ConstantVariableSubstitutionPassTest : PassTestBase() {
             prop { AG (a == 7) }
         """,
         analysisClasses = listOf(ConstantValueAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(ConstantVariableSubstitutionPass::class.java)
+    ) {
+        it.getInstance(ConstantVariableSubstitutionPass::class.java)
     }
 
     @Test
@@ -83,7 +83,7 @@ class ConstantVariableSubstitutionPassTest : PassTestBase() {
             prop { AG (a != 3) }
         """,
         analysisClasses = listOf(ConstantValueAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(ConstantVariableSubstitutionPass::class.java)
+    ) {
+        it.getInstance(ConstantVariableSubstitutionPass::class.java)
     }
 }

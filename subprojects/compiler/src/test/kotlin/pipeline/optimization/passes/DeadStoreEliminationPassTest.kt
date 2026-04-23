@@ -28,8 +28,8 @@ class DeadStoreEliminationPassTest : PassTestBase() {
             prop { AG (a == 1) }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(DeadStoreEliminationPass::class.java)
+    ) {
+        it.getInstance(DeadStoreEliminationPass::class.java)
     }
 
     @Test
@@ -55,8 +55,8 @@ class DeadStoreEliminationPassTest : PassTestBase() {
             prop { AG true }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(DeadStoreEliminationPass::class.java)
+    ) {
+        it.getInstance(DeadStoreEliminationPass::class.java)
     }
 
     @Test
@@ -80,8 +80,8 @@ class DeadStoreEliminationPassTest : PassTestBase() {
             prop { AG (state != 42) }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(DeadStoreEliminationPass::class.java)
+    ) {
+        it.getInstance(DeadStoreEliminationPass::class.java)
     }
 
     @Test
@@ -109,8 +109,8 @@ class DeadStoreEliminationPassTest : PassTestBase() {
             prop { AG (state != 25) }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(DeadStoreEliminationPass::class.java)
+    ) {
+        it.getInstance(DeadStoreEliminationPass::class.java)
     }
 
     @Test
@@ -136,8 +136,8 @@ class DeadStoreEliminationPassTest : PassTestBase() {
             prop { AG (a == 5) }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(DeadStoreEliminationPass::class.java)
+    ) {
+        it.getInstance(DeadStoreEliminationPass::class.java)
     }
 
     @Test
@@ -164,7 +164,7 @@ class DeadStoreEliminationPassTest : PassTestBase() {
             prop { AG (a == 5) }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(DeadStoreEliminationPass::class.java)
+    ) {
+        it.getInstance(DeadStoreEliminationPass::class.java)
     }
 }

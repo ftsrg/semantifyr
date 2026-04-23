@@ -30,8 +30,8 @@ class VariableLivenessPassTest : PassTestBase() {
             tran { a := 1 }
             prop { AG (a == 1) }
         """,
-    ) { injector ->
-        injector.getInstance(VariableLivenessPass::class.java)
+    ) {
+        it.getInstance(VariableLivenessPass::class.java)
     }
 
     @Test
@@ -51,8 +51,8 @@ class VariableLivenessPassTest : PassTestBase() {
             tran { }
             prop { AG (7 == 7) }
         """,
-    ) { injector ->
-        injector.getInstance(VariableLivenessPass::class.java)
+    ) {
+        it.getInstance(VariableLivenessPass::class.java)
     }
 
     // Q2: the optimizer used to keep one variable around as a theta workaround;
@@ -74,8 +74,8 @@ class VariableLivenessPassTest : PassTestBase() {
             tran { }
             prop { AG true }
         """,
-    ) { injector ->
-        injector.getInstance(VariableLivenessPass::class.java)
+    ) {
+        it.getInstance(VariableLivenessPass::class.java)
     }
 
     // Regression: VariableLivenessPass used to build its assignment index via
@@ -104,7 +104,7 @@ class VariableLivenessPassTest : PassTestBase() {
             }
             prop { AG (a == 1) }
         """,
-    ) { injector ->
-        injector.getInstance(VariableLivenessPass::class.java)
+    ) {
+        it.getInstance(VariableLivenessPass::class.java)
     }
 }

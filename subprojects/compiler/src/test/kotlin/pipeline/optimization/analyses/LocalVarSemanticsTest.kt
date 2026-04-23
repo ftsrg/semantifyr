@@ -245,8 +245,8 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
     }
 
     private fun InlinedOxsts.assignmentsTo(variable: VariableDeclaration): List<AssignmentOperation> {
-        return eAllOfType<AssignmentOperation>().filter { op ->
-            val ref = op.reference
+        return eAllOfType<AssignmentOperation>().filter {
+            val ref = it.reference
             ref is ElementReference && ref.element === variable
         }.toList()
     }

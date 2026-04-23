@@ -73,9 +73,9 @@ class ArtifactManagerTest {
         val manager = ArtifactManager(config)
 
         var receivedPath: Path? = null
-        manager.withFile(ArtifactKind.Witness) { file ->
-            receivedPath = file.toPath()
-            file.writeText("hello")
+        manager.withFile(ArtifactKind.Witness) {
+            receivedPath = it.toPath()
+            it.writeText("hello")
         }
 
         assertThat(receivedPath).isEqualTo(tempDir.resolve(manager.pathOf(ArtifactKind.Witness)))
@@ -87,8 +87,8 @@ class ArtifactManagerTest {
         val config = ArtifactConfig(outputDirectory = tempDir, enabled = setOf(ArtifactKind.InflatedModel))
         val manager = ArtifactManager(config)
 
-        manager.withFile(ArtifactKind.InflatedModel) { file ->
-            file.writeText("x")
+        manager.withFile(ArtifactKind.InflatedModel) {
+            it.writeText("x")
         }
 
         val expected = tempDir.resolve(manager.pathOf(ArtifactKind.InflatedModel))

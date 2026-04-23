@@ -22,10 +22,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ConeOfInflu
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import org.eclipse.xtext.EcoreUtil2
 
-/**
- * Uses [ConeOfInfluenceAnalysis] to remove assignments and havoc operations
- * whose target variable is not in the cone of influence of the property.
- */
 class DeadCodeRemovalPass @Inject constructor(
     private val config: OptimizationConfig,
     private val artifactManager: CompilationArtifactManager,

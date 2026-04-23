@@ -24,7 +24,9 @@ class BubbleNotAGPattern : OptimizationPattern {
         val parent = element.eContainer() ?: return false
 
         val replacement = OxstsFactory.createEF().also {
-            it.body = OxstsFactory.createNegationOperator().also { neg -> neg.body = ag.body }
+            it.body = OxstsFactory.createNegationOperator().also {
+                it.body = ag.body
+            }
         }
         EcoreUtil2.replace(element, replacement)
         worklist.add(replacement)
@@ -42,7 +44,9 @@ class BubbleNotEFPattern : OptimizationPattern {
         val parent = element.eContainer() ?: return false
 
         val replacement = OxstsFactory.createAG().also {
-            it.body = OxstsFactory.createNegationOperator().also { neg -> neg.body = ef.body }
+            it.body = OxstsFactory.createNegationOperator().also {
+                it.body = ef.body
+            }
         }
         EcoreUtil2.replace(element, replacement)
         worklist.add(replacement)

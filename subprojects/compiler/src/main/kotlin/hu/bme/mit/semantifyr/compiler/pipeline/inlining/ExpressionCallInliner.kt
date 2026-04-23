@@ -41,11 +41,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 import org.eclipse.xtext.EcoreUtil2
 
-/**
- * Orchestrator that walks expressions and delegates per-node rewrites to
- * [ExpressionCallExpander]. Pure BFS walking + dispatch; no expansion logic
- * lives here.
- */
 class ExpressionCallInliner @AssistedInject constructor(
     @param:Assisted val instance: Instance,
     private val compilationArtifactManager: CompilationArtifactManager,

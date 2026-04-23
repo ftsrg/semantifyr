@@ -43,8 +43,8 @@ class ResourceSetLoader @Inject constructor(
                 logger.error(error.message)
             }
 
-            val parseErrorSummary = resource.errors.joinToString("\n  ") { diag ->
-                "$fileLabel:${diag.line}:${diag.column}: ${diag.message}"
+            val parseErrorSummary = resource.errors.joinToString("\n  ") {
+                "$fileLabel:${it.line}:${it.column}: ${it.message}"
             }
             error("Parse errors in $fileLabel:\n  $parseErrorSummary")
         }
@@ -80,9 +80,9 @@ class ResourceSetLoader @Inject constructor(
                 it.severity == Severity.ERROR || it.severity == Severity.WARNING
             }
             if (blockingIssues.isNotEmpty()) {
-                val summary = blockingIssues.joinToString("\n  ") { issue ->
-                    val loc = issue.uriToProblem?.toFileString() ?: fileLabel
-                    "$loc:${issue.lineNumber}:${issue.column}: ${issue.severity} ${issue.code ?: ""} ${issue.message}".trim()
+                val summary = blockingIssues.joinToString("\n  ") {
+                    val loc = it.uriToProblem?.toFileString() ?: fileLabel
+                    "$loc:${it.lineNumber}:${it.column}: ${it.severity} ${it.code ?: ""} ${it.message}".trim()
                 }
                 error(
                     "${blockingIssues.size} validation issue(s) in $fileLabel:\n  $summary"

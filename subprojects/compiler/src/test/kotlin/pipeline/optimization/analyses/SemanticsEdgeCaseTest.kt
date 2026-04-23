@@ -375,32 +375,30 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
     }
 
     private fun InlinedOxsts.assignmentsTo(variable: VariableDeclaration): List<AssignmentOperation> {
-        return eAllOfType<AssignmentOperation>().filter { op ->
-            val ref = op.reference
+        return eAllOfType<AssignmentOperation>().filter {
+            val ref = it.reference
             ref is ElementReference && ref.element === variable
         }.toList()
     }
 
     private fun InlinedOxsts.havocsOn(variable: VariableDeclaration): List<HavocOperation> {
-        return eAllOfType<HavocOperation>().filter { op ->
-            val ref = op.reference
+        return eAllOfType<HavocOperation>().filter {
+            val ref = it.reference
             ref is ElementReference && ref.element === variable
         }.toList()
     }
 
     private fun InlinedOxsts.readsOfInInit(variable: VariableDeclaration): List<Expression> {
         val init = eAllOfType<TransitionDeclaration>().first { it.kind == TransitionKind.INIT }
-        return init.eAllOfType<ElementReference>()
-            .filter { it.element === variable }
-            .filterNot { ref ->
-                val parent = ref.eContainer()
-                parent is AssignmentOperation && parent.reference === ref
-            }
-            .filterNot { ref ->
-                val parent = ref.eContainer()
-                parent is HavocOperation && parent.reference === ref
-            }
-            .toList()
+        return init.eAllOfType<ElementReference>().filter {
+            it.element === variable
+        }.filterNot {
+            val parent = it.eContainer()
+            parent is AssignmentOperation && parent.reference === it
+        }.filterNot {
+            val parent = it.eContainer()
+            parent is HavocOperation && parent.reference === it
+        }.toList()
     }
 
     private fun InlinedOxsts.findPropertyReadOf(variable: VariableDeclaration): Expression {

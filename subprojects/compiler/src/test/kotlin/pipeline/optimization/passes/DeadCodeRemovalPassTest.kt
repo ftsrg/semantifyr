@@ -33,8 +33,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             prop { AG (a == 1) }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(DeadCodeRemovalPass::class.java)
+    ) {
+        it.getInstance(DeadCodeRemovalPass::class.java)
     }
 
     @Test
@@ -62,8 +62,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             prop { AG (a == 5) }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(DeadCodeRemovalPass::class.java)
+    ) {
+        it.getInstance(DeadCodeRemovalPass::class.java)
     }
 
     @Test
@@ -101,8 +101,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             prop { AG (a == 1) }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(DeadCodeRemovalPass::class.java)
+    ) {
+        it.getInstance(DeadCodeRemovalPass::class.java)
     }
 
     @Test
@@ -128,8 +128,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             prop { AG (a == 1) }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(DeadCodeRemovalPass::class.java)
+    ) {
+        it.getInstance(DeadCodeRemovalPass::class.java)
     }
 
     @Test
@@ -155,8 +155,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             prop { AG (a == 1) }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(DeadCodeRemovalPass::class.java)
+    ) {
+        it.getInstance(DeadCodeRemovalPass::class.java)
     }
 
     @Test
@@ -196,8 +196,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             prop { AG (activeState != 25) }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(DeadCodeRemovalPass::class.java)
+    ) {
+        it.getInstance(DeadCodeRemovalPass::class.java)
     }
 
     @Test
@@ -238,8 +238,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             prop { AG (stateA != 1) }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(DeadCodeRemovalPass::class.java)
+    ) {
+        it.getInstance(DeadCodeRemovalPass::class.java)
     }
 
     @Test
@@ -271,8 +271,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             prop { AG (a != 99) }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(DeadCodeRemovalPass::class.java)
+    ) {
+        it.getInstance(DeadCodeRemovalPass::class.java)
     }
 
     @Test
@@ -314,8 +314,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             prop { AG (state != 42) }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(DeadCodeRemovalPass::class.java)
+    ) {
+        it.getInstance(DeadCodeRemovalPass::class.java)
     }
 
     @Test
@@ -335,8 +335,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             prop { AG (a != 42) }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(DeadCodeRemovalPass::class.java)
+    ) {
+        it.getInstance(DeadCodeRemovalPass::class.java)
     }
 
     @Test
@@ -363,8 +363,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             prop { AG (a != 5) }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(DeadCodeRemovalPass::class.java)
+    ) {
+        it.getInstance(DeadCodeRemovalPass::class.java)
     }
 
     @Test
@@ -392,8 +392,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             prop { AG (state != 25) }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(DeadCodeRemovalPass::class.java)
+    ) {
+        it.getInstance(DeadCodeRemovalPass::class.java)
     }
 
     @Test
@@ -437,7 +437,7 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             prop { AG (state != 1) }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(DeadCodeRemovalPass::class.java)
+    ) {
+        it.getInstance(DeadCodeRemovalPass::class.java)
     }
 }

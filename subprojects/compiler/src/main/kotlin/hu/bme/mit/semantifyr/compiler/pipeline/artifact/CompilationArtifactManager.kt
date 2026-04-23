@@ -40,10 +40,10 @@ class CompilationArtifactManager @Inject constructor(
             "CompilationArtifactManager.commitStep($pass) called before setTarget(). The orchestrator must call setTarget() before any pass runs."
         }
 
-        artifactManager.withFile(ArtifactKind.CompilationStep) { stepsDir ->
-            stepsDir.mkdirs()
+        artifactManager.withFile(ArtifactKind.CompilationStep) {
+            it.mkdirs()
             val id = stepId++.toString().padStart(6, '0')
-            serializeInto(inlinedOxsts, stepsDir.resolve("${id}_${pass.name.lowercase()}.oxsts"))
+            serializeInto(inlinedOxsts, it.resolve("${id}_${pass.name.lowercase()}.oxsts"))
         }
     }
 

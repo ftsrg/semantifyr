@@ -36,8 +36,8 @@ class CopyPropagationPassTest : PassTestBase() {
             prop { AG true }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(CopyPropagationPass::class.java)
+    ) {
+        it.getInstance(CopyPropagationPass::class.java)
     }
 
     @Test
@@ -57,8 +57,8 @@ class CopyPropagationPassTest : PassTestBase() {
             prop { AG (1 != 27) }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(CopyPropagationPass::class.java)
+    ) {
+        it.getInstance(CopyPropagationPass::class.java)
     }
 
     @Test
@@ -86,8 +86,8 @@ class CopyPropagationPassTest : PassTestBase() {
             prop { AG true }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(CopyPropagationPass::class.java)
+    ) {
+        it.getInstance(CopyPropagationPass::class.java)
     }
 
     @Test
@@ -115,8 +115,8 @@ class CopyPropagationPassTest : PassTestBase() {
             prop { AG true }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(CopyPropagationPass::class.java)
+    ) {
+        it.getInstance(CopyPropagationPass::class.java)
     }
 
     @Test
@@ -146,8 +146,8 @@ class CopyPropagationPassTest : PassTestBase() {
             prop { AG true }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(CopyPropagationPass::class.java)
+    ) {
+        it.getInstance(CopyPropagationPass::class.java)
     }
 
     @Test
@@ -175,8 +175,8 @@ class CopyPropagationPassTest : PassTestBase() {
             prop { AG true }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(CopyPropagationPass::class.java)
+    ) {
+        it.getInstance(CopyPropagationPass::class.java)
     }
 
     @Test
@@ -208,7 +208,7 @@ class CopyPropagationPassTest : PassTestBase() {
             prop { AG true }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
-    ) { injector ->
-        injector.getInstance(CopyPropagationPass::class.java)
+    ) {
+        it.getInstance(CopyPropagationPass::class.java)
     }
 }

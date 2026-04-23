@@ -41,8 +41,8 @@ abstract class PackageExpanderTestBase {
         val parsed = packageParseHelper.parse(source.normalizedFixtureSource())
         val resourceErrors = parsed.resourceErrors
         if (resourceErrors.isNotEmpty()) {
-            val formatted = resourceErrors.joinToString("\n") { d ->
-                "  ${d.location ?: "<unknown>"}:${d.line}:${d.column}: ${d.message}"
+            val formatted = resourceErrors.joinToString("\n") {
+                "  ${it.location ?: "<unknown>"}:${it.line}:${it.column}: ${it.message}"
             }
             error("Test fixture failed to parse:\n$formatted")
         }

@@ -41,10 +41,10 @@ class CompilationArtifactManagerTest {
             enabledCompilationSteps = steps,
         )
         val artifactManager: ArtifactManager = mock()
-        whenever(artifactManager.withFile(any(), any())).thenAnswer { invocation ->
-            val kind = invocation.arguments[0] as ArtifactKind
+        whenever(artifactManager.withFile(any(), any())).thenAnswer {
+            val kind = it.arguments[0] as ArtifactKind
             @Suppress("UNCHECKED_CAST")
-            val block = invocation.arguments[1] as (File) -> Unit
+            val block = it.arguments[1] as (File) -> Unit
             if (config.isEnabled(kind)) {
                 val target = tempDir.resolve("${kind.name}.out").toFile()
                 target.parentFile?.mkdirs()

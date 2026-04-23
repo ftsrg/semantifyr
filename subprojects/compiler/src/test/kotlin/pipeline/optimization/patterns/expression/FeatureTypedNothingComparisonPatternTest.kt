@@ -129,8 +129,8 @@ class FeatureTypedNothingComparisonPatternTest : PackageExpanderTestBase() {
 
     private fun InlinedOxsts.propertyHasNothingComparison(): Boolean {
         val property = eAllOfType<PropertyDeclaration>().first()
-        return property.expression.eAllOfType<ComparisonOperator>().any { comparison ->
-            comparison.left is LiteralNothing || comparison.right is LiteralNothing
+        return property.expression.eAllOfType<ComparisonOperator>().any {
+            it.left is LiteralNothing || it.right is LiteralNothing
         }
     }
 }
