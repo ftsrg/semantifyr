@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization
 import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.loggerFactory
-import kotlin.collections.getOrPut
 import kotlin.time.TimeSource.Monotonic.markNow
 
 interface Analysis<T : Any> {

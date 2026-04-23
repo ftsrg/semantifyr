@@ -7,18 +7,18 @@
 package hu.bme.mit.semantifyr.compiler.pipeline
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactKind
+import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.context.CreatedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.RedefinitionAwareReferenceResolver
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
-import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactKind
-import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactManager
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.RedefinitionAwareReferenceResolver
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 
 class InlinedOxstsModelCreator @Inject constructor(
     private val builtinSymbolResolver: BuiltinSymbolResolver,

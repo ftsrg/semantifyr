@@ -8,6 +8,9 @@ package hu.bme.mit.semantifyr.compiler.pipeline.expression
 
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
+import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.parentSequence
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.BooleanEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluator
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ElementValueEvaluator
@@ -21,11 +24,8 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
-import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.parentSequence
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import org.eclipse.emf.ecore.EObject
 
 class StaticExpressionEvaluator @AssistedInject constructor(

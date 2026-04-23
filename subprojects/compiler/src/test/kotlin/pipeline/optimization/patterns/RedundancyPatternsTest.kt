@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns
 
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PatternTestBase
 import org.junit.jupiter.api.Test
 
 class RedundancyPatternsTest : PatternTestBase() {
@@ -23,8 +22,6 @@ class RedundancyPatternsTest : PatternTestBase() {
             }
             prop { AG true }
         """,
-        // The replaced SequenceOperation body nests inside the outer transition body;
-        // cleaning this up is FlattenNestedSequencePattern's job.
         expected = """
             inlined oxsts of semantifyr::Anything
             var a : int := 0

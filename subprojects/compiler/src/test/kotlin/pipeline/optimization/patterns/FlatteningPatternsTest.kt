@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns
 
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PatternTestBase
 import org.junit.jupiter.api.Test
 
 class FlatteningPatternsTest : PatternTestBase() {
@@ -23,9 +22,6 @@ class FlatteningPatternsTest : PatternTestBase() {
             }
             prop { AG true }
         """,
-        // FlattenSingleBranchChoicePattern replaces the choice with the branch
-        // SequenceOperation, producing a nested sequence that FlattenNestedSequencePattern
-        // cleans up afterwards.
         expected = """
             inlined oxsts of semantifyr::Anything
             var a : int := 0

@@ -68,7 +68,7 @@ class ConeOfInfluenceComputation(
             it as Operation
         }
 
-        val assignmentsByVariable = allWrites .groupBy {
+        val assignmentsByVariable = allWrites.groupBy {
             evaluator.evaluateTyped(VariableDeclaration::class.java, referenceOfWrite(it))
         }
 

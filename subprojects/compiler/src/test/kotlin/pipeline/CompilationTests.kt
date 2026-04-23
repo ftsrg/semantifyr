@@ -24,27 +24,12 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TemporalOperator
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.catchThrowable
-import org.junit.jupiter.api.Disabled
 import org.eclipse.xtext.EcoreUtil2
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 
-/**
- * Feature-matrix integration tests for the compiler.
- *
- * Each test method is one OXSTS model exercising one language feature (or a
- * small combination). The model source is inline; the
- * [OxstsPackageParseHelper] parses and resolves it, then
- * [SemantifyrCompiler] drives the full pipeline.
- *
- * Assertions are intentionally coarse: the compilation runs to completion, the
- * [FlattenedCompilationContext] is well-formed, and the default artifact set
- * lands on disk. Semantic correctness (verdicts) belongs in verification-layer
- * tests; this suite only checks that each language feature drives the pipeline
- * end-to-end without crashing.
- */
 @InjectWithOxsts
 class CompilationTests {
 

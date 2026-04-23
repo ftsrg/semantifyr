@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns
 
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PatternTestBase
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.SelfArithmeticPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.SelfComparisonPattern
 import org.junit.jupiter.api.Test

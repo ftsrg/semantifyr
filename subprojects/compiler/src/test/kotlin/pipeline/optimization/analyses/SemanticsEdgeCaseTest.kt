@@ -20,32 +20,10 @@ import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.emf.ecore.EObject
 import org.junit.jupiter.api.Test
 
-/**
- * These tests document assumptions about OXSTS semantics that the analyses
- * rely on. Each fixture is short and each assertion is a single predicate,
- * so the test name + the fixture tells you exactly what I believe the model
- * means. If any assertion reads as semantically wrong, that is a concrete
- * pointer to where the analysis (or my mental model) diverges from OXSTS.
- *
- * Conventions used in the fixtures:
- *  - `inlined oxsts of semantifyr::Anything` - builtin stub class.
- *  - Only top-level variables; no nested instances.
- *  - `init { ... }` runs exactly once before the first state-point.
- *  - `tran { ... }` is the main transition, iterated an unbounded number of
- *    times. Its choice branches model nondeterminism.
- *  - The property is evaluated at every reachable state. My current
- *    understanding: "reachable state" means post-init, and each subsequent
- *    state is reached via one more main-tran step.
- */
 class SemanticsEdgeCaseTest : AnalysisTestBase() {
 
     @Test
     fun `non-local variable declaration is NOT a reaching def for property reads`() {
-        // After init runs, the property only observes post-init state. The
-        // declared initializer value of a non-local variable is not
-        // observable from any property read unless init leaves the variable
-        // untouched (that case is substituted by VariableLivenessPass's
-        // init-only rule, not produced here).
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
@@ -62,12 +40,6 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
 
     @Test
     fun `declaration without initializer is currently NOT a reaching def`() {
-        // This documents current behaviour: my fix only adds the declaration
-        // to initialIn when expression != null. A variable without an
-        // initializer has non-deterministic initial value in most model-
-        // checking semantics - if OXSTS treats it that way, this should
-        // change so that CopyPropagation does not treat a lone assignment
-        // as the unique reaching def.
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
@@ -87,9 +59,6 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
 
     @Test
     fun `havoc kills prior defs within the same sequence`() {
-        // Assumption: havoc overwrites the variable with a non-deterministic
-        // value, so a subsequent read sees only the havoc as its reaching
-        // def - the earlier assignment is killed.
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
@@ -132,9 +101,6 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
 
     @Test
     fun `assume does not kill defs - the walker treats it as a no-op for RD`() {
-        // Assumption: `assume(...)` constrains reachability but doesn't
-        // modify any variable. The reaching defs after the assume are the
-        // same as before it.
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
@@ -159,12 +125,6 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
 
     @Test
     fun `assume false does NOT prune subsequent writes from RD`() {
-        // Documents current behaviour. A branch containing `assume(false)` is
-        // unreachable at runtime, but the RD walker treats `assume` uniformly
-        // as a no-op. Subsequent writes still appear in reaching-def sets.
-        // Pruning such writes is done separately by ConstantAssumptionPropagationPass
-        // BEFORE RD runs, so this shouldn't matter in practice - but if it
-        // does, this test will catch the divergence.
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
@@ -180,8 +140,6 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val a = inlined.varNamed("a")
         val write = inlined.assignmentsTo(a).single()
         val propRead = inlined.findPropertyReadOf(a)
-        // Under current model: the write is considered a reaching def for the
-        // property even though it is unreachable.
         assertThat(result.defsOf[propRead]!!).contains(write as EObject)
     }
 
@@ -213,9 +171,6 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
 
     @Test
     fun `if-without-else passes through the original defs on the false arm`() {
-        // Assumption: `if (g) { ... }` with no else has OUT = bodyOut U incoming.
-        // A downstream read sees writes from the body AND writes that were
-        // already reaching before the `if`.
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
@@ -240,11 +195,6 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
 
     @Test
     fun `reads in init currently see main-tran writes - sound but imprecise`() {
-        // Each transition is walked with initialIn = all writes. Reads inside
-        // init therefore see main-tran writes too, even though init runs
-        // before main so main writes cannot really reach init. This is
-        // over-approximation; consumers only act on singletons and the extra
-        // defs only widen the set.
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
@@ -264,16 +214,11 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val bWriteInTran = inlined.assignmentsTo(b).single()
 
         val defs = result.defsOf[initRead]!!
-        // Current analysis includes writes from both transitions.
         assertThat(defs).contains(bWriteInTran as EObject)
     }
 
     @Test
     fun `main-tran entry sees all writes including those that appear later in the tran body`() {
-        // initialIn for main tran includes all writes anywhere. A read at the
-        // start of main tran sees writes that only execute later in the tran
-        // body - this models the loop back-edge (iteration N+1 sees
-        // iteration N's writes).
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
@@ -293,9 +238,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val aWrite = inlined.assignmentsTo(a).single()
 
         val defs = result.defsOf[aReadInBRhs]!!
-        // The later write reaches via loop back-edge approximation.
         assertThat(defs).contains(aWrite as EObject)
-        // But the declaration itself is NOT a def.
         assertThat(defs).doesNotContain(a as EObject)
     }
 
@@ -319,9 +262,6 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
 
     @Test
     fun `nested if guards contribute variables to the cone`() {
-        // A write is inside nested guards. The guardVariablesFor walk should
-        // collect variables from every ancestor if/assume. Documents that
-        // behaviour.
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything

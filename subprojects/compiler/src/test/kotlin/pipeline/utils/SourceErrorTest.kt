@@ -7,9 +7,6 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.utils
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceLocationPrefix
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.InlinedOxstsParseHelper
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration

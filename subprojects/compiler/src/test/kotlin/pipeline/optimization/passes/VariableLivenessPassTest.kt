@@ -36,8 +36,6 @@ class VariableLivenessPassTest : PassTestBase() {
 
     @Test
     fun `initializer-only variable is substituted into its reads`() = assertPassTransforms(
-        // A var with an initializer and no assignments is effectively constant;
-        // the pass substitutes its reads with the init value and removes the var.
         source = """
             inlined oxsts of semantifyr::Anything
             var a : int := 7
@@ -55,10 +53,6 @@ class VariableLivenessPassTest : PassTestBase() {
         it.getInstance(VariableLivenessPass::class.java)
     }
 
-    // Q2: the optimizer used to keep one variable around as a theta workaround;
-    // that's been removed, so a single unused variable with no reads should be
-    // eliminated cleanly, producing a zero-variable model. This is a valid
-    // semantic outcome.
     @Test
     fun `single unused variable is fully eliminated, yielding a zero-variable model`() = assertPassTransforms(
         source = """
@@ -78,10 +72,6 @@ class VariableLivenessPassTest : PassTestBase() {
         it.getInstance(VariableLivenessPass::class.java)
     }
 
-    // Regression: VariableLivenessPass used to build its assignment index via
-    // Map.plus over separate AssignmentOperation / HavocOperation groupBys,
-    // which silently dropped one group for variables with both kinds of writes.
-    // With the variable still read, the pass should leave the IR untouched.
     @Test
     fun `variable with both havoc and assignment is left alone when read`() = assertPassTransforms(
         source = """

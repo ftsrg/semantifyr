@@ -91,9 +91,6 @@ class PatternOptimizerTest {
 
         optimizer.optimize(input)
 
-        // `second` is still tried on subsequent worklist items (there may be none
-        // here since a literal has no children), but for the element where `first`
-        // matched, `second` must not have been invoked.
         verify(first, times(1)).tryApply(eq(input), any())
         verify(second, never()).tryApply(eq(input), any())
     }

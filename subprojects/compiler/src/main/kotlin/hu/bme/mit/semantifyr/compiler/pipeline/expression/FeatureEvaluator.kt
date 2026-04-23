@@ -6,17 +6,17 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.expression
 
+import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.parentSequence
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.treeSequence
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.FeatureSubSettersFinder
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.OppositeHandler
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind
-import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.parentSequence
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.treeSequence
 
 class FeatureEvaluator(
     private val featureSubSettersFinder: FeatureSubSettersFinder,

@@ -47,7 +47,7 @@ class FlattenedPhaseOptimizer @Inject constructor(
             coneOfInfluenceAnalysis,
             constantValueAnalysis,
             reachingDefinitionsAnalysis,
-        )
+        ),
     )
 
     private val pipeline = PassOptimizer(

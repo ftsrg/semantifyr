@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns
+package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.ConstantExpressionEvaluationTransformer
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PatternTestBase
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.ConstantFoldingPattern
 import org.junit.jupiter.api.Test
 
 class ConstantFoldingPatternTest : PatternTestBase() {
@@ -24,9 +24,6 @@ class ConstantFoldingPatternTest : PatternTestBase() {
     @Test
     fun `pure operator expression over literals folds to a literal`() = assertPatternTransforms(
         pattern = pattern(),
-        // The pattern evaluates any OperatorExpression whose subtree is constant,
-        // so a nested arithmetic-plus-comparison folds to a single boolean literal
-        // in one shot.
         input = """
             inlined oxsts of semantifyr::Anything
             init { }

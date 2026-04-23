@@ -13,9 +13,6 @@ class ConstantVariableSubstitutionPassTest : PassTestBase() {
 
     @Test
     fun `variable whose initializer and only assignment agree is substituted`() = assertPassTransforms(
-        // ConstantValueAnalysis treats a variable as constant only when every
-        // written value (initializer + all assignment RHSs) evaluates to the
-        // same constant.
         source = """
             inlined oxsts of semantifyr::Anything
             var a : int := 7

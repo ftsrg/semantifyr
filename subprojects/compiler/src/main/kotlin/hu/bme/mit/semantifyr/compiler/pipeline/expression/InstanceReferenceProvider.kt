@@ -7,9 +7,9 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.expression
 
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.parentSequence
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
 
 class InstanceReferenceProvider {
 

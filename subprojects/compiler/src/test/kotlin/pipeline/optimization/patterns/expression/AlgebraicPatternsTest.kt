@@ -4,11 +4,9 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns
+package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression
 
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PatternTestBase
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.ArithmeticIdentityPattern
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.DoubleUnaryMinusPattern
 import org.junit.jupiter.api.Test
 
 class AlgebraicPatternsTest : PatternTestBase() {

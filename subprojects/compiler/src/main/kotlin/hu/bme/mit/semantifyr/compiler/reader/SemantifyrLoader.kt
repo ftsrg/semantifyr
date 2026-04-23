@@ -8,23 +8,22 @@ package hu.bme.mit.semantifyr.compiler.reader
 
 import com.google.inject.Inject
 import com.google.inject.Provider
-import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryAdapterFinder
-import hu.bme.mit.semantifyr.oxsts.lang.utils.ResourceUriProvider
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
+import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryAdapterFinder
 import hu.bme.mit.semantifyr.oxsts.lang.library.OxstsLibrary
-
+import hu.bme.mit.semantifyr.oxsts.lang.utils.ResourceUriProvider
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.xtext.resource.XtextResourceSet
-import java.nio.file.Files as NioFiles
 import java.nio.file.Path
 import kotlin.io.path.PathWalkOption
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 import kotlin.io.path.walk
+import java.nio.file.Files as NioFiles
 
 class SemantifyrModelContext(
     val resourceSet: ResourceSet,

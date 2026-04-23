@@ -7,10 +7,6 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluatorProvider
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.ConstantExpressionEvaluationTransformer
@@ -20,6 +16,10 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.AssumeFalse
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.FlatteningPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.RedundancyPatterns
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.ExpressionSimplificationPatterns
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 
 class NestedOperationOptimizer @Inject constructor(
     evaluator: ConstantExpressionEvaluatorProvider,

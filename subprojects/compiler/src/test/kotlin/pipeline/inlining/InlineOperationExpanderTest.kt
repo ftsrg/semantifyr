@@ -10,7 +10,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineOperation
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.eclipse.xtext.EcoreUtil2
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class InlineOperationExpanderTest : ExpanderTestBase() {
@@ -182,27 +181,6 @@ class InlineOperationExpanderTest : ExpanderTestBase() {
             prop { AG true }
         """,
     )
-
-    @Disabled(
-        "Needs an OxstsPackage-based ExpanderTestBase. The dispatching logic is implemented (CallTarget.VariableDispatch branch in InlineOperationExpander); covered end-to-end via gamma/sysmlv2 verification suites when a model uses inline-through-feature-var.",
-    )
-    @Test
-    fun `inline call through a feature-typed variable dispatches over every candidate instance`() {
-        // Pseudocode of intended fixture:
-        //   class Leaf { var v: int := 0; tran step() { v := v + 1 } }
-        //   @VerificationCase class Dispatcher {
-        //       contains leaves: Leaf[0..*]
-        //       var chosen: leaves[1]
-        //       redefine tran { inline chosen.step() }
-        //       prop { AG true }
-        //   }
-        // Expected expansion of `inline chosen.step()`:
-        //   choice {
-        //       assume(chosen == leaves1); { leaves1.v := leaves1.v + 1 }
-        //   } or {
-        //       assume(chosen == leaves2); { leaves2.v := leaves2.v + 1 }
-        //   } or ...
-    }
 
     @Test
     fun `inline seq for over a negative integer range unrolls in ascending order`() = assertFirstExpansion(

@@ -7,12 +7,6 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
@@ -27,8 +21,13 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PassResult
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.xtext.EcoreUtil2
-import kotlin.collections.iterator
 
 class VariableLivenessPass @Inject constructor(
     private val config: OptimizationConfig,

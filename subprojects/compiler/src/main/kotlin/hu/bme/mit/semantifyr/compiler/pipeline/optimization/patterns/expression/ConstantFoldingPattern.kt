@@ -6,6 +6,9 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression
 
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.ConstantExpressionEvaluationTransformer
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPattern
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticBinaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
@@ -16,9 +19,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.ConstantExpressionEvaluationTransformer
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPattern
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
 

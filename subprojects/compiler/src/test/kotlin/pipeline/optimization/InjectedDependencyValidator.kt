@@ -16,9 +16,6 @@ import java.lang.reflect.Modifier
  * `UninitializedPropertyAccessException` at the first use site, which hides
  * the real cause. This check reports "Unbound dependency: <field>" at setUp
  * time instead.
- *
- * Uses plain Java reflection so the check does not require `kotlin-reflect`
- * on the test classpath.
  */
 fun verifyInjectedDependenciesAreBound(target: Any) {
     val targetClass = target::class.java

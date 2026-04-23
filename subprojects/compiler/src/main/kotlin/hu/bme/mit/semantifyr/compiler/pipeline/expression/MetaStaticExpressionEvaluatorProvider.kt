@@ -8,8 +8,8 @@ package hu.bme.mit.semantifyr.compiler.pipeline.expression
 
 import com.google.inject.Inject
 import com.google.inject.Singleton
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 
 @Singleton

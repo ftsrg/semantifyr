@@ -24,8 +24,6 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
 
     @Test
     fun `property read after a single init write sees exactly that write`() {
-        // Non-local variable declarations are NOT reaching defs: after init
-        // runs the property only observes post-init state.
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
@@ -73,9 +71,6 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
 
     @Test
     fun `intra-transition read after single assignment sees exactly that assignment`() {
-        // b := a reads 'a' at a point where only 'a := 5' has executed in the
-        // current iteration of this transition. The walker kills earlier defs
-        // and gens this one, so CopyPropagation can fire.
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
@@ -154,10 +149,6 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         assertThat(defs).containsExactly(aWrite as EObject)
     }
 
-    // Gamma-style regression: a state variable written by consecutive
-    // assignments (kill-old, set-new). The reaching-def set at the property
-    // read must include every write, so DeadStoreElimination and CopyPropagation
-    // do not incorrectly treat any single write as the unique reaching def.
     @Test
     fun `state-machine-style consecutive writes all reach the property read`() {
         val (inlined, result) = runReachingDefinitions(

@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns
 
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PatternTestBase
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.DeMorganPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.DoubleNegationPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.NegatedComparisonPattern

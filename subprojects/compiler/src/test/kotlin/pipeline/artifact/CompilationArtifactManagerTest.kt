@@ -7,8 +7,8 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.artifact
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.eclipse.xtext.serializer.ISerializer
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.mockito.kotlin.any
@@ -18,7 +18,6 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import org.eclipse.xtext.serializer.ISerializer
 import java.io.File
 import java.io.Writer
 import java.nio.file.Path
@@ -138,9 +137,7 @@ class CompilationArtifactManagerTest {
 
         assertThatThrownBy {
             manager.setTarget(second)
-        }.isInstanceOf(IllegalStateException::class.java)
-            .hasMessageContaining("setTarget")
-            .hasMessageContaining("already")
+        }.isInstanceOf(IllegalStateException::class.java).hasMessageContaining("setTarget").hasMessageContaining("already")
     }
 
     @Test
@@ -149,8 +146,7 @@ class CompilationArtifactManagerTest {
 
         assertThatThrownBy {
             manager.commitStep(CompilationPass.ConstantFolding)
-        }.isInstanceOf(IllegalStateException::class.java)
-            .hasMessageContaining("setTarget")
+        }.isInstanceOf(IllegalStateException::class.java).hasMessageContaining("setTarget")
     }
 
     @Test
@@ -159,7 +155,6 @@ class CompilationArtifactManagerTest {
 
         assertThatThrownBy {
             manager.commitInstantiated()
-        }.isInstanceOf(IllegalStateException::class.java)
-            .hasMessageContaining("setTarget")
+        }.isInstanceOf(IllegalStateException::class.java).hasMessageContaining("setTarget")
     }
 }

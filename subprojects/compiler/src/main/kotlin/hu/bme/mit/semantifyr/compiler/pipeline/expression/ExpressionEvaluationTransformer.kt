@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.expression
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ArrayEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.BooleanEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EnumLiteralEvaluation
@@ -18,7 +19,6 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RealEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.StringEvaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 
 abstract class ExpressionEvaluationTransformer : StaticExpressionEvaluationVisitor<Expression>() {
 

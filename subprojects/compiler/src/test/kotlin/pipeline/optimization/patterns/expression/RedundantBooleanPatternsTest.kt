@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns
 
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PatternTestBase
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.ConstantFalseAndPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.ConstantTrueOrPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.IdempotentBooleanPattern

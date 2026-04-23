@@ -8,17 +8,17 @@ package hu.bme.mit.semantifyr.compiler.pipeline.artifact
 
 import com.google.inject.Inject
 import com.google.inject.Singleton
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
-import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParameterDeclaration
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.StaticExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.tryEvaluateTypedOrNull
+import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParameterDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 
 class ArgumentTrace(
     val parameterDeclaration: ParameterDeclaration?,

@@ -132,13 +132,8 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
             .isTrue
     }
 
-    // Gamma regression: a state variable that the property reads is written in
-    // guarded branches. DeadCodeRemovalPass (driven by this analysis) was
-    // erasing the writes, leaving the state machine stuck in its init state.
     @Test
     fun `consecutive writes inside one branch all stay relevant`() {
-        // Gamma emits paired 'leave old state / enter new state' writes as
-        // sequential assignments inside the same branch. Both must be in the cone.
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
@@ -200,9 +195,6 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         }
     }
 
-    // A4: deeply nested choice-in-if-in-choice structure. Every assume in the
-    // enclosing transition is a control dep of every relevant write under
-    // atomic-commit semantics, even when nesting is several layers deep.
     @Test
     fun `nested choice inside if inside choice propagates guards correctly`() {
         val (inlined, result) = runConeOfInfluence(
@@ -257,8 +249,6 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         }
     }
 
-    // A4: an outer assume guards inner writes. The outer assume's variables
-    // must be pulled into the cone because the inner writes are relevant.
     @Test
     fun `outer assume guarding inner writes pulls its reads into the cone`() {
         val (inlined, result) = runConeOfInfluence(
@@ -285,8 +275,6 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
             .isTrue
     }
 
-    // A4: a write to a non-relevant variable in one branch must not pull its
-    // guard into the cone (the branch itself carries no relevant writes).
     @Test
     fun `writes to irrelevant variables in a sibling branch stay out of the cone`() {
         val (inlined, result) = runConeOfInfluence(
@@ -321,10 +309,6 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         }
         // The sibling guard IS pulled in because atomic-commit semantics make
         // every assume in the transition a control dep of every relevant write.
-        // This documents (not asserts incorrect) the current conservative
-        // behavior: an assume that happens to fail rolls back the whole
-        // transition, so guards of sibling branches can affect whether the
-        // relevant write commits.
         assertThat(result.isRelevant(siblingGuard))
             .`as`("under atomic commit, sibling assume variables are control deps")
             .isTrue

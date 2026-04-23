@@ -7,6 +7,12 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluator
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
@@ -14,12 +20,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
-import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluator
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluatorProvider
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 
 data class ConstantValueInfo(
     val constants: Map<VariableDeclaration, Expression>,

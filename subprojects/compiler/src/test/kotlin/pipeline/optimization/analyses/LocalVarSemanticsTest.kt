@@ -16,23 +16,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.emf.ecore.EObject
 import org.junit.jupiter.api.Test
 
-/**
- * Tests that document how I believe local variables interact with the
- * analyses. Local vars (`LocalVarDeclarationOperation`) are declared inside
- * a transition body and - under my mental model - have these properties:
- *
- *  1. They are fresh at each iteration of a looping transition: their value
- *     at the declaration point is the initializer, never a value from a
- *     previous iteration of the enclosing tran.
- *  2. Their scope is the enclosing sequence; references outside that block
- *     are invalid models.
- *  3. A local var is both a `VariableDeclaration` (so the analyses treat it
- *     as a variable with writes and reads) and an `Operation` (so it appears
- *     in the transition body's sequence of steps).
- *
- * If any assertion below is wrong against OXSTS semantics, the analysis
- * handling is wrong in a corresponding way.
- */
 class LocalVarSemanticsTest : AnalysisTestBase() {
 
     @Test
@@ -54,9 +37,6 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
 
     @Test
     fun `local var with only an initializer is not seen as constant here`() {
-        // ConstantValueAnalysis defers init-only vars to VariableLivenessPass's
-        // substitution rule. Local vars with only their declarator should
-        // behave the same way as class-level vars with only an initializer.
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
@@ -74,9 +54,6 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
 
     @Test
     fun `local var assignment after declaration kills the declaration as reaching def`() {
-        // Assumption: within the same transition, after `var x := 5; x := 10`,
-        // a subsequent read sees only the assignment - the declaration's
-        // initializer no longer reaches.
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
@@ -102,13 +79,6 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
 
     @Test
     fun `local var read right after declaration sees only the declaration`() {
-        // Local variables are re-initialized every time their declaration
-        // runs. A read right after `var x := 5` (before any assignment to
-        // x in the same sequence) has the declaration as its sole reaching
-        // def. Writes that appear later in the same transition do not reach
-        // a read positioned earlier: by the time those writes execute,
-        // control has already moved past the earlier read, and at the next
-        // iteration the local is reset.
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
@@ -128,18 +98,11 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
         val xReadInYRhs = yWrite.expression as ElementReference
 
         val defs = result.defsOf[xReadInYRhs]!!
-        // Only the declaration reaches - the later write is not visible to
-        // this earlier read.
         assertThat(defs).containsExactly(x as EObject)
     }
 
     @Test
     fun `gamma-style anyRegionExecuted pattern keeps every region's 'true' write relevant`() {
-        // Gamma emits a local flag to tell the outer atomic transition
-        // whether any region branch committed: if no branch marked the flag,
-        // the trailing `assume` fails and the whole tran rolls back.
-        // Under my model (no atomicity), every branch's write to the flag
-        // is in the cone because the trailing assume reads the flag.
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
@@ -206,9 +169,6 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
 
     @Test
     fun `two separately-declared local vars with the same name are different variables`() {
-        // Each LocalVarDeclarationOperation is a distinct VariableDeclaration
-        // regardless of textual name, so writes in one branch do not group
-        // with writes in another branch.
         val (inlined, result) = runLiveness(
             """
                 inlined oxsts of semantifyr::Anything

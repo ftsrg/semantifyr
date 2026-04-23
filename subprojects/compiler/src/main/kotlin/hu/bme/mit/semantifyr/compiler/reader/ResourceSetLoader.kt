@@ -85,7 +85,7 @@ class ResourceSetLoader @Inject constructor(
                     "$loc:${it.lineNumber}:${it.column}: ${it.severity} ${it.code ?: ""} ${it.message}".trim()
                 }
                 error(
-                    "${blockingIssues.size} validation issue(s) in $fileLabel:\n  $summary"
+                    "${blockingIssues.size} validation issue(s) in $fileLabel:\n  $summary",
                 )
             }
         }

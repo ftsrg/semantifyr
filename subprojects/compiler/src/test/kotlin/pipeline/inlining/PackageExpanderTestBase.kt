@@ -75,12 +75,6 @@ abstract class PackageExpanderTestBase {
         val rootInstance: Instance get() = context.rootInstance
     }
 
-    /**
-     * Run the inlining phase (operation + expression) on [prepared] and
-     * return the resulting inlined context. Tests that care about the
-     * final inlined shape - not one expander step in isolation - use
-     * this and inspect `result.inlinedOxsts`.
-     */
     protected fun inlineAll(prepared: Prepared): InlinedCompilationContext {
         val inliner = prepared.compilationInjector.getInstance(OxstsInliner::class.java)
         return inliner.inline(prepared.context)

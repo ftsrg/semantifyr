@@ -7,9 +7,9 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.artifact
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.oxsts.lang.serializer.ExpressionSerializer
 import hu.bme.mit.semantifyr.compiler.pipeline.context.InstanceIdMapping
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceReferenceProvider
+import hu.bme.mit.semantifyr.oxsts.lang.serializer.ExpressionSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream

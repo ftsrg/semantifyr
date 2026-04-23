@@ -48,9 +48,6 @@ class LivenessAnalysisTest : AnalysisTestBase() {
         assertThat(result.isAssigned(b)).isTrue
     }
 
-    // Regression: assignments and havocs used to be merged via Map.plus in the
-    // assignment index, which silently dropped one group when a variable had
-    // both. The fix concatenates writes before groupBy; this test guards it.
     @Test
     fun `variable with both assignment and havoc has both in the assignments set`() {
         val (inlined, result) = runLiveness(

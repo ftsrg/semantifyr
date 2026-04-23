@@ -7,6 +7,13 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluator
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.tryEvaluateTypedOrNull
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
@@ -22,15 +29,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
-import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluator
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluatorProvider
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.tryEvaluateTypedOrNull
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import org.eclipse.emf.ecore.EObject
-import kotlin.collections.iterator
 
 data class ReachingDefinitionsInfo(
     val defsOf: Map<Expression, Set<EObject>>,

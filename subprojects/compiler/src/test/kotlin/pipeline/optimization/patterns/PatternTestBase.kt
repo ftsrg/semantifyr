@@ -23,35 +23,6 @@ import org.eclipse.xtext.serializer.ISerializer
 import org.junit.jupiter.api.BeforeEach
 import org.mockito.kotlin.mock
 
-/**
- * Base class for pattern-level optimization tests.
- *
- * Fixtures are written in the inlined-oxsts form the optimizer actually runs on
- * (the same form the compiler serializes at each pass-step), so the "input" and
- * "expected" snippets describe the IR shape precisely:
- *
- *     assertPatternTransforms(
- *         pattern = IdempotentBooleanPattern(),
- *         input = """
- *             inlined oxsts of semantifyr::Anything
- *             var x : bool := false
- *             init { }
- *             tran { }
- *             prop { AG (x && x) }
- *         """,
- *         expected = """
- *             inlined oxsts of semantifyr::Anything
- *             var x : bool := false
- *             init { }
- *             tran { }
- *             prop { AG x }
- *         """,
- *     )
- *
- * Tests only use top-level [hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts.variables] (no root feature, no nested
- * classes); [semantifyr::Anything] is a builtin stub that satisfies the required
- * [hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts.classDeclaration] cross-reference.
- */
 @InjectWithOxsts
 abstract class PatternTestBase {
 
