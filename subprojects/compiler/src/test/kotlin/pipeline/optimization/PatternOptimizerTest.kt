@@ -20,7 +20,7 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
-class WorklistOptimizerTest {
+class PatternOptimizerTest {
 
     private val artifacts: CompilationArtifactManager = mock()
 

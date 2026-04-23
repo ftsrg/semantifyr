@@ -9,7 +9,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PatternTestBase
 import org.junit.jupiter.api.Test
 
-class ConstantFalsePatternsTest : PatternTestBase() {
+class AssumeFalsePropagationPatternsTest : PatternTestBase() {
 
     @Test
     fun `sequence with a constant-false assumption collapses to just the assumption`() = assertPatternTransforms(

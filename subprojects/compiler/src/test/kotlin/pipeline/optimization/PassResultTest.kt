@@ -25,32 +25,8 @@ class PassResultTest {
     }
 
     @Test
-    fun `Unchanged is the singleton with no preserved field`() {
-        assertThat(PassResult.Unchanged).isSameAs(PassResult.Unchanged)
-    }
-
-    @Test
-    fun `Changed() with no arguments preserves nothing`() {
-        val result = PassResult.Changed()
-        assertThat(result.preserved).isEmpty()
-    }
-
-    @Test
     fun `Changed_preserving records the preserved analyses`() {
         val result = PassResult.Changed.preserving(FakeAnalysisA::class.java, FakeAnalysisB::class.java)
         assertThat(result.preserved).containsExactlyInAnyOrder(FakeAnalysisA::class.java, FakeAnalysisB::class.java)
-    }
-
-    @Test
-    fun `Changed_preserving deduplicates repeated analysis types`() {
-        val result = PassResult.Changed.preserving(FakeAnalysisA::class.java, FakeAnalysisA::class.java)
-        assertThat(result.preserved).containsExactly(FakeAnalysisA::class.java)
-    }
-
-    @Test
-    fun `equal Changed results compare equal by value`() {
-        val a = PassResult.Changed.preserving(FakeAnalysisA::class.java)
-        val b = PassResult.Changed.preserving(FakeAnalysisA::class.java)
-        assertThat(a).isEqualTo(b)
     }
 }

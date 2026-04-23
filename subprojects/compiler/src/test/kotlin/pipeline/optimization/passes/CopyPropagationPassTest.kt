@@ -24,9 +24,6 @@ class CopyPropagationPassTest : PassTestBase() {
             }
             prop { AG true }
         """,
-        // Inside the transition, the `a` read in `b := a` has a unique
-        // reaching definition (`a := 7` earlier in the same sequence) and
-        // that RHS is a literal, so it is substituted.
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var a : int := 0
@@ -45,11 +42,6 @@ class CopyPropagationPassTest : PassTestBase() {
 
     @Test
     fun `initializer plus a single tran write folds the property read to the init value`() = assertPassTransforms(
-        // The property is evaluated at post-init and post-main states. Main
-        // doesn't write 'a', so 'a' always equals the init write's value.
-        // CopyPropagation correctly substitutes the property read with 1.
-        // The resulting model may have no variables left - that's a valid
-        // semantic outcome, not an optimizer bug.
         source = """
             inlined oxsts of semantifyr::Anything
             var a : int := 0
@@ -63,6 +55,157 @@ class CopyPropagationPassTest : PassTestBase() {
             init { a := 1 }
             tran { }
             prop { AG (1 != 27) }
+        """,
+        analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
+    ) { injector ->
+        injector.getInstance(CopyPropagationPass::class.java)
+    }
+
+    @Test
+    fun `multiple reaching defs prevent propagation`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            var b : int := 0
+            init { }
+            tran {
+                choice { a := 1 } or { a := 2 }
+                b := a
+            }
+            prop { AG true }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            var b : int := 0
+            init { }
+            tran {
+                choice { a := 1 } or { a := 2 }
+                b := a
+            }
+            prop { AG true }
+        """,
+        analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
+    ) { injector ->
+        injector.getInstance(CopyPropagationPass::class.java)
+    }
+
+    @Test
+    fun `havoc blocks propagation - a havoced variable has no single reaching def`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            var b : int := 0
+            init { }
+            tran {
+                havoc(a)
+                b := a
+            }
+            prop { AG true }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            var b : int := 0
+            init { }
+            tran {
+                havoc(a)
+                b := a
+            }
+            prop { AG true }
+        """,
+        analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
+    ) { injector ->
+        injector.getInstance(CopyPropagationPass::class.java)
+    }
+
+    @Test
+    fun `RHS that is not a literal or element reference is not propagated`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            var b : int := 0
+            var c : int := 0
+            init { }
+            tran {
+                a := b + 1
+                c := a
+            }
+            prop { AG true }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            var b : int := 0
+            var c : int := 0
+            init { }
+            tran {
+                a := b + 1
+                c := a
+            }
+            prop { AG true }
+        """,
+        analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
+    ) { injector ->
+        injector.getInstance(CopyPropagationPass::class.java)
+    }
+
+    @Test
+    fun `self-read-same-variable check is narrow - transitive self-assignment is allowed`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var x : int := 0
+            var y : int := 0
+            init { }
+            tran {
+                y := x
+                x := y
+            }
+            prop { AG true }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var x : int := 0
+            var y : int := 0
+            init { }
+            tran {
+                y := y
+                x := x
+            }
+            prop { AG true }
+        """,
+        analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
+    ) { injector ->
+        injector.getInstance(CopyPropagationPass::class.java)
+    }
+
+    @Test
+    fun `chain of copies - single pass only folds via the stored reaching-def map`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            var b : int := 0
+            var c : int := 0
+            init { }
+            tran {
+                a := 5
+                b := a
+                c := b
+            }
+            prop { AG true }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            var b : int := 0
+            var c : int := 0
+            init { }
+            tran {
+                a := 5
+                b := 5
+                c := a
+            }
+            prop { AG true }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) { injector ->
