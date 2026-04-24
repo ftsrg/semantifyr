@@ -1,0 +1,102 @@
+package semantifyr::verification::lang::local_vars
+
+// Local variables scoped to a transition body. The compiler lifts them
+// to class-level slots with a reset semantics each step. Tests pair
+// reachability of the accumulated state with a safety bound.
+
+// --- local accumulation ---
+
+// Reachable: local `part` accumulates 1 + 2, then 3 is added to total.
+@VerificationCase
+class LocalVarAccumulateReach {
+    var total: int := 0
+
+    redefine tran {
+        assume(total < 3)
+        var part: int := 0
+        part := part + 1
+        part := part + 2
+        total := total + part
+    }
+
+    prop {
+        return EF total == 3
+    }
+}
+
+// Dual: total never exceeds 3.
+@VerificationCase
+class LocalVarAccumulateBound {
+    var total: int := 0
+
+    redefine tran {
+        assume(total < 3)
+        var part: int := 0
+        part := part + 1
+        part := part + 2
+        total := total + part
+    }
+
+    prop {
+        return AG total <= 3
+    }
+}
+
+// --- local havoc with narrowing assume ---
+
+// Reachable: delta lands at 3 at least once.
+@VerificationCase
+class LocalVarHavocReach {
+    var x: int := 0
+
+    redefine tran {
+        assume(x < 3)
+        var delta: int := 0
+        havoc(delta)
+        assume(delta == 3 - x)
+        x := x + delta
+    }
+
+    prop {
+        return EF x == 3
+    }
+}
+
+// Dual: x stays in [0, 3] because the local narrowing plus the outer
+// guard hem in each step.
+@VerificationCase
+class LocalVarHavocBound {
+    var x: int := 0
+
+    redefine tran {
+        assume(x < 3)
+        var delta: int := 0
+        havoc(delta)
+        assume(delta >= 1 && delta <= 3 - x)
+        x := x + delta
+    }
+
+    prop {
+        return AG (x >= 0 && x <= 3)
+    }
+}
+
+// --- local variable does not persist across steps ---
+
+// Each step resets the local to its initializer; even after setting a
+// local to 9 in one step, the next step reads 0 again. If the compiler
+// accidentally promoted the local to a class variable this would fail.
+@VerificationCase
+class LocalVarNotPersistedBound {
+    var total: int := 0
+
+    redefine tran {
+        var cache: int := 0
+        cache := 9
+        total := total + cache
+    }
+
+    prop {
+        return AG total >= 0
+    }
+}

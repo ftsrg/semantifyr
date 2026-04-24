@@ -1,0 +1,184 @@
+package semantifyr::verification::lang::inline_operations
+
+// Inline operations are expanded by the compiler at inline time rather
+// than dispatched at runtime. Verification checks that the expansion
+// preserves the intended semantics.
+
+// --- inline-if (compile-time guard) ---
+
+// Inline-if with a true static guard always takes the then-branch.
+@VerificationCase
+class InlineIfTrueReach {
+    var taken: int := 0
+
+    redefine tran {
+        inline if (1 < 2) {
+            taken := 1
+        } else {
+            taken := 2
+        }
+    }
+
+    prop {
+        return EF taken == 1
+    }
+}
+
+// Dual: the else-branch is never taken under a true guard.
+@VerificationCase
+class InlineIfTrueBound {
+    var taken: int := 0
+
+    redefine tran {
+        inline if (1 < 2) {
+            taken := 1
+        } else {
+            taken := 2
+        }
+    }
+
+    prop {
+        return AG taken != 2
+    }
+}
+
+// Inline-if with a false static guard always takes the else-branch.
+@VerificationCase
+class InlineIfFalseReach {
+    var taken: int := 0
+
+    redefine tran {
+        inline if (1 > 2) {
+            taken := 1
+        } else {
+            taken := 2
+        }
+    }
+
+    prop {
+        return EF taken == 2
+    }
+}
+
+// --- inline sequential for ---
+
+// Inline sequential for unrolls at compile time: 1 + 2 + 3 = 6 is reached.
+@VerificationCase
+class InlineSeqForReach {
+    var total: int := 0
+
+    redefine init {
+        inline for (n in 1..3) {
+            total := total + n
+        }
+    }
+
+    prop {
+        return EF total == 6
+    }
+}
+
+// Dual: total never exceeds the sum - no extra iterations happen.
+@VerificationCase
+class InlineSeqForBound {
+    var total: int := 0
+
+    redefine init {
+        inline for (n in 1..3) {
+            total := total + n
+        }
+    }
+
+    redefine tran { }
+
+    prop {
+        return AG total <= 6
+    }
+}
+
+// --- inline choice-for ---
+
+// Inline choice-for produces a nondeterministic choice over each value:
+// 1 is reachable.
+@VerificationCase
+class InlineChoiceFor1Reach {
+    var chosen: int := 0
+
+    redefine tran {
+        inline for choice (n in 1..3) {
+            chosen := n
+        }
+    }
+
+    prop {
+        return EF chosen == 1
+    }
+}
+
+// Inline choice-for: 3 is reachable.
+@VerificationCase
+class InlineChoiceFor3Reach {
+    var chosen: int := 0
+
+    redefine tran {
+        inline for choice (n in 1..3) {
+            chosen := n
+        }
+    }
+
+    prop {
+        return EF chosen == 3
+    }
+}
+
+// Dual: inline choice-for only produces values in the enumerated range.
+@VerificationCase
+class InlineChoiceForBound {
+    var chosen: int := 0
+
+    redefine tran {
+        inline for choice (n in 1..3) {
+            chosen := n
+        }
+    }
+
+    prop {
+        return AG (chosen == 0 || chosen == 1 || chosen == 2 || chosen == 3)
+    }
+}
+
+// --- inline for over a negative range ---
+
+// Inline for over a negative range unrolls in ascending order: -2 + -1 + 0 = -3.
+@VerificationCase
+class InlineForNegativeRangeReach {
+    var total: int := 0
+
+    redefine init {
+        inline for (n in -2..0) {
+            total := total + n
+        }
+    }
+
+    prop {
+        return EF total == -3
+    }
+}
+
+// Dual: the sum never dips below the exact value (no extra negative step).
+@VerificationCase
+class InlineForNegativeRangeBound {
+    var total: int := 0
+
+    redefine init {
+        inline for (n in -2..0) {
+            total := total + n
+        }
+    }
+
+    redefine tran { }
+
+    prop {
+        return AG total >= -3
+    }
+}

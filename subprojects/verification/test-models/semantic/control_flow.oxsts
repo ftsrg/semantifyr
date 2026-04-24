@@ -1,0 +1,188 @@
+package semantifyr::verification::lang::control_flow
+
+// Control-flow feature matrix: choice, assume, if, havoc-narrowing. Each
+// case has a sibling that asserts the dual (reachability + safety bound).
+// Inline forms live in `inline_operations.oxsts`.
+
+// --- choice nondeterminism ---
+
+// Either branch of a choice is reachable (the "1" branch).
+@VerificationCase
+class ChoiceBranch1Reach {
+    var x: int := 0
+
+    redefine tran {
+        choice {
+            x := 1
+        } or {
+            x := 2
+        }
+    }
+
+    prop {
+        return EF x == 1
+    }
+}
+
+// Either branch of a choice is reachable (the "2" branch).
+@VerificationCase
+class ChoiceBranch2Reach {
+    var x: int := 0
+
+    redefine tran {
+        choice {
+            x := 1
+        } or {
+            x := 2
+        }
+    }
+
+    prop {
+        return EF x == 2
+    }
+}
+
+// Choice output is restricted to the enumerated branches; no other
+// value is reachable.
+@VerificationCase
+class ChoiceBound {
+    var x: int := 0
+
+    redefine tran {
+        choice {
+            x := 1
+        } or {
+            x := 2
+        }
+    }
+
+    prop {
+        return AG (x == 0 || x == 1 || x == 2)
+    }
+}
+
+// --- assume guards ---
+
+// Guard allows progress up to the bound.
+@VerificationCase
+class AssumeReach {
+    var x: int := 0
+
+    redefine tran {
+        assume(x < 3)
+        x := x + 1
+    }
+
+    prop {
+        return EF x == 3
+    }
+}
+
+// Guard blocks any write past the bound.
+@VerificationCase
+class AssumeBound {
+    var x: int := 0
+
+    redefine tran {
+        assume(x < 3)
+        x := x + 1
+    }
+
+    prop {
+        return AG (x <= 3)
+    }
+}
+
+// --- havoc + narrowing ---
+
+// Havoc followed by a narrowing assume: any value in the assumed
+// range is reachable (pick the high end).
+@VerificationCase
+class HavocNarrowedReach {
+    var x: int := 0
+
+    redefine tran {
+        havoc(x)
+        assume(x >= 0 && x <= 5)
+    }
+
+    prop {
+        return EF x == 5
+    }
+}
+
+// Havoc followed by a narrowing assume: no value outside the
+// assumed range is reachable.
+@VerificationCase
+class HavocNarrowedBound {
+    var x: int := 0
+
+    redefine tran {
+        havoc(x)
+        assume(x >= 0 && x <= 5)
+    }
+
+    prop {
+        return AG (x >= 0 && x <= 5)
+    }
+}
+
+// --- if operation (statement form) ---
+
+// Runtime if with a true guard takes the then-branch.
+@VerificationCase
+class IfThenReach {
+    var taken: int := 0
+    var trigger: bool := true
+
+    redefine tran {
+        if (trigger) {
+            taken := 1
+        } else {
+            taken := 2
+        }
+    }
+
+    prop {
+        return EF taken == 1
+    }
+}
+
+// Runtime if with a false guard takes the else-branch.
+@VerificationCase
+class IfElseReach {
+    var taken: int := 0
+    var trigger: bool := false
+
+    redefine tran {
+        if (trigger) {
+            taken := 1
+        } else {
+            taken := 2
+        }
+    }
+
+    prop {
+        return EF taken == 2
+    }
+}
+
+// Runtime if: taken is in {0, 1, 2} for any trigger value.
+@VerificationCase
+class IfBound {
+    var taken: int := 0
+    var trigger: bool := false
+
+    redefine tran {
+        havoc(trigger)
+        if (trigger) {
+            taken := 1
+        } else {
+            taken := 2
+        }
+    }
+
+    prop {
+        return AG (taken == 0 || taken == 1 || taken == 2)
+    }
+}

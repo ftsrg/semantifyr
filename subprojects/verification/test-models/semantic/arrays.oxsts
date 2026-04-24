@@ -1,0 +1,105 @@
+package semantifyr::verification::lang::arrays
+
+// Fixed-size arrays: compiler flattens to per-index slot variables.
+// Tests cover literal initialization, independent indexing, and
+// that slots don't bleed into each other.
+
+// --- literal initializer, constant index read ---
+
+// Reachable: slots[0] starts at 10 (from the literal initializer).
+@VerificationCase
+class ArrayLiteralInit0Reach {
+    var values: int[3] := [10, 20, 30]
+    var first: int := 0
+
+    redefine tran {
+        first := values[0]
+    }
+
+    prop {
+        return EF first == 10
+    }
+}
+
+// Reachable: slots[2] starts at 30.
+@VerificationCase
+class ArrayLiteralInit2Reach {
+    var values: int[3] := [10, 20, 30]
+    var third: int := 0
+
+    redefine tran {
+        third := values[2]
+    }
+
+    prop {
+        return EF third == 30
+    }
+}
+
+// Dual: values are bounded by the declared initializers (no phantom
+// slot escapes).
+@VerificationCase
+class ArrayLiteralInitBound {
+    var values: int[3] := [10, 20, 30]
+
+    redefine tran { }
+
+    prop {
+        return AG (values[0] == 10 && values[1] == 20 && values[2] == 30)
+    }
+}
+
+// --- independent slot writes ---
+
+// Reachable: independent writes land each in their own slot.
+@VerificationCase
+class ArraySlotIndependenceReach {
+    var slots: int[3] := [0, 0, 0]
+
+    redefine tran {
+        choice {
+            slots[0] := slots[0] + 1
+        } or {
+            slots[1] := slots[1] + 1
+        } or {
+            slots[2] := slots[2] + 1
+        }
+    }
+
+    prop {
+        return EF (slots[0] == 1 && slots[1] == 1 && slots[2] == 1)
+    }
+}
+
+// Dual: writing slot 0 does not disturb slots 1 or 2 (write
+// independence is the invariant we care about for flattening).
+@VerificationCase
+class ArraySlot0DoesNotAffectOthers {
+    var slots: int[3] := [0, 0, 0]
+
+    redefine tran {
+        slots[0] := slots[0] + 1
+    }
+
+    prop {
+        return AG (slots[1] == 0 && slots[2] == 0)
+    }
+}
+
+// --- read-after-write on the same slot ---
+
+// Reachable: the value stored in slots[1] is what we read back.
+@VerificationCase
+class ArrayReadAfterWriteReach {
+    var slots: int[2] := [0, 0]
+    var seen: int := 0
+
+    redefine tran {
+        slots[1] := 7
+        seen := slots[1]
+    }
+
+    prop {
+        return EF seen == 7
+    }
+}

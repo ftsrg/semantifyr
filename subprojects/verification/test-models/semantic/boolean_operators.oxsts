@@ -1,0 +1,202 @@
+package semantifyr::verification::lang::boolean_operators
+
+// Boolean operators: &&, ||, ^^, !. Each case drives the operator
+// with havoc'd operands and asserts the truth-table outcome is
+// reachable; the dual asserts no unintended output escapes.
+
+// --- && (and) ---
+
+// Both-true is reachable.
+@VerificationCase
+class AndTrueReach {
+    var p: bool := false
+    var q: bool := false
+    var r: bool := false
+
+    redefine tran {
+        havoc(p)
+        havoc(q)
+        r := p && q
+    }
+
+    prop {
+        return EF r == true
+    }
+}
+
+// Dual: r = true only when both operands are true.
+@VerificationCase
+class AndTrueImpliesBoth {
+    var p: bool := false
+    var q: bool := false
+    var r: bool := false
+
+    redefine tran {
+        havoc(p)
+        havoc(q)
+        r := p && q
+    }
+
+    prop {
+        return AG (r == false || (p == true && q == true))
+    }
+}
+
+// --- || (or) ---
+
+// Any-true is reachable.
+@VerificationCase
+class OrTrueReach {
+    var p: bool := false
+    var q: bool := false
+    var r: bool := false
+
+    redefine tran {
+        havoc(p)
+        havoc(q)
+        r := p || q
+    }
+
+    prop {
+        return EF r == true
+    }
+}
+
+// Dual: r = false only when both operands are false.
+@VerificationCase
+class OrFalseImpliesBothFalse {
+    var p: bool := false
+    var q: bool := false
+    var r: bool := false
+
+    redefine tran {
+        havoc(p)
+        havoc(q)
+        r := p || q
+    }
+
+    prop {
+        return AG (r == true || (p == false && q == false))
+    }
+}
+
+// --- ^^ (xor) ---
+
+// Xor-true is reachable (operands differ).
+@VerificationCase
+class XorTrueReach {
+    var p: bool := false
+    var q: bool := false
+    var r: bool := false
+
+    redefine tran {
+        havoc(p)
+        havoc(q)
+        r := p ^^ q
+    }
+
+    prop {
+        return EF r == true
+    }
+}
+
+// Dual: r = true iff operands differ.
+@VerificationCase
+class XorTrueImpliesDiffer {
+    var p: bool := false
+    var q: bool := false
+    var r: bool := false
+
+    redefine tran {
+        havoc(p)
+        havoc(q)
+        r := p ^^ q
+    }
+
+    prop {
+        return AG (r == false || p != q)
+    }
+}
+
+// --- ! (negation) ---
+
+// Negation flips value: starting true, flipping yields false.
+@VerificationCase
+class NegationReach {
+    var p: bool := true
+
+    redefine tran {
+        p := !p
+    }
+
+    prop {
+        return EF p == false
+    }
+}
+
+// Dual: p stays boolean - always in {true, false}.
+@VerificationCase
+class NegationBound {
+    var p: bool := true
+
+    redefine tran {
+        p := !p
+    }
+
+    prop {
+        return AG (p == true || p == false)
+    }
+}
+
+// --- short-circuit-free evaluation: && / || are strict over pure reads ---
+
+// A chain of boolean ops: (p && q) || !p - classical tautology.
+@VerificationCase
+class TautologyAlwaysTrue {
+    var p: bool := false
+    var q: bool := false
+    var r: bool := false
+
+    redefine tran {
+        havoc(p)
+        havoc(q)
+        r := (p && q) || !p
+    }
+
+    prop {
+        return AG (r == false || r == true)
+    }
+}
+
+// --- nested negation (double negation) ---
+
+// !!p == p is reachable as true.
+@VerificationCase
+class DoubleNegationTrueReach {
+    var p: bool := true
+    var r: bool := false
+
+    redefine tran {
+        r := !(!p)
+    }
+
+    prop {
+        return EF r == true
+    }
+}
+
+// Dual: !!p never differs from p.
+@VerificationCase
+class DoubleNegationMatchesInput {
+    var p: bool := false
+    var r: bool := false
+
+    redefine tran {
+        havoc(p)
+        r := !(!p)
+    }
+
+    prop {
+        return AG (r == false || p == true)
+    }
+}

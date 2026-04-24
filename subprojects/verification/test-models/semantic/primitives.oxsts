@@ -1,0 +1,106 @@
+package semantifyr::verification::lang::primitives
+
+// Each behavioural test comes in a reachability (EF) / safety (AG) pair so
+// that a change in compilation cannot silently widen the reachable-state
+// set. Classes that share structure are siblings by naming convention:
+// `*Reach` for the positive claim, `*Bound` for the negative one.
+
+// --- integer counter ---
+
+// Integer counter: 10 is reachable.
+@VerificationCase
+class IntegerCounterReach {
+    var x: int := 0
+
+    redefine tran {
+        assume(x < 10)
+        x := x + 1
+    }
+
+    prop {
+        return EF x == 10
+    }
+}
+
+// Integer counter: x never falls below 0 or rises above 10. Pairs with
+// IntegerCounterReach to pin the reachable range.
+@VerificationCase
+class IntegerCounterBound {
+    var x: int := 0
+
+    redefine tran {
+        assume(x < 10)
+        x := x + 1
+    }
+
+    prop {
+        return AG (x >= 0 && x <= 10)
+    }
+}
+
+// --- boolean havoc ---
+
+// Boolean havoc: true is reachable from the initial false.
+@VerificationCase
+class BooleanHavocTrueReach {
+    var b: bool := false
+
+    redefine tran {
+        havoc(b)
+    }
+
+    prop {
+        return EF b == true
+    }
+}
+
+// Boolean havoc: false is also reachable (both values must be seen).
+@VerificationCase
+class BooleanHavocFalseReach {
+    var b: bool := true
+
+    redefine tran {
+        havoc(b)
+    }
+
+    prop {
+        return EF b == false
+    }
+}
+
+// --- bounded decrement ---
+
+// Bounded decrement: 0 is reachable from 5.
+@VerificationCase
+class BoundedDecrementReach {
+    var x: int := 5
+
+    redefine tran {
+        assume(x > 0)
+        x := x - 1
+    }
+
+    prop {
+        return EF x == 0
+    }
+}
+
+// Bounded decrement: x stays in [0, 5] - never under-runs, never over-runs
+// the initial value.
+@VerificationCase
+class BoundedDecrementBound {
+    var x: int := 5
+
+    redefine tran {
+        choice {
+            assume(x > 0)
+            x := x - 1
+        } or {
+            assume(x == 0)
+        }
+    }
+
+    prop {
+        return AG (x >= 0 && x <= 5)
+    }
+}

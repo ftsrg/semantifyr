@@ -1,0 +1,166 @@
+package semantifyr::verification::lang::parametric
+
+// Parametric transitions and properties. Arguments are substituted
+// into the body at inline time. Tests cover int, enum, and computed
+// arguments, each with a reachability / safety pair.
+
+// --- parametric transition with int argument ---
+
+// Three applications of `addN(3)` reach x == 9.
+@VerificationCase
+class ParametricTranReach {
+    var x: int := 0
+
+    tran addN(n: int) {
+        assume(x < 9)
+        x := x + n
+    }
+
+    redefine tran {
+        inline addN(3)
+    }
+
+    prop {
+        return EF x == 9
+    }
+}
+
+// Dual: the assume inside the body keeps x <= 9.
+@VerificationCase
+class ParametricTranBound {
+    var x: int := 0
+
+    tran addN(n: int) {
+        assume(x < 9)
+        x := x + n
+    }
+
+    redefine tran {
+        inline addN(3)
+    }
+
+    prop {
+        return AG x <= 9
+    }
+}
+
+// --- parametric transition with computed (non-literal) argument ---
+
+// Reachable: addBy(base + 2) where base == 3 drives x to 5.
+@VerificationCase
+class ParametricNonLiteralReach {
+    var x: int := 0
+    var base: int := 3
+
+    tran addBy(n: int) {
+        assume(x < 5)
+        x := x + n
+    }
+
+    redefine tran {
+        inline addBy(base + 2)
+    }
+
+    prop {
+        return EF x == 5
+    }
+}
+
+// Dual: x never exceeds 5.
+@VerificationCase
+class ParametricNonLiteralBound {
+    var x: int := 0
+    var base: int := 3
+
+    tran addBy(n: int) {
+        assume(x < 5)
+        x := x + n
+    }
+
+    redefine tran {
+        inline addBy(base + 2)
+    }
+
+    prop {
+        return AG x <= 5
+    }
+}
+
+// --- parametric transition with enum argument ---
+
+enum Level {
+    Low,
+    High
+}
+
+@VerificationCase
+class ParametricEnumReach {
+    var level: Level := Level::Low
+
+    tran setLevel(l: Level) {
+        level := l
+    }
+
+    redefine tran {
+        inline setLevel(Level::High)
+    }
+
+    prop {
+        return EF level == Level::High
+    }
+}
+
+// Dual: level is always in the enum's value set.
+@VerificationCase
+class ParametricEnumBound {
+    var level: Level := Level::Low
+
+    tran setLevel(l: Level) {
+        level := l
+    }
+
+    redefine tran {
+        inline setLevel(Level::High)
+    }
+
+    prop {
+        return AG (level == Level::Low || level == Level::High)
+    }
+}
+
+// --- parametric property with int argument ---
+
+// Reachable: equals(3) becomes true when x reaches 3.
+@VerificationCase
+class ParametricPropReach {
+    var x: int := 0
+
+    prop equals(n: int): bool {
+        return x == n
+    }
+
+    redefine tran {
+        assume(x < 3)
+        x := x + 1
+    }
+
+    prop {
+        return EF equals(3)
+    }
+}
+
+// Dual: before the counter runs, equals(3) is false.
+@VerificationCase
+class ParametricPropInitialState {
+    var x: int := 0
+
+    prop equals(n: int): bool {
+        return x == n
+    }
+
+    redefine tran { }
+
+    prop {
+        return AG !equals(3)
+    }
+}

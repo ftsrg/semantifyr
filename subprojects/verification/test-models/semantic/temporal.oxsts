@@ -1,0 +1,142 @@
+package semantifyr::verification::lang::temporal
+
+// Temporal operators AG / EF and their nesting. Each feature appears
+// in both a positive (holds) and a negative (dual) case.
+
+// --- EF ---
+
+// Target value is reachable from the initial state.
+@VerificationCase
+class EFReach {
+    var x: int := 0
+
+    redefine tran {
+        assume(x < 5)
+        x := x + 1
+    }
+
+    prop {
+        return EF x == 5
+    }
+}
+
+// Dual: EF does not lie - x cannot exceed the cap in the transition.
+@VerificationCase
+class EFBoundedByGuard {
+    var x: int := 0
+
+    redefine tran {
+        assume(x < 5)
+        x := x + 1
+    }
+
+    prop {
+        return AG x <= 5
+    }
+}
+
+// --- AG ---
+
+// Flip-flop 0 <-> 1 - AG invariant on the reachable set.
+@VerificationCase
+class AGInvariant {
+    var x: int := 0
+
+    redefine tran {
+        x := 1 - x
+    }
+
+    prop {
+        return AG (x == 0 || x == 1)
+    }
+}
+
+// Dual: both endpoints are reachable.
+@VerificationCase
+class AGEndpoint1Reach {
+    var x: int := 0
+
+    redefine tran {
+        x := 1 - x
+    }
+
+    prop {
+        return EF x == 1
+    }
+}
+
+@VerificationCase
+class AGEndpoint0Reach {
+    var x: int := 1
+
+    redefine tran {
+        x := 1 - x
+    }
+
+    prop {
+        return EF x == 0
+    }
+}
+
+// --- AG with a disjunction ---
+
+// AG holds across the enumerated branches.
+@VerificationCase
+class AGDisjunction {
+    var x: int := 0
+
+    redefine tran {
+        choice {
+            x := 1
+        } or {
+            x := 2
+        } or {
+            x := 3
+        }
+    }
+
+    prop {
+        return AG (x == 0 || x == 1 || x == 2 || x == 3)
+    }
+}
+
+// --- EF(AG ...) nesting ---
+
+// There exists a reachable state from which the invariant x == 3
+// holds forever (the guard blocks further change).
+@VerificationCase
+class EFAGReach {
+    var x: int := 0
+
+    redefine tran {
+        choice {
+            assume(x < 3)
+            x := x + 1
+        } or {
+            assume(x == 3)
+        }
+    }
+
+    prop {
+        return EF (AG x == 3)
+    }
+}
+
+// Dual: x never escapes [0, 3].
+@VerificationCase
+class EFAGBound {
+    var x: int := 0
+
+    redefine tran {
+        choice {
+            assume(x < 3)
+            x := x + 1
+        } or {
+            assume(x == 3)
+        }
+    }
+
+    prop {
+        return AG (x >= 0 && x <= 3)
+    }
+}

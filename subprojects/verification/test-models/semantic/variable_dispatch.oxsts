@@ -1,0 +1,140 @@
+package semantifyr::verification::lang::variable_dispatch
+
+// Variable dispatching: when the receiver of an inline call or a
+// property call is a feature- or class-typed variable, the compiler
+// expands the call across every candidate by guarding each expansion
+// with an equality test.
+
+class DispatchWorker {
+    var done: bool := false
+    tran step() {
+        done := true
+    }
+}
+
+// --- feature-typed variable dispatch ---
+
+// Reachable: current == a -> a.done; current == b -> b.done.
+@VerificationCase
+class FeatureDispatchAReach {
+    contains workers: DispatchWorker[0..*]
+    contains a: DispatchWorker[1] subsets workers
+    contains b: DispatchWorker[1] subsets workers
+
+    var current: workers[0..1] := nothing
+
+    redefine init {
+        current := a
+    }
+
+    redefine tran {
+        inline current.step()
+    }
+
+    prop {
+        return EF a.done == true
+    }
+}
+
+@VerificationCase
+class FeatureDispatchBReach {
+    contains workers: DispatchWorker[0..*]
+    contains a: DispatchWorker[1] subsets workers
+    contains b: DispatchWorker[1] subsets workers
+
+    var current: workers[0..1] := nothing
+
+    redefine init {
+        current := b
+    }
+
+    redefine tran {
+        inline current.step()
+    }
+
+    prop {
+        return EF b.done == true
+    }
+}
+
+// Dual: `current` only ever holds an instance in the workers set (or
+// nothing). Dispatch never invents a new candidate. This is the
+// domain-closure invariant that the dispatch expansion must preserve.
+@VerificationCase
+class FeatureDispatchDomainClosed {
+    contains workers: DispatchWorker[0..*]
+    contains a: DispatchWorker[1] subsets workers
+    contains b: DispatchWorker[1] subsets workers
+
+    var current: workers[0..1] := nothing
+
+    redefine init {
+        choice {
+            current := a
+        } or {
+            current := b
+        }
+    }
+
+    redefine tran {
+        inline current.step()
+    }
+
+    prop {
+        return AG (current == nothing || current == a || current == b)
+    }
+}
+
+// --- class-typed variable dispatch ---
+
+// Dispatch via a class-typed variable (not a feature reference): the
+// compiler uses InstanceCollector.instancesOfType to find candidates.
+@VerificationCase
+class ClassTypedDispatchReach {
+    contains first: DispatchWorker[1]
+    contains second: DispatchWorker[1]
+
+    var current: DispatchWorker[0..1] := nothing
+
+    redefine init {
+        choice {
+            current := first
+        } or {
+            current := second
+        }
+    }
+
+    redefine tran {
+        inline current.step()
+    }
+
+    prop {
+        return EF (first.done == true || second.done == true)
+    }
+}
+
+// Dual: `current` always resolves to one of the known instances or
+// nothing - no spurious instance is materialised by the dispatcher.
+@VerificationCase
+class ClassTypedDispatchDomainClosed {
+    contains first: DispatchWorker[1]
+    contains second: DispatchWorker[1]
+
+    var current: DispatchWorker[0..1] := nothing
+
+    redefine init {
+        choice {
+            current := first
+        } or {
+            current := second
+        }
+    }
+
+    redefine tran {
+        inline current.step()
+    }
+
+    prop {
+        return AG (current == nothing || current == first || current == second)
+    }
+}

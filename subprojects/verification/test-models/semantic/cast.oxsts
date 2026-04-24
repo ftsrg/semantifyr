@@ -1,0 +1,52 @@
+package semantifyr::verification::lang::cast
+
+// Cast expression: a narrowing static type change within the subtype
+// lattice. The compiler verifies the cast is narrowing and strips it
+// during inlining (the narrower type is carried by the assignment
+// context). Widening / unrelated casts are rejected at compile time.
+
+class Base { }
+class Child : Base { }
+
+// --- narrowing: Base-typed reference cast to Child ---
+
+// Reachable: `ref` is declared Base but holds a Child; casting back to
+// Child in a scratch variable preserves identity.
+@VerificationCase
+class NarrowIdentityReach {
+    contains children: Base[0..*]
+    contains c: Child[1] subsets children
+    var ref: children[0..1] := nothing
+
+    redefine init {
+        ref := c
+    }
+
+    redefine tran {
+        var narrowed: Child[0..1] := nothing
+        narrowed := ref as Child
+    }
+
+    prop {
+        return EF ref == c
+    }
+}
+
+// Dual: after the cast, `ref` still points at the same instance (or
+// nothing); no new candidate has been invented.
+@VerificationCase
+class NarrowIdentityInvariant {
+    contains children: Base[0..*]
+    contains c: Child[1] subsets children
+    var ref: children[0..1] := nothing
+
+    redefine init {
+        ref := c
+    }
+
+    redefine tran { }
+
+    prop {
+        return AG (ref == nothing || ref == c)
+    }
+}

@@ -1,0 +1,196 @@
+package semantifyr::verification::lang::comparison
+
+// Comparison operators: <, <=, >, >=, ==, !=. The fixtures bind
+// x and y to small bounded ranges via havoc + assume so the state
+// space is tractable, then verify each operator independently.
+
+// --- less-than ---
+
+@VerificationCase
+class LessTrueReach {
+    var x: int := 0
+    var y: int := 0
+    var r: bool := false
+
+    redefine tran {
+        havoc(x)
+        havoc(y)
+        assume(x >= 0 && x <= 3)
+        assume(y >= 0 && y <= 3)
+        r := x < y
+    }
+
+    prop {
+        return EF r == true
+    }
+}
+
+@VerificationCase
+class LessTrueImpliesOrder {
+    var x: int := 0
+    var y: int := 0
+    var r: bool := false
+
+    redefine tran {
+        havoc(x)
+        havoc(y)
+        assume(x >= 0 && x <= 3)
+        assume(y >= 0 && y <= 3)
+        r := x < y
+    }
+
+    prop {
+        return AG (r == false || x < y)
+    }
+}
+
+// --- less-or-equal ---
+
+@VerificationCase
+class LessEqEqualIsTrue {
+    var r: bool := false
+
+    redefine tran {
+        r := 3 <= 3
+    }
+
+    prop {
+        return EF r == true
+    }
+}
+
+@VerificationCase
+class LessEqStrictGreaterIsFalse {
+    var r: bool := true
+
+    redefine tran {
+        r := 4 <= 3
+    }
+
+    prop {
+        return EF r == false
+    }
+}
+
+// --- greater-than ---
+
+@VerificationCase
+class GreaterTrueReach {
+    var x: int := 0
+    var y: int := 0
+    var r: bool := false
+
+    redefine tran {
+        havoc(x)
+        havoc(y)
+        assume(x >= 0 && x <= 3)
+        assume(y >= 0 && y <= 3)
+        r := x > y
+    }
+
+    prop {
+        return EF r == true
+    }
+}
+
+@VerificationCase
+class GreaterTrueImpliesOrder {
+    var x: int := 0
+    var y: int := 0
+    var r: bool := false
+
+    redefine tran {
+        havoc(x)
+        havoc(y)
+        assume(x >= 0 && x <= 3)
+        assume(y >= 0 && y <= 3)
+        r := x > y
+    }
+
+    prop {
+        return AG (r == false || x > y)
+    }
+}
+
+// --- greater-or-equal ---
+
+@VerificationCase
+class GreaterEqEqualIsTrue {
+    var r: bool := false
+
+    redefine tran {
+        r := 3 >= 3
+    }
+
+    prop {
+        return EF r == true
+    }
+}
+
+// --- equality ---
+
+@VerificationCase
+class EqSameIsTrue {
+    var r: bool := false
+
+    redefine tran {
+        r := 5 == 5
+    }
+
+    prop {
+        return EF r == true
+    }
+}
+
+@VerificationCase
+class EqDifferentIsFalse {
+    var r: bool := true
+
+    redefine tran {
+        r := 5 == 4
+    }
+
+    prop {
+        return EF r == false
+    }
+}
+
+// --- inequality ---
+
+@VerificationCase
+class NotEqTrueReach {
+    var x: int := 0
+    var y: int := 0
+    var r: bool := false
+
+    redefine tran {
+        havoc(x)
+        havoc(y)
+        assume(x >= 0 && x <= 3)
+        assume(y >= 0 && y <= 3)
+        r := x != y
+    }
+
+    prop {
+        return EF r == true
+    }
+}
+
+@VerificationCase
+class NotEqTrueImpliesDiffer {
+    var x: int := 0
+    var y: int := 0
+    var r: bool := false
+
+    redefine tran {
+        havoc(x)
+        havoc(y)
+        assume(x >= 0 && x <= 3)
+        assume(y >= 0 && y <= 3)
+        r := x != y
+    }
+
+    prop {
+        return AG (r == false || x != y)
+    }
+}

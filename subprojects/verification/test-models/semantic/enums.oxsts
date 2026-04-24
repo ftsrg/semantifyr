@@ -1,0 +1,113 @@
+package semantifyr::verification::lang::enums
+
+// Enumerations - declaration, assignment, comparison in properties.
+// Tests pair a reachability claim with a safety claim on the enum's
+// value domain.
+
+enum Color {
+    Red,
+    Green,
+    Blue
+}
+
+// --- sequential transitions between enum states ---
+
+// Reachable: Red -> Green -> Blue.
+@VerificationCase
+class EnumStepReach {
+    var c: Color := Color::Red
+
+    redefine tran {
+        choice {
+            assume(c == Color::Red)
+            c := Color::Green
+        } or {
+            assume(c == Color::Green)
+            c := Color::Blue
+        }
+    }
+
+    prop {
+        return EF c == Color::Blue
+    }
+}
+
+// Dual: at every step c is one of the declared literals.
+@VerificationCase
+class EnumStepDomainClosed {
+    var c: Color := Color::Red
+
+    redefine tran {
+        choice {
+            assume(c == Color::Red)
+            c := Color::Green
+        } or {
+            assume(c == Color::Green)
+            c := Color::Blue
+        }
+    }
+
+    prop {
+        return AG (c == Color::Red || c == Color::Green || c == Color::Blue)
+    }
+}
+
+// --- enum havoc (any literal reachable) ---
+
+@VerificationCase
+class EnumAnyReachRed {
+    var c: Color := Color::Green
+
+    redefine tran {
+        choice {
+            c := Color::Red
+        } or {
+            c := Color::Green
+        } or {
+            c := Color::Blue
+        }
+    }
+
+    prop {
+        return EF c == Color::Red
+    }
+}
+
+@VerificationCase
+class EnumAnyReachBlue {
+    var c: Color := Color::Red
+
+    redefine tran {
+        choice {
+            c := Color::Red
+        } or {
+            c := Color::Green
+        } or {
+            c := Color::Blue
+        }
+    }
+
+    prop {
+        return EF c == Color::Blue
+    }
+}
+
+// Dual: no unrelated enum-ish value ever appears (domain closure).
+@VerificationCase
+class EnumAnyDomainClosed {
+    var c: Color := Color::Red
+
+    redefine tran {
+        choice {
+            c := Color::Red
+        } or {
+            c := Color::Green
+        } or {
+            c := Color::Blue
+        }
+    }
+
+    prop {
+        return AG (c == Color::Red || c == Color::Green || c == Color::Blue)
+    }
+}

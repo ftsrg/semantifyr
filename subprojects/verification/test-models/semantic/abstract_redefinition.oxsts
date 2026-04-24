@@ -1,0 +1,79 @@
+package semantifyr::verification::lang::abstract_redefinition
+
+// Abstract members must be realized in concrete subclasses. The
+// compiler's inliner resolves the abstract declaration to the
+// concrete subclass's body. Tests pair reachability of the concrete
+// outcome with an invariant that the abstract is never left unbound.
+
+abstract class Sensor {
+    var count: int := 0
+    abstract prop threshold(): bool
+    abstract tran tick()
+}
+
+class ThresholdSensor : Sensor {
+    redefine prop threshold(): bool {
+        return count >= 3
+    }
+
+    redefine tran tick() {
+        assume(count < 3)
+        count := count + 1
+    }
+}
+
+// --- abstract property redefined ---
+
+@VerificationCase
+class AbstractPropReach {
+    contains s: ThresholdSensor[1]
+
+    redefine tran {
+        inline s.tick()
+    }
+
+    prop {
+        return EF s.threshold()
+    }
+}
+
+// Dual: the threshold invariant holds iff the counter reached the
+// trigger value.
+@VerificationCase
+class AbstractPropInitialFalse {
+    contains s: ThresholdSensor[1]
+
+    redefine tran { }
+
+    prop {
+        return AG !s.threshold()
+    }
+}
+
+// --- abstract transition redefined ---
+
+@VerificationCase
+class AbstractTranReach {
+    contains s: ThresholdSensor[1]
+
+    redefine tran {
+        inline s.tick()
+    }
+
+    prop {
+        return EF s.count == 3
+    }
+}
+
+@VerificationCase
+class AbstractTranBound {
+    contains s: ThresholdSensor[1]
+
+    redefine tran {
+        inline s.tick()
+    }
+
+    prop {
+        return AG s.count <= 3
+    }
+}

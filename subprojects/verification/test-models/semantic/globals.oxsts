@@ -1,0 +1,36 @@
+package semantifyr::verification::lang::globals
+
+// Global containment features: a package-level singleton that any
+// verification case in the package can reference.
+
+class GlobalCounter {
+    var tick: int := 0
+}
+
+global containment counter: GlobalCounter[1]
+
+// Reachable: the global counter reaches 3 ticks.
+@VerificationCase
+class GlobalTickReach {
+    redefine tran {
+        assume(counter.tick < 3)
+        counter.tick := counter.tick + 1
+    }
+
+    prop {
+        return EF counter.tick == 3
+    }
+}
+
+// Dual: guard prevents overshoot.
+@VerificationCase
+class GlobalTickBound {
+    redefine tran {
+        assume(counter.tick < 3)
+        counter.tick := counter.tick + 1
+    }
+
+    prop {
+        return AG counter.tick <= 3
+    }
+}

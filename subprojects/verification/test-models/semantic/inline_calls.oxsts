@@ -1,0 +1,144 @@
+package semantifyr::verification::lang::inline_calls
+
+// Inline operation calls: the compiler expands `inline target()` into
+// the target's body at the call site. Tests cover self-calls, calls
+// via self-navigation, single-level and multi-level nav.
+
+// --- bare self-call ---
+
+// Reachable: three ticks of the named tran reach x == 3.
+@VerificationCase
+class SelfBareCallReach {
+    var x: int := 0
+
+    tran step() {
+        assume(x < 3)
+        x := x + 1
+    }
+
+    redefine tran {
+        inline step()
+    }
+
+    prop {
+        return EF x == 3
+    }
+}
+
+// Dual: x never exceeds 3 - the guard inside `step` still fires when
+// inlined.
+@VerificationCase
+class SelfBareCallBound {
+    var x: int := 0
+
+    tran step() {
+        assume(x < 3)
+        x := x + 1
+    }
+
+    redefine tran {
+        inline step()
+    }
+
+    prop {
+        return AG x <= 3
+    }
+}
+
+// --- self-call via explicit self navigation ---
+
+// Reachable: same body wired via `inline self.step()`.
+@VerificationCase
+class SelfNavCallReach {
+    var x: int := 0
+
+    tran step() {
+        assume(x < 3)
+        x := x + 1
+    }
+
+    redefine tran {
+        inline self.step()
+    }
+
+    prop {
+        return EF x == 3
+    }
+}
+
+// --- single-level navigation call ---
+
+class LocalWorker {
+    var done: bool := false
+    tran finish() {
+        done := true
+    }
+}
+
+@VerificationCase
+class SingleNavigationCallReach {
+    contains w: LocalWorker[1]
+
+    redefine tran {
+        inline w.finish()
+    }
+
+    prop {
+        return EF w.done == true
+    }
+}
+
+// Dual: `done` stays boolean; no value outside {false, true} appears.
+@VerificationCase
+class SingleNavigationCallBound {
+    contains w: LocalWorker[1]
+
+    redefine tran {
+        inline w.finish()
+    }
+
+    prop {
+        return AG (w.done == false || w.done == true)
+    }
+}
+
+// --- multi-level navigation call ---
+
+class LeafBump {
+    var v: int := 0
+    tran bump() {
+        assume(v < 3)
+        v := v + 1
+    }
+}
+
+class MidHolder {
+    contains leaf: LeafBump[1]
+}
+
+@VerificationCase
+class MultiNavigationCallReach {
+    contains mid: MidHolder[1]
+
+    redefine tran {
+        inline mid.leaf.bump()
+    }
+
+    prop {
+        return EF mid.leaf.v == 3
+    }
+}
+
+// Dual: guard in the nested body still bounds the reachable state.
+@VerificationCase
+class MultiNavigationCallBound {
+    contains mid: MidHolder[1]
+
+    redefine tran {
+        inline mid.leaf.bump()
+    }
+
+    prop {
+        return AG mid.leaf.v <= 3
+    }
+}

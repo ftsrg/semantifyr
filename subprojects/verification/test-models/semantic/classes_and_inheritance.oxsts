@@ -1,0 +1,201 @@
+package semantifyr::verification::lang::classes_and_inheritance
+
+// Class-level features: containment, inheritance, single/multi-level
+// redefinition, polymorphic dispatch via subsetting. Each case has a
+// dual that asserts what should NOT be reachable.
+
+class Worker {
+    var done: bool := false
+}
+
+// --- single containment ---
+
+// Reachable: main transition writes into a contained instance.
+@VerificationCase
+class SingleContainmentReach {
+    contains w: Worker[1]
+
+    redefine tran {
+        w.done := true
+    }
+
+    prop {
+        return EF w.done == true
+    }
+}
+
+// Dual: done is always boolean; no ghost state escapes.
+@VerificationCase
+class SingleContainmentBound {
+    contains w: Worker[1]
+
+    redefine tran {
+        w.done := true
+    }
+
+    prop {
+        return AG (w.done == false || w.done == true)
+    }
+}
+
+// --- single-level inheritance with redefine ---
+
+class Base {
+    tran act() { }
+}
+
+class Child : Base {
+    var x: int := 0
+    redefine tran act() {
+        x := 10
+    }
+}
+
+// Child's redefined body runs, reaching x == 10.
+@VerificationCase
+class ChildRedefinitionReach {
+    contains c: Child[1]
+
+    redefine tran {
+        inline c.act()
+    }
+
+    prop {
+        return EF c.x == 10
+    }
+}
+
+// Dual: x is in {0, 10} - parent's empty body never silently wins.
+@VerificationCase
+class ChildRedefinitionBound {
+    contains c: Child[1]
+
+    redefine tran {
+        inline c.act()
+    }
+
+    prop {
+        return AG (c.x == 0 || c.x == 10)
+    }
+}
+
+// --- multi-level inheritance ---
+
+class MidLevel : Base {
+    var m: int := 0
+    redefine tran act() {
+        m := 1
+    }
+}
+
+class LeafLevel : MidLevel {
+    var l: int := 0
+    redefine tran act() {
+        l := 2
+    }
+}
+
+// Reachable: leaf's body wins over mid's.
+@VerificationCase
+class MultiLevelRedefinitionReach {
+    contains leaf: LeafLevel[1]
+
+    redefine tran {
+        inline leaf.act()
+    }
+
+    prop {
+        return EF leaf.l == 2
+    }
+}
+
+// Dual: mid-level variable stays 0 when dispatching through leaf.
+@VerificationCase
+class MultiLevelRedefinitionNoMid {
+    contains leaf: LeafLevel[1]
+
+    redefine tran {
+        inline leaf.act()
+    }
+
+    prop {
+        return AG leaf.m == 0
+    }
+}
+
+// --- polymorphic dispatch via subsetting ---
+
+// Inlining `b.act()` where b is Base[0..*] but holds only the Child
+// instance via subsetting dispatches to Child's body.
+@VerificationCase
+class PolymorphicDispatchReach {
+    contains b: Base[0..*]
+    contains c: Child[1] subsets b
+
+    redefine tran {
+        inline b.act()
+    }
+
+    prop {
+        return EF c.x == 10
+    }
+}
+
+// Dual: no value other than 0 or 10 appears on c.x (parent body does
+// not silently run twice, child body does not over-fire).
+@VerificationCase
+class PolymorphicDispatchBound {
+    contains b: Base[0..*]
+    contains c: Child[1] subsets b
+
+    redefine tran {
+        inline b.act()
+    }
+
+    prop {
+        return AG (c.x == 0 || c.x == 10)
+    }
+}
+
+// --- abstract class with concrete subclass ---
+
+abstract class AbstractCounter {
+    var count: int := 0
+    abstract tran tick()
+}
+
+class ConcreteCounter : AbstractCounter {
+    redefine tran tick() {
+        count := count + 1
+    }
+}
+
+// Reachable: 3 ticks reach count == 3.
+@VerificationCase
+class AbstractConcreteReach {
+    contains c: ConcreteCounter[1]
+
+    redefine tran {
+        assume(c.count < 3)
+        inline c.tick()
+    }
+
+    prop {
+        return EF c.count == 3
+    }
+}
+
+// Dual: count never goes above 3 (guard holds).
+@VerificationCase
+class AbstractConcreteBound {
+    contains c: ConcreteCounter[1]
+
+    redefine tran {
+        assume(c.count < 3)
+        inline c.tick()
+    }
+
+    prop {
+        return AG c.count <= 3
+    }
+}
