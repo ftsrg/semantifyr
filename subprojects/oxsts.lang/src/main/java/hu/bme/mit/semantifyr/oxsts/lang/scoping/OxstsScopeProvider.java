@@ -23,8 +23,12 @@ import org.eclipse.xtext.scoping.ICaseInsensitivityHelper;
 import org.eclipse.xtext.scoping.IScope;
 import org.eclipse.xtext.scoping.Scopes;
 import org.eclipse.xtext.scoping.impl.SelectableBasedScope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
+
+    private static final Logger logger = LoggerFactory.getLogger(OxstsScopeProvider.class);
 
     @Inject
     private ExpressionTypeEvaluatorProvider expressionTypeEvaluatorProvider;
@@ -47,8 +51,7 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
         try {
             return calculateScope(context, reference);
         } catch (RuntimeException e) {
-            // FIXME: should log here
-            e.printStackTrace();
+            logger.error("Scope calculation failed for reference {} at {}", reference.getName(), context, e);
             return IScope.NULLSCOPE;
         }
     }

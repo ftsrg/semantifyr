@@ -26,7 +26,7 @@ import static com.google.common.collect.Lists.newArrayList;
 
 public class OxstsResourceDescription extends DefaultResourceDescription {
 
-    private final static Logger log = Logger.getLogger(OxstsResourceDescription.class);
+    private final static Logger logger = Logger.getLogger(OxstsResourceDescription.class);
 
     private final IDefaultResourceDescriptionStrategy strategy;
 
@@ -41,7 +41,7 @@ public class OxstsResourceDescription extends DefaultResourceDescription {
             try {
                 getResource().load(null);
             } catch (IOException e) {
-                log.error(e.getMessage(), e);
+                logger.error(e.getMessage(), e);
                 return Collections.emptyList();
             }
         }

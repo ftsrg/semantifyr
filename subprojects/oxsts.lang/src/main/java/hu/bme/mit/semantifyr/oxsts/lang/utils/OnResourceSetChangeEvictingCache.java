@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Singleton
 public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
 
-    private static final Logger log = Logger.getLogger(OnResourceSetChangeEvictingCache.class);
+    private static final Logger logger = Logger.getLogger(OnResourceSetChangeEvictingCache.class);
 
     @Override
     public void clear(Resource resource) {

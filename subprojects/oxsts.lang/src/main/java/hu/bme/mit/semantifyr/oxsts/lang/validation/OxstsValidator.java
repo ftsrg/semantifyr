@@ -27,6 +27,8 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.resource.ILocationInFileProvider;
 import org.eclipse.xtext.validation.Check;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -41,6 +43,8 @@ import java.util.stream.Collectors;
  */
 @SuppressWarnings("unused") // check functions are used by reflection
 public class OxstsValidator extends AbstractOxstsValidator {
+
+    private static final Logger logger = LoggerFactory.getLogger(OxstsValidator.class);
 
     @Inject
     private ILocationInFileProvider locationInFileProvider;
@@ -95,7 +99,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
 
     @Override
     protected void handleExceptionDuringValidation(Throwable targetException) throws RuntimeException {
-        // swallow all exceptions!
+        // Swallow all exceptions!
+        logger.error("Exception during validation", targetException);
     }
 
 //    @Check
