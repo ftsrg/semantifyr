@@ -37,12 +37,6 @@ class ResourceSetLoader @Inject constructor(
         val fileLabel = resource.uri.toFileString() ?: resource.uri.toString()
 
         if (resource.errors.any()) {
-            logger.error { "Parse errors in file $fileLabel:" }
-
-            for (error in resource.errors) {
-                logger.error(error.message)
-            }
-
             val parseErrorSummary = resource.errors.joinToString("\n  ") {
                 "$fileLabel:${it.line}:${it.column}: ${it.message}"
             }
@@ -77,7 +71,7 @@ class ResourceSetLoader @Inject constructor(
             }
 
             val blockingIssues = issues.filter {
-                it.severity == Severity.ERROR || it.severity == Severity.WARNING
+                it.severity == Severity.ERROR
             }
             if (blockingIssues.isNotEmpty()) {
                 val summary = blockingIssues.joinToString("\n  ") {
