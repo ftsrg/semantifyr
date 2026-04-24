@@ -28,7 +28,6 @@ public class XstsFormatter extends AbstractJavaFormatter {
 
     protected void formatBrackets(EObject eObject, IFormattableDocument document) {
         document.prepend(regionFor(eObject).keyword("{"), this::oneSpace);
-        document.append(regionFor(eObject).keyword("{"), this::newLines);
         document.prepend(regionFor(eObject).keyword("}"), this::newLines);
         document.interior(regionFor(eObject).keyword("{"), regionFor(eObject).keyword("}"), this::indent);
     }
