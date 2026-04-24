@@ -74,7 +74,12 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
                 case ADD -> new IntegerEvaluation(lValue + rValue);
                 case SUB -> new IntegerEvaluation(lValue - rValue);
                 case MUL -> new IntegerEvaluation(lValue * rValue);
-                case DIV -> new IntegerEvaluation(lValue / rValue);
+                case DIV -> {
+                    if (rValue == 0) {
+                        throw EvaluationFailureException.at(expression, "Division by zero!");
+                    }
+                    yield new IntegerEvaluation(lValue / rValue);
+                }
             };
         }
 
