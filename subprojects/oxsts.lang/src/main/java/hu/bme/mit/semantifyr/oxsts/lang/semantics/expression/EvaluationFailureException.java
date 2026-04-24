@@ -19,12 +19,6 @@ public class EvaluationFailureException extends RuntimeException {
         super(message, cause);
     }
 
-    /**
-     * Builds an {@link EvaluationFailureException} whose message is prefixed
-     * with the source location of the given element. Use at evaluator sites
-     * where the offending expression is known so diagnostics point at the
-     * user's code.
-     */
     public static EvaluationFailureException at(EObject eObject, String message) {
         return new EvaluationFailureException(SourceLocation.prefixFor(eObject) + message);
     }

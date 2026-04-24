@@ -104,17 +104,6 @@ public class TypeCompatibility {
         return domain;
     }
 
-    /**
-     * {@code true} if the two operands live in the same lattice family,
-     * ignoring multiplicity. Comparison is not unsafe - it always returns
-     * a boolean - so we do NOT require the stricter {@link #isAssignable}
-     * check. The rule: the two domains must be in a subtype relation
-     * (either direction). Unrelated domains (e.g. {@code int} vs
-     * {@code bool}, or unrelated class hierarchies) are still rejected
-     * because the comparison is trivially false and is almost always a
-     * bug. This could be relaxed further to "always allow" in the future
-     * if that turns out to be the better default.
-     */
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean isComparable(TypeEvaluation left, TypeEvaluation right, EObject context) {
         if (left instanceof InvalidTypeEvaluation || right instanceof InvalidTypeEvaluation) {
@@ -129,51 +118,46 @@ public class TypeCompatibility {
     }
 
     /**
-     * Returns {@code true} if the {@code source} type can be assigned into a
-     * location typed as {@code target}. Checks domain compatibility plus
-     * multiplicity (can an optional slot accept nothing? can a one slot
-     * accept a some? etc.).
+     * Returns {@code true} if a value of the {@code assigned} type can be
+     * assigned into a location typed as {@code assignee}. Checks domain
+     * compatibility plus multiplicity (can an optional slot accept nothing?
+     * can a one slot accept a some? etc.).
      */
-    public boolean isAssignable(TypeEvaluation target, TypeEvaluation source, EObject context) {
-        if (target instanceof InvalidTypeEvaluation || source instanceof InvalidTypeEvaluation) {
+    public boolean isAssignable(TypeEvaluation assignee, TypeEvaluation assigned, EObject context) {
+        if (assignee instanceof InvalidTypeEvaluation || assigned instanceof InvalidTypeEvaluation) {
             return true;
         }
-        if (source instanceof NothingTypeEvaluation) {
-            return target.getRange() != null && target.getRange().getLowerBound() == 0;
+        if (assigned instanceof NothingTypeEvaluation) {
+            return assignee.getRange() != null && assignee.getRange().getLowerBound() == 0;
         }
-        if (!isDomainAssignable(target.getDomain(), source.getDomain(), context)) {
+        if (!isDomainAssignable(assignee.getDomain(), assigned.getDomain(), context)) {
             return false;
         }
-        return isMultiplicityAssignable(target.getRange(), source.getRange());
+        return isMultiplicityAssignable(assignee.getRange(), assigned.getRange());
     }
 
-    /**
-     * Returns {@code true} if a value of {@code source} domain can be
-     * assigned to a target of {@code target} domain under the supertype
-     * lattice.
-     */
-    public boolean isDomainAssignable(DomainDeclaration target, DomainDeclaration source, EObject context) {
-        if (target == null || source == null) {
+    public boolean isDomainAssignable(DomainDeclaration assignee, DomainDeclaration assigned, EObject context) {
+        if (assignee == null || assigned == null) {
             return true;
         }
-        if (isAnyDomain(target, context)) {
+        if (isAnyDomain(assignee, context)) {
             return true;
         }
-        if (target == source) {
+        if (assignee == assigned) {
             return true;
         }
-        if (target instanceof ClassDeclaration targetClass && source instanceof ClassDeclaration sourceClass) {
-            return isSubclassOf(sourceClass, targetClass);
+        if (assignee instanceof ClassDeclaration assigneeClass && assigned instanceof ClassDeclaration assignedClass) {
+            return isSubclassOf(assignedClass, assigneeClass);
         }
-        if (target instanceof FeatureDeclaration targetFeat && source instanceof FeatureDeclaration sourceFeat) {
-            return isFeatureSubsetOf(sourceFeat, targetFeat);
+        if (assignee instanceof FeatureDeclaration assigneeFeat && assigned instanceof FeatureDeclaration assignedFeat) {
+            return isFeatureSubsetOf(assignedFeat, assigneeFeat);
         }
         // Mixed class / feature: unwrap one level and retry. A data-typed
         // feature (refers x: int = 3) is interchangeable with its int.
-        var targetUnwrapped = unwrap(target);
-        var sourceUnwrapped = unwrap(source);
-        if (targetUnwrapped != target || sourceUnwrapped != source) {
-            return isDomainAssignable(targetUnwrapped, sourceUnwrapped, context);
+        var assigneeUnwrapped = unwrap(assignee);
+        var assignedUnwrapped = unwrap(assigned);
+        if (assigneeUnwrapped != assignee || assignedUnwrapped != assigned) {
+            return isDomainAssignable(assigneeUnwrapped, assignedUnwrapped, context);
         }
         return false;
     }
@@ -185,22 +169,22 @@ public class TypeCompatibility {
         return domain;
     }
 
-    private boolean isMultiplicityAssignable(RangeEvaluation target, RangeEvaluation source) {
-        if (target == null || source == null) {
+    private boolean isMultiplicityAssignable(RangeEvaluation assignee, RangeEvaluation assigned) {
+        if (assignee == null || assigned == null) {
             return true;
         }
-        int targetLowerBound = target.getLowerBound();
-        int targetUpperBound = target.getUpperBound();
-        int sourceLowerBound = source.getLowerBound();
-        int sourceUpperBound = source.getUpperBound();
+        var assigneeLowerBound = assignee.getLowerBound();
+        var assigneeUpperBound = assignee.getUpperBound();
+        var assignedLowerBound = assigned.getLowerBound();
+        var assignedUpperBound = assigned.getUpperBound();
 
-        if (targetUpperBound != RangeEvaluation.INFINITY
-                && sourceUpperBound != RangeEvaluation.INFINITY
-                && sourceUpperBound > targetUpperBound) {
+        if (assigneeUpperBound != RangeEvaluation.INFINITY
+                && assignedUpperBound != RangeEvaluation.INFINITY
+                && assignedUpperBound > assigneeUpperBound) {
             return false;
         }
 
-        return sourceLowerBound >= targetLowerBound;
+        return assignedLowerBound >= assigneeLowerBound;
     }
 
     private boolean isSubclassOf(ClassDeclaration candidate, ClassDeclaration target) {
