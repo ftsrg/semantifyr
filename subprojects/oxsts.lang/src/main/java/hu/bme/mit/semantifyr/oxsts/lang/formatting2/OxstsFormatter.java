@@ -318,7 +318,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     protected void format(InlineSeqFor inlineFor, IFormattableDocument document) {
         formatOperation(inlineFor, document);
 
-        document.surround(regionFor(inlineFor).keyword("inline"), this::oneSpace);
+        document.append(regionFor(inlineFor).keyword("inline"), this::oneSpace);
         document.surround(regionFor(inlineFor).keyword("for"), this::oneSpace);
         document.surround(regionFor(inlineFor).keyword("seq"), this::oneSpace);
 
@@ -333,7 +333,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     protected void format(InlineChoiceFor inlineFor, IFormattableDocument document) {
         formatOperation(inlineFor, document);
 
-        document.surround(regionFor(inlineFor).keyword("inline"), this::oneSpace);
+        document.append(regionFor(inlineFor).keyword("inline"), this::oneSpace);
         document.surround(regionFor(inlineFor).keyword("for"), this::oneSpace);
         document.surround(regionFor(inlineFor).keyword("choice"), this::oneSpace);
         document.surround(regionFor(inlineFor).keyword("else"), this::oneSpace);
@@ -349,7 +349,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     protected void format(InlineIfOperation inlineIfOperation, IFormattableDocument document) {
         formatOperation(inlineIfOperation, document);
 
-        document.surround(regionFor(inlineIfOperation).keyword("inline"), this::oneSpace);
+        document.append(regionFor(inlineIfOperation).keyword("inline"), this::oneSpace);
         document.surround(regionFor(inlineIfOperation).keyword("if"), this::oneSpace);
 
         document.format(inlineIfOperation.getGuard());
