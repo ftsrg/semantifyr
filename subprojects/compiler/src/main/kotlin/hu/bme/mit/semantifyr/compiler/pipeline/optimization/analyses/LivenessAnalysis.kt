@@ -8,13 +8,13 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluator
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluator
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.tryEvaluateTypedOrNull
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
-import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableReadExpressions
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.writeReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
@@ -41,11 +41,11 @@ data class LivenessInfo(
 }
 
 class LivenessAnalysis @Inject constructor(
-    private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
+    private val metaCompileTimeExpressionEvaluatorProvider: MetaCompileTimeExpressionEvaluatorProvider,
 ) : Analysis<LivenessInfo> {
 
     override fun compute(input: EvaluableCompilationContext): LivenessInfo {
-        val evaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
+        val evaluator = metaCompileTimeExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
         return LivenessComputation(input.inlinedOxsts, evaluator).compute()
     }
 
@@ -53,15 +53,11 @@ class LivenessAnalysis @Inject constructor(
 
 class LivenessComputation(
     private val inlinedOxsts: InlinedOxsts,
-    private val evaluator: MetaStaticExpressionEvaluator,
+    private val evaluator: MetaCompileTimeExpressionEvaluator,
 ) {
 
     fun compute(): LivenessInfo {
-        val reads = inlinedOxsts.eAllOfType<Expression>().filterNot {
-            OxstsUtils.isWriteExpression(it)
-        }.filter {
-            evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, it) != null
-        }.groupBy {
+        val reads = inlinedOxsts.variableReadExpressions(evaluator).groupBy {
             evaluator.evaluateTyped(VariableDeclaration::class.java, it)
         }
 
@@ -72,18 +68,10 @@ class LivenessComputation(
         }
 
         val assignments = writes.groupBy {
-            evaluator.evaluateTyped(VariableDeclaration::class.java, referenceOf(it))
+            evaluator.evaluateTyped(VariableDeclaration::class.java, it.writeReference())
         }
 
         return LivenessInfo(reads, assignments)
-    }
-
-    private fun referenceOf(operation: Operation): Expression {
-        return when (operation) {
-            is AssignmentOperation -> operation.reference
-            is HavocOperation -> operation.reference
-            else -> error("Unexpected write operation: ${operation::class.simpleName}")
-        }
     }
 
 }

@@ -10,7 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.tryEvaluateTypedOrNull
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.AnalysisManager
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationCategory
@@ -29,7 +29,7 @@ import org.eclipse.xtext.EcoreUtil2
 
 class CopyPropagationPass @Inject constructor(
     private val config: OptimizationConfig,
-    private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
+    private val metaCompileTimeExpressionEvaluatorProvider: MetaCompileTimeExpressionEvaluatorProvider,
     private val artifactManager: CompilationArtifactManager,
 ) : Pass<EvaluableCompilationContext> {
 
@@ -39,7 +39,7 @@ class CopyPropagationPass @Inject constructor(
         }
 
         val rd = analysisManager.get(ReachingDefinitionsAnalysis::class.java, input)
-        val evaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
+        val evaluator = metaCompileTimeExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
 
         val substitutions = buildList {
             for ((read, defs) in rd.defsOf) {

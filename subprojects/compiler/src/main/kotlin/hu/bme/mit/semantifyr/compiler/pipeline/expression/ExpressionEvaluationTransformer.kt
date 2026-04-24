@@ -20,7 +20,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RealEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.StringEvaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 
-abstract class ExpressionEvaluationTransformer : StaticExpressionEvaluationVisitor<Expression>() {
+abstract class ExpressionEvaluationTransformer : CompileTimeExpressionEvaluationVisitor<Expression>() {
 
     fun transformEvaluation(evaluation: ExpressionEvaluation): Expression {
         return visit(evaluation)
@@ -90,7 +90,7 @@ open class ConstantExpressionEvaluationTransformer : ExpressionEvaluationTransfo
 
 }
 
-class StaticExpressionEvaluationTransformer @Inject constructor(
+class CompileTimeExpressionEvaluationTransformer @Inject constructor(
     private val instanceReferenceProvider: InstanceReferenceProvider,
 ) : ConstantExpressionEvaluationTransformer() {
 

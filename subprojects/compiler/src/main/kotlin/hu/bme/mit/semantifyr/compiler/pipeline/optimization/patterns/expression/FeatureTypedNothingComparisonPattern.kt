@@ -10,6 +10,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
@@ -37,7 +38,7 @@ class FeatureTypedNothingComparisonPattern(
         val variableSide = variableSideFacingNothing(element.left, element.right) ?: return false
         val resolved = try {
             metaEvaluatorProvider.evaluate(variableSide)
-        } catch (_: Exception) {
+        } catch (_: EvaluationFailureException) {
             return false
         }
         if (resolved !is VariableDeclaration) {
@@ -51,7 +52,7 @@ class FeatureTypedNothingComparisonPattern(
 
         val range = try {
             multiplicityRangeEvaluator.evaluate(typeSpecification)
-        } catch (_: Exception) {
+        } catch (_: EvaluationFailureException) {
             return false
         }
         if (range.lowerBound < 1) {

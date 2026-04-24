@@ -8,10 +8,10 @@ package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceReferenceProvider
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.RedefinitionAwareReferenceResolver
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.StaticExpressionEvaluationTransformer
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.StaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluationTransformer
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
@@ -24,11 +24,11 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 
 class ExpressionCallExpander @Inject constructor(
-    private val staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider,
-    private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
+    private val compileTimeExpressionEvaluatorProvider: CompileTimeExpressionEvaluatorProvider,
+    private val metaCompileTimeExpressionEvaluatorProvider: MetaCompileTimeExpressionEvaluatorProvider,
     private val expressionRewriter: ExpressionRewriter,
     private val instanceReferenceProvider: InstanceReferenceProvider,
-    private val staticEvaluationTransformer: StaticExpressionEvaluationTransformer,
+    private val staticEvaluationTransformer: CompileTimeExpressionEvaluationTransformer,
     private val callTargetResolver: CallTargetResolver,
     private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
 ) {
@@ -125,10 +125,10 @@ class ExpressionCallExpander @Inject constructor(
     }
 
     fun expandFeatureReferenceOrNull(expression: Expression, instance: Instance): Expression? {
-        if (metaStaticExpressionEvaluatorProvider.evaluate(instance, expression) !is FeatureDeclaration) {
+        if (metaCompileTimeExpressionEvaluatorProvider.evaluate(instance, expression) !is FeatureDeclaration) {
             return null
         }
-        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
+        val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instance)
         val evaluation = evaluator.evaluate(expression)
         return staticEvaluationTransformer.transformEvaluation(evaluation)
     }

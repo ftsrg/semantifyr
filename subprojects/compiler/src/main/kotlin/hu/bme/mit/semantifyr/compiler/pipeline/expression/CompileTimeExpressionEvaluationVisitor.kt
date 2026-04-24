@@ -9,7 +9,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.expression
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.utils.ExpressionEvaluationVisitor
 
-abstract class StaticExpressionEvaluationVisitor<T> : ExpressionEvaluationVisitor<T>() {
+abstract class CompileTimeExpressionEvaluationVisitor<T> : ExpressionEvaluationVisitor<T>() {
 
     override fun visit(evaluation: ExpressionEvaluation): T {
         return when (evaluation) {

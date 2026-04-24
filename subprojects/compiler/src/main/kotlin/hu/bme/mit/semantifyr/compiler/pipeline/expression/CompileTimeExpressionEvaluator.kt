@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.expression
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.evaluationFailure
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.parentSequence
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.BooleanEvaluation
@@ -17,26 +18,26 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ElementValueEvaluat
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.NothingEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 import org.eclipse.emf.ecore.EObject
 
-class StaticExpressionEvaluator @AssistedInject constructor(
+class CompileTimeExpressionEvaluator @AssistedInject constructor(
     @param:Assisted val instance: Instance,
-    private val staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider,
+    private val compileTimeExpressionEvaluatorProvider: CompileTimeExpressionEvaluatorProvider,
     private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
-    private val staticElementValueEvaluatorProvider: StaticElementValueEvaluatorProvider,
+    private val compileTimeElementValueEvaluatorProvider: CompileTimeElementValueEvaluatorProvider,
 ) : ConstantExpressionEvaluator() {
 
     override fun getElementValueEvaluator(context: EObject): ElementValueEvaluator<ExpressionEvaluation> {
-        return staticElementValueEvaluatorProvider.getEvaluator(instance)
+        return compileTimeElementValueEvaluatorProvider.getEvaluator(instance)
     }
 
     override fun visit(expression: ComparisonOperator): ExpressionEvaluation {
@@ -96,30 +97,30 @@ class StaticExpressionEvaluator @AssistedInject constructor(
         val context = instance.single()
         val resolvedMember = redefinitionAwareReferenceResolver.resolve(context.domain, expression.member)
 
-        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(context)
+        val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(context)
         return evaluator.evaluateElement(resolvedMember)
     }
 
     override fun visit(expression: CallSuffixExpression): ExpressionEvaluation {
-        sourceError(expression, "CallSuffixExpression is not supported by StaticExpressionEvaluator. Method/operation calls must be inlined before static evaluation.")
+        evaluationFailure(expression, "CallSuffixExpression is not compile-time-evaluable. Method/operation calls must be inlined before compile-time evaluation.")
     }
 
     override fun visit(expression: IndexingSuffixExpression): ExpressionEvaluation {
-        sourceError(expression, "IndexingSuffixExpression is not supported by StaticExpressionEvaluator. Array/map indexing is not statically evaluable in the general case.")
+        evaluationFailure(expression, "IndexingSuffixExpression is not compile-time-evaluable. Array/map indexing is not statically evaluable in the general case.")
     }
 
     override fun visit(expression: ElementReference): ExpressionEvaluation {
         val element = expression.element
 
         if (element !is Declaration || ! OxstsUtils.isElementContextual(element)) {
-            val rootEvaluator = staticExpressionEvaluatorProvider.getEvaluator(instance.parentSequence().last())
+            val rootEvaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instance.parentSequence().last())
             return rootEvaluator.evaluateElement(element)
         }
 
         for (candidate in instance.parentSequence()) {
             val resolvedElement = redefinitionAwareReferenceResolver.resolveOrNull(candidate.domain, element)
             if (resolvedElement != null) {
-                val candidateEvaluator = staticExpressionEvaluatorProvider.getEvaluator(candidate)
+                val candidateEvaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(candidate)
                 return candidateEvaluator.evaluateElement(resolvedElement)
             }
         }
@@ -166,7 +167,7 @@ class StaticExpressionEvaluator @AssistedInject constructor(
     }
 
     interface Factory {
-        fun create(instance: Instance): StaticExpressionEvaluator
+        fun create(instance: Instance): CompileTimeExpressionEvaluator
     }
 
 }

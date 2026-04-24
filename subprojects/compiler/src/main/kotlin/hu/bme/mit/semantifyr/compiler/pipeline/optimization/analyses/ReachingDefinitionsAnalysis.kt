@@ -8,13 +8,14 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluator
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluator
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.tryEvaluateTypedOrNull
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
-import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableReadExpressions
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.writeReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
@@ -36,11 +37,11 @@ data class ReachingDefinitionsInfo(
 )
 
 class ReachingDefinitionsAnalysis @Inject constructor(
-    private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
+    private val metaCompileTimeExpressionEvaluatorProvider: MetaCompileTimeExpressionEvaluatorProvider,
 ) : Analysis<ReachingDefinitionsInfo> {
 
     override fun compute(input: EvaluableCompilationContext): ReachingDefinitionsInfo {
-        val evaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
+        val evaluator = metaCompileTimeExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
         return ReachingDefinitionsComputation(input.inlinedOxsts, evaluator).compute()
     }
 
@@ -48,7 +49,7 @@ class ReachingDefinitionsAnalysis @Inject constructor(
 
 class ReachingDefinitionsComputation(
     private val inlinedOxsts: InlinedOxsts,
-    private val evaluator: MetaStaticExpressionEvaluator,
+    private val evaluator: MetaCompileTimeExpressionEvaluator,
 ) {
 
     private val defsOf = mutableMapOf<Expression, Set<EObject>>()
@@ -61,7 +62,7 @@ class ReachingDefinitionsComputation(
         }
 
         val initialIn = assignmentWrites.groupBy {
-            variableOfWrite(it as Operation)
+            evaluator.evaluateTyped(VariableDeclaration::class.java, (it as Operation).writeReference())
         }.mapValues {
             it.value.toSet()
         }
@@ -149,13 +150,9 @@ class ReachingDefinitionsComputation(
         expression: Expression,
         incoming: Map<VariableDeclaration, Set<EObject>>,
     ) {
-        val candidates = sequenceOf(expression) + expression.eAllOfType<Expression>()
-        for (candidate in candidates) {
-            if (OxstsUtils.isWriteExpression(candidate)) {
-                continue
-            }
-            val variable = evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, candidate) ?: continue
-            defsOf[candidate] = incoming[variable].orEmpty()
+        for (read in expression.variableReadExpressions(evaluator)) {
+            val variable = evaluator.evaluateTyped(VariableDeclaration::class.java, read)
+            defsOf[read] = incoming[variable].orEmpty()
         }
     }
 
@@ -176,14 +173,6 @@ class ReachingDefinitionsComputation(
         return result
     }
 
-    private fun variableOfWrite(
-        operation: Operation,
-    ): VariableDeclaration = when (operation) {
-        is AssignmentOperation -> evaluator.evaluateTyped(VariableDeclaration::class.java, operation.reference)
-        is HavocOperation -> evaluator.evaluateTyped(VariableDeclaration::class.java, operation.reference)
-        else -> error("Unexpected write operation: ${operation::class.simpleName}")
-    }
-
     private fun transitionsOf(inlinedOxsts: InlinedOxsts): List<TransitionDeclaration> {
         return listOfNotNull(
             inlinedOxsts.initTransition,
@@ -191,14 +180,8 @@ class ReachingDefinitionsComputation(
         )
     }
 
-    private fun readsIn(
-        inlinedOxsts: InlinedOxsts,
-    ): Sequence<Expression> {
-        return inlinedOxsts.eAllOfType<Expression>().filterNot {
-            OxstsUtils.isWriteExpression(it)
-        }.filter {
-            evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, it) != null
-        }
+    private fun readsIn(inlinedOxsts: InlinedOxsts): Sequence<Expression> {
+        return inlinedOxsts.variableReadExpressions(evaluator)
     }
 
 }

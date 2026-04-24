@@ -11,7 +11,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.artifact.TransitionCallTraceBuild
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.RedefinitionAwareReferenceResolver
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.StaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
@@ -33,7 +33,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 
 class InlineOperationExpander @Inject constructor(
-    private val staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider,
+    private val compileTimeExpressionEvaluatorProvider: CompileTimeExpressionEvaluatorProvider,
     private val expressionRewriter: ExpressionRewriter,
     private val instanceReferenceProvider: InstanceReferenceProvider,
     private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
@@ -187,7 +187,7 @@ class InlineOperationExpander @Inject constructor(
     }
 
     private fun expandIf(operation: InlineIfOperation, instance: Instance): Operation {
-        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
+        val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instance)
 
         if (evaluator.evaluateBoolean(operation.guard)) {
             return operation.body.copy()
@@ -251,7 +251,7 @@ class InlineOperationExpander @Inject constructor(
     }
 
     private fun enumerateLoopRange(rangeExpression: Expression, instance: Instance): List<Expression> {
-        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
+        val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instance)
         val evaluation = evaluator.evaluate(rangeExpression)
         return when (evaluation) {
             is InstanceEvaluation -> evaluation.instances.map {

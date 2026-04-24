@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluator
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
@@ -26,7 +27,7 @@ inline fun <reified T : A, A> ExpressionEvaluator<A>.evaluateTypedOrNull(clazz: 
 inline fun <reified T : A, A> ExpressionEvaluator<A>.tryEvaluateTypedOrNull(clazz: Class<T>, expression: Expression): T? {
     return try {
         evaluate(expression) as? T
-    } catch (_: Exception) {
+    } catch (_: EvaluationFailureException) {
         null
     }
 }
@@ -35,9 +36,9 @@ inline fun <reified T : A, A> ExpressionEvaluator<A>.evaluateTyped(clazz: Class<
     return evaluateTypedOrNull(clazz, expression) ?: sourceError(expression, "Expression does not evaluate to type ${T::class.qualifiedName}")
 }
 
-class MetaStaticExpressionEvaluator @AssistedInject constructor(
+class MetaCompileTimeExpressionEvaluator @AssistedInject constructor(
     @param:Assisted val instance: Instance,
-    private val staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider,
+    private val compileTimeExpressionEvaluatorProvider: CompileTimeExpressionEvaluatorProvider,
     private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
 ) : MetaConstantExpressionEvaluator() {
 
@@ -52,7 +53,7 @@ class MetaStaticExpressionEvaluator @AssistedInject constructor(
     }
 
     override fun visit(expression: NavigationSuffixExpression): NamedElement {
-        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
+        val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instance)
         val context = evaluator.evaluateSingleInstanceOrNull(expression.primary)
 
         if (context == null) {
@@ -66,7 +67,7 @@ class MetaStaticExpressionEvaluator @AssistedInject constructor(
     }
 
     interface Factory {
-        fun create(instance: Instance): MetaStaticExpressionEvaluator
+        fun create(instance: Instance): MetaCompileTimeExpressionEvaluator
     }
 
 }

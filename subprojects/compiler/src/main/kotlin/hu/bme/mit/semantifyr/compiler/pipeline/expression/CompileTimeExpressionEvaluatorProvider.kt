@@ -13,15 +13,15 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluatio
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 
 @Singleton
-class StaticExpressionEvaluatorProvider @Inject constructor(
-    private val staticExpressionEvaluatorFactory: StaticExpressionEvaluator.Factory,
+class CompileTimeExpressionEvaluatorProvider @Inject constructor(
+    private val compileTimeExpressionEvaluatorFactory: CompileTimeExpressionEvaluator.Factory,
 ) {
 
-    private val cache = mutableMapOf<Instance, StaticExpressionEvaluator>()
+    private val cache = mutableMapOf<Instance, CompileTimeExpressionEvaluator>()
 
-    fun getEvaluator(context: Instance): StaticExpressionEvaluator {
+    fun getEvaluator(context: Instance): CompileTimeExpressionEvaluator {
         return cache.getOrPut(context) {
-            staticExpressionEvaluatorFactory.create(context)
+            compileTimeExpressionEvaluatorFactory.create(context)
         }
     }
 

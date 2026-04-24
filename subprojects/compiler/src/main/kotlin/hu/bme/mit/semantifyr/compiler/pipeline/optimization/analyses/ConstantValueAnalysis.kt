@@ -8,12 +8,13 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluator
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluator
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
@@ -33,12 +34,12 @@ data class ConstantValueInfo(
 }
 
 class ConstantValueAnalysis @Inject constructor(
-    private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
+    private val metaCompileTimeExpressionEvaluatorProvider: MetaCompileTimeExpressionEvaluatorProvider,
     private val constantExpressionEvaluatorProvider: ConstantExpressionEvaluatorProvider,
 ) : Analysis<ConstantValueInfo> {
 
     override fun compute(input: EvaluableCompilationContext): ConstantValueInfo {
-        val evaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
+        val evaluator = metaCompileTimeExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
         return ConstantValueComputation(
             input.inlinedOxsts,
             evaluator,
@@ -50,7 +51,7 @@ class ConstantValueAnalysis @Inject constructor(
 
 class ConstantValueComputation(
     private val inlinedOxsts: InlinedOxsts,
-    private val evaluator: MetaStaticExpressionEvaluator,
+    private val evaluator: MetaCompileTimeExpressionEvaluator,
     private val constantExpressionEvaluatorProvider: ConstantExpressionEvaluatorProvider,
 ) {
 
@@ -70,20 +71,18 @@ class ConstantValueComputation(
                 continue
             }
 
+            val assignments = assignmentsByVariable[variable]
+            if (assignments.isNullOrEmpty()) {
+                continue
+            }
+
             val writtenValues = buildList {
                 variable.expression?.let {
                     add(it)
                 }
-                assignmentsByVariable[variable]?.forEach {
+                assignments.forEach {
                     add(it.expression)
                 }
-            }
-
-            if (writtenValues.isEmpty()) { // unwritten variables will be removed elsewhere, skip
-                continue
-            }
-            if (variable.expression != null && assignmentsByVariable[variable].isNullOrEmpty()) {
-                continue
             }
 
             val evaluations = writtenValues.map {
@@ -107,7 +106,7 @@ class ConstantValueComputation(
     private fun evaluateOrNull(expression: Expression): ExpressionEvaluation? {
         return try {
             constantExpressionEvaluatorProvider.evaluate(expression)
-        } catch (_: Exception) {
+        } catch (_: EvaluationFailureException) {
             null
         }
     }

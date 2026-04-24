@@ -13,15 +13,15 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 
 @Singleton
-class MetaStaticExpressionEvaluatorProvider @Inject constructor(
-    private val metaStaticExpressionEvaluatorFactory: MetaStaticExpressionEvaluator.Factory,
+class MetaCompileTimeExpressionEvaluatorProvider @Inject constructor(
+    private val metaCompileTimeExpressionEvaluatorFactory: MetaCompileTimeExpressionEvaluator.Factory,
 ) {
 
-    private val cache = mutableMapOf<Instance, MetaStaticExpressionEvaluator>()
+    private val cache = mutableMapOf<Instance, MetaCompileTimeExpressionEvaluator>()
 
-    fun getEvaluator(context: Instance): MetaStaticExpressionEvaluator {
+    fun getEvaluator(context: Instance): MetaCompileTimeExpressionEvaluator {
         return cache.getOrPut(context) {
-            metaStaticExpressionEvaluatorFactory.create(context)
+            metaCompileTimeExpressionEvaluatorFactory.create(context)
         }
     }
 

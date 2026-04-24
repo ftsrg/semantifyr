@@ -16,17 +16,17 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluatio
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 
-class StaticElementValueEvaluator @AssistedInject constructor(
+class CompileTimeElementValueEvaluator @AssistedInject constructor(
     @param:Assisted val instance: Instance,
     private val featureSubSettersFinder: FeatureSubSettersFinder,
-    private val staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider,
+    private val compileTimeExpressionEvaluatorProvider: CompileTimeExpressionEvaluatorProvider,
     private val oppositeHandler: OppositeHandler,
     private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
 ) : ConstantElementValueEvaluator() {
 
     private val featureEvaluator = FeatureEvaluator(
         featureSubSettersFinder,
-        staticExpressionEvaluatorProvider,
+        compileTimeExpressionEvaluatorProvider,
         oppositeHandler,
         redefinitionAwareReferenceResolver,
     )
@@ -40,7 +40,7 @@ class StaticElementValueEvaluator @AssistedInject constructor(
     }
 
     interface Factory {
-        fun create(instance: Instance): StaticElementValueEvaluator
+        fun create(instance: Instance): CompileTimeElementValueEvaluator
     }
 
 }

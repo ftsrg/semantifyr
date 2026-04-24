@@ -21,7 +21,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.StringEvaluation
 
 class ExpressionEvaluationSerializer @Inject constructor(
     private val oxstsQualifiedNameProvider: OxstsQualifiedNameProvider,
-) : StaticExpressionEvaluationVisitor<String>() {
+) : CompileTimeExpressionEvaluationVisitor<String>() {
 
     fun serialize(evaluation: ExpressionEvaluation): String {
         return visit(evaluation)

@@ -10,7 +10,7 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.StaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.tryEvaluateTypedOrNull
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
@@ -33,7 +33,7 @@ class TransitionCallTrace(
 
 @Singleton
 class TransitionCallTraceBuilder @Inject constructor(
-    private val staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider,
+    private val compileTimeExpressionEvaluatorProvider: CompileTimeExpressionEvaluatorProvider,
 ) {
 
     private var tracerCount = 0
@@ -46,7 +46,7 @@ class TransitionCallTraceBuilder @Inject constructor(
             it.name = "__transition_tracer${tracerCount++}"
         }
 
-        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
+        val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instance)
 
         val transitionCallTrace = TransitionCallTrace(
             InstanceEvaluation(containerInstance),

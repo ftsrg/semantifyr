@@ -8,14 +8,14 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluator
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluator
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.tryEvaluateTypedOrNull
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
-import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableReadExpressions
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.writeReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
@@ -46,11 +46,11 @@ data class ConeOfInfluenceInfo(
 }
 
 class ConeOfInfluenceAnalysis @Inject constructor(
-    private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
+    private val metaCompileTimeExpressionEvaluatorProvider: MetaCompileTimeExpressionEvaluatorProvider,
 ) : Analysis<ConeOfInfluenceInfo> {
 
     override fun compute(input: EvaluableCompilationContext): ConeOfInfluenceInfo {
-        val evaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
+        val evaluator = metaCompileTimeExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
         return ConeOfInfluenceComputation(input.inlinedOxsts, evaluator).compute()
     }
 
@@ -58,7 +58,7 @@ class ConeOfInfluenceAnalysis @Inject constructor(
 
 class ConeOfInfluenceComputation(
     private val inlinedOxsts: InlinedOxsts,
-    private val evaluator: MetaStaticExpressionEvaluator,
+    private val evaluator: MetaCompileTimeExpressionEvaluator,
 ) {
 
     fun compute(): ConeOfInfluenceInfo {
@@ -69,7 +69,7 @@ class ConeOfInfluenceComputation(
         }
 
         val assignmentsByVariable = allWrites.groupBy {
-            evaluator.evaluateTyped(VariableDeclaration::class.java, referenceOfWrite(it))
+            evaluator.evaluateTyped(VariableDeclaration::class.java, it.writeReference())
         }
 
         val relevantVariables = mutableSetOf<VariableDeclaration>()
@@ -118,27 +118,10 @@ class ConeOfInfluenceComputation(
         )
     }
 
-    private fun referenceOfWrite(operation: Operation): Expression {
-        return when (operation) {
-            is AssignmentOperation -> operation.reference
-            is HavocOperation -> operation.reference
-            else -> error("Unexpected write operation: ${operation::class.simpleName}")
-        }
-    }
-
     private fun variablesReadIn(expression: Expression): Set<VariableDeclaration> {
-        val result = mutableSetOf<VariableDeclaration>()
-        val candidates = sequenceOf(expression) + expression.eAllOfType<Expression>()
-        for (candidate in candidates) {
-            if (OxstsUtils.isWriteExpression(candidate)) {
-                continue
-            }
-            val variable = evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, candidate)
-            if (variable != null) {
-                result += variable
-            }
+        return expression.variableReadExpressions(evaluator).mapTo(mutableSetOf()) {
+            evaluator.evaluateTyped(VariableDeclaration::class.java, it)
         }
-        return result
     }
 
     private fun guardVariablesFor(operation: Operation): Set<VariableDeclaration> {
