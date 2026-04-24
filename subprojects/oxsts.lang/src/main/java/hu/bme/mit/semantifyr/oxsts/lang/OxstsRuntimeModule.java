@@ -43,6 +43,7 @@ public class OxstsRuntimeModule extends AbstractOxstsRuntimeModule {
         return OxstsValueConverterService.class;
     }
 
+    @SuppressWarnings("unused")
     public Class<? extends AbstractIDValueConverter> bindAbstractIDValueConverter() {
         return IDValueConverter.class;
     }
