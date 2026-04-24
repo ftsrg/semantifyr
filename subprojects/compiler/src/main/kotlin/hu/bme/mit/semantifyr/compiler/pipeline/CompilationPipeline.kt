@@ -15,12 +15,10 @@ import hu.bme.mit.semantifyr.compiler.pipeline.inlining.OxstsInliner
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.OxstsInstantiator
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import kotlin.time.TimeSource.Monotonic.markNow
 
 class CompilationPipeline @Inject constructor(
-    private val inlinedOxstsModelCreator: InlinedOxstsModelCreator,
     private val oxstsInstantiator: OxstsInstantiator,
     private val oxstsInliner: OxstsInliner,
     private val oxstsFlattener: OxstsFlattener,
@@ -29,29 +27,17 @@ class CompilationPipeline @Inject constructor(
 
     private val logger by loggerFactory()
 
-    fun compile(classDeclaration: ClassDeclaration): InlinedOxsts {
-        return compileDeflated(classDeclaration).inlinedOxsts
-    }
-
-    fun compileDeflated(classDeclaration: ClassDeclaration): FlattenedCompilationContext {
-        logger.info { "Starting compilation of class '${classDeclaration.name}'" }
-        val created = inlinedOxstsModelCreator.create(classDeclaration)
-        return compilePipeline(created)
-    }
-
     fun compile(inlinedOxsts: InlinedOxsts): InlinedOxsts {
-        return compileDeflated(inlinedOxsts).inlinedOxsts
+        return compileFlattened(inlinedOxsts).inlinedOxsts
     }
 
-    fun compileDeflated(inlinedOxsts: InlinedOxsts): FlattenedCompilationContext {
-        logger.info { "Starting compilation of pre-inlined OXSTS '${inlinedOxsts.classDeclaration.name}'" }
+    fun compileFlattened(inlinedOxsts: InlinedOxsts): FlattenedCompilationContext {
+        logger.info { "Starting compilation of '${inlinedOxsts.classDeclaration.name}'" }
         val created = CreatedCompilationContext(inlinedOxsts)
         return compilePipeline(created)
     }
 
     private fun compilePipeline(created: CreatedCompilationContext): FlattenedCompilationContext {
-        compilationArtifactManager.setTarget(created.inlinedOxsts)
-
         val totalMark = markNow()
 
         logger.info { "Phase: instantiation" }

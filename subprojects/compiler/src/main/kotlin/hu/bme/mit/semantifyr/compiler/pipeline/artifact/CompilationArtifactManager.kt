@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -17,27 +17,15 @@ import java.io.File
 class CompilationArtifactManager @Inject constructor(
     val serializer: ISerializer,
     val artifactManager: ArtifactManager,
-    val artifactConfig: ArtifactConfig
+    val artifactConfig: ArtifactConfig,
+    private val inlinedOxsts: InlinedOxsts,
 ) {
 
-    private lateinit var inlinedOxsts: InlinedOxsts
-
     private var stepId = 0
-
-    fun setTarget(inlinedOxsts: InlinedOxsts) {
-        check(!::inlinedOxsts.isInitialized) {
-            "CompilationArtifactManager.setTarget() was already called on this instance. Each compilation must use a fresh manager (the verifier / compiler builder creates per-compilation injectors)."
-        }
-        this.inlinedOxsts = inlinedOxsts
-    }
 
     fun commitStep(pass: CompilationPass) {
         if (!artifactConfig.enabledCompilationSteps.shouldEmit(pass)) {
             return
-        }
-
-        check(::inlinedOxsts.isInitialized) {
-            "CompilationArtifactManager.commitStep($pass) called before setTarget(). The orchestrator must call setTarget() before any pass runs."
         }
 
         artifactManager.withFile(ArtifactKind.CompilationStep) {
@@ -48,28 +36,19 @@ class CompilationArtifactManager @Inject constructor(
     }
 
     fun commitInstantiated() {
-        check(::inlinedOxsts.isInitialized) {
-            "CompilationArtifactManager.commitInstantiated() called before setTarget()."
-        }
-        artifactManager.withFile(ArtifactKind.InflatedModel) {
-            serializeInto(inlinedOxsts, it)
-        }
+        commitPhase(ArtifactKind.InstantiatedModel)
     }
 
     fun commitInlined() {
-        check(::inlinedOxsts.isInitialized) {
-            "CompilationArtifactManager.commitInlined() called before setTarget()."
-        }
-        artifactManager.withFile(ArtifactKind.InlinedModel) {
-            serializeInto(inlinedOxsts, it)
-        }
+        commitPhase(ArtifactKind.InlinedModel)
     }
 
     fun commitFlattened() {
-        check(::inlinedOxsts.isInitialized) {
-            "CompilationArtifactManager.commitFlattened() called before setTarget()."
-        }
-        artifactManager.withFile(ArtifactKind.DeflatedModel) {
+        commitPhase(ArtifactKind.FlattenedModel)
+    }
+
+    private fun commitPhase(kind: ArtifactKind) {
+        artifactManager.withFile(kind) {
             serializeInto(inlinedOxsts, it)
         }
     }

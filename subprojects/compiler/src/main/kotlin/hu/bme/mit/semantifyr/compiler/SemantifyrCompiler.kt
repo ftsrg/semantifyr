@@ -7,8 +7,10 @@
 package hu.bme.mit.semantifyr.compiler
 
 import com.google.inject.Injector
+import hu.bme.mit.semantifyr.compiler.pipeline.CompilationConfigModule
 import hu.bme.mit.semantifyr.compiler.pipeline.CompilationModule
 import hu.bme.mit.semantifyr.compiler.pipeline.CompilationPipeline
+import hu.bme.mit.semantifyr.compiler.pipeline.InlinedOxstsModelCreator
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
@@ -19,9 +21,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 
 class SemantifyrCompiler(
-    private val injector: Injector,
+    injector: Injector,
     private val artifactConfig: ArtifactConfig,
-    private val optimizationConfig: OptimizationConfig = OptimizationConfig.DEFAULT,
+    optimizationConfig: OptimizationConfig = OptimizationConfig.DEFAULT,
 ) : AutoCloseable {
 
     @JvmOverloads
@@ -32,27 +34,36 @@ class SemantifyrCompiler(
 
     private val logger by loggerFactory()
 
+    /**
+     * Injector that contains the configuration options
+     */
+    private val sharedInjector = injector.createChildInjector(
+        CompilationConfigModule(artifactConfig, optimizationConfig),
+    )
+
     init {
         logger.info { "Compiler artifacts will be written to: ${artifactConfig.outputDirectory.toAbsolutePath()}" }
     }
 
     fun compile(classDeclaration: ClassDeclaration): FlattenedCompilationContext {
         logger.info { "Compiling class '${classDeclaration.name}'" }
-        return freshPipeline().compileDeflated(classDeclaration)
+        val inlinedOxsts = sharedInjector
+            .getInstance(InlinedOxstsModelCreator::class.java)
+            .create(classDeclaration)
+            .inlinedOxsts
+        return compile(inlinedOxsts)
     }
 
     fun compile(inlinedOxsts: InlinedOxsts): FlattenedCompilationContext {
         logger.info { "Compiling inlined oxsts of '${inlinedOxsts.classDeclaration.name}'" }
-        return freshPipeline().compileDeflated(inlinedOxsts)
+        val pipeline = sharedInjector
+            .createChildInjector(CompilationModule(inlinedOxsts))
+            .getInstance(CompilationPipeline::class.java)
+        return pipeline.compileFlattened(inlinedOxsts)
     }
 
     override fun close() {
 
-    }
-
-    private fun freshPipeline(): CompilationPipeline {
-        return injector.createChildInjector(CompilationModule(artifactConfig, optimizationConfig))
-            .getInstance(CompilationPipeline::class.java)
     }
 
 }
