@@ -20,7 +20,7 @@ inline fun <reified T : EObject> EObject.eAllOfType(): Sequence<T> {
 }
 
 fun sourceError(eObject: EObject, message: String): Nothing {
-    throw IllegalStateException(SourceLocation.prefixFor(eObject) + message)
+    throw IllegalStateException("${SourceLocation.prefixFor(eObject)} $message")
 }
 
 fun evaluationFailure(eObject: EObject, message: String): Nothing {
