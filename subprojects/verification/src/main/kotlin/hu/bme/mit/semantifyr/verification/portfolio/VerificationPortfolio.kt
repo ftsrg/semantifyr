@@ -8,8 +8,10 @@ package hu.bme.mit.semantifyr.verification.portfolio
 
 import hu.bme.mit.semantifyr.backend.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.VerificationMetrics
 import hu.bme.mit.semantifyr.backend.VerificationRequest
 import hu.bme.mit.semantifyr.backend.VerificationResult
+import hu.bme.mit.semantifyr.backend.VerificationRunMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
@@ -32,10 +34,6 @@ class PortfolioScope internal constructor(
 ) {
     internal val jobs = mutableListOf<Deferred<VerificationResult>>()
 
-    /**
-     * Start a parallel verification job.
-     * Use [executor] inside the block for concurrency gating.
-     */
     fun async(block: suspend () -> VerificationResult) {
         jobs += coroutineScope.async {
             block()
@@ -47,35 +45,21 @@ fun VerificationRequest.withSubPath(subpath: String): VerificationRequest {
     return this.copy(artifactOutputPath = artifactOutputPath.resolve(subpath))
 }
 
-/**
- * Outcome of a portfolio combinator. Distinguishes the three reasons a
- * combinator might not produce a decisive verdict so callers can map
- * each to the right `VerificationVerdict`:
- *
- *  - [Decided]       - at least one decisive result, the combinator picks it
- *  - [AllErrored]    - every job threw; surface as `Errored`, not `Inconclusive`
- *  - [NoDecision]    - timeout or no decisive verdict agreed on (classical
- *                       inconclusive). [reason] is a human-readable summary.
- */
 sealed class PortfolioOutcome {
     data class Decided(val result: VerificationResult) : PortfolioOutcome()
     data class AllErrored(val exceptions: List<Throwable>) : PortfolioOutcome()
     data class NoDecision(val reason: String) : PortfolioOutcome()
 }
 
-/**
- * Collapse a [PortfolioOutcome] into a [VerificationResult] for portfolios
- * whose `verify()` contract returns a single result. All-errored outcomes
- * surface as [hu.bme.mit.semantifyr.backend.VerificationVerdict.Errored];
- * no-decision surfaces as Inconclusive.
- */
 fun PortfolioOutcome.toVerificationResult(
-    metadata: hu.bme.mit.semantifyr.backend.VerificationRunMetadata,
-    metrics: hu.bme.mit.semantifyr.backend.VerificationMetrics = hu.bme.mit.semantifyr.backend.VerificationMetrics(),
+    metadata: VerificationRunMetadata,
+    metrics: VerificationMetrics = VerificationMetrics(),
 ): VerificationResult = when (this) {
     is PortfolioOutcome.Decided -> result
     is PortfolioOutcome.AllErrored -> {
-        val firstMessage = exceptions.firstOrNull()?.let { "${it::class.simpleName}: ${it.message ?: ""}" } ?: "(no message)"
+        val firstMessage = exceptions.firstOrNull()?.let {
+            "${it::class.simpleName}: ${it.message ?: ""}"
+        } ?: "(no message)"
         val trailingCount = (exceptions.size - 1).coerceAtLeast(0)
         val summary = if (trailingCount > 0) "$firstMessage (+$trailingCount more)" else firstMessage
         VerificationResult.errored(
@@ -175,8 +159,7 @@ abstract class VerificationPortfolio {
         }
 
         cancelRemainingJobs()
-        // Promote disagreement on decisive results to a no-decision outcome
-        // with a descriptive reason.
+
         if (outcome is PortfolioOutcome.NoDecision && decisive.size >= count) {
             val breakdown = decisive.joinToString(", ") { "${it.metadata.backendId}=${it.verdict}" }
             PortfolioOutcome.NoDecision("$id: firstNDecisive(n=$count) disagreement ($breakdown)")
@@ -232,13 +215,6 @@ abstract class VerificationPortfolio {
         }
     }
 
-    /**
-     * Drains scope jobs through a channel, feeding each successful result to [onResult].
-     * Returns [PortfolioOutcome.Decided] as soon as [onResult] yields a non-null value.
-     * Returns [PortfolioOutcome.AllErrored] if every job failed (none produced a result).
-     * Returns [PortfolioOutcome.NoDecision] on [timeout] or when every job reported
-     * without a decision.
-     */
     private suspend fun CoroutineScope.receiveResultsWithTimeout(
         scope: PortfolioScope,
         timeout: Duration,
@@ -261,7 +237,10 @@ abstract class VerificationPortfolio {
                     continue
                 }
                 progress.reportProgress("result $done/$total: ${result.verdict}")
-                onResult(result)?.let { return@withTimeoutOrNull it }
+                val finalResult = onResult(result)
+                if (finalResult != null) {
+                    return@withTimeoutOrNull finalResult
+                }
             }
             null
         }
@@ -272,25 +251,8 @@ abstract class VerificationPortfolio {
         }
     }
 
-    /**
-     * Runs the jobs in the Scope by routing their results into a channel -> simple handling of concurrent results.
-     *
-     * Catches every [Throwable] except [CancellationException]. This is
-     * wider than the usual `catch (e: Exception)` on purpose: a backend
-     * can hit [OutOfMemoryError] (template blow-up from an exponential
-     * transform), [StackOverflowError] (pathological recursion in an IR),
-     * or an [Error] subclass coming from a native library. Any of those
-     * would otherwise propagate up through the coroutine machinery and
-     * kill the whole portfolio, wiping out still-decidable jobs. We
-     * contain the damage here: the offending job reports as an error,
-     * its stacktrace hits the logs, and the remaining jobs keep running.
-     */
     private fun CoroutineScope.funnelJobsIntoChannel(scope: PortfolioScope): Channel<Result<VerificationResult>> {
-        // Bound the channel at the job count: every job will enqueue exactly
-        // one result, and the drainer reads all of them, so this capacity
-        // never forces a sender to suspend. A bounded channel makes the
-        // intent explicit vs an unlimited buffer that grows with job count.
-        val results = Channel<Result<VerificationResult>>(scope.jobs.size)
+        val results = Channel<Result<VerificationResult>>(Channel.UNLIMITED)
         scope.jobs.forEach { deferred ->
             launch {
                 val outcome = try {

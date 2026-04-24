@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
+import kotlin.streams.asSequence
 
 /**
  * Discovers [VerificationCase]s in a loaded [SemantifyrModelContext].
@@ -27,18 +28,18 @@ class VerificationCaseDiscoverer @Inject constructor(
 ) {
 
     fun discover(context: SemantifyrModelContext): List<VerificationCase> {
-        val packages = context.modelResources.asSequence()
-            .flatMap { it.contents.asSequence() }
-            .filterIsInstance<OxstsModelPackage>()
+        val packages = context.modelResources.asSequence().flatMap {
+            it.contents.asSequence()
+        }.filterIsInstance<OxstsModelPackage>()
 
-        return packages.flatMap { pkg ->
-            builtInLibraryUtils.streamTestCases(pkg).toList().asSequence()
-        }.map { classDeclaration ->
-            val qualifiedName = oxstsQualifiedNameProvider.getFullyQualifiedNameString(classDeclaration)
+        return packages.flatMap {
+            builtInLibraryUtils.streamTestCases(it).asSequence()
+        }.map {
+            val qualifiedName = oxstsQualifiedNameProvider.getFullyQualifiedNameString(it)
             VerificationCase(
-                classDeclaration = classDeclaration,
+                classDeclaration = it,
                 qualifiedName = qualifiedName,
-                tags = tagsOf(classDeclaration),
+                tags = tagsOf(it),
             )
         }.toList()
     }
@@ -59,22 +60,25 @@ class VerificationCaseDiscoverer @Inject constructor(
     }
 
     fun findByQualifiedNameOrNull(context: SemantifyrModelContext, qualifiedName: String): VerificationCase? {
-        return discover(context).firstOrNull { it.qualifiedName == qualifiedName }
+        return discover(context).firstOrNull {
+            it.qualifiedName == qualifiedName
+        }
     }
 
     fun findByQualifiedName(context: SemantifyrModelContext, qualifiedName: String): VerificationCase {
         val cases = discover(context)
-        return cases.firstOrNull { it.qualifiedName == qualifiedName } ?: error("No verification case named '$qualifiedName' (known: ${cases.joinToString { it.qualifiedName }})")
+        return cases.firstOrNull {
+            it.qualifiedName == qualifiedName
+        } ?: error("No verification case named '$qualifiedName' (known: ${cases.joinToString { it.qualifiedName }})")
     }
 
     private fun tagsOf(classDeclaration: ClassDeclaration): Set<String> {
         val tagAnnotation = builtinSymbolResolver.tagAnnotation(classDeclaration) ?: return emptySet()
         val categoryParameter = builtinSymbolResolver.tagAnnotationCategory(classDeclaration) ?: return emptySet()
-        return OxstsUtils.getAnnotations(classDeclaration, tagAnnotation)
-            .map { OxstsUtils.getAnnotationValue(it, categoryParameter) }
-            .filter { it is LiteralString }
-            .map { (it as LiteralString).value }
-            .toList()
-            .toSet()
+        return OxstsUtils.getAnnotations(classDeclaration, tagAnnotation).asSequence().map {
+            OxstsUtils.getAnnotationValue(it, categoryParameter)
+        }.filterIsInstance<LiteralString>().map {
+            it.value
+        }.toSet()
     }
 }

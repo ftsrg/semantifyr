@@ -39,7 +39,6 @@ interface SemantifyrVerifier : AutoCloseable {
 
     suspend fun verify(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext = ProgressContext.NoOp): VerificationResult
 
-
     fun verifyAllBlocking(filter: CaseFilter, progressContext: ProgressContext) = runBlocking {
         verifyAll(filter, progressContext)
     }
