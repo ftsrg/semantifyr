@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -31,86 +31,57 @@ interface SemantifyrVerifier : AutoCloseable {
     fun modelContext(): SemantifyrModelContext
     fun verificationCases(filter: CaseFilter = CaseFilter.All): List<VerificationCase>
 
-    suspend fun verify(
-        case: VerificationCase,
-        progress: ProgressContext = ProgressContext.NoOp,
-    ): VerificationResult
+    suspend fun verifyAll(filter: CaseFilter = CaseFilter.All, progressContext: ProgressContext = ProgressContext.NoOp): List<VerificationResult>
 
-    suspend fun verify(
-        qualifiedName: String,
-        progress: ProgressContext = ProgressContext.NoOp,
-    ): VerificationResult
+    suspend fun verify(verificationCase: VerificationCase, progressContext: ProgressContext = ProgressContext.NoOp): VerificationResult
 
-    suspend fun verifyAll(
-        filter: CaseFilter = CaseFilter.All,
-        progress: ProgressContext = ProgressContext.NoOp,
-    ): List<VerificationResult>
+    suspend fun verify(qualifiedName: String, progressContext: ProgressContext = ProgressContext.NoOp): VerificationResult
 
-    /**
-     * Run the pipeline on a pre-inlined [InlinedOxsts] model and verify it.
-     *
-     * Primarily used for replaying counterexample witnesses: a
-     * [hu.bme.mit.semantifyr.verification.trace.TraceValidator] receives the
-     * verifier and calls this to re-run the witness through compilation +
-     * verification. Can also be used directly when a caller already has an
-     * inlined model on hand and wants to skip case discovery.
-     */
-    suspend fun verify(
-        inlinedOxsts: InlinedOxsts,
-        progress: ProgressContext = ProgressContext.NoOp,
-    ): VerificationResult
+    suspend fun verify(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext = ProgressContext.NoOp): VerificationResult
 
-    // Java-friendly blocking wrappers.
 
-    fun verifyBlocking(case: VerificationCase): VerificationResult {
-        return runBlocking { verify(case) }
+    fun verifyAllBlocking(filter: CaseFilter, progressContext: ProgressContext) = runBlocking {
+        verifyAll(filter, progressContext)
     }
 
-    fun verifyBlocking(case: VerificationCase, progress: ProgressContext): VerificationResult {
-        return runBlocking { verify(case, progress) }
+    fun verifyAllBlocking(filter: CaseFilter = CaseFilter.All) = runBlocking {
+        verifyAll(filter)
     }
 
-    fun verifyBlocking(qualifiedName: String): VerificationResult {
-        return runBlocking { verify(qualifiedName) }
+    fun verifyBlocking(verificationCase: VerificationCase) = runBlocking {
+        verify(verificationCase)
     }
 
-    fun verifyBlocking(qualifiedName: String, progress: ProgressContext): VerificationResult {
-        return runBlocking { verify(qualifiedName, progress) }
+    fun verifyBlocking(verificationCase: VerificationCase, progressContext: ProgressContext) = runBlocking {
+        verify(verificationCase, progressContext)
     }
 
-    fun verifyAllBlocking(filter: CaseFilter = CaseFilter.All): List<VerificationResult> {
-        return runBlocking { verifyAll(filter) }
+    fun verifyBlocking(qualifiedName: String) = runBlocking {
+        verify(qualifiedName)
     }
 
-    fun verifyAllBlocking(filter: CaseFilter, progress: ProgressContext): List<VerificationResult> {
-        return runBlocking { verifyAll(filter, progress) }
+    fun verifyBlocking(qualifiedName: String, progressContext: ProgressContext) = runBlocking {
+        verify(qualifiedName, progressContext)
     }
 
-    fun verifyBlocking(inlinedOxsts: InlinedOxsts): VerificationResult {
-        return runBlocking { verify(inlinedOxsts) }
+    fun verifyBlocking(inlinedOxsts: InlinedOxsts) = runBlocking {
+        verify(inlinedOxsts)
     }
 
-    fun verifyBlocking(inlinedOxsts: InlinedOxsts, progress: ProgressContext): VerificationResult {
-        return runBlocking { verify(inlinedOxsts, progress) }
+    fun verifyBlocking(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext) = runBlocking {
+        verify(inlinedOxsts, progressContext)
     }
-
-    override fun close()
 
     class Builder internal constructor() {
         private var injector: Injector? = null
         private var context: SemantifyrModelContext? = null
         private var verificationPortfolio: VerificationPortfolio? = null
         private var artifacts: ArtifactConfig? = null
-        private var environment: ExecutionEnvironment = ExecutionEnvironment.Empty
-        private var timeout: Duration = 5.minutes
-        private var maxConcurrency: Int = Runtime.getRuntime().availableProcessors().coerceAtLeast(1)
-        private var optimization: OptimizationConfig = OptimizationConfig.DEFAULT
+        private var environment = ExecutionEnvironment.Empty
+        private var timeout = 5.minutes
+        private var maxConcurrency = Runtime.getRuntime().availableProcessors().coerceAtLeast(1)
+        private var optimization = OptimizationConfig.DEFAULT
 
-        /**
-         * Share an existing [Injector] (typically the one that already loaded the model) with the verifier.
-         * When omitted, the builder creates a fresh OXSTS standalone injector. Reusing an injector avoids
-         * concurrent Guice injector-creation races under heavy Xtext / EMF activity (e.g. in the LSP).
-         */
         fun injector(injector: Injector): Builder {
             this.injector = injector
             return this
@@ -173,11 +144,11 @@ interface SemantifyrVerifier : AutoCloseable {
                 injector = resolvedInjector,
                 context = resolvedContext,
                 verificationPortfolio = resolvedPortfolio,
-                artifacts = resolvedArtifacts,
+                artifactConfig = resolvedArtifacts,
                 environment = environment,
                 timeout = timeout,
                 maxConcurrency = maxConcurrency,
-                optimization = optimization,
+                optimizationConfig = optimization,
             )
         }
     }

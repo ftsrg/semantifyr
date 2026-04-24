@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -64,8 +64,7 @@ class VerificationCaseDiscoverer @Inject constructor(
 
     fun findByQualifiedName(context: SemantifyrModelContext, qualifiedName: String): VerificationCase {
         val cases = discover(context)
-        return cases.firstOrNull { it.qualifiedName == qualifiedName }
-            ?: error("No verification case named '$qualifiedName' (known: ${cases.joinToString { it.qualifiedName }})")
+        return cases.firstOrNull { it.qualifiedName == qualifiedName } ?: error("No verification case named '$qualifiedName' (known: ${cases.joinToString { it.qualifiedName }})")
     }
 
     private fun tagsOf(classDeclaration: ClassDeclaration): Set<String> {

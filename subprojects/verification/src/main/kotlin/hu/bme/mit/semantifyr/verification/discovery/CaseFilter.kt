@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -18,8 +18,7 @@ sealed interface CaseFilter {
     }
 
     /**
-     * Matches when the case carries at least one tag from [including] (or [including]
-     * is empty) AND carries none of the tags from [excluding].
+     * Matches when the case carries at least one tag from [including] (or [including] is empty) AND carries none of the tags from [excluding].
      */
     data class Tags(
         val including: Set<String> = emptySet(),

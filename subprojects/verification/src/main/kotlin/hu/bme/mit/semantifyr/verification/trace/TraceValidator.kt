@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -47,7 +47,7 @@ object OxstsWitnessValidator : TraceValidator<VerificationTrace.OxstsWitness> {
         trace: VerificationTrace.OxstsWitness,
         progress: ProgressContext,
     ): TraceValidationResult {
-        val verification = verifier.verify(trace.witness.inlinedOxsts, progress)
+        val verification = verifier.verify(trace.backAnnotatedWitness, progress)
         return TraceValidationResult.from(verification)
     }
 }
