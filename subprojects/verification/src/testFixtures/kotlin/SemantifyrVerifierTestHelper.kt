@@ -22,8 +22,7 @@ import org.junit.jupiter.api.Named
 import org.junit.jupiter.params.provider.Arguments
 import java.nio.file.Files
 import kotlin.time.Duration
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
+import kotlin.time.Duration.Companion.minutes
 
 class SemantifyrVerifierTestHelper @Inject constructor(
     val semantifyrLoader: SemantifyrLoader,
@@ -70,7 +69,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         context: SemantifyrModelContext,
         case: VerificationCase,
         verificationPortfolio: VerificationPortfolio,
-        timeout: Duration = 30.toDuration(DurationUnit.MINUTES),
+        timeout: Duration = 30.minutes,
         environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
         expectedVerdict: VerificationVerdict = VerificationVerdict.Passed,
     ) {
@@ -101,7 +100,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         context: SemantifyrModelContext,
         case: VerificationCase,
         verificationPortfolio: VerificationPortfolio,
-        timeout: Duration = 30.toDuration(DurationUnit.MINUTES),
+        timeout: Duration = 30.minutes,
         environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
     ): VerificationResult {
         return buildVerifier(context, verificationPortfolio, timeout, environment).use {

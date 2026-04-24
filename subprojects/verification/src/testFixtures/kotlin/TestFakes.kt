@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.backend.VerificationRequest
 import hu.bme.mit.semantifyr.backend.VerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationRunMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verification.portfolio.BackendExecutor
@@ -24,13 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 
-/**
- * Test fakes shared by unit tests. Pure-JVM, no Guice / Theta / EMF wiring.
- * [fakeRequest] builds a [VerificationRequest] with a mock [InlinedOxsts] -- the portfolio
- * / strategy tests never inspect it.
- */
-
-internal fun fakeCase(qualifiedName: String = "pkg.Foo", vararg tags: String): VerificationCase {
+fun fakeCase(qualifiedName: String = "pkg.Foo", vararg tags: String): VerificationCase {
     return VerificationCase(
         classDeclaration = mock<ClassDeclaration>(),
         qualifiedName = qualifiedName,
@@ -38,21 +33,22 @@ internal fun fakeCase(qualifiedName: String = "pkg.Foo", vararg tags: String): V
     )
 }
 
-internal val noopExecutor: BackendExecutor = object : BackendExecutor {
+val noopExecutor: BackendExecutor = object : BackendExecutor {
     override suspend fun <T> withPermit(block: suspend () -> T): T {
         return block()
     }
 }
 
-internal fun fakeRequest(case: VerificationCase = fakeCase()): VerificationRequest {
+fun fakeRequest(case: VerificationCase = fakeCase()): VerificationRequest {
     return VerificationRequest(
         case = case,
         input = mock<InlinedOxsts>(),
+        compilation = mock<FlattenedCompilationContext>(),
         artifactOutputPath = Paths.get(System.getProperty("java.io.tmpdir")),
     )
 }
 
-internal fun fakeMetadata(backendId: String = "test", caseQualifiedName: String = "pkg.Foo"): VerificationRunMetadata {
+fun fakeMetadata(backendId: String = "test", caseQualifiedName: String = "pkg.Foo"): VerificationRunMetadata {
     return VerificationRunMetadata(
         backendId = backendId,
         startedAt = Clock.System.now(),
@@ -60,13 +56,7 @@ internal fun fakeMetadata(backendId: String = "test", caseQualifiedName: String 
     )
 }
 
-/**
- * Programmable [VerificationBackend] for portfolio tests. [behavior] decides what verdict
- * to return and how long to take. Tracks invocations and cancellations.
- *
- * Uses a sentinel [Unit] config -- these tests don't drive a real backend's config.
- */
-internal class FakeBackend(
+class FakeBackend(
     override val id: String,
     private val behavior: suspend () -> VerificationResult,
 ) : VerificationBackend<Unit>() {
@@ -102,6 +92,12 @@ internal class FakeBackend(
             return FakeBackend(id) {
                 delay(delayMillis)
                 VerificationResult(verdict = verdict, metadata = fakeMetadata(id))
+            }
+        }
+
+        fun throwing(id: String, throwable: Throwable): FakeBackend {
+            return FakeBackend(id) {
+                throw throwable
             }
         }
     }

@@ -8,25 +8,23 @@ package hu.bme.mit.semantifyr.verification
 
 import hu.bme.mit.semantifyr.backend.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.VerificationRequest
 import hu.bme.mit.semantifyr.backend.VerificationResult
 import hu.bme.mit.semantifyr.verification.portfolio.BackendExecutor
 import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
+import java.util.concurrent.atomic.AtomicInteger
 
-class SingleBackendPortfolio<T : Any>(
-    private val backend: VerificationBackend<T>,
-    private val config: T,
-    private val configId: String,
+class ErroringPortfolio(
+    override val id: String = "erroring",
 ) : VerificationPortfolio() {
+    override val displayName: String = id
+    override val description: String = "test-only"
+    override val familyId: String = "test"
 
-    override val id: String = "${backend.id}-$configId"
-    override val displayName: String = "${backend.id} $configId (test)"
-    override val description: String = "Test portfolio running ${backend.id} with config $configId."
-    override val familyId: String = backend.id
+    val invocations = AtomicInteger(0)
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
-        return backend.probeAvailability(config, environment)
+        return AvailabilityReport.Available
     }
 
     override suspend fun verify(
@@ -35,8 +33,7 @@ class SingleBackendPortfolio<T : Any>(
         environment: ExecutionEnvironment,
         progress: ProgressContext,
     ): VerificationResult {
-        return executor.withPermit {
-            backend.verify(config, request, environment)
-        }
+        invocations.incrementAndGet()
+        error("ErroringPortfolio.verify was called but should not have been")
     }
 }
