@@ -8,11 +8,12 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses
 
 import com.google.inject.Inject
 import com.google.inject.Injector
+import hu.bme.mit.semantifyr.compiler.pipeline.CompilationConfigModule
 import hu.bme.mit.semantifyr.compiler.pipeline.CompilationModule
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.context.CreatedCompilationContext
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluator
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluator
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceTree
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
@@ -41,7 +42,7 @@ abstract class AnalysisTestBase {
 
     protected data class Fixture(
         val inlinedOxsts: InlinedOxsts,
-        val evaluator: MetaStaticExpressionEvaluator,
+        val evaluator: MetaCompileTimeExpressionEvaluator,
         val child: Injector,
     )
 
@@ -52,12 +53,13 @@ abstract class AnalysisTestBase {
         val tree = SingleRootInstanceTree(classDeclaration)
         val context = CreatedCompilationContext(inlined).instantiated(tree)
         val child = injector.createChildInjector(
-            CompilationModule(
+            CompilationConfigModule(
                 ArtifactConfig.none(Files.createTempDirectory("analysis-test-")),
                 OptimizationConfig.ALL,
             ),
+            CompilationModule(inlined),
         )
-        val evaluator = child.getInstance(MetaStaticExpressionEvaluatorProvider::class.java)
+        val evaluator = child.getInstance(MetaCompileTimeExpressionEvaluatorProvider::class.java)
             .getEvaluator(context.rootInstance)
         return Fixture(inlined, evaluator, child)
     }

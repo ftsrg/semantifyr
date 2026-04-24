@@ -32,6 +32,12 @@ sealed interface PassResult {
 
 }
 
+private data class PassStats(
+    var total: Duration = Duration.ZERO,
+    var runs: Int = 0,
+    var fires: Int = 0,
+)
+
 class PassOptimizer<T>(
     private val passes: List<Pass<T>>,
     private val analysisManager: AnalysisManager,
@@ -43,10 +49,7 @@ class PassOptimizer<T>(
         analysisManager.invalidateAll()
 
         val totalMark = markNow()
-
-        val passTotal = LinkedHashMap<String, Duration>()
-        val passFires = LinkedHashMap<String, Int>()
-        val passRuns = LinkedHashMap<String, Int>()
+        val stats = LinkedHashMap<String, PassStats>()
 
         var changed = false
         var iteration = true
@@ -62,19 +65,20 @@ class PassOptimizer<T>(
                 val passMark = markNow()
                 val result = pass.run(input, analysisManager)
                 val passElapsed = passMark.elapsedNow()
-                passTotal[passName] = (passTotal[passName] ?: Duration.ZERO) + passElapsed
-                passRuns[passName] = (passRuns[passName] ?: 0) + 1
+                val passStats = stats.getOrPut(passName) { PassStats() }
+                passStats.total += passElapsed
+                passStats.runs++
                 when (result) {
                     is PassResult.Changed -> {
-                        passFires[passName] = (passFires[passName] ?: 0) + 1
+                        passStats.fires++
                         roundFires++
-                        logger.debug { "  $passName changed the model in ${passElapsed}" }
+                        logger.debug { "  $passName changed the model in $passElapsed" }
                         changed = true
                         iteration = true
                         analysisManager.invalidateExcept(result.preserved)
                     }
                     PassResult.Unchanged -> {
-                        logger.debug { "  $passName unchanged (${passElapsed})" }
+                        logger.debug { "  $passName unchanged ($passElapsed)" }
                     }
                 }
             }
@@ -82,10 +86,10 @@ class PassOptimizer<T>(
         }
 
         val total = totalMark.elapsedNow()
-        logger.info { "Optimizer fixpoint: ${round} round(s), ${total} total, changed=$changed" }
-        for ((name, dur) in passTotal.entries.sortedByDescending { it.value }) {
+        logger.info { "Optimizer fixpoint: $round round(s), $total total, changed=$changed" }
+        for ((name, passStats) in stats.entries.sortedByDescending { it.value.total }) {
             logger.info {
-                "  $name: $dur total, ${passRuns[name]} run(s), ${passFires[name] ?: 0} firing(s)"
+                "  $name: ${passStats.total} total, ${passStats.runs} run(s), ${passStats.fires} firing(s)"
             }
         }
         return changed

@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.utils
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.InlinedOxstsParseHelper
+import hu.bme.mit.semantifyr.oxsts.lang.utils.SourceLocation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -42,7 +43,7 @@ class SourceErrorTest {
     }
 
     @Test
-    fun `sourceLocationPrefix carries line number that matches the source`() {
+    fun `SourceLocation_prefixFor carries line number that matches the source`() {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
@@ -57,8 +58,8 @@ class SourceErrorTest {
         val aVariable = inlined.eAllOfType<VariableDeclaration>().first { it.name == "a" }
         val bVariable = inlined.eAllOfType<VariableDeclaration>().first { it.name == "b" }
 
-        val prefixA = sourceLocationPrefix(aVariable)
-        val prefixB = sourceLocationPrefix(bVariable)
+        val prefixA = SourceLocation.prefixFor(aVariable)
+        val prefixB = SourceLocation.prefixFor(bVariable)
 
         assertThat(prefixA).matches(".*:\\d+: ")
         assertThat(prefixB).matches(".*:\\d+: ")

@@ -53,7 +53,7 @@ class InlinedCompilationContext(
     override val rootInstance: Instance
         get() = instanceTree.rootInstance
 
-    fun deflated(flatteningInfo: FlatteningInfo): FlattenedCompilationContext {
+    fun flattened(flatteningInfo: FlatteningInfo): FlattenedCompilationContext {
         return FlattenedCompilationContext(
             inlinedOxsts = inlinedOxsts,
             rootInstance = instanceTree.rootInstance,

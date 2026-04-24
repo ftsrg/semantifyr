@@ -84,14 +84,14 @@ class ArtifactManagerTest {
 
     @Test
     fun `withFile creates parent directories on demand`() {
-        val config = ArtifactConfig(outputDirectory = tempDir, enabled = setOf(ArtifactKind.InflatedModel))
+        val config = ArtifactConfig(outputDirectory = tempDir, enabled = setOf(ArtifactKind.InstantiatedModel))
         val manager = ArtifactManager(config)
 
-        manager.withFile(ArtifactKind.InflatedModel) {
+        manager.withFile(ArtifactKind.InstantiatedModel) {
             it.writeText("x")
         }
 
-        val expected = tempDir.resolve(manager.pathOf(ArtifactKind.InflatedModel))
+        val expected = tempDir.resolve(manager.pathOf(ArtifactKind.InstantiatedModel))
         assertThat(Files.exists(expected.parent)).isTrue
         assertThat(Files.readString(expected)).isEqualTo("x")
     }

@@ -17,8 +17,8 @@ import hu.bme.mit.semantifyr.compiler.pipeline.context.InstanceIdMapping
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.ConstantExpressionEvaluationTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceReferenceProvider
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluatorProvider
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.StaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.ExpressionRewriter
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceCollector
@@ -93,7 +93,7 @@ class OxstsFlattener @Inject constructor(
         val variableInstanceDomain = mutableMapOf<VariableDeclaration, Set<Instance>>()
         val variableHolders = mutableMapOf<VariableDeclaration, Instance>()
         val variableMappings = mutableMapOf<Instance, Map<VariableDeclaration, VariableDeclaration>>()
-        val deflatedEvaluationTransformer = FlatExpressionEvaluationTransformer()
+        val flattenedEvaluationTransformer = FlatExpressionEvaluationTransformer()
 
         logger.debug { "Pulling down variables" }
         pullDownVariables(inlinedOxsts, instanceTree, variableInstanceDomain, variableHolders, variableMappings)
@@ -107,15 +107,15 @@ class OxstsFlattener @Inject constructor(
         logger.debug { "Rewriting feature-typed variables" }
         rewriteFeatureTypedVariables(inlinedOxsts, variableInstanceDomain)
 
-        compilationArtifactManager.commitStep(CompilationPass.Deflation)
+        compilationArtifactManager.commitStep(CompilationPass.Flattening)
 
         logger.debug { "Rewriting static expressions" }
-        rewriteStaticExpressions(inlinedOxsts, instanceTree, variableInstanceDomain, deflatedEvaluationTransformer)
+        rewriteStaticExpressions(inlinedOxsts, instanceTree, variableInstanceDomain, flattenedEvaluationTransformer)
 
         logger.info { "Running post-flattening optimizers" }
         flattenedPhaseOptimizer.optimize(inlinedCompilationContext)
 
-        val instanceIdMapping = deflatedEvaluationTransformer.buildMapping()
+        val instanceIdMapping = flattenedEvaluationTransformer.buildMapping()
 
         domainMappingSerializer.serializeMapping(instanceIdMapping)
 
@@ -130,7 +130,7 @@ class OxstsFlattener @Inject constructor(
             instanceIdMapping = instanceIdMapping,
         )
 
-        return inlinedCompilationContext.deflated(flatteningInfo)
+        return inlinedCompilationContext.flattened(flatteningInfo)
     }
 
     private fun pullDownVariables(
@@ -175,7 +175,7 @@ class OxstsFlattener @Inject constructor(
 
         when (declaredDomain) {
             is FeatureDeclaration -> {
-                val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
+                val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instance)
                 val featureInstances = evaluator.evaluateInstances(OxstsFactory.createElementReference(declaredDomain))
                 variableInstanceDomain[actualVariable] = featureInstances
                 actualVariable.typeSpecification.domain = builtinAnything
@@ -200,7 +200,7 @@ class OxstsFlattener @Inject constructor(
         instanceTree: InstanceTree,
         variableMappings: Map<Instance, Map<VariableDeclaration, VariableDeclaration>>,
     ) {
-        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instanceTree.rootInstance)
+        val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instanceTree.rootInstance)
 
         val variableReferences = inlinedOxsts.eAllOfType<NavigationSuffixExpression>().filter {
             it.member is VariableDeclaration
@@ -285,11 +285,11 @@ class OxstsFlattener @Inject constructor(
         inlinedOxsts: InlinedOxsts,
         instanceTree: InstanceTree,
         variableInstanceDomain: Map<VariableDeclaration, Set<Instance>>,
-        deflatedEvaluationTransformer: FlatExpressionEvaluationTransformer,
+        flattenedEvaluationTransformer: FlatExpressionEvaluationTransformer,
     ) {
         rewriteVariableDeclarations(inlinedOxsts, variableInstanceDomain)
         rewriteNothingExpressions(inlinedOxsts)
-        rewriteFeatureExpressions(inlinedOxsts, instanceTree, deflatedEvaluationTransformer)
+        rewriteFeatureExpressions(inlinedOxsts, instanceTree, flattenedEvaluationTransformer)
 
         inlinedOxsts.rootFeature = null
     }
@@ -331,14 +331,14 @@ class OxstsFlattener @Inject constructor(
     private fun rewriteFeatureExpressions(
         inlinedOxsts: InlinedOxsts,
         instanceTree: InstanceTree,
-        deflatedEvaluationTransformer: FlatExpressionEvaluationTransformer,
+        flattenedEvaluationTransformer: FlatExpressionEvaluationTransformer,
     ) {
-        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instanceTree.rootInstance)
+        val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instanceTree.rootInstance)
 
         var iteration = 0
         while (true) {
             val featureExpression = inlinedOxsts.eAllOfType<ReferenceExpression>().filter {
-                metaStaticExpressionEvaluatorProvider.evaluate(instanceTree.rootInstance, it) is FeatureDeclaration
+                metaCompileTimeExpressionEvaluatorProvider.evaluate(instanceTree.rootInstance, it) is FeatureDeclaration
             }.firstOrNull()
 
             if (featureExpression == null) {
@@ -347,7 +347,7 @@ class OxstsFlattener @Inject constructor(
             }
 
             val evaluation = evaluator.evaluate(featureExpression)
-            val expression = deflatedEvaluationTransformer.transformEvaluation(evaluation)
+            val expression = flattenedEvaluationTransformer.transformEvaluation(evaluation)
 
             EcoreUtil2.replace(featureExpression, expression)
             iteration++

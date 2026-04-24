@@ -61,8 +61,9 @@ class OxstsInliner @Inject constructor(
             }
         }
 
-        val temporalOutsideProperty = inlinedOxsts.eAllOfType<TemporalOperator>()
-            .firstOrNull { EcoreUtil2.getContainerOfType(it, PropertyDeclaration::class.java) == null }
+        val temporalOutsideProperty = inlinedOxsts.eAllOfType<TemporalOperator>().firstOrNull {
+            EcoreUtil2.getContainerOfType(it, PropertyDeclaration::class.java) == null
+        }
         if (temporalOutsideProperty != null) {
             sourceError(temporalOutsideProperty, "Temporal operators may only appear inside property blocks!")
         }

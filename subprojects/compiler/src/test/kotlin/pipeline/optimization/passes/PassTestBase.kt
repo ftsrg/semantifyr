@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes
 
 import com.google.inject.Inject
 import com.google.inject.Injector
+import hu.bme.mit.semantifyr.compiler.pipeline.CompilationConfigModule
 import hu.bme.mit.semantifyr.compiler.pipeline.CompilationModule
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.context.CreatedCompilationContext
@@ -71,10 +72,11 @@ abstract class PassTestBase {
         val expected = compile(expectedSource)
 
         val child = injector.createChildInjector(
-            CompilationModule(
+            CompilationConfigModule(
                 ArtifactConfig.none(Files.createTempDirectory("pass-test-")),
                 OptimizationConfig.ALL,
             ),
+            CompilationModule(actual.inlinedOxsts),
         )
 
         val analyses = analysisClasses.map {

@@ -10,9 +10,9 @@ import java.nio.file.Path
 
 enum class ArtifactKind {
     OutputModel,
+    InstantiatedModel,
     InlinedModel,
-    InflatedModel,
-    DeflatedModel,
+    FlattenedModel,
     CompilationStep,
     Witness,
     Mapping,
@@ -33,7 +33,7 @@ enum class CompilationPass {
     AssumptionPropagation,
     DeadCodeRemoval,
     UnusedVariableElimination,
-    Deflation,
+    Flattening,
 }
 
 sealed interface CompilationStepsConfig {

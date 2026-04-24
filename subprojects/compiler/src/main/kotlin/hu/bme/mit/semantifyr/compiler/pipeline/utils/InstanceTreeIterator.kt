@@ -7,13 +7,12 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.utils
 
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
-import java.util.*
 
 class InstanceTreeIterator(
     instance: Instance
 ) : Iterator<Instance> {
 
-    private val instanceQueue = LinkedList<Instance>()
+    private val instanceQueue = ArrayDeque<Instance>()
 
     init {
         instanceQueue += instance

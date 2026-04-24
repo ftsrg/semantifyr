@@ -12,7 +12,7 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 import kotlin.time.TimeSource.Monotonic.markNow
 
 interface Analysis<T : Any> {
-    val key: Class<Analysis<T>>
+    val key: Class<out Analysis<*>>
         get() = javaClass
 
     fun compute(input: EvaluableCompilationContext): T

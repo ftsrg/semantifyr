@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
 import com.google.inject.Inject
 import com.google.inject.Injector
+import hu.bme.mit.semantifyr.compiler.pipeline.CompilationConfigModule
 import hu.bme.mit.semantifyr.compiler.pipeline.CompilationModule
 import hu.bme.mit.semantifyr.compiler.pipeline.InlinedOxstsModelCreator
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
@@ -51,17 +52,16 @@ abstract class PackageExpanderTestBase {
             .singleOrNull { it.name == className }
             ?: error("Class '$className' not found in the test model")
 
-        val compilationInjector = injector.createChildInjector(
-            CompilationModule(
+        val sharedInjector = injector.createChildInjector(
+            CompilationConfigModule(
                 ArtifactConfig.none(Files.createTempDirectory("package-expander-test-")),
                 OptimizationConfig.ALL,
             ),
         )
 
-        val modelCreator = compilationInjector.getInstance(InlinedOxstsModelCreator::class.java)
+        val created = sharedInjector.getInstance(InlinedOxstsModelCreator::class.java).create(classDecl)
+        val compilationInjector = sharedInjector.createChildInjector(CompilationModule(created.inlinedOxsts))
         val instantiator = compilationInjector.getInstance(OxstsInstantiator::class.java)
-
-        val created = modelCreator.create(classDecl)
         val instantiated = instantiator.instantiate(created)
 
         return Prepared(instantiated.inlinedOxsts, instantiated, compilationInjector)

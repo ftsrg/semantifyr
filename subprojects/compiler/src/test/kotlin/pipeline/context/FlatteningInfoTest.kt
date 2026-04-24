@@ -19,8 +19,10 @@ class FlatteningInfoTest {
     private val holder: Instance = mock()
     private val otherHolder: Instance = mock()
 
-    private fun variable(name: String): VariableDeclaration = mock<VariableDeclaration>().also {
-        whenever(it.name).thenReturn(name)
+    private fun variable(name: String): VariableDeclaration {
+        return mock<VariableDeclaration>().also {
+            whenever(it.name).thenReturn(name)
+        }
     }
 
     @Test

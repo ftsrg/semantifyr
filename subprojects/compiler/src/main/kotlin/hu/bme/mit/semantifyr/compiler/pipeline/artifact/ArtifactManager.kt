@@ -10,12 +10,12 @@ import com.google.inject.Inject
 import org.eclipse.emf.common.util.URI
 import java.io.File
 
-private const val inlining = "inlining"
+private const val pipeline = "pipeline"
 private const val outputModel = "inlined.oxsts"
-private const val inlinedModel = "$inlining/inlined.oxsts"
-private const val inflatedModel = "$inlining/inflated.oxsts"
-private const val deflatedModel = "$inlining/deflated.oxsts"
-private const val compilationSteps = "$inlining/steps"
+private const val instantiatedModel = "$pipeline/instantiated.oxsts"
+private const val inlinedModel = "$pipeline/inlined.oxsts"
+private const val flattenedModel = "$pipeline/flattened.oxsts"
+private const val compilationSteps = "$pipeline/steps"
 private const val witness = "witness.oxsts"
 private const val trace = "trace.json"
 private const val mapping = "mapping.json"
@@ -28,9 +28,9 @@ class ArtifactManager @Inject constructor(
     fun pathOf(artifactKind: ArtifactKind): String {
         return when (artifactKind) {
             ArtifactKind.OutputModel -> outputModel
+            ArtifactKind.InstantiatedModel -> instantiatedModel
             ArtifactKind.InlinedModel -> inlinedModel
-            ArtifactKind.InflatedModel -> inflatedModel
-            ArtifactKind.DeflatedModel -> deflatedModel
+            ArtifactKind.FlattenedModel -> flattenedModel
             ArtifactKind.CompilationStep -> compilationSteps
             ArtifactKind.Witness -> witness
             ArtifactKind.Trace -> trace

@@ -19,7 +19,6 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvalu
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind
-import java.util.*
 
 class InstanceTreeCreator @Inject constructor(
     private val domainMemberCollectionProvider: DomainMemberCollectionProvider,
@@ -35,7 +34,7 @@ class InstanceTreeCreator @Inject constructor(
         logger.info { "Instantiating '${domainDeclaration.name}'" }
         val instanceTree = MutableInstanceTree(domainDeclaration)
 
-        val instanceQueue = LinkedList<Instance>()
+        val instanceQueue = ArrayDeque<Instance>()
         instanceQueue += instanceTree.rootInstance
 
         var visited = 0

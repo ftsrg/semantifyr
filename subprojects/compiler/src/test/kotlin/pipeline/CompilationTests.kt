@@ -1140,7 +1140,7 @@ class CompilationTests {
         }.toSet()
         assertThat(emitted)
             .`as`("default config should emit the three staged model artifacts")
-            .contains("inflated.oxsts", "inlined.oxsts", "deflated.oxsts")
+            .contains("instantiated.oxsts", "inlined.oxsts", "flattened.oxsts")
     }
 
     /**

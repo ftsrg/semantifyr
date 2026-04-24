@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
 import com.google.inject.Inject
 import com.google.inject.Injector
+import hu.bme.mit.semantifyr.compiler.pipeline.CompilationConfigModule
 import hu.bme.mit.semantifyr.compiler.pipeline.CompilationModule
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.context.CreatedCompilationContext
@@ -40,10 +41,11 @@ abstract class ExpanderTestBase {
         val inlined = parseHelper.parse(source.normalizedFixtureSource())
 
         val compilationInjector = injector.createChildInjector(
-            CompilationModule(
+            CompilationConfigModule(
                 ArtifactConfig.none(Files.createTempDirectory("expander-test-")),
                 OptimizationConfig.ALL,
             ),
+            CompilationModule(inlined),
         )
         val instantiator = compilationInjector.getInstance(OxstsInstantiator::class.java)
         val context = instantiator.instantiate(CreatedCompilationContext(inlined))

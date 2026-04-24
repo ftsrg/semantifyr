@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.IntegerEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
@@ -176,20 +177,7 @@ class ArrayFlatteningPass @Inject constructor(
                 "Array index $indexValue is out of bounds for '${arrayVariable.name}' (size ${slotVariables.size}).",
             )
         }
-        val slot = slotVariables[indexValue]
-        val primary = indexing.primary
-        val replacement = when (primary) {
-            is ElementReference -> OxstsFactory.createElementReference(slot)
-            is NavigationSuffixExpression -> OxstsFactory.createNavigationSuffixExpression().also {
-                it.primary = primary.primary.copy()
-                it.member = slot
-                it.isOptional = primary.isOptional
-            }
-            else -> sourceError(
-                indexing,
-                "Unexpected indexing primary shape: ${primary::class.simpleName}",
-            )
-        }
+        val replacement = slotRead(indexing, slotVariables[indexValue])
         EcoreUtil2.replace(indexing, replacement)
     }
 
@@ -210,19 +198,14 @@ class ArrayFlatteningPass @Inject constructor(
         slotVariables: List<VariableDeclaration>,
     ) {
         val indexExpr = indexing.index ?: sourceError(indexing, "Array indexing has no index expression.")
-        // Build the chain right-to-left: start with the last slot as the
-        // final else branch, then prepend `if i == k then a_k else <rest>`
-        // for k = N-2 down to 0.
-        var chain = slotRead(indexing, slotVariables.last())
+        // Build right-to-left: start with the last slot as the final else
+        // branch, then prepend `if i == k then a_k else <rest>` for
+        // k = N-2 down to 0.
+        var chain: Expression = slotRead(indexing, slotVariables.last())
         for (k in slotVariables.size - 2 downTo 0) {
-            val guard = OxstsFactory.createComparisonOperator().also {
-                it.op = ComparisonOp.EQ
-                it.left = indexExpr.copy()
-                it.right = OxstsFactory.createLiteralInteger(k)
-            }
             val thenExpr = slotRead(indexing, slotVariables[k])
             chain = OxstsFactory.createIfThenElse().also {
-                it.guard = guard
+                it.guard = buildEqGuard(indexExpr, k)
                 it.then = thenExpr
                 it.`else` = chain
             }
@@ -238,13 +221,8 @@ class ArrayFlatteningPass @Inject constructor(
         val indexExpr = indexing.index ?: sourceError(indexing, "Array indexing has no index expression.")
         val rightHandSide = assignment.expression ?: sourceError(assignment, "Assignment has no right-hand side.")
 
-        var elseOp = slotWrite(slotVariables.last(), rightHandSide.copy())
+        var elseOp: Operation = slotWrite(slotVariables.last(), rightHandSide.copy())
         for (k in slotVariables.size - 2 downTo 0) {
-            val guard = OxstsFactory.createComparisonOperator().also {
-                it.op = ComparisonOp.EQ
-                it.left = indexExpr.copy()
-                it.right = OxstsFactory.createLiteralInteger(k)
-            }
             val body = OxstsFactory.createSequenceOperation().also {
                 it.steps += slotWrite(slotVariables[k], rightHandSide.copy())
             }
@@ -252,12 +230,20 @@ class ArrayFlatteningPass @Inject constructor(
                 it.steps += elseOp
             }
             elseOp = OxstsFactory.createIfOperation().also {
-                it.guard = guard
+                it.guard = buildEqGuard(indexExpr, k)
                 it.body = body
                 it.`else` = elseBranch
             }
         }
         EcoreUtil2.replace(assignment, elseOp)
+    }
+
+    private fun buildEqGuard(indexExpr: Expression, k: Int): Expression {
+        return OxstsFactory.createComparisonOperator().also {
+            it.op = ComparisonOp.EQ
+            it.left = indexExpr.copy()
+            it.right = OxstsFactory.createLiteralInteger(k)
+        }
     }
 
     private fun slotRead(indexing: IndexingSuffixExpression, slot: VariableDeclaration): Expression {
@@ -283,13 +269,13 @@ class ArrayFlatteningPass @Inject constructor(
     }
 
     private fun evaluateConstantInteger(expression: EObject?): Int? {
-        if (expression !is EObject) {
+        if (expression == null) {
             return null
         }
         return try {
             val evaluation = constantExpressionEvaluatorProvider.evaluate(expression as Expression) as? IntegerEvaluation
             evaluation?.value
-        } catch (_: Exception) {
+        } catch (_: EvaluationFailureException) {
             null
         }
     }

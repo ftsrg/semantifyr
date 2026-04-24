@@ -6,8 +6,8 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.artifact
 
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.StaticExpressionEvaluator
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.StaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluator
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation
@@ -21,8 +21,8 @@ import org.mockito.kotlin.whenever
 
 class TransitionCallTraceBuilderTest {
 
-    private val evaluatorProvider: StaticExpressionEvaluatorProvider = mock()
-    private val evaluator: StaticExpressionEvaluator = mock()
+    private val evaluatorProvider: CompileTimeExpressionEvaluatorProvider = mock()
+    private val evaluator: CompileTimeExpressionEvaluator = mock()
     private val instance: Instance = mock()
     private val container: Instance = mock()
 

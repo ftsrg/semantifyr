@@ -17,12 +17,16 @@ class InstanceTest {
 
     private val tree: InstanceTree = mock()
 
-    private fun domain(name: String): DomainDeclaration = mock<DomainDeclaration>().also {
-        whenever(it.name).thenReturn(name)
+    private fun domain(name: String): DomainDeclaration {
+        return mock<DomainDeclaration>().also {
+            whenever(it.name).thenReturn(name)
+        }
     }
 
-    private fun feature(name: String): FeatureDeclaration = mock<FeatureDeclaration>().also {
-        whenever(it.name).thenReturn(name)
+    private fun feature(name: String): FeatureDeclaration {
+        return mock<FeatureDeclaration>().also {
+            whenever(it.name).thenReturn(name)
+        }
     }
 
     @Test

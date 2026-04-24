@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.artifact
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.eclipse.xtext.serializer.ISerializer
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -50,13 +49,12 @@ class CompilationArtifactManagerTest {
                 block(target)
             }
         }
-        return CompilationArtifactManager(serializer, artifactManager, config)
+        return CompilationArtifactManager(serializer, artifactManager, config, inlinedOxsts)
     }
 
     @Test
     fun `commitStep is a no-op when compilation steps are Off`() {
         val manager = managerWith(steps = CompilationStepsConfig.Off)
-        manager.setTarget(inlinedOxsts)
 
         manager.commitStep(CompilationPass.ConstantFolding)
 
@@ -66,7 +64,6 @@ class CompilationArtifactManagerTest {
     @Test
     fun `commitStep writes a file when steps are All`() {
         val manager = managerWith(steps = CompilationStepsConfig.All)
-        manager.setTarget(inlinedOxsts)
 
         manager.commitStep(CompilationPass.ConstantFolding)
 
@@ -78,7 +75,6 @@ class CompilationArtifactManagerTest {
         val manager = managerWith(
             steps = CompilationStepsConfig.Selected(setOf(CompilationPass.OperationFlattening)),
         )
-        manager.setTarget(inlinedOxsts)
 
         manager.commitStep(CompilationPass.OperationFlattening)
         manager.commitStep(CompilationPass.ConstantFolding)
@@ -89,7 +85,6 @@ class CompilationArtifactManagerTest {
     @Test
     fun `commitStep increments step id so repeated passes write distinct files`() {
         val manager = managerWith(steps = CompilationStepsConfig.All)
-        manager.setTarget(inlinedOxsts)
 
         manager.commitStep(CompilationPass.ConstantFolding)
         manager.commitStep(CompilationPass.ConstantFolding)
@@ -98,9 +93,8 @@ class CompilationArtifactManagerTest {
     }
 
     @Test
-    fun `commitInstantiated writes to the InflatedModel artifact`() {
+    fun `commitInstantiated writes to the InstantiatedModel artifact`() {
         val manager = managerWith()
-        manager.setTarget(inlinedOxsts)
 
         manager.commitInstantiated()
 
@@ -110,7 +104,6 @@ class CompilationArtifactManagerTest {
     @Test
     fun `commitInlined writes to the InlinedModel artifact`() {
         val manager = managerWith()
-        manager.setTarget(inlinedOxsts)
 
         manager.commitInlined()
 
@@ -118,43 +111,11 @@ class CompilationArtifactManagerTest {
     }
 
     @Test
-    fun `commitFlattened writes to the DeflatedModel artifact`() {
+    fun `commitFlattened writes to the FlattenedModel artifact`() {
         val manager = managerWith()
-        manager.setTarget(inlinedOxsts)
 
         manager.commitFlattened()
 
         verify(serializer, times(1)).serialize(eq(inlinedOxsts), any<Writer>(), any())
-    }
-
-    @Test
-    fun `setTarget rejects a second call with a descriptive message`() {
-        val manager = managerWith(steps = CompilationStepsConfig.All)
-        val first: InlinedOxsts = mock()
-        val second: InlinedOxsts = mock()
-
-        manager.setTarget(first)
-
-        assertThatThrownBy {
-            manager.setTarget(second)
-        }.isInstanceOf(IllegalStateException::class.java).hasMessageContaining("setTarget").hasMessageContaining("already")
-    }
-
-    @Test
-    fun `commitStep fails with a descriptive message if setTarget was never called`() {
-        val manager = managerWith(steps = CompilationStepsConfig.All)
-
-        assertThatThrownBy {
-            manager.commitStep(CompilationPass.ConstantFolding)
-        }.isInstanceOf(IllegalStateException::class.java).hasMessageContaining("setTarget")
-    }
-
-    @Test
-    fun `commitInstantiated fails with a descriptive message if setTarget was never called`() {
-        val manager = managerWith()
-
-        assertThatThrownBy {
-            manager.commitInstantiated()
-        }.isInstanceOf(IllegalStateException::class.java).hasMessageContaining("setTarget")
     }
 }

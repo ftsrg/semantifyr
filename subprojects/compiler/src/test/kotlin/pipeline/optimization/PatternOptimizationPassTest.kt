@@ -8,8 +8,6 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization
 
 import com.google.inject.Inject
 import com.google.inject.Injector
-import hu.bme.mit.semantifyr.compiler.pipeline.CompilationModule
-import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.context.CreatedCompilationContext
@@ -24,7 +22,6 @@ import org.eclipse.emf.ecore.EObject
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
-import java.nio.file.Files
 
 @InjectWithOxsts
 class PatternOptimizationPassTest {
@@ -128,14 +125,6 @@ class PatternOptimizationPassTest {
         val classDeclaration = inlined.classDeclaration
             ?: error("fixture must reference a class declaration")
         val tree = SingleRootInstanceTree(classDeclaration)
-        // Force eager construction of the per-test child injector so
-        // CompilationModule bindings exist for any downstream resolve.
-        injector.createChildInjector(
-            CompilationModule(
-                ArtifactConfig.none(Files.createTempDirectory("pattern-pass-test-")),
-                OptimizationConfig.ALL,
-            ),
-        )
         return CreatedCompilationContext(inlined).instantiated(tree)
     }
 

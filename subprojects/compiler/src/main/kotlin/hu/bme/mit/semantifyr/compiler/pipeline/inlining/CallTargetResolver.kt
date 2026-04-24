@@ -8,12 +8,13 @@ package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaStaticExpressionEvaluatorProvider
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.StaticExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceCollector
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.parentSequence
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AbstractForOperation
@@ -51,8 +52,8 @@ sealed interface CallTarget {
 }
 
 class CallTargetResolver @Inject constructor(
-    private val staticExpressionEvaluatorProvider: StaticExpressionEvaluatorProvider,
-    private val metaStaticExpressionEvaluatorProvider: MetaStaticExpressionEvaluatorProvider,
+    private val compileTimeExpressionEvaluatorProvider: CompileTimeExpressionEvaluatorProvider,
+    private val metaCompileTimeExpressionEvaluatorProvider: MetaCompileTimeExpressionEvaluatorProvider,
     private val instanceCollector: InstanceCollector,
 ) {
 
@@ -74,7 +75,7 @@ class CallTargetResolver @Inject constructor(
 
         val holderExpression = primary.primary
         val targetDeclaration = primary.member
-        val metaEvaluator = metaStaticExpressionEvaluatorProvider.getEvaluator(instance)
+        val metaEvaluator = metaCompileTimeExpressionEvaluatorProvider.getEvaluator(instance)
         val holder = metaEvaluator.evaluate(holderExpression)
 
         if (holder is VariableDeclaration) {
@@ -87,7 +88,7 @@ class CallTargetResolver @Inject constructor(
             )
         }
 
-        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
+        val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instance)
         val containerInstance = evaluator.evaluateSingleInstanceOrNull(holderExpression)
         if (containerInstance == null) {
             if (primary.isOptional) {
@@ -114,16 +115,16 @@ class CallTargetResolver @Inject constructor(
         }
 
         val domain = variable.typeSpecification?.domain ?: return emptySet()
-        
+
         return candidateInstancesOf(domain, variableAccessExpression, instance)
     }
 
     private fun candidateInstanceOfLoopVariable(
         variable: VariableDeclaration,
-        instance: Instance
-    ): MutableSet<Instance> {
+        instance: Instance,
+    ): Set<Instance> {
         val forOp = variable.eContainer() as AbstractForOperation
-        val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
+        val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instance)
         val rangeExpr = forOp.rangeExpression
         val instances = mutableSetOf<Instance>()
         if (rangeExpr is ArrayLiteral) {
@@ -145,7 +146,7 @@ class CallTargetResolver @Inject constructor(
     private fun candidateInstancesOf(
         domain: DomainDeclaration,
         variableAccessExpression: Expression,
-        instance: Instance
+        instance: Instance,
     ): Set<Instance> = when (domain) {
         is FeatureDeclaration -> {
             val holderExpression = when (variableAccessExpression) {
@@ -160,24 +161,16 @@ class CallTargetResolver @Inject constructor(
                 it.primary = holderExpression
                 it.member = domain
             }
-            val evaluator = staticExpressionEvaluatorProvider.getEvaluator(instance)
+            val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instance)
             val evaluation = evaluator.evaluate(navigation)
             (evaluation as? InstanceEvaluation)?.instances ?: emptySet()
         }
 
         is ClassDeclaration -> {
-            val rootInstance = instance.root()
+            val rootInstance = instance.parentSequence().last()
             instanceCollector.instancesOfType(rootInstance, domain)
         }
 
         else -> emptySet()
-    }
-
-    private fun Instance.root(): Instance {
-        var current = this
-        while (current.parent != null) {
-            current = current.parent
-        }
-        return current
     }
 }
