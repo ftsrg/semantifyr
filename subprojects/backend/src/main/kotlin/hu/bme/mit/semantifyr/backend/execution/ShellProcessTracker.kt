@@ -9,15 +9,6 @@ package hu.bme.mit.semantifyr.backend.execution
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * Tracks live [Process] handles launched by [BaseShellExecutor] and destroys them — along with
- * every descendant in the process tree — when the JVM shuts down. Without this hook, a hard kill
- * of the Semantifyr JVM (Ctrl+C, SIGTERM, an IDE stop button) leaves the spawned `verifyta` /
- * `nuXmv` / `spin` / `theta-xsts-cli` binaries running and holding their file descriptors.
- *
- * Processes register themselves on start and unregister on clean termination, so the shutdown
- * hook only sees the subset that was still running at JVM exit time.
- */
 internal object ShellProcessTracker {
 
     private val logger by loggerFactory()
@@ -25,7 +16,9 @@ internal object ShellProcessTracker {
 
     init {
         Runtime.getRuntime().addShutdownHook(
-            Thread({ killAll() }, "semantifyr-shell-killer"),
+            Thread({
+                killAll()
+            }, "semantifyr-shell-killer"),
         )
     }
 
@@ -39,8 +32,12 @@ internal object ShellProcessTracker {
 
     private fun killAll() {
         val snapshot = processes.toList()
-        if (snapshot.isEmpty()) return
+        if (snapshot.isEmpty()) {
+            return
+        }
+
         logger.info("Shutdown: destroying ${snapshot.size} still-running child process tree(s)")
+
         for (process in snapshot) {
             try {
                 val handle = process.toHandle()

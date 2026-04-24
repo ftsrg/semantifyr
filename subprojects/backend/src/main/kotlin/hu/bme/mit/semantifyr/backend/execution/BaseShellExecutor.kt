@@ -17,31 +17,18 @@ import org.slf4j.Logger
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-/**
- * Shared plumbing for backends that talk to a model-checker binary via the system shell. Subclasses
- * name the binary and typically wrap [runProcess]/[probeAvailability] with their own typed
- * `execute(spec)` / `isAvailable()` shape. The Windows `cmd /c` prefix, cancellation-safe waitFor,
- * process-tree teardown, and output redirection are handled here so backend-specific executors can
- * stay small.
- */
 abstract class BaseShellExecutor {
 
     protected abstract val logger: Logger
 
-    /** The binary that is expected to be on PATH, e.g. `spin`, `verifyta`, `nuXmv`. */
     protected abstract val binaryName: String
 
-    private val isWindows: Boolean = System.getProperty("os.name").lowercase().contains("windows")
+    private val isWindows = System.getProperty("os.name").lowercase().contains("windows")
 
-    /**
-     * Probes the binary by running it with [probeArgs] (typically `-V` or `-h`) under a short
-     * [timeoutSeconds]. If [expectedExitCode] is non-null, the exit code must match; if null, any
-     * successful wait-for counts as available (useful for tools that return non-zero on `--help`).
-     */
     protected fun probeAvailability(
         probeArgs: List<String>,
         timeoutSeconds: Long = 2,
-        expectedExitCode: Int? = 0,
+        expectedExitCode: Int = 0,
     ): Boolean {
         val available = runCatching {
             val process = buildProcess(probeArgs)
@@ -52,19 +39,13 @@ abstract class BaseShellExecutor {
                 process.destroyForcibly()
                 false
             } else {
-                expectedExitCode?.let { process.exitValue() == it } ?: true
+                process.exitValue() == expectedExitCode
             }
         }.getOrElse { false }
         logger.debug { "$binaryName on PATH: $available" }
         return available
     }
 
-    /**
-     * Runs the binary with the given [args] in [workingDirectory] and returns its exit code.
-     * Redirects stdout/stderr to [logFile]/[errorFile] if provided, emitting an optional [header]
-     * into the log before the process starts so operators can tell which invocation is which.
-     * Safe to cancel from a coroutine: on cancellation the process tree is destroyed and awaited.
-     */
     protected suspend fun runProcess(
         args: List<String>,
         workingDirectory: File,
@@ -88,8 +69,6 @@ abstract class BaseShellExecutor {
 
         logger.debug { "$binaryName process started (pid ${process.pid()})" }
 
-        // Tracked until we've awaited teardown, so a JVM shutdown between start() and the final
-        // waitFor() still gets the tree killed by ShellProcessTracker's hook.
         ShellProcessTracker.track(process)
         try {
             try {
@@ -111,14 +90,16 @@ abstract class BaseShellExecutor {
         exitCode
     }
 
-    /**
-     * Default no-op availability check that subclasses may override. Kept as a convenience so that
-     * `ShellBased*Executor` implementations not needing custom logic can just call through.
-     */
-    open fun isAvailable(): Boolean = probeAvailability(listOf("-V"))
+    open fun isAvailable(): Boolean {
+        return probeAvailability(listOf("-V"))
+    }
 
     private fun buildProcess(args: List<String>): ProcessBuilder {
-        val cmd = if (isWindows) listOf("cmd", "/c", binaryName) + args else listOf(binaryName) + args
+        val cmd = if (isWindows) {
+            listOf("cmd", "/c", binaryName) + args
+        } else {
+            listOf(binaryName) + args
+        }
         return ProcessBuilder(cmd)
     }
 
@@ -130,7 +111,7 @@ abstract class BaseShellExecutor {
                 writer.appendLine()
             }
         }
-        errorFile?.let { it.ensureExists() }
+        errorFile?.ensureExists()
     }
 
     private fun File.ensureExists(): File {
@@ -140,10 +121,6 @@ abstract class BaseShellExecutor {
     }
 }
 
-/**
- * Destroys the process and every descendant launched by it. Necessary because launcher scripts
- * (e.g. nuXmv's shell wrapper) spawn child JVMs or solvers that outlive the immediate child.
- */
 fun Process.destroyTree() {
     val handle = toHandle()
     handle.descendants().forEach { it.destroy() }

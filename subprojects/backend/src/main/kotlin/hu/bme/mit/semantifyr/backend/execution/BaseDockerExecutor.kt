@@ -22,12 +22,6 @@ import org.slf4j.Logger
 import java.io.File
 import java.io.FileOutputStream
 
-/**
- * Shared plumbing for backends that invoke model checkers inside Docker containers. Subclasses
- * name the target [image], provide a [logger], and build the per-invocation container via
- * [createContainer] — everything else (daemon probe, image pull, lifecycle, log capture, stop +
- * remove, shutdown-hook cleanup) lives here.
- */
 abstract class BaseDockerExecutor(
     protected val image: String,
 ) {
@@ -43,14 +37,19 @@ abstract class BaseDockerExecutor(
         DockerClientImpl.getInstance(config, httpClient)
     }
 
-    /** Whether the Docker daemon is reachable. Lazy — does not pull or run anything. */
     open fun isAvailable(): Boolean {
-        val available = runCatching { dockerClient.pingCmd().exec() }.isSuccess
-        logger.debug { "Docker daemon reachable: $available" }
-        return available
+        try {
+            dockerClient.pingCmd().exec()
+        } catch (throwable: Throwable) {
+            logger.debug { "Docker daemon is unreachable: $throwable" }
+
+            return false
+        }
+
+        logger.debug { "Docker daemon reachable" }
+        return true
     }
 
-    /** Pulls [image] if it isn't already present locally. Safe to call on every run. */
     protected fun ensureImagePresent() {
         try {
             dockerClient.inspectImageCmd(image).exec()
@@ -63,22 +62,13 @@ abstract class BaseDockerExecutor(
         }
     }
 
-    /**
-     * Runs [container] through its full lifecycle: registers it with [DockerContainerTracker] so a
-     * JVM shutdown will clean it up, starts it, waits for exit, then stops + captures logs + removes
-     * it under [NonCancellable]. Returns the container's exit status.
-     *
-     * Log streaming is best-effort: exceptions from the log callback are swallowed because losing
-     * a few log lines is less important than finishing the teardown cleanly.
-     */
     protected suspend fun runContainer(
         container: CreateContainerResponse,
         logFile: File? = null,
         errorFile: File? = null,
     ): WaitResponse {
-        DockerContainerTracker.track(dockerClient, container.id)
-        try {
-            return try {
+        return DockerContainerTracker.tracking(dockerClient, container.id) {
+            try {
                 startAndWait(container)
             } finally {
                 withContext(NonCancellable) {
@@ -87,8 +77,6 @@ abstract class BaseDockerExecutor(
                     destroyContainer(container)
                 }
             }
-        } finally {
-            DockerContainerTracker.untrack(dockerClient, container.id)
         }
     }
 
@@ -103,16 +91,16 @@ abstract class BaseDockerExecutor(
         try {
             dockerClient.stopContainerCmd(container.id).exec()
             logger.debug { "Stopped Docker container ${container.id}" }
-        } catch (_: Exception) {
-            // Already exited — nothing to stop.
+        } catch (e: Exception) {
+            logger.debug { "Stop of Docker container ${container.id} failed (likely already exited): $e" }
         }
     }
 
     private fun destroyContainer(container: CreateContainerResponse) {
         try {
             dockerClient.removeContainerCmd(container.id).withForce(true).exec()
-        } catch (_: Exception) {
-            // Best-effort cleanup.
+        } catch (e: Exception) {
+            logger.debug { "Best-effort remove of Docker container ${container.id} failed: $e" }
         }
     }
 
@@ -130,13 +118,18 @@ abstract class BaseDockerExecutor(
                 .withTailAll()
                 .exec(StreamLoggerCallback(logStream, errorStream))
                 .await()
-        } catch (_: Throwable) {
+        } catch (e: Throwable) {
             // Log streaming failures do not fail the verification run.
+            logger.debug { "Failed to stream logs for Docker container ${container.id}: $e" }
         }
     }
 
-    /** Splits `repo[:tag]` with protection for host-prefixed repos (`host:5000/name`). */
     private fun splitImageRef(reference: String): Pair<String, String> {
+        // Digest references (`repo@sha256:...`) are pulled by digest, not tag; treat the whole
+        // thing as the repository and let docker-java handle it.
+        if (reference.contains('@')) {
+            return reference to "latest"
+        }
         val colonIndex = reference.lastIndexOf(':')
         if (colonIndex >= 0 && !reference.substring(colonIndex + 1).contains('/')) {
             return reference.substring(0, colonIndex) to reference.substring(colonIndex + 1)

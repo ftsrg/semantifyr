@@ -77,6 +77,17 @@ data class VerificationResult(
             metrics = metrics,
             message = message,
         )
+
+        fun errored(
+            metadata: VerificationRunMetadata,
+            metrics: VerificationMetrics,
+            message: String,
+        ): VerificationResult = VerificationResult(
+            verdict = VerificationVerdict.Errored,
+            metadata = metadata,
+            metrics = metrics,
+            message = message,
+        )
     }
 }
 
