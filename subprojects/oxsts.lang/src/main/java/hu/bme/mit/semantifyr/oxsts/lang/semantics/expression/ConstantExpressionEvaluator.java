@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.oxsts.lang.semantics.expression;
 
 import com.google.inject.Inject;
+import hu.bme.mit.semantifyr.oxsts.lang.utils.SourceLocation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import org.eclipse.emf.ecore.EObject;
 
@@ -47,7 +48,7 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
             return switch (expression.getOp()) {
                 case EQ -> new BooleanEvaluation(lValue == rValue);
                 case NOT_EQ -> new BooleanEvaluation(lValue != rValue);
-                default -> throw new IllegalArgumentException("Boolean expression can only be == or !=!");
+                default -> throw EvaluationFailureException.at(expression, "Boolean expression can only be == or !=!");
             };
         }
 
@@ -55,11 +56,11 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
             return switch (expression.getOp()) {
                 case EQ -> new BooleanEvaluation(lValue == rValue);
                 case NOT_EQ -> new BooleanEvaluation(lValue != rValue);
-                default -> throw new IllegalArgumentException("Boolean expression can only be == or !=!");
+                default -> throw EvaluationFailureException.at(expression, "Boolean expression can only be == or !=!");
             };
         }
 
-        throw new IllegalArgumentException("Left and right are not supported expressions!");
+        throw EvaluationFailureException.at(expression, "Left and right are not supported expressions!");
     }
 
     @Override
@@ -77,7 +78,7 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
             };
         }
 
-        throw new IllegalArgumentException("Left and right are not integer expressions!");
+        throw EvaluationFailureException.at(expression, "Left and right are not integer expressions!");
     }
 
     @Override
@@ -93,7 +94,7 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
             };
         }
 
-        throw new IllegalArgumentException("Left and right are not boolean expressions!");
+        throw EvaluationFailureException.at(expression, "Left and right are not boolean expressions!");
     }
 
     @Override
@@ -114,7 +115,7 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
             };
         }
 
-        throw new IllegalArgumentException("Body is not an integer or real expression!");
+        throw EvaluationFailureException.at(expression, "Body is not an integer or real expression!");
     }
 
     @Override
@@ -125,17 +126,17 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
             return new BooleanEvaluation(!value);
         }
 
-        throw new IllegalArgumentException("Expression body is not a boolean expression!");
+        throw EvaluationFailureException.at(expression, "Expression body is not a boolean expression!");
     }
 
     @Override
     protected ExpressionEvaluation visit(AG expression) {
-        throw new IllegalArgumentException("AG expressions are not constant evaluable!");
+        throw EvaluationFailureException.at(expression, "AG expressions are not constant evaluable!");
     }
 
     @Override
     protected ExpressionEvaluation visit(EF expression) {
-        throw new IllegalArgumentException("EF expressions are not constant evaluable!");
+        throw EvaluationFailureException.at(expression, "EF expressions are not constant evaluable!");
     }
 
     @Override
@@ -178,9 +179,9 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
         return evaluateElement(expression.getElement());
     }
 
-    protected ExpressionEvaluation evaluateElement(NamedElement element) {
+    public ExpressionEvaluation evaluateElement(NamedElement element) {
         if (element.eIsProxy()) {
-            throw new IllegalStateException("Element could not be resolved!");
+            throw new IllegalStateException(SourceLocation.prefixFor(element) + "Element could not be resolved (unresolved proxy).");
         }
 
         return getElementValueEvaluator(element).evaluate(element);
@@ -188,23 +189,23 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
 
     @Override
     protected ExpressionEvaluation visit(SelfReference expression) {
-        throw new IllegalArgumentException("This evaluator can only evaluate non-contextual expressions!");
+        throw EvaluationFailureException.at(expression, "This evaluator can only evaluate constant expressions!");
     }
 
     @Override
     protected ExpressionEvaluation visit(NavigationSuffixExpression expression) {
-        throw new IllegalArgumentException("This evaluator can only evaluate non-contextual expressions!");
+        throw EvaluationFailureException.at(expression, "This evaluator can only evaluate constant expressions!");
     }
 
     @Override
     protected ExpressionEvaluation visit(CallSuffixExpression expression) {
         // TODO: implement with global functions
-        throw new IllegalArgumentException("This evaluator can only evaluate non-contextual expressions!");
+        throw EvaluationFailureException.at(expression, "This evaluator can only evaluate constant expressions!");
     }
 
     @Override
     protected ExpressionEvaluation visit(IndexingSuffixExpression expression) {
-        throw new IllegalArgumentException("This evaluator can only evaluate non-contextual expressions!");
+        throw EvaluationFailureException.at(expression, "This evaluator can only evaluate constant expressions!");
     }
 
     @Override
@@ -220,10 +221,8 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
         if (guard instanceof BooleanEvaluation(var value)) {
             return value ? evaluate(expression.getThen()) : evaluate(expression.getElse());
         }
-        // A non-constant guard cannot be evaluated at this level; the
-        // backend handles runtime ite. Callers that need a constant result
-        // should guard their use (static evaluator vs backend translation).
-        throw new IllegalArgumentException("Guard of if-then-else expression is not a constant boolean!");
+
+        throw EvaluationFailureException.at(expression, "if-then-else guard did not evaluate to a boolean: " + guard);
     }
 
 }

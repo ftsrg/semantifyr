@@ -37,9 +37,8 @@ public class FeatureSubSettersFinder {
         var memberCollection = domainMemberCollectionProvider.getMemberCollection(domain);
 
         // Preserve declaration order via LinkedHashSet. HashSet here would
-        // make downstream IR shape depend on hash order, which the
-        // golden-output tests catch as non-determinism (see
-        // variable_dispatch fixture).
+        // make downstream IR shape depend on hash order, reordering dispatch
+        // chains non-deterministically across runs.
         return memberCollection.getDeclarations().stream()
                 .filter(d -> d instanceof FeatureDeclaration)
                 .map(d -> (FeatureDeclaration)d)
