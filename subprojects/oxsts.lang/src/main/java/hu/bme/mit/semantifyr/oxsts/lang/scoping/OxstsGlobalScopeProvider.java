@@ -68,7 +68,7 @@ public class OxstsGlobalScopeProvider extends ResourceSetGlobalScopeProvider {
         var explicitScopes = new ArrayList<ISelectable>();
         for (var importEntry : imports) {
             var importedResourceUri = importEntry.uri();
-            if (resource.getURI() == importedResourceUri) {
+            if (resource.getURI().equals(importedResourceUri)) {
                 continue;
             }
             var importedResourceDescription = resourceDescriptionProvider.getResourceDescription(resource.getResourceSet(), importedResourceUri);
