@@ -7,11 +7,9 @@
 package hu.bme.mit.semantifyr.verification
 
 import hu.bme.mit.semantifyr.backend.VerificationResult
-import hu.bme.mit.semantifyr.backend.VerificationRunMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import kotlin.time.Clock
 
 class VerificationVerdictTest {
 
@@ -29,11 +27,7 @@ class VerificationVerdictTest {
 
     @Test
     fun `VerificationResult helpers reflect verdict`() {
-        val metadata = VerificationRunMetadata(
-            backendId = "test",
-            startedAt = Clock.System.now(),
-            caseQualifiedName = "x",
-        )
+        val metadata = fakeMetadata(caseQualifiedName = "x")
         val passed = VerificationResult(VerificationVerdict.Passed, metadata)
         val failed = VerificationResult(VerificationVerdict.Failed, metadata)
         val errored = VerificationResult(VerificationVerdict.Errored, metadata)

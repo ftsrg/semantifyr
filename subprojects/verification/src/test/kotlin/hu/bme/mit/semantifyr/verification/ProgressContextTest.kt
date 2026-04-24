@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.verification
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -61,7 +62,7 @@ class ProgressContextTest {
 
         parent.cancelled = true
 
-        org.assertj.core.api.Assertions.assertThatThrownBy {
+        assertThatThrownBy {
             child.checkIsCancelled()
         }.isInstanceOf(CancellationException::class.java)
     }

@@ -9,7 +9,9 @@ package hu.bme.mit.semantifyr.verification.trace
 import hu.bme.mit.semantifyr.backend.VerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationTrace
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
-import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitness
+import hu.bme.mit.semantifyr.backend.witness.OxstsClassAssumptionWitness
+import hu.bme.mit.semantifyr.backend.witness.SerializableTraceData
+import hu.bme.mit.semantifyr.backend.witness.SerializableTraceStep
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verification.ProgressContext
 import hu.bme.mit.semantifyr.verification.SemantifyrVerifier
@@ -25,10 +27,14 @@ import org.mockito.kotlin.verify
 class OxstsWitnessValidatorTest {
 
     private fun fakeWitness(inlined: InlinedOxsts): VerificationTrace.OxstsWitness {
-        val witness = mock<InlinedOxstsAssumptionWitness> {
-            on { this.inlinedOxsts } doReturn inlined
-        }
-        return VerificationTrace.OxstsWitness(witness)
+        return VerificationTrace.OxstsWitness(
+            classWitness = mock<OxstsClassAssumptionWitness>(),
+            backAnnotatedWitness = inlined,
+            callTrace = SerializableTraceData(
+                initialStep = SerializableTraceStep(emptyList(), emptyList()),
+                steps = emptyList(),
+            ),
+        )
     }
 
     @Test
