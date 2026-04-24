@@ -120,7 +120,7 @@ class SemantifyrVerifierImpl(
         return VerificationResult(
             verdict = VerificationVerdict.Errored,
             metadata = VerificationRunMetadata(
-                backendId = "none",
+                backendId = "trivial",
                 startedAt = Clock.System.now(),
                 caseQualifiedName = qualifiedName,
             ),
