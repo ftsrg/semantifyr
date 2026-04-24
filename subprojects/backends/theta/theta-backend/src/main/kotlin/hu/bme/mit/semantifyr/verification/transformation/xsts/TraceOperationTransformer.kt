@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
+package hu.bme.mit.semantifyr.verification.transformation.xsts
 
 import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.artifacts
+package hu.bme.mit.semantifyr.verification.artifacts
 
 import com.google.inject.Singleton
 import org.eclipse.emf.common.util.URI

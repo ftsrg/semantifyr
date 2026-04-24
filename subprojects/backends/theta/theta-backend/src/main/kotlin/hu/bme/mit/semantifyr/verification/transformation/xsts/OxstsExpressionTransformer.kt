@@ -1,10 +1,10 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
+package hu.bme.mit.semantifyr.verification.transformation.xsts
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.lang.utils.ExpressionVisitor
@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.CastExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
@@ -23,6 +24,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfThenElse
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInfinity
@@ -36,14 +38,16 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
+import hu.bme.mit.semantifyr.xsts.lang.xsts.ElementReferenceExpression
+import org.eclipse.emf.ecore.EObject
 
-private typealias XstsElement = org.eclipse.emf.ecore.EObject
+private typealias XstsElement = EObject
 private typealias XstsComparisonOp = hu.bme.mit.semantifyr.xsts.lang.xsts.ComparisonOp
 private typealias XstsBooleanOp = hu.bme.mit.semantifyr.xsts.lang.xsts.BooleanOp
 private typealias XstsUnaryOp = hu.bme.mit.semantifyr.xsts.lang.xsts.UnaryOp
 private typealias XstsArithmeticOp = hu.bme.mit.semantifyr.xsts.lang.xsts.ArithmeticOp
 private typealias XstsExpression = hu.bme.mit.semantifyr.xsts.lang.xsts.Expression
-private typealias XstsElementReferenceExpression = hu.bme.mit.semantifyr.xsts.lang.xsts.ElementReferenceExpression
+private typealias XstsElementReferenceExpression = ElementReferenceExpression
 
 class OxstsExpressionTransformer : ExpressionVisitor<XstsExpression>() {
 
@@ -219,6 +223,19 @@ class OxstsExpressionTransformer : ExpressionVisitor<XstsExpression>() {
         return XstsFactory.createReadIndexingSuffixExpression().also {
             it.primary = transformReference(expression.primary)
             it.index = transform(expression.index)
+        }
+    }
+
+    override fun visit(expression: CastExpression): XstsExpression {
+        // Casts are erased at the XSTS level; the body's value carries through.
+        return transform(expression.body)
+    }
+
+    override fun visit(expression: IfThenElse): XstsExpression {
+        return XstsFactory.createIfThenElseExpression().also {
+            it.guard = transform(expression.guard)
+            it.then = transform(expression.then)
+            it.`else` = transform(expression.`else`)
         }
     }
 

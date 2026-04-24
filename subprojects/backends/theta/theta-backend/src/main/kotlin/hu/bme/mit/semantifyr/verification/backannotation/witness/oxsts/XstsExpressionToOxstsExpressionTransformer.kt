@@ -1,14 +1,14 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.backannotation.witness.oxsts
+package hu.bme.mit.semantifyr.verification.backannotation.witness.oxsts
 
 import com.google.inject.Inject
 import com.google.inject.Singleton
-import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.OxstsDomainTransformer
+import hu.bme.mit.semantifyr.verification.transformation.xsts.OxstsDomainTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.xsts.lang.utils.XstsExpressionVisitor
 import hu.bme.mit.semantifyr.xsts.lang.xsts.ArithmeticBinaryOperator

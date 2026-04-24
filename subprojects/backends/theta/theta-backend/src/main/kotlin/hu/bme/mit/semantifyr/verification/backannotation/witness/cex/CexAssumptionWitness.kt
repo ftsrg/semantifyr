@@ -1,10 +1,10 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.backannotation.witness.cex
+package hu.bme.mit.semantifyr.verification.backannotation.witness.cex
 
 import hu.bme.mit.semantifyr.cex.lang.cex.CexModel
 import hu.bme.mit.semantifyr.cex.lang.cex.ExplStateValue

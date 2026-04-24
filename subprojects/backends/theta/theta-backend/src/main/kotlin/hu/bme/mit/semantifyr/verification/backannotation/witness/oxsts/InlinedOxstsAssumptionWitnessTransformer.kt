@@ -1,17 +1,17 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.backannotation.witness.oxsts
+package hu.bme.mit.semantifyr.verification.backannotation.witness.oxsts
 
 import com.google.inject.Inject
 import com.google.inject.Singleton
-import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.xsts.XstsAssumptionWitness
-import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.xsts.XstsAssumptionWitnessState
-import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.xsts.XstsAssumptionWitnessStateVariableValue
-import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.TraceOperationTransformer
+import hu.bme.mit.semantifyr.verification.backannotation.witness.xsts.XstsAssumptionWitness
+import hu.bme.mit.semantifyr.verification.backannotation.witness.xsts.XstsAssumptionWitnessState
+import hu.bme.mit.semantifyr.verification.backannotation.witness.xsts.XstsAssumptionWitnessStateVariableValue
+import hu.bme.mit.semantifyr.verification.transformation.xsts.TraceOperationTransformer
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionActivatedTrace
 import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitness

@@ -6,7 +6,10 @@
 
 package hu.bme.mit.semantifyr.portfolios
 
-import hu.bme.mit.semantifyr.backends.theta.hu.bme.mit.semantifyr.verification.ThetaConfig
+import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvConfig
+import hu.bme.mit.semantifyr.backends.spin.verification.SpinConfig
+import hu.bme.mit.semantifyr.verification.ThetaConfig
+import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn

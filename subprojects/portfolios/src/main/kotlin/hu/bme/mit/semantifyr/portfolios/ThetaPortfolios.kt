@@ -12,8 +12,8 @@ import hu.bme.mit.semantifyr.backend.VerificationMetrics
 import hu.bme.mit.semantifyr.backend.VerificationRequest
 import hu.bme.mit.semantifyr.backend.VerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationRunMetadata
-import hu.bme.mit.semantifyr.backends.theta.hu.bme.mit.semantifyr.verification.ThetaBackend
-import hu.bme.mit.semantifyr.backends.theta.hu.bme.mit.semantifyr.verification.ThetaConfig
+import hu.bme.mit.semantifyr.verification.ThetaBackend
+import hu.bme.mit.semantifyr.verification.ThetaConfig
 import hu.bme.mit.semantifyr.verification.ProgressContext
 import hu.bme.mit.semantifyr.verification.portfolio.BackendExecutor
 import hu.bme.mit.semantifyr.verification.portfolio.PortfolioScope

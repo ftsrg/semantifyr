@@ -4,20 +4,17 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.hu.bme.mit.semantifyr.verification
+package hu.bme.mit.semantifyr.verification
 
 import com.google.inject.AbstractModule
-import com.google.inject.Guice
 import com.google.inject.Injector
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
 import com.google.inject.assistedinject.FactoryModuleBuilder
-import hu.bme.mit.semantifyr.backends.theta.artifacts.ThetaArtifactManager
-import hu.bme.mit.semantifyr.backends.theta.backannotation.CexReader
-import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.cex.CexAssumptionWitnessTransformer
-import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.oxsts.InlinedOxstsAssumptionWitnessTransformer
-import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.xsts.XstsAssumptionWitnessTransformer
-import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.OxstsTransformer
+import hu.bme.mit.semantifyr.verification.backannotation.CexReader
+import hu.bme.mit.semantifyr.verification.backannotation.witness.cex.CexAssumptionWitnessTransformer
+import hu.bme.mit.semantifyr.verification.backannotation.witness.xsts.XstsAssumptionWitnessTransformer
+import hu.bme.mit.semantifyr.verification.transformation.xsts.OxstsTransformer
 import hu.bme.mit.semantifyr.backends.theta.ThetaExecutionSpecification
 import hu.bme.mit.semantifyr.backends.theta.ThetaExecutorSpec
 import hu.bme.mit.semantifyr.backends.theta.ThetaXstsExecutor
@@ -40,8 +37,9 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
-import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
+import hu.bme.mit.semantifyr.verification.artifacts.ThetaArtifactManager
+import hu.bme.mit.semantifyr.verification.backannotation.witness.oxsts.InlinedOxstsAssumptionWitnessTransformer
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 import org.eclipse.emf.common.util.URI
 import java.io.File
@@ -51,7 +49,7 @@ import kotlin.time.TimeSource
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
-object ThetaBackend : VerificationBackend<hu.bme.mit.semantifyr.backends.theta.hu.bme.mit.semantifyr.verification.ThetaConfig>() {
+object ThetaBackend : VerificationBackend<ThetaConfig>() {
 
     override val id: String = "theta"
 

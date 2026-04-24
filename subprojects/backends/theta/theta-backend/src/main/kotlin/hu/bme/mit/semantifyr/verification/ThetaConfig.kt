@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.hu.bme.mit.semantifyr.verification
+package hu.bme.mit.semantifyr.verification
 
 data class ThetaConfig(
     val id: String,

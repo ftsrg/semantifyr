@@ -1,25 +1,29 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
+package hu.bme.mit.semantifyr.verification.transformation.xsts
 
 import com.google.inject.Inject
 import com.google.inject.Singleton
-import hu.bme.mit.semantifyr.backends.theta.artifacts.ThetaArtifactManager
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
+import hu.bme.mit.semantifyr.verification.artifacts.ThetaArtifactManager
 import hu.bme.mit.semantifyr.xsts.lang.XstsStandaloneSetup
+import hu.bme.mit.semantifyr.xsts.lang.xsts.Property
+import hu.bme.mit.semantifyr.xsts.lang.xsts.SequenceOperation
+import hu.bme.mit.semantifyr.xsts.lang.xsts.Transition
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 import org.eclipse.xtext.resource.XtextResourceSet
+import kotlin.collections.plusAssign
 
-private typealias XstsTransition = hu.bme.mit.semantifyr.xsts.lang.xsts.Transition
-private typealias XstsProperty = hu.bme.mit.semantifyr.xsts.lang.xsts.Property
-private typealias XstsSequenceOperation = hu.bme.mit.semantifyr.xsts.lang.xsts.SequenceOperation
+private typealias XstsTransition = Transition
+private typealias XstsProperty = Property
+private typealias XstsSequenceOperation = SequenceOperation
 
 @Singleton
 class OxstsTransformer {

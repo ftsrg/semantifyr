@@ -21,7 +21,7 @@ import hu.bme.mit.semantifyr.backends.nuxmv.verification.nuxmv
 import hu.bme.mit.semantifyr.backends.spin.SpinExecutorSpec
 import hu.bme.mit.semantifyr.backends.spin.verification.spin
 import hu.bme.mit.semantifyr.backends.theta.ThetaExecutorSpec
-import hu.bme.mit.semantifyr.backends.theta.hu.bme.mit.semantifyr.verification.theta
+import hu.bme.mit.semantifyr.verification.theta
 import hu.bme.mit.semantifyr.backends.uppaal.UppaalExecutorSpec
 import hu.bme.mit.semantifyr.backends.uppaal.verification.uppaal
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
