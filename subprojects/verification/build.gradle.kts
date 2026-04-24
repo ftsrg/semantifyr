@@ -22,10 +22,12 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.kotlinx.coroutines.core)
+    testImplementation(libs.kotlinx.coroutines.test)
     implementation(libs.kotlinx.serialization.json)
 
     testFixturesApi(project(":oxsts.lang"))
     testFixturesApi(testFixtures(project(":oxsts.lang")))
+    testFixturesImplementation(libs.kotlinx.coroutines.core)
 }
 
 testing {

@@ -8,27 +8,20 @@ package hu.bme.mit.semantifyr.verification.portfolio
 
 import hu.bme.mit.semantifyr.backend.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.VerificationMetrics
 import hu.bme.mit.semantifyr.backend.VerificationRequest
 import hu.bme.mit.semantifyr.backend.VerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.verification.FakeBackend
 import hu.bme.mit.semantifyr.verification.ProgressContext
-import hu.bme.mit.semantifyr.verification.fakeMetadata
 import hu.bme.mit.semantifyr.verification.fakeRequest
 import hu.bme.mit.semantifyr.verification.noopExecutor
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-/** Portfolio subclass exposing the protected combinators for tests. */
-private class TestVerificationPortfolio(
-    override val id: String,
-    private val body: suspend TestVerificationPortfolio.(VerificationRequest, BackendExecutor, ExecutionEnvironment, ProgressContext) -> VerificationResult,
-) : VerificationPortfolio() {
+private class TestPortfolio(override val id: String = "p") : VerificationPortfolio() {
     override val displayName: String = id
     override val description: String = "test portfolio"
     override val familyId: String = "test"
@@ -43,7 +36,7 @@ private class TestVerificationPortfolio(
         environment: ExecutionEnvironment,
         progress: ProgressContext,
     ): VerificationResult {
-        return body(request, executor, environment, progress)
+        error("TestPortfolio.verify is unused; tests call runFirstDecisive / runFirstNDecisive / runAll directly")
     }
 
     suspend fun runFirstDecisive(
@@ -51,7 +44,7 @@ private class TestVerificationPortfolio(
         timeout: Duration = Duration.INFINITE,
         progress: ProgressContext = ProgressContext.NoOp,
         block: PortfolioScope.() -> Unit,
-    ): VerificationResult? {
+    ): PortfolioOutcome {
         return firstDecisive(executor, timeout, progress, block)
     }
 
@@ -61,7 +54,7 @@ private class TestVerificationPortfolio(
         timeout: Duration = Duration.INFINITE,
         progress: ProgressContext = ProgressContext.NoOp,
         block: PortfolioScope.() -> Unit,
-    ): VerificationResult? {
+    ): PortfolioOutcome {
         return firstNDecisive(count, executor, timeout, progress, block)
     }
 
@@ -70,46 +63,45 @@ private class TestVerificationPortfolio(
         timeout: Duration = Duration.INFINITE,
         progress: ProgressContext = ProgressContext.NoOp,
         block: PortfolioScope.() -> Unit,
-    ): VerificationResult? {
+    ): PortfolioOutcome {
         return all(executor, timeout, progress, block)
     }
 }
 
-/** DSL helper: register a [FakeBackend] as a parallel job on this scope. */
-private fun PortfolioScope.enqueue(backend: FakeBackend, request: VerificationRequest, env: ExecutionEnvironment) {
-    async {
-        executor.withPermit { backend.verify(Unit, request, env) }
+private fun PortfolioOutcome.orFail(message: String): VerificationResult {
+    return when (this) {
+        is PortfolioOutcome.Decided -> result
+        else -> error(message)
     }
 }
 
-private fun inconclusive(message: String): VerificationResult {
-    return VerificationResult.inconclusive(
-        metadata = fakeMetadata(),
-        metrics = VerificationMetrics(),
-        message = message,
-    )
-}
+class VerificationPortfolioTest {
 
-private val emptyEnv = ExecutionEnvironment.Empty
+    private val portfolio = TestPortfolio()
+    private val env = ExecutionEnvironment.Empty
+    private val request = fakeRequest()
 
-class PortfolioTest {
+    private fun PortfolioScope.enqueue(backend: FakeBackend) {
+        async {
+            executor.withPermit {
+                backend.verify(Unit, request, env)
+            }
+        }
+    }
 
     @Test
-    suspend fun `firstDecisive returns the first decisive verdict`() {
+    fun `firstDecisive returns the first decisive verdict`() = runTest {
         val slow = FakeBackend.delayed("slow", 200, VerificationVerdict.Passed)
         val fastInconclusive = FakeBackend.delayed("fast-inconc", 10, VerificationVerdict.Inconclusive)
         val midDecisive = FakeBackend.delayed("mid", 50, VerificationVerdict.Failed)
 
-        val portfolio = TestVerificationPortfolio("p") { req, exec, env, _ ->
-            runFirstDecisive(exec, timeout = 2.seconds) {
-                enqueue(slow, req, env)
-                enqueue(fastInconclusive, req, env)
-                enqueue(midDecisive, req, env)
-            } ?: error("no decisive result")
+        val outcome = portfolio.runFirstDecisive(noopExecutor, timeout = 2.seconds) {
+            enqueue(slow)
+            enqueue(fastInconclusive)
+            enqueue(midDecisive)
         }
 
-        val result = portfolio.verify(fakeRequest(), noopExecutor, emptyEnv, ProgressContext.NoOp)
-
+        val result = outcome.orFail("no decisive result")
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.metadata.backendId).isEqualTo("mid")
     }
@@ -120,34 +112,27 @@ class PortfolioTest {
         val b = FakeBackend.verdict("b", VerificationVerdict.Passed)
         val c = FakeBackend.verdict("c", VerificationVerdict.Passed)
 
-        val portfolio = TestVerificationPortfolio("p") { req, exec, env, _ ->
-            runFirstNDecisive(count = 2, exec) {
-                enqueue(a, req, env)
-                enqueue(b, req, env)
-                enqueue(c, req, env)
-            } ?: error("expected majority result")
+        val outcome = portfolio.runFirstNDecisive(count = 2, noopExecutor) {
+            enqueue(a)
+            enqueue(b)
+            enqueue(c)
         }
 
-        val result = portfolio.verify(fakeRequest(), noopExecutor, emptyEnv, ProgressContext.NoOp)
-
+        val result = outcome.orFail("expected majority result")
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
     }
 
     @Test
-    suspend fun `firstNDecisive returns null when decisive results disagree`() {
+    suspend fun `firstNDecisive yields NoDecision when decisive results disagree`() {
         val a = FakeBackend.verdict("a", VerificationVerdict.Passed)
         val b = FakeBackend.verdict("b", VerificationVerdict.Failed)
 
-        val portfolio = TestVerificationPortfolio("p") { req, exec, env, _ ->
-            runFirstNDecisive(count = 2, exec) {
-                enqueue(a, req, env)
-                enqueue(b, req, env)
-            } ?: inconclusive("disagreement")
+        val outcome = portfolio.runFirstNDecisive(count = 2, noopExecutor) {
+            enqueue(a)
+            enqueue(b)
         }
 
-        val result = portfolio.verify(fakeRequest(), noopExecutor, emptyEnv, ProgressContext.NoOp)
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
+        assertThat(outcome).isInstanceOf(PortfolioOutcome.NoDecision::class.java)
     }
 
     @Test
@@ -156,16 +141,13 @@ class PortfolioTest {
         val b = FakeBackend.verdict("b", VerificationVerdict.Passed)
         val c = FakeBackend.verdict("c", VerificationVerdict.Errored)
 
-        val portfolio = TestVerificationPortfolio("p") { req, exec, env, _ ->
-            runAll(exec) {
-                enqueue(a, req, env)
-                enqueue(b, req, env)
-                enqueue(c, req, env)
-            } ?: error("expected any result")
+        val outcome = portfolio.runAll(noopExecutor) {
+            enqueue(a)
+            enqueue(b)
+            enqueue(c)
         }
 
-        val result = portfolio.verify(fakeRequest(), noopExecutor, emptyEnv, ProgressContext.NoOp)
-
+        val result = outcome.orFail("expected any result")
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(a.invocations.get()).isEqualTo(1)
         assertThat(b.invocations.get()).isEqualTo(1)
@@ -173,17 +155,59 @@ class PortfolioTest {
     }
 
     @Test
-    fun `empty combinator block is rejected`() {
-        val portfolio = TestVerificationPortfolio("p") { _, exec, _, _ ->
-            runFirstDecisive(exec) {} ?: inconclusive("no jobs")
+    fun `a job that throws OutOfMemoryError does not kill sibling jobs`() = runTest {
+        val healthy = FakeBackend.delayed("healthy", 10, VerificationVerdict.Passed)
+        val oomed = FakeBackend.throwing("oomed", OutOfMemoryError("fake heap blowup"))
+
+        val outcome = portfolio.runFirstDecisive(noopExecutor) {
+            enqueue(oomed)
+            enqueue(healthy)
         }
-        assertThatThrownBy {
-            runBlocking { portfolio.verify(fakeRequest(), noopExecutor, emptyEnv, ProgressContext.NoOp) }
-        }.hasMessageContaining("at least one job")
+
+        val result = outcome.orFail("healthy sibling should decide even when its peer OOMed")
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(result.metadata.backendId).isEqualTo("healthy")
+        assertThat(oomed.invocations.get()).isEqualTo(1)
+        assertThat(healthy.invocations.get()).isEqualTo(1)
     }
 
     @Test
-    suspend fun `firstDecisive reports progress for every incoming result`() {
+    suspend fun `a job that throws StackOverflowError does not kill sibling jobs`() {
+        val healthy = FakeBackend.verdict("healthy", VerificationVerdict.Failed)
+        val overflowed = FakeBackend.throwing("overflowed", StackOverflowError("fake recursion"))
+
+        val outcome = portfolio.runFirstDecisive(noopExecutor) {
+            enqueue(overflowed)
+            enqueue(healthy)
+        }
+
+        val result = outcome.orFail("healthy sibling should decide even when its peer StackOverflowed")
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+    }
+
+    @Test
+    suspend fun `all jobs throwing fatal errors map to AllErrored outcome`() {
+        val a = FakeBackend.throwing("a", OutOfMemoryError("a"))
+        val b = FakeBackend.throwing("b", StackOverflowError("b"))
+
+        val outcome = portfolio.runFirstDecisive(noopExecutor) {
+            enqueue(a)
+            enqueue(b)
+        }
+
+        assertThat(outcome).isInstanceOf(PortfolioOutcome.AllErrored::class.java)
+    }
+
+    @Test
+    suspend fun `empty combinator block is rejected`() {
+        val exception = runCatching {
+            portfolio.runFirstDecisive(noopExecutor) {}
+        }.exceptionOrNull()
+        assertThat(exception).isNotNull.hasMessageContaining("at least one job")
+    }
+
+    @Test
+    fun `firstDecisive reports progress for every incoming result`() = runTest {
         val a = FakeBackend.delayed("a", 5, VerificationVerdict.Inconclusive)
         val b = FakeBackend.delayed("b", 20, VerificationVerdict.Passed)
 
@@ -195,16 +219,14 @@ class PortfolioTest {
             }
         }
 
-        val portfolio = TestVerificationPortfolio("p") { req, exec, env, prog ->
-            runFirstDecisive(exec, progress = prog) {
-                enqueue(a, req, env)
-                enqueue(b, req, env)
-            } ?: error("expected decisive")
+        val outcome = portfolio.runFirstDecisive(noopExecutor, progress = progress) {
+            enqueue(a)
+            enqueue(b)
         }
 
-        val result = portfolio.verify(fakeRequest(), noopExecutor, emptyEnv, progress)
-
+        val result = outcome.orFail("expected decisive")
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(messages).anyMatch { it.startsWith("result 1/2: ") }
     }
+
 }

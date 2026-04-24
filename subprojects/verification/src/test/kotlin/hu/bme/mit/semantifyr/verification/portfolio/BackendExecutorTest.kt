@@ -7,128 +7,118 @@
 package hu.bme.mit.semantifyr.verification.portfolio
 
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.Duration.Companion.seconds
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class BackendExecutorTest {
 
     @Test
-    suspend fun `LimitedBackendExecutor runs up to maxConcurrency in parallel`() {
+    fun `LimitedBackendExecutor runs up to maxConcurrency in parallel`() = runTest {
         val executor = LimitedBackendExecutor(maxConcurrency = 2)
-        val concurrent = AtomicInteger(0)
-        val peak = AtomicInteger(0)
+        val entered = Channel<Unit>(Channel.UNLIMITED)
         val release = CompletableDeferred<Unit>()
 
-        coroutineScope {
-            val jobs = (1..5).map {
-                async(Dispatchers.Default) {
-                    executor.withPermit {
-                        val now = concurrent.incrementAndGet()
-                        peak.updateAndGet { maxOf(it, now) }
-                        release.await()
-                        concurrent.decrementAndGet()
-                    }
+        val jobs = (1..5).map {
+            async {
+                executor.withPermit {
+                    entered.send(Unit)
+                    release.await()
                 }
             }
-
-            waitUntil { concurrent.get() == 2 }
-            assertThat(peak.get()).isEqualTo(2)
-
-            release.complete(Unit)
-            jobs.awaitAll()
         }
 
-        assertThat(peak.get()).isEqualTo(2)
+        runCurrent()
+
+        assertThat(entered.tryReceive().isSuccess).isTrue
+        assertThat(entered.tryReceive().isSuccess).isTrue
+        assertThat(entered.tryReceive().isFailure).isTrue
+
+        release.complete(Unit)
+        jobs.awaitAll()
     }
 
     @Test
-    suspend fun `LimitedBackendExecutor serializes with maxConcurrency 1`() {
+    fun `LimitedBackendExecutor serializes with maxConcurrency 1`() = runTest {
         val executor = LimitedBackendExecutor(maxConcurrency = 1)
-        val order = mutableListOf<Int>()
-        val inside = AtomicInteger(0)
-        val observedMax = AtomicInteger(0)
+        val entered = Channel<Unit>(Channel.UNLIMITED)
+        val release = Channel<Unit>(Channel.UNLIMITED)
 
-        coroutineScope {
-            val jobs = (1..4).map { i ->
-                async(Dispatchers.Default) {
-                    executor.withPermit {
-                        val now = inside.incrementAndGet()
-                        observedMax.updateAndGet { maxOf(it, now) }
-                        delay(10)
-                        synchronized(order) { order += i }
-                        inside.decrementAndGet()
-                    }
+        val jobs = (1..4).map {
+            async {
+                executor.withPermit {
+                    entered.send(Unit)
+                    release.receive()
                 }
             }
-            jobs.awaitAll()
         }
 
-        assertThat(observedMax.get()).isEqualTo(1)
-        assertThat(order).hasSize(4)
+        repeat(4) {
+            runCurrent()
+            assertThat(entered.tryReceive().isSuccess).isTrue
+            assertThat(entered.tryReceive().isFailure).isTrue
+            release.send(Unit)
+        }
+
+        jobs.awaitAll()
     }
 
     @Test
-    suspend fun `CappedBackendExecutor caps beneath an unlimited outer`() {
+    fun `CappedBackendExecutor caps beneath an unlimited outer`() = runTest {
         val outer = LimitedBackendExecutor(maxConcurrency = 10)
         val capped = outer.capped(maxConcurrency = 2)
-
-        val concurrent = AtomicInteger(0)
-        val peak = AtomicInteger(0)
+        val entered = Channel<Unit>(Channel.UNLIMITED)
         val release = CompletableDeferred<Unit>()
 
-        coroutineScope {
-            val jobs = (1..5).map {
-                async(Dispatchers.Default) {
-                    capped.withPermit {
-                        val now = concurrent.incrementAndGet()
-                        peak.updateAndGet { maxOf(it, now) }
-                        release.await()
-                        concurrent.decrementAndGet()
-                    }
+        val jobs = (1..5).map {
+            async {
+                capped.withPermit {
+                    entered.send(Unit)
+                    release.await()
                 }
             }
-
-            waitUntil { concurrent.get() == 2 }
-            assertThat(peak.get()).isEqualTo(2)
-
-            release.complete(Unit)
-            jobs.awaitAll()
         }
 
-        assertThat(peak.get()).isEqualTo(2)
+        runCurrent()
+
+        assertThat(entered.tryReceive().isSuccess).isTrue
+        assertThat(entered.tryReceive().isSuccess).isTrue
+        assertThat(entered.tryReceive().isFailure).isTrue
+
+        release.complete(Unit)
+        jobs.awaitAll()
     }
 
     @Test
-    suspend fun `CappedBackendExecutor respects the stricter of outer and inner limits`() {
+    fun `CappedBackendExecutor respects the stricter of outer and inner limits`() = runTest {
         val outer = LimitedBackendExecutor(maxConcurrency = 1)
         val capped = outer.capped(maxConcurrency = 5)
+        val entered = Channel<Unit>(Channel.UNLIMITED)
+        val release = Channel<Unit>(Channel.UNLIMITED)
 
-        val concurrent = AtomicInteger(0)
-        val peak = AtomicInteger(0)
-
-        coroutineScope {
-            val jobs = (1..4).map {
-                async(Dispatchers.Default) {
-                    capped.withPermit {
-                        val now = concurrent.incrementAndGet()
-                        peak.updateAndGet { maxOf(it, now) }
-                        delay(10)
-                        concurrent.decrementAndGet()
-                    }
+        val jobs = (1..4).map {
+            async {
+                capped.withPermit {
+                    entered.send(Unit)
+                    release.receive()
                 }
             }
-            jobs.awaitAll()
         }
 
-        assertThat(peak.get()).isEqualTo(1)
+        repeat(4) {
+            runCurrent()
+            assertThat(entered.tryReceive().isSuccess).isTrue
+            assertThat(entered.tryReceive().isFailure).isTrue
+            release.send(Unit)
+        }
+
+        jobs.awaitAll()
     }
 
     @Test
@@ -137,16 +127,4 @@ class BackendExecutorTest {
         val value = executor.withPermit { 42 }
         assertThat(value).isEqualTo(42)
     }
-}
-
-private suspend fun waitUntil(timeout: kotlin.time.Duration = 2.seconds, condition: () -> Boolean) {
-    withTimeout(timeout) {
-        while (!condition()) {
-            delay(5)
-        }
-    }
-}
-
-private suspend fun <T> List<Deferred<T>>.awaitAll(): List<T> {
-    return map { it.await() }
 }
