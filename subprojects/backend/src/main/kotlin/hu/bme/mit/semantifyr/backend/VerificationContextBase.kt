@@ -6,6 +6,10 @@
 
 package hu.bme.mit.semantifyr.backend
 
+import hu.bme.mit.semantifyr.backend.witness.AssumptionWitnessBackAnnotator
+import hu.bme.mit.semantifyr.backend.witness.CallTraceTransformer
+import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitness
+import hu.bme.mit.semantifyr.backend.witness.OxstsClassAssumptionWitnessTransformer
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
@@ -49,4 +53,17 @@ abstract class VerificationContextBase(
         metadata: VerificationRunMetadata,
         totalMark: ValueTimeMark,
     ): VerificationResult
+
+    protected open fun backAnnotateWitness(
+        witness: InlinedOxstsAssumptionWitness,
+        classWitnessTransformer: OxstsClassAssumptionWitnessTransformer,
+        backAnnotator: AssumptionWitnessBackAnnotator,
+        callTraceTransformer: CallTraceTransformer,
+    ): VerificationTrace.OxstsWitness {
+        val classWitness = classWitnessTransformer.transform(witness, request.compilation)
+        val backAnnotatedWitness = backAnnotator.createWitnessInlinedOxsts(classWitness)
+        val callTrace = callTraceTransformer.transformWitness(classWitness, request.compilation.transitionCallTraces)
+        return VerificationTrace.OxstsWitness(classWitness, backAnnotatedWitness, callTrace)
+    }
+
 }

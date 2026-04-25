@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.backend.witness
 
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.RedefinitionAwareReferenceResolver
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
@@ -30,7 +31,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionKind
 
-@Singleton
+@VerificationScoped
 class AssumptionWitnessBackAnnotator @Inject constructor(
     private val builtinSymbolResolver: BuiltinSymbolResolver,
     private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,

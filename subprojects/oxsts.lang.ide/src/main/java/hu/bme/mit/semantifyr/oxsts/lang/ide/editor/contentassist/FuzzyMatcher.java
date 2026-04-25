@@ -6,21 +6,17 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.editor.contentassist;
 
-import org.eclipse.xtext.ide.editor.contentassist.IPrefixMatcher;
-
 import java.util.Locale;
+import org.eclipse.xtext.ide.editor.contentassist.IPrefixMatcher;
 
 /**
  * Implements the candidate matching algorithm used by CodeMirror 6.
- * <p>
- * Using this class ensures that the same candidates will be returned when
- * filtering content assist proposals on the server as on the client.
- * </p>
- * <p>
- * The matching is "fuzzy" (<code>fzf</code>-like), i.e., the prefix characters
- * may occur anywhere in the name, but must be in the same order as in the
- * prefix.
- * </p>
+ *
+ * <p>Using this class ensures that the same candidates will be returned when filtering content
+ * assist proposals on the server as on the client.
+ *
+ * <p>The matching is "fuzzy" (<code>fzf</code>-like), i.e., the prefix characters may occur
+ * anywhere in the name, but must be in the same order as in the prefix.
  *
  * @author Kristóf Marussy
  */

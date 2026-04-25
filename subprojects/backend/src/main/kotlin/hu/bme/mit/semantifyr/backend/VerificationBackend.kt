@@ -6,9 +6,11 @@
 
 package hu.bme.mit.semantifyr.backend
 
+import hu.bme.mit.semantifyr.backend.witness.OxstsClassAssumptionWitness
+import hu.bme.mit.semantifyr.backend.witness.SerializableTraceData
+import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitness
 import kotlinx.serialization.Serializable
 import java.nio.file.Path
 import kotlin.time.Duration
@@ -17,6 +19,7 @@ import kotlin.time.Instant
 data class VerificationRequest(
     val case: VerificationCase,
     val input: InlinedOxsts,
+    val compilation: FlattenedCompilationContext,
     val artifactOutputPath: Path,
 )
 
@@ -28,7 +31,13 @@ data class VerificationRunMetadata(
 )
 
 sealed interface VerificationTrace {
-    data class OxstsWitness(val witness: InlinedOxstsAssumptionWitness) : VerificationTrace
+    data object NoTrace : VerificationTrace
+
+    data class OxstsWitness(
+        val classWitness: OxstsClassAssumptionWitness,
+        val backAnnotatedWitness: InlinedOxsts,
+        val callTrace: SerializableTraceData,
+    ) : VerificationTrace
 }
 
 data class VerificationCase(
@@ -59,7 +68,7 @@ data class VerificationResult(
     val verdict: VerificationVerdict,
     val metadata: VerificationRunMetadata,
     val metrics: VerificationMetrics = VerificationMetrics(),
-    val verificationTrace: VerificationTrace? = null,
+    val verificationTrace: VerificationTrace = VerificationTrace.NoTrace,
     val message: String? = null,
 ) {
     val isPassed: Boolean get() = verdict == VerificationVerdict.Passed

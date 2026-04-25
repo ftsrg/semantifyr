@@ -22,9 +22,7 @@ import org.eclipse.xtext.ide.server.codelens.ICodeLensResolver;
 import org.eclipse.xtext.ide.server.codelens.ICodeLensService;
 import org.eclipse.xtext.ide.server.commands.IExecutableCommandService;
 
-/**
- * Use this class to register ide components.
- */
+/** Use this class to register ide components. */
 public class OxstsIdeModule extends AbstractOxstsIdeModule {
 
     @Override
@@ -66,5 +64,4 @@ public class OxstsIdeModule extends AbstractOxstsIdeModule {
     public Class<? extends ICodeActionService2> bindICodeActionService2() {
         return QuickFixCodeActionService.class;
     }
-
 }

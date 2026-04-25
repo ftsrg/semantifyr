@@ -8,5 +8,4 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 
-public record InlineOxstsCommandParams(ClassDeclaration classDeclaration, boolean serializeSteps) {
-}
+public record InlineOxstsCommandParams(ClassDeclaration classDeclaration, boolean serializeSteps) {}

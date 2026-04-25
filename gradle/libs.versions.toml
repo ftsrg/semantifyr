@@ -27,6 +27,7 @@ bmuschkoDocker = "9.4.0"
 spotless = "8.4.0"
 ktlint = "1.8.0"
 palantirJavaFormat = "2.90.0"
+sonarqube = "7.2.3.7755"
 ktor = "3.4.2"
 micrometerPrometheus = "1.13.6"
 

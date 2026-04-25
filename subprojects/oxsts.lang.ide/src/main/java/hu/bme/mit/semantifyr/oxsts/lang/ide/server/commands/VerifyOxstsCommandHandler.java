@@ -15,19 +15,21 @@ import hu.bme.mit.semantifyr.backend.VerificationCase;
 import hu.bme.mit.semantifyr.backend.VerificationResult;
 import hu.bme.mit.semantifyr.backend.VerificationVerdict;
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader;
-import hu.bme.mit.semantifyr.oxsts.lang.ide.server.ServerSettings;
+import hu.bme.mit.semantifyr.lang.ide.server.ServerSettings;
+import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
+import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
+import hu.bme.mit.semantifyr.lang.ide.server.commands.VerificationCaseRunResultDto;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.verification.SemantifyrVerifier;
 import hu.bme.mit.semantifyr.verification.discovery.CaseFilter;
 import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio;
+import java.util.List;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDeclaration> {
 
@@ -62,7 +64,8 @@ public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
     }
 
     @Override
-    protected ClassDeclaration parseArguments(List<Object> arguments, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
+    protected ClassDeclaration parseArguments(
+            List<Object> arguments, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
         var gsonBuilder = new GsonBuilder();
         var gson = gsonBuilder.create();
         var locationJson = (JsonObject) arguments.get(0);
@@ -73,7 +76,8 @@ public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
     }
 
     @Override
-    protected Object execute(ClassDeclaration arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
+    protected Object execute(
+            ClassDeclaration arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
         progressContext.begin("Verifying class " + arguments.getName(), "Initializing");
 
         var targetQualifiedName = oxstsQualifiedNameProvider.getFullyQualifiedNameString(arguments);
@@ -108,7 +112,11 @@ public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
             LOG.info("LSP verify '{}' -> {}", targetQualifiedName, result.getVerdict());
             return toDto(result);
         } catch (Exception e) {
-            LOG.error("LSP verify '{}' threw {}", targetQualifiedName, e.getClass().getSimpleName(), e);
+            LOG.error(
+                    "LSP verify '{}' threw {}",
+                    targetQualifiedName,
+                    e.getClass().getSimpleName(),
+                    e);
             return new VerificationCaseRunResultDto("error", e.getMessage());
         } finally {
             semantifyrRequestManager.acquireReadLock();
@@ -126,5 +134,4 @@ public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
         }
         return new VerificationCaseRunResultDto(status, result.getMessage());
     }
-
 }

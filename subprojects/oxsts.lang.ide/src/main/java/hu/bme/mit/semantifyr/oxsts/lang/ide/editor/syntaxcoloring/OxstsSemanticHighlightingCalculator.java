@@ -24,13 +24,15 @@ public class OxstsSemanticHighlightingCalculator extends DefaultSemanticHighligh
     private OperationCanceledManager operationCanceledManager;
 
     @Override
-    protected boolean highlightElement(EObject object, IHighlightedPositionAcceptor acceptor, CancelIndicator cancelIndicator) {
+    protected boolean highlightElement(
+            EObject object, IHighlightedPositionAcceptor acceptor, CancelIndicator cancelIndicator) {
         highlightElementName(object, acceptor, cancelIndicator);
         highlightElementCrossReferences(object, acceptor, cancelIndicator);
         return false;
     }
 
-    protected void highlightElementName(EObject object, IHighlightedPositionAcceptor acceptor, CancelIndicator cancelIndicator) {
+    protected void highlightElementName(
+            EObject object, IHighlightedPositionAcceptor acceptor, CancelIndicator cancelIndicator) {
         if (!(object instanceof NamedElement)) {
             return;
         }
@@ -41,7 +43,8 @@ public class OxstsSemanticHighlightingCalculator extends DefaultSemanticHighligh
         }
     }
 
-    protected void highlightElementCrossReferences(EObject object, IHighlightedPositionAcceptor acceptor, CancelIndicator cancelIndicator) {
+    protected void highlightElementCrossReferences(
+            EObject object, IHighlightedPositionAcceptor acceptor, CancelIndicator cancelIndicator) {
         for (var reference : object.eClass().getEAllReferences()) {
             if (reference.isContainment()) {
                 continue;
@@ -78,7 +81,8 @@ public class OxstsSemanticHighlightingCalculator extends DefaultSemanticHighligh
         }
     }
 
-    // TODO: add modifiers: e.g., 'abstract' for abstract classes, 'defaultLibrary' for builtins, etc
+    // TODO: add modifiers: e.g., 'abstract' for abstract classes, 'defaultLibrary' for builtins,
+    // etc
     protected String getHighlightClass(EObject eObject, EReference reference) {
         if (eObject == null) return null;
         return switch (eObject) {
@@ -104,5 +108,4 @@ public class OxstsSemanticHighlightingCalculator extends DefaultSemanticHighligh
             default -> null;
         };
     }
-
 }

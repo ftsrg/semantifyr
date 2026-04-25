@@ -47,11 +47,9 @@ public class OxstsCommandService implements IExecutableCommandService {
                     inlineOxstsCommandHandler,
                     compileInlinedOxstsCommandHandler,
                     verifyOxstsCommandHandler,
-//                    generateTracesOxstsCommandHandler,
                     discoverVerificationCasesCommandHandler,
                     navigateToRedefinedCommandHandler,
-                    navigateToRedefinersCommandHandler
-            );
+                    navigateToRedefinersCommandHandler);
         }
         return commandHandlers;
     }
@@ -63,7 +61,9 @@ public class OxstsCommandService implements IExecutableCommandService {
 
     @Override
     public Object execute(ExecuteCommandParams params, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
-        var commandHandler = getCommandHandlers().stream().filter(c -> params.getCommand().equals(c.getId())).findFirst();
+        var commandHandler = getCommandHandlers().stream()
+                .filter(c -> params.getCommand().equals(c.getId()))
+                .findFirst();
 
         return commandHandler.map(handler -> handler.execute(params, access, cancelIndicator)).orElse(null);
     }
