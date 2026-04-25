@@ -46,7 +46,6 @@ private class ScopeBindingModule : AbstractModule() {
 }
 
 class ScopeContextTest {
-
     @Test
     fun `scoped class resolves outside an active scope throws OutOfScopeException wrapped in ProvisionException`() {
         val injector = Guice.createInjector(ScopeBindingModule())
@@ -123,7 +122,8 @@ class ScopeContextTest {
             assertThatThrownBy {
                 runBlocking {
                     testContext.withScope {
-                        @Suppress("UNUSED_VARIABLE") val unused = Unit
+                        @Suppress("UNUSED_VARIABLE")
+                        val unused = Unit
                     }
                 }
             }.isInstanceOf(IllegalStateException::class.java)
@@ -158,7 +158,8 @@ class ScopeContextTest {
         testContext.withScopeBlocking {
             assertThatThrownBy {
                 testContext.withScopeBlocking {
-                    @Suppress("UNUSED_VARIABLE") val unused = Unit
+                    @Suppress("UNUSED_VARIABLE")
+                    val unused = Unit
                 }
             }.isInstanceOf(IllegalStateException::class.java)
                 .hasMessageContaining("already open")
@@ -191,5 +192,4 @@ class ScopeContextTest {
         }.isInstanceOf(ProvisionException::class.java)
             .hasRootCauseInstanceOf(OutOfScopeException::class.java)
     }
-
 }

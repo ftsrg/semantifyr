@@ -25,7 +25,10 @@ private class StoreBackedScope(
     private val name: String,
     private val threadLocal: ThreadLocal<InstanceStore?>,
 ) : Scope {
-    override fun <T : Any> scope(key: Key<T>, unscoped: Provider<T>) = Provider<T> {
+    override fun <T : Any> scope(
+        key: Key<T>,
+        unscoped: Provider<T>,
+    ) = Provider<T> {
         val current = threadLocal.get() ?: throw OutOfScopeException("$name running without context!")
 
         synchronized(current.store) {
@@ -50,7 +53,6 @@ private class StoreBackedScope(
     override fun toString(): String {
         return "ScopeContext($name)"
     }
-
 }
 
 private class ScopeElement(
@@ -66,7 +68,10 @@ private class ScopeElement(
         return previous
     }
 
-    override fun restoreThreadContext(context: CoroutineContext, oldState: InstanceStore?) {
+    override fun restoreThreadContext(
+        context: CoroutineContext,
+        oldState: InstanceStore?,
+    ) {
         threadLocal.set(oldState)
     }
 }
@@ -82,22 +87,33 @@ private fun newStore(seed: Seed?): InstanceStore {
 class Seed {
     internal val entries = mutableMapOf<Key<*>, Any>()
 
-    fun <T : Any> seed(key: Key<T>, value: T) {
+    fun <T : Any> seed(
+        key: Key<T>,
+        value: T,
+    ) {
         entries[key] = value
     }
 
-    fun <T : Any> seed(clazz: Class<T>, value: T) {
+    fun <T : Any> seed(
+        clazz: Class<T>,
+        value: T,
+    ) {
         entries[Key.get(clazz)] = value
     }
 }
 
-class ScopeContext(private val name: String) {
+class ScopeContext(
+    private val name: String,
+) {
     private val threadLocal = ThreadLocal<InstanceStore?>()
     private val coroutineKey = NamedCoroutineKey(name)
 
     val scope: Scope = StoreBackedScope(name, threadLocal)
 
-    suspend fun <T> withScope(seed: Seed? = null, block: suspend () -> T): T {
+    suspend fun <T> withScope(
+        seed: Seed? = null,
+        block: suspend () -> T,
+    ): T {
         check(threadLocal.get() == null) {
             "$name is already open on this thread!"
         }
@@ -106,7 +122,10 @@ class ScopeContext(private val name: String) {
         }
     }
 
-    fun <T> withScopeBlocking(seed: Seed? = null, block: () -> T): T {
+    fun <T> withScopeBlocking(
+        seed: Seed? = null,
+        block: () -> T,
+    ): T {
         check(threadLocal.get() == null) {
             "$name is already open on this thread!"
         }
@@ -118,7 +137,9 @@ class ScopeContext(private val name: String) {
         }
     }
 
-    private class NamedCoroutineKey(private val name: String) : CoroutineContext.Key<ScopeElement> {
+    private class NamedCoroutineKey(
+        private val name: String,
+    ) : CoroutineContext.Key<ScopeElement> {
         override fun toString(): String = "ScopeContext.Key($name)"
     }
 }
