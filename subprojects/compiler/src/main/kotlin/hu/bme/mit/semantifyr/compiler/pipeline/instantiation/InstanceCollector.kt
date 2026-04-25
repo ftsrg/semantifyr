@@ -7,8 +7,8 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.instantiation
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.compiler.scopes.CompilationScoped
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.treeSequence
+import hu.bme.mit.semantifyr.compiler.scopes.CompilationScoped
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.InheritanceHandler
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 

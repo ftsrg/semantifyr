@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 
 class InstanceIdMappingTest {
-
     private val instance1: Instance = mock()
     private val instance2: Instance = mock()
 

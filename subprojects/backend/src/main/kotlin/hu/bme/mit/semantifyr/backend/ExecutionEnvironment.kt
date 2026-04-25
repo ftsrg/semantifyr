@@ -9,15 +9,20 @@ package hu.bme.mit.semantifyr.backend
 class ExecutionEnvironment(
     val entries: Map<String, Any>,
 ) {
-
-    fun with(id: String, spec: Any): ExecutionEnvironment {
+    fun with(
+        id: String,
+        spec: Any,
+    ): ExecutionEnvironment {
         return ExecutionEnvironment(entries + (id to spec))
     }
 
     class Builder {
         private val entries = mutableMapOf<String, Any>()
 
-        fun put(id: String, spec: Any): Builder {
+        fun put(
+            id: String,
+            spec: Any,
+        ): Builder {
             entries[id] = spec
             return this
         }

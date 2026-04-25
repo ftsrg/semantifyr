@@ -19,7 +19,12 @@ class InstanceReferenceProvider {
             return OxstsFactory.createSelfReference()
         }
 
-        val containmentTree = instance.parentSequence().toList().asReversed().asSequence().drop(1).iterator()
+        val containmentTree = instance.parentSequence()
+            .toList()
+            .asReversed()
+            .asSequence()
+            .drop(1)
+            .iterator()
 
         var reference: ReferenceExpression = OxstsFactory.createElementReference(containmentTree.next().domain)
 

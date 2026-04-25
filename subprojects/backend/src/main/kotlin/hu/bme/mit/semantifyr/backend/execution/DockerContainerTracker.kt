@@ -21,7 +21,11 @@ internal object DockerContainerTracker {
         )
     }
 
-    inline fun <T> tracking(client: DockerClient, containerId: String, block: () -> T): T {
+    inline fun <T> tracking(
+        client: DockerClient,
+        containerId: String,
+        block: () -> T,
+    ): T {
         track(client, containerId)
         try {
             return block()
@@ -30,13 +34,20 @@ internal object DockerContainerTracker {
         }
     }
 
-    fun track(client: DockerClient, containerId: String) {
-        containers.computeIfAbsent(client) {
-            ConcurrentHashMap.newKeySet()
-        }.add(containerId)
+    fun track(
+        client: DockerClient,
+        containerId: String,
+    ) {
+        containers
+            .computeIfAbsent(client) {
+                ConcurrentHashMap.newKeySet()
+            }.add(containerId)
     }
 
-    fun untrack(client: DockerClient, containerId: String) {
+    fun untrack(
+        client: DockerClient,
+        containerId: String,
+    ) {
         containers[client]?.remove(containerId)
     }
 

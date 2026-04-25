@@ -7,11 +7,11 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluationTransformer
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.RedefinitionAwareReferenceResolver
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluationTransformer
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy

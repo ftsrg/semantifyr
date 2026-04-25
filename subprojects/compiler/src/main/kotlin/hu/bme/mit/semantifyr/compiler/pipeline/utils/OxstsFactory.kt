@@ -19,7 +19,11 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.impl.OxstsFactoryImpl
 
 object OxstsFactory : OxstsFactoryImpl() {
 
-    fun createBooleanOperator(op: BooleanOp, left: Expression, right: Expression): BooleanOperator {
+    fun createBooleanOperator(
+        op: BooleanOp,
+        left: Expression,
+        right: Expression,
+    ): BooleanOperator {
         return createBooleanOperator().also {
             it.op = op
             it.left = left

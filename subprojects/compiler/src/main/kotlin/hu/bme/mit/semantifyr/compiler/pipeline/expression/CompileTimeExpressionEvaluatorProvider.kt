@@ -7,8 +7,8 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.expression
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.compiler.scopes.CompilationScoped
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
+import hu.bme.mit.semantifyr.compiler.scopes.CompilationScoped
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 
@@ -25,7 +25,10 @@ class CompileTimeExpressionEvaluatorProvider @Inject constructor(
         }
     }
 
-    fun evaluate(context: Instance, expression: Expression): ExpressionEvaluation {
+    fun evaluate(
+        context: Instance,
+        expression: Expression,
+    ): ExpressionEvaluation {
         return getEvaluator(context).evaluate(expression)
     }
 

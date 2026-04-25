@@ -17,7 +17,6 @@ import org.eclipse.emf.ecore.EObject
 import org.junit.jupiter.api.Test
 
 class LocalVarSemanticsTest : AnalysisTestBase() {
-
     @Test
     fun `local var declaration is recognized as a variable`() {
         val (inlined, result) = runLiveness(
@@ -205,9 +204,10 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
     }
 
     private fun InlinedOxsts.assignmentsTo(variable: VariableDeclaration): List<AssignmentOperation> {
-        return eAllOfType<AssignmentOperation>().filter {
-            val ref = it.reference
-            ref is ElementReference && ref.element === variable
-        }.toList()
+        return eAllOfType<AssignmentOperation>()
+            .filter {
+                val ref = it.reference
+                ref is ElementReference && ref.element === variable
+            }.toList()
     }
 }

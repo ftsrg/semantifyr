@@ -57,15 +57,12 @@ class ResourceSetLoader @Inject constructor(
                     Severity.INFO -> {
                         logger.info { "${issue.uriToProblem.toFileString()}[${issue.lineNumber}:${issue.column}] ${issue.message}" }
                     }
-
                     Severity.WARNING -> {
                         logger.warn { "${issue.uriToProblem.toFileString()}[${issue.lineNumber}:${issue.column}] ${issue.message}" }
                     }
-
                     Severity.ERROR -> {
                         logger.error { "${issue.uriToProblem.toFileString()}[${issue.lineNumber}:${issue.column}] ${issue.message}" }
                     }
-
                     Severity.IGNORE -> {}
                 }
             }

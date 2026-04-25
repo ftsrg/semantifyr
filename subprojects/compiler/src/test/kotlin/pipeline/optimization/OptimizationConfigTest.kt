@@ -10,7 +10,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class OptimizationConfigTest {
-
     @Test
     fun `NONE enables nothing`() {
         for (category in OptimizationCategory.entries) {

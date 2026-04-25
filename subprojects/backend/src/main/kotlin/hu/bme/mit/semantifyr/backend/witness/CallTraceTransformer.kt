@@ -51,7 +51,10 @@ class CallTraceTransformer @Inject constructor(
     private val expressionSerializer: ExpressionSerializer,
 ) {
 
-    private fun transformActivatedTrace(trace: OxstsClassAssumptionActivatedTrace, traces: TransitionCallTraceMap): SerializableTrace {
+    private fun transformActivatedTrace(
+        trace: OxstsClassAssumptionActivatedTrace,
+        traces: TransitionCallTraceMap,
+    ): SerializableTrace {
         val transitionCallTrace = traces.getTransitionCallTrace(trace.traceOperation)
 
         return SerializableTrace(
@@ -78,7 +81,10 @@ class CallTraceTransformer @Inject constructor(
         return SerializableTraceValue(variable, value)
     }
 
-    private fun transformState(state: OxstsClassAssumptionWitnessState, traces: TransitionCallTraceMap): SerializableTraceStep {
+    private fun transformState(
+        state: OxstsClassAssumptionWitnessState,
+        traces: TransitionCallTraceMap,
+    ): SerializableTraceStep {
         return SerializableTraceStep(
             state.activatedTraces.map {
                 transformActivatedTrace(it, traces)
@@ -89,7 +95,10 @@ class CallTraceTransformer @Inject constructor(
         )
     }
 
-    fun transformWitness(witness: OxstsClassAssumptionWitness, traces: TransitionCallTraceMap): SerializableTraceData {
+    fun transformWitness(
+        witness: OxstsClassAssumptionWitness,
+        traces: TransitionCallTraceMap,
+    ): SerializableTraceData {
         return SerializableTraceData(
             transformState(witness.initialState, traces),
             witness.transitionStates.map {

@@ -14,11 +14,11 @@ import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationConte
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlatteningInfo
 import hu.bme.mit.semantifyr.compiler.pipeline.context.InlinedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.context.InstanceIdMapping
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.ConstantExpressionEvaluationTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.ExpressionRewriter
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceCollector

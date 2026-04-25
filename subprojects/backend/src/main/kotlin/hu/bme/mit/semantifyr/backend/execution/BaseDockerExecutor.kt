@@ -57,7 +57,10 @@ abstract class BaseDockerExecutor(
         } catch (_: NotFoundException) {
             val (repository, tag) = splitImageRef(image)
             logger.info { "Pulling Docker image $repository:$tag (not present locally)" }
-            dockerClient.pullImageCmd(repository).withTag(tag).start().awaitCompletion()
+            dockerClient.pullImageCmd(repository)
+                .withTag(tag)
+                .start()
+                .awaitCompletion()
             logger.info { "Pulled Docker image $repository:$tag" }
         }
     }

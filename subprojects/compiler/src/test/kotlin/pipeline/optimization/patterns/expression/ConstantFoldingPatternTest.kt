@@ -13,7 +13,6 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionE
 import org.junit.jupiter.api.Test
 
 class ConstantFoldingPatternTest : PatternTestBase() {
-
     @Inject
     private lateinit var evaluatorProvider: ConstantExpressionEvaluatorProvider
 

@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test
 
 @InjectWithOxsts
 class SourceErrorTest {
-
     @Inject
     private lateinit var parseHelper: InlinedOxstsParseHelper
 
@@ -65,5 +64,4 @@ class SourceErrorTest {
         assertThat(prefixB).matches(".*:\\d+: ")
         assertThat(prefixA).isNotEqualTo(prefixB)
     }
-
 }

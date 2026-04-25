@@ -13,11 +13,17 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 
 class AnalysisManagerTest {
+    private class ResultA(
+        val value: String,
+    )
 
-    private class ResultA(val value: String)
-    private class ResultB(val value: String)
+    private class ResultB(
+        val value: String,
+    )
 
-    private class AnalysisA(private val result: ResultA) : Analysis<ResultA> {
+    private class AnalysisA(
+        private val result: ResultA,
+    ) : Analysis<ResultA> {
         var computeCount = 0
             private set
 
@@ -27,7 +33,9 @@ class AnalysisManagerTest {
         }
     }
 
-    private class AnalysisB(private val result: ResultB) : Analysis<ResultB> {
+    private class AnalysisB(
+        private val result: ResultB,
+    ) : Analysis<ResultB> {
         var computeCount = 0
             private set
 

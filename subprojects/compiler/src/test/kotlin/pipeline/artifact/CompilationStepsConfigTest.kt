@@ -10,7 +10,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class CompilationStepsConfigTest {
-
     @Test
     fun `Off emits no passes`() {
         for (pass in CompilationPass.entries) {
@@ -45,5 +44,4 @@ class CompilationStepsConfigTest {
             assertThat(config.shouldEmit(pass)).isFalse
         }
     }
-
 }

@@ -8,10 +8,10 @@ package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.TransitionCallTraceBuilder
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.RedefinitionAwareReferenceResolver
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
@@ -42,7 +42,11 @@ class InlineOperationExpander @Inject constructor(
     private val callTargetResolver: CallTargetResolver,
 ) {
 
-    fun expand(operation: InlineOperation, instance: Instance, allocateLocalVarIndex: () -> Int): Operation {
+    fun expand(
+        operation: InlineOperation,
+        instance: Instance,
+        allocateLocalVarIndex: () -> Int,
+    ): Operation {
         return when (operation) {
             is InlineCall -> expandCall(operation, instance, allocateLocalVarIndex)
             is InlineIfOperation -> expandIf(operation, instance)
@@ -52,7 +56,11 @@ class InlineOperationExpander @Inject constructor(
         }
     }
 
-    private fun expandCall(operation: InlineCall, instance: Instance, allocateLocalVarIndex: () -> Int): Operation {
+    private fun expandCall(
+        operation: InlineCall,
+        instance: Instance,
+        allocateLocalVarIndex: () -> Int,
+    ): Operation {
         val callExpression = operation.callExpression as CallSuffixExpression
 
         return when (val target = callTargetResolver.resolve(callExpression, instance)) {

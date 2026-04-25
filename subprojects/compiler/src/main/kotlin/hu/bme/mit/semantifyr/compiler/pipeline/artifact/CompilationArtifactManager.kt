@@ -53,7 +53,10 @@ class CompilationArtifactManager @Inject constructor(
         }
     }
 
-    private fun serializeInto(inlinedOxsts: InlinedOxsts, modelFile: File) {
+    private fun serializeInto(
+        inlinedOxsts: InlinedOxsts,
+        modelFile: File,
+    ) {
         serializer.serialize(inlinedOxsts, modelFile.bufferedWriter(), SaveOptions.defaultOptions())
     }
 

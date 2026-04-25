@@ -36,7 +36,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.TimeSource.Monotonic.markNow
 
-class OperationCallInliner @AssistedInject @Inject constructor(
+class OperationCallInliner @AssistedInject constructor(
     @param:Assisted val instance: Instance,
     expressionCallInlinerFactory: ExpressionCallInliner.Factory,
     private val nestedOperationOptimizer: NestedOperationOptimizer,

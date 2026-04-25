@@ -21,19 +21,31 @@ class RedefinitionAwareReferenceResolver @Inject constructor(
     private val domainMemberCollectionProvider: DomainMemberCollectionProvider,
 ) {
 
-    fun resolve(domain: DomainDeclaration, name: String): NamedElement {
+    fun resolve(
+        domain: DomainDeclaration,
+        name: String,
+    ): NamedElement {
         return resolveOrNull(domain, name) ?: throw IllegalArgumentException("Could not find any element named $name!")
     }
 
-    fun resolveOrNull(domain: DomainDeclaration, name: String): NamedElement? {
+    fun resolveOrNull(
+        domain: DomainDeclaration,
+        name: String,
+    ): NamedElement? {
         return resolveOrNull(domain, QualifiedName.create(name))
     }
 
-    fun resolve(domain: DomainDeclaration, name: QualifiedName): NamedElement {
+    fun resolve(
+        domain: DomainDeclaration,
+        name: QualifiedName,
+    ): NamedElement {
         return resolveOrNull(domain, name) ?: throw IllegalArgumentException("Could not find any element named $name!")
     }
 
-    fun resolveOrNull(domain: DomainDeclaration, name: QualifiedName): NamedElement? {
+    fun resolveOrNull(
+        domain: DomainDeclaration,
+        name: QualifiedName,
+    ): NamedElement? {
         val domain = domainMemberCollectionProvider.getMembers(domain)
         val elements = domain.getExportedObjects(OxstsPackage.eINSTANCE.namedElement, name, false)
 
@@ -44,11 +56,17 @@ class RedefinitionAwareReferenceResolver @Inject constructor(
         return null
     }
 
-    fun resolve(domain: DomainDeclaration, reference: NamedElement): NamedElement {
+    fun resolve(
+        domain: DomainDeclaration,
+        reference: NamedElement,
+    ): NamedElement {
         return resolveOrNull(domain, reference) ?: sourceError(reference, "Could not resolve element '${reference.name}' in domain '${domain.name}'")
     }
 
-    fun resolveOrNull(domain: DomainDeclaration, reference: NamedElement): NamedElement? {
+    fun resolveOrNull(
+        domain: DomainDeclaration,
+        reference: NamedElement,
+    ): NamedElement? {
         if (reference is RedefinableDeclaration && OxstsUtils.isElementRedefinable(reference)) {
             return resolveOrNull(domain, reference)
         }
@@ -56,11 +74,17 @@ class RedefinitionAwareReferenceResolver @Inject constructor(
         return reference
     }
 
-    fun resolve(domain: DomainDeclaration, redefinableDeclaration: RedefinableDeclaration): Declaration {
+    fun resolve(
+        domain: DomainDeclaration,
+        redefinableDeclaration: RedefinableDeclaration,
+    ): Declaration {
         return resolveOrNull(domain, redefinableDeclaration) ?: sourceError(redefinableDeclaration, "Could not resolve element '${redefinableDeclaration.name}' in domain '${domain.name}'")
     }
 
-    fun resolveOrNull(domain: DomainDeclaration, redefinableDeclaration: RedefinableDeclaration): Declaration? {
+    fun resolveOrNull(
+        domain: DomainDeclaration,
+        redefinableDeclaration: RedefinableDeclaration,
+    ): Declaration? {
         val memberCollection = domainMemberCollectionProvider.getMemberCollection(domain)
 
         return memberCollection.resolveElementOrNull(redefinableDeclaration)

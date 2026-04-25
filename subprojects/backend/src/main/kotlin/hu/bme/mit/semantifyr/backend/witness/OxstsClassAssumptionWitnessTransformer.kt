@@ -51,7 +51,10 @@ class OxstsClassAssumptionWitnessTransformer @Inject constructor(
             )
         }
 
-        private fun backAnnotateInstancePointers(variableDeclaration: VariableDeclaration, expression: Expression): Expression {
+        private fun backAnnotateInstancePointers(
+            variableDeclaration: VariableDeclaration,
+            expression: Expression,
+        ): Expression {
             if (compilation.flatteningInfo.variableInstanceDomains[variableDeclaration] == null) {
                 return expression
             }
@@ -78,7 +81,10 @@ class OxstsClassAssumptionWitnessTransformer @Inject constructor(
 
     }
 
-    fun transform(inlinedOxstsAssumptionWitness: InlinedOxstsAssumptionWitness, compilation: FlattenedCompilationContext): OxstsClassAssumptionWitness {
+    fun transform(
+        inlinedOxstsAssumptionWitness: InlinedOxstsAssumptionWitness,
+        compilation: FlattenedCompilationContext,
+    ): OxstsClassAssumptionWitness {
         val context = TransformerContext(compilation)
 
         val initialState = context.transform(inlinedOxstsAssumptionWitness.initialState)

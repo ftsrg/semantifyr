@@ -32,8 +32,8 @@ import hu.bme.mit.semantifyr.verification.ProgressContext
 import hu.bme.mit.semantifyr.verification.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verification.discovery.CaseFilter
 import hu.bme.mit.semantifyr.verification.discovery.VerificationCaseDiscoverer
-import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
 import hu.bme.mit.semantifyr.verification.portfolio.LimitedBackendExecutor
+import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
@@ -245,9 +245,9 @@ class SemantifyrVerifierImpl(
     }
 
     private fun isTriviallyVerifiable(inlinedOxsts: InlinedOxsts): Boolean {
-        return inlinedOxsts.variables.isEmpty()
-            && inlinedOxsts.initTransition.isEmpty()
-            && inlinedOxsts.mainTransition.isEmpty()
+        return inlinedOxsts.variables.isEmpty() &&
+            inlinedOxsts.initTransition.isEmpty() &&
+            inlinedOxsts.mainTransition.isEmpty()
     }
 
     private fun TransitionDeclaration.isEmpty(): Boolean {
@@ -288,5 +288,4 @@ class SemantifyrVerifierImpl(
             message = "Property decided at compile time; model fully optimized away.",
         )
     }
-
 }

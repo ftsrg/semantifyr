@@ -11,7 +11,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class PassResultTest {
-
     private class FakeAnalysisA : Analysis<Any> {
         override fun compute(input: EvaluableCompilationContext): Any {
             return Unit

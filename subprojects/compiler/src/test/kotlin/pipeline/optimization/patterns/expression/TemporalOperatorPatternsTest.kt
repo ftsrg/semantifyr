@@ -11,7 +11,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.
 import org.junit.jupiter.api.Test
 
 class TemporalOperatorPatternsTest : PatternTestBase() {
-
     @Test
     fun `not AG rewrites to EF not`() = assertPatternTransforms(
         pattern = BubbleNotAGPattern(),

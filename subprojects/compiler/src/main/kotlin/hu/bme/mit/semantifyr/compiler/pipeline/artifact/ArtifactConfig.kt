@@ -51,7 +51,9 @@ sealed interface CompilationStepsConfig {
         }
     }
 
-    data class Selected(val passes: Set<CompilationPass>) : CompilationStepsConfig {
+    data class Selected(
+        val passes: Set<CompilationPass>,
+    ) : CompilationStepsConfig {
         override fun shouldEmit(pass: CompilationPass): Boolean {
             return pass in passes
         }

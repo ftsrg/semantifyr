@@ -82,7 +82,10 @@ class FlatteningInfo(
             mapping.entries.associate { (original, actual) -> actual to original }
         }
 
-    fun resolveOriginalVariable(holder: Instance, actualVariable: VariableDeclaration): VariableDeclaration {
+    fun resolveOriginalVariable(
+        holder: Instance,
+        actualVariable: VariableDeclaration,
+    ): VariableDeclaration {
         val reverse = reverseVariableMappings[holder] ?: sourceError(
             actualVariable,
             "No variable mappings for instance '${holder.name}'",

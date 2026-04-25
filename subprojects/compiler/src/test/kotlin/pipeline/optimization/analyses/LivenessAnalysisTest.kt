@@ -13,7 +13,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class LivenessAnalysisTest : AnalysisTestBase() {
-
     @Test
     fun `variable read by the property is marked read`() {
         val (inlined, result) = runLiveness(

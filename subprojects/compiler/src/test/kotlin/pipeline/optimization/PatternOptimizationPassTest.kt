@@ -25,7 +25,6 @@ import org.mockito.kotlin.mock
 
 @InjectWithOxsts
 class PatternOptimizationPassTest {
-
     @Inject
     private lateinit var parseHelper: InlinedOxstsParseHelper
 
@@ -135,7 +134,10 @@ class PatternOptimizationPassTest {
         var invocations: Int = 0
             private set
 
-        override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
+        override fun tryApply(
+            element: EObject,
+            worklist: Worklist<EObject>,
+        ): Boolean {
             invocations++
             if (alwaysFires) {
                 return false // never loops forever; pattern claims "not applicable this element"
@@ -144,7 +146,9 @@ class PatternOptimizationPassTest {
         }
     }
 
-    private class SingleRootInstanceTree(domain: DomainDeclaration) : InstanceTree {
+    private class SingleRootInstanceTree(
+        domain: DomainDeclaration,
+    ) : InstanceTree {
         override val rootInstance: Instance = Instance(domain, parent = null, tree = this)
     }
 }

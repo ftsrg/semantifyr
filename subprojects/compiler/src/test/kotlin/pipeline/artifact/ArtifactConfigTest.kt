@@ -12,7 +12,6 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 
 class ArtifactConfigTest {
-
     @TempDir
     lateinit var tempDir: Path
 

@@ -13,7 +13,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class ConstantValueAnalysisTest : AnalysisTestBase() {
-
     @Test
     fun `variable whose initializer and only write agree is considered constant`() {
         val (inlined, result) = runConstantValue(

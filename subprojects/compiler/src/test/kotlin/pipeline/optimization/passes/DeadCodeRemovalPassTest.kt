@@ -10,7 +10,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ConeOfInflu
 import org.junit.jupiter.api.Test
 
 class DeadCodeRemovalPassTest : PassTestBase() {
-
     @Test
     fun `assignment to a variable not read by the property is removed`() = assertPassTransforms(
         source = """

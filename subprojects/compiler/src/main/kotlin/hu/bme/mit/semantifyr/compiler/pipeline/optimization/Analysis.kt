@@ -19,7 +19,7 @@ interface Analysis<T : Any> {
 }
 
 class AnalysisManager(
-    val analyses: List<Analysis<*>>
+    val analyses: List<Analysis<*>>,
 ) {
     private val logger by loggerFactory()
 

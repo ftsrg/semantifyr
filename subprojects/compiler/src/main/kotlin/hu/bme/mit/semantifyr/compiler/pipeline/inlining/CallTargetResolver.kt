@@ -7,9 +7,9 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceCollector
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
@@ -165,12 +165,10 @@ class CallTargetResolver @Inject constructor(
             val evaluation = evaluator.evaluate(navigation)
             (evaluation as? InstanceEvaluation)?.instances ?: emptySet()
         }
-
         is ClassDeclaration -> {
             val rootInstance = instance.parentSequence().last()
             instanceCollector.instancesOfType(rootInstance, domain)
         }
-
         else -> emptySet()
     }
 }

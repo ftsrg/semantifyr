@@ -88,7 +88,11 @@ class FakeBackend(
             }
         }
 
-        fun delayed(id: String, delayMillis: Long, verdict: VerificationVerdict): FakeBackend {
+        fun delayed(
+            id: String,
+            delayMillis: Long,
+            verdict: VerificationVerdict,
+        ): FakeBackend {
             return FakeBackend(id) {
                 delay(delayMillis)
                 VerificationResult(verdict = verdict, metadata = fakeMetadata(id))

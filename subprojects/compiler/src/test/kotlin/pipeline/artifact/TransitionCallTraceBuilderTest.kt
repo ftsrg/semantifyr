@@ -20,7 +20,6 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 
 class TransitionCallTraceBuilderTest {
-
     private val evaluatorProvider: CompileTimeExpressionEvaluatorProvider = mock()
     private val evaluator: CompileTimeExpressionEvaluator = mock()
     private val instance: Instance = mock()
@@ -101,7 +100,10 @@ class TransitionCallTraceBuilderTest {
         val snapshot = builder.build()
 
         val traced = builder.traceTransitionCall(
-            instance, container, mockTransitionDeclaration(), emptyCallExpression,
+            instance,
+            container,
+            mockTransitionDeclaration(),
+            emptyCallExpression,
         ) as TraceOperation
 
         assertThat(

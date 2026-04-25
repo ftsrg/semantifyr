@@ -13,7 +13,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 class ArtifactManagerTest {
-
     @TempDir
     lateinit var tempDir: Path
 

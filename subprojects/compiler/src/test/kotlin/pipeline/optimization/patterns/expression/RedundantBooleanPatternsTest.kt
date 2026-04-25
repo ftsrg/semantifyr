@@ -14,7 +14,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.
 import org.junit.jupiter.api.Test
 
 class RedundantBooleanPatternsTest : PatternTestBase() {
-
     @Test
     fun `and with literal true on the left collapses to right`() = assertPatternTransforms(
         pattern = RedundantAndPattern(),

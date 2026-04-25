@@ -10,7 +10,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ConstantVal
 import org.junit.jupiter.api.Test
 
 class ConstantVariableSubstitutionPassTest : PassTestBase() {
-
     @Test
     fun `variable whose initializer and only assignment agree is substituted`() = assertPassTransforms(
         source = """

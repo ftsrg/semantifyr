@@ -100,4 +100,3 @@ class ConstantTrueOrPattern : OptimizationPattern {
         return true
     }
 }
-

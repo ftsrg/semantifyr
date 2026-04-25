@@ -15,7 +15,6 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 
 class FlatteningInfoTest {
-
     private val holder: Instance = mock()
     private val otherHolder: Instance = mock()
 

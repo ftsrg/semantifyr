@@ -8,7 +8,6 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes
 
 import com.google.inject.Inject
 import com.google.inject.Injector
-import hu.bme.mit.semantifyr.compiler.pipeline.CompilationConfigModule
 import hu.bme.mit.semantifyr.compiler.pipeline.CompilationModule
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.context.CreatedCompilationContext
@@ -22,6 +21,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Pass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.verifyInjectedDependenciesAreBound
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.normalizedFixtureSource
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.serializeFormatted
+import hu.bme.mit.semantifyr.compiler.scopes.withCompilationScopeBlocking
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.InlinedOxstsParseHelper
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
@@ -33,7 +33,6 @@ import java.nio.file.Files
 
 @InjectWithOxsts
 abstract class PassTestBase {
-
     @Inject
     protected lateinit var parseHelper: InlinedOxstsParseHelper
 
@@ -72,24 +71,26 @@ abstract class PassTestBase {
         val expected = compile(expectedSource)
 
         val child = injector.createChildInjector(
-            CompilationConfigModule(
+            CompilationModule(
                 ArtifactConfig.none(Files.createTempDirectory("pass-test-")),
                 OptimizationConfig.ALL,
             ),
-            CompilationModule(actual.inlinedOxsts),
         )
 
-        val analyses = analysisClasses.map {
-            child.getInstance(it)
+        val passClassName = withCompilationScopeBlocking(actual.inlinedOxsts) {
+            val analyses = analysisClasses.map {
+                child.getInstance(it)
+            }
+            val analysisManager = AnalysisManager(analyses)
+            val pass = buildPass(child)
+            pass.run(actual.context, analysisManager)
+            pass::class.simpleName
         }
-        val analysisManager = AnalysisManager(analyses)
-        val pass = buildPass(child)
-        pass.run(actual.context, analysisManager)
 
         val actualText = serializer.serializeFormatted(actual.inlinedOxsts)
         val expectedText = serializer.serializeFormatted(expected.inlinedOxsts)
         assertThat(actualText)
-            .describedAs("Pass ${pass::class.simpleName} should have rewritten the input to the expected form")
+            .describedAs("Pass $passClassName should have rewritten the input to the expected form")
             .isEqualTo(expectedText)
     }
 

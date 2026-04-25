@@ -10,7 +10,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ReachingDef
 import org.junit.jupiter.api.Test
 
 class CopyPropagationPassTest : PassTestBase() {
-
     @Test
     fun `read with single reaching definition to a literal is substituted`() = assertPassTransforms(
         source = """

@@ -25,7 +25,10 @@ class FeatureEvaluator(
     private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
 ) {
 
-    fun evaluateFeature(instance: Instance, featureDeclaration: FeatureDeclaration): ExpressionEvaluation {
+    fun evaluateFeature(
+        instance: Instance,
+        featureDeclaration: FeatureDeclaration,
+    ): ExpressionEvaluation {
         if (OxstsUtils.isDataFeature(featureDeclaration)) {
             return evaluateDataFeature(instance, featureDeclaration)
         }
@@ -33,21 +36,31 @@ class FeatureEvaluator(
         return evaluateInstanceFeature(instance, featureDeclaration)
     }
 
-    private fun evaluateDataFeature(instance: Instance, featureDeclaration: FeatureDeclaration): ExpressionEvaluation {
+    private fun evaluateDataFeature(
+        instance: Instance,
+        featureDeclaration: FeatureDeclaration,
+    ): ExpressionEvaluation {
         return compileTimeExpressionEvaluatorProvider.evaluate(instance, featureDeclaration.expression)
     }
 
-    private fun evaluateInstanceFeature(instance: Instance, featureDeclaration: FeatureDeclaration): ExpressionEvaluation {
+    private fun evaluateInstanceFeature(
+        instance: Instance,
+        featureDeclaration: FeatureDeclaration,
+    ): ExpressionEvaluation {
         return when (featureDeclaration.kind) {
             FeatureKind.REFERENCE -> evaluateReferenceFeature(instance, featureDeclaration)
             FeatureKind.CONTAINMENT,
-            FeatureKind.CONTAINER -> evaluateContainmentFeature(instance, featureDeclaration)
+            FeatureKind.CONTAINER,
+            -> evaluateContainmentFeature(instance, featureDeclaration)
             FeatureKind.DERIVED -> evaluateDerivedFeature(instance, featureDeclaration)
             FeatureKind.FEATURE -> sourceError(featureDeclaration, "Abstract features can not be evaluated!")
         }
     }
 
-    private fun evaluateReferenceFeature(instance: Instance, featureDeclaration: FeatureDeclaration): ExpressionEvaluation {
+    private fun evaluateReferenceFeature(
+        instance: Instance,
+        featureDeclaration: FeatureDeclaration,
+    ): ExpressionEvaluation {
         if (featureDeclaration.expression != null) {
             return compileTimeExpressionEvaluatorProvider.evaluate(instance, featureDeclaration.expression)
         }
@@ -63,7 +76,10 @@ class FeatureEvaluator(
         return InstanceEvaluation(instances)
     }
 
-    private fun evaluateContainmentFeature(instance: Instance, featureDeclaration: FeatureDeclaration): ExpressionEvaluation {
+    private fun evaluateContainmentFeature(
+        instance: Instance,
+        featureDeclaration: FeatureDeclaration,
+    ): ExpressionEvaluation {
         val instances = instance.instancesAt(featureDeclaration).toMutableSet()
 
         for (feature in featureSubSettersFinder.getSubSetters(instance.domain, featureDeclaration)) {
@@ -75,7 +91,10 @@ class FeatureEvaluator(
         return InstanceEvaluation(instances)
     }
 
-    private fun evaluateDerivedFeature(instance: Instance, featureDeclaration: FeatureDeclaration): ExpressionEvaluation {
+    private fun evaluateDerivedFeature(
+        instance: Instance,
+        featureDeclaration: FeatureDeclaration,
+    ): ExpressionEvaluation {
         val opposite = oppositeHandler.getOppositeFeature(featureDeclaration)
 
         if (opposite == null) {
@@ -85,22 +104,25 @@ class FeatureEvaluator(
         return evaluateOppositeDerivedFeature(instance, opposite)
     }
 
-    private fun evaluateOppositeDerivedFeature(instance: Instance, opposite: FeatureDeclaration): ExpressionEvaluation {
+    private fun evaluateOppositeDerivedFeature(
+        instance: Instance,
+        opposite: FeatureDeclaration,
+    ): ExpressionEvaluation {
         val rootInstance = instance.parentSequence().last()
         val allInstances = rootInstance.treeSequence()
-        val oppositeInstances = allInstances.filter {
-            val resolved = redefinitionAwareReferenceResolver.resolveOrNull(it.domain, opposite) ?: return@filter false
-            val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(it)
-            val evaluation = evaluator.evaluate(OxstsFactory.createElementReference(resolved))
+        val oppositeInstances = allInstances
+            .filter {
+                val resolved = redefinitionAwareReferenceResolver.resolveOrNull(it.domain, opposite) ?: return@filter false
+                val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(it)
+                val evaluation = evaluator.evaluate(OxstsFactory.createElementReference(resolved))
 
-            if (evaluation is InstanceEvaluation) {
-                evaluation.instances.contains(instance)
-            } else {
-                false
-            }
-        }.toSet()
+                if (evaluation is InstanceEvaluation) {
+                    evaluation.instances.contains(instance)
+                } else {
+                    false
+                }
+            }.toSet()
 
         return InstanceEvaluation(oppositeInstances)
     }
-
 }

@@ -9,7 +9,9 @@ package hu.bme.mit.semantifyr.backend
 sealed interface AvailabilityReport {
     object Available : AvailabilityReport
 
-    data class Degraded(val message: String) : AvailabilityReport
+    data class Degraded(
+        val message: String,
+    ) : AvailabilityReport
 
     data class Unavailable(
         val reason: String,

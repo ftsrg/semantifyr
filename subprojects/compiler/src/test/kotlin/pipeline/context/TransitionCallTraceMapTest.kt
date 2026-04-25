@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 
 class TransitionCallTraceMapTest {
-
     private val factory = OxstsFactoryImpl()
 
     @Test

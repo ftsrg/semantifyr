@@ -10,8 +10,8 @@ import com.google.inject.Key
 import com.google.inject.Scope
 import com.google.inject.ScopeAnnotation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.scopes.Seed
 import hu.bme.mit.semantifyr.scopes.ScopeContext
+import hu.bme.mit.semantifyr.scopes.Seed
 
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
@@ -33,7 +33,7 @@ suspend fun <T> withCompilationScope(inlinedOxsts: InlinedOxsts, block: suspend 
         Seed().apply {
             this.inlinedOxsts = inlinedOxsts
         },
-        block
+        block,
     )
 }
 
@@ -46,7 +46,7 @@ fun <T> withCompilationScopeBlocking(inlinedOxsts: InlinedOxsts, block: () -> T)
         Seed().apply {
             this.inlinedOxsts = inlinedOxsts
         },
-        block
+        block,
     )
 }
 

@@ -196,7 +196,8 @@ abstract class VerificationPortfolio {
 
         val decisive = collected.filter { it.isDecisive }
         when {
-            decisive.isEmpty() && collected.isEmpty() -> outcome // AllErrored or timeout
+            decisive.isEmpty() && collected.isEmpty() -> outcome
+            // AllErrored or timeout
             decisive.isEmpty() -> PortfolioOutcome.Decided(collected.first())
             decisive.map { it.verdict }.distinct().size == 1 -> PortfolioOutcome.Decided(decisive.first())
             else -> {
@@ -209,7 +210,7 @@ abstract class VerificationPortfolio {
                         metadata = reference.metadata,
                         metrics = reference.metrics,
                         message = "Portfolio '$id' saw disagreeing decisive verdicts: $breakdown",
-                    )
+                    ),
                 )
             }
         }
@@ -273,5 +274,4 @@ abstract class VerificationPortfolio {
     private fun CoroutineScope.cancelRemainingJobs() {
         coroutineContext.cancelChildren()
     }
-
 }

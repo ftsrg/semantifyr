@@ -25,7 +25,6 @@ import org.mockito.kotlin.mock
 
 @InjectWithOxsts
 abstract class PatternTestBase {
-
     @Inject
     protected lateinit var parseHelper: InlinedOxstsParseHelper
 
@@ -50,11 +49,11 @@ abstract class PatternTestBase {
         if (!EcoreUtil.equals(inputModel, expectedModel)) {
             val actualText = serializer.serializeFormatted(inputModel)
             val expectedText = serializer.serializeFormatted(expectedModel)
-            Assertions.assertThat(actualText)
+            Assertions
+                .assertThat(actualText)
                 .describedAs(
                     "Pattern ${pattern::class.simpleName} did not rewrite the input to the expected form (structural EcoreUtil.equals was false; serialized forms follow)",
-                )
-                .isEqualTo(expectedText)
+                ).isEqualTo(expectedText)
             throw AssertionError(
                 "Pattern ${pattern::class.simpleName} produced an AST that is not structurally equal to the expected AST, even though the serialized forms match. The ASTs likely differ in cross-reference targets or non-syntactic attributes.",
             )
@@ -68,7 +67,10 @@ abstract class PatternTestBase {
         assertPatternTransforms(pattern, input, input)
     }
 
-    private fun runPattern(pattern: OptimizationPattern, inputModel: InlinedOxsts) {
+    private fun runPattern(
+        pattern: OptimizationPattern,
+        inputModel: InlinedOxsts,
+    ) {
         val artifacts: CompilationArtifactManager = mock()
         val optimizer = PatternOptimizer(
             patterns = listOf(pattern),

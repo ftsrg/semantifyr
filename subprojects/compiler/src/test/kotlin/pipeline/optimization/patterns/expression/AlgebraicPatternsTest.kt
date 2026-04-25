@@ -10,7 +10,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PatternTest
 import org.junit.jupiter.api.Test
 
 class AlgebraicPatternsTest : PatternTestBase() {
-
     @Test
     fun `add zero on left collapses to right`() = assertPatternTransforms(
         pattern = ArithmeticIdentityPattern(),

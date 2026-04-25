@@ -12,7 +12,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.
 import org.junit.jupiter.api.Test
 
 class NegationPropagationPatternsTest : PatternTestBase() {
-
     @Test
     fun `double negation cancels`() = assertPatternTransforms(
         pattern = DoubleNegationPattern(),

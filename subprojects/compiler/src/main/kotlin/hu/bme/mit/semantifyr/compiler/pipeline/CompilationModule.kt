@@ -38,9 +38,11 @@ class CompilationModule(
         bindScope(CompilationScoped::class.java, CompilationScope)
 
         bind(InlinedOxsts::class.java)
-            .toProvider(Provider {
-                error("InlinedOxsts must be seeded into the compilation scope; call withCompilationScope with a Seed that includes it.")
-            })
+            .toProvider(
+                Provider {
+                    error("InlinedOxsts must be seeded into the compilation scope; call withCompilationScope with a Seed that includes it.")
+                },
+            )
             .`in`(CompilationScope)
 
         install(FactoryModuleBuilder().build(CompileTimeExpressionEvaluator.Factory::class.java))

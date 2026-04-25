@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Test
 
 @InjectWithOxsts
 class ArrayFlatteningPassTest {
-
     @Inject
     private lateinit var parseHelper: InlinedOxstsParseHelper
 

@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns
 import org.junit.jupiter.api.Test
 
 class RedundancyPatternsTest : PatternTestBase() {
-
     @Test
     fun `if with constant true guard is replaced by its body`() = assertPatternTransforms(
         pattern = ConstantGuardIfPattern(),

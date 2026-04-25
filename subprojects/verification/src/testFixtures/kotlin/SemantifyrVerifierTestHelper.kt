@@ -107,5 +107,4 @@ class SemantifyrVerifierTestHelper @Inject constructor(
             it.verify(case)
         }
     }
-
 }

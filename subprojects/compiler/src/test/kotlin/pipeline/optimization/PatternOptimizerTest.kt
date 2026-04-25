@@ -21,7 +21,6 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 class PatternOptimizerTest {
-
     private val artifacts: CompilationArtifactManager = mock()
 
     @Test

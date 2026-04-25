@@ -18,7 +18,7 @@ interface BackendExecutor {
 }
 
 class LimitedBackendExecutor(
-    maxConcurrency: Int
+    maxConcurrency: Int,
 ) : BackendExecutor {
 
     init {
@@ -30,12 +30,11 @@ class LimitedBackendExecutor(
     override suspend fun <T> withPermit(block: suspend () -> T): T {
         return gate.withPermit { block() }
     }
-
 }
 
 class CappedBackendExecutor(
     private val outer: BackendExecutor,
-    maxConcurrency: Int
+    maxConcurrency: Int,
 ) : BackendExecutor {
 
     init {
@@ -51,5 +50,4 @@ class CappedBackendExecutor(
             }
         }
     }
-
 }

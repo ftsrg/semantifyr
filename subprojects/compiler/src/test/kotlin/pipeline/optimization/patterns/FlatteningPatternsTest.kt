@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns
 import org.junit.jupiter.api.Test
 
 class FlatteningPatternsTest : PatternTestBase() {
-
     @Test
     fun `single-branch choice collapses to its branch`() = assertPatternTransforms(
         pattern = FlattenSingleBranchChoicePattern(),

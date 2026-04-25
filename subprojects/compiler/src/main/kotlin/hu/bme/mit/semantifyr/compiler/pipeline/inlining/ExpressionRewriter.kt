@@ -38,7 +38,11 @@ class ExpressionRewriter @Inject constructor(
         rewriteSelfExpressionsToContext(rootElement, newContext)
     }
 
-    fun rewriteExpressionsToCall(rootElement: Element, parametricDeclaration: ParametricDeclaration, callSuffixExpression: CallSuffixExpression) {
+    fun rewriteExpressionsToCall(
+        rootElement: Element,
+        parametricDeclaration: ParametricDeclaration,
+        callSuffixExpression: CallSuffixExpression,
+    ) {
         val parameterReferences = rootElement.eAllOfType<ElementReference>().filter {
             it.element is ParameterDeclaration
         }.toList()
@@ -67,7 +71,11 @@ class ExpressionRewriter @Inject constructor(
         }
     }
 
-    fun rewriteReferencesTo(referencedElement: NamedElement, rootElement: Element, newContext: Expression) {
+    fun rewriteReferencesTo(
+        referencedElement: NamedElement,
+        rootElement: Element,
+        newContext: Expression,
+    ) {
         val elementReferences = rootElement.eAllOfType<ElementReference>().filter {
             it.element == referencedElement
         }.toList()

@@ -11,7 +11,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.
 import org.junit.jupiter.api.Test
 
 class IfThenElsePatternsTest : PatternTestBase() {
-
     @Test
     fun `if true then a else b collapses to a`() = assertPatternTransforms(
         pattern = IfThenElseConstantGuardPattern(),

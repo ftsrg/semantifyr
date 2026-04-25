@@ -8,7 +8,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression
 
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
-import hu.bme.mit.semantifyr.compiler.pipeline.inlining.PackageExpanderTestBase
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.InliningTestBase
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PatternOptimizer
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
@@ -22,8 +22,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 
-class FeatureTypedNothingComparisonPatternTest : PackageExpanderTestBase() {
-
+class FeatureTypedNothingComparisonPatternTest : InliningTestBase() {
     @Test
     fun `feature-typed slot with lower bound 1 equal-to-nothing folds to false`() {
         val folded = runPattern(
@@ -105,26 +104,33 @@ class FeatureTypedNothingComparisonPatternTest : PackageExpanderTestBase() {
         assertThat(folded.propertyHasNothingComparison()).isFalse
     }
 
-    private fun runPattern(source: String, className: String): InlinedOxsts {
-        val prepared = prepare(className, source)
-        val inlined = inlineAll(prepared).inlinedOxsts
+    private fun runPattern(
+        source: String,
+        className: String,
+    ): InlinedOxsts {
+        return prepare(className, source) {
+            val inlined = inlineAll(it).inlinedOxsts
 
-        val pattern = FeatureTypedNothingComparisonPattern(
-            prepared.compilationInjector.getInstance(MetaConstantExpressionEvaluatorProvider::class.java),
-            prepared.compilationInjector.getInstance(MultiplicityRangeEvaluator::class.java),
-        )
-        val optimizer = PatternOptimizer(
-            patterns = listOf(pattern),
-            pass = CompilationPass.ExpressionSimplification,
-            artifactManager = mock<CompilationArtifactManager>(),
-        )
-        optimizer.optimize(inlined)
-        return inlined
+            val pattern = FeatureTypedNothingComparisonPattern(
+                it.compilationInjector.getInstance(MetaConstantExpressionEvaluatorProvider::class.java),
+                it.compilationInjector.getInstance(MultiplicityRangeEvaluator::class.java),
+            )
+            val optimizer = PatternOptimizer(
+                patterns = listOf(pattern),
+                pass = CompilationPass.ExpressionSimplification,
+                artifactManager = mock<CompilationArtifactManager>(),
+            )
+            optimizer.optimize(inlined)
+            inlined
+        }
     }
 
     private fun InlinedOxsts.propertyBoolLiterals(): List<Boolean> {
         val property = eAllOfType<PropertyDeclaration>().first()
-        return property.expression.eAllOfType<LiteralBoolean>().map { it.isValue }.toList()
+        return property.expression
+            .eAllOfType<LiteralBoolean>()
+            .map { it.isValue }
+            .toList()
     }
 
     private fun InlinedOxsts.propertyHasNothingComparison(): Boolean {

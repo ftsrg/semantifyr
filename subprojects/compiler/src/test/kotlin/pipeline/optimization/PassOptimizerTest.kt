@@ -19,14 +19,15 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 
 class PassOptimizerTest {
-
     private class StubAnalysis : Analysis<Any> {
         override fun compute(input: EvaluableCompilationContext): Any {
             return Unit
         }
     }
 
-    private class Bag(var value: Int = 0)
+    private class Bag(
+        var value: Int = 0,
+    )
 
     @Test
     fun `empty pass list reports no change`() {

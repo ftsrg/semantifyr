@@ -15,7 +15,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
-
     @Test
     fun `variable read in the property is marked relevant`() {
         val (inlined, result) = runConeOfInfluence(
@@ -153,7 +152,7 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val activeState = inlined.varNamed("activeState")
         assertThat(result.isRelevant(activeState)).isTrue
         val writes = inlined.assignmentsTo(activeState)
-        assertThat(writes).hasSize(3)  // init + two inside the choice branch
+        assertThat(writes).hasSize(3) // init + two inside the choice branch
         for (write in writes) {
             assertThat(result.isRelevant(write))
                 .`as`("every write to the property-relevant variable should stay relevant")
@@ -320,9 +319,10 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
     }
 
     private fun InlinedOxsts.assignmentsTo(variable: VariableDeclaration): List<AssignmentOperation> {
-        return eAllOfType<AssignmentOperation>().filter {
-            val ref = it.reference
-            ref is ElementReference && ref.element === variable
-        }.toList()
+        return eAllOfType<AssignmentOperation>()
+            .filter {
+                val ref = it.reference
+                ref is ElementReference && ref.element === variable
+            }.toList()
     }
 }

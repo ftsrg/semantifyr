@@ -35,9 +35,9 @@ class AssumptionWitnessBackAnnotator @Inject constructor(
     private val builtinSymbolResolver: BuiltinSymbolResolver,
     private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
 ) {
-
-    private inner class WitnessContext(val witness: OxstsClassAssumptionWitness) {
-
+    private inner class WitnessContext(
+        val witness: OxstsClassAssumptionWitness,
+    ) {
         val stepValues = mutableMapOf<OxstsClassAssumptionWitnessState, Int>()
         private var lastStepValue = -1
         private val OxstsClassAssumptionWitnessState.stepValue
@@ -144,7 +144,10 @@ class AssumptionWitnessBackAnnotator @Inject constructor(
             }
         }
 
-        private fun createStateOperation(state: OxstsClassAssumptionWitnessState, transition: TransitionDeclaration): SequenceOperation {
+        private fun createStateOperation(
+            state: OxstsClassAssumptionWitnessState,
+            transition: TransitionDeclaration,
+        ): SequenceOperation {
             val realTransitionDeclaration = redefinitionAwareReferenceResolver.resolve(rootFeature, transition) as TransitionDeclaration
 
             return OxstsFactory.createSequenceOperation().also {

@@ -104,7 +104,11 @@ class InstanceTreeCreator @Inject constructor(
             )
         }
 
-        private fun placeInstance(holder: Instance, featureDeclaration: FeatureDeclaration, held: Instance) {
+        private fun placeInstance(
+            holder: Instance,
+            featureDeclaration: FeatureDeclaration,
+            held: Instance,
+        ) {
             localPlaceInstance(holder, featureDeclaration, held)
 
             val opposite = oppositeHandler.getOppositeFeature(featureDeclaration)
@@ -113,7 +117,11 @@ class InstanceTreeCreator @Inject constructor(
             }
         }
 
-        private fun localPlaceInstance(holder: Instance, featureDeclaration: FeatureDeclaration, held: Instance) {
+        private fun localPlaceInstance(
+            holder: Instance,
+            featureDeclaration: FeatureDeclaration,
+            held: Instance,
+        ) {
             val feature = redefinitionAwareReferenceResolver.resolve(holder.domain, featureDeclaration) as FeatureDeclaration
             holder.placeInSlot(feature, held)
         }

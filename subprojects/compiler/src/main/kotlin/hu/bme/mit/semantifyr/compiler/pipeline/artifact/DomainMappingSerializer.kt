@@ -17,18 +17,18 @@ import kotlinx.serialization.json.encodeToStream
 @Serializable
 data class DomainIdMapping(
     val name: String,
-    val ids: List<Int>
+    val ids: List<Int>,
 )
 
 @Serializable
 data class SerializableInstanceIdMapping(
     val name: String,
-    val id: Int
+    val id: Int,
 )
 
 @Serializable
 data class SerializableDomainMapping(
-    val instances: List<SerializableInstanceIdMapping>
+    val instances: List<SerializableInstanceIdMapping>,
 //    val domains: List<DomainIdMapping>,
 )
 
@@ -43,7 +43,8 @@ class DomainMappingSerializer @Inject constructor(
             instanceIdMapping.entries.map { (instance, id) ->
                 val reference = instanceReferenceProvider.getReference(instance)
                 SerializableInstanceIdMapping(
-                    expressionSerializer.serialize(reference), id,
+                    expressionSerializer.serialize(reference),
+                    id,
                 )
             },
         )
@@ -59,7 +60,6 @@ class DomainMappingSerializer @Inject constructor(
                 json.encodeToStream(data, it)
             }
         }
-
     }
 
 }

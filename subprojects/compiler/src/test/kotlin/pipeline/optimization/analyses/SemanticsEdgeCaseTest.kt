@@ -21,7 +21,6 @@ import org.eclipse.emf.ecore.EObject
 import org.junit.jupiter.api.Test
 
 class SemanticsEdgeCaseTest : AnalysisTestBase() {
-
     @Test
     fun `non-local variable declaration is NOT a reaching def for property reads`() {
         val (inlined, result) = runReachingDefinitions(
@@ -315,35 +314,40 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
     }
 
     private fun InlinedOxsts.assignmentsTo(variable: VariableDeclaration): List<AssignmentOperation> {
-        return eAllOfType<AssignmentOperation>().filter {
-            val ref = it.reference
-            ref is ElementReference && ref.element === variable
-        }.toList()
+        return eAllOfType<AssignmentOperation>()
+            .filter {
+                val ref = it.reference
+                ref is ElementReference && ref.element === variable
+            }.toList()
     }
 
     private fun InlinedOxsts.havocsOn(variable: VariableDeclaration): List<HavocOperation> {
-        return eAllOfType<HavocOperation>().filter {
-            val ref = it.reference
-            ref is ElementReference && ref.element === variable
-        }.toList()
+        return eAllOfType<HavocOperation>()
+            .filter {
+                val ref = it.reference
+                ref is ElementReference && ref.element === variable
+            }.toList()
     }
 
     private fun InlinedOxsts.readsOfInInit(variable: VariableDeclaration): List<Expression> {
         val init = eAllOfType<TransitionDeclaration>().first { it.kind == TransitionKind.INIT }
-        return init.eAllOfType<ElementReference>().filter {
-            it.element === variable
-        }.filterNot {
-            val parent = it.eContainer()
-            parent is AssignmentOperation && parent.reference === it
-        }.filterNot {
-            val parent = it.eContainer()
-            parent is HavocOperation && parent.reference === it
-        }.toList()
+        return init
+            .eAllOfType<ElementReference>()
+            .filter {
+                it.element === variable
+            }.filterNot {
+                val parent = it.eContainer()
+                parent is AssignmentOperation && parent.reference === it
+            }.filterNot {
+                val parent = it.eContainer()
+                parent is HavocOperation && parent.reference === it
+            }.toList()
     }
 
     private fun InlinedOxsts.findPropertyReadOf(variable: VariableDeclaration): Expression {
         val property = eAllOfType<PropertyDeclaration>().first()
-        return property.expression.eAllOfType<ElementReference>()
+        return property.expression
+            .eAllOfType<ElementReference>()
             .firstOrNull { it.element === variable }
             ?: error("Property does not reference '${variable.name}'")
     }

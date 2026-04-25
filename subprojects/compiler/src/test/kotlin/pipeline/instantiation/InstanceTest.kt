@@ -14,7 +14,6 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 
 class InstanceTest {
-
     private val tree: InstanceTree = mock()
 
     private fun domain(name: String): DomainDeclaration {

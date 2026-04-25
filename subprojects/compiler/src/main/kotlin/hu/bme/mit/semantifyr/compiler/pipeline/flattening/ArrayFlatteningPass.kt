@@ -144,7 +144,10 @@ class ArrayFlatteningPass @Inject constructor(
         return parent is AssignmentOperation && parent.reference === indexing
     }
 
-    private fun referencesArrayVariable(expression: EObject?, variable: VariableDeclaration): Boolean {
+    private fun referencesArrayVariable(
+        expression: EObject?,
+        variable: VariableDeclaration,
+    ): Boolean {
         return when (expression) {
             is ElementReference -> expression.element === variable
             is NavigationSuffixExpression -> expression.member === variable
@@ -238,7 +241,10 @@ class ArrayFlatteningPass @Inject constructor(
         EcoreUtil2.replace(assignment, elseOp)
     }
 
-    private fun buildEqGuard(indexExpr: Expression, k: Int): Expression {
+    private fun buildEqGuard(
+        indexExpr: Expression,
+        k: Int,
+    ): Expression {
         return OxstsFactory.createComparisonOperator().also {
             it.op = ComparisonOp.EQ
             it.left = indexExpr.copy()
@@ -246,7 +252,10 @@ class ArrayFlatteningPass @Inject constructor(
         }
     }
 
-    private fun slotRead(indexing: IndexingSuffixExpression, slot: VariableDeclaration): Expression {
+    private fun slotRead(
+        indexing: IndexingSuffixExpression,
+        slot: VariableDeclaration,
+    ): Expression {
         return when (val primary = indexing.primary) {
             is ElementReference -> OxstsFactory.createElementReference(slot)
             is NavigationSuffixExpression -> OxstsFactory.createNavigationSuffixExpression().also {
@@ -261,7 +270,10 @@ class ArrayFlatteningPass @Inject constructor(
         }
     }
 
-    private fun slotWrite(slot: VariableDeclaration, rhs: Expression): Operation {
+    private fun slotWrite(
+        slot: VariableDeclaration,
+        rhs: Expression,
+    ): Operation {
         return OxstsFactory.createAssignmentOperation().also {
             it.reference = OxstsFactory.createElementReference(slot)
             it.expression = rhs

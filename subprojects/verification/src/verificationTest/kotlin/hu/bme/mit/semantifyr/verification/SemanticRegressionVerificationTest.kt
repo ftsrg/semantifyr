@@ -40,5 +40,4 @@ class SemanticRegressionVerificationTest {
     suspend fun `Semantic regression verification cases should pass`(verificationCase: VerificationCase) {
         helper.checkVerificationCase(model, verificationCase, Portfolios.ThetaFull)
     }
-
 }

@@ -20,11 +20,17 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 
-inline fun <reified T : A, A> ExpressionEvaluator<A>.evaluateTypedOrNull(clazz: Class<T>, expression: Expression): T? {
+inline fun <reified T : A, A> ExpressionEvaluator<A>.evaluateTypedOrNull(
+    clazz: Class<T>,
+    expression: Expression,
+): T? {
     return evaluate(expression) as? T
 }
 
-inline fun <reified T : A, A> ExpressionEvaluator<A>.tryEvaluateTypedOrNull(clazz: Class<T>, expression: Expression): T? {
+inline fun <reified T : A, A> ExpressionEvaluator<A>.tryEvaluateTypedOrNull(
+    clazz: Class<T>,
+    expression: Expression,
+): T? {
     return try {
         evaluate(expression) as? T
     } catch (_: EvaluationFailureException) {
@@ -32,7 +38,10 @@ inline fun <reified T : A, A> ExpressionEvaluator<A>.tryEvaluateTypedOrNull(claz
     }
 }
 
-inline fun <reified T : A, A> ExpressionEvaluator<A>.evaluateTyped(clazz: Class<T>, expression: Expression): T {
+inline fun <reified T : A, A> ExpressionEvaluator<A>.evaluateTyped(
+    clazz: Class<T>,
+    expression: Expression,
+): T {
     return evaluateTypedOrNull(clazz, expression) ?: sourceError(expression, "Expression does not evaluate to type ${T::class.qualifiedName}")
 }
 

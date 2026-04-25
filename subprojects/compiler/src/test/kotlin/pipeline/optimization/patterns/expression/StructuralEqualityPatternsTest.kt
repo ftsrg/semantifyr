@@ -11,7 +11,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.
 import org.junit.jupiter.api.Test
 
 class StructuralEqualityPatternsTest : PatternTestBase() {
-
     @Test
     fun `subtract of equal pure operands collapses to zero`() = assertPatternTransforms(
         pattern = SelfArithmeticPattern(),

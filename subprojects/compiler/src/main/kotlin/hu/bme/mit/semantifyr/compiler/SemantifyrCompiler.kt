@@ -60,7 +60,6 @@ class SemantifyrCompiler(
     }
 
     override fun close() {
-
     }
 
 }

@@ -32,7 +32,6 @@ import java.nio.file.Path
 
 @InjectWithOxsts
 class CompilationTests {
-
     @TempDir
     lateinit var tempDir: Path
 
@@ -1064,7 +1063,11 @@ class CompilationTests {
      * rejection. Useful for pinning that the compiler says "nope" to a given
      * language feature, so regressions that silently accept it are caught.
      */
-    private fun assertCompilationFails(classToCompile: String, source: String, messageContains: String = "") {
+    private fun assertCompilationFails(
+        classToCompile: String,
+        source: String,
+        messageContains: String = "",
+    ) {
         val parsed = try {
             parseHelper.parse(source.trimIndent())
         } catch (e: Exception) {
@@ -1082,7 +1085,8 @@ class CompilationTests {
             return
         }
 
-        val classDecl = EcoreUtil2.eAllOfType(parsed.oxstsPackage, ClassDeclaration::class.java)
+        val classDecl = EcoreUtil2
+            .eAllOfType(parsed.oxstsPackage, ClassDeclaration::class.java)
             .singleOrNull { it.name == classToCompile }
             ?: error("Class '$classToCompile' not found in the test model")
 
@@ -1106,7 +1110,10 @@ class CompilationTests {
         }
     }
 
-    private fun assertCompiles(classToCompile: String, source: String) {
+    private fun assertCompiles(
+        classToCompile: String,
+        source: String,
+    ) {
         val parsed = parseHelper.parse(source.trimIndent())
         if (parsed.resourceErrors.isNotEmpty()) {
             val formatted = parsed.resourceErrors.joinToString("\n") {
@@ -1115,7 +1122,8 @@ class CompilationTests {
             error("Test fixture failed to parse:\n$formatted")
         }
 
-        val classDecl = EcoreUtil2.eAllOfType(parsed.oxstsPackage, ClassDeclaration::class.java)
+        val classDecl = EcoreUtil2
+            .eAllOfType(parsed.oxstsPackage, ClassDeclaration::class.java)
             .singleOrNull { it.name == classToCompile }
             ?: error("Class '$classToCompile' not found in the test model")
 

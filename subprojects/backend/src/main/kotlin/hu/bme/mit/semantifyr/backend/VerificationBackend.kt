@@ -92,7 +92,7 @@ data class VerificationResult(
 }
 
 enum class VerificationVerdict(
-    val isDecisive: Boolean
+    val isDecisive: Boolean,
 ) {
     Passed(true),
     Failed(true),
@@ -103,7 +103,14 @@ enum class VerificationVerdict(
 abstract class VerificationBackend<T : Any> {
     abstract val id: String
 
-    abstract suspend fun verify(config: T, request: VerificationRequest, environment: ExecutionEnvironment): VerificationResult
+    abstract suspend fun verify(
+        config: T,
+        request: VerificationRequest,
+        environment: ExecutionEnvironment,
+    ): VerificationResult
 
-    abstract fun probeAvailability(config: T, environment: ExecutionEnvironment = ExecutionEnvironment.Empty): AvailabilityReport
+    abstract fun probeAvailability(
+        config: T,
+        environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
+    ): AvailabilityReport
 }

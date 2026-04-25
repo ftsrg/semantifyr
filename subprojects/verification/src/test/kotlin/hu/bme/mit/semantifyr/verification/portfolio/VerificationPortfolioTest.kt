@@ -228,5 +228,4 @@ class VerificationPortfolioTest {
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(messages).anyMatch { it.startsWith("result 1/2: ") }
     }
-
 }

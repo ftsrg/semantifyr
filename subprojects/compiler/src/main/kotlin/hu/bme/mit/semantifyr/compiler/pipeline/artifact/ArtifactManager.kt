@@ -10,16 +10,16 @@ import com.google.inject.Inject
 import org.eclipse.emf.common.util.URI
 import java.io.File
 
-private const val pipeline = "pipeline"
-private const val outputModel = "inlined.oxsts"
-private const val instantiatedModel = "$pipeline/instantiated.oxsts"
-private const val inlinedModel = "$pipeline/inlined.oxsts"
-private const val flattenedModel = "$pipeline/flattened.oxsts"
-private const val compilationSteps = "$pipeline/steps"
-private const val witness = "witness.oxsts"
-private const val trace = "trace.json"
-private const val mapping = "mapping.json"
-private const val report = "report.json"
+private const val PIPELINE = "pipeline"
+private const val OUTPUT_MODEL = "inlined.oxsts"
+private const val INSTANTIATED_MODEL = "$PIPELINE/instantiated.oxsts"
+private const val INLINED_MODEL = "$PIPELINE/inlined.oxsts"
+private const val FLATTENED_MODEL = "$PIPELINE/flattened.oxsts"
+private const val COMPILATION_STEPS = "$PIPELINE/steps"
+private const val WITNESS = "witness.oxsts"
+private const val TRACE = "trace.json"
+private const val MAPPING = "mapping.json"
+private const val REPORT = "report.json"
 
 class ArtifactManager @Inject constructor(
     private val config: ArtifactConfig,
@@ -27,15 +27,15 @@ class ArtifactManager @Inject constructor(
 
     fun pathOf(artifactKind: ArtifactKind): String {
         return when (artifactKind) {
-            ArtifactKind.OutputModel -> outputModel
-            ArtifactKind.InstantiatedModel -> instantiatedModel
-            ArtifactKind.InlinedModel -> inlinedModel
-            ArtifactKind.FlattenedModel -> flattenedModel
-            ArtifactKind.CompilationStep -> compilationSteps
-            ArtifactKind.Witness -> witness
-            ArtifactKind.Trace -> trace
-            ArtifactKind.Mapping -> mapping
-            ArtifactKind.Report -> report
+            ArtifactKind.OutputModel -> OUTPUT_MODEL
+            ArtifactKind.InstantiatedModel -> INSTANTIATED_MODEL
+            ArtifactKind.InlinedModel -> INLINED_MODEL
+            ArtifactKind.FlattenedModel -> FLATTENED_MODEL
+            ArtifactKind.CompilationStep -> COMPILATION_STEPS
+            ArtifactKind.Witness -> WITNESS
+            ArtifactKind.Trace -> TRACE
+            ArtifactKind.Mapping -> MAPPING
+            ArtifactKind.Report -> REPORT
         }
     }
 

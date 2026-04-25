@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes
 import org.junit.jupiter.api.Test
 
 class VariableLivenessPassTest : PassTestBase() {
-
     @Test
     fun `unread variable and its assignments are removed`() = assertPassTransforms(
         source = """

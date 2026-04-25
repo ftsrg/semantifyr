@@ -22,7 +22,6 @@ import java.io.Writer
 import java.nio.file.Path
 
 class CompilationArtifactManagerTest {
-
     @TempDir
     lateinit var tempDir: Path
 
@@ -41,6 +40,7 @@ class CompilationArtifactManagerTest {
         val artifactManager: ArtifactManager = mock()
         whenever(artifactManager.withFile(any(), any())).thenAnswer {
             val kind = it.arguments[0] as ArtifactKind
+
             @Suppress("UNCHECKED_CAST")
             val block = it.arguments[1] as (File) -> Unit
             if (config.isEnabled(kind)) {

@@ -11,7 +11,6 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
 class WorklistTest {
-
     @Test
     fun `new worklist is empty`() {
         val worklist = Worklist<String>()

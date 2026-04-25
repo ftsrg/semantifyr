@@ -21,7 +21,6 @@ import org.eclipse.emf.ecore.EObject
 import org.junit.jupiter.api.Test
 
 class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
-
     @Test
     fun `property read after a single init write sees exactly that write`() {
         val (inlined, result) = runReachingDefinitions(
@@ -172,7 +171,7 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val defs = result.defsOf[propertyRead]!!
 
         val writes = inlined.assignmentsTo(activeState)
-        assertThat(writes).hasSize(3)  // init + two inside the branch
+        assertThat(writes).hasSize(3) // init + two inside the branch
         for (write in writes) {
             assertThat(defs)
                 .`as`("property read should see write $write")
@@ -186,23 +185,26 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
     }
 
     private fun InlinedOxsts.assignmentsTo(variable: VariableDeclaration): List<AssignmentOperation> {
-        return eAllOfType<AssignmentOperation>().filter {
-            val ref = it.reference
-            ref is ElementReference && ref.element === variable
-        }.toList()
+        return eAllOfType<AssignmentOperation>()
+            .filter {
+                val ref = it.reference
+                ref is ElementReference && ref.element === variable
+            }.toList()
     }
 
     private fun InlinedOxsts.havocsOn(variable: VariableDeclaration): List<HavocOperation> {
-        return eAllOfType<HavocOperation>().filter {
-            val ref = it.reference
-            ref is ElementReference && ref.element === variable
-        }.toList()
+        return eAllOfType<HavocOperation>()
+            .filter {
+                val ref = it.reference
+                ref is ElementReference && ref.element === variable
+            }.toList()
     }
 
     private fun InlinedOxsts.assumesReading(variable: VariableDeclaration): List<AssumptionOperation> {
-        return eAllOfType<AssumptionOperation>().filter { assume ->
-            assume.expression.eAllOfType<ElementReference>().any { it.element === variable }
-        }.toList()
+        return eAllOfType<AssumptionOperation>()
+            .filter { assume ->
+                assume.expression.eAllOfType<ElementReference>().any { it.element === variable }
+            }.toList()
     }
 
     private fun InlinedOxsts.findPropertyReadOf(variable: VariableDeclaration): Expression {

@@ -10,7 +10,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ReachingDef
 import org.junit.jupiter.api.Test
 
 class DeadStoreEliminationPassTest : PassTestBase() {
-
     @Test
     fun `write that reaches the property read is kept`() = assertPassTransforms(
         source = """

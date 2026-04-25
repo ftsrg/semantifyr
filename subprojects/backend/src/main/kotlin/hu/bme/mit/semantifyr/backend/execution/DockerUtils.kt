@@ -54,7 +54,6 @@ class StreamLoggerCallback(
     private val logStream: OutputStream,
     private val errorStream: OutputStream,
 ) : ResultCallback<Frame> {
-
     private val job = CompletableDeferred<Unit>()
 
     override fun onNext(item: Frame) {
