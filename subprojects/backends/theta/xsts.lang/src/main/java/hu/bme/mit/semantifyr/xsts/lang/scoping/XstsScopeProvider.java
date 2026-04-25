@@ -6,6 +6,4 @@
 
 package hu.bme.mit.semantifyr.xsts.lang.scoping;
 
-public class XstsScopeProvider extends AbstractXstsScopeProvider {
-
-}
+public class XstsScopeProvider extends AbstractXstsScopeProvider {}

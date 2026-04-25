@@ -12,7 +12,6 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 import java.io.File
 
 sealed interface ThetaExecutorSpec {
-
     object Auto : ThetaExecutorSpec
 
     object Shell : ThetaExecutorSpec
@@ -38,7 +37,6 @@ class ThetaExecutionSpecification(
 )
 
 interface ThetaXstsExecutor {
-
     fun isAvailable(): Boolean
 
     suspend fun execute(thetaExecutionSpecification: ThetaExecutionSpecification): ThetaExecutionResult

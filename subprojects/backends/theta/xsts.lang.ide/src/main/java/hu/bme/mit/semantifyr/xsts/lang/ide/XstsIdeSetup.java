@@ -10,21 +10,18 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import hu.bme.mit.semantifyr.xsts.lang.XstsRuntimeModule;
 import hu.bme.mit.semantifyr.xsts.lang.XstsStandaloneSetup;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.concurrent.ExecutionException;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.xtext.ide.server.LanguageServerImpl;
 import org.eclipse.xtext.ide.server.ServerModule;
 import org.eclipse.xtext.util.Modules2;
 
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.concurrent.ExecutionException;
-
-/**
- * Initialization support for running Xtext languages as language servers.
- */
+/** Initialization support for running Xtext languages as language servers. */
 public class XstsIdeSetup extends XstsStandaloneSetup {
 
     @Override
@@ -73,5 +70,4 @@ public class XstsIdeSetup extends XstsStandaloneSetup {
             }
         }
     }
-
 }

@@ -6,9 +6,5 @@
 
 package hu.bme.mit.semantifyr.xsts.lang.ide;
 
-/**
- * Use this class to register ide components.
- */
-public class XstsIdeModule extends AbstractXstsIdeModule {
-
-}
+/** Use this class to register ide components. */
+public class XstsIdeModule extends AbstractXstsIdeModule {}

@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.xsts.lang;
 
-
 import com.google.inject.Binder;
 import com.google.inject.name.Names;
 import hu.bme.mit.semantifyr.xsts.lang.resource.XstsResourceDescriptionManager;
@@ -18,7 +17,8 @@ import org.eclipse.xtext.scoping.IScopeProvider;
 import org.eclipse.xtext.scoping.impl.AbstractDeclarativeScopeProvider;
 
 /**
- * Use this class to register components to be used at runtime / without the Equinox extension registry.
+ * Use this class to register components to be used at runtime / without the Equinox extension
+ * registry.
  */
 public class XstsRuntimeModule extends AbstractXstsRuntimeModule {
 
@@ -29,15 +29,14 @@ public class XstsRuntimeModule extends AbstractXstsRuntimeModule {
 
     @Override
     public void configureIScopeProviderDelegate(Binder binder) {
-        binder.bind(IScopeProvider.class).annotatedWith(Names.named(AbstractDeclarativeScopeProvider.NAMED_DELEGATE))
+        binder.bind(IScopeProvider.class)
+                .annotatedWith(Names.named(AbstractDeclarativeScopeProvider.NAMED_DELEGATE))
                 .to(XstsLocalScopeProvider.class);
     }
-
 
     // Method name follows Xtext convention.
     @SuppressWarnings("squid:S100")
     public Class<? extends IResourceDescription.Manager> bindIResourceDescription$Manager() {
         return XstsResourceDescriptionManager.class;
     }
-
 }

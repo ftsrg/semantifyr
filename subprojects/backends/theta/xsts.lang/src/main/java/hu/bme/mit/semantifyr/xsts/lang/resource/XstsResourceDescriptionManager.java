@@ -14,8 +14,8 @@ import org.eclipse.xtext.resource.persistence.StorageAwareResourceDescriptionMan
 public class XstsResourceDescriptionManager extends StorageAwareResourceDescriptionManager {
 
     @Override
-    protected IResourceDescription internalGetResourceDescription(Resource resource, IDefaultResourceDescriptionStrategy strategy) {
+    protected IResourceDescription internalGetResourceDescription(
+            Resource resource, IDefaultResourceDescriptionStrategy strategy) {
         return new XstsResourceDescription(resource, strategy, getCache());
     }
-
 }

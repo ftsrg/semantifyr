@@ -89,7 +89,7 @@ dependencies {
     implementation(libs.docker.java.core)
     implementation(libs.docker.java.transport)
 
-    thetaCliJarClasspath("hu.bme.mit.ftsrg.theta:theta-xsts-cli:${thetaXstsCliVersion}@jar")
+    thetaCliJarClasspath("hu.bme.mit.ftsrg.theta:theta-xsts-cli:$thetaXstsCliVersion@jar")
 
     // Z3 — available on all platforms and architectures
     thetaNativeLibs("org.sosy-lab:javasmt-solver-z3:4.14.0:libz3-$currentArch@$nativeExt")
@@ -112,8 +112,8 @@ dependencies {
     }
 
     // Z3 legacy — a custom Z3 4.5.0 fork with renamed library symbols, committed to the theta repo
-    thetaZ3LegacyLibs("hu.bme.mit.ftsrg.theta.lib:libz3legacy:${thetaXstsCliVersion}@$nativeExt")
-    thetaZ3LegacyLibs("hu.bme.mit.ftsrg.theta.lib:libz3javalegacy:${thetaXstsCliVersion}@$nativeExt")
+    thetaZ3LegacyLibs("hu.bme.mit.ftsrg.theta.lib:libz3legacy:$thetaXstsCliVersion@$nativeExt")
+    thetaZ3LegacyLibs("hu.bme.mit.ftsrg.theta.lib:libz3javalegacy:$thetaXstsCliVersion@$nativeExt")
 }
 
 val prepareThetaXstsCli by tasks.registering(Sync::class) {
