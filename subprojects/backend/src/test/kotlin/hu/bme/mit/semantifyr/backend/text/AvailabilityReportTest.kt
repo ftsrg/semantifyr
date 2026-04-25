@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.verification
+package hu.bme.mit.semantifyr.backend.text
 
 import hu.bme.mit.semantifyr.backend.AvailabilityReport
 import org.assertj.core.api.Assertions.assertThat
@@ -28,11 +28,11 @@ class AvailabilityReportTest {
     fun `Unavailable is not usable and carries a reason and hints`() {
         val report = AvailabilityReport.Unavailable(
             reason = "theta-cli not on PATH",
-            hints = listOf("brew install theta", "set PATH"),
+            hints = listOf("install theta", "set PATH"),
         )
         assertThat(report.isUsable).isFalse
         assertThat(report.reason).isEqualTo("theta-cli not on PATH")
-        assertThat(report.hints).containsExactly("brew install theta", "set PATH")
+        assertThat(report.hints).containsExactly("install theta", "set PATH")
     }
 
     @Test
