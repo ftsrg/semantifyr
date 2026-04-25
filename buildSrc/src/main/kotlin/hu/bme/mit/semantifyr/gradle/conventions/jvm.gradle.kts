@@ -13,6 +13,7 @@ plugins {
     `java-library`
     `java-test-fixtures`
     jacoco
+    id("hu.bme.mit.semantifyr.gradle.conventions.formatting")
 }
 
 repositories {

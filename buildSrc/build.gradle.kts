@@ -18,4 +18,5 @@ dependencies {
     implementation(files(libs.javaClass.superclass.protectionDomain.codeSource.location))
 
     implementation(libs.plugin.gradle.node)
+    implementation(libs.plugin.spotless)
 }

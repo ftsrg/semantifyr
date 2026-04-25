@@ -24,6 +24,9 @@ guice = "7.0.0"
 lsp4j = "0.24.0"
 node = "7.1.0"
 bmuschkoDocker = "9.4.0"
+spotless = "8.4.0"
+ktlint = "1.8.0"
+googleJavaFormat = "1.35.0"
 ktor = "3.4.2"
 micrometerPrometheus = "1.13.6"
 
@@ -80,6 +83,7 @@ ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "
 ktor-client-websockets = { group = "io.ktor", name = "ktor-client-websockets", version.ref = "ktor" }
 ktor-server-test-host = { group = "io.ktor", name = "ktor-server-test-host", version.ref = "ktor" }
 plugin-gradle-node = { group = "com.github.node-gradle", name = "gradle-node-plugin", version.ref = "node" }
+plugin-spotless = { group = "com.diffplug.spotless", name = "spotless-plugin-gradle", version.ref = "spotless" }
 
 [bundles]
 junit-fixtures = ["junit-api", "junit-params"]
@@ -109,3 +113,4 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 gradle-node = { id = "com.github.node-gradle.node", version.ref = "node" }
 bmuschko-docker = { id = "com.bmuschko.docker-remote-api", version.ref = "bmuschkoDocker" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
