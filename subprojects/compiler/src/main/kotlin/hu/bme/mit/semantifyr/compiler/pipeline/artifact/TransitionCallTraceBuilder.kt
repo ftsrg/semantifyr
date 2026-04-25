@@ -7,7 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.artifact
 
 import com.google.inject.Inject
-import com.google.inject.Singleton
+import hu.bme.mit.semantifyr.compiler.scopes.CompilationScoped
 import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
@@ -31,7 +31,7 @@ class TransitionCallTrace(
     val arguments: List<ArgumentTrace>,
 )
 
-@Singleton
+@CompilationScoped
 class TransitionCallTraceBuilder @Inject constructor(
     private val compileTimeExpressionEvaluatorProvider: CompileTimeExpressionEvaluatorProvider,
 ) {

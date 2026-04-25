@@ -19,6 +19,7 @@ dependencies {
     api(libs.guice)
     api(libs.guice.extensions.assistedinject)
 
+    api(project(":guice-common"))
     api(project(":oxsts.lang"))
 
     implementation(project(":logging"))

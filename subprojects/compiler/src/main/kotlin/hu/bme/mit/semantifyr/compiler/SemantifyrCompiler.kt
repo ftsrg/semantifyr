@@ -7,13 +7,13 @@
 package hu.bme.mit.semantifyr.compiler
 
 import com.google.inject.Injector
-import hu.bme.mit.semantifyr.compiler.pipeline.CompilationConfigModule
 import hu.bme.mit.semantifyr.compiler.pipeline.CompilationModule
 import hu.bme.mit.semantifyr.compiler.pipeline.CompilationPipeline
 import hu.bme.mit.semantifyr.compiler.pipeline.InlinedOxstsModelCreator
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
+import hu.bme.mit.semantifyr.compiler.scopes.withCompilationScopeBlocking
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
@@ -34,11 +34,8 @@ class SemantifyrCompiler(
 
     private val logger by loggerFactory()
 
-    /**
-     * Injector that contains the configuration options
-     */
     private val sharedInjector = injector.createChildInjector(
-        CompilationConfigModule(artifactConfig, optimizationConfig),
+        CompilationModule(artifactConfig, optimizationConfig),
     )
 
     init {
@@ -56,10 +53,10 @@ class SemantifyrCompiler(
 
     fun compile(inlinedOxsts: InlinedOxsts): FlattenedCompilationContext {
         logger.info { "Compiling inlined oxsts of '${inlinedOxsts.classDeclaration.name}'" }
-        val pipeline = sharedInjector
-            .createChildInjector(CompilationModule(inlinedOxsts))
-            .getInstance(CompilationPipeline::class.java)
-        return pipeline.compileFlattened(inlinedOxsts)
+        return withCompilationScopeBlocking(inlinedOxsts) {
+            val pipeline = sharedInjector.getInstance(CompilationPipeline::class.java)
+            pipeline.compileFlattened(inlinedOxsts)
+        }
     }
 
     override fun close() {
