@@ -26,7 +26,7 @@ node = "7.1.0"
 bmuschkoDocker = "9.4.0"
 spotless = "8.4.0"
 ktlint = "1.8.0"
-googleJavaFormat = "1.35.0"
+palantirJavaFormat = "2.90.0"
 ktor = "3.4.2"
 micrometerPrometheus = "1.13.6"
 

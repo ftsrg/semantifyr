@@ -55,11 +55,6 @@ class Anything {
      * The base init transition.
      */
     init { }
-
-    /*
-     * The base havoc transition.
-     */
-    havoc { }
 }
 
 /*
