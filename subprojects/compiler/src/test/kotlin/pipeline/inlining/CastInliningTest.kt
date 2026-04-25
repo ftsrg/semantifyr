@@ -14,11 +14,10 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
-class CastInliningTest : PackageExpanderTestBase() {
-
+class CastInliningTest : InliningTestBase() {
     @Test
     fun `cast around a temporal operator at the property level is removed during inlining`() {
-        val prepared = prepare(
+        prepare(
             "Case",
             """
                 package inlining::tests::cast_in_property
@@ -29,27 +28,25 @@ class CastInliningTest : PackageExpanderTestBase() {
                     prop { return (EF x == 5) as bool }
                 }
             """,
-        )
-        val inlined = inlineAll(prepared).inlinedOxsts
-        val propertyExpression = inlined.property.expression
-        assertThat(propertyExpression)
-            .`as`("property expression should be a bare temporal operator, not a cast")
-            .isInstanceOf(TemporalOperator::class.java)
-        // No leftover cast anywhere in the property tree.
-        assertThat(inlined.property.eAllOfType<CastExpression>().toList())
-            .`as`("every cast should have been removed by the inliner")
-            .isEmpty()
-        // Only ONE temporal operator: the original EF. If the
-        // ensureTemporalExpressions step injected an AG around a cast we'd
-        // see two operators here.
-        val temporalOperators = inlined.property.eAllOfType<TemporalOperator>().toList()
-        assertThat(temporalOperators).hasSize(1)
-        assertThat(temporalOperators.single()).isInstanceOf(EF::class.java)
+        ) {
+            val inlined = inlineAll(it).inlinedOxsts
+            val propertyExpression = inlined.property.expression
+            assertThat(propertyExpression)
+                .`as`("property expression should be a bare temporal operator, not a cast")
+                .isInstanceOf(TemporalOperator::class.java)
+            // No leftover cast anywhere in the property tree.
+            assertThat(inlined.property.eAllOfType<CastExpression>().toList())
+                .`as`("every cast should have been removed by the inliner")
+                .isEmpty()
+            val temporalOperators = inlined.property.eAllOfType<TemporalOperator>().toList()
+            assertThat(temporalOperators).hasSize(1)
+            assertThat(temporalOperators.single()).isInstanceOf(EF::class.java)
+        }
     }
 
     @Test
     fun `cast on a scalar that the backend can evaluate is removed`() {
-        val prepared = prepare(
+        prepare(
             "Case",
             """
                 package inlining::tests::cast_scalar
@@ -63,16 +60,17 @@ class CastInliningTest : PackageExpanderTestBase() {
                     prop { return EF true }
                 }
             """,
-        )
-        val inlined = inlineAll(prepared).inlinedOxsts
-        assertThat(inlined.eAllOfType<CastExpression>().toList())
-            .`as`("every cast should have been stripped")
-            .isEmpty()
+        ) {
+            val inlined = inlineAll(it).inlinedOxsts
+            assertThat(inlined.eAllOfType<CastExpression>().toList())
+                .`as`("every cast should have been stripped")
+                .isEmpty()
+        }
     }
 
     @Test
     fun `widening cast is rejected at inline time`() {
-        val prepared = prepare(
+        prepare(
             "Case",
             """
                 package inlining::tests::widening_cast
@@ -86,15 +84,16 @@ class CastInliningTest : PackageExpanderTestBase() {
                     prop { return EF true }
                 }
             """,
-        )
-        assertThatThrownBy {
-            inlineAll(prepared)
-        }.hasMessageContaining("widen")
+        ) {
+            assertThatThrownBy {
+                inlineAll(it)
+            }.hasMessageContaining("widen")
+        }
     }
 
     @Test
     fun `narrowing cast that respects the lattice is accepted`() {
-        val prepared = prepare(
+        prepare(
             "Case",
             """
                 package inlining::tests::narrowing_cast
@@ -108,7 +107,8 @@ class CastInliningTest : PackageExpanderTestBase() {
                     prop { return EF true }
                 }
             """,
-        )
-        inlineAll(prepared)
+        ) {
+            inlineAll(it)
+        }
     }
 }

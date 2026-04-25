@@ -12,8 +12,7 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.eclipse.xtext.EcoreUtil2
 import org.junit.jupiter.api.Test
 
-class InlineOperationExpanderTest : ExpanderTestBase() {
-
+class InlineOperationExpanderTest : InliningTestBase() {
     @Test
     fun `inline if with a true static guard returns the then branch`() = assertFirstExpansion(
         input = """
@@ -218,7 +217,7 @@ class InlineOperationExpanderTest : ExpanderTestBase() {
 
     @Test
     fun `inline for over an unbounded range is rejected with a sourceError`() {
-        val fixture = prepare(
+        prepare(
             """
                 inlined oxsts of semantifyr::Anything
                 var total : int := 0
@@ -230,31 +229,34 @@ class InlineOperationExpanderTest : ExpanderTestBase() {
                 }
                 prop { AG true }
             """,
-        )
-        val expander = fixture.compilationInjector.getInstance(InlineOperationExpander::class.java)
-        val firstInline = firstInlineIn(fixture)
+        ) {
+            val expander = it.compilationInjector.getInstance(InlineOperationExpander::class.java)
+            val firstInline = firstInlineIn(it)
 
-        assertThatThrownBy { expander.expand(firstInline, fixture.rootInstance) { 0 } }
-            .isInstanceOf(IllegalStateException::class.java)
-            .hasMessageContaining("bounded range")
+            assertThatThrownBy { expander.expand(firstInline, it.rootInstance) { 0 } }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessageContaining("bounded range")
+        }
     }
 
-    private fun assertFirstExpansion(input: String, expected: String) {
-        val fixture = prepare(input)
-        val firstInline = firstInlineIn(fixture)
+    private fun assertFirstExpansion(
+        input: String,
+        expected: String,
+    ) {
+        prepare(input) {
+            val firstInline = firstInlineIn(it)
 
-        val expander = fixture.compilationInjector.getInstance(InlineOperationExpander::class.java)
-        var counter = 0
-        val expanded = expander.expand(firstInline, fixture.rootInstance) { counter++ }
-        EcoreUtil2.replace(firstInline, expanded)
+            val expander = it.compilationInjector.getInstance(InlineOperationExpander::class.java)
+            var counter = 0
+            val expanded = expander.expand(firstInline, it.rootInstance) { counter++ }
+            EcoreUtil2.replace(firstInline, expanded)
 
-        assertSerializedModelEquals(fixture.inlinedOxsts, expected)
+            assertSerializedModelEquals(it.inlinedOxsts, expected)
+        }
     }
 
     private fun firstInlineIn(fixture: Prepared): InlineOperation {
-        val main = fixture.inlinedOxsts.mainTransition
-            ?: error("Input fixture must have a main transition")
-        return main.eAllOfType<InlineOperation>().firstOrNull()
-            ?: error("Input fixture must contain at least one InlineOperation in its main transition")
+        val main = fixture.inlinedOxsts.mainTransition ?: error("Input fixture must have a main transition")
+        return main.eAllOfType<InlineOperation>().firstOrNull() ?: error("Input fixture must contain at least one InlineOperation in its main transition")
     }
 }

@@ -12,11 +12,10 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-class PackageInliningExpressionTest : PackageExpanderTestBase() {
-
+class PackageInliningExpressionTest : InliningTestBase() {
     @Test
     fun `self-call to a named property via bare call`() {
-        val prepared = prepare(
+        prepare(
             "Host",
             """
                 package inlining::tests::expr_self
@@ -28,15 +27,16 @@ class PackageInliningExpressionTest : PackageExpanderTestBase() {
                     redefine tran { x := x + 1 }
                 }
             """,
-        )
-        inlineAll(prepared)
-        assertNoPropertyCallsInProperty(prepared)
-        assertPropertyContains(prepared, "> 0")
+        ) {
+            inlineAll(it)
+            assertNoPropertyCallsInProperty(it)
+            assertPropertyContains(it, "> 0")
+        }
     }
 
     @Test
     fun `self-call to a named property via self navigation`() {
-        val prepared = prepare(
+        prepare(
             "Host",
             """
                 package inlining::tests::expr_self_nav
@@ -48,15 +48,16 @@ class PackageInliningExpressionTest : PackageExpanderTestBase() {
                     redefine tran { x := x + 1 }
                 }
             """,
-        )
-        inlineAll(prepared)
-        assertNoPropertyCallsInProperty(prepared)
-        assertPropertyContains(prepared, "> 0")
+        ) {
+            inlineAll(it)
+            assertNoPropertyCallsInProperty(it)
+            assertPropertyContains(it, "> 0")
+        }
     }
 
     @Test
     fun `single-level feature navigation property call`() {
-        val prepared = prepare(
+        prepare(
             "Host",
             """
                 package inlining::tests::expr_single_nav
@@ -71,14 +72,15 @@ class PackageInliningExpressionTest : PackageExpanderTestBase() {
                     prop { return EF w.isDone() }
                 }
             """,
-        )
-        inlineAll(prepared)
-        assertNoPropertyCallsInProperty(prepared)
+        ) {
+            inlineAll(it)
+            assertNoPropertyCallsInProperty(it)
+        }
     }
 
     @Test
     fun `multi-level feature navigation property call`() {
-        val prepared = prepare(
+        prepare(
             "Host",
             """
                 package inlining::tests::expr_multi_nav
@@ -96,14 +98,15 @@ class PackageInliningExpressionTest : PackageExpanderTestBase() {
                     prop { return EF mid.leaf.isBig() }
                 }
             """,
-        )
-        inlineAll(prepared)
-        assertNoPropertyCallsInProperty(prepared)
+        ) {
+            inlineAll(it)
+            assertNoPropertyCallsInProperty(it)
+        }
     }
 
     @Test
     fun `polymorphic dispatch via redefining subclass property`() {
-        val prepared = prepare(
+        prepare(
             "Testing",
             """
                 package inlining::tests::expr_poly
@@ -122,17 +125,16 @@ class PackageInliningExpressionTest : PackageExpanderTestBase() {
                     prop { return EF b.marker() }
                 }
             """,
-        )
-        inlineAll(prepared)
-        assertNoPropertyCallsInProperty(prepared)
-        // Child's body (`x == 10`) should be in the inlined property, not
-        // Base's (`false`).
-        assertPropertyContains(prepared, "== 10")
+        ) {
+            inlineAll(it)
+            assertNoPropertyCallsInProperty(it)
+            assertPropertyContains(it, "== 10")
+        }
     }
 
     @Test
     fun `multi-level inheritance redefinition picks the leaf property`() {
-        val prepared = prepare(
+        prepare(
             "Testing",
             """
                 package inlining::tests::expr_multi_inheritance
@@ -155,15 +157,16 @@ class PackageInliningExpressionTest : PackageExpanderTestBase() {
                     prop { return EF b.marker() }
                 }
             """,
-        )
-        inlineAll(prepared)
-        assertNoPropertyCallsInProperty(prepared)
-        assertPropertyContains(prepared, "== 2")
+        ) {
+            inlineAll(it)
+            assertNoPropertyCallsInProperty(it)
+            assertPropertyContains(it, "== 2")
+        }
     }
 
     @Test
     fun `variable dispatch in a property expression expands to an if-then-else chain`() {
-        val prepared = prepare(
+        prepare(
             "Dispatcher",
             """
                 package inlining::tests::expr_variable_dispatch
@@ -184,26 +187,30 @@ class PackageInliningExpressionTest : PackageExpanderTestBase() {
                     prop { return EF current.isDone() }
                 }
             """,
-        )
-        inlineAll(prepared)
-        assertNoPropertyCallsInProperty(prepared)
-        // The expanded property must include equality checks against each
-        // candidate, plus both candidates' bodies.
-        val propertyText = serializer.serializeFormatted(prepared.inlinedOxsts.property)
-        assertThat(propertyText)
-            .`as`("dispatch should produce an if-chain touching both candidates")
-            .contains("a")
-            .contains("b")
+        ) {
+            inlineAll(it)
+            assertNoPropertyCallsInProperty(it)
+            val propertyText = serializer.serializeFormatted(it.inlinedOxsts.property)
+            assertThat(propertyText)
+                .`as`("dispatch should produce an if-chain touching both candidates")
+                .contains("a")
+                .contains("b")
+        }
     }
 
     private fun assertNoPropertyCallsInProperty(prepared: Prepared) {
-        val remaining = prepared.inlinedOxsts.property.eAllOfType<CallSuffixExpression>().toList()
+        val remaining = prepared.inlinedOxsts.property
+            .eAllOfType<CallSuffixExpression>()
+            .toList()
         assertThat(remaining)
             .`as`("expression inliner should eliminate every property CallSuffixExpression from the property")
             .isEmpty()
     }
 
-    private fun assertPropertyContains(prepared: Prepared, substring: String) {
+    private fun assertPropertyContains(
+        prepared: Prepared,
+        substring: String,
+    ) {
         val propertyText = serializer.serializeFormatted(prepared.inlinedOxsts.property)
         assertThat(propertyText)
             .`as`("inlined property should contain '$substring'")
