@@ -7,6 +7,7 @@ package semantifyr::verification::lang::temporal
 
 // Target value is reachable from the initial state.
 @VerificationCase
+@Tag("expect-pass")
 class EFReach {
     var x: int := 0
 
@@ -22,6 +23,7 @@ class EFReach {
 
 // Dual: EF does not lie - x cannot exceed the cap in the transition.
 @VerificationCase
+@Tag("expect-pass")
 class EFBoundedByGuard {
     var x: int := 0
 
@@ -39,6 +41,7 @@ class EFBoundedByGuard {
 
 // Flip-flop 0 <-> 1 - AG invariant on the reachable set.
 @VerificationCase
+@Tag("expect-pass")
 class AGInvariant {
     var x: int := 0
 
@@ -53,6 +56,7 @@ class AGInvariant {
 
 // Dual: both endpoints are reachable.
 @VerificationCase
+@Tag("expect-pass")
 class AGEndpoint1Reach {
     var x: int := 0
 
@@ -66,6 +70,7 @@ class AGEndpoint1Reach {
 }
 
 @VerificationCase
+@Tag("expect-pass")
 class AGEndpoint0Reach {
     var x: int := 1
 
@@ -82,6 +87,7 @@ class AGEndpoint0Reach {
 
 // AG holds across the enumerated branches.
 @VerificationCase
+@Tag("expect-pass")
 class AGDisjunction {
     var x: int := 0
 
@@ -105,6 +111,7 @@ class AGDisjunction {
 // There exists a reachable state from which the invariant x == 3
 // holds forever (the guard blocks further change).
 @VerificationCase
+@Tag("expect-pass")
 class EFAGReach {
     var x: int := 0
 
@@ -124,6 +131,7 @@ class EFAGReach {
 
 // Dual: x never escapes [0, 3].
 @VerificationCase
+@Tag("expect-pass")
 class EFAGBound {
     var x: int := 0
 

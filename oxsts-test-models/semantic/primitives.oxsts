@@ -9,6 +9,7 @@ package semantifyr::verification::lang::primitives
 
 // Integer counter: 10 is reachable.
 @VerificationCase
+@Tag("expect-pass")
 class IntegerCounterReach {
     var x: int := 0
 
@@ -25,6 +26,7 @@ class IntegerCounterReach {
 // Integer counter: x never falls below 0 or rises above 10. Pairs with
 // IntegerCounterReach to pin the reachable range.
 @VerificationCase
+@Tag("expect-pass")
 class IntegerCounterBound {
     var x: int := 0
 
@@ -42,6 +44,7 @@ class IntegerCounterBound {
 
 // Boolean havoc: true is reachable from the initial false.
 @VerificationCase
+@Tag("expect-pass")
 class BooleanHavocTrueReach {
     var b: bool := false
 
@@ -56,6 +59,7 @@ class BooleanHavocTrueReach {
 
 // Boolean havoc: false is also reachable (both values must be seen).
 @VerificationCase
+@Tag("expect-pass")
 class BooleanHavocFalseReach {
     var b: bool := true
 
@@ -72,6 +76,7 @@ class BooleanHavocFalseReach {
 
 // Bounded decrement: 0 is reachable from 5.
 @VerificationCase
+@Tag("expect-pass")
 class BoundedDecrementReach {
     var x: int := 5
 
@@ -88,6 +93,7 @@ class BoundedDecrementReach {
 // Bounded decrement: x stays in [0, 5] - never under-runs, never over-runs
 // the initial value.
 @VerificationCase
+@Tag("expect-pass")
 class BoundedDecrementBound {
     var x: int := 5
 

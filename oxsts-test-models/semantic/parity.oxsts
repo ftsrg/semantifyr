@@ -8,6 +8,7 @@ package semantifyr::verification::lang::parity
 
 // --- integer counter: reachability ---
 @VerificationCase
+@Tag("expect-pass")
 class IntCounterReach {
     var x: int := 0
 
@@ -23,6 +24,7 @@ class IntCounterReach {
 
 // --- integer counter: safety bound ---
 @VerificationCase
+@Tag("expect-pass")
 class IntCounterBound {
     var x: int := 0
 
@@ -38,6 +40,7 @@ class IntCounterBound {
 
 // --- boolean havoc: true reachable ---
 @VerificationCase
+@Tag("expect-pass")
 class BoolHavocTrue {
     var flag: bool := false
 
@@ -52,6 +55,7 @@ class BoolHavocTrue {
 
 // --- boolean havoc: false reachable ---
 @VerificationCase
+@Tag("expect-pass")
 class BoolHavocFalse {
     var flag: bool := true
 
@@ -66,6 +70,7 @@ class BoolHavocFalse {
 
 // --- choice + assume: only enumerated branches are reachable ---
 @VerificationCase
+@Tag("expect-pass")
 class ChoiceBound {
     var x: int := 0
 
@@ -84,6 +89,7 @@ class ChoiceBound {
 
 // --- choice + assume: each branch is individually reachable ---
 @VerificationCase
+@Tag("expect-pass")
 class ChoiceBranchReach {
     var x: int := 0
 

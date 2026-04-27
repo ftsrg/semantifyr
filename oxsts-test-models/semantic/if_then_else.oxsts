@@ -8,6 +8,7 @@ package semantifyr::verification::lang::if_then_else
 // --- guard selects the then-branch ---
 
 @VerificationCase
+@Tag("expect-pass")
 class IteThenReach {
     var n: int := 1
     var result: int := 0
@@ -24,6 +25,7 @@ class IteThenReach {
 // --- guard selects the else-branch ---
 
 @VerificationCase
+@Tag("expect-pass")
 class IteElseReach {
     var n: int := -1
     var result: int := 0
@@ -40,6 +42,7 @@ class IteElseReach {
 // --- safety: output is one of the two branches ---
 
 @VerificationCase
+@Tag("expect-pass")
 class IteBound {
     var n: int := 0
     var result: int := 0
@@ -57,6 +60,7 @@ class IteBound {
 // --- nested if-then-else in a property ---
 
 @VerificationCase
+@Tag("expect-pass")
 class IteInPropertyReach {
     var n: int := 0
 
@@ -71,6 +75,7 @@ class IteInPropertyReach {
 }
 
 @VerificationCase
+@Tag("expect-pass")
 class IteInPropertyInitialFalse {
     // `flag` stays false via the guard (preventing the optimizer from
     // folding it to a constant and dropping the variable entirely,

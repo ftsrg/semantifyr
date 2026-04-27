@@ -7,6 +7,7 @@ package semantifyr::verification::lang::comparison
 // --- less-than ---
 
 @VerificationCase
+@Tag("expect-pass")
 class LessTrueReach {
     var x: int := 0
     var y: int := 0
@@ -26,6 +27,7 @@ class LessTrueReach {
 }
 
 @VerificationCase
+@Tag("expect-pass")
 class LessTrueImpliesOrder {
     var x: int := 0
     var y: int := 0
@@ -47,6 +49,7 @@ class LessTrueImpliesOrder {
 // --- less-or-equal ---
 
 @VerificationCase
+@Tag("expect-pass")
 class LessEqEqualIsTrue {
     var r: bool := false
 
@@ -60,6 +63,7 @@ class LessEqEqualIsTrue {
 }
 
 @VerificationCase
+@Tag("expect-pass")
 class LessEqStrictGreaterIsFalse {
     var r: bool := true
 
@@ -75,6 +79,7 @@ class LessEqStrictGreaterIsFalse {
 // --- greater-than ---
 
 @VerificationCase
+@Tag("expect-pass")
 class GreaterTrueReach {
     var x: int := 0
     var y: int := 0
@@ -94,6 +99,7 @@ class GreaterTrueReach {
 }
 
 @VerificationCase
+@Tag("expect-pass")
 class GreaterTrueImpliesOrder {
     var x: int := 0
     var y: int := 0
@@ -115,6 +121,7 @@ class GreaterTrueImpliesOrder {
 // --- greater-or-equal ---
 
 @VerificationCase
+@Tag("expect-pass")
 class GreaterEqEqualIsTrue {
     var r: bool := false
 
@@ -130,6 +137,7 @@ class GreaterEqEqualIsTrue {
 // --- equality ---
 
 @VerificationCase
+@Tag("expect-pass")
 class EqSameIsTrue {
     var r: bool := false
 
@@ -143,6 +151,7 @@ class EqSameIsTrue {
 }
 
 @VerificationCase
+@Tag("expect-pass")
 class EqDifferentIsFalse {
     var r: bool := true
 
@@ -158,6 +167,7 @@ class EqDifferentIsFalse {
 // --- inequality ---
 
 @VerificationCase
+@Tag("expect-pass")
 class NotEqTrueReach {
     var x: int := 0
     var y: int := 0
@@ -177,6 +187,7 @@ class NotEqTrueReach {
 }
 
 @VerificationCase
+@Tag("expect-pass")
 class NotEqTrueImpliesDiffer {
     var x: int := 0
     var y: int := 0

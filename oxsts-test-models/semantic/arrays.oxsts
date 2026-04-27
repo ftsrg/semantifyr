@@ -8,6 +8,7 @@ package semantifyr::verification::lang::arrays
 
 // Reachable: slots[0] starts at 10 (from the literal initializer).
 @VerificationCase
+@Tag("expect-pass")
 class ArrayLiteralInit0Reach {
     var values: int[3] := [10, 20, 30]
     var first: int := 0
@@ -23,6 +24,7 @@ class ArrayLiteralInit0Reach {
 
 // Reachable: slots[2] starts at 30.
 @VerificationCase
+@Tag("expect-pass")
 class ArrayLiteralInit2Reach {
     var values: int[3] := [10, 20, 30]
     var third: int := 0
@@ -39,6 +41,7 @@ class ArrayLiteralInit2Reach {
 // Dual: values are bounded by the declared initializers (no phantom
 // slot escapes).
 @VerificationCase
+@Tag("expect-pass")
 class ArrayLiteralInitBound {
     var values: int[3] := [10, 20, 30]
 
@@ -53,6 +56,7 @@ class ArrayLiteralInitBound {
 
 // Reachable: independent writes land each in their own slot.
 @VerificationCase
+@Tag("expect-pass")
 class ArraySlotIndependenceReach {
     var slots: int[3] := [0, 0, 0]
 
@@ -74,6 +78,7 @@ class ArraySlotIndependenceReach {
 // Dual: writing slot 0 does not disturb slots 1 or 2 (write
 // independence is the invariant we care about for flattening).
 @VerificationCase
+@Tag("expect-pass")
 class ArraySlot0DoesNotAffectOthers {
     var slots: int[3] := [0, 0, 0]
 
@@ -90,6 +95,7 @@ class ArraySlot0DoesNotAffectOthers {
 
 // Reachable: the value stored in slots[1] is what we read back.
 @VerificationCase
+@Tag("expect-pass")
 class ArrayReadAfterWriteReach {
     var slots: int[2] := [0, 0]
     var seen: int := 0

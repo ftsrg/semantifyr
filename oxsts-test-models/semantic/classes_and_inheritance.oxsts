@@ -12,6 +12,7 @@ class Worker {
 
 // Reachable: main transition writes into a contained instance.
 @VerificationCase
+@Tag("expect-pass")
 class SingleContainmentReach {
     contains w: Worker[1]
 
@@ -26,6 +27,7 @@ class SingleContainmentReach {
 
 // Dual: done is always boolean; no ghost state escapes.
 @VerificationCase
+@Tag("expect-pass")
 class SingleContainmentBound {
     contains w: Worker[1]
 
@@ -53,6 +55,7 @@ class Child : Base {
 
 // Child's redefined body runs, reaching x == 10.
 @VerificationCase
+@Tag("expect-pass")
 class ChildRedefinitionReach {
     contains c: Child[1]
 
@@ -67,6 +70,7 @@ class ChildRedefinitionReach {
 
 // Dual: x is in {0, 10} - parent's empty body never silently wins.
 @VerificationCase
+@Tag("expect-pass")
 class ChildRedefinitionBound {
     contains c: Child[1]
 
@@ -97,6 +101,7 @@ class LeafLevel : MidLevel {
 
 // Reachable: leaf's body wins over mid's.
 @VerificationCase
+@Tag("expect-pass")
 class MultiLevelRedefinitionReach {
     contains leaf: LeafLevel[1]
 
@@ -111,6 +116,7 @@ class MultiLevelRedefinitionReach {
 
 // Dual: mid-level variable stays 0 when dispatching through leaf.
 @VerificationCase
+@Tag("expect-pass")
 class MultiLevelRedefinitionNoMid {
     contains leaf: LeafLevel[1]
 
@@ -128,6 +134,7 @@ class MultiLevelRedefinitionNoMid {
 // Inlining `b.act()` where b is Base[0..*] but holds only the Child
 // instance via subsetting dispatches to Child's body.
 @VerificationCase
+@Tag("expect-pass")
 class PolymorphicDispatchReach {
     contains b: Base[0..*]
     contains c: Child[1] subsets b
@@ -144,6 +151,7 @@ class PolymorphicDispatchReach {
 // Dual: no value other than 0 or 10 appears on c.x (parent body does
 // not silently run twice, child body does not over-fire).
 @VerificationCase
+@Tag("expect-pass")
 class PolymorphicDispatchBound {
     contains b: Base[0..*]
     contains c: Child[1] subsets b
@@ -172,6 +180,7 @@ class ConcreteCounter : AbstractCounter {
 
 // Reachable: 3 ticks reach count == 3.
 @VerificationCase
+@Tag("expect-pass")
 class AbstractConcreteReach {
     contains c: ConcreteCounter[1]
 
@@ -187,6 +196,7 @@ class AbstractConcreteReach {
 
 // Dual: count never goes above 3 (guard holds).
 @VerificationCase
+@Tag("expect-pass")
 class AbstractConcreteBound {
     contains c: ConcreteCounter[1]
 

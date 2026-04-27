@@ -21,6 +21,7 @@ class Child {
 // --- child navigates to parent and mutates it ---
 
 @VerificationCase
+@Tag("expect-pass")
 class OppositeNavigateReach {
     contains root: Parent[1]
 
@@ -35,6 +36,7 @@ class OppositeNavigateReach {
 
 // Dual: the nested guard holds - gen never exceeds 3.
 @VerificationCase
+@Tag("expect-pass")
 class OppositeNavigateBound {
     contains root: Parent[1]
 

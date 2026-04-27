@@ -8,6 +8,7 @@ package semantifyr::verification::lang::property_calls
 
 // Reachable: isPositive() returns true once x > 0.
 @VerificationCase
+@Tag("expect-pass")
 class PropSelfBareCallReach {
     var x: int := 0
 
@@ -28,6 +29,7 @@ class PropSelfBareCallReach {
 // Dual: !isPositive() is the invariant when x stays zero (captures
 // the initial state where the inlined body evaluates to false).
 @VerificationCase
+@Tag("expect-pass")
 class PropSelfBareCallInitialState {
     var x: int := 0
 
@@ -45,6 +47,7 @@ class PropSelfBareCallInitialState {
 // --- self-call via explicit self-navigation ---
 
 @VerificationCase
+@Tag("expect-pass")
 class PropSelfNavCallReach {
     var x: int := 0
 
@@ -72,6 +75,7 @@ class PropWorker {
 }
 
 @VerificationCase
+@Tag("expect-pass")
 class PropNavigationCallReach {
     contains w: PropWorker[1]
 
@@ -86,6 +90,7 @@ class PropNavigationCallReach {
 
 // Dual: before the transition fires, w.isDone() is false.
 @VerificationCase
+@Tag("expect-pass")
 class PropNavigationCallInitialState {
     contains w: PropWorker[1]
 

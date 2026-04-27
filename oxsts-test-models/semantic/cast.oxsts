@@ -13,6 +13,7 @@ class Child : Base { }
 // Reachable: `ref` is declared Base but holds a Child; casting back to
 // Child in a scratch variable preserves identity.
 @VerificationCase
+@Tag("expect-pass")
 class NarrowIdentityReach {
     contains children: Base[0..*]
     contains c: Child[1] subsets children
@@ -35,6 +36,7 @@ class NarrowIdentityReach {
 // Dual: after the cast, `ref` still points at the same instance (or
 // nothing); no new candidate has been invented.
 @VerificationCase
+@Tag("expect-pass")
 class NarrowIdentityInvariant {
     contains children: Base[0..*]
     contains c: Child[1] subsets children

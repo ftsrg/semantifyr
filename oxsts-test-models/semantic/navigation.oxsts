@@ -15,6 +15,7 @@ class Leaf {
 // Reachable: absent target means the call is a no-op, so `AG true`
 // holds trivially.
 @VerificationCase
+@Tag("expect-pass")
 class OptionalNavDropAG {
     contains leaf: Leaf[0..1]
 
@@ -32,6 +33,7 @@ class OptionalNavDropAG {
 // dispatched anyway this would surface elsewhere; here we just check
 // the tran executes without error under the zero-instance interpretation.
 @VerificationCase
+@Tag("expect-pass")
 class OptionalNavDropReach {
     contains leaf: Leaf[0..1]
 
@@ -47,6 +49,7 @@ class OptionalNavDropReach {
 // --- optional navigation fires when the target is present ---
 
 @VerificationCase
+@Tag("expect-pass")
 class OptionalNavPresentReach {
     contains leaf: Leaf[1]
 
@@ -63,6 +66,7 @@ class OptionalNavPresentReach {
 // has no guard so v grows; the bound case instead pins initial value
 // before any tran).
 @VerificationCase
+@Tag("expect-pass")
 class OptionalNavInitialZero {
     contains leaf: Leaf[1]
 
@@ -92,6 +96,7 @@ class DeepHolder {
 }
 
 @VerificationCase
+@Tag("expect-pass")
 class DeepNavReach {
     contains holder: DeepHolder[1]
 
@@ -105,6 +110,7 @@ class DeepNavReach {
 }
 
 @VerificationCase
+@Tag("expect-pass")
 class DeepNavBound {
     contains holder: DeepHolder[1]
 

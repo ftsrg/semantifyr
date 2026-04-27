@@ -25,6 +25,7 @@ class ThresholdSensor : Sensor {
 // --- abstract property redefined ---
 
 @VerificationCase
+@Tag("expect-pass")
 class AbstractPropReach {
     contains s: ThresholdSensor[1]
 
@@ -40,6 +41,7 @@ class AbstractPropReach {
 // Dual: the threshold invariant holds iff the counter reached the
 // trigger value.
 @VerificationCase
+@Tag("expect-pass")
 class AbstractPropInitialFalse {
     contains s: ThresholdSensor[1]
 
@@ -53,6 +55,7 @@ class AbstractPropInitialFalse {
 // --- abstract transition redefined ---
 
 @VerificationCase
+@Tag("expect-pass")
 class AbstractTranReach {
     contains s: ThresholdSensor[1]
 
@@ -66,6 +69,7 @@ class AbstractTranReach {
 }
 
 @VerificationCase
+@Tag("expect-pass")
 class AbstractTranBound {
     contains s: ThresholdSensor[1]
 

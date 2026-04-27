@@ -8,6 +8,7 @@ package semantifyr::verification::lang::inline_operations
 
 // Inline-if with a true static guard always takes the then-branch.
 @VerificationCase
+@Tag("expect-pass")
 class InlineIfTrueReach {
     var taken: int := 0
 
@@ -26,6 +27,7 @@ class InlineIfTrueReach {
 
 // Dual: the else-branch is never taken under a true guard.
 @VerificationCase
+@Tag("expect-pass")
 class InlineIfTrueBound {
     var taken: int := 0
 
@@ -44,6 +46,7 @@ class InlineIfTrueBound {
 
 // Inline-if with a false static guard always takes the else-branch.
 @VerificationCase
+@Tag("expect-pass")
 class InlineIfFalseReach {
     var taken: int := 0
 
@@ -64,6 +67,7 @@ class InlineIfFalseReach {
 
 // Inline sequential for unrolls at compile time: 1 + 2 + 3 = 6 is reached.
 @VerificationCase
+@Tag("expect-pass")
 class InlineSeqForReach {
     var total: int := 0
 
@@ -80,6 +84,7 @@ class InlineSeqForReach {
 
 // Dual: total never exceeds the sum - no extra iterations happen.
 @VerificationCase
+@Tag("expect-pass")
 class InlineSeqForBound {
     var total: int := 0
 
@@ -101,6 +106,7 @@ class InlineSeqForBound {
 // Inline choice-for produces a nondeterministic choice over each value:
 // 1 is reachable.
 @VerificationCase
+@Tag("expect-pass")
 class InlineChoiceFor1Reach {
     var chosen: int := 0
 
@@ -117,6 +123,7 @@ class InlineChoiceFor1Reach {
 
 // Inline choice-for: 3 is reachable.
 @VerificationCase
+@Tag("expect-pass")
 class InlineChoiceFor3Reach {
     var chosen: int := 0
 
@@ -133,6 +140,7 @@ class InlineChoiceFor3Reach {
 
 // Dual: inline choice-for only produces values in the enumerated range.
 @VerificationCase
+@Tag("expect-pass")
 class InlineChoiceForBound {
     var chosen: int := 0
 
@@ -151,6 +159,7 @@ class InlineChoiceForBound {
 
 // Inline for over a negative range unrolls in ascending order: -2 + -1 + 0 = -3.
 @VerificationCase
+@Tag("expect-pass")
 class InlineForNegativeRangeReach {
     var total: int := 0
 
@@ -167,6 +176,7 @@ class InlineForNegativeRangeReach {
 
 // Dual: the sum never dips below the exact value (no extra negative step).
 @VerificationCase
+@Tag("expect-pass")
 class InlineForNegativeRangeBound {
     var total: int := 0
 

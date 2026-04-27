@@ -8,6 +8,7 @@ package semantifyr::verification::lang::arithmetic
 
 // Reachable: 3 + 4 = 7.
 @VerificationCase
+@Tag("expect-pass")
 class AddReach {
     var r: int := 0
 
@@ -22,6 +23,7 @@ class AddReach {
 
 // Dual: r is one of {0, 7}; no other value is produced.
 @VerificationCase
+@Tag("expect-pass")
 class AddBound {
     var r: int := 0
 
@@ -37,6 +39,7 @@ class AddBound {
 // --- subtraction ---
 
 @VerificationCase
+@Tag("expect-pass")
 class SubReach {
     var r: int := 0
 
@@ -50,6 +53,7 @@ class SubReach {
 }
 
 @VerificationCase
+@Tag("expect-pass")
 class SubBound {
     var r: int := 0
 
@@ -65,6 +69,7 @@ class SubBound {
 // --- multiplication ---
 
 @VerificationCase
+@Tag("expect-pass")
 class MulReach {
     var r: int := 0
 
@@ -78,6 +83,7 @@ class MulReach {
 }
 
 @VerificationCase
+@Tag("expect-pass")
 class MulBound {
     var r: int := 0
 
@@ -93,6 +99,7 @@ class MulBound {
 // --- division ---
 
 @VerificationCase
+@Tag("expect-pass")
 class DivReach {
     var r: int := 0
 
@@ -106,6 +113,7 @@ class DivReach {
 }
 
 @VerificationCase
+@Tag("expect-pass")
 class DivBound {
     var r: int := 0
 
@@ -122,6 +130,7 @@ class DivBound {
 
 // Unary minus negates the operand: -5 is reachable.
 @VerificationCase
+@Tag("expect-pass")
 class UnaryMinusReach {
     var x: int := 5
 
@@ -136,6 +145,7 @@ class UnaryMinusReach {
 
 // Dual: x stays in the double-signed orbit {5, -5}.
 @VerificationCase
+@Tag("expect-pass")
 class UnaryMinusBound {
     var x: int := 5
 
@@ -152,6 +162,7 @@ class UnaryMinusBound {
 
 // Reachable: 2 + 3 * 4 = 14 (not (2 + 3) * 4 = 20).
 @VerificationCase
+@Tag("expect-pass")
 class PrecedenceReach {
     var r: int := 0
 
@@ -166,6 +177,7 @@ class PrecedenceReach {
 
 // Dual: wrong-precedence outcome 20 is unreachable.
 @VerificationCase
+@Tag("expect-pass")
 class PrecedenceBound {
     var r: int := 0
 
