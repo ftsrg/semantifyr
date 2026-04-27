@@ -11,6 +11,10 @@ plugins {
     `jacoco-report-aggregation`
 }
 
+repositories {
+    mavenCentral()
+}
+
 val jvmConventionIds = setOf(
     "hu.bme.mit.semantifyr.gradle.conventions.jvm",
 )
