@@ -76,3 +76,8 @@ annotation Shared
  * Calls to transitions annotated with @Trace will be traced back in the verification case witness, containing the bindings of it's parameters at the call site.
  */
 annotation Trace
+
+/*
+ * Variables annotated with @Clock allows time-aware backends to handle them in a more optimal way.
+ */
+annotation Clock

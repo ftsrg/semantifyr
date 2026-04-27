@@ -25,6 +25,12 @@ public class BuiltinAnnotationHandler {
         return OxstsUtils.isAnnotatedWith(variableDeclaration, controlAnnotation);
     }
 
+    public boolean isClockVariable(VariableDeclaration variableDeclaration) {
+        var clockAnnotation = builtinSymbolResolver.clockAnnotation(variableDeclaration);
+
+        return OxstsUtils.isAnnotatedWith(variableDeclaration, clockAnnotation);
+    }
+
     public boolean isSharedFeature(FeatureDeclaration featureDeclaration) {
         var sharedAnnotation = builtinSymbolResolver.sharedAnnotation(featureDeclaration);
 
