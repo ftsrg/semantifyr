@@ -179,6 +179,33 @@ class CopyPropagationPassTest : PassTestBase() {
     }
 
     @Test
+    fun `read in init before its write does not see the later write as a reaching def`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var step : int := -1
+            init {
+                assume (step == -1)
+                step := 0
+            }
+            tran { }
+            prop { AG true }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var step : int := -1
+            init {
+                assume (step == -1)
+                step := 0
+            }
+            tran { }
+            prop { AG true }
+        """,
+        analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
+    ) {
+        it.getInstance(CopyPropagationPass::class.java)
+    }
+
+    @Test
     fun `chain of copies - single pass only folds via the stored reaching-def map`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything

@@ -193,7 +193,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
     }
 
     @Test
-    fun `reads in init currently see main-tran writes - sound but imprecise`() {
+    fun `reads in init do not see main-tran writes`() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
@@ -213,7 +213,8 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val bWriteInTran = inlined.assignmentsTo(b).single()
 
         val defs = result.defsOf[initRead]!!
-        assertThat(defs).contains(bWriteInTran as EObject)
+        assertThat(defs).doesNotContain(bWriteInTran as EObject)
+        assertThat(defs).isEmpty()
     }
 
     @Test

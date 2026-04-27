@@ -28,7 +28,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
 
@@ -67,7 +66,12 @@ class ReachingDefinitionsComputation(
             it.value.toSet()
         }
 
-        for (transition in transitionsOf(inlinedOxsts)) {
+        inlinedOxsts.initTransition?.let {
+            for (branch in it.branches) {
+                walkOperation(branch, emptyMap())
+            }
+        }
+        inlinedOxsts.mainTransition?.let { transition ->
             for (branch in transition.branches) {
                 walkOperation(branch, initialIn)
             }
@@ -171,13 +175,6 @@ class ReachingDefinitionsComputation(
             result[variable] = (result[variable].orEmpty()) + defs
         }
         return result
-    }
-
-    private fun transitionsOf(inlinedOxsts: InlinedOxsts): List<TransitionDeclaration> {
-        return listOfNotNull(
-            inlinedOxsts.initTransition,
-            inlinedOxsts.mainTransition,
-        )
     }
 
     private fun readsIn(inlinedOxsts: InlinedOxsts): Sequence<Expression> {
