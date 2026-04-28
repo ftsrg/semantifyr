@@ -6,22 +6,38 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.artifact
 
+import com.google.inject.Inject
+import hu.bme.mit.semantifyr.compiler.pipeline.CompilationRequest
+import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.InlinedOxstsParseHelper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 
+@InjectWithOxsts
 class ArtifactManagerTest {
     @TempDir
     lateinit var tempDir: Path
 
+    @Inject
+    lateinit var parseHelper: InlinedOxstsParseHelper
+
+    private val emptyInlined by lazy {
+        parseHelper.parse("inlined oxsts of semantifyr::Anything\ninit {}\ntran {}\nprop { AG true }")
+    }
+
+    private fun managerFor(config: ArtifactConfig): ArtifactManager {
+        val request = CompilationRequest(inlinedOxsts = emptyInlined, outputDirectory = tempDir)
+        return ArtifactManager(config, request)
+    }
+
     @Test
     fun `pathOf covers every ArtifactKind`() {
-        val manager = ArtifactManager(ArtifactConfig.debug(tempDir))
+        val manager = managerFor(ArtifactConfig.DEBUG)
 
         for (kind in ArtifactKind.entries) {
-            // Should not throw and must return a non-empty path string.
             val path = manager.pathOf(kind)
             assertThat(path).isNotBlank
         }
@@ -29,7 +45,7 @@ class ArtifactManagerTest {
 
     @Test
     fun `pathOf returns distinct paths for distinct kinds`() {
-        val manager = ArtifactManager(ArtifactConfig.debug(tempDir))
+        val manager = managerFor(ArtifactConfig.DEBUG)
 
         val paths = ArtifactKind.entries.map {
             manager.pathOf(it)
@@ -39,7 +55,7 @@ class ArtifactManagerTest {
 
     @Test
     fun `resolveUri resolves a relative path against the output directory`() {
-        val manager = ArtifactManager(ArtifactConfig.debug(tempDir))
+        val manager = managerFor(ArtifactConfig.DEBUG)
 
         val uri = manager.resolveUri("sub/model.oxsts")
 
@@ -48,7 +64,7 @@ class ArtifactManagerTest {
 
     @Test
     fun `resolveUri by ArtifactKind uses the kind-specific path`() {
-        val manager = ArtifactManager(ArtifactConfig.debug(tempDir))
+        val manager = managerFor(ArtifactConfig.DEBUG)
         val expected = tempDir.resolve(manager.pathOf(ArtifactKind.Witness)).toFile().absolutePath
 
         val uri = manager.resolveUri(ArtifactKind.Witness)
@@ -58,7 +74,7 @@ class ArtifactManagerTest {
 
     @Test
     fun `withFile does not invoke block when the artifact kind is disabled`() {
-        val manager = ArtifactManager(ArtifactConfig.none(tempDir))
+        val manager = managerFor(ArtifactConfig.NONE)
         var invoked = false
 
         manager.withFile(ArtifactKind.Witness) { invoked = true }
@@ -68,8 +84,8 @@ class ArtifactManagerTest {
 
     @Test
     fun `withFile invokes block with the resolved file when the kind is enabled`() {
-        val config = ArtifactConfig(outputDirectory = tempDir, enabled = setOf(ArtifactKind.Witness))
-        val manager = ArtifactManager(config)
+        val config = ArtifactConfig(enabled = setOf(ArtifactKind.Witness))
+        val manager = managerFor(config)
 
         var receivedPath: Path? = null
         manager.withFile(ArtifactKind.Witness) {
@@ -83,8 +99,8 @@ class ArtifactManagerTest {
 
     @Test
     fun `withFile creates parent directories on demand`() {
-        val config = ArtifactConfig(outputDirectory = tempDir, enabled = setOf(ArtifactKind.InstantiatedModel))
-        val manager = ArtifactManager(config)
+        val config = ArtifactConfig(enabled = setOf(ArtifactKind.InstantiatedModel))
+        val manager = managerFor(config)
 
         manager.withFile(ArtifactKind.InstantiatedModel) {
             it.writeText("x")

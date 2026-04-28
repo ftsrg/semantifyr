@@ -1096,9 +1096,9 @@ class CompilationTests {
         val thrown = catchThrowable {
             SemantifyrCompiler(
                 injector = injector,
-                artifactConfig = ArtifactConfig.all(artifactDir),
+                artifactConfig = ArtifactConfig.ALL,
             ).use {
-                it.compile(classDecl)
+                it.compile(classDecl, artifactDir)
             }
         }
 
@@ -1132,9 +1132,9 @@ class CompilationTests {
         }
         val compiled = SemantifyrCompiler(
             injector = injector,
-            artifactConfig = ArtifactConfig.all(artifactDir),
+            artifactConfig = ArtifactConfig.ALL,
         ).use {
-            it.compile(classDecl)
+            it.compile(classDecl, artifactDir)
         }
 
         assertThat(compiled.inlinedOxsts.classDeclaration).isNotNull
@@ -1151,13 +1151,6 @@ class CompilationTests {
             .contains("instantiated.oxsts", "inlined.oxsts", "flattened.oxsts")
     }
 
-    /**
-     * Asserts the post-flatten contract documented in
-     * `subprojects/compiler/docs/backend-input-contract.md`. These invariants
-     * don't pin exact output (deliberate optimizer changes shouldn't break
-     * tests); they catch wiring regressions that would leak pre-flatten
-     * structure into the backend IR.
-     */
     private fun assertFlattenedContract(compiled: FlattenedCompilationContext) {
         val inlined = compiled.inlinedOxsts
 

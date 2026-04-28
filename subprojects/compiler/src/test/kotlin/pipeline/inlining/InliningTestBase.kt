@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 import com.google.inject.Inject
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.compiler.pipeline.CompilationModule
+import hu.bme.mit.semantifyr.compiler.pipeline.CompilationRequest
 import hu.bme.mit.semantifyr.compiler.pipeline.InlinedOxstsModelCreator
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.context.CreatedCompilationContext
@@ -59,7 +60,11 @@ abstract class InliningTestBase {
     ): T {
         val inlined = parseHelper.parse(source.normalizedFixtureSource())
         val compilationInjector = newCompilationInjector()
-        return withCompilationScopeBlocking(inlined) {
+        val request = CompilationRequest(
+            inlinedOxsts = inlined,
+            outputDirectory = Files.createTempDirectory("inlining-test-"),
+        )
+        return withCompilationScopeBlocking(request) {
             val instantiator = compilationInjector.getInstance(OxstsInstantiator::class.java)
             val instantiated = instantiator.instantiate(CreatedCompilationContext(inlined))
             block(Prepared(instantiated.inlinedOxsts, instantiated, compilationInjector))
@@ -73,8 +78,13 @@ abstract class InliningTestBase {
     ): T {
         val classDecl = parseClassFromPackage(className, source)
         val compilationInjector = newCompilationInjector()
-        val created = compilationInjector.getInstance(InlinedOxstsModelCreator::class.java).create(classDecl)
-        return withCompilationScopeBlocking(created.inlinedOxsts) {
+        val outputDirectory = Files.createTempDirectory("inlining-test-")
+        val created = compilationInjector.getInstance(InlinedOxstsModelCreator::class.java).create(classDecl, outputDirectory)
+        val request = CompilationRequest(
+            inlinedOxsts = created.inlinedOxsts,
+            outputDirectory = outputDirectory,
+        )
+        return withCompilationScopeBlocking(request) {
             val instantiator = compilationInjector.getInstance(OxstsInstantiator::class.java)
             val instantiated = instantiator.instantiate(created)
             block(Prepared(instantiated.inlinedOxsts, instantiated, compilationInjector))
@@ -118,7 +128,7 @@ abstract class InliningTestBase {
 
     private fun newCompilationInjector(): Injector = injector.createChildInjector(
         CompilationModule(
-            ArtifactConfig.none(Files.createTempDirectory("inlining-test-")),
+            ArtifactConfig.NONE,
             OptimizationConfig.ALL,
         ),
     )

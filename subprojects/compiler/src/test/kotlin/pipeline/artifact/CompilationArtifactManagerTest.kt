@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.artifact
 
+import hu.bme.mit.semantifyr.compiler.pipeline.CompilationRequest
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.eclipse.xtext.serializer.ISerializer
 import org.junit.jupiter.api.Test
@@ -33,7 +34,6 @@ class CompilationArtifactManagerTest {
         steps: CompilationStepsConfig = CompilationStepsConfig.All,
     ): CompilationArtifactManager {
         val config = ArtifactConfig(
-            outputDirectory = tempDir,
             enabled = enabled,
             enabledCompilationSteps = steps,
         )
@@ -49,7 +49,8 @@ class CompilationArtifactManagerTest {
                 block(target)
             }
         }
-        return CompilationArtifactManager(serializer, artifactManager, config, inlinedOxsts)
+        val request = CompilationRequest(inlinedOxsts = inlinedOxsts, outputDirectory = tempDir)
+        return CompilationArtifactManager(serializer, artifactManager, config, request)
     }
 
     @Test

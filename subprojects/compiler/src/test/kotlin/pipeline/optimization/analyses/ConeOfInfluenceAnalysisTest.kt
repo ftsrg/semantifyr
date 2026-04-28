@@ -249,6 +249,159 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
     }
 
     @Test
+    fun `for-operation range read pulls the range variable into the cone`() {
+        val (inlined, result) = runConeOfInfluence(
+            """
+                inlined oxsts of semantifyr::Anything
+                var n : int := 5
+                var sum : int := 0
+                init { }
+                tran {
+                    for (x in 0 .. n) {
+                        sum := sum + x
+                    }
+                }
+                prop { AG (sum != 999) }
+            """,
+        )
+
+        val n = inlined.varNamed("n")
+        val sum = inlined.varNamed("sum")
+        assertThat(result.isRelevant(sum)).isTrue
+        assertThat(result.isRelevant(n))
+            .`as`("the for-loop's range variable controls how many writes to 'sum' fire and must be in the cone")
+            .isTrue
+    }
+
+    @Test
+    fun `assume in tran keeps its read variables in the cone even when the property has no variables`() {
+        val (inlined, result) = runConeOfInfluence(
+            """
+                inlined oxsts of semantifyr::Anything
+                var step : int := -1
+                init { step := 1 }
+                tran {
+                    assume(step == 1)
+                    step := 2
+                }
+                prop { AG true }
+            """,
+        )
+
+        val step = inlined.varNamed("step")
+        assertThat(result.isRelevant(step))
+            .`as`("step is read in a tran assume; it must stay in the cone even if the property is variable-free")
+            .isTrue
+        for (write in inlined.assignmentsTo(step)) {
+            assertThat(result.isRelevant(write))
+                .`as`("every write to the assume-read variable must stay in the cone")
+                .isTrue
+        }
+    }
+
+    @Test
+    fun `assume in init keeps its read variables in the cone even when the property has no variables`() {
+        val (inlined, result) = runConeOfInfluence(
+            """
+                inlined oxsts of semantifyr::Anything
+                var seed : int := 7
+                init {
+                    assume(seed == 7)
+                }
+                tran { }
+                prop { AG true }
+            """,
+        )
+
+        val seed = inlined.varNamed("seed")
+        assertThat(result.isRelevant(seed))
+            .`as`("init-assume reads must seed the cone of influence")
+            .isTrue
+    }
+
+    @Test
+    fun `assume on x backward-constrains earlier writes to x - they must all stay in the cone`() {
+        val (inlined, result) = runConeOfInfluence(
+            """
+                inlined oxsts of semantifyr::Anything
+                var x : int := 0
+                init {
+                    x := 5
+                }
+                tran {
+                    assume(x == 5)
+                    x := 6
+                }
+                prop { AG true }
+            """,
+        )
+
+        val x = inlined.varNamed("x")
+        assertThat(result.isRelevant(x)).isTrue
+        val writes = inlined.assignmentsTo(x)
+        assertThat(writes).hasSize(2)
+        for (write in writes) {
+            assertThat(result.isRelevant(write))
+                .`as`("write '${(write.expression)}' must stay - it sets the value the assume backward-constrains")
+                .isTrue
+        }
+    }
+
+    @Test
+    fun `assume reading multiple variables seeds all of them into the cone`() {
+        val (inlined, result) = runConeOfInfluence(
+            """
+                inlined oxsts of semantifyr::Anything
+                var x : int := 0
+                var y : int := 0
+                init {
+                    x := 1
+                    y := 2
+                }
+                tran {
+                    assume(x == 1 && y == 2)
+                }
+                prop { AG true }
+            """,
+        )
+
+        val x = inlined.varNamed("x")
+        val y = inlined.varNamed("y")
+        assertThat(result.isRelevant(x))
+            .`as`("'x' is read in the assume's first conjunct")
+            .isTrue
+        assertThat(result.isRelevant(y))
+            .`as`("'y' is read in the assume's second conjunct")
+            .isTrue
+    }
+
+    @Test
+    fun `assume read variable transitively pulls in its data feeders even with empty property`() {
+        val (inlined, result) = runConeOfInfluence(
+            """
+                inlined oxsts of semantifyr::Anything
+                var available : int := 0
+                var selected : int := 0
+                init {
+                    available := 7
+                    selected := available
+                }
+                tran {
+                    assume(selected == 7)
+                }
+                prop { AG true }
+            """,
+        )
+
+        val available = inlined.varNamed("available")
+        val selected = inlined.varNamed("selected")
+        assertThat(result.isRelevant(selected)).isTrue
+        assertThat(result.isRelevant(available))
+            .`as`("'available' feeds 'selected' via assignment, so it is transitively relevant")
+            .isTrue
+    }
+
+    @Test
     fun `outer assume guarding inner writes pulls its reads into the cone`() {
         val (inlined, result) = runConeOfInfluence(
             """

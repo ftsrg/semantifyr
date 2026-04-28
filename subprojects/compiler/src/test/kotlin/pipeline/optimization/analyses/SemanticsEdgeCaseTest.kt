@@ -38,7 +38,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
     }
 
     @Test
-    fun `declaration without initializer is currently NOT a reaching def`() {
+    fun `declaration without initializer counts the implicit havoc as a reaching def`() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
@@ -52,8 +52,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val propRead = inlined.findPropertyReadOf(a)
         val defs = result.defsOf[propRead]!!
         val aWrite = inlined.assignmentsTo(a).single()
-        // Under my current model: only the tran write reaches.
-        assertThat(defs).containsExactly(aWrite as EObject)
+        assertThat(defs).containsExactlyInAnyOrder(aWrite as EObject, a as EObject)
     }
 
     @Test
@@ -239,7 +238,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
 
         val defs = result.defsOf[aReadInBRhs]!!
         assertThat(defs).contains(aWrite as EObject)
-        assertThat(defs).doesNotContain(a as EObject)
+        assertThat(defs).contains(a as EObject)
     }
 
     @Test

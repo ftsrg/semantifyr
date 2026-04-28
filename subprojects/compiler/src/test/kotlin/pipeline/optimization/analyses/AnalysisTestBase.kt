@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses
 import com.google.inject.Inject
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.compiler.pipeline.CompilationModule
+import hu.bme.mit.semantifyr.compiler.pipeline.CompilationRequest
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.context.CreatedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluator
@@ -56,12 +57,16 @@ abstract class AnalysisTestBase {
         val context = CreatedCompilationContext(inlined).instantiated(tree)
         val child = injector.createChildInjector(
             CompilationModule(
-                ArtifactConfig.none(Files.createTempDirectory("analysis-test-")),
+                ArtifactConfig.NONE,
                 OptimizationConfig.ALL,
             ),
         )
 
-        return withCompilationScopeBlocking(inlined) {
+        val request = CompilationRequest(
+            inlinedOxsts = inlined,
+            outputDirectory = Files.createTempDirectory("analysis-test-"),
+        )
+        return withCompilationScopeBlocking(request) {
             val evaluator = child
                 .getInstance(MetaCompileTimeExpressionEvaluatorProvider::class.java)
                 .getEvaluator(context.rootInstance)

@@ -8,16 +8,11 @@ package hu.bme.mit.semantifyr.compiler.pipeline.artifact
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.io.TempDir
-import java.nio.file.Path
 
 class ArtifactConfigTest {
-    @TempDir
-    lateinit var tempDir: Path
-
     @Test
     fun `default enables every artifact kind except CompilationStep`() {
-        val config = ArtifactConfig(outputDirectory = tempDir)
+        val config = ArtifactConfig()
 
         for (kind in ArtifactKind.entries) {
             val expected = kind != ArtifactKind.CompilationStep
@@ -29,8 +24,8 @@ class ArtifactConfigTest {
     }
 
     @Test
-    fun `none() disables every artifact kind`() {
-        val config = ArtifactConfig.none(tempDir)
+    fun `NONE disables every artifact kind`() {
+        val config = ArtifactConfig.NONE
 
         for (kind in ArtifactKind.entries) {
             assertThat(config.isEnabled(kind)).isFalse
@@ -39,8 +34,8 @@ class ArtifactConfigTest {
     }
 
     @Test
-    fun `all() enables every artifact kind except CompilationStep`() {
-        val config = ArtifactConfig.all(tempDir)
+    fun `ALL enables every artifact kind except CompilationStep`() {
+        val config = ArtifactConfig.ALL
 
         for (kind in ArtifactKind.entries) {
             val expected = kind != ArtifactKind.CompilationStep
@@ -52,18 +47,12 @@ class ArtifactConfigTest {
     }
 
     @Test
-    fun `debug() enables every artifact kind and turns compilation steps on`() {
-        val config = ArtifactConfig.debug(tempDir)
+    fun `DEBUG enables every artifact kind and turns compilation steps on`() {
+        val config = ArtifactConfig.DEBUG
 
         for (kind in ArtifactKind.entries) {
             assertThat(config.isEnabled(kind)).isTrue
         }
         assertThat(config.enabledCompilationSteps).isEqualTo(CompilationStepsConfig.All)
-    }
-
-    @Test
-    fun `outputDirectory is preserved`() {
-        val config = ArtifactConfig(outputDirectory = tempDir)
-        assertThat(config.outputDirectory).isEqualTo(tempDir)
     }
 }

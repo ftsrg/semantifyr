@@ -168,7 +168,7 @@ class CopyPropagationPassTest : PassTestBase() {
             var y : int := 0
             init { }
             tran {
-                y := y
+                y := x
                 x := x
             }
             prop { AG true }
@@ -199,6 +199,114 @@ class CopyPropagationPassTest : PassTestBase() {
             }
             tran { }
             prop { AG true }
+        """,
+        analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
+    ) {
+        it.getInstance(CopyPropagationPass::class.java)
+    }
+
+    @Test
+    fun `tran write does not fold the property read when init does not overwrite the variable`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var done : bool := false
+            init { }
+            tran {
+                done := true
+            }
+            prop { AG (done == true) }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var done : bool := false
+            init { }
+            tran {
+                done := true
+            }
+            prop { AG (done == true) }
+        """,
+        analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
+    ) {
+        it.getInstance(CopyPropagationPass::class.java)
+    }
+
+    @Test
+    fun `init choice that writes on every branch counts as must-write so the initializer is masked`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var current : int := -1
+            init {
+                choice {
+                    current := 0
+                } or {
+                    current := 1
+                }
+            }
+            tran { }
+            prop { AG (current != 99) }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var current : int := -1
+            init {
+                choice {
+                    current := 0
+                } or {
+                    current := 1
+                }
+            }
+            tran { }
+            prop { AG (current != 99) }
+        """,
+        analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
+    ) {
+        it.getInstance(CopyPropagationPass::class.java)
+    }
+
+    @Test
+    fun `init choice with one writing and one empty branch leaves the initializer reachable`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var current : int := -1
+            init {
+                choice {
+                    current := 0
+                } or { }
+            }
+            tran { }
+            prop { AG (current != 99) }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var current : int := -1
+            init {
+                choice {
+                    current := 0
+                } or { }
+            }
+            tran { }
+            prop { AG (current != 99) }
+        """,
+        analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
+    ) {
+        it.getInstance(CopyPropagationPass::class.java)
+    }
+
+    @Test
+    fun `init havoc is a must-write so a single tran write can fold`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            init { havoc(a) }
+            tran { }
+            prop { AG (a != 99) }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            init { havoc(a) }
+            tran { }
+            prop { AG (a != 99) }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
