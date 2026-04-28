@@ -9,7 +9,7 @@ package hu.bme.mit.semantifyr.compiler.scopes
 import com.google.inject.Key
 import com.google.inject.Scope
 import com.google.inject.ScopeAnnotation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.compiler.pipeline.CompilationRequest
 import hu.bme.mit.semantifyr.scopes.ScopeContext
 import hu.bme.mit.semantifyr.scopes.Seed
 
@@ -22,16 +22,16 @@ private val compilationContext = ScopeContext("CompilationScope")
 
 val CompilationScope: Scope get() = compilationContext.scope
 
-var Seed.inlinedOxsts: InlinedOxsts
+var Seed.compilationRequest: CompilationRequest
     get() = error("Seed slots are write-only. Read seeded values via injection inside the scope.")
     set(value) {
-        seed(Key.get(InlinedOxsts::class.java), value)
+        seed(Key.get(CompilationRequest::class.java), value)
     }
 
-suspend fun <T> withCompilationScope(inlinedOxsts: InlinedOxsts, block: suspend () -> T): T {
+suspend fun <T> withCompilationScope(request: CompilationRequest, block: suspend () -> T): T {
     return withCompilationScope(
         Seed().apply {
-            this.inlinedOxsts = inlinedOxsts
+            this.compilationRequest = request
         },
         block,
     )
@@ -41,10 +41,10 @@ suspend fun <T> withCompilationScope(seed: Seed? = null, block: suspend () -> T)
     return compilationContext.withScope(seed, block)
 }
 
-fun <T> withCompilationScopeBlocking(inlinedOxsts: InlinedOxsts, block: () -> T): T {
+fun <T> withCompilationScopeBlocking(request: CompilationRequest, block: () -> T): T {
     return withCompilationScopeBlocking(
         Seed().apply {
-            this.inlinedOxsts = inlinedOxsts
+            this.compilationRequest = request
         },
         block,
     )

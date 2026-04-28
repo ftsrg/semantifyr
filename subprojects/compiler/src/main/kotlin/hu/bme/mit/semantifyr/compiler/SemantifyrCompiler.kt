@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.compiler
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.compiler.pipeline.CompilationModule
 import hu.bme.mit.semantifyr.compiler.pipeline.CompilationPipeline
+import hu.bme.mit.semantifyr.compiler.pipeline.CompilationRequest
 import hu.bme.mit.semantifyr.compiler.pipeline.InlinedOxstsModelCreator
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
@@ -19,10 +20,11 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import java.nio.file.Path
 
 class SemantifyrCompiler(
     injector: Injector,
-    private val artifactConfig: ArtifactConfig,
+    artifactConfig: ArtifactConfig,
     optimizationConfig: OptimizationConfig = OptimizationConfig.DEFAULT,
 ) : AutoCloseable {
 
@@ -38,22 +40,19 @@ class SemantifyrCompiler(
         CompilationModule(artifactConfig, optimizationConfig),
     )
 
-    init {
-        logger.info { "Compiler artifacts will be written to: ${artifactConfig.outputDirectory.toAbsolutePath()}" }
-    }
-
-    fun compile(classDeclaration: ClassDeclaration): FlattenedCompilationContext {
-        logger.info { "Compiling class '${classDeclaration.name}'" }
+    fun compile(classDeclaration: ClassDeclaration, outputDirectory: Path): FlattenedCompilationContext {
+        logger.info { "Compiling class '${classDeclaration.name}' into ${outputDirectory.toAbsolutePath()}" }
         val inlinedOxsts = sharedInjector
             .getInstance(InlinedOxstsModelCreator::class.java)
-            .create(classDeclaration)
+            .create(classDeclaration, outputDirectory)
             .inlinedOxsts
-        return compile(inlinedOxsts)
+        return compile(inlinedOxsts, outputDirectory)
     }
 
-    fun compile(inlinedOxsts: InlinedOxsts): FlattenedCompilationContext {
-        logger.info { "Compiling inlined oxsts of '${inlinedOxsts.classDeclaration.name}'" }
-        return withCompilationScopeBlocking(inlinedOxsts) {
+    fun compile(inlinedOxsts: InlinedOxsts, outputDirectory: Path): FlattenedCompilationContext {
+        logger.info { "Compiling inlined oxsts of '${inlinedOxsts.classDeclaration.name}' into ${outputDirectory.toAbsolutePath()}" }
+        val request = CompilationRequest(inlinedOxsts = inlinedOxsts, outputDirectory = outputDirectory)
+        return withCompilationScopeBlocking(request) {
             val pipeline = sharedInjector.getInstance(CompilationPipeline::class.java)
             pipeline.compileFlattened(inlinedOxsts)
         }

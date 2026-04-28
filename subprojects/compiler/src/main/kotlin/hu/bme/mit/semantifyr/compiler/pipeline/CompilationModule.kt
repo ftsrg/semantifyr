@@ -18,15 +18,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.inlining.OperationCallInliner
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.scopes.CompilationScope
 import hu.bme.mit.semantifyr.compiler.scopes.CompilationScoped
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 
-/**
- * Shape-level compilation module installed once per [SemantifyrCompiler]. Binds the
- * shared compiler config, wires the compilation scope and its seed slots, and installs
- * the AssistedInject factories. Per-compilation values (notably [InlinedOxsts]) are
- * supplied by seeding the compilation scope at entry, not by constructing this module
- * per call.
- */
 class CompilationModule(
     private val artifacts: ArtifactConfig,
     private val optimization: OptimizationConfig,
@@ -37,10 +29,10 @@ class CompilationModule(
 
         bindScope(CompilationScoped::class.java, CompilationScope)
 
-        bind(InlinedOxsts::class.java)
+        bind(CompilationRequest::class.java)
             .toProvider(
                 Provider {
-                    error("InlinedOxsts must be seeded into the compilation scope; call withCompilationScope with a Seed that includes it.")
+                    error("CompilationRequest must be seeded into the compilation scope; call withCompilationScope with a Seed that includes it.")
                 },
             )
             .`in`(CompilationScope)

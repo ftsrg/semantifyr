@@ -7,8 +7,6 @@
 package hu.bme.mit.semantifyr.compiler.pipeline
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactKind
-import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.context.CreatedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.RedefinitionAwareReferenceResolver
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
@@ -19,16 +17,17 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
+import org.eclipse.emf.common.util.URI
+import java.nio.file.Path
 
 class InlinedOxstsModelCreator @Inject constructor(
     private val builtinSymbolResolver: BuiltinSymbolResolver,
     private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
-    private val artifactManager: ArtifactManager,
 ) {
 
-    fun create(classDeclaration: ClassDeclaration): CreatedCompilationContext {
+    fun create(classDeclaration: ClassDeclaration, outputDirectory: Path): CreatedCompilationContext {
         val resourceSet = classDeclaration.eResource().resourceSet
-        val uri = artifactManager.resolveUri(ArtifactKind.OutputModel)
+        val uri = URI.createFileURI(outputDirectory.resolve("inlined.oxsts").toAbsolutePath().toString())
 
         val inlinedOxsts = OxstsFactory.createInlinedOxsts()
         inlinedOxsts.classDeclaration = classDeclaration
