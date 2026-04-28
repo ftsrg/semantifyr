@@ -67,6 +67,17 @@ class OxstsInliner @Inject constructor(
         if (temporalOutsideProperty != null) {
             sourceError(temporalOutsideProperty, "Temporal operators may only appear inside property blocks!")
         }
+
+        val outerTemporal = inlinedOxsts.property.expression as TemporalOperator
+        val nestedTemporal = outerTemporal.eAllOfType<TemporalOperator>().firstOrNull {
+            it !== outerTemporal
+        }
+        if (nestedTemporal != null) {
+            sourceError(
+                nestedTemporal,
+                "Nested temporal operators are not supported (properties must be `AG body` or `EF body` with a non-temporal body).",
+            )
+        }
     }
 
     private fun inlineOperationCalls(rootInstance: Instance, transition: TransitionDeclaration) {
