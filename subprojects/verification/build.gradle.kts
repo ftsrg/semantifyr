@@ -28,6 +28,7 @@ dependencies {
     testFixturesApi(project(":oxsts.lang"))
     testFixturesApi(testFixtures(project(":oxsts.lang")))
     testFixturesImplementation(libs.kotlinx.coroutines.core)
+    testFixturesImplementation(project(":logging"))
 }
 
 testing {
