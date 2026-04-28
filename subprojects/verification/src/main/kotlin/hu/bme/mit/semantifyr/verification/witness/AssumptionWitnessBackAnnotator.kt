@@ -9,17 +9,13 @@ package hu.bme.mit.semantifyr.verification.witness
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.RedefinitionAwareReferenceResolver
-import hu.bme.mit.semantifyr.compiler.pipeline.inlining.ExpressionRewriter
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
@@ -37,7 +33,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionKind
 class AssumptionWitnessBackAnnotator @Inject constructor(
     private val builtinSymbolResolver: BuiltinSymbolResolver,
     private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
-    private val expressionRewriter: ExpressionRewriter,
 ) {
     private inner class WitnessContext(
         val witness: OxstsClassAssumptionWitness,
@@ -83,7 +78,7 @@ class AssumptionWitnessBackAnnotator @Inject constructor(
             inlinedOxsts.variables += stateVariable
             inlinedOxsts.initTransition = createInitTransitionDeclaration()
             inlinedOxsts.mainTransition = createMainTransitionDeclaration()
-            inlinedOxsts.property = createPropertyDeclaration(lastStepValue)
+            inlinedOxsts.property = createPropertyDeclaration()
             return inlinedOxsts
         }
 
@@ -127,53 +122,22 @@ class AssumptionWitnessBackAnnotator @Inject constructor(
             }
         }
 
-        private fun createPropertyDeclaration(finalStepValue: Int): PropertyDeclaration {
-            val propertyBody = originalProperty.expression.bodyOfTemporal().copy()
-            expressionRewriter.rewriteExpressionsToContext(propertyBody, OxstsFactory.createElementReference(rootFeature))
-            val property = if (verdict == VerificationVerdict.Failed) {
-                OxstsFactory.createNegationOperator(propertyBody)
+        private fun createPropertyDeclaration(): PropertyDeclaration {
+            val call = OxstsFactory.createCallSuffixExpression().also {
+                it.primary = OxstsFactory.createNavigationSuffixExpression().also {
+                    it.primary = OxstsFactory.createElementReference().also {
+                        it.element = rootFeature
+                    }
+                    it.member = originalProperty
+                }
+            }
+            val expression = if (verdict == VerificationVerdict.Failed) {
+                OxstsFactory.createNegationOperator(call)
             } else {
-                propertyBody
+                call
             }
-
-            val anchoredExpression = when (originalProperty.expression) {
-                is EF -> OxstsFactory.createBooleanOperator(BooleanOp.AND, stepEqualsLast(finalStepValue), property)
-                else -> OxstsFactory.createBooleanOperator(BooleanOp.OR, stepNotEqualsLast(finalStepValue), property)
-            }
-
-            val temporal = when (originalProperty.expression) {
-                is EF -> OxstsFactory.createEF().also {
-                    it.body = anchoredExpression
-                }
-                else -> OxstsFactory.createAG().also {
-                    it.body = anchoredExpression
-                }
-            }
-
             return OxstsFactory.createPropertyDeclaration().also {
-                it.expression = temporal
-            }
-        }
-
-        private fun Expression.bodyOfTemporal(): Expression = when (this) {
-            is AG -> body
-            is EF -> body
-            else -> this
-        }
-
-        private fun stepEqualsLast(finalStepValue: Int): Expression {
-            return OxstsFactory.createComparisonOperator().also {
-                it.op = ComparisonOp.EQ
-                it.left = OxstsFactory.createElementReference(stateVariable)
-                it.right = OxstsFactory.createLiteralInteger(finalStepValue)
-            }
-        }
-
-        private fun stepNotEqualsLast(finalStepValue: Int): Expression {
-            return OxstsFactory.createComparisonOperator().also {
-                it.op = ComparisonOp.NOT_EQ
-                it.left = OxstsFactory.createElementReference(stateVariable)
-                it.right = OxstsFactory.createLiteralInteger(finalStepValue)
+                it.expression = expression
             }
         }
 
