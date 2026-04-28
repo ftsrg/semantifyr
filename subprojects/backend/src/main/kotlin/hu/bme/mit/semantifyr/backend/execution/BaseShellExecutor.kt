@@ -127,6 +127,6 @@ abstract class BaseShellExecutor {
 
 fun Process.destroyTree() {
     val handle = toHandle()
-    handle.descendants().forEach { it.destroy() }
-    handle.destroy()
+    handle.descendants().forEach { it.destroyForcibly() }
+    handle.destroyForcibly()
 }
