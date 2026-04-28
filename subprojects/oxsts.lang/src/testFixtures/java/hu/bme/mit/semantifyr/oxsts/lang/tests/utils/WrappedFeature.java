@@ -11,7 +11,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TypeSpecification;
-
 import java.util.List;
 
 public record WrappedFeature(FeatureDeclaration eObject) {

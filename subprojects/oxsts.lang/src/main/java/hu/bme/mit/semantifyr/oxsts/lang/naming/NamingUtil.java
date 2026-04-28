@@ -9,10 +9,9 @@ package hu.bme.mit.semantifyr.oxsts.lang.naming;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration;
+import java.util.regex.Pattern;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.xtext.util.Strings;
-
-import java.util.regex.Pattern;
 
 public class NamingUtil {
 
@@ -77,7 +76,7 @@ public class NamingUtil {
     }
 
     public static boolean isQuotedId(String name) {
-        return name != null && ! name.isBlank() && name.charAt(0) == '\'';
+        return name != null && !name.isBlank() && name.charAt(0) == '\'';
     }
 
     public static boolean isQuotedId(String name, int startIndex) {
@@ -87,5 +86,4 @@ public class NamingUtil {
     public static boolean isSimpleId(String name) {
         return name != null && ID_REGEX.matcher(name).matches();
     }
-
 }

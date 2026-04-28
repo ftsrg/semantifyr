@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression;
@@ -14,8 +16,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineCall;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression;
 import org.eclipse.xtext.EcoreUtil2;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @InjectWithOxsts
 public class ScopingTest {
@@ -38,8 +38,8 @@ public class ScopingTest {
         var hostW = pkg.classByName("Host").featureByName("w");
 
         assertThat(hostW.typeDomain())
-            .as("feature w's type should resolve to the Worker class declaration")
-            .isSameAs(worker.eObject());
+                .as("feature w's type should resolve to the Worker class declaration")
+                .isSameAs(worker.eObject());
     }
 
     @Test
@@ -60,13 +60,13 @@ public class ScopingTest {
 
         var redefinedW = pkg.classByName("Child").featureByName("w");
         assertThat(redefinedW.isRedefine())
-            .as("Child's w should have `redefine` flag set")
-            .isTrue();
+                .as("Child's w should have `redefine` flag set")
+                .isTrue();
 
         var betterWorker = pkg.classByName("BetterWorker");
         assertThat(redefinedW.typeDomain())
-            .as("Child's redefined w should be typed BetterWorker, not Worker")
-            .isSameAs(betterWorker.eObject());
+                .as("Child's redefined w should be typed BetterWorker, not Worker")
+                .isSameAs(betterWorker.eObject());
     }
 
     @Test
@@ -85,7 +85,8 @@ public class ScopingTest {
         var stepTran = host.namedTransition("step");
         var mainTran = host.anonymousMain();
 
-        var inlineCall = EcoreUtil2.eAllOfType(mainTran.eObject(), InlineCall.class).getFirst();
+        var inlineCall =
+                EcoreUtil2.eAllOfType(mainTran.eObject(), InlineCall.class).getFirst();
         var callExpression = (CallSuffixExpression) inlineCall.getCallExpression();
         var callPrimary = callExpression.getPrimary();
 
@@ -93,8 +94,8 @@ public class ScopingTest {
         // step transition declaration, not some dangling proxy.
         assertThat(callPrimary).isInstanceOf(ElementReference.class);
         assertThat(((ElementReference) callPrimary).getElement())
-            .as("inline call target must resolve to the step transition EObject")
-            .isSameAs(stepTran.eObject());
+                .as("inline call target must resolve to the step transition EObject")
+                .isSameAs(stepTran.eObject());
     }
 
     @Test
@@ -122,11 +123,11 @@ public class ScopingTest {
 
         // The primary of the navigation is `w`; the member is `finish`.
         assertThat(((ElementReference) navigation.getPrimary()).getElement())
-            .as("navigation's primary must resolve to host's w feature")
-            .isSameAs(hostW.eObject());
+                .as("navigation's primary must resolve to host's w feature")
+                .isSameAs(hostW.eObject());
         assertThat(navigation.getMember())
-            .as("navigation's member must resolve to Worker's finish transition")
-            .isSameAs(workerFinish.eObject());
+                .as("navigation's member must resolve to Worker's finish transition")
+                .isSameAs(workerFinish.eObject());
     }
 
     @Test
@@ -145,7 +146,7 @@ public class ScopingTest {
 
         var reference = (ElementReference) initializer;
         assertThat(reference.getElement())
-            .as("`Color::Red` must resolve to the Red enum literal")
-            .isSameAs(red);
+                .as("`Color::Red` must resolve to the Red enum literal")
+                .isSameAs(red);
     }
 }

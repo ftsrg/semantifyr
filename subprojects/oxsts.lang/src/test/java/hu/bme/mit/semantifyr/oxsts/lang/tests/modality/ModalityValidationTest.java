@@ -6,14 +6,14 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.modality;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator;
 import org.eclipse.xtext.validation.CheckMode;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @InjectWithOxsts
 public class ModalityValidationTest {
@@ -262,6 +262,7 @@ public class ModalityValidationTest {
         var holder = pkg.classByName("Holder");
         assertThat(holder.features()).hasSize(2);
         assertThat(holder.featureByName("w1").kind().toString()).isEqualTo("CONTAINMENT");
-        assertThat(holder.featureByName("w1").typeDomain()).isSameAs(pkg.classByName("Worker").eObject());
+        assertThat(holder.featureByName("w1").typeDomain())
+                .isSameAs(pkg.classByName("Worker").eObject());
     }
 }

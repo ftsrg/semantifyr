@@ -22,5 +22,4 @@ public class LibraryResourceResolver {
         var resourceSet = context.eResource().getResourceSet();
         return resourceSet.getResource(resourceUri, false);
     }
-
 }

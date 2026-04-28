@@ -27,13 +27,21 @@ public abstract class OperationVisitor<T> {
     }
 
     protected abstract T visit(SequenceOperation operation);
+
     protected abstract T visit(ChoiceOperation operation);
+
     protected abstract T visit(LocalVarDeclarationOperation operation);
+
     protected abstract T visit(ForOperation operation);
+
     protected abstract T visit(IfOperation operation);
+
     protected abstract T visit(HavocOperation operation);
+
     protected abstract T visit(AssumptionOperation operation);
+
     protected abstract T visit(AssignmentOperation operation);
+
     protected abstract T visit(TraceOperation operation);
 
     protected T visit(InlineOperation operation) {
@@ -46,6 +54,7 @@ public abstract class OperationVisitor<T> {
     }
 
     protected abstract T visit(InlineCall operation);
+
     protected abstract T visit(InlineIfOperation operation);
 
     protected T visit(InlineForOperation operation) {
@@ -57,6 +66,6 @@ public abstract class OperationVisitor<T> {
     }
 
     protected abstract T visit(InlineSeqFor operation);
-    protected abstract T visit(InlineChoiceFor operation);
 
+    protected abstract T visit(InlineChoiceFor operation);
 }

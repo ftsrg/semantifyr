@@ -52,5 +52,4 @@ public class OxstsQualifiedNameProvider extends IQualifiedNameProvider.AbstractI
 
         return qualifiedName;
     }
-
 }

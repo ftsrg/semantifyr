@@ -8,7 +8,6 @@ package hu.bme.mit.semantifyr.oxsts.lang.semantics.expression;
 
 import hu.bme.mit.semantifyr.oxsts.lang.utils.ExpressionVisitor;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,5 +26,4 @@ public abstract class ExpressionEvaluator<T> extends ExpressionVisitor<T> {
 
         return evaluation;
     }
-
 }

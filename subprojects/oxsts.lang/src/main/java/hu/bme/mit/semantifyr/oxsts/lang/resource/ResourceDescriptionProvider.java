@@ -29,5 +29,4 @@ public class ResourceDescriptionProvider {
         }
         return globalResourceDescriptionProvider.getResourceDescription(loadedResource);
     }
-
 }

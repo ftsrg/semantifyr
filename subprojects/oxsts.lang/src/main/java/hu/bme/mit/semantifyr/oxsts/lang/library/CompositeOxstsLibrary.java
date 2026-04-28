@@ -16,7 +16,6 @@ public abstract class CompositeOxstsLibrary implements OxstsLibrary {
 
     @Override
     public Iterable<URI> getImplicitImports() {
-        //noinspection DataFlowIssue
         return FluentIterable.from(getLibraries()).transformAndConcat(OxstsLibrary::getImplicitImports);
     }
 
@@ -26,5 +25,4 @@ public abstract class CompositeOxstsLibrary implements OxstsLibrary {
             library.loadLibrary(resourceSet);
         }
     }
-
 }

@@ -12,10 +12,9 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.xtext.testing.util.ParseHelper;
 
 /**
- * Parses a text fixture as an {@link InlinedOxsts} model. The Oxsts grammar's
- * top-level {@code Model} rule accepts both {@code OxstsModelPackage} and
- * {@code InlinedOxsts}; this helper disambiguates to the inlined form for
- * optimization-pass tests.
+ * Parses a text fixture as an {@link InlinedOxsts} model. The Oxsts grammar's top-level {@code
+ * Model} rule accepts both {@code OxstsModelPackage} and {@code InlinedOxsts}; this helper
+ * disambiguates to the inlined form for optimization-pass tests.
  */
 public class InlinedOxstsParseHelper {
 
@@ -31,5 +30,4 @@ public class InlinedOxstsParseHelper {
             throw new AssertionError("Unexpected exception while parsing InlinedOxsts", e);
         }
     }
-
 }

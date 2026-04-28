@@ -32,7 +32,7 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
 
     @Inject
     protected MultiplicityRangeEvaluator multiplicityRangeEvaluator;
-    
+
     @Inject
     protected TypeCompatibility typeCompatibility;
 
@@ -103,7 +103,7 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
         }
         var unwrapped = typeCompatibility.unwrappedDomain(operandType);
         if (unwrapped == builtinSymbolResolver.intDatatype(expression)
-            || unwrapped == builtinSymbolResolver.realDatatype(expression)) {
+                || unwrapped == builtinSymbolResolver.realDatatype(expression)) {
             return new ImmutableTypeEvaluation(unwrapped);
         }
         // Non-numeric operand: inner check reported the root cause.
@@ -138,7 +138,8 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
             return new ImmutableTypeEvaluation(builtinSymbolResolver.anyDatatype(expression), RangeEvaluation.of(0));
         }
         var elementType = evaluate(values.getFirst());
-        var elementDomain = elementType != null ? elementType.getDomain() : builtinSymbolResolver.anyDatatype(expression);
+        var elementDomain =
+                elementType != null ? elementType.getDomain() : builtinSymbolResolver.anyDatatype(expression);
         return new ImmutableTypeEvaluation(elementDomain, RangeEvaluation.of(values.size()));
     }
 
@@ -183,7 +184,8 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
         return switch (referencedElement) {
             case VariableDeclaration variableDeclaration -> variableTypeEvaluator.evaluate(variableDeclaration);
             case FeatureDeclaration featureDeclaration -> featureTypeEvaluation(featureDeclaration);
-            case ParameterDeclaration parameterDeclaration -> fromTypeSpecification(parameterDeclaration.getTypeSpecification());
+            case ParameterDeclaration parameterDeclaration ->
+                fromTypeSpecification(parameterDeclaration.getTypeSpecification());
             case EnumLiteral enumLiteral -> new ImmutableTypeEvaluation((EnumDeclaration) enumLiteral.eContainer());
             case DomainDeclaration domainDeclaration -> new ImmutableTypeEvaluation(domainDeclaration);
             default -> InvalidTypeEvaluation.Instance;
@@ -231,7 +233,8 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
 
         return switch (called) {
             case TransitionDeclaration ignored -> InvalidTypeEvaluation.Instance;
-            case PropertyDeclaration propertyDeclaration -> fromTypeSpecification(propertyTypeHandler.getPropertyReturnType(propertyDeclaration));
+            case PropertyDeclaration propertyDeclaration ->
+                fromTypeSpecification(propertyTypeHandler.getPropertyReturnType(propertyDeclaration));
             case RecordDeclaration recordDeclaration -> new ImmutableTypeEvaluation(recordDeclaration);
             default -> throw new IllegalStateException("Unexpected value: " + called);
         };
@@ -268,8 +271,8 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
         var thenType = evaluate(expression.getThen());
         var elseType = evaluate(expression.getElse());
         if (guard instanceof InvalidTypeEvaluation
-            || thenType instanceof InvalidTypeEvaluation
-            || elseType instanceof InvalidTypeEvaluation) {
+                || thenType instanceof InvalidTypeEvaluation
+                || elseType instanceof InvalidTypeEvaluation) {
             return InvalidTypeEvaluation.Instance;
         }
         return thenType;
@@ -289,5 +292,4 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
         var rangeEvaluation = multiplicityRangeEvaluator.evaluate(typeSpecification);
         return new ImmutableTypeEvaluation(featureDeclaration, rangeEvaluation);
     }
-
 }

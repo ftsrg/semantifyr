@@ -10,9 +10,7 @@ import com.google.inject.Injector;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsPackage;
 import org.eclipse.emf.ecore.EPackage;
 
-/**
- * Initialization support for running Xtext languages without Equinox extension registry.
- */
+/** Initialization support for running Xtext languages without Equinox extension registry. */
 public class OxstsStandaloneSetup extends OxstsStandaloneSetupGenerated {
 
     @Override

@@ -15,9 +15,10 @@ import org.eclipse.xtext.resource.ISelectable;
 import org.eclipse.xtext.util.Tuples;
 
 public class DomainMemberCollectionProvider {
-    private final static String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.typesystem.domain.DomainMemberCollector.CACHE_KEY";
-    private final static String MEMBER_KEY = CACHE_KEY + "MEMBER";
-    private final static String PARENT_KEY = CACHE_KEY + "PARENT";
+    private static final String CACHE_KEY =
+            "hu.bme.mit.semantifyr.oxsts.lang.typesystem.domain.DomainMemberCollector.CACHE_KEY";
+    private static final String MEMBER_KEY = CACHE_KEY + "MEMBER";
+    private static final String PARENT_KEY = CACHE_KEY + "PARENT";
 
     @Inject
     private InheritanceHandler inheritanceHandler;
@@ -39,7 +40,9 @@ public class DomainMemberCollectionProvider {
     }
 
     protected DomainMemberCollection computeParentCollection(DomainDeclaration domain) {
-        var superDomains = inheritanceHandler.getSuperDomains(domain).stream().map(this::getMemberCollection).toList();
+        var superDomains = inheritanceHandler.getSuperDomains(domain).stream()
+                .map(this::getMemberCollection)
+                .toList();
 
         return DomainMemberCollection.createCollection(superDomains, redefinitionHandler);
     }
@@ -53,5 +56,4 @@ public class DomainMemberCollectionProvider {
 
         return DomainMemberCollection.createCollection(domain, parent, redefinitionHandler);
     }
-
 }

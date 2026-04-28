@@ -14,7 +14,8 @@ import org.eclipse.emf.ecore.EObject;
 
 public class ExpressionTypeEvaluatorProvider {
 
-    private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider.CACHE_KEY";
+    private static final String CACHE_KEY =
+            "hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider.CACHE_KEY";
 
     @Inject
     private OnResourceSetChangeEvictingCache resourceScopeCache;
@@ -29,5 +30,4 @@ public class ExpressionTypeEvaluatorProvider {
     public TypeEvaluation evaluate(Expression expression) {
         return getEvaluator(expression).evaluate(expression);
     }
-
 }

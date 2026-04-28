@@ -9,10 +9,9 @@ package hu.bme.mit.semantifyr.oxsts.lang.naming;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.conversion.IdentifierValueConverter;
+import java.util.ArrayList;
 import org.eclipse.xtext.naming.IQualifiedNameConverter;
 import org.eclipse.xtext.naming.QualifiedName;
-
-import java.util.ArrayList;
 
 public class OxstsQualifiedNameConverter implements IQualifiedNameConverter {
 
@@ -58,5 +57,4 @@ public class OxstsQualifiedNameConverter implements IQualifiedNameConverter {
         }
         return QualifiedName.create(segments);
     }
-
 }

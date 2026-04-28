@@ -42,5 +42,4 @@ public class OxstsPackageParseHelper {
             throw new AssertionError("Unexpected exception while parsing Oxsts Package", e);
         }
     }
-
 }

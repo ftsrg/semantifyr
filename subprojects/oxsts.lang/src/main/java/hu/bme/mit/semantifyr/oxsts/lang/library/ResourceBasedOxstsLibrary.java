@@ -6,13 +6,12 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.library;
 
-import org.eclipse.emf.ecore.resource.ResourceSet;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import org.eclipse.emf.ecore.resource.ResourceSet;
 
 public abstract class ResourceBasedOxstsLibrary extends PathBasedOxstsLibrary {
 
@@ -68,12 +67,10 @@ public abstract class ResourceBasedOxstsLibrary extends PathBasedOxstsLibrary {
                     desired,
                     StandardOpenOption.CREATE,
                     StandardOpenOption.TRUNCATE_EXISTING,
-                    StandardOpenOption.WRITE
-            );
+                    StandardOpenOption.WRITE);
         } catch (IOException ignored) {
             // A concurrent writer may be mid-flight. Their copy of the file will be correct by the
             // time loading reads it, so swallowing here is safe and better than throwing.
         }
     }
-
 }

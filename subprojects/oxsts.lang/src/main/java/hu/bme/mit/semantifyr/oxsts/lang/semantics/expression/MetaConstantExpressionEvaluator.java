@@ -91,7 +91,8 @@ public class MetaConstantExpressionEvaluator extends ExpressionEvaluator<NamedEl
     @Override
     protected NamedElement visit(ElementReference expression) {
         if (expression.getElement().eIsProxy()) {
-            throw new IllegalStateException(SourceLocation.prefixFor(expression) + "Element reference could not be resolved (unresolved proxy).");
+            throw new IllegalStateException(SourceLocation.prefixFor(expression)
+                    + "Element reference could not be resolved (unresolved proxy).");
         }
 
         return expression.getElement();
@@ -105,7 +106,8 @@ public class MetaConstantExpressionEvaluator extends ExpressionEvaluator<NamedEl
     @Override
     protected NamedElement visit(NavigationSuffixExpression expression) {
         if (expression.getMember().eIsProxy()) {
-            throw new IllegalStateException(SourceLocation.prefixFor(expression) + "Navigation member could not be resolved (unresolved proxy).");
+            throw new IllegalStateException(SourceLocation.prefixFor(expression)
+                    + "Navigation member could not be resolved (unresolved proxy).");
         }
 
         return expression.getMember();
@@ -130,5 +132,4 @@ public class MetaConstantExpressionEvaluator extends ExpressionEvaluator<NamedEl
     protected NamedElement visit(IfThenElse expression) {
         throw EvaluationFailureException.at(expression, NOT_META);
     }
-
 }

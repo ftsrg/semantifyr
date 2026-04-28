@@ -15,7 +15,8 @@ import org.eclipse.xtext.util.Tuples;
 
 public class VariableTypeEvaluator {
 
-    private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.VariableTypeEvaluator.CACHE_KEY";
+    private static final String CACHE_KEY =
+            "hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.VariableTypeEvaluator.CACHE_KEY";
 
     @Inject
     private IResourceScopeCache cache;
@@ -24,7 +25,10 @@ public class VariableTypeEvaluator {
     private ExpressionTypeEvaluatorProvider expressionTypeEvaluatorProvider;
 
     public TypeEvaluation evaluate(VariableDeclaration variableDeclaration) {
-        return cache.get(Tuples.create(CACHE_KEY, variableDeclaration), variableDeclaration.eResource(), () -> computeTypeOf(variableDeclaration));
+        return cache.get(
+                Tuples.create(CACHE_KEY, variableDeclaration),
+                variableDeclaration.eResource(),
+                () -> computeTypeOf(variableDeclaration));
     }
 
     private TypeEvaluation computeTypeOf(VariableDeclaration variableDeclaration) {
@@ -54,5 +58,4 @@ public class VariableTypeEvaluator {
 
         return InvalidTypeEvaluation.Instance;
     }
-
 }

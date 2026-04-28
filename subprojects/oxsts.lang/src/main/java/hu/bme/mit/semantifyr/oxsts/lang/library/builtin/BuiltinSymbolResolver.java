@@ -23,18 +23,16 @@ public class BuiltinSymbolResolver {
     public static final QualifiedName TRACE_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Trace");
     public static final QualifiedName CLOCK_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Clock");
 
-    public static final QualifiedName VERIFICATION_CASE_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("VerificationCase");
+    public static final QualifiedName VERIFICATION_CASE_ANNOTATION_NAME =
+            BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("VerificationCase");
     public static final String VERIFICATION_CASE_SUMMARY_NAME = "summary";
 
     public static final QualifiedName TAG_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Tag");
     public static final String TAG_ANNOTATION_CATEGORY_NAME = "category";
 
     public static final QualifiedName ANYTHING_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Anything");
-//    public static final String ANYTHING_CHILDREN_NAME = "children";
-//    public static final String ANYTHING_PARENT_NAME = "parent";
     public static final String ANYTHING_INIT_NAME = "init";
     public static final String ANYTHING_MAIN_NAME = "main";
-    public static final String ANYTHING_HAVOC_NAME = "havoc";
 
     public static final QualifiedName ANY_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("any");
     public static final QualifiedName BOOL_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("bool");
@@ -118,24 +116,12 @@ public class BuiltinSymbolResolver {
         return findInClassDeclaration(anythingClass, type, name);
     }
 
-//    public FeatureDeclaration anythingChildrenFeature(EObject context) {
-//        return findInBuiltin(context, FeatureDeclaration.class, ANYTHING_CHILDREN_NAME);
-//    }
-
-//    public FeatureDeclaration anythingParentFeature(EObject context) {
-//        return findInBuiltin(context, FeatureDeclaration.class, ANYTHING_PARENT_NAME);
-//    }
-
     public TransitionDeclaration anythingInitTransition(EObject context) {
         return findInAnything(context, TransitionDeclaration.class, ANYTHING_INIT_NAME);
     }
 
     public TransitionDeclaration anythingMainTransition(EObject context) {
         return findInAnything(context, TransitionDeclaration.class, ANYTHING_MAIN_NAME);
-    }
-
-    public TransitionDeclaration anythingHavocTransition(EObject context) {
-        return findInAnything(context, TransitionDeclaration.class, ANYTHING_HAVOC_NAME);
     }
 
     public boolean isBuiltin(EObject eObject) {
@@ -155,14 +141,6 @@ public class BuiltinSymbolResolver {
         return isBuiltin(classDeclaration) && isNamed(classDeclaration, ANYTHING_NAME);
     }
 
-//    public boolean isAnythingParentFeature(FeatureDeclaration featureDeclaration) {
-//        return isBuiltin(featureDeclaration) && isNamed(featureDeclaration, ANYTHING_PARENT_NAME);
-//    }
-
-//    public boolean isAnythingChildrenFeature(FeatureDeclaration featureDeclaration) {
-//        return isBuiltin(featureDeclaration) && isNamed(featureDeclaration, ANYTHING_CHILDREN_NAME);
-//    }
-
     protected <T> T findInParameters(ParametricDeclaration parametricDeclaration, Class<T> type, String name) {
         for (var candidate : parametricDeclaration.getParameters()) {
             if (name.equals(NamingUtil.getName(candidate)) && type.isInstance(candidate)) {
@@ -171,10 +149,14 @@ public class BuiltinSymbolResolver {
             }
         }
 
-        throw new IllegalArgumentException("Built-in declaration '" + name + "' was not found in parametric declaration " + parametricDeclaration.getName());
+        throw new IllegalArgumentException("Built-in declaration '"
+                + name
+                + "' was not found in parametric declaration "
+                + parametricDeclaration.getName());
     }
 
-    protected <T extends Declaration> T findInClassDeclaration(ClassDeclaration classDeclaration, Class<T> type, String name) {
+    protected <T extends Declaration> T findInClassDeclaration(
+            ClassDeclaration classDeclaration, Class<T> type, String name) {
         for (var candidate : classDeclaration.getMembers()) {
             if (name.equals(NamingUtil.getName(candidate)) && type.isInstance(candidate)) {
                 //noinspection unchecked
@@ -182,7 +164,8 @@ public class BuiltinSymbolResolver {
             }
         }
 
-        throw new IllegalArgumentException("Built-in declaration '" + name + "' was not found in class " + classDeclaration.getName());
+        throw new IllegalArgumentException(
+                "Built-in declaration '" + name + "' was not found in class " + classDeclaration.getName());
     }
 
     protected <T extends Declaration> T findInBuiltin(EObject context, Class<T> type, QualifiedName name) {
@@ -193,5 +176,4 @@ public class BuiltinSymbolResolver {
     protected <T extends Declaration> T findInResource(Resource resource, Class<T> type, QualifiedName name) {
         return namedElementResolver.findQualifiedElement(resource, type, name);
     }
-
 }

@@ -324,7 +324,6 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
         document.surround(regionFor(inlineFor).keyword("in"), this::oneSpace);
 
-//        document.format(inlineFor.getLoopVariable());
         document.format(inlineFor.getRangeExpression());
         document.format(inlineFor.getBody());
         document.format(inlineFor.getElse());
@@ -340,7 +339,6 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
         document.surround(regionFor(inlineFor).keyword("in"), this::oneSpace);
 
-//        document.format(inlineFor.getLoopVariable());
         document.format(inlineFor.getRangeExpression());
         document.format(inlineFor.getBody());
         document.format(inlineFor.getElse());
@@ -390,42 +388,38 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void format(ComparisonOperator comparisonOperator, IFormattableDocument document) {
-        allRegionsFor(comparisonOperator).keywords(
-                "<", "<=", ">", "==", "!="
-        ).forEach(r -> document.surround(r, this::oneSpace));
+        allRegionsFor(comparisonOperator)
+                .keywords("<", "<=", ">", "==", "!=")
+                .forEach(r -> document.surround(r, this::oneSpace));
 
         document.format(comparisonOperator.getLeft());
         document.format(comparisonOperator.getRight());
     }
 
     protected void format(ArithmeticBinaryOperator arithmeticBinaryOperator, IFormattableDocument document) {
-        allRegionsFor(arithmeticBinaryOperator).keywords(
-                "+", "-", "*", "/"
-        ).forEach(r -> document.surround(r, this::oneSpace));
+        allRegionsFor(arithmeticBinaryOperator)
+                .keywords("+", "-", "*", "/")
+                .forEach(r -> document.surround(r, this::oneSpace));
 
         document.format(arithmeticBinaryOperator.getLeft());
         document.format(arithmeticBinaryOperator.getRight());
     }
 
     protected void format(BooleanOperator booleanOperator, IFormattableDocument document) {
-        allRegionsFor(booleanOperator).keywords(
-                "&&", "||", "^^"
-        ).forEach(r -> document.surround(r, this::oneSpace));
+        allRegionsFor(booleanOperator).keywords("&&", "||", "^^").forEach(r -> document.surround(r, this::oneSpace));
 
         document.format(booleanOperator.getLeft());
         document.format(booleanOperator.getRight());
     }
 
     protected void format(TemporalOperator temporalOperator, IFormattableDocument document) {
-        allRegionsFor(temporalOperator).keywords(
-                "EF", "AG"
-        ).forEach(r -> document.append(r, this::oneSpace));
+        allRegionsFor(temporalOperator).keywords("EF", "AG").forEach(r -> document.append(r, this::oneSpace));
 
         document.format(temporalOperator.getBody());
     }
 
     protected void format(IfThenElse ifThenElse, IFormattableDocument document) {
-        document.surround(regionFor(ifThenElse).keyword("if"), this::oneSpace);
+        document.append(regionFor(ifThenElse).keyword("if"), this::oneSpace);
         document.surround(regionFor(ifThenElse).keyword("then"), this::oneSpace);
         document.surround(regionFor(ifThenElse).keyword("else"), this::oneSpace);
 
@@ -487,5 +481,4 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.format(postfixUnaryExpression.getPrimary());
         document.format(postfixUnaryExpression.getIndex());
     }
-
 }

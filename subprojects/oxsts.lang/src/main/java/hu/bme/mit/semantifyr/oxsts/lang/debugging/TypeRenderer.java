@@ -41,5 +41,4 @@ public class TypeRenderer {
     public static String render(EObject element) {
         return instance.serialize(element);
     }
-
 }

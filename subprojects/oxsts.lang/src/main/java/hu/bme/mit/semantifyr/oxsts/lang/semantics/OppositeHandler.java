@@ -52,5 +52,4 @@ public class OppositeHandler {
 
         return getOppositeFeature(subsetFeature);
     }
-
 }

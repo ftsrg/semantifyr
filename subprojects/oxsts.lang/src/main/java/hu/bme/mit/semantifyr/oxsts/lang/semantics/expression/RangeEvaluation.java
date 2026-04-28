@@ -81,5 +81,4 @@ public class RangeEvaluation implements ExpressionEvaluation {
 
         return new RangeEvaluation(lowerBound, upperBound);
     }
-
 }

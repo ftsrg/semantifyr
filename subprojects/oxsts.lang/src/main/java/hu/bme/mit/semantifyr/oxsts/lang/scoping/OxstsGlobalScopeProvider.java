@@ -15,6 +15,9 @@ import hu.bme.mit.semantifyr.oxsts.lang.scoping.selectables.CompositeSelectable;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.selectables.TrimPrefixSelectable;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsPackage;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.xtext.resource.IEObjectDescription;
@@ -23,13 +26,10 @@ import org.eclipse.xtext.scoping.IScope;
 import org.eclipse.xtext.scoping.impl.ResourceSetGlobalScopeProvider;
 import org.eclipse.xtext.scoping.impl.SelectableBasedScope;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 public class OxstsGlobalScopeProvider extends ResourceSetGlobalScopeProvider {
 
-    private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.scoping.OxstsGlobalScopeProvider.CACHE_KEY";
+    private static final String CACHE_KEY =
+            "hu.bme.mit.semantifyr.oxsts.lang.scoping.OxstsGlobalScopeProvider.CACHE_KEY";
 
     @Inject
     private LibraryAdapterFinder libraryAdapterFinder;
@@ -71,11 +71,16 @@ public class OxstsGlobalScopeProvider extends ResourceSetGlobalScopeProvider {
             if (resource.getURI().equals(importedResourceUri)) {
                 continue;
             }
-            var importedResourceDescription = resourceDescriptionProvider.getResourceDescription(resource.getResourceSet(), importedResourceUri);
+            var importedResourceDescription =
+                    resourceDescriptionProvider.getResourceDescription(resource.getResourceSet(), importedResourceUri);
             if (importedResourceDescription == null) {
                 continue;
             }
-            var packageName = importedResourceDescription.getExportedObjects().iterator().next().getQualifiedName();
+            var packageName = importedResourceDescription
+                    .getExportedObjects()
+                    .iterator()
+                    .next()
+                    .getQualifiedName();
             if (importEntry.isImplicit()) {
                 implicitScopes.add(new TrimPrefixSelectable(importedResourceDescription, packageName));
             } else {
@@ -85,15 +90,15 @@ public class OxstsGlobalScopeProvider extends ResourceSetGlobalScopeProvider {
         return new LoadedImportScopes(implicitScopes, explicitScopes);
     }
 
-    protected IScope createScope(IScope parent, Collection<? extends ISelectable> children, EReference reference, Predicate<IEObjectDescription> filter) {
+    protected IScope createScope(
+            IScope parent,
+            Collection<? extends ISelectable> children,
+            EReference reference,
+            Predicate<IEObjectDescription> filter) {
         var selectable = CompositeSelectable.of(children);
-        return SelectableBasedScope.createScope(parent, selectable, filter, reference.getEReferenceType(), isIgnoreCase(reference));
+        return SelectableBasedScope.createScope(
+                parent, selectable, filter, reference.getEReferenceType(), isIgnoreCase(reference));
     }
 
-    protected record LoadedImportScopes(
-            List<ISelectable> implicitScopes,
-            List<ISelectable> explicitScopes
-    ) {
-    }
-
+    protected record LoadedImportScopes(List<ISelectable> implicitScopes, List<ISelectable> explicitScopes) {}
 }

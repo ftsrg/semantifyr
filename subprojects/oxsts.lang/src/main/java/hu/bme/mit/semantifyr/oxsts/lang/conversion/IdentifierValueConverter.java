@@ -5,22 +5,21 @@
  */
 package hu.bme.mit.semantifyr.oxsts.lang.conversion;
 
+import static org.eclipse.xtext.EcoreUtil2.eAllContentsAsList;
+import static org.eclipse.xtext.EcoreUtil2.typeSelect;
+
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.services.OxstsGrammarAccess;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import org.eclipse.xtext.GrammarUtil;
 import org.eclipse.xtext.Keyword;
 import org.eclipse.xtext.conversion.IValueConverter;
 import org.eclipse.xtext.conversion.ValueConverterException;
 import org.eclipse.xtext.nodemodel.INode;
-
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-
-import static org.eclipse.xtext.EcoreUtil2.eAllContentsAsList;
-import static org.eclipse.xtext.EcoreUtil2.typeSelect;
 
 @Singleton
 public class IdentifierValueConverter implements IValueConverter<String> {
@@ -39,7 +38,6 @@ public class IdentifierValueConverter implements IValueConverter<String> {
         for (Keyword keyword : list) {
             keywords.remove(keyword.getValue());
         }
-
     }
 
     @Override

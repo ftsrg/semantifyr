@@ -6,6 +6,4 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.semantics.expression;
 
-public record IntegerEvaluation(int value) implements ExpressionEvaluation {
-
-}
+public record IntegerEvaluation(int value) implements ExpressionEvaluation {}

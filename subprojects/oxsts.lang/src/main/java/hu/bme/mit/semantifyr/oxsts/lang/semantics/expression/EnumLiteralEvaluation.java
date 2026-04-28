@@ -8,6 +8,4 @@ package hu.bme.mit.semantifyr.oxsts.lang.semantics.expression;
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral;
 
-public record EnumLiteralEvaluation(EnumLiteral literal) implements ExpressionEvaluation {
-
-}
+public record EnumLiteralEvaluation(EnumLiteral literal) implements ExpressionEvaluation {}

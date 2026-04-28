@@ -6,12 +6,12 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.syntax;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @InjectWithOxsts
 public class AnnotationSyntaxTest {
@@ -40,7 +40,11 @@ public class AnnotationSyntaxTest {
             class Case { }
             """);
         pkg.assertNoResourceErrors();
-        var ann = pkg.classByName("Case").eObject().getAnnotation().getAnnotations().getFirst();
+        var ann = pkg.classByName("Case")
+                .eObject()
+                .getAnnotation()
+                .getAnnotations()
+                .getFirst();
         assertThat(ann.getArguments()).hasSize(1);
         assertThat(ann.getArguments().getFirst().getExpression()).isNotNull();
     }
@@ -53,7 +57,11 @@ public class AnnotationSyntaxTest {
             class Case { }
             """);
         pkg.assertNoResourceErrors();
-        var ann = pkg.classByName("Case").eObject().getAnnotation().getAnnotations().getFirst();
+        var ann = pkg.classByName("Case")
+                .eObject()
+                .getAnnotation()
+                .getAnnotations()
+                .getFirst();
         assertThat(ann.getArguments()).hasSize(1);
         assertThat(ann.getArguments().getFirst().getParameter()).isNotNull();
         assertThat(ann.getArguments().getFirst().getParameter().getName()).isEqualTo("summary");
@@ -69,7 +77,8 @@ public class AnnotationSyntaxTest {
             class Case { }
             """);
         pkg.assertNoResourceErrors();
-        assertThat(pkg.classByName("Case").eObject().getAnnotation().getAnnotations()).hasSize(2);
+        assertThat(pkg.classByName("Case").eObject().getAnnotation().getAnnotations())
+                .hasSize(2);
     }
 
     @Test

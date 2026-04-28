@@ -25,7 +25,10 @@ public class RedefinitionHandler {
     protected DomainMemberCollectionProvider domainMemberCollectionProvider;
 
     public RedefinableDeclaration getRedefinedDeclaration(RedefinableDeclaration declaration) {
-        return cache.get(Tuples.create(CACHE_KEY, declaration), declaration.eResource(), () -> computeRedefinedDeclaration(declaration));
+        return cache.get(
+                Tuples.create(CACHE_KEY, declaration),
+                declaration.eResource(),
+                () -> computeRedefinedDeclaration(declaration));
     }
 
     protected RedefinableDeclaration computeRedefinedDeclaration(RedefinableDeclaration declaration) {
@@ -43,7 +46,10 @@ public class RedefinitionHandler {
             // find the other RedefinableDeclaration in the parent domain with the same name
             var surroundingFeature = (DomainDeclaration) declaration.eContainer();
             var parentDomain = domainMemberCollectionProvider.getParentCollection(surroundingFeature);
-            var found = parentDomain.getMemberSelectable().getExportedObjects(declaration.eClass(), QualifiedName.create(NamingUtil.getName(declaration)), false);
+            var found = parentDomain
+                    .getMemberSelectable()
+                    .getExportedObjects(
+                            declaration.eClass(), QualifiedName.create(NamingUtil.getName(declaration)), false);
 
             for (var element : found) {
                 var toReturn = (RedefinableDeclaration) element.getEObjectOrProxy();
@@ -57,5 +63,4 @@ public class RedefinitionHandler {
 
         return null;
     }
-
 }

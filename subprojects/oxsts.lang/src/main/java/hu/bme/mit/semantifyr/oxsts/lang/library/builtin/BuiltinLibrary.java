@@ -8,11 +8,10 @@ package hu.bme.mit.semantifyr.oxsts.lang.library.builtin;
 
 import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.library.ResourceBasedOxstsLibrary;
-import org.eclipse.emf.common.util.URI;
-import org.eclipse.xtext.naming.QualifiedName;
-
 import java.nio.file.Path;
 import java.util.List;
+import org.eclipse.emf.common.util.URI;
+import org.eclipse.xtext.naming.QualifiedName;
 
 @Singleton
 public class BuiltinLibrary extends ResourceBasedOxstsLibrary {
@@ -35,9 +34,7 @@ public class BuiltinLibrary extends ResourceBasedOxstsLibrary {
 
     @Override
     public Iterable<URI> getImplicitImports() {
-        return List.of(
-                getBuiltinResourceUri()
-        );
+        return List.of(getBuiltinResourceUri());
     }
 
     protected static Path getHomePath() {
@@ -53,5 +50,4 @@ public class BuiltinLibrary extends ResourceBasedOxstsLibrary {
     protected ClassLoader getClassLoader() {
         return BuiltinLibrary.class.getClassLoader();
     }
-
 }

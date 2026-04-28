@@ -68,16 +68,14 @@ public class TypeCompatibility {
         if (typeEvaluation instanceof InvalidTypeEvaluation) {
             return true; // don't cascade
         }
-        if (isInt(typeEvaluation, context)
-                || isReal(typeEvaluation, context)
-                || isAny(typeEvaluation, context)) {
+        if (isInt(typeEvaluation, context) || isReal(typeEvaluation, context) || isAny(typeEvaluation, context)) {
             return true;
         }
 
         var unwrapped = unwrappedDomain(typeEvaluation);
         return unwrapped == builtinSymbolResolver.intDatatype(context)
-            || unwrapped == builtinSymbolResolver.realDatatype(context)
-            || unwrapped == builtinSymbolResolver.anyDatatype(context);
+                || unwrapped == builtinSymbolResolver.realDatatype(context)
+                || unwrapped == builtinSymbolResolver.anyDatatype(context);
     }
 
     public boolean isBoolean(TypeEvaluation typeEvaluation, EObject context) {
@@ -90,7 +88,7 @@ public class TypeCompatibility {
 
         var unwrapped = unwrappedDomain(typeEvaluation);
         return unwrapped == builtinSymbolResolver.boolDatatype(context)
-            || unwrapped == builtinSymbolResolver.anyDatatype(context);
+                || unwrapped == builtinSymbolResolver.anyDatatype(context);
     }
 
     public DomainDeclaration unwrappedDomain(TypeEvaluation typeEvaluation) {
@@ -114,14 +112,13 @@ public class TypeCompatibility {
         }
 
         return isDomainAssignable(left.getDomain(), right.getDomain(), context)
-            || isDomainAssignable(right.getDomain(), left.getDomain(), context);
+                || isDomainAssignable(right.getDomain(), left.getDomain(), context);
     }
 
     /**
-     * Returns {@code true} if a value of the {@code assigned} type can be
-     * assigned into a location typed as {@code assignee}. Checks domain
-     * compatibility plus multiplicity (can an optional slot accept nothing?
-     * can a one slot accept a some? etc.).
+     * Returns {@code true} if a value of the {@code assigned} type can be assigned into a location
+     * typed as {@code assignee}. Checks domain compatibility plus multiplicity (can an optional
+     * slot accept nothing? can a one slot accept a some? etc.).
      */
     public boolean isAssignable(TypeEvaluation assignee, TypeEvaluation assigned, EObject context) {
         if (assignee instanceof InvalidTypeEvaluation || assigned instanceof InvalidTypeEvaluation) {
@@ -149,7 +146,8 @@ public class TypeCompatibility {
         if (assignee instanceof ClassDeclaration assigneeClass && assigned instanceof ClassDeclaration assignedClass) {
             return isSubclassOf(assignedClass, assigneeClass);
         }
-        if (assignee instanceof FeatureDeclaration assigneeFeat && assigned instanceof FeatureDeclaration assignedFeat) {
+        if (assignee instanceof FeatureDeclaration assigneeFeat
+                && assigned instanceof FeatureDeclaration assignedFeat) {
             return isFeatureSubsetOf(assignedFeat, assigneeFeat);
         }
         // Mixed class / feature: unwrap one level and retry. A data-typed
@@ -212,5 +210,4 @@ public class TypeCompatibility {
     private boolean isAnyDomain(DomainDeclaration domain, EObject context) {
         return domain == builtinSymbolResolver.anyDatatype(context);
     }
-
 }

@@ -19,12 +19,14 @@ import hu.bme.mit.semantifyr.oxsts.lang.scoping.OxstsGlobalScopeProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.OxstsLocalScopeProvider;
 import org.eclipse.xtext.conversion.IValueConverterService;
 import org.eclipse.xtext.conversion.impl.AbstractIDValueConverter;
+import org.eclipse.xtext.formatting2.FormatterRequest;
 import org.eclipse.xtext.naming.IQualifiedNameConverter;
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
 import org.eclipse.xtext.resource.IResourceDescription;
 import org.eclipse.xtext.scoping.IGlobalScopeProvider;
 import org.eclipse.xtext.scoping.IScopeProvider;
 import org.eclipse.xtext.scoping.impl.AbstractDeclarativeScopeProvider;
+import org.eclipse.xtext.util.ExceptionAcceptor;
 
 public class OxstsRuntimeModule extends AbstractOxstsRuntimeModule {
 
@@ -65,8 +67,14 @@ public class OxstsRuntimeModule extends AbstractOxstsRuntimeModule {
 
     @Override
     public void configureIScopeProviderDelegate(Binder binder) {
-        binder.bind(IScopeProvider.class).annotatedWith(Names.named(AbstractDeclarativeScopeProvider.NAMED_DELEGATE))
+        binder.bind(IScopeProvider.class)
+                .annotatedWith(Names.named(AbstractDeclarativeScopeProvider.NAMED_DELEGATE))
                 .to(OxstsLocalScopeProvider.class);
     }
 
+    @SuppressWarnings("unused")
+    public void configureFormatterRequest(Binder binder) {
+        binder.bind(FormatterRequest.class)
+                .toProvider(() -> new FormatterRequest().setExceptionHandler(ExceptionAcceptor.THROWING));
+    }
 }

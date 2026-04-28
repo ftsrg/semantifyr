@@ -8,17 +8,19 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
 import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
+import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
+import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
+import hu.bme.mit.semantifyr.lang.ide.server.commands.VerificationCaseSpecification;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltInLibraryUtils;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
+import java.util.ArrayList;
+import java.util.List;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHandler<Resource> {
 
@@ -47,7 +49,8 @@ public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHand
     }
 
     @Override
-    protected Resource parseArguments(List<Object> arguments, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
+    protected Resource parseArguments(
+            List<Object> arguments, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
         var uriJson = (JsonPrimitive) arguments.getFirst();
         var uri = uriJson.getAsString();
 
@@ -60,14 +63,14 @@ public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHand
             return List.of();
         }
 
-        if (! (arguments.getContents().getFirst() instanceof OxstsModelPackage oxstsModel)) {
+        if (!(arguments.getContents().getFirst() instanceof OxstsModelPackage oxstsModel)) {
             return List.of();
         }
 
         var verificationCases = new ArrayList<VerificationCaseSpecification>();
-        builtInLibraryUtils.streamTestCases(oxstsModel).forEach(testCase ->
-                verificationCases.add(createCase(testCase))
-        );
+        builtInLibraryUtils
+                .streamTestCases(oxstsModel)
+                .forEach(testCase -> verificationCases.add(createCase(testCase)));
 
         return verificationCases;
     }
@@ -82,5 +85,4 @@ public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHand
 
         return new VerificationCaseSpecification(id, summary, location);
     }
-
 }

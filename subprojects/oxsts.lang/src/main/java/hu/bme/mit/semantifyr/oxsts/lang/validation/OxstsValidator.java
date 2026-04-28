@@ -9,8 +9,8 @@ package hu.bme.mit.semantifyr.oxsts.lang.validation;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.OppositeHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.PropertyTypeHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
@@ -23,6 +23,11 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.TypeCompatibility;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.TypeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.resource.ILocationInFileProvider;
@@ -30,16 +35,10 @@ import org.eclipse.xtext.validation.Check;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 /**
  * This class contains custom validation rules.
- * <p>
- * See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#validation
+ *
+ * <p>See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#validation
  */
 @SuppressWarnings("unused") // check functions are used by reflection
 public class OxstsValidator extends AbstractOxstsValidator {
@@ -84,8 +83,10 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String ELEMENT_SHADOWED = ISSUE_PREFIX + "ELEMENT_SHADOWED";
     public static final String INVALID_CALL_ARGUMENTS_COUND = ISSUE_PREFIX + "INVALID_CALL_ARGUMENTS_COUNT";
     public static final String INCORRECT_OPPOSITE = ISSUE_PREFIX + "INCORRECT_OPPOSITE";
-    public static final String ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED = ISSUE_PREFIX + "ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED";
-    public static final String ABSTRACT_FEATURE_INHERITED_MEMBERS_NOT_REDEFINED = ISSUE_PREFIX + "ABSTRACT_FEATURE_INHERITED_MEMBERS_NOT_REDEFINED";
+    public static final String ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED =
+            ISSUE_PREFIX + "ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED";
+    public static final String ABSTRACT_FEATURE_INHERITED_MEMBERS_NOT_REDEFINED =
+            ISSUE_PREFIX + "ABSTRACT_FEATURE_INHERITED_MEMBERS_NOT_REDEFINED";
     public static final String INCORRECT_ASSIGNMENT = ISSUE_PREFIX + "INCORRECT_ASSIGNMENT";
     public static final String INCORRECT_CALLED_ELEMENT = ISSUE_PREFIX + "INCORRECT_CALLED_ELEMENT";
     public static final String VARIABLE_WITH_IMPLICIT_TYPE = ISSUE_PREFIX + "VARIABLE_WITH_IMPLICIT_TYPE";
@@ -103,73 +104,105 @@ public class OxstsValidator extends AbstractOxstsValidator {
         logger.error("Exception during validation", targetException);
     }
 
-//    @Check
-//    public void featuresMustBeInAbstractClass(FeatureDeclaration featureDeclaration) {
-//        if (featureDeclaration.getKind() == FeatureKind.FEATURE && featureDeclaration.eContainer() instanceof ClassDeclaration containerClass && ! containerClass.isAbstract()) {
-//            acceptError("Abstract features can only be declared in abstract classes.", featureDeclaration, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0, MEMBER_NOT_IN_ABSTRACT_CLASS);
-//        }
-//    }
-//
-//    @Check
-//    public void featuresMustBeInAbstractFeatures(FeatureDeclaration featureDeclaration) {
-//        if (featureDeclaration.getKind() == FeatureKind.FEATURE && featureDeclaration.eContainer() instanceof FeatureDeclaration containerFeature && featureDeclaration.getKind() != FeatureKind.FEATURE) {
-//            acceptError("Abstract features can only be declared in abstract features.", featureDeclaration, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0, MEMBER_NOT_IN_ABSTRACT_CLASS);
-//        }
-//    }
+    //    @Check
+    //    public void featuresMustBeInAbstractClass(FeatureDeclaration featureDeclaration) {
+    //        if (featureDeclaration.getKind() == FeatureKind.FEATURE &&
+    // featureDeclaration.eContainer() instanceof ClassDeclaration containerClass && !
+    // containerClass.isAbstract()) {
+    //            acceptError("Abstract features can only be declared in abstract classes.",
+    // featureDeclaration, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0,
+    // MEMBER_NOT_IN_ABSTRACT_CLASS);
+    //        }
+    //    }
+    //
+    //    @Check
+    //    public void featuresMustBeInAbstractFeatures(FeatureDeclaration featureDeclaration) {
+    //        if (featureDeclaration.getKind() == FeatureKind.FEATURE &&
+    // featureDeclaration.eContainer() instanceof FeatureDeclaration containerFeature &&
+    // featureDeclaration.getKind() != FeatureKind.FEATURE) {
+    //            acceptError("Abstract features can only be declared in abstract features.",
+    // featureDeclaration, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0,
+    // MEMBER_NOT_IN_ABSTRACT_CLASS);
+    //        }
+    //    }
 
     @Check
     public void abstractTransitionMustBeInAbstractClass(TransitionDeclaration transitionDeclaration) {
         var containerClass = EcoreUtil2.getContainerOfType(transitionDeclaration, ClassDeclaration.class);
-        if (transitionDeclaration.isAbstract() && containerClass != null && ! containerClass.isAbstract()) {
-            acceptError("Abstract transitions can only be declared in abstract classes.", transitionDeclaration, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0, MEMBER_NOT_IN_ABSTRACT_CLASS);
+        if (transitionDeclaration.isAbstract() && containerClass != null && !containerClass.isAbstract()) {
+            acceptError(
+                    "Abstract transitions can only be declared in abstract classes.",
+                    transitionDeclaration,
+                    OxstsPackage.Literals.NAMED_ELEMENT__NAME,
+                    0,
+                    MEMBER_NOT_IN_ABSTRACT_CLASS);
         }
     }
 
     @Check
     public void abstractPropertyMustBeInAbstractClass(PropertyDeclaration propertyDeclaration) {
         var containerClass = EcoreUtil2.getContainerOfType(propertyDeclaration, ClassDeclaration.class);
-        if (propertyDeclaration.isAbstract() && containerClass != null && ! containerClass.isAbstract()) {
-            acceptError("Abstract properties can only be declared in abstract classes.", propertyDeclaration, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0, MEMBER_NOT_IN_ABSTRACT_CLASS);
+        if (propertyDeclaration.isAbstract() && containerClass != null && !containerClass.isAbstract()) {
+            acceptError(
+                    "Abstract properties can only be declared in abstract classes.",
+                    propertyDeclaration,
+                    OxstsPackage.Literals.NAMED_ELEMENT__NAME,
+                    0,
+                    MEMBER_NOT_IN_ABSTRACT_CLASS);
         }
     }
 
     @Check
     public void allInheritedAbstractMembersMustBeRealizedInNonAbstractClass(ClassDeclaration classDeclaration) {
-        if (! classDeclaration.isAbstract()) {
+        if (!classDeclaration.isAbstract()) {
             var memberCollection = domainMemberCollectionProvider.getMemberCollection(classDeclaration);
             var abstractInheritedMembers = memberCollection.getDeclarations().stream()
                     .filter(OxstsUtils::isDeclarationAbstract)
                     .filter(m -> m.eContainer() != classDeclaration)
                     .toList();
 
-            if (! abstractInheritedMembers.isEmpty()) {
-                var message = "Class '" + NamingUtil.getName(classDeclaration) +
-                        "' must either be declared abstract or redefine abstract members: " +
-                        abstractInheritedMembers.stream().map(m -> "'" + NamingUtil.getName(m) + "'").collect(Collectors.joining(", "));
+            if (!abstractInheritedMembers.isEmpty()) {
+                var message = "Class '"
+                        + NamingUtil.getName(classDeclaration)
+                        + "' must either be declared abstract or redefine abstract members: "
+                        + abstractInheritedMembers.stream()
+                                .map(m -> "'" + NamingUtil.getName(m) + "'")
+                                .collect(Collectors.joining(", "));
 
-                acceptError(message, classDeclaration, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0, ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED);
+                acceptError(
+                        message,
+                        classDeclaration,
+                        OxstsPackage.Literals.NAMED_ELEMENT__NAME,
+                        0,
+                        ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED);
             }
         }
     }
 
-//    @Check
-//    public void allInheritedAbstractMembersMustBeRealizedInNonAbstractFeature(FeatureDeclaration featureDeclaration) {
-//        if (featureDeclaration.getKind() != FeatureKind.FEATURE) {
-//            var memberCollection = domainMemberCollectionProvider.getMemberCollection(featureDeclaration);
-//            var abstractInheritedMembers = memberCollection.getDeclarations().stream()
-//                    .filter(OxstsUtils::isDeclarationAbstract)
-//                    .filter(m -> m.eContainer() != featureDeclaration)
-//                    .toList();
-//
-//            if (! abstractInheritedMembers.isEmpty()) {
-//                var message = "Feature '" + NamingUtil.getName(featureDeclaration) +
-//                        "' must either be declared abstract or redefine abstract members: " +
-//                        abstractInheritedMembers.stream().map(m -> "'" + NamingUtil.getName(m) + "'").collect(Collectors.joining(", "));
-//
-//                acceptError(message, featureDeclaration, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0, ABSTRACT_FEATURE_INHERITED_MEMBERS_NOT_REDEFINED);
-//            }
-//        }
-//    }
+    //    @Check
+    //    public void
+    // allInheritedAbstractMembersMustBeRealizedInNonAbstractFeature(FeatureDeclaration
+    // featureDeclaration) {
+    //        if (featureDeclaration.getKind() != FeatureKind.FEATURE) {
+    //            var memberCollection =
+    // domainMemberCollectionProvider.getMemberCollection(featureDeclaration);
+    //            var abstractInheritedMembers = memberCollection.getDeclarations().stream()
+    //                    .filter(OxstsUtils::isDeclarationAbstract)
+    //                    .filter(m -> m.eContainer() != featureDeclaration)
+    //                    .toList();
+    //
+    //            if (! abstractInheritedMembers.isEmpty()) {
+    //                var message = "Feature '" + NamingUtil.getName(featureDeclaration) +
+    //                        "' must either be declared abstract or redefine abstract members: " +
+    //                        abstractInheritedMembers.stream().map(m -> "'" + NamingUtil.getName(m)
+    // + "'").collect(Collectors.joining(", "));
+    //
+    //                acceptError(message, featureDeclaration,
+    // OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0,
+    // ABSTRACT_FEATURE_INHERITED_MEMBERS_NOT_REDEFINED);
+    //            }
+    //        }
+    //    }
 
     @Check
     public void checkNoRedefinedDeclarations(RedefinableDeclaration redefinableDeclaration) {
@@ -177,17 +210,28 @@ public class OxstsValidator extends AbstractOxstsValidator {
             try {
                 var redefined = redefinitionHandler.getRedefinedDeclaration(redefinableDeclaration);
                 if (redefined == null) {
-                    acceptError("Could not find redefined declaration.", redefinableDeclaration, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0, REDEFINED_NOT_FOUND_ISSUE);
+                    acceptError(
+                            "Could not find redefined declaration.",
+                            redefinableDeclaration,
+                            OxstsPackage.Literals.NAMED_ELEMENT__NAME,
+                            0,
+                            REDEFINED_NOT_FOUND_ISSUE);
                 }
             } catch (Exception e) {
-                acceptError("Could not find redefined declaration.", redefinableDeclaration, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0, REDEFINED_NOT_FOUND_ISSUE);
+                acceptError(
+                        "Could not find redefined declaration.",
+                        redefinableDeclaration,
+                        OxstsPackage.Literals.NAMED_ELEMENT__NAME,
+                        0,
+                        REDEFINED_NOT_FOUND_ISSUE);
             }
         }
     }
 
     @Check
     public void checkShadowedNames(NamedElement namedElement) {
-        if (namedElement instanceof RedefinableDeclaration redefinableDeclaration && redefinableDeclaration.isRedefine()) {
+        if (namedElement instanceof RedefinableDeclaration redefinableDeclaration
+                && redefinableDeclaration.isRedefine()) {
             return;
         }
 
@@ -195,16 +239,22 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (parentDomain == null) {
             return;
         }
-        var declarations = domainMemberCollectionProvider.getParentCollection(parentDomain).getDeclarations();
+        var declarations =
+                domainMemberCollectionProvider.getParentCollection(parentDomain).getDeclarations();
 
         if (declarations.stream().anyMatch(d -> Objects.equals(NamingUtil.getName(d), namedElement.getName()))) {
-            acceptWarning("Name shadows another element.", namedElement, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0, ELEMENT_SHADOWED);
+            acceptWarning(
+                    "Name shadows another element.",
+                    namedElement,
+                    OxstsPackage.Literals.NAMED_ELEMENT__NAME,
+                    0,
+                    ELEMENT_SHADOWED);
         }
     }
 
     @Check
     public void checkDataTypeOnlyInBuiltin(DataTypeDeclaration dataTypeDeclaration) {
-        if (! builtinSymbolResolver.isBuiltin(dataTypeDeclaration)) {
+        if (!builtinSymbolResolver.isBuiltin(dataTypeDeclaration)) {
             var message = "Custom data types are not allowed!";
             acceptError(message, dataTypeDeclaration, DATA_TYPE_NOT_IN_BUILTIN_ISSUE);
         }
@@ -218,16 +268,36 @@ public class OxstsValidator extends AbstractOxstsValidator {
             var oppositeOpposite = opposite.getOpposite();
 
             if (oppositeOpposite == null) {
-                var message = String.format("Expected feature to have opposite '%s'.", NamingUtil.getName(featureDeclaration));
+                var message = String.format(
+                        "Expected feature to have opposite '%s'.", NamingUtil.getName(featureDeclaration));
                 acceptError(message, opposite, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0, INCORRECT_OPPOSITE);
             } else if (oppositeOpposite != featureDeclaration) {
-                var oppositeMessage = String.format("Expected feature to have opposite '%s', got '%s' instead.", NamingUtil.getName(featureDeclaration), NamingUtil.getName(oppositeOpposite));
-                acceptError(oppositeMessage, opposite, OxstsPackage.Literals.FEATURE_DECLARATION__OPPOSITE, 0, INCORRECT_OPPOSITE);
+                var oppositeMessage = String.format(
+                        "Expected feature to have opposite '%s', got '%s' instead.",
+                        NamingUtil.getName(featureDeclaration), NamingUtil.getName(oppositeOpposite));
+                acceptError(
+                        oppositeMessage,
+                        opposite,
+                        OxstsPackage.Literals.FEATURE_DECLARATION__OPPOSITE,
+                        0,
+                        INCORRECT_OPPOSITE);
             } else {
-                if (featureDeclaration.getKind() == FeatureKind.CONTAINER && opposite.getKind() != FeatureKind.CONTAINMENT) {
-                    acceptError("Container's opposite must be containment.", featureDeclaration, OxstsPackage.Literals.FEATURE_DECLARATION__OPPOSITE, 0, INCORRECT_OPPOSITE);
-                } else if (featureDeclaration.getKind() == FeatureKind.CONTAINMENT && opposite.getKind() != FeatureKind.CONTAINER) {
-                    acceptError("Containment's opposite must be container.", featureDeclaration, OxstsPackage.Literals.FEATURE_DECLARATION__OPPOSITE, 0, INCORRECT_OPPOSITE);
+                if (featureDeclaration.getKind() == FeatureKind.CONTAINER
+                        && opposite.getKind() != FeatureKind.CONTAINMENT) {
+                    acceptError(
+                            "Container's opposite must be containment.",
+                            featureDeclaration,
+                            OxstsPackage.Literals.FEATURE_DECLARATION__OPPOSITE,
+                            0,
+                            INCORRECT_OPPOSITE);
+                } else if (featureDeclaration.getKind() == FeatureKind.CONTAINMENT
+                        && opposite.getKind() != FeatureKind.CONTAINER) {
+                    acceptError(
+                            "Containment's opposite must be container.",
+                            featureDeclaration,
+                            OxstsPackage.Literals.FEATURE_DECLARATION__OPPOSITE,
+                            0,
+                            INCORRECT_OPPOSITE);
                 }
             }
         } else if (featureDeclaration.getKind() == FeatureKind.CONTAINER) {
@@ -257,8 +327,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
                 recordDeclaration,
                 OxstsPackage.Literals.NAMED_ELEMENT__NAME,
                 0,
-                UNSUPPORTED_FEATURE
-        );
+                UNSUPPORTED_FEATURE);
     }
 
     @Check
@@ -266,10 +335,9 @@ public class OxstsValidator extends AbstractOxstsValidator {
         var kind = transitionDeclaration.getKind();
         if (kind == TransitionKind.ENV || kind == TransitionKind.HAVOC) {
             acceptError(
-                "Transition kind `" + kind.getLiteral() + "` is not yet supported by the compiler.",
-                transitionDeclaration,
-                UNSUPPORTED_FEATURE
-            );
+                    "Transition kind `" + kind.getLiteral() + "` is not yet supported by the compiler.",
+                    transitionDeclaration,
+                    UNSUPPORTED_FEATURE);
         }
     }
 
@@ -287,7 +355,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public void checkCallExpressionArgumentCount(CallSuffixExpression callSuffixExpression) {
         var primary = metaConstantExpressionEvaluatorProvider.evaluate(callSuffixExpression.getPrimary());
 
-        if (! (primary instanceof ParametricDeclaration parametricDeclaration)) {
+        if (!(primary instanceof ParametricDeclaration parametricDeclaration)) {
             return;
         }
 
@@ -296,25 +364,24 @@ public class OxstsValidator extends AbstractOxstsValidator {
 
         if (arguments.size() > parameters.size()) {
             acceptError(
-                "Expected at most " + parameters.size() + " arguments, found " + arguments.size() + ".",
-                callSuffixExpression,
-                INVALID_CALL_ARGUMENTS_COUND
-            );
+                    "Expected at most " + parameters.size() + " arguments, found " + arguments.size() + ".",
+                    callSuffixExpression,
+                    INVALID_CALL_ARGUMENTS_COUND);
             return;
         }
 
-        var minimumRequired = parameters.stream().filter(p -> !isParameterOptional(p)).count();
+        var minimumRequired =
+                parameters.stream().filter(p -> !isParameterOptional(p)).count();
         if (arguments.size() < minimumRequired) {
             var unbound = parameters.stream()
-                .filter(p -> !isParameterOptional(p))
-                .skip(arguments.size())
-                .map(NamedElement::getName)
-                .collect(Collectors.joining(", "));
+                    .filter(p -> !isParameterOptional(p))
+                    .skip(arguments.size())
+                    .map(NamedElement::getName)
+                    .collect(Collectors.joining(", "));
             acceptError(
-                "Missing argument(s) for non-optional parameter(s): " + unbound + ".",
-                callSuffixExpression,
-                INVALID_CALL_ARGUMENTS_COUND
-            );
+                    "Missing argument(s) for non-optional parameter(s): " + unbound + ".",
+                    callSuffixExpression,
+                    INVALID_CALL_ARGUMENTS_COUND);
         }
     }
 
@@ -331,22 +398,23 @@ public class OxstsValidator extends AbstractOxstsValidator {
                 var optionalName = firstOptional.getName() != null ? firstOptional.getName() : "<unnamed>";
                 var paramName = parameter.getName() != null ? parameter.getName() : "<unnamed>";
                 acceptError(
-                    "Non-optional parameter '" + paramName + "' cannot follow optional parameter '"
-                        + optionalName + "'. Declare required parameters before optional ones.",
-                    parameter,
-                    OxstsPackage.Literals.NAMED_ELEMENT__NAME,
-                    0,
-                    INVALID_CALL_ARGUMENTS_COUND
-                );
+                        "Non-optional parameter '"
+                                + paramName
+                                + "' cannot follow optional parameter '"
+                                + optionalName
+                                + "'. Declare required parameters before optional ones.",
+                        parameter,
+                        OxstsPackage.Literals.NAMED_ELEMENT__NAME,
+                        0,
+                        INVALID_CALL_ARGUMENTS_COUND);
             }
         }
     }
 
     /**
-     * A parameter is optional iff its declared multiplicity's lower bound
-     * is 0 (i.e. {@code [0..1]}, {@code [0..*]}, or {@code []}). Parameters
-     * with no explicit multiplicity default to ONE and are therefore
-     * required.
+     * A parameter is optional iff its declared multiplicity's lower bound is 0 (i.e. {@code
+     * [0..1]}, {@code [0..*]}, or {@code []}). Parameters with no explicit multiplicity default to
+     * ONE and are therefore required.
      */
     private boolean isParameterOptional(ParameterDeclaration parameter) {
         var typeSpec = parameter.getTypeSpecification();
@@ -412,14 +480,19 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (expressionType == null) {
             return;
         }
-        TypeEvaluation parameterType = typeEvaluatorProvider.getEvaluator(parameter).fromTypeSpecification(parameter.getTypeSpecification());
+        TypeEvaluation parameterType =
+                typeEvaluatorProvider.getEvaluator(parameter).fromTypeSpecification(parameter.getTypeSpecification());
         if (!typeCompatibility.isAssignable(parameterType, expressionType, argument)) {
             acceptError(
-                "Argument of type " + formatType(expressionType)
-                    + " is not assignable to parameter '" + parameter.getName() + "' of type " + formatType(parameterType) + ".",
-                argument,
-                TYPE_MISMATCH
-            );
+                    "Argument of type "
+                            + formatType(expressionType)
+                            + " is not assignable to parameter '"
+                            + parameter.getName()
+                            + "' of type "
+                            + formatType(parameterType)
+                            + ".",
+                    argument,
+                    TYPE_MISMATCH);
         }
     }
 
@@ -432,12 +505,11 @@ public class OxstsValidator extends AbstractOxstsValidator {
         var target = metaConstantExpressionEvaluatorProvider.evaluate(reference);
         if (!(target instanceof VariableDeclaration)) {
             acceptError(
-                "havoc target must be a variable reference.",
-                havocOperation,
-                OxstsPackage.Literals.HAVOC_OPERATION__REFERENCE,
-                0,
-                INCORRECT_ASSIGNMENT
-            );
+                    "havoc target must be a variable reference.",
+                    havocOperation,
+                    OxstsPackage.Literals.HAVOC_OPERATION__REFERENCE,
+                    0,
+                    INCORRECT_ASSIGNMENT);
         }
     }
 
@@ -458,13 +530,15 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
         if (!typeCompatibility.isAssignable(expected, actual, expression)) {
             acceptError(
-                "Property body has type " + formatType(actual)
-                    + " but is expected to return " + formatType(expected) + ".",
-                propertyDeclaration,
-                OxstsPackage.Literals.PROPERTY_DECLARATION__EXPRESSION,
-                0,
-                TYPE_MISMATCH
-            );
+                    "Property body has type "
+                            + formatType(actual)
+                            + " but is expected to return "
+                            + formatType(expected)
+                            + ".",
+                    propertyDeclaration,
+                    OxstsPackage.Literals.PROPERTY_DECLARATION__EXPRESSION,
+                    0,
+                    TYPE_MISMATCH);
         }
     }
 
@@ -477,20 +551,26 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (initializer == null || variableDeclaration.getTypeSpecification() == null) {
             return;
         }
-        var declared = typeEvaluatorProvider.getEvaluator(variableDeclaration).fromTypeSpecification(variableDeclaration.getTypeSpecification());
+        var declared = typeEvaluatorProvider
+                .getEvaluator(variableDeclaration)
+                .fromTypeSpecification(variableDeclaration.getTypeSpecification());
         var actual = evaluateTypeSafely(initializer);
         if (actual == null) {
             return;
         }
         if (!typeCompatibility.isAssignable(declared, actual, variableDeclaration)) {
             acceptError(
-                "Initializer of type " + formatType(actual)
-                    + " is not assignable to variable '" + variableDeclaration.getName() + "' of type " + formatType(declared) + ".",
-                variableDeclaration,
-                OxstsPackage.Literals.VARIABLE_DECLARATION__EXPRESSION,
-                0,
-                TYPE_MISMATCH
-            );
+                    "Initializer of type "
+                            + formatType(actual)
+                            + " is not assignable to variable '"
+                            + variableDeclaration.getName()
+                            + "' of type "
+                            + formatType(declared)
+                            + ".",
+                    variableDeclaration,
+                    OxstsPackage.Literals.VARIABLE_DECLARATION__EXPRESSION,
+                    0,
+                    TYPE_MISMATCH);
         }
     }
 
@@ -500,20 +580,26 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (expression == null || featureDeclaration.getTypeSpecification() == null) {
             return;
         }
-        var declared = typeEvaluatorProvider.getEvaluator(featureDeclaration).fromTypeSpecification(featureDeclaration.getTypeSpecification());
+        var declared = typeEvaluatorProvider
+                .getEvaluator(featureDeclaration)
+                .fromTypeSpecification(featureDeclaration.getTypeSpecification());
         var actual = evaluateTypeSafely(expression);
         if (actual == null) {
             return;
         }
         if (!typeCompatibility.isAssignable(declared, actual, featureDeclaration)) {
             acceptError(
-                "Feature bound expression of type " + formatType(actual)
-                    + " is not assignable to '" + featureDeclaration.getName() + "' of type " + formatType(declared) + ".",
-                featureDeclaration,
-                OxstsPackage.Literals.FEATURE_DECLARATION__EXPRESSION,
-                0,
-                TYPE_MISMATCH
-            );
+                    "Feature bound expression of type "
+                            + formatType(actual)
+                            + " is not assignable to '"
+                            + featureDeclaration.getName()
+                            + "' of type "
+                            + formatType(declared)
+                            + ".",
+                    featureDeclaration,
+                    OxstsPackage.Literals.FEATURE_DECLARATION__EXPRESSION,
+                    0,
+                    TYPE_MISMATCH);
         }
     }
 
@@ -531,14 +617,16 @@ public class OxstsValidator extends AbstractOxstsValidator {
             return;
         }
         var rangeEvaluation = type.getRange();
-        boolean isCollection = rangeEvaluation != null && !(rangeEvaluation.getLowerBound() == 1 && rangeEvaluation.getUpperBound() == 1);
-        boolean isIntRange = typeCompatibility.isNumeric(type, forOperation) && rangeEvaluation != null && rangeEvaluation.getLowerBound() != rangeEvaluation.getUpperBound();
+        boolean isCollection = rangeEvaluation != null
+                && !(rangeEvaluation.getLowerBound() == 1 && rangeEvaluation.getUpperBound() == 1);
+        boolean isIntRange = typeCompatibility.isNumeric(type, forOperation)
+                && rangeEvaluation != null
+                && rangeEvaluation.getLowerBound() != rangeEvaluation.getUpperBound();
         if (!isCollection && !isIntRange) {
             acceptError(
-                "`for` range must be a collection or an integer range (got " + formatType(type) + ").",
-                forOperation,
-                TYPE_MISMATCH
-            );
+                    "`for` range must be a collection or an integer range (got " + formatType(type) + ").",
+                    forOperation,
+                    TYPE_MISMATCH);
         }
     }
 
@@ -565,13 +653,15 @@ public class OxstsValidator extends AbstractOxstsValidator {
         var inheritedType = typeEvaluatorProvider.getEvaluator(inherited).fromTypeSpecification(inheritedSpec);
         if (!typeCompatibility.isAssignable(inheritedType, declaredType, declaration)) {
             acceptError(
-                "Redefinition has type " + formatType(declaredType)
-                    + " which is not assignable to the inherited type " + formatType(inheritedType) + ".",
-                declaration,
-                OxstsPackage.Literals.NAMED_ELEMENT__NAME,
-                0,
-                TYPE_MISMATCH
-            );
+                    "Redefinition has type "
+                            + formatType(declaredType)
+                            + " which is not assignable to the inherited type "
+                            + formatType(inheritedType)
+                            + ".",
+                    declaration,
+                    OxstsPackage.Literals.NAMED_ELEMENT__NAME,
+                    0,
+                    TYPE_MISMATCH);
         }
     }
 
@@ -586,19 +676,44 @@ public class OxstsValidator extends AbstractOxstsValidator {
 
     @Check
     public void noAssignmentsToConstants(AssignmentOperation assignmentOperation) {
-        var assigned = metaConstantExpressionEvaluatorProvider.evaluate(assignmentOperation.getReference());
+        // Indexing on the LHS (e.g. `slots[0] := ...`) targets an array element; the meta-evaluator
+        // can't reduce an indexing expression on its own, so resolve down to the array variable
+        // first. Same for navigation chains - we want the leaf reference's element.
+        var reference = unwrapAssignmentTarget(assignmentOperation.getReference());
+        var assigned = metaConstantExpressionEvaluatorProvider.evaluate(reference);
 
         if (!(assigned instanceof VariableDeclaration)) {
-            acceptError("Only variables can be assigned to!", assignmentOperation, OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE, 0, INCORRECT_ASSIGNMENT);
+            acceptError(
+                    "Only variables can be assigned to!",
+                    assignmentOperation,
+                    OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE,
+                    0,
+                    INCORRECT_ASSIGNMENT);
         }
+    }
+
+    private static Expression unwrapAssignmentTarget(Expression reference) {
+        // Strip outer indexing layers so the meta-evaluator sees the variable being indexed.
+        // Navigation chains are left alone - the evaluator already follows them via the member
+        // reference and returns the leaf variable.
+        var current = reference;
+        while (current instanceof IndexingSuffixExpression indexing) {
+            current = indexing.getPrimary();
+        }
+        return current;
     }
 
     @Check
     public void checkValidCalledElements(CallSuffixExpression callSuffixExpression) {
         var called = metaConstantExpressionEvaluatorProvider.evaluate(callSuffixExpression.getPrimary());
 
-        if (! OxstsUtils.isCallable(called)) {
-            acceptError("Element " + called.getName() + " is not callable!", callSuffixExpression, OxstsPackage.Literals.POSTFIX_UNARY_EXPRESSION__PRIMARY, 0, INCORRECT_CALLED_ELEMENT);
+        if (!OxstsUtils.isCallable(called)) {
+            acceptError(
+                    "Element " + called.getName() + " is not callable!",
+                    callSuffixExpression,
+                    OxstsPackage.Literals.POSTFIX_UNARY_EXPRESSION__PRIMARY,
+                    0,
+                    INCORRECT_CALLED_ELEMENT);
         }
     }
 
@@ -609,20 +724,16 @@ public class OxstsValidator extends AbstractOxstsValidator {
             return;
         }
         checkModalityAtMost(
-            expression,
-            Modality.COMPILE_TIME,
-            "Feature bound expression must be evaluable at compile time"
-        );
+                expression, Modality.COMPILE_TIME, "Feature bound expression must be evaluable at compile time");
     }
 
     @Check
     public void checkMultiplicityNotBareInfinity(DefiniteMultiplicity definiteMultiplicity) {
         if (definiteMultiplicity.getExpression() instanceof LiteralInfinity) {
             acceptError(
-                "`[*]` is not a valid multiplicity. Use `[]` for unbounded or `[lb..*]` for a lower-bounded unbounded range.",
-                definiteMultiplicity,
-                TYPE_MISMATCH
-            );
+                    "`[*]` is not a valid multiplicity. Use `[]` for unbounded or `[lb..*]` for a lower-bounded unbounded range.",
+                    definiteMultiplicity,
+                    TYPE_MISMATCH);
         }
     }
 
@@ -632,11 +743,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (expression == null) {
             return;
         }
-        checkModalityAtMost(
-            expression,
-            Modality.COMPILE_TIME,
-            "Multiplicity bound must be evaluable at compile time"
-        );
+        checkModalityAtMost(expression, Modality.COMPILE_TIME, "Multiplicity bound must be evaluable at compile time");
     }
 
     @Check
@@ -649,10 +756,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
             return;
         }
         checkModalityAtMost(
-            expression,
-            Modality.COMPILE_TIME,
-            "Variable initializer must be evaluable at compile time"
-        );
+                expression, Modality.COMPILE_TIME, "Variable initializer must be evaluable at compile time");
     }
 
     @Check
@@ -661,11 +765,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (guard == null) {
             return;
         }
-        checkModalityAtMost(
-            guard,
-            Modality.COMPILE_TIME,
-            "`inline if` guard must be evaluable at compile time"
-        );
+        checkModalityAtMost(guard, Modality.COMPILE_TIME, "`inline if` guard must be evaluable at compile time");
     }
 
     @Check
@@ -675,10 +775,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
             return;
         }
         checkModalityAtMost(
-            range,
-            Modality.COMPILE_TIME,
-            "`inline for` range expression must be evaluable at compile time"
-        );
+                range, Modality.COMPILE_TIME, "`inline for` range expression must be evaluable at compile time");
     }
 
     @Check
@@ -695,52 +792,39 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
         if (!typeCompatibility.isAssignable(lhsType, rhsType, assignmentOperation)) {
             acceptError(
-                "Cannot assign value of type " + formatType(rhsType)
-                    + " to target of type " + formatType(lhsType) + ".",
-                assignmentOperation,
-                TYPE_MISMATCH
-            );
+                    "Cannot assign value of type "
+                            + formatType(rhsType)
+                            + " to target of type "
+                            + formatType(lhsType)
+                            + ".",
+                    assignmentOperation,
+                    TYPE_MISMATCH);
         }
     }
 
     @Check
     public void checkAssumptionType(AssumptionOperation assumptionOperation) {
-        requireBoolean(
-            assumptionOperation.getExpression(),
-            "`assume` expression must be boolean"
-        );
+        requireBoolean(assumptionOperation.getExpression(), "`assume` expression must be boolean");
     }
 
     @Check
     public void checkIfGuardType(IfOperation ifOperation) {
-        requireBoolean(
-            ifOperation.getGuard(),
-            "`if` guard must be boolean"
-        );
+        requireBoolean(ifOperation.getGuard(), "`if` guard must be boolean");
     }
 
     @Check
     public void checkInlineIfGuardType(InlineIfOperation inlineIfOperation) {
-        requireBoolean(
-            inlineIfOperation.getGuard(),
-            "`inline if` guard must be boolean"
-        );
+        requireBoolean(inlineIfOperation.getGuard(), "`inline if` guard must be boolean");
     }
 
     @Check
     public void checkNegationOperandType(NegationOperator negationOperator) {
-        requireBoolean(
-            negationOperator.getBody(),
-            "negation operand must be boolean"
-        );
+        requireBoolean(negationOperator.getBody(), "negation operand must be boolean");
     }
 
     @Check
     public void checkArithmeticUnaryOperandType(ArithmeticUnaryOperator operator) {
-        requireNumeric(
-            operator.getBody(),
-            "unary arithmetic operand must be numeric"
-        );
+        requireNumeric(operator.getBody(), "unary arithmetic operand must be numeric");
     }
 
     @Check
@@ -769,20 +853,15 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
         if (!typeCompatibility.isComparable(leftType, rightType, operator)) {
             acceptError(
-                "Cannot compare values of type " + formatType(leftType)
-                    + " and " + formatType(rightType) + ".",
-                operator,
-                TYPE_MISMATCH
-            );
+                    "Cannot compare values of type " + formatType(leftType) + " and " + formatType(rightType) + ".",
+                    operator,
+                    TYPE_MISMATCH);
         }
     }
 
     @Check
     public void checkIndexingTypes(IndexingSuffixExpression expression) {
-        requireNumeric(
-            expression.getIndex(),
-            "array index must be numeric"
-        );
+        requireNumeric(expression.getIndex(), "array index must be numeric");
         var primary = expression.getPrimary();
         if (primary == null) {
             return;
@@ -793,13 +872,16 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
         var upper = primaryType.getRange().getUpperBound();
         if (upper != hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation.INFINITY
-            && upper <= 1
-            && primaryType.getRange().getLowerBound() <= 1) {
+                && upper <= 1
+                && primaryType.getRange().getLowerBound() <= 1) {
             acceptError(
-                "Cannot index a non-array value (multiplicity " + primaryType.getRange().getLowerBound() + ".." + upper + ").",
-                expression,
-                TYPE_MISMATCH
-            );
+                    "Cannot index a non-array value (multiplicity "
+                            + primaryType.getRange().getLowerBound()
+                            + ".."
+                            + upper
+                            + ").",
+                    expression,
+                    TYPE_MISMATCH);
         }
     }
 
@@ -820,12 +902,15 @@ public class OxstsValidator extends AbstractOxstsValidator {
             }
             if (!typeCompatibility.isComparable(firstType, elementType, arrayLiteral)) {
                 acceptError(
-                    "Array literal elements must share a common type; element " + i
-                        + " has type " + formatType(elementType) + " but the first has type "
-                        + formatType(firstType) + ".",
-                    arrayLiteral,
-                    TYPE_MISMATCH
-                );
+                        "Array literal elements must share a common type; element "
+                                + i
+                                + " has type "
+                                + formatType(elementType)
+                                + " but the first has type "
+                                + formatType(firstType)
+                                + ".",
+                        arrayLiteral,
+                        TYPE_MISMATCH);
                 return;
             }
         }
@@ -846,16 +931,16 @@ public class OxstsValidator extends AbstractOxstsValidator {
     private void rejectIfUnboundedMultiplicity(Multiplicity multiplicity, EObject host) {
         if (multiplicity instanceof UnboundedMultiplicity unboundedMultiplicity) {
             acceptError(
-                "Array size must have a compile-time upper bound (got unbounded multiplicity `[]`).",
-                host,
-                TYPE_MISMATCH
-            );
-        } else if (multiplicity instanceof DefiniteMultiplicity definite && definite.getExpression() != null && containsInfinity(definite.getExpression())) {
+                    "Array size must have a compile-time upper bound (got unbounded multiplicity `[]`).",
+                    host,
+                    TYPE_MISMATCH);
+        } else if (multiplicity instanceof DefiniteMultiplicity definite
+                && definite.getExpression() != null
+                && containsInfinity(definite.getExpression())) {
             acceptError(
-                "Array size must have a compile-time upper bound (got `*` / infinity in multiplicity).",
-                host,
-                TYPE_MISMATCH
-            );
+                    "Array size must have a compile-time upper bound (got `*` / infinity in multiplicity).",
+                    host,
+                    TYPE_MISMATCH);
         }
     }
 
@@ -880,27 +965,28 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (bodyType == null) {
             return;
         }
-        var castType = typeEvaluatorProvider.getEvaluator(castExpression).fromTypeSpecification(castExpression.getTypespecification());
+        var castType = typeEvaluatorProvider
+                .getEvaluator(castExpression)
+                .fromTypeSpecification(castExpression.getTypespecification());
         if (castType == null || castType.getDomain() == null) {
             return;
         }
 
         if (!typeCompatibility.isAssignable(bodyType, castType, castExpression)) {
             acceptError(
-                "Cast from " + formatType(bodyType) + " to " + formatType(castType)
-                    + " is not a valid narrowing cast (widening or unrelated types are rejected).",
-                castExpression,
-                INVALID_CAST
-            );
+                    "Cast from "
+                            + formatType(bodyType)
+                            + " to "
+                            + formatType(castType)
+                            + " is not a valid narrowing cast (widening or unrelated types are rejected).",
+                    castExpression,
+                    INVALID_CAST);
         }
     }
 
     @Check
     public void checkIfThenElseGuardType(IfThenElse expression) {
-        requireBoolean(
-            expression.getGuard(),
-            "if-then-else guard must be boolean"
-        );
+        requireBoolean(expression.getGuard(), "if-then-else guard must be boolean");
     }
 
     @Check
@@ -915,28 +1001,24 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
         if (!typeCompatibility.isComparable(thenType, elseType, expression)) {
             acceptError(
-                "Branches of if-then-else expression have incompatible types: "
-                    + formatType(thenType) + " and " + formatType(elseType) + ".",
-                expression,
-                TYPE_MISMATCH
-            );
+                    "Branches of if-then-else expression have incompatible types: "
+                            + formatType(thenType)
+                            + " and "
+                            + formatType(elseType)
+                            + ".",
+                    expression,
+                    TYPE_MISMATCH);
         }
     }
 
     @Check
     public void checkAGBodyType(AG expression) {
-        requireBoolean(
-            expression.getBody(),
-            "`AG` body must be boolean"
-        );
+        requireBoolean(expression.getBody(), "`AG` body must be boolean");
     }
 
     @Check
     public void checkEFBodyType(EF expression) {
-        requireBoolean(
-            expression.getBody(),
-            "`EF` body must be boolean"
-        );
+        requireBoolean(expression.getBody(), "`EF` body must be boolean");
     }
 
     private void requireBoolean(Expression expression, String messagePrefix) {
@@ -948,11 +1030,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
             return;
         }
         if (!typeCompatibility.isBoolean(type, expression)) {
-            acceptError(
-                messagePrefix + " (got " + formatType(type) + ").",
-                expression,
-                TYPE_MISMATCH
-            );
+            acceptError(messagePrefix + " (got " + formatType(type) + ").", expression, TYPE_MISMATCH);
         }
     }
 
@@ -965,11 +1043,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
             return;
         }
         if (!typeCompatibility.isNumeric(type, expression)) {
-            acceptError(
-                messagePrefix + " (got " + formatType(type) + ").",
-                expression,
-                TYPE_MISMATCH
-            );
+            acceptError(messagePrefix + " (got " + formatType(type) + ").", expression, TYPE_MISMATCH);
         }
     }
 
@@ -998,15 +1072,12 @@ public class OxstsValidator extends AbstractOxstsValidator {
             return;
         }
         if (!actual.isAtMost(upperBound)) {
-            acceptError(
-                messagePrefix + " (got modality " + actual + ").",
-                expression,
-                EXPRESSION_MODALITY_TOO_HIGH
-            );
+            acceptError(messagePrefix + " (got modality " + actual + ").", expression, EXPRESSION_MODALITY_TOO_HIGH);
         }
     }
 
-    // FIXME: this should be removed along with solving the problem in semantics#OxstsInflator#pullDownVariables()
+    // FIXME: this should be removed along with solving the problem in
+    // semantics#OxstsInflator#pullDownVariables()
     @Check
     public void checkNoImplicitlyTypeVariables(VariableDeclaration variableDeclaration) {
         if (OxstsUtils.isLoopVariable(variableDeclaration)) {
@@ -1042,5 +1113,4 @@ public class OxstsValidator extends AbstractOxstsValidator {
         var region = locationInFileProvider.getFullTextRegion(object);
         acceptError(message, object, region.getOffset(), region.getLength(), code, issueData);
     }
-
 }

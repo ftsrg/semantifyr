@@ -8,7 +8,6 @@ package hu.bme.mit.semantifyr.oxsts.lang.tests.utils;
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral;
-
 import java.util.List;
 
 public record WrappedEnum(EnumDeclaration eObject) {
@@ -27,8 +26,8 @@ public record WrappedEnum(EnumDeclaration eObject) {
 
     public EnumLiteral literalByName(String name) {
         return literals().stream()
-            .filter(l -> name.equals(l.getName()))
-            .findFirst()
-            .orElseThrow(() -> new AssertionError("No literal named '" + name + "' in enum '" + name() + "'"));
+                .filter(l -> name.equals(l.getName()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No literal named '" + name + "' in enum '" + name() + "'"));
     }
 }

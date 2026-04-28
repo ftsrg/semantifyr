@@ -152,7 +152,9 @@ public class ExpressionSerializer extends ExpressionVisitor<String> {
 
     @Override
     protected String visit(CallSuffixExpression expression) {
-        var arguments = expression.getArguments().stream().map(e -> visit(e.getExpression())).toList();
+        var arguments = expression.getArguments().stream()
+                .map(e -> visit(e.getExpression()))
+                .toList();
 
         return visit(expression.getPrimary()) + "(" + String.join(", ", arguments) + ")";
     }
@@ -166,15 +168,18 @@ public class ExpressionSerializer extends ExpressionVisitor<String> {
     protected String visit(CastExpression expression) {
         var typeSpec = expression.getTypespecification();
         var domainName = typeSpec != null && typeSpec.getDomain() != null
-            ? oxstsQualifiedNameProvider.getFullyQualifiedNameString(typeSpec.getDomain())
-            : "?";
+                ? oxstsQualifiedNameProvider.getFullyQualifiedNameString(typeSpec.getDomain())
+                : "?";
         return visit(expression.getBody()) + " as " + domainName;
     }
 
     @Override
     protected String visit(IfThenElse expression) {
-        return "if " + visit(expression.getGuard())
-            + " then " + visit(expression.getThen())
-            + " else " + visit(expression.getElse());
+        return "if "
+                + visit(expression.getGuard())
+                + " then "
+                + visit(expression.getThen())
+                + " else "
+                + visit(expression.getElse());
     }
 }

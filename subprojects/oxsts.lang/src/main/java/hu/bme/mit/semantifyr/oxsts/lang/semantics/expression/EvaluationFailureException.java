@@ -22,5 +22,4 @@ public class EvaluationFailureException extends RuntimeException {
     public static EvaluationFailureException at(EObject eObject, String message) {
         return new EvaluationFailureException(SourceLocation.prefixFor(eObject) + message);
     }
-
 }

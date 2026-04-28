@@ -6,10 +6,15 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.resource;
 
+import static com.google.common.collect.Lists.newArrayList;
+
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import org.apache.log4j.Logger;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.xtext.resource.IDefaultResourceDescriptionStrategy;
@@ -18,19 +23,14 @@ import org.eclipse.xtext.resource.impl.DefaultResourceDescription;
 import org.eclipse.xtext.util.IAcceptor;
 import org.eclipse.xtext.util.IResourceScopeCache;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-
-import static com.google.common.collect.Lists.newArrayList;
-
 public class OxstsResourceDescription extends DefaultResourceDescription {
 
-    private final static Logger logger = Logger.getLogger(OxstsResourceDescription.class);
+    private static final Logger logger = Logger.getLogger(OxstsResourceDescription.class);
 
     private final IDefaultResourceDescriptionStrategy strategy;
 
-    public OxstsResourceDescription(Resource resource, IDefaultResourceDescriptionStrategy strategy, IResourceScopeCache cache) {
+    public OxstsResourceDescription(
+            Resource resource, IDefaultResourceDescriptionStrategy strategy, IResourceScopeCache cache) {
         super(resource, strategy, cache);
         this.strategy = strategy;
     }
@@ -85,5 +85,4 @@ public class OxstsResourceDescription extends DefaultResourceDescription {
             }
         }
     }
-
 }

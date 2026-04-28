@@ -7,9 +7,9 @@
 package hu.bme.mit.semantifyr.oxsts.lang.semantics.modality;
 
 /**
- * Represents an expression's valid evaluation context.
- * Constant < Compile Time < Runtime
- * Every expression can be evaluated runtime, some of them can be at compile time, and some of those are constants.
+ * Represents an expression's valid evaluation context. Constant < Compile Time < Runtime Every
+ * expression can be evaluated runtime, some of them can be at compile time, and some of those are
+ * constants.
  */
 public enum Modality {
     CONSTANT,

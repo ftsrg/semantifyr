@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.syntax;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
@@ -18,8 +20,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnboundedMultiplicity;
 import org.eclipse.xtext.validation.CheckMode;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @InjectWithOxsts
 public class MultiplicitySyntaxTest {

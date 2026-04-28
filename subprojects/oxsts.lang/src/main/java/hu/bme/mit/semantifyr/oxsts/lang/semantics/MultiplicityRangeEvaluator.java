@@ -17,7 +17,8 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnboundedMultiplicity;
 import org.eclipse.xtext.util.Tuples;
 
 public class MultiplicityRangeEvaluator {
-    private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator.CACHE_KEY";
+    private static final String CACHE_KEY =
+            "hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator.CACHE_KEY";
 
     @Inject
     private OnResourceSetChangeEvictingCache cache;
@@ -26,7 +27,10 @@ public class MultiplicityRangeEvaluator {
     protected ConstantExpressionEvaluatorProvider constantExpressionEvaluatorProvider;
 
     public RangeEvaluation evaluate(TypeSpecification typeSpecification) {
-        return cache.get(Tuples.create(CACHE_KEY, typeSpecification), typeSpecification.eResource(), () -> compute(typeSpecification));
+        return cache.get(
+                Tuples.create(CACHE_KEY, typeSpecification),
+                typeSpecification.eResource(),
+                () -> compute(typeSpecification));
     }
 
     protected RangeEvaluation compute(TypeSpecification typeSpecification) {
@@ -53,5 +57,4 @@ public class MultiplicityRangeEvaluator {
 
         throw new IllegalArgumentException("Expression could not be evaluated to a range!");
     }
-
 }

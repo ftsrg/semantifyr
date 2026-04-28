@@ -47,5 +47,4 @@ public class LibraryAdapterFinder {
     private static LibraryAdapter getAdapter(ResourceSet resourceSet) {
         return (LibraryAdapter) EcoreUtil.getAdapter(resourceSet.eAdapters(), LibraryAdapter.class);
     }
-
 }

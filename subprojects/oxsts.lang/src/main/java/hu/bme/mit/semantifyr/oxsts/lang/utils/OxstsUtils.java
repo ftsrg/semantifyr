@@ -7,11 +7,10 @@
 package hu.bme.mit.semantifyr.oxsts.lang.utils;
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
-import org.eclipse.emf.ecore.EObject;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+import org.eclipse.emf.ecore.EObject;
 
 public class OxstsUtils {
     public static final String LIBRARY_EXTENSION = "oxsts";
@@ -22,7 +21,7 @@ public class OxstsUtils {
 
     public static boolean isConstantLiteralFalse(Expression expression) {
         if (expression instanceof LiteralBoolean literalBoolean) {
-            return ! literalBoolean.isValue();
+            return !literalBoolean.isValue();
         }
 
         return false;
@@ -37,7 +36,8 @@ public class OxstsUtils {
     }
 
     public static boolean isGlobalFeature(EObject element) {
-        return element instanceof FeatureDeclaration featureDeclaration && featureDeclaration.eContainer() instanceof OxstsModelPackage;
+        return element instanceof FeatureDeclaration featureDeclaration
+                && featureDeclaration.eContainer() instanceof OxstsModelPackage;
     }
 
     public static boolean isLoopVariable(EObject element) {
@@ -90,9 +90,11 @@ public class OxstsUtils {
 
         var globalFeatures = resourceSet.getResources().stream()
                 .flatMap(r -> Stream.of(r.getContents().getFirst()))
-                .filter(e -> e instanceof OxstsModelPackage).map(e -> (OxstsModelPackage) e)
+                .filter(e -> e instanceof OxstsModelPackage)
+                .map(e -> (OxstsModelPackage) e)
                 .flatMap(p -> p.getDeclarations().stream())
-                .filter(e -> e instanceof FeatureDeclaration).map(e -> (FeatureDeclaration) e);
+                .filter(e -> e instanceof FeatureDeclaration)
+                .map(e -> (FeatureDeclaration) e);
 
         return globalFeatures.toList();
     }
@@ -138,10 +140,14 @@ public class OxstsUtils {
             return null;
         }
 
-        return annotationContainer.getAnnotations().stream().filter(a -> a.getDeclaration() == annotationDeclaration).findFirst().orElse(null);
+        return annotationContainer.getAnnotations().stream()
+                .filter(a -> a.getDeclaration() == annotationDeclaration)
+                .findFirst()
+                .orElse(null);
     }
 
-    public static Stream<Annotation> getAnnotations(AnnotatedElement element, AnnotationDeclaration annotationDeclaration) {
+    public static Stream<Annotation> getAnnotations(
+            AnnotatedElement element, AnnotationDeclaration annotationDeclaration) {
         var annotationContainer = element.getAnnotation();
 
         if (annotationContainer == null) {
@@ -152,7 +158,10 @@ public class OxstsUtils {
     }
 
     public static Expression getAnnotationValue(Annotation annotation, ParameterDeclaration parameterDeclaration) {
-        var argument = annotation.getArguments().stream().filter(a -> a.getParameter() == parameterDeclaration).findFirst().orElse(null);
+        var argument = annotation.getArguments().stream()
+                .filter(a -> a.getParameter() == parameterDeclaration)
+                .findFirst()
+                .orElse(null);
 
         if (argument == null) {
             var position = annotation.getDeclaration().getParameters().indexOf(parameterDeclaration);
@@ -171,7 +180,9 @@ public class OxstsUtils {
     }
 
     public static boolean isCallable(Element declaration) {
-        return declaration instanceof TransitionDeclaration || declaration instanceof RecordDeclaration || declaration instanceof PropertyDeclaration;
+        return declaration instanceof TransitionDeclaration
+                || declaration instanceof RecordDeclaration
+                || declaration instanceof PropertyDeclaration;
     }
 
     public static boolean isInstanceFeature(FeatureDeclaration featureDeclaration) {
@@ -185,9 +196,9 @@ public class OxstsUtils {
     }
 
     public static boolean isMemberAbstract(Declaration declaration) {
-//        if (declaration instanceof FeatureDeclaration featureDeclaration) {
-//            return featureDeclaration.getKind() == FeatureKind.FEATURE;
-//        }
+        //        if (declaration instanceof FeatureDeclaration featureDeclaration) {
+        //            return featureDeclaration.getKind() == FeatureKind.FEATURE;
+        //        }
         if (declaration instanceof PropertyDeclaration propertyDeclaration) {
             return propertyDeclaration.isAbstract();
         }
@@ -204,5 +215,4 @@ public class OxstsUtils {
 
         return isMemberAbstract(declaration);
     }
-
 }

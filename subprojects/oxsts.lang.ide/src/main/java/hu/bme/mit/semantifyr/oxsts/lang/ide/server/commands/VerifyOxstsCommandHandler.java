@@ -12,9 +12,9 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import hu.bme.mit.semantifyr.backend.ExecutionEnvironment;
 import hu.bme.mit.semantifyr.backend.VerificationCase;
-import hu.bme.mit.semantifyr.backend.VerificationResult;
 import hu.bme.mit.semantifyr.backend.VerificationVerdict;
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader;
+import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext;
 import hu.bme.mit.semantifyr.lang.ide.server.ServerSettings;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
@@ -22,6 +22,7 @@ import hu.bme.mit.semantifyr.lang.ide.server.commands.VerificationCaseRunResultD
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.verification.SemantifyrVerifier;
+import hu.bme.mit.semantifyr.verification.VerificationResult;
 import hu.bme.mit.semantifyr.verification.discovery.CaseFilter;
 import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio;
 import java.util.List;
@@ -85,20 +86,7 @@ public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
         var context = semantifyrLoader.fromResourceSet(arguments.eResource().getResourceSet());
 
         semantifyrRequestManager.releaseReadLock();
-        VerificationPortfolio portfolio = serverSettings.resolvePortfolio();
-        ExecutionEnvironment environment = serverSettings.resolveExecutionEnvironment();
-        SemantifyrVerifier.Builder builder = SemantifyrVerifier.builder()
-                .injector(injector)
-                .context(context)
-                .portfolio(portfolio)
-                .environment(environment)
-                .timeout(serverSettings.resolveTimeout())
-                .artifacts(serverSettings.resolveArtifactConfig())
-                .optimization(serverSettings.resolveOptimizationConfig());
-        Integer maxConcurrency = serverSettings.resolveMaxConcurrencyOrNull();
-        if (maxConcurrency != null) {
-            builder.maxConcurrency(maxConcurrency);
-        }
+        SemantifyrVerifier.Builder builder = configureVerifierBuilder(injector, context, serverSettings);
         try (SemantifyrVerifier verifier = builder.build()) {
             progressContext.checkIsCancelled();
 
@@ -121,6 +109,26 @@ public class VerifyOxstsCommandHandler extends AbstractCommandHandler<ClassDecla
         } finally {
             semantifyrRequestManager.acquireReadLock();
         }
+    }
+
+    public static SemantifyrVerifier.Builder configureVerifierBuilder(
+            Injector injector, SemantifyrModelContext context, ServerSettings serverSettings) {
+        VerificationPortfolio portfolio = serverSettings.resolvePortfolio();
+        ExecutionEnvironment environment = serverSettings.resolveExecutionEnvironment();
+        SemantifyrVerifier.Builder builder = SemantifyrVerifier.builder()
+                .injector(injector)
+                .context(context)
+                .portfolio(portfolio)
+                .environment(environment)
+                .timeout(serverSettings.resolveTimeout())
+                .artifacts(serverSettings.resolveArtifactConfig())
+                .outputDirectory(serverSettings.resolveArtifactOutputDirectory())
+                .optimization(serverSettings.resolveOptimizationConfig());
+        Integer maxConcurrency = serverSettings.resolveMaxConcurrencyOrNull();
+        if (maxConcurrency != null) {
+            builder.maxConcurrency(maxConcurrency);
+        }
+        return builder;
     }
 
     private VerificationCaseRunResultDto toDto(VerificationResult result) {

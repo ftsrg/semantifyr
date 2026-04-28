@@ -154,10 +154,7 @@ public class ParameterBindingTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(
-            OxstsValidator.INVALID_CALL_ARGUMENTS_COUND,
-            "cannot follow optional parameter"
-        );
+        pkg.assertHasValidationIssue(OxstsValidator.INVALID_CALL_ARGUMENTS_COUND, "cannot follow optional parameter");
     }
 
     @Test
@@ -185,10 +182,7 @@ public class ParameterBindingTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(
-            OxstsValidator.INVALID_CALL_ARGUMENTS_COUND,
-            "'c'"
-        );
+        pkg.assertHasValidationIssue(OxstsValidator.INVALID_CALL_ARGUMENTS_COUND, "'c'");
     }
 
     @Test
@@ -198,9 +192,6 @@ public class ParameterBindingTest {
             annotation Tagged(maybe: string[0..1], required: string)
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(
-            OxstsValidator.INVALID_CALL_ARGUMENTS_COUND,
-            "cannot follow optional parameter"
-        );
+        pkg.assertHasValidationIssue(OxstsValidator.INVALID_CALL_ARGUMENTS_COUND, "cannot follow optional parameter");
     }
 }

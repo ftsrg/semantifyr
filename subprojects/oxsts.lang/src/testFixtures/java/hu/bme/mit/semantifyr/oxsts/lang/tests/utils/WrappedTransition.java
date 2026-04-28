@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.oxsts.lang.tests.utils;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionKind;
-
 import java.util.List;
 
 public record WrappedTransition(TransitionDeclaration eObject) {

@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.resource.ResourceDescriptionProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.selectables.TrimPrefixSelectable;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
+import java.util.List;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
@@ -21,8 +22,6 @@ import org.eclipse.xtext.scoping.IScope;
 import org.eclipse.xtext.scoping.Scopes;
 import org.eclipse.xtext.scoping.impl.AbstractGlobalScopeDelegatingScopeProvider;
 import org.eclipse.xtext.scoping.impl.SelectableBasedScope;
-
-import java.util.List;
 
 public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeProvider {
 
@@ -58,7 +57,8 @@ public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
         var resourceDescription = resourceDescriptionProvider.getResourceDescription(resource);
         var packageName = qualifiedNameProvider.getFullyQualifiedName(_package);
         var resourceSelectable = new TrimPrefixSelectable(resourceDescription, packageName);
-        return SelectableBasedScope.createScope(globalScope, resourceSelectable, reference.getEReferenceType(), isIgnoreCase(reference));
+        return SelectableBasedScope.createScope(
+                globalScope, resourceSelectable, reference.getEReferenceType(), isIgnoreCase(reference));
     }
 
     protected IScope getInlinedOxstsScope(InlinedOxsts inlinedOxsts, EReference reference) {
@@ -76,16 +76,14 @@ public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
 
     protected Iterable<? extends EObject> getInlinedOxstsElements(InlinedOxsts inlinedOxsts) {
         if (inlinedOxsts.getRootFeature() != null) {
-            return Iterables.concat(
-                    inlinedOxsts.getVariables(),
-                    List.of(inlinedOxsts.getRootFeature())
-            );
+            return Iterables.concat(inlinedOxsts.getVariables(), List.of(inlinedOxsts.getRootFeature()));
         } else {
             return inlinedOxsts.getVariables();
         }
     }
 
-    // caching feels unnecessary here, since most of the calculated instances are simple to create, or are cache anyway
+    // caching feels unnecessary here, since most of the calculated instances are simple to create,
+    // or are cache anyway
     protected IScope getLocalScope(IScope containerScope, EObject context, EObject child, EReference reference) {
         if (context instanceof InlinedOxsts) {
             return containerScope;
@@ -105,8 +103,11 @@ public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
         }
 
         if (context instanceof DomainDeclaration declaration) {
-            var memberCollection = domainMemberCollectionProvider.getMemberCollection(declaration).getMemberSelectable();
-            return SelectableBasedScope.createScope(containerScope, memberCollection, reference.getEReferenceType(), isIgnoreCase(reference));
+            var memberCollection = domainMemberCollectionProvider
+                    .getMemberCollection(declaration)
+                    .getMemberSelectable();
+            return SelectableBasedScope.createScope(
+                    containerScope, memberCollection, reference.getEReferenceType(), isIgnoreCase(reference));
         }
 
         if (context instanceof Namespace namespace) {
@@ -115,5 +116,4 @@ public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
 
         return containerScope;
     }
-
 }

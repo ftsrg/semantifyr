@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.syntax;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
@@ -20,8 +22,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation;
 import org.eclipse.xtext.EcoreUtil2;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @InjectWithOxsts
 public class OperationSyntaxTest {
@@ -190,7 +190,8 @@ public class OperationSyntaxTest {
             }
             """);
         pkg.assertNoResourceErrors();
-        var locals = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), LocalVarDeclarationOperation.class);
+        var locals = EcoreUtil2.eAllOfType(
+                pkg.classByName("C").anonymousMain().eObject(), LocalVarDeclarationOperation.class);
         assertThat(locals).hasSize(1);
         assertThat(locals.getFirst().getName()).isEqualTo("tmp");
         assertThat(locals.getFirst().getTypeSpecification()).isNotNull();
@@ -211,7 +212,8 @@ public class OperationSyntaxTest {
             }
             """);
         pkg.assertNoResourceErrors();
-        var locals = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), LocalVarDeclarationOperation.class);
+        var locals = EcoreUtil2.eAllOfType(
+                pkg.classByName("C").anonymousMain().eObject(), LocalVarDeclarationOperation.class);
         assertThat(locals).hasSize(1);
         assertThat(locals.getFirst().getExpression()).isNull();
     }

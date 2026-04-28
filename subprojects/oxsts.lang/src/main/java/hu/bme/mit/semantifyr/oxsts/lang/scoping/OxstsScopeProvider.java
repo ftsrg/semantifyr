@@ -110,22 +110,15 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
             var primary = navigationSuffixExpression.getPrimary();
             var primaryEvaluation = expressionTypeEvaluatorProvider.evaluate(primary);
 
-            if (primaryEvaluation instanceof ImmutableTypeEvaluation(DomainDeclaration domainDeclaration, RangeEvaluation rangeEvaluation)) {
+            if (primaryEvaluation
+                    instanceof
+                    ImmutableTypeEvaluation(DomainDeclaration domainDeclaration, RangeEvaluation rangeEvaluation)) {
                 var members = domainMemberCollectionProvider.getMembers(domainDeclaration);
                 return scopeFor(reference, members);
             }
 
             return IScope.NULLSCOPE;
         }
-
-//        if (context instanceof Expression expression) {
-//            var defaultExpressionContainer = OxstsUtils.containingVarOrFeatureIfDefaultExpression(expression);
-//            if (defaultExpressionContainer != null) {
-//                var originalScope = super.getScope(defaultExpressionContainer, reference);
-//
-//                return new FilteringScope(originalScope, e -> e.getEObjectOrProxy() != defaultExpressionContainer);
-//            }
-//        }
 
         return super.getScope(context, reference);
     }
@@ -157,15 +150,20 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
     protected IScope calculateFeatureRedefinedScope(EObject context, EReference reference) {
         var container = (DomainDeclaration) context.eContainer();
 
-        return scopeFor(reference, domainMemberCollectionProvider.getParentCollection(container).getMemberSelectable());
+        return scopeFor(
+                reference,
+                domainMemberCollectionProvider.getParentCollection(container).getMemberSelectable());
     }
 
     protected IScope scopeFor(EReference reference, ISelectable selectable) {
-        return SelectableBasedScope.createScope(IScope.NULLSCOPE, selectable, reference.getEReferenceType(), caseInsensitivityHelper.isIgnoreCase(reference));
+        return SelectableBasedScope.createScope(
+                IScope.NULLSCOPE,
+                selectable,
+                reference.getEReferenceType(),
+                caseInsensitivityHelper.isIgnoreCase(reference));
     }
 
     protected IScope scopeFor(Iterable<? extends Element> elements) {
         return Scopes.scopeFor(elements, QualifiedName.wrapper(NamingUtil::getName), IScope.NULLSCOPE);
     }
-
 }

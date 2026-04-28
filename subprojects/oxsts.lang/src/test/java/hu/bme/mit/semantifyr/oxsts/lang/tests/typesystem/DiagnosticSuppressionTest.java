@@ -6,16 +6,15 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.typesystem;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator;
 import org.eclipse.xtext.diagnostics.Severity;
 import org.eclipse.xtext.validation.CheckMode;
-import org.eclipse.xtext.validation.Issue;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @InjectWithOxsts
 public class DiagnosticSuppressionTest {
@@ -37,15 +36,14 @@ public class DiagnosticSuppressionTest {
             """, CheckMode.ALL);
 
         var typeMismatches = pkg.getIssues().stream()
-            .filter(i -> i.getSeverity() == Severity.ERROR)
-            .filter(i -> OxstsValidator.TYPE_MISMATCH.equals(i.getCode()))
-            .toList();
+                .filter(i -> i.getSeverity() == Severity.ERROR)
+                .filter(i -> OxstsValidator.TYPE_MISMATCH.equals(i.getCode()))
+                .toList();
         assertThat(typeMismatches)
-            .as("exactly one type-mismatch error should be reported for the inner arithmetic operand, " +
-                "not a cascade to the enclosing assignment")
-            .hasSize(1);
-        assertThat(typeMismatches.getFirst().getMessage())
-            .contains("arithmetic");
+                .as("exactly one type-mismatch error should be reported for the inner arithmetic operand, "
+                        + "not a cascade to the enclosing assignment")
+                .hasSize(1);
+        assertThat(typeMismatches.getFirst().getMessage()).contains("arithmetic");
     }
 
     @Test
@@ -62,14 +60,13 @@ public class DiagnosticSuppressionTest {
             """, CheckMode.ALL);
 
         var typeMismatches = pkg.getIssues().stream()
-            .filter(i -> i.getSeverity() == Severity.ERROR)
-            .filter(i -> OxstsValidator.TYPE_MISMATCH.equals(i.getCode()))
-            .toList();
+                .filter(i -> i.getSeverity() == Severity.ERROR)
+                .filter(i -> OxstsValidator.TYPE_MISMATCH.equals(i.getCode()))
+                .toList();
         assertThat(typeMismatches)
-            .as("only the innermost bool-operand error should fire")
-            .hasSize(1);
-        assertThat(typeMismatches.getFirst().getMessage())
-            .contains("boolean");
+                .as("only the innermost bool-operand error should fire")
+                .hasSize(1);
+        assertThat(typeMismatches.getFirst().getMessage()).contains("boolean");
     }
 
     @Test
@@ -86,14 +83,13 @@ public class DiagnosticSuppressionTest {
             """, CheckMode.ALL);
 
         var typeMismatches = pkg.getIssues().stream()
-            .filter(i -> i.getSeverity() == Severity.ERROR)
-            .filter(i -> OxstsValidator.TYPE_MISMATCH.equals(i.getCode()))
-            .toList();
+                .filter(i -> i.getSeverity() == Severity.ERROR)
+                .filter(i -> OxstsValidator.TYPE_MISMATCH.equals(i.getCode()))
+                .toList();
         assertThat(typeMismatches)
-            .as("only the guard type error should fire, not the branch compatibility check")
-            .hasSize(1);
-        assertThat(typeMismatches.getFirst().getMessage())
-            .contains("guard");
+                .as("only the guard type error should fire, not the branch compatibility check")
+                .hasSize(1);
+        assertThat(typeMismatches.getFirst().getMessage()).contains("guard");
     }
 
     @Test
@@ -111,13 +107,12 @@ public class DiagnosticSuppressionTest {
             """, CheckMode.ALL);
 
         var typeMismatches = pkg.getIssues().stream()
-            .filter(i -> i.getSeverity() == Severity.ERROR)
-            .filter(i -> OxstsValidator.TYPE_MISMATCH.equals(i.getCode()))
-            .toList();
+                .filter(i -> i.getSeverity() == Severity.ERROR)
+                .filter(i -> OxstsValidator.TYPE_MISMATCH.equals(i.getCode()))
+                .toList();
         assertThat(typeMismatches)
-            .as("only the innermost comparison error should fire")
-            .hasSize(1);
-        assertThat(typeMismatches.getFirst().getMessage())
-            .containsIgnoringCase("compare");
+                .as("only the innermost comparison error should fire")
+                .hasSize(1);
+        assertThat(typeMismatches.getFirst().getMessage()).containsIgnoringCase("compare");
     }
 }

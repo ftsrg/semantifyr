@@ -8,12 +8,12 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandHandler;
+import java.util.List;
 import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.ide.server.commands.IExecutableCommandService;
 import org.eclipse.xtext.util.CancelIndicator;
-
-import java.util.List;
 
 @Singleton
 public class OxstsCommandService implements IExecutableCommandService {
@@ -23,9 +23,6 @@ public class OxstsCommandService implements IExecutableCommandService {
 
     @Inject
     private VerifyOxstsCommandHandler verifyOxstsCommandHandler;
-
-//    @Inject
-//    private GenerateTracesOxstsCommandHandler generateTracesOxstsCommandHandler;
 
     @Inject
     private CompileInlinedOxstsCommandHandler compileInlinedOxstsCommandHandler;
@@ -65,7 +62,8 @@ public class OxstsCommandService implements IExecutableCommandService {
                 .filter(c -> params.getCommand().equals(c.getId()))
                 .findFirst();
 
-        return commandHandler.map(handler -> handler.execute(params, access, cancelIndicator)).orElse(null);
+        return commandHandler
+                .map(handler -> handler.execute(params, access, cancelIndicator))
+                .orElse(null);
     }
-
 }

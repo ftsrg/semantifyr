@@ -6,14 +6,14 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.syntax;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @InjectWithOxsts
 public class FeatureSyntaxTest {
@@ -38,8 +38,7 @@ public class FeatureSyntaxTest {
             }
             """);
         pkg.assertNoResourceErrors();
-        assertThat(pkg.classByName("Leaf").featureByName("parent").kind())
-            .isEqualTo(FeatureKind.CONTAINER);
+        assertThat(pkg.classByName("Leaf").featureByName("parent").kind()).isEqualTo(FeatureKind.CONTAINER);
     }
 
     @Test
@@ -59,8 +58,7 @@ public class FeatureSyntaxTest {
             }
             """);
         pkg.assertNoResourceErrors();
-        assertThat(pkg.classByName("Host").featureByName("inhabitants").kind())
-            .isEqualTo(FeatureKind.DERIVED);
+        assertThat(pkg.classByName("Host").featureByName("inhabitants").kind()).isEqualTo(FeatureKind.DERIVED);
     }
 
     @Test

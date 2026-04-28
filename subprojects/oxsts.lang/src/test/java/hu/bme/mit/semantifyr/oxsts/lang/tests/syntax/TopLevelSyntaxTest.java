@@ -6,16 +6,15 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.syntax;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AnnotationDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
 import org.eclipse.xtext.EcoreUtil2;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @InjectWithOxsts
 public class TopLevelSyntaxTest {
@@ -173,7 +172,8 @@ public class TopLevelSyntaxTest {
             annotation Tag(category: string)
             """);
         pkg.assertNoResourceErrors();
-        var ann = EcoreUtil2.eAllOfType(pkg.getOxstsPackage(), AnnotationDeclaration.class).getFirst();
+        var ann = EcoreUtil2.eAllOfType(pkg.getOxstsPackage(), AnnotationDeclaration.class)
+                .getFirst();
         assertThat(ann.getParameters()).hasSize(1);
         assertThat(ann.getParameters().getFirst().getName()).isEqualTo("category");
     }

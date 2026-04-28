@@ -10,7 +10,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TypeSpecification;
-
 import java.util.List;
 
 public record WrappedProperty(PropertyDeclaration eObject) {

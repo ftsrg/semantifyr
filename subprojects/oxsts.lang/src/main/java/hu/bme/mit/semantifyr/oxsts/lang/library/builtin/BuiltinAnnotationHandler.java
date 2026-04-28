@@ -45,7 +45,8 @@ public class BuiltinAnnotationHandler {
 
     public String getVerificationCaseSummary(ClassDeclaration classDeclaration) {
         var verificationCaseAnnotation = builtinSymbolResolver.verificationCaseAnnotation(classDeclaration);
-        var verificationCaseAnnotationSummary = builtinSymbolResolver.verificationCaseAnnotationSummary(classDeclaration);
+        var verificationCaseAnnotationSummary =
+                builtinSymbolResolver.verificationCaseAnnotationSummary(classDeclaration);
         var annotation = OxstsUtils.getAnnotation(classDeclaration, verificationCaseAnnotation);
         var value = OxstsUtils.getAnnotationValue(annotation, verificationCaseAnnotationSummary);
 
@@ -63,19 +64,16 @@ public class BuiltinAnnotationHandler {
 
         assert annotations != null;
 
-        var values = annotations.map(annotation ->
-                OxstsUtils.getAnnotationValue(annotation, tagAnnotationCategory)
-        ).filter(value ->
-                value instanceof LiteralString
-        ).map(value ->
-                ((LiteralString) value).getValue()
-        );
+        var values = annotations
+                .map(annotation -> OxstsUtils.getAnnotationValue(annotation, tagAnnotationCategory))
+                .filter(value -> value instanceof LiteralString)
+                .map(value -> ((LiteralString) value).getValue());
 
         return values.anyMatch(category::equals);
     }
 
     public boolean isNotTaggedWith(ClassDeclaration classDeclaration, String category) {
-        return ! isTaggedWith(classDeclaration, category);
+        return !isTaggedWith(classDeclaration, category);
     }
 
     public boolean isTransitionTraced(TransitionDeclaration transitionDeclaration) {
@@ -84,7 +82,8 @@ public class BuiltinAnnotationHandler {
         return isTransitivelyAnnotatedWith(transitionDeclaration, traceAnnotation);
     }
 
-    protected boolean isTransitivelyAnnotatedWith(RedefinableDeclaration annotatedElement, AnnotationDeclaration annotation) {
+    protected boolean isTransitivelyAnnotatedWith(
+            RedefinableDeclaration annotatedElement, AnnotationDeclaration annotation) {
         var element = annotatedElement;
 
         while (element != null) {
@@ -96,5 +95,4 @@ public class BuiltinAnnotationHandler {
 
         return false;
     }
-
 }

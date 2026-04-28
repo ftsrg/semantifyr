@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.syntax;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
@@ -18,8 +20,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralReal;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString;
 import org.eclipse.xtext.EcoreUtil2;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @InjectWithOxsts
 public class LiteralSyntaxTest {
@@ -120,7 +120,8 @@ public class LiteralSyntaxTest {
             }
             """);
         pkg.assertNoResourceErrors();
-        var infinities = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), LiteralInfinity.class);
+        var infinities =
+                EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), LiteralInfinity.class);
         assertThat(infinities).hasSize(1);
     }
 
@@ -157,6 +158,6 @@ public class LiteralSyntaxTest {
         var init = (ArrayLiteral) pkg.classByName("C").variableByName("three").initializer();
         assertThat(init.getValues()).hasSize(3);
         assertThat(init.getValues().stream().map(e -> ((LiteralInteger) e).getValue()))
-            .containsExactly(1, 2, 3);
+                .containsExactly(1, 2, 3);
     }
 }

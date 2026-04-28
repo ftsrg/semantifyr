@@ -32,7 +32,9 @@ public final class SourceLocation {
 
         }
 
-        var fileName = (resource != null && resource.getURI() != null) ? resource.getURI().lastSegment() : null;
+        var fileName = (resource != null && resource.getURI() != null)
+                ? resource.getURI().lastSegment()
+                : null;
 
         if (node == null && fileName == null) {
             return "";
@@ -42,5 +44,4 @@ public final class SourceLocation {
         var line = node != null ? String.valueOf(node.getStartLine()) : "?";
         return file + ":" + line + ": ";
     }
-
 }

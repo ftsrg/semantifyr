@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.syntax;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
@@ -16,8 +18,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference;
 import org.eclipse.xtext.EcoreUtil2;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @InjectWithOxsts
 public class ReferenceSyntaxTest {
@@ -39,8 +39,8 @@ public class ReferenceSyntaxTest {
         var refs = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), ElementReference.class);
         assertThat(refs).isNotEmpty();
         assertThat(refs.stream().filter(r -> r.getElement() == xVar).toList())
-            .as("at least one reference resolves to variable x")
-            .isNotEmpty();
+                .as("at least one reference resolves to variable x")
+                .isNotEmpty();
     }
 
     @Test
@@ -68,11 +68,13 @@ public class ReferenceSyntaxTest {
             }
             """);
         pkg.assertNoResourceErrors();
-        var navs = EcoreUtil2.eAllOfType(pkg.classByName("Host").anonymousMain().eObject(), NavigationSuffixExpression.class);
+        var navs = EcoreUtil2.eAllOfType(
+                pkg.classByName("Host").anonymousMain().eObject(), NavigationSuffixExpression.class);
         assertThat(navs).hasSize(1);
         var nav = navs.getFirst();
         assertThat(nav.isOptional()).isFalse();
-        assertThat(nav.getMember()).isSameAs(pkg.classByName("Worker").variableByName("done").eObject());
+        assertThat(nav.getMember())
+                .isSameAs(pkg.classByName("Worker").variableByName("done").eObject());
     }
 
     @Test
@@ -86,7 +88,8 @@ public class ReferenceSyntaxTest {
             }
             """);
         pkg.assertNoResourceErrors();
-        var navs = EcoreUtil2.eAllOfType(pkg.classByName("Host").anonymousMain().eObject(), NavigationSuffixExpression.class);
+        var navs = EcoreUtil2.eAllOfType(
+                pkg.classByName("Host").anonymousMain().eObject(), NavigationSuffixExpression.class);
         assertThat(navs).hasSize(1);
         assertThat(navs.getFirst().isOptional()).isTrue();
     }
@@ -103,7 +106,8 @@ public class ReferenceSyntaxTest {
             }
             """);
         pkg.assertNoResourceErrors();
-        var navs = EcoreUtil2.eAllOfType(pkg.classByName("Host").anonymousMain().eObject(), NavigationSuffixExpression.class);
+        var navs = EcoreUtil2.eAllOfType(
+                pkg.classByName("Host").anonymousMain().eObject(), NavigationSuffixExpression.class);
         assertThat(navs).hasSize(2);
     }
 
@@ -117,7 +121,8 @@ public class ReferenceSyntaxTest {
             }
             """);
         pkg.assertNoResourceErrors();
-        var idxs = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), IndexingSuffixExpression.class);
+        var idxs =
+                EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), IndexingSuffixExpression.class);
         assertThat(idxs).hasSize(1);
         assertThat(idxs.getFirst().getPrimary()).isNotNull();
         assertThat(idxs.getFirst().getIndex()).isNotNull();

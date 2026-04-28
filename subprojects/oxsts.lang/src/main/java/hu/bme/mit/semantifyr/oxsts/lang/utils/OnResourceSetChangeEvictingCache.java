@@ -8,6 +8,10 @@ package hu.bme.mit.semantifyr.oxsts.lang.utils;
 
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.log4j.Logger;
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.common.util.WrappedException;
@@ -20,14 +24,9 @@ import org.eclipse.xtext.util.Pair;
 import org.eclipse.xtext.util.Tuples;
 import org.eclipse.xtext.util.concurrent.IUnitOfWork;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
- * A cache implementation that stores its values in the scope of a resource set.
- * The values will be discarded as soon as the contents of the resource set changes.
+ * A cache implementation that stores its values in the scope of a resource set. The values will be
+ * discarded as soon as the contents of the resource set changes.
  */
 @Singleton
 public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
@@ -89,10 +88,11 @@ public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
     }
 
     /**
-     * The transaction will be executed. While it is running, any semantic state change
-     * in the given resource will be ignored and the cache will not be cleared.
+     * The transaction will be executed. While it is running, any semantic state change in the given
+     * resource will be ignored and the cache will not be cleared.
      */
-    public <Result, Param extends Resource> Result execWithoutCacheClear(Param resource, IUnitOfWork<Result, Param> transaction) throws WrappedException {
+    public <Result, Param extends Resource> Result execWithoutCacheClear(
+            Param resource, IUnitOfWork<Result, Param> transaction) throws WrappedException {
         var cacheAdapter = getOrCreate(resource.getResourceSet());
         try {
             cacheAdapter.ignoreNotifications();
@@ -228,5 +228,4 @@ public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
             this.resourceSet = resourceSet;
         }
     }
-
 }

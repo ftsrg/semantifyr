@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.typesystem;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider;
@@ -17,8 +19,6 @@ import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.WrappedOxstsPackage;
 import org.eclipse.emf.ecore.EObject;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @InjectWithOxsts
 public class TypeCompatibilityTest {
@@ -83,17 +83,22 @@ public class TypeCompatibilityTest {
 
         // C -> B -> A : walking up the chain is allowed.
         assertThat(typeCompatibility.isAssignable(a, b, context))
-            .as("B should be assignable to A (direct supertype)").isTrue();
+                .as("B should be assignable to A (direct supertype)")
+                .isTrue();
         assertThat(typeCompatibility.isAssignable(a, c, context))
-            .as("C should be assignable to A (transitive supertype)").isTrue();
+                .as("C should be assignable to A (transitive supertype)")
+                .isTrue();
         assertThat(typeCompatibility.isAssignable(b, c, context))
-            .as("C should be assignable to B").isTrue();
+                .as("C should be assignable to B")
+                .isTrue();
 
         // Reverse direction should fail.
         assertThat(typeCompatibility.isAssignable(b, a, context))
-            .as("A should NOT be assignable to B").isFalse();
+                .as("A should NOT be assignable to B")
+                .isFalse();
         assertThat(typeCompatibility.isAssignable(c, a, context))
-            .as("A should NOT be assignable to C").isFalse();
+                .as("A should NOT be assignable to C")
+                .isFalse();
     }
 
     @Test
@@ -109,13 +114,16 @@ public class TypeCompatibilityTest {
             """);
         var context = pkg.getOxstsPackage();
         var all = typeOf(pkg.classByName("Holder").featureByName("allItems").eObject());
-        var priority = typeOf(pkg.classByName("Holder").featureByName("priority").eObject());
-        var important = typeOf(pkg.classByName("Holder").featureByName("veryImportant").eObject());
+        var priority =
+                typeOf(pkg.classByName("Holder").featureByName("priority").eObject());
+        var important =
+                typeOf(pkg.classByName("Holder").featureByName("veryImportant").eObject());
 
         // Subset chain: veryImportant -> priority -> allItems.
         assertThat(typeCompatibility.isAssignable(all, priority, context)).isTrue();
         assertThat(typeCompatibility.isAssignable(all, important, context))
-            .as("veryImportant should be assignable to allItems transitively").isTrue();
+                .as("veryImportant should be assignable to allItems transitively")
+                .isTrue();
         assertThat(typeCompatibility.isAssignable(priority, important, context)).isTrue();
 
         // Reverse is not allowed.
@@ -138,9 +146,11 @@ public class TypeCompatibilityTest {
 
         // `size` types as the feature; unwrap should make it int-compatible.
         assertThat(typeCompatibility.isAssignable(intType, sizeType, context))
-            .as("`size` (feature-typed as int) should be assignable to int").isTrue();
+                .as("`size` (feature-typed as int) should be assignable to int")
+                .isTrue();
         assertThat(typeCompatibility.isNumeric(sizeType, context))
-            .as("`size` should be numeric via data-feature unwrap").isTrue();
+                .as("`size` should be numeric via data-feature unwrap")
+                .isTrue();
     }
 
     @Test
@@ -166,11 +176,16 @@ public class TypeCompatibilityTest {
             """);
         var context = pkg.getOxstsPackage();
 
-        assertThat(typeCompatibility.isNumeric(typeOf(builtinSymbolResolver.intDatatype(context)), context)).isTrue();
-        assertThat(typeCompatibility.isNumeric(typeOf(builtinSymbolResolver.realDatatype(context)), context)).isTrue();
-        assertThat(typeCompatibility.isNumeric(typeOf(builtinSymbolResolver.anyDatatype(context)), context)).isTrue();
-        assertThat(typeCompatibility.isNumeric(typeOf(builtinSymbolResolver.boolDatatype(context)), context)).isFalse();
-        assertThat(typeCompatibility.isNumeric(typeOf(builtinSymbolResolver.stringDatatype(context)), context)).isFalse();
+        assertThat(typeCompatibility.isNumeric(typeOf(builtinSymbolResolver.intDatatype(context)), context))
+                .isTrue();
+        assertThat(typeCompatibility.isNumeric(typeOf(builtinSymbolResolver.realDatatype(context)), context))
+                .isTrue();
+        assertThat(typeCompatibility.isNumeric(typeOf(builtinSymbolResolver.anyDatatype(context)), context))
+                .isTrue();
+        assertThat(typeCompatibility.isNumeric(typeOf(builtinSymbolResolver.boolDatatype(context)), context))
+                .isFalse();
+        assertThat(typeCompatibility.isNumeric(typeOf(builtinSymbolResolver.stringDatatype(context)), context))
+                .isFalse();
     }
 
     @Test
@@ -181,9 +196,12 @@ public class TypeCompatibilityTest {
             """);
         var context = pkg.getOxstsPackage();
 
-        assertThat(typeCompatibility.isBoolean(typeOf(builtinSymbolResolver.boolDatatype(context)), context)).isTrue();
-        assertThat(typeCompatibility.isBoolean(typeOf(builtinSymbolResolver.anyDatatype(context)), context)).isTrue();
-        assertThat(typeCompatibility.isBoolean(typeOf(builtinSymbolResolver.intDatatype(context)), context)).isFalse();
+        assertThat(typeCompatibility.isBoolean(typeOf(builtinSymbolResolver.boolDatatype(context)), context))
+                .isTrue();
+        assertThat(typeCompatibility.isBoolean(typeOf(builtinSymbolResolver.anyDatatype(context)), context))
+                .isTrue();
+        assertThat(typeCompatibility.isBoolean(typeOf(builtinSymbolResolver.intDatatype(context)), context))
+                .isFalse();
     }
 
     private WrappedOxstsPackage parse(String source) {

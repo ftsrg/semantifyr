@@ -146,7 +146,8 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
 
     @Override
     protected ExpressionEvaluation visit(ArrayLiteral expression) {
-        return new ArrayEvaluation(expression.getValues().stream().map(this::evaluate).toList());
+        return new ArrayEvaluation(
+                expression.getValues().stream().map(this::evaluate).toList());
     }
 
     @Override
@@ -186,7 +187,8 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
 
     public ExpressionEvaluation evaluateElement(NamedElement element) {
         if (element.eIsProxy()) {
-            throw new IllegalStateException(SourceLocation.prefixFor(element) + "Element could not be resolved (unresolved proxy).");
+            throw new IllegalStateException(
+                    SourceLocation.prefixFor(element) + "Element could not be resolved (unresolved proxy).");
         }
 
         return getElementValueEvaluator(element).evaluate(element);
@@ -229,5 +231,4 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
 
         throw EvaluationFailureException.at(expression, "if-then-else guard did not evaluate to a boolean: " + guard);
     }
-
 }

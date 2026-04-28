@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.oxsts.lang.scoping.domain;
 
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
-
 import java.util.List;
 
 public class MergedDomainMemberCollection extends DomainMemberCollection {

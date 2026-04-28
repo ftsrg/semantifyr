@@ -6,13 +6,14 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.modality;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.ExpressionModalityEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.Modality;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.WrappedOxstsPackage;
-import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.WrappedClass;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfThenElse;
@@ -20,8 +21,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference;
 import org.eclipse.xtext.EcoreUtil2;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @InjectWithOxsts
 public class ExpressionModalityEvaluatorTest {
@@ -86,8 +85,10 @@ public class ExpressionModalityEvaluatorTest {
                 redefine tran { self.x := 1 }
             }
             """);
-        var assignmentLhs = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), AssignmentOperation.class)
-            .getFirst().getReference();
+        var assignmentLhs = EcoreUtil2.eAllOfType(
+                        pkg.classByName("C").anonymousMain().eObject(), AssignmentOperation.class)
+                .getFirst()
+                .getReference();
         var bareSelf = EcoreUtil2.eAllOfType(assignmentLhs, SelfReference.class).getFirst();
 
         assertThat(modalityEvaluatorProvider.evaluate(bareSelf)).isEqualTo(Modality.COMPILE_TIME);
@@ -102,8 +103,10 @@ public class ExpressionModalityEvaluatorTest {
                 redefine tran { self.x := 1 }
             }
             """);
-        var assignmentLhs = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), AssignmentOperation.class)
-            .getFirst().getReference();
+        var assignmentLhs = EcoreUtil2.eAllOfType(
+                        pkg.classByName("C").anonymousMain().eObject(), AssignmentOperation.class)
+                .getFirst()
+                .getReference();
         var navigation = (NavigationSuffixExpression) assignmentLhs;
 
         assertThat(modalityEvaluatorProvider.evaluate(navigation)).isEqualTo(Modality.RUNTIME);
@@ -118,9 +121,12 @@ public class ExpressionModalityEvaluatorTest {
                 redefine tran { x := x + 1 }
             }
             """);
-        var assignment = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), AssignmentOperation.class).getFirst();
+        var assignment = EcoreUtil2.eAllOfType(
+                        pkg.classByName("C").anonymousMain().eObject(), AssignmentOperation.class)
+                .getFirst();
 
-        assertThat(modalityEvaluatorProvider.evaluate(assignment.getExpression())).isEqualTo(Modality.RUNTIME);
+        assertThat(modalityEvaluatorProvider.evaluate(assignment.getExpression()))
+                .isEqualTo(Modality.RUNTIME);
     }
 
     @Test
@@ -174,7 +180,8 @@ public class ExpressionModalityEvaluatorTest {
                 }
             }
             """);
-        var ite = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), IfThenElse.class).getFirst();
+        var ite = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), IfThenElse.class)
+                .getFirst();
 
         assertThat(modalityEvaluatorProvider.evaluate(ite)).isEqualTo(Modality.CONSTANT);
     }
@@ -191,7 +198,8 @@ public class ExpressionModalityEvaluatorTest {
                 }
             }
             """);
-        var ite = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), IfThenElse.class).getFirst();
+        var ite = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), IfThenElse.class)
+                .getFirst();
 
         assertThat(modalityEvaluatorProvider.evaluate(ite)).isEqualTo(Modality.RUNTIME);
     }
@@ -206,7 +214,9 @@ public class ExpressionModalityEvaluatorTest {
         var pkg = parse(source);
         var cls = pkg.classByName(className);
         var initializer = cls.variableByName(variableName).initializer();
-        assertThat(initializer).as("variable '" + variableName + "' must have an initializer").isNotNull();
+        assertThat(initializer)
+                .as("variable '" + variableName + "' must have an initializer")
+                .isNotNull();
         return initializer;
     }
 }

@@ -11,14 +11,14 @@ import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionPro
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration;
-import org.eclipse.xtext.util.Tuples;
-
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
+import org.eclipse.xtext.util.Tuples;
 
 public class FeatureSubSettersFinder {
-    private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.semantics.FeatureSubSettersFinder.CACHE_KEY";
+    private static final String CACHE_KEY =
+            "hu.bme.mit.semantifyr.oxsts.lang.semantics.FeatureSubSettersFinder.CACHE_KEY";
 
     @Inject
     private OnResourceSetChangeEvictingCache resourceScopeCache;
@@ -30,10 +30,13 @@ public class FeatureSubSettersFinder {
     private SubsetHandler subsetHandler;
 
     public Collection<FeatureDeclaration> getSubSetters(DomainDeclaration domain, FeatureDeclaration feature) {
-        return resourceScopeCache.get(Tuples.create(CACHE_KEY, domain, feature), feature.eResource(), () -> computeSubSetters(domain, feature));
+        return resourceScopeCache.get(
+                Tuples.create(CACHE_KEY, domain, feature),
+                feature.eResource(),
+                () -> computeSubSetters(domain, feature));
     }
 
-    public Collection<FeatureDeclaration>  computeSubSetters(DomainDeclaration domain, FeatureDeclaration feature) {
+    public Collection<FeatureDeclaration> computeSubSetters(DomainDeclaration domain, FeatureDeclaration feature) {
         var memberCollection = domainMemberCollectionProvider.getMemberCollection(domain);
 
         // Preserve declaration order via LinkedHashSet. HashSet here would
@@ -41,9 +44,8 @@ public class FeatureSubSettersFinder {
         // chains non-deterministically across runs.
         return memberCollection.getDeclarations().stream()
                 .filter(d -> d instanceof FeatureDeclaration)
-                .map(d -> (FeatureDeclaration)d)
+                .map(d -> (FeatureDeclaration) d)
                 .filter(f -> subsetHandler.getSubsetFeature(f) == feature)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
-
 }
