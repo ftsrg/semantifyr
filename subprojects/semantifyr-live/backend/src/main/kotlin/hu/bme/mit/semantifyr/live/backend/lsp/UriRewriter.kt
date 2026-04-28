@@ -10,11 +10,9 @@ class UriRewriter(
     val clientUri: String,
     val serverUri: String,
 ) {
-
     fun clientToServer(message: String): String {
         return message.replace(clientUri, serverUri)
     }
-
     fun serverToClient(message: String): String {
         return message.replace(serverUri, clientUri)
     }

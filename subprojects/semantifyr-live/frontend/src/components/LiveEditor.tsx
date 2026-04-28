@@ -38,10 +38,13 @@ export interface LiveEditorHandle {
   getFileUri: () => string;
   onEditorContentChange: (callback: () => void) => (() => void) | undefined;
   addProgressListener: (listener: (params: unknown) => void) => () => void;
+  addNotificationListener: (method: string, listener: (params: unknown) => void) => () => void;
 }
 
 interface Props {
-  language: string;
+  flavorId: string;
+  languageId: string;
+  fileName: string;
   initialCode: string;
   backendUrl: string;
   colorMode: ColorMode;
@@ -55,7 +58,9 @@ const RECONNECT_BACKOFF_MS = [1000, 2000, 4000];
 
 const LiveEditor = forwardRef<LiveEditorHandle, Props>(function LiveEditor(
   {
-    language,
+    flavorId,
+    languageId,
+    fileName,
     initialCode,
     backendUrl,
     colorMode,
@@ -75,6 +80,7 @@ const LiveEditor = forwardRef<LiveEditorHandle, Props>(function LiveEditor(
   const flavorRef = useRef<FlavorInfo | null>(null);
   const progressListenersRef = useRef<Set<(params: unknown) => void>>(new Set());
   const metricsClientRef = useRef<(LspClient & MetricsTracker) | null>(null);
+  const metricsRawClientRef = useRef<LspClient | null>(null);
 
   const [, setInternalStatus] = useState<LiveEditorStatus>('initializing');
 
@@ -90,14 +96,19 @@ const LiveEditor = forwardRef<LiveEditorHandle, Props>(function LiveEditor(
     onStatusChangeRef.current?.(newStatus, info);
   };
 
-  const fileUri = useMemo(() => createFileUri(language), [language]);
+  const fileUri = useMemo(() => createFileUri(fileName), [fileName]);
 
   const backendUrlRef = useRef(backendUrl);
-  const languageRef = useRef(language);
+  const flavorIdRef = useRef(flavorId);
+  const languageIdRef = useRef(languageId);
   useEffect(() => {
     backendUrlRef.current = backendUrl;
-    languageRef.current = language;
+    flavorIdRef.current = flavorId;
+    languageIdRef.current = languageId;
   });
+
+  const notificationHandlersRef = useRef<Map<string, Set<(params: unknown) => void>>>(new Map());
+  const attachedNotificationDisposablesRef = useRef<Array<{ dispose: () => void }>>([]);
 
   useEffect(() => {
     void applyColorTheme(colorMode);
@@ -110,6 +121,30 @@ const LiveEditor = forwardRef<LiveEditorHandle, Props>(function LiveEditor(
     }
   };
 
+  const attachNotificationHandlers = (client: LanguageClientWrapper): void => {
+    for (const d of attachedNotificationDisposablesRef.current) {
+      try { d.dispose(); } catch { /* ignore */ }
+    }
+    attachedNotificationDisposablesRef.current = [];
+    const raw = client.getLanguageClient() as unknown as {
+      onNotification: (method: string, cb: (params: unknown) => void) => { dispose: () => void };
+    } | undefined;
+    if (!raw) return;
+    for (const [method, listeners] of notificationHandlersRef.current) {
+      try {
+        const disposable = raw.onNotification(method, (params) => {
+          for (const listener of listeners) {
+            try { listener(params); }
+            catch (error) { console.warn(`semantifyr-live: notification listener for ${method} threw`, error); }
+          }
+        });
+        if (disposable) attachedNotificationDisposablesRef.current.push(disposable);
+      } catch (error) {
+        console.warn(`semantifyr-live: failed to attach notification listener for ${method}`, error);
+      }
+    }
+  };
+
   const doConnect = async (): Promise<void> => {
     if (languageClientRef.current) {
       try { await languageClientRef.current.dispose(); } catch { /* ignore */ }
@@ -117,7 +152,8 @@ const LiveEditor = forwardRef<LiveEditorHandle, Props>(function LiveEditor(
     }
     const connectedClient = await connectLanguageClient(
       backendUrlRef.current,
-      languageRef.current,
+      flavorIdRef.current,
+      languageIdRef.current,
       {
         onProgress: (params: unknown) => {
           for (const listener of progressListenersRef.current) {
@@ -136,6 +172,7 @@ const LiveEditor = forwardRef<LiveEditorHandle, Props>(function LiveEditor(
       return;
     }
     languageClientRef.current = connectedClient;
+    attachNotificationHandlers(connectedClient);
   };
 
   const scheduleReconnect = (): void => {
@@ -200,7 +237,7 @@ const LiveEditor = forwardRef<LiveEditorHandle, Props>(function LiveEditor(
 
         let instance: EditorInstance;
         try {
-          instance = await createEditor(hostRef.current, colorMode, fileUri, language, initialCode);
+          instance = await createEditor(hostRef.current, colorMode, fileUri, languageId, initialCode);
         } catch {
           if (!cancelledRef.current) reportStatus('errored', 'Editor failed to start');
           return;
@@ -228,7 +265,7 @@ const LiveEditor = forwardRef<LiveEditorHandle, Props>(function LiveEditor(
     })();
 
     const { http } = normalizeBaseUrl(backendUrl);
-    fetchFlavor(http, language)
+    fetchFlavor(http, flavorId)
       .then((found) => {
         if (cancelledRef.current) return;
         flavorRef.current = found;
@@ -241,7 +278,7 @@ const LiveEditor = forwardRef<LiveEditorHandle, Props>(function LiveEditor(
       void dispose();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [language, backendUrl, initialCode, fileUri]);
+  }, [flavorId, languageId, fileName, backendUrl, initialCode, fileUri]);
 
   useImperativeHandle(
     ref,
@@ -254,6 +291,7 @@ const LiveEditor = forwardRef<LiveEditorHandle, Props>(function LiveEditor(
           void languageClientRef.current.dispose().catch(() => { /* ignore */ });
           languageClientRef.current = null;
           metricsClientRef.current = null;
+          metricsRawClientRef.current = null;
           reportStatus('disconnected');
         }
       },
@@ -272,10 +310,12 @@ const LiveEditor = forwardRef<LiveEditorHandle, Props>(function LiveEditor(
         const rawClient = languageClientRef.current?.getLanguageClient() as LspClient | undefined;
         if (!rawClient) {
           metricsClientRef.current = null;
+          metricsRawClientRef.current = null;
           return undefined;
         }
-        if (!metricsClientRef.current) {
+        if (!metricsClientRef.current || metricsRawClientRef.current !== rawClient) {
           metricsClientRef.current = wrapClientWithMetrics(rawClient);
+          metricsRawClientRef.current = rawClient;
         }
         return metricsClientRef.current;
       },
@@ -291,6 +331,24 @@ const LiveEditor = forwardRef<LiveEditorHandle, Props>(function LiveEditor(
       addProgressListener: (listener: (params: unknown) => void) => {
         progressListenersRef.current.add(listener);
         return () => { progressListenersRef.current.delete(listener); };
+      },
+      addNotificationListener: (method: string, listener: (params: unknown) => void) => {
+        let listeners = notificationHandlersRef.current.get(method);
+        if (!listeners) {
+          listeners = new Set();
+          notificationHandlersRef.current.set(method, listeners);
+          if (languageClientRef.current) attachNotificationHandlers(languageClientRef.current);
+        }
+        listeners.add(listener);
+        return () => {
+          const set = notificationHandlersRef.current.get(method);
+          if (!set) return;
+          set.delete(listener);
+          if (set.size === 0) {
+            notificationHandlersRef.current.delete(method);
+            if (languageClientRef.current) attachNotificationHandlers(languageClientRef.current);
+          }
+        };
       },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -6,6 +6,7 @@
 
 import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
 import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
+import java.time.Instant
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.application")
@@ -29,19 +30,19 @@ val frontendDistribution by configurations.creating {
     isCanBeResolved = true
 }
 
+val gammaTestModels by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
+
 val thetaClasspath by configurations.getting {
     isCanBeConsumed = false
     isCanBeResolved = true
 }
 
 dependencies {
-    implementation(libs.ktor.server.core)
-    implementation(libs.ktor.server.netty)
-    implementation(libs.ktor.server.websockets)
-    implementation(libs.ktor.server.cors)
-    implementation(libs.ktor.server.host.common)
-    implementation(libs.ktor.server.content.negotiation)
-    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.bundles.ktor.server)
+    implementation(libs.micrometer.registry.prometheus)
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.core)
@@ -50,9 +51,12 @@ dependencies {
     implementation(libs.clikt)
     implementation(libs.guice)
     implementation(libs.guice.extensions.assistedinject)
-    implementation(libs.slf4j.api)
+    implementation(project(":logging"))
 
-    testImplementation(libs.ktor.server.test.host)
+    implementation(project(":portfolios"))
+    implementation(project(":guice-common"))
+
+    testImplementation(libs.bundles.ktor.client.test)
     testImplementation(libs.kotlinx.coroutines.test)
 
     lspDistributions(project(":oxsts.lang.ide", configuration = "distributionOutput"))
@@ -61,7 +65,7 @@ dependencies {
 
     frontendDistribution(project(":semantifyr-live-frontend", configuration = "distributionOutput"))
 
-    thetaClasspath(project(":theta-wrapper", configuration = "thetaOutput"))
+    gammaTestModels(project(":gamma-semantics", configuration = "testModels"))
 }
 
 application {
@@ -69,9 +73,39 @@ application {
     mainClass = "hu.bme.mit.semantifyr.live.backend.SemantifyrLiveCliKt"
 }
 
+val generateBuildInfo by tasks.registering {
+    val outputDir = layout.buildDirectory.dir("generated/buildinfo")
+    outputs.dir(outputDir)
+
+    doLast {
+        val commitHash = ProcessBuilder("git", "rev-parse", "--short", "HEAD")
+            .redirectErrorStream(true)
+            .start()
+            .inputStream
+            .bufferedReader()
+            .readText()
+            .trim()
+        val buildTime = Instant.now().toString()
+
+        outputDir.get().asFile.mkdirs()
+        outputDir.get().file("build-info.properties").asFile.writeText(
+            "commit=$commitHash\nbuildTime=$buildTime\n",
+        )
+    }
+}
+
+sourceSets.main {
+    resources.srcDir(generateBuildInfo.map { it.outputs.files.singleFile })
+}
+
 val cloneLspDistributions by tasks.registering(Sync::class) {
     from(lspDistributions)
     into(layout.buildDirectory.dir("staging/lsp"))
+}
+
+val cloneGammaTestModels by tasks.registering(Sync::class) {
+    from(gammaTestModels)
+    into(layout.buildDirectory.dir("staging/gamma-test-models"))
 }
 
 val cloneWebDistributions by tasks.registering(Sync::class) {
@@ -92,8 +126,14 @@ tasks.named<JavaExec>("run") {
     inputs.files(cloneLspDistributions)
     inputs.files(cloneWebDistributions)
 
-    val stagingDir = layout.buildDirectory.dir("staging").get().asFile
-    val workDir = layout.buildDirectory.dir("work").get().asFile
+    val stagingDir = layout.buildDirectory
+        .dir("staging")
+        .get()
+        .asFile
+    val workDir = layout.buildDirectory
+        .dir("work")
+        .get()
+        .asFile
 
     args = listOf("start")
 
@@ -101,10 +141,7 @@ tasks.named<JavaExec>("run") {
     environment("SEMANTIFYR_LIVE_WEB_ROOT_DIR", stagingDir.resolve("web").absolutePath)
     environment("SEMANTIFYR_LIVE_PORT", "18080")
     environment("SEMANTIFYR_LIVE_ROOT_WORK_DIR", workDir.absolutePath)
-    environment(
-        "SEMANTIFYR_LIVE_ALLOWED_ORIGINS",
-        "localhost:5173,localhost:3000,localhost:18080",
-    )
+    environment("SEMANTIFYR_LIVE_ADMIN_PASSWORD", "testing")
 }
 
 val runDev by tasks.registering(JavaExec::class) {
@@ -115,29 +152,49 @@ val runDev by tasks.registering(JavaExec::class) {
 
     inputs.files(cloneLspDistributions)
 
-    val stagingDir = layout.buildDirectory.dir("staging").get().asFile
-    val workDir = layout.buildDirectory.dir("work").get().asFile
+    val stagingDir = layout.buildDirectory
+        .dir("staging")
+        .get()
+        .asFile
+    val workDir = layout.buildDirectory
+        .dir("work")
+        .get()
+        .asFile
 
     args = listOf("start")
 
     environment("SEMANTIFYR_LIVE_LSP_BINARIES_DIR", stagingDir.resolve("lsp").absolutePath)
     environment("SEMANTIFYR_LIVE_PORT", "18080")
     environment("SEMANTIFYR_LIVE_ROOT_WORK_DIR", workDir.absolutePath)
-    environment(
-        "SEMANTIFYR_LIVE_ALLOWED_ORIGINS",
-        "localhost:5173,localhost:3000,localhost:18080",
-    )
+    environment("SEMANTIFYR_LIVE_ADMIN_PASSWORD", "testing")
 }
 
-val endToEndTest by tasks.registering(Test::class) {
-    group = "verification"
-    description = "Run backend end-to-end tests (boot real LSP, drive verification over WS)"
+testing {
+    suites {
+        val verificationTest by getting(JvmTestSuite::class) {
+            dependencies {
+                implementation(libs.kotlinx.serialization.json)
+                implementation.bundle(libs.bundles.ktor.server)
+                implementation.bundle(libs.bundles.ktor.client.test)
+                implementation(libs.kotlinx.coroutines.test)
+
+                implementation(project(":portfolios"))
+                implementation(testFixtures(project(":verification")))
+            }
+            targets.all {
+                testTask.configure {
+                    description = "Run backend integration tests (boot real LSP, drive verification over WS)"
 
                     inputs.files(cloneLspDistributions)
                     inputs.files(cloneWebDistributions)
+                    inputs.files(cloneGammaTestModels)
 
-                    val stagingDir = layout.buildDirectory.dir("staging").get().asFile
+                    val stagingDir = layout.buildDirectory
+                        .dir("staging")
+                        .get()
+                        .asFile
                     systemProperty("semantifyr.live.lsp", stagingDir.resolve("lsp").absolutePath)
+                    systemProperty("semantifyr.live.gammaTestModels", stagingDir.resolve("gamma-test-models").absolutePath)
                 }
             }
         }
@@ -152,10 +209,12 @@ val prepareDocker by tasks.registering {
 }
 
 val dockerImageRepo = "ftsrgbot/semantifyr-server"
-val dockerGitSha = providers.exec {
-    commandLine("git", "rev-parse", "--short", "HEAD")
-    isIgnoreExitValue = true
-}.standardOutput.asText.map { it.trim() }
+val dockerGitSha = providers
+    .exec {
+        commandLine("git", "rev-parse", "--short", "HEAD")
+        isIgnoreExitValue = true
+    }.standardOutput.asText
+    .map { it.trim() }
 
 val dockerBuildImage by tasks.registering(DockerBuildImage::class) {
     dependsOn(prepareDocker)

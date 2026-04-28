@@ -117,8 +117,8 @@ export async function applyColorTheme(colorMode: ResolvedColorMode): Promise<voi
   }
 }
 
-export function createFileUri(language: string): vscode.Uri {
-  return vscode.Uri.file(`/workspace/snippet.${language}`);
+export function createFileUri(fileName: string): vscode.Uri {
+  return vscode.Uri.file(`/workspace/${fileName}`);
 }
 
 export interface EditorInstance {
@@ -158,16 +158,17 @@ export interface LanguageClientCallbacks {
 
 export async function connectLanguageClient(
   backendUrl: string,
-  language: string,
+  flavorId: string,
+  languageId: string,
   callbacks: LanguageClientCallbacks,
 ): Promise<LanguageClientWrapper> {
   const { ws: wsBaseUrl } = normalizeBaseUrl(backendUrl);
-  const webSocketUrl = `${wsBaseUrl}/ws/lsp/${encodeURIComponent(language)}`;
+  const webSocketUrl = `${wsBaseUrl}/ws/lsp/${encodeURIComponent(flavorId)}`;
   const languageClientConfig: LanguageClientConfig = {
-    languageId: language,
+    languageId,
     connection: { options: { $type: 'WebSocketUrl', url: webSocketUrl } },
     clientOptions: {
-      documentSelector: [language],
+      documentSelector: [languageId],
       workspaceFolder: {
         index: 0,
         name: 'workspace',

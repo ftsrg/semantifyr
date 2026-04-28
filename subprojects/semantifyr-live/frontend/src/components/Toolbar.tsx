@@ -19,7 +19,7 @@ import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 
-import type { LiveExample } from '../examples';
+import type { LiveExample, LiveFlavor } from '../examples';
 import type { ColorModePreference } from '../lib/theme';
 import type { LiveEditorStatus } from './LiveEditor';
 import ConnectionStatus from './ConnectionStatus';
@@ -28,6 +28,9 @@ import ColorModeToggle from './ColorModeToggle';
 
 interface Props {
   logoSrc: string;
+  flavors: readonly LiveFlavor[];
+  currentFlavorId: string;
+  onSelectFlavor: (flavorId: string) => void;
   examples: readonly LiveExample[];
   onLoadExample: (exampleId: string) => void;
   connectionStatus: LiveEditorStatus;
@@ -41,6 +44,9 @@ interface Props {
 
 export default function Toolbar({
   logoSrc,
+  flavors,
+  currentFlavorId,
+  onSelectFlavor,
   examples,
   onLoadExample,
   connectionStatus,
@@ -52,7 +58,10 @@ export default function Toolbar({
   onToggleColorMode,
 }: Props): React.JSX.Element {
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+  const [flavorMenuAnchor, setFlavorMenuAnchor] = useState<HTMLElement | null>(null);
   const menuOpen = menuAnchor !== null;
+  const flavorMenuOpen = flavorMenuAnchor !== null;
+  const currentFlavor = flavors.find((f) => f.id === currentFlavorId);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>): void => {
     setMenuAnchor(event.currentTarget);
@@ -99,6 +108,60 @@ export default function Toolbar({
           onReconnect={onReconnect}
           onDisconnect={onDisconnect}
         />
+
+        <Divider
+          orientation="vertical"
+          flexItem
+          sx={{ mx: 0.5, borderColor: 'var(--surface-border)', display: { xs: 'none', sm: 'block' } }}
+        />
+
+        <Tooltip title="Select the modelling language mode">
+          <Button
+            size="small"
+            onClick={(e) => setFlavorMenuAnchor(e.currentTarget)}
+            sx={{
+              color: 'var(--text)',
+              textTransform: 'none',
+              fontSize: { xs: '0.8rem', sm: '0.85rem' },
+              px: 1.5,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Mode: {currentFlavor?.displayName ?? currentFlavorId}
+          </Button>
+        </Tooltip>
+        <Menu
+          anchorEl={flavorMenuAnchor}
+          open={flavorMenuOpen}
+          onClose={() => setFlavorMenuAnchor(null)}
+          slotProps={{
+            paper: {
+              sx: {
+                bgcolor: 'var(--surface-bg)',
+                color: 'var(--text)',
+                border: '1px solid var(--surface-border)',
+                minWidth: 260,
+              },
+            },
+          }}
+        >
+          {flavors.map((f) => (
+            <MenuItem
+              key={f.id}
+              selected={f.id === currentFlavorId}
+              onClick={() => {
+                setFlavorMenuAnchor(null);
+                if (f.id !== currentFlavorId) onSelectFlavor(f.id);
+              }}
+              sx={{ py: 1 }}
+            >
+              <ListItemText
+                primary={f.displayName}
+                slotProps={{ primary: { sx: { fontSize: '0.9rem' } } }}
+              />
+            </MenuItem>
+          ))}
+        </Menu>
 
         <Divider
           orientation="vertical"

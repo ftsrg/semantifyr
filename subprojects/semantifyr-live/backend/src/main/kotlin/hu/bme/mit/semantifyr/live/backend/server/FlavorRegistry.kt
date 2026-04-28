@@ -8,9 +8,9 @@ package hu.bme.mit.semantifyr.live.backend
 
 import java.nio.file.Path
 
-enum class WorkspaceLayout {
-    SingleFile,
-    // Future: WithLibrary — single user file plus a read-only stdlib subdir (for sysmlv2 etc.)
+sealed class WorkspaceLayout {
+    data object SingleFile : WorkspaceLayout()
+    data class WithLibrary(val librarySourceRelativePath: Path) : WorkspaceLayout()
 }
 
 data class Flavor(
@@ -20,19 +20,34 @@ data class Flavor(
     val fileName: String,
     val languageId: String,
     val workspaceLayout: WorkspaceLayout,
-    val verifyCommand: String?,
+    val verificationCommand: String?,
+    val discoveryCommand: String? = null,
+    val peekCompiledOutput: Boolean = false,
 )
 
 object FlavorRegistry {
     val flavors = listOf(
         Flavor(
             id = "oxsts",
-            displayName = "OxSTS",
+            displayName = "Semantifyr",
             binaryRelativePath = Path.of("oxsts.lang.ide", "bin", "oxsts.lang.ide"),
             fileName = "snippet.oxsts",
             languageId = "oxsts",
             workspaceLayout = WorkspaceLayout.SingleFile,
-            verifyCommand = "oxsts.case.verify",
+            verificationCommand = "oxsts.case.verify",
+            discoveryCommand = "oxsts.case.discover",
+        ),
+        Flavor(
+            id = "oxsts-with-gamma-library",
+            displayName = "Semantifyr with Gamma library",
+            binaryRelativePath = Path.of("oxsts.lang.ide", "bin", "oxsts.lang.ide"),
+            fileName = "snippet.oxsts",
+            languageId = "oxsts",
+            workspaceLayout = WorkspaceLayout.WithLibrary(
+                librarySourceRelativePath = Path.of("gamma.lang.ide", "Library"),
+            ),
+            verificationCommand = "oxsts.case.verify",
+            discoveryCommand = "oxsts.case.discover",
         ),
         Flavor(
             id = "xsts",
@@ -41,7 +56,7 @@ object FlavorRegistry {
             fileName = "snippet.xsts",
             languageId = "xsts",
             workspaceLayout = WorkspaceLayout.SingleFile,
-            verifyCommand = null,
+            verificationCommand = null,
         ),
         Flavor(
             id = "gamma",
@@ -49,8 +64,12 @@ object FlavorRegistry {
             binaryRelativePath = Path.of("gamma.lang.ide", "bin", "gamma.lang.ide"),
             fileName = "snippet.gamma",
             languageId = "gamma",
-            workspaceLayout = WorkspaceLayout.SingleFile,
-            verifyCommand = null,
+            workspaceLayout = WorkspaceLayout.WithLibrary(
+                librarySourceRelativePath = Path.of("gamma.lang.ide", "Library"),
+            ),
+            verificationCommand = "gamma.case.verify",
+            discoveryCommand = "gamma.case.discover",
+            peekCompiledOutput = true,
         ),
     )
 

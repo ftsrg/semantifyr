@@ -6,40 +6,33 @@
 
 package hu.bme.mit.semantifyr.live.backend.server
 
+import com.google.inject.Inject
+import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.session.SessionManager
-import io.ktor.http.*
+import hu.bme.mit.semantifyr.live.backend.session.WorkspaceSweeper
+import hu.bme.mit.semantifyr.logging.info
+import hu.bme.mit.semantifyr.logging.loggerFactory
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.websocket.*
-import com.google.inject.Inject
-import com.google.inject.Singleton
-import hu.bme.mit.semantifyr.live.backend.utils.info
-import hu.bme.mit.semantifyr.live.backend.utils.loggerFactory
 
 @Singleton
-class Server : AutoCloseable {
+class Server @Inject constructor(
+    private val config: BackendConfig,
+    private val sessionManager: SessionManager,
+    private val workspaceSweeper: WorkspaceSweeper,
+    private val apiRoutesHandler: ApiRoutesHandler,
+    private val metricsHandler: MetricsHandler,
+    private val webSocketHandler: WebSocketHandler,
+    private val adminHandler: AdminHandler,
+    private val staticFilesHandler: StaticFilesHandler,
+) : AutoCloseable {
 
     private val logger by loggerFactory()
-
-    @Inject
-    private lateinit var config: BackendConfig
-
-    @Inject
-    private lateinit var sessionManager: SessionManager
-
-    @Inject
-    private lateinit var apiRoutesHandler: ApiRoutesHandler
-
-    @Inject
-    private lateinit var webSocketHandler: WebSocketHandler
-
-    @Inject
-    private lateinit var staticFilesHandler: StaticFilesHandler
 
     private lateinit var ktorServer: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>
 
@@ -47,6 +40,8 @@ class Server : AutoCloseable {
         check(!this::ktorServer.isInitialized) {
             "The server has already been started!"
         }
+
+        workspaceSweeper.sweep()
 
         ktorServer = createKtorServer()
 
@@ -76,13 +71,6 @@ class Server : AutoCloseable {
             install(ContentNegotiation) {
                 json()
             }
-            install(CORS) {
-                for (origin in config.server.cors.allowedOrigins) {
-                    allowHost(origin, listOf("http", "https"))
-                }
-                allowMethod(HttpMethod.Get)
-                allowMethod(HttpMethod.Options)
-            }
             install(WebSockets) {
                 pingPeriod = config.server.pingPeriod
                 timeout = config.server.pingTimeout
@@ -90,6 +78,8 @@ class Server : AutoCloseable {
             }
 
             with(apiRoutesHandler) { configure() }
+            with(metricsHandler) { configure() }
+            with(adminHandler) { configure() }
             with(webSocketHandler) { configure() }
             with(staticFilesHandler) { configure() }
         }

@@ -21,7 +21,7 @@ interface Props {
   message: string | null;
   showProgress: boolean;
   infoItems?: readonly StatusBarInfoItem[] | undefined;
-  onInfoClick?: ((event: React.MouseEvent<HTMLElement>) => void) | undefined;
+  onInfoClick?: (() => void) | undefined;
 }
 
 export default function StatusBar({ message, showProgress, infoItems, onInfoClick }: Props): React.JSX.Element {

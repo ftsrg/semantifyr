@@ -12,11 +12,9 @@ import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.BackendModule
 import hu.bme.mit.semantifyr.live.backend.SessionManagerConfig
 import hu.bme.mit.semantifyr.live.backend.server.WebSocketHandler
-import io.ktor.client.plugins.websocket.WebSockets as ClientWebSockets
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.server.application.*
 import io.ktor.server.testing.*
-import io.ktor.server.websocket.WebSockets as ServerWebSockets
 import io.ktor.websocket.*
 import kotlinx.coroutines.CompletableDeferred
 import org.assertj.core.api.Assertions.assertThat
@@ -25,6 +23,8 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.mockito.kotlin.wheneverBlocking
+import io.ktor.client.plugins.websocket.WebSockets as ClientWebSockets
+import io.ktor.server.websocket.WebSockets as ServerWebSockets
 
 class SessionManagerTest {
 
@@ -36,31 +36,41 @@ class SessionManagerTest {
             sessionManager = SessionManagerConfig(maxSessionsGlobal = maxGlobal, maxSessionsPerIp = 2),
         )
 
-        val mockLiveSession = mock<LiveSession>()
-        whenever(mockLiveSession.sessionId).thenReturn("mock-session-${System.nanoTime()}")
-        wheneverBlocking { mockLiveSession.run(any()) }.thenAnswer { invocation ->
-            val ws = invocation.getArgument<io.ktor.server.websocket.WebSocketServerSession>(0)
-            kotlinx.coroutines.runBlocking { onSession(ws) }
+        val capturedWs = java.util.concurrent.atomic.AtomicReference<io.ktor.server.websocket.WebSocketServerSession>()
+        val mockLspSession = mock<LspSession>()
+        whenever(mockLspSession.sessionId).thenReturn("mock-session-${System.nanoTime()}")
+        wheneverBlocking { mockLspSession.run() }.thenAnswer {
+            kotlinx.coroutines.runBlocking { onSession(capturedWs.get()) }
         }
 
-        val factory = mock<LiveSession.Factory>()
-        whenever(factory.create(any(), any())).thenReturn(mockLiveSession)
+        val injector = Guice.createInjector(
+            com.google.inject.util.Modules.override(BackendModule(config)).with(object : AbstractModule() {
+                override fun configure() {
+                    // Session-scoped override: capture the seeded WebSocketSession and return the mock LspSession.
+                    bind(LspSession::class.java).toProvider(object : com.google.inject.Provider<LspSession> {
+                        @com.google.inject.Inject
+                        lateinit var wsProvider: com.google.inject.Provider<io.ktor.websocket.WebSocketSession>
 
-        val injector = Guice.createInjector(com.google.inject.util.Modules.override(BackendModule(config)).with(object : AbstractModule() {
-            override fun configure() {
-                bind(LiveSession.Factory::class.java).toInstance(factory)
-            }
-        }))
+                        override fun get(): LspSession {
+                            capturedWs.set(wsProvider.get() as io.ktor.server.websocket.WebSocketServerSession)
+                            return mockLspSession
+                        }
+                    }).`in`(SessionScoped::class.java)
+                }
+            }),
+        )
 
         return injector.getInstance(WebSocketHandler::class.java) to
             injector.getInstance(SessionManager::class.java)
     }
 
     private fun ApplicationTestBuilder.installHandler(handler: WebSocketHandler) {
-        install(createApplicationPlugin("ws-setup") {
-            application.install(ServerWebSockets)
-            with(handler) { application.configure() }
-        })
+        install(
+            createApplicationPlugin("ws-setup") {
+                application.install(ServerWebSockets)
+                with(handler) { application.configure() }
+            },
+        )
     }
 
     @Test
@@ -89,8 +99,12 @@ class SessionManagerTest {
             assertThat(manager.activeSessions).isEqualTo(1)
             sessionRelease.complete(Unit)
         }
-        // Allow server-side cleanup to complete
-        kotlinx.coroutines.delay(100)
+        // Server-side cleanup runs after the handler returns; wait with a timeout instead of a fixed delay.
+        kotlinx.coroutines.withTimeout(5_000) {
+            while (manager.activeSessions != 0) {
+                kotlinx.coroutines.delay(10)
+            }
+        }
         assertThat(manager.activeSessions).isEqualTo(0)
     }
 

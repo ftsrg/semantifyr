@@ -11,13 +11,12 @@ import com.google.inject.Guice
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.BackendModule
 import hu.bme.mit.semantifyr.live.backend.Flavor
+import hu.bme.mit.semantifyr.live.backend.ServerConfig
 import hu.bme.mit.semantifyr.live.backend.session.SessionLimitReachedException
 import hu.bme.mit.semantifyr.live.backend.session.SessionManager
-import io.ktor.client.plugins.websocket.WebSockets as ClientWebSockets
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.server.application.*
 import io.ktor.server.testing.*
-import io.ktor.server.websocket.WebSockets as ServerWebSockets
 import io.ktor.server.websocket.WebSocketServerSession
 import io.ktor.websocket.*
 import org.assertj.core.api.Assertions.assertThat
@@ -25,10 +24,13 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.wheneverBlocking
+import io.ktor.client.plugins.websocket.WebSockets as ClientWebSockets
+import io.ktor.server.websocket.WebSockets as ServerWebSockets
 
 class WebSocketHandlerTest {
 
     private fun createHandler(
+        config: BackendConfig = BackendConfig(),
         onRunSession: suspend (WebSocketServerSession, String, Flavor) -> Unit = { ws, _, _ ->
             ws.close(CloseReason(CloseReason.Codes.NORMAL, "done"))
         },
@@ -41,20 +43,24 @@ class WebSocketHandlerTest {
             kotlinx.coroutines.runBlocking { onRunSession(ws, ip, flavor) }
         }
 
-        val config = BackendConfig()
-        val injector = Guice.createInjector(BackendModule(config), object : AbstractModule() {
-            override fun configure() {
-                bind(SessionManager::class.java).toInstance(sessionManager)
-            }
-        })
+        val injector = Guice.createInjector(
+            BackendModule(config),
+            object : AbstractModule() {
+                override fun configure() {
+                    bind(SessionManager::class.java).toInstance(sessionManager)
+                }
+            },
+        )
         return injector.getInstance(WebSocketHandler::class.java)
     }
 
     private fun ApplicationTestBuilder.installHandler(handler: WebSocketHandler) {
-        install(createApplicationPlugin("ws-setup") {
-            application.install(ServerWebSockets)
-            with(handler) { application.configure() }
-        })
+        install(
+            createApplicationPlugin("ws-setup") {
+                application.install(ServerWebSockets)
+                with(handler) { application.configure() }
+            },
+        )
     }
 
     @Test
@@ -98,6 +104,22 @@ class WebSocketHandlerTest {
             val reason = closeReason.await()
             assertThat(reason?.code).isEqualTo(4429.toShort())
             assertThat(reason?.message).contains("Too many sessions")
+        }
+    }
+
+    @Test
+    fun `exceeding handshake rate limit rejects second handshake`() = testApplication {
+        val config = BackendConfig(server = ServerConfig(wsHandshakesPerPeriod = 1))
+        installHandler(createHandler(config))
+
+        val client = createClient { install(ClientWebSockets) }
+        client.webSocket("/ws/lsp/oxsts") {
+            closeReason.await()
+        }
+        org.junit.jupiter.api.Assertions.assertThrows(Throwable::class.java) {
+            kotlinx.coroutines.runBlocking {
+                client.webSocket("/ws/lsp/oxsts") { closeReason.await() }
+            }
         }
     }
 

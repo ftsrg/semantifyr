@@ -6,6 +6,12 @@
 
 package hu.bme.mit.semantifyr.live.backend.lsp
 
+import hu.bme.mit.semantifyr.logging.debug
+import hu.bme.mit.semantifyr.logging.error
+import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.logging.warn
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runInterruptible
 import org.eclipse.lsp4j.DidChangeTextDocumentParams
 import org.eclipse.lsp4j.DidOpenTextDocumentParams
 import org.eclipse.lsp4j.ExecuteCommandParams
@@ -14,52 +20,48 @@ import org.eclipse.lsp4j.TextDocumentContentChangeEvent
 import org.eclipse.lsp4j.jsonrpc.messages.Message
 import org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage
 import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage
-import hu.bme.mit.semantifyr.live.backend.utils.debug
-import hu.bme.mit.semantifyr.live.backend.utils.error
-import hu.bme.mit.semantifyr.live.backend.utils.loggerFactory
-import hu.bme.mit.semantifyr.live.backend.utils.warn
 import java.nio.file.Path
 import kotlin.io.path.writeText
 
-class WorkspaceFileSyncer(
+class WorkspaceSyncer(
     private val sessionId: String,
     private val clientUri: String,
     private val targetFile: Path,
-    private val verifyCommand: String? = null,
+    private val verificationCommand: String? = null,
 ) {
     private val logger by loggerFactory()
 
     private var currentText: String = ""
 
-    fun handleOutgoingMessage(message: Message) {
+    suspend fun handleOutgoingMessage(message: Message) {
         when (message) {
             is NotificationMessage -> handleNotification(message)
             is RequestMessage -> handleRequest(message)
         }
     }
 
-    private fun handleNotification(msg: NotificationMessage) {
+    private suspend fun handleNotification(msg: NotificationMessage) {
         when (val params = msg.params) {
             is DidOpenTextDocumentParams -> handleDidOpen(params)
             is DidChangeTextDocumentParams -> handleDidChange(params)
         }
     }
 
-    private fun handleRequest(msg: RequestMessage) {
+    private suspend fun handleRequest(msg: RequestMessage) {
         val params = msg.params
         if (params is ExecuteCommandParams) {
             handleExecuteCommand(params)
         }
     }
 
-    private fun handleDidOpen(params: DidOpenTextDocumentParams) {
-        if (params.textDocument.uri != clientUri) return
+    private suspend fun handleDidOpen(params: DidOpenTextDocumentParams) {
+        if (!params.textDocument.uri.startsWith(clientUri)) return
         currentText = params.textDocument.text
         writeFileSafely("didOpen")
     }
 
-    private fun handleDidChange(params: DidChangeTextDocumentParams) {
-        if (params.textDocument.uri != clientUri) return
+    private suspend fun handleDidChange(params: DidChangeTextDocumentParams) {
+        if (!params.textDocument.uri.startsWith(clientUri)) return
         for (change in params.contentChanges) {
             currentText = if (change.range == null) {
                 change.text
@@ -74,8 +76,8 @@ class WorkspaceFileSyncer(
      * Verify-time backstop: re-flush the buffer to disk before the verify command
      * so the LSP's file-system read path always sees the latest content.
      */
-    private fun handleExecuteCommand(params: ExecuteCommandParams) {
-        val verifyCmd = verifyCommand ?: return
+    private suspend fun handleExecuteCommand(params: ExecuteCommandParams) {
+        val verifyCmd = verificationCommand ?: return
         if (params.command != verifyCmd) return
         writeFileSafely("verify pre-flush")
     }
@@ -114,9 +116,11 @@ class WorkspaceFileSyncer(
         return (i + character).coerceAtMost(text.length)
     }
 
-    private fun writeFileSafely(source: String) {
+    private suspend fun writeFileSafely(source: String) {
         try {
-            targetFile.writeText(currentText)
+            runInterruptible(Dispatchers.IO) {
+                targetFile.writeText(currentText)
+            }
             logger.debug { "Session=$sessionId synced ${currentText.length} bytes from $source to $targetFile" }
         } catch (t: Throwable) {
             logger.error { "Session=$sessionId failed to sync $source buffer to $targetFile: $t" }

@@ -6,8 +6,11 @@
 
 import trafficlightDirectSnapshot from './snippets/trafficlight-direct-snapshot.oxsts?raw';
 import trafficlightLibrarySnapshot from './snippets/trafficlight-library-snapshot.oxsts?raw';
+import trafficlightXsts from './snippets/trafficlight.xsts?raw';
+import leaderWorkerGamma from './snippets/leader-worker.gamma?raw';
+import leaderWorkerGammaLibrary from './snippets/leader-worker-gamma-library.oxsts?raw';
 
-export type LiveFlavorId = 'oxsts' | 'xsts' | 'gamma';
+export type LiveFlavorId = 'oxsts' | 'oxsts-with-gamma-library' | 'xsts' | 'gamma';
 
 export interface LiveExample {
   id: string;
@@ -20,6 +23,9 @@ export interface LiveExample {
 export interface LiveFlavor {
   id: LiveFlavorId;
   displayName: string;
+  languageId: string;
+  fileName: string;
+  peekCompiledOutput: boolean;
   examples: LiveExample[];
 }
 
@@ -44,6 +50,13 @@ const oxstsExamples: LiveExample[] = [
 
 const xstsExamples: LiveExample[] = [
   {
+    id: 'trafficlight',
+    flavor: 'xsts',
+    label: 'Traffic light',
+    description: 'A three-colour traffic light with a reachability property.',
+    code: trafficlightXsts,
+  },
+  {
     id: 'blank',
     flavor: 'xsts',
     label: 'Blank',
@@ -54,6 +67,13 @@ const xstsExamples: LiveExample[] = [
 
 const gammaExamples: LiveExample[] = [
   {
+    id: 'leader-worker',
+    flavor: 'gamma',
+    label: 'Leader-worker',
+    description: 'Two statecharts coordinating via channel-bound events, with reachability cases.',
+    code: leaderWorkerGamma,
+  },
+  {
     id: 'blank',
     flavor: 'gamma',
     label: 'Blank',
@@ -62,10 +82,28 @@ const gammaExamples: LiveExample[] = [
   },
 ];
 
+const oxstsWithGammaLibraryExamples: LiveExample[] = [
+  {
+    id: 'leader-worker-gamma-library',
+    flavor: 'oxsts-with-gamma-library',
+    label: 'Leader-worker (Gamma library)',
+    description: 'Semantifyr transcription of the leader-worker Gamma model, built on the Gamma semantic library.',
+    code: leaderWorkerGammaLibrary,
+  },
+  {
+    id: 'blank',
+    flavor: 'oxsts-with-gamma-library',
+    label: 'Blank',
+    description: 'An empty Semantifyr file with the Gamma library preloaded on the workspace.',
+    code: '',
+  },
+];
+
 export const LIVE_FLAVORS: readonly LiveFlavor[] = [
-  { id: 'oxsts', displayName: 'Semantifyr', examples: oxstsExamples },
-  { id: 'xsts', displayName: 'XSTS', examples: xstsExamples },
-  { id: 'gamma', displayName: 'Gamma', examples: gammaExamples },
+  { id: 'oxsts', displayName: 'Semantifyr', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsExamples },
+  { id: 'oxsts-with-gamma-library', displayName: 'Semantifyr with Gamma library', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsWithGammaLibraryExamples },
+  { id: 'xsts', displayName: 'XSTS', languageId: 'xsts', fileName: 'snippet.xsts', peekCompiledOutput: false, examples: xstsExamples },
+  { id: 'gamma', displayName: 'Gamma', languageId: 'gamma', fileName: 'snippet.gamma', peekCompiledOutput: true, examples: gammaExamples },
 ];
 
 export function findFlavor(id: string | null | undefined): LiveFlavor | undefined {

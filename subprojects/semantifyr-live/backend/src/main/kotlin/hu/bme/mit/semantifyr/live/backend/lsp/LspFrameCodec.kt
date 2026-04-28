@@ -19,21 +19,9 @@ object LspFrameCodec {
      * process closed its stdout). Throws on malformed headers.
      */
     fun readFrame(input: InputStream): String? {
-        val headerBytes = ByteArrayOutputStream()
-        var state = 0 // 0: any, 1: \r, 2: \r\n, 3: \r\n\r, 4: done (\r\n\r\n)
-        while (state != 4) {
-            val ch = input.read()
-            if (ch == -1) return null
-            headerBytes.write(ch)
-            state = when (ch) {
-                '\r'.code if (state == 0 || state == 2) -> state + 1
-                '\n'.code if (state == 1 || state == 3) -> state + 1
-                else -> 0
-            }
-        }
-
-        val headerText = headerBytes.toString(Charsets.US_ASCII)
-        val contentLength = parseContentLength(headerText) ?: error("LSP frame missing Content-Length header: ${headerText.trim()}")
+        val headerText = readHeaderUntilBlankLine(input) ?: return null
+        val contentLength = parseContentLength(headerText)
+            ?: error("LSP frame missing Content-Length header: ${headerText.trim()}")
 
         val payload = ByteArray(contentLength)
         var read = 0
@@ -43,6 +31,34 @@ object LspFrameCodec {
             read += n
         }
         return String(payload, Charsets.UTF_8)
+    }
+
+    private fun readHeaderUntilBlankLine(input: InputStream): String? {
+        val headerBytes = ByteArrayOutputStream()
+        var state = HeaderState.START
+        while (state != HeaderState.DONE) {
+            val ch = input.read()
+            if (ch == -1) return null
+            headerBytes.write(ch)
+            state = state.advance(ch)
+        }
+        return headerBytes.toString(Charsets.US_ASCII)
+    }
+
+    private enum class HeaderState {
+        START,
+        SAW_CR,
+        SAW_CRLF,
+        SAW_CRLF_CR,
+        DONE,
+        ;
+
+        fun advance(ch: Int): HeaderState = when (ch) {
+            '\r'.code if (this == START || this == SAW_CRLF) -> if (this == START) SAW_CR else SAW_CRLF_CR
+            '\n'.code if (this == SAW_CR) -> SAW_CRLF
+            '\n'.code if (this == SAW_CRLF_CR) -> DONE
+            else -> START
+        }
     }
 
     /**

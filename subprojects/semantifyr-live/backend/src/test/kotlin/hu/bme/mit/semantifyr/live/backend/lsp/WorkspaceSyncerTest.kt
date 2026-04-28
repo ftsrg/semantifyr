@@ -4,58 +4,41 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.live.backend
+package hu.bme.mit.semantifyr.live.backend.lsp
 
-import hu.bme.mit.semantifyr.live.backend.lsp.WorkspaceFileSyncer
+import hu.bme.mit.semantifyr.live.backend.utils.lspMessageHandler
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.eclipse.lsp4j.DidChangeTextDocumentParams
-import org.eclipse.lsp4j.DidOpenTextDocumentParams
-import org.eclipse.lsp4j.ExecuteCommandParams
-import org.eclipse.lsp4j.jsonrpc.json.JsonRpcMethod
-import org.eclipse.lsp4j.jsonrpc.json.MessageJsonHandler
+import org.eclipse.lsp4j.jsonrpc.messages.Message
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
-private val messageHandler = MessageJsonHandler(
-    mapOf(
-        "textDocument/didOpen" to JsonRpcMethod.notification(
-            "textDocument/didOpen", DidOpenTextDocumentParams::class.java,
-        ),
-        "textDocument/didChange" to JsonRpcMethod.notification(
-            "textDocument/didChange", DidChangeTextDocumentParams::class.java,
-        ),
-        "workspace/executeCommand" to JsonRpcMethod.request(
-            "workspace/executeCommand", Any::class.java, ExecuteCommandParams::class.java,
-        ),
-    ),
-)
-
-class WorkspaceFileSyncerTest {
+class WorkspaceSyncerTest {
 
     @TempDir
     lateinit var tempDir: Path
 
     private val clientUri = "file:///workspace/snippet.oxsts"
-    private val verifyCommand = "oxsts.case.verify"
+    private val verificationCommand = "oxsts.case.verify"
 
     private fun newSync(
         file: Path = tempDir.resolve("snippet.oxsts"),
-        verifyCommandOverride: String? = verifyCommand,
-    ): Pair<WorkspaceFileSyncer, Path> {
+        verificationCommandOverride: String? = verificationCommand,
+    ): Pair<WorkspaceSyncer, Path> {
         file.writeText("")
-        return WorkspaceFileSyncer(
+        return WorkspaceSyncer(
             sessionId = "test-session",
             clientUri = clientUri,
             targetFile = file,
-            verifyCommand = verifyCommandOverride,
+            verificationCommand = verificationCommandOverride,
         ) to file
     }
 
-    private fun WorkspaceFileSyncer.handle(raw: String) {
-        handleOutgoingMessage(messageHandler.parseMessage(raw))
+    private fun WorkspaceSyncer.handle(raw: String) = runBlocking {
+        handleOutgoingMessage(lspMessageHandler.parseMessage(raw))
     }
 
     @Test
@@ -185,7 +168,7 @@ class WorkspaceFileSyncerTest {
 
     @Test
     fun `flavors without a verify command never re-flush on executeCommand`() {
-        val (sync, file) = newSync(verifyCommandOverride = null)
+        val (sync, file) = newSync(verificationCommandOverride = null)
         sync.handle(
             """{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"$clientUri","languageId":"oxsts","version":1,"text":"buffered"}}}""",
         )

@@ -14,10 +14,18 @@ import userEvent from '@testing-library/user-event';
 // can assert against them. This must be `vi.mock`-ed BEFORE importing EditorPage so the
 // dynamic `lazy(() => import('./LiveEditor'))` resolves to the stub.
 vi.mock('../components/LiveEditor', () => ({
-  default: (props: { language: string; initialCode: string; backendUrl: string }) => (
+  default: (props: {
+    flavorId: string;
+    languageId: string;
+    fileName: string;
+    initialCode: string;
+    backendUrl: string;
+  }) => (
     <div
       data-testid="live-editor"
-      data-language={props.language}
+      data-flavor-id={props.flavorId}
+      data-language={props.languageId}
+      data-file-name={props.fileName}
       data-backend-url={props.backendUrl}
     >
       <pre data-testid="initial-code">{props.initialCode}</pre>

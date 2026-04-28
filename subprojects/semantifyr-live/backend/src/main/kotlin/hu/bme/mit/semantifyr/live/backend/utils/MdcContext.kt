@@ -25,11 +25,15 @@ import kotlin.coroutines.CoroutineContext
  */
 class MdcContext(
     private val contextMap: Map<String, String>,
-) : AbstractCoroutineContextElement(Key), ThreadContextElement<Map<String, String>?> {
+) : AbstractCoroutineContextElement(Key),
+    ThreadContextElement<Map<String, String>?> {
 
     companion object Key : CoroutineContext.Key<MdcContext>
 
     constructor(vararg pairs: Pair<String, String>) : this(pairs.toMap())
+
+    /** Returns a new [MdcContext] that includes the existing entries plus the given ones. */
+    fun with(vararg pairs: Pair<String, String>): MdcContext = MdcContext(contextMap + pairs.toMap())
 
     override fun updateThreadContext(context: CoroutineContext): Map<String, String>? {
         val oldState = MDC.getCopyOfContextMap()
@@ -46,4 +50,20 @@ class MdcContext(
             MDC.setContextMap(oldState)
         }
     }
+}
+
+/** Extends the current coroutine's [MdcContext] with the given pairs (or creates one if absent). */
+fun CoroutineContext.withMdc(vararg pairs: Pair<String, String>): MdcContext {
+    val existing = this[MdcContext]
+    return existing?.with(*pairs) ?: MdcContext(*pairs)
+}
+
+/**
+ * Snapshot the calling thread's current SLF4J MDC into an [MdcContext], so a launched
+ * coroutine inherits the surrounding `withSessionId` / `withRequestId` blocks. Use this
+ * when launching from a non-suspend context (where [CoroutineContext.withMdc] isn't reachable).
+ */
+fun currentMdcContext(): MdcContext {
+    val snapshot = MDC.getCopyOfContextMap() ?: emptyMap()
+    return MdcContext(snapshot)
 }

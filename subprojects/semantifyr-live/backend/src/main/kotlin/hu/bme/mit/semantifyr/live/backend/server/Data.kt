@@ -8,10 +8,18 @@ package hu.bme.mit.semantifyr.live.backend.server
 
 import hu.bme.mit.semantifyr.live.backend.Flavor
 import kotlinx.serialization.Serializable
+import kotlin.time.Duration
 
 @Serializable
 data class HealthResponse(
     val status: String,
+)
+
+@Serializable
+data class InfoResponse(
+    val uptime: Duration,
+    val commit: String,
+    val buildTime: String,
     val activeSessions: Int,
     val maxSessions: Int,
 )
@@ -23,7 +31,9 @@ data class FlavorResponse(
     val languageId: String,
     val fileName: String,
     val verify: Boolean,
-    val verifyCommand: String?,
+    val verificationCommand: String?,
+    val discoveryCommand: String?,
+    val peekCompiledOutput: Boolean,
 ) {
     companion object {
         fun fromFlavor(flavor: Flavor) = FlavorResponse(
@@ -31,8 +41,10 @@ data class FlavorResponse(
             displayName = flavor.displayName,
             languageId = flavor.languageId,
             fileName = flavor.fileName,
-            verify = flavor.verifyCommand != null,
-            verifyCommand = flavor.verifyCommand,
+            verify = flavor.verificationCommand != null,
+            verificationCommand = flavor.verificationCommand,
+            discoveryCommand = flavor.discoveryCommand,
+            peekCompiledOutput = flavor.peekCompiledOutput,
         )
     }
 }
@@ -40,4 +52,38 @@ data class FlavorResponse(
 @Serializable
 data class FlavorsResponse(
     val flavors: List<FlavorResponse>,
+)
+
+@Serializable
+data class AdminStatusResponse(
+    val sessions: List<SessionInfo>,
+)
+
+@Serializable
+data class SessionInfo(
+    val sessionId: String,
+    val remoteIp: String,
+    val flavorId: String,
+    val uptime: Duration,
+    val workingDirectory: String,
+    val activeVerifications: Set<String>,
+    val started: Boolean,
+    val bridgeInfo: LspProxyInfo,
+)
+
+@Serializable
+data class LspProxyInfo(
+    val clientMessageCount: Long,
+    val serverMessageCount: Long,
+    val errorCount: Long,
+    val timeSinceLastClientMessage: Duration,
+    val timeSinceLastServerMessage: Duration,
+)
+
+@Serializable
+data class AdminConfigResponse(
+    val maxSessionsGlobal: Int,
+    val maxSessionsPerIp: Int,
+    val verificationConcurrency: Int,
+    val verificationTimeout: Duration,
 )

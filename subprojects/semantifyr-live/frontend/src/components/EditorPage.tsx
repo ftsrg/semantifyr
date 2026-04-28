@@ -11,7 +11,9 @@ import CircularProgress from '@mui/material/CircularProgress';
 import {
   LIVE_FLAVORS,
   findExample,
+  findFlavor,
   type LiveExample,
+  type LiveFlavor,
 } from '../examples';
 import { decodeBase64Url, encodeBase64Url } from '../lib/urls';
 import type { ColorModePreference, ResolvedColorMode } from '../lib/theme';
@@ -23,11 +25,18 @@ import type {
 import Toolbar from './Toolbar';
 import StatusBar, { type StatusBarInfoItem } from './StatusBar';
 import DevInfoPanel from './DevInfoPanel';
+import OxstsPreviewPane from './OxstsPreviewPane';
 import { VerificationPanel } from './verification';
 
 const LiveEditor = lazy(() => import('./LiveEditor'));
 
 const DEFAULT_FLAVOR = LIVE_FLAVORS[0]!;
+
+function resolveInitialFlavor(search: string): LiveFlavor {
+  const params = new URLSearchParams(search);
+  const modeParam = params.get('mode');
+  return (modeParam ? findFlavor(modeParam) : undefined) ?? DEFAULT_FLAVOR;
+}
 
 interface Props {
   backendUrl: string;
@@ -37,29 +46,31 @@ interface Props {
 }
 
 interface UrlState {
+  flavor: LiveFlavor;
   example: LiveExample;
   code: string;
 }
 
 function resolveInitialState(search: string): UrlState {
+  const flavor = resolveInitialFlavor(search);
   const params = new URLSearchParams(search);
   const exampleParam = params.get('example');
   const codeParam = params.get('code');
 
   if (exampleParam) {
-    const example = findExample(DEFAULT_FLAVOR, exampleParam) ?? DEFAULT_FLAVOR.examples[0]!;
+    const example = findExample(flavor, exampleParam) ?? flavor.examples[0]!;
     const code = codeParam ? decodeBase64Url(codeParam) ?? example.code : example.code;
-    return { example, code };
+    return { flavor, example, code };
   }
 
   if (codeParam) {
     const decoded = decodeBase64Url(codeParam);
-    const example = DEFAULT_FLAVOR.examples[0]!;
-    return { example, code: decoded ?? example.code };
+    const example = flavor.examples[0]!;
+    return { flavor, example, code: decoded ?? example.code };
   }
 
-  const example = DEFAULT_FLAVOR.examples[0]!;
-  return { example, code: example.code };
+  const example = flavor.examples[0]!;
+  return { flavor, example, code: example.code };
 }
 
 function deriveConnectionMessage(status: LiveEditorStatus, statusInfo: string | null): string {
@@ -78,6 +89,7 @@ export default function EditorPage({
   colorModePreference,
   onToggleColorMode,
 }: Props): React.JSX.Element {
+  const [flavor, setFlavor] = useState<LiveFlavor>(DEFAULT_FLAVOR);
   const [example, setExample] = useState<LiveExample>(DEFAULT_FLAVOR.examples[0]!);
   const [code, setCode] = useState<string>(DEFAULT_FLAVOR.examples[0]!.code);
   const [copyConfirmation, setCopyConfirmation] = useState<string | null>(null);
@@ -86,29 +98,51 @@ export default function EditorPage({
   const [statusInfo, setStatusInfo] = useState<string | null>(null);
   const [flavorInfo, setFlavorInfo] = useState<FlavorInfo | null>(null);
   const [verificationStatusMessage, setVerificationStatusMessage] = useState<string | null>(null);
-  const [devPanelAnchor, setDevPanelAnchor] = useState<HTMLElement | null>(null);
+  const [devPanelOpen, setDevPanelOpen] = useState(false);
   const [connectedSince, setConnectedSince] = useState<number | null>(null);
   const [reconnectCount, setReconnectCount] = useState(0);
+  const [generatedOxsts, setGeneratedOxsts] = useState<string | null>(null);
+  const [generatedOxstsAt, setGeneratedOxstsAt] = useState<number | null>(null);
 
   const editorHandleRef = useRef<LiveEditorHandle | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const initial = resolveInitialState(window.location.search);
+    setFlavor(initial.flavor);
     setExample(initial.example);
     setCode(initial.code);
   }, []);
 
+  const handleSelectFlavor = useCallback((flavorId: string) => {
+    const next = findFlavor(flavorId);
+    if (!next || next.id === flavor.id) return;
+    const firstExample = next.examples[0]!;
+    setFlavor(next);
+    setExample(firstExample);
+    setCode(firstExample.code);
+    setGeneratedOxsts(null);
+    setGeneratedOxstsAt(null);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('mode', next.id);
+      url.searchParams.delete('example');
+      url.searchParams.delete('code');
+      window.history.replaceState(null, '', url.toString());
+    }
+  }, [flavor.id]);
+
   const handleLoadExample = useCallback((exampleId: string) => {
-    const next = findExample(DEFAULT_FLAVOR, exampleId);
+    const next = findExample(flavor, exampleId);
     if (!next) return;
     setExample(next);
     setCode(next.code);
-  }, []);
+  }, [flavor]);
 
   const handleCopyLink = useCallback(async () => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams();
+    params.set('mode', flavor.id);
     params.set('example', example.id);
     params.set('code', encodeBase64Url(code));
     const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
@@ -119,11 +153,13 @@ export default function EditorPage({
       setCopyConfirmation('Copy failed');
     }
     setTimeout(() => setCopyConfirmation(null), 2000);
-  }, [example.id, code]);
+  }, [flavor.id, example.id, code]);
 
-  const editorKey = useMemo(() => `${DEFAULT_FLAVOR.id}:${example.id}`, [example.id]);
+  const editorKey = useMemo(() => `${flavor.id}:${example.id}`, [flavor.id, example.id]);
 
-  const showVerificationPanel = !!flavorInfo?.verify && !!flavorInfo.verifyCommand;
+  const showVerificationPanel =
+    !!flavorInfo?.verify && !!flavorInfo.verificationCommand && !!flavorInfo.discoveryCommand;
+  const showPeekPane = flavor.peekCompiledOutput;
   const logoSrc = colorMode === 'dark' ? '/logo-full-dark.svg' : '/logo-full-light.svg';
 
   const statusBarMessage = verificationStatusMessage ?? deriveConnectionMessage(status, statusInfo);
@@ -137,14 +173,31 @@ export default function EditorPage({
   }, []);
 
   const statusBarInfoItems = useMemo((): StatusBarInfoItem[] => [
-    { label: 'Language', value: DEFAULT_FLAVOR.displayName, tooltip: `Language: ${DEFAULT_FLAVOR.displayName}` },
-  ], []);
+    { label: 'Mode', value: flavor.displayName, tooltip: `Mode: ${flavor.displayName}` },
+  ], [flavor.displayName]);
+
+  useEffect(() => {
+    if (!showPeekPane) return;
+    const handle = editorHandleRef.current;
+    if (!handle) return;
+    const dispose = handle.addNotificationListener('semantifyr/gamma/oxstsGenerated', (params: unknown) => {
+      const p = params as { oxstsSource?: string } | undefined;
+      if (typeof p?.oxstsSource !== 'string') return;
+      setGeneratedOxsts(p.oxstsSource);
+      setGeneratedOxstsAt(Date.now());
+    });
+    return () => dispose?.();
+    // Re-register when flavor switches or the editor handle changes after remount.
+  }, [showPeekPane, editorKey]);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', minHeight: 480, bgcolor: 'var(--page-bg)' }}>
       <Toolbar
         logoSrc={logoSrc}
-        examples={DEFAULT_FLAVOR.examples}
+        flavors={LIVE_FLAVORS}
+        currentFlavorId={flavor.id}
+        onSelectFlavor={handleSelectFlavor}
+        examples={flavor.examples}
         onLoadExample={handleLoadExample}
         connectionStatus={status}
         onReconnect={() => editorHandleRef.current?.reconnect()}
@@ -155,45 +208,56 @@ export default function EditorPage({
         onToggleColorMode={onToggleColorMode}
       />
 
-      <Box sx={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-        <Suspense
-          fallback={
-            <Box sx={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, bgcolor: 'var(--page-bg)' }}>
-              <CircularProgress size={32} sx={{ color: 'var(--text-muted)' }} />
-              <Typography sx={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                Loading editor...
-              </Typography>
-            </Box>
-          }
-        >
-          <LiveEditor
-            ref={editorHandleRef}
-            key={editorKey}
-            language={DEFAULT_FLAVOR.id}
-            initialCode={code}
-            backendUrl={backendUrl}
-            colorMode={colorMode}
-            fillParent
-            onStatusChange={(next, info) => {
-              setStatus((prev) => {
-                if (next === 'connected' && prev !== 'connected') {
-                  setConnectedSince(Date.now());
-                  if (prev === 'reconnecting') setReconnectCount((c) => c + 1);
-                } else if (next !== 'connected') {
-                  setConnectedSince(null);
-                }
-                return next;
-              });
-              setStatusInfo(info ?? null);
-            }}
-            onFlavorReady={setFlavorInfo}
-          />
-        </Suspense>
+      <Box sx={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'row' }}>
+        <Box sx={{ flex: '1 1 0', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+          <Suspense
+            fallback={
+              <Box sx={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, bgcolor: 'var(--page-bg)' }}>
+                <CircularProgress size={32} sx={{ color: 'var(--text-muted)' }} />
+                <Typography sx={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                  Loading editor...
+                </Typography>
+              </Box>
+            }
+          >
+            <LiveEditor
+              ref={editorHandleRef}
+              key={editorKey}
+              flavorId={flavor.id}
+              languageId={flavor.languageId}
+              fileName={flavor.fileName}
+              initialCode={code}
+              backendUrl={backendUrl}
+              colorMode={colorMode}
+              fillParent
+              onStatusChange={(next, info) => {
+                setStatus((prev) => {
+                  if (next === 'connected' && prev !== 'connected') {
+                    setConnectedSince(Date.now());
+                    if (prev === 'reconnecting') setReconnectCount((c) => c + 1);
+                  } else if (next !== 'connected') {
+                    setConnectedSince(null);
+                  }
+                  return next;
+                });
+                setStatusInfo(info ?? null);
+              }}
+              onFlavorReady={setFlavorInfo}
+            />
+          </Suspense>
+        </Box>
+        {showPeekPane && (
+          <OxstsPreviewPane oxstsSource={generatedOxsts} lastUpdated={generatedOxstsAt} />
+        )}
+      </Box>
+
+      <Box sx={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column' }}>
 
         {showVerificationPanel && (
           <VerificationPanel
             editorHandle={editorHandleRef.current}
-            verifyCommand={flavorInfo!.verifyCommand!}
+            verificationCommand={flavorInfo!.verificationCommand!}
+            discoveryCommand={flavorInfo!.discoveryCommand!}
             connected={status === 'connected'}
             onStatusMessage={handleVerificationStatus}
           />
@@ -203,14 +267,13 @@ export default function EditorPage({
           message={statusBarMessage}
           showProgress={statusBarShowProgress}
           infoItems={statusBarInfoItems}
-          onInfoClick={(event) => setDevPanelAnchor(event.currentTarget)}
+          onInfoClick={() => setDevPanelOpen((prev) => !prev)}
         />
         <DevInfoPanel
-          anchorEl={devPanelAnchor}
-          open={devPanelAnchor !== null}
-          onClose={() => setDevPanelAnchor(null)}
+          open={devPanelOpen}
+          onClose={() => setDevPanelOpen(false)}
           connectionStatus={status}
-          language={DEFAULT_FLAVOR.displayName}
+          language={flavor.displayName}
           connectedSince={connectedSince}
           reconnectCount={reconnectCount}
           editorHandle={editorHandleRef.current}

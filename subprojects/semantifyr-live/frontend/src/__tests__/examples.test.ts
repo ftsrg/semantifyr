@@ -13,8 +13,13 @@ import {
 } from '../examples';
 
 describe('LIVE_FLAVORS registry', () => {
-  it('exposes the three v1 flavors in display order', () => {
-    expect(LIVE_FLAVORS.map((f) => f.id)).toEqual(['oxsts', 'xsts', 'gamma']);
+  it('exposes the registered flavors in display order', () => {
+    expect(LIVE_FLAVORS.map((f) => f.id)).toEqual([
+      'oxsts',
+      'oxsts-with-gamma-library',
+      'xsts',
+      'gamma',
+    ]);
   });
 
   it('every flavor has at least one example with a valid id and label', () => {
@@ -99,9 +104,9 @@ describe('findExampleAcrossFlavors', () => {
   });
 
   it('disambiguates correctly when multiple flavors define an id with the same name', () => {
-    // Both xsts and gamma have a "blank" example. The lookup walks flavors in
-    // declaration order, so the xsts blank wins.
+    // Multiple flavors register a "blank" example. The lookup walks flavors in
+    // declaration order, so the first declared one wins.
     const hit = findExampleAcrossFlavors('blank');
-    expect(hit?.flavor.id).toBe('xsts');
+    expect(hit?.flavor.id).toBe('oxsts-with-gamma-library');
   });
 });

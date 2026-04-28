@@ -48,14 +48,25 @@ data class ServerConfig(
     val port: Int = 8080,
     val pingPeriod: Duration = 30.seconds,
     val pingTimeout: Duration = 15.seconds,
-    val cors: CorsConfig = CorsConfig(),
     val webRootDirectory: String? = null,
+    val adminPassword: String? = null,
+    /**
+     * Time of client inactivity (no messages from the client) after which an otherwise
+     * idle session is terminated. Active verifications keep the session alive even when
+     * the client is silent - only idleness with no pending work evicts the session.
+     */
+    val sessionIdleTimeout: Duration = 10.minutes,
+    val wsHandshakesPerPeriod: Int = 10,
+    val wsHandshakeRatePeriod: Duration = 1.minutes,
 ) {
     fun withEnv(env: Map<String, String?>) = copy(
         port = env["SEMANTIFYR_LIVE_PORT"]?.toIntOrNull() ?: port,
         pingPeriod = env["SEMANTIFYR_LIVE_PING_PERIOD_SECONDS"]?.toLongOrNull()?.seconds ?: pingPeriod,
-        cors = cors.withEnv(env),
         webRootDirectory = env["SEMANTIFYR_LIVE_WEB_ROOT_DIR"] ?: webRootDirectory,
+        adminPassword = env["SEMANTIFYR_LIVE_ADMIN_PASSWORD"] ?: adminPassword,
+        sessionIdleTimeout = env["SEMANTIFYR_LIVE_SESSION_IDLE_TIMEOUT_SECONDS"]?.toLongOrNull()?.seconds ?: sessionIdleTimeout,
+        wsHandshakesPerPeriod = env["SEMANTIFYR_LIVE_WS_HANDSHAKES_PER_PERIOD"]?.toIntOrNull() ?: wsHandshakesPerPeriod,
+        wsHandshakeRatePeriod = env["SEMANTIFYR_LIVE_WS_HANDSHAKE_RATE_PERIOD_SECONDS"]?.toLongOrNull()?.seconds ?: wsHandshakeRatePeriod,
     )
 
     val webRootPath by lazy {
@@ -80,7 +91,9 @@ data class SessionManagerConfig(
     )
 
     val lspBinariesPath by lazy {
-        Path.of(lspBinariesDirectory)
+        lspBinariesDirectory?.let {
+            Path.of(it)
+        }
     }
 
     val rootWorkPath by lazy {
@@ -97,16 +110,4 @@ data class VerificationConfig(
         concurrency = env["SEMANTIFYR_LIVE_VERIFY_CONCURRENCY"]?.toIntOrNull() ?: concurrency,
         timeout = env["SEMANTIFYR_LIVE_VERIFY_TIMEOUT_SECONDS"]?.toLongOrNull()?.seconds ?: timeout,
     )
-}
-
-@Serializable
-data class CorsConfig(
-    val allowedOrigins: Set<String> = setOf("ftsrg.mit.bme.hu"),
-) {
-    fun withEnv(env: Map<String, String?>): CorsConfig {
-        val raw = env["SEMANTIFYR_LIVE_ALLOWED_ORIGINS"] ?: return this
-        return copy(
-            allowedOrigins = raw.split(',').map { it.trim() }.filter { it.isNotEmpty() }.toSet()
-        )
-    }
 }

@@ -10,7 +10,9 @@ export interface FlavorInfo {
   languageId: string;
   fileName: string;
   verify: boolean;
-  verifyCommand: string | null;
+  verificationCommand: string | null;
+  discoveryCommand: string | null;
+  peekCompiledOutput: boolean;
 }
 
 export interface FlavorsResponse {

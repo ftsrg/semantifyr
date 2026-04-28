@@ -7,32 +7,35 @@
 package hu.bme.mit.semantifyr.live.backend.session
 
 import com.google.inject.Inject
+import com.google.inject.Injector
+import com.google.inject.Key
 import com.google.inject.Singleton
+import com.google.inject.name.Names
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.Flavor
-import hu.bme.mit.semantifyr.live.backend.utils.info
-import hu.bme.mit.semantifyr.live.backend.utils.loggerFactory
-import hu.bme.mit.semantifyr.live.backend.utils.warn
+import hu.bme.mit.semantifyr.live.backend.server.SessionInfo
+import hu.bme.mit.semantifyr.logging.info
+import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.logging.warn
 import io.ktor.server.websocket.*
+import io.ktor.websocket.WebSocketSession
 import kotlinx.coroutines.sync.Semaphore
-import org.slf4j.MDC
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 class SessionLimitReachedException(message: String) : RuntimeException(message)
 
 @Singleton
 class SessionManager @Inject constructor(
-    val config: BackendConfig
+    val config: BackendConfig,
+    private val injector: Injector,
+    private val sessionScope: SessionScope,
 ) : AutoCloseable {
 
     private val logger by loggerFactory()
 
-    @Inject
-    private lateinit var liveSessionFactory: LiveSession.Factory
-
     private val globalGate = Semaphore(config.sessionManager.maxSessionsGlobal)
 
-    // TODO: empty DeviceSessionManagers are never removed (small memory leak per unique IP)
     private val deviceSessionManagers = ConcurrentHashMap<String, DeviceSessionManager>()
 
     val activeSessions: Int
@@ -40,7 +43,19 @@ class SessionManager @Inject constructor(
 
     val maxSessions = config.sessionManager.maxSessionsGlobal
 
-    suspend fun runSession(webSocketSession: WebSocketServerSession, remoteIp: String, flavor: Flavor) {
+    fun getSessionInfos(): List<SessionInfo> {
+        return deviceSessionManagers.values.flatMap { deviceManager ->
+            deviceManager.liveSessions.values.map { session ->
+                session.getSessionInfo()
+            }
+        }
+    }
+
+    suspend fun runSession(
+        webSocketSession: WebSocketServerSession,
+        remoteIp: String,
+        flavor: Flavor,
+    ) {
         if (!globalGate.tryAcquire()) {
             logger.warn { "Global session limit reached (active=$activeSessions, max=$maxSessions)" }
             throw SessionLimitReachedException("Global session limit reached, please try again later.")
@@ -50,11 +65,59 @@ class SessionManager @Inject constructor(
             val deviceSessionManager = deviceSessionManagers.computeIfAbsent(remoteIp) {
                 DeviceSessionManager(it)
             }
-            deviceSessionManager.runSession(webSocketSession, flavor)
+            try {
+                deviceSessionManager.runSession(webSocketSession, flavor)
+            } finally {
+                deviceSessionManagers.compute(remoteIp) { _, existing ->
+                    if (existing === deviceSessionManager && existing.liveSessions.isEmpty()) null else existing
+                }
+            }
         } finally {
             globalGate.release()
-            logger.info { "global permit released for ip=$remoteIp (active=$activeSessions)" }
+            logger.info { "Global permit released for ip=$remoteIp (active=$activeSessions/$maxSessions)" }
         }
+    }
+
+    private fun createLspSession(
+        flavor: Flavor,
+        remoteIp: String,
+        webSocketSession: WebSocketSession,
+    ): LspSession {
+        val sessionId = UUID.randomUUID().toString()
+        // Construction is synchronous on the current thread; the thread-local SessionScope is valid for this block.
+        return sessionScope.withSessionScope {
+            seed(Flavor::class.java, flavor)
+            seed(Key.get(String::class.java, Names.named("remoteIp")), remoteIp)
+            seed(Key.get(String::class.java, Names.named("sessionId")), sessionId)
+            seed(WebSocketSession::class.java, webSocketSession)
+            injector.getInstance(LspSession::class.java).also { it.initialize() }
+        }
+    }
+
+    fun cancelSession(sessionId: String): Boolean {
+        for (deviceManager in deviceSessionManagers.values) {
+            val session = deviceManager.liveSessions[sessionId]
+            if (session != null) {
+                logger.info { "Admin cancels sessionId=$sessionId" }
+                session.close()
+                return true
+            }
+        }
+        logger.warn { "Admin cancel request for unknown sessionId=$sessionId" }
+        return false
+    }
+
+    suspend fun cancelVerification(sessionId: String, requestId: String): Boolean {
+        for (deviceManager in deviceSessionManagers.values) {
+            val lspSession = deviceManager.liveSessions[sessionId]
+            if (lspSession != null) {
+                logger.info { "Admin cancels verification (sessionId=$sessionId, requestId=$requestId)" }
+                lspSession.cancelVerification(requestId)
+                return true
+            }
+        }
+        logger.warn { "Admin cancel verification for unknown sessionId=$sessionId (requestId=$requestId)" }
+        return false
     }
 
     override fun close() {
@@ -69,36 +132,30 @@ class SessionManager @Inject constructor(
         val remoteIp: String,
     ) {
         private val deviceGate = Semaphore(config.sessionManager.maxSessionsPerIp)
-        private val liveSessions = ConcurrentHashMap<String, LiveSession>()
+        internal val liveSessions = ConcurrentHashMap<String, LspSession>()
 
         suspend fun runSession(webSocketSession: WebSocketServerSession, flavor: Flavor) {
             if (!deviceGate.tryAcquire()) {
                 logger.warn { "Session limit reached for ip=$remoteIp" }
                 throw SessionLimitReachedException("Session limit reached for $remoteIp")
             }
-            val sessionId = java.util.UUID.randomUUID().toString()
-
-            MDC.put("sessionId", sessionId)
-            val liveSession = liveSessionFactory.create(flavor, sessionId)
+            val liveSession = createLspSession(flavor, remoteIp, webSocketSession)
             liveSessions[liveSession.sessionId] = liveSession
-            logger.info { "Created session for ip=$remoteIp with flavor=${flavor.id}" }
+            logger.info { "Created session=${liveSession.sessionId} for ip=$remoteIp with flavor=${flavor.id}" }
             try {
-                liveSession.run(webSocketSession)
+                liveSession.run()
             } finally {
                 liveSessions.remove(liveSession.sessionId)
                 liveSession.close()
                 deviceGate.release()
                 logger.info { "Ended session for ip=$remoteIp" }
-                MDC.remove("sessionId")
             }
         }
 
         fun close() {
+            logger.info { "Closing sessions for ip=$remoteIp" }
             for (liveSession in liveSessions.values) {
-                MDC.put("sessionId", liveSession.sessionId)
-                logger.info { "Force closing session for ip=$remoteIp" }
                 liveSession.close()
-                MDC.remove("sessionId")
             }
         }
     }

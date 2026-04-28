@@ -22,8 +22,8 @@ class BackendConfigTest {
         assertThat(cfg.server.port).isEqualTo(8080)
         assertThat(cfg.server.pingPeriod).isEqualTo(30.seconds)
         assertThat(cfg.server.pingTimeout).isEqualTo(15.seconds)
-        assertThat(cfg.server.cors.allowedOrigins).containsExactly("ftsrg.mit.bme.hu")
         assertThat(cfg.server.webRootDirectory).isNull()
+        assertThat(cfg.server.adminPassword).isNull()
         assertThat(cfg.sessionManager.maxSessionsGlobal).isEqualTo(32)
         assertThat(cfg.sessionManager.maxSessionsPerIp).isEqualTo(4)
         assertThat(cfg.sessionManager.lspBinariesDirectory).isNull()
@@ -38,18 +38,18 @@ class BackendConfigTest {
             mapOf(
                 "SEMANTIFYR_LIVE_PORT" to "9090",
                 "SEMANTIFYR_LIVE_PING_PERIOD_SECONDS" to "60",
-                "SEMANTIFYR_LIVE_ALLOWED_ORIGINS" to "example.org, other.test",
                 "SEMANTIFYR_LIVE_MAX_SESSIONS_GLOBAL" to "64",
                 "SEMANTIFYR_LIVE_MAX_SESSIONS_PER_IP" to "8",
                 "SEMANTIFYR_LIVE_LSP_BINARIES_DIR" to "/opt/lsp",
                 "SEMANTIFYR_LIVE_ROOT_WORK_DIR" to "/tmp/sessions",
                 "SEMANTIFYR_LIVE_VERIFY_CONCURRENCY" to "2",
                 "SEMANTIFYR_LIVE_VERIFY_TIMEOUT_SECONDS" to "180",
+                "SEMANTIFYR_LIVE_ADMIN_PASSWORD" to "secret123",
             ),
         )
         assertThat(cfg.server.port).isEqualTo(9090)
         assertThat(cfg.server.pingPeriod).isEqualTo(60.seconds)
-        assertThat(cfg.server.cors.allowedOrigins).containsExactlyInAnyOrder("example.org", "other.test")
+        assertThat(cfg.server.adminPassword).isEqualTo("secret123")
         assertThat(cfg.sessionManager.maxSessionsGlobal).isEqualTo(64)
         assertThat(cfg.sessionManager.maxSessionsPerIp).isEqualTo(8)
         assertThat(cfg.sessionManager.lspBinariesDirectory).isEqualTo("/opt/lsp")

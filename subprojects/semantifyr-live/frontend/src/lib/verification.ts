@@ -68,10 +68,11 @@ function parseResultStatus(response: VerificationResponse | null): VerificationC
 
 export async function discoverVerificationCases(
   client: LspClient,
+  discoveryCommand: string,
   fileUri: string,
 ): Promise<VerificationCaseInfo[]> {
   const result = await client.sendRequest('workspace/executeCommand', {
-    command: 'oxsts.case.discover',
+    command: discoveryCommand,
     arguments: [fileUri],
   });
   return result as VerificationCaseInfo[] ?? [];
@@ -81,9 +82,9 @@ export interface RunVerificationHandle {
   cancel: () => void;
 }
 
-export function runVerifyAll(
+export function runAllVerifications(
   client: LspClient,
-  verifyCommand: string,
+  verificationCommand: string,
   fileUri: string,
   cases: readonly VerificationCaseInfo[],
   setState: StateUpdater,
@@ -149,7 +150,7 @@ export function runVerifyAll(
         let resultMessage: string | undefined;
         try {
           const response = (await client.sendRequest('workspace/executeCommand', {
-            command: verifyCommand,
+            command: verificationCommand,
             arguments: [{ uri: fileUri, range: currentCase.location.range }],
           })) as VerificationResponse | null;
 
