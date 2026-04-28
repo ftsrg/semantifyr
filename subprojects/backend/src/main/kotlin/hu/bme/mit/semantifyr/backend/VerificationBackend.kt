@@ -6,8 +6,7 @@
 
 package hu.bme.mit.semantifyr.backend
 
-import hu.bme.mit.semantifyr.backend.witness.OxstsClassAssumptionWitness
-import hu.bme.mit.semantifyr.backend.witness.SerializableTraceData
+import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitness
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -30,21 +29,14 @@ data class VerificationRunMetadata(
     val caseQualifiedName: String,
 )
 
-sealed interface VerificationTrace {
-    data object NoTrace : VerificationTrace
-
-    data class OxstsWitness(
-        val classWitness: OxstsClassAssumptionWitness,
-        val backAnnotatedWitness: InlinedOxsts,
-        val callTrace: SerializableTraceData,
-    ) : VerificationTrace
-}
-
 data class VerificationCase(
     val classDeclaration: ClassDeclaration,
     val qualifiedName: String,
     val tags: Set<String> = emptySet(),
 ) {
+    val directoryName
+        get() = qualifiedNameToDirectoryName(qualifiedName)
+
     override fun toString(): String {
         val tagSuffix = if (tags.isEmpty()) {
             ""
@@ -55,6 +47,12 @@ data class VerificationCase(
     }
 }
 
+private val NON_FS_SAFE = Regex("[^A-Za-z0-9._-]")
+
+fun qualifiedNameToDirectoryName(qualifiedName: String): String {
+    return qualifiedName.replace("::", ".").replace(NON_FS_SAFE, "_")
+}
+
 @Serializable
 data class VerificationMetrics(
     val preparationDuration: Duration = Duration.ZERO,
@@ -63,12 +61,11 @@ data class VerificationMetrics(
     val totalDuration: Duration = Duration.ZERO,
 )
 
-@Serializable
-data class VerificationResult(
+data class BackendVerificationResult(
     val verdict: VerificationVerdict,
     val metadata: VerificationRunMetadata,
     val metrics: VerificationMetrics = VerificationMetrics(),
-    val verificationTrace: VerificationTrace = VerificationTrace.NoTrace,
+    val witness: InlinedOxstsAssumptionWitness? = null,
     val message: String? = null,
 ) {
     val isPassed: Boolean get() = verdict == VerificationVerdict.Passed
@@ -80,7 +77,7 @@ data class VerificationResult(
             metadata: VerificationRunMetadata,
             metrics: VerificationMetrics,
             message: String,
-        ): VerificationResult = VerificationResult(
+        ): BackendVerificationResult = BackendVerificationResult(
             verdict = VerificationVerdict.Inconclusive,
             metadata = metadata,
             metrics = metrics,
@@ -91,8 +88,19 @@ data class VerificationResult(
             metadata: VerificationRunMetadata,
             metrics: VerificationMetrics,
             message: String,
-        ): VerificationResult = VerificationResult(
+        ): BackendVerificationResult = BackendVerificationResult(
             verdict = VerificationVerdict.Errored,
+            metadata = metadata,
+            metrics = metrics,
+            message = message,
+        )
+
+        fun notSupported(
+            metadata: VerificationRunMetadata,
+            metrics: VerificationMetrics,
+            message: String,
+        ): BackendVerificationResult = BackendVerificationResult(
+            verdict = VerificationVerdict.NotSupported,
             metadata = metadata,
             metrics = metrics,
             message = message,
@@ -107,6 +115,7 @@ enum class VerificationVerdict(
     Failed(true),
     Errored(false),
     Inconclusive(false),
+    NotSupported(false),
 }
 
 abstract class VerificationBackend<T : Any> {
@@ -116,7 +125,7 @@ abstract class VerificationBackend<T : Any> {
         config: T,
         request: VerificationRequest,
         environment: ExecutionEnvironment,
-    ): VerificationResult
+    ): BackendVerificationResult
 
     abstract fun probeAvailability(
         config: T,

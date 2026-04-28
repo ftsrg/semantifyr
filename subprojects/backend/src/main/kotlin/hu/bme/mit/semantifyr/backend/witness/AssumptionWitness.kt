@@ -50,26 +50,3 @@ class InlinedOxstsAssumptionWitness(
     override val nextStateMap: Map<InlinedOxstsAssumptionWitnessState, List<InlinedOxstsAssumptionWitnessState>>,
     val inlinedOxsts: InlinedOxsts,
 ) : AssumptionWitness<InlinedOxstsAssumptionWitnessState>()
-
-class OxstsClassAssumptionWitnessStateValue(
-    val variableReference: Expression,
-    val value: Expression,
-)
-
-class OxstsClassAssumptionActivatedTrace(
-    val traceOperation: TraceOperation,
-)
-
-class OxstsClassAssumptionWitnessState(
-//    id: String,
-    val values: List<OxstsClassAssumptionWitnessStateValue>,
-    val activatedTraces: List<OxstsClassAssumptionActivatedTrace>,
-) : AssumptionWitnessState()
-
-class OxstsClassAssumptionWitness(
-    override val initialState: OxstsClassAssumptionWitnessState,
-    override val initializedState: OxstsClassAssumptionWitnessState?,
-    override val transitionStates: List<OxstsClassAssumptionWitnessState>,
-    override val nextStateMap: Map<OxstsClassAssumptionWitnessState, List<OxstsClassAssumptionWitnessState>>,
-    val inlinedOxsts: InlinedOxsts,
-) : AssumptionWitness<OxstsClassAssumptionWitnessState>()

@@ -6,10 +6,6 @@
 
 package hu.bme.mit.semantifyr.backend
 
-import hu.bme.mit.semantifyr.backend.witness.AssumptionWitnessBackAnnotator
-import hu.bme.mit.semantifyr.backend.witness.CallTraceTransformer
-import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitness
-import hu.bme.mit.semantifyr.backend.witness.OxstsClassAssumptionWitnessTransformer
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
@@ -24,7 +20,7 @@ abstract class VerificationContextBase(
 ) {
     private val logger by loggerFactory()
 
-    suspend fun execute(): VerificationResult {
+    suspend fun execute(): BackendVerificationResult {
         val metadata = VerificationRunMetadata(
             backendId = backendId,
             startedAt = Clock.System.now(),
@@ -39,9 +35,16 @@ abstract class VerificationContextBase(
         } catch (c: CancellationException) {
             logger.debug { "[$backendId] cancelled" }
             throw c
+        } catch (e: BackendUnsupportedException) {
+            logger.info { "[$backendId] verification of '${request.case.qualifiedName}' not supported: ${e.message}" }
+            BackendVerificationResult.notSupported(
+                metadata = metadata,
+                metrics = VerificationMetrics(totalDuration = totalMark.elapsedNow()),
+                message = e.message ?: "Unsupported by $backendId",
+            )
         } catch (e: Exception) {
             logger.warn("[$backendId] verification of '${request.case.qualifiedName}' threw ${e::class.simpleName}", e)
-            VerificationResult.errored(
+            BackendVerificationResult.errored(
                 metadata = metadata,
                 metrics = VerificationMetrics(totalDuration = totalMark.elapsedNow()),
                 message = e.message ?: e::class.simpleName ?: "unknown error",
@@ -52,18 +55,6 @@ abstract class VerificationContextBase(
     protected abstract suspend fun runVerification(
         metadata: VerificationRunMetadata,
         totalMark: ValueTimeMark,
-    ): VerificationResult
-
-    protected open fun backAnnotateWitness(
-        witness: InlinedOxstsAssumptionWitness,
-        classWitnessTransformer: OxstsClassAssumptionWitnessTransformer,
-        backAnnotator: AssumptionWitnessBackAnnotator,
-        callTraceTransformer: CallTraceTransformer,
-    ): VerificationTrace.OxstsWitness {
-        val classWitness = classWitnessTransformer.transform(witness, request.compilation)
-        val backAnnotatedWitness = backAnnotator.createWitnessInlinedOxsts(classWitness)
-        val callTrace = callTraceTransformer.transformWitness(classWitness, request.compilation.transitionCallTraces)
-        return VerificationTrace.OxstsWitness(classWitness, backAnnotatedWitness, callTrace)
-    }
+    ): BackendVerificationResult
 
 }
