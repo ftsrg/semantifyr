@@ -1,0 +1,44 @@
+package semantifyr::spin::ite
+
+@VerificationCase
+@Tag("expect-pass")
+class IteInProperty {
+    var n: int := 0
+
+    redefine tran {
+        n := n + 1
+    }
+
+    prop {
+        return EF (if (n > 0) then true else false)
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class IteInTransition {
+    var x: int := 0
+    var flag: bool := true
+
+    redefine tran {
+        x := if (flag) then 1 else 2
+    }
+
+    prop {
+        return EF x == 1
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class IteInPropertyNonBoolean {
+    var n: int := 0
+
+    redefine tran {
+        n := n + 1
+    }
+
+    prop {
+        return EF ((if (n > 0) then 1 else 2) == 1)
+    }
+}

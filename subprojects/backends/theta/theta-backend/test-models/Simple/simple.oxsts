@@ -1,6 +1,7 @@
 package semantifyr::theta::xsts::simple
 
 @VerificationCase
+@Tag("expect-pass")
 class Incrementing {
     // x is zero initially
     var x: int := 0
@@ -22,6 +23,7 @@ class Incrementing {
 }
 
 @VerificationCase
+@Tag("expect-pass")
 class Decrementing {
     var x: int := 10
 

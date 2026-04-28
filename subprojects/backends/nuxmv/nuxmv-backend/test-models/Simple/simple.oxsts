@@ -1,0 +1,191 @@
+package semantifyr::nuxmv::simple
+
+
+// --- integer counter: reachability (both configs) ---
+
+@VerificationCase
+@Tag("requires-smt")
+@Tag("expect-pass")
+class Incrementing {
+    var x: int := 0
+
+    redefine init {
+        x := 1
+    }
+
+    redefine tran {
+        x := x + 1
+    }
+
+    prop {
+        return EF x == 10
+    }
+}
+
+// --- integer counter: inductive safety (IC3 only) ---
+
+@VerificationCase
+@Tag("requires-smt")
+@Tag("expect-pass")
+@Tag("requires-induction")
+class Invariant {
+    var x: int := 0
+
+    redefine tran {
+        x := x + 1
+    }
+
+    prop {
+        return AG x >= 0
+    }
+}
+
+// --- guarded counter: inductive safety with an explicit cap ---
+
+@VerificationCase
+@Tag("requires-smt")
+@Tag("expect-pass")
+@Tag("requires-induction")
+class GuardedCounterBound {
+    var x: int := 0
+
+    redefine tran {
+        assume(x < 10)
+        x := x + 1
+    }
+
+    prop {
+        return AG x <= 10
+    }
+}
+
+// --- boolean havoc: both polarities reachable ---
+
+@VerificationCase
+@Tag("requires-smt")
+@Tag("expect-pass")
+class BoolHavocReachesTrue {
+    var flag: bool := false
+
+    redefine tran {
+        havoc(flag)
+    }
+
+    prop {
+        return EF flag == true
+    }
+}
+
+@VerificationCase
+@Tag("requires-smt")
+@Tag("expect-pass")
+class BoolHavocReachesFalse {
+    var flag: bool := true
+
+    redefine tran {
+        havoc(flag)
+    }
+
+    prop {
+        return EF flag == false
+    }
+}
+
+// --- nondeterministic choice: each branch reachable (both configs) ---
+
+@VerificationCase
+@Tag("requires-smt")
+@Tag("expect-pass")
+class ChoiceReachesBranch1 {
+    var x: int := 0
+
+    redefine tran {
+        choice {
+            x := 1
+        } or {
+            x := 2
+        }
+    }
+
+    prop {
+        return EF x == 1
+    }
+}
+
+@VerificationCase
+@Tag("requires-smt")
+@Tag("expect-pass")
+class ChoiceReachesBranch2 {
+    var x: int := 0
+
+    redefine tran {
+        choice {
+            x := 1
+        } or {
+            x := 2
+        }
+    }
+
+    prop {
+        return EF x == 2
+    }
+}
+
+// --- choice with inductive safety (IC3 only) ---
+
+@VerificationCase
+@Tag("requires-smt")
+@Tag("expect-pass")
+@Tag("requires-induction")
+class ChoiceStaysInRange {
+    var x: int := 0
+
+    redefine tran {
+        choice {
+            x := 1
+        } or {
+            x := 2
+        }
+    }
+
+    prop {
+        return AG (x == 0 || x == 1 || x == 2)
+    }
+}
+
+// --- expect-fail: inductive safety required to DISPROVE ---
+//
+// StaysAtOne needs induction to conclude x can never be 0 in the
+// reachable set; without it, BMC will never see a counterexample but
+// also never certify.
+
+@VerificationCase
+@Tag("requires-smt")
+@Tag("expect-fail")
+@Tag("requires-induction")
+class StaysAtOne {
+    var x: int := 1
+
+    redefine tran {
+        x := 1
+    }
+
+    prop {
+        return EF x == 0
+    }
+}
+
+@VerificationCase
+@Tag("requires-smt")
+@Tag("expect-fail")
+class CounterExceedsBound {
+    var x: int := 0
+
+    redefine tran {
+        x := x + 1
+    }
+
+    prop {
+        return AG x < 5
+    }
+}

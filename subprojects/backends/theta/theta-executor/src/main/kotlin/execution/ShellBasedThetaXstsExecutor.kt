@@ -13,7 +13,6 @@ import hu.bme.mit.semantifyr.backends.theta.ThetaXstsExecutor
 import hu.bme.mit.semantifyr.logging.loggerFactory
 
 class ShellBasedThetaXstsExecutor : BaseShellExecutor(), ThetaXstsExecutor {
-
     override val logger by loggerFactory()
     override val binaryName: String = "theta-xsts-cli"
 

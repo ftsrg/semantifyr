@@ -7,6 +7,7 @@
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
+    id("hu.bme.mit.semantifyr.gradle.conventions.conformance")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }
@@ -23,10 +24,21 @@ dependencies {
 
     implementation(project(":logging"))
     implementation(libs.kotlinx.serialization.json)
+}
 
-    testImplementation(project(":portfolios"))
-    testRuntimeOnly(libs.slf4j.log4j)
-
-    testFixturesApi(project(":verification"))
-    testFixturesApi(testFixtures(project(":verification")))
+testing {
+    suites {
+        val verificationTest by getting(JvmTestSuite::class) {
+            dependencies {
+                implementation(testFixtures(project(":verification")))
+            }
+        }
+        val conformanceTest by getting(JvmTestSuite::class) {
+            dependencies {
+                implementation(testFixtures(project(":verification")))
+                // Portfolios.AllAgree validates every produced witness via every installed backend.
+                implementation(project(":portfolios"))
+            }
+        }
+    }
 }

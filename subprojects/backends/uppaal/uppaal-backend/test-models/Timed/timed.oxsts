@@ -1,0 +1,20 @@
+package semantifyr::uppaal::timed
+
+@VerificationCase
+@Tag("expect-pass")
+class ClockBounded {
+    @Clock
+    var t: int
+
+    redefine init {
+        t := 0
+    }
+
+    redefine tran {
+        t := 0
+    }
+
+    prop {
+        return AG t >= 0
+    }
+}

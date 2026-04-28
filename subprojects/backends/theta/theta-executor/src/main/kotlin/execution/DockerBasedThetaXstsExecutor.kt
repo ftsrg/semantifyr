@@ -22,7 +22,6 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 class DockerBasedThetaXstsExecutor(
     image: String = ThetaExecutorSpec.Docker.DEFAULT_IMAGE,
 ) : BaseDockerExecutor(image), ThetaXstsExecutor {
-
     override val logger by loggerFactory()
 
     override suspend fun execute(thetaExecutionSpecification: ThetaExecutionSpecification): ThetaExecutionResult {
@@ -40,10 +39,12 @@ class DockerBasedThetaXstsExecutor(
     }
 
     private fun createContainer(spec: ThetaExecutionSpecification): CreateContainerResponse {
-        val hostConfig = HostConfig.newHostConfig()
+        val hostConfig = HostConfig
+            .newHostConfig()
             .withBinds(Bind(spec.workingDirectory.absolutePath, Volume("/host/working_directory")))
 
-        return dockerClient.createContainerCmd(image)
+        return dockerClient
+            .createContainerCmd(image)
             .withHostConfig(hostConfig)
             .withWorkingDir("/host/working_directory")
             .withCmd(spec.command)

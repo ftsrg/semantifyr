@@ -1,0 +1,152 @@
+package semantifyr::uppaal::simple
+
+// --- bounded integer counter: reachability ---
+
+@VerificationCase
+@Tag("expect-pass")
+class Incrementing {
+    var x: int := 0
+
+    redefine init {
+        x := 1
+    }
+
+    redefine tran {
+        x := x + 1
+    }
+
+    prop {
+        return EF x == 10
+    }
+}
+
+// --- finite-state invariant ---
+
+@VerificationCase
+@Tag("expect-pass")
+class Invariant {
+    var flag: bool := true
+
+    redefine tran {
+        flag := true
+    }
+
+    prop {
+        return AG flag == true
+    }
+}
+
+// --- local variable: evaluated once per step ---
+
+@VerificationCase
+@Tag("expect-pass")
+class WithLocal {
+    var x: int := 0
+
+    redefine tran {
+        var delta: int := 1
+        x := x + delta
+    }
+
+    prop {
+        return EF x == 5
+    }
+}
+
+// --- boolean havoc: both polarities reachable ---
+
+@VerificationCase
+@Tag("expect-pass")
+class BoolHavocReachesTrue {
+    var flag: bool := false
+
+    redefine tran {
+        havoc(flag)
+    }
+
+    prop {
+        return EF flag == true
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class BoolHavocReachesFalse {
+    var flag: bool := true
+
+    redefine tran {
+        havoc(flag)
+    }
+
+    prop {
+        return EF flag == false
+    }
+}
+
+// --- nondeterministic choice: each branch reachable ---
+
+@VerificationCase
+@Tag("expect-pass")
+class ChoiceReachesBranch1 {
+    var x: int := 0
+
+    redefine tran {
+        choice {
+            x := 1
+        } or {
+            x := 2
+        }
+    }
+
+    prop {
+        return EF x == 1
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ChoiceReachesBranch2 {
+    var x: int := 0
+
+    redefine tran {
+        choice {
+            x := 1
+        } or {
+            x := 2
+        }
+    }
+
+    prop {
+        return EF x == 2
+    }
+}
+
+// --- expect-fail pairs ---
+
+@VerificationCase
+@Tag("expect-fail")
+class StaysAtOne {
+    var x: int := 1
+
+    redefine tran {
+        x := 1
+    }
+
+    prop {
+        return EF x == 0
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class CounterExceedsBound {
+    var x: int := 0
+
+    redefine tran {
+        x := x + 1
+    }
+
+    prop {
+        return AG x < 5
+    }
+}

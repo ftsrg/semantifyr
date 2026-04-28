@@ -102,6 +102,7 @@ dependencies {
             thetaNativeLibs("org.sosy-lab:javasmt-solver-bitwuzla:0.7.0-13.1-g595512ae:libbitwuzlaj-x64@so")
             thetaNativeLibs("org.sosy-lab:javasmt-solver-opensmt:2.9.0-gef441e1c:libopensmtj-x64@so")
         }
+
         "windows" if currentArch == "x64" -> {
             thetaNativeLibs("org.sosy-lab:javasmt-solver-mathsat5:5.6.11-sosy1:mathsat5j-x64@dll")
             thetaNativeLibs("org.sosy-lab:javasmt-solver-mathsat5:5.6.11-sosy1:mathsat-x64@dll")
