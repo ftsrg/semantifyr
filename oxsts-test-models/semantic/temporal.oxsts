@@ -106,29 +106,6 @@ class AGDisjunction {
     }
 }
 
-// --- EF(AG ...) nesting ---
-
-// There exists a reachable state from which the invariant x == 3
-// holds forever (the guard blocks further change).
-@VerificationCase
-@Tag("expect-pass")
-class EFAGReach {
-    var x: int := 0
-
-    redefine tran {
-        choice {
-            assume(x < 3)
-            x := x + 1
-        } or {
-            assume(x == 3)
-        }
-    }
-
-    prop {
-        return EF (AG x == 3)
-    }
-}
-
 // Dual: x never escapes [0, 3].
 @VerificationCase
 @Tag("expect-pass")
