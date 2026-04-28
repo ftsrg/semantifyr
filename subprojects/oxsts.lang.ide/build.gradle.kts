@@ -15,6 +15,7 @@ val ideGeneratedClasspath by configurations.creating {
 
 dependencies {
     api(project(":oxsts.lang"))
+    api(project(":lang-ide-common"))
 
     implementation(project(":portfolios"))
 
