@@ -37,5 +37,8 @@ reporting {
         val verificationTestCodeCoverageReport by creating(JacocoCoverageReport::class) {
             testSuiteName = "verificationTest"
         }
+        val conformanceTestCodeCoverageReport by creating(JacocoCoverageReport::class) {
+            testSuiteName = "conformanceTest"
+        }
     }
 }
