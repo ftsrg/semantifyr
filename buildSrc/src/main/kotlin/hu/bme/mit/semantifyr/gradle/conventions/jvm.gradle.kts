@@ -36,6 +36,12 @@ java.toolchain {
     languageVersion = JavaLanguageVersion.of(25)
 }
 
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
+    testLogging.showStandardStreams = true
+    testLogging.exceptionFormat = TestExceptionFormat.FULL
+}
+
 testing {
     suites {
         val test by getting(JvmTestSuite::class) {
@@ -49,11 +55,16 @@ testing {
             targets.all {
                 testTask.configure {
                     jvmArgs("-javaagent:${mockitoAgent.asPath}", "-Xshare:off")
-                    testLogging.showStandardStreams = true
-                    testLogging.exceptionFormat = TestExceptionFormat.FULL
                     finalizedBy(tasks.jacocoTestReport)
                 }
             }
         }
+    }
+}
+
+tasks.jacocoTestReport {
+    inputs.files(tasks.test.get().outputs)
+    reports {
+        xml.required.set(true)
     }
 }
