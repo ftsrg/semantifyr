@@ -21,7 +21,8 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 
 class DockerBasedThetaXstsExecutor(
     image: String = ThetaExecutorSpec.Docker.DEFAULT_IMAGE,
-) : BaseDockerExecutor(image), ThetaXstsExecutor {
+) : BaseDockerExecutor(image),
+    ThetaXstsExecutor {
     override val logger by loggerFactory()
 
     override suspend fun execute(thetaExecutionSpecification: ThetaExecutionSpecification): ThetaExecutionResult {

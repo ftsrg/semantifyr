@@ -39,5 +39,15 @@ data class ThetaConfig(
             id = "ic3",
             parameters = "IC3 --flatten-depth 0 --stacktrace",
         )
+
+        val Builtin: List<ThetaConfig> = listOf(
+            CegarExpl,
+            CegarExplPredCombined,
+            CegarPredCart,
+            BoundedKInduction,
+            BoundedBmc,
+            BoundedImc,
+            Ic3,
+        )
     }
 }

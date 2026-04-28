@@ -272,7 +272,8 @@ internal class SpinVerificationContext @Inject constructor(
 
     private enum class SpinVerdict {
         True,
-        False;
+        False,
+        ;
 
         fun invert(): SpinVerdict = if (this == True) False else True
     }
