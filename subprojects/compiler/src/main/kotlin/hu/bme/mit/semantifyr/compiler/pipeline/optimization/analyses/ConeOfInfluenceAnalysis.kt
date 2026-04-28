@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableReadExpressions
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.writeReference
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AbstractForOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
@@ -83,6 +84,14 @@ class ConeOfInfluenceComputation(
             }
         }
 
+        for (assume in inlinedOxsts.eAllOfType<AssumptionOperation>()) {
+            for (variable in variablesReadIn(assume.expression)) {
+                if (relevantVariables.add(variable)) {
+                    variableWorklist.add(variable)
+                }
+            }
+        }
+
         while (variableWorklist.isNotEmpty()) {
             val variable = variableWorklist.pop()
             val assignments = assignmentsByVariable[variable] ?: emptyList()
@@ -132,6 +141,7 @@ class ConeOfInfluenceComputation(
             when (current) {
                 is IfOperation -> result += variablesReadIn(current.guard)
                 is AssumptionOperation -> result += variablesReadIn(current.expression)
+                is AbstractForOperation -> result += variablesReadIn(current.rangeExpression)
             }
             current = current.eContainer()
         }
