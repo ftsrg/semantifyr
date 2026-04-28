@@ -20,9 +20,14 @@ val verificationTestServiceProvider = gradle.sharedServices.registerIfAbsent(ver
 
 val libs = the<LibrariesForLibs>()
 
+val cloneOxstsTestModels by tasks.registering(Sync::class) {
+    from(rootProject.layout.projectDirectory.dir("oxsts-test-models"))
+    into(layout.buildDirectory.dir("test-models"))
+}
+
 testing {
     suites {
-        val verificationTest by registering(JvmTestSuite::class) {
+        val conformanceTest by registering(JvmTestSuite::class) {
             useJUnitJupiter()
 
             dependencies {
@@ -39,50 +44,28 @@ testing {
 
                     maxParallelForks = 1
 
-                    useJUnitPlatform {
-                        excludeTags("slow")
-                    }
+                    inputs.files(cloneOxstsTestModels)
+                    workingDir = layout.projectDirectory.asFile
 
                     shouldRunAfter(suites.named("test"))
 
-                    finalizedBy(tasks.named("jacocoVerificationTestReport"))
+                    finalizedBy(tasks.named("jacocoConformanceTestReport"))
                 }
             }
         }
     }
 }
 
-val jacocoVerificationTestReport by tasks.registering(JacocoReport::class) {
-    val verificationTestSuite = testing.suites.named("verificationTest", JvmTestSuite::class)
+val jacocoConformanceTestReport by tasks.registering(JacocoReport::class) {
+    val conformanceTestSuite = testing.suites.named("conformanceTest", JvmTestSuite::class)
     inputs.files(
-        verificationTestSuite.flatMap {
+        conformanceTestSuite.flatMap {
             it.targets.first().testTask.flatMap { it.outputs.files.elements }
         },
     )
-    executionData(layout.buildDirectory.file("jacoco/verificationTest.exec"))
+    executionData(layout.buildDirectory.file("jacoco/conformanceTest.exec"))
     sourceSets(sourceSets.main.get())
     reports {
         xml.required.set(true)
     }
-}
-
-val slowVerificationTest by tasks.registering(Test::class) {
-    description = "Runs the verification cases tagged with @Tag(\"slow\"). Sequenced with other verification tasks."
-    group = "verification"
-    usesService(verificationTestServiceProvider)
-
-    val verificationTestSuite = testing.suites.named("verificationTest", JvmTestSuite::class)
-    val target = verificationTestSuite.get().targets.first()
-    testClassesDirs = target.testTask.get().testClassesDirs
-    classpath = target.testTask.get().classpath
-
-    maxParallelForks = 1
-
-    useJUnitPlatform {
-        includeTags("slow")
-    }
-}
-
-tasks.named("check") {
-    dependsOn(testing.suites.named("verificationTest"))
 }
