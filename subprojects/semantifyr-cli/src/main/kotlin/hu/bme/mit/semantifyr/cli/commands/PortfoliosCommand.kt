@@ -14,7 +14,6 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 
 class PortfoliosCommand : SuspendingCliktCommand("portfolios") {
-
     private val logger by loggerFactory()
 
     override fun help(context: Context): String {

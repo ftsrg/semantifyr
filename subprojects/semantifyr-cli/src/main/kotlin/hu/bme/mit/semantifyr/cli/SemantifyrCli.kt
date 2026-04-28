@@ -25,7 +25,6 @@ class SemantifyrCommand @Inject constructor(
     listCommand: ListCommand,
     portfoliosCommand: PortfoliosCommand,
 ) : SuspendingCliktCommand("semantifyr") {
-
     @Suppress("unused")
     private val logLevel by logLevelOption()
 

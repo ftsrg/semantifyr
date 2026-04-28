@@ -19,7 +19,6 @@ class ListCommand @Inject constructor(
     semantifyrLoader: SemantifyrLoader,
     verificationCaseDiscoverer: VerificationCaseDiscoverer,
 ) : BaseSemantifyrCommand("list", semantifyrLoader) {
-
     private val logger by loggerFactory()
 
     private val caseSpecificationOptions by VerificationCaseSpecificationOptionGroup(verificationCaseDiscoverer)
@@ -43,5 +42,4 @@ class ListCommand @Inject constructor(
             echo("  $case")
         }
     }
-
 }

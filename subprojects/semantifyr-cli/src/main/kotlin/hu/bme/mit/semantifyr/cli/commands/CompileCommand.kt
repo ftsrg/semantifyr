@@ -37,7 +37,6 @@ class CompileCommand @Inject constructor(
     private val serializer: ISerializer,
     private val injector: Injector,
 ) : BaseSemantifyrCommand("compile", semantifyrLoader) {
-
     private val logger by loggerFactory()
 
     private val caseSpecificationOptions by VerificationCaseSpecificationOptionGroup(verificationCaseDiscoverer)
@@ -90,20 +89,30 @@ class CompileCommand @Inject constructor(
         return directory
     }
 
-    private fun compileSingleCase(case: VerificationCase, target: Path) {
+    private fun compileSingleCase(
+        case: VerificationCase,
+        target: Path,
+    ) {
         runCompiler { compiler ->
             echo("Compiling ${case.qualifiedName} to $target")
-            val compiled = compiler.compile(case.classDeclaration)
+            val caseDirectory = artifactOptions.resolvedOutputDirectory
+                .resolve(case.qualifiedName.replace("::", "."))
+            val compiled = compiler.compile(case.classDeclaration, caseDirectory)
             writeInlinedOxsts(compiled.inlinedOxsts, target)
         }
     }
 
-    private fun compileMultipleCases(cases: List<VerificationCase>, directory: Path) {
+    private fun compileMultipleCases(
+        cases: List<VerificationCase>,
+        directory: Path,
+    ) {
         runCompiler { compiler ->
             for (case in cases) {
                 val target = directory.resolve("${case.qualifiedName}.oxsts")
                 echo("Compiling ${case.qualifiedName} to $target")
-                val compiled = compiler.compile(case.classDeclaration)
+                val caseDirectory = artifactOptions.resolvedOutputDirectory
+                    .resolve(case.directoryName)
+                val compiled = compiler.compile(case.classDeclaration, caseDirectory)
                 writeInlinedOxsts(compiled.inlinedOxsts, target)
             }
         }
@@ -115,7 +124,10 @@ class CompileCommand @Inject constructor(
         }
     }
 
-    private fun writeInlinedOxsts(inlinedOxsts: InlinedOxsts, target: Path) {
+    private fun writeInlinedOxsts(
+        inlinedOxsts: InlinedOxsts,
+        target: Path,
+    ) {
         Files.createDirectories(target.parent)
         target.bufferedWriter().use {
             serializer.serialize(inlinedOxsts, it, SaveOptions.defaultOptions())

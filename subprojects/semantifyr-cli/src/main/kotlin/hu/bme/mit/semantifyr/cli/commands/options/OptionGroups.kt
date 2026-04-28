@@ -21,7 +21,7 @@ import hu.bme.mit.semantifyr.backends.nuxmv.verification.nuxmv
 import hu.bme.mit.semantifyr.backends.spin.SpinExecutorSpec
 import hu.bme.mit.semantifyr.backends.spin.verification.spin
 import hu.bme.mit.semantifyr.backends.theta.ThetaExecutorSpec
-import hu.bme.mit.semantifyr.verification.theta
+import hu.bme.mit.semantifyr.backends.theta.theta
 import hu.bme.mit.semantifyr.backends.uppaal.UppaalExecutorSpec
 import hu.bme.mit.semantifyr.backends.uppaal.verification.uppaal
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
@@ -41,7 +41,9 @@ class VerificationCaseSpecificationOptionGroup(
 ) : OptionGroup("Verification case specification") {
     val caseNames by option("--case-name")
         .multiple()
-        .help("The fully qualified name(s) of the verification case to be verified. Repeat the flag to add multiple. Overrides tag filters when set.")
+        .help(
+            "The fully qualified name(s) of the verification case to be verified. Repeat the flag to add multiple. Overrides tag filters when set.",
+        )
 
     val includeTags by option("--include-tag")
         .multiple()
@@ -75,7 +77,9 @@ class ArtifactOptionGroup : OptionGroup("Artifact options") {
     val artifactPreset by option("--artifacts")
         .enum<ArtifactPreset>(ignoreCase = true)
         .default(ArtifactPreset.All)
-        .help("Artifact preset. Default: 'all'. Use 'debug' to also write per-pass step dumps (slow; only for bisecting compiler regressions).")
+        .help(
+            "Artifact preset. Default: 'all'. Use 'debug' to also write per-pass step dumps (slow; only for bisecting compiler regressions).",
+        )
 
     val enableArtifacts by option("--enable-artifact")
         .enum<ArtifactKind>(ignoreCase = true)
@@ -87,12 +91,15 @@ class ArtifactOptionGroup : OptionGroup("Artifact options") {
         .multiple()
         .help("Disable a specific artifact kind (can be repeated).")
 
+    val resolvedOutputDirectory by lazy {
+        artifactDirectory ?: Files.createTempDirectory("semantifyr-")
+    }
+
     val resolved by lazy {
-        val outputDirectory = artifactDirectory ?: Files.createTempDirectory("semantifyr-")
         val base = when (artifactPreset) {
-            ArtifactPreset.None -> ArtifactConfig.none(outputDirectory)
-            ArtifactPreset.All -> ArtifactConfig.all(outputDirectory)
-            ArtifactPreset.Debug -> ArtifactConfig.debug(outputDirectory)
+            ArtifactPreset.None -> ArtifactConfig.NONE
+            ArtifactPreset.All -> ArtifactConfig.ALL
+            ArtifactPreset.Debug -> ArtifactConfig.DEBUG
         }
         val resolved = base.enabled + enableArtifacts.toSet() - disableArtifacts.toSet()
         base.copy(enabled = resolved)
@@ -115,7 +122,9 @@ class BackendOptionGroup : OptionGroup("Backend options") {
 
     val thetaDockerImage by option("--theta-docker-image")
         .default(ThetaExecutorSpec.Docker.DEFAULT_IMAGE)
-        .help("Theta docker image reference (repository:tag or @digest), used when --theta-executor=docker. Default: '${ThetaExecutorSpec.Docker.DEFAULT_IMAGE}'.")
+        .help(
+            "Theta docker image reference (repository:tag or @digest), used when --theta-executor=docker. Default: '${ThetaExecutorSpec.Docker.DEFAULT_IMAGE}'.",
+        )
 
     val timeoutSeconds by option("-t", "--timeout-seconds")
         .long()
@@ -136,7 +145,8 @@ class BackendOptionGroup : OptionGroup("Backend options") {
             ThetaExecutor.Shell -> ThetaExecutorSpec.Shell
             ThetaExecutor.Docker -> ThetaExecutorSpec.Docker(image = thetaDockerImage)
         }
-        ExecutionEnvironment.builder()
+        ExecutionEnvironment
+            .builder()
             .theta(thetaSpec)
             .uppaal(UppaalExecutorSpec.Auto)
             .nuxmv(NuxmvExecutorSpec.Auto)

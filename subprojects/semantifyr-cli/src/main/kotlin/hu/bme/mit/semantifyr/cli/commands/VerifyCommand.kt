@@ -34,7 +34,6 @@ class VerifyCommand @Inject constructor(
     verificationCaseDiscoverer: VerificationCaseDiscoverer,
     private val injector: Injector,
 ) : BaseSemantifyrCommand("verify", semantifyrLoader) {
-
     private val logger by loggerFactory()
 
     private val caseSpecificationOptions by VerificationCaseSpecificationOptionGroup(verificationCaseDiscoverer)
@@ -62,11 +61,15 @@ class VerifyCommand @Inject constructor(
         }
 
         val artifacts = artifactOptions.resolved
+        val outputDirectory = artifactOptions.resolvedOutputDirectory
 
-        verifyCases(semantifyrModelContext, portfolio, environment, artifacts, cases)
+        verifyCases(semantifyrModelContext, portfolio, environment, artifacts, outputDirectory, cases)
     }
 
-    private fun ensurePortfolio(portfolio: VerificationPortfolio, environment: ExecutionEnvironment) {
+    private fun ensurePortfolio(
+        portfolio: VerificationPortfolio,
+        environment: ExecutionEnvironment,
+    ) {
         val availability = portfolio.availability(environment)
         if (availability !is AvailabilityReport.Unavailable) return
 
@@ -86,15 +89,18 @@ class VerifyCommand @Inject constructor(
         portfolio: VerificationPortfolio,
         environment: ExecutionEnvironment,
         artifacts: ArtifactConfig,
+        outputDirectory: java.nio.file.Path,
         cases: List<VerificationCase>,
     ) {
-        SemantifyrVerifier.builder()
+        SemantifyrVerifier
+            .builder()
             .injector(injector)
             .context(semantifyrModelContext)
             .portfolio(portfolio)
             .environment(environment)
             .timeout(backendOptions.timeout)
             .artifacts(artifacts)
+            .outputDirectory(outputDirectory)
             .optimization(compilationOptions.resolved)
             .build()
             .use { verifier ->
@@ -108,7 +114,10 @@ class VerifyCommand @Inject constructor(
             }
     }
 
-    private suspend fun verifyCase(verifier: SemantifyrVerifier, case: VerificationCase): Boolean {
+    private suspend fun verifyCase(
+        verifier: SemantifyrVerifier,
+        case: VerificationCase,
+    ): Boolean {
         echo("Verifying ${case.qualifiedName} ...")
         val result = verifier.verify(case)
         val resultTag = when (result.verdict) {
@@ -116,6 +125,7 @@ class VerifyCommand @Inject constructor(
             VerificationVerdict.Failed -> "FAILED"
             VerificationVerdict.Inconclusive -> "INCONCLUSIVE"
             VerificationVerdict.Errored -> "ERRORED"
+            VerificationVerdict.NotSupported -> "NOT_SUPPORTED"
         }
         val message = result.message?.let { "- $it" } ?: ""
         echo("  $resultTag (${result.metrics.totalDuration}) $message")

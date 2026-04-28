@@ -31,7 +31,6 @@ abstract class BaseSemantifyrCommand(
     name: String,
     private val semantifyrLoader: SemantifyrLoader,
 ) : SuspendingCliktCommand(name) {
-
     override val printHelpOnEmptyArgs = true
 
     val model by argument("model path")
@@ -52,10 +51,10 @@ abstract class BaseSemantifyrCommand(
     }
 
     fun readModelContext(): SemantifyrModelContext {
-        return semantifyrLoader.startContext()
+        return semantifyrLoader
+            .startContext()
             .loadLibraryPaths(libraries)
             .loadModelPaths(listOf(model))
             .buildAndResolve()
     }
-
 }
