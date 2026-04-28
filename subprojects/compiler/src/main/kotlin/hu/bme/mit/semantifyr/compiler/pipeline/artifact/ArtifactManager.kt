@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.artifact
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.compiler.pipeline.CompilationRequest
 import org.eclipse.emf.common.util.URI
 import java.io.File
 
@@ -23,6 +24,7 @@ private const val REPORT = "report.json"
 
 class ArtifactManager @Inject constructor(
     private val config: ArtifactConfig,
+    private val request: CompilationRequest,
 ) {
 
     fun pathOf(artifactKind: ArtifactKind): String {
@@ -39,7 +41,7 @@ class ArtifactManager @Inject constructor(
         }
     }
 
-    private val basePath: File = config.outputDirectory.toFile()
+    private val basePath: File = request.outputDirectory.toFile()
 
     private fun resolve(relativePath: String): File {
         return basePath.resolve(relativePath)

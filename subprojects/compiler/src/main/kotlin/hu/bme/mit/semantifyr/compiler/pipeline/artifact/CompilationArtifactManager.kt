@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.artifact
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.compiler.pipeline.CompilationRequest
 import hu.bme.mit.semantifyr.compiler.scopes.CompilationScoped
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.eclipse.xtext.resource.SaveOptions
@@ -18,8 +19,11 @@ class CompilationArtifactManager @Inject constructor(
     val serializer: ISerializer,
     val artifactManager: ArtifactManager,
     val artifactConfig: ArtifactConfig,
-    private val inlinedOxsts: InlinedOxsts,
+    private val request: CompilationRequest,
 ) {
+
+    private val inlinedOxsts
+        get() = request.inlinedOxsts
 
     private var stepId = 0
 

@@ -6,8 +6,9 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.artifact
 
-import java.nio.file.Path
+import kotlinx.serialization.Serializable
 
+@Serializable
 enum class ArtifactKind {
     OutputModel,
     InstantiatedModel,
@@ -20,6 +21,7 @@ enum class ArtifactKind {
     Report,
 }
 
+@Serializable
 enum class CompilationPass {
     ExpressionCallInlining,
     OperationCallInlining,
@@ -36,21 +38,25 @@ enum class CompilationPass {
     Flattening,
 }
 
+@Serializable
 sealed interface CompilationStepsConfig {
     fun shouldEmit(pass: CompilationPass): Boolean
 
+    @Serializable
     object Off : CompilationStepsConfig {
         override fun shouldEmit(pass: CompilationPass): Boolean {
             return false
         }
     }
 
+    @Serializable
     object All : CompilationStepsConfig {
         override fun shouldEmit(pass: CompilationPass): Boolean {
             return true
         }
     }
 
+    @Serializable
     data class Selected(
         val passes: Set<CompilationPass>,
     ) : CompilationStepsConfig {
@@ -60,8 +66,8 @@ sealed interface CompilationStepsConfig {
     }
 }
 
+@Serializable
 data class ArtifactConfig(
-    val outputDirectory: Path,
     val enabled: Set<ArtifactKind> = ReportOnlyArtifacts,
     val enabledCompilationSteps: CompilationStepsConfig = CompilationStepsConfig.Off,
 ) {
@@ -72,32 +78,22 @@ data class ArtifactConfig(
     companion object {
         private val ReportOnlyArtifacts = ArtifactKind.entries.toSet() - ArtifactKind.CompilationStep
 
-        fun none(outputDirectory: Path): ArtifactConfig {
-            return ArtifactConfig(
-                outputDirectory = outputDirectory,
-                enabled = emptySet(),
-            )
-        }
+        @JvmField
+        val NONE: ArtifactConfig = ArtifactConfig(enabled = emptySet())
 
         /**
          * Emits every non-debug artifact (models, witness, trace, mapping, report).
          */
-        fun all(outputDirectory: Path): ArtifactConfig {
-            return ArtifactConfig(
-                outputDirectory = outputDirectory,
-                enabled = ReportOnlyArtifacts,
-            )
-        }
+        @JvmField
+        val ALL: ArtifactConfig = ArtifactConfig(enabled = ReportOnlyArtifacts)
 
         /**
          * Emits every artifact including per-pass step dumps.
          */
-        fun debug(outputDirectory: Path): ArtifactConfig {
-            return ArtifactConfig(
-                outputDirectory = outputDirectory,
-                enabled = ArtifactKind.entries.toSet(),
-                enabledCompilationSteps = CompilationStepsConfig.All,
-            )
-        }
+        @JvmField
+        val DEBUG: ArtifactConfig = ArtifactConfig(
+            enabled = ArtifactKind.entries.toSet(),
+            enabledCompilationSteps = CompilationStepsConfig.All,
+        )
     }
 }
