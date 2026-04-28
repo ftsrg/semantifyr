@@ -8,6 +8,7 @@ rootProject.name = "semantifyr"
 
 include(
     "logging",
+    "guice-common",
     "compiler",
     "verification",
     "portfolios",
