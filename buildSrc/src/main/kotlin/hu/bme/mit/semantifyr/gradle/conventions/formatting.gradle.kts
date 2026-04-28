@@ -20,6 +20,7 @@ spotless {
 
     kotlin {
         target("src/**/*.kt")
+        targetExclude("**/xtext-gen/**", "**/emf-gen/**", "**/build/**")
         ktlint(ktlintVersion).editorConfigOverride(
             mapOf(
                 "ktlint_standard_no-empty-file" to "disabled",
@@ -37,6 +38,7 @@ spotless {
 
     kotlinGradle {
         target("*.gradle.kts", "src/**/*.gradle.kts")
+        targetExclude("**/xtext-gen/**", "**/emf-gen/**", "**/build/**")
         ktlint(ktlintVersion)
     }
 
