@@ -60,10 +60,26 @@ class ReachingDefinitionsComputation(
             it as EObject
         }
 
-        val initialIn = assignmentWrites.groupBy {
+        val writesByVariable = assignmentWrites.groupBy {
             evaluator.evaluateTyped(VariableDeclaration::class.java, (it as Operation).writeReference())
         }.mapValues {
             it.value.toSet()
+        }
+
+        val initialIn = buildMap<VariableDeclaration, Set<EObject>> {
+            for ((variable, defs) in writesByVariable) {
+                val withStartState = if (!initMustWrite(variable)) {
+                    defs + variable
+                } else {
+                    defs
+                }
+                put(variable, withStartState)
+            }
+            for (variable in inlinedOxsts.variables) {
+                if (variable !in this) {
+                    put(variable, setOf(variable))
+                }
+            }
         }
 
         inlinedOxsts.initTransition?.let {
@@ -83,10 +99,52 @@ class ReachingDefinitionsComputation(
                 continue
             }
             val variable = evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, read) ?: continue
-            defsOf[read] = initialIn[variable].orEmpty()
+            val baseDefs = initialIn[variable].orEmpty()
+            val startStateReaches = !initMustWrite(variable)
+            defsOf[read] = if (startStateReaches) {
+                baseDefs + variable
+            } else {
+                baseDefs
+            }
         }
 
         return ReachingDefinitionsInfo(defsOf.toMap())
+    }
+
+    private fun initMustWrite(variable: VariableDeclaration): Boolean {
+        val transition = inlinedOxsts.initTransition ?: return false
+        if (transition.branches.isEmpty()) {
+            return false
+        }
+        return transition.branches.all { mustWrite(it, variable) }
+    }
+
+    private fun mustWrite(operation: Operation, variable: VariableDeclaration): Boolean {
+        return when (operation) {
+            is SequenceOperation -> operation.steps.any { mustWrite(it, variable) }
+            is ChoiceOperation -> {
+                operation.branches.isNotEmpty() && operation.branches.all { mustWrite(it, variable) }
+            }
+            is IfOperation -> {
+                val elseBranch = operation.`else` ?: return false
+                mustWrite(operation.body, variable) && mustWrite(elseBranch, variable)
+            }
+            is AssignmentOperation -> {
+                evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, operation.reference) == variable
+            }
+            is HavocOperation -> {
+                evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, operation.reference) == variable
+            }
+            // These operations never write the variable in question.
+            is AssumptionOperation -> false
+            is LocalVarDeclarationOperation -> false
+            is TraceOperation -> false
+            // ForOperation may iterate zero times (empty range) and unrolled inline-for variants
+            // are normally expanded before this analysis runs. Treat as may-write to stay sound.
+            // InlineCall / InlineIfOperation are likewise normally gone after inlining; conservative
+            // may-write is safe.
+            else -> false
+        }
     }
 
     private fun walkOperation(
