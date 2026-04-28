@@ -6,6 +6,9 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class OptimizationCategory {
     ConstantFolding,
     ExpressionSimplification,
@@ -16,6 +19,7 @@ enum class OptimizationCategory {
     DeadCodeElimination,
 }
 
+@Serializable
 data class OptimizationConfig(
     val enabled: Set<OptimizationCategory> = OptimizationCategory.entries.toSet(),
 ) {
