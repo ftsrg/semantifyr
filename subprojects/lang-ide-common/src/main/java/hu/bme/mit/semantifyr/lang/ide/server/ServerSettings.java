@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.lang.ide.server;
+package hu.bme.mit.semantifyr.lang.ide.server;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -12,8 +12,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.backend.ExecutionEnvironment;
+import hu.bme.mit.semantifyr.backends.theta.ThetaBackendKt;
 import hu.bme.mit.semantifyr.backends.theta.ThetaExecutorSpec;
-import hu.bme.mit.semantifyr.backends.theta.hu.bme.mit.semantifyr.verification.ThetaBackendKt;
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig;
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig;
 import hu.bme.mit.semantifyr.portfolios.Portfolios;
@@ -24,11 +24,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Server-side view of LSP workspace configuration. The VSCode extension ships these values
- * via {@code initializationOptions} on initialize and {@code workspace/didChangeConfiguration}
- * on change; all getters fall back to sensible defaults when a setting is missing.
- */
 @Singleton
 public class ServerSettings {
 
@@ -86,16 +81,21 @@ public class ServerSettings {
 
     public ArtifactConfig resolveArtifactConfig() {
         Snapshot s = snapshot.get();
-        Path outputDirectory = switch (s.artifactsLocation()) {
-            case "directory" -> s.artifactsDirectory() != null && !s.artifactsDirectory().isBlank()
-                    ? Path.of(s.artifactsDirectory())
-                    : createTempDir();
-            default -> createTempDir();
-        };
         return switch (s.artifactsPreset()) {
-            case "none" -> ArtifactConfig.Companion.none(outputDirectory);
-            case "debug" -> ArtifactConfig.Companion.debug(outputDirectory);
-            default -> ArtifactConfig.Companion.all(outputDirectory);
+            case "none" -> ArtifactConfig.NONE;
+            case "debug" -> ArtifactConfig.DEBUG;
+            default -> ArtifactConfig.ALL;
+        };
+    }
+
+    public Path resolveArtifactOutputDirectory() {
+        Snapshot s = snapshot.get();
+        return switch (s.artifactsLocation()) {
+            case "directory" ->
+                s.artifactsDirectory() != null && !s.artifactsDirectory().isBlank()
+                        ? Path.of(s.artifactsDirectory())
+                        : createTempDir();
+            default -> createTempDir();
         };
     }
 
@@ -120,9 +120,9 @@ public class ServerSettings {
         Snapshot s = snapshot.get();
         return switch (s.thetaExecutor()) {
             case "shell" -> ThetaExecutorSpec.Shell.INSTANCE;
-            case "docker" -> new ThetaExecutorSpec.Docker(
-                    s.thetaDockerImage() != null ? s.thetaDockerImage() : ThetaExecutorSpec.Docker.DEFAULT_IMAGE
-            );
+            case "docker" ->
+                new ThetaExecutorSpec.Docker(
+                        s.thetaDockerImage() != null ? s.thetaDockerImage() : ThetaExecutorSpec.Docker.DEFAULT_IMAGE);
             default -> ThetaExecutorSpec.Auto.INSTANCE;
         };
     }
@@ -136,8 +136,7 @@ public class ServerSettings {
             String artifactsLocation,
             String artifactsDirectory,
             String artifactsPreset,
-            String optimizationLevel
-    ) {
+            String optimizationLevel) {
         static Snapshot defaults() {
             return new Snapshot(
                     DEFAULT_PORTFOLIO_ID,
@@ -148,8 +147,7 @@ public class ServerSettings {
                     DEFAULT_ARTIFACTS_LOCATION,
                     null,
                     DEFAULT_ARTIFACTS_PRESET,
-                    DEFAULT_OPTIMIZATION_LEVEL
-            );
+                    DEFAULT_OPTIMIZATION_LEVEL);
         }
 
         static Snapshot fromJson(JsonObject o) {
@@ -163,8 +161,7 @@ public class ServerSettings {
                     stringAt(o, "artifacts.location", d.artifactsLocation()),
                     stringAt(o, "artifacts.directory", d.artifactsDirectory()),
                     stringAt(o, "artifacts.preset", d.artifactsPreset()),
-                    stringAt(o, "optimization.level", d.optimizationLevel())
-            );
+                    stringAt(o, "optimization.level", d.optimizationLevel()));
         }
 
         private static String stringAt(JsonObject o, String path, String fallback) {

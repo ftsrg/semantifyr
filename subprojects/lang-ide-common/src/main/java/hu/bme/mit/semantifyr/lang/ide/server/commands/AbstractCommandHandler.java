@@ -1,14 +1,15 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
+package hu.bme.mit.semantifyr.lang.ide.server.commands;
 
 import com.google.inject.Inject;
-import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.SemantifyrRequestManager;
-import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.WorkManager;
+import hu.bme.mit.semantifyr.lang.ide.server.concurrent.SemantifyrRequestManager;
+import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager;
+import java.util.List;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.lsp4j.ExecuteCommandParams;
@@ -20,8 +21,6 @@ import org.eclipse.xtext.resource.EObjectAtOffsetHelper;
 import org.eclipse.xtext.resource.IResourceServiceProvider;
 import org.eclipse.xtext.resource.XtextResource;
 import org.eclipse.xtext.util.CancelIndicator;
-
-import java.util.List;
 
 public abstract class AbstractCommandHandler<T> implements CommandHandler {
 
@@ -39,7 +38,7 @@ public abstract class AbstractCommandHandler<T> implements CommandHandler {
 
     @Override
     public Object execute(ExecuteCommandParams params, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
-        if (! params.getCommand().equals(getId())) {
+        if (!params.getCommand().equals(getId())) {
             throw new IllegalArgumentException("This handler is not for the given command!");
         }
 
@@ -56,7 +55,8 @@ public abstract class AbstractCommandHandler<T> implements CommandHandler {
 
     public abstract List<Object> serializeArguments(T arguments);
 
-    protected abstract T parseArguments(List<Object> arguments, ILanguageServerAccess access, CancelIndicator cancelIndicator);
+    protected abstract T parseArguments(
+            List<Object> arguments, ILanguageServerAccess access, CancelIndicator cancelIndicator);
 
     protected abstract Object execute(T argument, ILanguageServerAccess access, CommandProgressContext progressContext);
 
@@ -66,7 +66,9 @@ public abstract class AbstractCommandHandler<T> implements CommandHandler {
     }
 
     protected EObject getElement(final ILanguageServerAccess access, Location location) {
-        return access.doSyncRead(location.getUri(), context -> getElement(context, location.getRange().getStart()));
+        return access.doSyncRead(
+                location.getUri(),
+                context -> getElement(context, location.getRange().getStart()));
     }
 
     protected Location getLocation(final EObject eObject) {
@@ -74,8 +76,8 @@ public abstract class AbstractCommandHandler<T> implements CommandHandler {
     }
 
     protected DocumentExtensions getDocumentExtensions(final URI targetURI) {
-        return resourceServiceProviderRegistry.getResourceServiceProvider(targetURI.trimFragment())
+        return resourceServiceProviderRegistry
+                .getResourceServiceProvider(targetURI.trimFragment())
                 .get(DocumentExtensions.class);
     }
-
 }

@@ -1,16 +1,15 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.jobs;
+package hu.bme.mit.semantifyr.lang.ide.server.concurrent.jobs;
 
-import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.SemantifyrRequestManager;
+import hu.bme.mit.semantifyr.lang.ide.server.concurrent.SemantifyrRequestManager;
+import java.util.concurrent.CompletableFuture;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.eclipse.xtext.xbase.lib.Functions;
-
-import java.util.concurrent.CompletableFuture;
 
 public class WriteJob<U, V> extends AbstractJob<V> {
 
@@ -19,7 +18,11 @@ public class WriteJob<U, V> extends AbstractJob<V> {
     private final Functions.Function2<? super CancelIndicator, ? super U, ? extends V> cancellable;
     private final CompletableFuture<?> lastCancellation;
 
-    public WriteJob(SemantifyrRequestManager semantifyrRequestManager, Functions.Function0<? extends U> nonCancellable, Functions.Function2<? super CancelIndicator, ? super U, ? extends V> cancellable, CompletableFuture<?> lastCancellation) {
+    public WriteJob(
+            SemantifyrRequestManager semantifyrRequestManager,
+            Functions.Function0<? extends U> nonCancellable,
+            Functions.Function2<? super CancelIndicator, ? super U, ? extends V> cancellable,
+            CompletableFuture<?> lastCancellation) {
         super();
         this.semantifyrRequestManager = semantifyrRequestManager;
         this.nonCancellable = nonCancellable;
@@ -51,5 +54,4 @@ public class WriteJob<U, V> extends AbstractJob<V> {
         var writeResult = cancellable.apply(cancelIndicator, intermediateResult);
         complete(writeResult);
     }
-
 }

@@ -1,16 +1,15 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent;
-
-import org.eclipse.lsp4j.jsonrpc.CancelChecker;
-import org.eclipse.xtext.util.CancelIndicator;
+package hu.bme.mit.semantifyr.lang.ide.server.concurrent;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import org.eclipse.lsp4j.jsonrpc.CancelChecker;
+import org.eclipse.xtext.util.CancelIndicator;
 
 public class CompletableFutureCancelIndicator implements CancelIndicator, CancelChecker {
 
@@ -31,5 +30,4 @@ public class CompletableFutureCancelIndicator implements CancelIndicator, Cancel
             throw new CancellationException();
         }
     }
-
 }

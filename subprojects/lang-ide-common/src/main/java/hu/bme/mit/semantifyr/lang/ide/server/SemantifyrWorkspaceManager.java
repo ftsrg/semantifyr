@@ -1,20 +1,19 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.lang.ide.server;
+package hu.bme.mit.semantifyr.lang.ide.server;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.xtext.ide.server.BuildManager;
 import org.eclipse.xtext.ide.server.WorkspaceManager;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class OxstsWorkspaceManager extends WorkspaceManager {
+public class SemantifyrWorkspaceManager extends WorkspaceManager {
 
     @Override
     public BuildManager.Buildable didChangeFiles(List<URI> dirtyFiles, List<URI> deletedFiles) {
@@ -24,7 +23,10 @@ public class OxstsWorkspaceManager extends WorkspaceManager {
                 var prefix = deleted.isPrefix() ? deleted : deleted.appendSegment("");
                 var projectManager = getProjectManager(deleted);
                 var resourceSet = projectManager.getResourceSet();
-                var innerFiles = resourceSet.getResources().stream().map(Resource::getURI).filter(uri -> UriUtils.startsWith(uri, prefix)).toList();
+                var innerFiles = resourceSet.getResources().stream()
+                        .map(Resource::getURI)
+                        .filter(uri -> UriUtils.startsWith(uri, prefix))
+                        .toList();
 
                 allDeletedFiles.addAll(innerFiles);
             }
@@ -32,6 +34,4 @@ public class OxstsWorkspaceManager extends WorkspaceManager {
 
         return super.didChangeFiles(dirtyFiles, allDeletedFiles);
     }
-
-
 }

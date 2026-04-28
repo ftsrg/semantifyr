@@ -1,25 +1,24 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent;
+package hu.bme.mit.semantifyr.lang.ide.server.concurrent;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.jobs.AbstractJob;
-import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.jobs.ReadJob;
-import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.jobs.WriteJob;
-import org.eclipse.xtext.ide.server.concurrent.AbstractRequestManager;
-import org.eclipse.xtext.service.OperationCanceledManager;
-import org.eclipse.xtext.util.CancelIndicator;
-import org.eclipse.xtext.xbase.lib.Functions;
-
+import hu.bme.mit.semantifyr.lang.ide.server.concurrent.jobs.AbstractJob;
+import hu.bme.mit.semantifyr.lang.ide.server.concurrent.jobs.ReadJob;
+import hu.bme.mit.semantifyr.lang.ide.server.concurrent.jobs.WriteJob;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import org.eclipse.xtext.ide.server.concurrent.AbstractRequestManager;
+import org.eclipse.xtext.service.OperationCanceledManager;
+import org.eclipse.xtext.util.CancelIndicator;
+import org.eclipse.xtext.xbase.lib.Functions;
 
 @Singleton
 public class SemantifyrRequestManager extends AbstractRequestManager {
@@ -31,7 +30,8 @@ public class SemantifyrRequestManager extends AbstractRequestManager {
     private WriteJob<?, ?> lastWriteJob;
 
     @Inject
-    public SemantifyrRequestManager(ExecutorService executorService, OperationCanceledManager operationCanceledManager) {
+    public SemantifyrRequestManager(
+            ExecutorService executorService, OperationCanceledManager operationCanceledManager) {
         super(operationCanceledManager);
         this.executorService = executorService;
     }
@@ -63,7 +63,9 @@ public class SemantifyrRequestManager extends AbstractRequestManager {
     }
 
     @Override
-    public synchronized <U, V> CompletableFuture<V> runWrite(Functions.Function0<? extends U> nonCancellable, Functions.Function2<? super CancelIndicator, ? super U, ? extends V> cancellable) {
+    public synchronized <U, V> CompletableFuture<V> runWrite(
+            Functions.Function0<? extends U> nonCancellable,
+            Functions.Function2<? super CancelIndicator, ? super U, ? extends V> cancellable) {
         CompletableFuture<?> lastCancellation;
 
         if (lastWriteJob != null) {
@@ -84,5 +86,4 @@ public class SemantifyrRequestManager extends AbstractRequestManager {
         executorService.submit(request);
         return request.getFuture();
     }
-
 }

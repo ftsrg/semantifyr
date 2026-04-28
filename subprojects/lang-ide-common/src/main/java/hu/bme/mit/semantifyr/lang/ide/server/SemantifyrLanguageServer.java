@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.lang.ide.server;
+package hu.bme.mit.semantifyr.lang.ide.server;
 
 import com.google.gson.JsonElement;
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.WorkManager;
+import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager;
+import java.util.concurrent.CompletableFuture;
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
@@ -18,11 +18,9 @@ import org.eclipse.xtext.ide.server.LanguageServerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.CompletableFuture;
+public class SemantifyrLanguageServer extends LanguageServerImpl {
 
-public class OxstsLanguageServer extends LanguageServerImpl {
-
-    private static final Logger LOG = LoggerFactory.getLogger(OxstsLanguageServer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SemantifyrLanguageServer.class);
 
     @Inject
     protected WorkManager workManager;
@@ -49,7 +47,9 @@ public class OxstsLanguageServer extends LanguageServerImpl {
             LOG.info("workspace/didChangeConfiguration received");
             serverSettings.apply(el);
         } else if (raw != null) {
-            LOG.warn("workspace/didChangeConfiguration payload is not JSON: {}", raw.getClass().getName());
+            LOG.warn(
+                    "workspace/didChangeConfiguration payload is not JSON: {}",
+                    raw.getClass().getName());
         }
         super.didChangeConfiguration(params);
     }

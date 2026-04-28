@@ -1,23 +1,28 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent;
+package hu.bme.mit.semantifyr.lang.ide.server.concurrent;
 
 import com.google.inject.Singleton;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.eclipse.lsp4j.services.LanguageClient;
-
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
+import org.eclipse.lsp4j.ProgressParams;
+import org.eclipse.lsp4j.WorkDoneProgressBegin;
+import org.eclipse.lsp4j.WorkDoneProgressCancelParams;
+import org.eclipse.lsp4j.WorkDoneProgressCreateParams;
+import org.eclipse.lsp4j.WorkDoneProgressEnd;
+import org.eclipse.lsp4j.WorkDoneProgressReport;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.lsp4j.services.LanguageClient;
 
 @Singleton
 public class WorkManager {
 
-    protected final ConcurrentHashMap<Either<String, Integer>, SimpleCancelIndicator> indicators = new ConcurrentHashMap<>();
+    protected final ConcurrentHashMap<Either<String, Integer>, SimpleCancelIndicator> indicators =
+            new ConcurrentHashMap<>();
 
     protected LanguageClient languageClient;
 
@@ -76,5 +81,4 @@ public class WorkManager {
         progress.setMessage(message);
         languageClient.notifyProgress(new ProgressParams(token, Either.forLeft(progress)));
     }
-
 }

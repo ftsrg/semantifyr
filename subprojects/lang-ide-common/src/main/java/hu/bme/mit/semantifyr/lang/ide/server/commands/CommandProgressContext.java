@@ -1,18 +1,17 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
+package hu.bme.mit.semantifyr.lang.ide.server.commands;
 
-import hu.bme.mit.semantifyr.oxsts.lang.ide.server.concurrent.WorkManager;
+import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager;
 import hu.bme.mit.semantifyr.verification.ProgressContext;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.eclipse.xtext.util.CancelIndicator;
-
 import java.util.Random;
 import java.util.concurrent.CancellationException;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.xtext.util.CancelIndicator;
 
 public class CommandProgressContext implements ProgressContext {
 
@@ -47,5 +46,4 @@ public class CommandProgressContext implements ProgressContext {
     public void reportProgress(String message) {
         workManager.reportProgressOnWork(token, message);
     }
-
 }
