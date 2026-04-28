@@ -6,6 +6,7 @@
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
+    id("hu.bme.mit.semantifyr.gradle.conventions.verification")
     kotlin("jvm")
 }
 
@@ -18,4 +19,17 @@ dependencies {
 
     api(project(":verification"))
     api(project(":theta-backend"))
+    api(project(":uppaal-backend"))
+    api(project(":nuxmv-backend"))
+    api(project(":spin-backend"))
+}
+
+testing {
+    suites {
+        val verificationTest by getting(JvmTestSuite::class) {
+            dependencies {
+                implementation(testFixtures(project(":verification")))
+            }
+        }
+    }
 }

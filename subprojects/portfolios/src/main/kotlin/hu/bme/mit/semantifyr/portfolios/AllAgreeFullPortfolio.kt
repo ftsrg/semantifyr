@@ -1,0 +1,147 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package hu.bme.mit.semantifyr.portfolios
+
+import hu.bme.mit.semantifyr.backend.AvailabilityReport
+import hu.bme.mit.semantifyr.backend.BackendVerificationResult
+import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.VerificationBackend
+import hu.bme.mit.semantifyr.backend.VerificationMetrics
+import hu.bme.mit.semantifyr.backend.VerificationRequest
+import hu.bme.mit.semantifyr.backend.VerificationRunMetadata
+import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackend
+import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvConfig
+import hu.bme.mit.semantifyr.backends.spin.verification.SpinBackend
+import hu.bme.mit.semantifyr.backends.spin.verification.SpinConfig
+import hu.bme.mit.semantifyr.backends.theta.ThetaBackend
+import hu.bme.mit.semantifyr.backends.theta.ThetaConfig
+import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalBackend
+import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
+import hu.bme.mit.semantifyr.logging.info
+import hu.bme.mit.semantifyr.verification.ProgressContext
+import hu.bme.mit.semantifyr.verification.portfolio.BackendExecutor
+import hu.bme.mit.semantifyr.verification.portfolio.PortfolioOutcome
+import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
+import hu.bme.mit.semantifyr.verification.portfolio.withSubPath
+import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.TimeSource.Monotonic.markNow
+
+class AllAgreeFullPortfolio(
+    private val timeout: Duration = 25.minutes,
+) : VerificationPortfolio() {
+    override val id: String = "all-agree-full"
+    override val displayName: String = "Cross-backend agreement across every installed backend"
+    override val description: String =
+        "Runs one representative config per backend in parallel; reports a verdict only when every " +
+            "decisive backend agrees. Disagreement is reported as Inconclusive."
+    override val familyId: String = "all-agree"
+
+    override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
+        val anyAvailable = roster.any { it.isAvailable(environment) }
+        return if (anyAvailable) {
+            AvailabilityReport.Available
+        } else {
+            AvailabilityReport.Unavailable(
+                reason = "No verification backends are available on this system.",
+                hints = listOf(
+                    "Install at least one of: theta-xsts-cli, verifyta (Uppaal), nuXmv, or spin.",
+                    "See each backend's README for setup details.",
+                ),
+            )
+        }
+    }
+
+    override suspend fun verify(
+        request: VerificationRequest,
+        executor: BackendExecutor,
+        environment: ExecutionEnvironment,
+        progress: ProgressContext,
+    ): BackendVerificationResult {
+        val totalMark = markNow()
+        val metadata = VerificationRunMetadata(
+            backendId = id,
+            startedAt = Clock.System.now(),
+            caseQualifiedName = request.case.qualifiedName,
+        )
+        val available = roster.filter { it.isAvailable(environment) }
+        if (available.isEmpty()) {
+            logger.info { "$id: no available backends on this host" }
+            return BackendVerificationResult.inconclusive(
+                metadata = metadata,
+                metrics = VerificationMetrics(totalDuration = totalMark.elapsedNow()),
+                message = "$id: no available backends",
+            )
+        }
+        logger.info { "$id: requiring agreement across ${available.joinToString { it.subPath }} (timeout $timeout)" }
+        progress.reportProgress("running ${available.size} backend(s) for cross-backend agreement")
+
+        val outcome = all(executor, timeout, progress) {
+            available.forEach { task ->
+                async {
+                    executor.withPermit {
+                        task.run(request.withSubPath(task.subPath), environment)
+                    }
+                }
+            }
+        }
+
+        return when (outcome) {
+            is PortfolioOutcome.Decided -> {
+                outcome.result
+            }
+            is PortfolioOutcome.AllErrored -> {
+                val firstMessage = outcome.exceptions
+                    .firstOrNull()
+                    ?.let { "${it::class.simpleName}: ${it.message ?: ""}" }
+                    ?: "(no message)"
+                val extra = (outcome.exceptions.size - 1).coerceAtLeast(0)
+                val summary = if (extra > 0) "$firstMessage (+$extra more)" else firstMessage
+                BackendVerificationResult.errored(
+                    metadata = metadata,
+                    metrics = VerificationMetrics(totalDuration = totalMark.elapsedNow()),
+                    message = "$id: every backend errored - $summary",
+                )
+            }
+            is PortfolioOutcome.NoDecision -> {
+                BackendVerificationResult.inconclusive(
+                    metadata = metadata,
+                    metrics = VerificationMetrics(totalDuration = totalMark.elapsedNow()),
+                    message = outcome.reason,
+                )
+            }
+            is PortfolioOutcome.AllNotSupported -> {
+                BackendVerificationResult.notSupported(
+                    metadata = metadata,
+                    metrics = VerificationMetrics(totalDuration = totalMark.elapsedNow()),
+                    message = outcome.reason,
+                )
+            }
+        }
+    }
+
+    private val roster: List<AllAgreeBackendTask<*>> = listOf(
+        AllAgreeBackendTask(ThetaBackend, ThetaConfig.CegarExplPredCombined, "theta-cegar-combined"),
+        AllAgreeBackendTask(NuxmvBackend, NuxmvConfig.Ic3Invar, "nuxmv-ic3"),
+        AllAgreeBackendTask(UppaalBackend, UppaalConfig.Default, "uppaal-default"),
+        AllAgreeBackendTask(SpinBackend, SpinConfig.SafeDfs, "spin-safe-dfs"),
+    )
+}
+
+private class AllAgreeBackendTask<T : Any>(
+    private val backend: VerificationBackend<T>,
+    private val config: T,
+    val subPath: String,
+) {
+    fun isAvailable(environment: ExecutionEnvironment): Boolean = backend.probeAvailability(config, environment).isUsable
+
+    suspend fun run(
+        request: VerificationRequest,
+        environment: ExecutionEnvironment,
+    ): BackendVerificationResult = backend.verify(config, request, environment)
+}

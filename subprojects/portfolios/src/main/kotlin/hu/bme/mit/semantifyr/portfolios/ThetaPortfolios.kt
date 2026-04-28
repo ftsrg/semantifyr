@@ -7,22 +7,22 @@
 package hu.bme.mit.semantifyr.portfolios
 
 import hu.bme.mit.semantifyr.backend.AvailabilityReport
+import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.VerificationMetrics
 import hu.bme.mit.semantifyr.backend.VerificationRequest
-import hu.bme.mit.semantifyr.backend.VerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationRunMetadata
-import hu.bme.mit.semantifyr.verification.ThetaBackend
-import hu.bme.mit.semantifyr.verification.ThetaConfig
+import hu.bme.mit.semantifyr.backends.theta.ThetaBackend
+import hu.bme.mit.semantifyr.backends.theta.ThetaConfig
 import hu.bme.mit.semantifyr.verification.ProgressContext
 import hu.bme.mit.semantifyr.verification.portfolio.BackendExecutor
 import hu.bme.mit.semantifyr.verification.portfolio.PortfolioScope
 import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
+import hu.bme.mit.semantifyr.verification.portfolio.toBackendVerificationResult
 import hu.bme.mit.semantifyr.verification.portfolio.withSubPath
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Instant
 
 internal const val THETA_FAMILY_ID = "theta"
 
@@ -42,7 +42,7 @@ suspend fun BackendExecutor.runTheta(
     config: ThetaConfig,
     request: VerificationRequest,
     environment: ExecutionEnvironment,
-): VerificationResult {
+): BackendVerificationResult {
     return withPermit {
         ThetaBackend.verify(config, request, environment)
     }
@@ -51,7 +51,6 @@ suspend fun BackendExecutor.runTheta(
 class ThetaFullPortfolio(
     private val stageTimeout: Duration = 10.minutes,
 ) : VerificationPortfolio() {
-
     override val id: String = "theta-full"
     override val displayName: String = "Theta full portfolio"
     override val description: String = "All Theta CEGAR/BOUNDED configurations in parallel. First decisive wins."
@@ -67,28 +66,27 @@ class ThetaFullPortfolio(
         executor: BackendExecutor,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
-    ): VerificationResult {
-        return firstDecisive(executor, stageTimeout) {
+    ): BackendVerificationResult {
+        val outcome = firstDecisive(executor, stageTimeout) {
             runTheta(ThetaConfig.CegarExpl, request.withSubPath("cegarexpl"), environment)
             runTheta(ThetaConfig.CegarExplPredCombined, request.withSubPath("cegarexplpred"), environment)
             runTheta(ThetaConfig.CegarPredCart, request.withSubPath("cegarexplcart"), environment)
             runTheta(ThetaConfig.BoundedKInduction, request.withSubPath("kinduction"), environment)
-        } ?: VerificationResult.inconclusive(
+        }
+        return outcome.toBackendVerificationResult(
             metadata = VerificationRunMetadata(
-                backendId = "",
+                backendId = id,
                 startedAt = Clock.System.now(),
-                caseQualifiedName = ""
+                caseQualifiedName = "",
             ),
-            metrics = VerificationMetrics(
-
-            ),
-            message = "$id: no decisive result within $stageTimeout"
+            metrics = VerificationMetrics(),
         )
     }
-
 }
 
-class ThetaSinglePortfolio(val config: ThetaConfig) : VerificationPortfolio() {
+class ThetaSinglePortfolio(
+    val config: ThetaConfig,
+) : VerificationPortfolio() {
     override val id: String = "theta-${config.id}"
     override val displayName: String = "Theta ${config.id}"
     override val description: String = "Single Theta configuration: ${config.parameters}"
@@ -103,8 +101,7 @@ class ThetaSinglePortfolio(val config: ThetaConfig) : VerificationPortfolio() {
         executor: BackendExecutor,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
-    ): VerificationResult {
+    ): BackendVerificationResult {
         return executor.runTheta(config, request, environment)
     }
-
 }
