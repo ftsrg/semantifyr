@@ -6,16 +6,18 @@
 
 package hu.bme.mit.semantifyr.verification.trace
 
-import hu.bme.mit.semantifyr.backend.VerificationResult
-import hu.bme.mit.semantifyr.backend.VerificationTrace
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
-import hu.bme.mit.semantifyr.backend.witness.OxstsClassAssumptionWitness
-import hu.bme.mit.semantifyr.backend.witness.SerializableTraceData
-import hu.bme.mit.semantifyr.backend.witness.SerializableTraceStep
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verification.ProgressContext
 import hu.bme.mit.semantifyr.verification.SemantifyrVerifier
+import hu.bme.mit.semantifyr.verification.VerificationResult
+import hu.bme.mit.semantifyr.verification.VerificationTrace
 import hu.bme.mit.semantifyr.verification.fakeMetadata
+import hu.bme.mit.semantifyr.verification.witness.OxstsClassAssumptionWitness
+import hu.bme.mit.semantifyr.verification.witness.OxstsWitnessValidator
+import hu.bme.mit.semantifyr.verification.witness.SerializableTraceData
+import hu.bme.mit.semantifyr.verification.witness.SerializableTraceStep
+import hu.bme.mit.semantifyr.verification.witness.WitnessValidationResult
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.doReturn
@@ -52,7 +54,7 @@ class OxstsWitnessValidatorTest {
         val result = OxstsWitnessValidator.validate(verifier, trace)
 
         verify(verifier).verify(same(inlined), eq(ProgressContext.NoOp))
-        assertThat(result).isInstanceOf(TraceValidationResult.Valid::class.java)
+        assertThat(result).isInstanceOf(WitnessValidationResult.Valid::class.java)
         assertThat(result.verification).isSameAs(verification)
     }
 
@@ -69,7 +71,7 @@ class OxstsWitnessValidatorTest {
 
         val result = OxstsWitnessValidator.validate(verifier, trace)
 
-        assertThat(result).isInstanceOf(TraceValidationResult.Invalid::class.java)
+        assertThat(result).isInstanceOf(WitnessValidationResult.Invalid::class.java)
     }
 
     @Test
@@ -88,6 +90,6 @@ class OxstsWitnessValidatorTest {
         val result = OxstsWitnessValidator.validate(verifier, trace, progress)
 
         verify(verifier).verify(same(inlined), same(progress))
-        assertThat(result).isInstanceOf(TraceValidationResult.Inconclusive::class.java)
+        assertThat(result).isInstanceOf(WitnessValidationResult.Inconclusive::class.java)
     }
 }

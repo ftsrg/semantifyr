@@ -7,9 +7,9 @@
 package hu.bme.mit.semantifyr.verification
 
 import hu.bme.mit.semantifyr.backend.AvailabilityReport
+import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.VerificationRequest
-import hu.bme.mit.semantifyr.backend.VerificationResult
 import hu.bme.mit.semantifyr.verification.portfolio.BackendExecutor
 import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
 import java.util.concurrent.atomic.AtomicInteger
@@ -32,7 +32,7 @@ class ErroringPortfolio(
         executor: BackendExecutor,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
-    ): VerificationResult {
+    ): BackendVerificationResult {
         invocations.incrementAndGet()
         error("ErroringPortfolio.verify was called but should not have been")
     }

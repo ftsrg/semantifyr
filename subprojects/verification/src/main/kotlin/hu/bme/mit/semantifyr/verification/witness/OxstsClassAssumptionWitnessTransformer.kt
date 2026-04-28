@@ -1,12 +1,16 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backend.witness
+package hu.bme.mit.semantifyr.verification.witness
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionActivatedTrace
+import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitness
+import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitnessState
+import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitnessStateValue
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
@@ -27,7 +31,7 @@ class OxstsClassAssumptionWitnessTransformer @Inject constructor(
 
         fun transform(inlinedOxstsAssumptionWitnessState: InlinedOxstsAssumptionWitnessState) = mappings.getOrPut(inlinedOxstsAssumptionWitnessState) {
             OxstsClassAssumptionWitnessState(
-                inlinedOxstsAssumptionWitnessState.values.map {
+                inlinedOxstsAssumptionWitnessState.values.mapNotNull {
                     transform(it)
                 },
                 inlinedOxstsAssumptionWitnessState.activatedTraces.map {
@@ -36,8 +40,8 @@ class OxstsClassAssumptionWitnessTransformer @Inject constructor(
             )
         }
 
-        private fun transform(variableValue: InlinedOxstsAssumptionWitnessStateValue): OxstsClassAssumptionWitnessStateValue {
-            val holder = compilation.flatteningInfo.variableHolders[variableValue.variable] ?: error("Variable was not transformed!")
+        private fun transform(variableValue: InlinedOxstsAssumptionWitnessStateValue): OxstsClassAssumptionWitnessStateValue? {
+            val holder = compilation.flatteningInfo.variableHolders[variableValue.variable] ?: return null
             val originalVariable = compilation.flatteningInfo.resolveOriginalVariable(holder, variableValue.variable)
             val holderReference = instanceReferenceProvider.getReference(holder)
             val variableReference = OxstsFactory.createNavigationSuffixExpression().also {
@@ -88,11 +92,7 @@ class OxstsClassAssumptionWitnessTransformer @Inject constructor(
         val context = TransformerContext(compilation)
 
         val initialState = context.transform(inlinedOxstsAssumptionWitness.initialState)
-        val initializedState = if (inlinedOxstsAssumptionWitness.initializedState != null) {
-            context.transform(inlinedOxstsAssumptionWitness.initializedState)
-        } else {
-            null
-        }
+        val initializedState = inlinedOxstsAssumptionWitness.initializedState?.let { context.transform(it) }
         val transitionStates = inlinedOxstsAssumptionWitness.transitionStates.map {
             context.transform(it)
         }

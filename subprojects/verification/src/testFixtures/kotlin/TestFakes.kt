@@ -7,11 +7,11 @@
 package hu.bme.mit.semantifyr.verification
 
 import hu.bme.mit.semantifyr.backend.AvailabilityReport
+import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.VerificationCase
 import hu.bme.mit.semantifyr.backend.VerificationRequest
-import hu.bme.mit.semantifyr.backend.VerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationRunMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
@@ -58,7 +58,7 @@ fun fakeMetadata(backendId: String = "test", caseQualifiedName: String = "pkg.Fo
 
 class FakeBackend(
     override val id: String,
-    private val behavior: suspend () -> VerificationResult,
+    private val behavior: suspend () -> BackendVerificationResult,
 ) : VerificationBackend<Unit>() {
     val invocations = AtomicInteger(0)
     val cancellations = AtomicInteger(0)
@@ -67,7 +67,7 @@ class FakeBackend(
         config: Unit,
         request: VerificationRequest,
         environment: ExecutionEnvironment,
-    ): VerificationResult {
+    ): BackendVerificationResult {
         invocations.incrementAndGet()
         try {
             return behavior()
@@ -84,7 +84,7 @@ class FakeBackend(
     companion object {
         fun verdict(id: String, verdict: VerificationVerdict): FakeBackend {
             return FakeBackend(id) {
-                VerificationResult(verdict = verdict, metadata = fakeMetadata(id))
+                BackendVerificationResult(verdict = verdict, metadata = fakeMetadata(id))
             }
         }
 
@@ -95,7 +95,7 @@ class FakeBackend(
         ): FakeBackend {
             return FakeBackend(id) {
                 delay(delayMillis)
-                VerificationResult(verdict = verdict, metadata = fakeMetadata(id))
+                BackendVerificationResult(verdict = verdict, metadata = fakeMetadata(id))
             }
         }
 

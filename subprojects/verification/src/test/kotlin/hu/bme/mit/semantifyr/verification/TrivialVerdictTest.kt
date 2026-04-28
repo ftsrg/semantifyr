@@ -8,14 +8,16 @@ package hu.bme.mit.semantifyr.verification
 
 import com.google.inject.Inject
 import com.google.inject.Injector
-import hu.bme.mit.semantifyr.backend.VerificationResult
+import hu.bme.mit.semantifyr.backend.VerificationCase
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
-import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.InlinedOxstsParseHelper
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import org.assertj.core.api.Assertions.assertThat
+import org.eclipse.xtext.EcoreUtil2
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import java.nio.file.Files
@@ -27,16 +29,18 @@ class TrivialVerdictTest {
     private lateinit var injector: Injector
 
     @Inject
-    private lateinit var parseHelper: InlinedOxstsParseHelper
+    private lateinit var parseHelper: OxstsPackageParseHelper
 
     @Test
     suspend fun `short-circuits to Passed when property simplifies to AG true`() {
         assertTriviallyDecided(
-            model = """
-                inlined oxsts of semantifyr::Anything
-                init { }
-                tran { }
-                prop { AG true }
+            classToVerify = "TrivialPass",
+            source = """
+                package trivial::tests
+                @VerificationCase
+                class TrivialPass {
+                    prop { return AG true }
+                }
             """.trimIndent(),
             expected = VerificationVerdict.Passed,
         )
@@ -45,11 +49,13 @@ class TrivialVerdictTest {
     @Test
     suspend fun `short-circuits to Failed when property simplifies to AG false`() {
         assertTriviallyDecided(
-            model = """
-                inlined oxsts of semantifyr::Anything
-                init { }
-                tran { }
-                prop { AG false }
+            classToVerify = "TrivialFailAG",
+            source = """
+                package trivial::tests
+                @VerificationCase
+                class TrivialFailAG {
+                    prop { return AG false }
+                }
             """.trimIndent(),
             expected = VerificationVerdict.Failed,
         )
@@ -58,11 +64,13 @@ class TrivialVerdictTest {
     @Test
     suspend fun `short-circuits to Passed when property simplifies to EF true`() {
         assertTriviallyDecided(
-            model = """
-                inlined oxsts of semantifyr::Anything
-                init { }
-                tran { }
-                prop { EF true }
+            classToVerify = "TrivialPassEF",
+            source = """
+                package trivial::tests
+                @VerificationCase
+                class TrivialPassEF {
+                    prop { return EF true }
+                }
             """.trimIndent(),
             expected = VerificationVerdict.Passed,
         )
@@ -71,11 +79,13 @@ class TrivialVerdictTest {
     @Test
     suspend fun `short-circuits to Failed when property simplifies to EF false`() {
         assertTriviallyDecided(
-            model = """
-                inlined oxsts of semantifyr::Anything
-                init { }
-                tran { }
-                prop { EF false }
+            classToVerify = "TrivialFailEF",
+            source = """
+                package trivial::tests
+                @VerificationCase
+                class TrivialFailEF {
+                    prop { return EF false }
+                }
             """.trimIndent(),
             expected = VerificationVerdict.Failed,
         )
@@ -84,12 +94,14 @@ class TrivialVerdictTest {
     @Test
     suspend fun `dispatches to portfolio when model has a variable`() {
         assertDispatchedToPortfolio(
-            model = """
-                inlined oxsts of semantifyr::Anything
-                var x : int
-                init { }
-                tran { }
-                prop { AG (x >= 0) }
+            classToVerify = "DispatchOnVar",
+            source = """
+                package trivial::tests
+                @VerificationCase
+                class DispatchOnVar {
+                    var x: int := 0
+                    prop { return AG (x >= 0) }
+                }
             """.trimIndent(),
         )
     }
@@ -97,11 +109,15 @@ class TrivialVerdictTest {
     @Test
     suspend fun `dispatches to portfolio when init is non-empty`() {
         assertDispatchedToPortfolio(
-            model = """
-                inlined oxsts of semantifyr::Anything
-                init { assume(false) }
-                tran { }
-                prop { AG true }
+            classToVerify = "DispatchOnInit",
+            source = """
+                package trivial::tests
+                @VerificationCase
+                class DispatchOnInit {
+                    var x: int := 0
+                    redefine init { x := 1 }
+                    prop { return AG (x >= 0) }
+                }
             """.trimIndent(),
         )
     }
@@ -109,18 +125,26 @@ class TrivialVerdictTest {
     @Test
     suspend fun `dispatches to portfolio when tran is non-empty`() {
         assertDispatchedToPortfolio(
-            model = """
-                inlined oxsts of semantifyr::Anything
-                init { }
-                tran { assume(false) }
-                prop { AG true }
+            classToVerify = "DispatchOnTran",
+            source = """
+                package trivial::tests
+                @VerificationCase
+                class DispatchOnTran {
+                    var x: int := 0
+                    redefine tran { x := x + 1 }
+                    prop { return AG (x >= 0) }
+                }
             """.trimIndent(),
         )
     }
 
-    private suspend fun assertTriviallyDecided(model: String, expected: VerificationVerdict) {
+    private suspend fun assertTriviallyDecided(
+        classToVerify: String,
+        source: String,
+        expected: VerificationVerdict,
+    ) {
         val portfolio = ErroringPortfolio()
-        val result = runVerifier(model, portfolio)
+        val result = runVerifier(classToVerify, source, portfolio)
         assertThat(result.verdict).isEqualTo(expected)
         assertThat(portfolio.invocations.get())
             .`as`("portfolio must not be invoked when the model is fully optimized away")
@@ -128,17 +152,31 @@ class TrivialVerdictTest {
         assertThat(result.metadata.backendId).isEqualTo("trivial")
     }
 
-    private suspend fun assertDispatchedToPortfolio(model: String) {
+    private suspend fun assertDispatchedToPortfolio(
+        classToVerify: String,
+        source: String,
+    ) {
         val portfolio = ErroringPortfolio()
-        runVerifier(model, portfolio)
+        runVerifier(classToVerify, source, portfolio)
         assertThat(portfolio.invocations.get())
             .`as`("portfolio must be invoked when the trivial shortcircuit does not apply")
             .isEqualTo(1)
     }
 
-    private suspend fun runVerifier(model: String, portfolio: ErroringPortfolio): VerificationResult {
-        val inlined = parseHelper.parse(model)
-        return buildVerifier(portfolio).use { it.verify(inlined) }
+    private suspend fun runVerifier(
+        classToVerify: String,
+        source: String,
+        portfolio: ErroringPortfolio,
+    ): VerificationResult {
+        val parsed = parseHelper.parse(source)
+        val classDecl = EcoreUtil2
+            .eAllOfType(parsed.oxstsPackage, ClassDeclaration::class.java)
+            .single { it.name == classToVerify }
+        val case = VerificationCase(
+            classDeclaration = classDecl,
+            qualifiedName = "trivial::tests::$classToVerify",
+        )
+        return buildVerifier(portfolio).use { it.verify(case) }
     }
 
     private fun buildVerifier(portfolio: ErroringPortfolio): SemantifyrVerifier {
@@ -146,12 +184,9 @@ class TrivialVerdictTest {
             .injector(injector)
             .context(mock<SemantifyrModelContext>())
             .portfolio(portfolio)
-            .artifacts(artifacts())
+            .artifacts(ArtifactConfig.NONE)
+            .outputDirectory(Files.createTempDirectory("trivial-verdict-test-"))
             .optimization(OptimizationConfig.NONE)
             .build()
-    }
-
-    private fun artifacts(): ArtifactConfig {
-        return ArtifactConfig.none(Files.createTempDirectory("trivial-verdict-test-"))
     }
 }

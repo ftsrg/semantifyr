@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.verification
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.VerificationCase
-import hu.bme.mit.semantifyr.backend.VerificationResult
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
@@ -19,6 +18,7 @@ import hu.bme.mit.semantifyr.verification.discovery.CaseFilter
 import hu.bme.mit.semantifyr.verification.internal.SemantifyrVerifierImpl
 import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
 import kotlinx.coroutines.runBlocking
+import java.nio.file.Path
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toKotlinDuration
@@ -76,6 +76,7 @@ interface SemantifyrVerifier : AutoCloseable {
         private var context: SemantifyrModelContext? = null
         private var verificationPortfolio: VerificationPortfolio? = null
         private var artifacts: ArtifactConfig? = null
+        private var outputDirectory: Path? = null
         private var environment = ExecutionEnvironment.Empty
         private var timeout = 5.minutes
         private var maxConcurrency = Runtime.getRuntime().availableProcessors().coerceAtLeast(1)
@@ -98,6 +99,11 @@ interface SemantifyrVerifier : AutoCloseable {
 
         fun artifacts(config: ArtifactConfig): Builder {
             this.artifacts = config
+            return this
+        }
+
+        fun outputDirectory(path: Path): Builder {
+            this.outputDirectory = path
             return this
         }
 
@@ -137,6 +143,9 @@ interface SemantifyrVerifier : AutoCloseable {
             val resolvedArtifacts = requireNotNull(artifacts) {
                 "SemantifyrVerifier.Builder requires .artifacts(...)."
             }
+            val resolvedOutputDirectory = requireNotNull(outputDirectory) {
+                "SemantifyrVerifier.Builder requires .outputDirectory(...)."
+            }
             val resolvedInjector = injector ?: OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
 
             return SemantifyrVerifierImpl(
@@ -144,6 +153,7 @@ interface SemantifyrVerifier : AutoCloseable {
                 context = resolvedContext,
                 verificationPortfolio = resolvedPortfolio,
                 artifactConfig = resolvedArtifacts,
+                outputDirectory = resolvedOutputDirectory,
                 environment = environment,
                 timeout = timeout,
                 maxConcurrency = maxConcurrency,

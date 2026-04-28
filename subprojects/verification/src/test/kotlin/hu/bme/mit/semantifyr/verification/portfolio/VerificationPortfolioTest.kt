@@ -7,9 +7,9 @@
 package hu.bme.mit.semantifyr.verification.portfolio
 
 import hu.bme.mit.semantifyr.backend.AvailabilityReport
+import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.VerificationRequest
-import hu.bme.mit.semantifyr.backend.VerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.verification.FakeBackend
 import hu.bme.mit.semantifyr.verification.ProgressContext
@@ -35,7 +35,7 @@ private class TestPortfolio(override val id: String = "p") : VerificationPortfol
         executor: BackendExecutor,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
-    ): VerificationResult {
+    ): BackendVerificationResult {
         error("TestPortfolio.verify is unused; tests call runFirstDecisive / runFirstNDecisive / runAll directly")
     }
 
@@ -68,7 +68,7 @@ private class TestPortfolio(override val id: String = "p") : VerificationPortfol
     }
 }
 
-private fun PortfolioOutcome.orFail(message: String): VerificationResult {
+private fun PortfolioOutcome.orFail(message: String): BackendVerificationResult {
     return when (this) {
         is PortfolioOutcome.Decided -> result
         else -> error(message)

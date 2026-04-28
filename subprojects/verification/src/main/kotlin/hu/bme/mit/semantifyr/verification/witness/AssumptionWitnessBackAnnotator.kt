@@ -1,22 +1,25 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backend.witness
+package hu.bme.mit.semantifyr.verification.witness
 
 import com.google.inject.Inject
-import com.google.inject.Singleton
-import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
+import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.RedefinitionAwareReferenceResolver
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.ExpressionRewriter
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
@@ -31,13 +34,14 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionKind
 
-@VerificationScoped
 class AssumptionWitnessBackAnnotator @Inject constructor(
     private val builtinSymbolResolver: BuiltinSymbolResolver,
     private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
+    private val expressionRewriter: ExpressionRewriter,
 ) {
     private inner class WitnessContext(
         val witness: OxstsClassAssumptionWitness,
+        val verdict: VerificationVerdict,
     ) {
         val stepValues = mutableMapOf<OxstsClassAssumptionWitnessState, Int>()
         private var lastStepValue = -1
@@ -67,29 +71,20 @@ class AssumptionWitnessBackAnnotator @Inject constructor(
             }
         }
 
-        fun createInlinedOxsts(): InlinedOxsts {
-//            val resourceSet = witness.inlinedOxsts.eResource().resourceSet
-//            val path = witness.inlinedOxsts.eResource().uri.toString().replace("inlined.oxsts", "witness.oxsts")
-//            val uri = URI.createURI(path)
-
-            val inlinedOxsts = OxstsFactory.createInlinedOxsts()
-
-//            resourceSet.getResource(uri, false)?.delete(mutableMapOf<Any, Any>())
-//            resourceSet.createResource(uri).contents += inlinedOxsts
-
-            initializeInlinedOxstsModel(inlinedOxsts)
-
-            return inlinedOxsts
+        private val originalProperty by lazy {
+            redefinitionAwareReferenceResolver.resolveOrNull(rootFeature, "prop") as? PropertyDeclaration ?: error("Verified class has no property.")
         }
 
-        private fun initializeInlinedOxstsModel(inlinedOxstsWitness: InlinedOxsts) {
-            inlinedOxstsWitness.rootFeature = rootFeature
-            inlinedOxstsWitness.classDeclaration = witness.inlinedOxsts.classDeclaration
-            inlinedOxstsWitness.isWitness = true
-            inlinedOxstsWitness.variables += stateVariable
-            inlinedOxstsWitness.initTransition = createInitTransitionDeclaration()
-            inlinedOxstsWitness.mainTransition = createMainTransitionDeclaration()
-            inlinedOxstsWitness.property = createPropertyDeclaration()
+        fun createInlinedOxsts(): InlinedOxsts {
+            val inlinedOxsts = OxstsFactory.createInlinedOxsts()
+            inlinedOxsts.rootFeature = rootFeature
+            inlinedOxsts.classDeclaration = witness.inlinedOxsts.classDeclaration
+            inlinedOxsts.isWitness = true
+            inlinedOxsts.variables += stateVariable
+            inlinedOxsts.initTransition = createInitTransitionDeclaration()
+            inlinedOxsts.mainTransition = createMainTransitionDeclaration()
+            inlinedOxsts.property = createPropertyDeclaration(lastStepValue)
+            return inlinedOxsts
         }
 
         private fun createInitTransitionDeclaration(): TransitionDeclaration {
@@ -99,11 +94,19 @@ class AssumptionWitnessBackAnnotator @Inject constructor(
             return OxstsFactory.createTransitionDeclaration().also {
                 it.kind = TransitionKind.INIT
                 it.branches += OxstsFactory.createSequenceOperation().also {
-                    it.steps += createStateOperation(witness.initialState, transition).steps
+                    it.steps += createInitialStateOperation(witness.initialState).steps
                     if (witness.initializedState != null) {
                         it.steps += createStateOperation(witness.initializedState, transition).steps
                     }
                 }
+            }
+        }
+
+        private fun createInitialStateOperation(state: OxstsClassAssumptionWitnessState): SequenceOperation {
+            return OxstsFactory.createSequenceOperation().also {
+                it.steps += createStateVariableAssumption(state.stepValue)
+                it.steps += state.toAssumptionOperations()
+                it.steps += createStateVariableAssignment(state.stepValue + 1)
             }
         }
 
@@ -124,24 +127,53 @@ class AssumptionWitnessBackAnnotator @Inject constructor(
             }
         }
 
-        private fun createPropertyDeclaration(): PropertyDeclaration {
-            val property = redefinitionAwareReferenceResolver.resolveOrNull(rootFeature, "prop") as? PropertyDeclaration
+        private fun createPropertyDeclaration(finalStepValue: Int): PropertyDeclaration {
+            val propertyBody = originalProperty.expression.bodyOfTemporal().copy()
+            expressionRewriter.rewriteExpressionsToContext(propertyBody, OxstsFactory.createElementReference(rootFeature))
+            val property = if (verdict == VerificationVerdict.Failed) {
+                OxstsFactory.createNegationOperator(propertyBody)
+            } else {
+                propertyBody
+            }
 
-            if (property == null) {
-                return OxstsFactory.createPropertyDeclaration().also {
-                    it.expression = OxstsFactory.createLiteralBoolean(true)
+            val anchoredExpression = when (originalProperty.expression) {
+                is EF -> OxstsFactory.createBooleanOperator(BooleanOp.AND, stepEqualsLast(finalStepValue), property)
+                else -> OxstsFactory.createBooleanOperator(BooleanOp.OR, stepNotEqualsLast(finalStepValue), property)
+            }
+
+            val temporal = when (originalProperty.expression) {
+                is EF -> OxstsFactory.createEF().also {
+                    it.body = anchoredExpression
+                }
+                else -> OxstsFactory.createAG().also {
+                    it.body = anchoredExpression
                 }
             }
 
             return OxstsFactory.createPropertyDeclaration().also {
-                it.expression = OxstsFactory.createCallSuffixExpression().also {
-                    it.primary = OxstsFactory.createNavigationSuffixExpression().also {
-                        it.primary = OxstsFactory.createElementReference().also {
-                            it.element = rootFeature
-                        }
-                        it.member = property
-                    }
-                }
+                it.expression = temporal
+            }
+        }
+
+        private fun Expression.bodyOfTemporal(): Expression = when (this) {
+            is AG -> body
+            is EF -> body
+            else -> this
+        }
+
+        private fun stepEqualsLast(finalStepValue: Int): Expression {
+            return OxstsFactory.createComparisonOperator().also {
+                it.op = ComparisonOp.EQ
+                it.left = OxstsFactory.createElementReference(stateVariable)
+                it.right = OxstsFactory.createLiteralInteger(finalStepValue)
+            }
+        }
+
+        private fun stepNotEqualsLast(finalStepValue: Int): Expression {
+            return OxstsFactory.createComparisonOperator().also {
+                it.op = ComparisonOp.NOT_EQ
+                it.left = OxstsFactory.createElementReference(stateVariable)
+                it.right = OxstsFactory.createLiteralInteger(finalStepValue)
             }
         }
 
@@ -158,8 +190,10 @@ class AssumptionWitnessBackAnnotator @Inject constructor(
 
                 it.steps += state.toAssumptionOperations()
 
-                if (witness.getNextStates(state).any()) {
+                if (witness.getNextStates(state).size > 1) {
                     it.steps += createNextStateTransitionOperation(state)
+                } else {
+                    it.steps += createStateVariableAssignment(state.stepValue + 1)
                 }
             }
         }
@@ -227,7 +261,7 @@ class AssumptionWitnessBackAnnotator @Inject constructor(
 
             val innerMost = innerMostElementReference()
 
-            if (! OxstsUtils.isGlobalFeature(innerMost.element)) {
+            if (OxstsUtils.isElementContextual(innerMost.element)) {
                 innerMost.element = actualRoot
             }
 
@@ -250,8 +284,11 @@ class AssumptionWitnessBackAnnotator @Inject constructor(
 
     }
 
-    fun createWitnessInlinedOxsts(witness: OxstsClassAssumptionWitness): InlinedOxsts {
-        val context = WitnessContext(witness)
+    fun createWitnessInlinedOxsts(
+        witness: OxstsClassAssumptionWitness,
+        verdict: VerificationVerdict,
+    ): InlinedOxsts {
+        val context = WitnessContext(witness, verdict)
         return context.createInlinedOxsts()
     }
 

@@ -7,10 +7,10 @@
 package hu.bme.mit.semantifyr.verification
 
 import hu.bme.mit.semantifyr.backend.AvailabilityReport
+import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.VerificationRequest
-import hu.bme.mit.semantifyr.backend.VerificationResult
 import hu.bme.mit.semantifyr.verification.portfolio.BackendExecutor
 import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
 
@@ -34,7 +34,7 @@ class SingleBackendPortfolio<T : Any>(
         executor: BackendExecutor,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
-    ): VerificationResult {
+    ): BackendVerificationResult {
         return executor.withPermit {
             backend.verify(config, request, environment)
         }

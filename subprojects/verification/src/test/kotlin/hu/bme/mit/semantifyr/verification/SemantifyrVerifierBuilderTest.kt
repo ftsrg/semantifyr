@@ -15,7 +15,8 @@ import java.nio.file.Paths
 class SemantifyrVerifierBuilderTest {
 
     private val portfolio = ErroringPortfolio()
-    private val dummyArtifacts: ArtifactConfig = ArtifactConfig.none(Paths.get(System.getProperty("java.io.tmpdir")))
+    private val dummyArtifacts: ArtifactConfig = ArtifactConfig.NONE
+    private val dummyOutputDirectory = Paths.get(System.getProperty("java.io.tmpdir"))
 
     @Test
     fun `verifier builder requires a context`() {
@@ -23,6 +24,7 @@ class SemantifyrVerifierBuilderTest {
             SemantifyrVerifier.builder()
                 .portfolio(portfolio)
                 .artifacts(dummyArtifacts)
+                .outputDirectory(dummyOutputDirectory)
                 .build()
         }.hasMessageContaining(".context(...)")
     }
@@ -33,6 +35,7 @@ class SemantifyrVerifierBuilderTest {
             SemantifyrVerifier.builder()
                 .context(mock())
                 .artifacts(dummyArtifacts)
+                .outputDirectory(dummyOutputDirectory)
                 .build()
         }.hasMessageContaining(".portfolio(...)")
     }
@@ -43,8 +46,20 @@ class SemantifyrVerifierBuilderTest {
             SemantifyrVerifier.builder()
                 .context(mock())
                 .portfolio(portfolio)
+                .outputDirectory(dummyOutputDirectory)
                 .build()
         }.hasMessageContaining(".artifacts(...)")
+    }
+
+    @Test
+    fun `verifier builder requires an outputDirectory`() {
+        assertThatThrownBy {
+            SemantifyrVerifier.builder()
+                .context(mock())
+                .portfolio(portfolio)
+                .artifacts(dummyArtifacts)
+                .build()
+        }.hasMessageContaining(".outputDirectory(...)")
     }
 
     @Test
