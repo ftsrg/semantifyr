@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitnessStateV
 import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvVariableKind
 import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvVariableTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -27,11 +28,21 @@ class NuxmvInlinedOxstsWitnessTransformer @Inject constructor(
     fun transform(inlinedOxsts: InlinedOxsts, trace: NuxmvTrace): InlinedOxstsAssumptionWitness {
         val nameToVar = inlinedOxsts.variables.associateBy { variableTransformer.nameOf(it) }
 
+        val running = mutableMapOf<VariableDeclaration, Expression>()
+        val updated = mutableSetOf<VariableDeclaration>()
+
         val states = trace.states.map { state ->
-            val values = state.variableValues.mapNotNull { (name, raw) ->
-                val variable = nameToVar[name] ?: return@mapNotNull null
-                val value = parseValue(variable, raw) ?: return@mapNotNull null
-                InlinedOxstsAssumptionWitnessStateValue(variable, value)
+            for ((name, raw) in state.variableValues) {
+                val variable = nameToVar[name] ?: continue
+                val value = parseValue(variable, raw) ?: continue
+                running[variable] = value
+                updated += variable
+            }
+            val values = inlinedOxsts.variables.mapNotNull { variable ->
+                if (variable !in updated) {
+                    return@mapNotNull null
+                }
+                running[variable]?.let { InlinedOxstsAssumptionWitnessStateValue(variable, it.copy()) }
             }
             InlinedOxstsAssumptionWitnessState(values, activatedTraces = emptyList())
         }

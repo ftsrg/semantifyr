@@ -61,12 +61,16 @@ class NuxmvModelGenerator {
         val initPrimedVars = initBranches.flatMap { it.newPrimes }
         val tranPrimedVars = tranBranches.flatMap { it.newPrimes }
         val allIvars = (initBranches + tranBranches).flatMap { it.ivars }
+        val allFrozenVars = (initBranches + tranBranches).flatMap { it.frozenVars }
 
         val builder = IndentingBuilder()
         builder.line("MODULE main")
         renderVarSection(builder, variables, initPrimedVars + tranPrimedVars)
         if (allIvars.isNotEmpty()) {
             renderIvarSection(builder, allIvars)
+        }
+        if (allFrozenVars.isNotEmpty()) {
+            renderFrozenVarSection(builder, allFrozenVars)
         }
         renderInitSection(builder, allVars, initBranches, declaredInitial)
         renderTransSection(builder, allVars, tranBranches)
@@ -102,6 +106,18 @@ class NuxmvModelGenerator {
         builder.indented {
             for (ivar in ivars) {
                 line("${ivar.name} : ${ivar.typeSmv};")
+            }
+        }
+    }
+
+    private fun renderFrozenVarSection(
+        builder: IndentingBuilder,
+        frozenVars: List<NuxmvFrozenVar>,
+    ) {
+        builder.line("FROZENVAR")
+        builder.indented {
+            for (frozen in frozenVars) {
+                line("${frozen.name} : ${frozen.typeSmv};")
             }
         }
     }

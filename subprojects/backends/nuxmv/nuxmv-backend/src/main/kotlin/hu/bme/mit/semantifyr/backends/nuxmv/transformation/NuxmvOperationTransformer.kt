@@ -26,6 +26,7 @@ class NuxmvOperationTransformer {
     private lateinit var nuxmvVariableTransformer: NuxmvVariableTransformer
 
     private var nextIvarId: Int = 0
+    private var nextFrozenVarId: Int = 0
     private var contextTag: String = ""
     private var branchTag: String = ""
     private val primeCounter: MutableMap<VariableDeclaration, Int> = mutableMapOf()
@@ -154,12 +155,23 @@ class NuxmvOperationTransformer {
             return fold(accumulated, branches.single())
         }
 
-        val ivar = choiceIVar(name = "nondet_${nextIvarId++}", branchCount = branches.size)
         val childBranches = branches.map { child -> fold(accumulated, child) }
+        if (contextTag == "init") {
+            val frozen = choiceFrozenVar(name = "nondet_init_${nextFrozenVarId++}", branchCount = branches.size)
+            return commonize(
+                base = accumulated,
+                childBranches = childBranches,
+                extraIvars = emptyList(),
+                extraFrozenVars = listOf(frozen),
+                keyExprs = childBranches.indices.map { i -> "${frozen.name} = $i" },
+            )
+        }
+        val ivar = choiceIVar(name = "nondet_${nextIvarId++}", branchCount = branches.size)
         return commonize(
             base = accumulated,
             childBranches = childBranches,
             extraIvars = listOf(ivar),
+            extraFrozenVars = emptyList(),
             keyExprs = childBranches.indices.map { i -> "${ivar.name} = $i" },
         )
     }
@@ -175,6 +187,7 @@ class NuxmvOperationTransformer {
             base = accumulated,
             childBranches = listOf(thenBranch, elseBranch),
             extraIvars = emptyList(),
+            extraFrozenVars = emptyList(),
             keyExprs = listOf(guardStr, "TRUE"),
         )
     }
@@ -189,6 +202,7 @@ class NuxmvOperationTransformer {
         base: NuxmvBranch,
         childBranches: List<NuxmvBranch>,
         extraIvars: List<NuxmvIVar>,
+        extraFrozenVars: List<NuxmvFrozenVar>,
         keyExprs: List<String>,
     ): NuxmvBranch {
         require(childBranches.size == keyExprs.size) {
@@ -205,6 +219,7 @@ class NuxmvOperationTransformer {
         val mergedPrimes = base.newPrimes.toMutableList()
         val mergedCurrent = base.currentPrime.toMutableMap()
         val mergedIvars = base.ivars + extraIvars
+        val mergedFrozenVars = base.frozenVars + extraFrozenVars
 
         // Per-branch extra constraints: case-wrap on the key so they only fire in the matching branch.
         val branchExtras: List<List<String>> = childBranches.map { child ->
@@ -223,9 +238,12 @@ class NuxmvOperationTransformer {
             mergedPrimes += child.newPrimes.subList(base.newPrimes.size, child.newPrimes.size)
         }
 
-        // Carry-over IVARs introduced inside child branches (e.g. nested choices).
+        // Carry-over IVARs and FROZENVARs introduced inside child branches (e.g. nested choices).
         val childExtraIvars = childBranches.flatMap { child ->
             child.ivars.subList(base.ivars.size, child.ivars.size)
+        }
+        val childExtraFrozenVars = childBranches.flatMap { child ->
+            child.frozenVars.subList(base.frozenVars.size, child.frozenVars.size)
         }
 
         // For each touched variable: introduce a post-merge prime bound by a case on the key.
@@ -244,6 +262,7 @@ class NuxmvOperationTransformer {
             currentPrime = mergedCurrent,
             newPrimes = mergedPrimes,
             ivars = mergedIvars + childExtraIvars,
+            frozenVars = mergedFrozenVars + childExtraFrozenVars,
         )
     }
 

@@ -13,12 +13,25 @@ data class NuxmvIVar(
     val typeSmv: String,
 )
 
+data class NuxmvFrozenVar(
+    val name: String,
+    val typeSmv: String,
+)
+
 fun choiceIVar(
     name: String,
     branchCount: Int,
 ): NuxmvIVar {
     require(branchCount >= 2) { "choiceIVar branchCount must be >= 2 (got $branchCount)" }
     return NuxmvIVar(name = name, typeSmv = "0..${branchCount - 1}")
+}
+
+fun choiceFrozenVar(
+    name: String,
+    branchCount: Int,
+): NuxmvFrozenVar {
+    require(branchCount >= 2) { "choiceFrozenVar branchCount must be >= 2 (got $branchCount)" }
+    return NuxmvFrozenVar(name = name, typeSmv = "0..${branchCount - 1}")
 }
 
 data class NuxmvPrimedDecl(
@@ -31,4 +44,5 @@ data class NuxmvBranch(
     val currentPrime: Map<VariableDeclaration, String> = emptyMap(),
     val newPrimes: List<NuxmvPrimedDecl> = emptyList(),
     val ivars: List<NuxmvIVar> = emptyList(),
+    val frozenVars: List<NuxmvFrozenVar> = emptyList(),
 )

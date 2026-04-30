@@ -11,15 +11,14 @@ import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitness
 import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitnessState
 import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitnessStateValue
+import hu.bme.mit.semantifyr.backends.spin.transformation.SpinPropertyTransformer
 import hu.bme.mit.semantifyr.backends.spin.transformation.SpinVariableKind
 import hu.bme.mit.semantifyr.backends.spin.transformation.SpinVariableTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
 @VerificationScoped
@@ -30,24 +29,37 @@ class SpinInlinedOxstsWitnessTransformer @Inject constructor(
     fun transform(inlinedOxsts: InlinedOxsts, trace: SpinTrace): InlinedOxstsAssumptionWitness {
         val nameToVar = inlinedOxsts.variables.associateBy { variableTransformer.nameOf(it) }
 
-        val states = trace.states.map { state ->
-            val values = state.variableValues.mapNotNull { (name, raw) ->
-                val variable = nameToVar[name] ?: return@mapNotNull null
-                val value = parseValue(variable, raw) ?: return@mapNotNull null
-                InlinedOxstsAssumptionWitnessStateValue(variable, value)
+        val running = mutableMapOf<VariableDeclaration, Expression>()
+        val updated = mutableSetOf<VariableDeclaration>()
+
+        val states = trace.states.mapNotNull { state ->
+            for ((name, raw) in state.variableValues) {
+                val variable = nameToVar[name] ?: continue
+                val value = parseValue(variable, raw) ?: continue
+                running[variable] = value
+                updated += variable
+            }
+            val stable = state.variableValues[SpinPropertyTransformer.STABLE_FLAG]
+            if (stable != "1" && stable != "true") {
+                return@mapNotNull null
+            }
+            val values = inlinedOxsts.variables.mapNotNull { variable ->
+                if (variable !in updated) {
+                    return@mapNotNull null
+                }
+                running[variable]?.let { InlinedOxstsAssumptionWitnessStateValue(variable, it.copy()) }
             }
             InlinedOxstsAssumptionWitnessState(values, activatedTraces = emptyList())
         }
 
         require(states.isNotEmpty()) { "Cannot build witness from an empty Spin trace" }
 
-        val initHasEffect = inlinedOxsts.initTransition.hasObservableEffect()
         val pre = InlinedOxstsAssumptionWitnessState(values = emptyList(), activatedTraces = emptyList())
-        val initialized = if (initHasEffect) states.first() else null
-        val transitions = if (initHasEffect) states.drop(1) else states
+        val initialized = states.first()
+        val transitions = states.drop(1)
 
         val nextStateMap = mutableMapOf<InlinedOxstsAssumptionWitnessState, List<InlinedOxstsAssumptionWitnessState>>()
-        if (initialized != null && transitions.isNotEmpty()) {
+        if (transitions.isNotEmpty()) {
             nextStateMap[initialized] = listOf(transitions.first())
         }
         for (i in 1 until transitions.size) {
@@ -63,17 +75,6 @@ class SpinInlinedOxstsWitnessTransformer @Inject constructor(
         )
     }
 
-    private fun TransitionDeclaration.hasObservableEffect(): Boolean {
-        val iterator = this.eAllContents()
-        while (iterator.hasNext()) {
-            val obj = iterator.next()
-            if (obj is AssignmentOperation || obj is HavocOperation) {
-                return true
-            }
-        }
-        return false
-    }
-
     private fun parseValue(variable: VariableDeclaration, raw: String): Expression? {
         val kind = runCatching { variableTransformer.describe(variable).kind }.getOrNull() ?: return null
         return when (kind) {
@@ -87,8 +88,9 @@ class SpinInlinedOxstsWitnessTransformer @Inject constructor(
             }
             SpinVariableKind.Enum -> {
                 val enumDecl = variable.typeSpecification?.domain as? EnumDeclaration ?: return null
-                val ordinal = raw.toIntOrNull() ?: return null
-                val literal = enumDecl.literals.getOrNull(ordinal) ?: return null
+                val literal = enumDecl.literals.firstOrNull { it.name == raw }
+                    ?: raw.toIntOrNull()?.let { enumDecl.literals.getOrNull(it) }
+                    ?: return null
                 OxstsFactory.createElementReference(literal)
             }
         }
