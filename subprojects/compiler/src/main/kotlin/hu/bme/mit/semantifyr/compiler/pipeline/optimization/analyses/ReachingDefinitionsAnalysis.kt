@@ -33,6 +33,7 @@ import org.eclipse.emf.ecore.EObject
 
 data class ReachingDefinitionsInfo(
     val defsOf: Map<Expression, Set<EObject>>,
+    val exitReaching: Set<EObject>,
 )
 
 class ReachingDefinitionsAnalysis @Inject constructor(
@@ -82,14 +83,30 @@ class ReachingDefinitionsComputation(
             }
         }
 
+        val globalVariables = inlinedOxsts.variables.toSet()
+        val exitReaching = mutableSetOf<EObject>()
+
+        fun harvestExit(state: Map<VariableDeclaration, Set<EObject>>) {
+            for ((variable, defs) in state) {
+                if (variable !in globalVariables) {
+                    continue
+                }
+                for (def in defs) {
+                    if (def is AssignmentOperation || def is HavocOperation) {
+                        exitReaching += def
+                    }
+                }
+            }
+        }
+
         inlinedOxsts.initTransition?.let {
             for (branch in it.branches) {
-                walkOperation(branch, emptyMap())
+                harvestExit(walkOperation(branch, emptyMap()))
             }
         }
         inlinedOxsts.mainTransition?.let { transition ->
             for (branch in transition.branches) {
-                walkOperation(branch, initialIn)
+                harvestExit(walkOperation(branch, initialIn))
             }
         }
 
@@ -108,7 +125,7 @@ class ReachingDefinitionsComputation(
             }
         }
 
-        return ReachingDefinitionsInfo(defsOf.toMap())
+        return ReachingDefinitionsInfo(defsOf.toMap(), exitReaching.toSet())
     }
 
     private fun initMustWrite(variable: VariableDeclaration): Boolean {

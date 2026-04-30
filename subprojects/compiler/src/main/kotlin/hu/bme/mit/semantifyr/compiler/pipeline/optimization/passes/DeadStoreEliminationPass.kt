@@ -32,14 +32,18 @@ class DeadStoreEliminationPass @Inject constructor(
             return PassResult.Unchanged
         }
 
-        val rd = analysisManager.get(ReachingDefinitionsAnalysis::class.java, input)
+        val reachingDefinitionsInfo = analysisManager.get(ReachingDefinitionsAnalysis::class.java, input)
 
-        val liveWrites = rd.defsOf.values.flatten().toSet()
+        val liveWrites = reachingDefinitionsInfo.defsOf.values.flatten().toSet()
+        val exitLiveWrites = reachingDefinitionsInfo.exitReaching
 
-        val deadWrites = input.inlinedOxsts.eAllOfType<Operation>()
-            .filter { it is AssignmentOperation || it is HavocOperation }
-            .filter { it !in liveWrites }
-            .toList()
+        val deadWrites = input.inlinedOxsts.eAllOfType<Operation>().filter {
+            it is AssignmentOperation || it is HavocOperation
+        }.filter {
+            it !in liveWrites
+        }.filter {
+            it !in exitLiveWrites
+        }.toList()
 
         if (deadWrites.isEmpty()) {
             return PassResult.Unchanged
