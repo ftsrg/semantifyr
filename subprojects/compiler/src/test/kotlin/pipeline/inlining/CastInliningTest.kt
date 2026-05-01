@@ -34,7 +34,6 @@ class CastInliningTest : InliningTestBase() {
             assertThat(propertyExpression)
                 .`as`("property expression should be a bare temporal operator, not a cast")
                 .isInstanceOf(TemporalOperator::class.java)
-            // No leftover cast anywhere in the property tree.
             assertThat(inlined.property.eAllOfType<CastExpression>().toList())
                 .`as`("every cast should have been removed by the inliner")
                 .isEmpty()
@@ -111,4 +110,28 @@ class CastInliningTest : InliningTestBase() {
             inlineAll(it)
         }
     }
+
+    @Test
+    fun `incorrect narrowing cast is rejected at inline time`() {
+        prepare(
+            "Case",
+            """
+                package inlining::tests::widening_cast
+                @VerificationCase
+                class Case {
+                    var x: int := 0
+                    redefine tran {
+                        var a: real := 0.0
+                        x := a as int
+                    }
+                    prop { return EF true }
+                }
+            """,
+        ) {
+            assertThatThrownBy {
+                inlineAll(it)
+            }.hasMessageContaining("widen")
+        }
+    }
+
 }

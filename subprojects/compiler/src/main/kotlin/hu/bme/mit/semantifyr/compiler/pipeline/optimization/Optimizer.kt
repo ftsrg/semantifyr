@@ -6,6 +6,6 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization
 
-abstract class Optimizer<T> {
-    abstract fun optimize(input: T): Boolean
+interface Optimizer<T> {
+    fun optimize(input: T): Boolean
 }

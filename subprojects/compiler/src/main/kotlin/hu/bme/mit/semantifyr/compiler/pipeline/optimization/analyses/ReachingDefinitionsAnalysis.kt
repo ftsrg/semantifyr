@@ -13,9 +13,8 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpress
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.tryEvaluateTypedOrNull
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableReadExpressions
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.writeReference
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableWrites
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
@@ -23,16 +22,18 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
 
 data class ReachingDefinitionsInfo(
-    val defsOf: Map<Expression, Set<EObject>>,
+    val definitionsOf: Map<Expression, Set<EObject>>,
     val exitReaching: Set<EObject>,
 )
 
@@ -52,88 +53,99 @@ class ReachingDefinitionsComputation(
     private val evaluator: MetaCompileTimeExpressionEvaluator,
 ) {
 
-    private val defsOf = mutableMapOf<Expression, Set<EObject>>()
+    private val definitionsOf = mutableMapOf<Expression, Set<EObject>>()
+    private val exitReaching = mutableSetOf<EObject>()
+
+    private val topLevelVariables by lazy {
+        inlinedOxsts.variables.toSet()
+    }
+
+    private val readVariables by lazy {
+        inlinedOxsts.variableReadExpressions(evaluator).mapNotNull {
+            evaluateVariable(it)
+        }.toSet()
+    }
 
     fun compute(): ReachingDefinitionsInfo {
-        val assignmentWrites: Sequence<EObject> = inlinedOxsts.eAllOfType<AssignmentOperation>().map {
-            it as EObject
-        } + inlinedOxsts.eAllOfType<HavocOperation>().map {
-            it as EObject
-        }
+        val initialIn = buildInitialIn()
+        walkTransition(inlinedOxsts.initTransition, emptyMap())
+        walkTransition(inlinedOxsts.mainTransition, initialIn)
+        recordFallbackReads(initialIn)
 
-        val writesByVariable = assignmentWrites.groupBy {
-            evaluator.evaluateTyped(VariableDeclaration::class.java, (it as Operation).writeReference())
-        }.mapValues {
+        return ReachingDefinitionsInfo(definitionsOf.toMap(), exitReaching.toSet())
+    }
+
+    private fun buildInitialIn(): Map<VariableDeclaration, Set<EObject>> {
+        val writesByVariable = inlinedOxsts.variableWrites(evaluator).mapValues {
             it.value.toSet()
         }
 
-        val initialIn = buildMap<VariableDeclaration, Set<EObject>> {
-            for ((variable, defs) in writesByVariable) {
-                val withStartState = if (!initMustWrite(variable)) {
-                    defs + variable
-                } else {
-                    defs
-                }
-                put(variable, withStartState)
-            }
-            for (variable in inlinedOxsts.variables) {
-                if (variable !in this) {
-                    put(variable, setOf(variable))
-                }
+        val initial = LinkedHashMap<VariableDeclaration, Set<EObject>>()
+        for ((variable, defs) in writesByVariable) {
+            initial[variable] = if (initMustWrite(variable)) {
+                defs
+            } else {
+                defs + variable
             }
         }
-
-        val globalVariables = inlinedOxsts.variables.toSet()
-        val exitReaching = mutableSetOf<EObject>()
-
-        fun harvestExit(state: Map<VariableDeclaration, Set<EObject>>) {
-            for ((variable, defs) in state) {
-                if (variable !in globalVariables) {
-                    continue
-                }
-                for (def in defs) {
-                    if (def is AssignmentOperation || def is HavocOperation) {
-                        exitReaching += def
-                    }
-                }
-            }
+        for (variable in inlinedOxsts.variables) {
+            initial.getOrPut(variable) { setOf(variable) }
         }
+        return initial
+    }
 
-        inlinedOxsts.initTransition?.let {
-            for (branch in it.branches) {
-                harvestExit(walkOperation(branch, emptyMap()))
-            }
+    private fun walkTransition(
+        transition: TransitionDeclaration,
+        startState: Map<VariableDeclaration, Set<EObject>>,
+    ) {
+        for (branch in transition.branches) {
+            harvestExit(walkOperation(branch, startState))
         }
-        inlinedOxsts.mainTransition?.let { transition ->
-            for (branch in transition.branches) {
-                harvestExit(walkOperation(branch, initialIn))
-            }
-        }
+    }
 
-        val visitedReads = defsOf.keys.toSet()
-        for (read in readsIn(inlinedOxsts)) {
-            if (read in visitedReads) {
+    private fun harvestExit(state: Map<VariableDeclaration, Set<EObject>>) {
+        for ((variable, defs) in state) {
+            if (variable !in topLevelVariables) {
                 continue
             }
-            val variable = evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, read) ?: continue
-            val baseDefs = initialIn[variable].orEmpty()
-            val startStateReaches = !initMustWrite(variable)
-            defsOf[read] = if (startStateReaches) {
-                baseDefs + variable
-            } else {
-                baseDefs
+            if (variable !in readVariables) {
+                continue
+            }
+            for (def in defs) {
+                if (def is AssignmentOperation || def is HavocOperation) {
+                    exitReaching += def
+                }
             }
         }
+    }
 
-        return ReachingDefinitionsInfo(defsOf.toMap(), exitReaching.toSet())
+    private fun recordFallbackReads(initialIn: Map<VariableDeclaration, Set<EObject>>) {
+        for (read in inlinedOxsts.variableReadExpressions(evaluator)) {
+            if (read in definitionsOf) {
+                continue
+            }
+            val variable = evaluateVariable(read) ?: continue
+            val baseDefs = initialIn[variable].orEmpty()
+            definitionsOf[read] = if (initMustWrite(variable)) {
+                baseDefs
+            } else {
+                baseDefs + variable
+            }
+        }
     }
 
     private fun initMustWrite(variable: VariableDeclaration): Boolean {
         val transition = inlinedOxsts.initTransition ?: return false
-        if (transition.branches.isEmpty()) {
+        return transition.transitionMustWrite(variable)
+    }
+
+    private fun TransitionDeclaration.transitionMustWrite(variable: VariableDeclaration): Boolean {
+        if (branches.isEmpty()) {
             return false
         }
-        return transition.branches.all { mustWrite(it, variable) }
+        return branches.all {
+            mustWrite(it, variable)
+        }
     }
 
     private fun mustWrite(operation: Operation, variable: VariableDeclaration): Boolean {
@@ -146,20 +158,13 @@ class ReachingDefinitionsComputation(
                 val elseBranch = operation.`else` ?: return false
                 mustWrite(operation.body, variable) && mustWrite(elseBranch, variable)
             }
-            is AssignmentOperation -> {
-                evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, operation.reference) == variable
-            }
-            is HavocOperation -> {
-                evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, operation.reference) == variable
-            }
-            // These operations never write the variable in question.
+            is AssignmentOperation -> evaluateVariable(operation.reference) == variable
+            is HavocOperation -> evaluateVariable(operation.reference) == variable
             is AssumptionOperation -> false
             is LocalVarDeclarationOperation -> false
             is TraceOperation -> false
-            // ForOperation may iterate zero times (empty range) and unrolled inline-for variants
-            // are normally expanded before this analysis runs. Treat as may-write to stay sound.
-            // InlineCall / InlineIfOperation are likewise normally gone after inlining; conservative
-            // may-write is safe.
+            is ForOperation -> false
+            is InlineOperation -> false
             else -> false
         }
     }
@@ -169,47 +174,17 @@ class ReachingDefinitionsComputation(
         incoming: Map<VariableDeclaration, Set<EObject>>,
     ): Map<VariableDeclaration, Set<EObject>> {
         return when (operation) {
-            is SequenceOperation -> {
-                var state = incoming
-                for (step in operation.steps) {
-                    state = walkOperation(step, state)
-                }
-                state
-            }
-            is ChoiceOperation -> {
-                operation.branches.map {
-                    walkOperation(it, incoming)
-                }.fold(emptyMap()) { acc, branchOut ->
-                    mergeDefs(acc, branchOut)
-                }
-            }
-            is IfOperation -> {
-                recordReads(operation.guard, incoming)
-                val bodyOut = walkOperation(operation.body, incoming)
-                val elseOut = operation.`else`?.let {
-                    walkOperation(it, incoming)
-                } ?: incoming
-                mergeDefs(bodyOut, elseOut)
-            }
-            is ForOperation -> {
-                recordReads(operation.rangeExpression, incoming)
-                var state = incoming
-                var changed = true
-                while (changed) {
-                    val before = state
-                    val after = walkOperation(operation.body, state)
-                    state = mergeDefs(before, after)
-                    changed = state != before
-                }
-                state
-            }
+            is SequenceOperation -> walkSequence(operation, incoming)
+            is ChoiceOperation -> walkChoice(operation, incoming)
+            is IfOperation -> walkIf(operation, incoming)
+            is ForOperation -> walkFor(operation, incoming)
             is AssignmentOperation -> {
                 recordReads(operation.expression, incoming)
-                val variable = evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, operation.reference) ?: return incoming
+                val variable = evaluateVariable(operation.reference) ?: return incoming
                 incoming + (variable to setOf<EObject>(operation))
             }
             is HavocOperation -> {
-                val variable = evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, operation.reference) ?: return incoming
+                val variable = evaluateVariable(operation.reference) ?: return incoming
                 incoming + (variable to setOf<EObject>(operation))
             }
             is AssumptionOperation -> {
@@ -225,13 +200,61 @@ class ReachingDefinitionsComputation(
         }
     }
 
+    private fun walkSequence(
+        operation: SequenceOperation,
+        incoming: Map<VariableDeclaration, Set<EObject>>,
+    ): Map<VariableDeclaration, Set<EObject>> {
+        var state = incoming
+        for (step in operation.steps) {
+            state = walkOperation(step, state)
+        }
+        return state
+    }
+
+    private fun walkChoice(
+        operation: ChoiceOperation,
+        incoming: Map<VariableDeclaration, Set<EObject>>,
+    ): Map<VariableDeclaration, Set<EObject>> {
+        return operation.branches.fold(emptyMap()) { acc, branch ->
+            mergeDefs(acc, walkOperation(branch, incoming))
+        }
+    }
+
+    private fun walkIf(
+        operation: IfOperation,
+        incoming: Map<VariableDeclaration, Set<EObject>>,
+    ): Map<VariableDeclaration, Set<EObject>> {
+        recordReads(operation.guard, incoming)
+        val bodyOut = walkOperation(operation.body, incoming)
+        val elseOut = operation.`else`?.let {
+            walkOperation(it, incoming)
+        } ?: incoming
+        return mergeDefs(bodyOut, elseOut)
+    }
+
+    private fun walkFor(
+        operation: ForOperation,
+        incoming: Map<VariableDeclaration, Set<EObject>>,
+    ): Map<VariableDeclaration, Set<EObject>> {
+        recordReads(operation.rangeExpression, incoming)
+        var state = incoming
+        while (true) {
+            val merged = mergeDefs(state, walkOperation(operation.body, state))
+            if (merged == state) {
+                break
+            }
+            state = merged
+        }
+        return state
+    }
+
     private fun recordReads(
         expression: Expression,
         incoming: Map<VariableDeclaration, Set<EObject>>,
     ) {
         for (read in expression.variableReadExpressions(evaluator)) {
-            val variable = evaluator.evaluateTyped(VariableDeclaration::class.java, read)
-            defsOf[read] = incoming[variable].orEmpty()
+            val variable = evaluateVariable(read)
+            definitionsOf[read] = incoming[variable].orEmpty()
         }
     }
 
@@ -247,13 +270,13 @@ class ReachingDefinitionsComputation(
         }
         val result = LinkedHashMap<VariableDeclaration, Set<EObject>>(a)
         for ((variable, defs) in b) {
-            result[variable] = (result[variable].orEmpty()) + defs
+            result[variable] = result[variable].orEmpty() + defs
         }
         return result
     }
 
-    private fun readsIn(inlinedOxsts: InlinedOxsts): Sequence<Expression> {
-        return inlinedOxsts.variableReadExpressions(evaluator)
+    private fun evaluateVariable(expression: Expression): VariableDeclaration? {
+        return evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, expression)
     }
 
 }

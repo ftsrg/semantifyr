@@ -67,8 +67,6 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
 
     @Test
     fun `variable with only an initializer is not reported constant here`() {
-        // ConstantValueAnalysis intentionally defers init-only variables to
-        // VariableLivenessPass's substituteUnassignedInitialized rule.
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything

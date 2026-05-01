@@ -27,7 +27,7 @@ class NestedOperationOptimizer @Inject constructor(
     multiplicityRangeEvaluator: MultiplicityRangeEvaluator,
     transformer: ConstantExpressionEvaluationTransformer,
     artifactManager: CompilationArtifactManager,
-) : Optimizer<Operation>() {
+) : Optimizer<Operation> {
 
     private val patternOptimizer = PatternOptimizer(
         patterns = listOf(

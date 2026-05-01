@@ -38,14 +38,14 @@ class CopyPropagationPass @Inject constructor(
             return PassResult.Unchanged
         }
 
-        val rd = analysisManager.get(ReachingDefinitionsAnalysis::class.java, input)
+        val reachingDefinitions = analysisManager.get(ReachingDefinitionsAnalysis::class.java, input)
         val evaluator = metaCompileTimeExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
 
         val substitutions = buildList {
-            for ((read, defs) in rd.defsOf) {
-                val definition = defs.singleOrNull() as? AssignmentOperation ?: continue
+            for ((read, definitions) in reachingDefinitions.definitionsOf) {
+                val definition = definitions.singleOrNull() as? AssignmentOperation ?: continue
                 val candidate = definition.expression
-                if (!isSimplyCopyable(candidate)) {
+                if (!isSimpleExpression(candidate)) {
                     continue
                 }
 
@@ -68,11 +68,10 @@ class CopyPropagationPass @Inject constructor(
             EcoreUtil2.replace(read, source.copy())
             artifactManager.commitStep(CompilationPass.CopyPropagation)
         }
-        return PassResult.Changed()
+        return PassResult.Changed
     }
 
-    // A copyable expression is one we can freely duplicate at a read site.
-    private fun isSimplyCopyable(expression: Expression): Boolean {
+    private fun isSimpleExpression(expression: Expression): Boolean {
         if (OxstsUtils.isWriteExpression(expression)) {
             return false
         }

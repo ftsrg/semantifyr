@@ -34,7 +34,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         )
         val a = inlined.varNamed("a")
         val propRead = inlined.findPropertyReadOf(a)
-        assertThat(result.defsOf[propRead]!!).doesNotContain(a as EObject)
+        assertThat(result.definitionsOf[propRead]!!).doesNotContain(a as EObject)
     }
 
     @Test
@@ -50,7 +50,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         )
         val a = inlined.varNamed("a")
         val propRead = inlined.findPropertyReadOf(a)
-        val defs = result.defsOf[propRead]!!
+        val defs = result.definitionsOf[propRead]!!
         val aWrite = inlined.assignmentsTo(a).single()
         assertThat(defs).containsExactlyInAnyOrder(aWrite as EObject, a as EObject)
     }
@@ -76,7 +76,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val bWrite = inlined.assignmentsTo(inlined.varNamed("b")).single()
         val aReadInBRhs = bWrite.expression as ElementReference
 
-        assertThat(result.defsOf[aReadInBRhs]!!).containsExactly(havoc as EObject)
+        assertThat(result.definitionsOf[aReadInBRhs]!!).containsExactly(havoc as EObject)
     }
 
     @Test
@@ -118,7 +118,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val bWrite = inlined.assignmentsTo(inlined.varNamed("b")).single()
         val aReadInBRhs = bWrite.expression as ElementReference
 
-        assertThat(result.defsOf[aReadInBRhs]!!).containsExactly(aWrite as EObject)
+        assertThat(result.definitionsOf[aReadInBRhs]!!).containsExactly(aWrite as EObject)
     }
 
     @Test
@@ -138,7 +138,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val a = inlined.varNamed("a")
         val write = inlined.assignmentsTo(a).single()
         val propRead = inlined.findPropertyReadOf(a)
-        assertThat(result.defsOf[propRead]!!).contains(write as EObject)
+        assertThat(result.definitionsOf[propRead]!!).contains(write as EObject)
     }
 
     @Test
@@ -160,7 +160,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val aWrites = inlined.assignmentsTo(a).toSet()
         val bWrite = inlined.assignmentsTo(inlined.varNamed("b")).single()
         val aReadInBRhs = bWrite.expression as ElementReference
-        val defs = result.defsOf[aReadInBRhs]!!
+        val defs = result.definitionsOf[aReadInBRhs]!!
 
         assertThat(defs)
             .`as`("after a choice, both branches' writes reach the downstream read")
@@ -187,7 +187,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val allAWrites = inlined.assignmentsTo(a).toSet()
         val bWrite = inlined.assignmentsTo(inlined.varNamed("b")).single()
         val aReadInBRhs = bWrite.expression as ElementReference
-        val defs = result.defsOf[aReadInBRhs]!!
+        val defs = result.definitionsOf[aReadInBRhs]!!
         assertThat(defs).containsAll(allAWrites.map { it as EObject })
     }
 
@@ -211,7 +211,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val initRead = inlined.readsOfInInit(b).single()
         val bWriteInTran = inlined.assignmentsTo(b).single()
 
-        val defs = result.defsOf[initRead]!!
+        val defs = result.definitionsOf[initRead]!!
         assertThat(defs).doesNotContain(bWriteInTran as EObject)
         assertThat(defs).isEmpty()
     }
@@ -236,7 +236,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val aReadInBRhs = bWrite.expression as ElementReference
         val aWrite = inlined.assignmentsTo(a).single()
 
-        val defs = result.defsOf[aReadInBRhs]!!
+        val defs = result.definitionsOf[aReadInBRhs]!!
         assertThat(defs).contains(aWrite as EObject)
         assertThat(defs).contains(a as EObject)
     }
@@ -309,46 +309,42 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
     }
 
     private fun InlinedOxsts.varNamed(name: String): VariableDeclaration {
-        return eAllOfType<VariableDeclaration>().firstOrNull { it.name == name }
-            ?: error("No variable named '$name'")
+        return eAllOfType<VariableDeclaration>().firstOrNull {
+            it.name == name
+        } ?: error("No variable named '$name'")
     }
 
     private fun InlinedOxsts.assignmentsTo(variable: VariableDeclaration): List<AssignmentOperation> {
-        return eAllOfType<AssignmentOperation>()
-            .filter {
-                val ref = it.reference
-                ref is ElementReference && ref.element === variable
-            }.toList()
+        return eAllOfType<AssignmentOperation>().filter {
+            val ref = it.reference
+            ref is ElementReference && ref.element === variable
+        }.toList()
     }
 
     private fun InlinedOxsts.havocsOn(variable: VariableDeclaration): List<HavocOperation> {
-        return eAllOfType<HavocOperation>()
-            .filter {
-                val ref = it.reference
-                ref is ElementReference && ref.element === variable
-            }.toList()
+        return eAllOfType<HavocOperation>().filter {
+            val ref = it.reference
+            ref is ElementReference && ref.element === variable
+        }.toList()
     }
 
     private fun InlinedOxsts.readsOfInInit(variable: VariableDeclaration): List<Expression> {
         val init = eAllOfType<TransitionDeclaration>().first { it.kind == TransitionKind.INIT }
-        return init
-            .eAllOfType<ElementReference>()
-            .filter {
-                it.element === variable
-            }.filterNot {
-                val parent = it.eContainer()
-                parent is AssignmentOperation && parent.reference === it
-            }.filterNot {
-                val parent = it.eContainer()
-                parent is HavocOperation && parent.reference === it
-            }.toList()
+        return init.eAllOfType<ElementReference>().filter {
+            it.element === variable
+        }.filterNot {
+            val parent = it.eContainer()
+            parent is AssignmentOperation && parent.reference === it
+        }.filterNot {
+            val parent = it.eContainer()
+            parent is HavocOperation && parent.reference === it
+        }.toList()
     }
 
     private fun InlinedOxsts.findPropertyReadOf(variable: VariableDeclaration): Expression {
         val property = eAllOfType<PropertyDeclaration>().first()
-        return property.expression
-            .eAllOfType<ElementReference>()
-            .firstOrNull { it.element === variable }
-            ?: error("Property does not reference '${variable.name}'")
+        return property.expression.eAllOfType<ElementReference>().firstOrNull {
+            it.element === variable
+        } ?: error("Property does not reference '${variable.name}'")
     }
 }

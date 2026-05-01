@@ -30,9 +30,8 @@ enum class CompilationPass {
     CopyPropagation,
     ExpressionSimplification,
     RedundantOperationRemoval,
-    DeadStoreElimination,
     OperationFlattening,
-    AssumptionPropagation,
+    AssumeFalsePropagation,
     DeadCodeRemoval,
     UnusedVariableElimination,
     Flattening,
@@ -81,15 +80,9 @@ data class ArtifactConfig(
         @JvmField
         val NONE: ArtifactConfig = ArtifactConfig(enabled = emptySet())
 
-        /**
-         * Emits every non-debug artifact (models, witness, trace, mapping, report).
-         */
         @JvmField
         val ALL: ArtifactConfig = ArtifactConfig(enabled = ReportOnlyArtifacts)
 
-        /**
-         * Emits every artifact including per-pass step dumps.
-         */
         @JvmField
         val DEBUG: ArtifactConfig = ArtifactConfig(
             enabled = ArtifactKind.entries.toSet(),

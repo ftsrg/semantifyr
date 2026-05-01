@@ -12,12 +12,10 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpress
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableReadExpressions
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.writeReference
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableReads
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableWrites
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
@@ -57,21 +55,10 @@ class LivenessComputation(
 ) {
 
     fun compute(): LivenessInfo {
-        val reads = inlinedOxsts.variableReadExpressions(evaluator).groupBy {
-            evaluator.evaluateTyped(VariableDeclaration::class.java, it)
-        }
+        val reads = inlinedOxsts.variableReads(evaluator)
+        val writes = inlinedOxsts.variableWrites(evaluator)
 
-        val writes = inlinedOxsts.eAllOfType<AssignmentOperation>().map {
-            it as Operation
-        } + inlinedOxsts.eAllOfType<HavocOperation>().map {
-            it as Operation
-        }
-
-        val assignments = writes.groupBy {
-            evaluator.evaluateTyped(VariableDeclaration::class.java, it.writeReference())
-        }
-
-        return LivenessInfo(reads, assignments)
+        return LivenessInfo(reads, writes)
     }
 
 }

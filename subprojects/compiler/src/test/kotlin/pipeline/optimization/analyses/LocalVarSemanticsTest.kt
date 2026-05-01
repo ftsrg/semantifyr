@@ -73,7 +73,7 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
         val yWrite = inlined.assignmentsTo(y).single()
         val xReadInYRhs = yWrite.expression as ElementReference
 
-        assertThat(result.defsOf[xReadInYRhs]!!).containsExactly(xWrite as EObject)
+        assertThat(result.definitionsOf[xReadInYRhs]!!).containsExactly(xWrite as EObject)
     }
 
     @Test
@@ -96,7 +96,7 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
         val yWrite = inlined.assignmentsTo(y).single()
         val xReadInYRhs = yWrite.expression as ElementReference
 
-        val defs = result.defsOf[xReadInYRhs]!!
+        val defs = result.definitionsOf[xReadInYRhs]!!
         assertThat(defs).containsExactly(x as EObject)
     }
 
@@ -162,8 +162,7 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
         val yWrite = inlined.assignmentsTo(inlined.varNamed("y")).single()
         val xRead = yWrite.expression as ElementReference
 
-        // No assignments to x, so the only def is the declaration itself.
-        assertThat(result.defsOf[xRead]!!).containsExactly(x as EObject)
+        assertThat(result.definitionsOf[xRead]!!).containsExactly(x as EObject)
     }
 
     @Test
@@ -194,20 +193,21 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
     }
 
     private fun InlinedOxsts.varNamed(name: String): VariableDeclaration {
-        return eAllOfType<VariableDeclaration>().firstOrNull { it.name == name }
-            ?: error("No variable named '$name'")
+        return eAllOfType<VariableDeclaration>().firstOrNull {
+            it.name == name
+        } ?: error("No variable named '$name'")
     }
 
     private fun InlinedOxsts.localVarNamed(name: String): LocalVarDeclarationOperation {
-        return eAllOfType<LocalVarDeclarationOperation>().firstOrNull { it.name == name }
-            ?: error("No local var named '$name'")
+        return eAllOfType<LocalVarDeclarationOperation>().firstOrNull {
+            it.name == name
+        } ?: error("No local var named '$name'")
     }
 
     private fun InlinedOxsts.assignmentsTo(variable: VariableDeclaration): List<AssignmentOperation> {
-        return eAllOfType<AssignmentOperation>()
-            .filter {
-                val ref = it.reference
-                ref is ElementReference && ref.element === variable
-            }.toList()
+        return eAllOfType<AssignmentOperation>().filter {
+            val ref = it.reference
+            ref is ElementReference && ref.element === variable
+        }.toList()
     }
 }

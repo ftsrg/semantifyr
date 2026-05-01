@@ -60,7 +60,7 @@ class ConstantVariableSubstitutionPass @Inject constructor(
             EcoreUtil2.replace(readExpression, constantExpression.copy())
             artifactManager.commitStep(CompilationPass.ConstantVariableSubstitution)
         }
-        return PassResult.Changed()
+        return PassResult.Changed
     }
 
 }

@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization
 
 import com.google.inject.Inject
-import com.google.inject.Injector
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.context.CreatedCompilationContext
@@ -19,22 +18,14 @@ import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.InlinedOxstsParseHelper
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.emf.ecore.EObject
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 
 @InjectWithOxsts
 class PatternOptimizationPassTest {
+
     @Inject
     private lateinit var parseHelper: InlinedOxstsParseHelper
-
-    @Inject
-    private lateinit var injector: Injector
-
-    @BeforeEach
-    fun verifyInjectedDependencies() {
-        verifyInjectedDependenciesAreBound(this)
-    }
 
     @Test
     fun `returns Unchanged without invoking patterns when every category is disabled`() {
@@ -68,8 +59,6 @@ class PatternOptimizationPassTest {
 
     @Test
     fun `returns Changed when at least one pattern application fires`() {
-        // The pattern fires once on first invocation and then signals "done",
-        // so the worklist exits after a single application.
         val pattern = CountingPattern(alwaysFires = false, firesOnInvocation = 1)
         val pass = pass(pattern = pattern)
 

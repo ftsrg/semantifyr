@@ -20,7 +20,7 @@ class AssumeFalsePropagationPass @Inject constructor(
 ) : PatternOptimizationPass(
     config = config,
     category = OptimizationCategory.AssumeFalsePropagation,
-    compilationPass = CompilationPass.AssumptionPropagation,
+    compilationPass = CompilationPass.AssumeFalsePropagation,
     patterns = listOf(AssumeFalsePropagationPattern()),
     artifactManager = artifactManager,
 )

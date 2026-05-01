@@ -459,23 +459,22 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                 .`as`("irrelevant 'y := 5' must not gate anything in the cone")
                 .isFalse
         }
-        // The sibling guard IS pulled in because atomic-commit semantics make
-        // every assume in the transition a control dep of every relevant write.
+
         assertThat(result.isRelevant(siblingGuard))
             .`as`("under atomic commit, sibling assume variables are control deps")
             .isTrue
     }
 
     private fun InlinedOxsts.varNamed(name: String): VariableDeclaration {
-        return eAllOfType<VariableDeclaration>().firstOrNull { it.name == name }
-            ?: error("No variable named '$name' in inlined oxsts")
+        return eAllOfType<VariableDeclaration>().firstOrNull {
+            it.name == name
+        } ?: error("No variable named '$name' in inlined oxsts")
     }
 
     private fun InlinedOxsts.assignmentsTo(variable: VariableDeclaration): List<AssignmentOperation> {
-        return eAllOfType<AssignmentOperation>()
-            .filter {
-                val ref = it.reference
-                ref is ElementReference && ref.element === variable
-            }.toList()
+        return eAllOfType<AssignmentOperation>().filter {
+            val ref = it.reference
+            ref is ElementReference && ref.element === variable
+        }.toList()
     }
 }

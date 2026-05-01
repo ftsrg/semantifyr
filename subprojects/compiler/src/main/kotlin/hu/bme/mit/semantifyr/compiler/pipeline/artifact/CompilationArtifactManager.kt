@@ -19,11 +19,10 @@ class CompilationArtifactManager @Inject constructor(
     val serializer: ISerializer,
     val artifactManager: ArtifactManager,
     val artifactConfig: ArtifactConfig,
-    private val request: CompilationRequest,
+    request: CompilationRequest,
 ) {
 
-    private val inlinedOxsts
-        get() = request.inlinedOxsts
+    private val inlinedOxsts = request.inlinedOxsts
 
     private var stepId = 0
 

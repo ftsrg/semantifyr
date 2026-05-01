@@ -49,8 +49,7 @@ class FlatteningInfoTest {
 
         assertThatThrownBy {
             info.resolveOriginalVariable(holder, variable("x"))
-        }.isInstanceOf(IllegalStateException::class.java)
-            .hasMessageContaining("No variable mappings")
+        }.isInstanceOf(IllegalStateException::class.java).hasMessageContaining("No variable mappings")
     }
 
     @Test
@@ -67,8 +66,7 @@ class FlatteningInfoTest {
 
         assertThatThrownBy {
             info.resolveOriginalVariable(holder, missingActual)
-        }.isInstanceOf(IllegalStateException::class.java)
-            .hasMessageContaining("missing")
+        }.isInstanceOf(IllegalStateException::class.java).hasMessageContaining("missing")
     }
 
     @Test

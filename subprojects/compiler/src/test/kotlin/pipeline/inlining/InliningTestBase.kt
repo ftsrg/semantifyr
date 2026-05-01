@@ -15,7 +15,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.context.CreatedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.context.InlinedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
-import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.OxstsInstantiator
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.normalizedFixtureSource
@@ -50,8 +49,7 @@ abstract class InliningTestBase {
         val context: InstantiatedCompilationContext,
         val compilationInjector: Injector,
     ) {
-        val rootInstance: Instance
-            get() = context.rootInstance
+        val rootInstance = context.rootInstance
     }
 
     protected fun <T> prepare(
@@ -76,10 +74,10 @@ abstract class InliningTestBase {
         source: String,
         block: (Prepared) -> T,
     ): T {
-        val classDecl = parseClassFromPackage(className, source)
+        val classDeclaration = parseClassFromPackage(className, source)
         val compilationInjector = newCompilationInjector()
         val outputDirectory = Files.createTempDirectory("inlining-test-")
-        val created = compilationInjector.getInstance(InlinedOxstsModelCreator::class.java).create(classDecl, outputDirectory)
+        val created = compilationInjector.getInstance(InlinedOxstsModelCreator::class.java).create(classDeclaration, outputDirectory)
         val request = CompilationRequest(
             inlinedOxsts = created.inlinedOxsts,
             outputDirectory = outputDirectory,

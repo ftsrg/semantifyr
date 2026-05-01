@@ -17,7 +17,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.scopes.withCompilationScopeBlocking
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
-import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import java.nio.file.Path
@@ -26,13 +25,7 @@ class SemantifyrCompiler(
     injector: Injector,
     artifactConfig: ArtifactConfig,
     optimizationConfig: OptimizationConfig = OptimizationConfig.DEFAULT,
-) : AutoCloseable {
-
-    @JvmOverloads
-    constructor(
-        artifactConfig: ArtifactConfig,
-        optimizationConfig: OptimizationConfig = OptimizationConfig.DEFAULT,
-    ) : this(OxstsStandaloneSetup().createInjectorAndDoEMFRegistration(), artifactConfig, optimizationConfig)
+) {
 
     private val logger by loggerFactory()
 
@@ -56,9 +49,6 @@ class SemantifyrCompiler(
             val pipeline = sharedInjector.getInstance(CompilationPipeline::class.java)
             pipeline.compileFlattened(inlinedOxsts)
         }
-    }
-
-    override fun close() {
     }
 
 }

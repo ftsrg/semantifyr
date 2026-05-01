@@ -44,7 +44,9 @@ class ArrayFlatteningPassTest {
         val flattened = pass.flattenArrays(inlined)
 
         assertThat(flattened).isEqualTo(1)
-        val names = inlined.variables.map { it.name }
+        val names = inlined.variables.map {
+            it.name
+        }
         assertThat(names).containsExactly("a_0", "a_1", "a_2")
     }
 
@@ -166,8 +168,7 @@ class ArrayFlatteningPassTest {
             .`as`("runtime-index read should be rewritten - no IndexingSuffixExpression left")
             .isEmpty()
         val serialized = serialize(inlined)
-        // The read chain visits every slot, guarded by equality comparisons
-        // on the index.
+
         assertThat(serialized).contains("a_0")
         assertThat(serialized).contains("a_1")
         assertThat(serialized).contains("a_2")

@@ -396,6 +396,29 @@ class DeadCodeRemovalPassTest : PassTestBase() {
     }
 
     @Test
+    fun `write to NonOptimizable variable is kept even when not in cone of influence`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            @NonOptimizable
+            var tracer : bool := false
+            init { }
+            tran { tracer := true }
+            prop { AG true }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            @NonOptimizable
+            var tracer : bool := false
+            init { }
+            tran { tracer := true }
+            prop { AG true }
+        """,
+        analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
+    ) {
+        it.getInstance(DeadCodeRemovalPass::class.java)
+    }
+
+    @Test
     fun `region marker local var keeps its writes and activates the guarded branches`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything

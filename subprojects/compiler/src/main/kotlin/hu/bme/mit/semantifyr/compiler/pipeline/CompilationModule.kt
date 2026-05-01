@@ -32,7 +32,7 @@ class CompilationModule(
         bind(CompilationRequest::class.java)
             .toProvider(
                 Provider {
-                    error("CompilationRequest must be seeded into the compilation scope; call withCompilationScope with a Seed that includes it.")
+                    error("CompilationRequest must be seeded into the compilation scope.")
                 },
             )
             .`in`(CompilationScope)

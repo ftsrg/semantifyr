@@ -204,7 +204,7 @@ class ArrayFlatteningPass @Inject constructor(
         // Build right-to-left: start with the last slot as the final else
         // branch, then prepend `if i == k then a_k else <rest>` for
         // k = N-2 down to 0.
-        var chain: Expression = slotRead(indexing, slotVariables.last())
+        var chain = slotRead(indexing, slotVariables.last())
         for (k in slotVariables.size - 2 downTo 0) {
             val thenExpr = slotRead(indexing, slotVariables[k])
             chain = OxstsFactory.createIfThenElse().also {
@@ -224,7 +224,7 @@ class ArrayFlatteningPass @Inject constructor(
         val indexExpr = indexing.index ?: sourceError(indexing, "Array indexing has no index expression.")
         val rightHandSide = assignment.expression ?: sourceError(assignment, "Assignment has no right-hand side.")
 
-        var elseOp: Operation = slotWrite(slotVariables.last(), rightHandSide.copy())
+        var elseOp = slotWrite(slotVariables.last(), rightHandSide.copy())
         for (k in slotVariables.size - 2 downTo 0) {
             val body = OxstsFactory.createSequenceOperation().also {
                 it.steps += slotWrite(slotVariables[k], rightHandSide.copy())

@@ -166,4 +166,27 @@ class DeadStoreEliminationPassTest : PassTestBase() {
     ) {
         it.getInstance(DeadStoreEliminationPass::class.java)
     }
+
+    @Test
+    fun `write to NonOptimizable variable is preserved even when unread`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            @NonOptimizable
+            var tracer : bool := false
+            init { }
+            tran { tracer := true }
+            prop { AG true }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            @NonOptimizable
+            var tracer : bool := false
+            init { }
+            tran { tracer := true }
+            prop { AG true }
+        """,
+        analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
+    ) {
+        it.getInstance(DeadStoreEliminationPass::class.java)
+    }
 }

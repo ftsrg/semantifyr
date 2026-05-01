@@ -25,7 +25,14 @@ class ArtifactManagerTest {
     lateinit var parseHelper: InlinedOxstsParseHelper
 
     private val emptyInlined by lazy {
-        parseHelper.parse("inlined oxsts of semantifyr::Anything\ninit {}\ntran {}\nprop { AG true }")
+        parseHelper.parse(
+            """
+                inlined oxsts of semantifyr::Anything
+                init {}
+                tran {}
+                prop { AG true }
+            """.trimIndent(),
+        )
     }
 
     private fun managerFor(config: ArtifactConfig): ArtifactManager {
@@ -77,7 +84,9 @@ class ArtifactManagerTest {
         val manager = managerFor(ArtifactConfig.NONE)
         var invoked = false
 
-        manager.withFile(ArtifactKind.Witness) { invoked = true }
+        manager.withFile(ArtifactKind.Witness) {
+            invoked = true
+        }
 
         assertThat(invoked).isFalse
     }
@@ -87,14 +96,14 @@ class ArtifactManagerTest {
         val config = ArtifactConfig(enabled = setOf(ArtifactKind.Witness))
         val manager = managerFor(config)
 
-        var receivedPath: Path? = null
+        lateinit var receivedPath: Path
         manager.withFile(ArtifactKind.Witness) {
             receivedPath = it.toPath()
             it.writeText("hello")
         }
 
         assertThat(receivedPath).isEqualTo(tempDir.resolve(manager.pathOf(ArtifactKind.Witness)))
-        assertThat(Files.readString(receivedPath!!)).isEqualTo("hello")
+        assertThat(Files.readString(receivedPath)).isEqualTo("hello")
     }
 
     @Test

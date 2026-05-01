@@ -38,7 +38,7 @@ abstract class PatternOptimizationPass(
         }
         val changed = patternOptimizer.optimize(input.inlinedOxsts)
         return if (changed) {
-            PassResult.Changed()
+            PassResult.Changed
         } else {
             PassResult.Unchanged
         }

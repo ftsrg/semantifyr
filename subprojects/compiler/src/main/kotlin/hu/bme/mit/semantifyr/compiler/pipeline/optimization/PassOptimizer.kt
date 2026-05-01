@@ -20,15 +20,7 @@ sealed interface PassResult {
 
     object Unchanged : PassResult
 
-    data class Changed(
-        val preserved: Set<Class<out Analysis<*>>> = emptySet(),
-    ) : PassResult {
-        companion object {
-            fun preserving(vararg analyses: Class<out Analysis<*>>): Changed {
-                return Changed(analyses.toSet())
-            }
-        }
-    }
+    object Changed : PassResult
 
 }
 
@@ -41,7 +33,7 @@ private data class PassStats(
 class PassOptimizer<T>(
     private val passes: List<Pass<T>>,
     private val analysisManager: AnalysisManager,
-) : Optimizer<T>() {
+) : Optimizer<T> {
 
     private val logger by loggerFactory()
 
@@ -75,7 +67,7 @@ class PassOptimizer<T>(
                         logger.debug { "  $passName changed the model in $passElapsed" }
                         changed = true
                         iteration = true
-                        analysisManager.invalidateExcept(result.preserved)
+                        analysisManager.invalidateAll()
                     }
                     PassResult.Unchanged -> {
                         logger.debug { "  $passName unchanged ($passElapsed)" }

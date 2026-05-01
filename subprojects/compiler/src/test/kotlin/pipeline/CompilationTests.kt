@@ -1056,13 +1056,6 @@ class CompilationTests {
         )
     }
 
-    /**
-     * Assert the pipeline rejects this source: either parsing errors, or
-     * the compiler itself throws. [messageContains] is an optional substring
-     * filter on the reported diagnostics / exception; pass "" to accept any
-     * rejection. Useful for pinning that the compiler says "nope" to a given
-     * language feature, so regressions that silently accept it are caught.
-     */
     private fun assertCompilationFails(
         classToCompile: String,
         source: String,
@@ -1085,21 +1078,19 @@ class CompilationTests {
             return
         }
 
-        val classDecl = EcoreUtil2
-            .eAllOfType(parsed.oxstsPackage, ClassDeclaration::class.java)
-            .singleOrNull { it.name == classToCompile }
-            ?: error("Class '$classToCompile' not found in the test model")
+        val classDeclaration = EcoreUtil2.eAllOfType(parsed.oxstsPackage, ClassDeclaration::class.java).singleOrNull {
+            it.name == classToCompile
+        } ?: error("Class '$classToCompile' not found in the test model")
 
         val artifactDir = tempDir.resolve("artifacts").also {
             Files.createDirectories(it)
         }
+        val compiler = SemantifyrCompiler(
+            injector = injector,
+            artifactConfig = ArtifactConfig.ALL,
+        )
         val thrown = catchThrowable {
-            SemantifyrCompiler(
-                injector = injector,
-                artifactConfig = ArtifactConfig.ALL,
-            ).use {
-                it.compile(classDecl, artifactDir)
-            }
+            compiler.compile(classDeclaration, artifactDir)
         }
 
         assertThat(thrown)
@@ -1122,20 +1113,18 @@ class CompilationTests {
             error("Test fixture failed to parse:\n$formatted")
         }
 
-        val classDecl = EcoreUtil2
-            .eAllOfType(parsed.oxstsPackage, ClassDeclaration::class.java)
-            .singleOrNull { it.name == classToCompile }
-            ?: error("Class '$classToCompile' not found in the test model")
+        val classDeclaration = EcoreUtil2.eAllOfType(parsed.oxstsPackage, ClassDeclaration::class.java).singleOrNull {
+            it.name == classToCompile
+        } ?: error("Class '$classToCompile' not found in the test model")
 
         val artifactDir = tempDir.resolve("artifacts").also {
             Files.createDirectories(it)
         }
-        val compiled = SemantifyrCompiler(
+        val compiler = SemantifyrCompiler(
             injector = injector,
             artifactConfig = ArtifactConfig.ALL,
-        ).use {
-            it.compile(classDecl, artifactDir)
-        }
+        )
+        val compiled = compiler.compile(classDeclaration, artifactDir)
 
         assertThat(compiled.inlinedOxsts.classDeclaration).isNotNull
         assertThat(compiled.flatteningInfo).isNotNull
@@ -1159,8 +1148,8 @@ class CompilationTests {
             .isNull()
 
         val transitions = listOfNotNull(inlined.initTransition, inlined.mainTransition)
-        val property: PropertyDeclaration = requireNotNull(inlined.property) {
-            "post-flatten IR must have a property declaration"
+        val property = requireNotNull(inlined.property) {
+            "post-flatten must have a property declaration"
         }
         assertThat(inlined.initTransition).`as`("init transition is present").isNotNull
         assertThat(inlined.mainTransition).`as`("main transition is present").isNotNull

@@ -72,7 +72,6 @@ class InlineOperationExpander @Inject constructor(
                 allocateLocalVarIndex,
             )
             is CallTarget.VariableDispatch -> dispatchOverVariable(
-                operation,
                 transitionDeclarationOf(target.targetDeclaration, callExpression),
                 callExpression,
                 instance,
@@ -94,7 +93,6 @@ class InlineOperationExpander @Inject constructor(
     }
 
     private fun dispatchOverVariable(
-        operation: InlineCall,
         transitionDeclaration: TransitionDeclaration,
         callExpression: CallSuffixExpression,
         instance: Instance,

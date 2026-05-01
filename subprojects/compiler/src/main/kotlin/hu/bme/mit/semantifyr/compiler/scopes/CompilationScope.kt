@@ -20,18 +20,12 @@ annotation class CompilationScoped
 
 private val compilationContext = ScopeContext("CompilationScope")
 
-val CompilationScope: Scope get() = compilationContext.scope
-
-var Seed.compilationRequest: CompilationRequest
-    get() = error("Seed slots are write-only. Read seeded values via injection inside the scope.")
-    set(value) {
-        seed(Key.get(CompilationRequest::class.java), value)
-    }
+val CompilationScope = compilationContext.scope
 
 suspend fun <T> withCompilationScope(request: CompilationRequest, block: suspend () -> T): T {
     return withCompilationScope(
         Seed().apply {
-            this.compilationRequest = request
+            seed(Key.get(CompilationRequest::class.java), request)
         },
         block,
     )
@@ -44,7 +38,7 @@ suspend fun <T> withCompilationScope(seed: Seed? = null, block: suspend () -> T)
 fun <T> withCompilationScopeBlocking(request: CompilationRequest, block: () -> T): T {
     return withCompilationScopeBlocking(
         Seed().apply {
-            this.compilationRequest = request
+            seed(Key.get(CompilationRequest::class.java), request)
         },
         block,
     )

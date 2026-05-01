@@ -39,7 +39,7 @@ class FlattenedPhaseOptimizer @Inject constructor(
     deadStoreElimination: DeadStoreEliminationPass,
     deadCodeRemoval: DeadCodeRemovalPass,
     variableLiveness: VariableLivenessPass,
-) : Optimizer<EvaluableCompilationContext>() {
+) : Optimizer<EvaluableCompilationContext> {
 
     private val analysisManager = AnalysisManager(
         listOf(
@@ -52,18 +52,14 @@ class FlattenedPhaseOptimizer @Inject constructor(
 
     private val pipeline = PassOptimizer(
         passes = listOf(
-            // Cheap simplifications first.
             expressionSimplification,
             operationFlattening,
             redundantOperationRemoval,
             constantAssumptionPropagation,
-            // Analysis-driven value propagation.
             constantVariableSubstitution,
             copyPropagation,
-            // Analysis-driven dead code / store elimination.
             deadStoreElimination,
             deadCodeRemoval,
-            // Cleanup after analyses remove things.
             variableLiveness,
         ),
         analysisManager = analysisManager,

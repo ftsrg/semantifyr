@@ -17,14 +17,12 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpress
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceTree
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.verifyInjectedDependenciesAreBound
 import hu.bme.mit.semantifyr.compiler.scopes.withCompilationScopeBlocking
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.InlinedOxstsParseHelper
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import org.junit.jupiter.api.BeforeEach
 import java.nio.file.Files
 
 @InjectWithOxsts
@@ -34,11 +32,6 @@ abstract class AnalysisTestBase {
 
     @Inject
     protected lateinit var injector: Injector
-
-    @BeforeEach
-    fun verifyInjectedDependencies() {
-        verifyInjectedDependenciesAreBound(this)
-    }
 
     protected data class Fixture(
         val inlinedOxsts: InlinedOxsts,
@@ -51,8 +44,7 @@ abstract class AnalysisTestBase {
         block: (Fixture) -> T,
     ): T {
         val inlined = parseHelper.parse(source.trimIndent())
-        val classDeclaration = inlined.classDeclaration
-            ?: error("InlinedOxsts fixture must reference a class declaration (use 'inlined oxsts of semantifyr::Anything')")
+        val classDeclaration = inlined.classDeclaration ?: error("InlinedOxsts fixture must reference a class declaration (use 'inlined oxsts of semantifyr::Anything')")
         val tree = SingleRootInstanceTree(classDeclaration)
         val context = CreatedCompilationContext(inlined).instantiated(tree)
         val child = injector.createChildInjector(

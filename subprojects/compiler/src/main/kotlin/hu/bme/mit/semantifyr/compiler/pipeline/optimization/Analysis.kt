@@ -44,8 +44,4 @@ class AnalysisManager(
         cache.clear()
     }
 
-    fun invalidateExcept(preserved: Set<Class<out Analysis<*>>>) {
-        cache.keys.retainAll(preserved)
-    }
-
 }

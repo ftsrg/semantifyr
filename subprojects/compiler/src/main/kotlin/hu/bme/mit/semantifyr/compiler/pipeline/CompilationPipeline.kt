@@ -27,10 +27,6 @@ class CompilationPipeline @Inject constructor(
 
     private val logger by loggerFactory()
 
-    fun compile(inlinedOxsts: InlinedOxsts): InlinedOxsts {
-        return compileFlattened(inlinedOxsts).inlinedOxsts
-    }
-
     fun compileFlattened(inlinedOxsts: InlinedOxsts): FlattenedCompilationContext {
         logger.info { "Starting compilation of '${inlinedOxsts.classDeclaration.name}'" }
         val created = CreatedCompilationContext(inlinedOxsts)

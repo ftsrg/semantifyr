@@ -22,10 +22,10 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableReadExpressions
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.writeReference
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableWrites
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
@@ -35,6 +35,7 @@ class VariableLivenessPass @Inject constructor(
     private val config: OptimizationConfig,
     private val metaCompileTimeExpressionEvaluatorProvider: MetaCompileTimeExpressionEvaluatorProvider,
     private val compilationArtifactManager: CompilationArtifactManager,
+    private val builtinAnnotationHandler: BuiltinAnnotationHandler,
 ) : Pass<EvaluableCompilationContext> {
 
     override fun run(input: EvaluableCompilationContext, analysisManager: AnalysisManager): PassResult {
@@ -42,9 +43,14 @@ class VariableLivenessPass @Inject constructor(
             return PassResult.Unchanged
         }
         val evaluator = metaCompileTimeExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
-        val changed = VariableLivenessComputation(input.inlinedOxsts, evaluator, compilationArtifactManager).execute()
+        val changed = VariableLivenessComputation(
+            input.inlinedOxsts,
+            evaluator,
+            compilationArtifactManager,
+            builtinAnnotationHandler,
+        ).execute()
         return if (changed) {
-            PassResult.Changed()
+            PassResult.Changed
         } else {
             PassResult.Unchanged
         }
@@ -56,6 +62,7 @@ class VariableLivenessComputation(
     private val inlinedOxsts: InlinedOxsts,
     private val evaluator: MetaCompileTimeExpressionEvaluator,
     private val compilationArtifactManager: CompilationArtifactManager,
+    private val builtinAnnotationHandler: BuiltinAnnotationHandler,
 ) {
 
     private sealed interface WorkItem {
@@ -64,36 +71,32 @@ class VariableLivenessComputation(
         data class UnassignedInitialized(override val variable: VariableDeclaration) : WorkItem
     }
 
-    private val variableReads: MutableMap<VariableDeclaration, MutableList<Expression>>
-    private val variableAssignments: MutableMap<VariableDeclaration, MutableList<Operation>>
+    private val variableReads = inlinedOxsts.variableReadExpressions(evaluator).groupBy {
+        evaluator.evaluateTyped(VariableDeclaration::class.java, it)
+    }.mapValuesTo(mutableMapOf()) {
+        it.value.toMutableList()
+    }
+    private val assignedValues: MutableMap<VariableDeclaration, MutableList<Operation>>
 
     private val worklist = Worklist<WorkItem>()
 
     init {
-        variableReads = inlinedOxsts.variableReadExpressions(evaluator).groupBy {
-            evaluator.evaluateTyped(VariableDeclaration::class.java, it)
-        }.mapValuesTo(mutableMapOf()) {
+        val variableWrites = inlinedOxsts.variableWrites(evaluator)
+
+        assignedValues = variableWrites.mapValuesTo(mutableMapOf()) {
             it.value.toMutableList()
         }
 
-        // Concat before groupBy - using Map.plus would silently drop one side's
-        // entries when a variable has both assignments and havocs.
-        val writes: Sequence<Operation> =
-            inlinedOxsts.eAllOfType<AssignmentOperation>().map { it as Operation } +
-                inlinedOxsts.eAllOfType<HavocOperation>().map { it as Operation }
-        variableAssignments = writes.groupBy {
-            evaluator.evaluateTyped(VariableDeclaration::class.java, it.writeReference())
-        }.mapValuesTo(mutableMapOf()) {
-            it.value.toMutableList()
-        }
+        val allVariables = inlinedOxsts.eAllOfType<VariableDeclaration>().filterNot {
+            builtinAnnotationHandler.isNonOptimizable(it)
+        }.toSet()
 
-        val allVariables = inlinedOxsts.eAllOfType<VariableDeclaration>().toSet()
-
-        (allVariables - variableReads.keys).forEach {
+        for (it in allVariables - variableReads.keys) {
             worklist.add(WorkItem.Unread(it))
         }
+
         allVariables.filter {
-            it.expression != null && it !in variableAssignments
+            it.expression != null && it !in assignedValues
         }.forEach {
             worklist.add(WorkItem.UnassignedInitialized(it))
         }
@@ -118,7 +121,7 @@ class VariableLivenessComputation(
     }
 
     private fun removeUnread(variable: VariableDeclaration): Boolean {
-        val assignments = variableAssignments[variable] ?: emptyList()
+        val assignments = assignedValues[variable] ?: emptyList()
         for (assignment in assignments) {
             if (assignment is AssignmentOperation) {
                 dropReadsIn(assignment.expression)
@@ -126,7 +129,7 @@ class VariableLivenessComputation(
             EcoreUtil2.remove(assignment)
         }
         EcoreUtil2.remove(variable)
-        variableAssignments -= variable
+        assignedValues -= variable
         compilationArtifactManager.commitStep(CompilationPass.UnusedVariableElimination)
         return true
     }
@@ -155,13 +158,13 @@ class VariableLivenessComputation(
     }
 
     private fun dropReadsIn(expression: Expression) {
-        val readsByVar = expression.variableReadExpressions(evaluator).groupBy {
+        val readsByVariable = expression.variableReadExpressions(evaluator).groupBy {
             evaluator.evaluateTyped(VariableDeclaration::class.java, it)
         }
 
-        for ((variable, dropped) in readsByVar) {
+        for ((variable, reads) in readsByVariable) {
             val list = variableReads[variable] ?: continue
-            list.removeAll(dropped)
+            list.removeAll(reads)
             if (list.isEmpty()) {
                 variableReads -= variable
                 worklist.add(WorkItem.Unread(variable))

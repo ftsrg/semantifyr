@@ -35,7 +35,7 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
 
         val a = inlined.varNamed("a")
         val propertyRead = inlined.findPropertyReadOf(a)
-        val defs = result.defsOf[propertyRead]!!
+        val defs = result.definitionsOf[propertyRead]!!
 
         val initWrite = inlined.assignmentsTo(a).single()
         assertThat(defs).containsExactly(initWrite as EObject)
@@ -58,7 +58,7 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
 
         val a = inlined.varNamed("a")
         val propertyRead = inlined.findPropertyReadOf(a)
-        val defs = result.defsOf[propertyRead]!!
+        val defs = result.definitionsOf[propertyRead]!!
 
         val writes = inlined.assignmentsTo(a)
         assertThat(writes).hasSize(3)
@@ -91,7 +91,7 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val aReadInBRhs = bAssignment.expression as ElementReference
         assertThat(aReadInBRhs.element).isSameAs(a)
 
-        val defs = result.defsOf[aReadInBRhs]
+        val defs = result.definitionsOf[aReadInBRhs]
             ?: error("RHS read of 'a' in 'b := a' not in defsOf map")
 
         assertThat(defs).containsExactly(aWrite as EObject)
@@ -117,7 +117,7 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
 
         val current = inlined.varNamed("current")
         val propertyRead = inlined.findPropertyReadOf(current)
-        val defs = result.defsOf[propertyRead]!!
+        val defs = result.definitionsOf[propertyRead]!!
 
         val writes = inlined.assignmentsTo(current)
         assertThat(defs).containsExactlyInAnyOrderElementsOf(writes.map { it as EObject })
@@ -142,7 +142,7 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
 
         val current = inlined.varNamed("current")
         val propertyRead = inlined.findPropertyReadOf(current)
-        val defs = result.defsOf[propertyRead]!!
+        val defs = result.definitionsOf[propertyRead]!!
 
         val writes = inlined.assignmentsTo(current)
         assertThat(defs).contains(current as EObject)
@@ -167,7 +167,7 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
 
         val done = inlined.varNamed("done")
         val propertyRead = inlined.findPropertyReadOf(done)
-        val defs = result.defsOf[propertyRead]!!
+        val defs = result.definitionsOf[propertyRead]!!
 
         val tranWrite = inlined.assignmentsTo(done).single()
         assertThat(defs).containsExactlyInAnyOrder(tranWrite as EObject, done as EObject)
@@ -191,7 +191,7 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
 
         val a = inlined.varNamed("a")
         val propertyRead = inlined.findPropertyReadOf(a)
-        val defs = result.defsOf[propertyRead]!!
+        val defs = result.definitionsOf[propertyRead]!!
 
         val initWrite = inlined.assignmentsTo(a).single()
         assertThat(defs).containsExactlyInAnyOrder(initWrite as EObject, a as EObject)
@@ -217,7 +217,7 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
 
         val a = inlined.varNamed("a")
         val propertyRead = inlined.findPropertyReadOf(a)
-        val defs = result.defsOf[propertyRead]!!
+        val defs = result.definitionsOf[propertyRead]!!
 
         val writes = inlined.assignmentsTo(a)
         assertThat(defs).containsExactlyInAnyOrderElementsOf(writes.map { it as EObject })
@@ -240,7 +240,7 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
 
         val a = inlined.varNamed("a")
         val propertyRead = inlined.findPropertyReadOf(a)
-        val defs = result.defsOf[propertyRead]!!
+        val defs = result.definitionsOf[propertyRead]!!
 
         val havoc = inlined.havocsOn(a).single()
         assertThat(defs).containsExactlyInAnyOrder(havoc as EObject, a as EObject)
@@ -269,8 +269,7 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val assume = inlined.assumesReading(a).single()
         val aReadInGuard = (assume.expression as ComparisonOperator).left as ElementReference
 
-        val defs = result.defsOf[aReadInGuard]
-            ?: error("Read of 'a' inside assume guard not in defsOf map")
+        val defs = result.definitionsOf[aReadInGuard] ?: error("Read of 'a' inside assume guard not in defsOf map")
 
         assertThat(defs).containsExactly(aWrite as EObject)
     }
@@ -295,7 +294,7 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
 
         val activeState = inlined.varNamed("activeState")
         val propertyRead = inlined.findPropertyReadOf(activeState)
-        val defs = result.defsOf[propertyRead]!!
+        val defs = result.definitionsOf[propertyRead]!!
 
         val writes = inlined.assignmentsTo(activeState)
         assertThat(writes).hasSize(3) // init + two inside the branch
@@ -307,36 +306,37 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
     }
 
     private fun InlinedOxsts.varNamed(name: String): VariableDeclaration {
-        return eAllOfType<VariableDeclaration>().firstOrNull { it.name == name }
-            ?: error("No variable named '$name' in inlined oxsts")
+        return eAllOfType<VariableDeclaration>().firstOrNull {
+            it.name == name
+        } ?: error("No variable named '$name' in inlined oxsts")
     }
 
     private fun InlinedOxsts.assignmentsTo(variable: VariableDeclaration): List<AssignmentOperation> {
-        return eAllOfType<AssignmentOperation>()
-            .filter {
-                val ref = it.reference
-                ref is ElementReference && ref.element === variable
-            }.toList()
+        return eAllOfType<AssignmentOperation>().filter {
+            val ref = it.reference
+            ref is ElementReference && ref.element === variable
+        }.toList()
     }
 
     private fun InlinedOxsts.havocsOn(variable: VariableDeclaration): List<HavocOperation> {
-        return eAllOfType<HavocOperation>()
-            .filter {
-                val ref = it.reference
-                ref is ElementReference && ref.element === variable
-            }.toList()
+        return eAllOfType<HavocOperation>().filter {
+            val ref = it.reference
+            ref is ElementReference && ref.element === variable
+        }.toList()
     }
 
     private fun InlinedOxsts.assumesReading(variable: VariableDeclaration): List<AssumptionOperation> {
-        return eAllOfType<AssumptionOperation>()
-            .filter { assume ->
-                assume.expression.eAllOfType<ElementReference>().any { it.element === variable }
-            }.toList()
+        return eAllOfType<AssumptionOperation>().filter {
+            it.expression.eAllOfType<ElementReference>().any {
+                it.element === variable
+            }
+        }.toList()
     }
 
     private fun InlinedOxsts.findPropertyReadOf(variable: VariableDeclaration): Expression {
         val property = eAllOfType<PropertyDeclaration>().first()
-        return property.expression.eAllOfType<ElementReference>().firstOrNull { it.element === variable }
-            ?: error("Property does not reference '${variable.name}'")
+        return property.expression.eAllOfType<ElementReference>().firstOrNull {
+            it.element === variable
+        } ?: error("Property does not reference '${variable.name}'")
     }
 }

@@ -58,7 +58,6 @@ class PassOptimizerTest {
         verify(pass1, times(1)).run(any(), eq(manager))
         verify(pass2, times(1)).run(any(), eq(manager))
         verify(manager, times(1)).invalidateAll()
-        verify(manager, never()).invalidateExcept(any())
     }
 
     @Test
@@ -71,7 +70,7 @@ class PassOptimizerTest {
             } doAnswer {
                 if (firstCall) {
                     firstCall = false
-                    PassResult.Changed()
+                    PassResult.Changed
                 } else {
                     PassResult.Unchanged
                 }
@@ -82,32 +81,7 @@ class PassOptimizerTest {
         val changed = optimizer.optimize(Bag())
 
         assertThat(changed).isTrue
-        // First iteration: pass returns changed → second iteration runs. Second: unchanged.
         verify(pass, times(2)).run(any(), eq(manager))
-        verify(manager).invalidateExcept(emptySet())
-    }
-
-    @Test
-    fun `preserved analyses are forwarded to invalidateExcept`() {
-        val manager = mock<AnalysisManager>()
-        val preserved: Set<Class<out Analysis<*>>> = setOf(StubAnalysis::class.java)
-        var first = true
-        val pass: Pass<Bag> = mock {
-            on {
-                run(any(), any())
-            } doAnswer {
-                if (first) {
-                    first = false
-                    PassResult.Changed(preserved)
-                } else {
-                    PassResult.Unchanged
-                }
-            }
-        }
-
-        PassOptimizer(listOf(pass), manager).optimize(Bag())
-
-        verify(manager).invalidateExcept(eq(preserved))
     }
 
     @Test
@@ -120,7 +94,7 @@ class PassOptimizerTest {
             } doAnswer {
                 runs++
                 if (runs <= 2) {
-                    PassResult.Changed()
+                    PassResult.Changed
                 } else {
                     PassResult.Unchanged
                 }
@@ -135,7 +109,6 @@ class PassOptimizerTest {
         val changed = PassOptimizer(listOf(pass1, pass2), manager).optimize(Bag())
 
         assertThat(changed).isTrue
-        // pass1 runs 3 times (changed, changed, unchanged), pass2 runs 3 times too.
         verify(pass1, times(3)).run(any(), eq(manager))
         verify(pass2, times(3)).run(any(), eq(manager))
     }

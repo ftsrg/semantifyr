@@ -49,7 +49,7 @@ class ExpressionCallInliner @AssistedInject constructor(
     private val typeCompatibility: TypeCompatibility,
 ) : ExpressionVisitor<Unit>() {
 
-    private val processorQueue: ArrayDeque<Expression> = ArrayDeque<Expression>()
+    private val processorQueue = ArrayDeque<Expression>()
 
     fun process(expression: Expression) {
         visit(expression)

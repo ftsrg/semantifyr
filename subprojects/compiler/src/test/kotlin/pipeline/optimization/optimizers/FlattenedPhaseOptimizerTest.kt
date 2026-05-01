@@ -102,9 +102,6 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
 
     @Test
     fun `single tran write that is reached only via the loop is not folded into the property`() = assertOptimizerTransforms(
-        // The property reads done_first; init does not write it, so the initializer (false) is
-        // observable at the post-init state. CopyPropagation must therefore not collapse the
-        // read to the tran write's RHS (true), since that would lose the post-init value.
         source = """
             inlined oxsts of semantifyr::Anything
             var done_first : bool := false
@@ -127,11 +124,6 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
 
     @Test
     fun `assumes guarding tran keep their read variables in the cone of influence`() = assertOptimizerTransforms(
-        // The property simplifies to `AG true` because `aux` (no writes, only initializer 0)
-        // gets substituted by its initial value, then the disjunction folds. After that,
-        // DeadCodeRemoval must NOT wipe out the step writes that guard tran via `assume(step == 1)`,
-        // because removing them would make the assume fold to `assume false` and silently change
-        // the set of reachable states. Variables read in assumes are part of the cone of influence.
         source = """
             inlined oxsts of semantifyr::Anything
             var step : int := -1
@@ -161,10 +153,6 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
 
     @Test
     fun `step counter style witness model - init writes must survive`() = assertOptimizerTransforms(
-        // Mirrors the back-annotated witness shape from AssumptionWitnessBackAnnotator:
-        // a step counter with sequenced init writes, a tran guarded by step == N, and a
-        // property of the form `AG step != N || ...`. The optimizer must preserve every
-        // step write so the witness stays executable.
         source = """
             inlined oxsts of semantifyr::Anything
             var step : int := -1
@@ -198,9 +186,6 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
 
     @Test
     fun `nested choice in init - all branches stay live when read in tran`() = assertOptimizerTransforms(
-        // OperationFlattening hoists the nested choice into a flat one. That reshape is
-        // expected; the test asserts that all three init writes survive and the assume
-        // is preserved.
         source = """
             inlined oxsts of semantifyr::Anything
             var current : int := -1
@@ -241,12 +226,6 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
 
     @Test
     fun `witness shape with step counter and dispatch must be preserved`() = assertOptimizerTransforms(
-        // Mirrors the back-annotated witness produced for ClassTypedDispatchReach:
-        // a step counter pinning each transition, a dispatch choice in init, a
-        // case-split in tran writing one of two `done` flags, and assumes pinning
-        // the witness trace. The optimizer must not collapse the property to
-        // EF false - every init/tran assignment is referenced through some assume
-        // or property read, and removing any of them invalidates the witness.
         source = """
             inlined oxsts of semantifyr::Anything
             var step : int := -1
@@ -323,6 +302,26 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
                 step := 2
             }
             prop { EF (step == 2 && (first_done == true || second_done == true)) }
+        """,
+    )
+
+    @Test
+    fun `NonOptimizable variable and its writes survive the full optimizer pipeline`() = assertOptimizerTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            @NonOptimizable
+            var tracer : bool := false
+            init { }
+            tran { tracer := true }
+            prop { AG true }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            @NonOptimizable
+            var tracer : bool := false
+            init { }
+            tran { tracer := true }
+            prop { AG true }
         """,
     )
 

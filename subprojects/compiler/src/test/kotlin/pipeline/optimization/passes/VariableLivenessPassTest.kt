@@ -96,4 +96,26 @@ class VariableLivenessPassTest : PassTestBase() {
     ) {
         it.getInstance(VariableLivenessPass::class.java)
     }
+
+    @Test
+    fun `unread NonOptimizable variable survives elimination`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            @NonOptimizable
+            var tracer : bool := false
+            init { }
+            tran { tracer := true }
+            prop { AG true }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            @NonOptimizable
+            var tracer : bool := false
+            init { }
+            tran { tracer := true }
+            prop { AG true }
+        """,
+    ) {
+        it.getInstance(VariableLivenessPass::class.java)
+    }
 }

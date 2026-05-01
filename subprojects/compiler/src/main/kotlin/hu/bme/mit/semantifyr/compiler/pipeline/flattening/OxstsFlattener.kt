@@ -107,13 +107,13 @@ class OxstsFlattener @Inject constructor(
         logger.debug { "Rewriting feature-typed variables" }
         rewriteFeatureTypedVariables(inlinedOxsts, variableInstanceDomain)
 
-        compilationArtifactManager.commitStep(CompilationPass.Flattening)
-
         logger.debug { "Rewriting static expressions" }
         rewriteStaticExpressions(inlinedOxsts, instanceTree, variableInstanceDomain, flattenedEvaluationTransformer)
 
         logger.info { "Running post-flattening optimizers" }
         flattenedPhaseOptimizer.optimize(inlinedCompilationContext)
+
+        compilationArtifactManager.commitStep(CompilationPass.Flattening)
 
         val instanceIdMapping = flattenedEvaluationTransformer.buildMapping()
 
@@ -186,7 +186,6 @@ class OxstsFlattener @Inject constructor(
                 actualVariable.typeSpecification.domain = builtinAnything
             }
             else -> {
-                // Primitive-domain variable (int/bool/enum/etc.); no retyping.
             }
         }
 
@@ -309,22 +308,15 @@ class OxstsFlattener @Inject constructor(
     }
 
     private fun rewriteNothingExpressions(inlinedOxsts: InlinedOxsts) {
-        var iteration = 0
-        while (true) {
-            val nothingExpression = inlinedOxsts.eAllOfType<LiteralNothing>().firstOrNull()
+        val nothingExpressions = inlinedOxsts.eAllOfType<LiteralNothing>().toList()
 
-            if (nothingExpression == null) {
-                logger.debug { "rewriteNothingExpressions finished after $iteration iteration(s)" }
-                return
-            }
-
+        for (nothingExpression in nothingExpressions) {
             val minusOne = OxstsFactory.createArithmeticUnaryOperator().also {
                 it.op = UnaryOp.MINUS
                 it.body = OxstsFactory.createLiteralInteger(1)
             }
 
             EcoreUtil2.replace(nothingExpression, minusOne)
-            iteration++
         }
     }
 
@@ -337,9 +329,9 @@ class OxstsFlattener @Inject constructor(
 
         var iteration = 0
         while (true) {
-            val featureExpression = inlinedOxsts.eAllOfType<ReferenceExpression>().filter {
+            val featureExpression = inlinedOxsts.eAllOfType<ReferenceExpression>().firstOrNull {
                 metaCompileTimeExpressionEvaluatorProvider.evaluate(instanceTree.rootInstance, it) is FeatureDeclaration
-            }.firstOrNull()
+            }
 
             if (featureExpression == null) {
                 logger.debug { "rewriteFeatureExpressions finished after $iteration iteration(s)" }

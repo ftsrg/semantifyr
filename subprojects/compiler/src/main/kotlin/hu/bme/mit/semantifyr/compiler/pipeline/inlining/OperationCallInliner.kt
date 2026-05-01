@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
-import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
@@ -33,7 +32,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation
 import org.eclipse.xtext.EcoreUtil2
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.TimeSource.Monotonic.markNow
 
 class OperationCallInliner @AssistedInject constructor(
@@ -47,17 +45,15 @@ class OperationCallInliner @AssistedInject constructor(
     private val logger by loggerFactory()
 
     private val expressionCallInliner = expressionCallInlinerFactory.create(instance)
-
-    private var localVariableIndex: Int = 0
-
     private val processorQueue = ArrayDeque<Operation>()
 
-    private var nestedOptimizeCalls: Int = 0
-    private var nestedOptimizeTotal: Duration = ZERO
+    private var localVariableIndex = 0
+    private var nestedOptimizeCalls = 0
+    private var nestedOptimizeTotal = Duration.ZERO
 
     fun process(operation: Operation) {
         nestedOptimizeCalls = 0
-        nestedOptimizeTotal = ZERO
+        nestedOptimizeTotal = Duration.ZERO
 
         val mark = markNow()
         visit(operation)

@@ -14,11 +14,11 @@ import org.junit.jupiter.api.Test
 
 class PackageInliningOperationTest : InliningTestBase() {
     @Test
-    fun `self-call to main via bare inline main`() {
+    fun `call to main via bare inline main`() {
         prepare(
             "Host",
             """
-                package inlining::tests::self_main
+                package inlining::tests
                 @VerificationCase
                 class Host {
                     var x : int := 0
@@ -33,11 +33,11 @@ class PackageInliningOperationTest : InliningTestBase() {
     }
 
     @Test
-    fun `self-call to a named tran via bare call`() {
+    fun `call to a named tran via bare call`() {
         prepare(
             "Host",
             """
-                package inlining::tests::self_named
+                package inlining::tests
                 @VerificationCase
                 class Host {
                     var x : int := 0
@@ -54,11 +54,11 @@ class PackageInliningOperationTest : InliningTestBase() {
     }
 
     @Test
-    fun `self-call to a named tran via self navigation`() {
+    fun `call to a named tran via self navigation`() {
         prepare(
             "Host",
             """
-                package inlining::tests::self_nav
+                package inlining::tests
                 @VerificationCase
                 class Host {
                     var x : int := 0
@@ -79,7 +79,7 @@ class PackageInliningOperationTest : InliningTestBase() {
         prepare(
             "Host",
             """
-                package inlining::tests::single_nav
+                package inlining::tests
                 class Worker {
                     var done : bool := false
                     tran step() { done := true }
@@ -103,7 +103,7 @@ class PackageInliningOperationTest : InliningTestBase() {
         prepare(
             "Host",
             """
-                package inlining::tests::multi_nav
+                package inlining::tests
                 class Leaf {
                     var v : int := 0
                     tran bump() { v := v + 1 }
@@ -130,7 +130,7 @@ class PackageInliningOperationTest : InliningTestBase() {
         prepare(
             "Testing",
             """
-                package inlining::tests::poly
+                package inlining::tests
                 class Base {
                     tran someBehavior() { }
                 }
@@ -149,9 +149,7 @@ class PackageInliningOperationTest : InliningTestBase() {
         ) {
             inlineAll(it)
             assertNoInlineOperationsInMain(it)
-            // The Child redefinition should win; the assignment `x := 10` must
-            // appear in the inlined main, proving the redefinition-aware resolver
-            // picked up the subclass body rather than the empty Base body.
+
             assertMainContains(it, ":= 10")
         }
     }
@@ -161,7 +159,7 @@ class PackageInliningOperationTest : InliningTestBase() {
         prepare(
             "Testing",
             """
-                package inlining::tests::multi_inheritance
+                package inlining::tests
                 class Base {
                     tran act() { }
                 }
@@ -184,7 +182,7 @@ class PackageInliningOperationTest : InliningTestBase() {
         ) {
             inlineAll(it)
             assertNoInlineOperationsInMain(it)
-            // Must pick the leaf redefinition, not Mid's or Base's.
+
             assertMainContains(it, ":= 2")
         }
     }
@@ -194,7 +192,7 @@ class PackageInliningOperationTest : InliningTestBase() {
         prepare(
             "Dispatcher",
             """
-                package inlining::tests::variable_dispatch
+                package inlining::tests
                 class Worker {
                     var done : bool := false
                     tran step() { done := true }
@@ -215,7 +213,6 @@ class PackageInliningOperationTest : InliningTestBase() {
         ) {
             inlineAll(it)
             assertNoInlineOperationsInMain(it)
-            // Both candidates should appear: the dispatch fans out across a and b.
             val mainText = serializer.serializeFormatted(it.inlinedOxsts.mainTransition)
             assertThat(mainText)
                 .`as`("dispatch should produce branches referring to both candidates")
@@ -229,7 +226,7 @@ class PackageInliningOperationTest : InliningTestBase() {
         prepare(
             "Dispatcher",
             """
-                package inlining::tests::class_dispatch
+                package inlining::tests
                 class Worker {
                     var done : bool := false
                     tran step() { done := true }
@@ -249,8 +246,6 @@ class PackageInliningOperationTest : InliningTestBase() {
         ) {
             inlineAll(it)
             assertNoInlineOperationsInMain(it)
-            // Class-typed variable dispatch goes through InstanceCollector.instancesOfType;
-            // the dispatch should fan out to both a and b (instances of Worker).
             val mainText = serializer.serializeFormatted(it.inlinedOxsts.mainTransition)
             assertThat(mainText)
                 .`as`("class-typed dispatch should guard each branch with an equality to a candidate")
@@ -264,7 +259,7 @@ class PackageInliningOperationTest : InliningTestBase() {
         prepare(
             "Host",
             """
-                package inlining::tests::optional_nav
+                package inlining::tests
                 class Leaf {
                     var v : int := 0
                     tran bump() { v := v + 1 }
@@ -279,9 +274,7 @@ class PackageInliningOperationTest : InliningTestBase() {
         ) {
             inlineAll(it)
             assertNoInlineOperationsInMain(it)
-            // With multiplicity [0..1] and no subsetter, `leaf` resolves to no
-            // instance; the optional navigation drops the inline call, leaving
-            // the main body free of any `leaf` or `bump` references.
+
             val mainText = serializer.serializeFormatted(it.inlinedOxsts.mainTransition)
             assertThat(mainText)
                 .`as`("optional navigation on empty container should produce an empty main body")
@@ -294,7 +287,7 @@ class PackageInliningOperationTest : InliningTestBase() {
         prepare(
             "Host",
             """
-                package inlining::tests::non_literal_arg
+                package inlining::tests
                 @VerificationCase
                 class Host {
                     var x : int := 0
@@ -319,7 +312,7 @@ class PackageInliningOperationTest : InliningTestBase() {
         prepare(
             "Host",
             """
-                package inlining::tests::enum_arg
+                package inlining::tests
                 enum Command { Inc, Dec }
                 @VerificationCase
                 class Host {
@@ -352,7 +345,7 @@ class PackageInliningOperationTest : InliningTestBase() {
         prepare(
             "Host",
             """
-                package inlining::tests::local_var_collision
+                package inlining::tests
                 @VerificationCase
                 class Host {
                     var x : int := 0
@@ -373,7 +366,9 @@ class PackageInliningOperationTest : InliningTestBase() {
             assertNoInlineOperationsInMain(it)
             val mainText = serializer.serializeFormatted(it.inlinedOxsts.mainTransition)
             val localDeclarationMatches = Regex("""var\s+'?tmp[^\s:']*'?\s*:""").findAll(mainText).toList()
-            val distinctNames = localDeclarationMatches.map { it.value }.toSet()
+            val distinctNames = localDeclarationMatches.map {
+                it.value
+            }.toSet()
             assertThat(localDeclarationMatches)
                 .`as`("expected two local tmp declarations after two inline expansions, got main body: $mainText")
                 .hasSize(2)

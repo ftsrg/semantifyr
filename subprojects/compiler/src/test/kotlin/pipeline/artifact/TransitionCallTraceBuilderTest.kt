@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.artifact
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluator
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
@@ -25,7 +26,7 @@ class TransitionCallTraceBuilderTest {
     private val instance: Instance = mock()
     private val container: Instance = mock()
 
-    private val emptyCallExpression: CallSuffixExpression = OxstsFactoryImpl().createCallSuffixExpression()
+    private val emptyCallExpression = OxstsFactory.createCallSuffixExpression()
 
     private fun mockTransitionDeclaration(): TransitionDeclaration {
         return mock()
@@ -41,7 +42,9 @@ class TransitionCallTraceBuilderTest {
         val map = newBuilder().build()
 
         // Looking up anything in the empty map must raise.
-        val traceOperation: TraceOperation = OxstsFactoryImpl().createTraceOperation().also { it.name = "missing" }
+        val traceOperation = OxstsFactory.createTraceOperation().also {
+            it.name = "missing"
+        }
 
         assertThat(
             runCatching {
@@ -58,7 +61,9 @@ class TransitionCallTraceBuilderTest {
         val second = builder.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression)
         val third = builder.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression)
 
-        val names = listOf(first, second, third).map { (it as TraceOperation).name }
+        val names = listOf(first, second, third).map {
+            (it as TraceOperation).name
+        }
 
         assertThat(names).hasSize(3)
         assertThat(names).doesNotHaveDuplicates()

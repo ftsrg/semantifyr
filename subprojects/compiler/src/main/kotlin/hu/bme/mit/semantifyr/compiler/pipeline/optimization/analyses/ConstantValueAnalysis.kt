@@ -10,15 +10,14 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluator
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableAssignments
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableHavocs
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
@@ -56,27 +55,22 @@ class ConstantValueComputation(
 ) {
 
     fun compute(): ConstantValueInfo {
-        val havocedVariables = inlinedOxsts.eAllOfType<HavocOperation>().mapTo(mutableSetOf()) {
-            evaluator.evaluateTyped(VariableDeclaration::class.java, it.reference)
-        }
-
-        val assignmentsByVariable = inlinedOxsts.eAllOfType<AssignmentOperation>().groupBy {
-            evaluator.evaluateTyped(VariableDeclaration::class.java, it.reference)
-        }
+        val variableHavocs = inlinedOxsts.variableHavocs(evaluator)
+        val variableAssignments = inlinedOxsts.variableAssignments(evaluator)
 
         val constants = mutableMapOf<VariableDeclaration, Expression>()
 
         for (variable in inlinedOxsts.eAllOfType<VariableDeclaration>()) {
-            if (variable in havocedVariables) {
+            if (variable in variableHavocs) {
                 continue
             }
 
-            val assignments = assignmentsByVariable[variable]
+            val assignments = variableAssignments[variable]
             if (assignments.isNullOrEmpty()) {
                 continue
             }
 
-            val writtenValues = buildList {
+            val writtenExpressions = buildList {
                 variable.expression?.let {
                     add(it)
                 }
@@ -85,19 +79,18 @@ class ConstantValueComputation(
                 }
             }
 
-            val evaluations = writtenValues.map {
+            val writtenValues = writtenExpressions.map {
                 evaluateOrNull(it)
             }
-            if (evaluations.any { it == null }) {
+            if (writtenValues.any { it == null }) {
                 continue
             }
-            val unique = evaluations.distinct()
+            val unique = writtenValues.distinct()
             if (unique.size != 1) {
                 continue
             }
 
-            // All writes produce the same constant. Pick any as the canonical value.
-            constants[variable] = writtenValues.first()
+            constants[variable] = writtenExpressions.first()
         }
 
         return ConstantValueInfo(constants)

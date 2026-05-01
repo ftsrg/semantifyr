@@ -59,7 +59,7 @@ class PatternOptimizer(
     private val patterns: List<OptimizationPattern>,
     private val pass: CompilationPass,
     private val artifactManager: CompilationArtifactManager,
-) : Optimizer<EObject>() {
+) : Optimizer<EObject> {
 
     private val logger by loggerFactory()
 

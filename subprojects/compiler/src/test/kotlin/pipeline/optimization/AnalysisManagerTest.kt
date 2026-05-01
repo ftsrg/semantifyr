@@ -82,35 +82,6 @@ class AnalysisManagerTest {
     }
 
     @Test
-    fun `invalidateExcept keeps only the preserved entries`() {
-        val a = AnalysisA(ResultA("a"))
-        val b = AnalysisB(ResultB("b"))
-        val manager = AnalysisManager(listOf(a, b))
-
-        manager.get(AnalysisA::class.java, context)
-        manager.get(AnalysisB::class.java, context)
-        manager.invalidateExcept(setOf(AnalysisA::class.java))
-
-        manager.get(AnalysisA::class.java, context)
-        manager.get(AnalysisB::class.java, context)
-
-        assertThat(a.computeCount).isEqualTo(1)
-        assertThat(b.computeCount).isEqualTo(2)
-    }
-
-    @Test
-    fun `invalidateExcept with empty set clears everything`() {
-        val a = AnalysisA(ResultA("a"))
-        val manager = AnalysisManager(listOf(a))
-
-        manager.get(AnalysisA::class.java, context)
-        manager.invalidateExcept(emptySet())
-        manager.get(AnalysisA::class.java, context)
-
-        assertThat(a.computeCount).isEqualTo(2)
-    }
-
-    @Test
     fun `get for unregistered analysis type throws a descriptive error`() {
         val manager = AnalysisManager(emptyList())
 

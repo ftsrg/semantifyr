@@ -21,7 +21,7 @@ class InlinedPhaseOptimizer @Inject constructor(
     operationFlattening: OperationFlatteningPass,
     redundantOperationRemoval: RedundantOperationRemovalPass,
     constantAssumptionPropagation: AssumeFalsePropagationPass,
-) : Optimizer<EvaluableCompilationContext>() {
+) : Optimizer<EvaluableCompilationContext> {
 
     private val pipeline = PassOptimizer(
         passes = listOf(

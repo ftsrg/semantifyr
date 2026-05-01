@@ -61,7 +61,6 @@ class CallTargetResolver @Inject constructor(
         val primary = callExpression.primary
 
         if (primary !is NavigationSuffixExpression) {
-            // Bare `b(args)` - self-dispatch.
             val targetDeclaration = (primary as? ElementReference)?.element ?: sourceError(
                 callExpression,
                 "Unexpected call primary shape: ${primary::class.simpleName}",

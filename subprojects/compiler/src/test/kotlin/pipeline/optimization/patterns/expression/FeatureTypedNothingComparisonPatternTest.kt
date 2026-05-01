@@ -127,10 +127,9 @@ class FeatureTypedNothingComparisonPatternTest : InliningTestBase() {
 
     private fun InlinedOxsts.propertyBoolLiterals(): List<Boolean> {
         val property = eAllOfType<PropertyDeclaration>().first()
-        return property.expression
-            .eAllOfType<LiteralBoolean>()
-            .map { it.isValue }
-            .toList()
+        return property.expression.eAllOfType<LiteralBoolean>().map {
+            it.isValue
+        }.toList()
     }
 
     private fun InlinedOxsts.propertyHasNothingComparison(): Boolean {
