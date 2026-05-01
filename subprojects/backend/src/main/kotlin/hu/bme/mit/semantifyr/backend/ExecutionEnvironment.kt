@@ -6,24 +6,25 @@
 
 package hu.bme.mit.semantifyr.backend
 
-class ExecutionEnvironment(
-    val entries: Map<String, Any>,
+class ExecutionEnvironment private constructor(
+    private val entries: Map<Key<*>, Any>,
 ) {
-    fun with(
-        id: String,
-        spec: Any,
-    ): ExecutionEnvironment {
-        return ExecutionEnvironment(entries + (id to spec))
+
+    class Key<T : Any>(val name: String)
+
+    operator fun <T : Any> get(key: Key<T>): T? {
+        @Suppress("UNCHECKED_CAST")
+        return entries[key] as T?
     }
 
     class Builder {
-        private val entries = mutableMapOf<String, Any>()
+        private val entries = mutableMapOf<Key<*>, Any>()
 
-        fun put(
-            id: String,
-            spec: Any,
+        fun <T : Any> put(
+            key: Key<T>,
+            value: T,
         ): Builder {
-            entries[id] = spec
+            entries[key] = value
             return this
         }
 
@@ -33,8 +34,8 @@ class ExecutionEnvironment(
     }
 
     companion object {
-        @JvmField
-        val Empty: ExecutionEnvironment = ExecutionEnvironment(emptyMap())
+        @JvmStatic
+        val Empty = ExecutionEnvironment(emptyMap())
 
         @JvmStatic
         fun builder(): Builder {

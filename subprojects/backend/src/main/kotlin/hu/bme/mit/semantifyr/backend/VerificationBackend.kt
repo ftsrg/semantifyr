@@ -9,15 +9,15 @@ package hu.bme.mit.semantifyr.backend
 import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitness
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import kotlinx.serialization.Serializable
 import java.nio.file.Path
 import kotlin.time.Duration
 import kotlin.time.Instant
 
+class BackendUnsupportedException(message: String, cause: Throwable? = null) : Exception(message, cause)
+
 data class VerificationRequest(
-    val case: VerificationCase,
-    val input: InlinedOxsts,
+    val verificationCase: VerificationCase,
     val compilation: FlattenedCompilationContext,
     val artifactOutputPath: Path,
 )
@@ -59,37 +59,33 @@ data class VerificationMetrics(
     val verificationDuration: Duration = Duration.ZERO,
     val backAnnotationDuration: Duration = Duration.ZERO,
     val totalDuration: Duration = Duration.ZERO,
-)
+) {
+    // kotlin.time.Duration is a value class - its `toIsoString` and component getters are
+    // name-mangled by the JVM and unreachable from Java. The Java consumers in the LSP wire
+    // layer need ISO 8601 strings to match the rest of the project's duration serialisation
+    // (admin endpoint, etc.); these accessors do the bridging.
+    fun preparationDurationIso(): String = preparationDuration.toIsoString()
+    fun verificationDurationIso(): String = verificationDuration.toIsoString()
+    fun backAnnotationDurationIso(): String = backAnnotationDuration.toIsoString()
+    fun totalDurationIso(): String = totalDuration.toIsoString()
+}
 
 data class BackendVerificationResult(
-    val verdict: VerificationVerdict,
+    val verdict: BackendVerificationVerdict,
     val metadata: VerificationRunMetadata,
     val metrics: VerificationMetrics = VerificationMetrics(),
     val witness: InlinedOxstsAssumptionWitness? = null,
     val message: String? = null,
 ) {
-    val isPassed: Boolean get() = verdict == VerificationVerdict.Passed
-    val isFailed: Boolean get() = verdict == VerificationVerdict.Failed
-    val isDecisive: Boolean get() = verdict.isDecisive
+    val isDecisive = verdict.isDecisive
 
     companion object {
-        fun inconclusive(
-            metadata: VerificationRunMetadata,
-            metrics: VerificationMetrics,
-            message: String,
-        ): BackendVerificationResult = BackendVerificationResult(
-            verdict = VerificationVerdict.Inconclusive,
-            metadata = metadata,
-            metrics = metrics,
-            message = message,
-        )
-
         fun errored(
             metadata: VerificationRunMetadata,
             metrics: VerificationMetrics,
             message: String,
         ): BackendVerificationResult = BackendVerificationResult(
-            verdict = VerificationVerdict.Errored,
+            verdict = BackendVerificationVerdict.Errored,
             metadata = metadata,
             metrics = metrics,
             message = message,
@@ -100,7 +96,7 @@ data class BackendVerificationResult(
             metrics: VerificationMetrics,
             message: String,
         ): BackendVerificationResult = BackendVerificationResult(
-            verdict = VerificationVerdict.NotSupported,
+            verdict = BackendVerificationVerdict.NotSupported,
             metadata = metadata,
             metrics = metrics,
             message = message,
@@ -108,13 +104,12 @@ data class BackendVerificationResult(
     }
 }
 
-enum class VerificationVerdict(
+enum class BackendVerificationVerdict(
     val isDecisive: Boolean,
 ) {
     Passed(true),
     Failed(true),
     Errored(false),
-    Inconclusive(false),
     NotSupported(false),
 }
 

@@ -7,17 +7,17 @@
 package hu.bme.mit.semantifyr.backend
 
 sealed interface AvailabilityReport {
-    object Available : AvailabilityReport
-
-    data class Degraded(
-        val message: String,
-    ) : AvailabilityReport
+    object Available : AvailabilityReport {
+        override val isUsable = true
+    }
 
     data class Unavailable(
         val reason: String,
         val hints: List<String> = emptyList(),
-    ) : AvailabilityReport
+    ) : AvailabilityReport {
+        override val isUsable = false
+    }
 
     val isUsable: Boolean
-        get() = this is Available || this is Degraded
+
 }

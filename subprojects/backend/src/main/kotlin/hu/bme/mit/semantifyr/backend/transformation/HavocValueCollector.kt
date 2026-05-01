@@ -17,6 +17,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
+import org.eclipse.xtext.EcoreUtil2
 
 @VerificationScoped
 class HavocValueCollector {
@@ -29,10 +30,12 @@ class HavocValueCollector {
     }
 
     private fun compute(variable: VariableDeclaration): List<Int> {
-        val root = variable.containingInlinedOxsts() ?: return listOf(0)
+        val root = EcoreUtil2.getContainerOfType(variable, InlinedOxsts::class.java) ?: return listOf(0)
         val values = sortedSetOf<Int>()
 
-        variable.expression?.asInt()?.let { values += it }
+        variable.expression?.asInt()?.let {
+            values += it
+        }
 
         for (comparison in root.eAllContents().asSequence().filterIsInstance<ComparisonOperator>()) {
             collectFromComparison(comparison, variable, values)
@@ -65,17 +68,49 @@ class HavocValueCollector {
         if (variableOnLeft == variableOnRight) {
             return
         }
-        val literal = if (variableOnLeft) right.asInt() else left.asInt()
-        literal ?: return
+
+        val literal = if (variableOnLeft) {
+            right.asInt()
+        } else {
+            left.asInt()
+        }
+        if (literal == null) {
+            return
+        }
 
         val (valid, invalid) = when (comparison.op) {
             ComparisonOp.EQ -> literal to literal + 1
             ComparisonOp.NOT_EQ -> literal + 1 to literal
-            ComparisonOp.LESS -> if (variableOnLeft) literal - 1 to literal else literal + 1 to literal
-            ComparisonOp.LESS_EQ -> if (variableOnLeft) literal to literal + 1 else literal to literal - 1
-            ComparisonOp.GREATER -> if (variableOnLeft) literal + 1 to literal else literal - 1 to literal
-            ComparisonOp.GREATER_EQ -> if (variableOnLeft) literal to literal - 1 else literal to literal + 1
+            ComparisonOp.LESS -> {
+                if (variableOnLeft) {
+                    literal - 1 to literal
+                } else {
+                    literal + 1 to literal
+                }
+            }
+            ComparisonOp.LESS_EQ -> {
+                if (variableOnLeft) {
+                    literal to literal + 1
+                } else {
+                    literal to literal - 1
+                }
+            }
+            ComparisonOp.GREATER -> {
+                if (variableOnLeft) {
+                    literal + 1 to literal
+                } else {
+                    literal - 1 to literal
+                }
+            }
+            ComparisonOp.GREATER_EQ -> {
+                if (variableOnLeft) {
+                    literal to literal - 1
+                } else {
+                    literal to literal + 1
+                }
+            }
         }
+
         out += valid
         out += invalid
     }
@@ -98,12 +133,4 @@ class HavocValueCollector {
         }
     }
 
-    private fun EObject.containingInlinedOxsts(): InlinedOxsts? {
-        var current: EObject? = this
-        while (current != null) {
-            if (current is InlinedOxsts) return current
-            current = current.eContainer()
-        }
-        return null
-    }
 }

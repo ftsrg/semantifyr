@@ -36,7 +36,9 @@ class DeferredResultCallback<T : Any> : ResultCallback<T> {
         this.item = item
     }
 
-    suspend fun await(): T = job.await()
+    suspend fun await(): T {
+        return job.await()
+    }
 }
 
 suspend inline fun <T : Any> runAsync(

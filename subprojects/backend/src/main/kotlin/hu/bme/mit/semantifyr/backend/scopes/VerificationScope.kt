@@ -6,10 +6,8 @@
 
 package hu.bme.mit.semantifyr.backend.scopes
 
-import com.google.inject.Key
 import com.google.inject.Scope
 import com.google.inject.ScopeAnnotation
-import hu.bme.mit.semantifyr.backend.VerificationRequest
 import hu.bme.mit.semantifyr.scopes.ScopeContext
 import hu.bme.mit.semantifyr.scopes.Seed
 
@@ -20,13 +18,7 @@ annotation class VerificationScoped
 
 private val verificationContext = ScopeContext("VerificationScope")
 
-val VerificationScope: Scope get() = verificationContext.scope
-
-var Seed.verificationRequest: VerificationRequest
-    get() = error("Seed slots are write-only; read seeded values via injection inside the scope.")
-    set(value) {
-        seed(Key.get(VerificationRequest::class.java), value)
-    }
+val VerificationScope = verificationContext.scope
 
 suspend fun <T> withVerificationScope(
     seed: Seed? = null,

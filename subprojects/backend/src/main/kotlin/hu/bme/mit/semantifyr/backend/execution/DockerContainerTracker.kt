@@ -38,10 +38,9 @@ internal object DockerContainerTracker {
         client: DockerClient,
         containerId: String,
     ) {
-        containers
-            .computeIfAbsent(client) {
-                ConcurrentHashMap.newKeySet()
-            }.add(containerId)
+        containers.computeIfAbsent(client) {
+            ConcurrentHashMap.newKeySet()
+        }.add(containerId)
     }
 
     fun untrack(

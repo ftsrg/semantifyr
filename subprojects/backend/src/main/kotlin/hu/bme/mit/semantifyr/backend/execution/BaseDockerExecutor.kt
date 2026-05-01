@@ -85,8 +85,8 @@ abstract class BaseDockerExecutor(
 
     private suspend fun startAndWait(container: CreateContainerResponse): WaitResponse {
         dockerClient.startContainerCmd(container.id).exec()
-        return runAsync(Dispatchers.IO) { callback ->
-            dockerClient.waitContainerCmd(container.id).exec(callback)
+        return runAsync(Dispatchers.IO) {
+            dockerClient.waitContainerCmd(container.id).exec(it)
         }
     }
 
@@ -128,9 +128,7 @@ abstract class BaseDockerExecutor(
     }
 
     private fun splitImageRef(reference: String): Pair<String, String> {
-        // Digest references (`repo@sha256:...`) are pulled by digest, not tag; treat the whole
-        // thing as the repository and let docker-java handle it.
-        if (reference.contains('@')) {
+        if (reference.contains('@')) { // digest
             return reference to "latest"
         }
         val colonIndex = reference.lastIndexOf(':')

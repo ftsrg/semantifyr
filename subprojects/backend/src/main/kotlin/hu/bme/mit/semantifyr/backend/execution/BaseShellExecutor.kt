@@ -103,26 +103,6 @@ abstract class BaseShellExecutor {
         return ProcessBuilder(cmd)
     }
 
-    private fun prepareOutputFiles(
-        logFile: File?,
-        errorFile: File?,
-        header: String?,
-    ) {
-        logFile?.let { file ->
-            file.ensureExists()
-            file.bufferedWriter().use { writer ->
-                if (header != null) writer.appendLine(header)
-                writer.appendLine()
-            }
-        }
-        errorFile?.ensureExists()
-    }
-
-    private fun File.ensureExists(): File {
-        parentFile?.mkdirs()
-        createNewFile()
-        return this
-    }
 }
 
 fun Process.destroyTree() {
