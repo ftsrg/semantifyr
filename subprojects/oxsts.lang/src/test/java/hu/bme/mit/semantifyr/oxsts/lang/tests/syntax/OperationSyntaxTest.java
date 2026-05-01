@@ -19,7 +19,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation;
 import org.eclipse.xtext.EcoreUtil2;
 import org.junit.jupiter.api.Test;
 
@@ -216,21 +215,6 @@ public class OperationSyntaxTest {
                 pkg.classByName("C").anonymousMain().eObject(), LocalVarDeclarationOperation.class);
         assertThat(locals).hasSize(1);
         assertThat(locals.getFirst().getExpression()).isNull();
-    }
-
-    @Test
-    void traceOperation() {
-        var pkg = parseHelper.parse("""
-            package test
-            class C {
-                var x: int := 0
-                redefine tran { trace someTrace x := 1 }
-            }
-            """);
-        pkg.assertNoResourceErrors();
-        var traces = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), TraceOperation.class);
-        assertThat(traces).hasSize(1);
-        assertThat(traces.getFirst().getName()).isEqualTo("someTrace");
     }
 
     @Test

@@ -281,7 +281,6 @@ Operation:
 	| AssignmentOperation
 	| IfOperation
 	| ForOperation
-	| TraceOperation
 	| LocalVarDeclarationOperation
 ;
 
@@ -322,10 +321,6 @@ LoopVariable returns VariableDeclaration:
 ForOperation:
     'for' '(' loopVariable=LoopVariable 'in' rangeExpression=Expression ')'
     body=SequenceOperation
-;
-
-TraceOperation:
-    'trace' name=Identifier
 ;
 
 LocalVarDeclarationOperation:

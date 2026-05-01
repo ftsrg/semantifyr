@@ -29,7 +29,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineSeqFor
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation
 import org.eclipse.xtext.EcoreUtil2
 import kotlin.time.Duration
 import kotlin.time.TimeSource.Monotonic.markNow
@@ -111,10 +110,6 @@ class OperationCallInliner @AssistedInject constructor(
 
     override fun visit(operation: AssignmentOperation) {
         expressionCallInliner.process(operation.expression)
-    }
-
-    override fun visit(operation: TraceOperation) {
-        // NO-OP
     }
 
     override fun visit(operation: InlineCall) {

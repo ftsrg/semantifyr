@@ -20,7 +20,6 @@ public abstract class OperationVisitor<T> {
             case HavocOperation havocOperation -> visit(havocOperation);
             case AssumptionOperation assumptionOperation -> visit(assumptionOperation);
             case AssignmentOperation assignmentOperation -> visit(assignmentOperation);
-            case TraceOperation traceOperation -> visit(traceOperation);
             case InlineOperation inlineOperation -> visit(inlineOperation);
             default -> throw new IllegalStateException("Unexpected value: " + operation);
         };
@@ -41,8 +40,6 @@ public abstract class OperationVisitor<T> {
     protected abstract T visit(AssumptionOperation operation);
 
     protected abstract T visit(AssignmentOperation operation);
-
-    protected abstract T visit(TraceOperation operation);
 
     protected T visit(InlineOperation operation) {
         return switch (operation) {

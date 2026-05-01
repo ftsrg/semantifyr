@@ -253,10 +253,6 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.format(assignmentOperation.getExpression());
     }
 
-    protected void format(TraceOperation traceOperation, IFormattableDocument document) {
-        formatOperation(traceOperation, document);
-    }
-
     protected void format(SequenceOperation sequenceOperation, IFormattableDocument document) {
         // do not add new line before sequences
         formatSemicolonedLine(sequenceOperation, document);

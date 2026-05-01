@@ -27,7 +27,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
@@ -162,7 +161,6 @@ class ReachingDefinitionsComputation(
             is HavocOperation -> evaluateVariable(operation.reference) == variable
             is AssumptionOperation -> false
             is LocalVarDeclarationOperation -> false
-            is TraceOperation -> false
             is ForOperation -> false
             is InlineOperation -> false
             else -> false
@@ -195,7 +193,6 @@ class ReachingDefinitionsComputation(
                 recordReads(operation.expression, incoming)
                 incoming + (operation to setOf<EObject>(operation))
             }
-            is TraceOperation -> incoming
             else -> incoming
         }
     }
