@@ -97,6 +97,7 @@ class OxstsFlattener @Inject constructor(
 
         logger.debug { "Pulling down variables" }
         pullDownVariables(inlinedOxsts, instanceTree, variableInstanceDomain, variableHolders, variableMappings)
+
         logger.debug { "Rewriting variable references (${inlinedOxsts.variables.size} variable(s))" }
         rewriteVariableReferences(inlinedOxsts, instanceTree, variableMappings)
 
@@ -142,7 +143,7 @@ class OxstsFlattener @Inject constructor(
     ) {
         val builtinAnything = builtinSymbolResolver.anythingClass(inlinedOxsts)
 
-        for (instance in instanceTree.rootInstance.treeSequence()) {
+        for (instance in instanceTree.rootInstance.treeSequence().drop(1)) { // drop the root instance
             val memberCollection = domainMemberCollectionProvider.getMemberCollection(instance.domain)
             val domainVariables = memberCollection.declarations.filterIsInstance<VariableDeclaration>().distinct()
 
