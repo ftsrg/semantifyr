@@ -79,7 +79,7 @@ class OxstsClassAssumptionWitnessTransformer @Inject constructor(
 
         private fun transform(trace: InlinedOxstsAssumptionActivatedTrace): OxstsClassAssumptionActivatedTrace {
             return OxstsClassAssumptionActivatedTrace(
-                trace.traceOperation,
+                trace.tracerVariable,
             )
         }
 

@@ -56,6 +56,7 @@ data class ArtifactPointersReport(
     val inlinedModel: String? = null,
     val flattenedModel: String? = null,
     val witness: String? = null,
+    val witnessState: String? = null,
     val trace: String? = null,
     val mapping: String? = null,
     val backendDirectories: List<String> = emptyList(),

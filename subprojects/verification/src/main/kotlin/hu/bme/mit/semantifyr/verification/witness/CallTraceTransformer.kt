@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.verification.witness
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.ExpressionEvaluationSerializer
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionCallTrace
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider
 import hu.bme.mit.semantifyr.oxsts.lang.serializer.ExpressionSerializer
 import kotlinx.serialization.Serializable
@@ -28,21 +29,31 @@ data class SerializableTrace(
 )
 
 @Serializable
-data class SerializableTraceValue(
+data class SerializableCallTraceStep(
+    val traces: List<SerializableTrace>,
+)
+
+@Serializable
+data class SerializableCallTraceData(
+    val initialStep: SerializableCallTraceStep,
+    val steps: List<SerializableCallTraceStep>,
+)
+
+@Serializable
+data class SerializableWitnessStateValue(
     val variable: String,
     val value: String,
 )
 
 @Serializable
-data class SerializableTraceStep(
-    val traces: List<SerializableTrace>,
-    val values: List<SerializableTraceValue>,
+data class SerializableWitnessStateStep(
+    val values: List<SerializableWitnessStateValue>,
 )
 
 @Serializable
-data class SerializableTraceData(
-    val initialStep: SerializableTraceStep,
-    val steps: List<SerializableTraceStep>,
+data class SerializableWitnessStateData(
+    val initialStep: SerializableWitnessStateStep,
+    val steps: List<SerializableWitnessStateStep>,
 )
 
 class CallTraceTransformer @Inject constructor(
@@ -51,59 +62,77 @@ class CallTraceTransformer @Inject constructor(
     private val expressionSerializer: ExpressionSerializer,
 ) {
 
-    private fun transformActivatedTrace(
-        trace: OxstsClassAssumptionActivatedTrace,
+    fun transformCallTrace(
+        witness: OxstsClassAssumptionWitness,
         traces: TransitionCallTraceMap,
-    ): SerializableTrace {
-        val transitionCallTrace = traces.getTransitionCallTrace(trace.traceOperation)
-
-        return SerializableTrace(
-            expressionEvaluationSerializer.serialize(transitionCallTrace.self),
-            oxstsQualifiedNameProvider.getFullyQualifiedNameString(transitionCallTrace.transitionDeclaration),
-            transitionCallTrace.arguments.map {
-                SerializableTraceArgument(
-                    it.parameterDeclaration?.name ?: "",
-                    if (it.evaluation != null) {
-                        expressionEvaluationSerializer.serialize(it.evaluation!!)
-                    } else {
-                        ""
-                    },
-                )
+    ): SerializableCallTraceData {
+        return SerializableCallTraceData(
+            transformCallTraceStep(witness.initialState, traces),
+            witness.transitionStates.map {
+                transformCallTraceStep(it, traces)
             },
-            null,
         )
     }
 
-    private fun transformStateValue(value: OxstsClassAssumptionWitnessStateValue): SerializableTraceValue {
-        val variable = expressionSerializer.serialize(value.variableReference)
-        val value = expressionSerializer.serialize(value.value)
-
-        return SerializableTraceValue(variable, value)
+    fun transformWitnessState(witness: OxstsClassAssumptionWitness): SerializableWitnessStateData {
+        return SerializableWitnessStateData(
+            transformWitnessStateStep(witness.initialState),
+            witness.transitionStates.map {
+                transformWitnessStateStep(it)
+            },
+        )
     }
 
-    private fun transformState(
+    private fun transformCallTraceStep(
         state: OxstsClassAssumptionWitnessState,
         traces: TransitionCallTraceMap,
-    ): SerializableTraceStep {
-        return SerializableTraceStep(
-            state.activatedTraces.map {
-                transformActivatedTrace(it, traces)
-            },
+    ): SerializableCallTraceStep {
+        val activatedTraces = state.activatedTraces.map {
+            traces.getTransitionCallTrace(it.tracerVariable)
+        }
+        return SerializableCallTraceStep(buildForest(activatedTraces))
+    }
+
+    private fun transformWitnessStateStep(state: OxstsClassAssumptionWitnessState): SerializableWitnessStateStep {
+        return SerializableWitnessStateStep(
             state.values.map {
                 transformStateValue(it)
             },
         )
     }
 
-    fun transformWitness(
-        witness: OxstsClassAssumptionWitness,
-        traces: TransitionCallTraceMap,
-    ): SerializableTraceData {
-        return SerializableTraceData(
-            transformState(witness.initialState, traces),
-            witness.transitionStates.map {
-                transformState(it, traces)
-            },
+    private fun buildForest(activatedTraces: List<TransitionCallTrace>): List<SerializableTrace> {
+        val activatedSet = activatedTraces.toSet()
+        val childrenByParent = activatedTraces.groupBy {
+            it.parent.takeIf { parent -> parent in activatedSet }
+        }
+
+        fun build(trace: TransitionCallTrace): SerializableTrace {
+            val children = childrenByParent[trace].orEmpty().map {
+                build(it)
+            }
+            return SerializableTrace(
+                self = expressionEvaluationSerializer.serialize(trace.self),
+                calledTransition = oxstsQualifiedNameProvider.getFullyQualifiedNameString(trace.transitionDeclaration),
+                arguments = trace.arguments.map {
+                    SerializableTraceArgument(
+                        it.parameterDeclaration.name,
+                        expressionEvaluationSerializer.serialize(it.evaluation),
+                    )
+                },
+                innerTraces = children.takeIf { it.isNotEmpty() },
+            )
+        }
+
+        return childrenByParent[null].orEmpty().map {
+            build(it)
+        }
+    }
+
+    private fun transformStateValue(value: OxstsClassAssumptionWitnessStateValue): SerializableWitnessStateValue {
+        return SerializableWitnessStateValue(
+            expressionSerializer.serialize(value.variableReference),
+            expressionSerializer.serialize(value.value),
         )
     }
 

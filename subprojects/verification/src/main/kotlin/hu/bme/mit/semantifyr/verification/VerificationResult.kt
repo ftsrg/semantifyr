@@ -11,7 +11,8 @@ import hu.bme.mit.semantifyr.backend.VerificationRunMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verification.witness.OxstsClassAssumptionWitness
-import hu.bme.mit.semantifyr.verification.witness.SerializableTraceData
+import hu.bme.mit.semantifyr.verification.witness.SerializableCallTraceData
+import hu.bme.mit.semantifyr.verification.witness.SerializableWitnessStateData
 
 sealed interface VerificationTrace {
     data object NoTrace : VerificationTrace
@@ -19,7 +20,8 @@ sealed interface VerificationTrace {
     data class OxstsWitness(
         val classWitness: OxstsClassAssumptionWitness,
         val backAnnotatedWitness: InlinedOxsts,
-        val callTrace: SerializableTraceData,
+        val witnessState: SerializableWitnessStateData,
+        val callTrace: SerializableCallTraceData,
     ) : VerificationTrace
 }
 

@@ -10,7 +10,7 @@ import hu.bme.mit.semantifyr.backend.witness.AssumptionWitness
 import hu.bme.mit.semantifyr.backend.witness.AssumptionWitnessState
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
 class OxstsClassAssumptionWitnessStateValue(
     val variableReference: Expression,
@@ -18,7 +18,7 @@ class OxstsClassAssumptionWitnessStateValue(
 )
 
 class OxstsClassAssumptionActivatedTrace(
-    val traceOperation: TraceOperation,
+    val tracerVariable: VariableDeclaration,
 )
 
 class OxstsClassAssumptionWitnessState(

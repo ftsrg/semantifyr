@@ -342,6 +342,7 @@ class SemantifyrVerifierImpl(
             inlinedModel = relIfExists("pipeline/inlined.oxsts"),
             flattenedModel = relIfExists("pipeline/flattened.oxsts"),
             witness = if (result.verificationTrace is VerificationTrace.OxstsWitness) relIfExists("witness.oxsts") else null,
+            witnessState = if (result.verificationTrace is VerificationTrace.OxstsWitness) relIfExists("witness.json") else null,
             trace = if (result.verificationTrace is VerificationTrace.OxstsWitness) relIfExists("trace.json") else null,
             mapping = relIfExists("mapping.json"),
             backendDirectories = backendDirs,
@@ -372,8 +373,9 @@ class SemantifyrVerifierImpl(
                 classWitness,
                 backendResult.verdict,
             )
-            val callTrace = callTraceTransformer.transformWitness(classWitness, compilation.transitionCallTraces)
-            VerificationTrace.OxstsWitness(classWitness, backAnnotatedWitness, callTrace)
+            val witnessState = callTraceTransformer.transformWitnessState(classWitness)
+            val callTrace = callTraceTransformer.transformCallTrace(classWitness, compilation.transitionCallTraces)
+            VerificationTrace.OxstsWitness(classWitness, backAnnotatedWitness, witnessState, callTrace)
         }
         logger.info { "[$qualifiedName] back-annotation completed in $duration" }
 
@@ -398,6 +400,7 @@ class SemantifyrVerifierImpl(
     ) {
         if (artifactConfig.isEnabled(ArtifactKind.Witness)) {
             serializeWitnessArtifact(caseArtifactPath, trace, qualifiedName)
+            serializeWitnessStateArtifact(caseArtifactPath, trace, qualifiedName)
         }
         if (artifactConfig.isEnabled(ArtifactKind.Trace)) {
             serializeTraceArtifact(caseArtifactPath, trace, qualifiedName)
@@ -438,6 +441,21 @@ class SemantifyrVerifierImpl(
             logger.info { "[$qualifiedName] wrote call trace artifact to $tracePath" }
         } catch (e: Exception) {
             logger.warn("[$qualifiedName] failed to write trace artifact at $tracePath: ${e.message ?: e::class.simpleName}", e)
+        }
+    }
+
+    private fun serializeWitnessStateArtifact(
+        caseArtifactPath: Path,
+        trace: VerificationTrace.OxstsWitness,
+        qualifiedName: String,
+    ) {
+        val statePath = caseArtifactPath.resolve("witness.json")
+        try {
+            statePath.parent?.createDirectories()
+            statePath.writeText(json.encodeToString(trace.witnessState))
+            logger.info { "[$qualifiedName] wrote witness state artifact to $statePath" }
+        } catch (e: Exception) {
+            logger.warn("[$qualifiedName] failed to write witness state artifact at $statePath: ${e.message ?: e::class.simpleName}", e)
         }
     }
 
