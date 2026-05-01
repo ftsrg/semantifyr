@@ -6,7 +6,8 @@
 
 package hu.bme.mit.semantifyr.backend
 
-import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitness
+import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.witness.Witness
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import kotlinx.serialization.Serializable
@@ -71,21 +72,32 @@ data class VerificationMetrics(
 }
 
 data class BackendVerificationResult(
-    val verdict: BackendVerificationVerdict,
+    val verdict: VerificationVerdict,
     val metadata: VerificationRunMetadata,
     val metrics: VerificationMetrics = VerificationMetrics(),
-    val witness: InlinedOxstsAssumptionWitness? = null,
+    val witness: Witness? = null,
     val message: String? = null,
 ) {
     val isDecisive = verdict.isDecisive
 
     companion object {
+        fun inconclusive(
+            metadata: VerificationRunMetadata,
+            metrics: VerificationMetrics,
+            message: String,
+        ): BackendVerificationResult = BackendVerificationResult(
+            verdict = VerificationVerdict.Inconclusive,
+            metadata = metadata,
+            metrics = metrics,
+            message = message,
+        )
+
         fun errored(
             metadata: VerificationRunMetadata,
             metrics: VerificationMetrics,
             message: String,
         ): BackendVerificationResult = BackendVerificationResult(
-            verdict = BackendVerificationVerdict.Errored,
+            verdict = VerificationVerdict.Errored,
             metadata = metadata,
             metrics = metrics,
             message = message,
@@ -96,7 +108,7 @@ data class BackendVerificationResult(
             metrics: VerificationMetrics,
             message: String,
         ): BackendVerificationResult = BackendVerificationResult(
-            verdict = BackendVerificationVerdict.NotSupported,
+            verdict = VerificationVerdict.NotSupported,
             metadata = metadata,
             metrics = metrics,
             message = message,
@@ -104,11 +116,12 @@ data class BackendVerificationResult(
     }
 }
 
-enum class BackendVerificationVerdict(
+enum class VerificationVerdict(
     val isDecisive: Boolean,
 ) {
     Passed(true),
     Failed(true),
+    Inconclusive(false),
     Errored(false),
     NotSupported(false),
 }
@@ -117,6 +130,7 @@ abstract class VerificationBackend<T : Any> {
     abstract val id: String
 
     abstract suspend fun verify(
+        parentInjector: Injector,
         config: T,
         request: VerificationRequest,
         environment: ExecutionEnvironment,
