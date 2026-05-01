@@ -19,7 +19,7 @@ class WitnessState(
     val values: List<WitnessStateValue>,
 )
 
-class Witness(
+class InlinedWitness(
     val initialState: WitnessState,
     val initializedState: WitnessState?,
     val transitionStates: List<WitnessState>,

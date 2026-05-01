@@ -7,9 +7,9 @@
 package hu.bme.mit.semantifyr.backend
 
 import com.google.inject.Injector
-import hu.bme.mit.semantifyr.backend.witness.Witness
-import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
+import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import kotlinx.serialization.Serializable
 import java.nio.file.Path
 import kotlin.time.Duration
@@ -18,8 +18,7 @@ import kotlin.time.Instant
 class BackendUnsupportedException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
 data class VerificationRequest(
-    val verificationCase: VerificationCase,
-    val compilation: FlattenedCompilationContext,
+    val inlinedOxsts: InlinedOxsts,
     val artifactOutputPath: Path,
 )
 
@@ -27,32 +26,7 @@ data class VerificationRequest(
 data class VerificationRunMetadata(
     val backendId: String,
     val startedAt: Instant,
-    val caseQualifiedName: String,
 )
-
-data class VerificationCase(
-    val classDeclaration: ClassDeclaration,
-    val qualifiedName: String,
-    val tags: Set<String> = emptySet(),
-) {
-    val directoryName
-        get() = qualifiedNameToDirectoryName(qualifiedName)
-
-    override fun toString(): String {
-        val tagSuffix = if (tags.isEmpty()) {
-            ""
-        } else {
-            "@[${tags.joinToString(",")}]"
-        }
-        return "$qualifiedName$tagSuffix"
-    }
-}
-
-private val NON_FS_SAFE = Regex("[^A-Za-z0-9._-]")
-
-fun qualifiedNameToDirectoryName(qualifiedName: String): String {
-    return qualifiedName.replace("::", ".").replace(NON_FS_SAFE, "_")
-}
 
 @Serializable
 data class VerificationMetrics(
@@ -60,22 +34,13 @@ data class VerificationMetrics(
     val verificationDuration: Duration = Duration.ZERO,
     val backAnnotationDuration: Duration = Duration.ZERO,
     val totalDuration: Duration = Duration.ZERO,
-) {
-    // kotlin.time.Duration is a value class - its `toIsoString` and component getters are
-    // name-mangled by the JVM and unreachable from Java. The Java consumers in the LSP wire
-    // layer need ISO 8601 strings to match the rest of the project's duration serialisation
-    // (admin endpoint, etc.); these accessors do the bridging.
-    fun preparationDurationIso(): String = preparationDuration.toIsoString()
-    fun verificationDurationIso(): String = verificationDuration.toIsoString()
-    fun backAnnotationDurationIso(): String = backAnnotationDuration.toIsoString()
-    fun totalDurationIso(): String = totalDuration.toIsoString()
-}
+)
 
 data class BackendVerificationResult(
     val verdict: VerificationVerdict,
     val metadata: VerificationRunMetadata,
     val metrics: VerificationMetrics = VerificationMetrics(),
-    val witness: Witness? = null,
+    val inlinedWitness: InlinedWitness? = null,
     val message: String? = null,
 ) {
     val isDecisive = verdict.isDecisive
@@ -140,4 +105,5 @@ abstract class VerificationBackend<T : Any> {
         config: T,
         environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
     ): AvailabilityReport
+
 }

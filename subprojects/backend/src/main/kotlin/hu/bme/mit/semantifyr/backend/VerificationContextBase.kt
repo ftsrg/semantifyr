@@ -24,11 +24,10 @@ abstract class VerificationContextBase(
         val metadata = VerificationRunMetadata(
             backendId = backendId,
             startedAt = Clock.System.now(),
-            caseQualifiedName = request.verificationCase.qualifiedName,
         )
         val totalMark = markNow()
 
-        logger.info { "[$backendId] starting verification of '${request.verificationCase.qualifiedName}'" }
+        logger.info { "[$backendId] starting verification (output=${request.artifactOutputPath})" }
 
         return try {
             runVerification(metadata, totalMark)
@@ -36,14 +35,14 @@ abstract class VerificationContextBase(
             logger.debug { "[$backendId] cancelled" }
             throw c
         } catch (e: BackendUnsupportedException) {
-            logger.info { "[$backendId] verification of '${request.verificationCase.qualifiedName}' not supported: ${e.message}" }
+            logger.info { "[$backendId] verification not supported: ${e.message}" }
             BackendVerificationResult.notSupported(
                 metadata = metadata,
                 metrics = VerificationMetrics(totalDuration = totalMark.elapsedNow()),
                 message = e.message ?: "Unsupported by $backendId",
             )
         } catch (e: Exception) {
-            logger.warn("[$backendId] verification of '${request.verificationCase.qualifiedName}' threw ${e::class.simpleName}", e)
+            logger.warn("[$backendId] verification threw ${e::class.simpleName}", e)
             BackendVerificationResult.errored(
                 metadata = metadata,
                 metrics = VerificationMetrics(totalDuration = totalMark.elapsedNow()),
