@@ -6,17 +6,16 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.context
 
-import hu.bme.mit.semantifyr.compiler.pipeline.artifact.TransitionCallTrace
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionCallTrace
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
 class TransitionCallTraceMap(
-    private val traceMap: Map<String, TransitionCallTrace>,
+    private val traceMap: Map<VariableDeclaration, TransitionCallTrace>,
 ) {
 
-    fun getTransitionCallTrace(traceOperation: TraceOperation): TransitionCallTrace {
-        return traceMap[traceOperation.name] ?: sourceError(traceOperation, "No transition call trace was found for '${traceOperation.name}'")
+    fun getTransitionCallTrace(variable: VariableDeclaration): TransitionCallTrace {
+        return traceMap[variable] ?: error("No transition call trace was found for '${variable.name}'")
     }
 
 }

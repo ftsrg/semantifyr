@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.compiler.pipeline.artifact.TransitionCallTraceBuilder
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceReferenceProvider
@@ -38,7 +37,7 @@ class InlineOperationExpander @Inject constructor(
     private val instanceReferenceProvider: InstanceReferenceProvider,
     private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
     private val builtinAnnotationHandler: BuiltinAnnotationHandler,
-    private val transitionCallTracer: TransitionCallTraceBuilder,
+    private val transitionCallTraceTransformer: TransitionCallTraceTransformer,
     private val callTargetResolver: CallTargetResolver,
 ) {
 
@@ -162,27 +161,27 @@ class InlineOperationExpander @Inject constructor(
 
         rewriteLocalVariables(inlined, allocateLocalVarIndex)
 
-        val tracerOperation = if (builtinAnnotationHandler.isTransitionTraced(actualTransition)) {
-            transitionCallTracer.traceTransitionCall(instance, containerInstance, actualTransition, callExpression)
+        val body = if (inlined.branches.size == 1) {
+            inlined.branches.single()
         } else {
-            null
+            inlined
         }
 
-        if (inlined.branches.size == 1) {
-            val singleBranch = inlined.branches.single()
-            if (tracerOperation != null) {
-                singleBranch.steps.addFirst(tracerOperation.copy())
-            }
-            return singleBranch
+        if (!builtinAnnotationHandler.isTransitionTraced(actualTransition)) {
+            return body
         }
 
-        if (tracerOperation != null) {
-            for (branch in inlined.branches) {
-                branch.steps.addFirst(tracerOperation.copy())
-            }
-        }
+        val tracerAssignment = transitionCallTraceTransformer.traceTransitionCall(
+            instance,
+            containerInstance,
+            actualTransition,
+            callExpression,
+        )
 
-        return inlined
+        return OxstsFactory.createSequenceOperation().also {
+            it.steps += tracerAssignment
+            it.steps += body
+        }
     }
 
     private fun rewriteLocalVariables(operation: Operation, allocateLocalVarIndex: () -> Int) {

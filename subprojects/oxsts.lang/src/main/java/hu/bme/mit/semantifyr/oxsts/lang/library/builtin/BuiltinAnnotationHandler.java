@@ -31,6 +31,12 @@ public class BuiltinAnnotationHandler {
         return OxstsUtils.isAnnotatedWith(variableDeclaration, clockAnnotation);
     }
 
+    public boolean isNonOptimizable(VariableDeclaration variableDeclaration) {
+        var nonOptimizableAnnotation = builtinSymbolResolver.nonOptimizableAnnotation(variableDeclaration);
+
+        return OxstsUtils.isAnnotatedWith(variableDeclaration, nonOptimizableAnnotation);
+    }
+
     public boolean isSharedFeature(FeatureDeclaration featureDeclaration) {
         var sharedAnnotation = builtinSymbolResolver.sharedAnnotation(featureDeclaration);
 

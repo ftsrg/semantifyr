@@ -23,6 +23,9 @@ public class BuiltinSymbolResolver {
     public static final QualifiedName TRACE_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Trace");
     public static final QualifiedName CLOCK_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Clock");
 
+    public static final QualifiedName NON_OPTIMIZABLE_ANNOTATION_NAME =
+            BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("NonOptimizable");
+
     public static final QualifiedName VERIFICATION_CASE_ANNOTATION_NAME =
             BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("VerificationCase");
     public static final String VERIFICATION_CASE_SUMMARY_NAME = "summary";
@@ -66,6 +69,10 @@ public class BuiltinSymbolResolver {
 
     public AnnotationDeclaration clockAnnotation(EObject context) {
         return findInBuiltin(context, AnnotationDeclaration.class, CLOCK_ANNOTATION_NAME);
+    }
+
+    public AnnotationDeclaration nonOptimizableAnnotation(EObject context) {
+        return findInBuiltin(context, AnnotationDeclaration.class, NON_OPTIMIZABLE_ANNOTATION_NAME);
     }
 
     public AnnotationDeclaration verificationCaseAnnotation(EObject context) {

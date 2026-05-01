@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.compiler.pipeline.artifact.TransitionCallTraceBuilder
 import hu.bme.mit.semantifyr.compiler.pipeline.context.InlinedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
@@ -28,7 +27,7 @@ class OxstsInliner @Inject constructor(
     private val inlinedPhaseOptimizer: InlinedPhaseOptimizer,
     private val operationCallInlinerProvider: OperationCallInliner.Factory,
     private val expressionCallInlinerProvider: ExpressionCallInliner.Factory,
-    private val transitionCallTraceBuilder: TransitionCallTraceBuilder,
+    private val transitionCallTraceTransformer: TransitionCallTraceTransformer,
 ) {
 
     private val logger by loggerFactory()
@@ -46,12 +45,15 @@ class OxstsInliner @Inject constructor(
         logger.debug { "Inlining property expression" }
         inlineExpressionCalls(instanceTree.rootInstance, inlinedOxsts.property)
 
+        logger.debug { "Finalizing transition call tracer state" }
+        val transitionCallTraces = transitionCallTraceTransformer.finalize(inlinedOxsts)
+
         logger.info { "Running post-inlining optimizers" }
         inlinedPhaseOptimizer.optimize(instantiatedContext)
 
         ensureTemporalExpressions(inlinedOxsts)
 
-        return instantiatedContext.inlined(transitionCallTraceBuilder.build())
+        return instantiatedContext.inlined(transitionCallTraces)
     }
 
     private fun ensureTemporalExpressions(inlinedOxsts: InlinedOxsts) {

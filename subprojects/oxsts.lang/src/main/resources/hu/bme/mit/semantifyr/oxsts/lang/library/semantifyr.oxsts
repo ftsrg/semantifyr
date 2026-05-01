@@ -81,3 +81,8 @@ annotation Trace
  * Variables annotated with @Clock allows time-aware backends to handle them in a more optimal way.
  */
 annotation Clock
+
+/*
+ * Variables annotated with @NonOptimizable are excluded from optimizer passes that could remove or fold them.
+ */
+annotation NonOptimizable
