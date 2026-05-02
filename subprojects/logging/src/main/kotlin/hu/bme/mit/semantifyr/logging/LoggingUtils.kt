@@ -27,11 +27,29 @@ inline fun Logger.trace(msgSupplier: () -> String) {
 }
 
 /**
+ * Inlined helper logging only if trace is enabled.
+ */
+inline fun Logger.trace(throwable: Throwable, msgSupplier: () -> String) {
+    if (this.isTraceEnabled) {
+        trace(msgSupplier(), throwable)
+    }
+}
+
+/**
  * Inlined helper logging only if debug is enabled.
  */
 inline fun Logger.debug(msgSupplier: () -> String) {
     if (this.isDebugEnabled) {
         debug(msgSupplier())
+    }
+}
+
+/**
+ * Inlined helper logging only if debug is enabled.
+ */
+inline fun Logger.debug(throwable: Throwable, msgSupplier: () -> String) {
+    if (this.isDebugEnabled) {
+        debug(msgSupplier(), throwable)
     }
 }
 
@@ -45,6 +63,15 @@ inline fun Logger.info(msgSupplier: () -> String) {
 }
 
 /**
+ * Inlined helper logging only if info is enabled.
+ */
+inline fun Logger.info(throwable: Throwable, msgSupplier: () -> String) {
+    if (this.isInfoEnabled) {
+        info(msgSupplier(), throwable)
+    }
+}
+
+/**
  * Inlined helper logging only if warn is enabled.
  */
 inline fun Logger.warn(msgSupplier: () -> String) {
@@ -54,10 +81,28 @@ inline fun Logger.warn(msgSupplier: () -> String) {
 }
 
 /**
+ * Inlined helper logging only if warn is enabled.
+ */
+inline fun Logger.warn(throwable: Throwable, msgSupplier: () -> String) {
+    if (this.isWarnEnabled) {
+        warn(msgSupplier(), throwable)
+    }
+}
+
+/**
  * Inlined helper logging only if error is enabled.
  */
 inline fun Logger.error(msgSupplier: () -> String) {
     if (this.isErrorEnabled) {
         error(msgSupplier())
+    }
+}
+
+/**
+ * Inlined helper logging only if error is enabled.
+ */
+inline fun Logger.error(throwable: Throwable, msgSupplier: () -> String) {
+    if (this.isErrorEnabled) {
+        error(msgSupplier(), throwable)
     }
 }
