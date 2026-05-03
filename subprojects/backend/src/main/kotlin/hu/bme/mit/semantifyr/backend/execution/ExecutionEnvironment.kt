@@ -6,30 +6,63 @@
 
 package hu.bme.mit.semantifyr.backend.execution
 
+import hu.bme.mit.semantifyr.backend.AvailabilityReport
+
+typealias ExecutorFactory<T> = () -> T
+
+class ExecutorKey<out T : BackendExecutor>(
+    val name: String,
+    val unavailableHints: List<String> = emptyList(),
+    val default: ExecutorFactory<T>,
+) {
+    override fun toString(): String {
+        return "ExecutorKey($name)"
+    }
+}
+
 class ExecutionEnvironment private constructor(
-    private val entries: Map<Key<*>, Any>,
+    private val factories: Map<ExecutorKey<*>, ExecutorFactory<BackendExecutor>>,
 ) {
 
-    class Key<T : Any>(val name: String)
-
-    operator fun <T : Any> get(key: Key<T>): T? {
+    operator fun <T : BackendExecutor> get(key: ExecutorKey<T>): T {
         @Suppress("UNCHECKED_CAST")
-        return entries[key] as T?
+        val factory = factories[key] as ExecutorFactory<T>?
+        return (factory ?: key.default).invoke()
+    }
+
+    fun availability(key: ExecutorKey<*>): AvailabilityReport {
+        val factory = factories[key] ?: key.default
+        val available = runCatching {
+            factory().isAvailable()
+        }.getOrElse {
+            return AvailabilityReport.Unavailable(
+                reason = "${key.name}: probe failed: ${it.message ?: it::class.simpleName}",
+                hints = key.unavailableHints,
+            )
+        }
+        return if (available) {
+            AvailabilityReport.Available
+        } else {
+            AvailabilityReport.Unavailable(
+                reason = "${key.name}: configured executor is not available on this host",
+                hints = key.unavailableHints,
+            )
+        }
     }
 
     class Builder {
-        private val entries = mutableMapOf<Key<*>, Any>()
+        private val factories = mutableMapOf<ExecutorKey<*>, ExecutorFactory<BackendExecutor>>()
 
-        fun <T : Any> put(
-            key: Key<T>,
-            value: T,
+        fun <T : BackendExecutor> put(
+            key: ExecutorKey<T>,
+            factory: ExecutorFactory<T>,
         ): Builder {
-            entries[key] = value
+            factories[key] = factory
             return this
         }
 
         fun build(): ExecutionEnvironment {
-            return ExecutionEnvironment(entries.toMap())
+            return ExecutionEnvironment(factories.toMap())
         }
     }
 

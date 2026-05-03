@@ -72,6 +72,7 @@ ktor-server-core = { group = "io.ktor", name = "ktor-server-core", version.ref =
 ktor-server-netty = { group = "io.ktor", name = "ktor-server-netty", version.ref = "ktor" }
 ktor-server-websockets = { group = "io.ktor", name = "ktor-server-websockets", version.ref = "ktor" }
 ktor-server-auth = { group = "io.ktor", name = "ktor-server-auth", version.ref = "ktor" }
+ktor-server-sessions = { group = "io.ktor", name = "ktor-server-sessions", version.ref = "ktor" }
 ktor-server-cors = { group = "io.ktor", name = "ktor-server-cors", version.ref = "ktor" }
 ktor-server-host-common = { group = "io.ktor", name = "ktor-server-host-common", version.ref = "ktor" }
 ktor-server-content-negotiation = { group = "io.ktor", name = "ktor-server-content-negotiation", version.ref = "ktor" }
@@ -95,6 +96,7 @@ ktor-server = [
     "ktor-server-netty",
     "ktor-server-websockets",
     "ktor-server-auth",
+    "ktor-server-sessions",
     "ktor-server-cors",
     "ktor-server-host-common",
     "ktor-server-content-negotiation",

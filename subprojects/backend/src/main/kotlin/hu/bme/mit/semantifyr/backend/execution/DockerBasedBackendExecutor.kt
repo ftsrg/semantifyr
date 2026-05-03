@@ -14,6 +14,7 @@ import com.github.dockerjava.core.DockerClientImpl
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
+import hu.bme.mit.semantifyr.logging.loggerFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
@@ -22,11 +23,11 @@ import org.slf4j.Logger
 import java.io.File
 import java.io.FileOutputStream
 
-abstract class BaseDockerExecutor(
+abstract class DockerBasedBackendExecutor(
     protected val image: String,
-) {
+) : BackendExecutor {
 
-    protected abstract val logger: Logger
+    protected val logger by loggerFactory()
 
     protected val dockerClient by lazy {
         val config = DefaultDockerClientConfig.createDefaultConfigBuilder().build()
@@ -37,11 +38,11 @@ abstract class BaseDockerExecutor(
         DockerClientImpl.getInstance(config, httpClient)
     }
 
-    open fun isAvailable(): Boolean {
+    override fun isAvailable(): Boolean {
         try {
             dockerClient.pingCmd().exec()
         } catch (throwable: Throwable) {
-            logger.debug { "Docker daemon is unreachable: $throwable" }
+            logger.debug(throwable) { "Docker daemon is unreachable." }
 
             return false
         }
@@ -50,7 +51,7 @@ abstract class BaseDockerExecutor(
         return true
     }
 
-    protected fun ensureImagePresent() {
+    override fun prepare() {
         try {
             dockerClient.inspectImageCmd(image).exec()
             logger.debug { "Docker image $image already present locally" }
@@ -70,6 +71,7 @@ abstract class BaseDockerExecutor(
         logFile: File? = null,
         errorFile: File? = null,
     ): WaitResponse {
+        prepareOutputFiles(logFile, errorFile)
         return DockerContainerTracker.tracking(dockerClient, container.id) {
             try {
                 startAndWait(container)
@@ -94,16 +96,16 @@ abstract class BaseDockerExecutor(
         try {
             dockerClient.stopContainerCmd(container.id).exec()
             logger.debug { "Stopped Docker container ${container.id}" }
-        } catch (e: Exception) {
-            logger.debug { "Stop of Docker container ${container.id} failed (likely already exited): $e" }
+        } catch (throwable: Throwable) {
+            logger.debug(throwable) { "Stop of Docker container ${container.id} failed (likely already exited)." }
         }
     }
 
     private fun destroyContainer(container: CreateContainerResponse) {
         try {
             dockerClient.removeContainerCmd(container.id).withForce(true).exec()
-        } catch (e: Exception) {
-            logger.debug { "Best-effort remove of Docker container ${container.id} failed: $e" }
+        } catch (throwable: Throwable) {
+            logger.debug(throwable) { "Best-effort remove of Docker container ${container.id} failed." }
         }
     }
 
@@ -111,9 +113,15 @@ abstract class BaseDockerExecutor(
         container: CreateContainerResponse,
         logFile: File?,
         errorFile: File?,
-    ) = withContext(Dispatchers.IO) {
-        val logStream = logFile?.let { FileOutputStream(it, true) } ?: NullOutputStream.INSTANCE
-        val errorStream = errorFile?.let { FileOutputStream(it, true) } ?: NullOutputStream.INSTANCE
+    ) {
+        val logStream = logFile?.let {
+            FileOutputStream(it, true)
+        } ?: NullOutputStream.INSTANCE
+
+        val errorStream = errorFile?.let {
+            FileOutputStream(it, true)
+        } ?: NullOutputStream.INSTANCE
+
         try {
             dockerClient.logContainerCmd(container.id)
                 .withStdOut(true)
@@ -121,9 +129,9 @@ abstract class BaseDockerExecutor(
                 .withTailAll()
                 .exec(StreamLoggerCallback(logStream, errorStream))
                 .await()
-        } catch (e: Throwable) {
-            // Log streaming failures do not fail the verification run.
-            logger.debug { "Failed to stream logs for Docker container ${container.id}: $e" }
+        } catch (throwable: Throwable) {
+            // Log streaming failures do not fail the execution.
+            logger.debug(throwable) { "Failed to stream logs for Docker container ${container.id}." }
         }
     }
 

@@ -11,16 +11,8 @@ import java.io.File
 fun prepareOutputFiles(
     logFile: File?,
     errorFile: File?,
-    header: String? = null,
 ) {
     logFile?.ensureExists()
-    logFile?.bufferedWriter()?.use {
-        if (header != null) {
-            it.appendLine(header)
-        }
-        it.appendLine()
-    }
-
     errorFile?.ensureExists()
 }
 

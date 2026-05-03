@@ -14,14 +14,14 @@ import kotlin.time.Clock
 import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 import kotlin.time.TimeSource.Monotonic.markNow
 
-abstract class VerificationContextBase(
+abstract class VerificationContext(
     protected val backendId: String,
-    protected val request: VerificationRequest,
+    protected val request: BackendVerificationRequest,
 ) {
     private val logger by loggerFactory()
 
     suspend fun execute(): BackendVerificationResult {
-        val metadata = VerificationRunMetadata(
+        val metadata = VerificationMetadata(
             backendId = backendId,
             startedAt = Clock.System.now(),
         )
@@ -36,14 +36,16 @@ abstract class VerificationContextBase(
             throw c
         } catch (e: BackendUnsupportedException) {
             logger.info { "[$backendId] verification not supported: ${e.message}" }
-            BackendVerificationResult.notSupported(
+            BackendVerificationResult(
+                verdict = VerificationVerdict.NotSupported,
                 metadata = metadata,
                 metrics = VerificationMetrics(totalDuration = totalMark.elapsedNow()),
                 message = e.message ?: "Unsupported by $backendId",
             )
         } catch (e: Exception) {
             logger.warn("[$backendId] verification threw ${e::class.simpleName}", e)
-            BackendVerificationResult.errored(
+            BackendVerificationResult(
+                verdict = VerificationVerdict.Errored,
                 metadata = metadata,
                 metrics = VerificationMetrics(totalDuration = totalMark.elapsedNow()),
                 message = e.message ?: e::class.simpleName ?: "unknown error",
@@ -52,8 +54,7 @@ abstract class VerificationContextBase(
     }
 
     protected abstract suspend fun runVerification(
-        metadata: VerificationRunMetadata,
+        metadata: VerificationMetadata,
         totalMark: ValueTimeMark,
     ): BackendVerificationResult
-
 }

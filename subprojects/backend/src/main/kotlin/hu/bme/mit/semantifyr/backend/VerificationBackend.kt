@@ -7,7 +7,9 @@
 package hu.bme.mit.semantifyr.backend
 
 import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import kotlinx.serialization.Serializable
@@ -17,14 +19,14 @@ import kotlin.time.Instant
 
 class BackendUnsupportedException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
-data class VerificationRequest(
+data class BackendVerificationRequest(
     val inlinedOxsts: InlinedOxsts,
     val artifactOutputPath: Path,
 )
 
 @Serializable
-data class VerificationRunMetadata(
-    val backendId: String,
+data class VerificationMetadata(
+    val backendId: String?,
     val startedAt: Instant,
 )
 
@@ -38,47 +40,12 @@ data class VerificationMetrics(
 
 data class BackendVerificationResult(
     val verdict: VerificationVerdict,
-    val metadata: VerificationRunMetadata,
+    val metadata: VerificationMetadata,
     val metrics: VerificationMetrics = VerificationMetrics(),
     val inlinedWitness: InlinedWitness? = null,
     val message: String? = null,
 ) {
     val isDecisive = verdict.isDecisive
-
-    companion object {
-        fun inconclusive(
-            metadata: VerificationRunMetadata,
-            metrics: VerificationMetrics,
-            message: String,
-        ): BackendVerificationResult = BackendVerificationResult(
-            verdict = VerificationVerdict.Inconclusive,
-            metadata = metadata,
-            metrics = metrics,
-            message = message,
-        )
-
-        fun errored(
-            metadata: VerificationRunMetadata,
-            metrics: VerificationMetrics,
-            message: String,
-        ): BackendVerificationResult = BackendVerificationResult(
-            verdict = VerificationVerdict.Errored,
-            metadata = metadata,
-            metrics = metrics,
-            message = message,
-        )
-
-        fun notSupported(
-            metadata: VerificationRunMetadata,
-            metrics: VerificationMetrics,
-            message: String,
-        ): BackendVerificationResult = BackendVerificationResult(
-            verdict = VerificationVerdict.NotSupported,
-            metadata = metadata,
-            metrics = metrics,
-            message = message,
-        )
-    }
 }
 
 enum class VerificationVerdict(
@@ -91,19 +58,30 @@ enum class VerificationVerdict(
     NotSupported(false),
 }
 
+sealed interface AvailabilityReport {
+    object Available : AvailabilityReport {
+        override val isUsable = true
+    }
+
+    data class Unavailable(
+        val reason: String,
+        val hints: List<String> = emptyList(),
+    ) : AvailabilityReport {
+        override val isUsable = false
+    }
+
+    val isUsable: Boolean
+}
+
 abstract class VerificationBackend<T : Any> {
     abstract val id: String
+
+    abstract val executorKey: ExecutorKey<BackendExecutor>
 
     abstract suspend fun verify(
         parentInjector: Injector,
         config: T,
-        request: VerificationRequest,
+        request: BackendVerificationRequest,
         environment: ExecutionEnvironment,
     ): BackendVerificationResult
-
-    abstract fun probeAvailability(
-        config: T,
-        environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
-    ): AvailabilityReport
-
 }

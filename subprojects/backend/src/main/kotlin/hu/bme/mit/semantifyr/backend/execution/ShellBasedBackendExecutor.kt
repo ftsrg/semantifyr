@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.backend.execution
 
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
+import hu.bme.mit.semantifyr.logging.loggerFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.coroutineScope
@@ -17,13 +18,17 @@ import org.slf4j.Logger
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-abstract class BaseShellExecutor {
+abstract class ShellBasedBackendExecutor : BackendExecutor {
 
-    protected abstract val logger: Logger
+    protected val logger by loggerFactory()
 
     protected abstract val binaryName: String
 
     private val isWindows = System.getProperty("os.name").lowercase().contains("windows")
+
+    override fun isAvailable(): Boolean {
+        return probeAvailability(listOf("-V"))
+    }
 
     protected fun probeAvailability(
         probeArgs: List<String>,
@@ -51,15 +56,19 @@ abstract class BaseShellExecutor {
         workingDirectory: File,
         logFile: File? = null,
         errorFile: File? = null,
-        header: String? = null,
     ): Int = coroutineScope {
         logger.info { "Starting $binaryName in ${workingDirectory.absolutePath}" }
         logger.debug { "$binaryName command: ${args.joinToString(" ")}" }
 
-        prepareOutputFiles(logFile, errorFile, header)
+        prepareOutputFiles(logFile, errorFile)
 
-        val logRedirect = logFile?.let { ProcessBuilder.Redirect.appendTo(it) } ?: ProcessBuilder.Redirect.DISCARD
-        val errorRedirect = errorFile?.let { ProcessBuilder.Redirect.appendTo(it) } ?: ProcessBuilder.Redirect.DISCARD
+        val logRedirect = logFile?.let {
+            ProcessBuilder.Redirect.appendTo(it)
+        } ?: ProcessBuilder.Redirect.DISCARD
+
+        val errorRedirect = errorFile?.let {
+            ProcessBuilder.Redirect.appendTo(it)
+        } ?: ProcessBuilder.Redirect.DISCARD
 
         val process = buildProcess(args)
             .directory(workingDirectory)
@@ -69,8 +78,8 @@ abstract class BaseShellExecutor {
 
         logger.debug { "$binaryName process started (pid ${process.pid()})" }
 
-        ShellProcessTracker.track(process)
-        try {
+
+        ShellProcessTracker.tracking(process) {
             try {
                 runInterruptible(Dispatchers.IO) {
                     process.waitFor()
@@ -81,17 +90,11 @@ abstract class BaseShellExecutor {
                     process.waitFor()
                 }
             }
-        } finally {
-            ShellProcessTracker.untrack(process)
         }
 
         val exitCode = process.exitValue()
         logger.info { "$binaryName exited with code $exitCode" }
         exitCode
-    }
-
-    open fun isAvailable(): Boolean {
-        return probeAvailability(listOf("-V"))
     }
 
     private fun buildProcess(args: List<String>): ProcessBuilder {
@@ -107,6 +110,8 @@ abstract class BaseShellExecutor {
 
 fun Process.destroyTree() {
     val handle = toHandle()
-    handle.descendants().forEach { it.destroyForcibly() }
+    handle.descendants().forEach {
+        it.destroyForcibly()
+    }
     handle.destroyForcibly()
 }

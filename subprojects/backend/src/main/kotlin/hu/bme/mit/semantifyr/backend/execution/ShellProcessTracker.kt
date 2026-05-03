@@ -16,10 +16,17 @@ internal object ShellProcessTracker {
 
     init {
         Runtime.getRuntime().addShutdownHook(
-            Thread({
-                killAll()
-            }, "semantifyr-shell-killer"),
+            Thread({ killAll() }, "semantifyr-shell-killer"),
         )
+    }
+
+    inline fun tracking(process: Process, block: () -> Unit) {
+        try {
+            track(process)
+            block()
+        } finally {
+            untrack(process)
+        }
     }
 
     fun track(process: Process) {

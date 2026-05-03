@@ -7,7 +7,10 @@
 package hu.bme.mit.semantifyr.backend.execution
 
 import com.github.dockerjava.api.DockerClient
+import hu.bme.mit.semantifyr.logging.error
+import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.logging.warn
 import java.util.concurrent.ConcurrentHashMap
 
 internal object DockerContainerTracker {
@@ -26,8 +29,8 @@ internal object DockerContainerTracker {
         containerId: String,
         block: () -> T,
     ): T {
-        track(client, containerId)
         try {
+            track(client, containerId)
             return block()
         } finally {
             untrack(client, containerId)
@@ -59,18 +62,21 @@ internal object DockerContainerTracker {
             return
         }
 
-        logger.info("Shutdown: stopping and removing $total still-running container(s)")
+        logger.info { "Shutdown: stopping and removing $total still-running container(s)" }
+
         for ((client, ids) in snapshot) {
             for (id in ids) {
                 try {
                     client.stopContainerCmd(id).exec()
-                } catch (_: Throwable) {
-                    // Container may already be exited — keep going to the remove step.
+                } catch (throwable: Throwable) {
+                    logger.warn(throwable) { "Error stopping container." }
+                    // Container may have already exited.
                 }
                 try {
                     client.removeContainerCmd(id).withForce(true).exec()
-                } catch (_: Throwable) {
-                    // Best-effort; a dangling container is less harmful than blocking shutdown.
+                } catch (throwable: Throwable) {
+                    logger.warn(throwable) { "Error removing container." }
+                    // Best-effort.
                 }
             }
         }
