@@ -34,6 +34,8 @@ class VerificationCaseDiscovererTest {
         assertThat(cases).extracting<String> { it.qualifiedName }
             .containsExactlyInAnyOrder(
                 "semantifyr::verification::simple::Incrementing",
+                "semantifyr::verification::simple::StaysAtOne",
+                "semantifyr::verification::simple::FlipFlopInvariant",
                 "semantifyr::verification::simple::CounterExceedsBound",
             )
     }
@@ -55,7 +57,10 @@ class VerificationCaseDiscovererTest {
         val filtered = discoverer.discover(context, CaseFilter.tagged("expect-pass"))
 
         assertThat(filtered).extracting<String> { it.qualifiedName }
-            .containsExactly("semantifyr::verification::simple::Incrementing")
+            .containsExactly(
+                "semantifyr::verification::simple::Incrementing",
+                "semantifyr::verification::simple::FlipFlopInvariant",
+            )
     }
 
     @Test
@@ -64,7 +69,10 @@ class VerificationCaseDiscovererTest {
         val filtered = discoverer.discover(context, CaseFilter.excluding("expect-fail"))
 
         assertThat(filtered).extracting<String> { it.qualifiedName }
-            .containsExactly("semantifyr::verification::simple::Incrementing")
+            .containsExactly(
+                "semantifyr::verification::simple::Incrementing",
+                "semantifyr::verification::simple::FlipFlopInvariant",
+            )
     }
 
     @Test
