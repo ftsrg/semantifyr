@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.backends.uppaal.transformation
 
+import com.google.inject.Inject
+import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalBackendModule
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
@@ -14,6 +16,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
+import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
@@ -22,12 +25,21 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import kotlin.io.path.Path
 
-class UppaalModelGeneratorTest {
-    private val injector = OxstsStandaloneSetup()
-        .createInjectorAndDoEMFRegistration()
-        .createChildInjector(UppaalBackendModule)
-    private val annotationHandler: BuiltinAnnotationHandler = injector.getInstance(BuiltinAnnotationHandler::class.java)
-    private val loader: SemantifyrLoader = injector.getInstance(SemantifyrLoader::class.java)
+@InjectWithOxsts
+class UppaalModelTransformerTest {
+
+    @Inject
+    private lateinit var injector: Injector
+
+    @Inject
+    private lateinit var annotationHandler: BuiltinAnnotationHandler
+
+    @Inject
+    private lateinit var loader: SemantifyrLoader
+
+    private val childInjector by lazy {
+        injector.createChildInjector(UppaalBackendModule())
+    }
 
     @Test
     suspend fun `clock annotation produces a clock declaration`() {
@@ -58,9 +70,9 @@ class UppaalModelGeneratorTest {
     @Test
     fun `annotation handler recognizes the Clock annotation`() {
         val case = firstVerificationCase("test-models/Timed/timed.oxsts")
-        val hasClockVar = case.members
-            .filterIsInstance<VariableDeclaration>()
-            .any { annotationHandler.isClockVariable(it) }
+        val hasClockVar = case.members.filterIsInstance<VariableDeclaration>().any {
+            annotationHandler.isClockVariable(it)
+        }
         assertThat(hasClockVar).isTrue()
     }
 
@@ -69,21 +81,21 @@ class UppaalModelGeneratorTest {
             .startContext()
             .loadModel(Path(modelPath))
             .buildAndResolve()
-        return context.modelResources
-            .flatMap { it.contents }
-            .filterIsInstance<OxstsModelPackage>()
-            .flatMap { it.declarations }
-            .filterIsInstance<ClassDeclaration>()
-            .first { annotationHandler.isVerificationCase(it) }
+        return context.modelResources.asSequence().flatMap {
+            it.contents
+        }.filterIsInstance<OxstsModelPackage>().flatMap {
+            it.declarations
+        }.filterIsInstance<ClassDeclaration>().first {
+            annotationHandler.isVerificationCase(it)
+        }
     }
 
     private fun compileFirstVerificationCase(modelPath: String): UppaalArtifacts {
         val classDeclaration = firstVerificationCase(modelPath)
         val artifactDir = Files.createTempDirectory("uppaal-test-")
-        SemantifyrCompiler(injector, ArtifactConfig.NONE, OptimizationConfig.NONE).use { compiler ->
-            val generator = injector.getInstance(UppaalModelGenerator::class.java)
-            val compiled = compiler.compile(classDeclaration, artifactDir)
-            return generator.generate(compiled.inlinedOxsts)
-        }
+        val compiler = SemantifyrCompiler(childInjector, ArtifactConfig.NONE, OptimizationConfig.NONE)
+        val generator = childInjector.getInstance(UppaalModelTransformer::class.java)
+        val compiled = compiler.compile(classDeclaration, artifactDir)
+        return generator.generate(compiled.inlinedOxsts)
     }
 }

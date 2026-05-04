@@ -28,7 +28,7 @@ data class UppaalArtifacts(
 )
 
 @VerificationScoped
-class UppaalModelGenerator {
+class UppaalModelTransformer {
     @Inject
     private lateinit var uppaalVariableTransformer: UppaalVariableTransformer
 

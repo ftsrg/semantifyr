@@ -11,17 +11,16 @@ import hu.bme.mit.semantifyr.backend.transformation.HavocValueCollector
 import hu.bme.mit.semantifyr.backends.uppaal.ir.UppaalEdge
 import hu.bme.mit.semantifyr.backends.uppaal.ir.UppaalLocation
 import hu.bme.mit.semantifyr.backends.uppaal.ir.UppaalLocationKind
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
 class UppaalOperationTransformer {
     @Inject
@@ -134,7 +133,7 @@ class UppaalOperationTransformer {
         targetId: String,
         operation: AssignmentOperation,
     ) {
-        val variable = resolveVariable(operation.reference)
+        val variable = OxstsUtils.requireVariableReference(operation.reference)
         val name = uppaalVariableTransformer.nameOf(variable)
         val isClock = uppaalVariableTransformer.isClock(variable)
 
@@ -206,7 +205,7 @@ class UppaalOperationTransformer {
         targetId: String,
         operation: HavocOperation,
     ) {
-        val variable = resolveVariable(operation.reference)
+        val variable = OxstsUtils.requireVariableReference(operation.reference)
         val name = uppaalVariableTransformer.nameOf(variable)
         if (uppaalVariableTransformer.isClock(variable)) {
             error("Uppaal backend does not support havoc on clock variable '$name' (clocks may only be reset to 0).")
@@ -275,11 +274,4 @@ class UppaalOperationTransformer {
         )
     }
 
-    private fun resolveVariable(expression: org.eclipse.emf.ecore.EObject): VariableDeclaration {
-        val ref = expression as? ElementReference
-            ?: error("Unsupported reference shape on the left-hand side of an assignment: ${expression::class.simpleName}")
-        val element = ref.element
-        return element as? VariableDeclaration
-            ?: error("Expected a variable reference on the left-hand side of an assignment, got ${element::class.simpleName}")
-    }
 }

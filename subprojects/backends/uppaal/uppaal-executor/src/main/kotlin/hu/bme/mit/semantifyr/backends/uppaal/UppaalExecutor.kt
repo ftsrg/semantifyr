@@ -6,13 +6,20 @@
 
 package hu.bme.mit.semantifyr.backends.uppaal
 
+import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
+import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.backends.uppaal.execution.ShellBasedUppaalExecutor
 import java.io.File
 
-sealed interface UppaalExecutorSpec {
-    object Auto : UppaalExecutorSpec
-
-    object Shell : UppaalExecutorSpec
+@JvmField
+val UppaalExecutorKey = ExecutorKey<UppaalExecutor>(
+    name = "uppaal",
+    unavailableHints = listOf(
+        "Install Uppaal (https://uppaal.org) and ensure the 'verifyta' binary is on PATH.",
+        "On a typical Uppaal install the binary is under <uppaal>/bin-Linux/verifyta.",
+    ),
+) {
+    UppaalExecutor.autoDetect()
 }
 
 class UppaalExecutionResult(
@@ -26,18 +33,16 @@ class UppaalExecutionSpecification(
     val errorFile: File? = null,
 )
 
-interface UppaalExecutor {
-    fun isAvailable(): Boolean
-
+interface UppaalExecutor : BackendExecutor {
     suspend fun execute(uppaalExecutionSpecification: UppaalExecutionSpecification): UppaalExecutionResult
 
     companion object {
-        fun of(spec: UppaalExecutorSpec = UppaalExecutorSpec.Auto): UppaalExecutor {
-            return when (spec) {
-                UppaalExecutorSpec.Auto, UppaalExecutorSpec.Shell -> ShellBasedUppaalExecutor().also {
-                    check(it.isAvailable()) { "Shell-based Uppaal executor: verifyta is not on PATH." }
-                }
-            }
+        fun shell(): UppaalExecutor {
+            return ShellBasedUppaalExecutor()
+        }
+
+        fun autoDetect(): UppaalExecutor {
+            return shell()
         }
     }
 }

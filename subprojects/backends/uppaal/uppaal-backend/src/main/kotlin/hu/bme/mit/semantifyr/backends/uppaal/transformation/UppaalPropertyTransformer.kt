@@ -37,6 +37,6 @@ class UppaalPropertyTransformer {
 
     companion object {
         private const val STABLE_QUALIFIED: String =
-            "${UppaalModelGenerator.TEMPLATE_NAME}.${UppaalModelGenerator.STABLE_LOCATION_NAME}"
+            "${UppaalModelTransformer.TEMPLATE_NAME}.${UppaalModelTransformer.STABLE_LOCATION_NAME}"
     }
 }

@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test
 class UppaalOperationTransformerTest {
     private val injector = OxstsStandaloneSetup()
         .createInjectorAndDoEMFRegistration()
-        .createChildInjector(UppaalBackendModule)
+        .createChildInjector(UppaalBackendModule())
     private val parseHelper: InlinedOxstsParseHelper = injector.getInstance(InlinedOxstsParseHelper::class.java)
 
     @Test
@@ -151,7 +151,7 @@ class UppaalOperationTransformerTest {
     }
 
     private fun buildTemplate(inlined: InlinedOxsts) = injector
-        .getInstance(UppaalModelGenerator::class.java)
+        .getInstance(UppaalModelTransformer::class.java)
         .buildNta(inlined)
         .templates
         .single()
