@@ -15,8 +15,6 @@ repositories {
 
 dependencies {
     implementation(project(":logging"))
-    implementation(project(":compiler"))
-    implementation(project(":verification"))
     implementation(project(":portfolios"))
 
     implementation(libs.clikt)

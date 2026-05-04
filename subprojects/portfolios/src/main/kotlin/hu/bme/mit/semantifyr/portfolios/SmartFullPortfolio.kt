@@ -22,10 +22,10 @@ import hu.bme.mit.semantifyr.backends.theta.ThetaConfig
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalBackend
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
 import hu.bme.mit.semantifyr.logging.info
-import hu.bme.mit.semantifyr.verification.ProgressContext
-import hu.bme.mit.semantifyr.verification.portfolio.ConcurrencyGate
-import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
-import hu.bme.mit.semantifyr.verification.portfolio.withSubPath
+import hu.bme.mit.semantifyr.verifier.ProgressContext
+import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
+import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
+import hu.bme.mit.semantifyr.verifier.portfolio.withSubPath
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes

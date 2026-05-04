@@ -17,8 +17,8 @@ import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
-import hu.bme.mit.semantifyr.verification.portfolio.SingleBackendPortfolio
-import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
+import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
+import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 
 object Portfolios {
     private val logger by loggerFactory()

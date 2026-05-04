@@ -13,7 +13,7 @@ import hu.bme.mit.semantifyr.cli.commands.options.VerificationCaseSpecificationO
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
-import hu.bme.mit.semantifyr.verification.discovery.VerificationCaseDiscoverer
+import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 
 class ListCommand @Inject constructor(
     semantifyrLoader: SemantifyrLoader,

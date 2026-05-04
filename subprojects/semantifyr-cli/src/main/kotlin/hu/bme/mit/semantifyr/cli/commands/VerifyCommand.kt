@@ -19,14 +19,13 @@ import hu.bme.mit.semantifyr.cli.commands.options.CompilationOptionGroup
 import hu.bme.mit.semantifyr.cli.commands.options.VerificationCaseSpecificationOptionGroup
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
-import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
-import hu.bme.mit.semantifyr.verification.SemantifyrVerifier
-import hu.bme.mit.semantifyr.verification.VerificationCase
-import hu.bme.mit.semantifyr.verification.discovery.VerificationCaseDiscoverer
-import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
+import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
+import hu.bme.mit.semantifyr.verifier.VerificationCase
+import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
+import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import kotlin.system.exitProcess
 
 class VerifyCommand @Inject constructor(

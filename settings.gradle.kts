@@ -10,7 +10,7 @@ include(
     "logging",
     "guice-common",
     "compiler",
-    "verification",
+    "verifier",
     "portfolios",
     "frontend",
     "backend",

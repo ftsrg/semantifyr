@@ -24,10 +24,10 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationCategory
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.portfolios.Portfolios
-import hu.bme.mit.semantifyr.verification.VerificationCase
-import hu.bme.mit.semantifyr.verification.discovery.CaseFilter
-import hu.bme.mit.semantifyr.verification.discovery.VerificationCaseDiscoverer
-import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
+import hu.bme.mit.semantifyr.verifier.VerificationCase
+import hu.bme.mit.semantifyr.verifier.discovery.CaseFilter
+import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
+import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import java.nio.file.Files
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds

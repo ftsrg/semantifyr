@@ -8,10 +8,9 @@ import hu.bme.mit.semantifyr.backends.uppaal.execution.ShellBasedUppaalExecutor
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalBackend
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
-import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
-import hu.bme.mit.semantifyr.verification.SemantifyrVerifierTestHelper
-import hu.bme.mit.semantifyr.verification.VerificationCase
-import hu.bme.mit.semantifyr.verification.portfolio.SingleBackendPortfolio
+import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
+import hu.bme.mit.semantifyr.verifier.VerificationCase
+import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest

@@ -21,9 +21,9 @@ import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.verification.VerificationCase
-import hu.bme.mit.semantifyr.verification.discovery.VerificationCaseDiscoverer
-import hu.bme.mit.semantifyr.verification.qualifiedNameToDirectoryName
+import hu.bme.mit.semantifyr.verifier.VerificationCase
+import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
+import hu.bme.mit.semantifyr.verifier.qualifiedNameToDirectoryName
 import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
 import java.nio.file.Files

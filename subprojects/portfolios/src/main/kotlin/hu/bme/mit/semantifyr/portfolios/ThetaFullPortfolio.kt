@@ -13,10 +13,10 @@ import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backends.theta.ThetaBackend
 import hu.bme.mit.semantifyr.backends.theta.ThetaConfig
-import hu.bme.mit.semantifyr.verification.ProgressContext
-import hu.bme.mit.semantifyr.verification.portfolio.ConcurrencyGate
-import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
-import hu.bme.mit.semantifyr.verification.portfolio.withSubPath
+import hu.bme.mit.semantifyr.verifier.ProgressContext
+import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
+import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
+import hu.bme.mit.semantifyr.verifier.portfolio.withSubPath
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes

@@ -17,19 +17,9 @@ repositories {
 dependencies {
     implementation(project(":logging"))
 
-    api(project(":verification"))
+    api(project(":verifier"))
     api(project(":theta-backend"))
     api(project(":uppaal-backend"))
     api(project(":nuxmv-backend"))
     api(project(":spin-backend"))
-}
-
-testing {
-    suites {
-        val verificationTest by getting(JvmTestSuite::class) {
-            dependencies {
-                implementation(testFixtures(project(":verification")))
-            }
-        }
-    }
 }
