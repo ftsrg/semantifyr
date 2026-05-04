@@ -15,10 +15,7 @@ enum class ArtifactKind {
     InlinedModel,
     FlattenedModel,
     CompilationStep,
-    Witness,
     Mapping,
-    Trace,
-    Report,
 }
 
 @Serializable

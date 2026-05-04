@@ -17,10 +17,7 @@ private const val INSTANTIATED_MODEL = "$PIPELINE/instantiated.oxsts"
 private const val INLINED_MODEL = "$PIPELINE/inlined.oxsts"
 private const val FLATTENED_MODEL = "$PIPELINE/flattened.oxsts"
 private const val COMPILATION_STEPS = "$PIPELINE/steps"
-private const val WITNESS = "witness.oxsts"
-private const val TRACE = "trace.json"
 private const val MAPPING = "mapping.json"
-private const val REPORT = "report.json"
 
 class ArtifactManager @Inject constructor(
     private val config: ArtifactConfig,
@@ -34,10 +31,7 @@ class ArtifactManager @Inject constructor(
             ArtifactKind.InlinedModel -> INLINED_MODEL
             ArtifactKind.FlattenedModel -> FLATTENED_MODEL
             ArtifactKind.CompilationStep -> COMPILATION_STEPS
-            ArtifactKind.Witness -> WITNESS
-            ArtifactKind.Trace -> TRACE
             ArtifactKind.Mapping -> MAPPING
-            ArtifactKind.Report -> REPORT
         }
     }
 

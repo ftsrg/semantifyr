@@ -72,9 +72,9 @@ class ArtifactManagerTest {
     @Test
     fun `resolveUri by ArtifactKind uses the kind-specific path`() {
         val manager = managerFor(ArtifactConfig.DEBUG)
-        val expected = tempDir.resolve(manager.pathOf(ArtifactKind.Witness)).toFile().absolutePath
+        val expected = tempDir.resolve(manager.pathOf(ArtifactKind.InlinedModel)).toFile().absolutePath
 
-        val uri = manager.resolveUri(ArtifactKind.Witness)
+        val uri = manager.resolveUri(ArtifactKind.InlinedModel)
 
         assertThat(uri.toFileString()).isEqualTo(expected)
     }
@@ -84,7 +84,7 @@ class ArtifactManagerTest {
         val manager = managerFor(ArtifactConfig.NONE)
         var invoked = false
 
-        manager.withFile(ArtifactKind.Witness) {
+        manager.withFile(ArtifactKind.InlinedModel) {
             invoked = true
         }
 
@@ -93,16 +93,16 @@ class ArtifactManagerTest {
 
     @Test
     fun `withFile invokes block with the resolved file when the kind is enabled`() {
-        val config = ArtifactConfig(enabled = setOf(ArtifactKind.Witness))
+        val config = ArtifactConfig(enabled = setOf(ArtifactKind.InlinedModel))
         val manager = managerFor(config)
 
         lateinit var receivedPath: Path
-        manager.withFile(ArtifactKind.Witness) {
+        manager.withFile(ArtifactKind.InlinedModel) {
             receivedPath = it.toPath()
             it.writeText("hello")
         }
 
-        assertThat(receivedPath).isEqualTo(tempDir.resolve(manager.pathOf(ArtifactKind.Witness)))
+        assertThat(receivedPath).isEqualTo(tempDir.resolve(manager.pathOf(ArtifactKind.InlinedModel)))
         assertThat(Files.readString(receivedPath)).isEqualTo("hello")
     }
 
