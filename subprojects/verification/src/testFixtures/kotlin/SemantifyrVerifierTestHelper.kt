@@ -172,7 +172,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         verificationPortfolio: VerificationPortfolio,
         outputDirectory: Path,
         validationPortfolio: VerificationPortfolio? = null,
-        timeout: Duration = 2.minutes,
+        timeout: Duration = 1.minutes,
         validationTimeout: Duration = 1.minutes,
         environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
         expectedVerdict: VerificationVerdict = expectedVerdictFromTags(case),
