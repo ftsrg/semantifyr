@@ -8,43 +8,35 @@ package hu.bme.mit.semantifyr.backends.spin.transformation
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
+import hu.bme.mit.semantifyr.backend.transformation.BackendExpressionVisitor
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ImmutableTypeEvaluation
-import hu.bme.mit.semantifyr.oxsts.lang.utils.ExpressionVisitor
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticBinaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOperator
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.CastExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfThenElse
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInfinity
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralNothing
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralReal
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TemporalOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.xtext.EcoreUtil2
 
-class SpinExpressionTransformer : ExpressionVisitor<String>() {
+class SpinExpressionTransformer : BackendExpressionVisitor<String>() {
+
+    override val backendName: String = "Spin"
+
     @Inject
     private lateinit var spinVariableTransformer: SpinVariableTransformer
 
@@ -109,7 +101,9 @@ class SpinExpressionTransformer : ExpressionVisitor<String>() {
 
     override fun visit(expression: LiteralBoolean): String = if (expression.isValue) "true" else "false"
 
-    override fun visit(expression: LiteralReal): String = error("Real literals are not supported in Promela")
+    override fun visit(expression: LiteralReal): String {
+        throw BackendUnsupportedException("Spin does not support real literals")
+    }
 
     override fun visit(expression: ElementReference): String {
         return when (val element = expression.element) {
@@ -119,29 +113,9 @@ class SpinExpressionTransformer : ExpressionVisitor<String>() {
         }
     }
 
-    override fun visit(expression: AG): String = error("AG should be handled at the property level")
-
-    override fun visit(expression: EF): String = error("EF should be handled at the property level")
-
-    override fun visit(expression: RangeExpression): String = error("Range expressions have no direct Promela equivalent")
-
-    override fun visit(expression: ArrayLiteral): String = error("Array literals are not yet supported in the Spin backend")
-
-    override fun visit(expression: LiteralInfinity): String = error("Infinity literals are not supported in Promela")
-
-    override fun visit(expression: LiteralString): String = error("String literals are not supported in Promela")
-
-    override fun visit(expression: LiteralNothing): String = error("Nothing literals are not supported in Promela")
-
-    override fun visit(expression: SelfReference): String = error("Self references should have been resolved")
-
-    override fun visit(expression: NavigationSuffixExpression): String = error("Navigation expressions should have been resolved")
-
-    override fun visit(expression: CallSuffixExpression): String = error("Call expressions should have been resolved")
-
-    override fun visit(expression: IndexingSuffixExpression): String = error("Indexing expressions are not yet supported in the Spin backend")
-
-    override fun visit(expression: CastExpression): String = visit(expression.body)
+    override fun visit(expression: IndexingSuffixExpression): String {
+        throw BackendUnsupportedException("Spin does not support array indexing")
+    }
 
     override fun visit(expression: IfThenElse): String {
         val guard = visit(expression.guard)
@@ -153,9 +127,7 @@ class SpinExpressionTransformer : ExpressionVisitor<String>() {
             return "(($guard) -> ($then) : ($orElse))"
         }
         if (!isBooleanTyped(expression)) {
-            throw BackendUnsupportedException(
-                "Promela LTL has no ternary; non-boolean if-then-else inside a property body cannot be transformed (would require lifting to an auxiliary variable).",
-            )
+            throw BackendUnsupportedException("Spin does not support non-boolean if-then-else inside a property body")
         }
         return "((($guard) && ($then)) || ((!($guard)) && ($orElse)))"
     }

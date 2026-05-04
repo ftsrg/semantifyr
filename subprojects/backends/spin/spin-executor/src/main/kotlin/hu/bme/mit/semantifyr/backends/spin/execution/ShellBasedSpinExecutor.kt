@@ -6,17 +6,15 @@
 
 package hu.bme.mit.semantifyr.backends.spin.execution
 
-import hu.bme.mit.semantifyr.backend.execution.BaseShellExecutor
+import hu.bme.mit.semantifyr.backend.execution.ShellBasedBackendExecutor
 import hu.bme.mit.semantifyr.backends.spin.SpinExecutionResult
 import hu.bme.mit.semantifyr.backends.spin.SpinExecutionSpecification
 import hu.bme.mit.semantifyr.backends.spin.SpinExecutor
 import hu.bme.mit.semantifyr.backends.spin.SpinReplaySpecification
-import hu.bme.mit.semantifyr.logging.loggerFactory
 
 class ShellBasedSpinExecutor :
-    BaseShellExecutor(),
+    ShellBasedBackendExecutor(),
     SpinExecutor {
-    override val logger by loggerFactory()
     override val binaryName: String = "spin"
 
     override suspend fun execute(specification: SpinExecutionSpecification): SpinExecutionResult {
@@ -26,7 +24,6 @@ class ShellBasedSpinExecutor :
             workingDirectory = specification.workingDirectory,
             logFile = specification.logFile,
             errorFile = specification.errorFile,
-            header = "Running spin on ${specification.modelFileName}",
         )
         return SpinExecutionResult(exitCode)
     }
@@ -38,7 +35,6 @@ class ShellBasedSpinExecutor :
             workingDirectory = specification.workingDirectory,
             logFile = specification.logFile,
             errorFile = specification.errorFile,
-            header = "Replaying spin trail for ${specification.modelFileName}",
         )
         return SpinExecutionResult(exitCode)
     }

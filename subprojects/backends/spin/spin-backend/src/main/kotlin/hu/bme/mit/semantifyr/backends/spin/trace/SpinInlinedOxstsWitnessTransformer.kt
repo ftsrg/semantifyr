@@ -8,9 +8,10 @@ package hu.bme.mit.semantifyr.backends.spin.trace
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
-import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitness
-import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitnessState
-import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitnessStateValue
+import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.backend.witness.WitnessState
+import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
+import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
 import hu.bme.mit.semantifyr.backends.spin.transformation.SpinPropertyTransformer
 import hu.bme.mit.semantifyr.backends.spin.transformation.SpinVariableKind
 import hu.bme.mit.semantifyr.backends.spin.transformation.SpinVariableTransformer
@@ -26,8 +27,10 @@ class SpinInlinedOxstsWitnessTransformer @Inject constructor(
     private val variableTransformer: SpinVariableTransformer,
 ) {
 
-    fun transform(inlinedOxsts: InlinedOxsts, trace: SpinTrace): InlinedOxstsAssumptionWitness {
-        val nameToVar = inlinedOxsts.variables.associateBy { variableTransformer.nameOf(it) }
+    fun transform(inlinedOxsts: InlinedOxsts, trace: SpinTrace): InlinedWitness {
+        val nameToVar = inlinedOxsts.variables.associateBy {
+            variableTransformer.nameOf(it)
+        }
 
         val running = mutableMapOf<VariableDeclaration, Expression>()
         val updated = mutableSetOf<VariableDeclaration>()
@@ -47,38 +50,25 @@ class SpinInlinedOxstsWitnessTransformer @Inject constructor(
                 if (variable !in updated) {
                     return@mapNotNull null
                 }
-                running[variable]?.let { InlinedOxstsAssumptionWitnessStateValue(variable, it.copy()) }
+                running[variable]?.let {
+                    WitnessStateValue(variable, it.copy())
+                }
             }
-            InlinedOxstsAssumptionWitnessState(values, activatedTraces = emptyList())
+            WitnessState(values)
         }
 
-        require(states.isNotEmpty()) { "Cannot build witness from an empty Spin trace" }
-
-        val pre = InlinedOxstsAssumptionWitnessState(values = emptyList(), activatedTraces = emptyList())
-        val initialized = states.first()
-        val transitions = states.drop(1)
-
-        val nextStateMap = mutableMapOf<InlinedOxstsAssumptionWitnessState, List<InlinedOxstsAssumptionWitnessState>>()
-        if (transitions.isNotEmpty()) {
-            nextStateMap[initialized] = listOf(transitions.first())
-        }
-        for (i in 1 until transitions.size) {
-            nextStateMap[transitions[i - 1]] = listOf(transitions[i])
-        }
-
-        return InlinedOxstsAssumptionWitness(
-            initialState = pre,
-            initializedState = initialized,
-            transitionStates = transitions,
-            nextStateMap = nextStateMap,
-            inlinedOxsts = inlinedOxsts,
-        )
+        return linearInlinedWitness(inlinedOxsts, states)
     }
 
     private fun parseValue(variable: VariableDeclaration, raw: String): Expression? {
-        val kind = runCatching { variableTransformer.describe(variable).kind }.getOrNull() ?: return null
+        val kind = runCatching {
+            variableTransformer.describe(variable).kind
+        }.getOrNull() ?: return null
+
         return when (kind) {
-            SpinVariableKind.Integer -> raw.toIntOrNull()?.let { OxstsFactory.createLiteralInteger(it) }
+            SpinVariableKind.Integer -> raw.toIntOrNull()?.let {
+                OxstsFactory.createLiteralInteger(it)
+            }
             SpinVariableKind.Boolean -> when (raw) {
                 "0" -> OxstsFactory.createLiteralBoolean(false)
                 "1" -> OxstsFactory.createLiteralBoolean(true)
@@ -88,9 +78,11 @@ class SpinInlinedOxstsWitnessTransformer @Inject constructor(
             }
             SpinVariableKind.Enum -> {
                 val enumDecl = variable.typeSpecification?.domain as? EnumDeclaration ?: return null
-                val literal = enumDecl.literals.firstOrNull { it.name == raw }
-                    ?: raw.toIntOrNull()?.let { enumDecl.literals.getOrNull(it) }
-                    ?: return null
+                val literal = enumDecl.literals.firstOrNull {
+                    it.name == raw
+                } ?: raw.toIntOrNull()?.let {
+                    enumDecl.literals.getOrNull(it)
+                } ?: return null
                 OxstsFactory.createElementReference(literal)
             }
         }

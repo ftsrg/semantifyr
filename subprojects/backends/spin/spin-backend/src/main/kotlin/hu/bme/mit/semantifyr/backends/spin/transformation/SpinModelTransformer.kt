@@ -17,18 +17,16 @@ data class SpinArtifacts(
 )
 
 @VerificationScoped
-class SpinModelGenerator {
-    @Inject
-    private lateinit var spinVariableTransformer: SpinVariableTransformer
+class SpinModelTransformer @Inject constructor(
+    private val spinVariableTransformer: SpinVariableTransformer,
+    private val spinOperationTransformer: SpinOperationTransformer,
+    private val spinPropertyTransformer: SpinPropertyTransformer,
+) {
 
-    @Inject
-    private lateinit var spinOperationTransformer: SpinOperationTransformer
-
-    @Inject
-    private lateinit var spinPropertyTransformer: SpinPropertyTransformer
-
-    fun generate(inlinedOxsts: InlinedOxsts): SpinArtifacts {
-        val globals = inlinedOxsts.variables.map { spinVariableTransformer.describe(it) }
+    fun transform(inlinedOxsts: InlinedOxsts): SpinArtifacts {
+        val globals = inlinedOxsts.variables.map {
+            spinVariableTransformer.describe(it)
+        }
         val enums = globals
             .asSequence()
             .mapNotNull { it.enumDeclaration }
@@ -58,7 +56,9 @@ class SpinModelGenerator {
     ) {
         for (enum in enums) {
             builder.append("mtype:").append(enum.name).append(" = { ")
-            builder.append(enum.literals.joinToString(", ") { spinVariableTransformer.sanitizeEnumLiteral(it) })
+            builder.append(enum.literals.joinToString(", ") {
+                spinVariableTransformer.sanitizeEnumLiteral(it)
+            })
             builder.append(" };\n")
         }
         if (enums.isNotEmpty()) builder.append('\n')

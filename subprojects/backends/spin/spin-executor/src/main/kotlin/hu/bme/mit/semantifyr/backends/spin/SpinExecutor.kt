@@ -6,13 +6,19 @@
 
 package hu.bme.mit.semantifyr.backends.spin
 
+import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
+import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.backends.spin.execution.ShellBasedSpinExecutor
 import java.io.File
 
-sealed interface SpinExecutorSpec {
-    object Auto : SpinExecutorSpec
-
-    object Shell : SpinExecutorSpec
+@JvmField
+val SpinExecutorKey = ExecutorKey(
+    name = "spin",
+    unavailableHints = listOf(
+        "Install Spin from https://spinroot.com/spin/Src/ and make sure both 'spin' and a C compiler (gcc) are on PATH.",
+    ),
+) {
+    SpinExecutor.autoDetect()
 }
 
 class SpinExecutionResult(
@@ -34,20 +40,18 @@ class SpinReplaySpecification(
     val errorFile: File? = null,
 )
 
-interface SpinExecutor {
-    fun isAvailable(): Boolean
-
+interface SpinExecutor : BackendExecutor {
     suspend fun execute(specification: SpinExecutionSpecification): SpinExecutionResult
 
     suspend fun replayTrail(specification: SpinReplaySpecification): SpinExecutionResult
 
     companion object {
-        fun of(spec: SpinExecutorSpec = SpinExecutorSpec.Auto): SpinExecutor {
-            return when (spec) {
-                SpinExecutorSpec.Auto, SpinExecutorSpec.Shell -> ShellBasedSpinExecutor().also {
-                    check(it.isAvailable()) { "Shell-based Spin executor: spin is not on PATH." }
-                }
-            }
+        fun shell(): SpinExecutor {
+            return ShellBasedSpinExecutor()
+        }
+
+        fun autoDetect(): SpinExecutor {
+            return shell()
         }
     }
 }

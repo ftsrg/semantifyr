@@ -30,3 +30,15 @@ dependencies {
 
     testFixturesApi(testFixtures(project(":backend")))
 }
+
+val cloneOxstsTestModels by tasks.registering(Sync::class) {
+    from(rootProject.layout.projectDirectory.dir("oxsts-test-models"))
+    into(layout.buildDirectory.dir("test-models"))
+}
+
+tasks.named<Test>("verificationTest") {
+    inputs.files(cloneOxstsTestModels)
+}
+tasks.named<Test>("conformanceTest") {
+    inputs.files(cloneOxstsTestModels)
+}

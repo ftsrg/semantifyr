@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.backends.spin.transformation
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
+import hu.bme.mit.semantifyr.backend.transformation.BackendNameMangler
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
@@ -36,19 +37,10 @@ class SpinVariableTransformer {
     @Inject
     private lateinit var spinExpressionTransformer: SpinExpressionTransformer
 
-    private val nameMap = mutableMapOf<VariableDeclaration, String>()
+    private val mangler = BackendNameMangler()
 
     fun nameOf(variableDeclaration: VariableDeclaration): String {
-        return nameMap.getOrPut(variableDeclaration) {
-            val base = sanitize(variableDeclaration.name)
-            if (variableDeclaration is LocalVarDeclarationOperation) {
-                // Promela has lexical scoping within blocks, but to avoid name clashes across branches
-                // we mangle locals with a stable identity hash — same pattern as the Uppaal/nuXmv backends.
-                "${base}_${(System.identityHashCode(variableDeclaration) and Int.MAX_VALUE)}"
-            } else {
-                base
-            }
-        }
+        return mangler.nameOf(variableDeclaration)
     }
 
     fun describe(variableDeclaration: VariableDeclaration): SpinVariable {
@@ -81,10 +73,7 @@ class SpinVariableTransformer {
         }
     }
 
-    fun sanitizeEnumLiteral(literal: EnumLiteral): String = sanitize(literal.name)
-
-    private fun sanitize(name: String?): String {
-        val base = name ?: "var"
-        return base.replace(Regex("[^A-Za-z0-9_]"), "_")
+    fun sanitizeEnumLiteral(literal: EnumLiteral): String {
+        return mangler.sanitize(literal.name)
     }
 }

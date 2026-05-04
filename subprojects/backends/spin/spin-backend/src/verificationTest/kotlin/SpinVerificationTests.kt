@@ -9,7 +9,6 @@ import hu.bme.mit.semantifyr.backends.spin.verification.SpinBackend
 import hu.bme.mit.semantifyr.backends.spin.verification.SpinConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
-import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verification.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verification.VerificationCase
 import hu.bme.mit.semantifyr.verification.portfolio.SingleBackendPortfolio
@@ -21,7 +20,7 @@ import org.junit.jupiter.params.provider.MethodSource
 import kotlin.io.path.Path
 
 @InjectWithOxsts
-class SpinSemanticConformanceTest {
+class SpinVerificationTests {
 
     companion object {
 
@@ -31,7 +30,7 @@ class SpinSemanticConformanceTest {
         private val context by lazy {
             helper.semantifyrLoader
                 .startContext()
-                .loadModels(Path("build/test-models/semantic"))
+                .loadModels(Path("build/test-models/simple"))
                 .buildAndResolve()
         }
 
@@ -40,25 +39,24 @@ class SpinSemanticConformanceTest {
         fun assumeSpinAvailable() {
             Assumptions.assumeTrue(
                 ShellBasedSpinExecutor().isAvailable(),
-                "spin not on PATH - skipping Spin conformance tests",
+                "spin not on PATH - skipping Spin backend tests",
             )
         }
 
         @JvmStatic
-        fun corpusCases(): List<Arguments> {
+        fun `OXSTS Simple Test Suite Passes`(): List<Arguments> {
             return helper.collectVerificationCasesAsArguments(context)
         }
     }
 
     @ParameterizedTest
-    @MethodSource("corpusCases")
-    suspend fun `Semantic conformance - corpus case`(verificationCase: VerificationCase) {
+    @MethodSource
+    suspend fun `OXSTS Simple Test Suite Passes`(verificationCase: VerificationCase) {
         helper.checkTestModel(
             context,
             verificationCase,
             verificationPortfolio = SingleBackendPortfolio(SpinBackend(), SpinConfig.SafeDfs),
-            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(SpinSemanticConformanceTest::class.java),
-            validationPortfolio = Portfolios.AllAgree,
+            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(SpinVerificationTests::class.java),
         )
     }
 }

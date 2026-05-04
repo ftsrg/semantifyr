@@ -6,10 +6,12 @@
 
 package hu.bme.mit.semantifyr.backends.spin.verification
 
+import hu.bme.mit.semantifyr.backend.BackendConfig
+
 data class SpinConfig(
-    val id: String,
+    override val id: String,
     val extraArguments: List<String> = emptyList(),
-) {
+) : BackendConfig {
     companion object {
         val ExhaustiveDfs = SpinConfig(
             id = "exhaustive-dfs",

@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.backends.spin.transformation
 
+import com.google.inject.Inject
+import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
 import hu.bme.mit.semantifyr.backends.spin.verification.SpinBackendModule
@@ -13,8 +15,8 @@ import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
-import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
+import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
 import org.assertj.core.api.Assertions.assertThat
@@ -23,12 +25,22 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import kotlin.io.path.Path
 
-class SpinModelGeneratorTest {
-    private val injector = OxstsStandaloneSetup()
-        .createInjectorAndDoEMFRegistration()
-        .createChildInjector(SpinBackendModule)
-    private val annotationHandler: BuiltinAnnotationHandler = injector.getInstance(BuiltinAnnotationHandler::class.java)
-    private val loader: SemantifyrLoader = injector.getInstance(SemantifyrLoader::class.java)
+@InjectWithOxsts
+class SpinModelTransformerTest {
+
+    @Inject
+    private lateinit var injector: Injector
+
+    @Inject
+    private lateinit var annotationHandler: BuiltinAnnotationHandler
+
+    @Inject
+    private lateinit var loader: SemantifyrLoader
+
+    private val childInjector by lazy {
+        injector.createChildInjector(SpinBackendModule())
+    }
+
 
     @Test
     suspend fun `model emits an init proctype with a main do-loop`() {
@@ -109,12 +121,13 @@ class SpinModelGeneratorTest {
             .startContext()
             .loadModel(Path(modelPath))
             .buildAndResolve()
-        return context.modelResources
-            .flatMap { it.contents }
-            .filterIsInstance<OxstsModelPackage>()
-            .flatMap { it.declarations }
-            .filterIsInstance<ClassDeclaration>()
-            .first { it.name == name }
+        return context.modelResources.asSequence().flatMap {
+            it.contents
+        }.filterIsInstance<OxstsModelPackage>().flatMap {
+            it.declarations
+        }.filterIsInstance<ClassDeclaration>().first {
+            it.name == name
+        }
     }
 
     private fun compileFirstVerificationCase(modelPath: String): SpinArtifacts {
@@ -122,20 +135,20 @@ class SpinModelGeneratorTest {
             .startContext()
             .loadModel(Path(modelPath))
             .buildAndResolve()
-        val firstCase = context.modelResources
-            .flatMap { it.contents }
-            .filterIsInstance<OxstsModelPackage>()
-            .flatMap { it.declarations }
-            .filterIsInstance<ClassDeclaration>()
-            .first { annotationHandler.isVerificationCase(it) }
+        val firstCase = context.modelResources.asSequence().flatMap {
+            it.contents
+        }.filterIsInstance<OxstsModelPackage>().flatMap {
+            it.declarations
+        }.filterIsInstance<ClassDeclaration>().first {
+            annotationHandler.isVerificationCase(it)
+        }
         return compile(firstCase)
     }
 
     private fun compile(classDeclaration: ClassDeclaration): SpinArtifacts {
         val artifactDir = Files.createTempDirectory("spin-test-")
-        SemantifyrCompiler(injector, ArtifactConfig.NONE, OptimizationConfig.NONE).use { compiler ->
-            val generator = injector.getInstance(SpinModelGenerator::class.java)
-            return generator.generate(compiler.compile(classDeclaration, artifactDir).inlinedOxsts)
-        }
+        val compiler = SemantifyrCompiler(childInjector, ArtifactConfig.NONE, OptimizationConfig.NONE)
+        val transformer = childInjector.getInstance(SpinModelTransformer::class.java)
+        return transformer.transform(compiler.compile(classDeclaration, artifactDir).inlinedOxsts)
     }
 }
