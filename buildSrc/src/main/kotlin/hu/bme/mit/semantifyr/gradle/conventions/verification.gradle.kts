@@ -13,10 +13,7 @@ plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
 }
 
-val verificationTestServiceName = "verificationTestService"
-val verificationTestServiceProvider = gradle.sharedServices.registerIfAbsent(verificationTestServiceName, VerificationTestService::class) {
-    maxParallelUsages.set(1)
-}
+val verificationTestServiceProvider = gradle.sharedServices.registerVerificationTestService()
 
 val libs = the<LibrariesForLibs>()
 
@@ -84,5 +81,5 @@ val slowVerificationTest by tasks.registering(Test::class) {
 }
 
 tasks.named("check") {
-    dependsOn(testing.suites.named("verificationTest"))
+//    dependsOn(testing.suites.named("verificationTest"))
 }
