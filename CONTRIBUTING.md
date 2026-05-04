@@ -22,4 +22,4 @@ This project follows a [Code of Conduct](CODE_OF_CONDUCT.md) adapted from the Co
 
 ## Maintainers
 
-Project leadership and contact information is listed in [`CONTRIBUTORS.md`](CONTRIBUTORS.md).
+Project leadership and contact information is listed in [CONTRIBUTORS.md](CONTRIBUTORS.md).
