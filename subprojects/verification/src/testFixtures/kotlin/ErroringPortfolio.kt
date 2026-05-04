@@ -6,11 +6,12 @@
 
 package hu.bme.mit.semantifyr.verification
 
-import hu.bme.mit.semantifyr.backend.AvailabilityReport
+import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
-import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.VerificationRequest
-import hu.bme.mit.semantifyr.verification.portfolio.BackendExecutor
+import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
+import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.verification.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -19,7 +20,6 @@ class ErroringPortfolio(
 ) : VerificationPortfolio() {
     override val displayName: String = id
     override val description: String = "test-only"
-    override val familyId: String = "test"
 
     val invocations = AtomicInteger(0)
 
@@ -28,8 +28,9 @@ class ErroringPortfolio(
     }
 
     override suspend fun verify(
-        request: VerificationRequest,
-        executor: BackendExecutor,
+        parentInjector: Injector,
+        request: BackendVerificationRequest,
+        gate: ConcurrencyGate,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
     ): BackendVerificationResult {

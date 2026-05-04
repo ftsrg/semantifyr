@@ -6,33 +6,38 @@
 
 package hu.bme.mit.semantifyr.verification.portfolio
 
-import hu.bme.mit.semantifyr.backend.AvailabilityReport
+import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
-import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.VerificationRequest
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
+import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.verification.FakeBackend
+import hu.bme.mit.semantifyr.verification.FakeConfig
 import hu.bme.mit.semantifyr.verification.ProgressContext
 import hu.bme.mit.semantifyr.verification.fakeRequest
-import hu.bme.mit.semantifyr.verification.noopExecutor
+import hu.bme.mit.semantifyr.verification.noopGate
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.mock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-private class TestPortfolio(override val id: String = "p") : VerificationPortfolio() {
-    override val displayName: String = id
-    override val description: String = "test portfolio"
-    override val familyId: String = "test"
+private class TestPortfolio(
+    override val id: String = "p",
+) : VerificationPortfolio() {
+    override val displayName = id
+    override val description = "test portfolio"
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
         return AvailabilityReport.Available
     }
 
     override suspend fun verify(
-        request: VerificationRequest,
-        executor: BackendExecutor,
+        parentInjector: Injector,
+        request: BackendVerificationRequest,
+        gate: ConcurrencyGate,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
     ): BackendVerificationResult {
@@ -40,31 +45,31 @@ private class TestPortfolio(override val id: String = "p") : VerificationPortfol
     }
 
     suspend fun runFirstDecisive(
-        executor: BackendExecutor,
+        gate: ConcurrencyGate,
         timeout: Duration = Duration.INFINITE,
         progress: ProgressContext = ProgressContext.NoOp,
         block: PortfolioScope.() -> Unit,
     ): PortfolioOutcome {
-        return firstDecisive(executor, timeout, progress, block)
+        return firstDecisive(gate, timeout, progress, block)
     }
 
     suspend fun runFirstNDecisive(
         count: Int,
-        executor: BackendExecutor,
+        gate: ConcurrencyGate,
         timeout: Duration = Duration.INFINITE,
         progress: ProgressContext = ProgressContext.NoOp,
         block: PortfolioScope.() -> Unit,
     ): PortfolioOutcome {
-        return firstNDecisive(count, executor, timeout, progress, block)
+        return firstNDecisive(count, gate, timeout, progress, block)
     }
 
     suspend fun runAll(
-        executor: BackendExecutor,
+        gate: ConcurrencyGate,
         timeout: Duration = Duration.INFINITE,
         progress: ProgressContext = ProgressContext.NoOp,
         block: PortfolioScope.() -> Unit,
     ): PortfolioOutcome {
-        return all(executor, timeout, progress, block)
+        return all(gate, timeout, progress, block)
     }
 }
 
@@ -80,11 +85,12 @@ class VerificationPortfolioTest {
     private val portfolio = TestPortfolio()
     private val env = ExecutionEnvironment.Empty
     private val request = fakeRequest()
+    private val parentInjector = mock<Injector>()
 
     private fun PortfolioScope.enqueue(backend: FakeBackend) {
         async {
-            executor.withPermit {
-                backend.verify(Unit, request, env)
+            gate.withPermit {
+                backend.verify(parentInjector, FakeConfig(), request, env)
             }
         }
     }
@@ -95,7 +101,7 @@ class VerificationPortfolioTest {
         val fastInconclusive = FakeBackend.delayed("fast-inconc", 10, VerificationVerdict.Inconclusive)
         val midDecisive = FakeBackend.delayed("mid", 50, VerificationVerdict.Failed)
 
-        val outcome = portfolio.runFirstDecisive(noopExecutor, timeout = 2.seconds) {
+        val outcome = portfolio.runFirstDecisive(noopGate, timeout = 2.seconds) {
             enqueue(slow)
             enqueue(fastInconclusive)
             enqueue(midDecisive)
@@ -112,7 +118,7 @@ class VerificationPortfolioTest {
         val b = FakeBackend.verdict("b", VerificationVerdict.Passed)
         val c = FakeBackend.verdict("c", VerificationVerdict.Passed)
 
-        val outcome = portfolio.runFirstNDecisive(count = 2, noopExecutor) {
+        val outcome = portfolio.runFirstNDecisive(count = 2, noopGate) {
             enqueue(a)
             enqueue(b)
             enqueue(c)
@@ -127,7 +133,7 @@ class VerificationPortfolioTest {
         val a = FakeBackend.verdict("a", VerificationVerdict.Passed)
         val b = FakeBackend.verdict("b", VerificationVerdict.Failed)
 
-        val outcome = portfolio.runFirstNDecisive(count = 2, noopExecutor) {
+        val outcome = portfolio.runFirstNDecisive(count = 2, noopGate) {
             enqueue(a)
             enqueue(b)
         }
@@ -141,7 +147,7 @@ class VerificationPortfolioTest {
         val b = FakeBackend.verdict("b", VerificationVerdict.Passed)
         val c = FakeBackend.verdict("c", VerificationVerdict.Errored)
 
-        val outcome = portfolio.runAll(noopExecutor) {
+        val outcome = portfolio.runAll(noopGate) {
             enqueue(a)
             enqueue(b)
             enqueue(c)
@@ -159,7 +165,7 @@ class VerificationPortfolioTest {
         val healthy = FakeBackend.delayed("healthy", 10, VerificationVerdict.Passed)
         val oomed = FakeBackend.throwing("oomed", OutOfMemoryError("fake heap blowup"))
 
-        val outcome = portfolio.runFirstDecisive(noopExecutor) {
+        val outcome = portfolio.runFirstDecisive(noopGate) {
             enqueue(oomed)
             enqueue(healthy)
         }
@@ -176,7 +182,7 @@ class VerificationPortfolioTest {
         val healthy = FakeBackend.verdict("healthy", VerificationVerdict.Failed)
         val overflowed = FakeBackend.throwing("overflowed", StackOverflowError("fake recursion"))
 
-        val outcome = portfolio.runFirstDecisive(noopExecutor) {
+        val outcome = portfolio.runFirstDecisive(noopGate) {
             enqueue(overflowed)
             enqueue(healthy)
         }
@@ -190,7 +196,7 @@ class VerificationPortfolioTest {
         val a = FakeBackend.throwing("a", OutOfMemoryError("a"))
         val b = FakeBackend.throwing("b", StackOverflowError("b"))
 
-        val outcome = portfolio.runFirstDecisive(noopExecutor) {
+        val outcome = portfolio.runFirstDecisive(noopGate) {
             enqueue(a)
             enqueue(b)
         }
@@ -201,7 +207,7 @@ class VerificationPortfolioTest {
     @Test
     suspend fun `empty combinator block is rejected`() {
         val exception = runCatching {
-            portfolio.runFirstDecisive(noopExecutor) {}
+            portfolio.runFirstDecisive(noopGate) {}
         }.exceptionOrNull()
         assertThat(exception).isNotNull.hasMessageContaining("at least one job")
     }
@@ -219,7 +225,7 @@ class VerificationPortfolioTest {
             }
         }
 
-        val outcome = portfolio.runFirstDecisive(noopExecutor, progress = progress) {
+        val outcome = portfolio.runFirstDecisive(noopGate, progress = progress) {
             enqueue(a)
             enqueue(b)
         }

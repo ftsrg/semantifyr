@@ -4,20 +4,15 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.verification.trace
+package hu.bme.mit.semantifyr.verification.witness
 
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verification.ProgressContext
 import hu.bme.mit.semantifyr.verification.SemantifyrVerifier
+import hu.bme.mit.semantifyr.verification.Trace
 import hu.bme.mit.semantifyr.verification.VerificationResult
-import hu.bme.mit.semantifyr.verification.VerificationTrace
-import hu.bme.mit.semantifyr.verification.fakeMetadata
-import hu.bme.mit.semantifyr.verification.witness.OxstsClassAssumptionWitness
-import hu.bme.mit.semantifyr.verification.witness.OxstsWitnessValidator
-import hu.bme.mit.semantifyr.verification.witness.SerializableTraceData
-import hu.bme.mit.semantifyr.verification.witness.SerializableTraceStep
-import hu.bme.mit.semantifyr.verification.witness.WitnessValidationResult
+import hu.bme.mit.semantifyr.verification.fakeVerificationResult
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.doReturn
@@ -26,32 +21,32 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.same
 import org.mockito.kotlin.verify
 
-class OxstsWitnessValidatorTest {
+class WitnessValidatorTest {
 
-    private fun fakeWitness(inlined: InlinedOxsts): VerificationTrace.OxstsWitness {
-        return VerificationTrace.OxstsWitness(
-            classWitness = mock<OxstsClassAssumptionWitness>(),
-            backAnnotatedWitness = inlined,
-            callTrace = SerializableTraceData(
-                initialStep = SerializableTraceStep(emptyList(), emptyList()),
+    private fun fakeTrace(inlined: InlinedOxsts): Trace {
+        return Trace(
+            backAnnotatedModel = inlined,
+            witnessState = WitnessState(
+                initialStep = WitnessStateStep(emptyList()),
+                steps = emptyList(),
+            ),
+            callTrace = CallTrace(
+                initialStep = CallTraceStep(emptyList()),
                 steps = emptyList(),
             ),
         )
     }
 
     @Test
-    suspend fun `validate re-runs verification on the witness inlined OXSTS`() {
+    suspend fun `validate re-runs verification on the back-annotated model`() {
         val inlined = mock<InlinedOxsts>()
-        val trace = fakeWitness(inlined)
-        val verification = VerificationResult(
-            verdict = VerificationVerdict.Passed,
-            metadata = fakeMetadata(),
-        )
+        val trace = fakeTrace(inlined)
+        val verification = fakeVerificationResult(verdict = VerificationVerdict.Passed)
         val verifier = mock<SemantifyrVerifier> {
             onBlocking { verify(inlined, ProgressContext.NoOp) } doReturn verification
         }
 
-        val result = OxstsWitnessValidator.validate(verifier, trace)
+        val result = WitnessValidator().validate(verifier, trace)
 
         verify(verifier).verify(same(inlined), eq(ProgressContext.NoOp))
         assertThat(result).isInstanceOf(WitnessValidationResult.Valid::class.java)
@@ -61,15 +56,12 @@ class OxstsWitnessValidatorTest {
     @Test
     suspend fun `validate propagates Failed verdict as Invalid`() {
         val inlined = mock<InlinedOxsts>()
-        val trace = fakeWitness(inlined)
+        val trace = fakeTrace(inlined)
         val verifier = mock<SemantifyrVerifier> {
-            onBlocking { verify(inlined, ProgressContext.NoOp) } doReturn VerificationResult(
-                verdict = VerificationVerdict.Failed,
-                metadata = fakeMetadata(),
-            )
+            onBlocking { verify(inlined, ProgressContext.NoOp) } doReturn fakeVerificationResult(verdict = VerificationVerdict.Failed)
         }
 
-        val result = OxstsWitnessValidator.validate(verifier, trace)
+        val result = WitnessValidator().validate(verifier, trace)
 
         assertThat(result).isInstanceOf(WitnessValidationResult.Invalid::class.java)
     }
@@ -77,17 +69,14 @@ class OxstsWitnessValidatorTest {
     @Test
     suspend fun `validate forwards a non-default progress context`() {
         val inlined = mock<InlinedOxsts>()
-        val trace = fakeWitness(inlined)
+        val trace = fakeTrace(inlined)
         val progress = ProgressContext.NoOp.child("ctx")
-        val verification = VerificationResult(
-            verdict = VerificationVerdict.Inconclusive,
-            metadata = fakeMetadata(),
-        )
+        val verification = fakeVerificationResult(verdict = VerificationVerdict.Inconclusive)
         val verifier = mock<SemantifyrVerifier> {
             onBlocking { verify(inlined, progress) } doReturn verification
         }
 
-        val result = OxstsWitnessValidator.validate(verifier, trace, progress)
+        val result = WitnessValidator().validate(verifier, trace, progress)
 
         verify(verifier).verify(same(inlined), same(progress))
         assertThat(result).isInstanceOf(WitnessValidationResult.Inconclusive::class.java)

@@ -16,27 +16,17 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":logging"))
-
     api(project(":backend"))
 
+    implementation(project(":logging"))
+    implementation(libs.guice.extensions.assistedinject)
     implementation(libs.kotlinx.coroutines.core)
-    testImplementation(libs.kotlinx.coroutines.core)
-    testImplementation(libs.kotlinx.coroutines.test)
     implementation(libs.kotlinx.serialization.json)
 
-    testFixturesApi(project(":oxsts.lang"))
-    testFixturesApi(testFixtures(project(":oxsts.lang")))
+    testImplementation(libs.kotlinx.coroutines.core)
+    testImplementation(libs.kotlinx.coroutines.test)
+
+    testFixturesApi(testFixtures(project(":backend")))
     testFixturesImplementation(libs.kotlinx.coroutines.core)
     testFixturesImplementation(project(":logging"))
-}
-
-testing {
-    suites {
-        val verificationTest by getting(JvmTestSuite::class) {
-            dependencies {
-                implementation(project(":portfolios"))
-            }
-        }
-    }
 }

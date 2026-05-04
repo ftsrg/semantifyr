@@ -4,24 +4,18 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.verification.trace
+package hu.bme.mit.semantifyr.verification.witness
 
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
-import hu.bme.mit.semantifyr.verification.VerificationResult
-import hu.bme.mit.semantifyr.verification.fakeMetadata
-import hu.bme.mit.semantifyr.verification.witness.WitnessValidationResult
+import hu.bme.mit.semantifyr.verification.fakeVerificationResult
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class TraceValidationResultTest {
 
-    private fun result(verdict: VerificationVerdict): VerificationResult {
-        return VerificationResult(verdict = verdict, metadata = fakeMetadata())
-    }
-
     @Test
     fun `Passed maps to Valid`() {
-        val mapped = WitnessValidationResult.from(result(VerificationVerdict.Passed))
+        val mapped = WitnessValidationResult.from(fakeVerificationResult(verdict = VerificationVerdict.Passed))
         assertThat(mapped).isInstanceOf(WitnessValidationResult.Valid::class.java)
         assertThat(mapped.isValid).isTrue
         assertThat(mapped.isInvalid).isFalse
@@ -29,7 +23,7 @@ class TraceValidationResultTest {
 
     @Test
     fun `Failed maps to Invalid`() {
-        val mapped = WitnessValidationResult.from(result(VerificationVerdict.Failed))
+        val mapped = WitnessValidationResult.from(fakeVerificationResult(verdict = VerificationVerdict.Failed))
         assertThat(mapped).isInstanceOf(WitnessValidationResult.Invalid::class.java)
         assertThat(mapped.isInvalid).isTrue
         assertThat(mapped.isValid).isFalse
@@ -37,7 +31,7 @@ class TraceValidationResultTest {
 
     @Test
     fun `Inconclusive maps to Inconclusive`() {
-        val mapped = WitnessValidationResult.from(result(VerificationVerdict.Inconclusive))
+        val mapped = WitnessValidationResult.from(fakeVerificationResult(verdict = VerificationVerdict.Inconclusive))
         assertThat(mapped).isInstanceOf(WitnessValidationResult.Inconclusive::class.java)
         assertThat(mapped.isValid).isFalse
         assertThat(mapped.isInvalid).isFalse
@@ -45,7 +39,7 @@ class TraceValidationResultTest {
 
     @Test
     fun `Errored maps to Errored`() {
-        val mapped = WitnessValidationResult.from(result(VerificationVerdict.Errored))
+        val mapped = WitnessValidationResult.from(fakeVerificationResult(verdict = VerificationVerdict.Errored))
         assertThat(mapped).isInstanceOf(WitnessValidationResult.Errored::class.java)
         assertThat(mapped.isValid).isFalse
         assertThat(mapped.isInvalid).isFalse
@@ -53,7 +47,7 @@ class TraceValidationResultTest {
 
     @Test
     fun `from preserves the underlying verification result`() {
-        val verification = result(VerificationVerdict.Passed)
+        val verification = fakeVerificationResult(verdict = VerificationVerdict.Passed)
         val mapped = WitnessValidationResult.from(verification)
         assertThat(mapped.verification).isSameAs(verification)
     }

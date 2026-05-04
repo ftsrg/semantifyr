@@ -8,18 +8,15 @@ package hu.bme.mit.semantifyr.verification
 
 import com.google.inject.Inject
 import com.google.inject.Injector
-import hu.bme.mit.semantifyr.backend.VerificationCase
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
-import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.xtext.EcoreUtil2
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.mock
 import java.nio.file.Files
 
 @InjectWithOxsts
@@ -159,7 +156,7 @@ class TrivialVerdictTest {
         val portfolio = ErroringPortfolio()
         runVerifier(classToVerify, source, portfolio)
         assertThat(portfolio.invocations.get())
-            .`as`("portfolio must be invoked when the trivial shortcircuit does not apply")
+            .`as`("portfolio must be invoked when the trivial short circuit does not apply")
             .isEqualTo(1)
     }
 
@@ -169,20 +166,20 @@ class TrivialVerdictTest {
         portfolio: ErroringPortfolio,
     ): VerificationResult {
         val parsed = parseHelper.parse(source)
-        val classDecl = EcoreUtil2
-            .eAllOfType(parsed.oxstsPackage, ClassDeclaration::class.java)
-            .single { it.name == classToVerify }
-        val case = VerificationCase(
-            classDeclaration = classDecl,
+        val classDeclaration = EcoreUtil2.eAllOfType(parsed.oxstsPackage, ClassDeclaration::class.java).single {
+            it.name == classToVerify
+        }
+        val verificationCase = VerificationCase(
+            classDeclaration = classDeclaration,
             qualifiedName = "trivial::tests::$classToVerify",
         )
-        return buildVerifier(portfolio).use { it.verify(case) }
+        val verifier = buildVerifier(portfolio)
+        return verifier.verify(verificationCase)
     }
 
     private fun buildVerifier(portfolio: ErroringPortfolio): SemantifyrVerifier {
         return SemantifyrVerifier.builder()
             .injector(injector)
-            .context(mock<SemantifyrModelContext>())
             .portfolio(portfolio)
             .artifacts(ArtifactConfig.NONE)
             .outputDirectory(Files.createTempDirectory("trivial-verdict-test-"))

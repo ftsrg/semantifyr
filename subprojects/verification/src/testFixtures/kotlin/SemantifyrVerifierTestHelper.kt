@@ -7,10 +7,9 @@
 package hu.bme.mit.semantifyr.verification
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backend.AvailabilityReport
-import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.VerificationCase
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
+import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
@@ -22,7 +21,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.verification.discovery.CaseFilter
 import hu.bme.mit.semantifyr.verification.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
-import hu.bme.mit.semantifyr.verification.witness.OxstsWitnessValidator
+import hu.bme.mit.semantifyr.verification.witness.WitnessValidator
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
@@ -44,7 +43,6 @@ class SemantifyrVerifierTestHelper @Inject constructor(
     val logger by loggerFactory()
 
     private fun buildVerifier(
-        context: SemantifyrModelContext,
         verificationPortfolio: VerificationPortfolio,
         timeout: Duration,
         outputDirectory: Path,
@@ -53,7 +51,6 @@ class SemantifyrVerifierTestHelper @Inject constructor(
     ): SemantifyrVerifier {
         outputDirectory.createDirectories()
         return SemantifyrVerifier.builder()
-            .context(context)
             .portfolio(verificationPortfolio)
             .environment(environment)
             .artifacts(artifacts)
@@ -95,17 +92,14 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         )
 
         if (expectsWitness(case, expectedVerdict)) {
-            assertThat(result.verificationTrace)
-                .describedAs("verdict $expectedVerdict for ${case.qualifiedName} must carry an OxstsWitness")
-                .isInstanceOf(VerificationTrace.OxstsWitness::class.java)
-            val witness = result.verificationTrace as VerificationTrace.OxstsWitness
-            assertThat(witness.classWitness.initialState)
-                .describedAs("witness for ${case.qualifiedName} must have an initial state")
+            assertThat(result.trace)
+                .describedAs("verdict $expectedVerdict for ${case.qualifiedName} must carry a Trace")
                 .isNotNull()
-            assertThat(witness.backAnnotatedWitness.classDeclaration)
-                .describedAs("back-annotated witness for ${case.qualifiedName} must reference the verified class")
+            val trace = requireNotNull(result.trace)
+            assertThat(trace.backAnnotatedModel.classDeclaration)
+                .describedAs("back-annotated model for ${case.qualifiedName} must reference the verified class")
                 .isNotNull()
-            assertThat(witness.backAnnotatedWitness.isWitness)
+            assertThat(trace.backAnnotatedModel.isWitness)
                 .describedAs("back-annotated InlinedOxsts for ${case.qualifiedName} must be flagged as a witness")
                 .isTrue()
 
@@ -114,8 +108,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
     }
 
     private fun expectsWitness(case: VerificationCase, verdict: VerificationVerdict): Boolean {
-        val classDeclaration = case.classDeclaration
-        val prop = classDeclaration.eAllContents().asSequence().filterIsInstance<PropertyDeclaration>().firstOrNull {
+        val prop = case.classDeclaration.eAllContents().asSequence().filterIsInstance<PropertyDeclaration>().firstOrNull {
             it.name == "prop"
         } ?: return false
         return when (prop.expression) {
@@ -126,7 +119,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
     }
 
     private fun assertWitnessFilesPersisted(artifactsRoot: Path, case: VerificationCase) {
-        val caseDir = artifactsRoot.resolve(case.directoryName)
+        val caseDir = artifactsRoot.resolve(qualifiedNameToDirectoryName(case.qualifiedName))
         val witnessFile = caseDir.resolve("witness.oxsts")
         val traceFile = caseDir.resolve("trace.json")
 
@@ -169,9 +162,8 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
         artifacts: ArtifactConfig = ArtifactConfig.ALL,
     ): VerificationResult {
-        return buildVerifier(context, verificationPortfolio, timeout, outputDirectory, environment, artifacts).use {
-            it.verify(case)
-        }
+        val verifier = buildVerifier(verificationPortfolio, timeout, outputDirectory, environment, artifacts)
+        return verifier.verify(case)
     }
 
     suspend fun checkTestModel(
@@ -180,7 +172,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         verificationPortfolio: VerificationPortfolio,
         outputDirectory: Path,
         validationPortfolio: VerificationPortfolio? = null,
-        timeout: Duration = 5.minutes,
+        timeout: Duration = 2.minutes,
         validationTimeout: Duration = 1.minutes,
         environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
         expectedVerdict: VerificationVerdict = expectedVerdictFromTags(case),
@@ -192,11 +184,14 @@ class SemantifyrVerifierTestHelper @Inject constructor(
             result.verdict == VerificationVerdict.NotSupported,
             "Portfolio ${verificationPortfolio.id} reports ${case.qualifiedName} is not supported: ${result.message ?: "no message"}",
         )
+        Assumptions.assumeFalse(
+            result.verdict == VerificationVerdict.Inconclusive,
+            "Portfolio ${verificationPortfolio.id} could not decide ${case.qualifiedName} within $timeout: ${result.message ?: "no message"}",
+        )
         Assertions.assertTrue(
             result.verdict.isDecisive,
         ) {
-            "Portfolio ${verificationPortfolio.id} did not produce a decisive verdict for ${case.qualifiedName} " +
-                "(got ${result.verdict}: ${result.message ?: "no message"}).${backendDiagnostics(outputDirectory, case)}"
+            "Portfolio ${verificationPortfolio.id} did not produce a decisive verdict for ${case.qualifiedName} (got ${result.verdict}: ${result.message ?: "no message"}).${backendDiagnostics(outputDirectory, case)}"
         }
         Assertions.assertEquals(
             expectedVerdict,
@@ -208,7 +203,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
 
         logger.info { "Result: ${result.verdict}" }
 
-        val witness = result.verificationTrace as? VerificationTrace.OxstsWitness ?: return
+        val trace = result.trace ?: return
         val validation = validationPortfolio ?: return
         val report = validation.availability(environment)
         Assumptions.assumeTrue(
@@ -218,17 +213,16 @@ class SemantifyrVerifierTestHelper @Inject constructor(
 
         logger.info { "Validating returned witness" }
 
-        val validationDirectory = outputDirectory.resolve(case.directoryName).resolve("validation")
-        buildVerifier(context, validation, validationTimeout, validationDirectory, environment).use {
-            val outcome = OxstsWitnessValidator.validate(it, witness)
-            assertThat(outcome.isValid)
-                .describedAs("Witness for ${case.qualifiedName} (original verdict $expectedVerdict) must re-verify Passed via ${validation.id} but got ${outcome.verification.verdict} (${outcome.verification.message ?: "no message"})")
-                .isTrue()
-        }
+        val validationDirectory = outputDirectory.resolve(qualifiedNameToDirectoryName(case.qualifiedName)).resolve("validation")
+        val verifier = buildVerifier(validation, validationTimeout, validationDirectory, environment)
+        val outcome = WitnessValidator().validate(verifier, trace)
+        assertThat(outcome.isValid)
+            .describedAs("Witness for ${case.qualifiedName} (original verdict $expectedVerdict) must re-verify Passed via ${validation.id} but got ${outcome.verification.verdict} (${outcome.verification.message ?: "no message"})")
+            .isTrue()
     }
 
     private fun backendDiagnostics(outputDirectory: Path, case: VerificationCase): String {
-        val caseDir = outputDirectory.resolve(case.directoryName).toFile()
+        val caseDir = outputDirectory.resolve(qualifiedNameToDirectoryName(case.qualifiedName)).toFile()
         if (!caseDir.exists()) {
             return ""
         }

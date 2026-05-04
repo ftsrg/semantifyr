@@ -19,21 +19,9 @@ class SemantifyrVerifierBuilderTest {
     private val dummyOutputDirectory = Paths.get(System.getProperty("java.io.tmpdir"))
 
     @Test
-    fun `verifier builder requires a context`() {
-        assertThatThrownBy {
-            SemantifyrVerifier.builder()
-                .portfolio(portfolio)
-                .artifacts(dummyArtifacts)
-                .outputDirectory(dummyOutputDirectory)
-                .build()
-        }.hasMessageContaining(".context(...)")
-    }
-
-    @Test
     fun `verifier builder requires a portfolio`() {
         assertThatThrownBy {
             SemantifyrVerifier.builder()
-                .context(mock())
                 .artifacts(dummyArtifacts)
                 .outputDirectory(dummyOutputDirectory)
                 .build()
@@ -44,7 +32,6 @@ class SemantifyrVerifierBuilderTest {
     fun `verifier builder requires artifacts`() {
         assertThatThrownBy {
             SemantifyrVerifier.builder()
-                .context(mock())
                 .portfolio(portfolio)
                 .outputDirectory(dummyOutputDirectory)
                 .build()
@@ -55,7 +42,6 @@ class SemantifyrVerifierBuilderTest {
     fun `verifier builder requires an outputDirectory`() {
         assertThatThrownBy {
             SemantifyrVerifier.builder()
-                .context(mock())
                 .portfolio(portfolio)
                 .artifacts(dummyArtifacts)
                 .build()

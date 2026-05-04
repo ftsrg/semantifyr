@@ -6,18 +6,19 @@
 
 package hu.bme.mit.semantifyr.verification
 
-import hu.bme.mit.semantifyr.backend.AvailabilityReport
+import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.BackendConfig
+import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
-import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.VerificationBackend
-import hu.bme.mit.semantifyr.backend.VerificationCase
-import hu.bme.mit.semantifyr.backend.VerificationRequest
-import hu.bme.mit.semantifyr.backend.VerificationRunMetadata
+import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
-import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
+import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
+import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.verification.portfolio.BackendExecutor
+import hu.bme.mit.semantifyr.verification.portfolio.ConcurrencyGate
 import kotlinx.coroutines.delay
 import org.mockito.kotlin.mock
 import java.nio.file.Paths
@@ -33,39 +34,65 @@ fun fakeCase(qualifiedName: String = "pkg.Foo", vararg tags: String): Verificati
     )
 }
 
-val noopExecutor: BackendExecutor = object : BackendExecutor {
+val noopGate: ConcurrencyGate = object : ConcurrencyGate {
     override suspend fun <T> withPermit(block: suspend () -> T): T {
         return block()
     }
 }
 
-fun fakeRequest(case: VerificationCase = fakeCase()): VerificationRequest {
-    return VerificationRequest(
-        case = case,
-        input = mock<InlinedOxsts>(),
-        compilation = mock<FlattenedCompilationContext>(),
+fun fakeRequest(): BackendVerificationRequest {
+    return BackendVerificationRequest(
+        inlinedOxsts = mock<InlinedOxsts>(),
         artifactOutputPath = Paths.get(System.getProperty("java.io.tmpdir")),
     )
 }
 
-fun fakeMetadata(backendId: String = "test", caseQualifiedName: String = "pkg.Foo"): VerificationRunMetadata {
-    return VerificationRunMetadata(
+fun fakeMetadata(backendId: String? = "test"): VerificationMetadata {
+    return VerificationMetadata(
         backendId = backendId,
         startedAt = Clock.System.now(),
-        caseQualifiedName = caseQualifiedName,
     )
 }
+
+fun fakeVerificationResult(
+    verdict: VerificationVerdict = VerificationVerdict.Passed,
+    backendId: String? = "test",
+    metrics: VerificationMetrics = VerificationMetrics(),
+    trace: Trace? = null,
+    message: String? = null,
+): VerificationResult {
+    return VerificationResult(
+        metadata = fakeMetadata(backendId),
+        verdict = verdict,
+        metrics = metrics,
+        trace = trace,
+        message = message,
+    )
+}
+
+class AlwaysAvailableExecutor : BackendExecutor {
+    override fun isAvailable(): Boolean = true
+}
+
+val FakeExecutorKey = ExecutorKey<AlwaysAvailableExecutor>(name = "fake") {
+    AlwaysAvailableExecutor()
+}
+
+data class FakeConfig(override val id: String = "fake") : BackendConfig
 
 class FakeBackend(
     override val id: String,
     private val behavior: suspend () -> BackendVerificationResult,
-) : VerificationBackend<Unit>() {
+) : VerificationBackend<FakeConfig>() {
+    override val executorKey = FakeExecutorKey
+
     val invocations = AtomicInteger(0)
     val cancellations = AtomicInteger(0)
 
     override suspend fun verify(
-        config: Unit,
-        request: VerificationRequest,
+        parentInjector: Injector,
+        config: FakeConfig,
+        request: BackendVerificationRequest,
         environment: ExecutionEnvironment,
     ): BackendVerificationResult {
         invocations.incrementAndGet()
@@ -75,10 +102,6 @@ class FakeBackend(
             cancellations.incrementAndGet()
             throw c
         }
-    }
-
-    override fun probeAvailability(config: Unit, environment: ExecutionEnvironment): AvailabilityReport {
-        return AvailabilityReport.Available
     }
 
     companion object {

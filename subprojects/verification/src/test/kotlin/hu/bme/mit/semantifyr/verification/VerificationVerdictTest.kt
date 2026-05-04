@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.verification
 
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
-import hu.bme.mit.semantifyr.verification.VerificationResult
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -27,10 +26,9 @@ class VerificationVerdictTest {
 
     @Test
     fun `VerificationResult helpers reflect verdict`() {
-        val metadata = fakeMetadata(caseQualifiedName = "x")
-        val passed = VerificationResult(VerificationVerdict.Passed, metadata)
-        val failed = VerificationResult(VerificationVerdict.Failed, metadata)
-        val errored = VerificationResult(VerificationVerdict.Errored, metadata)
+        val passed = fakeVerificationResult(verdict = VerificationVerdict.Passed)
+        val failed = fakeVerificationResult(verdict = VerificationVerdict.Failed)
+        val errored = fakeVerificationResult(verdict = VerificationVerdict.Errored)
 
         assertThat(passed.isPassed).isTrue
         assertThat(passed.isFailed).isFalse
