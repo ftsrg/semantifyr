@@ -8,7 +8,7 @@ package hu.bme.mit.semantifyr.cli.commands
 
 import com.github.ajalt.clikt.command.SuspendingCliktCommand
 import com.github.ajalt.clikt.core.Context
-import hu.bme.mit.semantifyr.backend.AvailabilityReport
+import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.portfolios.Portfolios
@@ -32,10 +32,9 @@ class PortfoliosCommand : SuspendingCliktCommand("portfolios") {
             val availability = portfolio.availability()
             val tag = when (availability) {
                 AvailabilityReport.Available -> "Available"
-                is AvailabilityReport.Degraded -> "Degraded (${availability.message})"
                 is AvailabilityReport.Unavailable -> "Unavailable (${availability.reason})"
             }
-            echo("${portfolio.id}  -  ${portfolio.displayName}  [${portfolio.familyId}]  $tag")
+            echo("${portfolio.id}  -  ${portfolio.displayName}  $tag")
             echo("    ${portfolio.description}")
             if (availability is AvailabilityReport.Unavailable && availability.hints.isNotEmpty()) {
                 availability.hints.forEach { echo("    hint: $it") }

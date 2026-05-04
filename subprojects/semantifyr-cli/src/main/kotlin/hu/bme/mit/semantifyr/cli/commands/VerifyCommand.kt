@@ -10,10 +10,9 @@ import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
 import com.google.inject.Inject
 import com.google.inject.Injector
-import hu.bme.mit.semantifyr.backend.AvailabilityReport
-import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.VerificationCase
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
+import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.cli.commands.options.ArtifactOptionGroup
 import hu.bme.mit.semantifyr.cli.commands.options.BackendOptionGroup
 import hu.bme.mit.semantifyr.cli.commands.options.CompilationOptionGroup
@@ -25,6 +24,7 @@ import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.verification.SemantifyrVerifier
+import hu.bme.mit.semantifyr.verification.VerificationCase
 import hu.bme.mit.semantifyr.verification.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
 import kotlin.system.exitProcess
@@ -63,7 +63,7 @@ class VerifyCommand @Inject constructor(
         val artifacts = artifactOptions.resolved
         val outputDirectory = artifactOptions.resolvedOutputDirectory
 
-        verifyCases(semantifyrModelContext, portfolio, environment, artifacts, outputDirectory, cases)
+        verifyCases(portfolio, environment, artifacts, outputDirectory, cases)
     }
 
     private fun ensurePortfolio(
@@ -85,17 +85,15 @@ class VerifyCommand @Inject constructor(
     }
 
     private suspend fun verifyCases(
-        semantifyrModelContext: SemantifyrModelContext,
         portfolio: VerificationPortfolio,
         environment: ExecutionEnvironment,
         artifacts: ArtifactConfig,
         outputDirectory: java.nio.file.Path,
         cases: List<VerificationCase>,
     ) {
-        SemantifyrVerifier
+        val verifier = SemantifyrVerifier
             .builder()
             .injector(injector)
-            .context(semantifyrModelContext)
             .portfolio(portfolio)
             .environment(environment)
             .timeout(backendOptions.timeout)
@@ -103,15 +101,14 @@ class VerifyCommand @Inject constructor(
             .outputDirectory(outputDirectory)
             .optimization(compilationOptions.resolved)
             .build()
-            .use { verifier ->
-                var anyNonPass = false
-                for (case in cases) {
-                    anyNonPass = verifyCase(verifier, case) || anyNonPass
-                }
-                if (anyNonPass) {
-                    exitProcess(1)
-                }
-            }
+
+        var anyNonPass = false
+        for (case in cases) {
+            anyNonPass = verifyCase(verifier, case) || anyNonPass
+        }
+        if (anyNonPass) {
+            exitProcess(1)
+        }
     }
 
     private suspend fun verifyCase(

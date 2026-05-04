@@ -14,22 +14,18 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.long
 import com.github.ajalt.clikt.parameters.types.path
-import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.VerificationCase
-import hu.bme.mit.semantifyr.backends.nuxmv.NuxmvExecutorSpec
-import hu.bme.mit.semantifyr.backends.nuxmv.verification.nuxmv
-import hu.bme.mit.semantifyr.backends.spin.SpinExecutorSpec
-import hu.bme.mit.semantifyr.backends.spin.verification.spin
-import hu.bme.mit.semantifyr.backends.theta.ThetaExecutorSpec
-import hu.bme.mit.semantifyr.backends.theta.theta
-import hu.bme.mit.semantifyr.backends.uppaal.UppaalExecutorSpec
-import hu.bme.mit.semantifyr.backends.uppaal.verification.uppaal
+import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backends.theta.THETA_DEFAULT_IMAGE
+import hu.bme.mit.semantifyr.backends.theta.ThetaExecutorKey
+import hu.bme.mit.semantifyr.backends.theta.ThetaXstsExecutor
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactKind
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationCategory
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.portfolios.Portfolios
+import hu.bme.mit.semantifyr.verification.VerificationCase
+import hu.bme.mit.semantifyr.verification.discovery.CaseFilter
 import hu.bme.mit.semantifyr.verification.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
 import java.nio.file.Files
@@ -61,8 +57,7 @@ class VerificationCaseSpecificationOptionGroup(
         }
         return verificationCaseDiscoverer.discover(
             context,
-            including = includeTags.toSet(),
-            excluding = excludeTags.toSet(),
+            CaseFilter.Tags(including = includeTags.toSet(), excluding = excludeTags.toSet()),
         )
     }
 }
@@ -121,9 +116,9 @@ class BackendOptionGroup : OptionGroup("Backend options") {
         .help("Which Theta executor to use. Default: 'auto'. Options: auto, shell, docker")
 
     val thetaDockerImage by option("--theta-docker-image")
-        .default(ThetaExecutorSpec.Docker.DEFAULT_IMAGE)
+        .default(THETA_DEFAULT_IMAGE)
         .help(
-            "Theta docker image reference (repository:tag or @digest), used when --theta-executor=docker. Default: '${ThetaExecutorSpec.Docker.DEFAULT_IMAGE}'.",
+            "Theta docker image reference (repository:tag or @digest), used when --theta-executor=docker. Default: '$THETA_DEFAULT_IMAGE'.",
         )
 
     val timeoutSeconds by option("-t", "--timeout-seconds")
@@ -140,18 +135,13 @@ class BackendOptionGroup : OptionGroup("Backend options") {
     }
 
     val resolved by lazy {
-        val thetaSpec = when (thetaExecutor) {
-            ThetaExecutor.Auto -> ThetaExecutorSpec.Auto
-            ThetaExecutor.Shell -> ThetaExecutorSpec.Shell
-            ThetaExecutor.Docker -> ThetaExecutorSpec.Docker(image = thetaDockerImage)
+        val builder = ExecutionEnvironment.builder()
+        when (thetaExecutor) {
+            ThetaExecutor.Auto -> builder.put(ThetaExecutorKey) { ThetaXstsExecutor.autoDetect(thetaDockerImage) }
+            ThetaExecutor.Shell -> builder.put(ThetaExecutorKey) { ThetaXstsExecutor.shell() }
+            ThetaExecutor.Docker -> builder.put(ThetaExecutorKey) { ThetaXstsExecutor.docker(thetaDockerImage) }
         }
-        ExecutionEnvironment
-            .builder()
-            .theta(thetaSpec)
-            .uppaal(UppaalExecutorSpec.Auto)
-            .nuxmv(NuxmvExecutorSpec.Auto)
-            .spin(SpinExecutorSpec.Auto)
-            .build()
+        builder.build()
     }
 }
 

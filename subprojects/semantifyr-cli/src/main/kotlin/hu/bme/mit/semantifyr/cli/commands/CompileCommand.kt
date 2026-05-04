@@ -13,7 +13,6 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path
 import com.google.inject.Inject
 import com.google.inject.Injector
-import hu.bme.mit.semantifyr.backend.VerificationCase
 import hu.bme.mit.semantifyr.cli.commands.options.ArtifactOptionGroup
 import hu.bme.mit.semantifyr.cli.commands.options.CompilationOptionGroup
 import hu.bme.mit.semantifyr.cli.commands.options.VerificationCaseSpecificationOptionGroup
@@ -22,7 +21,9 @@ import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.verification.VerificationCase
 import hu.bme.mit.semantifyr.verification.discovery.VerificationCaseDiscoverer
+import hu.bme.mit.semantifyr.verification.qualifiedNameToDirectoryName
 import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
 import java.nio.file.Files
@@ -95,8 +96,7 @@ class CompileCommand @Inject constructor(
     ) {
         runCompiler { compiler ->
             echo("Compiling ${case.qualifiedName} to $target")
-            val caseDirectory = artifactOptions.resolvedOutputDirectory
-                .resolve(case.qualifiedName.replace("::", "."))
+            val caseDirectory = artifactOptions.resolvedOutputDirectory.resolve(qualifiedNameToDirectoryName(case.qualifiedName))
             val compiled = compiler.compile(case.classDeclaration, caseDirectory)
             writeInlinedOxsts(compiled.inlinedOxsts, target)
         }
@@ -110,8 +110,7 @@ class CompileCommand @Inject constructor(
             for (case in cases) {
                 val target = directory.resolve("${case.qualifiedName}.oxsts")
                 echo("Compiling ${case.qualifiedName} to $target")
-                val caseDirectory = artifactOptions.resolvedOutputDirectory
-                    .resolve(case.directoryName)
+                val caseDirectory = artifactOptions.resolvedOutputDirectory.resolve(qualifiedNameToDirectoryName(case.qualifiedName))
                 val compiled = compiler.compile(case.classDeclaration, caseDirectory)
                 writeInlinedOxsts(compiled.inlinedOxsts, target)
             }
@@ -119,9 +118,8 @@ class CompileCommand @Inject constructor(
     }
 
     private inline fun runCompiler(block: (SemantifyrCompiler) -> Unit) {
-        SemantifyrCompiler(injector, artifactOptions.resolved, compilationOptions.resolved).use {
-            block(it)
-        }
+        val compiler = SemantifyrCompiler(injector, artifactOptions.resolved, compilationOptions.resolved)
+        block(compiler)
     }
 
     private fun writeInlinedOxsts(
