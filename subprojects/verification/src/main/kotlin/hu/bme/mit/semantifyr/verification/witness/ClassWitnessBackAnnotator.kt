@@ -30,17 +30,17 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionKind
 
-class AssumptionWitnessBackAnnotator @Inject constructor(
+class ClassWitnessBackAnnotator @Inject constructor(
     private val builtinSymbolResolver: BuiltinSymbolResolver,
     private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
 ) {
     private inner class WitnessContext(
-        val witness: OxstsClassAssumptionWitness,
+        val classWitness: ClassWitness,
         val verdict: VerificationVerdict,
     ) {
-        val stepValues = mutableMapOf<OxstsClassAssumptionWitnessState, Int>()
+        val stepValues = mutableMapOf<ClassWitnessState, Int>()
         private var lastStepValue = -1
-        private val OxstsClassAssumptionWitnessState.stepValue
+        private val ClassWitnessState.stepValue
             get() = stepValues.getOrPut(this) {
                 lastStepValue++
             }
@@ -49,7 +49,7 @@ class AssumptionWitnessBackAnnotator @Inject constructor(
             OxstsFactory.createFeatureDeclaration().also {
                 it.kind = FeatureKind.CONTAINMENT
                 it.typeSpecification = OxstsFactory.createTypeSpecification().also {
-                    it.domain = witness.inlinedOxsts.classDeclaration
+                    it.domain = classWitness.inlinedOxsts.classDeclaration
                 }
                 it.name = "root"
             }
@@ -60,7 +60,7 @@ class AssumptionWitnessBackAnnotator @Inject constructor(
                 it.name = "step"
                 it.annotation = OxstsFactory.createAnnotationContainer()
                 it.typeSpecification = OxstsFactory.createTypeSpecification().also {
-                    it.domain = builtinSymbolResolver.intDatatype(witness.inlinedOxsts.classDeclaration)
+                    it.domain = builtinSymbolResolver.intDatatype(classWitness.inlinedOxsts.classDeclaration)
                 }
                 it.expression = OxstsFactory.createLiteralInteger(-1)
             }
@@ -73,7 +73,7 @@ class AssumptionWitnessBackAnnotator @Inject constructor(
         fun createInlinedOxsts(): InlinedOxsts {
             val inlinedOxsts = OxstsFactory.createInlinedOxsts()
             inlinedOxsts.rootFeature = rootFeature
-            inlinedOxsts.classDeclaration = witness.inlinedOxsts.classDeclaration
+            inlinedOxsts.classDeclaration = classWitness.inlinedOxsts.classDeclaration
             inlinedOxsts.isWitness = true
             inlinedOxsts.variables += stateVariable
             inlinedOxsts.initTransition = createInitTransitionDeclaration()
@@ -83,21 +83,21 @@ class AssumptionWitnessBackAnnotator @Inject constructor(
         }
 
         private fun createInitTransitionDeclaration(): TransitionDeclaration {
-            val initTransition = builtinSymbolResolver.anythingInitTransition(witness.inlinedOxsts.classDeclaration)
+            val initTransition = builtinSymbolResolver.anythingInitTransition(classWitness.inlinedOxsts.classDeclaration)
             val transition = redefinitionAwareReferenceResolver.resolve(rootFeature, initTransition) as TransitionDeclaration
 
             return OxstsFactory.createTransitionDeclaration().also {
                 it.kind = TransitionKind.INIT
                 it.branches += OxstsFactory.createSequenceOperation().also {
-                    it.steps += createInitialStateOperation(witness.initialState).steps
-                    if (witness.initializedState != null) {
-                        it.steps += createStateOperation(witness.initializedState, transition).steps
+                    it.steps += createInitialStateOperation(classWitness.initialState).steps
+                    if (classWitness.initializedState != null) {
+                        it.steps += createStateOperation(classWitness.initializedState, transition).steps
                     }
                 }
             }
         }
 
-        private fun createInitialStateOperation(state: OxstsClassAssumptionWitnessState): SequenceOperation {
+        private fun createInitialStateOperation(state: ClassWitnessState): SequenceOperation {
             return OxstsFactory.createSequenceOperation().also {
                 it.steps += createStateVariableAssumption(state.stepValue)
                 it.steps += state.toAssumptionOperations()
@@ -106,17 +106,17 @@ class AssumptionWitnessBackAnnotator @Inject constructor(
         }
 
         private fun createMainTransitionDeclaration(): TransitionDeclaration {
-            val mainTransition = builtinSymbolResolver.anythingMainTransition(witness.inlinedOxsts.classDeclaration)
+            val mainTransition = builtinSymbolResolver.anythingMainTransition(classWitness.inlinedOxsts.classDeclaration)
             val transition = redefinitionAwareReferenceResolver.resolve(rootFeature, mainTransition) as TransitionDeclaration
 
             return OxstsFactory.createTransitionDeclaration().also {
                 it.kind = TransitionKind.TRAN
 
-                if (witness.transitionStates.isEmpty()) {
+                if (classWitness.transitionStates.isEmpty()) {
                     it.branches += OxstsFactory.createSequenceOperation()
                 }
 
-                for (state in witness.transitionStates) {
+                for (state in classWitness.transitionStates) {
                     it.branches += createStateOperation(state, transition)
                 }
             }
@@ -142,7 +142,7 @@ class AssumptionWitnessBackAnnotator @Inject constructor(
         }
 
         private fun createStateOperation(
-            state: OxstsClassAssumptionWitnessState,
+            state: ClassWitnessState,
             transition: TransitionDeclaration,
         ): SequenceOperation {
             val realTransitionDeclaration = redefinitionAwareReferenceResolver.resolve(rootFeature, transition) as TransitionDeclaration
@@ -154,7 +154,7 @@ class AssumptionWitnessBackAnnotator @Inject constructor(
 
                 it.steps += state.toAssumptionOperations()
 
-                if (witness.getNextStates(state).size > 1) {
+                if (classWitness.getNextStates(state).size > 1) {
                     it.steps += createNextStateTransitionOperation(state)
                 } else {
                     it.steps += createStateVariableAssignment(state.stepValue + 1)
@@ -162,8 +162,8 @@ class AssumptionWitnessBackAnnotator @Inject constructor(
             }
         }
 
-        private fun createNextStateTransitionOperation(state: OxstsClassAssumptionWitnessState): Operation {
-            val nextStates = witness.getNextStates(state)
+        private fun createNextStateTransitionOperation(state: ClassWitnessState): Operation {
+            val nextStates = classWitness.getNextStates(state)
 
             if (nextStates.size == 1) {
                 return createStateVariableAssignment(nextStates.single().stepValue)
@@ -208,7 +208,7 @@ class AssumptionWitnessBackAnnotator @Inject constructor(
             }
         }
 
-        private fun OxstsClassAssumptionWitnessStateValue.toAssumption(): AssumptionOperation {
+        private fun ClassWitnessStateValue.toAssumption(): AssumptionOperation {
             return OxstsFactory.createAssumptionOperation().also {
                 it.expression = OxstsFactory.createComparisonOperator().also {
                     it.op = ComparisonOp.EQ
@@ -240,7 +240,7 @@ class AssumptionWitnessBackAnnotator @Inject constructor(
             }
         }
 
-        private fun OxstsClassAssumptionWitnessState.toAssumptionOperations(): List<AssumptionOperation> {
+        private fun ClassWitnessState.toAssumptionOperations(): List<AssumptionOperation> {
             return values.map {
                 it.toAssumption()
             }
@@ -249,10 +249,10 @@ class AssumptionWitnessBackAnnotator @Inject constructor(
     }
 
     fun createWitnessInlinedOxsts(
-        witness: OxstsClassAssumptionWitness,
+        classWitness: ClassWitness,
         verdict: VerificationVerdict,
     ): InlinedOxsts {
-        val context = WitnessContext(witness, verdict)
+        val context = WitnessContext(classWitness, verdict)
         return context.createInlinedOxsts()
     }
 

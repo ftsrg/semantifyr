@@ -15,45 +15,45 @@ import hu.bme.mit.semantifyr.oxsts.lang.serializer.ExpressionSerializer
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class SerializableTraceArgument(
+data class TraceArgument(
     val parameter: String,
     val value: String,
 )
 
 @Serializable
-data class SerializableTrace(
+data class TraceEntry(
     val self: String,
     val calledTransition: String,
-    val arguments: List<SerializableTraceArgument>,
-    val innerTraces: List<SerializableTrace>?,
+    val arguments: List<TraceArgument>,
+    val innerTraces: List<TraceEntry>?,
 )
 
 @Serializable
-data class SerializableCallTraceStep(
-    val traces: List<SerializableTrace>,
+data class CallTraceStep(
+    val traces: List<TraceEntry>,
 )
 
 @Serializable
-data class SerializableCallTraceData(
-    val initialStep: SerializableCallTraceStep,
-    val steps: List<SerializableCallTraceStep>,
+data class CallTrace(
+    val initialStep: CallTraceStep,
+    val steps: List<CallTraceStep>,
 )
 
 @Serializable
-data class SerializableWitnessStateValue(
+data class WitnessStateValue(
     val variable: String,
     val value: String,
 )
 
 @Serializable
-data class SerializableWitnessStateStep(
-    val values: List<SerializableWitnessStateValue>,
+data class WitnessStateStep(
+    val values: List<WitnessStateValue>,
 )
 
 @Serializable
-data class SerializableWitnessStateData(
-    val initialStep: SerializableWitnessStateStep,
-    val steps: List<SerializableWitnessStateStep>,
+data class WitnessState(
+    val initialStep: WitnessStateStep,
+    val steps: List<WitnessStateStep>,
 )
 
 class CallTraceTransformer @Inject constructor(
@@ -63,59 +63,59 @@ class CallTraceTransformer @Inject constructor(
 ) {
 
     fun transformCallTrace(
-        witness: OxstsClassAssumptionWitness,
+        classWitness: ClassWitness,
         traces: TransitionCallTraceMap,
-    ): SerializableCallTraceData {
-        return SerializableCallTraceData(
-            transformCallTraceStep(witness.initialState, traces),
-            witness.transitionStates.map {
+    ): CallTrace {
+        return CallTrace(
+            transformCallTraceStep(classWitness.initialState, traces),
+            classWitness.transitionStates.map {
                 transformCallTraceStep(it, traces)
             },
         )
     }
 
-    fun transformWitnessState(witness: OxstsClassAssumptionWitness): SerializableWitnessStateData {
-        return SerializableWitnessStateData(
-            transformWitnessStateStep(witness.initialState),
-            witness.transitionStates.map {
+    fun transformWitnessState(classWitness: ClassWitness): WitnessState {
+        return WitnessState(
+            transformWitnessStateStep(classWitness.initialState),
+            classWitness.transitionStates.map {
                 transformWitnessStateStep(it)
             },
         )
     }
 
     private fun transformCallTraceStep(
-        state: OxstsClassAssumptionWitnessState,
+        state: ClassWitnessState,
         traces: TransitionCallTraceMap,
-    ): SerializableCallTraceStep {
+    ): CallTraceStep {
         val activatedTraces = state.activatedTraces.map {
-            traces.getTransitionCallTrace(it.tracerVariable)
+            traces.getTransitionCallTrace(it.variable)
         }
-        return SerializableCallTraceStep(buildForest(activatedTraces))
+        return CallTraceStep(buildForest(activatedTraces))
     }
 
-    private fun transformWitnessStateStep(state: OxstsClassAssumptionWitnessState): SerializableWitnessStateStep {
-        return SerializableWitnessStateStep(
+    private fun transformWitnessStateStep(state: ClassWitnessState): WitnessStateStep {
+        return WitnessStateStep(
             state.values.map {
                 transformStateValue(it)
             },
         )
     }
 
-    private fun buildForest(activatedTraces: List<TransitionCallTrace>): List<SerializableTrace> {
+    private fun buildForest(activatedTraces: List<TransitionCallTrace>): List<TraceEntry> {
         val activatedSet = activatedTraces.toSet()
         val childrenByParent = activatedTraces.groupBy {
             it.parent.takeIf { parent -> parent in activatedSet }
         }
 
-        fun build(trace: TransitionCallTrace): SerializableTrace {
+        fun build(trace: TransitionCallTrace): TraceEntry {
             val children = childrenByParent[trace].orEmpty().map {
                 build(it)
             }
-            return SerializableTrace(
+            return TraceEntry(
                 self = expressionEvaluationSerializer.serialize(trace.self),
                 calledTransition = oxstsQualifiedNameProvider.getFullyQualifiedNameString(trace.transitionDeclaration),
                 arguments = trace.arguments.map {
-                    SerializableTraceArgument(
+                    TraceArgument(
                         it.parameterDeclaration.name,
                         expressionEvaluationSerializer.serialize(it.evaluation),
                     )
@@ -129,8 +129,8 @@ class CallTraceTransformer @Inject constructor(
         }
     }
 
-    private fun transformStateValue(value: OxstsClassAssumptionWitnessStateValue): SerializableWitnessStateValue {
-        return SerializableWitnessStateValue(
+    private fun transformStateValue(value: ClassWitnessStateValue): WitnessStateValue {
+        return WitnessStateValue(
             expressionSerializer.serialize(value.variableReference),
             expressionSerializer.serialize(value.value),
         )

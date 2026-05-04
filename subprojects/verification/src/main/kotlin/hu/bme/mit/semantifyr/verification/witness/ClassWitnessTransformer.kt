@@ -7,12 +7,12 @@
 package hu.bme.mit.semantifyr.verification.witness
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionActivatedTrace
-import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitness
-import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitnessState
-import hu.bme.mit.semantifyr.backend.witness.InlinedOxstsAssumptionWitnessStateValue
+import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.backend.witness.WitnessState
+import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceReferenceProvider
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
@@ -20,28 +20,34 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
-class OxstsClassAssumptionWitnessTransformer @Inject constructor(
+class ClassWitnessTransformer @Inject constructor(
     private val instanceReferenceProvider: InstanceReferenceProvider,
 ) {
 
     private inner class TransformerContext(
         private val compilation: FlattenedCompilationContext,
     ) {
-        val mappings = mutableMapOf<InlinedOxstsAssumptionWitnessState, OxstsClassAssumptionWitnessState>()
+        val mappings = mutableMapOf<WitnessState, ClassWitnessState>()
 
-        fun transform(inlinedOxstsAssumptionWitnessState: InlinedOxstsAssumptionWitnessState) = mappings.getOrPut(inlinedOxstsAssumptionWitnessState) {
-            OxstsClassAssumptionWitnessState(
-                inlinedOxstsAssumptionWitnessState.values.mapNotNull {
+        fun transform(witnessState: WitnessState) = mappings.getOrPut(witnessState) {
+            val (tracerVariableValues, nonTracerValues) = witnessState.values.partition {
+                TransitionTracerNames.isTracerName(it.variable.name)
+            }
+            val realVariableValues = nonTracerValues.filter {
+                it.variable in compilation.flatteningInfo.variableHolders
+            }
+
+            ClassWitnessState(
+                realVariableValues.map {
                     transform(it)
                 },
-                inlinedOxstsAssumptionWitnessState.activatedTraces.map {
-                    transform(it)
-                },
+                tracerVariableValues,
             )
         }
 
-        private fun transform(variableValue: InlinedOxstsAssumptionWitnessStateValue): OxstsClassAssumptionWitnessStateValue? {
-            val holder = compilation.flatteningInfo.variableHolders[variableValue.variable] ?: return null
+        private fun transform(variableValue: WitnessStateValue): ClassWitnessStateValue {
+            val holder = compilation.flatteningInfo.variableHolders[variableValue.variable]
+                ?: error("Witness value references variable '${variableValue.variable.name}' with no holder instance in flatteningInfo.variableHolders. Synthetic root-level variables should be filtered out before reaching transform(WitnessStateValue).")
             val originalVariable = compilation.flatteningInfo.resolveOriginalVariable(holder, variableValue.variable)
             val holderReference = instanceReferenceProvider.getReference(holder)
             val variableReference = OxstsFactory.createNavigationSuffixExpression().also {
@@ -49,7 +55,7 @@ class OxstsClassAssumptionWitnessTransformer @Inject constructor(
                 it.member = originalVariable
             }
 
-            return OxstsClassAssumptionWitnessStateValue(
+            return ClassWitnessStateValue(
                 variableReference,
                 backAnnotateInstancePointers(variableValue.variable, variableValue.value),
             )
@@ -77,35 +83,31 @@ class OxstsClassAssumptionWitnessTransformer @Inject constructor(
             return instanceReferenceProvider.getReference(instance)
         }
 
-        private fun transform(trace: InlinedOxstsAssumptionActivatedTrace): OxstsClassAssumptionActivatedTrace {
-            return OxstsClassAssumptionActivatedTrace(
-                trace.tracerVariable,
-            )
-        }
-
     }
 
     fun transform(
-        inlinedOxstsAssumptionWitness: InlinedOxstsAssumptionWitness,
+        inlinedWitness: InlinedWitness,
         compilation: FlattenedCompilationContext,
-    ): OxstsClassAssumptionWitness {
+    ): ClassWitness {
         val context = TransformerContext(compilation)
 
-        val initialState = context.transform(inlinedOxstsAssumptionWitness.initialState)
-        val initializedState = inlinedOxstsAssumptionWitness.initializedState?.let { context.transform(it) }
-        val transitionStates = inlinedOxstsAssumptionWitness.transitionStates.map {
+        val initialState = context.transform(inlinedWitness.initialState)
+        val initializedState = inlinedWitness.initializedState?.let {
             context.transform(it)
         }
-        val nextStateMap = inlinedOxstsAssumptionWitness.nextStateMap.map {
+        val transitionStates = inlinedWitness.transitionStates.map {
+            context.transform(it)
+        }
+        val nextStateMap = inlinedWitness.nextStateMap.map {
             context.transform(it.key) to it.value.map { context.transform(it) }
         }.toMap()
 
-        return OxstsClassAssumptionWitness(
+        return ClassWitness(
             initialState,
             initializedState,
             transitionStates,
             nextStateMap,
-            inlinedOxstsAssumptionWitness.inlinedOxsts,
+            inlinedWitness.inlinedOxsts,
         )
     }
 
