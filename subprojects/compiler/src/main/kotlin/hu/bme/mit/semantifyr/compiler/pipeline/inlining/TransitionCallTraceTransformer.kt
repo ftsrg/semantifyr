@@ -46,8 +46,7 @@ class TransitionCallTraceTransformer @Inject constructor(
 ) {
 
     private var tracerCount = 0
-
-    private val tracerAssignments = LinkedHashMap<AssignmentOperation, TransitionCallTrace>()
+    private val tracerAssignments = mutableMapOf<AssignmentOperation, TransitionCallTrace>()
 
     fun traceTransitionCall(
         instance: Instance,
@@ -77,7 +76,9 @@ class TransitionCallTraceTransformer @Inject constructor(
     }
 
     fun finalize(inlinedOxsts: InlinedOxsts): TransitionCallTraceMap {
-        val tracerVariables = tracerAssignments.keys.map { it.tracerVariable }
+        val tracerVariables = tracerAssignments.keys.map {
+            it.tracerVariable
+        }
         if (tracerVariables.isNotEmpty()) {
             inlinedOxsts.variables += tracerVariables
             for (branch in inlinedOxsts.mainTransition.branches) {
