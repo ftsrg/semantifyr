@@ -31,17 +31,16 @@ data class VerificationMetadata(
 )
 
 @Serializable
-data class VerificationMetrics(
+data class BackendMetrics(
     val preparationDuration: Duration = Duration.ZERO,
     val verificationDuration: Duration = Duration.ZERO,
     val backAnnotationDuration: Duration = Duration.ZERO,
-    val totalDuration: Duration = Duration.ZERO,
 )
 
 data class BackendVerificationResult(
     val verdict: VerificationVerdict,
     val metadata: VerificationMetadata,
-    val metrics: VerificationMetrics = VerificationMetrics(),
+    val metrics: BackendMetrics = BackendMetrics(),
     val inlinedWitness: InlinedWitness? = null,
     val message: String? = null,
 ) {
@@ -58,22 +57,7 @@ enum class VerificationVerdict(
     NotSupported(false),
 }
 
-sealed interface AvailabilityReport {
-    object Available : AvailabilityReport {
-        override val isUsable = true
-    }
-
-    data class Unavailable(
-        val reason: String,
-        val hints: List<String> = emptyList(),
-    ) : AvailabilityReport {
-        override val isUsable = false
-    }
-
-    val isUsable: Boolean
-}
-
-abstract class VerificationBackend<T : Any> {
+abstract class VerificationBackend<T : BackendConfig> {
     abstract val id: String
 
     abstract val executorKey: ExecutorKey<BackendExecutor>

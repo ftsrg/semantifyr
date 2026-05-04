@@ -30,3 +30,30 @@ class InlinedWitness(
         return nextStateMap[state] ?: emptyList()
     }
 }
+
+fun linearInlinedWitness(
+    inlinedOxsts: InlinedOxsts,
+    states: List<WitnessState>,
+): InlinedWitness {
+    require(states.isNotEmpty()) { "Cannot build witness from empty state list" }
+
+    val initialState = WitnessState(values = emptyList())
+    val initializedState = states.first()
+    val transitionStates = states.drop(1)
+
+    val nextStateMap = mutableMapOf<WitnessState, List<WitnessState>>()
+    if (transitionStates.isNotEmpty()) {
+        nextStateMap[initializedState] = listOf(transitionStates.first())
+    }
+    for (i in 1 until transitionStates.size) {
+        nextStateMap[transitionStates[i - 1]] = listOf(transitionStates[i])
+    }
+
+    return InlinedWitness(
+        initialState = initialState,
+        initializedState = initializedState,
+        transitionStates = transitionStates,
+        nextStateMap = nextStateMap,
+        inlinedOxsts = inlinedOxsts,
+    )
+}

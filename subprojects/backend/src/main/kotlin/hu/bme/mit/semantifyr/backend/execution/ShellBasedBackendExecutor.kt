@@ -14,7 +14,6 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
-import org.slf4j.Logger
 import java.io.File
 import java.util.concurrent.TimeUnit
 
@@ -77,7 +76,6 @@ abstract class ShellBasedBackendExecutor : BackendExecutor {
             .start()
 
         logger.debug { "$binaryName process started (pid ${process.pid()})" }
-
 
         ShellProcessTracker.tracking(process) {
             try {

@@ -6,8 +6,6 @@
 
 package hu.bme.mit.semantifyr.backend.execution
 
-import hu.bme.mit.semantifyr.backend.AvailabilityReport
-
 typealias ExecutorFactory<T> = () -> T
 
 class ExecutorKey<out T : BackendExecutor>(

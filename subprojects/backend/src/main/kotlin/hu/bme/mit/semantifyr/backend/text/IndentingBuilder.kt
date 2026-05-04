@@ -20,7 +20,7 @@ class IndentingBuilder(
             }
             sb.append(text)
         }
-        sb.append('\n')
+        sb.append(System.lineSeparator())
     }
 
     fun lines(texts: Iterable<String>) {
