@@ -6,13 +6,14 @@
 
 package hu.bme.mit.semantifyr.verification.portfolio
 
-import hu.bme.mit.semantifyr.backend.AvailabilityReport
+import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.BackendMetrics
+import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
-import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.VerificationMetrics
-import hu.bme.mit.semantifyr.backend.VerificationRequest
-import hu.bme.mit.semantifyr.backend.VerificationRunMetadata
+import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
+import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
@@ -27,10 +28,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration
+import kotlin.time.Instant
 
 class PortfolioScope internal constructor(
     private val coroutineScope: CoroutineScope,
-    val executor: BackendExecutor,
+    val gate: ConcurrencyGate,
 ) {
     internal val jobs = mutableListOf<Deferred<BackendVerificationResult>>()
 
@@ -41,86 +43,111 @@ class PortfolioScope internal constructor(
     }
 }
 
-fun VerificationRequest.withSubPath(subpath: String): VerificationRequest {
+fun BackendVerificationRequest.withSubPath(subpath: String): BackendVerificationRequest {
     return this.copy(artifactOutputPath = artifactOutputPath.resolve(subpath))
 }
 
-sealed class PortfolioOutcome {
-    data class Decided(val result: BackendVerificationResult) : PortfolioOutcome()
-    data class AllErrored(val exceptions: List<Throwable>) : PortfolioOutcome()
-    data class NoDecision(val reason: String) : PortfolioOutcome()
-    data class AllNotSupported(val reason: String) : PortfolioOutcome()
-}
-
-fun PortfolioOutcome.toBackendVerificationResult(
-    metadata: VerificationRunMetadata,
-    metrics: VerificationMetrics = VerificationMetrics(),
-): BackendVerificationResult = when (this) {
-    is PortfolioOutcome.Decided -> result
-    is PortfolioOutcome.AllErrored -> {
-        val firstMessage = exceptions.firstOrNull()?.let {
-            "${it::class.simpleName}: ${it.message ?: ""}"
-        } ?: "(no message)"
-        val trailingCount = (exceptions.size - 1).coerceAtLeast(0)
-        val summary = if (trailingCount > 0) "$firstMessage (+$trailingCount more)" else firstMessage
-        BackendVerificationResult.errored(
-            metadata = metadata,
-            metrics = metrics,
-            message = "All portfolio jobs errored: $summary",
-        )
+sealed interface PortfolioOutcome {
+    data class Decided(val result: BackendVerificationResult) : PortfolioOutcome {
+        override fun toBackendVerificationResult(startedAt: Instant): BackendVerificationResult {
+            return result.copy(
+                metadata = result.metadata.copy(startedAt = startedAt),
+            )
+        }
     }
-    is PortfolioOutcome.NoDecision -> BackendVerificationResult.inconclusive(
-        metadata = metadata,
-        metrics = metrics,
-        message = reason,
-    )
-    is PortfolioOutcome.AllNotSupported -> BackendVerificationResult.notSupported(
-        metadata = metadata,
-        metrics = metrics,
-        message = reason,
-    )
+
+    data class AllErrored(val exceptions: List<Throwable>) : PortfolioOutcome {
+        override fun toBackendVerificationResult(startedAt: Instant): BackendVerificationResult {
+            val firstMessage = exceptions.firstOrNull()?.let {
+                "${it::class.simpleName}: ${it.message ?: ""}"
+            } ?: "(no message)"
+            val trailingCount = (exceptions.size - 1).coerceAtLeast(0)
+            val summary = if (trailingCount > 0) {
+                "$firstMessage (+$trailingCount more)"
+            } else {
+                firstMessage
+            }
+            return BackendVerificationResult(
+                metadata = VerificationMetadata(
+                    backendId = null,
+                    startedAt = startedAt,
+                ),
+                verdict = VerificationVerdict.Errored,
+                metrics = BackendMetrics(),
+                message = "All portfolio jobs errored: $summary",
+            )
+        }
+    }
+
+    data class NoDecision(val reason: String) : PortfolioOutcome {
+        override fun toBackendVerificationResult(startedAt: Instant): BackendVerificationResult {
+            return BackendVerificationResult(
+                metadata = VerificationMetadata(
+                    backendId = null,
+                    startedAt = startedAt,
+                ),
+                verdict = VerificationVerdict.Inconclusive,
+                metrics = BackendMetrics(),
+                message = reason,
+            )
+        }
+    }
+
+    data class AllNotSupported(val reason: String) : PortfolioOutcome {
+        override fun toBackendVerificationResult(startedAt: Instant): BackendVerificationResult {
+            return BackendVerificationResult(
+                metadata = VerificationMetadata(
+                    backendId = null,
+                    startedAt = startedAt,
+                ),
+                verdict = VerificationVerdict.NotSupported,
+                metrics = BackendMetrics(),
+                message = reason,
+            )
+        }
+    }
+
+    fun toBackendVerificationResult(startedAt: Instant): BackendVerificationResult
 }
 
 abstract class VerificationPortfolio {
 
-    val logger by loggerFactory()
+    protected val logger by loggerFactory()
 
     abstract val id: String
     abstract val displayName: String
     abstract val description: String
-    abstract val familyId: String
 
     abstract fun availability(environment: ExecutionEnvironment = ExecutionEnvironment.Empty): AvailabilityReport
 
     abstract suspend fun verify(
-        request: VerificationRequest,
-        executor: BackendExecutor,
+        parentInjector: Injector,
+        request: BackendVerificationRequest,
+        gate: ConcurrencyGate,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
     ): BackendVerificationResult
 
     /**
-     * Launch every job registered in [block] in parallel. Returns the first decisive result
-     * and cancels every still-running child. When no decisive result arrives in time the
-     * outcome distinguishes "all jobs errored" from "some jobs still pending at timeout"
-     * so callers can surface the right verdict (Errored vs Inconclusive).
+     * Launch every job registered in [block] in parallel, returns the first decisive result and cancels every still-running child.
+     * When no decisive result arrives in time the outcome distinguishes "all jobs errored" from "some jobs still pending at timeout" so callers can surface the right verdict (Errored vs Inconclusive).
      */
     protected suspend fun firstDecisive(
-        executor: BackendExecutor,
+        gate: ConcurrencyGate,
         timeout: Duration = Duration.INFINITE,
         progress: ProgressContext = ProgressContext.NoOp,
         block: PortfolioScope.() -> Unit,
     ): PortfolioOutcome = supervisorScope {
-        val scope = PortfolioScope(this, executor)
+        val scope = PortfolioScope(this, gate)
         scope.block()
 
         require(scope.jobs.isNotEmpty()) { "$id: firstDecisive requires at least one job" }
         logger.info { "$id: firstDecisive over ${scope.jobs.size} job(s), timeout=$timeout" }
 
-        val outcome = receiveResultsWithTimeout(scope, timeout, progress) { result ->
-            if (result.isDecisive) {
-                logger.info { "$id: job produced decisive ${result.verdict}" }
-                result
+        val outcome = receiveResultsWithTimeout(scope, timeout, progress) {
+            if (it.isDecisive) {
+                logger.info { "$id: job produced decisive ${it.verdict}" }
+                it
             } else {
                 null
             }
@@ -132,18 +159,17 @@ abstract class VerificationPortfolio {
 
     /**
      * Launch every job registered in [block] in parallel. Waits for [count] decisive results.
-     * If they all agree, returns that verdict. On disagreement, fewer-than-[count] decisive
-     * results within [timeout], or too many job errors, returns a non-decided outcome that
-     * tells the caller *why* (all-errored vs timeout vs disagreement).
+     * If they all agree, returns that verdict.
+     * On disagreement, fewer-than-[count] decisive results within [timeout], or too many job errors, returns a non-decided outcome.
      */
     protected suspend fun firstNDecisive(
         count: Int,
-        executor: BackendExecutor,
+        gate: ConcurrencyGate,
         timeout: Duration = Duration.INFINITE,
         progress: ProgressContext = ProgressContext.NoOp,
         block: PortfolioScope.() -> Unit,
     ): PortfolioOutcome = supervisorScope {
-        val scope = PortfolioScope(this, executor)
+        val scope = PortfolioScope(this, gate)
         scope.block()
 
         require(scope.jobs.isNotEmpty()) { "$id: firstNDecisive requires at least one job" }
@@ -176,17 +202,17 @@ abstract class VerificationPortfolio {
 
     /**
      * Launch every job registered in [block] in parallel and wait for all of them (or [timeout]).
-     * If every decisive result agrees, returns that verdict. Disagreement among decisive
-     * verdicts is treated as Inconclusive with a logged conflict. Jobs that error are
-     * surfaced as [PortfolioOutcome.AllErrored] when nothing else reported.
+     * If every decisive result agrees, returns that verdict.
+     * Disagreement among decisive verdicts is treated as Inconclusive with a logged conflict.
+     * Jobs that error are surfaced as [PortfolioOutcome.AllErrored] when nothing else reported.
      */
     protected suspend fun all(
-        executor: BackendExecutor,
+        gate: ConcurrencyGate,
         timeout: Duration = Duration.INFINITE,
         progress: ProgressContext = ProgressContext.NoOp,
         block: PortfolioScope.() -> Unit,
     ): PortfolioOutcome = supervisorScope {
-        val scope = PortfolioScope(this, executor)
+        val scope = PortfolioScope(this, gate)
         scope.block()
 
         require(scope.jobs.isNotEmpty()) { "$id: all requires at least one job" }
@@ -204,10 +230,9 @@ abstract class VerificationPortfolio {
         when {
             decisive.isEmpty() && collected.isEmpty() -> outcome
             decisive.isEmpty() && collected.all { it.verdict == VerificationVerdict.NotSupported } -> {
-                val backends = collected.joinToString(", ") { it.metadata.backendId }
+                val backends = collected.joinToString(", ") { it.metadata.backendId ?: "?" }
                 PortfolioOutcome.AllNotSupported("$id: every backend reported NotSupported ($backends)")
             }
-            // AllErrored or timeout
             decisive.isEmpty() -> PortfolioOutcome.Decided(collected.first())
             decisive.map { it.verdict }.distinct().size == 1 -> PortfolioOutcome.Decided(decisive.first())
             else -> {
@@ -217,7 +242,10 @@ abstract class VerificationPortfolio {
                 PortfolioOutcome.Decided(
                     BackendVerificationResult(
                         verdict = VerificationVerdict.Inconclusive,
-                        metadata = reference.metadata,
+                        metadata = VerificationMetadata(
+                            backendId = null,
+                            startedAt = reference.metadata.startedAt,
+                        ),
                         metrics = reference.metrics,
                         message = "Portfolio '$id' saw disagreeing decisive verdicts: $breakdown",
                     ),
@@ -263,7 +291,7 @@ abstract class VerificationPortfolio {
         return when {
             decided != null -> PortfolioOutcome.Decided(decided)
             allNotSupported -> {
-                val backends = collected.joinToString(", ") { it.metadata.backendId }
+                val backends = collected.joinToString(", ") { it.metadata.backendId ?: "?" }
                 PortfolioOutcome.AllNotSupported("$id: every backend reported NotSupported ($backends)")
             }
             errors.size == total -> PortfolioOutcome.AllErrored(errors)
