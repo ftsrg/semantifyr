@@ -22,7 +22,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.TraceOperation
 
 typealias XstsOperation = hu.bme.mit.semantifyr.xsts.lang.xsts.Operation
 
@@ -33,9 +32,6 @@ class OxstsOperationTransformer : OperationVisitor<XstsOperation>() {
 
     @Inject
     private lateinit var oxstsVariableTransformer: OxstsVariableTransformer
-
-    @Inject
-    private lateinit var traceOperationTransformer: TraceOperationTransformer
 
     fun transform(operation: Operation): XstsOperation {
         return visit(operation)
@@ -102,10 +98,6 @@ class OxstsOperationTransformer : OperationVisitor<XstsOperation>() {
             it.reference = oxstsExpressionTransformer.transformReference(operation.reference)
             it.expression = oxstsExpressionTransformer.transform(operation.expression)
         }
-    }
-
-    override fun visit(operation: TraceOperation): XstsOperation {
-        return traceOperationTransformer.transformTraceOperation(operation)
     }
 
     override fun visit(operation: InlineCall): XstsOperation {

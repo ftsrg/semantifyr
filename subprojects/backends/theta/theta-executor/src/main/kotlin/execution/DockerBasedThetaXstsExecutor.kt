@@ -10,25 +10,20 @@ import com.github.dockerjava.api.command.CreateContainerResponse
 import com.github.dockerjava.api.model.Bind
 import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.Volume
-import hu.bme.mit.semantifyr.backend.execution.BaseDockerExecutor
+import hu.bme.mit.semantifyr.backend.execution.DockerBasedBackendExecutor
+import hu.bme.mit.semantifyr.backends.theta.THETA_DEFAULT_IMAGE
 import hu.bme.mit.semantifyr.backends.theta.ThetaExecutionResult
 import hu.bme.mit.semantifyr.backends.theta.ThetaExecutionSpecification
-import hu.bme.mit.semantifyr.backends.theta.ThetaExecutorSpec
 import hu.bme.mit.semantifyr.backends.theta.ThetaXstsExecutor
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
-import hu.bme.mit.semantifyr.logging.loggerFactory
 
 class DockerBasedThetaXstsExecutor(
-    image: String = ThetaExecutorSpec.Docker.DEFAULT_IMAGE,
-) : BaseDockerExecutor(image),
+    image: String = THETA_DEFAULT_IMAGE,
+) : DockerBasedBackendExecutor(image),
     ThetaXstsExecutor {
-    override val logger by loggerFactory()
 
     override suspend fun execute(thetaExecutionSpecification: ThetaExecutionSpecification): ThetaExecutionResult {
-        ensureImagePresent()
-        prepareOutputFiles(thetaExecutionSpecification)
-
         val container = createContainer(thetaExecutionSpecification)
         logger.info { "Starting Docker container for image $image in ${thetaExecutionSpecification.workingDirectory.absolutePath}" }
         logger.debug { "Docker container id ${container.id}, command: ${thetaExecutionSpecification.command.joinToString(" ")}" }
@@ -51,23 +46,5 @@ class DockerBasedThetaXstsExecutor(
             .withCmd(spec.command)
             .withEntrypoint("java", "-jar", "/theta-xsts-cli.jar")
             .exec()
-    }
-
-    private fun prepareOutputFiles(spec: ThetaExecutionSpecification) {
-        spec.logFile?.let {
-            it.parentFile?.mkdirs()
-            it.createNewFile()
-            it.bufferedWriter().use { writer ->
-                writer.appendLine("Running theta with command:")
-                writer.appendLine(spec.command.joinToString(" "))
-                writer.appendLine()
-            }
-            logger.info { "Writing theta stdout to ${it.absolutePath}" }
-        }
-        spec.errorFile?.let {
-            it.parentFile?.mkdirs()
-            it.createNewFile()
-            logger.info { "Writing theta stderr to ${it.absolutePath}" }
-        }
     }
 }

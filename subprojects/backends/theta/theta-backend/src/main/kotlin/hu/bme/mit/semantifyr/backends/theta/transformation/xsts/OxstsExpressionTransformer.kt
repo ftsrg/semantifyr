@@ -7,16 +7,14 @@
 package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.oxsts.lang.utils.ExpressionVisitor
+import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
+import hu.bme.mit.semantifyr.backend.transformation.BackendExpressionVisitor
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticBinaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOperator
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.CastExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
@@ -27,15 +25,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfThenElse
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInfinity
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralNothing
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralReal
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.xsts.lang.xsts.ElementReferenceExpression
@@ -49,7 +41,9 @@ private typealias XstsArithmeticOp = hu.bme.mit.semantifyr.xsts.lang.xsts.Arithm
 private typealias XstsExpression = hu.bme.mit.semantifyr.xsts.lang.xsts.Expression
 private typealias XstsElementReferenceExpression = ElementReferenceExpression
 
-class OxstsExpressionTransformer : ExpressionVisitor<XstsExpression>() {
+class OxstsExpressionTransformer : BackendExpressionVisitor<XstsExpression>() {
+
+    override val backendName: String = "Theta"
 
     @Inject
     private lateinit var oxstsVariableTransformer: OxstsVariableTransformer
@@ -106,10 +100,6 @@ class OxstsExpressionTransformer : ExpressionVisitor<XstsExpression>() {
         }
     }
 
-    override fun visit(expression: RangeExpression): XstsExpression {
-        error("No equivalent in XSTS!")
-    }
-
     override fun visit(expression: ComparisonOperator): XstsExpression {
         return XstsFactory.createComparisonOperator().also {
             it.left = transform(expression.left)
@@ -161,16 +151,8 @@ class OxstsExpressionTransformer : ExpressionVisitor<XstsExpression>() {
         }
     }
 
-    override fun visit(expression: ArrayLiteral): XstsExpression {
-        error("No equivalent in XSTS!")
-    }
-
-    override fun visit(expression: LiteralInfinity): XstsExpression {
-        error("No equivalent in XSTS!")
-    }
-
     override fun visit(expression: LiteralReal): XstsExpression {
-        error("No equivalent in XSTS!")
+        throw BackendUnsupportedException("Theta does not support real literals")
     }
 
     override fun visit(expression: LiteralInteger): XstsExpression {
@@ -179,18 +161,10 @@ class OxstsExpressionTransformer : ExpressionVisitor<XstsExpression>() {
         }
     }
 
-    override fun visit(expression: LiteralString): XstsExpression {
-        error("No equivalent in XSTS!")
-    }
-
     override fun visit(expression: LiteralBoolean): XstsExpression {
         return XstsFactory.createLiteralBoolean().also {
             it.isValue = expression.isValue
         }
-    }
-
-    override fun visit(expression: LiteralNothing): XstsExpression {
-        error("No equivalent in XSTS!")
     }
 
     override fun visit(expression: ElementReference): XstsExpression {
@@ -207,28 +181,11 @@ class OxstsExpressionTransformer : ExpressionVisitor<XstsExpression>() {
         }
     }
 
-    override fun visit(expression: SelfReference): XstsExpression {
-        error("No equivalent in XSTS!")
-    }
-
-    override fun visit(expression: NavigationSuffixExpression): XstsExpression {
-        error("No equivalent in XSTS!")
-    }
-
-    override fun visit(expression: CallSuffixExpression): XstsExpression {
-        error("No equivalent in XSTS!")
-    }
-
     override fun visit(expression: IndexingSuffixExpression): XstsExpression {
         return XstsFactory.createReadIndexingSuffixExpression().also {
             it.primary = transformReference(expression.primary)
             it.index = transform(expression.index)
         }
-    }
-
-    override fun visit(expression: CastExpression): XstsExpression {
-        // Casts are erased at the XSTS level; the body's value carries through.
-        return transform(expression.body)
     }
 
     override fun visit(expression: IfThenElse): XstsExpression {

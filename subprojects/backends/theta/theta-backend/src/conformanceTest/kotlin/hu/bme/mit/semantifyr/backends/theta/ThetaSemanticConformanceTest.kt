@@ -6,13 +6,13 @@
 
 package hu.bme.mit.semantifyr.backends.theta
 
-import hu.bme.mit.semantifyr.backend.VerificationCase
 import hu.bme.mit.semantifyr.backends.theta.execution.ShellBasedThetaXstsExecutor
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verification.SemantifyrVerifierTestHelper
-import hu.bme.mit.semantifyr.verification.SingleBackendPortfolio
+import hu.bme.mit.semantifyr.verification.VerificationCase
+import hu.bme.mit.semantifyr.verification.portfolio.SingleBackendPortfolio
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
@@ -20,7 +20,6 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import kotlin.io.path.Path
 
-@InjectWithOxsts
 class ThetaSemanticConformanceTest {
 
     companion object {
@@ -28,7 +27,7 @@ class ThetaSemanticConformanceTest {
         private val injector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
         private val helper = injector.getInstance(SemantifyrVerifierTestHelper::class.java)
 
-        private val corpus by lazy {
+        private val context by lazy {
             helper.semantifyrLoader.startContext()
                 .loadModels(Path("build/test-models/semantic"))
                 .buildAndResolve()
@@ -44,22 +43,18 @@ class ThetaSemanticConformanceTest {
         }
 
         @JvmStatic
-        fun `Semantic conformance - corpus case`(): List<Arguments> {
-            return helper.collectVerificationCasesAsArguments(corpus)
+        fun `OXSTS Semantic Test Suite Passes`(): List<Arguments> {
+            return helper.collectVerificationCasesAsArguments(context)
         }
     }
 
     @ParameterizedTest
     @MethodSource
-    suspend fun `Semantic conformance - corpus case`(verificationCase: VerificationCase) {
+    suspend fun `OXSTS Semantic Test Suite Passes`(verificationCase: VerificationCase) {
         helper.checkTestModel(
-            corpus,
+            context,
             verificationCase,
-            verificationPortfolio = SingleBackendPortfolio(
-                ThetaBackend,
-                ThetaConfig.CegarExplPredCombined,
-                "conformance-cegar-combined",
-            ),
+            verificationPortfolio = SingleBackendPortfolio(ThetaBackend(), ThetaConfig.CegarExplPredCombined),
             outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(ThetaSemanticConformanceTest::class.java),
             validationPortfolio = Portfolios.AllAgree,
         )

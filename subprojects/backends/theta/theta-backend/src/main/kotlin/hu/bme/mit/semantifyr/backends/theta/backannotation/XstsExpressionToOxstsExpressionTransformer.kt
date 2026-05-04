@@ -1,15 +1,16 @@
 /*
- * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.backannotation.witness.oxsts
+package hu.bme.mit.semantifyr.backends.theta.backannotation
 
 import com.google.inject.Inject
-import com.google.inject.Singleton
+import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.OxstsDomainTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.xsts.lang.utils.XstsExpressionVisitor
 import hu.bme.mit.semantifyr.xsts.lang.xsts.ArithmeticBinaryOperator
 import hu.bme.mit.semantifyr.xsts.lang.xsts.ArithmeticOp
@@ -22,7 +23,6 @@ import hu.bme.mit.semantifyr.xsts.lang.xsts.ConcreteLiteralArray
 import hu.bme.mit.semantifyr.xsts.lang.xsts.DefaultLiteralArray
 import hu.bme.mit.semantifyr.xsts.lang.xsts.ElementReferenceExpression
 import hu.bme.mit.semantifyr.xsts.lang.xsts.EnumLiteral
-import hu.bme.mit.semantifyr.xsts.lang.xsts.Expression
 import hu.bme.mit.semantifyr.xsts.lang.xsts.IfThenElseExpression
 import hu.bme.mit.semantifyr.xsts.lang.xsts.IntegerType
 import hu.bme.mit.semantifyr.xsts.lang.xsts.LiteralBoolean
@@ -32,13 +32,13 @@ import hu.bme.mit.semantifyr.xsts.lang.xsts.ReadIndexingSuffixExpression
 import hu.bme.mit.semantifyr.xsts.lang.xsts.UnaryOp
 import hu.bme.mit.semantifyr.xsts.lang.xsts.WriteIndexingSuffixExpression
 
-@Singleton
-class XstsExpressionToOxstsExpressionTransformer : XstsExpressionVisitor<hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression>() {
+@VerificationScoped
+class XstsExpressionToOxstsExpressionTransformer : XstsExpressionVisitor<Expression>() {
 
     @Inject
     private lateinit var oxstsExpressionTransformer: OxstsDomainTransformer
 
-    fun transform(expression: Expression): hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression {
+    fun transform(expression: hu.bme.mit.semantifyr.xsts.lang.xsts.Expression): Expression {
         return visit(expression)
     }
 
@@ -81,7 +81,7 @@ class XstsExpressionToOxstsExpressionTransformer : XstsExpressionVisitor<hu.bme.
         }
     }
 
-    override fun visit(expression: ArithmeticBinaryOperator): hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression {
+    override fun visit(expression: ArithmeticBinaryOperator): Expression {
         return OxstsFactory.createArithmeticBinaryOperator().also {
             it.op = transform(expression.op)
             it.left = transform(expression.left)
@@ -89,14 +89,14 @@ class XstsExpressionToOxstsExpressionTransformer : XstsExpressionVisitor<hu.bme.
         }
     }
 
-    override fun visit(expression: ArithmeticUnaryOperator): hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression {
+    override fun visit(expression: ArithmeticUnaryOperator): Expression {
         return OxstsFactory.createArithmeticUnaryOperator().also {
             it.op = transform(expression.op)
             it.body = transform(expression.body)
         }
     }
 
-    override fun visit(expression: BooleanOperator): hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression {
+    override fun visit(expression: BooleanOperator): Expression {
         return OxstsFactory.createBooleanOperator().also {
             it.op = transform(expression.op)
             it.left = transform(expression.left)
@@ -104,7 +104,7 @@ class XstsExpressionToOxstsExpressionTransformer : XstsExpressionVisitor<hu.bme.
         }
     }
 
-    override fun visit(expression: ComparisonOperator): hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression {
+    override fun visit(expression: ComparisonOperator): Expression {
         return OxstsFactory.createComparisonOperator().also {
             it.op = transform(expression.op)
             it.left = transform(expression.left)
@@ -112,7 +112,7 @@ class XstsExpressionToOxstsExpressionTransformer : XstsExpressionVisitor<hu.bme.
         }
     }
 
-    override fun visit(expression: ElementReferenceExpression): hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression {
+    override fun visit(expression: ElementReferenceExpression): Expression {
         val element = expression.element
 
         require(element is EnumLiteral) {
@@ -124,36 +124,36 @@ class XstsExpressionToOxstsExpressionTransformer : XstsExpressionVisitor<hu.bme.
         return OxstsFactory.createElementReference(originalElement)
     }
 
-    override fun visit(expression: IfThenElseExpression): hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression {
+    override fun visit(expression: IfThenElseExpression): Expression {
         error("IfThenElse Expressions are not supported in OXSTS")
     }
 
-    override fun visit(expression: NegationOperator): hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression {
+    override fun visit(expression: NegationOperator): Expression {
         return OxstsFactory.createNegationOperator().also {
             it.body = transform(expression.body)
         }
     }
 
-    override fun visit(expression: ReadIndexingSuffixExpression): hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression {
+    override fun visit(expression: ReadIndexingSuffixExpression): Expression {
         return OxstsFactory.createIndexingSuffixExpression().also {
             it.primary = transform(expression.primary)
             it.index = transform(expression.index)
         }
     }
 
-    override fun visit(expression: WriteIndexingSuffixExpression): hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression {
+    override fun visit(expression: WriteIndexingSuffixExpression): Expression {
         error("Default literal arrays are not supported in OXSTS")
     }
 
-    override fun visit(expression: LiteralBoolean): hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression {
+    override fun visit(expression: LiteralBoolean): Expression {
         return OxstsFactory.createLiteralBoolean(expression.isValue)
     }
 
-    override fun visit(expression: LiteralInteger): hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression {
+    override fun visit(expression: LiteralInteger): Expression {
         return OxstsFactory.createLiteralInteger(expression.value)
     }
 
-    override fun visit(expression: ConcreteLiteralArray): hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression {
+    override fun visit(expression: ConcreteLiteralArray): Expression {
         require(expression.elseExpression == null) {
             "Else expressions are not allowed in Oxsts!"
         }
@@ -174,7 +174,7 @@ class XstsExpressionToOxstsExpressionTransformer : XstsExpressionVisitor<hu.bme.
         }
     }
 
-    override fun visit(expression: DefaultLiteralArray): hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression {
+    override fun visit(expression: DefaultLiteralArray): Expression {
         error("DefaultLiteral arrays are not supported in OXSTS")
     }
 }

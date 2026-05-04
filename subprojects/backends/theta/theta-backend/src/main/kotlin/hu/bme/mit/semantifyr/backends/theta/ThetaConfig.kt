@@ -6,10 +6,12 @@
 
 package hu.bme.mit.semantifyr.backends.theta
 
+import hu.bme.mit.semantifyr.backend.BackendConfig
+
 data class ThetaConfig(
-    val id: String,
+    override val id: String,
     val parameters: String,
-) {
+) : BackendConfig {
     companion object {
         val CegarExpl = ThetaConfig(
             id = "cegar-expl",

@@ -7,7 +7,7 @@
 package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
 import com.google.inject.Inject
-import com.google.inject.Singleton
+import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DataTypeDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
@@ -18,7 +18,7 @@ typealias XstsType = Type
 private typealias XstsEnumDeclaration = hu.bme.mit.semantifyr.xsts.lang.xsts.EnumDeclaration
 private typealias XstsEnumLiteral = hu.bme.mit.semantifyr.xsts.lang.xsts.EnumLiteral
 
-@Singleton
+@VerificationScoped
 class OxstsDomainTransformer {
 
     @Inject

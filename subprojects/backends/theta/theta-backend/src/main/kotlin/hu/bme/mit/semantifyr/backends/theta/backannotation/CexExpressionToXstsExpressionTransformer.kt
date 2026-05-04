@@ -1,10 +1,10 @@
 /*
- * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.backannotation.witness.xsts
+package hu.bme.mit.semantifyr.backends.theta.backannotation
 
 import hu.bme.mit.semantifyr.cex.lang.cex.ArithmeticUnaryOperator
 import hu.bme.mit.semantifyr.cex.lang.cex.LiteralBoolean

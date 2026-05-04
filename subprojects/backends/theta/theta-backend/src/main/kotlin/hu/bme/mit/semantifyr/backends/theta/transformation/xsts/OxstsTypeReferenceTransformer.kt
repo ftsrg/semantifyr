@@ -17,10 +17,6 @@ class OxstsTypeReferenceTransformer {
     @Inject
     private lateinit var oxstsDomainTransformer: OxstsDomainTransformer
 
-    fun transform(domainDeclaration: DomainDeclaration): XstsType {
-        return transform(domainDeclaration, null)
-    }
-
     fun transform(domainDeclaration: DomainDeclaration, multplicity: Multiplicity?): XstsType {
         val xstsType = when (domainDeclaration) {
             is EnumDeclaration -> {

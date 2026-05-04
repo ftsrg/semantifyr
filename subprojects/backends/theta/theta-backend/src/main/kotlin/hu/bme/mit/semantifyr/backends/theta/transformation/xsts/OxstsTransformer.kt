@@ -8,7 +8,6 @@ package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
-import hu.bme.mit.semantifyr.backends.theta.artifacts.ThetaArtifactManager
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
@@ -18,6 +17,7 @@ import hu.bme.mit.semantifyr.xsts.lang.xsts.Property
 import hu.bme.mit.semantifyr.xsts.lang.xsts.SequenceOperation
 import hu.bme.mit.semantifyr.xsts.lang.xsts.Transition
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
+import org.eclipse.emf.common.util.URI
 import org.eclipse.xtext.resource.XtextResourceSet
 
 private typealias XstsTransition = Transition
@@ -47,14 +47,8 @@ class OxstsTransformer {
     @Inject
     private lateinit var oxstsVariableTransformer: OxstsVariableTransformer
 
-    @Inject
-    private lateinit var traceOperationTransformer: TraceOperationTransformer
-
-    @Inject
-    private lateinit var thetaArtifactManager: ThetaArtifactManager
-
-    fun transform(inlinedOxsts: InlinedOxsts): XstsModel {
-        val xsts = createEmptyXsts()
+    fun transform(inlinedOxsts: InlinedOxsts, xstsUri: URI): XstsModel {
+        val xsts = createEmptyXsts(xstsUri)
 
         for (variableDeclaration in inlinedOxsts.variables) {
             xsts.variableDeclarations += oxstsVariableTransformer.transformTopLevel(variableDeclaration)
@@ -73,14 +67,12 @@ class OxstsTransformer {
             oxstsDomainTransformer.transform(it)
         }.distinct()
 
-        traceOperationTransformer.finalizeTransformedTraceOperations(xsts)
-
         return xsts
     }
 
-    private fun createEmptyXsts(): XstsModel {
+    private fun createEmptyXsts(xstsUri: URI): XstsModel {
         val resourceSet = resourceSetProvider.get()
-        val resource = resourceSet.createResource(thetaArtifactManager.xstsUri)
+        val resource = resourceSet.createResource(xstsUri)
 
         val xstsModel = XstsFactory.createXstsModel()
         resource.contents += xstsModel

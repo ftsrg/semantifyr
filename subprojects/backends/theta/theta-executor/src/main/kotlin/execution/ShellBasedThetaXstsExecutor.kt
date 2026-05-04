@@ -6,19 +6,20 @@
 
 package hu.bme.mit.semantifyr.backends.theta.execution
 
-import hu.bme.mit.semantifyr.backend.execution.BaseShellExecutor
+import hu.bme.mit.semantifyr.backend.execution.ShellBasedBackendExecutor
 import hu.bme.mit.semantifyr.backends.theta.ThetaExecutionResult
 import hu.bme.mit.semantifyr.backends.theta.ThetaExecutionSpecification
 import hu.bme.mit.semantifyr.backends.theta.ThetaXstsExecutor
-import hu.bme.mit.semantifyr.logging.loggerFactory
 
 class ShellBasedThetaXstsExecutor :
-    BaseShellExecutor(),
+    ShellBasedBackendExecutor(),
     ThetaXstsExecutor {
-    override val logger by loggerFactory()
+
     override val binaryName: String = "theta-xsts-cli"
 
-    override fun isAvailable(): Boolean = probeAvailability(probeArgs = listOf("--version"))
+    override fun isAvailable(): Boolean {
+        return probeAvailability(probeArgs = listOf("--version"))
+    }
 
     override suspend fun execute(thetaExecutionSpecification: ThetaExecutionSpecification): ThetaExecutionResult {
         val exitCode = runProcess(
@@ -26,7 +27,6 @@ class ShellBasedThetaXstsExecutor :
             workingDirectory = thetaExecutionSpecification.workingDirectory,
             logFile = thetaExecutionSpecification.logFile,
             errorFile = thetaExecutionSpecification.errorFile,
-            header = "Running theta with command: ${thetaExecutionSpecification.command.joinToString(" ")}",
         )
         return ThetaExecutionResult(exitCode)
     }

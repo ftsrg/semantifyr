@@ -4,45 +4,43 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta.backannotation.witness.xsts
+package hu.bme.mit.semantifyr.backends.theta.backannotation
 
-import hu.bme.mit.semantifyr.backend.witness.AssumptionWitness
-import hu.bme.mit.semantifyr.backend.witness.AssumptionWitnessState
-import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.cex.CexAssumptionWitness
-import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.cex.CexAssumptionWitnessState
-import hu.bme.mit.semantifyr.backends.theta.backannotation.witness.cex.CexAssumptionWitnessStateVariableValue
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.LocalVarNames
 import hu.bme.mit.semantifyr.xsts.lang.xsts.Expression
 import hu.bme.mit.semantifyr.xsts.lang.xsts.VariableDeclaration
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 
-class XstsAssumptionWitnessStateVariableValue(
+class XstsWitnessStateVariableValue(
     val variableDeclaration: VariableDeclaration,
     val value: Expression,
 )
 
-class XstsAssumptionWitnessState(
-//    id: String,
-    val variableValues: List<XstsAssumptionWitnessStateVariableValue>,
-) : AssumptionWitnessState()
+class XstsWitnessState(
+    val variableValues: List<XstsWitnessStateVariableValue>,
+)
 
-class XstsAssumptionWitness(
-    override val initialState: XstsAssumptionWitnessState,
-    override val initializedState: XstsAssumptionWitnessState?,
-    override val transitionStates: List<XstsAssumptionWitnessState>,
-    override val nextStateMap: Map<XstsAssumptionWitnessState, List<XstsAssumptionWitnessState>>,
+class XstsWitness(
+    val initialState: XstsWitnessState,
+    val initializedState: XstsWitnessState?,
+    val transitionStates: List<XstsWitnessState>,
+    val nextStateMap: Map<XstsWitnessState, List<XstsWitnessState>>,
     val xstsModel: XstsModel,
-) : AssumptionWitness<XstsAssumptionWitnessState>()
+) {
+    fun getNextStates(state: XstsWitnessState): List<XstsWitnessState> {
+        return nextStateMap[state] ?: emptyList()
+    }
+}
 
-class XstsAssumptionWitnessTransformer {
+class XstsWitnessTransformer {
 
     private inner class TransformerContext(val xstsModel: XstsModel) {
         val cexExpressionToXstsExpressionTransformer = CexExpressionToXstsExpressionTransformer(xstsModel)
 
-        val mappings = mutableMapOf<CexAssumptionWitnessState, XstsAssumptionWitnessState>()
+        val mappings = mutableMapOf<CexWitnessState, XstsWitnessState>()
 
-        fun transform(cexAssumptionWitnessState: CexAssumptionWitnessState) = mappings.getOrPut(cexAssumptionWitnessState) {
-            XstsAssumptionWitnessState(
+        fun transform(cexAssumptionWitnessState: CexWitnessState) = mappings.getOrPut(cexAssumptionWitnessState) {
+            XstsWitnessState(
                 cexAssumptionWitnessState.variableValues.filterNot {
                     LocalVarNames.isLocalVar(it.variableName)
                 }.map {
@@ -51,7 +49,7 @@ class XstsAssumptionWitnessTransformer {
             )
         }
 
-        private fun transform(variableValue: CexAssumptionWitnessStateVariableValue): XstsAssumptionWitnessStateVariableValue {
+        private fun transform(variableValue: CexWitnessStateVariableValue): XstsWitnessStateVariableValue {
             val variable = xstsModel.variableDeclarations.firstOrNull {
                 it.name == variableValue.variableName
             }
@@ -59,14 +57,14 @@ class XstsAssumptionWitnessTransformer {
                 "Variable with name ${variableValue.variableName} not found!"
             }
 
-            return XstsAssumptionWitnessStateVariableValue(
+            return XstsWitnessStateVariableValue(
                 variable,
                 cexExpressionToXstsExpressionTransformer.transform(variableValue.value),
             )
         }
     }
 
-    fun transform(xstsModel: XstsModel, cexAssumptionWitness: CexAssumptionWitness): XstsAssumptionWitness {
+    fun transform(xstsModel: XstsModel, cexAssumptionWitness: CexWitness): XstsWitness {
         val context = TransformerContext(xstsModel)
 
         val initialState = context.transform(cexAssumptionWitness.initialState)
@@ -82,7 +80,7 @@ class XstsAssumptionWitnessTransformer {
             context.transform(it.key) to it.value.map { context.transform(it) }
         }.toMap()
 
-        return XstsAssumptionWitness(
+        return XstsWitness(
             initialState,
             initializedState,
             transitionStates,
