@@ -6,19 +6,24 @@
 
 package hu.bme.mit.semantifyr.verification
 
+import com.google.inject.AbstractModule
 import com.google.inject.Injector
-import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.VerificationCase
+import com.google.inject.Module
+import com.google.inject.assistedinject.FactoryModuleBuilder
+import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.scopes.VerificationScope
+import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
-import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.verification.discovery.CaseFilter
+import hu.bme.mit.semantifyr.verification.internal.SemantifyrVerifierConfiguration
 import hu.bme.mit.semantifyr.verification.internal.SemantifyrVerifierImpl
+import hu.bme.mit.semantifyr.verification.internal.VerificationArtifactWriter
 import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
+import kotlin.jvm.java
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toKotlinDuration
@@ -26,54 +31,26 @@ import kotlin.time.toKotlinDuration
 /**
  * The main Verifier entrypoint that exposes verification cases and their verification.
  */
-interface SemantifyrVerifier : AutoCloseable {
-
-    fun modelContext(): SemantifyrModelContext
-    fun verificationCases(filter: CaseFilter = CaseFilter.All): List<VerificationCase>
-
-    suspend fun verifyAll(filter: CaseFilter = CaseFilter.All, progressContext: ProgressContext = ProgressContext.NoOp): List<VerificationResult>
+interface SemantifyrVerifier {
 
     suspend fun verify(verificationCase: VerificationCase, progressContext: ProgressContext = ProgressContext.NoOp): VerificationResult
-
-    suspend fun verify(qualifiedName: String, progressContext: ProgressContext = ProgressContext.NoOp): VerificationResult
-
     suspend fun verify(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext = ProgressContext.NoOp): VerificationResult
-
-    fun verifyAllBlocking(filter: CaseFilter, progressContext: ProgressContext) = runBlocking {
-        verifyAll(filter, progressContext)
-    }
-
-    fun verifyAllBlocking(filter: CaseFilter = CaseFilter.All) = runBlocking {
-        verifyAll(filter)
-    }
 
     fun verifyBlocking(verificationCase: VerificationCase) = runBlocking {
         verify(verificationCase)
     }
-
     fun verifyBlocking(verificationCase: VerificationCase, progressContext: ProgressContext) = runBlocking {
         verify(verificationCase, progressContext)
     }
-
-    fun verifyBlocking(qualifiedName: String) = runBlocking {
-        verify(qualifiedName)
-    }
-
-    fun verifyBlocking(qualifiedName: String, progressContext: ProgressContext) = runBlocking {
-        verify(qualifiedName, progressContext)
-    }
-
     fun verifyBlocking(inlinedOxsts: InlinedOxsts) = runBlocking {
         verify(inlinedOxsts)
     }
-
     fun verifyBlocking(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext) = runBlocking {
         verify(inlinedOxsts, progressContext)
     }
 
     class Builder internal constructor() {
         private var injector: Injector? = null
-        private var context: SemantifyrModelContext? = null
         private var verificationPortfolio: VerificationPortfolio? = null
         private var artifacts: ArtifactConfig? = null
         private var outputDirectory: Path? = null
@@ -84,11 +61,6 @@ interface SemantifyrVerifier : AutoCloseable {
 
         fun injector(injector: Injector): Builder {
             this.injector = injector
-            return this
-        }
-
-        fun context(context: SemantifyrModelContext): Builder {
-            this.context = context
             return this
         }
 
@@ -134,9 +106,6 @@ interface SemantifyrVerifier : AutoCloseable {
         }
 
         fun build(): SemantifyrVerifier {
-            val resolvedContext = requireNotNull(context) {
-                "SemantifyrVerifier.Builder requires .context(...)."
-            }
             val resolvedPortfolio = requireNotNull(verificationPortfolio) {
                 "SemantifyrVerifier.Builder requires .portfolio(...)."
             }
@@ -146,12 +115,13 @@ interface SemantifyrVerifier : AutoCloseable {
             val resolvedOutputDirectory = requireNotNull(outputDirectory) {
                 "SemantifyrVerifier.Builder requires .outputDirectory(...)."
             }
-            val resolvedInjector = injector ?: OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
 
-            return SemantifyrVerifierImpl(
-                injector = resolvedInjector,
-                context = resolvedContext,
-                verificationPortfolio = resolvedPortfolio,
+            val resolvedInjector = injector ?: OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
+            val verifierInjector = resolvedInjector.createChildInjector(SemantifyrVerifierModule())
+
+            val configuration = SemantifyrVerifierConfiguration(
+                injector = verifierInjector,
+                portfolio = resolvedPortfolio,
                 artifactConfig = resolvedArtifacts,
                 outputDirectory = resolvedOutputDirectory,
                 environment = environment,
@@ -159,6 +129,10 @@ interface SemantifyrVerifier : AutoCloseable {
                 maxConcurrency = maxConcurrency,
                 optimizationConfig = optimization,
             )
+
+            val semantifyrVerifierImplFactory = verifierInjector.getInstance(SemantifyrVerifierImpl.Factory::class.java)
+
+            return semantifyrVerifierImplFactory.create(configuration)
         }
     }
 
@@ -167,5 +141,13 @@ interface SemantifyrVerifier : AutoCloseable {
         fun builder(): Builder {
             return Builder()
         }
+    }
+}
+
+class SemantifyrVerifierModule : AbstractModule() {
+    override fun configure() {
+        install(FactoryModuleBuilder().build(SemantifyrVerifierImpl.Factory::class.java))
+
+        super.configure()
     }
 }

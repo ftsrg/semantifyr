@@ -6,57 +6,25 @@
 
 package hu.bme.mit.semantifyr.verification
 
-import hu.bme.mit.semantifyr.backend.VerificationMetrics
-import hu.bme.mit.semantifyr.backend.VerificationRunMetadata
+import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.verification.witness.OxstsClassAssumptionWitness
-import hu.bme.mit.semantifyr.verification.witness.SerializableCallTraceData
-import hu.bme.mit.semantifyr.verification.witness.SerializableWitnessStateData
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
-sealed interface VerificationTrace {
-    data object NoTrace : VerificationTrace
-
-    data class OxstsWitness(
-        val classWitness: OxstsClassAssumptionWitness,
-        val backAnnotatedWitness: InlinedOxsts,
-        val witnessState: SerializableWitnessStateData,
-        val callTrace: SerializableCallTraceData,
-    ) : VerificationTrace
-}
-
+@Serializable
 data class VerificationResult(
+    val metadata: VerificationMetadata,
     val verdict: VerificationVerdict,
-    val metadata: VerificationRunMetadata,
-    val metrics: VerificationMetrics = VerificationMetrics(),
-    val verificationTrace: VerificationTrace = VerificationTrace.NoTrace,
+    val metrics: VerificationMetrics,
+    @Transient val trace: Trace? = null,
     val message: String? = null,
 ) {
-    val isPassed: Boolean get() = verdict == VerificationVerdict.Passed
-    val isFailed: Boolean get() = verdict == VerificationVerdict.Failed
-    val isDecisive: Boolean get() = verdict.isDecisive
+    val isPassed: Boolean
+        get() = verdict == VerificationVerdict.Passed
 
-    companion object {
-        fun inconclusive(
-            metadata: VerificationRunMetadata,
-            metrics: VerificationMetrics,
-            message: String,
-        ): VerificationResult = VerificationResult(
-            verdict = VerificationVerdict.Inconclusive,
-            metadata = metadata,
-            metrics = metrics,
-            message = message,
-        )
+    val isFailed: Boolean
+        get() = verdict == VerificationVerdict.Failed
 
-        fun errored(
-            metadata: VerificationRunMetadata,
-            metrics: VerificationMetrics,
-            message: String,
-        ): VerificationResult = VerificationResult(
-            verdict = VerificationVerdict.Errored,
-            metadata = metadata,
-            metrics = metrics,
-            message = message,
-        )
-    }
+    val isDecisive: Boolean
+        get() = verdict.isDecisive
 }
