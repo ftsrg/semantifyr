@@ -179,6 +179,19 @@ public class OxstsUtils {
                 || expression.eContainmentFeature() == OxstsPackage.Literals.HAVOC_OPERATION__REFERENCE;
     }
 
+    public static VariableDeclaration requireVariableReference(EObject expression) {
+        if (!(expression instanceof ElementReference elementReference)) {
+            throw new IllegalStateException("Expected a variable reference, got "
+                    + (expression == null ? "null" : expression.getClass().getSimpleName()));
+        }
+        var element = elementReference.getElement();
+        if (!(element instanceof VariableDeclaration variableDeclaration)) {
+            throw new IllegalStateException("Expected a variable reference, got "
+                    + (element == null ? "null" : element.getClass().getSimpleName()));
+        }
+        return variableDeclaration;
+    }
+
     public static boolean isCallable(Element declaration) {
         return declaration instanceof TransitionDeclaration
                 || declaration instanceof RecordDeclaration
