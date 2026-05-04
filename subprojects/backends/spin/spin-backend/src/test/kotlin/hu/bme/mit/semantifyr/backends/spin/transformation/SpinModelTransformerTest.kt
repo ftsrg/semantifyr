@@ -41,7 +41,6 @@ class SpinModelTransformerTest {
         injector.createChildInjector(SpinBackendModule())
     }
 
-
     @Test
     suspend fun `model emits an init proctype with a main do-loop`() {
         withVerificationScope {

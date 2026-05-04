@@ -56,9 +56,11 @@ class SpinModelTransformer @Inject constructor(
     ) {
         for (enum in enums) {
             builder.append("mtype:").append(enum.name).append(" = { ")
-            builder.append(enum.literals.joinToString(", ") {
-                spinVariableTransformer.sanitizeEnumLiteral(it)
-            })
+            builder.append(
+                enum.literals.joinToString(", ") {
+                    spinVariableTransformer.sanitizeEnumLiteral(it)
+                },
+            )
             builder.append(" };\n")
         }
         if (enums.isNotEmpty()) builder.append('\n')
