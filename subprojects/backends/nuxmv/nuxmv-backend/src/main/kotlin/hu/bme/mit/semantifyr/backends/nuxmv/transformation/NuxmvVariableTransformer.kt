@@ -8,10 +8,10 @@ package hu.bme.mit.semantifyr.backends.nuxmv.transformation
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
+import hu.bme.mit.semantifyr.backend.transformation.BackendNameMangler
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
 enum class NuxmvVariableKind {
@@ -32,18 +32,10 @@ class NuxmvVariableTransformer {
     @Inject
     private lateinit var builtinSymbolResolver: BuiltinSymbolResolver
 
-    private val nameMap = mutableMapOf<VariableDeclaration, String>()
+    private val mangler = BackendNameMangler()
 
     fun nameOf(variableDeclaration: VariableDeclaration): String {
-        return nameMap.getOrPut(variableDeclaration) {
-            val base = sanitize(variableDeclaration.name)
-            if (variableDeclaration is LocalVarDeclarationOperation) {
-                // Locals are hoisted to the flat SMV global namespace; mangle them so each decl site is unique
-                "${base}_${(System.identityHashCode(variableDeclaration) and Int.MAX_VALUE)}"
-            } else {
-                base
-            }
-        }
+        return mangler.nameOf(variableDeclaration)
     }
 
     fun describe(variableDeclaration: VariableDeclaration): NuxmvVariable {
@@ -70,10 +62,7 @@ class NuxmvVariableTransformer {
         }
     }
 
-    fun sanitizeEnumLiteral(literal: EnumLiteral): String = sanitize(literal.name)
-
-    private fun sanitize(name: String?): String {
-        val base = name ?: "var"
-        return base.replace(Regex("[^A-Za-z0-9_]"), "_")
+    fun sanitizeEnumLiteral(literal: EnumLiteral): String {
+        return mangler.sanitize(literal.name)
     }
 }

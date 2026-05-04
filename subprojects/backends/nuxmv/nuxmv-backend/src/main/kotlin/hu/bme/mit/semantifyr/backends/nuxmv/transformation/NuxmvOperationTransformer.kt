@@ -7,10 +7,10 @@
 package hu.bme.mit.semantifyr.backends.nuxmv.transformation
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
@@ -89,7 +89,7 @@ class NuxmvOperationTransformer {
         accumulated: NuxmvBranch,
         operation: AssignmentOperation,
     ): NuxmvBranch {
-        val variable = resolveVariable(operation.reference)
+        val variable = OxstsUtils.requireVariableReference(operation.reference)
         val rhs = nuxmvExpressionTransformer.transform(operation.expression, accumulated.currentPrime)
         val primed = freshPrime(variable)
         return accumulated.copy(
@@ -134,7 +134,7 @@ class NuxmvOperationTransformer {
         accumulated: NuxmvBranch,
         operation: HavocOperation,
     ): NuxmvBranch {
-        val variable = resolveVariable(operation.reference)
+        val variable = OxstsUtils.requireVariableReference(operation.reference)
         val primed = freshPrime(variable)
         return accumulated.copy(
             // No constraint - the prime is a fresh free SMV state var for the havoc'd value.
@@ -266,11 +266,4 @@ class NuxmvOperationTransformer {
         )
     }
 
-    private fun resolveVariable(expression: org.eclipse.emf.ecore.EObject): VariableDeclaration {
-        val ref = expression as? ElementReference
-            ?: error("Unsupported reference shape on the left-hand side of an assignment: ${expression::class.simpleName}")
-        val element = ref.element
-        return element as? VariableDeclaration
-            ?: error("Expected a variable reference on the left-hand side of an assignment, got ${element::class.simpleName}")
-    }
 }

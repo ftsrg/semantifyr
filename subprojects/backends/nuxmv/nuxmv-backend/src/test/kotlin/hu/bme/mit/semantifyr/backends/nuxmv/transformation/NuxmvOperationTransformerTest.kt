@@ -6,23 +6,28 @@
 
 package hu.bme.mit.semantifyr.backends.nuxmv.transformation
 
+import com.google.inject.Inject
+import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackendModule
-import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
+import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.InlinedOxstsParseHelper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
+@InjectWithOxsts
 class NuxmvOperationTransformerTest {
-    private val injector = OxstsStandaloneSetup()
-        .createInjectorAndDoEMFRegistration()
-        .createChildInjector(NuxmvBackendModule)
-    private val parseHelper: InlinedOxstsParseHelper = injector.getInstance(InlinedOxstsParseHelper::class.java)
+
+    @Inject
+    private lateinit var parseHelper: InlinedOxstsParseHelper
+
+    @Inject
+    private lateinit var injector: Injector
 
     @Test
     suspend fun `single choice allocates one ivar and dispatches via case on the IVAR`() {
         withVerificationScope {
-            val smv = generate(
+            val smv = transform(
                 """
                     inlined oxsts of semantifyr::Anything
                     var x : int := 0
@@ -52,7 +57,7 @@ class NuxmvOperationTransformerTest {
             val declarations = (1..depth).joinToString(separator = "\n                    ") { i ->
                 "var v$i : int := 0"
             }
-            val smv = generate(
+            val smv = transform(
                 """
                     inlined oxsts of semantifyr::Anything
                     $declarations
@@ -74,7 +79,7 @@ class NuxmvOperationTransformerTest {
     @Test
     suspend fun `assumption inside a choice branch becomes a case-wrapped guard`() {
         withVerificationScope {
-            val smv = generate(
+            val smv = transform(
                 """
                     inlined oxsts of semantifyr::Anything
                     var x : int := 0
@@ -99,7 +104,7 @@ class NuxmvOperationTransformerTest {
     @Test
     suspend fun `if operation uses guard-keyed case and introduces no ivar`() {
         withVerificationScope {
-            val smv = generate(
+            val smv = transform(
                 """
                     inlined oxsts of semantifyr::Anything
                     var b : bool := false
@@ -119,7 +124,7 @@ class NuxmvOperationTransformerTest {
     @Test
     suspend fun `variable untouched in a choice branch retains its prior value`() {
         withVerificationScope {
-            val smv = generate(
+            val smv = transform(
                 """
                     inlined oxsts of semantifyr::Anything
                     var x : int := 0
@@ -136,8 +141,9 @@ class NuxmvOperationTransformerTest {
         }
     }
 
-    private fun generate(source: String): String {
-        val generator = injector.getInstance(NuxmvModelGenerator::class.java)
-        return generator.generate(parseHelper.parse(source)).smv
+    private fun transform(source: String): String {
+        val childInjector = injector.createChildInjector(NuxmvBackendModule())
+        val generator = childInjector.getInstance(NuxmvModelTransformer::class.java)
+        return generator.transform(parseHelper.parse(source)).smv
     }
 }

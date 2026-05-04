@@ -6,13 +6,19 @@
 
 package hu.bme.mit.semantifyr.backends.nuxmv
 
+import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
+import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.backends.nuxmv.execution.ShellBasedNuxmvExecutor
 import java.io.File
 
-sealed interface NuxmvExecutorSpec {
-    object Auto : NuxmvExecutorSpec
-
-    object Shell : NuxmvExecutorSpec
+@JvmField
+val NuxmvExecutorKey = ExecutorKey<NuxmvExecutor>(
+    name = "nuxmv",
+    unavailableHints = listOf(
+        "Download nuXmv from https://nuxmv.fbk.eu/download.html and add its bin folder to PATH.",
+    ),
+) {
+    NuxmvExecutor.autoDetect()
 }
 
 class NuxmvExecutionResult(
@@ -26,18 +32,16 @@ class NuxmvExecutionSpecification(
     val errorFile: File? = null,
 )
 
-interface NuxmvExecutor {
-    fun isAvailable(): Boolean
-
+interface NuxmvExecutor : BackendExecutor {
     suspend fun execute(nuxmvExecutionSpecification: NuxmvExecutionSpecification): NuxmvExecutionResult
 
     companion object {
-        fun of(spec: NuxmvExecutorSpec = NuxmvExecutorSpec.Auto): NuxmvExecutor {
-            return when (spec) {
-                NuxmvExecutorSpec.Auto, NuxmvExecutorSpec.Shell -> ShellBasedNuxmvExecutor().also {
-                    check(it.isAvailable()) { "Shell-based nuXmv executor: nuXmv is not on PATH." }
-                }
-            }
+        fun shell(): NuxmvExecutor {
+            return ShellBasedNuxmvExecutor()
+        }
+
+        fun autoDetect(): NuxmvExecutor {
+            return shell()
         }
     }
 }

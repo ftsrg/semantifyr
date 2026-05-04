@@ -9,10 +9,9 @@ package hu.bme.mit.semantifyr.backends.nuxmv.transformation
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.backend.text.IndentingBuilder
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
-import org.eclipse.emf.ecore.EObject
 
 data class NuxmvArtifacts(
     val smv: String,
@@ -20,40 +19,30 @@ data class NuxmvArtifacts(
 )
 
 @VerificationScoped
-class NuxmvModelGenerator {
-    @Inject
-    private lateinit var nuxmvVariableTransformer: NuxmvVariableTransformer
+class NuxmvModelTransformer @Inject constructor(
+    private val nuxmvVariableTransformer: NuxmvVariableTransformer,
+    private val nuxmvExpressionTransformer: NuxmvExpressionTransformer,
+    private val nuxmvOperationTransformer: NuxmvOperationTransformer,
+    private val nuxmvPropertyTransformer: NuxmvPropertyTransformer,
+) {
 
-    @Inject
-    private lateinit var nuxmvExpressionTransformer: NuxmvExpressionTransformer
+    fun transform(inlinedOxsts: InlinedOxsts): NuxmvArtifacts {
+        val variables = inlinedOxsts.eAllOfType<VariableDeclaration>().toList()
+        val nuxmvVariables = variables.map {
+            nuxmvVariableTransformer.describe(it)
+        }
 
-    @Inject
-    private lateinit var nuxmvOperationTransformer: NuxmvOperationTransformer
+        val initializedVariables = variables.filter {
+            it.expression != null
+        }.associateWith {
+            nuxmvExpressionTransformer.transform(it.expression)
+        }
 
-    @Inject
-    private lateinit var nuxmvPropertyTransformer: NuxmvPropertyTransformer
-
-    fun generate(inlinedOxsts: InlinedOxsts): NuxmvArtifacts {
-        val locals = collectLocalVars(inlinedOxsts)
-        val allVars: List<VariableDeclaration> = inlinedOxsts.variables + locals
-        val variables = allVars.map { nuxmvVariableTransformer.describe(it) }
-
-        val declaredInitial = allVars
-            .mapNotNull { decl ->
-                decl.expression?.let { init -> decl to nuxmvExpressionTransformer.transform(init) }
-            }.toMap()
-
-        // Init branches: pre-seed each top-level variable with a phase-0 prime, decoupling
-        // intermediate values from the SMV variable's INIT value. Declared initial values become
-        // the first primed binding; uninitialized variables get a free primed declaration.
         val initBranches = inlinedOxsts.initTransition.branches.mapIndexed { branchIdx, branch ->
-            val seed = seedInitBranch(allVars, declaredInitial)
+            val seed = seedInitBranch(variables, initializedVariables)
             nuxmvOperationTransformer.transform(branch, contextTag = "init", branchTag = "b$branchIdx", seed = seed)
         }
 
-        // Trans branches: no pre-seed - reads of unprimed variables resolve to the SMV variable
-        // name (the current pre-transition state), which is correct for trans guards. Assignments
-        // and havocs introduce primes that bind to next(var) at finalize time.
         val tranBranches = inlinedOxsts.mainTransition.branches.mapIndexed { branchIdx, branch ->
             nuxmvOperationTransformer.transform(branch, contextTag = "tran", branchTag = "b$branchIdx")
         }
@@ -65,15 +54,15 @@ class NuxmvModelGenerator {
 
         val builder = IndentingBuilder()
         builder.line("MODULE main")
-        renderVarSection(builder, variables, initPrimedVars + tranPrimedVars)
+        renderVarSection(builder, nuxmvVariables, initPrimedVars + tranPrimedVars)
         if (allIvars.isNotEmpty()) {
             renderIvarSection(builder, allIvars)
         }
         if (allFrozenVars.isNotEmpty()) {
             renderFrozenVarSection(builder, allFrozenVars)
         }
-        renderInitSection(builder, allVars, initBranches, declaredInitial)
-        renderTransSection(builder, allVars, tranBranches)
+        renderInitSection(builder, variables, initBranches, initializedVariables)
+        renderTransSection(builder, variables, tranBranches)
 
         return NuxmvArtifacts(
             smv = builder.toString(),
@@ -138,11 +127,18 @@ class NuxmvModelGenerator {
                 branches.map { branch ->
                     val finalize = finalizeInitBindings(allVars, branch, declaredInitial)
                     val parts = branch.constraints + finalize
-                    parts.filter { it.isNotEmpty() }.joinToString(" & ") { "($it)" }
-                        .ifEmpty { "TRUE" }
+                    parts.filter {
+                        it.isNotEmpty()
+                    }.joinToString(" & ") {
+                        "($it)"
+                    }.ifEmpty { "TRUE" }
                 }
             }
-            line(rendered.joinToString(" | ") { "($it)" })
+            line(
+                rendered.joinToString(" | ") {
+                    "($it)"
+                },
+            )
         }
     }
 
@@ -167,10 +163,6 @@ class NuxmvModelGenerator {
         }
     }
 
-    /**
-     * Build the seed branch for an init transition: every top-level variable gets a phase-0
-     * primed name; declared-initial variables also get the binding constraint `<prime> = <init>`.
-     */
     private fun seedInitBranch(
         allVars: List<VariableDeclaration>,
         declaredInitial: Map<VariableDeclaration, String>,
@@ -232,26 +224,6 @@ class NuxmvModelGenerator {
                 val enum = variable.enumDeclaration
                     ?: error("Enum variable ${variable.name} has no enum declaration")
                 enum.literals.joinToString(", ", prefix = "{ ", postfix = " }") { it.name }
-            }
-        }
-    }
-
-    private fun collectLocalVars(inlinedOxsts: InlinedOxsts): List<LocalVarDeclarationOperation> {
-        val result = mutableListOf<LocalVarDeclarationOperation>()
-        collectLocalVarsFrom(inlinedOxsts.initTransition, result)
-        collectLocalVarsFrom(inlinedOxsts.mainTransition, result)
-        return result
-    }
-
-    private fun collectLocalVarsFrom(
-        root: EObject,
-        sink: MutableList<LocalVarDeclarationOperation>,
-    ) {
-        val iterator = root.eAllContents()
-        while (iterator.hasNext()) {
-            val next = iterator.next()
-            if (next is LocalVarDeclarationOperation) {
-                sink += next
             }
         }
     }

@@ -6,16 +6,14 @@
 
 package hu.bme.mit.semantifyr.backends.nuxmv.execution
 
-import hu.bme.mit.semantifyr.backend.execution.BaseShellExecutor
+import hu.bme.mit.semantifyr.backend.execution.ShellBasedBackendExecutor
 import hu.bme.mit.semantifyr.backends.nuxmv.NuxmvExecutionResult
 import hu.bme.mit.semantifyr.backends.nuxmv.NuxmvExecutionSpecification
 import hu.bme.mit.semantifyr.backends.nuxmv.NuxmvExecutor
-import hu.bme.mit.semantifyr.logging.loggerFactory
 
 class ShellBasedNuxmvExecutor :
-    BaseShellExecutor(),
+    ShellBasedBackendExecutor(),
     NuxmvExecutor {
-    override val logger by loggerFactory()
     override val binaryName: String = "nuXmv"
 
     override fun isAvailable(): Boolean {
@@ -28,7 +26,6 @@ class ShellBasedNuxmvExecutor :
             workingDirectory = nuxmvExecutionSpecification.workingDirectory,
             logFile = nuxmvExecutionSpecification.logFile,
             errorFile = nuxmvExecutionSpecification.errorFile,
-            header = "Running nuXmv with command file: ${nuxmvExecutionSpecification.commandFile.absolutePath}",
         )
         return NuxmvExecutionResult(exitCode)
     }

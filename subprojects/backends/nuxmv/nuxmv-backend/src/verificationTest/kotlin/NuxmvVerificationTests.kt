@@ -8,7 +8,7 @@ import hu.bme.mit.semantifyr.backends.nuxmv.execution.ShellBasedNuxmvExecutor
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackend
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
-import hu.bme.mit.semantifyr.portfolios.Portfolios
+import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.verification.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verification.VerificationCase
 import hu.bme.mit.semantifyr.verification.portfolio.SingleBackendPortfolio
@@ -19,7 +19,8 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import kotlin.io.path.Path
 
-class NuxmvSemanticConformanceTest {
+@InjectWithOxsts
+class NuxmvVerificationTests {
 
     companion object {
 
@@ -29,7 +30,7 @@ class NuxmvSemanticConformanceTest {
         private val context by lazy {
             helper.semantifyrLoader
                 .startContext()
-                .loadModels(Path("build/test-models/semantic"))
+                .loadModels(Path("build/test-models/simple"))
                 .buildAndResolve()
         }
 
@@ -38,25 +39,24 @@ class NuxmvSemanticConformanceTest {
         fun assumeNuxmvAvailable() {
             Assumptions.assumeTrue(
                 ShellBasedNuxmvExecutor().isAvailable(),
-                "nuXmv not on PATH - skipping nuXmv conformance tests",
+                "nuXmv not on PATH - skipping nuXmv backend tests",
             )
         }
 
         @JvmStatic
-        fun `OXSTS Semantic Test Suite Passes`(): List<Arguments> {
+        fun `OXSTS Simple Test Suite Passes`(): List<Arguments> {
             return helper.collectVerificationCasesAsArguments(context)
         }
     }
 
     @ParameterizedTest
     @MethodSource
-    suspend fun `OXSTS Semantic Test Suite Passes`(verificationCase: VerificationCase) {
+    suspend fun `OXSTS Simple Test Suite Passes`(verificationCase: VerificationCase) {
         helper.checkTestModel(
             context,
             verificationCase,
             verificationPortfolio = SingleBackendPortfolio(NuxmvBackend(), NuxmvConfig.Ic3Invar),
-            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(NuxmvSemanticConformanceTest::class.java),
-            validationPortfolio = Portfolios.AllAgree,
+            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(NuxmvVerificationTests::class.java),
         )
     }
 }

@@ -6,14 +6,16 @@
 
 package hu.bme.mit.semantifyr.backends.nuxmv.transformation
 
+import com.google.inject.Inject
+import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackendModule
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
-import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
+import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
 import org.assertj.core.api.Assertions.assertThat
@@ -21,12 +23,17 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import kotlin.io.path.Path
 
-class NuxmvModelGeneratorTest {
-    private val injector = OxstsStandaloneSetup()
-        .createInjectorAndDoEMFRegistration()
-        .createChildInjector(NuxmvBackendModule)
-    private val annotationHandler: BuiltinAnnotationHandler = injector.getInstance(BuiltinAnnotationHandler::class.java)
-    private val loader: SemantifyrLoader = injector.getInstance(SemantifyrLoader::class.java)
+@InjectWithOxsts
+class NuxmvModelTransformerTest {
+
+    @Inject
+    private lateinit var annotationHandler: BuiltinAnnotationHandler
+
+    @Inject
+    private lateinit var loader: SemantifyrLoader
+
+    @Inject
+    private lateinit var injector: Injector
 
     @Test
     suspend fun `integer variables become unbounded SMV integers`() {
@@ -50,7 +57,7 @@ class NuxmvModelGeneratorTest {
     suspend fun `AG property maps directly to an invariant without verdict inversion`() {
         withVerificationScope {
             val invariant = verificationCaseNamed("test-models/Simple/simple.oxsts", "Invariant")
-            val artifacts = compile(invariant)
+            val artifacts = transform(invariant)
             assertThat(artifacts.property.invertVerdict).isFalse()
         }
     }
@@ -59,7 +66,7 @@ class NuxmvModelGeneratorTest {
     suspend fun `EF property maps to a negated invariant with verdict inversion`() {
         withVerificationScope {
             val incrementing = verificationCaseNamed("test-models/Simple/simple.oxsts", "Incrementing")
-            val artifacts = compile(incrementing)
+            val artifacts = transform(incrementing)
             assertThat(artifacts.property.invertVerdict).isTrue()
             assertThat(artifacts.property.invariant).startsWith("!(")
         }
@@ -73,12 +80,13 @@ class NuxmvModelGeneratorTest {
             .startContext()
             .loadModel(Path(modelPath))
             .buildAndResolve()
-        return context.modelResources
-            .flatMap { it.contents }
-            .filterIsInstance<OxstsModelPackage>()
-            .flatMap { it.declarations }
-            .filterIsInstance<ClassDeclaration>()
-            .first { it.name == name }
+        return context.modelResources.asSequence().flatMap {
+            it.contents
+        }.filterIsInstance<OxstsModelPackage>().flatMap {
+            it.declarations
+        }.filterIsInstance<ClassDeclaration>().first {
+            it.name == name
+        }
     }
 
     private fun compileFirstVerificationCase(modelPath: String): NuxmvArtifacts {
@@ -86,20 +94,24 @@ class NuxmvModelGeneratorTest {
             .startContext()
             .loadModel(Path(modelPath))
             .buildAndResolve()
-        val firstCase = context.modelResources
-            .flatMap { it.contents }
-            .filterIsInstance<OxstsModelPackage>()
-            .flatMap { it.declarations }
-            .filterIsInstance<ClassDeclaration>()
-            .first { annotationHandler.isVerificationCase(it) }
-        return compile(firstCase)
+        val firstCase = context.modelResources.asSequence().flatMap {
+            it.contents
+        }.filterIsInstance<OxstsModelPackage>().flatMap {
+            it.declarations
+        }.filterIsInstance<ClassDeclaration>().first {
+            annotationHandler.isVerificationCase(it)
+        }
+
+        return transform(firstCase)
     }
 
-    private fun compile(classDeclaration: ClassDeclaration): NuxmvArtifacts {
+    private fun transform(classDeclaration: ClassDeclaration): NuxmvArtifacts {
         val artifactDir = Files.createTempDirectory("nuxmv-test-")
-        SemantifyrCompiler(injector, ArtifactConfig.NONE, OptimizationConfig.NONE).use { compiler ->
-            val generator = injector.getInstance(NuxmvModelGenerator::class.java)
-            return generator.generate(compiler.compile(classDeclaration, artifactDir).inlinedOxsts)
-        }
+        val compiler = SemantifyrCompiler(injector, ArtifactConfig.NONE, OptimizationConfig.NONE)
+
+        val backendInjector = injector.createChildInjector(NuxmvBackendModule())
+        val transformer = backendInjector.getInstance(NuxmvModelTransformer::class.java)
+        return transformer.transform(compiler.compile(classDeclaration, artifactDir).inlinedOxsts)
     }
+
 }

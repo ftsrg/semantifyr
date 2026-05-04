@@ -6,11 +6,13 @@
 
 package hu.bme.mit.semantifyr.backends.nuxmv.verification
 
+import hu.bme.mit.semantifyr.backend.BackendConfig
+
 data class NuxmvConfig(
-    val id: String,
+    override val id: String,
     val checkCommand: String,
     val setupCommand: String = "go_msat",
-) {
+) : BackendConfig {
     companion object {
         val Ic3Invar = NuxmvConfig(
             id = "ic3-invar",
@@ -26,6 +28,12 @@ data class NuxmvConfig(
             id = "bdd-invar",
             checkCommand = "check_invar -p",
             setupCommand = "go",
+        )
+
+        val Builtin: List<NuxmvConfig> = listOf(
+            Ic3Invar,
+            BmcInvar,
+            BddInvar,
         )
     }
 }
