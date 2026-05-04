@@ -6,13 +6,14 @@
 
 package hu.bme.mit.semantifyr.portfolios
 
-import hu.bme.mit.semantifyr.backend.AvailabilityReport
+import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.BackendMetrics
+import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
-import hu.bme.mit.semantifyr.backend.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.VerificationBackend
-import hu.bme.mit.semantifyr.backend.VerificationMetrics
-import hu.bme.mit.semantifyr.backend.VerificationRequest
-import hu.bme.mit.semantifyr.backend.VerificationRunMetadata
+import hu.bme.mit.semantifyr.backend.VerificationMetadata
+import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
+import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackend
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvConfig
 import hu.bme.mit.semantifyr.backends.spin.verification.SpinBackend
@@ -23,125 +24,80 @@ import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalBackend
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.verification.ProgressContext
-import hu.bme.mit.semantifyr.verification.portfolio.BackendExecutor
-import hu.bme.mit.semantifyr.verification.portfolio.PortfolioOutcome
+import hu.bme.mit.semantifyr.verification.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio
 import hu.bme.mit.semantifyr.verification.portfolio.withSubPath
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.TimeSource.Monotonic.markNow
 
 class AllAgreeFullPortfolio(
     private val timeout: Duration = 25.minutes,
+    private val tasks: List<PortfolioTask<*>> = defaultAllAgreeTasks(),
 ) : VerificationPortfolio() {
     override val id: String = "all-agree-full"
-    override val displayName: String = "Cross-backend agreement across every installed backend"
-    override val description: String =
-        "Runs one representative config per backend in parallel; reports a verdict only when every " +
-            "decisive backend agrees. Disagreement is reported as Inconclusive."
-    override val familyId: String = "all-agree"
+    override val displayName: String = "All backends agree portfolio"
+    override val description: String = "Runs one representative config per backend in parallel."
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
-        val anyAvailable = roster.any { it.isAvailable(environment) }
+        val anyAvailable = tasks.any {
+            it.isAvailable(environment)
+        }
         return if (anyAvailable) {
             AvailabilityReport.Available
         } else {
             AvailabilityReport.Unavailable(
                 reason = "No verification backends are available on this system.",
                 hints = listOf(
-                    "Install at least one of: theta-xsts-cli, verifyta (Uppaal), nuXmv, or spin.",
-                    "See each backend's README for setup details.",
+                    "Install at least one of: theta-xsts-cli, Uppaal, nuXmv, or spin.",
                 ),
             )
         }
     }
 
     override suspend fun verify(
-        request: VerificationRequest,
-        executor: BackendExecutor,
+        parentInjector: Injector,
+        request: BackendVerificationRequest,
+        gate: ConcurrencyGate,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
     ): BackendVerificationResult {
-        val totalMark = markNow()
-        val metadata = VerificationRunMetadata(
-            backendId = id,
-            startedAt = Clock.System.now(),
-            caseQualifiedName = request.case.qualifiedName,
-        )
-        val available = roster.filter { it.isAvailable(environment) }
+        val startedAt = Clock.System.now()
+        val available = tasks.filter {
+            it.isAvailable(environment)
+        }
         if (available.isEmpty()) {
             logger.info { "$id: no available backends on this host" }
-            return BackendVerificationResult.inconclusive(
-                metadata = metadata,
-                metrics = VerificationMetrics(totalDuration = totalMark.elapsedNow()),
+            return BackendVerificationResult(
+                metadata = VerificationMetadata(
+                    backendId = null,
+                    startedAt = startedAt,
+                ),
+                verdict = VerificationVerdict.Inconclusive,
+                metrics = BackendMetrics(),
                 message = "$id: no available backends",
             )
         }
         logger.info { "$id: requiring agreement across ${available.joinToString { it.subPath }} (timeout $timeout)" }
-        progress.reportProgress("running ${available.size} backend(s) for cross-backend agreement")
+        progress.reportProgress("running ${available.size} backend(s)")
 
-        val outcome = all(executor, timeout, progress) {
-            available.forEach { task ->
+        val outcome = all(gate, timeout, progress) {
+            available.forEach {
                 async {
-                    executor.withPermit {
-                        task.run(request.withSubPath(task.subPath), environment)
+                    gate.withPermit {
+                        it.run(parentInjector, request.withSubPath(it.subPath), environment)
                     }
                 }
             }
         }
 
-        return when (outcome) {
-            is PortfolioOutcome.Decided -> {
-                outcome.result
-            }
-            is PortfolioOutcome.AllErrored -> {
-                val firstMessage = outcome.exceptions
-                    .firstOrNull()
-                    ?.let { "${it::class.simpleName}: ${it.message ?: ""}" }
-                    ?: "(no message)"
-                val extra = (outcome.exceptions.size - 1).coerceAtLeast(0)
-                val summary = if (extra > 0) "$firstMessage (+$extra more)" else firstMessage
-                BackendVerificationResult.errored(
-                    metadata = metadata,
-                    metrics = VerificationMetrics(totalDuration = totalMark.elapsedNow()),
-                    message = "$id: every backend errored - $summary",
-                )
-            }
-            is PortfolioOutcome.NoDecision -> {
-                BackendVerificationResult.inconclusive(
-                    metadata = metadata,
-                    metrics = VerificationMetrics(totalDuration = totalMark.elapsedNow()),
-                    message = outcome.reason,
-                )
-            }
-            is PortfolioOutcome.AllNotSupported -> {
-                BackendVerificationResult.notSupported(
-                    metadata = metadata,
-                    metrics = VerificationMetrics(totalDuration = totalMark.elapsedNow()),
-                    message = outcome.reason,
-                )
-            }
-        }
+        return outcome.toBackendVerificationResult(startedAt)
     }
-
-    private val roster: List<AllAgreeBackendTask<*>> = listOf(
-        AllAgreeBackendTask(ThetaBackend, ThetaConfig.CegarExplPredCombined, "theta-cegar-combined"),
-        AllAgreeBackendTask(NuxmvBackend, NuxmvConfig.Ic3Invar, "nuxmv-ic3"),
-        AllAgreeBackendTask(UppaalBackend, UppaalConfig.Default, "uppaal-default"),
-        AllAgreeBackendTask(SpinBackend, SpinConfig.SafeDfs, "spin-safe-dfs"),
-    )
 }
 
-private class AllAgreeBackendTask<T : Any>(
-    private val backend: VerificationBackend<T>,
-    private val config: T,
-    val subPath: String,
-) {
-    fun isAvailable(environment: ExecutionEnvironment): Boolean = backend.probeAvailability(config, environment).isUsable
-
-    suspend fun run(
-        request: VerificationRequest,
-        environment: ExecutionEnvironment,
-    ): BackendVerificationResult = backend.verify(config, request, environment)
-}
+private fun defaultAllAgreeTasks(): List<PortfolioTask<*>> = listOf(
+    PortfolioTask(ThetaBackend(), ThetaConfig.CegarExplPredCombined, "theta-cegar-combined"),
+    PortfolioTask(NuxmvBackend(), NuxmvConfig.Ic3Invar, "nuxmv-ic3"),
+    PortfolioTask(UppaalBackend(), UppaalConfig.Default, "uppaal-default"),
+    PortfolioTask(SpinBackend(), SpinConfig.SafeDfs, "spin-safe-dfs"),
+)
