@@ -1,0 +1,39 @@
+package semantifyr::verification::lang::clock
+
+@VerificationCase
+@Tag("expect-pass")
+class ClockResetInvariant {
+    @Clock
+    var t: int
+
+    redefine init {
+        t := 0
+    }
+
+    redefine tran {
+        t := 0
+    }
+
+    prop {
+        return AG t >= 0
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ClockReachZero {
+    @Clock
+    var t: int
+
+    redefine init {
+        t := 0
+    }
+
+    redefine tran {
+        t := 0
+    }
+
+    prop {
+        return EF t == 0
+    }
+}
