@@ -6,7 +6,7 @@
 
 package hu.bme.mit.semantifyr.verification.discovery
 
-import hu.bme.mit.semantifyr.backend.VerificationCase
+import hu.bme.mit.semantifyr.verification.VerificationCase
 
 sealed interface CaseFilter {
     fun matches(case: VerificationCase): Boolean

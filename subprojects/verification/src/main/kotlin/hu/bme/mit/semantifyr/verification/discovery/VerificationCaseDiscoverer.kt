@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.verification.discovery
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backend.VerificationCase
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltInLibraryUtils
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
@@ -16,6 +15,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
+import hu.bme.mit.semantifyr.verification.VerificationCase
 import kotlin.streams.asSequence
 
 /**
@@ -46,17 +46,6 @@ class VerificationCaseDiscoverer @Inject constructor(
 
     fun discover(context: SemantifyrModelContext, filter: CaseFilter): List<VerificationCase> {
         return discover(context).filter(filter::matches)
-    }
-
-    fun discover(
-        context: SemantifyrModelContext,
-        including: Set<String> = emptySet(),
-        excluding: Set<String> = emptySet(),
-    ): List<VerificationCase> {
-        if (including.isEmpty() && excluding.isEmpty()) {
-            return discover(context)
-        }
-        return discover(context, CaseFilter.Tags(including = including, excluding = excluding))
     }
 
     fun findByQualifiedNameOrNull(context: SemantifyrModelContext, qualifiedName: String): VerificationCase? {
