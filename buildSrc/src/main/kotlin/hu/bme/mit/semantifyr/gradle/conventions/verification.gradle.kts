@@ -26,7 +26,7 @@ testing {
                 implementation(project())
                 implementation(testFixtures(project()))
 
-                implementation(testFixtures(project(":verification")))
+                implementation(testFixtures(project(":verifier")))
 
                 runtimeOnly(libs.slf4j.log4j)
             }

@@ -17,11 +17,6 @@ val verificationTestServiceProvider = gradle.sharedServices.registerVerification
 
 val libs = the<LibrariesForLibs>()
 
-val cloneOxstsTestModels by tasks.registering(Sync::class) {
-    from(rootProject.layout.projectDirectory.dir("oxsts-test-models"))
-    into(layout.buildDirectory.dir("test-models"))
-}
-
 testing {
     suites {
         val conformanceTest by registering(JvmTestSuite::class) {
@@ -31,7 +26,7 @@ testing {
                 implementation(project())
                 implementation(testFixtures(project()))
 
-                implementation(testFixtures(project(":verification")))
+                implementation(testFixtures(project(":verifier")))
                 implementation(project(":portfolios"))
 
                 runtimeOnly(libs.slf4j.log4j)
@@ -43,9 +38,6 @@ testing {
                     usesService(verificationTestServiceProvider)
 
                     maxParallelForks = 1
-
-                    inputs.files(cloneOxstsTestModels)
-                    workingDir = layout.projectDirectory.asFile
 
                     shouldRunAfter(suites.named("test"))
 

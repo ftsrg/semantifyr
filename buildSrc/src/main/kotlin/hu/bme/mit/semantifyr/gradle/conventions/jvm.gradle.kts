@@ -40,6 +40,7 @@ tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     testLogging.showStandardStreams = true
     testLogging.exceptionFormat = TestExceptionFormat.FULL
+    workingDir = layout.projectDirectory.asFile
 }
 
 testing {
