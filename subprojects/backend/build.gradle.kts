@@ -23,6 +23,5 @@ dependencies {
     implementation(libs.docker.java.core)
     implementation(libs.docker.java.transport)
 
-    testFixturesApi(project(":compiler"))
     testFixturesApi(testFixtures(project(":compiler")))
 }

@@ -28,22 +28,5 @@ dependencies {
     testImplementation(project(":compiler"))
     testRuntimeOnly(libs.slf4j.log4j)
 
-    testFixturesApi(project(":verification"))
-    testFixturesApi(testFixtures(project(":verification")))
-}
-
-testing {
-    suites {
-        val verificationTest by getting(JvmTestSuite::class) {
-            dependencies {
-                implementation(testFixtures(project(":verification")))
-            }
-        }
-        val conformanceTest by getting(JvmTestSuite::class) {
-            dependencies {
-                implementation(testFixtures(project(":verification")))
-                implementation(project(":portfolios"))
-            }
-        }
-    }
+    testFixturesApi(testFixtures(project(":backend")))
 }

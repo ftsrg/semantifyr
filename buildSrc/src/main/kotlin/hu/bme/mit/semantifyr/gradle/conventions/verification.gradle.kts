@@ -26,6 +26,8 @@ testing {
                 implementation(project())
                 implementation(testFixtures(project()))
 
+                implementation(testFixtures(project(":verification")))
+
                 runtimeOnly(libs.slf4j.log4j)
             }
 
@@ -81,5 +83,5 @@ val slowVerificationTest by tasks.registering(Test::class) {
 }
 
 tasks.named("check") {
-//    dependsOn(testing.suites.named("verificationTest"))
+    dependsOn(testing.suites.named("verificationTest"))
 }

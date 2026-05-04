@@ -31,6 +31,9 @@ testing {
                 implementation(project())
                 implementation(testFixtures(project()))
 
+                implementation(testFixtures(project(":verification")))
+                implementation(project(":portfolios"))
+
                 runtimeOnly(libs.slf4j.log4j)
             }
 

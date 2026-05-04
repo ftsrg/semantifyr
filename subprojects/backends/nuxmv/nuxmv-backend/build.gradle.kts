@@ -24,25 +24,6 @@ dependencies {
 
     implementation(project(":logging"))
     implementation(libs.kotlinx.serialization.json)
-}
 
-testing {
-    suites {
-        val test by getting(JvmTestSuite::class) {
-            dependencies {
-                implementation(testFixtures(project(":oxsts.lang")))
-            }
-        }
-        val verificationTest by getting(JvmTestSuite::class) {
-            dependencies {
-                implementation(testFixtures(project(":verification")))
-            }
-        }
-        val conformanceTest by getting(JvmTestSuite::class) {
-            dependencies {
-                implementation(testFixtures(project(":verification")))
-                implementation(project(":portfolios"))
-            }
-        }
-    }
+    testImplementation(testFixtures(project(":backend")))
 }

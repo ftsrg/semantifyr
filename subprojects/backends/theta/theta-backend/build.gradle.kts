@@ -24,21 +24,6 @@ dependencies {
 
     implementation(project(":logging"))
     implementation(libs.kotlinx.serialization.json)
-}
 
-testing {
-    suites {
-        val verificationTest by getting(JvmTestSuite::class) {
-            dependencies {
-                implementation(testFixtures(project(":verification")))
-            }
-        }
-        val conformanceTest by getting(JvmTestSuite::class) {
-            dependencies {
-                implementation(testFixtures(project(":verification")))
-                // Portfolios.AllAgree validates every produced witness via every installed backend.
-                implementation(project(":portfolios"))
-            }
-        }
-    }
+    testImplementation(testFixtures(project(":backend")))
 }
