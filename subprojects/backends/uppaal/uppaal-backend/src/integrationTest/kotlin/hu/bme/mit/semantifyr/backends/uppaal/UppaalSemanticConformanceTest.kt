@@ -4,11 +4,13 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.backends.spin.execution.ShellBasedSpinExecutor
-import hu.bme.mit.semantifyr.backends.spin.verification.SpinBackend
-import hu.bme.mit.semantifyr.backends.spin.verification.SpinConfig
+package hu.bme.mit.semantifyr.backends.uppaal
+
+import hu.bme.mit.semantifyr.backends.uppaal.execution.ShellBasedUppaalExecutor
+import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalBackend
+import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
-import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
+import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
@@ -19,8 +21,7 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import kotlin.io.path.Path
 
-@InjectWithOxsts
-class SpinVerificationTests {
+class UppaalSemanticConformanceTest {
 
     companion object {
 
@@ -30,16 +31,16 @@ class SpinVerificationTests {
         private val context by lazy {
             helper.semantifyrLoader
                 .startContext()
-                .loadModels(Path("build/test-models/simple"))
+                .loadModels(Path("build/test-models/semantic"))
                 .buildAndResolve()
         }
 
         @JvmStatic
         @BeforeAll
-        fun assumeSpinAvailable() {
+        fun assumeVerifytaAvailable() {
             Assumptions.assumeTrue(
-                ShellBasedSpinExecutor().isAvailable(),
-                "spin not on PATH - skipping Spin backend tests",
+                ShellBasedUppaalExecutor().isAvailable(),
+                "verifyta not on PATH - skipping Uppaal conformance tests",
             )
         }
 
@@ -55,8 +56,9 @@ class SpinVerificationTests {
         helper.checkTestModel(
             context,
             verificationCase,
-            verificationPortfolio = SingleBackendPortfolio(SpinBackend(), SpinConfig.SafeDfs),
-            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(SpinVerificationTests::class.java),
+            verificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.Companion.Default),
+            outputDirectory = SemantifyrVerifierTestHelper.Companion.testArtifactRoot(UppaalSemanticConformanceTest::class.java),
+            validationPortfolio = Portfolios.AllAgree,
         )
     }
 }

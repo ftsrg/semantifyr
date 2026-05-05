@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.backends.uppaal.execution.ShellBasedUppaalExecutor
-import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalBackend
-import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
+package hu.bme.mit.semantifyr.backends.nuxmv
+
+import hu.bme.mit.semantifyr.backends.nuxmv.execution.ShellBasedNuxmvExecutor
+import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackend
+import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
-import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
@@ -19,7 +20,7 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import kotlin.io.path.Path
 
-class UppaalSemanticConformanceTest {
+class NuxmvVerificationTests {
 
     companion object {
 
@@ -29,16 +30,16 @@ class UppaalSemanticConformanceTest {
         private val context by lazy {
             helper.semantifyrLoader
                 .startContext()
-                .loadModels(Path("build/test-models/semantic"))
+                .loadModels(Path("build/test-models/simple"))
                 .buildAndResolve()
         }
 
         @JvmStatic
         @BeforeAll
-        fun assumeVerifytaAvailable() {
+        fun assumeNuxmvAvailable() {
             Assumptions.assumeTrue(
-                ShellBasedUppaalExecutor().isAvailable(),
-                "verifyta not on PATH - skipping Uppaal conformance tests",
+                ShellBasedNuxmvExecutor().isAvailable(),
+                "nuXmv not on PATH - skipping nuXmv backend tests",
             )
         }
 
@@ -54,9 +55,8 @@ class UppaalSemanticConformanceTest {
         helper.checkTestModel(
             context,
             verificationCase,
-            verificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.Default),
-            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(UppaalSemanticConformanceTest::class.java),
-            validationPortfolio = Portfolios.AllAgree,
+            verificationPortfolio = SingleBackendPortfolio(NuxmvBackend(), NuxmvConfig.Companion.Ic3Invar),
+            outputDirectory = SemantifyrVerifierTestHelper.Companion.testArtifactRoot(NuxmvVerificationTests::class.java),
         )
     }
 }
