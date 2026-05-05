@@ -12,7 +12,6 @@ include(
     "compiler",
     "verifier",
     "portfolios",
-    "frontend",
     "backend",
     "lang-ide-common",
     "semantifyr-cli",
