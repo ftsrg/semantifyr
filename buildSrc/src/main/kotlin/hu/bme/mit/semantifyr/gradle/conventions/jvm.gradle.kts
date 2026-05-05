@@ -7,7 +7,18 @@
 package hu.bme.mit.semantifyr.gradle.conventions
 
 import org.gradle.accessors.dm.LibrariesForLibs
+import org.gradle.api.file.FileCollection
+import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.process.CommandLineArgumentProvider
+
+class MockitoAgentArgumentProvider(
+    @get:Classpath val agent: FileCollection,
+) : CommandLineArgumentProvider {
+    override fun asArguments(): Iterable<String> {
+        return listOf("-javaagent:${agent.asPath}", "-Xshare:off")
+    }
+}
 
 plugins {
     `java-library`
@@ -63,7 +74,7 @@ testing {
 
             targets.all {
                 testTask.configure {
-                    jvmArgs("-javaagent:${mockitoAgent.asPath}", "-Xshare:off")
+                    jvmArgumentProviders.add(MockitoAgentArgumentProvider(mockitoAgent))
                     finalizedBy(tasks.jacocoTestReport)
                 }
             }
