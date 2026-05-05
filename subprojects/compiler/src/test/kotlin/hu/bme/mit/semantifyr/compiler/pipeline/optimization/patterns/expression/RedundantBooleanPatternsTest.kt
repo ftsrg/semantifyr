@@ -4,13 +4,9 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns
+package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression
 
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.ConstantFalseAndPattern
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.ConstantTrueOrPattern
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.IdempotentBooleanPattern
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.RedundantAndPattern
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.RedundantOrPattern
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PatternTestBase
 import org.junit.jupiter.api.Test
 
 class RedundantBooleanPatternsTest : PatternTestBase() {

@@ -4,8 +4,13 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns
+package hu.bme.mit.semantifyr.compiler.pipeline.patterns
 
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PatternTestBase
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PropagateBothBranchesConstantFalsePattern
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PropagateConstantFalseInSequencePattern
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PropagateSingleBranchConstantFalsePattern
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.RemoveConstantFalseChoiceBranchPattern
 import org.junit.jupiter.api.Test
 
 class AssumeFalsePropagationPatternsTest : PatternTestBase() {

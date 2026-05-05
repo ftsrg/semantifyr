@@ -9,99 +9,85 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PatternTestBase
 import org.junit.jupiter.api.Test
 
-class AlgebraicPatternsTest : PatternTestBase() {
+class IfThenElsePatternsTest : PatternTestBase() {
     @Test
-    fun `add zero on left collapses to right`() = assertPatternTransforms(
-        pattern = ArithmeticIdentityPattern(),
+    fun `if true then a else b collapses to a`() = assertPatternTransforms(
+        pattern = IfThenElseConstantGuardPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
             var a : int := 0
             init { }
             tran { }
-            prop { AG (0 + a == 0) }
+            prop { AG (if true then a else 0) == 0 }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var a : int := 0
             init { }
             tran { }
-            prop { AG (a == 0) }
+            prop { AG a == 0 }
         """,
     )
 
     @Test
-    fun `multiply by zero collapses to zero`() = assertPatternTransforms(
-        pattern = ArithmeticIdentityPattern(),
+    fun `if false then a else b collapses to b`() = assertPatternTransforms(
+        pattern = IfThenElseConstantGuardPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
             var a : int := 0
             init { }
             tran { }
-            prop { AG (a * 0 == 0) }
+            prop { AG (if false then a else 0) == 0 }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var a : int := 0
             init { }
             tran { }
-            prop { AG (0 == 0) }
+            prop { AG 0 == 0 }
         """,
     )
 
     @Test
-    fun `multiply by one on left collapses to right`() = assertPatternTransforms(
-        pattern = ArithmeticIdentityPattern(),
+    fun `if with identical branches collapses to the branch`() = assertPatternTransforms(
+        pattern = IfThenElseIdenticalBranchesPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
             var a : int := 0
             init { }
             tran { }
-            prop { AG (1 * a == 0) }
+            prop { AG (if a == 0 then 5 else 5) == 5 }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var a : int := 0
             init { }
             tran { }
-            prop { AG (a == 0) }
+            prop { AG 5 == 5 }
         """,
     )
 
     @Test
-    fun `divide by one collapses to left`() = assertPatternTransforms(
-        pattern = ArithmeticIdentityPattern(),
+    fun `if with non-literal guard is left alone`() = assertPatternDoesNotMatch(
+        pattern = IfThenElseConstantGuardPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
             var a : int := 0
             init { }
             tran { }
-            prop { AG (a / 1 == 0) }
-        """,
-        expected = """
-            inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran { }
-            prop { AG (a == 0) }
+            prop { AG (if a == 0 then 1 else 2) >= 0 }
         """,
     )
 
     @Test
-    fun `double unary minus cancels`() = assertPatternTransforms(
-        pattern = DoubleUnaryMinusPattern(),
+    fun `if with differing branches is left alone`() = assertPatternDoesNotMatch(
+        pattern = IfThenElseIdenticalBranchesPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
             var a : int := 0
             init { }
             tran { }
-            prop { AG (-(-a) == 0) }
-        """,
-        expected = """
-            inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran { }
-            prop { AG (a == 0) }
+            prop { AG (if a == 0 then 1 else 2) >= 0 }
         """,
     )
 }

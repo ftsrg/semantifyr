@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression
+package hu.bme.mit.semantifyr.compiler.pipeline.patterns.expression
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.ConstantExpressionEvaluationTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PatternTestBase
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.ConstantFoldingPattern
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
 import org.junit.jupiter.api.Test
 

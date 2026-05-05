@@ -4,10 +4,9 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns
+package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression
 
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.SelfArithmeticPattern
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.SelfComparisonPattern
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PatternTestBase
 import org.junit.jupiter.api.Test
 
 class StructuralEqualityPatternsTest : PatternTestBase() {
