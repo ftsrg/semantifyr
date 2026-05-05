@@ -12,7 +12,7 @@ plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.frontend")
 }
 
-val sysmlCommit = "f829c1307799c278242ab456b8c6cd7adf44f156" // Added support for AcceptWhen triggers
+val sysmlCommit = "e1d22922929d10a26885ff144b654fc247e45e56" // Use spawn instead of exec to inherit stdio
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.buildDirectory.dir("sysml-2ls").get()
 
@@ -88,7 +88,7 @@ val buildExtension by tasks.registering(PnpmTask::class) {
 }
 
 val bundleExtension by tasks.registering(PnpmTask::class) {
-    dependsOn(buildExtension)
+    inputs.files(buildExtension)
     inputs.file(sysmlDir.file("package.json"))
     inputs.file(sysmlDir.file("tsconfig.json"))
     inputs.file(sysmlDir.file("tsconfig.build.json"))
@@ -142,8 +142,8 @@ val buildCli by tasks.registering(PnpmTask::class) {
 }
 
 val bundleCli by tasks.registering(Sync::class) {
-    dependsOn(checkoutLibrary)
-    dependsOn(buildCli)
+    inputs.files(checkoutLibrary)
+    inputs.files(buildCli)
     from(sysmlDir.file("packages/syside-cli/out/index.js"))
     from(fileTree(sysmlDir.dir("SysML-v2-Release/sysml.library"))) {
         include("**/*.sysml")
@@ -154,10 +154,10 @@ val bundleCli by tasks.registering(Sync::class) {
 }
 
 artifacts {
-    add(distributionOutput.name, bundleExtension.get().outputs.files.singleFile) {
+    add(distributionOutput.name, bundleExtension.map { it.outputs.files.singleFile }) {
         builtBy(bundleExtension)
     }
-    add(cliOutput.name, project.layout.buildDirectory.dir("cli-bundle").get().asFile) {
+    add(cliOutput.name, project.layout.buildDirectory.dir("cli-bundle")) {
         builtBy(bundleCli)
     }
 }
