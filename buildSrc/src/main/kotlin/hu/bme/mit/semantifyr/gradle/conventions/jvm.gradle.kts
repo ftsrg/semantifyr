@@ -25,6 +25,7 @@ plugins {
     `java-test-fixtures`
     jacoco
     id("hu.bme.mit.semantifyr.gradle.conventions.formatting")
+    id("org.sonarqube")
 }
 
 repositories {
@@ -59,6 +60,7 @@ tasks.withType<JacocoReport>().configureEach {
     sourceSets(sourceSets.main.get())
     reports {
         xml.required = true
+        html.required = true
     }
 }
 
@@ -84,4 +86,51 @@ testing {
 
 tasks.jacocoTestReport {
     inputs.files(tasks.test.get().outputs)
+}
+
+tasks.named("sonarResolver") {
+    inputs.files(tasks.withType<JacocoReport>().map { it.outputs.files })
+}
+
+sonar {
+    properties {
+        val nonMainSourceSets = sourceSets.filter {
+            it.name != "main" && it.name != "testFixtures"
+        }
+
+        val testSourceDirs = nonMainSourceSets.flatMap {
+            it.allSource.srcDirs
+        }.filter {
+            it.exists()
+        }
+
+        val testBinaryDirs = nonMainSourceSets.flatMap {
+            it.output.classesDirs.files
+        }
+
+        val testClasspath = nonMainSourceSets.flatMap {
+            it.runtimeClasspath.files
+        }.filter {
+            it.exists()
+        }
+
+        val coverageXmls = tasks.withType<JacocoReport>().map {
+            it.reports.xml.outputLocation.get().asFile
+        }.filter {
+            it.exists()
+        }
+
+        if (testSourceDirs.isNotEmpty()) {
+            property("sonar.tests", testSourceDirs.joinToString(",") { it.absolutePath })
+        }
+        if (testBinaryDirs.isNotEmpty()) {
+            property("sonar.java.test.binaries", testBinaryDirs.joinToString(",") { it.absolutePath })
+        }
+        if (testClasspath.isNotEmpty()) {
+            property("sonar.java.test.libraries", testClasspath.joinToString(",") { it.absolutePath })
+        }
+        if (coverageXmls.isNotEmpty()) {
+            property("sonar.coverage.jacoco.xmlReportPaths", coverageXmls.joinToString(",") { it.absolutePath })
+        }
+    }
 }

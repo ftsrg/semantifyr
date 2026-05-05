@@ -86,6 +86,7 @@ ktor-client-websockets = { group = "io.ktor", name = "ktor-client-websockets", v
 ktor-server-test-host = { group = "io.ktor", name = "ktor-server-test-host", version.ref = "ktor" }
 plugin-gradle-node = { group = "com.github.node-gradle", name = "gradle-node-plugin", version.ref = "node" }
 plugin-spotless = { group = "com.diffplug.spotless", name = "spotless-plugin-gradle", version.ref = "spotless" }
+plugin-sonarqube = { group = "org.sonarqube", name = "org.sonarqube.gradle.plugin", version.ref = "sonarqube" }
 
 [bundles]
 junit-fixtures = ["junit-api", "junit-params"]
@@ -114,6 +115,4 @@ ktor-client-test = [
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-gradle-node = { id = "com.github.node-gradle.node", version.ref = "node" }
 bmuschko-docker = { id = "com.bmuschko.docker-remote-api", version.ref = "bmuschkoDocker" }
-spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

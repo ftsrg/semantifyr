@@ -19,4 +19,5 @@ dependencies {
 
     implementation(libs.plugin.gradle.node)
     implementation(libs.plugin.spotless)
+    implementation(libs.plugin.sonarqube)
 }

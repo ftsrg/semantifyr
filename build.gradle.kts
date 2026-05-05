@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.bmuschko.docker) apply false
+    id("org.sonarqube")
     `jacoco-report-aggregation`
 }
 
@@ -40,5 +41,19 @@ reporting {
         val conformanceTestCodeCoverageReport by creating(JacocoCoverageReport::class) {
             testSuiteName = "conformanceTest"
         }
+    }
+}
+
+val generatedSourceExclusions = "**/src-gen/**,**/generated/**,**/xtext-gen/**,**/emf-gen/**"
+
+sonar {
+    properties {
+        property("sonar.coverage.exclusions", generatedSourceExclusions)
+        property("sonar.exclusions", generatedSourceExclusions)
+        property("sonar.projectKey", "ftsrg_semantifyr")
+        property("sonar.organization", "ftsrg-github")
+        property("sonar.projectName", "Semantifyr")
+        property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.sourceEncoding", "UTF-8")
     }
 }
