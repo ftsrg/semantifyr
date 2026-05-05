@@ -63,7 +63,7 @@ class NuxmvTraceParser {
                     running[name] = value
                 }
                 else -> {
-                    // input section line - ignore aux ivars
+                    // input section line - ignore aux inputVariables
                 }
             }
         }
@@ -77,13 +77,13 @@ class NuxmvTraceParser {
     }
 
     private fun splitAssignment(line: String): Pair<String, String>? {
-        val idx = line.indexOf(" = ")
-        if (idx < 0) {
+        val index = line.indexOf(" = ")
+        if (index < 0) {
             return null
         }
 
-        val name = line.substring(0, idx).trim()
-        val value = line.substring(idx + 3).trim()
+        val name = line.substring(0, index).trim()
+        val value = line.substring(index + 3).trim()
         if (name.isEmpty() || value.isEmpty()) {
             return null
         }

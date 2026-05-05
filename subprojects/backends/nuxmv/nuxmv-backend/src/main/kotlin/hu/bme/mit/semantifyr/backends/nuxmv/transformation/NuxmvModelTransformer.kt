@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.backends.nuxmv.transformation
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.backend.text.IndentingBuilder
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -18,12 +17,14 @@ data class NuxmvArtifacts(
     val property: NuxmvProperty,
 )
 
-@VerificationScoped
 class NuxmvModelTransformer @Inject constructor(
     private val nuxmvVariableTransformer: NuxmvVariableTransformer,
     private val nuxmvExpressionTransformer: NuxmvExpressionTransformer,
     private val nuxmvOperationTransformer: NuxmvOperationTransformer,
     private val nuxmvPropertyTransformer: NuxmvPropertyTransformer,
+    private val nuxmvBranchSeeder: NuxmvBranchSeeder,
+    private val nuxmvDeclarationRenderer: NuxmvDeclarationRenderer,
+    private val nuxmvFormulaRenderer: NuxmvFormulaRenderer,
 ) {
 
     fun transform(inlinedOxsts: InlinedOxsts): NuxmvArtifacts {
@@ -31,200 +32,65 @@ class NuxmvModelTransformer @Inject constructor(
         val nuxmvVariables = variables.map {
             nuxmvVariableTransformer.describe(it)
         }
+        val initializedVariables = collectInitializedVariables(variables)
+        val initResults = transformInitBranches(inlinedOxsts, variables, initializedVariables)
+        val tranResults = transformTranBranches(inlinedOxsts)
+        val allResults = initResults + tranResults
 
-        val initializedVariables = variables.filter {
+        val builder = IndentingBuilder()
+        builder.line("MODULE main")
+        nuxmvDeclarationRenderer.renderVariablesSection(builder, nuxmvVariables, allPrimedDeclarations(allResults))
+        nuxmvDeclarationRenderer.renderInputVariablesSection(builder, allInputVariables(allResults))
+        nuxmvDeclarationRenderer.renderFrozenVariablesSection(builder, allFrozenVariables(allResults))
+        nuxmvFormulaRenderer.renderInitSection(builder, variables, initResults.map { it.branch }, initializedVariables)
+        nuxmvFormulaRenderer.renderTransSection(builder, variables, tranResults.map { it.branch })
+
+        return NuxmvArtifacts(
+            builder.toString(),
+            nuxmvPropertyTransformer.transform(inlinedOxsts.property),
+        )
+    }
+
+    private fun collectInitializedVariables(variables: List<VariableDeclaration>): Map<VariableDeclaration, String> {
+        return variables.filter {
             it.expression != null
         }.associateWith {
             nuxmvExpressionTransformer.transform(it.expression)
         }
-
-        val initBranches = inlinedOxsts.initTransition.branches.mapIndexed { branchIdx, branch ->
-            val seed = seedInitBranch(variables, initializedVariables)
-            nuxmvOperationTransformer.transform(branch, contextTag = "init", branchTag = "b$branchIdx", seed = seed)
-        }
-
-        val tranBranches = inlinedOxsts.mainTransition.branches.mapIndexed { branchIdx, branch ->
-            nuxmvOperationTransformer.transform(branch, contextTag = "tran", branchTag = "b$branchIdx")
-        }
-
-        val initPrimedVars = initBranches.flatMap { it.newPrimes }
-        val tranPrimedVars = tranBranches.flatMap { it.newPrimes }
-        val allIvars = (initBranches + tranBranches).flatMap { it.ivars }
-        val allFrozenVars = (initBranches + tranBranches).flatMap { it.frozenVars }
-
-        val builder = IndentingBuilder()
-        builder.line("MODULE main")
-        renderVarSection(builder, nuxmvVariables, initPrimedVars + tranPrimedVars)
-        if (allIvars.isNotEmpty()) {
-            renderIvarSection(builder, allIvars)
-        }
-        if (allFrozenVars.isNotEmpty()) {
-            renderFrozenVarSection(builder, allFrozenVars)
-        }
-        renderInitSection(builder, variables, initBranches, initializedVariables)
-        renderTransSection(builder, variables, tranBranches)
-
-        return NuxmvArtifacts(
-            smv = builder.toString(),
-            property = nuxmvPropertyTransformer.transform(inlinedOxsts.property),
-        )
     }
 
-    private fun renderVarSection(
-        builder: IndentingBuilder,
-        variables: List<NuxmvVariable>,
-        primedVars: List<NuxmvPrimedDecl>,
-    ) {
-        builder.line("VAR")
-        builder.indented {
-            for (variable in variables) {
-                line("${variable.name} : ${renderType(variable)};")
-            }
-            for (primed in primedVars) {
-                val v = nuxmvVariableTransformer.describe(primed.variable)
-                line("${primed.name} : ${renderType(v)};")
-            }
+    private fun transformInitBranches(
+        inlinedOxsts: InlinedOxsts,
+        variables: List<VariableDeclaration>,
+        initializedVariables: Map<VariableDeclaration, String>,
+    ): List<NuxmvBranchResult> {
+        return inlinedOxsts.initTransition.branches.mapIndexed { branchIndex, branch ->
+            val seed = nuxmvBranchSeeder.seedInitBranch(variables, initializedVariables)
+            nuxmvOperationTransformer.transform(branch, NuxmvTransitionKind.Init, "b$branchIndex", seed)
         }
     }
 
-    private fun renderIvarSection(
-        builder: IndentingBuilder,
-        ivars: List<NuxmvIVar>,
-    ) {
-        builder.line("IVAR")
-        builder.indented {
-            for (ivar in ivars) {
-                line("${ivar.name} : ${ivar.typeSmv};")
-            }
+    private fun transformTranBranches(inlinedOxsts: InlinedOxsts): List<NuxmvBranchResult> {
+        return inlinedOxsts.mainTransition.branches.mapIndexed { branchIndex, branch ->
+            nuxmvOperationTransformer.transform(branch, NuxmvTransitionKind.Tran, "b$branchIndex")
         }
     }
 
-    private fun renderFrozenVarSection(
-        builder: IndentingBuilder,
-        frozenVars: List<NuxmvFrozenVar>,
-    ) {
-        builder.line("FROZENVAR")
-        builder.indented {
-            for (frozen in frozenVars) {
-                line("${frozen.name} : ${frozen.typeSmv};")
-            }
+    private fun allPrimedDeclarations(results: List<NuxmvBranchResult>): List<NuxmvPrimedDeclaration> {
+        return results.flatMap {
+            it.branch.newPrimes
         }
     }
 
-    private fun renderInitSection(
-        builder: IndentingBuilder,
-        allVars: List<VariableDeclaration>,
-        branches: List<NuxmvBranch>,
-        declaredInitial: Map<VariableDeclaration, String>,
-    ) {
-        builder.line("INIT")
-        builder.indented {
-            val rendered = if (branches.isEmpty()) {
-                listOf(
-                    finalizeInitBindings(allVars, NuxmvBranch(), declaredInitial),
-                )
-            } else {
-                branches.map { branch ->
-                    val finalize = finalizeInitBindings(allVars, branch, declaredInitial)
-                    val parts = branch.constraints + finalize
-                    parts.filter {
-                        it.isNotEmpty()
-                    }.joinToString(" & ") {
-                        "($it)"
-                    }.ifEmpty { "TRUE" }
-                }
-            }
-            line(
-                rendered.joinToString(" | ") {
-                    "($it)"
-                },
-            )
+    private fun allInputVariables(results: List<NuxmvBranchResult>): List<NuxmvIVariable> {
+        return results.flatMap {
+            it.inputVariables
         }
     }
 
-    private fun renderTransSection(
-        builder: IndentingBuilder,
-        allVars: List<VariableDeclaration>,
-        branches: List<NuxmvBranch>,
-    ) {
-        builder.line("TRANS")
-        builder.indented {
-            val rendered = if (branches.isEmpty()) {
-                listOf(finalizeTransBindings(allVars, NuxmvBranch()))
-            } else {
-                branches.map { branch ->
-                    val finalize = finalizeTransBindings(allVars, branch)
-                    val parts = branch.constraints + finalize
-                    parts.filter { it.isNotEmpty() }.joinToString(" & ") { "($it)" }
-                        .ifEmpty { "TRUE" }
-                }
-            }
-            line(rendered.joinToString(" | ") { "($it)" })
-        }
-    }
-
-    private fun seedInitBranch(
-        allVars: List<VariableDeclaration>,
-        declaredInitial: Map<VariableDeclaration, String>,
-    ): NuxmvBranch {
-        val constraints = mutableListOf<String>()
-        val currentPrime = mutableMapOf<VariableDeclaration, String>()
-        val newPrimes = mutableListOf<NuxmvPrimedDecl>()
-        for (variable in allVars) {
-            val base = nuxmvVariableTransformer.nameOf(variable)
-            val name = "${base}__init_seed_0"
-            val primed = NuxmvPrimedDecl(name = name, variable = variable)
-            newPrimes += primed
-            currentPrime[variable] = name
-            declaredInitial[variable]?.let { initExpr -> constraints += "$name = $initExpr" }
-        }
-        return NuxmvBranch(
-            constraints = constraints,
-            currentPrime = currentPrime,
-            newPrimes = newPrimes,
-        )
-    }
-
-    private fun finalizeInitBindings(
-        allVars: List<VariableDeclaration>,
-        branch: NuxmvBranch,
-        declaredInitial: Map<VariableDeclaration, String>,
-    ): String {
-        val parts = mutableListOf<String>()
-        for (variable in allVars) {
-            val name = nuxmvVariableTransformer.nameOf(variable)
-            val rhs = branch.currentPrime[variable]
-            if (rhs != null && rhs != name) {
-                parts += "$name = $rhs"
-            } else {
-                declaredInitial[variable]?.let { parts += "$name = $it" }
-            }
-        }
-        return parts.joinToString(" & ")
-    }
-
-    private fun finalizeTransBindings(
-        allVars: List<VariableDeclaration>,
-        branch: NuxmvBranch,
-    ): String {
-        val parts = mutableListOf<String>()
-        for (variable in allVars) {
-            val name = nuxmvVariableTransformer.nameOf(variable)
-            val rhs = branch.currentPrime[variable] ?: name
-            parts += "next($name) = $rhs"
-        }
-        return parts.joinToString(" & ")
-    }
-
-    private fun renderType(variable: NuxmvVariable): String {
-        return when (variable.kind) {
-            NuxmvVariableKind.Integer -> "integer"
-            NuxmvVariableKind.Boolean -> "boolean"
-            NuxmvVariableKind.Enum -> {
-                val enum = variable.enumDeclaration
-                    ?: error("Enum variable ${variable.name} has no enum declaration")
-                enum.literals.joinToString(", ", prefix = "{ ", postfix = " }") { it.name }
-            }
+    private fun allFrozenVariables(results: List<NuxmvBranchResult>): List<NuxmvFrozenVariable> {
+        return results.flatMap {
+            it.frozenVariables
         }
     }
 }

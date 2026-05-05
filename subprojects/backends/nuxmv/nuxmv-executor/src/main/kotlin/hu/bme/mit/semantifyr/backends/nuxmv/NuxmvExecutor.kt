@@ -12,7 +12,7 @@ import hu.bme.mit.semantifyr.backends.nuxmv.execution.ShellBasedNuxmvExecutor
 import java.io.File
 
 @JvmField
-val NuxmvExecutorKey = ExecutorKey<NuxmvExecutor>(
+val NuxmvExecutorKey = ExecutorKey(
     name = "nuxmv",
     unavailableHints = listOf(
         "Download nuXmv from https://nuxmv.fbk.eu/download.html and add its bin folder to PATH.",

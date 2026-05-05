@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.backends.nuxmv.trace
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
@@ -21,14 +20,13 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
-@VerificationScoped
 class NuxmvInlinedOxstsWitnessTransformer @Inject constructor(
-    private val variableTransformer: NuxmvVariableTransformer,
+    private val nuxmvVariableTransformer: NuxmvVariableTransformer,
 ) {
 
     fun transform(inlinedOxsts: InlinedOxsts, trace: NuxmvTrace): InlinedWitness {
         val nameToVar = inlinedOxsts.variables.associateBy {
-            variableTransformer.nameOf(it)
+            nuxmvVariableTransformer.nameOf(it)
         }
 
         val running = mutableMapOf<VariableDeclaration, Expression>()
@@ -56,7 +54,7 @@ class NuxmvInlinedOxstsWitnessTransformer @Inject constructor(
     }
 
     private fun parseValue(variable: VariableDeclaration, raw: String): Expression? {
-        val kind = variableKind(variable) ?: return null
+        val kind = nuxmvVariableTransformer.describe(variable).kind
         return when (kind) {
             NuxmvVariableKind.Integer -> raw.toIntOrNull()?.let {
                 OxstsFactory.createLiteralInteger(it)
@@ -69,16 +67,10 @@ class NuxmvInlinedOxstsWitnessTransformer @Inject constructor(
             NuxmvVariableKind.Enum -> {
                 val enumDeclaration = variable.typeSpecification?.domain as? EnumDeclaration ?: return null
                 val literal = enumDeclaration.literals.firstOrNull {
-                    variableTransformer.sanitizeEnumLiteral(it) == raw
+                    nuxmvVariableTransformer.sanitizeEnumLiteral(it) == raw
                 } ?: return null
                 OxstsFactory.createElementReference(literal)
             }
         }
-    }
-
-    private fun variableKind(variable: VariableDeclaration): NuxmvVariableKind? {
-        return runCatching {
-            variableTransformer.describe(variable).kind
-        }.getOrNull()
     }
 }

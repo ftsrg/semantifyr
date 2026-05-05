@@ -21,33 +21,30 @@ enum class NuxmvVariableKind {
 }
 
 data class NuxmvVariable(
-    val declaration: VariableDeclaration,
     val name: String,
     val kind: NuxmvVariableKind,
     val enumDeclaration: EnumDeclaration?,
 )
 
 @VerificationScoped
-class NuxmvVariableTransformer {
-    @Inject
-    private lateinit var builtinSymbolResolver: BuiltinSymbolResolver
+class NuxmvVariableTransformer @Inject constructor(
+    private val builtinSymbolResolver: BuiltinSymbolResolver,
+) {
 
     private val mangler = BackendNameMangler()
+    private val descriptionCache = mutableMapOf<VariableDeclaration, NuxmvVariable>()
 
     fun nameOf(variableDeclaration: VariableDeclaration): String {
         return mangler.nameOf(variableDeclaration)
     }
 
     fun describe(variableDeclaration: VariableDeclaration): NuxmvVariable {
-        val name = nameOf(variableDeclaration)
-        val kind = resolveKind(variableDeclaration)
-        val enumDecl = (variableDeclaration.typeSpecification?.domain as? EnumDeclaration)
-        return NuxmvVariable(
-            declaration = variableDeclaration,
-            name = name,
-            kind = kind,
-            enumDeclaration = enumDecl,
-        )
+        return descriptionCache.getOrPut(variableDeclaration) {
+            val name = nameOf(variableDeclaration)
+            val kind = resolveKind(variableDeclaration)
+            val enumDeclaration = variableDeclaration.typeSpecification?.domain as? EnumDeclaration
+            NuxmvVariable(name, kind, enumDeclaration)
+        }
     }
 
     private fun resolveKind(variableDeclaration: VariableDeclaration): NuxmvVariableKind {

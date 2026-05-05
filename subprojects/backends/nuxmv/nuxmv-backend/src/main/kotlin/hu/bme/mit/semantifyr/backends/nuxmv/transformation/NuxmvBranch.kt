@@ -8,33 +8,17 @@ package hu.bme.mit.semantifyr.backends.nuxmv.transformation
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
-data class NuxmvIVar(
+data class NuxmvIVariable(
     val name: String,
-    val typeSmv: String,
+    val smvType: String,
 )
 
-data class NuxmvFrozenVar(
+data class NuxmvFrozenVariable(
     val name: String,
-    val typeSmv: String,
+    val smvType: String,
 )
 
-fun choiceIVar(
-    name: String,
-    branchCount: Int,
-): NuxmvIVar {
-    require(branchCount >= 2) { "choiceIVar branchCount must be >= 2 (got $branchCount)" }
-    return NuxmvIVar(name = name, typeSmv = "0..${branchCount - 1}")
-}
-
-fun choiceFrozenVar(
-    name: String,
-    branchCount: Int,
-): NuxmvFrozenVar {
-    require(branchCount >= 2) { "choiceFrozenVar branchCount must be >= 2 (got $branchCount)" }
-    return NuxmvFrozenVar(name = name, typeSmv = "0..${branchCount - 1}")
-}
-
-data class NuxmvPrimedDecl(
+data class NuxmvPrimedDeclaration(
     val name: String,
     val variable: VariableDeclaration,
 )
@@ -42,7 +26,11 @@ data class NuxmvPrimedDecl(
 data class NuxmvBranch(
     val constraints: List<String> = emptyList(),
     val currentPrime: Map<VariableDeclaration, String> = emptyMap(),
-    val newPrimes: List<NuxmvPrimedDecl> = emptyList(),
-    val ivars: List<NuxmvIVar> = emptyList(),
-    val frozenVars: List<NuxmvFrozenVar> = emptyList(),
+    val newPrimes: List<NuxmvPrimedDeclaration> = emptyList(),
+)
+
+data class NuxmvBranchResult(
+    val branch: NuxmvBranch,
+    val inputVariables: List<NuxmvIVariable>,
+    val frozenVariables: List<NuxmvFrozenVariable>,
 )

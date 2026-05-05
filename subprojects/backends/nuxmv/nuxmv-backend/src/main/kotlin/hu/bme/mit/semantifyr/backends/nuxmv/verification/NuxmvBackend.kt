@@ -26,18 +26,19 @@ import hu.bme.mit.semantifyr.backends.nuxmv.NuxmvExecutor
 import hu.bme.mit.semantifyr.backends.nuxmv.NuxmvExecutorKey
 import hu.bme.mit.semantifyr.backends.nuxmv.artifacts.NuxmvArtifactManager
 import hu.bme.mit.semantifyr.backends.nuxmv.trace.NuxmvInlinedOxstsWitnessTransformer
+import hu.bme.mit.semantifyr.backends.nuxmv.trace.NuxmvLogVerdictParser
 import hu.bme.mit.semantifyr.backends.nuxmv.trace.NuxmvTraceParser
+import hu.bme.mit.semantifyr.backends.nuxmv.trace.NuxmvVerdict
 import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvArtifacts
+import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvExpressionVisitor
 import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvModelTransformer
+import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvOperationVisitor
 import hu.bme.mit.semantifyr.logging.info
-import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 
 class NuxmvBackend : VerificationBackend<NuxmvConfig>() {
-    override val id: String = "nuxmv"
+    override val id = "nuxmv"
     override val executorKey = NuxmvExecutorKey
-
-    private val logger by loggerFactory()
 
     override suspend fun verify(
         parentInjector: Injector,
@@ -57,10 +58,12 @@ class NuxmvBackend : VerificationBackend<NuxmvConfig>() {
     }
 }
 
-internal class NuxmvBackendModule : AbstractModule() {
+class NuxmvBackendModule : AbstractModule() {
     override fun configure() {
         bindScope(VerificationScoped::class.java, VerificationScope)
         install(FactoryModuleBuilder().build(NuxmvVerificationContext.Factory::class.java))
+        install(FactoryModuleBuilder().build(NuxmvExpressionVisitor.Factory::class.java))
+        install(FactoryModuleBuilder().build(NuxmvOperationVisitor.Factory::class.java))
 
         super.configure()
     }
@@ -71,9 +74,10 @@ class NuxmvVerificationContext @AssistedInject constructor(
     @param:Assisted override val executor: NuxmvExecutor,
     @Assisted request: BackendVerificationRequest,
     private val nuxmvModelTransformer: NuxmvModelTransformer,
-    private val traceParser: NuxmvTraceParser,
-    private val witnessTransformer: NuxmvInlinedOxstsWitnessTransformer,
-) : VerificationContext<NuxmvArtifacts, NuxmvVerificationContext.NuxmvVerdict>(
+    private val nuxmvTraceParser: NuxmvTraceParser,
+    private val nuxmvLogVerdictParser: NuxmvLogVerdictParser,
+    private val nuxmvInlinedOxstsWitnessTransformer: NuxmvInlinedOxstsWitnessTransformer,
+) : VerificationContext<NuxmvArtifacts, NuxmvVerdict>(
     backendId = "nuxmv:${config.id}",
     request = request,
 ) {
@@ -119,7 +123,7 @@ class NuxmvVerificationContext @AssistedInject constructor(
         return artifactManager.logFile.takeIf {
             it.exists()
         }?.useLines {
-            detectVerdict(it)
+            nuxmvLogVerdictParser.parse(it)
         }
     }
 
@@ -140,56 +144,13 @@ class NuxmvVerificationContext @AssistedInject constructor(
         if (rawVerdict != NuxmvVerdict.False) {
             return null
         }
-        val trace = traceParser.parse(artifactManager.logFile)
+        val trace = nuxmvTraceParser.parse(artifactManager.logFile)
         if (trace == null) {
             logger.warn { "[$backendId] no trace parseable from ${artifactManager.logFile.name}. Witness will be omitted" }
             return null
         }
         logger.info { "[$backendId] parsed nuXmv trace with ${trace.states.size} state(s). Building witness" }
-        return witnessTransformer.transform(request.inlinedOxsts, trace)
-    }
-
-    private fun detectVerdict(lines: Sequence<String>): NuxmvVerdict? {
-        var inBlock = false
-        for (raw in lines) {
-            val lower = raw.lowercase()
-            val opensBlock = lower.trimStart().startsWith("-- invariant") ||
-                lower.trimStart().startsWith("-- specification")
-            if (opensBlock) {
-                if (lower.trimEnd().endsWith("is true")) {
-                    return NuxmvVerdict.True
-                }
-                if (lower.trimEnd().endsWith("is false")) {
-                    return NuxmvVerdict.False
-                }
-                inBlock = true
-                continue
-            }
-            if (inBlock) {
-                val trimmed = lower.trimEnd()
-                if (trimmed.endsWith("is true")) {
-                    return NuxmvVerdict.True
-                }
-                if (trimmed.endsWith("is false")) {
-                    return NuxmvVerdict.False
-                }
-            }
-        }
-        return null
-    }
-
-    enum class NuxmvVerdict {
-        True,
-        False,
-        ;
-
-        fun invert(): NuxmvVerdict {
-            return if (this == True) {
-                False
-            } else {
-                True
-            }
-        }
+        return nuxmvInlinedOxstsWitnessTransformer.transform(request.inlinedOxsts, trace)
     }
 
     interface Factory {

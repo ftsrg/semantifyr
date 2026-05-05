@@ -14,7 +14,7 @@ import hu.bme.mit.semantifyr.backends.nuxmv.NuxmvExecutor
 class ShellBasedNuxmvExecutor :
     ShellBasedBackendExecutor(),
     NuxmvExecutor {
-    override val binaryName: String = "nuXmv"
+    override val binaryName = "nuXmv"
 
     override fun isAvailable(): Boolean {
         return probeAvailability(probeArgs = listOf("-h"), expectedExitCode = 2)

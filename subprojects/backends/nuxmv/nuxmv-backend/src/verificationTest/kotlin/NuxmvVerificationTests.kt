@@ -8,7 +8,6 @@ import hu.bme.mit.semantifyr.backends.nuxmv.execution.ShellBasedNuxmvExecutor
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackend
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
-import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
@@ -19,7 +18,6 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import kotlin.io.path.Path
 
-@InjectWithOxsts
 class NuxmvVerificationTests {
 
     companion object {
