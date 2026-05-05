@@ -12,7 +12,6 @@ import hu.bme.mit.semantifyr.backend.transformation.BackendNameMangler
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
 enum class SpinVariableKind {
@@ -22,43 +21,30 @@ enum class SpinVariableKind {
 }
 
 data class SpinVariable(
-    val declaration: VariableDeclaration,
     val name: String,
     val kind: SpinVariableKind,
     val enumDeclaration: EnumDeclaration?,
-    val initialValue: String?,
 )
 
 @VerificationScoped
-class SpinVariableTransformer {
-    @Inject
-    private lateinit var builtinSymbolResolver: BuiltinSymbolResolver
-
-    @Inject
-    private lateinit var spinExpressionTransformer: SpinExpressionTransformer
+class SpinVariableTransformer @Inject constructor(
+    private val builtinSymbolResolver: BuiltinSymbolResolver,
+) {
 
     private val mangler = BackendNameMangler()
+    private val descriptionCache = mutableMapOf<VariableDeclaration, SpinVariable>()
 
     fun nameOf(variableDeclaration: VariableDeclaration): String {
         return mangler.nameOf(variableDeclaration)
     }
 
     fun describe(variableDeclaration: VariableDeclaration): SpinVariable {
-        val name = nameOf(variableDeclaration)
-        val kind = resolveKind(variableDeclaration)
-        val enumDecl = (variableDeclaration.typeSpecification?.domain as? EnumDeclaration)
-        val initExpr = if (variableDeclaration is LocalVarDeclarationOperation) {
-            null // locals are declared inline where they appear; don't emit a global init
-        } else {
-            variableDeclaration.expression?.let { spinExpressionTransformer.transform(it) }
+        return descriptionCache.getOrPut(variableDeclaration) {
+            val name = nameOf(variableDeclaration)
+            val kind = resolveKind(variableDeclaration)
+            val enumDeclaration = variableDeclaration.typeSpecification?.domain as? EnumDeclaration
+            SpinVariable(name, kind, enumDeclaration)
         }
-        return SpinVariable(
-            declaration = variableDeclaration,
-            name = name,
-            kind = kind,
-            enumDeclaration = enumDecl,
-            initialValue = initExpr,
-        )
     }
 
     private fun resolveKind(variableDeclaration: VariableDeclaration): SpinVariableKind {

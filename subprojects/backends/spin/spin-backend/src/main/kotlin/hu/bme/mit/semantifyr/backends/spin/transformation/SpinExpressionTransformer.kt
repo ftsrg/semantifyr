@@ -33,20 +33,15 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.xtext.EcoreUtil2
 
-class SpinExpressionTransformer : BackendExpressionVisitor<String>() {
+class SpinExpressionTransformer @Inject constructor(
+    private val spinVariableTransformer: SpinVariableTransformer,
+    private val expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider,
+    private val builtinSymbolResolver: BuiltinSymbolResolver,
+) : BackendExpressionVisitor<String>() {
 
-    override val backendName: String = "Spin"
-
-    @Inject
-    private lateinit var spinVariableTransformer: SpinVariableTransformer
-
-    @Inject
-    private lateinit var expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider
-
-    @Inject
-    private lateinit var builtinSymbolResolver: BuiltinSymbolResolver
-
-    fun transform(expression: Expression): String = visit(expression)
+    fun transform(expression: Expression): String {
+        return visit(expression)
+    }
 
     override fun visit(expression: ComparisonOperator): String {
         val left = visit(expression.left)
@@ -80,7 +75,6 @@ class SpinExpressionTransformer : BackendExpressionVisitor<String>() {
         val op = when (expression.op) {
             BooleanOp.AND -> "&&"
             BooleanOp.OR -> "||"
-            // Promela has no native XOR for bools; emulate as inequality of bools.
             BooleanOp.XOR -> "!="
         }
         return "($left $op $right)"
@@ -95,11 +89,21 @@ class SpinExpressionTransformer : BackendExpressionVisitor<String>() {
         return "($op$body)"
     }
 
-    override fun visit(expression: NegationOperator): String = "!(${visit(expression.body)})"
+    override fun visit(expression: NegationOperator): String {
+        return "!(${visit(expression.body)})"
+    }
 
-    override fun visit(expression: LiteralInteger): String = expression.value.toString()
+    override fun visit(expression: LiteralInteger): String {
+        return expression.value.toString()
+    }
 
-    override fun visit(expression: LiteralBoolean): String = if (expression.isValue) "true" else "false"
+    override fun visit(expression: LiteralBoolean): String {
+        return if (expression.isValue) {
+            "true"
+        } else {
+            "false"
+        }
+    }
 
     override fun visit(expression: LiteralReal): String {
         throw BackendUnsupportedException("Spin does not support real literals")
@@ -121,15 +125,17 @@ class SpinExpressionTransformer : BackendExpressionVisitor<String>() {
         val guard = visit(expression.guard)
         val then = visit(expression.then)
         val orElse = visit(expression.`else`)
-        val inLtl = EcoreUtil2.getContainerOfType(expression, TemporalOperator::class.java) != null
-        if (!inLtl) {
-            // Inside a Promela transition, the ternary form is fine for any value type.
+        if (!isInsideTemporal(expression)) {
             return "(($guard) -> ($then) : ($orElse))"
         }
         if (!isBooleanTyped(expression)) {
             throw BackendUnsupportedException("Spin does not support non-boolean if-then-else inside a property body")
         }
         return "((($guard) && ($then)) || ((!($guard)) && ($orElse)))"
+    }
+
+    private fun isInsideTemporal(expression: Expression): Boolean {
+        return EcoreUtil2.getContainerOfType(expression, TemporalOperator::class.java) != null
     }
 
     private fun isBooleanTyped(expression: Expression): Boolean {

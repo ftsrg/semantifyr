@@ -27,18 +27,18 @@ import hu.bme.mit.semantifyr.backends.spin.SpinExecutorKey
 import hu.bme.mit.semantifyr.backends.spin.SpinReplaySpecification
 import hu.bme.mit.semantifyr.backends.spin.artifacts.SpinArtifactManager
 import hu.bme.mit.semantifyr.backends.spin.trace.SpinInlinedOxstsWitnessTransformer
+import hu.bme.mit.semantifyr.backends.spin.trace.SpinLogVerdictParser
 import hu.bme.mit.semantifyr.backends.spin.trace.SpinTraceParser
+import hu.bme.mit.semantifyr.backends.spin.trace.SpinVerdict
 import hu.bme.mit.semantifyr.backends.spin.transformation.SpinArtifacts
 import hu.bme.mit.semantifyr.backends.spin.transformation.SpinModelTransformer
+import hu.bme.mit.semantifyr.backends.spin.transformation.SpinOperationVisitor
 import hu.bme.mit.semantifyr.logging.info
-import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 
 class SpinBackend : VerificationBackend<SpinConfig>() {
-    override val id: String = "spin"
+    override val id = "spin"
     override val executorKey = SpinExecutorKey
-
-    private val logger by loggerFactory()
 
     override suspend fun verify(
         parentInjector: Injector,
@@ -58,10 +58,11 @@ class SpinBackend : VerificationBackend<SpinConfig>() {
     }
 }
 
-internal class SpinBackendModule : AbstractModule() {
+class SpinBackendModule : AbstractModule() {
     override fun configure() {
         bindScope(VerificationScoped::class.java, VerificationScope)
         install(FactoryModuleBuilder().build(SpinVerificationContext.Factory::class.java))
+        install(FactoryModuleBuilder().build(SpinOperationVisitor.Factory::class.java))
 
         super.configure()
     }
@@ -72,9 +73,10 @@ class SpinVerificationContext @AssistedInject constructor(
     @param:Assisted override val executor: SpinExecutor,
     @Assisted request: BackendVerificationRequest,
     private val spinModelTransformer: SpinModelTransformer,
-    private val traceParser: SpinTraceParser,
-    private val witnessTransformer: SpinInlinedOxstsWitnessTransformer,
-) : VerificationContext<SpinArtifacts, SpinVerificationContext.SpinVerdict>(
+    private val spinTraceParser: SpinTraceParser,
+    private val spinLogVerdictParser: SpinLogVerdictParser,
+    private val spinInlinedOxstsWitnessTransformer: SpinInlinedOxstsWitnessTransformer,
+) : VerificationContext<SpinArtifacts, SpinVerdict>(
     backendId = "spin:${config.id}",
     request = request,
 ) {
@@ -106,9 +108,11 @@ class SpinVerificationContext @AssistedInject constructor(
             error("spin execution failed with exit code ${result.exitCode}")
         }
 
-        return artifactManager.logFile
-            .takeIf { it.exists() }
-            ?.useLines { lines -> detectVerdict(lines) }
+        return artifactManager.logFile.takeIf {
+            it.exists()
+        }?.useLines {
+            spinLogVerdictParser.parse(it)
+        }
     }
 
     override fun interpret(rawVerdict: SpinVerdict?, artifacts: SpinArtifacts): VerificationVerdict {
@@ -139,49 +143,13 @@ class SpinVerificationContext @AssistedInject constructor(
             logger.warn { "[$backendId] spin replay failed with exit code ${replayResult.exitCode}; witness not produced" }
             return null
         }
-        val trace = traceParser.parse(artifactManager.replayLogFile)
+        val trace = spinTraceParser.parse(artifactManager.replayLogFile)
         if (trace == null) {
             logger.warn { "[$backendId] no parseable steps in spin replay; witness not produced" }
             return null
         }
         logger.info { "[$backendId] parsed Spin trace with ${trace.states.size} state(s); building witness" }
-        return witnessTransformer.transform(request.inlinedOxsts, trace)
-    }
-
-    private fun detectVerdict(lines: Sequence<String>): SpinVerdict? {
-        var explicitFailure = false
-        var explicitSuccess = false
-        for (raw in lines) {
-            val line = raw.trim()
-            val lower = line.lowercase()
-            // Counterexample signals - either LTL claim violated or liveness acceptance cycle found.
-            if ("violated" in lower || "acceptance cycle" in lower || "assertion violated" in lower) {
-                explicitFailure = true
-            }
-            // Spin's summary line after a clean run. Reliable when combined with absence of failure signals.
-            if (lower.contains("errors: 0")) {
-                explicitSuccess = true
-            }
-        }
-        return when {
-            explicitFailure -> SpinVerdict.False
-            explicitSuccess -> SpinVerdict.True
-            else -> null
-        }
-    }
-
-    enum class SpinVerdict {
-        True,
-        False,
-        ;
-
-        fun invert(): SpinVerdict {
-            return if (this == True) {
-                False
-            } else {
-                True
-            }
-        }
+        return spinInlinedOxstsWitnessTransformer.transform(request.inlinedOxsts, trace)
     }
 
     interface Factory {

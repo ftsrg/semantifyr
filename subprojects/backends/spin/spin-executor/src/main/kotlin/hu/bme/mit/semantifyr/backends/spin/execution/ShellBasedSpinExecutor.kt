@@ -15,7 +15,7 @@ import hu.bme.mit.semantifyr.backends.spin.SpinReplaySpecification
 class ShellBasedSpinExecutor :
     ShellBasedBackendExecutor(),
     SpinExecutor {
-    override val binaryName: String = "spin"
+    override val binaryName = "spin"
 
     override suspend fun execute(specification: SpinExecutionSpecification): SpinExecutionResult {
         val args = listOf("-search") + specification.extraArguments + listOf(specification.modelFileName)

@@ -80,11 +80,15 @@ class SpinTraceParser {
     }
 
     private fun splitAssignment(line: String): Pair<String, String>? {
-        val idx = line.indexOf(" = ")
-        if (idx < 0) return null
-        val name = line.substring(0, idx).trim()
-        val value = line.substring(idx + 3).trim()
-        if (name.isEmpty() || value.isEmpty()) return null
+        val index = line.indexOf(" = ")
+        if (index < 0) {
+            return null
+        }
+        val name = line.substring(0, index).trim()
+        val value = line.substring(index + 3).trim()
+        if (name.isEmpty() || value.isEmpty()) {
+            return null
+        }
         return name to value
     }
 }
