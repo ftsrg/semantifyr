@@ -7,9 +7,8 @@
 package hu.bme.mit.semantifyr.frontends.gamma.lang.gamma;
 
 import com.google.common.collect.Iterables;
-import org.eclipse.emf.ecore.EObject;
-
 import java.util.List;
+import org.eclipse.emf.ecore.EObject;
 
 public class GammaUtils {
 
@@ -36,9 +35,7 @@ public class GammaUtils {
     }
 
     public static Iterable<EObject> getAllMembers(InterfaceDeclaration declaration) {
-        return Iterables.concat(
-                declaration.getEvents()
-        );
+        return Iterables.concat(declaration.getEvents());
     }
 
     public static Iterable<EObject> getAllMembers(StatechartDeclaration declaration) {
@@ -46,26 +43,18 @@ public class GammaUtils {
                 declaration.getRegions(),
                 declaration.getTimeouts(),
                 declaration.getVariables(),
-                declaration.getPorts()
-        );
+                declaration.getPorts());
     }
 
     public static Iterable<EObject> getAllMembers(SyncComponentDeclaration declaration) {
-        return Iterables.concat(
-                declaration.getPorts(),
-                declaration.getComponents()
-        );
+        return Iterables.concat(declaration.getPorts(), declaration.getComponents());
     }
 
     public static Iterable<EObject> getAllMembers(Region declaration) {
-        return Iterables.concat(
-                declaration.getStates(),
-                declaration.getTransitions()
-        );
+        return Iterables.concat(declaration.getStates(), declaration.getTransitions());
     }
 
     public static Iterable<EObject> getAllMembers(State declaration) {
         return Iterables.concat(declaration.getRegions());
     }
-
 }

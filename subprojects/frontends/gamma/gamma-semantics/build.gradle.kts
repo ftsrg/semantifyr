@@ -7,6 +7,8 @@
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.application")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
+    id("hu.bme.mit.semantifyr.gradle.conventions.verification")
+    id("hu.bme.mit.semantifyr.gradle.conventions.integration")
     kotlin("jvm")
 }
 
@@ -16,12 +18,39 @@ repositories {
 
 dependencies {
     api(project(":gamma.lang"))
+    api(project(":verifier"))
 
-    testRuntimeOnly(libs.slf4j.log4j)
+    implementation(project(":logging"))
+    implementation(libs.kotlinx.coroutines.core)
 
     testFixturesApi(project(":gamma.lang"))
     testFixturesApi(testFixtures(project(":gamma.lang")))
+}
 
-    testFixturesApi(project(":xsts-verifier"))
-    testFixturesApi(testFixtures(project(":xsts-verifier")))
+val syncGammaLibrary by tasks.registering(Sync::class) {
+    from(layout.projectDirectory.dir("../models/libraries"))
+    into(layout.buildDirectory.dir("libraries"))
+}
+
+val syncGammaTestModels by tasks.registering(Sync::class) {
+    from(layout.projectDirectory.dir("../models/examples"))
+    into(layout.buildDirectory.dir("test-models"))
+}
+
+tasks.processResources {
+    from(syncGammaLibrary)
+}
+
+tasks.withType<Test>().configureEach {
+    inputs.files(syncGammaTestModels)
+}
+
+testing {
+    suites {
+        val verificationTest by getting(JvmTestSuite::class) {
+            dependencies {
+                implementation(project(":portfolios"))
+            }
+        }
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -10,68 +10,34 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.GammaRuntimeModule;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.GammaStandaloneSetup;
-import org.eclipse.lsp4j.jsonrpc.Launcher;
-import org.eclipse.lsp4j.services.LanguageClient;
-import org.eclipse.xtext.ide.server.LanguageServerImpl;
-import org.eclipse.xtext.ide.server.ServerModule;
-import org.eclipse.xtext.util.Modules2;
-
+import hu.bme.mit.semantifyr.frontends.gamma.lang.ide.server.GammaServerModule;
+import hu.bme.mit.semantifyr.lang.ide.LanguageServerLauncher;
+import hu.bme.mit.semantifyr.lang.ide.LspCliOptions;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
+import org.eclipse.lsp4j.services.LanguageClient;
+import org.eclipse.xtext.util.Modules2;
 
-/**
- * Initialization support for running Xtext languages as language servers.
- */
 public class GammaIdeSetup extends GammaStandaloneSetup {
+
+    private final LspCliOptions cliOptions;
+
+    public GammaIdeSetup(LspCliOptions cliOptions) {
+        this.cliOptions = cliOptions;
+    }
 
     @Override
     public Injector createInjector() {
-        return Guice.createInjector(Modules2.mixin(new ServerModule(), new GammaRuntimeModule(), new GammaIdeModule()));
+        return Guice.createInjector(Modules2.mixin(
+                new GammaServerModule(), new GammaRuntimeModule(), new GammaIdeModule(), cliOptions.asModule()));
     }
 
     public static void main(String[] args) throws InterruptedException, ExecutionException, IOException {
         Files.deleteIfExists(Path.of("gamma.lsp.log"));
-
-        if (args.length == 2) {
-            if (args[0].equals("--network")) {
-                int port = Integer.parseInt(args[1]);
-                runOnPort(port);
-                return;
-            }
-        }
-
-        runOnStdIo();
+        var parsed = LspCliOptions.parse(args);
+        var injector = new GammaIdeSetup(parsed.options()).createInjectorAndDoEMFRegistration();
+        LanguageServerLauncher.launch(injector, LanguageClient.class, parsed.remaining());
     }
-
-    private static void runOnStdIo() throws ExecutionException, InterruptedException {
-        Injector injector = new GammaIdeSetup().createInjectorAndDoEMFRegistration();
-        var languageServer = injector.getInstance(LanguageServerImpl.class);
-
-        var launcher = Launcher.createLauncher(languageServer, LanguageClient.class, System.in, System.out);
-        languageServer.connect(launcher.getRemoteProxy());
-        launcher.startListening().get();
-    }
-
-    private static void runOnPort(int port) throws IOException, ExecutionException, InterruptedException {
-        var injector = new GammaIdeSetup().createInjectorAndDoEMFRegistration();
-        var languageServer = injector.getInstance(LanguageServerImpl.class);
-
-        try (var serverSocket = new ServerSocket(port)) {
-            System.out.println("LSP server listening on port " + port);
-            try (var clientSocket = serverSocket.accept()) {
-                System.out.println("Client connected from " + clientSocket.getRemoteSocketAddress());
-
-                var in = clientSocket.getInputStream();
-                var out = clientSocket.getOutputStream();
-
-                var launcher = Launcher.createLauncher(languageServer, LanguageClient.class, in, out);
-                languageServer.connect(launcher.getRemoteProxy());
-                launcher.startListening().get();
-            }
-        }
-    }
-
 }
