@@ -37,6 +37,9 @@ jobs:
       - name: Gradle build
         shell: bash
         run: ./gradlew build
+      - name: Run integration tests
+        shell: bash
+        run: ./gradlew integrationTest
       - name: Merge coverage reports
         if: ${{ matrix.os == 'ubuntu-latest' }}
         shell: bash
@@ -46,7 +49,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: jacoco-coverage-reports
-          path: build/reports/jacoco/**/html/
+          path: build/reports/jacoco/mergedJacocoReport/html/
           if-no-files-found: warn
           retention-days: 30
       - name: Publish to SonarCloud

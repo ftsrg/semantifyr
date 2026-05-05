@@ -42,10 +42,26 @@ reporting {
             testSuiteName = "integrationTest"
         }
 
-        val mergedJacocoReport by tasks.registering {
-            inputs.files(mergedJacocoTestReport.reportTask.map { it.outputs})
-            inputs.files(mergedJacocoVerificationTestReport.reportTask.get().outputs)
-            inputs.files(mergedJacocoIntegrationTestReport.reportTask.get().outputs)
+        val perSuiteReportTasks = listOf(
+            mergedJacocoTestReport.reportTask,
+            mergedJacocoVerificationTestReport.reportTask,
+            mergedJacocoIntegrationTestReport.reportTask,
+        )
+
+        val mergedJacocoReport by tasks.registering(JacocoReport::class) {
+            group = "verification"
+            description = "Aggregate code coverage across test, verificationTest, and integrationTest suites"
+
+            perSuiteReportTasks.forEach { reportTask ->
+                executionData.from(reportTask.map { it.executionData })
+                sourceDirectories.from(reportTask.map { it.sourceDirectories })
+                classDirectories.from(reportTask.map { it.classDirectories })
+            }
+
+            reports {
+                xml.required = true
+                html.required = true
+            }
         }
     }
 }
