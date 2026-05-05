@@ -24,7 +24,7 @@ dependencies {
     subprojects.forEach { subproject ->
         jvmConventionIds.forEach { conventionId ->
             subproject.plugins.withId(conventionId) {
-                add("jacocoAggregation", subproject)
+                jacocoAggregation(subproject)
             }
         }
     }
@@ -32,14 +32,20 @@ dependencies {
 
 reporting {
     reports {
-        val testCodeCoverageReport by creating(JacocoCoverageReport::class) {
+        val mergedJacocoTestReport by creating(JacocoCoverageReport::class) {
             testSuiteName = "test"
         }
-        val verificationTestCodeCoverageReport by creating(JacocoCoverageReport::class) {
+        val mergedJacocoVerificationTestReport by creating(JacocoCoverageReport::class) {
             testSuiteName = "verificationTest"
         }
-        val conformanceTestCodeCoverageReport by creating(JacocoCoverageReport::class) {
-            testSuiteName = "conformanceTest"
+        val mergedJacocoIntegrationTestReport by creating(JacocoCoverageReport::class) {
+            testSuiteName = "integrationTest"
+        }
+
+        val mergedJacocoReport by tasks.registering {
+            inputs.files(mergedJacocoTestReport.reportTask.map { it.outputs})
+            inputs.files(mergedJacocoVerificationTestReport.reportTask.get().outputs)
+            inputs.files(mergedJacocoIntegrationTestReport.reportTask.get().outputs)
         }
     }
 }
