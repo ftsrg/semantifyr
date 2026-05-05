@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.codelens;
 
 import com.google.inject.Inject;
+import hu.bme.mit.semantifyr.lang.ide.LspCliOptions;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands.*;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinersFinder;
@@ -16,7 +17,11 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration;
 import java.util.ArrayList;
 import java.util.List;
-import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.CodeLens;
+import org.eclipse.lsp4j.CodeLensParams;
+import org.eclipse.lsp4j.Command;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.ide.server.Document;
 import org.eclipse.xtext.ide.server.codelens.ICodeLensResolver;
@@ -28,10 +33,13 @@ import org.eclipse.xtext.util.CancelIndicator;
 public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensService {
 
     @Inject
-    private InlineOxstsCommandHandler inlineOxstsCommandHandler;
+    private InlineClassCommandHandler inlineClassCommandHandler;
 
     @Inject
     private CompileInlinedOxstsCommandHandler compileInlinedOxstsCommandHandler;
+
+    @Inject
+    private VerifyInlinedOxstsCommandHandler verifyInlinedOxstsCommandHandler;
 
     @Inject
     private NavigateToRedefinedCommandHandler navigateToRedefinedCommandHandler;
@@ -48,6 +56,9 @@ public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensServic
     @Inject
     private RedefinersFinder redefinersFinder;
 
+    @Inject
+    private LspCliOptions cliOptions;
+
     @Override
     public CodeLens resolveCodeLens(
             Document document, XtextResource resource, CodeLens codeLens, CancelIndicator indicator) {
@@ -57,6 +68,10 @@ public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensServic
     @Override
     public List<? extends CodeLens> computeCodeLenses(
             Document document, XtextResource resource, CodeLensParams params, CancelIndicator indicator) {
+        if (cliOptions.codeLensMode() == LspCliOptions.CodeLensMode.NONE) {
+            return List.of();
+        }
+
         if (resource.getContents().isEmpty()) {
             return List.of();
         }
@@ -64,16 +79,7 @@ public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensServic
         var rootElement = resource.getContents().getFirst();
 
         if (rootElement instanceof InlinedOxsts inlinedOxsts) {
-            var codeLens = new CodeLens();
-            var command = new Command(
-                    compileInlinedOxstsCommandHandler.getTitle(),
-                    compileInlinedOxstsCommandHandler.getId(),
-                    compileInlinedOxstsCommandHandler.serializeArguments(inlinedOxsts));
-            codeLens.setCommand(command);
-            var node = NodeModelUtils.getNode(inlinedOxsts);
-            var start = new Position(node.getStartLine() - 1, 0);
-            codeLens.setRange(new Range(start, start));
-            return List.of(codeLens);
+            return List.of(createVerifyInlinedOxstsLens(inlinedOxsts), createCompileInlinedOxstsLens(inlinedOxsts));
         }
 
         var lenses = new ArrayList<CodeLens>();
@@ -81,17 +87,17 @@ public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensServic
         EcoreUtil2.getAllProperContents(resource, false).forEachRemaining(element -> {
             if (element instanceof ClassDeclaration classDeclaration) {
                 if (annotationHandler.isVerificationCase(classDeclaration)) {
-                    lenses.add(createCompileLense(classDeclaration, false));
-                    lenses.add(createCompileLense(classDeclaration, true));
+                    lenses.add(createCompileInlinedOxstsLens(classDeclaration, false));
+                    lenses.add(createCompileInlinedOxstsLens(classDeclaration, true));
                 }
             } else if (element instanceof RedefinableDeclaration redefinableDeclaration) {
                 if (redefinitionHandler.getRedefinedDeclaration(redefinableDeclaration) != null) {
-                    lenses.add(createNavigateToRedefinedLense(redefinableDeclaration));
+                    lenses.add(createNavigateToRedefinedLens(redefinableDeclaration));
                 }
                 if (!redefinersFinder
                         .getRedefinerDeclarations(redefinableDeclaration)
                         .isEmpty()) {
-                    lenses.add(createNavigateToRedefinersLense(redefinableDeclaration));
+                    lenses.add(createNavigateToRedefinersLens(redefinableDeclaration));
                 }
             }
         });
@@ -99,16 +105,43 @@ public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensServic
         return lenses;
     }
 
-    private CodeLens createCompileLense(ClassDeclaration classDeclaration, boolean serializeStep) {
+    private CodeLens createCompileInlinedOxstsLens(InlinedOxsts inlinedOxsts) {
+        var codeLens = new CodeLens();
+        var command = new Command(
+                compileInlinedOxstsCommandHandler.getTitle(),
+                compileInlinedOxstsCommandHandler.getId(),
+                compileInlinedOxstsCommandHandler.serializeArguments(inlinedOxsts));
+        codeLens.setCommand(command);
+        var node = NodeModelUtils.getNode(inlinedOxsts);
+        var start = new Position(node.getStartLine() - 1, 0);
+        codeLens.setRange(new Range(start, start));
+        return codeLens;
+    }
+
+    private CodeLens createVerifyInlinedOxstsLens(InlinedOxsts inlinedOxsts) {
+        var codeLens = new CodeLens();
+        var command = new Command(
+                verifyInlinedOxstsCommandHandler.getTitle(),
+                verifyInlinedOxstsCommandHandler.getId(),
+                verifyInlinedOxstsCommandHandler.serializeArguments(
+                        new VerifyInlinedOxstsCommandParams(inlinedOxsts, null)));
+        codeLens.setCommand(command);
+        var node = NodeModelUtils.getNode(inlinedOxsts);
+        var start = new Position(node.getStartLine() - 1, 0);
+        codeLens.setRange(new Range(start, start));
+        return codeLens;
+    }
+
+    private CodeLens createCompileInlinedOxstsLens(ClassDeclaration classDeclaration, boolean serializeStep) {
         var codeLens = new CodeLens();
         var title = serializeStep
-                ? inlineOxstsCommandHandler.getTitle() + " (with steps)"
-                : inlineOxstsCommandHandler.getTitle();
+                ? inlineClassCommandHandler.getTitle() + " (with steps)"
+                : inlineClassCommandHandler.getTitle();
         var command = new Command(
                 title,
-                inlineOxstsCommandHandler.getId(),
-                inlineOxstsCommandHandler.serializeArguments(
-                        new InlineOxstsCommandParams(classDeclaration, serializeStep)));
+                inlineClassCommandHandler.getId(),
+                inlineClassCommandHandler.serializeArguments(
+                        new InlineClassCommandParams(classDeclaration, serializeStep)));
         codeLens.setCommand(command);
         var classNode = NodeModelUtils.getNode(classDeclaration);
         var start = new Position(classNode.getStartLine() - 1, 0);
@@ -116,7 +149,7 @@ public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensServic
         return codeLens;
     }
 
-    private CodeLens createNavigateToRedefinedLense(RedefinableDeclaration redefinableDeclaration) {
+    private CodeLens createNavigateToRedefinedLens(RedefinableDeclaration redefinableDeclaration) {
         var codeLens = new CodeLens();
         var command = new Command(
                 navigateToRedefinedCommandHandler.getTitle(),
@@ -129,7 +162,7 @@ public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensServic
         return codeLens;
     }
 
-    private CodeLens createNavigateToRedefinersLense(RedefinableDeclaration redefinableDeclaration) {
+    private CodeLens createNavigateToRedefinersLens(RedefinableDeclaration redefinableDeclaration) {
         var codeLens = new CodeLens();
         var command = new Command(
                 navigateToRedefinersCommandHandler.getTitle(),

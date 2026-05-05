@@ -10,7 +10,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler;
 import hu.bme.mit.semantifyr.lang.ide.server.ServerSettings;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
@@ -23,10 +22,9 @@ import org.eclipse.xtext.util.CancelIndicator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Singleton
 public class CompileInlinedOxstsCommandHandler extends AbstractCommandHandler<InlinedOxsts> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CompileInlinedOxstsCommandHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CompileInlinedOxstsCommandHandler.class);
 
     @Inject
     protected ServerSettings serverSettings;
@@ -65,11 +63,13 @@ public class CompileInlinedOxstsCommandHandler extends AbstractCommandHandler<In
     @Override
     protected Object execute(
             InlinedOxsts arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
-        LOG.info("LSP compile-inlined request");
+        LOGGER.info("LSP compile-inlined request");
+
+        var compiler = new SemantifyrCompiler(
+                injector, serverSettings.resolveArtifactConfig(), serverSettings.resolveOptimizationConfig());
 
         semantifyrRequestManager.releaseReadLock();
-        try (SemantifyrCompiler compiler = new SemantifyrCompiler(
-                injector, serverSettings.resolveArtifactConfig(), serverSettings.resolveOptimizationConfig())) {
+        try {
             compiler.compile(arguments, serverSettings.resolveArtifactOutputDirectory());
         } finally {
             semantifyrRequestManager.acquireReadLock();

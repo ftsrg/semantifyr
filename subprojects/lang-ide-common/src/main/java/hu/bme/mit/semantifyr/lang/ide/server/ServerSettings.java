@@ -6,18 +6,19 @@
 
 package hu.bme.mit.semantifyr.lang.ide.server;
 
-import com.google.gson.JsonArray;
+import static hu.bme.mit.semantifyr.backends.theta.ThetaXstsExecutorKt.ThetaExecutorKey;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.inject.Singleton;
-import hu.bme.mit.semantifyr.backend.ExecutionEnvironment;
-import hu.bme.mit.semantifyr.backends.theta.ThetaBackendKt;
-import hu.bme.mit.semantifyr.backends.theta.ThetaExecutorSpec;
+import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment;
+import hu.bme.mit.semantifyr.backends.theta.ThetaXstsExecutor;
+import hu.bme.mit.semantifyr.backends.theta.ThetaXstsExecutorKt;
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig;
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig;
 import hu.bme.mit.semantifyr.portfolios.Portfolios;
-import hu.bme.mit.semantifyr.verification.portfolio.VerificationPortfolio;
+import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicReference;
@@ -27,7 +28,7 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class ServerSettings {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ServerSettings.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServerSettings.class);
 
     public static final String DEFAULT_PORTFOLIO_ID = "theta-full";
     public static final long DEFAULT_TIMEOUT_SECONDS = 300L;
@@ -43,7 +44,7 @@ public class ServerSettings {
             return;
         }
         if (!(payload instanceof JsonObject root)) {
-            LOG.warn("Ignoring non-object LSP settings payload: {}", payload);
+            LOGGER.warn("Ignoring non-object LSP settings payload: {}", payload);
             return;
         }
         JsonObject section = root.has("semantifyr") && root.get("semantifyr").isJsonObject()
@@ -51,14 +52,21 @@ public class ServerSettings {
                 : root;
         Snapshot next = Snapshot.fromJson(section);
         snapshot.set(next);
-        LOG.info("LSP settings applied: {}", next);
+        LOGGER.info("LSP settings applied: {}", next);
     }
 
-    public VerificationPortfolio resolvePortfolio() {
+    public VerificationPortfolio resolvePortfolio(String portfolioIdOverride) {
+        if (portfolioIdOverride != null && !portfolioIdOverride.isBlank()) {
+            VerificationPortfolio override = Portfolios.INSTANCE.byIdOrNull(portfolioIdOverride);
+            if (override != null) {
+                return override;
+            }
+            LOGGER.warn("Unknown per-call portfolio override '{}'; falling back to settings", portfolioIdOverride);
+        }
         String id = snapshot.get().portfolio();
         VerificationPortfolio portfolio = Portfolios.INSTANCE.byIdOrNull(id);
         if (portfolio == null) {
-            LOG.warn("Unknown portfolio '{}', falling back to '{}'", id, DEFAULT_PORTFOLIO_ID);
+            LOGGER.warn("Unknown portfolio '{}', falling back to '{}'", id, DEFAULT_PORTFOLIO_ID);
             return Portfolios.INSTANCE.byIdOrNull(DEFAULT_PORTFOLIO_ID);
         }
         return portfolio;
@@ -75,8 +83,22 @@ public class ServerSettings {
     }
 
     public ExecutionEnvironment resolveExecutionEnvironment() {
-        ThetaExecutorSpec spec = resolveThetaExecutorSpec();
-        return ThetaBackendKt.theta(ExecutionEnvironment.builder(), spec).build();
+        Snapshot s = snapshot.get();
+        String image = s.thetaDockerImage() != null ? s.thetaDockerImage() : ThetaXstsExecutorKt.THETA_DEFAULT_IMAGE;
+        return switch (s.thetaExecutor()) {
+            case "shell" ->
+                ExecutionEnvironment.builder()
+                        .put(ThetaExecutorKey, ThetaXstsExecutor.Companion::shell)
+                        .build();
+            case "docker" ->
+                ExecutionEnvironment.builder()
+                        .put(ThetaExecutorKey, () -> ThetaXstsExecutor.Companion.docker(image))
+                        .build();
+            default ->
+                ExecutionEnvironment.builder()
+                        .put(ThetaExecutorKey, () -> ThetaXstsExecutor.Companion.autoDetect(image))
+                        .build();
+        };
     }
 
     public ArtifactConfig resolveArtifactConfig() {
@@ -116,17 +138,6 @@ public class ServerSettings {
         };
     }
 
-    private ThetaExecutorSpec resolveThetaExecutorSpec() {
-        Snapshot s = snapshot.get();
-        return switch (s.thetaExecutor()) {
-            case "shell" -> ThetaExecutorSpec.Shell.INSTANCE;
-            case "docker" ->
-                new ThetaExecutorSpec.Docker(
-                        s.thetaDockerImage() != null ? s.thetaDockerImage() : ThetaExecutorSpec.Docker.DEFAULT_IMAGE);
-            default -> ThetaExecutorSpec.Auto.INSTANCE;
-        };
-    }
-
     private record Snapshot(
             String portfolio,
             long timeoutSeconds,
@@ -143,7 +154,7 @@ public class ServerSettings {
                     DEFAULT_TIMEOUT_SECONDS,
                     0,
                     DEFAULT_THETA_EXECUTOR,
-                    ThetaExecutorSpec.Docker.DEFAULT_IMAGE,
+                    ThetaXstsExecutorKt.THETA_DEFAULT_IMAGE,
                     DEFAULT_ARTIFACTS_LOCATION,
                     null,
                     DEFAULT_ARTIFACTS_PRESET,
@@ -200,11 +211,6 @@ public class ServerSettings {
                 current = obj.get(part);
             }
             return current;
-        }
-
-        @SuppressWarnings("unused")
-        private static JsonArray noop() {
-            return new JsonArray();
         }
     }
 }

@@ -1,10 +1,10 @@
 /*
- * SPDX-FileCopyrightText: 2021-2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2021-2024 The Refinery Authors <https://refinery.tools/>
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.lang.ide.editor.contentassist;
+package hu.bme.mit.semantifyr.lang.ide.editor.contentassist;
 
 import java.util.Locale;
 import org.eclipse.xtext.ide.editor.contentassist.IPrefixMatcher;

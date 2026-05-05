@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 
 public class SemantifyrLanguageServer extends LanguageServerImpl {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SemantifyrLanguageServer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SemantifyrLanguageServer.class);
 
     @Inject
     protected WorkManager workManager;
@@ -44,10 +44,10 @@ public class SemantifyrLanguageServer extends LanguageServerImpl {
     public void didChangeConfiguration(DidChangeConfigurationParams params) {
         Object raw = params == null ? null : params.getSettings();
         if (raw instanceof JsonElement el) {
-            LOG.info("workspace/didChangeConfiguration received");
+            LOGGER.info("workspace/didChangeConfiguration received");
             serverSettings.apply(el);
         } else if (raw != null) {
-            LOG.warn(
+            LOGGER.warn(
                     "workspace/didChangeConfiguration payload is not JSON: {}",
                     raw.getClass().getName());
         }
@@ -58,10 +58,11 @@ public class SemantifyrLanguageServer extends LanguageServerImpl {
         if (params == null) return;
         Object options = params.getInitializationOptions();
         if (options instanceof JsonElement el) {
-            LOG.info("initialize with settings");
+            LOGGER.info("initialize with settings");
             serverSettings.apply(el);
         } else if (options != null) {
-            LOG.warn("initialize options are not JSON: {}", options.getClass().getName());
+            LOGGER.warn(
+                    "initialize options are not JSON: {}", options.getClass().getName());
         }
     }
 }

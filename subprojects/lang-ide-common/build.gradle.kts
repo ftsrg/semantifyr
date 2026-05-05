@@ -18,7 +18,7 @@ dependencies {
     api(libs.lsp4j.jsonrpc)
     api(libs.guice)
 
-    api(project(":verification"))
+    api(project(":verifier"))
     api(project(":backend"))
     api(project(":compiler"))
     api(project(":portfolios"))

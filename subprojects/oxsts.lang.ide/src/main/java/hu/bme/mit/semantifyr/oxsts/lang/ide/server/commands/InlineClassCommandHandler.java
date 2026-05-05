@@ -11,7 +11,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler;
 import hu.bme.mit.semantifyr.lang.ide.server.ServerSettings;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
@@ -25,10 +24,9 @@ import org.eclipse.xtext.util.CancelIndicator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Singleton
-public class InlineOxstsCommandHandler extends AbstractCommandHandler<InlineOxstsCommandParams> {
+public class InlineClassCommandHandler extends AbstractCommandHandler<InlineClassCommandParams> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(InlineOxstsCommandHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(InlineClassCommandHandler.class);
 
     @Inject
     protected OxstsQualifiedNameProvider oxstsQualifiedNameProvider;
@@ -50,14 +48,14 @@ public class InlineOxstsCommandHandler extends AbstractCommandHandler<InlineOxst
     }
 
     @Override
-    public List<Object> serializeArguments(InlineOxstsCommandParams arguments) {
+    public List<Object> serializeArguments(InlineClassCommandParams arguments) {
         var location = getLocation(arguments.classDeclaration());
         var serializeSteps = arguments.serializeSteps();
         return List.of(location, serializeSteps);
     }
 
     @Override
-    protected InlineOxstsCommandParams parseArguments(
+    protected InlineClassCommandParams parseArguments(
             List<Object> arguments, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
         var gsonBuilder = new GsonBuilder();
         var gson = gsonBuilder.create();
@@ -67,27 +65,26 @@ public class InlineOxstsCommandHandler extends AbstractCommandHandler<InlineOxst
         var serializeSteps = gson.fromJson(serializeStepsJson, boolean.class);
         var element = getElement(access, location);
 
-        return new InlineOxstsCommandParams((ClassDeclaration) element, serializeSteps);
+        return new InlineClassCommandParams((ClassDeclaration) element, serializeSteps);
     }
 
     @Override
     protected Object execute(
-            InlineOxstsCommandParams arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
+            InlineClassCommandParams arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
         progressContext.begin("Compiling class " + arguments.classDeclaration().getName(), "Transforming");
 
-        ClassDeclaration classDeclaration = arguments.classDeclaration();
+        var classDeclaration = arguments.classDeclaration();
         var targetQualifiedName = oxstsQualifiedNameProvider.getFullyQualifiedNameString(classDeclaration);
-        LOG.info(
+        LOGGER.info(
                 "LSP inline request for case '{}' (serializeSteps={})",
                 targetQualifiedName,
                 arguments.serializeSteps());
 
-        // serializeSteps is accepted at the LSP boundary but not yet honored;
-        // re-attach when ArtifactConfig.compilationSteps is wired through the settings.
+        var compiler = new SemantifyrCompiler(
+                injector, serverSettings.resolveArtifactConfig(), serverSettings.resolveOptimizationConfig());
 
         semantifyrRequestManager.releaseReadLock();
-        try (SemantifyrCompiler compiler = new SemantifyrCompiler(
-                injector, serverSettings.resolveArtifactConfig(), serverSettings.resolveOptimizationConfig())) {
+        try {
             progressContext.checkIsCancelled();
             compiler.compile(classDeclaration, serverSettings.resolveArtifactOutputDirectory());
         } finally {

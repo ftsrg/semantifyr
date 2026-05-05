@@ -6,7 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide;
 
-import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.contentassist.FuzzyMatcher;
+import hu.bme.mit.semantifyr.lang.ide.editor.contentassist.FuzzyMatcher;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.contentassist.OxstsIdeContentProposalProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.quickfix.OxstsQuickFixProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.syntaxcoloring.OxstsSemanticHighlightingCalculator;

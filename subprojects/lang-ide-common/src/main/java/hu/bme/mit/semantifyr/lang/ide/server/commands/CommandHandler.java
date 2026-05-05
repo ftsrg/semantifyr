@@ -11,7 +11,6 @@ import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 
 public interface CommandHandler {
-
     String getId();
 
     String getTitle();

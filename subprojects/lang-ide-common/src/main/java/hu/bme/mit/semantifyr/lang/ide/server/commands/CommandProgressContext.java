@@ -7,7 +7,7 @@
 package hu.bme.mit.semantifyr.lang.ide.server.commands;
 
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager;
-import hu.bme.mit.semantifyr.verification.ProgressContext;
+import hu.bme.mit.semantifyr.verifier.ProgressContext;
 import java.util.Random;
 import java.util.concurrent.CancellationException;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
