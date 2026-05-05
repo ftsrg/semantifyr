@@ -7,8 +7,7 @@
 package hu.bme.mit.semantifyr.backends.theta.backannotation
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
-import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.OxstsDomainTransformer
+import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaDomainTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.xsts.lang.utils.XstsExpressionVisitor
@@ -32,11 +31,9 @@ import hu.bme.mit.semantifyr.xsts.lang.xsts.ReadIndexingSuffixExpression
 import hu.bme.mit.semantifyr.xsts.lang.xsts.UnaryOp
 import hu.bme.mit.semantifyr.xsts.lang.xsts.WriteIndexingSuffixExpression
 
-@VerificationScoped
-class XstsExpressionToOxstsExpressionTransformer : XstsExpressionVisitor<Expression>() {
-
-    @Inject
-    private lateinit var oxstsExpressionTransformer: OxstsDomainTransformer
+class XstsExpressionToOxstsExpressionTransformer @Inject constructor(
+    private val thetaDomainTransformer: ThetaDomainTransformer,
+) : XstsExpressionVisitor<Expression>() {
 
     fun transform(expression: hu.bme.mit.semantifyr.xsts.lang.xsts.Expression): Expression {
         return visit(expression)
@@ -119,7 +116,7 @@ class XstsExpressionToOxstsExpressionTransformer : XstsExpressionVisitor<Express
             "This class is supposed to transform Cex expressions to Oxsts, which must only refer to enum literals!"
         }
 
-        val originalElement = oxstsExpressionTransformer.getOriginal(element)
+        val originalElement = thetaDomainTransformer.getOriginal(element)
 
         return OxstsFactory.createElementReference(originalElement)
     }

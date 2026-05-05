@@ -22,8 +22,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 
 abstract class BackendExpressionVisitor<T> : ExpressionVisitor<T>() {
 
-    protected abstract val backendName: String
-
     override fun visit(expression: SelfReference): T {
         error("Unexpected self reference")
     }
@@ -53,7 +51,7 @@ abstract class BackendExpressionVisitor<T> : ExpressionVisitor<T>() {
     }
 
     override fun visit(expression: LiteralString): T {
-        throw BackendUnsupportedException("$backendName does not support string literals")
+        throw BackendUnsupportedException("Backend does not support string literals")
     }
 
     override fun visit(expression: LiteralNothing): T {
@@ -65,6 +63,6 @@ abstract class BackendExpressionVisitor<T> : ExpressionVisitor<T>() {
     }
 
     override fun visit(expression: ArrayLiteral): T {
-        throw BackendUnsupportedException("$backendName does not support array literals")
+        throw BackendUnsupportedException("Backend does not support array literals")
     }
 }

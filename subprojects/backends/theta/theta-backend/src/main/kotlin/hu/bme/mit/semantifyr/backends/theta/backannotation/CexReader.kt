@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.backends.theta.backannotation
 
+import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.cex.lang.CexStandaloneSetup
 import hu.bme.mit.semantifyr.cex.lang.cex.CexModel
 import org.eclipse.emf.common.util.URI
@@ -15,6 +16,7 @@ import org.eclipse.xtext.resource.XtextResourceSet
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
+@Singleton
 class CexReader {
 
     private val cexInjector by lazy {

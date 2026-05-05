@@ -45,11 +45,7 @@ class CexWitness(
     val initializedState: CexWitnessState?,
     val transitionStates: List<CexWitnessState>,
     val nextStateMap: Map<CexWitnessState, List<CexWitnessState>>,
-) {
-    fun getNextStates(state: CexWitnessState): List<CexWitnessState> {
-        return nextStateMap[state] ?: emptyList()
-    }
-}
+)
 
 private val XstsState.isTran
     get() = isPostInit && isLastInternal

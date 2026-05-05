@@ -41,15 +41,10 @@ private typealias XstsArithmeticOp = hu.bme.mit.semantifyr.xsts.lang.xsts.Arithm
 private typealias XstsExpression = hu.bme.mit.semantifyr.xsts.lang.xsts.Expression
 private typealias XstsElementReferenceExpression = ElementReferenceExpression
 
-class OxstsExpressionTransformer : BackendExpressionVisitor<XstsExpression>() {
-
-    override val backendName: String = "Theta"
-
-    @Inject
-    private lateinit var oxstsVariableTransformer: OxstsVariableTransformer
-
-    @Inject
-    private lateinit var oxstsDomainTransformer: OxstsDomainTransformer
+class ThetaExpressionTransformer @Inject constructor(
+    private val thetaVariableTransformer: ThetaVariableTransformer,
+    private val thetaDomainTransformer: ThetaDomainTransformer,
+) : BackendExpressionVisitor<XstsExpression>() {
 
     fun transform(expression: Expression): XstsExpression {
         return visit(expression)
@@ -175,8 +170,8 @@ class OxstsExpressionTransformer : BackendExpressionVisitor<XstsExpression>() {
 
     private fun demandTransformElement(element: Element): XstsElement {
         return when (element) {
-            is VariableDeclaration -> oxstsVariableTransformer.transform(element)
-            is EnumLiteral -> oxstsDomainTransformer.transform(element)
+            is VariableDeclaration -> thetaVariableTransformer.transform(element)
+            is EnumLiteral -> thetaDomainTransformer.transform(element)
             else -> error("Unexpected kind of element: $element")
         }
     }

@@ -7,18 +7,15 @@
 package hu.bme.mit.semantifyr.backends.theta.backannotation
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
-@VerificationScoped
-class InlinedWitnessTransformer {
-
-    @Inject
-    private lateinit var xstsExpressionToOxstsExpressionTransformer: XstsExpressionToOxstsExpressionTransformer
+class InlinedWitnessTransformer @Inject constructor(
+    private val xstsExpressionToOxstsExpressionTransformer: XstsExpressionToOxstsExpressionTransformer,
+) {
 
     private inner class TransformerContext(val inlinedOxsts: InlinedOxsts) {
         val mappings = mutableMapOf<XstsWitnessState, WitnessState>()

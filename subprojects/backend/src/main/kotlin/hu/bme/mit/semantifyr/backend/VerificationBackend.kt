@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import kotlinx.serialization.Serializable
 import java.nio.file.Path
@@ -58,6 +59,8 @@ enum class VerificationVerdict(
 }
 
 abstract class VerificationBackend<T : BackendConfig> {
+    protected val logger by loggerFactory()
+
     abstract val id: String
 
     abstract val executorKey: ExecutorKey<BackendExecutor>

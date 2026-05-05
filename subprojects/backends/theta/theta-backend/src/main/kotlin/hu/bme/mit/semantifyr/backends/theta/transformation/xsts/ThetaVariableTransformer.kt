@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
 import com.google.inject.Inject
+import com.google.inject.Provider
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
@@ -19,16 +20,16 @@ typealias XstsTopLevelVariableDeclaration = TopLevelVariableDeclaration
 private typealias XstsLocalVarDeclarationOperation = LocalVarDeclOperation
 
 @VerificationScoped
-class OxstsVariableTransformer {
+class ThetaVariableTransformer @Inject constructor(
+    private val thetaTypeReferenceTransformer: ThetaTypeReferenceTransformer,
+    private val builtinAnnotationHandler: BuiltinAnnotationHandler,
+    private val thetaExpressionTransformerProvider: Provider<ThetaExpressionTransformer>,
+) {
 
-    @Inject
-    private lateinit var oxstsExpressionTransformer: OxstsExpressionTransformer
-
-    @Inject
-    private lateinit var oxstsTypeReferenceTransformer: OxstsTypeReferenceTransformer
-
-    @Inject
-    private lateinit var builtinAnnotationHandler: BuiltinAnnotationHandler
+    // resolve dependency cycle
+    private val thetaExpressionTransformer by lazy {
+        thetaExpressionTransformerProvider.get()
+    }
 
     private val topVariableMap = mutableMapOf<VariableDeclaration, XstsTopLevelVariableDeclaration>()
     private val localVariableMap = mutableMapOf<LocalVarDeclarationOperation, XstsLocalVarDeclarationOperation>()
@@ -68,10 +69,10 @@ class OxstsVariableTransformer {
         variable.name = variableDeclaration.name
 
         val type = variableDeclaration.typeSpecification.domain
-        variable.type = oxstsTypeReferenceTransformer.transform(type, variableDeclaration.typeSpecification?.multiplicity)
+        variable.type = thetaTypeReferenceTransformer.transform(type, variableDeclaration.typeSpecification?.multiplicity)
 
         if (variableDeclaration.expression != null) {
-            variable.expression = oxstsExpressionTransformer.transform(variableDeclaration.expression)
+            variable.expression = thetaExpressionTransformer.transform(variableDeclaration.expression)
         }
     }
 }

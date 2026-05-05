@@ -26,7 +26,7 @@ import hu.bme.mit.semantifyr.backends.theta.backannotation.CexReader
 import hu.bme.mit.semantifyr.backends.theta.backannotation.CexWitnessTransformer
 import hu.bme.mit.semantifyr.backends.theta.backannotation.InlinedWitnessTransformer
 import hu.bme.mit.semantifyr.backends.theta.backannotation.XstsWitnessTransformer
-import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.OxstsTransformer
+import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaModelTransformer
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
@@ -40,8 +40,6 @@ class ThetaBackend : VerificationBackend<ThetaConfig>() {
     override val id = "theta"
     override val executorKey = ThetaExecutorKey
 
-    private val logger by loggerFactory()
-
     override suspend fun verify(
         parentInjector: Injector,
         config: ThetaConfig,
@@ -52,9 +50,9 @@ class ThetaBackend : VerificationBackend<ThetaConfig>() {
         logger.info { "[theta:${config.id}] dispatching via ${executor::class.simpleName}" }
         val injector = parentInjector.createChildInjector(ThetaBackendModule())
         return withVerificationScope {
-            injector.getInstance(ThetaVerificationContextFactory::class.java)
-                .create(config, executor, request)
-                .execute()
+            val factory = injector.getInstance(ThetaVerificationContext.Factory::class.java)
+            val context = factory.create(config, executor, request)
+            context.execute()
         }
     }
 }
@@ -62,25 +60,17 @@ class ThetaBackend : VerificationBackend<ThetaConfig>() {
 class ThetaBackendModule : AbstractModule() {
     override fun configure() {
         bindScope(VerificationScoped::class.java, VerificationScope)
-        install(FactoryModuleBuilder().build(ThetaVerificationContextFactory::class.java))
+        install(FactoryModuleBuilder().build(ThetaVerificationContext.Factory::class.java))
 
         super.configure()
     }
 }
 
-interface ThetaVerificationContextFactory {
-    fun create(
-        config: ThetaConfig,
-        executor: ThetaXstsExecutor,
-        request: BackendVerificationRequest,
-    ): ThetaVerificationContext
-}
-
 class ThetaVerificationContext @AssistedInject constructor(
-    @Assisted private val config: ThetaConfig,
-    @Assisted override val executor: ThetaXstsExecutor,
+    @param:Assisted private val config: ThetaConfig,
+    @param:Assisted override val executor: ThetaXstsExecutor,
     @Assisted request: BackendVerificationRequest,
-    private val oxstsTransformer: OxstsTransformer,
+    private val thetaModelTransformer: ThetaModelTransformer,
     private val cexReader: CexReader,
     private val cexWitnessTransformer: CexWitnessTransformer,
     private val xstsWitnessTransformer: XstsWitnessTransformer,
@@ -94,7 +84,7 @@ class ThetaVerificationContext @AssistedInject constructor(
 
     override suspend fun prepare(): XstsModel {
         logger.info { "[$backendId] transforming InlinedOxsts -> XSTS" }
-        val xsts = oxstsTransformer.transform(request.inlinedOxsts, artifactManager.xstsUri)
+        val xsts = thetaModelTransformer.transform(request.inlinedOxsts, artifactManager.xstsUri)
 
         val resourceSet = request.inlinedOxsts.eResource().resourceSet
         resourceSet.getResource(artifactManager.xstsUri, false)?.delete(emptyMap<Any, Any>())
@@ -163,4 +153,12 @@ class ThetaVerificationContext @AssistedInject constructor(
     }
 
     enum class ThetaVerdict { Safe, Unsafe }
+
+    interface Factory {
+        fun create(
+            config: ThetaConfig,
+            executor: ThetaXstsExecutor,
+            request: BackendVerificationRequest,
+        ): ThetaVerificationContext
+    }
 }

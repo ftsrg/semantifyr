@@ -10,7 +10,9 @@ import org.eclipse.emf.common.util.URI
 import java.io.File
 import java.nio.file.Path
 
-class ThetaArtifactManager(private val rootDirectory: Path) {
+class ThetaArtifactManager(
+    private val rootDirectory: Path,
+) {
 
     val xstsFile: File
         get() = rootDirectory.resolve("inlined.xsts").toFile()

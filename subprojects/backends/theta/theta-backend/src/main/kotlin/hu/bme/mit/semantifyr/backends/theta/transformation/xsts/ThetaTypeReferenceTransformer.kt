@@ -12,23 +12,20 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Multiplicity
 
-class OxstsTypeReferenceTransformer {
+class ThetaTypeReferenceTransformer @Inject constructor(
+    private val thetaDomainTransformer: ThetaDomainTransformer,
+) {
 
-    @Inject
-    private lateinit var oxstsDomainTransformer: OxstsDomainTransformer
-
-    fun transform(domainDeclaration: DomainDeclaration, multplicity: Multiplicity?): XstsType {
+    fun transform(domainDeclaration: DomainDeclaration, multiplicity: Multiplicity?): XstsType {
         val xstsType = when (domainDeclaration) {
-            is EnumDeclaration -> {
-                XstsFactory.createEnumType().also {
-                    it.enumDeclaration = oxstsDomainTransformer.transform(domainDeclaration)
-                }
+            is EnumDeclaration -> XstsFactory.createEnumType().also {
+                it.enumDeclaration = thetaDomainTransformer.transform(domainDeclaration)
             }
-            is DataTypeDeclaration -> oxstsDomainTransformer.transform(domainDeclaration)
-            else -> error("Unexpected variable type: $this")
+            is DataTypeDeclaration -> thetaDomainTransformer.transform(domainDeclaration)
+            else -> error("Unexpected variable type: $domainDeclaration")
         }
 
-        if (multplicity == null) {
+        if (multiplicity == null) {
             return xstsType
         }
 

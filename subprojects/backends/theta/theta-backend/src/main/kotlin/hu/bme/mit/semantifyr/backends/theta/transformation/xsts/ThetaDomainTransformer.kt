@@ -19,10 +19,9 @@ private typealias XstsEnumDeclaration = hu.bme.mit.semantifyr.xsts.lang.xsts.Enu
 private typealias XstsEnumLiteral = hu.bme.mit.semantifyr.xsts.lang.xsts.EnumLiteral
 
 @VerificationScoped
-class OxstsDomainTransformer {
-
-    @Inject
-    private lateinit var builtinSymbolResolver: BuiltinSymbolResolver
+class ThetaDomainTransformer @Inject constructor(
+    private val builtinSymbolResolver: BuiltinSymbolResolver,
+) {
 
     private val enumDeclarationMap = mutableMapOf<EnumDeclaration, XstsEnumDeclaration>()
     private val enumLiteralMap = mutableMapOf<EnumLiteral, XstsEnumLiteral>()
