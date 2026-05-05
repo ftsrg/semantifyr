@@ -7,6 +7,7 @@
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
+    id("hu.bme.mit.semantifyr.gradle.conventions.verification")
     id("hu.bme.mit.semantifyr.gradle.conventions.integration")
     kotlin("jvm")
     kotlin("plugin.serialization")
@@ -26,7 +27,6 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
 
     testImplementation(project(":compiler"))
-    testRuntimeOnly(libs.slf4j.log4j)
 
     testFixturesApi(testFixtures(project(":backend")))
 }

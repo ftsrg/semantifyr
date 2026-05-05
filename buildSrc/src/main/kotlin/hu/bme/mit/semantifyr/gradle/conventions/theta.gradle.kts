@@ -7,7 +7,7 @@
 package hu.bme.mit.semantifyr.gradle.conventions
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.verification")
+    id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
 }
 
 val thetaClasspath by configurations.creating {
