@@ -43,6 +43,14 @@ tasks.withType<Test>().configureEach {
     workingDir = layout.projectDirectory.asFile
 }
 
+tasks.withType<JacocoReport>().configureEach {
+    group = "verification"
+    sourceSets(sourceSets.main.get())
+    reports {
+        xml.required = true
+    }
+}
+
 testing {
     suites {
         val test by getting(JvmTestSuite::class) {
@@ -65,7 +73,4 @@ testing {
 
 tasks.jacocoTestReport {
     inputs.files(tasks.test.get().outputs)
-    reports {
-        xml.required.set(true)
-    }
 }

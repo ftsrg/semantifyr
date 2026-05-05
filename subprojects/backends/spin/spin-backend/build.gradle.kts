@@ -7,7 +7,7 @@
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
-    id("hu.bme.mit.semantifyr.gradle.conventions.conformance")
+    id("hu.bme.mit.semantifyr.gradle.conventions.integration")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }
@@ -36,9 +36,9 @@ val cloneOxstsTestModels by tasks.registering(Sync::class) {
     into(layout.buildDirectory.dir("test-models"))
 }
 
-tasks.named<Test>("verificationTest") {
+tasks.named("verificationTest") {
     inputs.files(cloneOxstsTestModels)
 }
-tasks.named<Test>("conformanceTest") {
+tasks.named("integrationTest") {
     inputs.files(cloneOxstsTestModels)
 }

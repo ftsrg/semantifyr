@@ -7,7 +7,8 @@
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
-    id("hu.bme.mit.semantifyr.gradle.conventions.conformance")
+    id("hu.bme.mit.semantifyr.gradle.conventions.integration")
+    id("hu.bme.mit.semantifyr.gradle.conventions.verification")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }
@@ -18,7 +19,6 @@ repositories {
 
 dependencies {
     api(project(":backend"))
-    api(project(":oxsts.lang"))
     api(project(":nuxmv-executor"))
     api(libs.guice.extensions.assistedinject)
 
@@ -36,6 +36,6 @@ val cloneOxstsTestModels by tasks.registering(Sync::class) {
 tasks.named("verificationTest") {
     inputs.files(cloneOxstsTestModels)
 }
-tasks.named("conformanceTest") {
+tasks.named("integrationTest") {
     inputs.files(cloneOxstsTestModels)
 }

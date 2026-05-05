@@ -19,7 +19,7 @@ val libs = the<LibrariesForLibs>()
 
 testing {
     suites {
-        val conformanceTest by registering(JvmTestSuite::class) {
+        val integrationTest by registering(JvmTestSuite::class) {
             useJUnitJupiter()
 
             dependencies {
@@ -34,30 +34,19 @@ testing {
 
             targets.all {
                 testTask.configure {
-                    group = "verification"
                     usesService(verificationTestServiceProvider)
-
-                    maxParallelForks = 1
 
                     shouldRunAfter(suites.named("test"))
 
-                    finalizedBy(tasks.named("jacocoConformanceTestReport"))
+                    finalizedBy(jacocoIntegrationTestReport)
                 }
             }
         }
     }
 }
 
-val jacocoConformanceTestReport by tasks.registering(JacocoReport::class) {
-    val conformanceTestSuite = testing.suites.named("conformanceTest", JvmTestSuite::class)
-    inputs.files(
-        conformanceTestSuite.flatMap {
-            it.targets.first().testTask.flatMap { it.outputs.files.elements }
-        },
-    )
-    executionData(layout.buildDirectory.file("jacoco/conformanceTest.exec"))
-    sourceSets(sourceSets.main.get())
-    reports {
-        xml.required.set(true)
-    }
+val jacocoIntegrationTestReport by tasks.registering(JacocoReport::class) {
+    val integrationTestSuite = tasks.named<Test>("integrationTest").get()
+    inputs.files(integrationTestSuite)
+    executionData(integrationTestSuite)
 }

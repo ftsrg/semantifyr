@@ -33,18 +33,11 @@ testing {
 
             targets.all {
                 testTask.configure {
-                    group = "verification"
                     usesService(verificationTestServiceProvider)
-
-                    maxParallelForks = 1
-
-                    useJUnitPlatform {
-                        excludeTags("slow")
-                    }
 
                     shouldRunAfter(suites.named("test"))
 
-                    finalizedBy(tasks.named("jacocoVerificationTestReport"))
+                    finalizedBy(jacocoVerificationTestReport)
                 }
             }
         }
@@ -52,34 +45,9 @@ testing {
 }
 
 val jacocoVerificationTestReport by tasks.registering(JacocoReport::class) {
-    val verificationTestSuite = testing.suites.named("verificationTest", JvmTestSuite::class)
-    inputs.files(
-        verificationTestSuite.flatMap {
-            it.targets.first().testTask.flatMap { it.outputs.files.elements }
-        },
-    )
-    executionData(layout.buildDirectory.file("jacoco/verificationTest.exec"))
-    sourceSets(sourceSets.main.get())
-    reports {
-        xml.required.set(true)
-    }
-}
-
-val slowVerificationTest by tasks.registering(Test::class) {
-    description = "Runs the verification cases tagged with @Tag(\"slow\"). Sequenced with other verification tasks."
-    group = "verification"
-    usesService(verificationTestServiceProvider)
-
-    val verificationTestSuite = testing.suites.named("verificationTest", JvmTestSuite::class)
-    val target = verificationTestSuite.get().targets.first()
-    testClassesDirs = target.testTask.get().testClassesDirs
-    classpath = target.testTask.get().classpath
-
-    maxParallelForks = 1
-
-    useJUnitPlatform {
-        includeTags("slow")
-    }
+    val verificationTestSuite = tasks.named<Test>("verificationTest").get()
+    inputs.files(verificationTestSuite)
+    executionData(verificationTestSuite)
 }
 
 tasks.named("check") {

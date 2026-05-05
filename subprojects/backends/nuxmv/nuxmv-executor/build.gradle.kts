@@ -6,7 +6,6 @@
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
-    id("hu.bme.mit.semantifyr.gradle.conventions.verification")
     kotlin("jvm")
 }
 
