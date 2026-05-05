@@ -10,6 +10,7 @@ import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
+import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
@@ -33,11 +34,21 @@ import kotlin.time.Duration.Companion.minutes
 
 class AllAgreeFullPortfolio(
     private val timeout: Duration = 25.minutes,
-    private val tasks: List<PortfolioTask<*>> = defaultAllAgreeTasks(),
+    private val theta: VerificationBackend<ThetaConfig> = ThetaBackend(),
+    private val nuxmv: VerificationBackend<NuxmvConfig> = NuxmvBackend(),
+    private val uppaal: VerificationBackend<UppaalConfig> = UppaalBackend(),
+    private val spin: VerificationBackend<SpinConfig> = SpinBackend(),
 ) : VerificationPortfolio() {
     override val id: String = "all-agree-full"
     override val displayName: String = "All backends agree portfolio"
     override val description: String = "Runs one representative config per backend in parallel."
+
+    private val tasks: List<PortfolioTask<*>> = listOf(
+        PortfolioTask(theta, ThetaConfig.CegarExplPredCombined, "theta-cegar-combined"),
+        PortfolioTask(nuxmv, NuxmvConfig.Ic3Invar, "nuxmv-ic3"),
+        PortfolioTask(uppaal, UppaalConfig.Default, "uppaal-default"),
+        PortfolioTask(spin, SpinConfig.SafeDfs, "spin-safe-dfs"),
+    )
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
         val anyAvailable = tasks.any {
@@ -94,10 +105,3 @@ class AllAgreeFullPortfolio(
         return outcome.toBackendVerificationResult(startedAt)
     }
 }
-
-private fun defaultAllAgreeTasks(): List<PortfolioTask<*>> = listOf(
-    PortfolioTask(ThetaBackend(), ThetaConfig.CegarExplPredCombined, "theta-cegar-combined"),
-    PortfolioTask(NuxmvBackend(), NuxmvConfig.Ic3Invar, "nuxmv-ic3"),
-    PortfolioTask(UppaalBackend(), UppaalConfig.Default, "uppaal-default"),
-    PortfolioTask(SpinBackend(), SpinConfig.SafeDfs, "spin-safe-dfs"),
-)

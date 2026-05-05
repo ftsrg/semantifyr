@@ -14,8 +14,8 @@ import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 
 class PortfolioTask<T : BackendConfig>(
-    val backend: VerificationBackend<T>,
-    val config: T,
+    private val backend: VerificationBackend<T>,
+    private val config: T,
     val subPath: String,
 ) {
     fun isAvailable(environment: ExecutionEnvironment): Boolean {

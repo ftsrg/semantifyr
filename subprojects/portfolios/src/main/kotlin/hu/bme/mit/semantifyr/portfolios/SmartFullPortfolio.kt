@@ -10,11 +10,13 @@ import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
+import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackend
+import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvConfig
 import hu.bme.mit.semantifyr.backends.spin.verification.SpinBackend
 import hu.bme.mit.semantifyr.backends.spin.verification.SpinConfig
 import hu.bme.mit.semantifyr.backends.theta.ThetaBackend
@@ -32,11 +34,27 @@ import kotlin.time.Duration.Companion.minutes
 
 class SmartFullPortfolio(
     private val timeout: Duration = 25.minutes,
-    private val tasks: List<PortfolioTask<*>> = defaultSmartTasks(),
+    private val theta: VerificationBackend<ThetaConfig> = ThetaBackend(),
+    private val uppaal: VerificationBackend<UppaalConfig> = UppaalBackend(),
+    private val nuxmv: VerificationBackend<NuxmvConfig> = NuxmvBackend(),
+    private val spin: VerificationBackend<SpinConfig> = SpinBackend(),
 ) : VerificationPortfolio() {
     override val id: String = "smart-full"
     override val displayName: String = "Race across all backends"
     override val description: String = "Races all representative backend configurations in parallel."
+
+    private val tasks: List<PortfolioTask<*>> = listOf(
+//        PortfolioTask(nuxmv, NuxmvConfig.BmcInvar, "nuxmv-bmc"),
+        PortfolioTask(theta, ThetaConfig.BoundedBmc, "theta-bmc"),
+        PortfolioTask(spin, SpinConfig.SafeDfs, "spin-safe-dfs"),
+        PortfolioTask(uppaal, UppaalConfig.Default, "uppaal-default"),
+//        PortfolioTask(nuxmv, NuxmvConfig.Ic3Invar, "nuxmv-ic3"),
+        PortfolioTask(theta, ThetaConfig.CegarExplPredCombined, "theta-cegar-combined"),
+        PortfolioTask(theta, ThetaConfig.BoundedKInduction, "theta-kinduction"),
+        PortfolioTask(theta, ThetaConfig.Ic3, "theta-ic3"),
+        PortfolioTask(uppaal, UppaalConfig.OverApproximation, "uppaal-over-approx"),
+        PortfolioTask(spin, SpinConfig.BitstateHashing, "spin-bitstate"),
+    )
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
         val anyAvailable = tasks.any {
@@ -92,23 +110,4 @@ class SmartFullPortfolio(
 
         return outcome.toBackendVerificationResult(startedAt)
     }
-}
-
-private fun defaultSmartTasks(): List<PortfolioTask<*>> {
-    val theta = ThetaBackend()
-    val uppaal = UppaalBackend()
-    val spin = SpinBackend()
-    val nuxmv = NuxmvBackend()
-    return listOf(
-//        BackendTask(nuxmv, NuxmvConfig.BmcInvar, "nuxmv-bmc"),
-        PortfolioTask(theta, ThetaConfig.BoundedBmc, "theta-bmc"),
-        PortfolioTask(spin, SpinConfig.SafeDfs, "spin-safe-dfs"),
-        PortfolioTask(uppaal, UppaalConfig.Default, "uppaal-default"),
-//        BackendTask(nuxmv, NuxmvConfig.Ic3Invar, "nuxmv-ic3"),
-        PortfolioTask(theta, ThetaConfig.CegarExplPredCombined, "theta-cegar-combined"),
-        PortfolioTask(theta, ThetaConfig.BoundedKInduction, "theta-kinduction"),
-        PortfolioTask(theta, ThetaConfig.Ic3, "theta-ic3"),
-        PortfolioTask(uppaal, UppaalConfig.OverApproximation, "uppaal-over-approx"),
-        PortfolioTask(spin, SpinConfig.BitstateHashing, "spin-bitstate"),
-    )
 }

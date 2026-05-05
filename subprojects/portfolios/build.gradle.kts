@@ -6,7 +6,6 @@
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
-    id("hu.bme.mit.semantifyr.gradle.conventions.verification")
     kotlin("jvm")
 }
 
@@ -22,4 +21,6 @@ dependencies {
     api(project(":uppaal-backend"))
     api(project(":nuxmv-backend"))
     api(project(":spin-backend"))
+
+    testImplementation(libs.kotlinx.coroutines.core)
 }
