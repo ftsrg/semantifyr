@@ -14,7 +14,6 @@ import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DataTypeDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
 enum class UppaalVariableKind {
@@ -28,21 +27,16 @@ data class UppaalVariable(
     val name: String,
     val kind: UppaalVariableKind,
     val enumDeclaration: EnumDeclaration?,
-    val initialValue: String?,
 )
 
 @VerificationScoped
-class UppaalVariableTransformer {
-    @Inject
-    private lateinit var builtinAnnotationHandler: BuiltinAnnotationHandler
-
-    @Inject
-    private lateinit var builtinSymbolResolver: BuiltinSymbolResolver
-
-    @Inject
-    private lateinit var uppaalExpressionTransformer: UppaalExpressionTransformer
+class UppaalVariableTransformer @Inject constructor(
+    private val builtinAnnotationHandler: BuiltinAnnotationHandler,
+    private val builtinSymbolResolver: BuiltinSymbolResolver,
+) {
 
     private val mangler = BackendNameMangler()
+    private val descriptionCache = mutableMapOf<VariableDeclaration, UppaalVariable>()
 
     fun nameOf(variableDeclaration: VariableDeclaration): String {
         return mangler.nameOf(variableDeclaration)
@@ -53,31 +47,17 @@ class UppaalVariableTransformer {
     }
 
     fun describe(variableDeclaration: VariableDeclaration): UppaalVariable {
-        val name = nameOf(variableDeclaration)
-        val kind = resolveKind(variableDeclaration)
-        val enumDecl = (variableDeclaration.typeSpecification?.domain as? EnumDeclaration)
-
-        val initExpr = if (variableDeclaration is LocalVarDeclarationOperation) {
-            null
-        } else {
-            variableDeclaration.expression?.let { uppaalExpressionTransformer.transform(it) }
+        return descriptionCache.getOrPut(variableDeclaration) {
+            val name = nameOf(variableDeclaration)
+            val kind = resolveKind(variableDeclaration)
+            val enumDeclaration = variableDeclaration.typeSpecification?.domain as? EnumDeclaration
+            UppaalVariable(name, kind, enumDeclaration)
         }
-
-        return UppaalVariable(
-            name = name,
-            kind = kind,
-            enumDeclaration = enumDecl,
-            initialValue = initExpr,
-        )
     }
 
     private fun resolveKind(variableDeclaration: VariableDeclaration): UppaalVariableKind {
         if (isClock(variableDeclaration)) {
-            val domain = variableDeclaration.typeSpecification?.domain
-            if (domain !is DataTypeDeclaration) {
-                error("@Clock annotations are only supported on data-typed variables; got ${domain?.javaClass?.simpleName} on ${variableDeclaration.name}")
-            }
-            return UppaalVariableKind.Clock
+            return resolveClockKind(variableDeclaration)
         }
         val domain = variableDeclaration.typeSpecification?.domain
             ?: error("Variable ${variableDeclaration.name} has no type specification")
@@ -88,6 +68,14 @@ class UppaalVariableTransformer {
             domain === builtinSymbolResolver.boolDatatype(variableDeclaration) -> UppaalVariableKind.Boolean
             else -> error("Unsupported variable domain for Uppaal: ${domain.name} on ${variableDeclaration.name}")
         }
+    }
+
+    private fun resolveClockKind(variableDeclaration: VariableDeclaration): UppaalVariableKind {
+        val domain = variableDeclaration.typeSpecification?.domain
+        if (domain !is DataTypeDeclaration) {
+            error("@Clock annotations are only supported on data-typed variables; got ${domain?.javaClass?.simpleName} on ${variableDeclaration.name}")
+        }
+        return UppaalVariableKind.Clock
     }
 
     fun sanitizeEnumLiteral(literal: EnumLiteral): String {

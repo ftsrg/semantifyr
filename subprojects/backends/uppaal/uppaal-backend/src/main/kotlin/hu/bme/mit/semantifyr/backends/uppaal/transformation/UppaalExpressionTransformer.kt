@@ -28,12 +28,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
-class UppaalExpressionTransformer : BackendExpressionVisitor<String>() {
-
-    override val backendName: String = "Uppaal"
-
-    @Inject
-    private lateinit var uppaalVariableTransformer: UppaalVariableTransformer
+class UppaalExpressionTransformer @Inject constructor(
+    private val uppaalVariableTransformer: UppaalVariableTransformer,
+) : BackendExpressionVisitor<String>() {
 
     fun transform(expression: Expression): String {
         return visit(expression)
@@ -94,7 +91,11 @@ class UppaalExpressionTransformer : BackendExpressionVisitor<String>() {
     }
 
     override fun visit(expression: LiteralBoolean): String {
-        return if (expression.isValue) "true" else "false"
+        return if (expression.isValue) {
+            "true"
+        } else {
+            "false"
+        }
     }
 
     override fun visit(expression: LiteralReal): String {
@@ -113,5 +114,10 @@ class UppaalExpressionTransformer : BackendExpressionVisitor<String>() {
         throw BackendUnsupportedException("Uppaal does not support array indexing")
     }
 
-    override fun visit(expression: IfThenElse): String = "((${visit(expression.guard)}) ? (${visit(expression.then)}) : (${visit(expression.`else`)}))"
+    override fun visit(expression: IfThenElse): String {
+        val guard = visit(expression.guard)
+        val then = visit(expression.then)
+        val orElse = visit(expression.`else`)
+        return "(($guard) ? ($then) : ($orElse))"
+    }
 }

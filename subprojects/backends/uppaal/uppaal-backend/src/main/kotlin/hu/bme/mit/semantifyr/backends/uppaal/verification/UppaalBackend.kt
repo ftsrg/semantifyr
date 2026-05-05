@@ -27,17 +27,17 @@ import hu.bme.mit.semantifyr.backends.uppaal.UppaalExecutor
 import hu.bme.mit.semantifyr.backends.uppaal.UppaalExecutorKey
 import hu.bme.mit.semantifyr.backends.uppaal.artifacts.UppaalArtifactManager
 import hu.bme.mit.semantifyr.backends.uppaal.trace.UppaalInlinedOxstsWitnessTransformer
+import hu.bme.mit.semantifyr.backends.uppaal.trace.UppaalLogVerdictParser
 import hu.bme.mit.semantifyr.backends.uppaal.trace.UppaalTraceParser
+import hu.bme.mit.semantifyr.backends.uppaal.trace.UppaalVerdict
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalArtifacts
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalModelTransformer
+import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalOperationVisitor
 import hu.bme.mit.semantifyr.logging.info
-import hu.bme.mit.semantifyr.logging.loggerFactory
 
 class UppaalBackend : VerificationBackend<UppaalConfig>() {
-    override val id: String = "uppaal"
+    override val id = "uppaal"
     override val executorKey = UppaalExecutorKey
-
-    private val logger by loggerFactory()
 
     override suspend fun verify(
         parentInjector: Injector,
@@ -57,10 +57,11 @@ class UppaalBackend : VerificationBackend<UppaalConfig>() {
     }
 }
 
-internal class UppaalBackendModule : AbstractModule() {
+class UppaalBackendModule : AbstractModule() {
     override fun configure() {
         bindScope(VerificationScoped::class.java, VerificationScope)
         install(FactoryModuleBuilder().build(UppaalVerificationContext.Factory::class.java))
+        install(FactoryModuleBuilder().build(UppaalOperationVisitor.Factory::class.java))
 
         super.configure()
     }
@@ -71,9 +72,10 @@ class UppaalVerificationContext @AssistedInject constructor(
     @param:Assisted override val executor: UppaalExecutor,
     @Assisted request: BackendVerificationRequest,
     private val uppaalModelTransformer: UppaalModelTransformer,
-    private val traceParser: UppaalTraceParser,
-    private val witnessTransformer: UppaalInlinedOxstsWitnessTransformer,
-) : VerificationContext<UppaalArtifacts, UppaalVerificationContext.UppaalVerdict>(
+    private val uppaalTraceParser: UppaalTraceParser,
+    private val uppaalLogVerdictParser: UppaalLogVerdictParser,
+    private val uppaalInlinedOxstsWitnessTransformer: UppaalInlinedOxstsWitnessTransformer,
+) : VerificationContext<UppaalArtifacts, UppaalVerdict>(
     backendId = "uppaal:${config.id}",
     request = request,
 ) {
@@ -82,7 +84,7 @@ class UppaalVerificationContext @AssistedInject constructor(
 
     override suspend fun prepare(): UppaalArtifacts {
         logger.info { "[$backendId] generating Uppaal XML and query files" }
-        val artifacts = uppaalModelTransformer.generate(request.inlinedOxsts)
+        val artifacts = uppaalModelTransformer.transform(request.inlinedOxsts)
         artifactManager.modelFile.apply {
             parentFile?.mkdirs()
         }.writeText(artifacts.modelXml)
@@ -104,26 +106,32 @@ class UppaalVerificationContext @AssistedInject constructor(
 
         val result = executor.execute(spec)
 
-        artifactManager.errorFile
-            .takeIf { it.exists() }
-            ?.useLines { lines ->
-                lines.firstOrNull { it.contains("is out of range", ignoreCase = true) }
-            }
-            ?.let { offending ->
-                throw BackendUnsupportedException(
-                    "Uppaal cannot represent the OXSTS model: $offending. " +
-                        "Uppaal's bounded `int` cannot hold a value the model assigns, and no faithful " +
-                        "backend encoding is available without a tighter source bound.",
-                )
-            }
+        detectOutOfRangeError()
 
         if (result.exitCode != 0 && result.exitCode != 1) {
             error("verifyta execution failed with exit code ${result.exitCode}")
         }
 
-        return artifactManager.logFile
-            .takeIf { it.exists() }
-            ?.useLines { lines -> lines.firstNotNullOfOrNull(::detectVerdict) }
+        return artifactManager.logFile.takeIf {
+            it.exists()
+        }?.useLines {
+            uppaalLogVerdictParser.parse(it)
+        }
+    }
+
+    private fun detectOutOfRangeError() {
+        val offending = artifactManager.errorFile.takeIf {
+            it.exists()
+        }?.useLines { lines ->
+            lines.firstOrNull {
+                it.contains("is out of range", ignoreCase = true)
+            }
+        } ?: return
+        throw BackendUnsupportedException(
+            "Uppaal cannot represent the OXSTS model: $offending. " +
+                "Uppaal's bounded `int` cannot hold a value the model assigns, and no faithful " +
+                "backend encoding is available without a tighter source bound.",
+        )
     }
 
     override fun interpret(rawVerdict: UppaalVerdict?, artifacts: UppaalArtifacts): VerificationVerdict {
@@ -138,27 +146,14 @@ class UppaalVerificationContext @AssistedInject constructor(
         if (rawVerdict == null) {
             return null
         }
-        val trace = traceParser.parse(artifactManager.logFile)
+        val trace = uppaalTraceParser.parse(artifactManager.logFile)
         if (trace == null) {
             logger.info { "[$backendId] no diagnostic trace in ${artifactManager.logFile.name}; witness not produced" }
             return null
         }
         logger.info { "[$backendId] parsed Uppaal trace with ${trace.states.size} state(s); building witness" }
-        return witnessTransformer.transform(request.inlinedOxsts, trace)
+        return uppaalInlinedOxstsWitnessTransformer.transform(request.inlinedOxsts, trace)
     }
-
-    private fun detectVerdict(line: String): UppaalVerdict? {
-        val trimmed = line.trim()
-        return when {
-            trimmed.contains("Formula is NOT satisfied", ignoreCase = true) -> UppaalVerdict.Unsatisfied
-            trimmed.contains("Property is NOT satisfied", ignoreCase = true) -> UppaalVerdict.Unsatisfied
-            trimmed.contains("Formula is satisfied", ignoreCase = true) -> UppaalVerdict.Satisfied
-            trimmed.contains("Property is satisfied", ignoreCase = true) -> UppaalVerdict.Satisfied
-            else -> null
-        }
-    }
-
-    enum class UppaalVerdict { Satisfied, Unsatisfied }
 
     interface Factory {
         fun create(

@@ -7,15 +7,16 @@
 package hu.bme.mit.semantifyr.backends.uppaal.transformation
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 
-@VerificationScoped
-class UppaalPropertyTransformer {
-    @Inject
-    private lateinit var uppaalExpressionTransformer: UppaalExpressionTransformer
+private const val STABLE_QUALIFIED =
+    "${UppaalModelTransformer.TEMPLATE_NAME}.${UppaalModelTransformer.STABLE_LOCATION_NAME}"
+
+class UppaalPropertyTransformer @Inject constructor(
+    private val uppaalExpressionTransformer: UppaalExpressionTransformer,
+) {
 
     fun transform(property: PropertyDeclaration): String {
         val expression = property.expression
@@ -29,14 +30,7 @@ class UppaalPropertyTransformer {
                 val body = uppaalExpressionTransformer.transform(expression.body)
                 "E<> ($STABLE_QUALIFIED and ($body))"
             }
-            else -> {
-                error("Unsupported property: expected AG or EF, got ${expression::class.simpleName}")
-            }
+            else -> error("Unsupported property: expected AG or EF, got ${expression::class.simpleName}")
         }
-    }
-
-    companion object {
-        private const val STABLE_QUALIFIED: String =
-            "${UppaalModelTransformer.TEMPLATE_NAME}.${UppaalModelTransformer.STABLE_LOCATION_NAME}"
     }
 }
