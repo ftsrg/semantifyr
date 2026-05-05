@@ -19,8 +19,6 @@ dependencies {
 
     implementation(libs.clikt)
     implementation(libs.kotlinx.coroutines.core)
-
-    runtimeOnly(libs.slf4j.log4j)
 }
 
 application {

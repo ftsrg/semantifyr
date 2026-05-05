@@ -18,7 +18,7 @@ val assembleFrontend by tasks.registering(NpmTask::class) {
     inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
     inputs.file(project.layout.projectDirectory.file("package.json"))
     inputs.file(project.layout.projectDirectory.file("package-lock.json"))
-    inputs.files(tasks.npmInstall.get().outputs)
+    inputs.files(tasks.npmInstall)
 
     npmCommand.set(listOf("run", "build"))
     outputs.dir(project.layout.buildDirectory.dir("docusaurus"))

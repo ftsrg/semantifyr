@@ -85,7 +85,7 @@ testing {
 }
 
 tasks.jacocoTestReport {
-    inputs.files(tasks.test.get().outputs)
+    inputs.files(tasks.test)
 }
 
 tasks.named("sonarResolver") {

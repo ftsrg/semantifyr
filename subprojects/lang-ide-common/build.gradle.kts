@@ -25,5 +25,4 @@ dependencies {
     api(project(":theta-backend"))
 
     implementation(project(":logging"))
-    runtimeOnly(libs.slf4j.log4j)
 }

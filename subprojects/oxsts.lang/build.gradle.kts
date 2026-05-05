@@ -25,5 +25,5 @@ val syncModel by tasks.registering(Sync::class) {
 }
 
 val generateXtextLanguage by tasks.getting(JavaExec::class) {
-    inputs.files(syncModel.get().outputs)
+    inputs.files(syncModel)
 }

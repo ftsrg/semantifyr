@@ -82,11 +82,11 @@ tasks {
     }
 
     compileJava {
-        inputs.files(generateXtextLanguage.get().outputs)
+        inputs.files(generateXtextLanguage)
     }
 
     processResources {
-        inputs.files(generateXtextLanguage.get().outputs)
+        inputs.files(generateXtextLanguage)
     }
 
     clean {

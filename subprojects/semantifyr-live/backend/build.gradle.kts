@@ -179,7 +179,7 @@ testing {
                 implementation(libs.kotlinx.coroutines.test)
 
                 implementation(project(":portfolios"))
-                implementation(testFixtures(project(":verification")))
+                implementation(testFixtures(project(":verifier")))
             }
             targets.all {
                 testTask.configure {

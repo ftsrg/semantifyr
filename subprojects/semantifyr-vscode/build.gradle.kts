@@ -47,7 +47,7 @@ val buildExtension by tasks.registering(NpmTask::class) {
     inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
     inputs.file(project.layout.projectDirectory.file("package-lock.json"))
     inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
-    inputs.files(tasks.npmInstall.get().outputs)
+    inputs.files(tasks.npmInstall)
 
     npmCommand.set(
         listOf(
@@ -61,7 +61,7 @@ val buildExtension by tasks.registering(NpmTask::class) {
 
 val syncPackageVersion by tasks.registering(NpmTask::class) {
     description = "Rewrite package.json version to match project.version"
-    dependsOn(tasks.npmInstall)
+    inputs.files(tasks.npmInstall)
     inputs.property("version", project.version.toString())
     outputs.file(project.layout.projectDirectory.file("package.json"))
     npmCommand.set(listOf("pkg", "set", "version=${project.version}"))
@@ -70,22 +70,21 @@ val syncPackageVersion by tasks.registering(NpmTask::class) {
 val vsixFile = project.layout.buildDirectory.file("semantifyr-${project.version}.vsix")
 
 val bundleExtension by tasks.registering(NpmTask::class) {
-    dependsOn(syncPackageVersion)
+    inputs.files(syncPackageVersion)
 
-    inputs.files(cloneDistribution.get().outputs)
+    inputs.files(cloneDistribution)
     inputs.dir(project.layout.projectDirectory.dir("src"))
     inputs.dir(project.layout.projectDirectory.dir("syntaxes"))
     inputs.file(project.layout.projectDirectory.file("esbuild.mjs"))
     inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
     inputs.file(project.layout.projectDirectory.file("language-configuration.json"))
-    inputs.file(project.layout.projectDirectory.file("package.json"))
     inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
     inputs.file(project.layout.projectDirectory.file("icons/icon.png"))
     inputs.file(project.layout.projectDirectory.file("icons/semantifyr-file-icon.png"))
     inputs.file(project.layout.projectDirectory.file("icons/gamma-file-icon.png"))
     inputs.file(project.layout.projectDirectory.file("README.md"))
     inputs.file(project.layout.projectDirectory.file("CHANGELOG.md"))
-    inputs.files(tasks.npmInstall.get().outputs)
+    inputs.files(tasks.npmInstall)
 
     npmCommand.set(
         listOf(
@@ -99,8 +98,8 @@ val bundleExtension by tasks.registering(NpmTask::class) {
 
 tasks {
     assemble {
-        inputs.files(cloneDistribution.get().outputs)
-        inputs.files(buildExtension.get().outputs)
+        inputs.files(cloneDistribution)
+        inputs.files(buildExtension)
     }
 
     clean {
