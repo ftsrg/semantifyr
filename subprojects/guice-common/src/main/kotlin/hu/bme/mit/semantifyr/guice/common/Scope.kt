@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.scopes
+package hu.bme.mit.semantifyr.guice.common
 
 import com.google.inject.Key
 import com.google.inject.OutOfScopeException

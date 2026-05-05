@@ -6,10 +6,9 @@
 
 package hu.bme.mit.semantifyr.backend.scopes
 
-import com.google.inject.Scope
 import com.google.inject.ScopeAnnotation
-import hu.bme.mit.semantifyr.scopes.ScopeContext
-import hu.bme.mit.semantifyr.scopes.Seed
+import hu.bme.mit.semantifyr.guice.common.ScopeContext
+import hu.bme.mit.semantifyr.guice.common.Seed
 
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)

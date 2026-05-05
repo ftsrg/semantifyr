@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.scopes
+package hu.bme.mit.semantifyr.guice.common
 
 import com.google.inject.AbstractModule
 import com.google.inject.ConfigurationException
@@ -31,13 +31,7 @@ private annotation class TestScoped
 private val testContext = ScopeContext("TestScope")
 
 @TestScoped
-class TestScopedService @Inject constructor() {
-    val id: Int = counter.getAndIncrement()
-
-    companion object {
-        val counter = AtomicInteger(0)
-    }
-}
+class TestScopedService
 
 private class ScopeBindingModule : AbstractModule() {
     override fun configure() {
@@ -51,8 +45,7 @@ class ScopeContextTest {
         val injector = Guice.createInjector(ScopeBindingModule())
         assertThatThrownBy {
             injector.getInstance(TestScopedService::class.java)
-        }.isInstanceOf(ProvisionException::class.java)
-            .hasRootCauseInstanceOf(OutOfScopeException::class.java)
+        }.isInstanceOf(ProvisionException::class.java).hasRootCauseInstanceOf(OutOfScopeException::class.java)
     }
 
     @Test
@@ -122,12 +115,10 @@ class ScopeContextTest {
             assertThatThrownBy {
                 runBlocking {
                     testContext.withScope {
-                        @Suppress("UNUSED_VARIABLE")
-                        val unused = Unit
+                        // no-op
                     }
                 }
-            }.isInstanceOf(IllegalStateException::class.java)
-                .hasMessageContaining("already open")
+            }.isInstanceOf(IllegalStateException::class.java).hasMessageContaining("already open")
         }
     }
 
@@ -161,8 +152,7 @@ class ScopeContextTest {
                     @Suppress("UNUSED_VARIABLE")
                     val unused = Unit
                 }
-            }.isInstanceOf(IllegalStateException::class.java)
-                .hasMessageContaining("already open")
+            }.isInstanceOf(IllegalStateException::class.java).hasMessageContaining("already open")
         }
     }
 
@@ -174,8 +164,7 @@ class ScopeContextTest {
         }
         assertThatThrownBy {
             injector.getInstance(TestScopedService::class.java)
-        }.isInstanceOf(ProvisionException::class.java)
-            .hasRootCauseInstanceOf(OutOfScopeException::class.java)
+        }.isInstanceOf(ProvisionException::class.java).hasRootCauseInstanceOf(OutOfScopeException::class.java)
     }
 
     @Test
@@ -189,7 +178,6 @@ class ScopeContextTest {
         }
         assertThatThrownBy {
             injector.getInstance(TestScopedService::class.java)
-        }.isInstanceOf(ProvisionException::class.java)
-            .hasRootCauseInstanceOf(OutOfScopeException::class.java)
+        }.isInstanceOf(ProvisionException::class.java).hasRootCauseInstanceOf(OutOfScopeException::class.java)
     }
 }
