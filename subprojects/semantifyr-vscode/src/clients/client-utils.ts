@@ -15,12 +15,6 @@ function buildClientOptions(language: string): LanguageClientOptions {
     };
 }
 
-/**
- * Push `semantifyr.*` settings to an already-started LSP client, and keep
- * pushing on every workspace-config change. Also sends an initial
- * `didChangeConfiguration` so servers that ignore `initializationOptions` see
- * the current state.
- */
 export function registerSemantifyrSettingsSync(client: LanguageClient) {
     const send = async () => {
         await client.sendNotification(DidChangeConfigurationNotification.type, {
@@ -59,14 +53,6 @@ export function createRemoteLspClient(port: number, language: string): LanguageC
     );
 }
 
-/**
- * Spawn the LSP executable and talk to it over a loopback TCP socket on an OS-picked free port.
- *
- * The extension binds `127.0.0.1:0`, lets the kernel pick an unused port, spawns the server with
- * `--socket=<port>`, and accepts the incoming connection. This avoids stdio multiplexing (so the
- * server can log to stdout/stderr normally) and sidesteps the "is this port free" problem that a
- * fixed-port `TransportKind.socket` would have.
- */
 export function createLspClient(lspExecutable: string, language: string): LanguageClient {
     const serverOptions: ServerOptions = () => new Promise<StreamInfo>((resolve, reject) => {
         const server = net.createServer((socket) => {
