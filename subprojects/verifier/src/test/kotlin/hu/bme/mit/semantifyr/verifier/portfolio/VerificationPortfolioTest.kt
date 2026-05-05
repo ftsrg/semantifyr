@@ -213,6 +213,49 @@ class VerificationPortfolioTest {
     }
 
     @Test
+    fun `firstDecisive cancels remaining jobs once a verdict is reached`() = runTest {
+        val winner = FakeBackend.delayed("winner", 10, VerificationVerdict.Passed)
+        val laggard = FakeBackend.delayed("laggard", 10_000, VerificationVerdict.Passed)
+
+        val outcome = portfolio.runFirstDecisive(noopGate) {
+            enqueue(winner)
+            enqueue(laggard)
+        }
+
+        val result = outcome.orFail("expected decisive")
+        assertThat(result.metadata.backendId).isEqualTo("winner")
+        assertThat(laggard.cancellations.get()).isEqualTo(1)
+    }
+
+    @Test
+    suspend fun `all reports AllNotSupported when every job is NotSupported`() {
+        val a = FakeBackend.verdict("a", VerificationVerdict.NotSupported)
+        val b = FakeBackend.verdict("b", VerificationVerdict.NotSupported)
+
+        val outcome = portfolio.runAll(noopGate) {
+            enqueue(a)
+            enqueue(b)
+        }
+
+        assertThat(outcome).isInstanceOf(PortfolioOutcome.AllNotSupported::class.java)
+    }
+
+    @Test
+    suspend fun `all maps disagreeing decisive verdicts to Inconclusive with a disagreement message`() {
+        val pass = FakeBackend.verdict("pass", VerificationVerdict.Passed)
+        val fail = FakeBackend.verdict("fail", VerificationVerdict.Failed)
+
+        val outcome = portfolio.runAll(noopGate) {
+            enqueue(pass)
+            enqueue(fail)
+        }
+
+        val result = outcome.orFail("expected aggregated result")
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
+        assertThat(result.message).contains("disagreeing")
+    }
+
+    @Test
     fun `firstDecisive reports progress for every incoming result`() = runTest {
         val a = FakeBackend.delayed("a", 5, VerificationVerdict.Inconclusive)
         val b = FakeBackend.delayed("b", 20, VerificationVerdict.Passed)
