@@ -21,6 +21,7 @@ dependencies {
     api(project(":verifier"))
 
     implementation(project(":logging"))
+    implementation(project(":utils"))
     implementation(libs.kotlinx.coroutines.core)
 
     testFixturesApi(project(":gamma.lang"))

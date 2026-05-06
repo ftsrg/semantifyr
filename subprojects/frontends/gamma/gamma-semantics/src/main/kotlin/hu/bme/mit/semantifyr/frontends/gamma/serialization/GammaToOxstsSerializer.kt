@@ -56,10 +56,12 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TypeReference
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.UnaryOp
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration
+import hu.bme.mit.semantifyr.utils.text.IndentingStringBuilder
+import hu.bme.mit.semantifyr.utils.text.buildIndented
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 
 class GammaToOxstsSerializer {
-    fun transformToOxsts(gammaPackage: GammaModelPackage) = indent {
+    fun transformToOxsts(gammaPackage: GammaModelPackage) = buildIndented {
         appendLine("package ${gammaPackage.name}")
         appendLine()
         appendLine("import semantifyr::gamma::expressions")
@@ -86,7 +88,7 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(interfaceDeclaration: InterfaceDeclaration) {
+    private fun IndentingStringBuilder.serialize(interfaceDeclaration: InterfaceDeclaration) {
         appendIndent("class ${interfaceDeclaration.name} : Interface") {
             for (event in interfaceDeclaration.events) {
                 serialize(event)
@@ -101,18 +103,18 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(event: EventDeclaration) {
+    private fun IndentingStringBuilder.serialize(event: EventDeclaration) {
         appendLine("@Shared")
         appendLine("contains ${event.name}: Event subsets ${getEventDirection(event)}")
     }
 
-    private fun IndentationAwareStringWriter.serialize(component: ComponentDeclaration) = when (component) {
+    private fun IndentingStringBuilder.serialize(component: ComponentDeclaration) = when (component) {
         is SyncComponentDeclaration -> serialize(component)
         is StatechartDeclaration -> serialize(component)
         else -> error("Unknown component type: $component")
     }
 
-    private fun IndentationAwareStringWriter.serialize(component: SyncComponentDeclaration) {
+    private fun IndentingStringBuilder.serialize(component: SyncComponentDeclaration) {
         appendIndent("class ${component.name} : SyncComponent") {
             val unboundPorts = mutableSetOf<PortDeclaration>()
             unboundPorts += component.ports
@@ -143,30 +145,30 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(port: PortDeclaration) {
+    private fun IndentingStringBuilder.serialize(port: PortDeclaration) {
         appendIndent("contains ${port.name}: ${getPortType(port)} subsets ports") {
             appendLine("redefine contains interface: ${port.`interface`.name}")
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(portBinding: PortBinding) {
+    private fun IndentingStringBuilder.serialize(portBinding: PortBinding) {
         appendLine(
             "refers ${portBinding.port.name}: Port subsets ports = ${portBinding.boundPort.instance.name}.${portBinding.boundPort.port.name}",
         )
     }
 
-    private fun IndentationAwareStringWriter.serialize(instance: ComponentInstance) {
+    private fun IndentingStringBuilder.serialize(instance: ComponentInstance) {
         appendLine("contains ${instance.name}: ${instance.component.name} subsets components")
     }
 
-    private fun IndentationAwareStringWriter.serialize(channel: Channel) {
+    private fun IndentingStringBuilder.serialize(channel: Channel) {
         appendIndent("contains ${channel.name}: Channel subsets channels") {
             appendLine("redefine refers inputPort: Port = ${channel.providedPort.instance.name}.${channel.providedPort.port.name}")
             appendLine("redefine refers outputPort: Port = ${channel.requiredPort.instance.name}.${channel.requiredPort.port.name}")
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(statechart: StatechartDeclaration) {
+    private fun IndentingStringBuilder.serialize(statechart: StatechartDeclaration) {
         appendIndent("class ${statechart.name} : Statechart") {
             if (statechart.schedulingOrder == SchedulingOrder.BOTTOM_UP) {
                 appendLine("redefine refers regionSchedule: RegionSchedule = RegionSchedule::BottomUp")
@@ -208,7 +210,7 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(variable: VariableDeclaration) {
+    private fun IndentingStringBuilder.serialize(variable: VariableDeclaration) {
         appendIndent("contains ${variable.name}: ${getTypeReferenceName(variable.type)}Variable subsets variables") {
             if (variable.default != null) {
                 val default = serializeInline(variable.default)
@@ -218,11 +220,11 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(timeout: TimeoutDeclaration) {
+    private fun IndentingStringBuilder.serialize(timeout: TimeoutDeclaration) {
         appendLine("contains ${timeout.name}: Timeout subsets timeouts")
     }
 
-    private fun IndentationAwareStringWriter.serialize(region: Region) {
+    private fun IndentingStringBuilder.serialize(region: Region) {
         appendIndent("contains ${region.name}: Region subsets regions") {
             for (state in region.states) {
                 serialize(state)
@@ -234,7 +236,7 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(state: State) {
+    private fun IndentingStringBuilder.serialize(state: State) {
         appendIndent("contains ${state.name}: State subsets states") {
             for (action in state.entryActions) {
                 serialize(action, "entryActions")
@@ -250,19 +252,19 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(transition: Transition) = when (transition) {
+    private fun IndentingStringBuilder.serialize(transition: Transition) = when (transition) {
         is EntryTransition -> serialize(transition)
         is StateTransition -> serialize(transition)
         else -> error("Unknown State type $transition")
     }
 
-    private fun IndentationAwareStringWriter.serialize(transition: EntryTransition) {
+    private fun IndentingStringBuilder.serialize(transition: EntryTransition) {
         appendIndent("contains ${transition.name}: EntryTransition subsets entryTransitions") {
             appendLine("redefine refers to: State = ${transition.to.name}")
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(transition: StateTransition) {
+    private fun IndentingStringBuilder.serialize(transition: StateTransition) {
         appendIndent("contains ${transition.name}: Transition subsets transitions") {
             appendLine("redefine refers from: State = ${transition.from.name}")
             appendLine("redefine refers to: State = ${transition.to.name}")
@@ -283,26 +285,26 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(trigger: Trigger) = when (trigger) {
+    private fun IndentingStringBuilder.serialize(trigger: Trigger) = when (trigger) {
         is EventTrigger -> serialize(trigger)
         is TimeoutTrigger -> serialize(trigger)
         else -> error("Unknown trigger type: $trigger")
     }
 
-    private fun IndentationAwareStringWriter.serialize(trigger: EventTrigger) {
+    private fun IndentingStringBuilder.serialize(trigger: EventTrigger) {
         appendIndent("redefine contains trigger: EventTrigger") {
             appendLine("redefine refers port: Port = ${trigger.port.name}")
             appendLine("redefine refers event: Event = ${trigger.port.name}.interface.${trigger.event.name}")
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(trigger: TimeoutTrigger) {
+    private fun IndentingStringBuilder.serialize(trigger: TimeoutTrigger) {
         appendIndent("redefine contains trigger: TimeoutTrigger") {
             appendLine("redefine refers timeout: Timeout = ${trigger.timeout.name}")
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(
+    private fun IndentingStringBuilder.serialize(
         action: Action,
         subsets: String,
     ) = when (action) {
@@ -312,7 +314,7 @@ class GammaToOxstsSerializer {
         else -> error("Unknown action type: $action")
     }
 
-    private fun IndentationAwareStringWriter.serialize(
+    private fun IndentingStringBuilder.serialize(
         action: RaiseEventAction,
         subsets: String,
     ) {
@@ -322,7 +324,7 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(
+    private fun IndentingStringBuilder.serialize(
         action: SetTimeoutAction,
         subsets: String,
     ) {
@@ -332,7 +334,7 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(
+    private fun IndentingStringBuilder.serialize(
         action: AssignmentAction,
         subsets: String,
     ) {
@@ -342,7 +344,7 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(verificationCase: VerificationCaseDeclaration) {
+    private fun IndentingStringBuilder.serialize(verificationCase: VerificationCaseDeclaration) {
         appendLine("@VerificationCase")
         appendIndent("class ${verificationCase.name} : GammaVerificationCase") {
             appendLine("contains ${verificationCase.component.name}: ${verificationCase.component.component.name} redefines component")
@@ -351,7 +353,7 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(
+    private fun IndentingStringBuilder.serialize(
         expression: Expression,
         redefines: String,
     ) = when (expression) {
@@ -402,28 +404,28 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(
+    private fun IndentingStringBuilder.serialize(
         expression: ArithmeticBinaryOperator,
         redefines: String,
     ) {
         serializeOperator(expression.left, expression.right, getOpName(expression.op), redefines)
     }
 
-    private fun IndentationAwareStringWriter.serialize(
+    private fun IndentingStringBuilder.serialize(
         expression: ArithmeticUnaryOperator,
         redefines: String,
     ) {
         serializeOperator(expression.body, getOpName(expression.op), redefines)
     }
 
-    private fun IndentationAwareStringWriter.serialize(
+    private fun IndentingStringBuilder.serialize(
         expression: BooleanOperator,
         redefines: String,
     ) {
         serializeOperator(expression.left, expression.right, getOpName(expression.op), redefines)
     }
 
-    private fun IndentationAwareStringWriter.serialize(
+    private fun IndentingStringBuilder.serialize(
         expression: TemporalOperator,
         redefines: String,
     ) {
@@ -434,28 +436,28 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(
+    private fun IndentingStringBuilder.serialize(
         expression: AG,
         redefines: String,
     ) {
         serializeOperator(expression.body, "MustAlways", redefines)
     }
 
-    private fun IndentationAwareStringWriter.serialize(
+    private fun IndentingStringBuilder.serialize(
         expression: EF,
         redefines: String,
     ) {
         serializeOperator(expression.body, "Eventually", redefines)
     }
 
-    private fun IndentationAwareStringWriter.serialize(
+    private fun IndentingStringBuilder.serialize(
         expression: ComparisonOperator,
         redefines: String,
     ) {
         serializeOperator(expression.left, expression.right, getOpName(expression.op), redefines)
     }
 
-    private fun IndentationAwareStringWriter.serializeOperator(
+    private fun IndentingStringBuilder.serializeOperator(
         left: Expression,
         right: Expression,
         name: String,
@@ -467,7 +469,7 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serializeOperator(
+    private fun IndentingStringBuilder.serializeOperator(
         body: Expression,
         name: String,
         redefines: String,
@@ -477,7 +479,7 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(
+    private fun IndentingStringBuilder.serialize(
         expression: LiteralExpression,
         redefines: String,
     ) {
@@ -488,7 +490,7 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(
+    private fun IndentingStringBuilder.serialize(
         expression: LiteralInteger,
         redefines: String,
     ) {
@@ -497,7 +499,7 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(
+    private fun IndentingStringBuilder.serialize(
         expression: LiteralBoolean,
         redefines: String,
     ) {
@@ -506,14 +508,14 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serialize(
+    private fun IndentingStringBuilder.serialize(
         expression: NegationOperator,
         redefines: String,
     ) {
         serializeOperator(expression.body, "UnaryNotExpression", redefines)
     }
 
-    private fun IndentationAwareStringWriter.serialize(
+    private fun IndentingStringBuilder.serialize(
         expression: IsStateActiveExpression,
         redefines: String,
     ) {
@@ -522,7 +524,7 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serializeVariableReference(
+    private fun IndentingStringBuilder.serializeVariableReference(
         expression: ElementReferenceExpression,
         redefines: String,
     ) {
@@ -531,7 +533,7 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentationAwareStringWriter.serializeVariableReference(
+    private fun IndentingStringBuilder.serializeVariableReference(
         expression: NavigationSuffixExpression,
         redefines: String,
     ) {

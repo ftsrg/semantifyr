@@ -6,14 +6,14 @@
 
 package hu.bme.mit.semantifyr.utils.text
 
-class IndentingBuilder(
+class IndentingStringBuilder(
     private val indent: String = "    ",
     private val sb: StringBuilder = StringBuilder(),
 ) {
 
     private var level: Int = 0
 
-    fun line(text: String = "") {
+    fun appendLine(text: String = "") {
         if (text.isNotEmpty()) {
             repeat(level) {
                 sb.append(indent)
@@ -23,13 +23,7 @@ class IndentingBuilder(
         sb.append(System.lineSeparator())
     }
 
-    fun lines(texts: Iterable<String>) {
-        for (text in texts) {
-            line(text)
-        }
-    }
-
-    fun indented(block: IndentingBuilder.() -> Unit) {
+    fun indented(block: IndentingStringBuilder.() -> Unit) {
         level++
         try {
             block()
@@ -42,13 +36,13 @@ class IndentingBuilder(
         header: String,
         openSuffix: String = " {",
         closeChar: String = "}",
-        crossinline body: IndentingBuilder.() -> Unit,
+        crossinline body: IndentingStringBuilder.() -> Unit,
     ) {
-        line(header + openSuffix)
+        appendLine(header + openSuffix)
         indented {
             body()
         }
-        line(closeChar)
+        appendLine(closeChar)
     }
 
     fun appendRaw(text: String) {
@@ -62,9 +56,9 @@ class IndentingBuilder(
 
 inline fun buildIndented(
     indent: String = "    ",
-    body: IndentingBuilder.() -> Unit,
+    body: IndentingStringBuilder.() -> Unit,
 ): String {
-    val builder = IndentingBuilder(indent)
+    val builder = IndentingStringBuilder(indent)
     builder.body()
     return builder.toString()
 }

@@ -22,10 +22,10 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
-import hu.bme.mit.semantifyr.utils.text.IndentingBuilder
+import hu.bme.mit.semantifyr.utils.text.IndentingStringBuilder
 
 class SpinOperationVisitor @AssistedInject constructor(
-    @param:Assisted private val builder: IndentingBuilder,
+    @param:Assisted private val builder: IndentingStringBuilder,
     private val spinExpressionTransformer: SpinExpressionTransformer,
     private val spinVariableTransformer: SpinVariableTransformer,
     private val havocValueCollector: HavocValueCollector,
@@ -42,54 +42,54 @@ class SpinOperationVisitor @AssistedInject constructor(
     }
 
     override fun visit(operation: ChoiceOperation) {
-        builder.line("if")
+        builder.appendLine("if")
         for (branch in operation.branches) {
             renderChoiceBranch(branch)
         }
-        builder.line("fi;")
+        builder.appendLine("fi;")
     }
 
     private fun renderChoiceBranch(branch: SequenceOperation) {
         if (branch.steps.isEmpty()) {
-            builder.line(":: skip")
+            builder.appendLine(":: skip")
             return
         }
-        builder.line(":: atomic {")
+        builder.appendLine(":: atomic {")
         builder.indented {
             visit(branch)
         }
-        builder.line("}")
+        builder.appendLine("}")
     }
 
     override fun visit(operation: AssignmentOperation) {
         val variable = OxstsUtils.requireVariableReference(operation.reference)
         val name = spinVariableTransformer.nameOf(variable)
         val rightHandSide = spinExpressionTransformer.transform(operation.expression)
-        builder.line("$name = $rightHandSide;")
+        builder.appendLine("$name = $rightHandSide;")
     }
 
     override fun visit(operation: AssumptionOperation) {
         val guard = spinExpressionTransformer.transform(operation.expression)
-        builder.line("($guard);")
+        builder.appendLine("($guard);")
     }
 
     override fun visit(operation: IfOperation) {
         val guard = spinExpressionTransformer.transform(operation.guard)
-        builder.line("if")
-        builder.line(":: ($guard) ->")
+        builder.appendLine("if")
+        builder.appendLine(":: ($guard) ->")
         builder.indented {
             visit(operation.body)
         }
         renderIfElseBranch(operation.`else`)
-        builder.line("fi;")
+        builder.appendLine("fi;")
     }
 
     private fun renderIfElseBranch(elseBranch: Operation?) {
         if (elseBranch == null) {
-            builder.line(":: else -> skip")
+            builder.appendLine(":: else -> skip")
             return
         }
-        builder.line(":: else ->")
+        builder.appendLine(":: else ->")
         builder.indented {
             visit(elseBranch)
         }
@@ -101,7 +101,7 @@ class SpinOperationVisitor @AssistedInject constructor(
         val initializer = operation.expression?.let {
             " = ${spinExpressionTransformer.transform(it)}"
         } ?: ""
-        builder.line("$type $name$initializer;")
+        builder.appendLine("$type $name$initializer;")
     }
 
     private fun renderLocalType(operation: LocalVarDeclarationOperation): String {
@@ -124,30 +124,30 @@ class SpinOperationVisitor @AssistedInject constructor(
     }
 
     private fun renderBooleanHavoc(name: String) {
-        builder.line("if")
-        builder.line(":: $name = false")
-        builder.line(":: $name = true")
-        builder.line("fi;")
+        builder.appendLine("if")
+        builder.appendLine(":: $name = false")
+        builder.appendLine(":: $name = true")
+        builder.appendLine("fi;")
     }
 
     private fun renderEnumHavoc(variable: SpinVariable) {
         val enum = variable.enumDeclaration
             ?: error("Enum-typed havoc target '${variable.name}' has no enum declaration")
-        builder.line("if")
+        builder.appendLine("if")
         for (literal in enum.literals) {
             val literalName = spinVariableTransformer.sanitizeEnumLiteral(literal)
-            builder.line(":: ${variable.name} = $literalName")
+            builder.appendLine(":: ${variable.name} = $literalName")
         }
-        builder.line("fi;")
+        builder.appendLine("fi;")
     }
 
     private fun renderIntegerHavoc(variable: VariableDeclaration, name: String) {
         val values = havocValueCollector.valuesFor(variable)
-        builder.line("if")
+        builder.appendLine("if")
         for (value in values) {
-            builder.line(":: $name = $value")
+            builder.appendLine(":: $name = $value")
         }
-        builder.line("fi;")
+        builder.appendLine("fi;")
     }
 
     override fun visit(operation: ForOperation) {
@@ -155,6 +155,6 @@ class SpinOperationVisitor @AssistedInject constructor(
     }
 
     interface Factory {
-        fun create(builder: IndentingBuilder): SpinOperationVisitor
+        fun create(builder: IndentingStringBuilder): SpinOperationVisitor
     }
 }

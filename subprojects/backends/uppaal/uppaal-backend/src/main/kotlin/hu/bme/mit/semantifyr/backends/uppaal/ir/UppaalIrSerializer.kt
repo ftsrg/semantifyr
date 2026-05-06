@@ -6,15 +6,15 @@
 
 package hu.bme.mit.semantifyr.backends.uppaal.ir
 
-import hu.bme.mit.semantifyr.utils.text.IndentingBuilder
+import hu.bme.mit.semantifyr.utils.text.IndentingStringBuilder
 import hu.bme.mit.semantifyr.utils.text.escapeXml
 
 class UppaalIrSerializer {
     fun serialize(nta: UppaalNta): String {
-        val builder = IndentingBuilder()
-        builder.line("<?xml version=\"1.0\" encoding=\"utf-8\"?>")
-        builder.line("<!DOCTYPE nta PUBLIC \"-//Uppaal Team//DTD Flat System 1.6//EN\" \"http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd\">")
-        builder.line("<nta>")
+        val builder = IndentingStringBuilder()
+        builder.appendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>")
+        builder.appendLine("<!DOCTYPE nta PUBLIC \"-//Uppaal Team//DTD Flat System 1.6//EN\" \"http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd\">")
+        builder.appendLine("<nta>")
         builder.indented {
             serializeDeclarations(this, nta.globalDeclarations)
             for (template in nta.templates) {
@@ -22,20 +22,20 @@ class UppaalIrSerializer {
             }
             serializeSystem(this, nta.systemDeclaration)
         }
-        builder.line("</nta>")
+        builder.appendLine("</nta>")
         return builder.toString()
     }
 
     private fun serializeDeclarations(
-        builder: IndentingBuilder,
+        builder: IndentingStringBuilder,
         declarations: UppaalDeclarations,
     ) {
         val text = renderDeclarationsText(declarations)
         if (text.isEmpty()) {
-            builder.line("<declaration></declaration>")
+            builder.appendLine("<declaration></declaration>")
             return
         }
-        builder.line("<declaration>${escapeXml(text)}</declaration>")
+        builder.appendLine("<declaration>${escapeXml(text)}</declaration>")
     }
 
     private fun renderDeclarationsText(declarations: UppaalDeclarations): String {
@@ -55,81 +55,81 @@ class UppaalIrSerializer {
     }
 
     private fun serializeTemplate(
-        builder: IndentingBuilder,
+        builder: IndentingStringBuilder,
         template: UppaalTemplate,
     ) {
-        builder.line("<template>")
+        builder.appendLine("<template>")
         builder.indented {
-            line("<name>${escapeXml(template.name)}</name>")
+            appendLine("<name>${escapeXml(template.name)}</name>")
             if (template.parameters.isNotEmpty()) {
-                line("<parameter>${escapeXml(template.parameters)}</parameter>")
+                appendLine("<parameter>${escapeXml(template.parameters)}</parameter>")
             }
             val localText = renderDeclarationsText(template.localDeclarations)
             if (localText.isNotEmpty()) {
-                line("<declaration>${escapeXml(localText)}</declaration>")
+                appendLine("<declaration>${escapeXml(localText)}</declaration>")
             }
             for (location in template.locations) {
                 serializeLocation(this, location)
             }
-            line("<init ref=\"${escapeXml(template.initialLocationId)}\"/>")
+            appendLine("<init ref=\"${escapeXml(template.initialLocationId)}\"/>")
             for (edge in template.edges) {
                 serializeEdge(this, edge)
             }
         }
-        builder.line("</template>")
+        builder.appendLine("</template>")
     }
 
     private fun serializeLocation(
-        builder: IndentingBuilder,
+        builder: IndentingStringBuilder,
         location: UppaalLocation,
     ) {
-        builder.line("<location id=\"${escapeXml(location.id)}\">")
+        builder.appendLine("<location id=\"${escapeXml(location.id)}\">")
         builder.indented {
-            line("<name>${escapeXml(location.name)}</name>")
+            appendLine("<name>${escapeXml(location.name)}</name>")
             location.invariant?.let {
-                line("<label kind=\"invariant\">${escapeXml(it)}</label>")
+                appendLine("<label kind=\"invariant\">${escapeXml(it)}</label>")
             }
             when (location.kind) {
                 UppaalLocationKind.Committed -> {
-                    line("<committed/>")
+                    appendLine("<committed/>")
                 }
                 UppaalLocationKind.Urgent -> {
-                    line("<urgent/>")
+                    appendLine("<urgent/>")
                 }
                 UppaalLocationKind.Normal -> { /* no marker */ }
             }
         }
-        builder.line("</location>")
+        builder.appendLine("</location>")
     }
 
     private fun serializeEdge(
-        builder: IndentingBuilder,
+        builder: IndentingStringBuilder,
         edge: UppaalEdge,
     ) {
-        builder.line("<transition>")
+        builder.appendLine("<transition>")
         builder.indented {
-            line("<source ref=\"${escapeXml(edge.sourceId)}\"/>")
-            line("<target ref=\"${escapeXml(edge.targetId)}\"/>")
+            appendLine("<source ref=\"${escapeXml(edge.sourceId)}\"/>")
+            appendLine("<target ref=\"${escapeXml(edge.targetId)}\"/>")
             edge.select?.let {
-                line("<label kind=\"select\">${escapeXml(it)}</label>")
+                appendLine("<label kind=\"select\">${escapeXml(it)}</label>")
             }
             edge.guard?.let {
-                line("<label kind=\"guard\">${escapeXml(it)}</label>")
+                appendLine("<label kind=\"guard\">${escapeXml(it)}</label>")
             }
             edge.sync?.let {
-                line("<label kind=\"synchronisation\">${escapeXml(it)}</label>")
+                appendLine("<label kind=\"synchronisation\">${escapeXml(it)}</label>")
             }
             edge.assignment?.let {
-                line("<label kind=\"assignment\">${escapeXml(it)}</label>")
+                appendLine("<label kind=\"assignment\">${escapeXml(it)}</label>")
             }
         }
-        builder.line("</transition>")
+        builder.appendLine("</transition>")
     }
 
     private fun serializeSystem(
-        builder: IndentingBuilder,
+        builder: IndentingStringBuilder,
         systemDeclaration: String,
     ) {
-        builder.line("<system>${escapeXml(systemDeclaration)}</system>")
+        builder.appendLine("<system>${escapeXml(systemDeclaration)}</system>")
     }
 }

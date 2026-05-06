@@ -8,19 +8,19 @@ package hu.bme.mit.semantifyr.backends.nuxmv.transformation
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
-import hu.bme.mit.semantifyr.utils.text.IndentingBuilder
+import hu.bme.mit.semantifyr.utils.text.IndentingStringBuilder
 
 class NuxmvFormulaRenderer @Inject constructor(
     private val nuxmvVariableTransformer: NuxmvVariableTransformer,
 ) {
 
     fun renderInitSection(
-        builder: IndentingBuilder,
+        builder: IndentingStringBuilder,
         allVariables: List<VariableDeclaration>,
         branches: List<NuxmvBranch>,
         declaredInitial: Map<VariableDeclaration, String>,
     ) {
-        builder.line("INIT")
+        builder.appendLine("INIT")
         builder.indented {
             renderDisjunction(this, branches.ifEmpty { listOf(NuxmvBranch()) }) {
                 it.constraints + finalizeInitBindings(allVariables, it, declaredInitial)
@@ -29,11 +29,11 @@ class NuxmvFormulaRenderer @Inject constructor(
     }
 
     fun renderTransSection(
-        builder: IndentingBuilder,
+        builder: IndentingStringBuilder,
         allVariables: List<VariableDeclaration>,
         branches: List<NuxmvBranch>,
     ) {
-        builder.line("TRANS")
+        builder.appendLine("TRANS")
         builder.indented {
             renderDisjunction(this, branches.ifEmpty { listOf(NuxmvBranch()) }) {
                 it.constraints + finalizeTransBindings(allVariables, it)
@@ -73,7 +73,7 @@ class NuxmvFormulaRenderer @Inject constructor(
     }
 
     private fun renderDisjunction(
-        builder: IndentingBuilder,
+        builder: IndentingStringBuilder,
         branches: List<NuxmvBranch>,
         partsOf: (NuxmvBranch) -> List<String>,
     ) {
@@ -83,20 +83,20 @@ class NuxmvFormulaRenderer @Inject constructor(
             } else {
                 "| ("
             }
-            builder.line(opener)
+            builder.appendLine(opener)
             builder.indented {
                 renderConjunction(this, partsOf(branch))
             }
-            builder.line(")")
+            builder.appendLine(")")
         }
     }
 
-    private fun renderConjunction(builder: IndentingBuilder, parts: List<String>) {
+    private fun renderConjunction(builder: IndentingStringBuilder, parts: List<String>) {
         val nonEmpty = parts.filter {
             it.isNotEmpty()
         }
         if (nonEmpty.isEmpty()) {
-            builder.line("TRUE")
+            builder.appendLine("TRUE")
             return
         }
         for ((index, part) in nonEmpty.withIndex()) {
@@ -105,7 +105,7 @@ class NuxmvFormulaRenderer @Inject constructor(
             } else {
                 "& "
             }
-            builder.line("$prefix($part)")
+            builder.appendLine("$prefix($part)")
         }
     }
 }

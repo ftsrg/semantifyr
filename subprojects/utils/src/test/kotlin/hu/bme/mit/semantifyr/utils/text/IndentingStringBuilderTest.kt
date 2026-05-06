@@ -9,38 +9,38 @@ package hu.bme.mit.semantifyr.utils.text
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-class IndentingBuilderTest {
+class IndentingStringBuilderTest {
 
     @Test
     fun `single line has no leading indent`() {
-        val builder = IndentingBuilder()
-        builder.line("hello")
+        val builder = IndentingStringBuilder()
+        builder.appendLine("hello")
         assertThat(builder.toString()).isEqualTo("hello\n")
     }
 
     @Test
     fun `indented block prefixes inner lines with one indent`() {
-        val builder = IndentingBuilder()
-        builder.line("outer")
+        val builder = IndentingStringBuilder()
+        builder.appendLine("outer")
         builder.indented {
-            line("inner")
+            appendLine("inner")
         }
-        builder.line("after")
+        builder.appendLine("after")
         assertThat(builder.toString()).isEqualTo("outer\n    inner\nafter\n")
     }
 
     @Test
     fun `nested indented blocks stack indents`() {
-        val builder = IndentingBuilder()
-        builder.line("a")
+        val builder = IndentingStringBuilder()
+        builder.appendLine("a")
         builder.indented {
-            line("b")
+            appendLine("b")
             indented {
-                line("c")
+                appendLine("c")
             }
-            line("b2")
+            appendLine("b2")
         }
-        builder.line("d")
+        builder.appendLine("d")
         assertThat(builder.toString()).isEqualTo(
             "a\n    b\n        c\n    b2\nd\n",
         )
@@ -48,62 +48,53 @@ class IndentingBuilderTest {
 
     @Test
     fun `empty line has no indent and just a newline`() {
-        val builder = IndentingBuilder()
+        val builder = IndentingStringBuilder()
         builder.indented {
-            line("x")
-            line()
-            line("y")
+            appendLine("x")
+            appendLine()
+            appendLine("y")
         }
         assertThat(builder.toString()).isEqualTo("    x\n\n    y\n")
     }
 
     @Test
     fun `indent level restored after a block that throws`() {
-        val builder = IndentingBuilder()
-        builder.line("before")
+        val builder = IndentingStringBuilder()
+        builder.appendLine("before")
         runCatching {
             builder.indented {
-                line("inside")
+                appendLine("inside")
                 error("boom")
             }
         }
-        builder.line("after")
+        builder.appendLine("after")
         assertThat(builder.toString()).isEqualTo("before\n    inside\nafter\n")
     }
 
     @Test
     fun `custom indent string is honoured`() {
-        val builder = IndentingBuilder(indent = "\t")
-        builder.line("a")
+        val builder = IndentingStringBuilder(indent = "\t")
+        builder.appendLine("a")
         builder.indented {
-            line("b")
+            appendLine("b")
         }
         assertThat(builder.toString()).isEqualTo("a\n\tb\n")
     }
 
     @Test
-    fun `lines writes multiple entries in order`() {
-        val builder = IndentingBuilder()
-        builder.indented {
-            lines(listOf("one", "two", "three"))
-        }
-        assertThat(builder.toString()).isEqualTo("    one\n    two\n    three\n")
-    }
-
-    @Test
     fun `appendRaw writes the fragment verbatim without indent or newline`() {
-        val builder = IndentingBuilder()
-        builder.line("<open>")
+        val builder = IndentingStringBuilder()
+        builder.appendLine("<open>")
         builder.appendRaw("   body with its own layout\n")
-        builder.line("</open>")
+        builder.appendLine("</open>")
         assertThat(builder.toString()).isEqualTo("<open>\n   body with its own layout\n</open>\n")
     }
 
     @Test
     fun `block emits header with brace, indented body, and closing brace`() {
-        val builder = IndentingBuilder()
+        val builder = IndentingStringBuilder()
         builder.appendIndent("class X") {
-            line("body")
+            appendLine("body")
         }
         assertThat(builder.toString()).isEqualTo("class X {\n    body\n}\n")
     }
@@ -113,7 +104,7 @@ class IndentingBuilderTest {
         val text = buildIndented("  ") {
             appendIndent("class X") {
                 appendIndent("fun y") {
-                    line("z")
+                    appendLine("z")
                 }
             }
         }
@@ -132,9 +123,9 @@ class IndentingBuilderTest {
     @Test
     fun `buildIndented returns the produced string`() {
         val text = buildIndented {
-            line("first")
+            appendLine("first")
             indented {
-                line("second")
+                appendLine("second")
             }
         }
         assertThat(text).isEqualTo("first\n    second\n")

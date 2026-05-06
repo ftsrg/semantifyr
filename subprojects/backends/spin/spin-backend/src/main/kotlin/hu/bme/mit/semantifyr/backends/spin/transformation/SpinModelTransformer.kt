@@ -10,7 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
-import hu.bme.mit.semantifyr.utils.text.IndentingBuilder
+import hu.bme.mit.semantifyr.utils.text.IndentingStringBuilder
 
 data class SpinArtifacts(
     val promela: String,
@@ -29,13 +29,13 @@ class SpinModelTransformer @Inject constructor(
         val enums = collectEnumDeclarations(globals)
         val property = spinPropertyTransformer.transform(inlinedOxsts.property)
 
-        val builder = IndentingBuilder()
+        val builder = IndentingStringBuilder()
         spinDeclarationRenderer.renderEnums(builder, enums)
         spinDeclarationRenderer.renderGlobals(builder, globals)
         spinDeclarationRenderer.renderStableFlag(builder)
         spinProctypeRenderer.renderInitProctype(builder, inlinedOxsts)
-        builder.line()
-        builder.line("ltl p { ${property.ltl} }")
+        builder.appendLine()
+        builder.appendLine("ltl p { ${property.ltl} }")
 
         return SpinArtifacts(builder.toString(), property)
     }

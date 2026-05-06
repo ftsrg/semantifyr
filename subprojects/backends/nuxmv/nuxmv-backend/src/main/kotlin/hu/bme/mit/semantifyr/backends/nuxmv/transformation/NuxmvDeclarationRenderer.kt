@@ -7,49 +7,49 @@
 package hu.bme.mit.semantifyr.backends.nuxmv.transformation
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.utils.text.IndentingBuilder
+import hu.bme.mit.semantifyr.utils.text.IndentingStringBuilder
 
 class NuxmvDeclarationRenderer @Inject constructor(
     private val nuxmvVariableTransformer: NuxmvVariableTransformer,
 ) {
 
     fun renderVariablesSection(
-        builder: IndentingBuilder,
+        builder: IndentingStringBuilder,
         variables: List<NuxmvVariable>,
         primedDeclarations: List<NuxmvPrimedDeclaration>,
     ) {
-        builder.line("VAR")
+        builder.appendLine("VAR")
         builder.indented {
             for (variable in variables) {
-                line("${variable.name} : ${renderType(variable)};")
+                appendLine("${variable.name} : ${renderType(variable)};")
             }
             for (primed in primedDeclarations) {
                 val variable = nuxmvVariableTransformer.describe(primed.variable)
-                line("${primed.name} : ${renderType(variable)};")
+                appendLine("${primed.name} : ${renderType(variable)};")
             }
         }
     }
 
-    fun renderInputVariablesSection(builder: IndentingBuilder, inputVariables: List<NuxmvIVariable>) {
+    fun renderInputVariablesSection(builder: IndentingStringBuilder, inputVariables: List<NuxmvIVariable>) {
         if (inputVariables.isEmpty()) {
             return
         }
-        builder.line("IVAR")
+        builder.appendLine("IVAR")
         builder.indented {
             for (ivar in inputVariables) {
-                line("${ivar.name} : ${ivar.smvType};")
+                appendLine("${ivar.name} : ${ivar.smvType};")
             }
         }
     }
 
-    fun renderFrozenVariablesSection(builder: IndentingBuilder, frozenVariables: List<NuxmvFrozenVariable>) {
+    fun renderFrozenVariablesSection(builder: IndentingStringBuilder, frozenVariables: List<NuxmvFrozenVariable>) {
         if (frozenVariables.isEmpty()) {
             return
         }
-        builder.line("FROZENVAR")
+        builder.appendLine("FROZENVAR")
         builder.indented {
             for (frozen in frozenVariables) {
-                line("${frozen.name} : ${frozen.smvType};")
+                appendLine("${frozen.name} : ${frozen.smvType};")
             }
         }
     }

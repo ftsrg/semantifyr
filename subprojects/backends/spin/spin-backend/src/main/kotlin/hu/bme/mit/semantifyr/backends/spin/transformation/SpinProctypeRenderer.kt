@@ -9,22 +9,22 @@ package hu.bme.mit.semantifyr.backends.spin.transformation
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
-import hu.bme.mit.semantifyr.utils.text.IndentingBuilder
+import hu.bme.mit.semantifyr.utils.text.IndentingStringBuilder
 
 class SpinProctypeRenderer @Inject constructor(
     private val spinOperationTransformer: SpinOperationTransformer,
 ) {
 
-    fun renderInitProctype(builder: IndentingBuilder, inlinedOxsts: InlinedOxsts) {
-        builder.line("init {")
+    fun renderInitProctype(builder: IndentingStringBuilder, inlinedOxsts: InlinedOxsts) {
+        builder.appendLine("init {")
         builder.indented {
             renderInitBody(this, inlinedOxsts.initTransition.branches)
             renderTranLoop(this, inlinedOxsts.mainTransition.branches)
         }
-        builder.line("}")
+        builder.appendLine("}")
     }
 
-    private fun renderInitBody(builder: IndentingBuilder, branches: List<SequenceOperation>) {
+    private fun renderInitBody(builder: IndentingStringBuilder, branches: List<SequenceOperation>) {
         when {
             branches.isEmpty() -> renderEmptyInit(builder)
             branches.size == 1 -> renderAtomicBranch(builder, branches.single())
@@ -32,52 +32,52 @@ class SpinProctypeRenderer @Inject constructor(
         }
     }
 
-    private fun renderEmptyInit(builder: IndentingBuilder) {
-        builder.line("atomic { $SPIN_STABLE_FLAG = true; }")
+    private fun renderEmptyInit(builder: IndentingStringBuilder) {
+        builder.appendLine("atomic { $SPIN_STABLE_FLAG = true; }")
     }
 
-    private fun renderInitChoice(builder: IndentingBuilder, branches: List<SequenceOperation>) {
-        builder.line("if")
+    private fun renderInitChoice(builder: IndentingStringBuilder, branches: List<SequenceOperation>) {
+        builder.appendLine("if")
         for (branch in branches) {
             renderChoiceArm(builder, branch)
         }
-        builder.line("fi;")
+        builder.appendLine("fi;")
     }
 
-    private fun renderChoiceArm(builder: IndentingBuilder, branch: SequenceOperation) {
-        builder.line(":: atomic {")
+    private fun renderChoiceArm(builder: IndentingStringBuilder, branch: SequenceOperation) {
+        builder.appendLine(":: atomic {")
         builder.indented {
             renderAtomicBody(this, branch)
         }
-        builder.line("}")
+        builder.appendLine("}")
     }
 
-    private fun renderAtomicBranch(builder: IndentingBuilder, branch: SequenceOperation) {
-        builder.line("atomic {")
+    private fun renderAtomicBranch(builder: IndentingStringBuilder, branch: SequenceOperation) {
+        builder.appendLine("atomic {")
         builder.indented {
             renderAtomicBody(this, branch)
         }
-        builder.line("}")
+        builder.appendLine("}")
     }
 
-    private fun renderAtomicBody(builder: IndentingBuilder, branch: SequenceOperation) {
-        builder.line("$SPIN_STABLE_FLAG = false;")
+    private fun renderAtomicBody(builder: IndentingStringBuilder, branch: SequenceOperation) {
+        builder.appendLine("$SPIN_STABLE_FLAG = false;")
         if (branch.steps.isEmpty()) {
-            builder.line("skip;")
+            builder.appendLine("skip;")
         } else {
             spinOperationTransformer.transform(branch, builder)
         }
-        builder.line("$SPIN_STABLE_FLAG = true;")
+        builder.appendLine("$SPIN_STABLE_FLAG = true;")
     }
 
-    private fun renderTranLoop(builder: IndentingBuilder, branches: List<SequenceOperation>) {
+    private fun renderTranLoop(builder: IndentingStringBuilder, branches: List<SequenceOperation>) {
         if (branches.isEmpty()) {
             return
         }
-        builder.line("do")
+        builder.appendLine("do")
         for (branch in branches) {
             renderChoiceArm(builder, branch)
         }
-        builder.line("od;")
+        builder.appendLine("od;")
     }
 }

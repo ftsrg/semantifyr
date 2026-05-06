@@ -9,14 +9,14 @@ package hu.bme.mit.semantifyr.backends.spin.transformation
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
-import hu.bme.mit.semantifyr.utils.text.IndentingBuilder
+import hu.bme.mit.semantifyr.utils.text.IndentingStringBuilder
 
 class SpinDeclarationRenderer @Inject constructor(
     private val spinVariableTransformer: SpinVariableTransformer,
     private val spinExpressionTransformer: SpinExpressionTransformer,
 ) {
 
-    fun renderEnums(builder: IndentingBuilder, enums: List<EnumDeclaration>) {
+    fun renderEnums(builder: IndentingStringBuilder, enums: List<EnumDeclaration>) {
         if (enums.isEmpty()) {
             return
         }
@@ -24,22 +24,22 @@ class SpinDeclarationRenderer @Inject constructor(
             val literals = enum.literals.joinToString(", ") {
                 spinVariableTransformer.sanitizeEnumLiteral(it)
             }
-            builder.line("mtype:${enum.name} = { $literals };")
+            builder.appendLine("mtype:${enum.name} = { $literals };")
         }
-        builder.line()
+        builder.appendLine()
     }
 
     fun renderGlobals(
-        builder: IndentingBuilder,
+        builder: IndentingStringBuilder,
         globals: List<VariableDeclaration>,
     ) {
         if (globals.isEmpty()) {
             return
         }
         for (variable in globals) {
-            builder.line(renderGlobal(variable))
+            builder.appendLine(renderGlobal(variable))
         }
-        builder.line()
+        builder.appendLine()
     }
 
     private fun renderGlobal(variable: VariableDeclaration): String {
@@ -59,8 +59,8 @@ class SpinDeclarationRenderer @Inject constructor(
         }
     }
 
-    fun renderStableFlag(builder: IndentingBuilder) {
-        builder.line("bool $SPIN_STABLE_FLAG = false;")
-        builder.line()
+    fun renderStableFlag(builder: IndentingStringBuilder) {
+        builder.appendLine("bool $SPIN_STABLE_FLAG = false;")
+        builder.appendLine()
     }
 }

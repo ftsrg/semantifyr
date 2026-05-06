@@ -10,7 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
-import hu.bme.mit.semantifyr.utils.text.IndentingBuilder
+import hu.bme.mit.semantifyr.utils.text.IndentingStringBuilder
 
 data class NuxmvArtifacts(
     val smv: String,
@@ -37,8 +37,8 @@ class NuxmvModelTransformer @Inject constructor(
         val tranResults = transformTranBranches(inlinedOxsts)
         val allResults = initResults + tranResults
 
-        val builder = IndentingBuilder()
-        builder.line("MODULE main")
+        val builder = IndentingStringBuilder()
+        builder.appendLine("MODULE main")
         nuxmvDeclarationRenderer.renderVariablesSection(builder, nuxmvVariables, allPrimedDeclarations(allResults))
         nuxmvDeclarationRenderer.renderInputVariablesSection(builder, allInputVariables(allResults))
         nuxmvDeclarationRenderer.renderFrozenVariablesSection(builder, allFrozenVariables(allResults))
