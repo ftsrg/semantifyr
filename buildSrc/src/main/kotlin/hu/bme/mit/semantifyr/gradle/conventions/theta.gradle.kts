@@ -19,11 +19,17 @@ dependencies {
     thetaClasspath(project(":theta-executor", configuration = "thetaOutput"))
 }
 
+val cloneTheta by tasks.registering(Sync::class) {
+    from(thetaClasspath)
+    into(layout.buildDirectory.dir("theta-xsts-cli"))
+}
+
 tasks.withType<Test>().configureEach {
-    inputs.files(thetaClasspath)
+    inputs.files(cloneTheta)
 
-    val thetaCliDir = project(":theta-executor").layout.buildDirectory.dir("theta-xsts-cli").get().asFile
-    val existingPath = environment["PATH"] ?: System.getenv("PATH") ?: ""
+    val thetaCliDir = cloneTheta.map { it.destinationDir.absolutePath }
 
-    environment("PATH", "${thetaCliDir.absolutePath}${File.pathSeparator}$existingPath")
+    doFirst {
+        environment("PATH", "${thetaCliDir.get()}${File.pathSeparator}${System.getenv("PATH")}")
+    }
 }

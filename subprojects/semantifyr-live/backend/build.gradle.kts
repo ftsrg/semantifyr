@@ -109,11 +109,7 @@ val cloneWebDistributions by tasks.registering(Sync::class) {
     into(layout.buildDirectory.dir("staging/web"))
 }
 
-val cloneTheta by tasks.registering(Sync::class) {
-    inputs.files(thetaClasspath)
-    from(thetaClasspath)
-    into(layout.buildDirectory.dir("theta-xsts-cli"))
-}
+val cloneTheta = tasks.named<Sync>("cloneTheta")
 
 tasks.named<JavaExec>("run") {
     group = "application"
@@ -121,6 +117,9 @@ tasks.named<JavaExec>("run") {
 
     inputs.files(cloneLspDistributions)
     inputs.files(cloneWebDistributions)
+    inputs.files(cloneTheta)
+
+    val thetaCliDir = cloneTheta.map { it.destinationDir.absolutePath }
 
     val stagingDir = layout.buildDirectory
         .dir("staging")
@@ -138,6 +137,10 @@ tasks.named<JavaExec>("run") {
     environment("SEMANTIFYR_LIVE_PORT", "18080")
     environment("SEMANTIFYR_LIVE_ROOT_WORK_DIR", workDir.absolutePath)
     environment("SEMANTIFYR_LIVE_ADMIN_PASSWORD", "testing")
+
+    doFirst {
+        environment("PATH", "${thetaCliDir.get()}${File.pathSeparator}${System.getenv("PATH")}")
+    }
 }
 
 val runDev by tasks.registering(JavaExec::class) {
@@ -147,6 +150,9 @@ val runDev by tasks.registering(JavaExec::class) {
     mainClass = application.mainClass
 
     inputs.files(cloneLspDistributions)
+    inputs.files(cloneTheta)
+
+    val thetaCliDir = cloneTheta.map { it.destinationDir.absolutePath }
 
     val stagingDir = layout.buildDirectory
         .dir("staging")
@@ -163,6 +169,10 @@ val runDev by tasks.registering(JavaExec::class) {
     environment("SEMANTIFYR_LIVE_PORT", "18080")
     environment("SEMANTIFYR_LIVE_ROOT_WORK_DIR", workDir.absolutePath)
     environment("SEMANTIFYR_LIVE_ADMIN_PASSWORD", "testing")
+
+    doFirst {
+        environment("PATH", "${thetaCliDir.get()}${File.pathSeparator}${System.getenv("PATH")}")
+    }
 }
 
 testing {
