@@ -20,14 +20,19 @@ val distributionClasspath by configurations.creating {
     isCanBeResolved = true
 }
 
+val editorCommonDist by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
+
 dependencies {
     distributionClasspath(project(":oxsts.lang.ide", configuration = "distributionOutput"))
     distributionClasspath(project(":gamma.lang.ide", configuration = "distributionOutput"))
+
+    editorCommonDist(project(":semantifyr-editor-common", configuration = "distributionOutput"))
 }
 
 val cloneDistribution by tasks.registering(Sync::class) {
-    inputs.files(distributionClasspath)
-
     from(
         distributionClasspath.map {
             fileTree(it)
@@ -37,13 +42,19 @@ val cloneDistribution by tasks.registering(Sync::class) {
     into("bin")
 }
 
+tasks.npmInstall {
+    workingDir = rootProject.projectDir
+}
+
 val buildExtension by tasks.registering(NpmTask::class) {
     inputs.dir(project.layout.projectDirectory.dir("src"))
     inputs.file(project.layout.projectDirectory.file("esbuild.mjs"))
     inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
-    inputs.file(project.layout.projectDirectory.file("package-lock.json"))
     inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
+    inputs.file(rootProject.layout.projectDirectory.file("package.json"))
+    inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
     inputs.files(tasks.npmInstall)
+    inputs.files(editorCommonDist)
 
     npmCommand.set(
         listOf(
@@ -80,7 +91,10 @@ val bundleExtension by tasks.registering(NpmTask::class) {
     inputs.file(project.layout.projectDirectory.file("icons/gamma-file-icon.png"))
     inputs.file(project.layout.projectDirectory.file("README.md"))
     inputs.file(project.layout.projectDirectory.file("CHANGELOG.md"))
+    inputs.file(rootProject.layout.projectDirectory.file("package.json"))
+    inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
     inputs.files(tasks.npmInstall)
+    inputs.files(editorCommonDist)
 
     npmCommand.set(
         listOf(

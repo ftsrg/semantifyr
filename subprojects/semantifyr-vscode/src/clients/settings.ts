@@ -1,10 +1,5 @@
 import { workspace } from "vscode";
 
-/**
- * JSON payload mirrored by the LSP server's `ServerSettings`. Keep the shape
- * compatible with the server-side parser (dotted keys under a top-level
- * `semantifyr` object).
- */
 export type SemantifyrSettings = {
     portfolio: string;
     timeoutSeconds: number;
@@ -32,7 +27,6 @@ export function readSemantifyrSettings(): SemantifyrSettings {
     };
 }
 
-/** Wrapped to match what the server expects: `{ semantifyr: {...} }`. */
 export function readSemantifyrPayload(): { semantifyr: SemantifyrSettings } {
     return { semantifyr: readSemantifyrSettings() };
 }

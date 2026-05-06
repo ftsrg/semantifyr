@@ -36,7 +36,6 @@
   "keywords": [
     "semantifyr",
     "oxsts",
-    "xsts",
     "gamma",
     "formal verification",
     "model checking",
@@ -90,21 +89,6 @@
         }
       },
       {
-        "id": "xsts",
-        "extensions": [
-          ".xsts"
-        ],
-        "aliases": [
-          "XSTS",
-          "xsts"
-        ],
-        "configuration": "./language-configuration.json",
-        "icon": {
-          "light": "./icons/semantifyr-file-icon.png",
-          "dark": "./icons/semantifyr-file-icon.png"
-        }
-      },
-      {
         "id": "gamma",
         "extensions": [
           ".gamma"
@@ -127,11 +111,6 @@
         "path": "./syntaxes/oxsts.tmLanguage.json"
       },
       {
-        "language": "xsts",
-        "scopeName": "source.xsts",
-        "path": "./syntaxes/xsts.tmLanguage.json"
-      },
-      {
         "language": "gamma",
         "scopeName": "source.gamma",
         "path": "./syntaxes/gamma.tmLanguage.json"
@@ -144,13 +123,36 @@
           "type": "string",
           "default": "theta-full",
           "enum": [
+            "smart-full",
+            "all-agree-full",
             "theta-full",
             "theta-cegar-expl",
             "theta-cegar-expl-pred-combined",
             "theta-cegar-pred-cart",
-            "theta-bounded-kinduction"
+            "theta-bounded-kinduction",
+            "theta-bounded-bmc",
+            "theta-bounded-imc",
+            "theta-ic3",
+            "uppaal-default",
+            "uppaal-breadth-first",
+            "uppaal-depth-first",
+            "uppaal-random-depth-first",
+            "uppaal-over-approximation",
+            "uppaal-under-approximation",
+            "uppaal-under-approximation-large",
+            "uppaal-aggressive-inclusion",
+            "nuxmv-ic3-invar",
+            "nuxmv-bmc-invar",
+            "nuxmv-bdd-invar",
+            "spin-exhaustive-dfs",
+            "spin-exhaustive-bfs",
+            "spin-safe-dfs",
+            "spin-fast-dfs",
+            "spin-collapse",
+            "spin-bitstate",
+            "spin-hash-compact"
           ],
-          "markdownDescription": "Backend portfolio used when running verification. `theta-full` runs the curated full Theta portfolio; other choices pick a single-configuration Theta run."
+          "markdownDescription": "Backend portfolio used when running verification. `smart-full` is the recommended general-purpose pick; `all-agree-full` is the cross-backend cross-check used by witness validation. The remaining entries pin one backend / configuration."
         },
         "semantifyr.timeoutSeconds": {
           "type": "number",
@@ -216,6 +218,7 @@
     "bundle": "npm run build:production && vsce package --out build/"
   },
   "dependencies": {
+    "@semantifyr/editor-common": "*",
     "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {
