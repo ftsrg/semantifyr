@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.lang.ide.server.commands;
 
+import com.google.gson.JsonElement;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.SemantifyrRequestManager;
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager;
@@ -22,7 +23,7 @@ import org.eclipse.xtext.resource.IResourceServiceProvider;
 import org.eclipse.xtext.resource.XtextResource;
 import org.eclipse.xtext.util.CancelIndicator;
 
-public abstract class AbstractCommandHandler<T> implements CommandHandler {
+public abstract class AbstractCommandHandler<TRequest, TArgument> implements CommandHandler {
 
     @Inject
     protected WorkManager workManager;
@@ -42,7 +43,9 @@ public abstract class AbstractCommandHandler<T> implements CommandHandler {
             throw new IllegalArgumentException("This handler is not for the given command!");
         }
 
-        var argument = parseArguments(params.getArguments(), access, cancelIndicator);
+        var requestJson = (JsonElement) params.getArguments().get(0);
+        var request = CommandGson.INSTANCE.fromJson(requestJson, getRequestType());
+        var argument = resolveArgument(request, access, cancelIndicator);
 
         var progressContext = new CommandProgressContext(workManager, cancelIndicator);
 
@@ -53,12 +56,15 @@ public abstract class AbstractCommandHandler<T> implements CommandHandler {
         }
     }
 
-    public abstract List<Object> serializeArguments(T arguments);
+    public abstract List<Object> serializeArguments(TArgument arguments);
 
-    protected abstract T parseArguments(
-            List<Object> arguments, ILanguageServerAccess access, CancelIndicator cancelIndicator);
+    protected abstract Class<TRequest> getRequestType();
 
-    protected abstract Object execute(T argument, ILanguageServerAccess access, CommandProgressContext progressContext);
+    protected abstract TArgument resolveArgument(
+            TRequest request, ILanguageServerAccess access, CancelIndicator cancelIndicator);
+
+    protected abstract Object execute(
+            TArgument argument, ILanguageServerAccess access, CommandProgressContext progressContext);
 
     protected EObject getElement(final ILanguageServerAccess.Context context, Position position) {
         var offset = context.getDocument().getOffSet(position);
