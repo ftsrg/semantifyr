@@ -25,6 +25,9 @@ public class OxstsCommandService extends SemantifyrCommandService {
     private VerifyInlinedOxstsCommandHandler verifyInlinedOxstsCommandHandler;
 
     @Inject
+    private ValidateWitnessClassCommandHandler validateWitnessClassCommandHandler;
+
+    @Inject
     private CompileInlinedOxstsCommandHandler compileInlinedOxstsCommandHandler;
 
     @Inject
@@ -46,6 +49,7 @@ public class OxstsCommandService extends SemantifyrCommandService {
                     compileInlinedOxstsCommandHandler,
                     verifyClassCommandHandler,
                     verifyInlinedOxstsCommandHandler,
+                    validateWitnessClassCommandHandler,
                     discoverVerificationCasesCommandHandler,
                     navigateToRedefinedCommandHandler,
                     navigateToRedefinersCommandHandler);

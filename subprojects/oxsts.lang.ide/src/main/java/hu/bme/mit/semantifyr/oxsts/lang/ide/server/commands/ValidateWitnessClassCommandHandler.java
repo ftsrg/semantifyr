@@ -8,24 +8,25 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader;
 import hu.bme.mit.semantifyr.lang.ide.server.ServerSettings;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
-import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult;
+import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier;
+import hu.bme.mit.semantifyr.verifier.VerificationResultDtoKt;
+import hu.bme.mit.semantifyr.verifier.witness.WitnessValidator;
 import java.util.List;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class VerifyInlinedOxstsCommandHandler
+public class ValidateWitnessClassCommandHandler
         extends AbstractCommandHandler<VerificationCaseRequest, VerifyInlinedOxstsCommandParams> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(VerifyInlinedOxstsCommandHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ValidateWitnessClassCommandHandler.class);
 
     @Inject
     protected ServerSettings serverSettings;
@@ -34,16 +35,16 @@ public class VerifyInlinedOxstsCommandHandler
     protected Injector injector;
 
     @Inject
-    protected SemantifyrLoader semantifyrLoader;
+    protected WitnessValidator witnessValidator;
 
     @Override
     public String getId() {
-        return "oxsts.inlined.verify";
+        return "oxsts.case.validateWitness";
     }
 
     @Override
     public String getTitle() {
-        return "Verify inlined oxsts";
+        return "Validate witness";
     }
 
     @Override
@@ -69,10 +70,9 @@ public class VerifyInlinedOxstsCommandHandler
             VerifyInlinedOxstsCommandParams arguments,
             ILanguageServerAccess access,
             CommandProgressContext progressContext) {
-        progressContext.begin("Verifying inlined oxsts", "Initializing");
+        progressContext.begin("Validating witness", "Initializing");
 
         var inlinedOxsts = arguments.inlinedOxsts();
-
         var portfolio = serverSettings.resolvePortfolio(arguments.portfolioId());
         var outputDirectory = serverSettings.resolveArtifactOutputDirectory();
 
@@ -89,11 +89,12 @@ public class VerifyInlinedOxstsCommandHandler
 
         try {
             progressContext.checkIsCancelled();
-            var dto = verifier.verifyBlocking(inlinedOxsts, progressContext);
-            LOGGER.info("LSP verify {}", dto.getVerdict());
-            return VerificationCaseResult.fromDto(dto, portfolio.getId());
+            var validationResult = witnessValidator.validateBlocking(verifier, inlinedOxsts, progressContext);
+            LOGGER.info("LSP validateWitness {}", validationResult.getClass().getSimpleName());
+            var dto = VerificationResultDtoKt.toJavaDto(validationResult);
+            return WitnessValidationResult.fromDto(dto, portfolio.getId());
         } catch (Exception e) {
-            LOGGER.warn("Verification threw {}", e.getClass().getSimpleName(), e);
+            LOGGER.warn("Witness validation threw {}", e.getClass().getSimpleName(), e);
             return null;
         } finally {
             semantifyrRequestManager.acquireReadLock();

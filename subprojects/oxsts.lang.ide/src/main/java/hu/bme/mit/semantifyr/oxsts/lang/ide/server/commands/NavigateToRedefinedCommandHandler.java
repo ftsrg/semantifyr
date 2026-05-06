@@ -1,13 +1,11 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
@@ -20,7 +18,7 @@ import org.eclipse.lsp4j.Location;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 
-public class NavigateToRedefinedCommandHandler extends AbstractCommandHandler<RedefinableDeclaration> {
+public class NavigateToRedefinedCommandHandler extends AbstractCommandHandler<Location, RedefinableDeclaration> {
 
     @Inject
     private RedefinitionHandler redefinitionHandler;
@@ -37,20 +35,18 @@ public class NavigateToRedefinedCommandHandler extends AbstractCommandHandler<Re
 
     @Override
     public List<Object> serializeArguments(RedefinableDeclaration arguments) {
-        var location = getLocation(arguments);
-        return List.of(location);
+        return List.of(getLocation(arguments));
     }
 
     @Override
-    protected RedefinableDeclaration parseArguments(
-            List<Object> arguments, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
-        var gsonBuilder = new GsonBuilder();
-        var gson = gsonBuilder.create();
-        var locationJson = (JsonObject) arguments.get(0);
-        var location = gson.fromJson(locationJson, Location.class);
-        var element = getElement(access, location);
+    protected Class<Location> getRequestType() {
+        return Location.class;
+    }
 
-        return (RedefinableDeclaration) element;
+    @Override
+    protected RedefinableDeclaration resolveArgument(
+            Location request, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
+        return (RedefinableDeclaration) getElement(access, request);
     }
 
     @Override

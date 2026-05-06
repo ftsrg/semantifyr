@@ -1,14 +1,11 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler;
@@ -18,13 +15,13 @@ import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import java.util.List;
-import org.eclipse.lsp4j.Location;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class InlineClassCommandHandler extends AbstractCommandHandler<InlineClassCommandParams> {
+public class InlineClassCommandHandler
+        extends AbstractCommandHandler<InlineClassWireRequest, InlineClassCommandParams> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InlineClassCommandHandler.class);
 
@@ -49,23 +46,20 @@ public class InlineClassCommandHandler extends AbstractCommandHandler<InlineClas
 
     @Override
     public List<Object> serializeArguments(InlineClassCommandParams arguments) {
-        var location = getLocation(arguments.classDeclaration());
-        var serializeSteps = arguments.serializeSteps();
-        return List.of(location, serializeSteps);
+        return List.of(
+                new InlineClassWireRequest(getLocation(arguments.classDeclaration()), arguments.serializeSteps()));
     }
 
     @Override
-    protected InlineClassCommandParams parseArguments(
-            List<Object> arguments, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
-        var gsonBuilder = new GsonBuilder();
-        var gson = gsonBuilder.create();
-        var locationJson = (JsonObject) arguments.get(0);
-        var location = gson.fromJson(locationJson, Location.class);
-        var serializeStepsJson = (JsonPrimitive) arguments.get(1);
-        var serializeSteps = gson.fromJson(serializeStepsJson, boolean.class);
-        var element = getElement(access, location);
+    protected Class<InlineClassWireRequest> getRequestType() {
+        return InlineClassWireRequest.class;
+    }
 
-        return new InlineClassCommandParams((ClassDeclaration) element, serializeSteps);
+    @Override
+    protected InlineClassCommandParams resolveArgument(
+            InlineClassWireRequest request, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
+        var element = getElement(access, request.location());
+        return new InlineClassCommandParams((ClassDeclaration) element, request.serializeSteps());
     }
 
     @Override
