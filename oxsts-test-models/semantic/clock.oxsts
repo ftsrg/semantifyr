@@ -11,7 +11,7 @@ class ClockResetInvariant {
     }
 
     redefine tran {
-        t := 0
+        t := t + 1
     }
 
     prop {
@@ -21,7 +21,7 @@ class ClockResetInvariant {
 
 @VerificationCase
 @Tag("expect-pass")
-class ClockReachZero {
+class ClockReach100 {
     @Clock
     var t: int
 
@@ -30,10 +30,10 @@ class ClockReachZero {
     }
 
     redefine tran {
-        t := 0
+        t := t + 1
     }
 
     prop {
-        return EF t == 0
+        return EF t == 100
     }
 }
