@@ -16,6 +16,7 @@ include(
     "backend",
     "lang-ide-common",
     "semantifyr-cli",
+    "semantifyr-editor-common",
     "oxsts.model",
     "oxsts.lang",
     "oxsts.lang.ide",
@@ -28,21 +29,22 @@ rootProject.children.forEach { project ->
     project.projectDir = file("subprojects/${project.name}")
 }
 
-include("semantifyr-live-backend")
-project(":semantifyr-live-backend").projectDir = file("subprojects/semantifyr-live/backend")
-
-include("semantifyr-live-frontend")
-project(":semantifyr-live-frontend").projectDir = file("subprojects/semantifyr-live/frontend")
-
-fun includeDirectory(dirPath: String) {
-    val dir = file(dirPath)
-    val projects = dir.listFiles()?.filter { it.isDirectory } ?: emptyList()
+fun includeDirectory(directoryPath: String, namePrefix: String = "") {
+    val directory = file(directoryPath)
+    val projects = directory.listFiles()?.filter {
+        it.isDirectory
+    }?.filter {
+        it.resolve("build.gradle.kts").isFile
+    } ?: emptyList()
 
     for (subProject in projects) {
-        include(subProject.name)
-        project(":${subProject.name}").projectDir = subProject
+        val name = "$namePrefix${subProject.name}"
+        include(name)
+        project(":$name").projectDir = subProject
     }
 }
+
+includeDirectory("subprojects/semantifyr-live", namePrefix = "semantifyr-live-")
 
 includeDirectory("subprojects/frontends/gamma")
 includeDirectory("subprojects/frontends/sysml")
