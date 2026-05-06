@@ -5,7 +5,7 @@
  */
 
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationCase
-import hu.bme.mit.semantifyr.frontends.gamma.semantics.testing.GammaFrontendTestHelper
+import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaFrontendTestHelper
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
