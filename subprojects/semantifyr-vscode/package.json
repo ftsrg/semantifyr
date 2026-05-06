@@ -59,12 +59,7 @@
   "contributes": {
     "commands": [
       {
-        "command": "semantifyr.verifyXsts",
-        "title": "Verify XSTS File",
-        "category": "Semantifyr"
-      },
-      {
-        "command": "gamma.compile",
+        "command": "semantifyr.gamma.compile",
         "title": "Compile Gamma File",
         "category": "Semantifyr"
       }
@@ -72,12 +67,7 @@
     "menus": {
       "explorer/context": [
         {
-          "command": "semantifyr.verifyXsts",
-          "when": "resourceExtname == .xsts",
-          "group": "semantifyr"
-        },
-        {
-          "command": "gamma.compile",
+          "command": "semantifyr.gamma.compile",
           "when": "resourceExtname == .gamma",
           "group": "semantifyr"
         }
