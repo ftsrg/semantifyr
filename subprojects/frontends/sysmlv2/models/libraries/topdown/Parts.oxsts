@@ -3,6 +3,7 @@ package semantifyr::sysml::parts
 import semantifyr::sysml::attributes
 import semantifyr::sysml::ports
 import semantifyr::sysml::states
+import semantifyr::sysml::items
 
 class Part {
     contains parts: Part[0..*]
@@ -95,7 +96,7 @@ class Flow {
 
     redefine tran {
         if (inputPort.hasOutgoing()) {
-            inline outputPort.setIncomingItem(inputPort.outgoingItem)
+            inline outputPort.setIncomingItem(inputPort.outgoingItem as Item)
         }
     }
 }

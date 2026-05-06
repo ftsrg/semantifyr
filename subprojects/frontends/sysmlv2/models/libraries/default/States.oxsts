@@ -25,7 +25,7 @@ abstract class AbstractState : StateNode {
         return parent?.isInnerStateActive(self)
     }
 
-    abstract prop getActiveState(): AbstractState
+    abstract prop getActiveState(): AbstractState[0..1]
 
     abstract prop isInnerStateActive(state: AbstractState): bool
 
@@ -38,7 +38,7 @@ abstract class AbstractState : StateNode {
     abstract tran enterRecursive(commonState: StateNode)
     abstract tran exitRecursive(commonState: StateNode)
 
-    abstract tran setActiveState(state: AbstractState)
+    abstract tran setActiveState(state: AbstractState[0..1])
 }
 
 class State : AbstractState {
@@ -52,7 +52,7 @@ class State : AbstractState {
         return state == activeState
     }
 
-    redefine prop getActiveState(): AbstractState {
+    redefine prop getActiveState(): AbstractState[0..1] {
         return activeState
     }
     
@@ -211,7 +211,7 @@ class Transition {
 class ParallelState : AbstractState {
     contains start: EntryState[1]
 
-    redefine prop getActiveState(): AbstractState {
+    redefine prop getActiveState(): AbstractState[0..1] {
         return nothing
     }
     
@@ -334,7 +334,7 @@ class EntryState : StateNode {
 }
 
 class IsStateActiveExpression : Expression {
-    refers state: State
+    refers state: AbstractState
 
     redefine prop evaluate(): bool {
         return state.isActive()
