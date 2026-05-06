@@ -15,7 +15,6 @@ import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.frontends.gamma.lang.GammaStandaloneSetup
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration
-import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
@@ -85,7 +84,7 @@ class GammaFrontend @Inject private constructor(
         val gammaModel = EcoreUtil2.getContainerOfType(gammaVerificationCase.declaration, GammaModelPackage::class.java)
 
         logger.info { "Verifying Gamma case '$qualifiedName'" }
-        logger.debug { "Compiling Gamma case '$qualifiedName' to '$outputPath'" }
+
         gammaCompiler.compile(gammaModel, outputPath)
 
         val context = semantifyrLoader.startContext()
