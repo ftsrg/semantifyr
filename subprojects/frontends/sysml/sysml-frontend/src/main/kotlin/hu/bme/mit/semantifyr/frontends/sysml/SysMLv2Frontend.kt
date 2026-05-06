@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.frontends.sysml.semantics
+package hu.bme.mit.semantifyr.frontends.sysml
 
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
+import hu.bme.mit.semantifyr.frontends.sysml.wrapper.SysMLv2Compiler
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
@@ -34,8 +35,6 @@ class SysMLv2FrontendConfig(
     val sourcePath: Path,
     val variant: SysMLv2Variant,
     val libraryPaths: List<Path>,
-    val cliPath: Path,
-    val sysmlLibraryPath: Path,
     val oxstsInjector: Injector,
     val portfolio: VerificationPortfolio,
     val environment: ExecutionEnvironment,
@@ -126,8 +125,6 @@ class SysMLv2Frontend private constructor(
         private var sourcePath: Path? = null
         private var variant = SysMLv2Variant.Default
         private var libraryOverride: List<Path>? = null
-        private var cliPath: Path = Path.of("build", "cli", "index.js")
-        private var sysmlLibraryPath: Path = Path.of("build", "cli", "sysml.library")
         private var oxstsInjector: Injector? = null
         private var loader: SemantifyrLoader? = null
         private var portfolio: VerificationPortfolio? = null
@@ -151,16 +148,6 @@ class SysMLv2Frontend private constructor(
 
         fun libraryPaths(paths: List<Path>): Builder {
             this.libraryOverride = paths
-            return this
-        }
-
-        fun cliPath(path: Path): Builder {
-            this.cliPath = path
-            return this
-        }
-
-        fun sysmlLibraryPath(path: Path): Builder {
-            this.sysmlLibraryPath = path
             return this
         }
 
@@ -246,8 +233,6 @@ class SysMLv2Frontend private constructor(
                 sharedSysMLv2Compiler.compile(
                     sourcePath = resolvedSource,
                     outputPath = target,
-                    cliPath = cliPath,
-                    sysmlLibraryPath = sysmlLibraryPath,
                 )
             }
 
@@ -259,8 +244,6 @@ class SysMLv2Frontend private constructor(
                 sourcePath = resolvedSource,
                 variant = variant,
                 libraryPaths = resolvedLibraryPaths,
-                cliPath = cliPath,
-                sysmlLibraryPath = sysmlLibraryPath,
                 oxstsInjector = effectiveOxstsInjector,
                 portfolio = resolvedPortfolio,
                 environment = environment,

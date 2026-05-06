@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.frontends.sysml.semantics.SysMLv2Variant
-import hu.bme.mit.semantifyr.frontends.sysml.semantics.testing.SysMLv2FrontendTestHelper
+import hu.bme.mit.semantifyr.frontends.sysml.SysMLv2Variant
+import hu.bme.mit.semantifyr.frontends.sysml.testing.SysMLv2FrontendTestHelper
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import org.junit.jupiter.params.ParameterizedTest

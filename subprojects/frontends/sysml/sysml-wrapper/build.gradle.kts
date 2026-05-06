@@ -9,7 +9,14 @@ import com.github.gradle.node.task.NodeTask
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
+    id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
     id("hu.bme.mit.semantifyr.gradle.conventions.frontend")
+    kotlin("jvm")
+}
+
+dependencies {
+    implementation(project(":utils"))
+    implementation(project(":logging"))
 }
 
 val sysmlCommit = "e1d22922929d10a26885ff144b654fc247e45e56" // Use spawn instead of exec to inherit stdio
@@ -21,11 +28,6 @@ node {
 }
 
 val distributionOutput by configurations.creating {
-    isCanBeConsumed = true
-    isCanBeResolved = false
-}
-
-val cliOutput by configurations.creating {
     isCanBeConsumed = true
     isCanBeResolved = false
 }
@@ -157,7 +159,10 @@ artifacts {
     add(distributionOutput.name, bundleExtension.map { it.outputs.files.singleFile }) {
         builtBy(bundleExtension)
     }
-    add(cliOutput.name, project.layout.buildDirectory.dir("cli-bundle")) {
-        builtBy(bundleCli)
+}
+
+tasks.processResources {
+    from(bundleCli) {
+        into("sysml-cli")
     }
 }

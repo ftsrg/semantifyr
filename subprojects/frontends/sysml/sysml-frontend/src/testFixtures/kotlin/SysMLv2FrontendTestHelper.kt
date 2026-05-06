@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.frontends.sysml.semantics.testing
+package hu.bme.mit.semantifyr.frontends.sysml.testing
 
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
-import hu.bme.mit.semantifyr.frontends.sysml.semantics.SysMLv2Frontend
-import hu.bme.mit.semantifyr.frontends.sysml.semantics.SysMLv2Variant
+import hu.bme.mit.semantifyr.frontends.sysml.SysMLv2Frontend
+import hu.bme.mit.semantifyr.frontends.sysml.SysMLv2Variant
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase

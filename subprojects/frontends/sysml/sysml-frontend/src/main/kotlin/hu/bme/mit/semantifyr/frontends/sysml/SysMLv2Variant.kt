@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.frontends.sysml.semantics
+package hu.bme.mit.semantifyr.frontends.sysml
 
 enum class SysMLv2Variant(
     internal val resourcePrefix: String,
