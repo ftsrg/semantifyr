@@ -179,7 +179,7 @@ fun sysmlExampleTask(name: String) = tasks.register<NodeTask>("compileSysmlExamp
     outputs.file(targetFile)
     outputs.cacheIf { true }
     script = cliBundleDir.get().file("index.js").asFile
-    args.set(provider {
+    args = provider {
         listOf(
             "compile",
             sourceFile.asFile.absolutePath,
@@ -187,7 +187,7 @@ fun sysmlExampleTask(name: String) = tasks.register<NodeTask>("compileSysmlExamp
             "-o",
             targetFile.get().asFile.absolutePath,
         )
-    })
+    }
 }
 
 val compileSysmlExampleCompressedSpacecraft = sysmlExampleTask("compressedspacecraft")

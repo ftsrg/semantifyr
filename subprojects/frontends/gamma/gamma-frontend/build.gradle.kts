@@ -68,9 +68,9 @@ fun gammaExampleTask(name: String) = tasks.register<JavaExec>("compileGammaExamp
     outputs.cacheIf { true }
     mainClass.set("hu.bme.mit.semantifyr.frontends.gamma.examples.CompileGammaExampleKt")
     classpath = sourceSets["main"].runtimeClasspath
-    argumentProviders.add(CommandLineArgumentProvider {
+    argumentProviders += CommandLineArgumentProvider {
         listOf(sourceFile.asFile.absolutePath, targetFile.get().asFile.absolutePath)
-    })
+    }
 }
 
 val compileGammaExampleCrossroads = gammaExampleTask("Crossroads")
