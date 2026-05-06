@@ -15,6 +15,7 @@ import hu.bme.mit.semantifyr.live.backend.lsp.bridge.LspServerRawConnector
 import hu.bme.mit.semantifyr.live.backend.server.LspProxyInfo
 import hu.bme.mit.semantifyr.live.backend.utils.lspMessageHandler
 import hu.bme.mit.semantifyr.logging.debug
+import hu.bme.mit.semantifyr.logging.error
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.trace
@@ -77,8 +78,6 @@ class LspMessageProxy @Inject constructor(
         }
     }
 
-    // --- LspBridge ---
-
     override suspend fun sendToLspServer(message: Message) {
         sendToLspServer(lspMessageHandler.serialize(message))
     }
@@ -108,12 +107,19 @@ class LspMessageProxy @Inject constructor(
             lastClientMessageMark = TimeSource.Monotonic.markNow()
             logger.trace { "Client -> server raw: $raw" }
 
-            val message = lspMessageHandler.parseMessage(raw)
-            val handled = runInterceptors {
-                it.handleClientMessage(raw, message, this)
+            val message = try {
+                lspMessageHandler.parseMessage(raw)
+            } catch (e: Exception) {
+                // Log the raw payload before rethrowing so a malformed client message gets a
+                // chance to show its body in the operator log instead of just the parse error.
+                logger.error { "Failed to parse client message ($e): $raw" }
+                throw e
             }
-            if (handled) {
-                logger.debug { "Client message handled by interceptor (method=${message.methodOrNull()})" }
+            val consumed = runInterceptors {
+                it.interceptClientMessage(raw, message, this)
+            }
+            if (consumed) {
+                logger.debug { "Client message consumed by interceptor (method=${message.methodOrNull()})" }
                 continue
             }
 
@@ -146,11 +152,11 @@ class LspMessageProxy @Inject constructor(
             logger.trace { "Server -> client raw: $raw" }
             val message = lspMessageHandler.parseMessage(raw)
 
-            val handled = runInterceptors {
-                it.handleServerMessage(raw, message, this)
+            val consumed = runInterceptors {
+                it.interceptServerMessage(raw, message, this)
             }
-            if (handled) {
-                logger.debug { "Server message handled by interceptor (method=${message.methodOrNull()})" }
+            if (consumed) {
+                logger.debug { "Server message consumed by interceptor (method=${message.methodOrNull()})" }
                 continue
             }
 
@@ -160,7 +166,7 @@ class LspMessageProxy @Inject constructor(
 
     private inline fun runInterceptors(block: (LspMessageInterceptor) -> Boolean): Boolean {
         for (interceptor in lspMessageInterceptors) {
-            if (!block(interceptor)) {
+            if (block(interceptor)) {
                 return true
             }
         }

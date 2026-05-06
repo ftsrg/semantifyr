@@ -13,11 +13,16 @@ import hu.bme.mit.semantifyr.live.backend.BackendModule
 import hu.bme.mit.semantifyr.live.backend.ServerConfig
 import hu.bme.mit.semantifyr.live.backend.session.SessionManager
 import io.ktor.client.call.body
+import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.createApplicationPlugin
 import io.ktor.server.application.install
@@ -45,7 +50,7 @@ class AdminHandlerTest {
         sessionInfos: List<SessionInfo> = emptyList(),
     ): AdminHandler {
         val config = BackendConfig(
-            server = ServerConfig(adminPassword = adminPassword),
+            server = ServerConfig(adminPassword = adminPassword, httpsOnlyCookies = false),
         )
         val sessionManager = mock(SessionManager::class.java)
         `when`(sessionManager.getSessionInfos()).thenReturn(sessionInfos)
@@ -108,7 +113,7 @@ class AdminHandlerTest {
             flavorId = "oxsts",
             uptime = 30.seconds,
             workingDirectory = "/tmp/test",
-            activeVerifications = setOf("req-1"),
+            activeVerifications = listOf(ActiveVerificationInfo(requestId = "req-1", portfolioId = "smart-full")),
             started = true,
             bridgeInfo = LspProxyInfo(
                 clientMessageCount = 10,
@@ -134,7 +139,9 @@ class AdminHandlerTest {
         assertThat(status.sessions[0].started).isTrue()
         assertThat(status.sessions[0].bridgeInfo?.clientMessageCount).isEqualTo(10)
         assertThat(status.sessions[0].bridgeInfo?.serverMessageCount).isEqualTo(15)
-        assertThat(status.sessions[0].activeVerifications).containsExactly("req-1")
+        assertThat(status.sessions[0].activeVerifications).hasSize(1)
+        assertThat(status.sessions[0].activeVerifications[0].requestId).isEqualTo("req-1")
+        assertThat(status.sessions[0].activeVerifications[0].portfolioId).isEqualTo("smart-full")
     }
 
     @Test
@@ -212,5 +219,65 @@ class AdminHandlerTest {
             header(HttpHeaders.Authorization, basicAuth())
         }
         assertThat(response.status).isEqualTo(HttpStatusCode.Unauthorized)
+    }
+
+    @Test
+    fun `login sets a cookie that authenticates subsequent requests`() = testApplication {
+        installAdmin(createHandler())
+        val client = createClient {
+            install(ClientContentNegotiation) { json() }
+            install(HttpCookies)
+        }
+
+        val unauthenticated = client.get("/api/admin/whoami")
+        assertThat(unauthenticated.status).isEqualTo(HttpStatusCode.Unauthorized)
+
+        val login = client.post("/api/admin/login") {
+            contentType(ContentType.Application.Json)
+            setBody(AdminLoginRequest(password = adminPassword))
+        }
+        assertThat(login.status).isEqualTo(HttpStatusCode.OK)
+
+        val whoami = client.get("/api/admin/whoami")
+        assertThat(whoami.status).isEqualTo(HttpStatusCode.OK)
+
+        val status = client.get("/api/admin/status")
+        assertThat(status.status).isEqualTo(HttpStatusCode.OK)
+    }
+
+    @Test
+    fun `login rejects an incorrect password`() = testApplication {
+        installAdmin(createHandler())
+        val client = createClient {
+            install(ClientContentNegotiation) { json() }
+            install(HttpCookies)
+        }
+
+        val login = client.post("/api/admin/login") {
+            contentType(ContentType.Application.Json)
+            setBody(AdminLoginRequest(password = "wrong-password"))
+        }
+        assertThat(login.status).isEqualTo(HttpStatusCode.Unauthorized)
+
+        val whoami = client.get("/api/admin/whoami")
+        assertThat(whoami.status).isEqualTo(HttpStatusCode.Unauthorized)
+    }
+
+    @Test
+    fun `logout clears the session cookie`() = testApplication {
+        installAdmin(createHandler())
+        val client = createClient {
+            install(ClientContentNegotiation) { json() }
+            install(HttpCookies)
+        }
+
+        client.post("/api/admin/login") {
+            contentType(ContentType.Application.Json)
+            setBody(AdminLoginRequest(password = adminPassword))
+        }
+        assertThat(client.get("/api/admin/whoami").status).isEqualTo(HttpStatusCode.OK)
+
+        client.post("/api/admin/logout")
+        assertThat(client.get("/api/admin/whoami").status).isEqualTo(HttpStatusCode.Unauthorized)
     }
 }

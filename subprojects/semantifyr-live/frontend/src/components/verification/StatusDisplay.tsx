@@ -13,6 +13,8 @@ import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined';
 import RadioButtonUncheckedOutlinedIcon from '@mui/icons-material/RadioButtonUncheckedOutlined';
+import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined';
+import RemoveCircleOutlineOutlinedIcon from '@mui/icons-material/RemoveCircleOutlineOutlined';
 import UpdateIcon from '@mui/icons-material/Update';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import type { VerificationCaseStatus, VerificationCaseState, VerificationState } from '../../lib/verification';
@@ -20,13 +22,15 @@ import type { VerificationCaseStatus, VerificationCaseState, VerificationState }
 export const ICON_SIZE = 20;
 const iconBoxSx = { width: ICON_SIZE, height: ICON_SIZE, display: 'flex', alignItems: 'center', justifyContent: 'center' } as const;
 
-type StatusCategory = 'passed' | 'failed' | 'errored' | 'unknown';
+type StatusCategory = 'passed' | 'failed' | 'errored' | 'inconclusive' | 'not_supported' | 'unknown';
 
 function statusColorVar(category: StatusCategory): string {
   switch (category) {
     case 'passed': return 'var(--success)';
     case 'failed':
     case 'errored': return 'var(--danger)';
+    case 'inconclusive': return 'var(--warning)';
+    case 'not_supported':
     case 'unknown': return 'var(--text-muted)';
   }
 }
@@ -40,6 +44,10 @@ export function StatusIcon({ category, size }: { category: StatusCategory; size:
       return <CancelOutlinedIcon sx={{ fontSize: size, color }} />;
     case 'errored':
       return <ErrorOutlinedIcon sx={{ fontSize: size, color }} />;
+    case 'inconclusive':
+      return <HelpOutlineOutlinedIcon sx={{ fontSize: size, color }} />;
+    case 'not_supported':
+      return <RemoveCircleOutlineOutlinedIcon sx={{ fontSize: size, color }} />;
     case 'unknown':
       return <RadioButtonUncheckedOutlinedIcon sx={{ fontSize: Math.round(size * 0.8), color }} />;
   }
@@ -49,6 +57,8 @@ const STATUS_TOOLTIPS: Record<VerificationCaseStatus, string> = {
   passed: 'Passed',
   failed: 'Failed',
   errored: 'Error during verification',
+  inconclusive: 'Inconclusive (timeout or abstraction)',
+  not_supported: 'Not supported by the chosen portfolio',
   running: 'Running',
   queued: 'Queued for verification',
   stale: 'Not yet verified',
@@ -61,6 +71,8 @@ export function CaseStatusIcon({ status }: { status: VerificationCaseStatus }): 
       case 'passed':
       case 'failed':
       case 'errored':
+      case 'inconclusive':
+      case 'not_supported':
       case 'stale': {
         const category: StatusCategory = status === 'stale' ? 'unknown' : status;
         return <StatusIcon category={category} size={ICON_SIZE} />;
@@ -77,6 +89,8 @@ export function CaseStatusIcon({ status }: { status: VerificationCaseStatus }): 
 export interface CaseCounts {
   failed: number;
   errored: number;
+  inconclusive: number;
+  notSupported: number;
   passed: number;
   unknown: number;
   total: number;
@@ -85,19 +99,34 @@ export interface CaseCounts {
 export function countCases(cases: readonly VerificationCaseState[]): CaseCounts {
   let failed = 0;
   let errored = 0;
+  let inconclusive = 0;
+  let notSupported = 0;
   let passed = 0;
   for (const c of cases) {
     if (c.status === 'passed') passed++;
     else if (c.status === 'failed') failed++;
     else if (c.status === 'errored') errored++;
+    else if (c.status === 'inconclusive') inconclusive++;
+    else if (c.status === 'not_supported') notSupported++;
   }
-  return { failed, errored, passed, unknown: cases.length - failed - errored - passed, total: cases.length };
+  const decided = passed + failed + errored + inconclusive + notSupported;
+  return {
+    failed,
+    errored,
+    inconclusive,
+    notSupported,
+    passed,
+    unknown: cases.length - decided,
+    total: cases.length,
+  };
 }
 
 const COUNT_TOOLTIPS: Record<StatusCategory, string> = {
   passed: 'Passed cases',
-  failed: 'Failed or errored cases',
+  failed: 'Failed cases',
   errored: 'Errored cases',
+  inconclusive: 'Inconclusive cases',
+  not_supported: 'Cases not supported by the chosen portfolio',
   unknown: 'Not yet verified',
 };
 
@@ -114,11 +143,12 @@ function CountBadge({ category, count }: { category: StatusCategory; count: numb
 }
 
 export function SummaryCounts({ cases }: { cases: readonly VerificationCaseState[] }): React.JSX.Element {
-  const { failed, errored, passed, unknown, total } = countCases(cases);
+  const { failed, errored, inconclusive, notSupported, passed, unknown, total } = countCases(cases);
   if (total === 0) return <></>;
+  const unresolved = unknown + inconclusive + notSupported;
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-      <CountBadge category="unknown" count={unknown} />
+      <CountBadge category="unknown" count={unresolved} />
       <CountBadge category="failed" count={failed + errored} />
       <CountBadge category="passed" count={passed} />
       <Typography variant="caption" sx={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}> / {total}</Typography>

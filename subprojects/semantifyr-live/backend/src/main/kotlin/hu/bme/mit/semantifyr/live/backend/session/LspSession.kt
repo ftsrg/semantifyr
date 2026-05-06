@@ -8,21 +8,24 @@ package hu.bme.mit.semantifyr.live.backend.session
 
 import com.google.inject.Inject
 import com.google.inject.Provider
-import com.google.inject.name.Named
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
-import hu.bme.mit.semantifyr.live.backend.Flavor
 import hu.bme.mit.semantifyr.live.backend.lsp.UriRewriter
+import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SessionControlInterceptor
+import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SessionControlManager
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SessionInfoProvider
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SessionVerificationManager
+import hu.bme.mit.semantifyr.live.backend.server.ActiveVerificationInfo
 import hu.bme.mit.semantifyr.live.backend.server.SessionInfo
+import hu.bme.mit.semantifyr.live.backend.server.VerificationKind
+import hu.bme.mit.semantifyr.live.backend.utils.MdcContext
 import hu.bme.mit.semantifyr.live.backend.utils.currentMdcContext
 import hu.bme.mit.semantifyr.live.backend.utils.withRequestId
-import hu.bme.mit.semantifyr.live.backend.utils.withSessionId
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
@@ -33,7 +36,6 @@ import kotlinx.coroutines.withTimeout
 import org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage
-import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.TimeSource
 
@@ -44,7 +46,11 @@ const val VERIFICATION_ENQUEUED_NOTIFICATION = "semantifyr/verification/enqueued
 class VerificationTracker(
     val requestId: String,
     val sessionId: String,
+    val kind: VerificationKind,
+    val caseLabel: String?,
+    val portfolioId: String?,
 ) {
+    val startMark = TimeSource.Monotonic.markNow()
     private val result = CompletableDeferred<String>()
 
     fun complete(responseMessage: String) {
@@ -62,44 +68,38 @@ class VerificationTracker(
 
 @SessionScoped
 class LspSession @Inject constructor(
-    val flavor: Flavor,
-    @param:Named("remoteIp") val remoteIp: String,
-    @param:Named("sessionId") val sessionId: String,
-    @param:Named("workingDirectoryPath") private val workingDirectoryPath: Path,
+    private val context: SessionContext,
     private val config: BackendConfig,
     private val globalVerificationManager: GlobalVerificationManager,
     private val lspServerRunner: LspServerRawRunner,
     private val uriRewriter: UriRewriter,
-    // Provider breaks the Guice construction cycle (proxy -> interceptors -> this session).
-    // By the time the proxy is resolved, this session is already in the scope cache, so the
-    // interceptors can inject the session-backed interfaces directly without needing proxies.
-    private val lspMessageProxyProvider: Provider<LspMessageProxy>,
+    lspMessageProxyProvider: Provider<LspMessageProxy>,
 ) : AutoCloseable,
     SessionInfoProvider,
-    SessionVerificationManager {
+    SessionVerificationManager,
+    SessionControlManager {
 
     private val logger by loggerFactory()
 
+    val sessionId get() = context.sessionId
+    val remoteIp get() = context.remoteIp
+    val flavor get() = context.flavor
+
     private val startMark = TimeSource.Monotonic.markNow()
     private val verificationTrackers = mutableMapOf<String, VerificationTracker>()
+    private val lspMessageProxy = lspMessageProxyProvider.get()
     private lateinit var coroutineScope: CoroutineScope
     private var started = false
 
-    // Resolved eagerly after LspSession is placed in the SessionScope cache, so the provider
-    // chain (LspMessageProxy -> List<Interceptor> -> SessionInfoProvider -> this session) resolves
-    // cleanly without Guice needing to proxy interfaces for cycle breaking.
-    private lateinit var lspMessageProxy: LspMessageProxy
-
-    /**
-     * Called by [SessionManager] inside the session scope after construction so the
-     * provider chain can resolve while the scope is still active.
-     */
-    internal fun initialize() {
-        lspMessageProxy = lspMessageProxyProvider.get()
+    val activeVerifications get() = verificationTrackers.values.map {
+        ActiveVerificationInfo(
+            requestId = it.requestId,
+            kind = it.kind,
+            caseLabel = it.caseLabel,
+            portfolioId = it.portfolioId,
+            elapsed = it.startMark.elapsedNow(),
+        )
     }
-
-    val activeVerificationIds: Set<String>
-        get() = verificationTrackers.keys.toSet()
 
     override fun getSessionInfo(): SessionInfo {
         return SessionInfo(
@@ -107,26 +107,23 @@ class LspSession @Inject constructor(
             remoteIp = remoteIp,
             flavorId = flavor.id,
             uptime = startMark.elapsedNow(),
-            workingDirectory = workingDirectoryPath.toString(),
-            activeVerifications = activeVerificationIds,
+            workingDirectory = context.workingDirectoryPath.toString(),
+            activeVerifications = activeVerifications,
             started = started,
             bridgeInfo = lspMessageProxy.getInfo(),
         )
     }
 
-    suspend fun run() = withSessionId(sessionId) {
+    suspend fun run() {
         check(!started) { "Session has already been started!" }
         started = true
 
-        logger.info { "Starting session (flavor=${flavor.id}, workspace=$workingDirectoryPath)" }
-
-        // Snapshot the surrounding MDC (sessionId, possibly more from a parent withSessionId/...)
-        // so it propagates across coroutine suspensions inside this scope.
-        coroutineScope = CoroutineScope(currentCoroutineContext() + currentMdcContext())
+        coroutineScope = CoroutineScope(currentCoroutineContext() + MdcContext("sessionId" to sessionId))
         coroutineScope.launch { doRun() }.join()
     }
 
     private suspend fun doRun() = coroutineScope {
+        logger.info { "Starting session (flavor=${flavor.id}, workspace=${context.workingDirectoryPath})" }
         val runnerJob = launch { lspServerRunner.run() }
         val idleWatchdog = launch { watchForIdleEviction() }
         try {
@@ -137,12 +134,6 @@ class LspSession @Inject constructor(
         }
     }
 
-    /**
-     * Evicts the session if the client has been silent for longer than
-     * [ServerConfig.sessionIdleTimeout][hu.bme.mit.semantifyr.live.backend.ServerConfig.sessionIdleTimeout].
-     * This threshold must be configured larger than [VerificationConfig.timeout] so long
-     * verifications (which legitimately produce client silence) don't get evicted.
-     */
     private suspend fun watchForIdleEviction() {
         val idleTimeout = config.server.sessionIdleTimeout
         while (true) {
@@ -156,26 +147,29 @@ class LspSession @Inject constructor(
         }
     }
 
-    // --- SessionVerificationManager ---
+    override suspend fun enqueueVerification(
+        requestId: String,
+        requestMessage: String,
+        kind: VerificationKind,
+        caseLabel: String?,
+        portfolioId: String?,
+    ): Unit = withRequestId(requestId) {
+        logger.info {
+            "Verification request received (kind=$kind, case=${caseLabel ?: "?"}, portfolio=${portfolioId ?: "default"})"
+        }
 
-    override suspend fun enqueueVerification(requestId: String, requestMessage: String): Unit = withRequestId(requestId) {
-        logger.info { "Verification request received" }
-
-        val tracker = VerificationTracker(requestId, sessionId)
+        val tracker = VerificationTracker(requestId, sessionId, kind, caseLabel, portfolioId)
         verificationTrackers[requestId] = tracker
+        notifyInflightChanged()
 
-        // currentMdcContext() snapshots the surrounding withSessionId/withRequestId so the
-        // launched job's log lines inherit them across coroutine suspensions.
-        coroutineScope.launch(currentMdcContext()) {
+        launchInSession {
             try {
                 logger.info { "Verification request enqueued" }
                 lspMessageProxy.sendToLspClient(enqueuedNotification(requestId))
 
                 globalVerificationManager.withPermit {
                     logger.info { "Verification started" }
-                    // Interceptors capture the client-form raw message before the proxy's
-                    // per-message rewrite runs, so the deferred forward here has to rewrite
-                    // URIs itself; otherwise the LSP server sees file:///workspace/... paths.
+
                     lspMessageProxy.sendToLspServer(uriRewriter.clientToServer(requestMessage))
 
                     val response = withTimeout(config.verification.timeout) {
@@ -192,14 +186,53 @@ class LspSession @Inject constructor(
                 // Normal cancellation: admin cancel or session close.
             } finally {
                 verificationTrackers.remove(requestId)
+                notifyInflightChanged()
             }
         }
     }
 
+    override fun listInFlight() = activeVerifications
+
+    override suspend fun cancelInFlight(requestId: String) = cancelTracker(requestId, "Cancelled by client")
+
+    override suspend fun cancelAllInFlight(): Int {
+        val ids = verificationTrackers.keys.toList()
+        if (ids.isEmpty()) {
+            return 0
+        }
+        logger.info { "Cancelling ${ids.size} in-flight job(s) for session" }
+        for (id in ids) {
+            cancelTracker(id, "Cancelled by client (cancelAll)")
+        }
+        return ids.size
+    }
+
+    private suspend fun cancelTracker(requestId: String, reason: String): Boolean {
+        val tracker = verificationTrackers[requestId] ?: return false
+        logger.info { "Cancelling verification (requestId=$requestId, kind=${tracker.kind}, case=${tracker.caseLabel ?: "?"}, reason=$reason)" }
+        sendCancelToLspServer(requestId)
+        tracker.cancel(CancellationException(reason))
+        return true
+    }
+
+    private fun notifyInflightChanged() {
+        if (!started) {
+            return
+        }
+        val notification = SessionControlInterceptor.changedNotification(activeVerifications)
+        launchInSession {
+            lspMessageProxy.sendToLspClient(notification)
+        }
+    }
+
+    private fun launchInSession(block: suspend CoroutineScope.() -> Unit): Job {
+        return coroutineScope.launch(currentMdcContext(), block = block)
+    }
+
     suspend fun sendCancelToLspServer(requestId: String) {
-        logger.info { "Sending $/cancelRequest to LSP server (requestId=$requestId)" }
+        logger.info { "Sending \$/cancelRequest to LSP server (requestId=$requestId)" }
         val notification = NotificationMessage().apply {
-            method = "$/cancelRequest"
+            method = "\$/cancelRequest"
             params = mapOf("id" to requestId)
         }
         lspMessageProxy.sendToLspServer(notification)
@@ -216,13 +249,11 @@ class LspSession @Inject constructor(
     }
 
     override suspend fun cancelVerification(requestId: String) {
-        val tracker = verificationTrackers[requestId] ?: return
-        logger.info { "Cancelling verification (requestId=$requestId)" }
-        tracker.cancel(CancellationException("Verification cancelled"))
+        cancelTracker(requestId, "Verification cancelled")
     }
 
-    override fun close() = withSessionId(sessionId) {
-        logger.info { "Closing session" }
+    override fun close() {
+        logger.info { "Closing session (sessionId=$sessionId)" }
         if (started) {
             coroutineScope.cancel(CancellationException("Session terminated"))
         }
@@ -241,5 +272,4 @@ class LspSession @Inject constructor(
             params = mapOf("requestId" to requestId)
         }
     }
-
 }

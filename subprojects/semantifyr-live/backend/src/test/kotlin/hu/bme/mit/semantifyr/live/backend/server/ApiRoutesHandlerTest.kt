@@ -106,23 +106,43 @@ class ApiRoutesHandlerTest {
 
         val flavors = client.get("/api/flavors").body<FlavorsResponse>()
         val ids = flavors.flavors.map { it.id }
-        assertThat(ids).containsExactly("oxsts", "oxsts-with-gamma-library", "xsts", "gamma")
+        assertThat(ids).containsExactly("oxsts", "oxsts-with-gamma-library", "oxsts-with-sysmlv2-library", "gamma")
     }
 
     @Test
-    fun `flavors endpoint reports verify capability per flavor`() = testApplication {
+    fun `flavors endpoint reports verification capability per flavor`() = testApplication {
         installApiRoutes(createHandler())
         val client = jsonClient()
 
         val flavors = client.get("/api/flavors").body<FlavorsResponse>()
 
         val oxsts = flavors.flavors.first { it.id == "oxsts" }
-        assertThat(oxsts.verify).isTrue()
         assertThat(oxsts.verificationCommand).isEqualTo("oxsts.case.verify")
+        assertThat(oxsts.validateWitnessCommand).isEqualTo("oxsts.case.validateWitness")
 
-        val xsts = flavors.flavors.first { it.id == "xsts" }
-        assertThat(xsts.verify).isFalse()
-        assertThat(xsts.verificationCommand).isNull()
+        val gamma = flavors.flavors.first { it.id == "gamma" }
+        assertThat(gamma.validateWitnessCommand).isNull()
+    }
+
+    @Test
+    fun `portfolios endpoint exposes the demo portfolio set`() = testApplication {
+        installApiRoutes(createHandler())
+        val client = jsonClient()
+
+        val response = client.get("/api/portfolios").body<PortfoliosResponse>()
+        val ids = response.portfolios.map { it.id }
+        // The five demo entries; availability depends on host binaries, so we assert presence
+        // rather than the boolean.
+        assertThat(ids).containsExactly(
+            "smart-full",
+            "all-agree-full",
+            "theta-full",
+            "nuxmv-ic3-invar",
+            "spin-safe-dfs",
+            "uppaal-default",
+        )
+        val auto = response.portfolios.first { it.id == "smart-full" }
+        assertThat(auto.displayName).isEqualTo("Auto")
     }
 }
 

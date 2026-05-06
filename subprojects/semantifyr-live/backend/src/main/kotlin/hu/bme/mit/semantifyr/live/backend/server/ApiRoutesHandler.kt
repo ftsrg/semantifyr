@@ -9,10 +9,7 @@ package hu.bme.mit.semantifyr.live.backend.server
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.live.backend.BuildInfo
-import hu.bme.mit.semantifyr.live.backend.FlavorRegistry
 import hu.bme.mit.semantifyr.live.backend.session.SessionManager
-import hu.bme.mit.semantifyr.logging.debug
-import hu.bme.mit.semantifyr.logging.loggerFactory
 import io.ktor.server.application.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.response.*
@@ -23,8 +20,6 @@ class ApiRoutesHandler @Inject constructor(
     private val sessionManager: SessionManager,
 ) {
 
-    private val logger by loggerFactory()
-
     fun Application.configure() {
         routing {
             route("/api/health") {
@@ -33,12 +28,10 @@ class ApiRoutesHandler @Inject constructor(
                     anyMethod()
                 }
                 get {
-                    logger.debug { "/api/health" }
                     call.respond(HealthResponse(status = "ok"))
                 }
             }
             get("/api/info") {
-                logger.debug { "/api/info" }
                 call.respond(
                     InfoResponse(
                         uptime = BuildInfo.uptime,
@@ -50,12 +43,14 @@ class ApiRoutesHandler @Inject constructor(
                 )
             }
             get("/api/flavors") {
-                logger.debug { "/api/flavors" }
                 call.respond(
                     FlavorsResponse(
                         flavors = FlavorRegistry.flavors.map { FlavorResponse.fromFlavor(it) },
                     ),
                 )
+            }
+            get("/api/portfolios") {
+                call.respond(PortfoliosResponse(portfolios = PortfolioRegistry.snapshot()))
             }
         }
     }

@@ -22,9 +22,10 @@ interface Props {
   showProgress: boolean;
   infoItems?: readonly StatusBarInfoItem[] | undefined;
   onInfoClick?: (() => void) | undefined;
+  trailing?: React.ReactNode;
 }
 
-export default function StatusBar({ message, showProgress, infoItems, onInfoClick }: Props): React.JSX.Element {
+export default function StatusBar({ message, showProgress, infoItems, onInfoClick, trailing }: Props): React.JSX.Element {
   return (
     <Box
       sx={{
@@ -92,6 +93,12 @@ export default function StatusBar({ message, showProgress, infoItems, onInfoClic
                 </Tooltip>
               ))}
             </Box>
+          </>
+        )}
+        {trailing && (
+          <>
+            <Divider orientation="vertical" flexItem sx={{ my: 0.25, borderColor: 'var(--surface-border)' }} />
+            {trailing}
           </>
         )}
       </Box>

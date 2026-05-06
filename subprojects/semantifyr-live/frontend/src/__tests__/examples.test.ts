@@ -17,7 +17,7 @@ describe('LIVE_FLAVORS registry', () => {
     expect(LIVE_FLAVORS.map((f) => f.id)).toEqual([
       'oxsts',
       'oxsts-with-gamma-library',
-      'xsts',
+      'oxsts-with-sysmlv2-library',
       'gamma',
     ]);
   });

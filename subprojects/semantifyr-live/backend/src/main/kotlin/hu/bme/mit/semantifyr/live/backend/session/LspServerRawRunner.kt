@@ -7,12 +7,10 @@
 package hu.bme.mit.semantifyr.live.backend.session
 
 import com.google.inject.Inject
-import com.google.inject.name.Named
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
-import hu.bme.mit.semantifyr.live.backend.Flavor
-import hu.bme.mit.semantifyr.live.backend.WorkspaceLayout
 import hu.bme.mit.semantifyr.live.backend.lsp.LspFrameCodec
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.LspServerRawConnector
+import hu.bme.mit.semantifyr.live.backend.server.WorkspaceLayout
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.error
 import hu.bme.mit.semantifyr.logging.info
@@ -28,7 +26,6 @@ import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Files
-import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createDirectories
 import kotlin.io.path.writeText
@@ -47,13 +44,16 @@ private fun Process.destroyTree() {
 
 @SessionScoped
 class LspServerRawRunner @Inject constructor(
-    private val flavor: Flavor,
-    @param:Named("workingDirectoryPath")
-    private val workingDirectoryPath: Path,
+    private val context: SessionContext,
     private val config: BackendConfig,
 ) : LspServerRawConnector {
 
     private val logger by loggerFactory()
+
+    private val flavor
+        get() = context.flavor
+    private val workingDirectoryPath
+        get() = context.workingDirectoryPath
 
     private val outgoing = Channel<String>(Channel.BUFFERED)
     private val incoming = Channel<String>(Channel.BUFFERED)
@@ -98,18 +98,18 @@ class LspServerRawRunner @Inject constructor(
         workingDirectoryPath.resolve(flavor.fileName).writeText("")
         val layout = flavor.workspaceLayout
         if (layout is WorkspaceLayout.WithLibrary) {
-            copyLibrary(layout.librarySourceRelativePath)
+            copyLibrary(layout)
         }
     }
 
-    private fun copyLibrary(librarySourceRelativePath: Path) {
-        val lspBinariesPath = config.sessionManager.lspBinariesPath
-            ?: error("Binary directory is not set. Set it via sessionManager.lspBinariesDirectory or the environment.")
-        val librarySource = lspBinariesPath.resolve(librarySourceRelativePath)
+    private fun copyLibrary(layout: WorkspaceLayout.WithLibrary) {
+        val semanticLibrariesPath = config.sessionManager.semanticLibrariesPath
+            ?: error("Semantic libraries directory is not set. Set it via sessionManager.semanticLibrariesDirectory or the environment.")
+        val librarySource = semanticLibrariesPath.resolve(layout.libraryRelativePath)
         require(Files.isDirectory(librarySource)) {
             "Library directory for flavor '${flavor.id}' not found: $librarySource"
         }
-        val libraryTarget = workingDirectoryPath.resolve(librarySourceRelativePath.fileName)
+        val libraryTarget = workingDirectoryPath.resolve(layout.workspaceTargetName)
         logger.info { "Copying library $librarySource -> $libraryTarget" }
         librarySource.toFile().copyRecursively(libraryTarget.toFile(), overwrite = true)
     }
@@ -122,7 +122,7 @@ class LspServerRawRunner @Inject constructor(
         }
 
         logger.info { "Spawning LSP server (flavor=${flavor.id}, binary=$binary, workspace=$workingDirectoryPath)" }
-        return ProcessBuilder(binary.absolutePathString())
+        return ProcessBuilder(binary.absolutePathString(), "--code-lens-mode=none")
             .directory(workingDirectoryPath.toFile())
             .redirectErrorStream(false)
             .redirectError(ProcessBuilder.Redirect.PIPE)

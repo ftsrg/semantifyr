@@ -12,6 +12,7 @@ export interface FlavorInfo {
   verify: boolean;
   verificationCommand: string | null;
   discoveryCommand: string | null;
+  validateWitnessCommand: string | null;
   peekCompiledOutput: boolean;
 }
 

@@ -39,14 +39,14 @@ class WorkspaceSweeper @Inject constructor(
     }
 
     private fun deleteRecursively(path: Path) {
-        try {
-            path.toFile().deleteRecursively().also { ok ->
-                if (!ok) {
-                    logger.warn { "Failed to fully delete leftover workspace $path" }
-                }
-            }
+        val ok = try {
+            path.toFile().deleteRecursively()
         } catch (e: Exception) {
             logger.warn { "Failed to delete leftover workspace $path: $e" }
+            return
+        }
+        if (!ok) {
+            logger.warn { "Failed to fully delete leftover workspace $path" }
         }
     }
 }

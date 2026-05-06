@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.live.backend.server
 
-import hu.bme.mit.semantifyr.live.backend.Flavor
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 
@@ -30,9 +29,9 @@ data class FlavorResponse(
     val displayName: String,
     val languageId: String,
     val fileName: String,
-    val verify: Boolean,
     val verificationCommand: String?,
     val discoveryCommand: String?,
+    val validateWitnessCommand: String?,
     val peekCompiledOutput: Boolean,
 ) {
     companion object {
@@ -41,13 +40,26 @@ data class FlavorResponse(
             displayName = flavor.displayName,
             languageId = flavor.languageId,
             fileName = flavor.fileName,
-            verify = flavor.verificationCommand != null,
             verificationCommand = flavor.verificationCommand,
             discoveryCommand = flavor.discoveryCommand,
+            validateWitnessCommand = flavor.validateWitnessCommand,
             peekCompiledOutput = flavor.peekCompiledOutput,
         )
     }
 }
+
+@Serializable
+data class PortfolioResponse(
+    val id: String,
+    val displayName: String,
+    val description: String,
+    val available: Boolean,
+)
+
+@Serializable
+data class PortfoliosResponse(
+    val portfolios: List<PortfolioResponse>,
+)
 
 @Serializable
 data class FlavorsResponse(
@@ -60,13 +72,26 @@ data class AdminStatusResponse(
 )
 
 @Serializable
+enum class VerificationKind { Verify, Validate }
+
+@Serializable
+data class ActiveVerificationInfo(
+    val requestId: String,
+    val kind: VerificationKind = VerificationKind.Verify,
+    val caseLabel: String? = null,
+    val portfolioId: String? = null,
+    /** Wall-clock time elapsed since the request was enqueued. */
+    val elapsed: Duration = Duration.ZERO,
+)
+
+@Serializable
 data class SessionInfo(
     val sessionId: String,
     val remoteIp: String,
     val flavorId: String,
     val uptime: Duration,
     val workingDirectory: String,
-    val activeVerifications: Set<String>,
+    val activeVerifications: List<ActiveVerificationInfo>,
     val started: Boolean,
     val bridgeInfo: LspProxyInfo,
 )

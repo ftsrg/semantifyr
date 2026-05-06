@@ -6,15 +6,18 @@
 
 package hu.bme.mit.semantifyr.live.backend.session
 
+import com.google.inject.Inject
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.LspClientRawConnector
 import io.ktor.websocket.Frame
-import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.readText
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 
-class WebSocketLspClientRawConnector(
-    private val webSocketSession: WebSocketSession,
+@SessionScoped
+class WebSocketLspClientRawConnector @Inject constructor(
+    context: SessionContext,
 ) : LspClientRawConnector {
+
+    private val webSocketSession = context.webSocketSession
 
     override suspend fun receiveFromClient(): String? {
         while (true) {

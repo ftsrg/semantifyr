@@ -28,7 +28,7 @@ class SessionInfoMessageInterceptorTest {
         flavorId = "oxsts",
         uptime = 10.seconds,
         workingDirectory = "/tmp/s1",
-        activeVerifications = emptySet(),
+        activeVerifications = emptyList(),
         started = true,
         bridgeInfo = LspProxyInfo(0, 0, 0, Duration.ZERO, Duration.ZERO),
     )
@@ -54,9 +54,9 @@ class SessionInfoMessageInterceptorTest {
         val bridge = CapturingBridge()
 
         val request = request(id = "42", command = "semantifyr.session.info")
-        val result = interceptor.handleClientMessage(serialize(request), request, bridge)
+        val result = interceptor.interceptClientMessage(serialize(request), request, bridge)
 
-        assertThat(result).isFalse()
+        assertThat(result).isTrue()
         assertThat(bridge.sentToClient).singleElement().isInstanceOfSatisfying(ResponseMessage::class.java) {
             assertThat(it.id).isEqualTo("42")
             assertThat(it.result).isNotNull
@@ -69,9 +69,9 @@ class SessionInfoMessageInterceptorTest {
         val bridge = CapturingBridge()
 
         val request = request(id = "1", command = "oxsts.case.verify")
-        val result = interceptor.handleClientMessage(serialize(request), request, bridge)
+        val result = interceptor.interceptClientMessage(serialize(request), request, bridge)
 
-        assertThat(result).isTrue()
+        assertThat(result).isFalse()
         assertThat(bridge.sentToClient).isEmpty()
     }
 
@@ -84,9 +84,9 @@ class SessionInfoMessageInterceptorTest {
             method = "textDocument/didChange"
             params = emptyMap<String, Any>()
         }
-        val result = interceptor.handleClientMessage(serialize(notification), notification, bridge)
+        val result = interceptor.interceptClientMessage(serialize(notification), notification, bridge)
 
-        assertThat(result).isTrue()
+        assertThat(result).isFalse()
         assertThat(bridge.sentToClient).isEmpty()
     }
 
@@ -96,9 +96,9 @@ class SessionInfoMessageInterceptorTest {
         val bridge = CapturingBridge()
 
         val message: Message = ResponseMessage().apply { id = "1" }
-        val result = interceptor.handleServerMessage(serialize(message), message, bridge)
+        val result = interceptor.interceptServerMessage(serialize(message), message, bridge)
 
-        assertThat(result).isTrue()
+        assertThat(result).isFalse()
         assertThat(bridge.sentToClient).isEmpty()
     }
 

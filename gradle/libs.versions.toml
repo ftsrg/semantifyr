@@ -30,7 +30,6 @@ ktlint = "1.8.0"
 palantirJavaFormat = "2.90.0"
 sonarqube = "7.2.3.7755"
 ktor = "3.4.2"
-micrometerPrometheus = "1.13.6"
 
 [libraries]
 ecore = { group = "org.eclipse.emf", name = "org.eclipse.emf.ecore", version.ref = "ecore" }
@@ -79,8 +78,6 @@ ktor-server-cors = { group = "io.ktor", name = "ktor-server-cors", version.ref =
 ktor-server-host-common = { group = "io.ktor", name = "ktor-server-host-common", version.ref = "ktor" }
 ktor-server-content-negotiation = { group = "io.ktor", name = "ktor-server-content-negotiation", version.ref = "ktor" }
 ktor-server-rate-limit = { group = "io.ktor", name = "ktor-server-rate-limit", version.ref = "ktor" }
-ktor-server-metrics-micrometer = { group = "io.ktor", name = "ktor-server-metrics-micrometer", version.ref = "ktor" }
-micrometer-registry-prometheus = { group = "io.micrometer", name = "micrometer-registry-prometheus", version.ref = "micrometerPrometheus" }
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
@@ -104,7 +101,6 @@ ktor-server = [
     "ktor-server-host-common",
     "ktor-server-content-negotiation",
     "ktor-server-rate-limit",
-    "ktor-server-metrics-micrometer",
     "ktor-serialization-kotlinx-json",
 ]
 ktor-client-test = [

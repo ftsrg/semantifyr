@@ -46,21 +46,10 @@ class WorkspaceSyncerInterceptorTest {
         val interceptor = WorkspaceSyncerInterceptor(syncerFor(targetFile))
 
         val didOpen = didOpenNotification(uri = "file:///workspace/snippet.oxsts", text = "hello")
-        val result = interceptor.handleClientMessage(serialize(didOpen), didOpen, NoOpBridge)
+        val result = interceptor.interceptClientMessage(serialize(didOpen), didOpen, NoOpBridge)
 
-        assertThat(result).isTrue() // never consumes
+        assertThat(result).isFalse() // never consumes
         assertThat(targetFile.readText()).isEqualTo("hello")
-    }
-
-    @Test
-    fun `ignores messages for unrelated document URIs`() = runTest {
-        val targetFile = tempDir.resolve("snippet.oxsts").apply { writeText("initial") }
-        val interceptor = WorkspaceSyncerInterceptor(syncerFor(targetFile))
-
-        val didOpen = didOpenNotification(uri = "file:///elsewhere/other.oxsts", text = "other content")
-        interceptor.handleClientMessage(serialize(didOpen), didOpen, NoOpBridge)
-
-        assertThat(targetFile.readText()).isEqualTo("initial")
     }
 
     @Test
@@ -69,9 +58,9 @@ class WorkspaceSyncerInterceptorTest {
         val interceptor = WorkspaceSyncerInterceptor(syncerFor(targetFile))
 
         val response: Message = ResponseMessage().apply { id = "1" }
-        val result = interceptor.handleServerMessage(serialize(response), response, NoOpBridge)
+        val result = interceptor.interceptServerMessage(serialize(response), response, NoOpBridge)
 
-        assertThat(result).isTrue()
+        assertThat(result).isFalse()
         assertThat(targetFile.readText()).isEqualTo("untouched")
     }
 

@@ -32,3 +32,52 @@ export function formatIsoDuration(iso: string): string {
   if (minutes > 0) return `${minutes}m ${seconds}s`;
   return `${seconds}s`;
 }
+
+export function isoDurationFromMs(totalMs: number): string {
+  // Round-trip through "PT{seconds}S" so callers can sum a list of ISO durations and pass the
+  // total back through the existing format helpers (formatIsoDuration / ...Detailed).
+  return `PT${(totalMs / 1000).toFixed(3)}S`;
+}
+
+export function isoDurationToMs(iso: string): number {
+  let parsed;
+  try {
+    parsed = parseIso(iso);
+  } catch {
+    return 0;
+  }
+  return (
+    ((parsed.weeks ?? 0) * 7 * 86400 +
+      (parsed.days ?? 0) * 86400 +
+      (parsed.hours ?? 0) * 3600 +
+      (parsed.minutes ?? 0) * 60 +
+      (parsed.seconds ?? 0)) *
+    1000
+  );
+}
+
+/**
+ * Sub-second-aware variant of {@link formatIsoDuration}: keeps millisecond precision for short
+ * durations (verification timings often land below 1 s) and degrades gracefully for longer ones.
+ */
+export function formatIsoDurationDetailed(iso: string): string {
+  let parsed;
+  try {
+    parsed = parseIso(iso);
+  } catch {
+    return '0 s';
+  }
+  const totalMs =
+    ((parsed.weeks ?? 0) * 7 * 86400 +
+      (parsed.days ?? 0) * 86400 +
+      (parsed.hours ?? 0) * 3600 +
+      (parsed.minutes ?? 0) * 60 +
+      (parsed.seconds ?? 0)) *
+    1000;
+  if (totalMs < 1000) return `${Math.round(totalMs)} ms`;
+  const totalSeconds = totalMs / 1000;
+  if (totalSeconds < 60) {
+    return `${totalSeconds.toFixed(totalSeconds < 10 ? 2 : 1)} s`;
+  }
+  return formatIsoDuration(iso);
+}

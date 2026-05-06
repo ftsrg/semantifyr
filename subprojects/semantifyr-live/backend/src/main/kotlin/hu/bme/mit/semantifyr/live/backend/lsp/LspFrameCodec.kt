@@ -27,7 +27,9 @@ object LspFrameCodec {
         var read = 0
         while (read < contentLength) {
             val n = input.read(payload, read, contentLength - read)
-            if (n == -1) return null
+            if (n == -1) {
+                return null
+            }
             read += n
         }
         return String(payload, Charsets.UTF_8)
@@ -38,7 +40,9 @@ object LspFrameCodec {
         var state = HeaderState.START
         while (state != HeaderState.DONE) {
             val ch = input.read()
-            if (ch == -1) return null
+            if (ch == -1) {
+                return null
+            }
             headerBytes.write(ch)
             state = state.advance(ch)
         }
@@ -76,7 +80,9 @@ object LspFrameCodec {
     private fun parseContentLength(header: String): Int? {
         for (line in header.split("\r\n")) {
             val colon = line.indexOf(':')
-            if (colon < 0) continue
+            if (colon < 0) {
+                continue
+            }
             val name = line.substring(0, colon).trim()
             if (name.equals("Content-Length", ignoreCase = true)) {
                 return line.substring(colon + 1).trim().toIntOrNull()

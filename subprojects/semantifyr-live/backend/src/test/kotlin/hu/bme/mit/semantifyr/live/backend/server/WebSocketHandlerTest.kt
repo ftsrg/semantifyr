@@ -10,7 +10,6 @@ import com.google.inject.AbstractModule
 import com.google.inject.Guice
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.BackendModule
-import hu.bme.mit.semantifyr.live.backend.Flavor
 import hu.bme.mit.semantifyr.live.backend.ServerConfig
 import hu.bme.mit.semantifyr.live.backend.session.SessionLimitReachedException
 import hu.bme.mit.semantifyr.live.backend.session.SessionManager
@@ -22,6 +21,7 @@ import io.ktor.websocket.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.doSuspendableAnswer
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.wheneverBlocking
 import io.ktor.client.plugins.websocket.WebSockets as ClientWebSockets
@@ -36,11 +36,11 @@ class WebSocketHandlerTest {
         },
     ): WebSocketHandler {
         val sessionManager = mock<SessionManager>()
-        wheneverBlocking { sessionManager.runSession(any(), any(), any()) }.thenAnswer { invocation ->
+        wheneverBlocking { sessionManager.runSession(any(), any(), any()) } doSuspendableAnswer { invocation ->
             val ws = invocation.getArgument<WebSocketServerSession>(0)
             val ip = invocation.getArgument<String>(1)
             val flavor = invocation.getArgument<Flavor>(2)
-            kotlinx.coroutines.runBlocking { onRunSession(ws, ip, flavor) }
+            onRunSession(ws, ip, flavor)
         }
 
         val injector = Guice.createInjector(
@@ -116,11 +116,10 @@ class WebSocketHandlerTest {
         client.webSocket("/ws/lsp/oxsts") {
             closeReason.await()
         }
-        org.junit.jupiter.api.Assertions.assertThrows(Throwable::class.java) {
-            kotlinx.coroutines.runBlocking {
-                client.webSocket("/ws/lsp/oxsts") { closeReason.await() }
-            }
+        val secondAttempt = runCatching {
+            client.webSocket("/ws/lsp/oxsts") { closeReason.await() }
         }
+        assertThat(secondAttempt.exceptionOrNull()).isNotNull
     }
 
     @Test

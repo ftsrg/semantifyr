@@ -18,13 +18,13 @@ class WorkspaceSyncerInterceptor @Inject constructor(
 
     // FIXME: we should also sync the workspace in the other way around: when the lsp server changes something
 
-    override suspend fun handleClientMessage(
+    override suspend fun interceptClientMessage(
         raw: String,
         message: Message,
         bridge: LspBridge,
     ): Boolean {
         workspaceSyncer.handleOutgoingMessage(message)
-        return true
+        return false
     }
 
 }

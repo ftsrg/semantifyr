@@ -8,11 +8,10 @@ package hu.bme.mit.semantifyr.live.backend.session
 
 import com.google.inject.Inject
 import com.google.inject.Injector
-import com.google.inject.Key
 import com.google.inject.Singleton
-import com.google.inject.name.Names
+import hu.bme.mit.semantifyr.guice.common.Seed
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
-import hu.bme.mit.semantifyr.live.backend.Flavor
+import hu.bme.mit.semantifyr.live.backend.server.Flavor
 import hu.bme.mit.semantifyr.live.backend.server.SessionInfo
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
@@ -29,7 +28,6 @@ class SessionLimitReachedException(message: String) : RuntimeException(message)
 class SessionManager @Inject constructor(
     val config: BackendConfig,
     private val injector: Injector,
-    private val sessionScope: SessionScope,
 ) : AutoCloseable {
 
     private val logger by loggerFactory()
@@ -84,13 +82,18 @@ class SessionManager @Inject constructor(
         webSocketSession: WebSocketSession,
     ): LspSession {
         val sessionId = UUID.randomUUID().toString()
-        // Construction is synchronous on the current thread; the thread-local SessionScope is valid for this block.
-        return sessionScope.withSessionScope {
-            seed(Flavor::class.java, flavor)
-            seed(Key.get(String::class.java, Names.named("remoteIp")), remoteIp)
-            seed(Key.get(String::class.java, Names.named("sessionId")), sessionId)
-            seed(WebSocketSession::class.java, webSocketSession)
-            injector.getInstance(LspSession::class.java).also { it.initialize() }
+        val context = SessionContext(
+            sessionId = sessionId,
+            remoteIp = remoteIp,
+            flavor = flavor,
+            webSocketSession = webSocketSession,
+            workingDirectoryPath = config.sessionManager.rootWorkPath.resolve("sessions").resolve(sessionId),
+        )
+        val seed = Seed().apply {
+            seed(SessionContext::class.java, context)
+        }
+        return withSessionScope(seed) {
+            injector.getInstance(LspSession::class.java)
         }
     }
 

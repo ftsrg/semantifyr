@@ -50,14 +50,11 @@ data class ServerConfig(
     val pingTimeout: Duration = 15.seconds,
     val webRootDirectory: String? = null,
     val adminPassword: String? = null,
-    /**
-     * Time of client inactivity (no messages from the client) after which an otherwise
-     * idle session is terminated. Active verifications keep the session alive even when
-     * the client is silent - only idleness with no pending work evicts the session.
-     */
     val sessionIdleTimeout: Duration = 10.minutes,
     val wsHandshakesPerPeriod: Int = 10,
     val wsHandshakeRatePeriod: Duration = 1.minutes,
+    val maxWsFrameSize: Long = 4 * 1024 * 1024,
+    val httpsOnlyCookies: Boolean = true,
 ) {
     fun withEnv(env: Map<String, String?>) = copy(
         port = env["SEMANTIFYR_LIVE_PORT"]?.toIntOrNull() ?: port,
@@ -67,10 +64,14 @@ data class ServerConfig(
         sessionIdleTimeout = env["SEMANTIFYR_LIVE_SESSION_IDLE_TIMEOUT_SECONDS"]?.toLongOrNull()?.seconds ?: sessionIdleTimeout,
         wsHandshakesPerPeriod = env["SEMANTIFYR_LIVE_WS_HANDSHAKES_PER_PERIOD"]?.toIntOrNull() ?: wsHandshakesPerPeriod,
         wsHandshakeRatePeriod = env["SEMANTIFYR_LIVE_WS_HANDSHAKE_RATE_PERIOD_SECONDS"]?.toLongOrNull()?.seconds ?: wsHandshakeRatePeriod,
+        maxWsFrameSize = env["SEMANTIFYR_LIVE_MAX_WS_FRAME_SIZE"]?.toLongOrNull() ?: maxWsFrameSize,
+        httpsOnlyCookies = env["SEMANTIFYR_LIVE_HTTPS_ONLY_COOKIES"]?.toBooleanStrictOrNull() ?: httpsOnlyCookies,
     )
 
     val webRootPath by lazy {
-        webRootDirectory?.let(Path::of)?.takeIf {
+        webRootDirectory?.let {
+            Path.of(it)
+        }?.takeIf {
             Files.isDirectory(it)
         }
     }
@@ -81,17 +82,25 @@ data class SessionManagerConfig(
     val maxSessionsGlobal: Int = 32,
     val maxSessionsPerIp: Int = 4,
     val lspBinariesDirectory: String? = null,
+    val semanticLibrariesDirectory: String? = null,
     val rootWorkDirectory: String = "/var/lib/semantifyr-live",
 ) {
     fun withEnv(env: Map<String, String?>) = copy(
         maxSessionsGlobal = env["SEMANTIFYR_LIVE_MAX_SESSIONS_GLOBAL"]?.toIntOrNull() ?: maxSessionsGlobal,
         maxSessionsPerIp = env["SEMANTIFYR_LIVE_MAX_SESSIONS_PER_IP"]?.toIntOrNull() ?: maxSessionsPerIp,
         lspBinariesDirectory = env["SEMANTIFYR_LIVE_LSP_BINARIES_DIR"] ?: lspBinariesDirectory,
+        semanticLibrariesDirectory = env["SEMANTIFYR_LIVE_SEMANTIC_LIBRARIES_DIR"] ?: semanticLibrariesDirectory,
         rootWorkDirectory = env["SEMANTIFYR_LIVE_ROOT_WORK_DIR"] ?: rootWorkDirectory,
     )
 
     val lspBinariesPath by lazy {
         lspBinariesDirectory?.let {
+            Path.of(it)
+        }
+    }
+
+    val semanticLibrariesPath by lazy {
+        semanticLibrariesDirectory?.let {
             Path.of(it)
         }
     }

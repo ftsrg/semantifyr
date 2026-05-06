@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { LspClient } from './verification';
+import type { CancellationToken, LspClient } from './verification';
 
 export interface LspMetrics {
   requestCount: number;
@@ -43,10 +43,20 @@ export function wrapClientWithMetrics(client: LspClient): LspClient & MetricsTra
   };
 
   return {
-    sendRequest: async (method: string, params?: unknown): Promise<unknown> => {
+    sendRequest: async (method: string, params?: unknown, token?: CancellationToken): Promise<unknown> => {
       const start = performance.now();
       try {
-        const result = await client.sendRequest(method, params);
+        // Critical: only forward the token when the caller actually supplied one. The
+        // underlying language client's sendRequest is variadic and routes through
+        // vscode-jsonrpc's `connection.sendRequest`, which detects a CancellationToken in the
+        // last positional argument. Always forwarding three args means an undefined trailing
+        // arg falls through that detection and ends up serialised as `null` in a positional
+        // params array (`[<payload>, null]`), which lsp4j on the server side rejects with
+        // "Expected END_ARRAY but was NULL".
+        const result =
+          token === undefined
+            ? await client.sendRequest(method, params)
+            : await client.sendRequest(method, params, token);
         const elapsed = Math.round(performance.now() - start);
         lastResponseTimeMs = elapsed;
         totalResponseTimeMs += elapsed;

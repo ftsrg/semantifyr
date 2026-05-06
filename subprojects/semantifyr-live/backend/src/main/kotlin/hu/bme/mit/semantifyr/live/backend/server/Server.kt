@@ -26,7 +26,6 @@ class Server @Inject constructor(
     private val sessionManager: SessionManager,
     private val workspaceSweeper: WorkspaceSweeper,
     private val apiRoutesHandler: ApiRoutesHandler,
-    private val metricsHandler: MetricsHandler,
     private val webSocketHandler: WebSocketHandler,
     private val adminHandler: AdminHandler,
     private val staticFilesHandler: StaticFilesHandler,
@@ -74,11 +73,10 @@ class Server @Inject constructor(
             install(WebSockets) {
                 pingPeriod = config.server.pingPeriod
                 timeout = config.server.pingTimeout
-                maxFrameSize = Long.MAX_VALUE
+                maxFrameSize = config.server.maxWsFrameSize
             }
 
             with(apiRoutesHandler) { configure() }
-            with(metricsHandler) { configure() }
             with(adminHandler) { configure() }
             with(webSocketHandler) { configure() }
             with(staticFilesHandler) { configure() }

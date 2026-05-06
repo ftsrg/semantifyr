@@ -74,22 +74,22 @@ class LspMessageProxyTest {
         val clientSeen = mutableListOf<String>()
         val serverSeen = mutableListOf<String>()
 
-        override suspend fun handleClientMessage(
+        override suspend fun interceptClientMessage(
             raw: String,
             message: Message,
             bridge: LspBridge,
         ): Boolean {
             clientSeen += raw
-            return !consumeClient
+            return consumeClient
         }
 
-        override suspend fun handleServerMessage(
+        override suspend fun interceptServerMessage(
             raw: String,
             message: Message,
             bridge: LspBridge,
         ): Boolean {
             serverSeen += raw
-            return !consumeServer
+            return consumeServer
         }
     }
 

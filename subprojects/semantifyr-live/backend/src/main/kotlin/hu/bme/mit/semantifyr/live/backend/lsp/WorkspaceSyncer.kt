@@ -55,13 +55,17 @@ class WorkspaceSyncer(
     }
 
     private suspend fun handleDidOpen(params: DidOpenTextDocumentParams) {
-        if (!params.textDocument.uri.startsWith(clientUri)) return
+        if (!params.textDocument.uri.startsWith(clientUri)) {
+            return
+        }
         currentText = params.textDocument.text
         writeFileSafely("didOpen")
     }
 
     private suspend fun handleDidChange(params: DidChangeTextDocumentParams) {
-        if (!params.textDocument.uri.startsWith(clientUri)) return
+        if (!params.textDocument.uri.startsWith(clientUri)) {
+            return
+        }
         for (change in params.contentChanges) {
             currentText = if (change.range == null) {
                 change.text
@@ -72,23 +76,14 @@ class WorkspaceSyncer(
         writeFileSafely("didChange")
     }
 
-    /**
-     * Verify-time backstop: re-flush the buffer to disk before the verify command
-     * so the LSP's file-system read path always sees the latest content.
-     */
     private suspend fun handleExecuteCommand(params: ExecuteCommandParams) {
         val verifyCmd = verificationCommand ?: return
-        if (params.command != verifyCmd) return
-        writeFileSafely("verify pre-flush")
+        if (params.command != verifyCmd) {
+            return
+        }
+        writeFileSafely("verification pre-flush")
     }
 
-    /**
-     * Apply a single LSP incremental content-change event to [current].
-     *
-     * The LSP spec describes positions as `(line, character)` over UTF-16 code
-     * units. For oxsts/xsts/gamma source (essentially ASCII) the distinction
-     * doesn't matter.
-     */
     private fun applyIncrementalChange(
         current: String,
         change: TextDocumentContentChangeEvent,
@@ -106,11 +101,15 @@ class WorkspaceSyncer(
     private fun positionToOffset(text: String, position: Position): Int {
         val line = position.line
         val character = position.character
-        if (line < 0) return 0
+        if (line < 0) {
+            return 0
+        }
         var currentLine = 0
         var i = 0
         while (i < text.length && currentLine < line) {
-            if (text[i] == '\n') currentLine++
+            if (text[i] == '\n') {
+                currentLine++
+            }
             i++
         }
         return (i + character).coerceAtMost(text.length)

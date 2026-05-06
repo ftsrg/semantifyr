@@ -14,7 +14,8 @@ import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
-import type { LiveEditorHandle, LiveEditorStatus, LspMetrics } from './LiveEditor';
+import type { LiveEditorHandle, LiveEditorStatus } from './LiveEditor';
+import type { LspMetrics } from '../lib/lspMetrics';
 import type { InfoResponse, SessionInfo } from '../lib/adminApi';
 import { formatDuration, formatIsoDuration } from '../lib/duration';
 
@@ -239,9 +240,9 @@ export default function DevInfoPanel({
             <InfoRow label="Status" value={sessionInfo ? 'connected' : connectionStatus === 'reconnecting' ? 'reconnecting' : 'disconnected'} />
             <InfoRow label="Session ID" value={sessionInfo?.sessionId ?? '-'} mono />
             <InfoRow label="Uptime" value={sessionInfo ? formatIsoDuration(sessionInfo.uptime) : '-'} />
-            <InfoRow label="Messages (in / out)" value={sessionInfo ? `${sessionInfo.clientMessageCount} / ${sessionInfo.serverMessageCount}` : '-'} />
-            <InfoRow label="Last activity (in / out)" value={sessionInfo ? `${formatIsoDuration(sessionInfo.timeSinceLastClientMessage)} / ${formatIsoDuration(sessionInfo.timeSinceLastServerMessage)} ago` : '-'} />
-            <InfoRow label="Errors" value={sessionInfo ? String(sessionInfo.errorCount) : '-'} />
+            <InfoRow label="Messages (in / out)" value={sessionInfo ? `${sessionInfo.bridgeInfo.clientMessageCount} / ${sessionInfo.bridgeInfo.serverMessageCount}` : '-'} />
+            <InfoRow label="Last activity (in / out)" value={sessionInfo ? `${formatIsoDuration(sessionInfo.bridgeInfo.timeSinceLastClientMessage)} / ${formatIsoDuration(sessionInfo.bridgeInfo.timeSinceLastServerMessage)} ago` : '-'} />
+            <InfoRow label="Errors" value={sessionInfo ? String(sessionInfo.bridgeInfo.errorCount) : '-'} />
             <InfoRow label="Verifications" value={sessionInfo ? String(sessionInfo.activeVerifications.length) : '-'} />
           </TableBody>
         </Table>

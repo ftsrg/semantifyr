@@ -4,13 +4,16 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.live.backend
+package hu.bme.mit.semantifyr.live.backend.server
 
 import java.nio.file.Path
 
 sealed class WorkspaceLayout {
     data object SingleFile : WorkspaceLayout()
-    data class WithLibrary(val librarySourceRelativePath: Path) : WorkspaceLayout()
+    data class WithLibrary(
+        val libraryRelativePath: Path,
+        val workspaceTargetName: String,
+    ) : WorkspaceLayout()
 }
 
 data class Flavor(
@@ -20,8 +23,9 @@ data class Flavor(
     val fileName: String,
     val languageId: String,
     val workspaceLayout: WorkspaceLayout,
-    val verificationCommand: String?,
-    val discoveryCommand: String? = null,
+    val verificationCommand: String,
+    val discoveryCommand: String,
+    val validateWitnessCommand: String? = null,
     val peekCompiledOutput: Boolean = false,
 )
 
@@ -36,6 +40,7 @@ object FlavorRegistry {
             workspaceLayout = WorkspaceLayout.SingleFile,
             verificationCommand = "oxsts.case.verify",
             discoveryCommand = "oxsts.case.discover",
+            validateWitnessCommand = "oxsts.case.validateWitness",
         ),
         Flavor(
             id = "oxsts-with-gamma-library",
@@ -44,19 +49,26 @@ object FlavorRegistry {
             fileName = "snippet.oxsts",
             languageId = "oxsts",
             workspaceLayout = WorkspaceLayout.WithLibrary(
-                librarySourceRelativePath = Path.of("gamma.lang.ide", "Library"),
+                libraryRelativePath = Path.of("gamma"),
+                workspaceTargetName = "Library",
             ),
             verificationCommand = "oxsts.case.verify",
             discoveryCommand = "oxsts.case.discover",
+            validateWitnessCommand = "oxsts.case.validateWitness",
         ),
         Flavor(
-            id = "xsts",
-            displayName = "XSTS",
-            binaryRelativePath = Path.of("xsts.lang.ide", "bin", "xsts.lang.ide"),
-            fileName = "snippet.xsts",
-            languageId = "xsts",
-            workspaceLayout = WorkspaceLayout.SingleFile,
-            verificationCommand = null,
+            id = "oxsts-with-sysmlv2-library",
+            displayName = "Semantifyr with SysML v2 library",
+            binaryRelativePath = Path.of("oxsts.lang.ide", "bin", "oxsts.lang.ide"),
+            fileName = "snippet.oxsts",
+            languageId = "oxsts",
+            workspaceLayout = WorkspaceLayout.WithLibrary(
+                libraryRelativePath = Path.of("sysmlv2"),
+                workspaceTargetName = "Library",
+            ),
+            verificationCommand = "oxsts.case.verify",
+            discoveryCommand = "oxsts.case.discover",
+            validateWitnessCommand = "oxsts.case.validateWitness",
         ),
         Flavor(
             id = "gamma",
@@ -65,7 +77,8 @@ object FlavorRegistry {
             fileName = "snippet.gamma",
             languageId = "gamma",
             workspaceLayout = WorkspaceLayout.WithLibrary(
-                librarySourceRelativePath = Path.of("gamma.lang.ide", "Library"),
+                libraryRelativePath = Path.of("gamma"),
+                workspaceTargetName = "Library",
             ),
             verificationCommand = "gamma.case.verify",
             discoveryCommand = "gamma.case.discover",

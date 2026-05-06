@@ -7,9 +7,7 @@
 package hu.bme.mit.semantifyr.live.backend.lsp
 
 import hu.bme.mit.semantifyr.live.backend.utils.lspMessageHandler
-import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.eclipse.lsp4j.jsonrpc.messages.Message
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
@@ -37,12 +35,12 @@ class WorkspaceSyncerTest {
         ) to file
     }
 
-    private fun WorkspaceSyncer.handle(raw: String) = runBlocking {
+    private suspend fun WorkspaceSyncer.handle(raw: String) {
         handleOutgoingMessage(lspMessageHandler.parseMessage(raw))
     }
 
     @Test
-    fun `didOpen for the session URI writes the full text to disk`() {
+    suspend fun `didOpen for the session URI writes the full text to disk`() {
         val (sync, file) = newSync()
         sync.handle(
             """{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"$clientUri","languageId":"oxsts","version":1,"text":"package demo\nclass Main { var x: int := 0 }"}}}""",
@@ -51,7 +49,7 @@ class WorkspaceSyncerTest {
     }
 
     @Test
-    fun `full-text didChange replaces the file contents`() {
+    suspend fun `full-text didChange replaces the file contents`() {
         val (sync, file) = newSync()
         sync.handle(
             """{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"$clientUri","languageId":"oxsts","version":1,"text":"old"}}}""",
@@ -63,7 +61,7 @@ class WorkspaceSyncerTest {
     }
 
     @Test
-    fun `incremental didChange applies the edit to the in-memory buffer and writes to disk`() {
+    suspend fun `incremental didChange applies the edit to the in-memory buffer and writes to disk`() {
         val (sync, file) = newSync()
         sync.handle(
             """{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"$clientUri","languageId":"oxsts","version":1,"text":"hello world"}}}""",
@@ -77,7 +75,7 @@ class WorkspaceSyncerTest {
     }
 
     @Test
-    fun `multi-line incremental edits apply correctly across line boundaries`() {
+    suspend fun `multi-line incremental edits apply correctly across line boundaries`() {
         val (sync, file) = newSync()
         sync.handle(
             """{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"$clientUri","languageId":"oxsts","version":1,"text":"line one\nline two\nline three"}}}""",
@@ -91,7 +89,7 @@ class WorkspaceSyncerTest {
     }
 
     @Test
-    fun `multiple incremental edits in one didChange apply in order`() {
+    suspend fun `multiple incremental edits in one didChange apply in order`() {
         val (sync, file) = newSync()
         sync.handle(
             """{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"$clientUri","languageId":"oxsts","version":1,"text":"abcdef"}}}""",
@@ -106,7 +104,7 @@ class WorkspaceSyncerTest {
     }
 
     @Test
-    fun `mixed incremental + full updates within one didChange apply in order`() {
+    suspend fun `mixed incremental + full updates within one didChange apply in order`() {
         val (sync, file) = newSync()
         sync.handle(
             """{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"$clientUri","languageId":"oxsts","version":1,"text":"abc"}}}""",
@@ -121,7 +119,7 @@ class WorkspaceSyncerTest {
     }
 
     @Test
-    fun `verify executeCommand re-flushes the buffer to disk`() {
+    suspend fun `verification executeCommand re-flushes the buffer to disk`() {
         val (sync, file) = newSync()
         sync.handle(
             """{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"$clientUri","languageId":"oxsts","version":1,"text":"buffered content"}}}""",
@@ -136,7 +134,7 @@ class WorkspaceSyncerTest {
     }
 
     @Test
-    fun `verify pre-flush sees edits applied between didOpen and verify`() {
+    suspend fun `verification pre-flush sees edits applied between didOpen and verification`() {
         val (sync, file) = newSync()
         sync.handle(
             """{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"$clientUri","languageId":"oxsts","version":1,"text":"hello world"}}}""",
@@ -154,7 +152,7 @@ class WorkspaceSyncerTest {
     }
 
     @Test
-    fun `non-verify executeCommands do not re-flush the file`() {
+    suspend fun `non-verify executeCommands do not re-flush the file`() {
         val (sync, file) = newSync()
         sync.handle(
             """{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"$clientUri","languageId":"oxsts","version":1,"text":"buffered"}}}""",
@@ -167,7 +165,7 @@ class WorkspaceSyncerTest {
     }
 
     @Test
-    fun `flavors without a verify command never re-flush on executeCommand`() {
+    suspend fun `flavors without a verify command never re-flush on executeCommand`() {
         val (sync, file) = newSync(verificationCommandOverride = null)
         sync.handle(
             """{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"$clientUri","languageId":"oxsts","version":1,"text":"buffered"}}}""",
@@ -180,7 +178,7 @@ class WorkspaceSyncerTest {
     }
 
     @Test
-    fun `events for a different document URI are ignored`() {
+    suspend fun `events for a different document URI are ignored`() {
         val (sync, file) = newSync()
         file.writeText("untouched")
         sync.handle(
@@ -190,7 +188,7 @@ class WorkspaceSyncerTest {
     }
 
     @Test
-    fun `non-document methods are ignored`() {
+    suspend fun `non-document methods are ignored`() {
         val (sync, file) = newSync()
         file.writeText("untouched")
         sync.handle(
@@ -200,7 +198,7 @@ class WorkspaceSyncerTest {
     }
 
     @Test
-    fun `out-of-range incremental edits are ignored without crashing`() {
+    suspend fun `out-of-range incremental edits are ignored without crashing`() {
         val (sync, file) = newSync()
         sync.handle(
             """{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"$clientUri","languageId":"oxsts","version":1,"text":"abc"}}}""",

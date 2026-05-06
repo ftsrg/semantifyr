@@ -4,51 +4,54 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import AppBar from '@mui/material/AppBar';
 import MuiToolbar from '@mui/material/Toolbar';
-import Tab from '@mui/material/Tab';
-import Tabs from '@mui/material/Tabs';
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
+import Snackbar from '@mui/material/Snackbar';
+import Tooltip from '@mui/material/Tooltip';
+import PauseCircleOutlinedIcon from '@mui/icons-material/PauseCircleOutlined';
+import PlayCircleOutlinedIcon from '@mui/icons-material/PlayCircleOutlined';
+import SearchIcon from '@mui/icons-material/Search';
+import ClearIcon from '@mui/icons-material/Clear';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { useColorMode } from '../lib/theme';
 import ColorModeToggle from './ColorModeToggle';
-import SessionList from './admin/SessionList';
+import KpiStrip from './admin/KpiStrip';
+import SessionsTable from './admin/SessionsTable';
+import InfoAside from './admin/InfoAside';
 import {
-  fetchInfo, fetchAdminStatus, fetchAdminConfig,
-  cancelSession, cancelVerification,
-  type InfoResponse, type AdminStatusResponse, type AdminConfigResponse,
+  fetchInfo,
+  fetchAdminStatus,
+  fetchAdminConfig,
+  cancelSession,
+  cancelVerification,
+  loginAdmin,
+  logoutAdmin,
+  checkAdminAuth,
+  type InfoResponse,
+  type AdminStatusResponse,
+  type AdminConfigResponse,
 } from '../lib/adminApi';
-import { formatIsoDuration } from '../lib/duration';
+import { fetchPortfolios, type PortfolioInfo } from '../lib/portfolios';
 
-const cellSx = { color: 'var(--text)', fontSize: '0.85rem', borderColor: 'var(--surface-border)' } as const;
-const labelSx = { ...cellSx, color: 'var(--text-muted)', fontWeight: 600 } as const;
+const REFRESH_INTERVAL_MS = 1000;
 
-function InfoTable({ rows }: { rows: [string, React.ReactNode][] }): React.JSX.Element {
-  return (
-    <Table size="small">
-      <TableBody>
-        {rows.map(([label, value]) => (
-          <TableRow key={label}>
-            <TableCell sx={labelSx}>{label}</TableCell>
-            <TableCell sx={cellSx}>{value}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
+interface AdminHeaderProps {
+  lastRefreshAt: number | null;
+  paused?: boolean;
+  onTogglePause?: () => void;
+  onLogout?: () => void;
 }
 
-function AdminHeader(): React.JSX.Element {
+function AdminHeader({ lastRefreshAt, paused, onTogglePause, onLogout }: AdminHeaderProps): React.JSX.Element {
   const { preference, colorMode, cycle } = useColorMode();
   const logoSrc = colorMode === 'dark' ? '/logo-full-dark.svg' : '/logo-full-light.svg';
   return (
@@ -59,7 +62,26 @@ function AdminHeader(): React.JSX.Element {
         </Box>
         <Typography sx={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>/ Admin</Typography>
         <Box sx={{ flex: 1 }} />
+        {lastRefreshAt !== null && (
+          <Typography sx={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+            {paused ? 'Paused' : `Updated ${new Date(lastRefreshAt).toLocaleTimeString()}`}
+          </Typography>
+        )}
+        {onTogglePause && (
+          <Tooltip title={paused ? 'Resume auto-refresh' : 'Pause auto-refresh'}>
+            <IconButton size="small" onClick={onTogglePause} sx={{ color: 'var(--text-muted)' }}>
+              {paused ? <PlayCircleOutlinedIcon sx={{ fontSize: 20 }} /> : <PauseCircleOutlinedIcon sx={{ fontSize: 20 }} />}
+            </IconButton>
+          </Tooltip>
+        )}
         <ColorModeToggle preference={preference} onToggle={cycle} />
+        {onLogout && (
+          <Tooltip title="Sign out">
+            <IconButton size="small" onClick={onLogout} sx={{ color: 'var(--text-muted)' }}>
+              <LogoutIcon sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Tooltip>
+        )}
       </MuiToolbar>
     </AppBar>
   );
@@ -68,7 +90,7 @@ function AdminHeader(): React.JSX.Element {
 function LoginForm({ onLogin, error }: { onLogin: (password: string) => void; error: boolean }): React.JSX.Element {
   const [password, setPassword] = useState('');
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', bgcolor: 'var(--page-bg)', gap: 2 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100dvh', bgcolor: 'var(--page-bg)', gap: 2 }}>
       <Typography variant="h5" sx={{ color: 'var(--text)', mb: 1 }}>Semantifyr Admin</Typography>
       {error && <Alert severity="error">Invalid password</Alert>}
       <Box component="form" onSubmit={(e: React.FormEvent) => { e.preventDefault(); onLogin(password); }} sx={{ display: 'flex', gap: 1 }}>
@@ -99,152 +121,265 @@ interface DashboardData {
   config: AdminConfigResponse;
 }
 
-const monoSpan = (value: string): React.ReactNode => (
-  <Typography component="span" sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--text)' }}>{value}</Typography>
-);
+interface ToastState {
+  message: string;
+  severity: 'success' | 'error' | 'info';
+}
 
-function Dashboard({ password }: { password: string }): React.JSX.Element {
+function Dashboard({ onLogout }: { onLogout: () => void }): React.JSX.Element {
   const [data, setData] = useState<DashboardData | null>(null);
+  const [portfolios, setPortfolios] = useState<readonly PortfolioInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState(0);
+  const [lastRefreshAt, setLastRefreshAt] = useState<number | null>(null);
+  const [paused, setPaused] = useState(false);
+  const [filter, setFilter] = useState('');
+  const [toast, setToast] = useState<ToastState | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const refresh = useCallback(async () => {
     try {
       const [info, admin, config] = await Promise.all([
         fetchInfo(),
-        fetchAdminStatus(password),
-        fetchAdminConfig(password),
+        fetchAdminStatus(),
+        fetchAdminConfig(),
       ]);
       setData({ info, admin, config });
       setError(null);
+      setLastRefreshAt(Date.now());
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
     }
-  }, [password]);
+  }, []);
 
   useEffect(() => {
     void refresh();
-    intervalRef.current = setInterval(() => void refresh(), 1000);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    void fetchPortfolios('').then(setPortfolios).catch(() => setPortfolios([]));
   }, [refresh]);
+
+  useEffect(() => {
+    if (paused) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      return;
+    }
+    intervalRef.current = setInterval(() => void refresh(), REFRESH_INTERVAL_MS);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    };
+  }, [paused, refresh]);
+
+  const handleCancelSession = useCallback(async (sessionId: string) => {
+    const ok = await cancelSession(sessionId);
+    setToast({
+      message: ok
+        ? `Killed session ${sessionId.slice(0, 8)}…`
+        : `Failed to kill session ${sessionId.slice(0, 8)}…`,
+      severity: ok ? 'success' : 'error',
+    });
+    void refresh();
+  }, [refresh]);
+
+  const handleCancelVerification = useCallback(async (sessionId: string, requestId: string) => {
+    const ok = await cancelVerification(sessionId, requestId);
+    setToast({
+      message: ok
+        ? `Cancelled verification ${requestId}`
+        : `Failed to cancel verification ${requestId}`,
+      severity: ok ? 'success' : 'error',
+    });
+    void refresh();
+  }, [refresh]);
+
+  const filteredSessions = useMemo(() => {
+    if (!data) return [];
+    const needle = filter.trim().toLowerCase();
+    if (!needle) return data.admin.sessions;
+    return data.admin.sessions.filter((s) =>
+      s.sessionId.toLowerCase().includes(needle) ||
+      s.remoteIp.toLowerCase().includes(needle) ||
+      s.flavorId.toLowerCase().includes(needle),
+    );
+  }, [data, filter]);
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, bgcolor: 'var(--page-bg)' }}>
-        <CircularProgress sx={{ color: 'var(--text-muted)' }} />
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100dvh', bgcolor: 'var(--page-bg)' }}>
+        <AdminHeader lastRefreshAt={null} />
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
+          <CircularProgress sx={{ color: 'var(--text-muted)' }} />
+        </Box>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      {error && <Alert severity="error" sx={{ mx: 3, mt: 2 }}>{error}</Alert>}
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100dvh', bgcolor: 'var(--page-bg)' }}>
+      <AdminHeader
+        lastRefreshAt={lastRefreshAt}
+        paused={paused}
+        onTogglePause={() => setPaused((p) => !p)}
+        onLogout={onLogout}
+      />
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
+        {error && <Alert severity="error" sx={{ mx: 3, mt: 2 }}>{error}</Alert>}
 
-      {data && (
-        <>
-          <Paper sx={{ bgcolor: 'var(--surface-bg)', border: '1px solid var(--surface-border)', mx: 3, mt: 2, mb: 0 }}>
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              <Box sx={{ flex: 1, minWidth: 200 }}>
-                <SectionTitle>Backend</SectionTitle>
-                <InfoTable rows={[
-                  ['Commit', monoSpan(data.info.commit)],
-                  ['Built', data.info.buildTime],
-                  ['Uptime', formatIsoDuration(data.info.uptime)],
-                  ['Sessions', `${data.info.activeSessions} / ${data.info.maxSessions}`],
-                ]} />
+        {data && (
+          <>
+            <KpiStrip
+              uptime={data.info.uptime}
+              activeSessions={data.info.activeSessions}
+              maxSessions={data.info.maxSessions}
+              sessions={data.admin.sessions}
+            />
+
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', md: 'row' },
+                gap: 2,
+                mx: 3,
+                mt: 2,
+                mb: 3,
+                alignItems: 'flex-start',
+              }}
+            >
+              <Box sx={{ flex: '1 1 auto', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <SessionsHeader
+                  total={data.admin.sessions.length}
+                  shown={filteredSessions.length}
+                  filter={filter}
+                  onFilterChange={setFilter}
+                />
+                <SessionsTable
+                  sessions={filteredSessions}
+                  onCancelSession={handleCancelSession}
+                  onCancelVerification={handleCancelVerification}
+                />
               </Box>
-              <Box sx={{ flex: 1, minWidth: 200 }}>
-                <SectionTitle>Frontend</SectionTitle>
-                <InfoTable rows={[
-                  ['Commit', monoSpan(__GIT_COMMIT__)],
-                  ['Built', __BUILD_TIME__],
-                ]} />
+              <Box sx={{ flex: { xs: '1 1 auto', md: '0 0 320px' }, width: { xs: '100%', md: 320 } }}>
+                <InfoAside
+                  info={data.info}
+                  config={data.config}
+                  frontendCommit={__GIT_COMMIT__}
+                  frontendBuildTime={__BUILD_TIME__}
+                  portfolios={portfolios}
+                />
               </Box>
             </Box>
-          </Paper>
-
-          <Tabs
-            value={tab}
-            onChange={(_, v: number) => setTab(v)}
-            sx={{
-              mx: 3, mt: 2,
-              '& .MuiTab-root': { color: 'var(--text-muted)', textTransform: 'none', fontSize: '0.9rem' },
-              '& .Mui-selected': { color: 'var(--text)' },
-              '& .MuiTabs-indicator': { bgcolor: 'var(--accent)' },
-            }}
-          >
-            <Tab label={`Sessions (${data.info.activeSessions} / ${data.info.maxSessions})`} />
-            <Tab label="Configuration" />
-          </Tabs>
-
-          <Box sx={{ flex: 1, overflow: 'auto', p: 3, maxWidth: 1100, mx: 'auto', width: '100%' }}>
-            {tab === 0 && (
-              <>
-                <SessionList
-                  sessions={data.admin.sessions}
-                  onCancelSession={(id) => { void cancelSession(password, id).then(() => refresh()); }}
-                  onCancelVerification={(sid, rid) => { void cancelVerification(password, sid, rid).then(() => refresh()); }}
-                />
-                <Typography sx={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
-                  Auto-refreshes every second
-                </Typography>
-              </>
-            )}
-            {tab === 1 && (
-              <Paper sx={{ bgcolor: 'var(--surface-bg)', border: '1px solid var(--surface-border)' }}>
-                <InfoTable rows={[
-                  ['Max sessions (global)', String(data.config.maxSessionsGlobal)],
-                  ['Max sessions (per IP)', String(data.config.maxSessionsPerIp)],
-                  ['Verification concurrency', String(data.config.verificationConcurrency)],
-                  ['Verification timeout', formatIsoDuration(data.config.verificationTimeout)],
-                ]} />
-              </Paper>
-            )}
-          </Box>
-        </>
-      )}
+          </>
+        )}
+      </Box>
+      <Snackbar
+        open={toast !== null}
+        autoHideDuration={4000}
+        onClose={() => setToast(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        {toast ? (
+          <Alert severity={toast.severity} onClose={() => setToast(null)} sx={{ width: '100%' }}>
+            {toast.message}
+          </Alert>
+        ) : undefined}
+      </Snackbar>
     </Box>
   );
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }): React.JSX.Element {
-  return <Typography sx={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', px: 1.5, pt: 1, pb: 0.5 }}>{children}</Typography>;
+interface SessionsHeaderProps {
+  total: number;
+  shown: number;
+  filter: string;
+  onFilterChange: (value: string) => void;
+}
+
+function SessionsHeader({ total, shown, filter, onFilterChange }: SessionsHeaderProps): React.JSX.Element {
+  const filtered = filter.trim().length > 0;
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 0.5, flexWrap: 'wrap' }}>
+      <Typography sx={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text)' }}>
+        Sessions
+      </Typography>
+      <Typography sx={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+        {total === 0
+          ? 'none active'
+          : filtered
+            ? `${shown} of ${total} shown`
+            : `${total} active`}
+      </Typography>
+      <Box sx={{ flex: 1, minWidth: 8 }} />
+      <TextField
+        size="small"
+        placeholder="Filter by session, IP, or flavor"
+        value={filter}
+        onChange={(e) => onFilterChange(e.target.value)}
+        sx={{
+          width: { xs: '100%', sm: 280 },
+          '& .MuiInputBase-root': { color: 'var(--text)', bgcolor: 'var(--surface-bg)', fontSize: '0.82rem' },
+          '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--surface-border)' },
+        }}
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ fontSize: 16, color: 'var(--text-muted)' }} />
+              </InputAdornment>
+            ),
+            endAdornment: filter ? (
+              <InputAdornment position="end">
+                <IconButton size="small" onClick={() => onFilterChange('')} sx={{ color: 'var(--text-muted)' }}>
+                  <ClearIcon sx={{ fontSize: 16 }} />
+                </IconButton>
+              </InputAdornment>
+            ) : undefined,
+          },
+        }}
+      />
+    </Box>
+  );
 }
 
 export default function AdminPage(): React.JSX.Element {
-  const [password, setPassword] = useState<string | null>(() => {
-    if (typeof sessionStorage !== 'undefined') {
-      return sessionStorage.getItem('admin-password');
-    }
-    return null;
-  });
+  const [authState, setAuthState] = useState<'checking' | 'unauthenticated' | 'authenticated'>('checking');
   const [authError, setAuthError] = useState(false);
 
+  useEffect(() => {
+    void checkAdminAuth().then((ok) => {
+      setAuthState(ok ? 'authenticated' : 'unauthenticated');
+    });
+  }, []);
+
   const handleLogin = useCallback(async (pw: string) => {
-    try {
-      await fetchAdminStatus(pw);
-      setPassword(pw);
+    const ok = await loginAdmin(pw);
+    if (ok) {
+      setAuthState('authenticated');
       setAuthError(false);
-      if (typeof sessionStorage !== 'undefined') {
-        sessionStorage.setItem('admin-password', pw);
-      }
-    } catch {
+    } else {
       setAuthError(true);
     }
   }, []);
 
-  if (!password) {
+  const handleLogout = useCallback(async () => {
+    await logoutAdmin();
+    setAuthState('unauthenticated');
+  }, []);
+
+  if (authState === 'checking') {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100dvh', bgcolor: 'var(--page-bg)' }}>
+        <CircularProgress sx={{ color: 'var(--text-muted)' }} />
+      </Box>
+    );
+  }
+
+  if (authState === 'unauthenticated') {
     return <LoginForm onLogin={handleLogin} error={authError} />;
   }
 
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: 'var(--page-bg)' }}>
-      <AdminHeader />
-      <Dashboard password={password} />
-    </Box>
-  );
+  return <Dashboard onLogout={handleLogout} />;
 }

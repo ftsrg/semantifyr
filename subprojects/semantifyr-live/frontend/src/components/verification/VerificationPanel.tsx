@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import Collapse from '@mui/material/Collapse';
 import List from '@mui/material/List';
@@ -15,30 +15,96 @@ import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Divider from '@mui/material/Divider';
+import CircularProgress from '@mui/material/CircularProgress';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import MyLocationOutlinedIcon from '@mui/icons-material/MyLocationOutlined';
+import Badge from '@mui/material/Badge';
+import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 
 import {
+  dispatchAutoValidation,
   discoverVerificationCases,
   runAllVerifications,
   verifySingleCase,
   type VerificationCaseLocation,
+  type VerificationCaseState,
   type VerificationState,
   type RunVerificationHandle,
 } from '../../lib/verification';
 import type { LiveEditorHandle } from '../LiveEditor';
 import VerifyButton from './VerifyButton';
 import RefreshButton from './RefreshButton';
+import ProblemsPill from './ProblemsPill';
 import { CaseStatusIcon, SummaryCounts, SummaryStatusIcon } from './StatusDisplay';
+import { formatIsoDurationDetailed } from '../../lib/duration';
 
 interface Props {
   editorHandle: LiveEditorHandle | null;
   verificationCommand: string;
   discoveryCommand: string;
+  validateWitnessCommand?: string | undefined;
   connected: boolean;
+  portfolioId: string;
+  /** Portfolio id used by the auto-validation and the panel's revalidate handle. */
+  validationPortfolioId: string;
+  /** When false, verify finishes without firing an automatic follow-up validation. */
+  autoValidate: boolean;
+  /** Toggling auto-validate; rendered in the panel header next to the verify controls. */
+  onAutoValidateChange?: (enabled: boolean) => void;
+  /** Max pixel height for the case list body; overrides the responsive default. */
+  caseListMaxHeight?: number | undefined;
   onStatusMessage: (message: string | null) => void;
+  onCasesChange?: (cases: readonly import('../../lib/verification').VerificationCaseState[]) => void;
+  onShowWitness?: (caseId: string) => void;
+}
+
+/** Imperative handle exposed to the parent so the witness pane can re-fire validation per case. */
+export interface VerificationPanelHandle {
+  /** Re-runs witness validation for the given case id; folds the outcome into that case's state. */
+  revalidate: (caseId: string) => void;
+}
+
+function isMeaningfulDuration(iso: string | undefined): boolean {
+  // ISO 8601 zero durations from kotlin.time.Duration come through as "PT0S".
+  return typeof iso === 'string' && iso.length > 0 && iso !== 'PT0S';
+}
+
+function isFlaggedValidation(status: VerificationCaseState['witnessValidation']): boolean {
+  // The Show-witness button is decorated with a red dot when the cross-validation portfolio
+  // returned anything other than a clean "valid" - even errored counts; the witness pane
+  // surfaces the detailed reason via ValidationChip.
+  return status === 'invalid' || status === 'inconclusive' || status === 'errored';
+}
+
+const pillSx = {
+  fontSize: '0.7rem',
+  fontWeight: 500,
+  color: 'var(--text-muted)',
+  bgcolor: 'var(--surface-panel-bg)',
+  border: '1px solid var(--surface-border)',
+  borderRadius: 999,
+  px: 0.75,
+  py: 0.05,
+  whiteSpace: 'nowrap',
+} as const;
+
+function verifyMetricsTooltip(caseState: VerificationCaseState): string {
+  const m = caseState.metrics;
+  if (!m) return '';
+  const parts: string[] = [];
+  if (isMeaningfulDuration(m.preparationDuration)) parts.push(`Compile: ${formatIsoDurationDetailed(m.preparationDuration)}`);
+  if (isMeaningfulDuration(m.verificationDuration)) parts.push(`Verify: ${formatIsoDurationDetailed(m.verificationDuration)}`);
+  if (isMeaningfulDuration(m.backAnnotationDuration)) parts.push(`Back-annotate: ${formatIsoDurationDetailed(m.backAnnotationDuration)}`);
+  if (caseState.backendId) parts.push(`Backend: ${caseState.backendId}`);
+  return parts.join('  ·  ');
+}
+
+function validateMetricsTooltip(): string {
+  return 'Cross-validation: end-to-end wall clock of the validation portfolio (compile + verify + back-annotate)';
 }
 
 function deriveStatusMessage(state: VerificationState): string | null {
@@ -53,13 +119,24 @@ function deriveStatusMessage(state: VerificationState): string | null {
   return null;
 }
 
-export default function VerificationPanel({
-  editorHandle,
-  verificationCommand,
-  discoveryCommand,
-  connected,
-  onStatusMessage,
-}: Props): React.JSX.Element {
+function VerificationPanelInner(
+  {
+    editorHandle,
+    verificationCommand,
+    discoveryCommand,
+    validateWitnessCommand,
+    connected,
+    portfolioId,
+    validationPortfolioId,
+    autoValidate,
+    onAutoValidateChange,
+    caseListMaxHeight,
+    onStatusMessage,
+    onCasesChange,
+    onShowWitness,
+  }: Props,
+  ref: React.Ref<VerificationPanelHandle>,
+): React.JSX.Element {
   const [drawerOpen, setDrawerOpen] = useState(true);
   const [verifyState, setVerifyState] = useState<VerificationState>({ phase: 'idle', cases: [] });
   const verifyStateRef = useRef(verifyState);
@@ -78,6 +155,11 @@ export default function VerificationPanel({
   useEffect(() => {
     onStatusMessage(deriveStatusMessage(verifyState));
   }, [verifyState, onStatusMessage]);
+
+  // Mirror cases out to the parent so it can drive the witness pane.
+  useEffect(() => {
+    onCasesChange?.(verifyState.cases);
+  }, [verifyState.cases, onCasesChange]);
 
   const handleRefreshCases = useCallback((): void => {
     const client = editorHandle?.getLspClient();
@@ -126,6 +208,19 @@ export default function VerificationPanel({
     };
   }, [connected, editorHandle, handleRefreshCases]);
 
+  // Mirrored into a ref so the runner's getAutoValidateRequest sees the latest values when the
+  // user toggles auto-validate or changes the validation portfolio mid-batch.
+  const autoValidateOptionsRef = useRef({ autoValidate, validateWitnessCommand, validationPortfolioId });
+  useEffect(() => {
+    autoValidateOptionsRef.current = { autoValidate, validateWitnessCommand, validationPortfolioId };
+  }, [autoValidate, validateWitnessCommand, validationPortfolioId]);
+
+  const getAutoValidateRequest = useCallback(() => {
+    const { autoValidate: live, validateWitnessCommand: cmd, validationPortfolioId: pid } = autoValidateOptionsRef.current;
+    if (!live || !cmd) return null;
+    return { command: cmd, ...(pid ? { portfolioId: pid } : {}) };
+  }, []);
+
   const handleVerifyAll = useCallback(() => {
     if (verifyStateRef.current.phase === 'running') return;
     const client = editorHandle?.getLspClient();
@@ -144,8 +239,9 @@ export default function VerificationPanel({
       cases,
       stateUpdater,
       (listener) => editorHandle.addProgressListener(listener),
+      { portfolioId, getAutoValidateRequest },
     );
-  }, [editorHandle, verificationCommand, stateUpdater]);
+  }, [editorHandle, verificationCommand, stateUpdater, portfolioId, getAutoValidateRequest]);
 
   const handleVerifySingle = useCallback((caseId: string) => {
     if (verifyStateRef.current.phase === 'running') return;
@@ -155,8 +251,17 @@ export default function VerificationPanel({
     const targetCase = verifyStateRef.current.cases.find((cs) => cs.caseInfo.id === caseId)?.caseInfo;
     if (!targetCase) return;
 
-    void verifySingleCase(client, verificationCommand, editorHandle.getFileUri(), targetCase, stateUpdater);
-  }, [editorHandle, verificationCommand, stateUpdater]);
+    // Stash the run handle so the panel-level Cancel button reaches both the batch and the
+    // single-case flow uniformly.
+    runHandleRef.current = verifySingleCase(
+      client,
+      verificationCommand,
+      editorHandle.getFileUri(),
+      targetCase,
+      stateUpdater,
+      { portfolioId, getAutoValidateRequest },
+    );
+  }, [editorHandle, verificationCommand, stateUpdater, portfolioId, getAutoValidateRequest]);
 
   const handleCancel = useCallback(() => {
     runHandleRef.current?.cancel();
@@ -166,6 +271,21 @@ export default function VerificationPanel({
   const handleCaseClick = useCallback((location: VerificationCaseLocation) => {
     editorHandle?.goToCase(location);
   }, [editorHandle]);
+
+  useImperativeHandle(ref, () => ({
+    revalidate: (caseId: string) => {
+      if (!validateWitnessCommand) return;
+      const client = editorHandle?.getLspClient();
+      if (!client) return;
+      const target = verifyStateRef.current.cases.find((cs) => cs.caseInfo.id === caseId);
+      const witnessUri = target?.trace?.witnessUri;
+      if (!witnessUri) return;
+      dispatchAutoValidation(client, validateWitnessCommand, caseId, witnessUri, stateUpdater, {
+        validationPortfolioId,
+        caseLabel: target.caseInfo.label,
+      });
+    },
+  }), [editorHandle, validateWitnessCommand, stateUpdater, validationPortfolioId]);
 
   const { phase, cases } = verifyState;
   const verifyBusy = phase === 'running';
@@ -184,7 +304,9 @@ export default function VerificationPanel({
         sx={{
           display: 'flex',
           alignItems: 'center',
-          px: 1.5,
+          flexWrap: 'wrap',
+          rowGap: 0.5,
+          px: { xs: 1, sm: 1.5 },
           py: 0.25,
           gap: 0.5,
         }}
@@ -202,8 +324,27 @@ export default function VerificationPanel({
         <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5, borderColor: 'var(--surface-border)' }} />
         <SummaryCounts cases={cases} />
         <SummaryStatusIcon cases={cases} phase={phase} />
+        <ProblemsPill editorHandle={editorHandle} />
         <Box sx={{ flex: 1 }} />
 
+        {validateWitnessCommand && onAutoValidateChange && (
+          <Tooltip title="When enabled, every verify success kicks off a witness cross-validation in the background.">
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  checked={autoValidate}
+                  onChange={(_, checked) => onAutoValidateChange(checked)}
+                  onClick={(event) => event.stopPropagation()}
+                />
+              }
+              label={
+                <Typography sx={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>auto-validate</Typography>
+              }
+              sx={{ mr: 0.5, ml: 0, '& .MuiFormControlLabel-label': { ml: 0.25 } }}
+            />
+          </Tooltip>
+        )}
         <VerifyButton
           busy={verifyBusy}
           disabled={!connected}
@@ -223,7 +364,12 @@ export default function VerificationPanel({
       </Box>
 
       <Collapse in={drawerOpen}>
-        <Box sx={{ maxHeight: 220, overflowY: 'auto' }}>
+        <Box
+          sx={{
+            maxHeight: caseListMaxHeight ?? { xs: 160, sm: 220 },
+            overflowY: 'auto',
+          }}
+        >
           {phase === 'error' && verifyState.message && (
             <Box sx={{ px: 1.5, py: 0.75 }}>
               <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'var(--danger)' }}>
@@ -244,18 +390,75 @@ export default function VerificationPanel({
                     <CaseStatusIcon status={caseState.status} />
                   </ListItemIcon>
                   <ListItemText
-                    primary={caseState.caseInfo.label}
-                    secondary={(caseState.status === 'failed' || caseState.status === 'errored') && caseState.message ? caseState.message : null}
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography component="span" sx={{ fontSize: '0.9rem', color: stale ? 'var(--text-muted)' : 'var(--text)' }}>
+                          {caseState.caseInfo.label}
+                        </Typography>
+                        {caseState.metrics !== undefined && isMeaningfulDuration(caseState.metrics.totalDuration) && (
+                          <Tooltip title={verifyMetricsTooltip(caseState)}>
+                            <Box component="span" sx={pillSx}>
+                              verify {formatIsoDurationDetailed(caseState.metrics.totalDuration)}
+                            </Box>
+                          </Tooltip>
+                        )}
+                        {caseState.metrics?.validationDuration && isMeaningfulDuration(caseState.metrics.validationDuration) && (
+                          <Tooltip title={validateMetricsTooltip()}>
+                            <Box component="span" sx={pillSx}>
+                              validate {formatIsoDurationDetailed(caseState.metrics.validationDuration)}
+                            </Box>
+                          </Tooltip>
+                        )}
+                        {caseState.validating && (
+                          <Tooltip title="Cross-validating witness in the background">
+                            <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, color: 'var(--text-muted)', fontSize: '0.7rem' }}>
+                              <CircularProgress size={10} thickness={6} sx={{ color: 'var(--text-muted)' }} />
+                              <span>validating...</span>
+                            </Box>
+                          </Tooltip>
+                        )}
+                      </Box>
+                    }
+                    secondary={
+                      caseState.message != null && (caseState.status === 'failed' || caseState.status === 'errored' || caseState.status === 'inconclusive' || caseState.status === 'not_supported')
+                        ? caseState.message
+                        : null
+                    }
                     slotProps={{
-                      primary: { sx: { fontSize: '0.9rem', color: stale ? 'var(--text-muted)' : 'var(--text)' } },
-                      secondary: { sx: { fontSize: '0.82rem', color: 'var(--danger)' } },
+                      secondary: {
+                        sx: {
+                          fontSize: '0.82rem',
+                          color: caseState.status === 'failed' || caseState.status === 'errored' ? 'var(--danger)' : 'var(--text-muted)',
+                        },
+                      },
                     }}
                   />
+                  {caseState.trace !== undefined && onShowWitness && (() => {
+                    const flagged = isFlaggedValidation(caseState.witnessValidation);
+                    return (
+                      <Tooltip title={flagged ? 'Show witness (validation portfolio disagreed)' : 'Show witness'}>
+                        <IconButton
+                          size="small"
+                          onClick={(event) => { event.stopPropagation(); onShowWitness(caseState.caseInfo.id); }}
+                          sx={{ color: flagged ? 'var(--danger)' : 'var(--text-muted)', ml: 0.5 }}
+                        >
+                          <Badge
+                            color="error"
+                            variant="dot"
+                            invisible={!flagged}
+                            overlap="circular"
+                          >
+                            <ArticleOutlinedIcon sx={{ fontSize: 18 }} />
+                          </Badge>
+                        </IconButton>
+                      </Tooltip>
+                    );
+                  })()}
                   <Tooltip title="Go to definition">
                     <IconButton
                       size="small"
                       onClick={(event) => { event.stopPropagation(); handleCaseClick(caseState.caseInfo.location); }}
-                      sx={{ color: 'var(--text-muted)', ml: 0.5 }}
+                      sx={{ color: 'var(--text-muted)', ml: 0.5, display: { xs: 'none', sm: 'inline-flex' } }}
                     >
                       <MyLocationOutlinedIcon sx={{ fontSize: 18 }} />
                     </IconButton>
@@ -289,3 +492,7 @@ export default function VerificationPanel({
     </Box>
   );
 }
+
+const VerificationPanel = forwardRef<VerificationPanelHandle, Props>(VerificationPanelInner);
+VerificationPanel.displayName = 'VerificationPanel';
+export default VerificationPanel;

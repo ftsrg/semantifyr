@@ -5,7 +5,7 @@
 FROM eclipse-temurin:25-jre-noble
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends libgomp1 libmpfr-dev \
+ && apt-get install -y --no-install-recommends libgomp1 libmpfr-dev spin \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
@@ -16,6 +16,7 @@ COPY build/theta-xsts-cli /opt/theta-xsts-cli
 ENV PATH="/opt/theta-xsts-cli:${PATH}"
 
 ENV SEMANTIFYR_LIVE_LSP_BINARIES_DIR=/opt/semantifyr/staging/lsp
+ENV SEMANTIFYR_LIVE_SEMANTIC_LIBRARIES_DIR=/opt/semantifyr/staging/semantic-libraries
 ENV SEMANTIFYR_LIVE_WEB_ROOT_DIR=/opt/semantifyr/staging/web
 ENV SEMANTIFYR_LIVE_PORT=8080
 ENV SEMANTIFYR_LIVE_ROOT_WORK_DIR=/tmp/semantifyr

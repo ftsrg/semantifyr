@@ -10,6 +10,7 @@ import java.time.Instant
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.application")
+    id("hu.bme.mit.semantifyr.gradle.conventions.integration")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
     alias(libs.plugins.bmuschko.docker)
     kotlin("jvm")
@@ -26,19 +27,18 @@ val frontendDistribution by configurations.creating {
     isCanBeResolved = true
 }
 
-val gammaTestModels by configurations.creating {
+val gammaCompiledExamples by configurations.creating {
     isCanBeConsumed = false
     isCanBeResolved = true
 }
 
-val thetaClasspath by configurations.getting {
+val sysmlCompiledExamples by configurations.creating {
     isCanBeConsumed = false
     isCanBeResolved = true
 }
 
 dependencies {
     implementation(libs.bundles.ktor.server)
-    implementation(libs.micrometer.registry.prometheus)
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.core)
@@ -56,12 +56,12 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
 
     lspDistributions(project(":oxsts.lang.ide", configuration = "distributionOutput"))
-    lspDistributions(project(":xsts.lang.ide", configuration = "distributionOutput"))
     lspDistributions(project(":gamma.lang.ide", configuration = "distributionOutput"))
 
     frontendDistribution(project(":semantifyr-live-frontend", configuration = "distributionOutput"))
 
-    gammaTestModels(project(":gamma-semantics", configuration = "testModels"))
+    gammaCompiledExamples(project(":gamma-frontend", configuration = "compiledExamples"))
+    sysmlCompiledExamples(project(":sysml-wrapper", configuration = "compiledExamples"))
 }
 
 application {
@@ -99,9 +99,37 @@ val cloneLspDistributions by tasks.registering(Sync::class) {
     into(layout.buildDirectory.dir("staging/lsp"))
 }
 
+val cloneSemanticLibraries by tasks.registering(Sync::class) {
+    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/libraries/default")) {
+        into("sysmlv2")
+    }
+    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/libraries/default")) {
+        into("gamma")
+    }
+    into(layout.buildDirectory.dir("staging/semantic-libraries"))
+}
+
 val cloneGammaTestModels by tasks.registering(Sync::class) {
-    from(gammaTestModels)
+    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/examples"))
     into(layout.buildDirectory.dir("staging/gamma-test-models"))
+}
+
+val cloneOxstsTestModels by tasks.registering(Sync::class) {
+    description = "Stage the OXSTS simple test models for integration tests."
+    from(rootProject.layout.projectDirectory.dir("oxsts-test-models/simple"))
+    into(layout.buildDirectory.dir("staging/oxsts-test-models"))
+}
+
+val cloneGammaLibraryModels by tasks.registering(Sync::class) {
+    description = "Stage Gamma-library OXSTS examples for integration tests."
+    from(gammaCompiledExamples)
+    into(layout.buildDirectory.dir("staging/gamma-library-models"))
+}
+
+val cloneSysmlLibraryModels by tasks.registering(Sync::class) {
+    description = "Stage SysMLv2-library OXSTS examples for integration tests."
+    from(sysmlCompiledExamples)
+    into(layout.buildDirectory.dir("staging/sysml-library-models"))
 }
 
 val cloneWebDistributions by tasks.registering(Sync::class) {
@@ -116,23 +144,19 @@ tasks.named<JavaExec>("run") {
     description = "Run the backend with web root (builds frontend)"
 
     inputs.files(cloneLspDistributions)
+    inputs.files(cloneSemanticLibraries)
     inputs.files(cloneWebDistributions)
     inputs.files(cloneTheta)
 
     val thetaCliDir = cloneTheta.map { it.destinationDir.absolutePath }
 
-    val stagingDir = layout.buildDirectory
-        .dir("staging")
-        .get()
-        .asFile
-    val workDir = layout.buildDirectory
-        .dir("work")
-        .get()
-        .asFile
+    val stagingDir = layout.buildDirectory.dir("staging").get().asFile
+    val workDir = layout.buildDirectory.dir("work").get().asFile
 
     args = listOf("start")
 
     environment("SEMANTIFYR_LIVE_LSP_BINARIES_DIR", stagingDir.resolve("lsp").absolutePath)
+    environment("SEMANTIFYR_LIVE_SEMANTIC_LIBRARIES_DIR", stagingDir.resolve("semantic-libraries").absolutePath)
     environment("SEMANTIFYR_LIVE_WEB_ROOT_DIR", stagingDir.resolve("web").absolutePath)
     environment("SEMANTIFYR_LIVE_PORT", "18080")
     environment("SEMANTIFYR_LIVE_ROOT_WORK_DIR", workDir.absolutePath)
@@ -155,14 +179,8 @@ val runDev by tasks.registering(JavaExec::class) {
 
     val thetaCliDir = cloneTheta.map { it.destinationDir.absolutePath }
 
-    val stagingDir = layout.buildDirectory
-        .dir("staging")
-        .get()
-        .asFile
-    val workDir = layout.buildDirectory
-        .dir("work")
-        .get()
-        .asFile
+    val stagingDir = layout.buildDirectory.dir("staging").get().asFile
+    val workDir = layout.buildDirectory.dir("work").get().asFile
 
     args = listOf("start")
 
@@ -178,30 +196,33 @@ val runDev by tasks.registering(JavaExec::class) {
 
 testing {
     suites {
-        val verificationTest by getting(JvmTestSuite::class) {
+        val integrationTest by getting(JvmTestSuite::class) {
             dependencies {
                 implementation(libs.kotlinx.serialization.json)
                 implementation.bundle(libs.bundles.ktor.server)
                 implementation.bundle(libs.bundles.ktor.client.test)
                 implementation(libs.kotlinx.coroutines.test)
-
-                implementation(project(":portfolios"))
-                implementation(testFixtures(project(":verifier")))
             }
             targets.all {
                 testTask.configure {
                     description = "Run backend integration tests (boot real LSP, drive verification over WS)"
 
                     inputs.files(cloneLspDistributions)
+                    inputs.files(cloneSemanticLibraries)
                     inputs.files(cloneWebDistributions)
                     inputs.files(cloneGammaTestModels)
+                    inputs.files(cloneOxstsTestModels)
+                    inputs.files(cloneGammaLibraryModels)
+                    inputs.files(cloneSysmlLibraryModels)
 
-                    val stagingDir = layout.buildDirectory
-                        .dir("staging")
-                        .get()
-                        .asFile
+                    val stagingDir = layout.buildDirectory.dir("staging").get().asFile
+
                     systemProperty("semantifyr.live.lsp", stagingDir.resolve("lsp").absolutePath)
+                    systemProperty("semantifyr.live.semanticLibraries", stagingDir.resolve("semantic-libraries").absolutePath)
                     systemProperty("semantifyr.live.gammaTestModels", stagingDir.resolve("gamma-test-models").absolutePath)
+                    systemProperty("semantifyr.live.oxstsTestModels", stagingDir.resolve("oxsts-test-models").absolutePath)
+                    systemProperty("semantifyr.live.gammaLibraryModels", stagingDir.resolve("gamma-library-models").absolutePath)
+                    systemProperty("semantifyr.live.sysmlLibraryModels", stagingDir.resolve("sysml-library-models").absolutePath)
                 }
             }
         }
@@ -210,18 +231,19 @@ testing {
 
 val prepareDocker by tasks.registering {
     inputs.files(cloneLspDistributions)
+    inputs.files(cloneSemanticLibraries)
     inputs.files(cloneWebDistributions)
     inputs.files(cloneTheta)
     inputs.files(tasks.installDist)
 }
 
 val dockerImageRepo = "ftsrgbot/semantifyr-server"
-val dockerGitSha = providers
-    .exec {
-        commandLine("git", "rev-parse", "--short", "HEAD")
-        isIgnoreExitValue = true
-    }.standardOutput.asText
-    .map { it.trim() }
+val dockerGitSha = providers.exec {
+    commandLine("git", "rev-parse", "--short", "HEAD")
+    isIgnoreExitValue = true
+}.standardOutput.asText.map {
+    it.trim()
+}
 
 val dockerBuildImage by tasks.registering(DockerBuildImage::class) {
     dependsOn(prepareDocker)

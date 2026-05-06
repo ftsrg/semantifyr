@@ -29,18 +29,18 @@ class SessionInfoMessageInterceptor @Inject constructor(
 
     private val logger by loggerFactory()
 
-    override suspend fun handleClientMessage(
+    override suspend fun interceptClientMessage(
         raw: String,
         message: Message,
         bridge: LspBridge,
     ): Boolean {
         if (message !is RequestMessage) {
-            return true
+            return false
         }
 
-        val params = message.params as? ExecuteCommandParams ?: return true
+        val params = message.params as? ExecuteCommandParams ?: return false
         if (params.command != SemantifyrCommands.SESSION_INFO_COMMAND) {
-            return true
+            return false
         }
 
         logger.info { "Intercepted ${SemantifyrCommands.SESSION_INFO_COMMAND} request" }
@@ -52,6 +52,6 @@ class SessionInfoMessageInterceptor @Inject constructor(
 
         bridge.sendToLspClient(response)
 
-        return false // consumed
+        return true
     }
 }

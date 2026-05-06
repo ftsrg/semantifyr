@@ -5,6 +5,7 @@
  */
 
 import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import * as vscode from 'vscode';
 import type { LanguageClientWrapper } from 'monaco-languageclient/lcwrapper';
 import type { EditorApp } from 'monaco-languageclient/editorApp';
 
@@ -23,11 +24,17 @@ import { wrapClientWithMetrics, type LspMetrics, type MetricsTracker } from '../
 
 import styles from './LiveEditor.module.css';
 
-export type { LspClient } from '../lib/verification';
-export type { VerificationCaseLocation } from '../lib/verification';
-export type { LspMetrics } from '../lib/lspMetrics';
-
 export type LiveEditorStatus = 'initializing' | 'connected' | 'disconnected' | 'reconnecting' | 'errored';
+
+export interface ProblemEntry {
+  severity: 'error' | 'warning' | 'info' | 'hint';
+  startLine: number;
+  startColumn: number;
+  endLine: number;
+  endColumn: number;
+  message: string;
+  source: string;
+}
 
 export interface LiveEditorHandle {
   reconnect: () => void;
@@ -39,6 +46,14 @@ export interface LiveEditorHandle {
   onEditorContentChange: (callback: () => void) => (() => void) | undefined;
   addProgressListener: (listener: (params: unknown) => void) => () => void;
   addNotificationListener: (method: string, listener: (params: unknown) => void) => () => void;
+  /** Set verify-derived markers on the active model. Pass an empty array to clear. */
+  setVerifyCaseMarkers: (markers: readonly ProblemEntry[]) => void;
+  /** Snapshot of every model marker currently visible (LSP + verify + future sources). */
+  getProblems: () => ProblemEntry[];
+  /** Subscribe to marker updates. Returns disposer. */
+  addProblemsListener: (listener: () => void) => () => void;
+  /** Reveal + position the editor at a marker's range and focus it. */
+  revealProblem: (problem: ProblemEntry) => void;
 }
 
 interface Props {
@@ -81,6 +96,10 @@ const LiveEditor = forwardRef<LiveEditorHandle, Props>(function LiveEditor(
   const progressListenersRef = useRef<Set<(params: unknown) => void>>(new Set());
   const metricsClientRef = useRef<(LspClient & MetricsTracker) | null>(null);
   const metricsRawClientRef = useRef<LspClient | null>(null);
+  // Verify-derived diagnostics live in their own collection so we can replace them wholesale
+  // without touching LSP-emitted diagnostics under the language-server's owner.
+  const verifyDiagnosticsRef = useRef<vscode.DiagnosticCollection | null>(null);
+  const problemsListenersRef = useRef<Set<() => void>>(new Set());
 
   const [, setInternalStatus] = useState<LiveEditorStatus>('initializing');
 
@@ -97,6 +116,46 @@ const LiveEditor = forwardRef<LiveEditorHandle, Props>(function LiveEditor(
   };
 
   const fileUri = useMemo(() => createFileUri(fileName), [fileName]);
+
+  const verifyMarkersSubscriptionsRef = useRef<vscode.Disposable[] | null>(null);
+
+  // Lazy bring-up. The vscode services aren't ready until `createEditor` has run inside the
+  // editor-bootstrap effect; calling `vscode.languages.*` before that throws "Default api is
+  // not ready yet". Every handle method routes through this getter, which sets up the
+  // collection + listeners on first use (always after the editor mounted).
+  const ensureVerifyDiagnostics = (): vscode.DiagnosticCollection | null => {
+    if (verifyDiagnosticsRef.current) return verifyDiagnosticsRef.current;
+    try {
+      const collection = vscode.languages.createDiagnosticCollection('semantifyr-verify');
+      const subs: vscode.Disposable[] = [
+        vscode.languages.onDidChangeDiagnostics(() => {
+          for (const listener of problemsListenersRef.current) {
+            try { listener(); } catch { /* ignore */ }
+          }
+        }),
+        // Edits invalidate the previous verdict, so wipe the verify markers when the user types.
+        vscode.workspace.onDidChangeTextDocument(() => {
+          verifyDiagnosticsRef.current?.clear();
+        }),
+      ];
+      verifyDiagnosticsRef.current = collection;
+      verifyMarkersSubscriptionsRef.current = subs;
+      return collection;
+    } catch {
+      // vscode services still not ready - the caller will retry on the next listener tick.
+      return null;
+    }
+  };
+
+  // Component-unmount cleanup for whatever ensureVerifyDiagnostics installed.
+  useEffect(() => {
+    return () => {
+      verifyMarkersSubscriptionsRef.current?.forEach((d) => { try { d.dispose(); } catch { /* ignore */ } });
+      verifyMarkersSubscriptionsRef.current = null;
+      try { verifyDiagnosticsRef.current?.dispose(); } catch { /* ignore */ }
+      verifyDiagnosticsRef.current = null;
+    };
+  }, []);
 
   const backendUrlRef = useRef(backendUrl);
   const flavorIdRef = useRef(flavorId);
@@ -350,6 +409,54 @@ const LiveEditor = forwardRef<LiveEditorHandle, Props>(function LiveEditor(
           }
         };
       },
+      setVerifyCaseMarkers: (markers) => {
+        const collection = ensureVerifyDiagnostics();
+        if (!collection) return;
+        const diagnostics = markers.map((m) => {
+          const range = new vscode.Range(
+            Math.max(0, m.startLine),
+            Math.max(0, m.startColumn),
+            Math.max(0, m.endLine),
+            Math.max(0, m.endColumn),
+          );
+          const diagnostic = new vscode.Diagnostic(range, m.message, severityFromString(m.severity));
+          diagnostic.source = m.source;
+          return diagnostic;
+        });
+        collection.set(fileUri, diagnostics);
+      },
+      getProblems: () => {
+        // Touch ensureVerifyDiagnostics so the listener subscription is in place before the
+        // caller registers a problems listener; safe to call repeatedly (no-op once init'd).
+        ensureVerifyDiagnostics();
+        try {
+          const all = vscode.languages.getDiagnostics(fileUri);
+          return all.map((d) => ({
+            severity: severityToString(d.severity),
+            startLine: d.range.start.line,
+            startColumn: d.range.start.character,
+            endLine: d.range.end.line,
+            endColumn: d.range.end.character,
+            message: d.message,
+            source: d.source ?? '',
+          }));
+        } catch {
+          return [];
+        }
+      },
+      addProblemsListener: (listener) => {
+        problemsListenersRef.current.add(listener);
+        return () => { problemsListenersRef.current.delete(listener); };
+      },
+      revealProblem: (problem) => {
+        const editor = editorAppRef.current?.getEditor();
+        if (!editor) return;
+        const startLine = problem.startLine + 1;
+        const startCol = problem.startColumn + 1;
+        editor.revealLineInCenter(startLine);
+        editor.setPosition({ lineNumber: startLine, column: startCol });
+        editor.focus();
+      },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [fileUri],
@@ -363,3 +470,21 @@ const LiveEditor = forwardRef<LiveEditorHandle, Props>(function LiveEditor(
 });
 
 export default LiveEditor;
+
+function severityFromString(s: ProblemEntry['severity']): vscode.DiagnosticSeverity {
+  switch (s) {
+    case 'error': return vscode.DiagnosticSeverity.Error;
+    case 'warning': return vscode.DiagnosticSeverity.Warning;
+    case 'info': return vscode.DiagnosticSeverity.Information;
+    case 'hint': return vscode.DiagnosticSeverity.Hint;
+  }
+}
+
+function severityToString(s: vscode.DiagnosticSeverity): ProblemEntry['severity'] {
+  switch (s) {
+    case vscode.DiagnosticSeverity.Error: return 'error';
+    case vscode.DiagnosticSeverity.Warning: return 'warning';
+    case vscode.DiagnosticSeverity.Information: return 'info';
+    case vscode.DiagnosticSeverity.Hint: return 'hint';
+  }
+}

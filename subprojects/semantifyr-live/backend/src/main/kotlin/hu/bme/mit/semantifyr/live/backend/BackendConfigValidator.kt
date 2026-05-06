@@ -6,15 +6,13 @@
 
 package hu.bme.mit.semantifyr.live.backend
 
+import hu.bme.mit.semantifyr.live.backend.server.Flavor
+import hu.bme.mit.semantifyr.live.backend.server.FlavorRegistry
+import hu.bme.mit.semantifyr.live.backend.server.WorkspaceLayout
 import java.nio.file.Files
 
 class InvalidConfigurationException(message: String) : RuntimeException(message)
 
-/**
- * Validates that a [BackendConfig] can actually be used to run the server. Catches
- * misconfiguration (missing/unreadable LSP binaries, unwritable workspace, conflicting timeouts)
- * before any client connects, so failures surface at startup rather than on the first request.
- */
 object BackendConfigValidator {
 
     fun validate(
@@ -25,12 +23,13 @@ object BackendConfigValidator {
 
         validateRootWorkDirectory(config, problems)
         validateLspBinaries(config, flavors, problems)
+        validateSemanticLibraries(config, flavors, problems)
         validateTimeouts(config, problems)
         validateLimits(config, problems)
 
         if (problems.isNotEmpty()) {
             throw InvalidConfigurationException(
-                "Backend configuration is invalid:\n  - " + problems.joinToString("\n  - "),
+                "Backend configuration is invalid:\n  - ${problems.joinToString("\n  - ")}",
             )
         }
     }
@@ -70,10 +69,36 @@ object BackendConfigValidator {
         }
     }
 
+    private fun validateSemanticLibraries(
+        config: BackendConfig,
+        flavors: List<Flavor>,
+        problems: MutableList<String>,
+    ) {
+        val flavorsNeedingLibraries = flavors.filter { it.workspaceLayout is WorkspaceLayout.WithLibrary }
+        if (flavorsNeedingLibraries.isEmpty()) {
+            return
+        }
+        val librariesPath = config.sessionManager.semanticLibrariesPath
+        if (librariesPath == null) {
+            problems += "semanticLibrariesDirectory is not set (env: SEMANTIFYR_LIVE_SEMANTIC_LIBRARIES_DIR)"
+            return
+        }
+        if (!Files.isDirectory(librariesPath)) {
+            problems += "semanticLibrariesDirectory '$librariesPath' does not exist or is not a directory"
+            return
+        }
+        for (flavor in flavorsNeedingLibraries) {
+            val layout = flavor.workspaceLayout as WorkspaceLayout.WithLibrary
+            val libraryDir = librariesPath.resolve(layout.libraryRelativePath)
+            if (!Files.isDirectory(libraryDir)) {
+                problems += "Flavor '${flavor.id}' library directory '$libraryDir' is missing"
+            }
+        }
+    }
+
     private fun validateTimeouts(config: BackendConfig, problems: MutableList<String>) {
         if (config.server.sessionIdleTimeout <= config.verification.timeout) {
-            problems += "server.sessionIdleTimeout (${config.server.sessionIdleTimeout}) must be greater than " +
-                "verification.timeout (${config.verification.timeout}) so long verifications aren't evicted"
+            problems += "server.sessionIdleTimeout (${config.server.sessionIdleTimeout}) must be greater than verification.timeout (${config.verification.timeout}) so long verifications aren't evicted"
         }
     }
 

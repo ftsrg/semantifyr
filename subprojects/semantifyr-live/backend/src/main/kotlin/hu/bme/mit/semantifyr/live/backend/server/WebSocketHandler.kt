@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.live.backend.server
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
-import hu.bme.mit.semantifyr.live.backend.FlavorRegistry
 import hu.bme.mit.semantifyr.live.backend.session.SessionLimitReachedException
 import hu.bme.mit.semantifyr.live.backend.session.SessionManager
 import hu.bme.mit.semantifyr.logging.error

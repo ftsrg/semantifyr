@@ -19,16 +19,23 @@ interface LspServerRawConnector {
 }
 
 interface LspMessageInterceptor {
-    suspend fun handleClientMessage(
+    /**
+     * Returns `true` if the interceptor consumed the message.
+     */
+    suspend fun interceptClientMessage(
         raw: String,
         message: Message,
         bridge: LspBridge,
-    ): Boolean = true
-    suspend fun handleServerMessage(
+    ): Boolean = false
+
+    /**
+     * Returns `true` if the interceptor consumed the message.
+     */
+    suspend fun interceptServerMessage(
         raw: String,
         message: Message,
         bridge: LspBridge,
-    ): Boolean = true
+    ): Boolean = false
 }
 
 interface LspBridge {

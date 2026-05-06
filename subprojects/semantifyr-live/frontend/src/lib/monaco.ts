@@ -21,7 +21,6 @@ import { handleNavigateTo, type NavigateToParams } from './handlers';
 import type { ResolvedColorMode } from './theme';
 
 import oxstsGrammar from '../vscode/syntaxes/oxsts.tmLanguage.json';
-import xstsGrammar from '../vscode/syntaxes/xsts.tmLanguage.json';
 import gammaGrammar from '../vscode/syntaxes/gamma.tmLanguage.json';
 import languageConfiguration from '../vscode/language-configuration.json';
 
@@ -43,13 +42,11 @@ const EDITOR_OPTIONS: editor.IStandaloneEditorConstructionOptions = {
 
 const LANGUAGE_DEFS = [
   { id: 'oxsts', extensions: ['.oxsts'], aliases: ['OxSTS', 'oxsts'], scopeName: 'source.oxsts', grammarPath: './syntaxes/oxsts.tmLanguage.json' },
-  { id: 'xsts', extensions: ['.xsts'], aliases: ['XSTS', 'xsts'], scopeName: 'source.xsts', grammarPath: './syntaxes/xsts.tmLanguage.json' },
   { id: 'gamma', extensions: ['.gamma'], aliases: ['Gamma', 'gamma'], scopeName: 'source.gamma', grammarPath: './syntaxes/gamma.tmLanguage.json' },
 ];
 
 const GRAMMAR_FILES: Record<string, unknown> = {
   'oxsts': oxstsGrammar,
-  'xsts': xstsGrammar,
   'gamma': gammaGrammar,
 } as const;
 

@@ -20,6 +20,7 @@ import kotlinx.coroutines.CompletableDeferred
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.doSuspendableAnswer
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.mockito.kotlin.wheneverBlocking
@@ -39,20 +40,20 @@ class SessionManagerTest {
         val capturedWs = java.util.concurrent.atomic.AtomicReference<io.ktor.server.websocket.WebSocketServerSession>()
         val mockLspSession = mock<LspSession>()
         whenever(mockLspSession.sessionId).thenReturn("mock-session-${System.nanoTime()}")
-        wheneverBlocking { mockLspSession.run() }.thenAnswer {
-            kotlinx.coroutines.runBlocking { onSession(capturedWs.get()) }
+        wheneverBlocking { mockLspSession.run() } doSuspendableAnswer {
+            onSession(capturedWs.get())
         }
 
         val injector = Guice.createInjector(
             com.google.inject.util.Modules.override(BackendModule(config)).with(object : AbstractModule() {
                 override fun configure() {
-                    // Session-scoped override: capture the seeded WebSocketSession and return the mock LspSession.
+                    // Session-scoped override: capture the seeded SessionContext's WebSocketSession and return the mock LspSession.
                     bind(LspSession::class.java).toProvider(object : com.google.inject.Provider<LspSession> {
                         @com.google.inject.Inject
-                        lateinit var wsProvider: com.google.inject.Provider<io.ktor.websocket.WebSocketSession>
+                        lateinit var contextProvider: com.google.inject.Provider<SessionContext>
 
                         override fun get(): LspSession {
-                            capturedWs.set(wsProvider.get() as io.ktor.server.websocket.WebSocketServerSession)
+                            capturedWs.set(contextProvider.get().webSocketSession as io.ktor.server.websocket.WebSocketServerSession)
                             return mockLspSession
                         }
                     }).`in`(SessionScoped::class.java)

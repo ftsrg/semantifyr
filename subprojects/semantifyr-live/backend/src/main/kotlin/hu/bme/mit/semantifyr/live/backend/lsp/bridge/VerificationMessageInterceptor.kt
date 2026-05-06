@@ -6,8 +6,10 @@
 
 package hu.bme.mit.semantifyr.live.backend.lsp.bridge
 
+import com.google.gson.JsonObject
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.live.backend.FlavorRegistry
+import hu.bme.mit.semantifyr.live.backend.server.FlavorRegistry
+import hu.bme.mit.semantifyr.live.backend.server.VerificationKind
 import hu.bme.mit.semantifyr.live.backend.session.SessionScoped
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
@@ -17,7 +19,13 @@ import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage
 
 interface SessionVerificationManager {
-    suspend fun enqueueVerification(requestId: String, requestMessage: String)
+    suspend fun enqueueVerification(
+        requestId: String,
+        requestMessage: String,
+        kind: VerificationKind,
+        caseLabel: String?,
+        portfolioId: String?,
+    )
     suspend fun completeVerification(requestId: String, responseMessage: String)
     suspend fun cancelVerification(requestId: String)
 
@@ -31,48 +39,63 @@ class VerificationMessageInterceptor @Inject constructor(
 
     private val logger by loggerFactory()
 
-    override suspend fun handleClientMessage(
+    override suspend fun interceptClientMessage(
         raw: String,
         message: Message,
         bridge: LspBridge,
     ): Boolean {
         if (message !is RequestMessage) {
-            return true
+            return false
         }
 
-        val params = message.params as? ExecuteCommandParams ?: return true
-        if (params.command !in verificationCommands) {
-            return true
+        val params = message.params as? ExecuteCommandParams ?: return false
+        if (params.command !in throttledCommands) {
+            return false
         }
 
-        val requestId = message.id ?: return true // we should handle malformed requests by sending an error instead
-        logger.info { "Intercepted verification request (command=${params.command}, requestId=$requestId)" }
-        sessionVerificationManager.enqueueVerification(requestId, raw)
-        return false
+        val requestId = message.id ?: return false // we should handle malformed requests by sending an error instead
+        val kind = if (params.command in validateCommands) VerificationKind.Validate else VerificationKind.Verify
+        val portfolioId = extractStringArg(params, "portfolio")
+        val caseLabel = extractStringArg(params, "caseLabel")
+        logger.info {
+            "Intercepted throttled command (command=${params.command}, kind=$kind, requestId=$requestId, case=${caseLabel ?: "?"}, portfolio=${portfolioId ?: "default"})"
+        }
+        sessionVerificationManager.enqueueVerification(requestId, raw, kind, caseLabel, portfolioId)
+        return true
     }
 
-    override suspend fun handleServerMessage(
+    private fun extractStringArg(params: ExecuteCommandParams, name: String): String? {
+        val first = params.arguments?.firstOrNull() as? JsonObject ?: return null
+        val value = first.get(name) ?: return null
+        if (value.isJsonPrimitive && value.asJsonPrimitive.isString) {
+            val str = value.asString
+            return str.ifBlank { null }
+        }
+        return null
+    }
+
+    override suspend fun interceptServerMessage(
         raw: String,
         message: Message,
         bridge: LspBridge,
     ): Boolean {
         if (message !is ResponseMessage) {
-            return true
+            return false
         }
 
-        val requestId = message.id ?: return true // we should handle malformed responses
+        val requestId = message.id ?: return false // we should handle malformed responses
         if (!sessionVerificationManager.isVerificationTracked(requestId)) {
-            return true
+            return false
         }
 
         logger.info { "Intercepted verification response (requestId=$requestId)" }
         sessionVerificationManager.completeVerification(requestId, raw)
-        return false
+        return true
     }
 
     companion object {
-        private val verificationCommands = FlavorRegistry.flavors.mapNotNull {
-            it.verificationCommand
-        }.toSet()
+        private val verifyCommands = FlavorRegistry.flavors.map { it.verificationCommand }.toSet()
+        private val validateCommands = FlavorRegistry.flavors.map { it.validateWitnessCommand }.toSet()
+        private val throttledCommands = verifyCommands + validateCommands
     }
 }
