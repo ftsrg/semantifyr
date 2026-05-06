@@ -33,6 +33,8 @@ dependencies {
 }
 
 val cloneDistribution by tasks.registering(Sync::class) {
+    inputs.files(distributionClasspath)
+
     from(
         distributionClasspath.map {
             fileTree(it)
