@@ -150,6 +150,7 @@ val runDev by tasks.registering(JavaExec::class) {
     mainClass = application.mainClass
 
     inputs.files(cloneLspDistributions)
+    inputs.files(cloneSemanticLibraries)
     inputs.files(cloneTheta)
 
     val thetaCliDir = cloneTheta.map { it.destinationDir.absolutePath }
