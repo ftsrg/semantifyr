@@ -9,10 +9,6 @@ plugins {
     kotlin("jvm")
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     api(libs.slf4j.api)
 }

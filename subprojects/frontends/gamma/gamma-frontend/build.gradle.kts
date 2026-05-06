@@ -12,10 +12,6 @@ plugins {
     kotlin("jvm")
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     api(project(":gamma.lang"))
     api(project(":verifier"))

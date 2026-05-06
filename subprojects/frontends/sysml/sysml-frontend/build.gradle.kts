@@ -13,10 +13,6 @@ plugins {
     kotlin("plugin.serialization")
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     api(project(":portfolios"))
 

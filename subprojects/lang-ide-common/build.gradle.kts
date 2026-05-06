@@ -8,10 +8,6 @@ plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     api(libs.xtext.ide)
     api(libs.lsp4j)

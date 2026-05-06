@@ -11,7 +11,6 @@ plugins {
 }
 
 repositories {
-    mavenCentral()
     maven("https://repo.eclipse.org/content/groups/viatra/")
 }
 

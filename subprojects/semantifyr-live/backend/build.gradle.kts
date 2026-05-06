@@ -16,10 +16,6 @@ plugins {
     kotlin("plugin.serialization")
 }
 
-repositories {
-    mavenCentral()
-}
-
 val lspDistributions by configurations.creating {
     isCanBeConsumed = false
     isCanBeResolved = true

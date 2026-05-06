@@ -27,7 +27,6 @@ val nativeExt = when (currentOs) {
 }
 
 repositories {
-    mavenCentral()
     exclusiveContent {
         forRepository {
             ivy {
