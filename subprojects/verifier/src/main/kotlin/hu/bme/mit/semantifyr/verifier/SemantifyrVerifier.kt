@@ -33,16 +33,16 @@ interface SemantifyrVerifier {
     suspend fun verify(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext = ProgressContext.NoOp): VerificationResult
 
     fun verifyBlocking(verificationCase: VerificationCase) = runBlocking {
-        verify(verificationCase)
+        verify(verificationCase).toJavaDto()
     }
     fun verifyBlocking(verificationCase: VerificationCase, progressContext: ProgressContext) = runBlocking {
-        verify(verificationCase, progressContext)
+        verify(verificationCase, progressContext).toJavaDto()
     }
     fun verifyBlocking(inlinedOxsts: InlinedOxsts) = runBlocking {
-        verify(inlinedOxsts)
+        verify(inlinedOxsts).toJavaDto()
     }
     fun verifyBlocking(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext) = runBlocking {
-        verify(inlinedOxsts, progressContext)
+        verify(inlinedOxsts, progressContext).toJavaDto()
     }
 
     class Builder internal constructor() {
