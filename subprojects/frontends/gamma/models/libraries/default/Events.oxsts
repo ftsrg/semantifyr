@@ -11,6 +11,7 @@ class Event
 class Timeout {
     refers deltaTime: int = 1
 
+    @Clock
     var remainingTime: int := 0
 
     tran passTime() {
