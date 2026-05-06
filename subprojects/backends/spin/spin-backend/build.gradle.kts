@@ -24,6 +24,7 @@ dependencies {
     api(libs.guice.extensions.assistedinject)
 
     implementation(project(":logging"))
+    implementation(project(":utils"))
     implementation(libs.kotlinx.serialization.json)
 
     testImplementation(project(":compiler"))

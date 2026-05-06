@@ -7,10 +7,10 @@
 package hu.bme.mit.semantifyr.backends.nuxmv.transformation
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backend.text.IndentingBuilder
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
+import hu.bme.mit.semantifyr.utils.text.IndentingBuilder
 
 data class NuxmvArtifacts(
     val smv: String,

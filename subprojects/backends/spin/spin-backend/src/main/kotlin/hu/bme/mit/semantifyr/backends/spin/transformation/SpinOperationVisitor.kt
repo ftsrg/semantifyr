@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.backends.spin.transformation
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
-import hu.bme.mit.semantifyr.backend.text.IndentingBuilder
 import hu.bme.mit.semantifyr.backend.transformation.BackendOperationVisitor
 import hu.bme.mit.semantifyr.backend.transformation.HavocValueCollector
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
@@ -23,6 +22,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
+import hu.bme.mit.semantifyr.utils.text.IndentingBuilder
 
 class SpinOperationVisitor @AssistedInject constructor(
     @param:Assisted private val builder: IndentingBuilder,

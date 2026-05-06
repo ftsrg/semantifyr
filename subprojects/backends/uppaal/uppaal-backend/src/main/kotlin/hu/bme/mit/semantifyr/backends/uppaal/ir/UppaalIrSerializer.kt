@@ -6,8 +6,8 @@
 
 package hu.bme.mit.semantifyr.backends.uppaal.ir
 
-import hu.bme.mit.semantifyr.backend.text.IndentingBuilder
-import hu.bme.mit.semantifyr.backend.text.escapeXml
+import hu.bme.mit.semantifyr.utils.text.IndentingBuilder
+import hu.bme.mit.semantifyr.utils.text.escapeXml
 
 class UppaalIrSerializer {
     fun serialize(nta: UppaalNta): String {

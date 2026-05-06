@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backend.text
+package hu.bme.mit.semantifyr.utils.text
 
 class IndentingBuilder(
     private val indent: String = "    ",
@@ -38,6 +38,19 @@ class IndentingBuilder(
         }
     }
 
+    inline fun appendIndent(
+        header: String,
+        openSuffix: String = " {",
+        closeChar: String = "}",
+        crossinline body: IndentingBuilder.() -> Unit,
+    ) {
+        line(header + openSuffix)
+        indented {
+            body()
+        }
+        line(closeChar)
+    }
+
     fun appendRaw(text: String) {
         sb.append(text)
     }
@@ -45,6 +58,15 @@ class IndentingBuilder(
     override fun toString(): String {
         return sb.toString()
     }
+}
+
+inline fun buildIndented(
+    indent: String = "    ",
+    body: IndentingBuilder.() -> Unit,
+): String {
+    val builder = IndentingBuilder(indent)
+    builder.body()
+    return builder.toString()
 }
 
 fun escapeXml(value: String): String {

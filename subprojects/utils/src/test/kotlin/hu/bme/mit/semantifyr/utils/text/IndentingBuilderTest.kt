@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backend.text
+package hu.bme.mit.semantifyr.utils.text
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -97,6 +97,47 @@ class IndentingBuilderTest {
         builder.appendRaw("   body with its own layout\n")
         builder.line("</open>")
         assertThat(builder.toString()).isEqualTo("<open>\n   body with its own layout\n</open>\n")
+    }
+
+    @Test
+    fun `block emits header with brace, indented body, and closing brace`() {
+        val builder = IndentingBuilder()
+        builder.appendIndent("class X") {
+            line("body")
+        }
+        assertThat(builder.toString()).isEqualTo("class X {\n    body\n}\n")
+    }
+
+    @Test
+    fun `nested block stacks indent levels`() {
+        val text = buildIndented("  ") {
+            appendIndent("class X") {
+                appendIndent("fun y") {
+                    line("z")
+                }
+            }
+        }
+        assertThat(text).isEqualTo(
+            """
+            class X {
+              fun y {
+                z
+              }
+            }
+
+            """.trimIndent(),
+        )
+    }
+
+    @Test
+    fun `buildIndented returns the produced string`() {
+        val text = buildIndented {
+            line("first")
+            indented {
+                line("second")
+            }
+        }
+        assertThat(text).isEqualTo("first\n    second\n")
     }
 
     @Test

@@ -7,9 +7,9 @@
 package hu.bme.mit.semantifyr.backends.spin.transformation
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backend.text.IndentingBuilder
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
+import hu.bme.mit.semantifyr.utils.text.IndentingBuilder
 
 class SpinDeclarationRenderer @Inject constructor(
     private val spinVariableTransformer: SpinVariableTransformer,
