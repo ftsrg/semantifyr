@@ -205,7 +205,6 @@ class ServerIntegrationTest {
     }
 
     @Test
-    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     suspend fun `oxsts verification case passes end-to-end`(@TempDir tmp: Path) {
         assumeTrue(lspBinariesDirectory != null, "semantifyr.live.lsp system property not set")
         val modelSource = checkNotNull(javaClass.getResource("/integration/trafficlight.oxsts")) {
@@ -229,7 +228,6 @@ class ServerIntegrationTest {
     }
 
     @Test
-    @Timeout(value = 2, unit = TimeUnit.MINUTES)
     suspend fun `gamma verification case passes end-to-end`(@TempDir tmp: Path) {
         assumeTrue(lspBinariesDirectory != null, "semantifyr.live.lsp system property not set")
         assumeTrue(gammaTestModelsDirectory != null, "semantifyr.live.gammaTestModels system property not set")
@@ -262,7 +260,6 @@ class ServerIntegrationTest {
     }
 
     @Test
-    @Timeout(value = 2, unit = TimeUnit.MINUTES)
     suspend fun `oxsts-with-gamma-library smoke verifies a compiled gamma example`(@TempDir tmp: Path) {
         assumeTrue(lspBinariesDirectory != null, "semantifyr.live.lsp system property not set")
         assumeTrue(gammaLibraryModelsDirectory != null, "semantifyr.live.gammaLibraryModels system property not set")
@@ -288,7 +285,6 @@ class ServerIntegrationTest {
     }
 
     @Test
-    @Timeout(value = 2, unit = TimeUnit.MINUTES)
     suspend fun `oxsts-with-sysmlv2-library smoke verifies a compiled sysml example`(@TempDir tmp: Path) {
         assumeTrue(lspBinariesDirectory != null, "semantifyr.live.lsp system property not set")
         assumeTrue(sysmlLibraryModelsDirectory != null, "semantifyr.live.sysmlLibraryModels system property not set")

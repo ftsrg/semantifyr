@@ -10,7 +10,7 @@ import java.time.Instant
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.application")
-    id("hu.bme.mit.semantifyr.gradle.conventions.integration")
+    id("hu.bme.mit.semantifyr.gradle.conventions.verification")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
     alias(libs.plugins.bmuschko.docker)
     kotlin("jvm")
@@ -196,7 +196,7 @@ val runDev by tasks.registering(JavaExec::class) {
 
 testing {
     suites {
-        val integrationTest by getting(JvmTestSuite::class) {
+        val verificationTest by getting(JvmTestSuite::class) {
             dependencies {
                 implementation(libs.kotlinx.serialization.json)
                 implementation.bundle(libs.bundles.ktor.server)
@@ -205,8 +205,6 @@ testing {
             }
             targets.all {
                 testTask.configure {
-                    description = "Run backend integration tests (boot real LSP, drive verification over WS)"
-
                     inputs.files(cloneLspDistributions)
                     inputs.files(cloneSemanticLibraries)
                     inputs.files(cloneWebDistributions)
