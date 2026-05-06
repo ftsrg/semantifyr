@@ -261,7 +261,7 @@ abstract class AbstractTransition {
 
     abstract prop isEnabled(): bool
 
-    @Trace
+    // @Trace
     tran fire() {
         inline to.enter(parentRegion)
     }

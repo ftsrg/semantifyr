@@ -18,7 +18,7 @@ abstract class Component {
         inline schedule()
     }
 
-    @Trace
+    //@Trace
     abstract tran schedule()
 
     tran resetInputEvents() {
@@ -50,7 +50,7 @@ class Channel {
     refers inputPort: Port[1]
     refers outputPort: Port[1]
 
-    @Trace
+    //@Trace
     tran doTransferEvent() {
         inline outputPort.setInputEvent(inputPort.outputEvent as Event)
     }
