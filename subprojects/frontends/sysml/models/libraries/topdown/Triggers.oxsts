@@ -43,7 +43,6 @@ class AcceptTimeoutAction : AcceptAction {
 
     refers afterTime: int = 1
 
-    @Clock
     var remainingTime: int := 0
 
     redefine tran passTime() {
