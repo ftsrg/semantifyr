@@ -7,11 +7,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resolveBackendUrl } from '../lib/config';
 
-/**
- * resolveBackendUrl reads from `window.location` and `import.meta.env`. The unit test
- * mutates `window.location` via the jsdom escape hatch and stubs the env via Vitest's
- * vi.stubEnv helper, restoring both between tests.
- */
 describe('resolveBackendUrl', () => {
   let originalLocation: Location;
 

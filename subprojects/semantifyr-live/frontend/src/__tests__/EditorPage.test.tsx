@@ -8,11 +8,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-// LiveEditor pulls in monaco-languageclient + @codingame/* which is too heavy for jsdom
-// (it touches `Worker`, `EventSource` and other browser APIs we don't have here). Replace
-// it with a tiny stand-in that simply records the props it was rendered with so the test
-// can assert against them. This must be `vi.mock`-ed BEFORE importing EditorPage so the
-// dynamic `lazy(() => import('./LiveEditor'))` resolves to the stub.
 vi.mock('../components/LiveEditor', () => ({
   default: (props: {
     flavorId: string;
@@ -124,10 +119,6 @@ describe('EditorPage', () => {
   });
 
   it('clicking Copy link reports success and the handler completes', async () => {
-    // We verify that the copy handler runs to completion (shows "Link copied!"
-    // rather than "Copy failed"). The actual clipboard call is backed by jsdom's
-    // navigator.clipboard which is not reliably mockable across versions; we
-    // separately test the URL encoding logic in urls.test.ts.
     setLocation('https://test.example/');
     renderPage();
     await waitForEditor();
@@ -135,11 +126,6 @@ describe('EditorPage', () => {
     await user.click(screen.getByRole('button', { name: 'Copy link' }));
 
     const note = await screen.findByText(/Link copied!|Copy failed/);
-    // Under jsdom the clipboard.writeText call should succeed silently, so
-    // "Link copied!" is the expected outcome. If jsdom can't complete the write
-    // (e.g. no Permissions API in the test env) the handler falls back to
-    // "Copy failed" — both are acceptable in a jsdom test. What we care about
-    // is that the handler didn't throw and the UI updated.
     expect(note.textContent).toMatch(/^(Link copied!|Copy failed)$/);
   });
 });

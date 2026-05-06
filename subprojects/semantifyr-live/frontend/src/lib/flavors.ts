@@ -9,7 +9,6 @@ export interface FlavorInfo {
   displayName: string;
   languageId: string;
   fileName: string;
-  verify: boolean;
   verificationCommand: string | null;
   discoveryCommand: string | null;
   validateWitnessCommand: string | null;

@@ -15,10 +15,20 @@ import {
   type LiveExample,
   type LiveFlavor,
 } from '../examples';
-import { decodeMaybeCompressedBase64Url, encodeCompressedBase64Url, normalizeBaseUrl } from '../lib/urls';
+import { decodeMaybeCompressedBase64Url, normalizeBaseUrl } from '../lib/urls';
+import { buildShareableUrl } from '../lib/sharing';
 import type { ColorModePreference, ResolvedColorMode } from '../lib/theme';
 import type { FlavorInfo } from '../lib/flavors';
 import type { VerificationCaseState, WitnessValidationStatus } from '../lib/verification';
+import { casesToMarkers } from '../lib/caseMarkers';
+import {
+  persistBool,
+  persistSize,
+  persistString,
+  readPersistedBool,
+  readPersistedSize,
+  readPersistedString,
+} from '../lib/persistence';
 import { fetchPortfolios, type PortfolioInfo } from '../lib/portfolios';
 import type {
   LiveEditorHandle,
@@ -27,7 +37,7 @@ import type {
 import Toolbar from './Toolbar';
 import StatusBar, { type StatusBarInfoItem } from './StatusBar';
 import DevInfoPanel from './DevInfoPanel';
-import RightPane, { type RightPaneTab } from './RightPane';
+import RightPane from './RightPane';
 import PaneSplitter from './PaneSplitter';
 import InflightMonitor from './InflightMonitor';
 import PortfolioSettings from './PortfolioSettings';
@@ -53,66 +63,7 @@ const MIN_VERIFICATION_PANEL_HEIGHT = 80;
 // Editor needs to keep at least this many pixels above the splitter.
 const MIN_EDITOR_AREA_HEIGHT = 200;
 
-function readPersistedSize(key: string, fallback: number): number {
-  if (typeof window === 'undefined') return fallback;
-  try {
-    const stored = window.localStorage.getItem(key);
-    if (!stored) return fallback;
-    const parsed = Number.parseInt(stored, 10);
-    if (Number.isFinite(parsed) && parsed > 0) return parsed;
-  } catch {
-    /* ignore */
-  }
-  return fallback;
-}
-
-function readPersistedString(key: string, fallback: string): string {
-  if (typeof window === 'undefined') return fallback;
-  try {
-    return window.localStorage.getItem(key) ?? fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function readPersistedBool(key: string, fallback: boolean): boolean {
-  if (typeof window === 'undefined') return fallback;
-  try {
-    const stored = window.localStorage.getItem(key);
-    if (stored === 'true') return true;
-    if (stored === 'false') return false;
-  } catch {
-    /* ignore */
-  }
-  return fallback;
-}
-
-function persistString(key: string, value: string): void {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(key, value);
-  } catch {
-    /* ignore */
-  }
-}
-
-function persistBool(key: string, value: boolean): void {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(key, value ? 'true' : 'false');
-  } catch {
-    /* ignore */
-  }
-}
-
-function persistSize(key: string, value: number): void {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(key, String(Math.round(value)));
-  } catch {
-    /* ignore */
-  }
-}
+const COPY_CONFIRMATION_MS = 2000;
 
 function resolveInitialFlavor(search: string): LiveFlavor {
   const params = new URLSearchParams(search);
@@ -181,8 +132,6 @@ export default function EditorPage({
   const [devPanelOpen, setDevPanelOpen] = useState(false);
   const [connectedSince, setConnectedSince] = useState<number | null>(null);
   const [reconnectCount, setReconnectCount] = useState(0);
-  const [generatedSource, setGeneratedSource] = useState<string | null>(null);
-  const [generatedSourceAt, setGeneratedSourceAt] = useState<number | null>(null);
   const [portfolios, setPortfolios] = useState<PortfolioInfo[]>([]);
   const [portfolioId, setPortfolioId] = useState<string>(DEFAULT_PORTFOLIO_ID);
   const [validationPortfolioId, setValidationPortfolioIdState] = useState<string>(() =>
@@ -199,7 +148,6 @@ export default function EditorPage({
     setAutoValidateState(enabled);
     persistBool(AUTO_VALIDATE_KEY, enabled);
   }, []);
-  const [rightPaneTab, setRightPaneTab] = useState<RightPaneTab>('generated');
   const [verificationCases, setVerificationCases] = useState<readonly VerificationCaseState[]>([]);
   const [selectedWitnessCaseId, setSelectedWitnessCaseId] = useState<string | null>(null);
   const [rightPaneWidth, setRightPaneWidth] = useState<number>(() =>
@@ -213,6 +161,7 @@ export default function EditorPage({
   const splitContainerRef = useRef<HTMLDivElement | null>(null);
   const pageContainerRef = useRef<HTMLDivElement | null>(null);
   const verificationPanelRef = useRef<VerificationPanelHandle | null>(null);
+  const copyConfirmationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleRightPaneWidthChange = useCallback((next: number) => {
     setRightPaneWidth(next);
@@ -260,8 +209,6 @@ export default function EditorPage({
     setFlavor(next);
     setExample(firstExample);
     setCode(firstExample.code);
-    setGeneratedSource(null);
-    setGeneratedSourceAt(null);
     setVerificationCases([]);
     setSelectedWitnessCaseId(null);
     if (typeof window !== 'undefined') {
@@ -281,26 +228,44 @@ export default function EditorPage({
     setSelectedWitnessCaseId(null);
   }, [flavor]);
 
+  const flashCopyConfirmation = useCallback((message: string) => {
+    setCopyConfirmation(message);
+    if (copyConfirmationTimerRef.current !== null) {
+      clearTimeout(copyConfirmationTimerRef.current);
+    }
+    copyConfirmationTimerRef.current = setTimeout(() => {
+      copyConfirmationTimerRef.current = null;
+      setCopyConfirmation(null);
+    }, COPY_CONFIRMATION_MS);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (copyConfirmationTimerRef.current !== null) {
+        clearTimeout(copyConfirmationTimerRef.current);
+        copyConfirmationTimerRef.current = null;
+      }
+    };
+  }, []);
+
   const handleCopyLink = useCallback(async () => {
     if (typeof window === 'undefined') return;
-    const params = new URLSearchParams();
-    params.set('mode', flavor.id);
-    params.set('example', example.id);
-    params.set('code', await encodeCompressedBase64Url(code));
-    const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    const url = await buildShareableUrl(
+      `${window.location.origin}${window.location.pathname}`,
+      { flavorId: flavor.id, exampleId: example.id, code },
+    );
     try {
       await navigator.clipboard.writeText(url);
-      setCopyConfirmation('Link copied!');
+      flashCopyConfirmation('Link copied!');
     } catch {
-      setCopyConfirmation('Copy failed');
+      flashCopyConfirmation('Copy failed');
     }
-    setTimeout(() => setCopyConfirmation(null), 2000);
-  }, [flavor.id, example.id, code]);
+  }, [flavor.id, example.id, code, flashCopyConfirmation]);
 
   const editorKey = useMemo(() => `${flavor.id}:${example.id}`, [flavor.id, example.id]);
 
   const showVerificationPanel =
-    !!flavorInfo?.verify && !!flavorInfo.verificationCommand && !!flavorInfo.discoveryCommand;
+    !!flavorInfo?.verificationCommand && !!flavorInfo.discoveryCommand;
   const logoSrc = colorMode === 'dark' ? '/logo-full-dark.svg' : '/logo-full-light.svg';
 
   const statusBarMessage = verificationStatusMessage ?? deriveConnectionMessage(status, statusInfo);
@@ -321,46 +286,10 @@ export default function EditorPage({
     },
   ], [flavor.displayName]);
 
-  // Generated source notification (server-emitted on Gamma / SysMLv2 frontend verifies). We
-  // only auto-switch to the Generated tab on first arrival per session. Subsequent verifies
-  // (especially "verify all", which fires the notification once per case with the same source)
-  // would otherwise yank focus back from the Witness tab on every iteration.
-  useEffect(() => {
-    const handle = editorHandleRef.current;
-    if (!handle) return;
-    const dispose = handle.addNotificationListener('semantifyr/case/generatedSource', (params: unknown) => {
-      const p = params as { source?: string; language?: string } | undefined;
-      if (typeof p?.source !== 'string') return;
-      setGeneratedSource((previous) => {
-        if (previous === null) {
-          setRightPaneTab('generated');
-        }
-        return p.source!;
-      });
-      setGeneratedSourceAt(Date.now());
-    });
-    return () => dispose?.();
-  }, [editorKey]);
-
   // Mirror the verify outcome onto the editor as Monaco markers, so failed @VerificationCase
   // lines get squiggles and the ProblemsPill picks them up. Editor auto-clears on text changes.
   useEffect(() => {
-    const handle = editorHandleRef.current;
-    if (!handle) return;
-    const markers = verificationCases.flatMap((cs) => {
-      const severity = caseStatusToSeverity(cs.status);
-      if (!severity) return [];
-      return [{
-        severity,
-        startLine: cs.caseInfo.location.range.start.line,
-        startColumn: cs.caseInfo.location.range.start.character,
-        endLine: cs.caseInfo.location.range.end.line,
-        endColumn: cs.caseInfo.location.range.end.character,
-        message: cs.message ?? defaultMessageForStatus(cs.status, cs.caseInfo.label),
-        source: 'semantifyr-verify',
-      }];
-    });
-    handle.setVerifyCaseMarkers(markers);
+    editorHandleRef.current?.setVerifyCaseMarkers(casesToMarkers(verificationCases));
   }, [verificationCases]);
 
   // The witness pane shows ONLY the case the user explicitly picked via the verification panel's
@@ -381,13 +310,6 @@ export default function EditorPage({
     if (firstFailure) setSelectedWitnessCaseId(firstFailure.caseInfo.id);
   }, [verificationCases, selectedWitnessCaseId]);
 
-  // Auto-switch to the witness tab when a witness becomes visible.
-  useEffect(() => {
-    if (witnessCaseState && witnessCaseState.trace) {
-      setRightPaneTab('witness');
-    }
-  }, [witnessCaseState?.caseInfo.id, witnessCaseState?.trace]);
-
   const witnessValidation: WitnessValidationStatus | undefined = witnessCaseState?.witnessValidation;
 
   // Resolve the user-facing portfolio name (e.g. "Auto", "Theta") for the witness pane. Falls
@@ -401,26 +323,16 @@ export default function EditorPage({
     return match?.displayName ?? id;
   }, [witnessCaseState, portfolios]);
 
-  const handleOpenGeneratedInOxsts = useCallback(async (source: string) => {
-    // The OXSTS source compresses ~6-12x with gzip+base64url, so even the larger compiled
-    // models fit comfortably inside the server's 4 KB request line and every browser's URL
-    // cap. No localStorage handoff needed; the new tab decodes the URL on load.
-    if (typeof window === 'undefined') return;
-    const targetFlavor = findFlavor('oxsts-with-gamma-library');
-    if (!targetFlavor) return;
-    const params = new URLSearchParams();
-    params.set('mode', targetFlavor.id);
-    params.set('code', await encodeCompressedBase64Url(source));
-    const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }, []);
-
   const handleRevalidateWitness = useCallback(() => {
     if (!witnessCaseState) return;
     verificationPanelRef.current?.revalidate(witnessCaseState.caseInfo.id);
   }, [witnessCaseState]);
 
-  const showRightPane = (generatedSource !== null) || (witnessCaseState?.trace != null);
+  const handleCloseWitness = useCallback(() => {
+    setSelectedWitnessCaseId(null);
+  }, []);
+
+  const showRightPane = witnessCaseState?.trace != null;
 
   return (
     <Box
@@ -525,20 +437,18 @@ export default function EditorPage({
                 borderTop: { xs: '1px solid var(--surface-border)', md: 'none' },
               }}
             >
-              <RightPane
-                generatedSource={generatedSource}
-                generatedSourceLastUpdated={generatedSourceAt}
-                onOpenGeneratedInOxsts={flavor.id === 'gamma' ? handleOpenGeneratedInOxsts : undefined}
-                witnessCase={witnessCaseState?.caseInfo ?? null}
-                witness={witnessCaseState?.trace ?? null}
-                witnessValidation={witnessValidation}
-                verificationPortfolioLabel={verificationPortfolioLabel}
-                validating={witnessCaseState?.validating ?? false}
-                canRevalidate={status === 'connected' && !!flavorInfo?.validateWitnessCommand}
-                onRevalidate={handleRevalidateWitness}
-                activeTab={rightPaneTab}
-                onTabChange={setRightPaneTab}
-              />
+              {witnessCaseState?.trace != null && (
+                <RightPane
+                  witnessCase={witnessCaseState.caseInfo}
+                  witness={witnessCaseState.trace}
+                  witnessValidation={witnessValidation}
+                  verificationPortfolioLabel={verificationPortfolioLabel}
+                  validating={witnessCaseState.validating ?? false}
+                  canRevalidate={status === 'connected' && !!flavorInfo?.validateWitnessCommand}
+                  onRevalidate={handleRevalidateWitness}
+                  onClose={handleCloseWitness}
+                />
+              )}
             </Box>
           </>
         )}
@@ -572,10 +482,8 @@ export default function EditorPage({
             caseListMaxHeight={Math.max(0, verificationPanelHeight - VERIFICATION_PANEL_HEADER_HEIGHT)}
             onStatusMessage={handleVerificationStatus}
             onCasesChange={setVerificationCases}
-            onShowWitness={(caseId) => {
-              setSelectedWitnessCaseId(caseId);
-              setRightPaneTab('witness');
-            }}
+            onShowWitness={setSelectedWitnessCaseId}
+            portfolios={portfolios}
           />
         )}
 
@@ -607,37 +515,11 @@ export default function EditorPage({
           connectedSince={connectedSince}
           reconnectCount={reconnectCount}
           editorHandle={editorHandleRef.current}
+          backendUrl={backendUrl}
         />
       </Box>
     </Box>
   );
 }
 
-function caseStatusToSeverity(status: VerificationCaseState['status']): 'error' | 'warning' | null {
-  switch (status) {
-    case 'failed':
-    case 'errored':
-      return 'error';
-    case 'inconclusive':
-    case 'not_supported':
-      return 'warning';
-    default:
-      return null;
-  }
-}
-
-function defaultMessageForStatus(status: VerificationCaseState['status'], label: string): string {
-  switch (status) {
-    case 'failed':
-      return `${label}: property fails on at least one execution. See the witness pane.`;
-    case 'errored':
-      return `${label}: verification raised an error. Check the verification panel for details.`;
-    case 'inconclusive':
-      return `${label}: the verifier could not produce a decisive verdict. Try a different portfolio.`;
-    case 'not_supported':
-      return `${label}: the chosen portfolio cannot transform this case. Pick another.`;
-    default:
-      return label;
-  }
-}
 

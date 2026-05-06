@@ -18,6 +18,7 @@ import type { LiveEditorHandle, LiveEditorStatus } from './LiveEditor';
 import type { LspMetrics } from '../lib/lspMetrics';
 import type { InfoResponse, SessionInfo } from '../lib/adminApi';
 import { formatDuration, formatIsoDuration } from '../lib/duration';
+import { normalizeBaseUrl } from '../lib/urls';
 
 interface Props {
   open: boolean;
@@ -27,6 +28,8 @@ interface Props {
   connectedSince: number | null;
   reconnectCount: number;
   editorHandle: LiveEditorHandle | null;
+  /** Resolved backend URL; the dev panel must show info for the SAME backend the editor talks to. */
+  backendUrl: string;
 }
 
 
@@ -96,6 +99,7 @@ export default function DevInfoPanel({
   connectedSince,
   reconnectCount,
   editorHandle,
+  backendUrl,
 }: Props): React.JSX.Element {
   const [sessionUptime, setSessionUptime] = useState<string>('-');
   const [pageUptime, setPageUptime] = useState<string>('0s');
@@ -129,21 +133,33 @@ export default function DevInfoPanel({
     return () => clearInterval(interval);
   }, [open, connectedSince, editorHandle]);
 
-  // Fetch backend health when panel opens
+  // Fetch backend health when panel opens. Routes through the resolved backend URL so
+  // ?backend= / VITE_BACKEND_URL overrides see info for the SAME backend the editor talks to.
   useEffect(() => {
     if (!open) return;
     setHealthError(false);
-    fetch('/api/info')
+    const { http } = normalizeBaseUrl(backendUrl);
+    let cancelled = false;
+    fetch(`${http}/api/info`)
       .then((res) => {
-        if (!res.ok) throw new Error('Failed');
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
         return res.json() as Promise<InfoResponse>;
       })
-      .then(setInfoResponse)
+      .then((info) => {
+        if (cancelled) return;
+        setInfoResponse(info);
+      })
       .catch(() => {
+        if (cancelled) return;
         setInfoResponse(null);
         setHealthError(true);
       });
-  }, [open]);
+    return () => {
+      cancelled = true;
+    };
+  }, [open, backendUrl]);
 
   const browser = getBrowserName();
 

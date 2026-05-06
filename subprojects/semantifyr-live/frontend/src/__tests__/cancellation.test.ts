@@ -30,11 +30,6 @@ const sampleCase = (id: string): VerificationCaseSpecification => ({
 
 describe('LSP cancellation plumbing', () => {
   it('createCancellationTokenSource produces a token that vscode-jsonrpc recognises', () => {
-    // The whole point of using vscode-jsonrpc.CancellationTokenSource is that the LSP
-    // language client's `CancellationToken.is(...)` predicate accepts it; if this fails,
-    // the language client treats the token as a positional arg and the wire ends up with
-    // `params: [<payload>, null]`, which is exactly the JsonSyntaxException we saw on
-    // the server.
     const source = createCancellationTokenSource();
     expect(VscodeCancellationToken.is(source.token)).toBe(true);
   });
@@ -82,10 +77,6 @@ describe('LSP cancellation plumbing', () => {
   });
 
   it('wrapClientWithMetrics forwards two args when no token is supplied (no trailing undefined)', async () => {
-    // Regression for the on-load JsonSyntaxException: `connection.sendRequest` from
-    // vscode-jsonrpc maps a missing trailing token into a `null` slot inside a positional
-    // params array. The fix is for the wrapper to drop the third argument entirely when the
-    // caller passed only (method, params).
     const sendRequest = vi.fn<LspClient['sendRequest']>(async () => null);
     const inner: LspClient = { sendRequest, sendNotification: () => {} };
     const wrapped = wrapClientWithMetrics(inner);

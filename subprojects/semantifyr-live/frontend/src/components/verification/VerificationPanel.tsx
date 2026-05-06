@@ -41,6 +41,26 @@ import RefreshButton from './RefreshButton';
 import ProblemsPill from './ProblemsPill';
 import { CaseStatusIcon, SummaryCounts, SummaryStatusIcon } from './StatusDisplay';
 import { formatIsoDurationDetailed } from '../../lib/duration';
+import { buildMetricsTooltip, isMeaningfulDuration } from '../../lib/metricsTooltip';
+
+interface MetricsPillSource {
+  /** Past-participle pill label, e.g. "verified". */
+  verb: 'verified' | 'validated';
+  totalDuration: string;
+  metrics: VerificationCaseState['metrics'];
+  portfolioLabel?: string | undefined;
+  backendId?: string | undefined;
+}
+
+function findPortfolioLabel(
+  portfolios: readonly { id: string; displayName: string }[],
+  id: string | undefined,
+): string | undefined {
+  if (!id) {
+    return undefined;
+  }
+  return portfolios.find((p) => p.id === id)?.displayName ?? id;
+}
 
 interface Props {
   editorHandle: LiveEditorHandle | null;
@@ -58,19 +78,16 @@ interface Props {
   /** Max pixel height for the case list body; overrides the responsive default. */
   caseListMaxHeight?: number | undefined;
   onStatusMessage: (message: string | null) => void;
-  onCasesChange?: (cases: readonly import('../../lib/verification').VerificationCaseState[]) => void;
+  onCasesChange?: (cases: readonly VerificationCaseState[]) => void;
   onShowWitness?: (caseId: string) => void;
+  /** Portfolio catalogue used to render display names in the pill tooltips. */
+  portfolios?: readonly { id: string; displayName: string }[];
 }
 
 /** Imperative handle exposed to the parent so the witness pane can re-fire validation per case. */
 export interface VerificationPanelHandle {
   /** Re-runs witness validation for the given case id; folds the outcome into that case's state. */
   revalidate: (caseId: string) => void;
-}
-
-function isMeaningfulDuration(iso: string | undefined): boolean {
-  // ISO 8601 zero durations from kotlin.time.Duration come through as "PT0S".
-  return typeof iso === 'string' && iso.length > 0 && iso !== 'PT0S';
 }
 
 function isFlaggedValidation(status: VerificationCaseState['witnessValidation']): boolean {
@@ -92,19 +109,23 @@ const pillSx = {
   whiteSpace: 'nowrap',
 } as const;
 
-function verifyMetricsTooltip(caseState: VerificationCaseState): string {
-  const m = caseState.metrics;
-  if (!m) return '';
-  const parts: string[] = [];
-  if (isMeaningfulDuration(m.preparationDuration)) parts.push(`Compile: ${formatIsoDurationDetailed(m.preparationDuration)}`);
-  if (isMeaningfulDuration(m.verificationDuration)) parts.push(`Verify: ${formatIsoDurationDetailed(m.verificationDuration)}`);
-  if (isMeaningfulDuration(m.backAnnotationDuration)) parts.push(`Back-annotate: ${formatIsoDurationDetailed(m.backAnnotationDuration)}`);
-  if (caseState.backendId) parts.push(`Backend: ${caseState.backendId}`);
-  return parts.join('  ·  ');
-}
-
-function validateMetricsTooltip(): string {
-  return 'Cross-validation: end-to-end wall clock of the validation portfolio (compile + verify + back-annotate)';
+function MetricsPill({
+  source,
+}: {
+  source: MetricsPillSource;
+}): React.JSX.Element {
+  const tooltip = buildMetricsTooltip(source.metrics, {
+    portfolioLabel: source.portfolioLabel,
+    backendId: source.backendId,
+  });
+  const label = `${source.verb} in ${formatIsoDurationDetailed(source.totalDuration)}`;
+  return (
+    <Tooltip title={tooltip}>
+      <Box component="span" sx={pillSx}>
+        {label}
+      </Box>
+    </Tooltip>
+  );
 }
 
 function deriveStatusMessage(state: VerificationState): string | null {
@@ -134,6 +155,7 @@ function VerificationPanelInner(
     onStatusMessage,
     onCasesChange,
     onShowWitness,
+    portfolios,
   }: Props,
   ref: React.Ref<VerificationPanelHandle>,
 ): React.JSX.Element {
@@ -396,18 +418,32 @@ function VerificationPanelInner(
                           {caseState.caseInfo.label}
                         </Typography>
                         {caseState.metrics !== undefined && isMeaningfulDuration(caseState.metrics.totalDuration) && (
-                          <Tooltip title={verifyMetricsTooltip(caseState)}>
-                            <Box component="span" sx={pillSx}>
-                              verify {formatIsoDurationDetailed(caseState.metrics.totalDuration)}
-                            </Box>
-                          </Tooltip>
+                          <MetricsPill
+                            source={{
+                              verb: 'verified',
+                              totalDuration: caseState.metrics.totalDuration,
+                              metrics: caseState.metrics,
+                              portfolioLabel: findPortfolioLabel(
+                                portfolios ?? [],
+                                caseState.portfolioId ?? caseState.backendId,
+                              ),
+                              backendId: caseState.backendId,
+                            }}
+                          />
                         )}
-                        {caseState.metrics?.validationDuration && isMeaningfulDuration(caseState.metrics.validationDuration) && (
-                          <Tooltip title={validateMetricsTooltip()}>
-                            <Box component="span" sx={pillSx}>
-                              validate {formatIsoDurationDetailed(caseState.metrics.validationDuration)}
-                            </Box>
-                          </Tooltip>
+                        {caseState.validationMetrics !== undefined && isMeaningfulDuration(caseState.validationMetrics.totalDuration) && (
+                          <MetricsPill
+                            source={{
+                              verb: 'validated',
+                              totalDuration: caseState.validationMetrics.totalDuration,
+                              metrics: caseState.validationMetrics,
+                              portfolioLabel: findPortfolioLabel(
+                                portfolios ?? [],
+                                caseState.validationPortfolioIdUsed ?? caseState.validationBackendId,
+                              ),
+                              backendId: caseState.validationBackendId,
+                            }}
+                          />
                         )}
                         {caseState.validating && (
                           <Tooltip title="Cross-validating witness in the background">

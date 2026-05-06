@@ -28,7 +28,7 @@ describe('LIVE_FLAVORS registry', () => {
       for (const example of flavor.examples) {
         expect(example.id.length).toBeGreaterThan(0);
         expect(example.label.length).toBeGreaterThan(0);
-        // Blank examples have empty code — that's intentional. Named tutorial
+        // Blank examples have empty code - that's intentional. Named tutorial
         // snapshots must have non-empty code.
         if (example.id !== 'blank') {
           expect(example.code.length).toBeGreaterThan(0);
@@ -104,8 +104,6 @@ describe('findExampleAcrossFlavors', () => {
   });
 
   it('disambiguates correctly when multiple flavors define an id with the same name', () => {
-    // Multiple flavors register a "blank" example. The lookup walks flavors in
-    // declaration order, so the first declared one wins.
     const hit = findExampleAcrossFlavors('blank');
     expect(hit?.flavor.id).toBe('oxsts-with-gamma-library');
   });

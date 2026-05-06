@@ -349,23 +349,42 @@ export default function AdminPage(): React.JSX.Element {
   const [authError, setAuthError] = useState(false);
 
   useEffect(() => {
-    void checkAdminAuth().then((ok) => {
-      setAuthState(ok ? 'authenticated' : 'unauthenticated');
-    });
+    let cancelled = false;
+    void checkAdminAuth()
+      .then((ok) => {
+        if (cancelled) return;
+        setAuthState(ok ? 'authenticated' : 'unauthenticated');
+      })
+      .catch(() => {
+        // Network failures must NOT leave us spinning forever; surface the login screen so the
+        // user can retry on their own terms (and see any login error reported by the backend
+        // when the network comes back).
+        if (cancelled) return;
+        setAuthState('unauthenticated');
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleLogin = useCallback(async (pw: string) => {
-    const ok = await loginAdmin(pw);
-    if (ok) {
-      setAuthState('authenticated');
-      setAuthError(false);
-    } else {
+    try {
+      const ok = await loginAdmin(pw);
+      setAuthError(!ok);
+      if (ok) {
+        setAuthState('authenticated');
+      }
+    } catch {
       setAuthError(true);
     }
   }, []);
 
   const handleLogout = useCallback(async () => {
-    await logoutAdmin();
+    try {
+      await logoutAdmin();
+    } catch {
+      /* The user clearly wants to leave; flip local state regardless of network outcome. */
+    }
     setAuthState('unauthenticated');
   }, []);
 

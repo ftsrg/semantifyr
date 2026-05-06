@@ -18,11 +18,6 @@ interface Props {
   editorHandle: LiveEditorHandle | null;
 }
 
-/**
- * Compact "N issues" chip in the verification panel header. Aggregates Monaco-side markers from
- * all sources (LSP-emitted diagnostics + verify-derived case markers) into a single counter and
- * a click-through list. Hidden when there is nothing to report.
- */
 export default function ProblemsPill({ editorHandle }: Props): React.JSX.Element {
   const [problems, setProblems] = useState<ProblemEntry[]>([]);
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);

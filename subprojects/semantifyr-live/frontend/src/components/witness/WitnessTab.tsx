@@ -6,9 +6,12 @@
 
 import React, { useState } from 'react';
 import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import CloseIcon from '@mui/icons-material/Close';
 import type { VerificationCaseSpecification, VerificationTrace, WitnessValidationStatus } from '../../lib/verification';
 import CallTraceView from './CallTraceView';
 import WitnessStateView from './WitnessStateView';
@@ -21,6 +24,8 @@ interface Props {
   validating: boolean;
   canRevalidate: boolean;
   onRevalidate: () => void;
+  /** Dismisses the witness, returning focus to the editor / generated source. */
+  onClose?: () => void;
   verificationPortfolioLabel?: string | undefined;
 }
 
@@ -33,6 +38,7 @@ export default function WitnessTab({
   validating,
   canRevalidate,
   onRevalidate,
+  onClose,
   verificationPortfolioLabel,
 }: Props): React.JSX.Element {
   const [view, setView] = useState<ViewMode>('trace');
@@ -90,6 +96,18 @@ export default function WitnessTab({
           <ToggleButton value="witness">Witness</ToggleButton>
           <ToggleButton value="raw">Raw</ToggleButton>
         </ToggleButtonGroup>
+        {onClose && (
+          <Tooltip title="Close witness">
+            <IconButton
+              size="small"
+              onClick={onClose}
+              aria-label="Close witness"
+              sx={{ color: 'var(--text-muted)', ml: 0.5 }}
+            >
+              <CloseIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+        )}
       </Box>
       <Box sx={{ flex: '1 1 auto', minHeight: 0, minWidth: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         {view === 'trace' && <CallTraceView trace={trace.callTrace} />}
