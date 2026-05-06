@@ -7,7 +7,10 @@
 package hu.bme.mit.semantifyr.lang.ide;
 
 import com.google.inject.Injector;
+import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -15,8 +18,12 @@ import java.util.concurrent.ExecutionException;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.xtext.ide.server.LanguageServerImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class LanguageServerLauncher {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(LanguageServerLauncher.class);
 
     private static final String SOCKET_ARG_PREFIX = "--socket=";
 
@@ -38,11 +45,22 @@ public final class LanguageServerLauncher {
         runOnStdIo(injector, languageClientClass);
     }
 
+    private static <T extends LanguageClient> Launcher<T> buildLauncher(
+            LanguageServerImpl languageServer, Class<T> languageClientClass, InputStream in, OutputStream out) {
+        return new Launcher.Builder<T>()
+                .setLocalService(languageServer)
+                .setRemoteInterface(languageClientClass)
+                .setInput(in)
+                .setOutput(out)
+                .configureGson(CommandGson::configure)
+                .create();
+    }
+
     private static <T extends LanguageClient> void runOnStdIo(Injector injector, Class<T> languageClientClass)
             throws ExecutionException, InterruptedException {
         var languageServer = injector.getInstance(LanguageServerImpl.class);
 
-        var launcher = Launcher.createLauncher(languageServer, languageClientClass, System.in, System.out);
+        var launcher = buildLauncher(languageServer, languageClientClass, System.in, System.out);
         languageServer.connect(launcher.getRemoteProxy());
         launcher.startListening().get();
     }
@@ -52,14 +70,14 @@ public final class LanguageServerLauncher {
         var languageServer = injector.getInstance(LanguageServerImpl.class);
 
         try (var serverSocket = new ServerSocket(port)) {
-            System.out.println("LSP server listening on port " + port);
+            LOGGER.info("LSP server listening on port {}", port);
             try (var clientSocket = serverSocket.accept()) {
-                System.out.println("Client connected from " + clientSocket.getRemoteSocketAddress());
+                LOGGER.info("Client connected from {}", clientSocket.getRemoteSocketAddress());
 
                 var in = clientSocket.getInputStream();
                 var out = clientSocket.getOutputStream();
 
-                var launcher = Launcher.createLauncher(languageServer, languageClientClass, in, out);
+                var launcher = buildLauncher(languageServer, languageClientClass, in, out);
                 languageServer.connect(launcher.getRemoteProxy());
                 launcher.startListening().get();
             }
@@ -77,7 +95,7 @@ public final class LanguageServerLauncher {
             var in = socket.getInputStream();
             var out = socket.getOutputStream();
 
-            var launcher = Launcher.createLauncher(languageServer, languageClientClass, in, out);
+            var launcher = buildLauncher(languageServer, languageClientClass, in, out);
             languageServer.connect(launcher.getRemoteProxy());
             launcher.startListening().get();
         }
