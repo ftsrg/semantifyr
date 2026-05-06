@@ -19,8 +19,12 @@ spotless {
     val palantirVersion = libs.versions.palantirJavaFormat.get()
 
     kotlin {
-        target("src/**/*.kt")
-        targetExclude("**/xtext-gen/**", "**/emf-gen/**", "**/build/**")
+        target(
+            fileTree("src") {
+                include("**/*.kt")
+                exclude("**/xtext-gen/**", "**/emf-gen/**")
+            },
+        )
         ktlint(ktlintVersion).editorConfigOverride(
             mapOf(
                 "ktlint_standard_no-empty-file" to "disabled",
@@ -37,14 +41,22 @@ spotless {
     }
 
     kotlinGradle {
-        target("*.gradle.kts", "src/**/*.gradle.kts")
-        targetExclude("**/xtext-gen/**", "**/emf-gen/**", "**/build/**")
+        target(
+            fileTree(".") {
+                include("*.gradle.kts", "src/**/*.gradle.kts")
+                exclude("build/**", "**/xtext-gen/**", "**/emf-gen/**")
+            },
+        )
         ktlint(ktlintVersion)
     }
 
     java {
-        target("src/**/*.java")
-        targetExclude("**/xtext-gen/**", "**/emf-gen/**", "**/build/**")
+        target(
+            fileTree("src") {
+                include("**/*.java")
+                exclude("**/xtext-gen/**", "**/emf-gen/**")
+            },
+        )
         palantirJavaFormat(palantirVersion)
     }
 }
