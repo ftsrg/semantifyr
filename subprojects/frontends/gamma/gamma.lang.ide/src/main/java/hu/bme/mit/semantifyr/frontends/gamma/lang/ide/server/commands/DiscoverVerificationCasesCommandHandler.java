@@ -6,20 +6,19 @@
 
 package hu.bme.mit.semantifyr.frontends.gamma.lang.ide.server.commands;
 
-import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationCase;
 import hu.bme.mit.semantifyr.frontends.gamma.discovery.GammaVerificationCaseDiscoverer;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
-import hu.bme.mit.semantifyr.lang.ide.server.commands.VerificationCaseSpecification;
+import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification;
 import java.util.List;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 
-public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHandler<Resource> {
+public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHandler<String, Resource> {
 
     @Inject
     private GammaVerificationCaseDiscoverer discoverer;
@@ -40,12 +39,13 @@ public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHand
     }
 
     @Override
-    protected Resource parseArguments(
-            List<Object> arguments, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
-        var uriJson = (JsonPrimitive) arguments.getFirst();
-        var uri = uriJson.getAsString();
+    protected Class<String> getRequestType() {
+        return String.class;
+    }
 
-        return access.doSyncRead(uri, ILanguageServerAccess.Context::getResource);
+    @Override
+    protected Resource resolveArgument(String request, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
+        return access.doSyncRead(request, ILanguageServerAccess.Context::getResource);
     }
 
     @Override

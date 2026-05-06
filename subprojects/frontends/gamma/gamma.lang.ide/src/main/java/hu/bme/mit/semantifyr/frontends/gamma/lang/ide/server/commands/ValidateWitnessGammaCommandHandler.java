@@ -10,13 +10,15 @@ import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.lang.ide.server.ServerSettings;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
+import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
 import java.util.List;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ValidateWitnessGammaCommandHandler extends AbstractCommandHandler<ValidateWitnessCommandParams> {
+public class ValidateWitnessGammaCommandHandler
+        extends AbstractCommandHandler<VerificationCaseRequest, ValidateWitnessCommandParams> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ValidateWitnessGammaCommandHandler.class);
 
@@ -39,8 +41,13 @@ public class ValidateWitnessGammaCommandHandler extends AbstractCommandHandler<V
     }
 
     @Override
-    protected ValidateWitnessCommandParams parseArguments(
-            List<Object> arguments, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
+    protected Class<VerificationCaseRequest> getRequestType() {
+        return VerificationCaseRequest.class;
+    }
+
+    @Override
+    protected ValidateWitnessCommandParams resolveArgument(
+            VerificationCaseRequest request, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
         throw new IllegalStateException("Not yet implemented");
     }
 
@@ -49,7 +56,6 @@ public class ValidateWitnessGammaCommandHandler extends AbstractCommandHandler<V
             ValidateWitnessCommandParams arguments,
             ILanguageServerAccess access,
             CommandProgressContext progressContext) {
-
         throw new IllegalStateException("Not yet implemented");
     }
 }

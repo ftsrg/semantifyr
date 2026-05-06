@@ -22,14 +22,15 @@ public class GammaCommandService extends SemantifyrCommandService {
     private VerifyGammaCaseCommandHandler verifyGammaCaseCommandHandler;
 
     @Inject
-    private ValidateWitnessGammaCommandHandler validateWitnessGammaCommandHandler;
+    private CompileGammaCommandHandler compileGammaCommandHandler;
 
     private List<CommandHandler> commandHandlers;
 
     @Override
     protected List<CommandHandler> getCommandHandlers() {
         if (commandHandlers == null) {
-            commandHandlers = List.of(discoverVerificationCasesCommandHandler, verifyGammaCaseCommandHandler);
+            commandHandlers = List.of(
+                    discoverVerificationCasesCommandHandler, verifyGammaCaseCommandHandler, compileGammaCommandHandler);
         }
         return commandHandlers;
     }
