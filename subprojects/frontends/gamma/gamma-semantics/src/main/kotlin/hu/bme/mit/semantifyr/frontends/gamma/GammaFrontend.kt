@@ -74,6 +74,19 @@ class GammaFrontend @Inject private constructor(
 
     private val logger by loggerFactory()
 
+    val outputDirectory: Path
+        get() = gammaFrontendConfig.outputDirectory
+
+    val timeout: Duration?
+        get() = gammaFrontendConfig.timeout
+
+    fun buildVerifierWith(
+        portfolio: VerificationPortfolio,
+        outputDirectory: Path,
+    ): SemantifyrVerifier {
+        return buildVerifier(outputDirectory, portfolio)
+    }
+
     suspend fun verify(
         gammaVerificationCase: GammaVerificationCase,
         progress: ProgressContext = ProgressContext.NoOp,
@@ -176,10 +189,13 @@ class GammaFrontend @Inject private constructor(
     //     }
     // }
 
-    private fun buildVerifier(outputPath: Path): SemantifyrVerifier {
+    private fun buildVerifier(
+        outputPath: Path,
+        portfolioOverride: VerificationPortfolio = gammaFrontendConfig.portfolio,
+    ): SemantifyrVerifier {
         val verifierBuilder = SemantifyrVerifier.builder()
             .injector(gammaFrontendConfig.oxstsInjector)
-            .portfolio(gammaFrontendConfig.portfolio)
+            .portfolio(portfolioOverride)
             .artifacts(gammaFrontendConfig.artifacts)
             .outputDirectory(outputPath)
             .environment(gammaFrontendConfig.environment)

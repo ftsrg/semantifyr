@@ -17,6 +17,8 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.GammaStandaloneSetup
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
+import hu.bme.mit.semantifyr.verifier.witness.WitnessValidator
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Named
 import org.junit.jupiter.params.provider.Arguments
@@ -77,22 +79,27 @@ class GammaFrontendTestHelper {
         return result
     }
 
-    // TODO: Re-enable once GammaFrontend.validateWitness is restored (see comment there).
-    // suspend fun checkValidWitness(
-    //     frontend: GammaFrontend,
-    //     gammaVerificationCase: GammaVerificationCase,
-    //     verificationResult: GammaVerificationResult,
-    // ): WitnessValidationResult {
-    //     val witness = requireNotNull(verificationResult.witness) {
-    //         "Expected ${gammaVerificationCase.qualifiedName} to produce a witness, got verdict ${verificationResult.verification.verdict}"
-    //     }
-    //     val validationResult = frontend.validateWitness(gammaVerificationCase, witness)
-    //     Assertions.assertTrue(
-    //         validationResult.isValid,
-    //         "Witness for ${gammaVerificationCase.qualifiedName} did not validate: $validationResult (${validationResult.verification.message ?: "no message"})",
-    //     )
-    //     return validationResult
-    // }
+    suspend fun checkConformance(
+        frontend: GammaFrontend,
+        gammaVerificationCase: GammaVerificationCase,
+        validationPortfolio: VerificationPortfolio,
+        expectedVerdict: VerificationVerdict = VerificationVerdict.Passed,
+    ): GammaVerificationResult {
+        val result = checkVerificationCase(frontend, gammaVerificationCase, expectedVerdict)
+        val witness = result.witness ?: return result
+
+        val validationDirectory = frontend.outputDirectory
+            .resolve(gammaVerificationCase.qualifiedName)
+            .resolve("validation")
+        val validationVerifier = frontend.buildVerifierWith(validationPortfolio, validationDirectory)
+        val outcome = WitnessValidator().validate(validationVerifier, witness.trace)
+        assertThat(outcome.isValid)
+            .describedAs(
+                "Witness for ${gammaVerificationCase.qualifiedName} must re-verify Passed via ${validationPortfolio.id} but got ${outcome.verification.verdict} (${outcome.verification.message ?: "no message"})",
+            )
+            .isTrue()
+        return result
+    }
 
     companion object {
         @JvmStatic

@@ -44,8 +44,7 @@ class GammaVerificationTests {
             portfolio = Portfolios.SmartFull,
             outputDirectory = artifactRoot,
         )
-        helper.checkVerificationCase(frontend, gammaVerificationCase)
-        // TODO: Re-enable witness re-validation once the back-annotated witness type-checks.
+        helper.checkConformance(frontend, gammaVerificationCase, Portfolios.AllAgree)
     }
 
     @ParameterizedTest

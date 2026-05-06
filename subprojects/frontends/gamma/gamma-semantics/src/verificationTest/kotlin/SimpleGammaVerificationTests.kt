@@ -36,8 +36,7 @@ class SimpleGammaVerificationTests {
             portfolio = Portfolios.SmartFull,
             outputDirectory = artifactRoot,
         )
-        helper.checkVerificationCase(frontend, verificationCase)
-        // TODO: Re-enable witness re-validation once the back-annotated witness type-checks.
+        helper.checkConformance(frontend, verificationCase, Portfolios.AllAgree)
     }
 
 }
