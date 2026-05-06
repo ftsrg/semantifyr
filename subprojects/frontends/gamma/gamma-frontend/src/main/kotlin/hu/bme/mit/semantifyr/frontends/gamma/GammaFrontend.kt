@@ -22,9 +22,12 @@ import hu.bme.mit.semantifyr.oxsts.lang.library.ClasspathBasedOxstsLibrary
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.Trace
+import hu.bme.mit.semantifyr.verifier.TraceDto
 import hu.bme.mit.semantifyr.verifier.VerificationResult
+import hu.bme.mit.semantifyr.verifier.VerificationResultDto
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
+import hu.bme.mit.semantifyr.verifier.toJavaDto
 import kotlinx.coroutines.runBlocking
 import org.eclipse.xtext.EcoreUtil2
 import java.nio.file.Path
@@ -46,6 +49,44 @@ data class GammaVerificationResult(
     val verification: VerificationResult,
     val witness: GammaWitness?,
 )
+
+data class GammaWitnessDto(
+    val trace: TraceDto,
+    val witnessPath: Path,
+    val compiledModelPath: Path,
+) {
+    companion object {
+        fun fromGammaWitness(witness: GammaWitness): GammaWitnessDto {
+            return GammaWitnessDto(
+                trace = witness.trace.toJavaDto(),
+                witnessPath = witness.witnessPath,
+                compiledModelPath = witness.compiledModelPath,
+            )
+        }
+    }
+}
+
+data class GammaVerificationResultDto(
+    val verification: VerificationResultDto,
+    val witness: GammaWitnessDto?,
+) {
+    companion object {
+        fun fromGammaResult(result: GammaVerificationResult): GammaVerificationResultDto {
+            return GammaVerificationResultDto(
+                verification = result.verification.toJavaDto(),
+                witness = result.witness?.let { GammaWitnessDto.fromGammaWitness(it) },
+            )
+        }
+    }
+}
+
+fun GammaVerificationResult.toJavaDto(): GammaVerificationResultDto {
+    return GammaVerificationResultDto.fromGammaResult(this)
+}
+
+fun GammaWitness.toJavaDto(): GammaWitnessDto {
+    return GammaWitnessDto.fromGammaWitness(this)
+}
 
 enum class GammaVariant(
     internal val resourcePrefix: String,
@@ -128,9 +169,9 @@ class GammaFrontend @Inject private constructor(
     fun verifyBlocking(
         case: GammaVerificationCase,
         progress: ProgressContext = ProgressContext.NoOp,
-    ): GammaVerificationResult {
+    ): GammaVerificationResultDto {
         return runBlocking {
-            verify(case, progress)
+            verify(case, progress).toJavaDto()
         }
     }
 

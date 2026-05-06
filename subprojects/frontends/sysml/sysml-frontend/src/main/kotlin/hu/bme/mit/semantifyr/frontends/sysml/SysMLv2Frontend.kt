@@ -21,8 +21,10 @@ import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.VerificationResult
+import hu.bme.mit.semantifyr.verifier.VerificationResultDto
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
+import hu.bme.mit.semantifyr.verifier.toJavaDto
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import kotlin.io.path.nameWithoutExtension
@@ -92,9 +94,9 @@ class SysMLv2Frontend private constructor(
     fun verifyBlocking(
         case: VerificationCase,
         progress: ProgressContext = ProgressContext.NoOp,
-    ): VerificationResult {
+    ): VerificationResultDto {
         return runBlocking {
-            verify(case, progress)
+            verify(case, progress).toJavaDto()
         }
     }
 
