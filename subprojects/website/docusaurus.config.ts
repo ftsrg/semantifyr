@@ -167,7 +167,7 @@ export default {
     },
   } satisfies UserThemeConfig,
   future: {
-    experimental_faster: {
+    faster: {
       lightningCssMinimizer: true,
       mdxCrossCompilerCache: true,
       rspackBundler: false,

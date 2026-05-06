@@ -10,6 +10,10 @@ plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.frontend")
 }
 
+tasks.npmInstall {
+    workingDir = rootProject.projectDir
+}
+
 val assembleFrontend by tasks.registering(NpmTask::class) {
     inputs.dir(project.layout.projectDirectory.dir("src"))
     inputs.dir(project.layout.projectDirectory.dir("static"))
@@ -17,7 +21,8 @@ val assembleFrontend by tasks.registering(NpmTask::class) {
     inputs.file(project.layout.projectDirectory.file("sidebars.ts"))
     inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
     inputs.file(project.layout.projectDirectory.file("package.json"))
-    inputs.file(project.layout.projectDirectory.file("package-lock.json"))
+    inputs.file(rootProject.layout.projectDirectory.file("package.json"))
+    inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
     inputs.files(tasks.npmInstall)
 
     npmCommand.set(listOf("run", "build"))
