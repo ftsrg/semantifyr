@@ -25,6 +25,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import java.net.InetSocketAddress
+import java.net.ServerSocket
+import java.net.Socket
 import java.nio.file.Files
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createDirectories
@@ -71,18 +74,45 @@ class LspServerRawRunner @Inject constructor(
 
         initializeWorkspace()
         try {
-            val process = startProcess()
+            val serverSocket = ServerSocket().apply {
+                reuseAddress = true
+                bind(InetSocketAddress("127.0.0.1", 0))
+            }
             try {
-                launchOutgoingPump(process)
-                launchIncomingPump(process)
-                launchStderrDrain(process)
-                runInterruptible(Dispatchers.IO) { process.waitFor() }
-                logger.info { "LSP process exited (flavor=${flavor.id}, exitCode=${process.exitValue()})" }
+                val port = serverSocket.localPort
+                logger.info { "Listening for LSP server on 127.0.0.1:$port (flavor=${flavor.id})" }
+                val process = startProcess(port)
+                try {
+                    launchProcessOutputDrain(process)
+                    val clientSocket = acceptClientConnection(serverSocket, process)
+                    try {
+                        launchOutgoingPump(clientSocket)
+                        launchIncomingPump(clientSocket)
+                        runInterruptible(Dispatchers.IO) { process.waitFor() }
+                        logger.info { "LSP process exited (flavor=${flavor.id}, exitCode=${process.exitValue()})" }
+                    } finally {
+                        withContext(NonCancellable) {
+                            outgoing.close()
+                            incoming.close()
+                            try {
+                                clientSocket.close()
+                            } catch (_: IOException) {
+                                // already closed
+                            }
+                        }
+                    }
+                } finally {
+                    withContext(NonCancellable) {
+                        process.destroyTree()
+                    }
+                }
             } finally {
                 withContext(NonCancellable) {
-                    outgoing.close()
-                    incoming.close()
-                    process.destroyTree()
+                    try {
+                        serverSocket.close()
+                    } catch (_: IOException) {
+                        // already closed
+                    }
                 }
             }
         } finally {
@@ -114,47 +144,70 @@ class LspServerRawRunner @Inject constructor(
         librarySource.toFile().copyRecursively(libraryTarget.toFile(), overwrite = true)
     }
 
-    private fun startProcess(): Process {
+    private fun startProcess(port: Int): Process {
         val lspBinariesPath = config.sessionManager.lspBinariesPath ?: error("Binary directory is not set. Set it via sessionManager.lspBinariesDirectory or the environment.")
         val binary = lspBinariesPath.resolve(flavor.binaryRelativePath)
         require(Files.isExecutable(binary)) {
             "LSP binary for flavor '${flavor.id}' not found or not executable: $binary"
         }
 
-        logger.info { "Spawning LSP server (flavor=${flavor.id}, binary=$binary, workspace=$workingDirectoryPath)" }
-        return ProcessBuilder(binary.absolutePathString(), "--code-lens-mode=none")
+        logger.info { "Spawning LSP server (flavor=${flavor.id}, binary=$binary, workspace=$workingDirectoryPath, socketPort=$port)" }
+        return ProcessBuilder(binary.absolutePathString(), "--socket=$port", "--code-lens-mode=none")
             .directory(workingDirectoryPath.toFile())
             .redirectErrorStream(false)
+            .redirectOutput(ProcessBuilder.Redirect.PIPE)
             .redirectError(ProcessBuilder.Redirect.PIPE)
             .start()
     }
 
-    private fun CoroutineScope.launchOutgoingPump(process: Process) {
+    private suspend fun CoroutineScope.acceptClientConnection(serverSocket: ServerSocket, process: Process): Socket {
+        val watchdog = launch(Dispatchers.IO) {
+            runInterruptible { process.waitFor() }
+            try {
+                serverSocket.close()
+            } catch (_: IOException) {
+                // already closed
+            }
+        }
+        try {
+            val socket = runInterruptible(Dispatchers.IO) { serverSocket.accept() }
+            watchdog.cancel()
+            logger.info { "LSP server connected from ${socket.remoteSocketAddress} (flavor=${flavor.id})" }
+            return socket
+        } catch (e: IOException) {
+            if (!process.isAlive) {
+                error("LSP process exited before connecting back (flavor=${flavor.id}, exitCode=${process.exitValue()})")
+            }
+            throw e
+        }
+    }
+
+    private fun CoroutineScope.launchOutgoingPump(socket: Socket) {
         launch(Dispatchers.IO) {
             try {
                 outgoing.consumeEach { raw ->
                     runInterruptible {
-                        LspFrameCodec.writeFrame(process.outputStream, raw)
+                        LspFrameCodec.writeFrame(socket.getOutputStream(), raw)
                     }
                 }
             } catch (_: IOException) {
-                // process stdin closed during shutdown
+                // socket closed during shutdown
             }
             logger.debug { "Outgoing pump ended" }
         }
     }
 
-    private fun CoroutineScope.launchIncomingPump(process: Process) {
+    private fun CoroutineScope.launchIncomingPump(socket: Socket) {
         launch(Dispatchers.IO) {
             try {
                 while (true) {
                     val raw = runInterruptible {
-                        LspFrameCodec.readFrame(process.inputStream)
+                        LspFrameCodec.readFrame(socket.getInputStream())
                     } ?: break
                     incoming.send(raw)
                 }
             } catch (_: IOException) {
-                // process stdout closed during shutdown
+                // socket closed during shutdown
             } finally {
                 incoming.close()
             }
@@ -162,7 +215,16 @@ class LspServerRawRunner @Inject constructor(
         }
     }
 
-    private fun CoroutineScope.launchStderrDrain(process: Process) {
+    private fun CoroutineScope.launchProcessOutputDrain(process: Process) {
+        launch(Dispatchers.IO) {
+            runInterruptible {
+                process.inputStream.bufferedReader().use { reader ->
+                    reader.forEachLine { line ->
+                        logger.debug { "lsp.stdout: $line" }
+                    }
+                }
+            }
+        }
         launch(Dispatchers.IO) {
             runInterruptible {
                 process.errorStream.bufferedReader().use { reader ->
