@@ -166,3 +166,49 @@ tasks.processResources {
         into("sysml-cli")
     }
 }
+
+val compiledExamplesDir = layout.buildDirectory.dir("compiled-examples")
+val examplesSourceDir = layout.projectDirectory.dir("../models/examples")
+val cliBundleDir = layout.buildDirectory.dir("cli-bundle")
+
+fun sysmlExampleTask(name: String) = tasks.register<NodeTask>("compileSysmlExample_$name") {
+    inputs.files(bundleCli)
+    val sourceFile = examplesSourceDir.file("$name.sysml")
+    val targetFile = compiledExamplesDir.map { it.file("$name.oxsts") }
+    inputs.file(sourceFile).withPathSensitivity(PathSensitivity.NAME_ONLY)
+    outputs.file(targetFile)
+    outputs.cacheIf { true }
+    script = cliBundleDir.get().file("index.js").asFile
+    args.set(provider {
+        listOf(
+            "compile",
+            sourceFile.asFile.absolutePath,
+            cliBundleDir.get().dir("sysml.library").asFile.absolutePath,
+            "-o",
+            targetFile.get().asFile.absolutePath,
+        )
+    })
+}
+
+val compileSysmlExampleCompressedSpacecraft = sysmlExampleTask("compressedspacecraft")
+val compileSysmlExampleCrossroads = sysmlExampleTask("crossroads")
+val compileSysmlExampleDoorAccess = sysmlExampleTask("door_access")
+val compileSysmlExampleOrionProtocol = sysmlExampleTask("orion_protocol")
+
+val compileSysmlExamples by tasks.registering {
+    inputs.files(compileSysmlExampleCompressedSpacecraft)
+    inputs.files(compileSysmlExampleCrossroads)
+    inputs.files(compileSysmlExampleDoorAccess)
+    inputs.files(compileSysmlExampleOrionProtocol)
+}
+
+val compiledExamples by configurations.creating {
+    isCanBeConsumed = true
+    isCanBeResolved = false
+}
+
+artifacts {
+    add(compiledExamples.name, compiledExamplesDir) {
+        builtBy(compileSysmlExamples)
+    }
+}
