@@ -26,11 +26,6 @@ Workflow {
 					root = null
 					srcGen = '${rootPath}/xsts.lang/src/testFixtures/xtext-gen'
 				}
-				genericIde = {
-					enabled = true
-					root = null
-                    srcGen = "${rootPath}/xsts.lang/build/generated/sources/xtext/ide"
-                }
 				mavenLayout = true
 			}
 			code = {
