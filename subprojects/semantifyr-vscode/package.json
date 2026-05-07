@@ -215,7 +215,7 @@
     "build": "npm run check && npm run assemble",
     "build:production": "npm run check && npm run assemble:production",
     "watch:all": "concurrently -k \"npm run typecheck:watch\" \"npm run assemble:watch\"",
-    "bundle": "npm run build:production && vsce package --out build/"
+    "bundle": "npm run build:production && vsce package --no-dependencies --out build/"
   },
   "dependencies": {
     "@semantifyr/editor-common": "*",
@@ -224,10 +224,10 @@
   "devDependencies": {
     "@types/node": "^20.17.19",
     "@types/vscode": "^1.93.0",
+    "@vscode/vsce": "^3.2.2",
     "esbuild": "^0.25.0",
     "eslint": "^9.20.1",
     "typescript": "~5.7.3",
-    "typescript-eslint": "^8.24.1",
-    "@vscode/vsce": "^3.2.2"
+    "typescript-eslint": "^8.24.1"
   }
 }
