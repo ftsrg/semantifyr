@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.live.backend.session
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.VerificationConfig
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -53,24 +54,26 @@ class GlobalVerificationManagerTest {
 
     @Test
     fun `withPermit suspends when no permits available`() = runTest {
-        val manager = manager(concurrency = 1)
-        var secondStarted = false
+        coroutineScope {
+            val manager = manager(concurrency = 1)
+            var secondStarted = false
 
-        val first = async {
-            manager.withPermit {
-                assertThat(secondStarted).isFalse()
+            val first = async {
+                manager.withPermit {
+                    assertThat(secondStarted).isFalse()
+                }
             }
-        }
 
-        val second = async {
-            manager.withPermit {
-                secondStarted = true
+            val second = async {
+                manager.withPermit {
+                    secondStarted = true
+                }
             }
-        }
 
-        first.await()
-        second.await()
-        assertThat(secondStarted).isTrue()
-        assertThat(manager.availablePermits).isEqualTo(1)
+            first.await()
+            second.await()
+            assertThat(secondStarted).isTrue()
+            assertThat(manager.availablePermits).isEqualTo(1)
+        }
     }
 }

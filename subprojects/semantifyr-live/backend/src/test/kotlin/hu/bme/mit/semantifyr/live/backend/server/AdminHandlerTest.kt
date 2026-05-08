@@ -6,12 +6,13 @@
 
 package hu.bme.mit.semantifyr.live.backend.server
 
-import com.google.inject.AbstractModule
-import com.google.inject.Guice
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
-import hu.bme.mit.semantifyr.live.backend.BackendModule
 import hu.bme.mit.semantifyr.live.backend.ServerConfig
 import hu.bme.mit.semantifyr.live.backend.session.SessionManager
+import hu.bme.mit.semantifyr.live.backend.testing.handler
+import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrApp
+import hu.bme.mit.semantifyr.live.backend.testing.jsonClient
+import hu.bme.mit.semantifyr.live.backend.testing.testInjector
 import io.ktor.client.call.body
 import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.request.delete
@@ -24,10 +25,6 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.application.createApplicationPlugin
-import io.ktor.server.application.install
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -56,40 +53,26 @@ class AdminHandlerTest {
         `when`(sessionManager.getSessionInfos()).thenReturn(sessionInfos)
         `when`(sessionManager.cancelSession("test-session")).thenReturn(true)
         `when`(sessionManager.cancelSession("nonexistent")).thenReturn(false)
-        wheneverBlocking { sessionManager.cancelVerification("test-session", "req-1") }.thenReturn(true)
-        wheneverBlocking { sessionManager.cancelVerification("test-session", "nonexistent") }.thenReturn(false)
+        wheneverBlocking {
+            sessionManager.cancelVerification("test-session", "req-1")
+        }.thenReturn(true)
+        wheneverBlocking {
+            sessionManager.cancelVerification("test-session", "nonexistent")
+        }.thenReturn(false)
 
-        val injector = Guice.createInjector(
-            BackendModule(config),
-            object : AbstractModule() {
-                override fun configure() {
-                    bind(SessionManager::class.java).toInstance(sessionManager)
-                }
-            },
-        )
-        return injector.getInstance(AdminHandler::class.java)
-    }
-
-    private fun ApplicationTestBuilder.installAdmin(handler: AdminHandler) {
-        install(
-            createApplicationPlugin("admin") {
-                with(handler) { application.configure() }
-            },
-        )
-        install(
-            createApplicationPlugin("content-negotiation-setup") {
-                application.install(ContentNegotiation) { json() }
-            },
-        )
-    }
-
-    private fun ApplicationTestBuilder.jsonClient() = createClient {
-        install(ClientContentNegotiation) { json() }
+        return testInjector(config) {
+            bind(SessionManager::class.java).toInstance(sessionManager)
+        }.handler<AdminHandler>()
     }
 
     @Test
     fun `status endpoint returns 401 without auth`() = testApplication {
-        installAdmin(createHandler())
+        val handler = createHandler()
+        installSemantifyrApp {
+            with(handler) {
+                configure()
+            }
+        }
 
         val response = client.get("/api/admin/status")
         assertThat(response.status).isEqualTo(HttpStatusCode.Unauthorized)
@@ -97,7 +80,12 @@ class AdminHandlerTest {
 
     @Test
     fun `status endpoint returns 401 with wrong password`() = testApplication {
-        installAdmin(createHandler())
+        val handler = createHandler()
+        installSemantifyrApp {
+            with(handler) {
+                configure()
+            }
+        }
 
         val response = client.get("/api/admin/status") {
             header(HttpHeaders.Authorization, basicAuth(password = "wrong"))
@@ -123,7 +111,12 @@ class AdminHandlerTest {
                 timeSinceLastServerMessage = 1.seconds,
             ),
         )
-        installAdmin(createHandler(sessionInfos = listOf(testSession)))
+        val handler = createHandler(sessionInfos = listOf(testSession))
+        installSemantifyrApp {
+            with(handler) {
+                configure()
+            }
+        }
         val client = jsonClient()
 
         val response = client.get("/api/admin/status") {
@@ -137,8 +130,8 @@ class AdminHandlerTest {
         assertThat(status.sessions[0].remoteIp).isEqualTo("127.0.0.1")
         assertThat(status.sessions[0].flavorId).isEqualTo("oxsts")
         assertThat(status.sessions[0].started).isTrue()
-        assertThat(status.sessions[0].bridgeInfo?.clientMessageCount).isEqualTo(10)
-        assertThat(status.sessions[0].bridgeInfo?.serverMessageCount).isEqualTo(15)
+        assertThat(status.sessions[0].bridgeInfo.clientMessageCount).isEqualTo(10)
+        assertThat(status.sessions[0].bridgeInfo.serverMessageCount).isEqualTo(15)
         assertThat(status.sessions[0].activeVerifications).hasSize(1)
         assertThat(status.sessions[0].activeVerifications[0].requestId).isEqualTo("req-1")
         assertThat(status.sessions[0].activeVerifications[0].portfolioId).isEqualTo("smart-full")
@@ -146,7 +139,12 @@ class AdminHandlerTest {
 
     @Test
     fun `config endpoint returns server configuration`() = testApplication {
-        installAdmin(createHandler())
+        val handler = createHandler()
+        installSemantifyrApp {
+            with(handler) {
+                configure()
+            }
+        }
         val client = jsonClient()
 
         val response = client.get("/api/admin/config") {
@@ -162,7 +160,12 @@ class AdminHandlerTest {
 
     @Test
     fun `cancel session returns 200 for existing session`() = testApplication {
-        installAdmin(createHandler())
+        val handler = createHandler()
+        installSemantifyrApp {
+            with(handler) {
+                configure()
+            }
+        }
 
         val response = client.delete("/api/admin/sessions/test-session") {
             header(HttpHeaders.Authorization, basicAuth())
@@ -172,7 +175,12 @@ class AdminHandlerTest {
 
     @Test
     fun `cancel session returns 404 for nonexistent session`() = testApplication {
-        installAdmin(createHandler())
+        val handler = createHandler()
+        installSemantifyrApp {
+            with(handler) {
+                configure()
+            }
+        }
 
         val response = client.delete("/api/admin/sessions/nonexistent") {
             header(HttpHeaders.Authorization, basicAuth())
@@ -182,7 +190,12 @@ class AdminHandlerTest {
 
     @Test
     fun `cancel verification returns 200 for existing verification`() = testApplication {
-        installAdmin(createHandler())
+        val handler = createHandler()
+        installSemantifyrApp {
+            with(handler) {
+                configure()
+            }
+        }
 
         val response = client.delete("/api/admin/sessions/test-session/verifications/req-1") {
             header(HttpHeaders.Authorization, basicAuth())
@@ -192,7 +205,12 @@ class AdminHandlerTest {
 
     @Test
     fun `cancel verification returns 404 for nonexistent verification`() = testApplication {
-        installAdmin(createHandler())
+        val handler = createHandler()
+        installSemantifyrApp {
+            with(handler) {
+                configure()
+            }
+        }
 
         val response = client.delete("/api/admin/sessions/test-session/verifications/nonexistent") {
             header(HttpHeaders.Authorization, basicAuth())
@@ -202,18 +220,16 @@ class AdminHandlerTest {
 
     @Test
     fun `admin endpoints reject when no password is configured`() = testApplication {
-        val config = BackendConfig()
         val sessionManager = mock(SessionManager::class.java)
-        val injector = Guice.createInjector(
-            BackendModule(config),
-            object : AbstractModule() {
-                override fun configure() {
-                    bind(SessionManager::class.java).toInstance(sessionManager)
-                }
-            },
-        )
-        val handler = injector.getInstance(AdminHandler::class.java)
-        installAdmin(handler)
+        val handler = testInjector {
+            bind(SessionManager::class.java).toInstance(sessionManager)
+        }.handler<AdminHandler>()
+
+        installSemantifyrApp {
+            with(handler) {
+                configure()
+            }
+        }
 
         val response = client.get("/api/admin/status") {
             header(HttpHeaders.Authorization, basicAuth())
@@ -223,7 +239,12 @@ class AdminHandlerTest {
 
     @Test
     fun `login sets a cookie that authenticates subsequent requests`() = testApplication {
-        installAdmin(createHandler())
+        val handler = createHandler()
+        installSemantifyrApp {
+            with(handler) {
+                configure()
+            }
+        }
         val client = createClient {
             install(ClientContentNegotiation) { json() }
             install(HttpCookies)
@@ -247,7 +268,12 @@ class AdminHandlerTest {
 
     @Test
     fun `login rejects an incorrect password`() = testApplication {
-        installAdmin(createHandler())
+        val handler = createHandler()
+        installSemantifyrApp {
+            with(handler) {
+                configure()
+            }
+        }
         val client = createClient {
             install(ClientContentNegotiation) { json() }
             install(HttpCookies)
@@ -265,7 +291,12 @@ class AdminHandlerTest {
 
     @Test
     fun `logout clears the session cookie`() = testApplication {
-        installAdmin(createHandler())
+        val handler = createHandler()
+        installSemantifyrApp {
+            with(handler) {
+                configure()
+            }
+        }
         val client = createClient {
             install(ClientContentNegotiation) { json() }
             install(HttpCookies)

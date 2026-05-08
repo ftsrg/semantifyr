@@ -12,11 +12,14 @@ import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.BackendModule
 import hu.bme.mit.semantifyr.live.backend.ServerConfig
 import hu.bme.mit.semantifyr.live.backend.SessionManagerConfig
-import hu.bme.mit.semantifyr.live.backend.server.AdminHandler
+import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SemantifyrLiveMethods
 import hu.bme.mit.semantifyr.live.backend.server.AdminStatusResponse
-import hu.bme.mit.semantifyr.live.backend.server.ApiRoutesHandler
-import hu.bme.mit.semantifyr.live.backend.server.WebSocketHandler
 import hu.bme.mit.semantifyr.live.backend.session.SessionManager
+import hu.bme.mit.semantifyr.live.backend.testing.LspWire
+import hu.bme.mit.semantifyr.live.backend.testing.awaitResponseFor
+import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrApp
+import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrLiveBackend
+import hu.bme.mit.semantifyr.live.backend.testing.jsonClient
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -25,7 +28,6 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.application.createApplicationPlugin
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -44,17 +46,14 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Base64
-import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.minutes
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 import io.ktor.client.plugins.websocket.WebSockets as ClientWebSockets
 import io.ktor.client.plugins.websocket.webSocket as clientWebSocket
-import io.ktor.server.websocket.WebSockets as ServerWebSockets
 
 class ServerIntegrationTest {
 
@@ -63,6 +62,10 @@ class ServerIntegrationTest {
     }
 
     private val semanticLibrariesDirectory = System.getProperty("semantifyr.live.semanticLibraries")?.let {
+        Path.of(it)
+    }
+
+    private val oxstsTestModelsDirectory = System.getProperty("semantifyr.live.oxstsTestModels")?.let {
         Path.of(it)
     }
 
@@ -104,38 +107,34 @@ class ServerIntegrationTest {
         return "Basic $credentials"
     }
 
-    private fun jsonClient(builder: ApplicationTestBuilder) = builder.createClient {
-        install(ClientContentNegotiation) { json() }
-        install(ClientWebSockets)
-    }
-
-    private fun ApplicationTestBuilder.configureServer(config: BackendConfig) {
-        val injector = Guice.createInjector(BackendModule(config))
-        install(
-            createApplicationPlugin("integration-server") {
-                application.install(ContentNegotiation) { json() }
-                application.install(ServerWebSockets)
-                with(injector.getInstance(ApiRoutesHandler::class.java)) { application.configure() }
-                with(injector.getInstance(AdminHandler::class.java)) { application.configure() }
-                with(injector.getInstance(WebSocketHandler::class.java)) { application.configure() }
-            },
-        )
+    private fun runIntegrationTest(
+        tmp: Path,
+        block: suspend ApplicationTestBuilder.(injector: Injector) -> Unit,
+    ) = testApplication {
+        assumeTrue(lspBinariesDirectory != null, "semantifyr.live.lsp system property not set")
+        val injector = Guice.createInjector(BackendModule(config(tmp)))
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(injector)
+        }
+        block(injector)
     }
 
     private suspend fun withRealServer(tmp: Path, block: suspend (HttpClient, Int) -> Unit) {
         val injector: Injector = Guice.createInjector(BackendModule(config(tmp)))
         val server = embeddedServer(Netty, port = 0) {
-            install(ContentNegotiation) { json() }
+            install(ContentNegotiation) {
+                json()
+            }
             install(WebSockets)
-            with(injector.getInstance(ApiRoutesHandler::class.java)) { configure() }
-            with(injector.getInstance(AdminHandler::class.java)) { configure() }
-            with(injector.getInstance(WebSocketHandler::class.java)) { configure() }
+            installSemantifyrLiveBackend(injector)
         }.start(wait = false)
 
         try {
             val port = server.engine.resolvedConnectors().first().port
             val client = HttpClient(CIO) {
-                install(ClientContentNegotiation) { json() }
+                install(ClientContentNegotiation) {
+                    json()
+                }
                 install(ClientWebSockets)
             }
             client.use {
@@ -148,13 +147,8 @@ class ServerIntegrationTest {
     }
 
     @Test
-    fun `websocket LSP session initializes a real LSP server`(
-        @TempDir tmp: Path,
-    ) = testApplication {
-        assumeTrue(lspBinariesDirectory != null, "semantifyr.live.lsp system property not set")
-        configureServer(config(tmp))
-        val client = jsonClient(this)
-
+    fun `websocket LSP session initializes a real LSP server`(@TempDir tmp: Path) = runIntegrationTest(tmp) {
+        val client = jsonClient(webSockets = true)
         client.clientWebSocket("/ws/lsp/oxsts") {
             send(Frame.Text(LspWire.initializeRequest()))
             val response = awaitResponseFor(id = 1)
@@ -165,16 +159,13 @@ class ServerIntegrationTest {
     @Test
     fun `session info command is intercepted and returns session metadata`(
         @TempDir tmp: Path,
-    ) = testApplication {
-        assumeTrue(lspBinariesDirectory != null, "semantifyr.live.lsp system property not set")
-        configureServer(config(tmp))
-        val client = jsonClient(this)
-
+    ) = runIntegrationTest(tmp) {
+        val client = jsonClient(webSockets = true)
         client.clientWebSocket("/ws/lsp/oxsts") {
             send(Frame.Text(LspWire.initializeRequest()))
             awaitResponseFor(id = 1)
 
-            send(Frame.Text(LspWire.executeCommandRequest(id = 2, command = "semantifyr.session.info")))
+            send(Frame.Text(LspWire.request(id = 2, method = SemantifyrLiveMethods.SESSION_INFO)))
             val response = awaitResponseFor(id = 2)
 
             val sessionInfo = response["result"]?.jsonObject
@@ -185,11 +176,8 @@ class ServerIntegrationTest {
     }
 
     @Test
-    fun `admin status reports the live session while connected`(@TempDir tmp: Path) = testApplication {
-        assumeTrue(lspBinariesDirectory != null, "semantifyr.live.lsp system property not set")
-        configureServer(config(tmp))
-        val client = jsonClient(this)
-
+    fun `admin status reports the live session while connected`(@TempDir tmp: Path) = runIntegrationTest(tmp) {
+        val client = jsonClient(webSockets = true)
         client.clientWebSocket("/ws/lsp/oxsts") {
             send(Frame.Text(LspWire.initializeRequest()))
             awaitResponseFor(id = 1)
@@ -206,53 +194,36 @@ class ServerIntegrationTest {
 
     @Test
     suspend fun `oxsts verification case passes end-to-end`(@TempDir tmp: Path) {
-        assumeTrue(lspBinariesDirectory != null, "semantifyr.live.lsp system property not set")
-        val modelSource = checkNotNull(javaClass.getResource("/integration/trafficlight.oxsts")) {
-            "trafficlight.oxsts example model not on the test classpath"
-        }.readText()
-
         verifyEndToEnd(
             tmp = tmp,
             flavor = "oxsts",
-            languageId = "oxsts",
-            documentUri = "file:///workspace/snippet.oxsts",
-            modelSource = modelSource,
-            discoverCommand = "oxsts.case.discover",
-            verifyCommand = "oxsts.case.verify",
+            modelSource = stagedModel(oxstsTestModelsDirectory, "semantifyr.live.oxstsTestModels", "trafficlight.oxsts"),
             pickCase = { cases ->
-                cases.firstOrNull { it["label"]?.jsonPrimitive?.contentOrNull?.endsWith("GreenColorIsReachable") == true }
-                    ?: error("Expected 'GreenColorIsReachable' verification case in the discovered list: $cases")
+                cases.pickByLabelSuffix("GreenColorIsReachable")
             },
-            assertVerdict = { status, _ -> assertThat(status).isEqualTo("passed") },
+            assertVerdict = { status, _ ->
+                assertThat(status).isEqualTo("passed")
+            },
         )
     }
 
     @Test
     suspend fun `gamma verification case passes end-to-end`(@TempDir tmp: Path) {
-        assumeTrue(lspBinariesDirectory != null, "semantifyr.live.lsp system property not set")
-        assumeTrue(gammaTestModelsDirectory != null, "semantifyr.live.gammaTestModels system property not set")
-        val gammaSource = checkNotNull(gammaTestModelsDirectory).resolve("Simple.gamma")
-        assumeTrue(Files.exists(gammaSource), "Simple.gamma not found at $gammaSource")
-
         verifyEndToEnd(
             tmp = tmp,
             flavor = "gamma",
             languageId = "gamma",
             documentUri = "file:///workspace/snippet.gamma",
-            modelSource = Files.readString(gammaSource),
+            modelSource = stagedModel(gammaTestModelsDirectory, "semantifyr.live.gammaTestModels", "Simple.gamma"),
             discoverCommand = "gamma.case.discover",
             verifyCommand = "gamma.case.verify",
             pickCase = { cases ->
-                val idleReachable = cases.firstOrNull {
-                    it["label"]?.jsonPrimitive?.contentOrNull == "LeaderStatechartIdleReachable"
-                } ?: error("Expected 'LeaderStatechartIdleReachable' verification case in the discovered list: $cases")
+                val idleReachable = cases.pickByLabel("LeaderStatechartIdleReachable")
                 assertThat(idleReachable["id"]?.jsonPrimitive?.contentOrNull).isEqualTo("Simple.LeaderStatechartIdleReachable")
                 idleReachable
             },
             assertVerdict = { status, result ->
-                assertThat(status)
-                    .describedAs("verification result for LeaderStatechartIdleReachable: $result")
-                    .isIn("passed", "failed", "inconclusive", "not_supported")
+                acceptAnyKnownStatus("LeaderStatechartIdleReachable", status, result)
                 assertThat(status).isIn("passed", "not_supported")
             },
             verifyTimeout = 2.minutes,
@@ -261,66 +232,87 @@ class ServerIntegrationTest {
 
     @Test
     suspend fun `oxsts-with-gamma-library smoke verifies a compiled gamma example`(@TempDir tmp: Path) {
-        assumeTrue(lspBinariesDirectory != null, "semantifyr.live.lsp system property not set")
-        assumeTrue(gammaLibraryModelsDirectory != null, "semantifyr.live.gammaLibraryModels system property not set")
-        val source = checkNotNull(gammaLibraryModelsDirectory).resolve("Simple.oxsts")
-        assumeTrue(Files.exists(source), "Simple.oxsts not found at $source")
-
-        verifyEndToEnd(
+        smokeVerifyFirstCase(
             tmp = tmp,
             flavor = "oxsts-with-gamma-library",
-            languageId = "oxsts",
-            documentUri = "file:///workspace/snippet.oxsts",
-            modelSource = Files.readString(source),
-            discoverCommand = "oxsts.case.discover",
-            verifyCommand = "oxsts.case.verify",
-            pickCase = { it.first().jsonObject },
-            assertVerdict = { status, result ->
-                assertThat(status)
-                    .describedAs("verification status for oxsts-with-gamma-library: $result")
-                    .isIn("passed", "failed", "inconclusive", "not_supported")
-            },
-            verifyTimeout = 2.minutes,
+            modelSource = stagedModel(gammaLibraryModelsDirectory, "semantifyr.live.gammaLibraryModels", "Simple.oxsts"),
         )
     }
 
     @Test
     suspend fun `oxsts-with-sysmlv2-library smoke verifies a compiled sysml example`(@TempDir tmp: Path) {
-        assumeTrue(lspBinariesDirectory != null, "semantifyr.live.lsp system property not set")
-        assumeTrue(sysmlLibraryModelsDirectory != null, "semantifyr.live.sysmlLibraryModels system property not set")
-        val source = checkNotNull(sysmlLibraryModelsDirectory).resolve("door_access.oxsts")
-        assumeTrue(Files.exists(source), "door_access.oxsts not found at $source")
-
-        verifyEndToEnd(
+        smokeVerifyFirstCase(
             tmp = tmp,
             flavor = "oxsts-with-sysmlv2-library",
-            languageId = "oxsts",
-            documentUri = "file:///workspace/snippet.oxsts",
-            modelSource = Files.readString(source),
-            discoverCommand = "oxsts.case.discover",
-            verifyCommand = "oxsts.case.verify",
-            pickCase = { it.first().jsonObject },
+            modelSource = stagedModel(sysmlLibraryModelsDirectory, "semantifyr.live.sysmlLibraryModels", "door_access.oxsts"),
+        )
+    }
+
+    private suspend fun smokeVerifyFirstCase(
+        tmp: Path,
+        flavor: String,
+        modelSource: String,
+    ) {
+        verifyEndToEnd(
+            tmp = tmp,
+            flavor = flavor,
+            modelSource = modelSource,
+            pickCase = {
+                it.first().jsonObject
+            },
             assertVerdict = { status, result ->
-                assertThat(status)
-                    .describedAs("verification status for oxsts-with-sysmlv2-library: $result")
-                    .isIn("passed", "failed", "inconclusive", "not_supported")
+                acceptAnyKnownStatus(flavor, status, result)
             },
             verifyTimeout = 2.minutes,
         )
     }
 
+    private fun stagedModel(
+        directory: Path?,
+        propertyName: String,
+        filename: String,
+    ): String {
+        assumeTrue(directory != null, "$propertyName system property not set")
+        val source = checkNotNull(directory).resolve(filename)
+        assumeTrue(Files.exists(source), "$filename not found at $source")
+        return Files.readString(source)
+    }
+
+    private fun List<JsonObject>.pickByLabel(label: String): JsonObject {
+        return firstOrNull {
+            it["label"]?.jsonPrimitive?.contentOrNull == label
+        } ?: error("Expected '$label' verification case in the discovered list: $this")
+    }
+
+    private fun List<JsonObject>.pickByLabelSuffix(suffix: String): JsonObject {
+        return firstOrNull {
+            it["label"]?.jsonPrimitive?.contentOrNull?.endsWith(suffix) == true
+        } ?: error("Expected verification case ending in '$suffix' in the discovered list: $this")
+    }
+
+    private fun acceptAnyKnownStatus(
+        label: String,
+        status: String?,
+        result: JsonObject,
+    ) {
+        assertThat(status)
+            .describedAs("verification status for $label: $result")
+            .isIn("passed", "failed", "inconclusive", "not_supported")
+    }
+
     private suspend fun verifyEndToEnd(
         tmp: Path,
         flavor: String,
-        languageId: String,
-        documentUri: String,
         modelSource: String,
-        discoverCommand: String,
-        verifyCommand: String,
         pickCase: (List<JsonObject>) -> JsonObject,
         assertVerdict: (status: String?, result: JsonObject) -> Unit,
+        languageId: String = "oxsts",
+        documentUri: String = "file:///workspace/snippet.oxsts",
+        discoverCommand: String = "oxsts.case.discover",
+        verifyCommand: String = "oxsts.case.verify",
         verifyTimeout: kotlin.time.Duration = 1.minutes,
     ) {
+        assumeTrue(lspBinariesDirectory != null, "semantifyr.live.lsp system property not set")
         withRealServer(tmp) { client, port ->
             client.clientWebSocket("ws://localhost:$port/ws/lsp/$flavor") {
                 send(Frame.Text(LspWire.initializeRequest()))
@@ -330,7 +322,8 @@ class ServerIntegrationTest {
 
                 val cases = discoverCases(id = 2, command = discoverCommand, documentUri = documentUri, flavor = flavor)
                 val selectedCase = pickCase(cases)
-                val caseRange = selectedCase["location"]?.jsonObject?.get("range") ?: error("verification case has no location.range: $selectedCase")
+                val caseRange = selectedCase["location"]?.jsonObject?.get("range")
+                    ?: error("verification case has no location.range: $selectedCase")
 
                 send(
                     Frame.Text(
@@ -342,7 +335,8 @@ class ServerIntegrationTest {
                     ),
                 )
                 val verifyResponse = awaitResponseFor(id = 3, timeout = verifyTimeout)
-                val resultObject = verifyResponse["result"]?.jsonObject ?: error("verify response had no result: $verifyResponse")
+                val resultObject = verifyResponse["result"]?.jsonObject
+                    ?: error("verify response had no result: $verifyResponse")
                 val resultStatus = resultObject["status"]?.jsonPrimitive?.contentOrNull
                 assertVerdict(resultStatus, resultObject)
             }
@@ -365,7 +359,8 @@ class ServerIntegrationTest {
             ),
         )
         val discoverResponse = awaitResponseFor(id = id)
-        val cases = discoverResponse["result"] as? JsonArray ?: error("discover returned no result for flavor=$flavor: $discoverResponse")
+        val cases = discoverResponse["result"] as? JsonArray
+            ?: error("discover returned no result for flavor=$flavor: $discoverResponse")
         assertThat(cases).describedAs("discover for flavor=$flavor").isNotEmpty
         return cases.map {
             it.jsonObject

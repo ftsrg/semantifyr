@@ -6,18 +6,18 @@
 
 package hu.bme.mit.semantifyr.live.backend.server
 
-import com.google.inject.AbstractModule
-import com.google.inject.Guice
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
-import hu.bme.mit.semantifyr.live.backend.BackendModule
 import hu.bme.mit.semantifyr.live.backend.ServerConfig
 import hu.bme.mit.semantifyr.live.backend.session.SessionLimitReachedException
 import hu.bme.mit.semantifyr.live.backend.session.SessionManager
+import hu.bme.mit.semantifyr.live.backend.testing.handler
+import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrApp
+import hu.bme.mit.semantifyr.live.backend.testing.testInjector
 import io.ktor.client.plugins.websocket.webSocket
-import io.ktor.server.application.*
-import io.ktor.server.testing.*
+import io.ktor.server.testing.testApplication
 import io.ktor.server.websocket.WebSocketServerSession
-import io.ktor.websocket.*
+import io.ktor.websocket.CloseReason
+import io.ktor.websocket.close
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -25,7 +25,6 @@ import org.mockito.kotlin.doSuspendableAnswer
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.wheneverBlocking
 import io.ktor.client.plugins.websocket.WebSockets as ClientWebSockets
-import io.ktor.server.websocket.WebSockets as ServerWebSockets
 
 class WebSocketHandlerTest {
 
@@ -36,36 +35,28 @@ class WebSocketHandlerTest {
         },
     ): WebSocketHandler {
         val sessionManager = mock<SessionManager>()
-        wheneverBlocking { sessionManager.runSession(any(), any(), any()) } doSuspendableAnswer { invocation ->
+        wheneverBlocking {
+            sessionManager.runSession(any(), any(), any())
+        } doSuspendableAnswer { invocation ->
             val ws = invocation.getArgument<WebSocketServerSession>(0)
             val ip = invocation.getArgument<String>(1)
             val flavor = invocation.getArgument<Flavor>(2)
             onRunSession(ws, ip, flavor)
         }
 
-        val injector = Guice.createInjector(
-            BackendModule(config),
-            object : AbstractModule() {
-                override fun configure() {
-                    bind(SessionManager::class.java).toInstance(sessionManager)
-                }
-            },
-        )
-        return injector.getInstance(WebSocketHandler::class.java)
-    }
-
-    private fun ApplicationTestBuilder.installHandler(handler: WebSocketHandler) {
-        install(
-            createApplicationPlugin("ws-setup") {
-                application.install(ServerWebSockets)
-                with(handler) { application.configure() }
-            },
-        )
+        return testInjector(config) {
+            bind(SessionManager::class.java).toInstance(sessionManager)
+        }.handler<WebSocketHandler>()
     }
 
     @Test
     fun `unknown flavor returns close code 4404`() = testApplication {
-        installHandler(createHandler())
+        val handler = createHandler()
+        installSemantifyrApp(contentNegotiation = false, webSockets = true) {
+            with(handler) {
+                configure()
+            }
+        }
 
         val wsClient = createClient { install(ClientWebSockets) }
         wsClient.webSocket("/ws/lsp/nonexistent") {
@@ -82,7 +73,11 @@ class WebSocketHandlerTest {
             ranWithFlavor = flavor.id
             ws.close(CloseReason(CloseReason.Codes.NORMAL, "done"))
         }
-        installHandler(handler)
+        installSemantifyrApp(contentNegotiation = false, webSockets = true) {
+            with(handler) {
+                configure()
+            }
+        }
 
         val wsClient = createClient { install(ClientWebSockets) }
         wsClient.webSocket("/ws/lsp/oxsts") {
@@ -97,7 +92,11 @@ class WebSocketHandlerTest {
         val handler = createHandler { _, _, _ ->
             throw SessionLimitReachedException("Too many sessions")
         }
-        installHandler(handler)
+        installSemantifyrApp(contentNegotiation = false, webSockets = true) {
+            with(handler) {
+                configure()
+            }
+        }
 
         val wsClient = createClient { install(ClientWebSockets) }
         wsClient.webSocket("/ws/lsp/oxsts") {
@@ -110,7 +109,12 @@ class WebSocketHandlerTest {
     @Test
     fun `exceeding handshake rate limit rejects second handshake`() = testApplication {
         val config = BackendConfig(server = ServerConfig(wsHandshakesPerPeriod = 1))
-        installHandler(createHandler(config))
+        val handler = createHandler(config)
+        installSemantifyrApp(contentNegotiation = false, webSockets = true) {
+            with(handler) {
+                configure()
+            }
+        }
 
         val client = createClient { install(ClientWebSockets) }
         client.webSocket("/ws/lsp/oxsts") {
@@ -127,7 +131,11 @@ class WebSocketHandlerTest {
         val handler = createHandler { _, _, _ ->
             throw RuntimeException("something broke")
         }
-        installHandler(handler)
+        installSemantifyrApp(contentNegotiation = false, webSockets = true) {
+            with(handler) {
+                configure()
+            }
+        }
 
         val wsClient = createClient { install(ClientWebSockets) }
         wsClient.webSocket("/ws/lsp/oxsts") {

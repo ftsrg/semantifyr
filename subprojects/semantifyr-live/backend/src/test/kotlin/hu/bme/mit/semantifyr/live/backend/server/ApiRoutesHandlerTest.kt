@@ -6,22 +6,22 @@
 
 package hu.bme.mit.semantifyr.live.backend.server
 
-import com.google.inject.AbstractModule
 import com.google.inject.Guice
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.BackendModule
 import hu.bme.mit.semantifyr.live.backend.ServerConfig
 import hu.bme.mit.semantifyr.live.backend.session.SessionManager
+import hu.bme.mit.semantifyr.live.backend.testing.handler
+import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrApp
+import hu.bme.mit.semantifyr.live.backend.testing.jsonClient
+import hu.bme.mit.semantifyr.live.backend.testing.testInjector
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
-import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.createApplicationPlugin
 import io.ktor.server.application.install
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -30,47 +30,27 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.nio.file.Files
 import java.nio.file.Path
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 
 class ApiRoutesHandlerTest {
 
     private fun createHandler(activeSessions: Int = 3, maxSessions: Int = 64): ApiRoutesHandler {
-        val config = BackendConfig()
         val sessionManager = mock(SessionManager::class.java)
         `when`(sessionManager.activeSessions).thenReturn(activeSessions)
         `when`(sessionManager.maxSessions).thenReturn(maxSessions)
 
-        val injector = Guice.createInjector(
-            BackendModule(config),
-            object : AbstractModule() {
-                override fun configure() {
-                    bind(SessionManager::class.java).toInstance(sessionManager)
-                }
-            },
-        )
-        return injector.getInstance(ApiRoutesHandler::class.java)
-    }
-
-    private fun ApplicationTestBuilder.installApiRoutes(handler: ApiRoutesHandler) {
-        install(
-            createApplicationPlugin("api-routes") {
-                with(handler) { application.configure() }
-            },
-        )
-        install(
-            createApplicationPlugin("content-negotiation-setup") {
-                application.install(ContentNegotiation) { json() }
-            },
-        )
-    }
-
-    private fun ApplicationTestBuilder.jsonClient() = createClient {
-        install(ClientContentNegotiation) { json() }
+        return testInjector {
+            bind(SessionManager::class.java).toInstance(sessionManager)
+        }.handler<ApiRoutesHandler>()
     }
 
     @Test
     fun `health endpoint returns 200 with status`() = testApplication {
-        installApiRoutes(createHandler())
+        val handler = createHandler()
+        installSemantifyrApp {
+            with(handler) {
+                configure()
+            }
+        }
         val client = jsonClient()
 
         val health = client.get("/api/health").body<HealthResponse>()
@@ -79,7 +59,12 @@ class ApiRoutesHandlerTest {
 
     @Test
     fun `info endpoint returns server info`() = testApplication {
-        installApiRoutes(createHandler(activeSessions = 3, maxSessions = 64))
+        val handler = createHandler(activeSessions = 3, maxSessions = 64)
+        installSemantifyrApp {
+            with(handler) {
+                configure()
+            }
+        }
         val client = jsonClient()
 
         val info = client.get("/api/info").body<InfoResponse>()
@@ -92,7 +77,12 @@ class ApiRoutesHandlerTest {
 
     @Test
     fun `health endpoint returns JSON content type`() = testApplication {
-        installApiRoutes(createHandler())
+        val handler = createHandler()
+        installSemantifyrApp {
+            with(handler) {
+                configure()
+            }
+        }
 
         val response = client.get("/api/health")
         assertThat(response.contentType()?.withoutParameters())
@@ -101,7 +91,12 @@ class ApiRoutesHandlerTest {
 
     @Test
     fun `flavors endpoint lists all registered flavors`() = testApplication {
-        installApiRoutes(createHandler())
+        val handler = createHandler()
+        installSemantifyrApp {
+            with(handler) {
+                configure()
+            }
+        }
         val client = jsonClient()
 
         val flavors = client.get("/api/flavors").body<FlavorsResponse>()
@@ -111,7 +106,12 @@ class ApiRoutesHandlerTest {
 
     @Test
     fun `flavors endpoint reports verification capability per flavor`() = testApplication {
-        installApiRoutes(createHandler())
+        val handler = createHandler()
+        installSemantifyrApp {
+            with(handler) {
+                configure()
+            }
+        }
         val client = jsonClient()
 
         val flavors = client.get("/api/flavors").body<FlavorsResponse>()
@@ -126,7 +126,12 @@ class ApiRoutesHandlerTest {
 
     @Test
     fun `portfolios endpoint exposes the demo portfolio set`() = testApplication {
-        installApiRoutes(createHandler())
+        val handler = createHandler()
+        installSemantifyrApp {
+            with(handler) {
+                configure()
+            }
+        }
         val client = jsonClient()
 
         val response = client.get("/api/portfolios").body<PortfoliosResponse>()

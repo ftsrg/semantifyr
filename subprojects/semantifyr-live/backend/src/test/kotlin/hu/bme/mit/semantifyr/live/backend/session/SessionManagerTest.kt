@@ -6,79 +6,64 @@
 
 package hu.bme.mit.semantifyr.live.backend.session
 
-import com.google.inject.AbstractModule
-import com.google.inject.Guice
+import com.google.inject.Inject
+import com.google.inject.Provider
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
-import hu.bme.mit.semantifyr.live.backend.BackendModule
 import hu.bme.mit.semantifyr.live.backend.SessionManagerConfig
 import hu.bme.mit.semantifyr.live.backend.server.WebSocketHandler
+import hu.bme.mit.semantifyr.live.backend.testing.handler
+import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrApp
+import hu.bme.mit.semantifyr.live.backend.testing.testInjector
 import io.ktor.client.plugins.websocket.webSocket
-import io.ktor.server.application.*
-import io.ktor.server.testing.*
-import io.ktor.websocket.*
+import io.ktor.server.testing.testApplication
+import io.ktor.server.websocket.WebSocketServerSession
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.any
 import org.mockito.kotlin.doSuspendableAnswer
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.mockito.kotlin.wheneverBlocking
+import java.util.concurrent.atomic.AtomicReference
 import io.ktor.client.plugins.websocket.WebSockets as ClientWebSockets
-import io.ktor.server.websocket.WebSockets as ServerWebSockets
 
 class SessionManagerTest {
 
     private fun createTestSetup(
         maxGlobal: Int = 4,
-        onSession: suspend (io.ktor.server.websocket.WebSocketServerSession) -> Unit,
+        onSession: suspend (WebSocketServerSession) -> Unit,
     ): Pair<WebSocketHandler, SessionManager> {
         val config = BackendConfig(
             sessionManager = SessionManagerConfig(maxSessionsGlobal = maxGlobal, maxSessionsPerIp = 2),
         )
 
-        val capturedWs = java.util.concurrent.atomic.AtomicReference<io.ktor.server.websocket.WebSocketServerSession>()
+        val capturedWs = AtomicReference<WebSocketServerSession>()
         val mockLspSession = mock<LspSession>()
         whenever(mockLspSession.sessionId).thenReturn("mock-session-${System.nanoTime()}")
         wheneverBlocking { mockLspSession.run() } doSuspendableAnswer {
             onSession(capturedWs.get())
         }
 
-        val injector = Guice.createInjector(
-            com.google.inject.util.Modules.override(BackendModule(config)).with(object : AbstractModule() {
-                override fun configure() {
-                    // Session-scoped override: capture the seeded SessionContext's WebSocketSession and return the mock LspSession.
-                    bind(LspSession::class.java).toProvider(object : com.google.inject.Provider<LspSession> {
-                        @com.google.inject.Inject
-                        lateinit var contextProvider: com.google.inject.Provider<SessionContext>
+        val injector = testInjector(config) {
+            bind(LspSession::class.java).toProvider(object : Provider<LspSession> {
+                @Inject
+                lateinit var contextProvider: Provider<SessionContext>
 
-                        override fun get(): LspSession {
-                            capturedWs.set(contextProvider.get().webSocketSession as io.ktor.server.websocket.WebSocketServerSession)
-                            return mockLspSession
-                        }
-                    }).`in`(SessionScoped::class.java)
+                override fun get(): LspSession {
+                    capturedWs.set(contextProvider.get().webSocketSession as WebSocketServerSession)
+                    return mockLspSession
                 }
-            }),
-        )
+            }).`in`(SessionScoped::class.java)
+        }
 
-        return injector.getInstance(WebSocketHandler::class.java) to
-            injector.getInstance(SessionManager::class.java)
-    }
-
-    private fun ApplicationTestBuilder.installHandler(handler: WebSocketHandler) {
-        install(
-            createApplicationPlugin("ws-setup") {
-                application.install(ServerWebSockets)
-                with(handler) { application.configure() }
-            },
-        )
+        return injector.handler<WebSocketHandler>() to injector.handler<SessionManager>()
     }
 
     @Test
     fun `activeSessions starts at zero`() {
-        val config = BackendConfig()
-        val injector = Guice.createInjector(BackendModule(config))
-        val manager = injector.getInstance(SessionManager::class.java)
+        val manager = testInjector().handler<SessionManager>()
         assertThat(manager.activeSessions).isEqualTo(0)
         assertThat(manager.maxSessions).isEqualTo(32)
     }
@@ -92,7 +77,11 @@ class SessionManagerTest {
             sessionStarted.complete(Unit)
             sessionRelease.await()
         }
-        installHandler(handler)
+        installSemantifyrApp(contentNegotiation = false, webSockets = true) {
+            with(handler) {
+                configure()
+            }
+        }
 
         val wsClient = createClient { install(ClientWebSockets) }
         wsClient.webSocket("/ws/lsp/oxsts") {
@@ -100,10 +89,10 @@ class SessionManagerTest {
             assertThat(manager.activeSessions).isEqualTo(1)
             sessionRelease.complete(Unit)
         }
-        // Server-side cleanup runs after the handler returns; wait with a timeout instead of a fixed delay.
-        kotlinx.coroutines.withTimeout(5_000) {
+
+        withTimeout(5_000) {
             while (manager.activeSessions != 0) {
-                kotlinx.coroutines.delay(10)
+                delay(10)
             }
         }
         assertThat(manager.activeSessions).isEqualTo(0)
@@ -116,7 +105,11 @@ class SessionManagerTest {
         val (handler, _) = createTestSetup(maxGlobal = 1) { _ ->
             sessionRelease.await()
         }
-        installHandler(handler)
+        installSemantifyrApp(contentNegotiation = false, webSockets = true) {
+            with(handler) {
+                configure()
+            }
+        }
 
         val wsClient = createClient { install(ClientWebSockets) }
         wsClient.webSocket("/ws/lsp/oxsts") {

@@ -6,7 +6,7 @@
 
 package hu.bme.mit.semantifyr.live.backend.lsp
 
-import hu.bme.mit.semantifyr.live.backend.utils.lspMessageHandler
+import hu.bme.mit.semantifyr.live.backend.testing.parseLspMessage
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -36,7 +36,7 @@ class WorkspaceSyncerTest {
     }
 
     private suspend fun WorkspaceSyncer.handle(raw: String) {
-        handleOutgoingMessage(lspMessageHandler.parseMessage(raw))
+        handleOutgoingMessage(parseLspMessage(raw))
     }
 
     @Test
