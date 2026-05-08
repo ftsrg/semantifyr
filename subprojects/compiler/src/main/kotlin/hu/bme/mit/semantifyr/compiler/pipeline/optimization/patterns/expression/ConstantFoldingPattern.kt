@@ -10,12 +10,12 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.ConstantExpressionEval
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticBinaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
@@ -45,11 +45,11 @@ class ConstantFoldingPattern(
 
     private fun Expression.isCollapsibleOperator(): Boolean {
         return when (this) {
-            is ArithmeticBinaryOperator -> left.isLiteral() && right.isLiteral()
-            is ComparisonOperator -> left.isLiteral() && right.isLiteral()
-            is BooleanOperator -> left.isLiteral() && right.isLiteral()
-            is ArithmeticUnaryOperator -> body.isLiteral() && !isNegativeLiteralInteger()
-            is NegationOperator -> body.isLiteral()
+            is ArithmeticBinaryOperator -> left.isSimpleLiteral() && right.isSimpleLiteral()
+            is ComparisonOperator -> left.isSimpleLiteral() && right.isSimpleLiteral()
+            is BooleanOperator -> left.isSimpleLiteral() && right.isSimpleLiteral()
+            is ArithmeticUnaryOperator -> body.isSimpleLiteral() && !isNegativeLiteralInteger()
+            is NegationOperator -> body.isSimpleLiteral()
             else -> false
         }
     }
@@ -58,8 +58,8 @@ class ConstantFoldingPattern(
         return op == UnaryOp.MINUS && body is LiteralInteger
     }
 
-    private fun Expression?.isLiteral(): Boolean {
-        return this is LiteralExpression
+    private fun Expression?.isSimpleLiteral(): Boolean {
+        return OxstsUtils.isSimpleExpression(this)
     }
 
 }
