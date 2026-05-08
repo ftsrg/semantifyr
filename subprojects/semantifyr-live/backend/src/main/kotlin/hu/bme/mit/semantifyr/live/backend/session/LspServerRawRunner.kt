@@ -15,6 +15,7 @@ import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.error
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.utils.process.destroyTree
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -32,18 +33,6 @@ import java.nio.file.Files
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createDirectories
 import kotlin.io.path.writeText
-
-private fun Process.destroyTree() {
-    val handle = toHandle()
-    handle.descendants().forEach { child ->
-        try {
-            child.destroy()
-        } catch (_: IllegalStateException) {
-            child.destroyForcibly()
-        }
-    }
-    handle.destroy()
-}
 
 @SessionScoped
 class LspServerRawRunner @Inject constructor(
