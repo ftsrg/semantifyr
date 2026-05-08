@@ -35,6 +35,15 @@ public class OxstsUtils {
         return false;
     }
 
+    public static boolean isSimpleExpression(Expression expression) {
+        return expression instanceof LiteralBoolean
+                || expression instanceof LiteralInteger
+                || expression instanceof LiteralNothing
+                || expression instanceof LiteralReal
+                || expression instanceof LiteralString
+                || (expression instanceof ElementReference elementReference && elementReference.getElement() instanceof EnumLiteral);
+    }
+
     public static boolean isGlobalFeature(EObject element) {
         return element instanceof FeatureDeclaration featureDeclaration
                 && featureDeclaration.eContainer() instanceof OxstsModelPackage;

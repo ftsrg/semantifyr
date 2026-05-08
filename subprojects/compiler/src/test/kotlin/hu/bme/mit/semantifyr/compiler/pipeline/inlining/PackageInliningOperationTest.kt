@@ -335,8 +335,9 @@ class PackageInliningOperationTest : InliningTestBase() {
             assertNoInlineOperationsInMain(it)
             val mainText = serializer.serializeFormatted(it.inlinedOxsts.mainTransition)
             assertThat(mainText)
-                .`as`("enum argument must be substituted into the inlined assumption")
-                .contains("Command::Inc")
+                .`as`("enum argument must be substituted, leaving only the Inc-branch increment")
+                .contains("x := root.x + 1")
+                .doesNotContain("- 1")
         }
     }
 
