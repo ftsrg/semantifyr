@@ -73,7 +73,7 @@ verification case LeaderStatechartStoppedReachable {
 verification case LeaderStatechartUnreachable {
     component system : System
 
-    property { /* AG */ not isActive (system.leader.Main.Unreachable) }
+    property { AG not isActive (system.leader.Main.Unreachable) }
 }
 
 
@@ -98,5 +98,5 @@ verification case WorkerStatechartStoppedReachable {
 verification case WorkerStatechartUnreachable {
     component system : System
 
-    property { /* AG */ not isActive (system.worker.Main.Unreachable) }
+    property { AG not isActive (system.worker.Main.Unreachable) }
 }

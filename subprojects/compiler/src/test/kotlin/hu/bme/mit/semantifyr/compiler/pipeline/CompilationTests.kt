@@ -522,8 +522,8 @@ class CompilationTests {
     }
 
     @Test
-    fun `trivial property without explicit temporal operator`() {
-        assertCompiles(
+    fun `property without explicit temporal operator is rejected`() {
+        assertCompilationFails(
             classToCompile = "Trivial",
             source = """
                 package compilation::tests::trivial_prop
@@ -534,6 +534,7 @@ class CompilationTests {
                     prop { return true }
                 }
             """,
+            messageContains = "temporal operator",
         )
     }
 

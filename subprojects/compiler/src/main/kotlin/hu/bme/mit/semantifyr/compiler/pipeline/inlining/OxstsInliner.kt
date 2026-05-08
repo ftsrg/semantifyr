@@ -11,12 +11,12 @@ import hu.bme.mit.semantifyr.compiler.pipeline.context.InlinedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.InlinedPhaseOptimizer
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.oxsts.lang.utils.SourceLocation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TemporalOperator
@@ -57,28 +57,26 @@ class OxstsInliner @Inject constructor(
     }
 
     private fun ensureTemporalExpressions(inlinedOxsts: InlinedOxsts) {
-        if (inlinedOxsts.property.expression !is TemporalOperator) {
-            inlinedOxsts.property.expression = OxstsFactory.createAG().also {
-                it.body = inlinedOxsts.property.expression
-            }
-        }
-
-        val temporalOutsideProperty = inlinedOxsts.eAllOfType<TemporalOperator>().firstOrNull {
-            EcoreUtil2.getContainerOfType(it, PropertyDeclaration::class.java) == null
-        }
-        if (temporalOutsideProperty != null) {
-            sourceError(temporalOutsideProperty, "Temporal operators may only appear inside property blocks!")
-        }
-
-        val outerTemporal = inlinedOxsts.property.expression as TemporalOperator
-        val nestedTemporal = outerTemporal.eAllOfType<TemporalOperator>().firstOrNull {
-            it !== outerTemporal
-        }
-        if (nestedTemporal != null) {
+        val rootExpression = inlinedOxsts.property.expression
+        if (rootExpression !is TemporalOperator) {
             sourceError(
-                nestedTemporal,
-                "Nested temporal operators are not supported (properties must be `AG body` or `EF body` with a non-temporal body).",
+                rootExpression,
+                "Property body must have a temporal operator (`AG` or `EF`) at the top level.",
             )
+        }
+
+        val incorrectTemporalOperators = inlinedOxsts.eAllOfType<TemporalOperator>().filter {
+            it !== rootExpression
+        }.toList()
+
+        if (incorrectTemporalOperators.isNotEmpty()) {
+            val message = buildString {
+                appendLine("There are temporal operators that are not the root of the main prop's expression:")
+                for (incorrectTemporalOperator in incorrectTemporalOperators) {
+                    appendLine("${SourceLocation.prefixFor(incorrectTemporalOperator)}")
+                }
+            }
+            error(message)
         }
     }
 

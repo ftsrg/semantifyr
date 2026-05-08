@@ -321,7 +321,7 @@ verification case UnreachableGreenGreen {
 verification case UnreachableGreenYellow {
     component system : CrossroadSystem
     property { 
-        /* AG */ not (
+        AG not (
             isActive (system.trafficLightA.Main.Normal.NormalRegion.Green) 
             && isActive (system.trafficLightB.Main.Normal.NormalRegion.Yellow) 
         )
@@ -341,11 +341,11 @@ verification case ReachableYellowRed {
 
 verification case UnreachableYellowGreen {
     component system : CrossroadSystem
-    property { 
-        /* AG */ not (EF (
-            isActive (system.trafficLightA.Main.Normal.NormalRegion.Yellow) 
-            && isActive (system.trafficLightB.Main.Normal.NormalRegion.Green) 
-        ))
+    property {
+        AG not (
+            isActive (system.trafficLightA.Main.Normal.NormalRegion.Yellow)
+            && isActive (system.trafficLightB.Main.Normal.NormalRegion.Green)
+        )
     }
 }
 
