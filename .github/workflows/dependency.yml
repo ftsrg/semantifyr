@@ -17,6 +17,5 @@ jobs:
         with:
           distribution: adopt
           java-version: 25
-
       - name: Generate and submit dependency graph
         uses: gradle/actions/dependency-submission@v5
