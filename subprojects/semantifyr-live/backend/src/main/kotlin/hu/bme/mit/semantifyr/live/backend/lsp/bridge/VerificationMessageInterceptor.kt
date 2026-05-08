@@ -54,7 +54,7 @@ class VerificationMessageInterceptor @Inject constructor(
         }
 
         val requestId = message.id ?: return false // we should handle malformed requests by sending an error instead
-        val kind = if (params.command in validateCommands) VerificationKind.Validate else VerificationKind.Verify
+        val kind = if (params.command in validationCommands) VerificationKind.Validate else VerificationKind.Verify
         val portfolioId = extractStringArg(params, "portfolio")
         val caseLabel = extractStringArg(params, "caseLabel")
         logger.info {
@@ -94,8 +94,8 @@ class VerificationMessageInterceptor @Inject constructor(
     }
 
     companion object {
-        private val verifyCommands = FlavorRegistry.flavors.map { it.verificationCommand }.toSet()
-        private val validateCommands = FlavorRegistry.flavors.map { it.validateWitnessCommand }.toSet()
-        private val throttledCommands = verifyCommands + validateCommands
+        private val verificationCommands = FlavorRegistry.flavors.map { it.verificationCommand }.toSet()
+        private val validationCommands = FlavorRegistry.flavors.map { it.validateWitnessCommand }.toSet()
+        private val throttledCommands = verificationCommands + validationCommands
     }
 }

@@ -8,19 +8,20 @@ package hu.bme.mit.semantifyr.live.backend
 
 import com.google.inject.AbstractModule
 import com.google.inject.Provides
+import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.live.backend.lsp.UriRewriter
 import hu.bme.mit.semantifyr.live.backend.lsp.WorkspaceSyncer
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.ArtifactsConfigInterceptor
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.LspClientRawConnector
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.LspMessageInterceptor
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.LspServerRawConnector
-import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SessionControlInterceptor
+import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SemantifyrLiveMethodInterceptor
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SessionControlManager
-import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SessionInfoMessageInterceptor
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SessionInfoProvider
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SessionVerificationManager
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.VerificationMessageInterceptor
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.WorkspaceSyncerInterceptor
+import hu.bme.mit.semantifyr.live.backend.lsp.createLspMessageHandler
 import hu.bme.mit.semantifyr.live.backend.session.LspServerRawRunner
 import hu.bme.mit.semantifyr.live.backend.session.LspSession
 import hu.bme.mit.semantifyr.live.backend.session.SessionContext
@@ -28,6 +29,7 @@ import hu.bme.mit.semantifyr.live.backend.session.SessionScope
 import hu.bme.mit.semantifyr.live.backend.session.SessionScoped
 import hu.bme.mit.semantifyr.live.backend.session.WebSocketLspClientRawConnector
 import hu.bme.mit.semantifyr.live.backend.session.seededKeyProvider
+import org.eclipse.lsp4j.jsonrpc.json.MessageJsonHandler
 
 private const val CLIENT_URI = "file:///workspace/"
 
@@ -74,16 +76,20 @@ class BackendModule(
     fun provideInterceptors(
         workspaceSyncerInterceptor: WorkspaceSyncerInterceptor,
         artifactsConfigInterceptor: ArtifactsConfigInterceptor,
-        sessionInfoMessageInterceptor: SessionInfoMessageInterceptor,
-        sessionControlInterceptor: SessionControlInterceptor,
+        semantifyrLiveMethodInterceptor: SemantifyrLiveMethodInterceptor,
         verificationMessageInterceptor: VerificationMessageInterceptor,
     ): List<LspMessageInterceptor> {
         return listOf(
             workspaceSyncerInterceptor,
             artifactsConfigInterceptor,
-            sessionInfoMessageInterceptor,
-            sessionControlInterceptor,
+            semantifyrLiveMethodInterceptor,
             verificationMessageInterceptor,
         )
+    }
+
+    @Provides
+    @Singleton
+    fun provideLspMessageHandler(): MessageJsonHandler {
+        return createLspMessageHandler()
     }
 }

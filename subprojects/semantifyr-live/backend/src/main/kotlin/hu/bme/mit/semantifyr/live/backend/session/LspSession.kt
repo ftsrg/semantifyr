@@ -10,10 +10,12 @@ import com.google.inject.Inject
 import com.google.inject.Provider
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.lsp.UriRewriter
-import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SessionControlInterceptor
+import hu.bme.mit.semantifyr.live.backend.lsp.bridge.InflightChangedParams
+import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SemantifyrLiveMethods
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SessionControlManager
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SessionInfoProvider
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SessionVerificationManager
+import hu.bme.mit.semantifyr.live.backend.lsp.bridge.VerificationEnqueuedParams
 import hu.bme.mit.semantifyr.live.backend.server.ActiveVerificationInfo
 import hu.bme.mit.semantifyr.live.backend.server.SessionInfo
 import hu.bme.mit.semantifyr.live.backend.server.VerificationKind
@@ -41,7 +43,6 @@ import kotlin.time.TimeSource
 
 // JSON-RPC reserved range (-32800..-32899) for server-defined errors; -32800 signals a request was cancelled.
 private const val VERIFICATION_TIMEOUT_ERROR_CODE = -32800
-const val VERIFICATION_ENQUEUED_NOTIFICATION = "semantifyr/verification/enqueued"
 
 class VerificationTracker(
     val requestId: String,
@@ -219,7 +220,10 @@ class LspSession @Inject constructor(
         if (!started) {
             return
         }
-        val notification = SessionControlInterceptor.changedNotification(activeVerifications)
+        val notification = NotificationMessage().apply {
+            method = SemantifyrLiveMethods.INFLIGHT_CHANGED
+            params = InflightChangedParams(activeVerifications)
+        }
         launchInSession {
             lspMessageProxy.sendToLspClient(notification)
         }
@@ -268,8 +272,8 @@ class LspSession @Inject constructor(
 
     private fun enqueuedNotification(requestId: String): NotificationMessage {
         return NotificationMessage().apply {
-            method = VERIFICATION_ENQUEUED_NOTIFICATION
-            params = mapOf("requestId" to requestId)
+            method = SemantifyrLiveMethods.VERIFICATION_ENQUEUED
+            params = VerificationEnqueuedParams(requestId)
         }
     }
 }
