@@ -15,17 +15,7 @@ updates:
       interval: "weekly"
     rebase-strategy: "disabled"
   - package-ecosystem: "npm"
-    directory: "/subprojects/semantifyr-vscode"
-    schedule:
-      interval: "weekly"
-    rebase-strategy: "disabled"
-  - package-ecosystem: "npm"
-    directory: "/subprojects/semantifyr-live/frontend"
-    schedule:
-      interval: "weekly"
-    rebase-strategy: "disabled"
-  - package-ecosystem: "npm"
-    directory: "/subprojects/website"
+    directory: "/
     schedule:
       interval: "weekly"
     rebase-strategy: "disabled"
