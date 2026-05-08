@@ -13,6 +13,7 @@ plugins {
 dependencies {
     api(project(":compiler"))
 
+    implementation(project(":utils"))
     implementation(project(":logging"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)

@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backend.execution
 
 import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.utils.process.destroyTree
 import java.util.concurrent.ConcurrentHashMap
 
 internal object ShellProcessTracker {
@@ -46,13 +47,7 @@ internal object ShellProcessTracker {
         logger.info("Shutdown: destroying ${snapshot.size} still-running child process tree(s)")
 
         for (process in snapshot) {
-            try {
-                val handle = process.toHandle()
-                handle.descendants().forEach { it.destroyForcibly() }
-                handle.destroyForcibly()
-            } catch (_: Throwable) {
-                // Best-effort: do not let a stuck process block other cleanup.
-            }
+            process.destroyTree()
         }
     }
 }

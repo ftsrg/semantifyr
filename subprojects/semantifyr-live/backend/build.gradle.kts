@@ -39,7 +39,6 @@ val sysmlCompiledExamples by configurations.creating {
 
 dependencies {
     implementation(libs.bundles.ktor.server)
-
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.lsp4j)
@@ -47,8 +46,9 @@ dependencies {
     implementation(libs.clikt)
     implementation(libs.guice)
     implementation(libs.guice.extensions.assistedinject)
-    implementation(project(":logging"))
 
+    implementation(project(":utils"))
+    implementation(project(":logging"))
     implementation(project(":portfolios"))
     implementation(project(":guice-common"))
 

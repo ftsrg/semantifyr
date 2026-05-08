@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.backend.execution
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.utils.process.destroyTree
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.coroutineScope
@@ -104,12 +105,4 @@ abstract class ShellBasedBackendExecutor : BackendExecutor {
         return ProcessBuilder(cmd)
     }
 
-}
-
-fun Process.destroyTree() {
-    val handle = toHandle()
-    handle.descendants().forEach {
-        it.destroyForcibly()
-    }
-    handle.destroyForcibly()
 }
