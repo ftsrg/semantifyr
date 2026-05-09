@@ -95,39 +95,39 @@ sonar {
             it.name != "main" && it.name != "testFixtures"
         }
 
-        val testSourceDirs = nonMainSourceSets.flatMap {
-            it.allSource.srcDirs
-        }.filter {
-            it.exists()
-        }
-
-        val testBinaryDirs = nonMainSourceSets.flatMap {
-            it.output.classesDirs.files
-        }
-
-        val testClasspath = nonMainSourceSets.flatMap {
-            it.runtimeClasspath.files
-        }.filter {
-            it.exists()
-        }
-
-        val coverageXmls = tasks.withType<JacocoReport>().map {
-            it.reports.xml.outputLocation.get().asFile
-        }.filter {
-            it.exists()
-        }
-
-        if (testSourceDirs.isNotEmpty()) {
-            property("sonar.tests", testSourceDirs.joinToString(",") { it.absolutePath })
-        }
-        if (testBinaryDirs.isNotEmpty()) {
-            property("sonar.java.test.binaries", testBinaryDirs.joinToString(",") { it.absolutePath })
-        }
-        if (testClasspath.isNotEmpty()) {
-            property("sonar.java.test.libraries", testClasspath.joinToString(",") { it.absolutePath })
-        }
-        if (coverageXmls.isNotEmpty()) {
-            property("sonar.coverage.jacoco.xmlReportPaths", coverageXmls.joinToString(",") { it.absolutePath })
-        }
+        property("sonar.tests", provider {
+            nonMainSourceSets.flatMap {
+                it.allSource.srcDirs
+            }.filter {
+                it.exists()
+            }.joinToString(",") {
+                it.absolutePath
+            }
+        })
+        property("sonar.java.test.binaries", provider {
+            nonMainSourceSets.flatMap {
+                it.output.classesDirs.files
+            }.joinToString(",") {
+                it.absolutePath
+            }
+        })
+        property("sonar.java.test.libraries", provider {
+            nonMainSourceSets.flatMap {
+                it.runtimeClasspath.files
+            }.filter {
+                it.exists()
+            }.joinToString(",") {
+                it.absolutePath
+            }
+        })
+        property("sonar.coverage.jacoco.xmlReportPaths", provider {
+            tasks.withType<JacocoReport>().map {
+                it.reports.xml.outputLocation.get().asFile
+            }.filter {
+                it.exists()
+            }.joinToString(",") {
+                it.absolutePath
+            }
+        })
     }
 }
