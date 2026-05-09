@@ -50,7 +50,6 @@ reporting {
 
         val mergedJacocoReport by tasks.registering(JacocoReport::class) {
             group = "verification"
-            description = "Aggregate code coverage across test, verificationTest, and integrationTest suites"
 
             perSuiteReportTasks.forEach { reportTask ->
                 executionData.from(reportTask.map { it.executionData })

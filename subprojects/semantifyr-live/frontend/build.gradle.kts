@@ -39,8 +39,6 @@ dependencies {
 val importedSnippetsDir = project.layout.projectDirectory.dir("src/snippets/imported")
 
 val cloneGammaTestModels by tasks.registering(Sync::class) {
-    group = "build"
-    description = "Stage the Gamma example models (sources + frontend-compiled OXSTS) into src/snippets/imported/gamma so the SPA can bundle them."
     from(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/examples")) {
         include("*.gamma")
     }
@@ -51,8 +49,6 @@ val cloneGammaTestModels by tasks.registering(Sync::class) {
 }
 
 val cloneSysmlv2TestModels by tasks.registering(Sync::class) {
-    group = "build"
-    description = "Stage the SysMLv2 example models (sources + frontend-compiled OXSTS) into src/snippets/imported/sysmlv2 so the SPA can bundle them."
     from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/examples")) {
         include(
             "compressedspacecraft.sysml",
@@ -68,9 +64,15 @@ val cloneSysmlv2TestModels by tasks.registering(Sync::class) {
 }
 
 val cloneTestModels by tasks.registering {
-    group = "build"
-    description = "Aggregate sync of every upstream test-model snapshot consumed by the SPA."
-    dependsOn(cloneGammaTestModels, cloneSysmlv2TestModels)
+    dependsOn(cloneGammaTestModels, cloneSysmlv2TestModels, cloneTutorialSnippets)
+}
+
+val cloneVscodeLanguageAssets by tasks.registering(Sync::class) {
+    from(rootProject.layout.projectDirectory.dir("subprojects/semantifyr-vscode")) {
+        include("language-configuration.json")
+        include("syntaxes/*.tmLanguage.json")
+    }
+    into(importedVscodeDir)
 }
 
 // npm workspaces: install runs once at the repo root so all four TS packages share a single
@@ -82,7 +84,6 @@ tasks.npmInstall {
 
 val assembleFrontend by tasks.registering(NpmTask::class) {
     group = "build"
-    description = "Build the production SPA bundle into dist/"
 
     inputs.dir(project.layout.projectDirectory.dir("src"))
     inputs.file(project.layout.projectDirectory.file("index.html"))
@@ -107,7 +108,7 @@ artifacts {
 
 val test by tasks.registering(NpmTask::class) {
     group = "verification"
-    description = "Run the frontend Vitest unit + integration tests"
+
     inputs.files(tasks.npmInstall)
     inputs.files(editorCommonDist)
     inputs.dir(project.layout.projectDirectory.dir("src"))

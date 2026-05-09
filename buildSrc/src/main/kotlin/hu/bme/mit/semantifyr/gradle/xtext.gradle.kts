@@ -53,7 +53,6 @@ sourceSets {
 
 val generateXtextLanguage by tasks.registering(JavaExec::class) {
     group = "build"
-    description = "Generates the Xtext language infrastructure"
 
     classpath(mwe2)
     mainClass.set("org.eclipse.emf.mwe2.launch.runtime.Mwe2Launcher")

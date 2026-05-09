@@ -120,19 +120,16 @@ val cloneGammaTestModels by tasks.registering(Sync::class) {
 }
 
 val cloneOxstsTestModels by tasks.registering(Sync::class) {
-    description = "Stage the OXSTS simple test models for integration tests."
     from(rootProject.layout.projectDirectory.dir("oxsts-test-models/simple"))
     into(layout.buildDirectory.dir("staging/oxsts-test-models"))
 }
 
 val cloneGammaLibraryModels by tasks.registering(Sync::class) {
-    description = "Stage Gamma-library OXSTS examples for integration tests."
     from(gammaCompiledExamples)
     into(layout.buildDirectory.dir("staging/gamma-library-models"))
 }
 
 val cloneSysmlLibraryModels by tasks.registering(Sync::class) {
-    description = "Stage SysMLv2-library OXSTS examples for integration tests."
     from(sysmlCompiledExamples)
     into(layout.buildDirectory.dir("staging/sysml-library-models"))
 }
@@ -146,7 +143,6 @@ val cloneTheta = tasks.named<Sync>("cloneTheta")
 
 tasks.named<JavaExec>("run") {
     group = "application"
-    description = "Run the backend with web root (builds frontend)"
 
     inputs.files(cloneLspDistributions)
     inputs.files(cloneSemanticLibraries)
@@ -174,7 +170,7 @@ tasks.named<JavaExec>("run") {
 
 val runDev by tasks.registering(JavaExec::class) {
     group = "application"
-    description = "Run the backend without web root (for use with Vite dev/preview)"
+
     classpath = sourceSets["main"].runtimeClasspath
     mainClass = application.mainClass
 

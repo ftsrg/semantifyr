@@ -69,7 +69,6 @@ val buildExtension by tasks.registering(NpmTask::class) {
 }
 
 val syncPackageVersion by tasks.registering(NpmTask::class) {
-    description = "Rewrite package.json version to match project.version"
     inputs.files(tasks.npmInstall)
     inputs.property("version", project.version.toString())
     outputs.file(project.layout.projectDirectory.file("package.json"))
