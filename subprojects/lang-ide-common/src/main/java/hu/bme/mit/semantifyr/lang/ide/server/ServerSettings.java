@@ -134,7 +134,7 @@ public class ServerSettings {
         return switch (preset) {
             case "none" -> OptimizationConfig.Companion.getNONE();
             case "all" -> OptimizationConfig.Companion.getALL();
-            default -> OptimizationConfig.Companion.getDEFAULT();
+            default -> OptimizationConfig.Companion.getALL();
         };
     }
 

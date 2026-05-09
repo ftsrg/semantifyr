@@ -52,7 +52,7 @@ interface SemantifyrVerifier {
         private var environment = ExecutionEnvironment.Empty
         private var timeout = 5.minutes
         private var maxConcurrency = Runtime.getRuntime().availableProcessors().coerceAtLeast(1)
-        private var optimization = OptimizationConfig.DEFAULT
+        private var optimization = OptimizationConfig.ALL
 
         fun injector(injector: Injector): Builder {
             this.injector = injector

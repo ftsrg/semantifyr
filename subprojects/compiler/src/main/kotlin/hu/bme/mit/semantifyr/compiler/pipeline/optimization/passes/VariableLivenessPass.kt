@@ -14,8 +14,8 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpress
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.AnalysisManager
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationCategory
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Pass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PassResult
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
@@ -39,7 +39,7 @@ class VariableLivenessPass @Inject constructor(
 ) : Pass<EvaluableCompilationContext> {
 
     override fun run(input: EvaluableCompilationContext, analysisManager: AnalysisManager): PassResult {
-        if (!config.isEnabled(OptimizationCategory.UnusedVariableElimination)) {
+        if (!config.isEnabled(OptimizationPass.VariableLiveness)) {
             return PassResult.Unchanged
         }
         val evaluator = metaCompileTimeExpressionEvaluatorProvider.getEvaluator(input.rootInstance)

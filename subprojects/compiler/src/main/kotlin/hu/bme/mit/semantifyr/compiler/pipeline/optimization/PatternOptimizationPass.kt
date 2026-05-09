@@ -12,19 +12,11 @@ import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationConte
 
 abstract class PatternOptimizationPass(
     private val config: OptimizationConfig,
-    private val categories: List<OptimizationCategory>,
+    private val pass: OptimizationPass,
     compilationPass: CompilationPass,
     patterns: List<OptimizationPattern>,
     artifactManager: CompilationArtifactManager,
 ) : Pass<EvaluableCompilationContext> {
-
-    constructor(
-        config: OptimizationConfig,
-        category: OptimizationCategory,
-        compilationPass: CompilationPass,
-        patterns: List<OptimizationPattern>,
-        artifactManager: CompilationArtifactManager,
-    ) : this(config, listOf(category), compilationPass, patterns, artifactManager)
 
     private val patternOptimizer = PatternOptimizer(
         patterns = patterns,
@@ -33,7 +25,7 @@ abstract class PatternOptimizationPass(
     )
 
     override fun run(input: EvaluableCompilationContext, analysisManager: AnalysisManager): PassResult {
-        if (categories.none(config::isEnabled)) {
+        if (!config.isEnabled(pass)) {
             return PassResult.Unchanged
         }
         val changed = patternOptimizer.optimize(input.inlinedOxsts)

@@ -9,8 +9,8 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationCategory
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PatternOptimizationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.RedundancyPatterns
 
@@ -19,7 +19,7 @@ class RedundantOperationRemovalPass @Inject constructor(
     artifactManager: CompilationArtifactManager,
 ) : PatternOptimizationPass(
     config = config,
-    category = OptimizationCategory.RedundantOperationRemoval,
+    pass = OptimizationPass.RedundantOperationRemoval,
     compilationPass = CompilationPass.RedundantOperationRemoval,
     patterns = listOf(RedundancyPatterns()),
     artifactManager = artifactManager,

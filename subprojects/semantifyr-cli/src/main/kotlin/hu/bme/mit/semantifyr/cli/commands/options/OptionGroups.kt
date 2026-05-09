@@ -20,8 +20,8 @@ import hu.bme.mit.semantifyr.backends.theta.ThetaExecutorKey
 import hu.bme.mit.semantifyr.backends.theta.ThetaXstsExecutor
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactKind
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationCategory
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPass
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.VerificationCase
@@ -154,14 +154,14 @@ class CompilationOptionGroup : OptionGroup("Compilation options") {
         .help("Optimization preset. Default: 'all'.")
 
     val enableOptimizations by option("--enable-optimization")
-        .enum<OptimizationCategory>(ignoreCase = true)
+        .enum<OptimizationPass>(ignoreCase = true)
         .multiple()
-        .help("Enable a specific optimization category (can be repeated).")
+        .help("Enable a specific optimization pass (can be repeated).")
 
     val disableOptimizations by option("--disable-optimization")
-        .enum<OptimizationCategory>(ignoreCase = true)
+        .enum<OptimizationPass>(ignoreCase = true)
         .multiple()
-        .help("Disable a specific optimization category (can be repeated).")
+        .help("Disable a specific optimization pass (can be repeated).")
 
     val resolved by lazy {
         val base = when (optimizationPreset) {

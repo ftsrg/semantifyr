@@ -13,8 +13,8 @@ import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationConte
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.tryEvaluateTypedOrNull
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.AnalysisManager
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationCategory
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Pass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PassResult
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ReachingDefinitionsAnalysis
@@ -34,7 +34,7 @@ class CopyPropagationPass @Inject constructor(
 ) : Pass<EvaluableCompilationContext> {
 
     override fun run(input: EvaluableCompilationContext, analysisManager: AnalysisManager): PassResult {
-        if (!config.isEnabled(OptimizationCategory.ConstantFolding)) {
+        if (!config.isEnabled(OptimizationPass.CopyPropagation)) {
             return PassResult.Unchanged
         }
 

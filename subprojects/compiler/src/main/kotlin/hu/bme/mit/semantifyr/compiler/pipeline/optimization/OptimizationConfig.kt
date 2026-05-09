@@ -9,31 +9,28 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization
 import kotlinx.serialization.Serializable
 
 @Serializable
-enum class OptimizationCategory {
-    ConstantFolding,
+enum class OptimizationPass {
     ExpressionSimplification,
-    RedundantOperationRemoval,
     OperationFlattening,
+    RedundantOperationRemoval,
     AssumeFalsePropagation,
-    UnusedVariableElimination,
-    DeadCodeElimination,
+    ConstantVariableSubstitution,
+    CopyPropagation,
+    DeadStoreElimination,
+    DeadCodeRemoval,
+    VariableLiveness,
 }
 
 @Serializable
 data class OptimizationConfig(
-    val enabled: Set<OptimizationCategory> = OptimizationCategory.entries.toSet(),
+    val enabled: Set<OptimizationPass> = OptimizationPass.entries.toSet(),
 ) {
-    fun isEnabled(category: OptimizationCategory): Boolean {
-        return category in enabled
-    }
-
-    fun isAnyEnabled(vararg categories: OptimizationCategory): Boolean {
-        return categories.any(::isEnabled)
+    fun isEnabled(pass: OptimizationPass): Boolean {
+        return pass in enabled
     }
 
     companion object {
         val NONE = OptimizationConfig(enabled = emptySet())
-        val ALL = OptimizationConfig(enabled = OptimizationCategory.entries.toSet())
-        val DEFAULT = ALL
+        val ALL = OptimizationConfig(enabled = OptimizationPass.entries.toSet())
     }
 }

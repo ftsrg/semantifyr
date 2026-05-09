@@ -31,6 +31,7 @@ enum class CompilationPass {
     AssumeFalsePropagation,
     DeadCodeRemoval,
     UnusedVariableElimination,
+    PropertyExpressionNormalization,
     Flattening,
 }
 

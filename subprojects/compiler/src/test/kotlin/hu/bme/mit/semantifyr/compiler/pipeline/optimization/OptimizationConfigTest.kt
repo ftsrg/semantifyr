@@ -12,67 +12,33 @@ import org.junit.jupiter.api.Test
 class OptimizationConfigTest {
     @Test
     fun `NONE enables nothing`() {
-        for (category in OptimizationCategory.entries) {
-            assertThat(OptimizationConfig.NONE.isEnabled(category)).isFalse
+        for (pass in OptimizationPass.entries) {
+            assertThat(OptimizationConfig.NONE.isEnabled(pass)).isFalse
         }
     }
 
     @Test
-    fun `ALL enables every category`() {
-        for (category in OptimizationCategory.entries) {
-            assertThat(OptimizationConfig.ALL.isEnabled(category)).isTrue
+    fun `ALL enables every pass`() {
+        for (pass in OptimizationPass.entries) {
+            assertThat(OptimizationConfig.ALL.isEnabled(pass)).isTrue
         }
     }
 
     @Test
-    fun `DEFAULT is equivalent to ALL`() {
-        assertThat(OptimizationConfig.DEFAULT).isEqualTo(OptimizationConfig.ALL)
+    fun `custom config enables only the specified passes`() {
+        val config = OptimizationConfig(enabled = setOf(OptimizationPass.ExpressionSimplification))
+
+        assertThat(config.isEnabled(OptimizationPass.ExpressionSimplification)).isTrue
+        assertThat(config.isEnabled(OptimizationPass.OperationFlattening)).isFalse
+        assertThat(config.isEnabled(OptimizationPass.DeadCodeRemoval)).isFalse
     }
 
     @Test
-    fun `custom config enables only the specified categories`() {
-        val config = OptimizationConfig(enabled = setOf(OptimizationCategory.ConstantFolding))
-
-        assertThat(config.isEnabled(OptimizationCategory.ConstantFolding)).isTrue
-        assertThat(config.isEnabled(OptimizationCategory.OperationFlattening)).isFalse
-        assertThat(config.isEnabled(OptimizationCategory.DeadCodeElimination)).isFalse
-    }
-
-    @Test
-    fun `isAnyEnabled returns true when at least one given category is enabled`() {
-        val config = OptimizationConfig(enabled = setOf(OptimizationCategory.OperationFlattening))
-
-        assertThat(
-            config.isAnyEnabled(
-                OptimizationCategory.ConstantFolding,
-                OptimizationCategory.OperationFlattening,
-            ),
-        ).isTrue
-    }
-
-    @Test
-    fun `isAnyEnabled returns false when none of the given categories are enabled`() {
-        val config = OptimizationConfig(enabled = setOf(OptimizationCategory.OperationFlattening))
-
-        assertThat(
-            config.isAnyEnabled(
-                OptimizationCategory.ConstantFolding,
-                OptimizationCategory.AssumeFalsePropagation,
-            ),
-        ).isFalse
-    }
-
-    @Test
-    fun `isAnyEnabled with no arguments is false`() {
-        assertThat(OptimizationConfig.ALL.isAnyEnabled()).isFalse
-    }
-
-    @Test
-    fun `default constructor enables every category`() {
+    fun `default constructor enables every pass`() {
         val config = OptimizationConfig()
 
-        for (category in OptimizationCategory.entries) {
-            assertThat(config.isEnabled(category)).isTrue
+        for (pass in OptimizationPass.entries) {
+            assertThat(config.isEnabled(pass)).isTrue
         }
     }
 }

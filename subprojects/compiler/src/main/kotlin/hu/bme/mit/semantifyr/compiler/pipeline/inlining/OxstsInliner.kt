@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.context.InlinedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.InlinedPhaseOptimizer
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.PropertyExpressionNormalizationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.logging.debug
@@ -27,6 +28,7 @@ class OxstsInliner @Inject constructor(
     private val operationCallInlinerProvider: OperationCallInliner.Factory,
     private val expressionCallInlinerProvider: ExpressionCallInliner.Factory,
     private val transitionCallTraceTransformer: TransitionCallTraceTransformer,
+    private val propertyExpressionNormalizationPass: PropertyExpressionNormalizationPass,
 ) {
 
     private val logger by loggerFactory()
@@ -49,6 +51,9 @@ class OxstsInliner @Inject constructor(
 
         logger.info { "Running post-inlining optimizers" }
         inlinedPhaseOptimizer.optimize(instantiatedContext)
+
+        logger.info { "Normalizing property expression" }
+        propertyExpressionNormalizationPass.normalize(inlinedOxsts)
 
         ensureTemporalExpressions(inlinedOxsts)
 

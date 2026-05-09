@@ -24,7 +24,7 @@ import java.nio.file.Path
 class SemantifyrCompiler(
     injector: Injector,
     artifactConfig: ArtifactConfig,
-    optimizationConfig: OptimizationConfig = OptimizationConfig.DEFAULT,
+    optimizationConfig: OptimizationConfig = OptimizationConfig.ALL,
 ) {
 
     private val logger by loggerFactory()

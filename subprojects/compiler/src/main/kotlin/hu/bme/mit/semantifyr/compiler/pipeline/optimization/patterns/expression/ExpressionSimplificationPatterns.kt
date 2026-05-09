@@ -21,11 +21,10 @@ class ExpressionSimplificationPatterns(
 ) : CompositeOptimizationPattern() {
 
     override val patterns: Collection<OptimizationPattern> = listOf(
-        // Double-inverse / negation pushing first - creates opportunities for others
-        DoubleNegationPattern(),
+        // Negation pushing
+        NegationNormalizationPatterns(),
         DoubleUnaryMinusPattern(),
         NegatedComparisonPattern(),
-        DeMorganPattern(),
         // Identity / absorption with constants
         ConstantTrueOrPattern(),
         ConstantFalseAndPattern(),
@@ -41,9 +40,6 @@ class ExpressionSimplificationPatterns(
         IfThenElseIdenticalBranchesPattern(),
         // Type-driven comparisons against 'nothing'
         FeatureTypedNothingComparisonPattern(metaEvaluatorProvider, multiplicityRangeEvaluator),
-        // Temporal operator rewrites
-        BubbleNotEFPattern(),
-        BubbleNotAGPattern(),
         // Constant folding
         ConstantFoldingPattern(evaluator, transformer),
     )

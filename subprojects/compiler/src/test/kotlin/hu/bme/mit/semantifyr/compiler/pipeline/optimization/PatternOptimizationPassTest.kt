@@ -28,11 +28,11 @@ class PatternOptimizationPassTest {
     private lateinit var parseHelper: InlinedOxstsParseHelper
 
     @Test
-    fun `returns Unchanged without invoking patterns when every category is disabled`() {
+    fun `returns Unchanged without invoking patterns when the pass is disabled`() {
         val pattern = CountingPattern(alwaysFires = true)
         val pass = pass(
             config = OptimizationConfig.NONE,
-            categories = listOf(OptimizationCategory.ExpressionSimplification),
+            optimizationPass = OptimizationPass.ExpressionSimplification,
             pattern = pattern,
         )
 
@@ -68,32 +68,30 @@ class PatternOptimizationPassTest {
     }
 
     @Test
-    fun `multi-category gate runs the pass when any one category is enabled`() {
+    fun `pass runs only when its own enum value is enabled`() {
         val pattern = CountingPattern(alwaysFires = false)
         val pass = pass(
-            config = OptimizationConfig(enabled = setOf(OptimizationCategory.ConstantFolding)),
-            categories = listOf(
-                OptimizationCategory.ExpressionSimplification,
-                OptimizationCategory.ConstantFolding,
-            ),
+            config = OptimizationConfig(enabled = setOf(OptimizationPass.ExpressionSimplification)),
+            optimizationPass = OptimizationPass.OperationFlattening,
             pattern = pattern,
         )
 
-        pass.run(context(), AnalysisManager(emptyList()))
+        val result = pass.run(context(), AnalysisManager(emptyList()))
 
+        assertThat(result).isEqualTo(PassResult.Unchanged)
         assertThat(pattern.invocations)
-            .`as`("enabling any one listed category must unlock the pass")
-            .isPositive
+            .`as`("a different pass being enabled must not unlock this one")
+            .isZero
     }
 
     private fun pass(
         config: OptimizationConfig = OptimizationConfig.ALL,
-        categories: List<OptimizationCategory> = listOf(OptimizationCategory.ExpressionSimplification),
+        optimizationPass: OptimizationPass = OptimizationPass.ExpressionSimplification,
         pattern: OptimizationPattern,
     ): PatternOptimizationPass {
         return object : PatternOptimizationPass(
             config = config,
-            categories = categories,
+            pass = optimizationPass,
             compilationPass = CompilationPass.ExpressionSimplification,
             patterns = listOf(pattern),
             artifactManager = mock<CompilationArtifactManager>(),
