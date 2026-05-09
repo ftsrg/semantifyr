@@ -50,6 +50,7 @@ class Intersection {
     }
 }
 
+@Tag("expect-pass")
 @VerificationCase
 class GreenColorIsReachable {
     contains light: TrafficLight[1]
@@ -63,6 +64,7 @@ class GreenColorIsReachable {
     }
 }
 
+@Tag("expect-pass")
 @VerificationCase
 class IntersectionNeverBothGreen {
     contains intersection: Intersection
