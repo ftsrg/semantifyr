@@ -5,10 +5,7 @@
  */
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
-    id("hu.bme.mit.semantifyr.gradle.conventions.theta")
-    id("hu.bme.mit.semantifyr.gradle.conventions.verification")
-    id("hu.bme.mit.semantifyr.gradle.conventions.integration")
+    id("hu.bme.mit.semantifyr.gradle.conventions.backend")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }
@@ -24,16 +21,4 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
 
     testImplementation(testFixtures(project(":backend")))
-}
-
-val cloneOxstsTestModels by tasks.registering(Sync::class) {
-    from(rootProject.layout.projectDirectory.dir("oxsts-test-models"))
-    into(layout.buildDirectory.dir("test-models"))
-}
-
-tasks.named("verificationTest") {
-    inputs.files(cloneOxstsTestModels)
-}
-tasks.named("integrationTest") {
-    inputs.files(cloneOxstsTestModels)
 }
