@@ -26,5 +26,6 @@ val integrationTest by tasks.getting {
 }
 
 val backendIntegrationTest by tasks.registering {
+    group = "verification"
     inputs.files(integrationTest)
 }
