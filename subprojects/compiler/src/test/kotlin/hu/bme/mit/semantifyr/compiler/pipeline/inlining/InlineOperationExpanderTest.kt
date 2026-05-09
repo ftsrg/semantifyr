@@ -233,7 +233,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
             val expander = it.compilationInjector.getInstance(InlineOperationExpander::class.java)
             val firstInline = firstInlineIn(it)
 
-            assertThatThrownBy { expander.expand(firstInline, it.rootInstance) { 0 } }
+            assertThatThrownBy { expander.expand(firstInline, it.rootInstance) }
                 .isInstanceOf(IllegalStateException::class.java)
                 .hasMessageContaining("bounded range")
         }
@@ -247,8 +247,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
             val firstInline = firstInlineIn(it)
 
             val expander = it.compilationInjector.getInstance(InlineOperationExpander::class.java)
-            var counter = 0
-            val expanded = expander.expand(firstInline, it.rootInstance) { counter++ }
+            val expanded = expander.expand(firstInline, it.rootInstance)
             EcoreUtil2.replace(firstInline, expanded)
 
             assertSerializedModelEquals(it.inlinedOxsts, expected)
