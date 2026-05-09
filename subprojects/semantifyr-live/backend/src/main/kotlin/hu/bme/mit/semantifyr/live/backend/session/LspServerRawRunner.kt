@@ -17,7 +17,6 @@ import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.utils.process.destroyTree
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
@@ -72,12 +71,11 @@ class LspServerRawRunner @Inject constructor(
                 logger.info { "Listening for LSP server on 127.0.0.1:$port (flavor=${flavor.id})" }
                 val process = startProcess(port)
                 try {
-                    launchProcessOutputDrain(process)
                     val clientSocket = acceptClientConnection(serverSocket, process)
                     try {
                         launchOutgoingPump(clientSocket)
                         launchIncomingPump(clientSocket)
-                        runInterruptible(Dispatchers.IO) { process.waitFor() }
+                        runInterruptible(lspBlockingDispatcher) { process.waitFor() }
                         logger.info { "LSP process exited (flavor=${flavor.id}, exitCode=${process.exitValue()})" }
                     } finally {
                         withContext(NonCancellable) {
@@ -140,17 +138,24 @@ class LspServerRawRunner @Inject constructor(
             "LSP binary for flavor '${flavor.id}' not found or not executable: $binary"
         }
 
-        logger.info { "Spawning LSP server (flavor=${flavor.id}, binary=$binary, workspace=$workingDirectoryPath, socketPort=$port)" }
+        val lspLogsDirectory = config.sessionManager.rootWorkPath.resolve("lsp-logs")
+        lspLogsDirectory.createDirectories()
+        val stdoutLog = lspLogsDirectory.resolve("${context.sessionId}-stdout.log")
+        val stderrLog = lspLogsDirectory.resolve("${context.sessionId}-stderr.log")
+
+        logger.info {
+            "Spawning LSP server (flavor=${flavor.id}, binary=$binary, workspace=$workingDirectoryPath, " +
+                "socketPort=$port, stdoutLog=$stdoutLog, stderrLog=$stderrLog)"
+        }
         return ProcessBuilder(binary.absolutePathString(), "--socket=$port", "--code-lens-mode=none")
             .directory(workingDirectoryPath.toFile())
-            .redirectErrorStream(false)
-            .redirectOutput(ProcessBuilder.Redirect.PIPE)
-            .redirectError(ProcessBuilder.Redirect.PIPE)
+            .redirectOutput(stdoutLog.toFile())
+            .redirectError(stderrLog.toFile())
             .start()
     }
 
     private suspend fun CoroutineScope.acceptClientConnection(serverSocket: ServerSocket, process: Process): Socket {
-        val watchdog = launch(Dispatchers.IO) {
+        val watchdog = launch(lspBlockingDispatcher) {
             runInterruptible { process.waitFor() }
             try {
                 serverSocket.close()
@@ -159,7 +164,7 @@ class LspServerRawRunner @Inject constructor(
             }
         }
         try {
-            val socket = runInterruptible(Dispatchers.IO) { serverSocket.accept() }
+            val socket = runInterruptible(lspBlockingDispatcher) { serverSocket.accept() }
             watchdog.cancel()
             logger.info { "LSP server connected from ${socket.remoteSocketAddress} (flavor=${flavor.id})" }
             return socket
@@ -172,7 +177,7 @@ class LspServerRawRunner @Inject constructor(
     }
 
     private fun CoroutineScope.launchOutgoingPump(socket: Socket) {
-        launch(Dispatchers.IO) {
+        launch(lspBlockingDispatcher) {
             try {
                 outgoing.consumeEach { raw ->
                     runInterruptible {
@@ -187,7 +192,7 @@ class LspServerRawRunner @Inject constructor(
     }
 
     private fun CoroutineScope.launchIncomingPump(socket: Socket) {
-        launch(Dispatchers.IO) {
+        launch(lspBlockingDispatcher) {
             try {
                 while (true) {
                     val raw = runInterruptible {
@@ -201,27 +206,6 @@ class LspServerRawRunner @Inject constructor(
                 incoming.close()
             }
             logger.debug { "Incoming pump ended" }
-        }
-    }
-
-    private fun CoroutineScope.launchProcessOutputDrain(process: Process) {
-        launch(Dispatchers.IO) {
-            runInterruptible {
-                process.inputStream.bufferedReader().use { reader ->
-                    reader.forEachLine { line ->
-                        logger.debug { "lsp.stdout: $line" }
-                    }
-                }
-            }
-        }
-        launch(Dispatchers.IO) {
-            runInterruptible {
-                process.errorStream.bufferedReader().use { reader ->
-                    reader.forEachLine { line ->
-                        logger.debug { "lsp.stderr: $line" }
-                    }
-                }
-            }
         }
     }
 
