@@ -52,8 +52,13 @@ dependencies {
     implementation(project(":portfolios"))
     implementation(project(":guice-common"))
 
-    testImplementation(libs.bundles.ktor.client.test)
-    testImplementation(libs.kotlinx.coroutines.test)
+    testFixturesApi(libs.lsp4j)
+    testFixturesApi(libs.lsp4j.jsonrpc)
+    testFixturesApi(libs.kotlinx.coroutines.core)
+    testFixturesApi(libs.kotlinx.serialization.json)
+    testFixturesApi(libs.bundles.ktor.server)
+    testFixturesApi(libs.bundles.ktor.client.test)
+    testFixturesImplementation(libs.guice)
 
     lspDistributions(project(":oxsts.lang.ide", configuration = "distributionOutput"))
     lspDistributions(project(":gamma.lang.ide", configuration = "distributionOutput"))
@@ -197,12 +202,6 @@ val runDev by tasks.registering(JavaExec::class) {
 testing {
     suites {
         val verificationTest by getting(JvmTestSuite::class) {
-            dependencies {
-                implementation(libs.kotlinx.serialization.json)
-                implementation.bundle(libs.bundles.ktor.server)
-                implementation.bundle(libs.bundles.ktor.client.test)
-                implementation(libs.kotlinx.coroutines.test)
-            }
             targets.all {
                 testTask.configure {
                     inputs.files(cloneLspDistributions)
@@ -221,6 +220,36 @@ testing {
                     systemProperty("semantifyr.live.oxstsTestModels", stagingDir.resolve("oxsts-test-models").absolutePath)
                     systemProperty("semantifyr.live.gammaLibraryModels", stagingDir.resolve("gamma-library-models").absolutePath)
                     systemProperty("semantifyr.live.sysmlLibraryModels", stagingDir.resolve("sysml-library-models").absolutePath)
+                }
+            }
+        }
+
+        val benchmark by registering(JvmTestSuite::class) {
+            useJUnitJupiter()
+
+            dependencies {
+                implementation(project())
+                implementation(testFixtures(project()))
+                implementation(project(":logging"))
+
+                runtimeOnly(libs.slf4j.log4j)
+            }
+
+            targets.all {
+                testTask.configure {
+                    inputs.files(cloneLspDistributions)
+                    inputs.files(cloneSemanticLibraries)
+                    inputs.files(cloneOxstsTestModels)
+
+                    val stagingDir = layout.buildDirectory.dir("staging").get().asFile
+
+                    systemProperty("semantifyr.live.lsp", stagingDir.resolve("lsp").absolutePath)
+                    systemProperty("semantifyr.live.semanticLibraries", stagingDir.resolve("semantic-libraries").absolutePath)
+                    systemProperty("semantifyr.live.oxstsTestModels", stagingDir.resolve("oxsts-test-models").absolutePath)
+
+                    testLogging {
+                        showStandardStreams = true
+                    }
                 }
             }
         }
