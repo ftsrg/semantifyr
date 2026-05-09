@@ -14,27 +14,19 @@ import hu.bme.mit.semantifyr.live.backend.ServerConfig
 import hu.bme.mit.semantifyr.live.backend.SessionManagerConfig
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SemantifyrLiveMethods
 import hu.bme.mit.semantifyr.live.backend.server.AdminStatusResponse
-import hu.bme.mit.semantifyr.live.backend.session.SessionManager
 import hu.bme.mit.semantifyr.live.backend.testing.LspWire
 import hu.bme.mit.semantifyr.live.backend.testing.awaitResponseFor
 import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrApp
 import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrLiveBackend
 import hu.bme.mit.semantifyr.live.backend.testing.jsonClient
-import io.ktor.client.HttpClient
+import hu.bme.mit.semantifyr.live.backend.testing.withRealServer
 import io.ktor.client.call.body
-import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
-import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.application.install
-import io.ktor.server.engine.embeddedServer
-import io.ktor.server.netty.Netty
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
-import io.ktor.server.websocket.WebSockets
 import io.ktor.websocket.Frame
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -51,8 +43,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Base64
 import kotlin.time.Duration.Companion.minutes
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
-import io.ktor.client.plugins.websocket.WebSockets as ClientWebSockets
 import io.ktor.client.plugins.websocket.webSocket as clientWebSocket
 
 class ServerIntegrationTest {
@@ -117,33 +107,6 @@ class ServerIntegrationTest {
             installSemantifyrLiveBackend(injector)
         }
         block(injector)
-    }
-
-    private suspend fun withRealServer(tmp: Path, block: suspend (HttpClient, Int) -> Unit) {
-        val injector: Injector = Guice.createInjector(BackendModule(config(tmp)))
-        val server = embeddedServer(Netty, port = 0) {
-            install(ContentNegotiation) {
-                json()
-            }
-            install(WebSockets)
-            installSemantifyrLiveBackend(injector)
-        }.start(wait = false)
-
-        try {
-            val port = server.engine.resolvedConnectors().first().port
-            val client = HttpClient(CIO) {
-                install(ClientContentNegotiation) {
-                    json()
-                }
-                install(ClientWebSockets)
-            }
-            client.use {
-                block(it, port)
-            }
-        } finally {
-            server.stop(gracePeriodMillis = 500, timeoutMillis = 2_000)
-            injector.getInstance(SessionManager::class.java).close()
-        }
     }
 
     @Test
@@ -313,7 +276,7 @@ class ServerIntegrationTest {
         verifyTimeout: kotlin.time.Duration = 1.minutes,
     ) {
         assumeTrue(lspBinariesDirectory != null, "semantifyr.live.lsp system property not set")
-        withRealServer(tmp) { client, port ->
+        withRealServer(config(tmp)) { client, port ->
             client.clientWebSocket("ws://localhost:$port/ws/lsp/$flavor") {
                 send(Frame.Text(LspWire.initializeRequest()))
                 awaitResponseFor(id = 1)

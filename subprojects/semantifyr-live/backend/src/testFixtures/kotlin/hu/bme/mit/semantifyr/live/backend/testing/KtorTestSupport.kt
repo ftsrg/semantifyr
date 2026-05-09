@@ -15,10 +15,15 @@ import hu.bme.mit.semantifyr.live.backend.BackendModule
 import hu.bme.mit.semantifyr.live.backend.server.AdminHandler
 import hu.bme.mit.semantifyr.live.backend.server.ApiRoutesHandler
 import hu.bme.mit.semantifyr.live.backend.server.WebSocketHandler
+import hu.bme.mit.semantifyr.live.backend.session.SessionManager
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.createApplicationPlugin
 import io.ktor.server.application.install
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
@@ -73,5 +78,33 @@ fun Application.installSemantifyrLiveBackend(injector: Injector) {
     }
     with(injector.getInstance(WebSocketHandler::class.java)) {
         configure()
+    }
+}
+
+suspend fun withRealServer(
+    config: BackendConfig,
+    block: suspend (HttpClient, Int) -> Unit,
+) {
+    val injector = Guice.createInjector(BackendModule(config))
+    val server = embeddedServer(Netty, port = 0) {
+        install(ContentNegotiation) {
+            json()
+        }
+        install(ServerWebSockets)
+        installSemantifyrLiveBackend(injector)
+    }.start(wait = false)
+    try {
+        val port = server.engine.resolvedConnectors().first().port
+        HttpClient(CIO) {
+            install(ClientContentNegotiation) {
+                json()
+            }
+            install(ClientWebSockets)
+        }.use {
+            block(it, port)
+        }
+    } finally {
+        server.stop(gracePeriodMillis = 500, timeoutMillis = 2_000)
+        injector.getInstance(SessionManager::class.java).close()
     }
 }

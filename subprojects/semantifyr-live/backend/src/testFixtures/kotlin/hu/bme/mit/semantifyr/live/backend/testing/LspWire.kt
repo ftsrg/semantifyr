@@ -105,6 +105,35 @@ object LspWire {
         )
     }
 
+    fun didChangeNotification(
+        uri: String,
+        version: Int,
+        text: String,
+    ): String {
+        return notification(
+            method = "textDocument/didChange",
+            params = buildJsonObject {
+                put(
+                    "textDocument",
+                    buildJsonObject {
+                        put("uri", JsonPrimitive(uri))
+                        put("version", JsonPrimitive(version))
+                    },
+                )
+                put(
+                    "contentChanges",
+                    JsonArray(
+                        listOf(
+                            buildJsonObject {
+                                put("text", JsonPrimitive(text))
+                            },
+                        ),
+                    ),
+                )
+            },
+        )
+    }
+
     fun executeCommandRequest(
         id: Int,
         command: String,
