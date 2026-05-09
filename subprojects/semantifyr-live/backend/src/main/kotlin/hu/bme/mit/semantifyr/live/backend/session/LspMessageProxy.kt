@@ -18,7 +18,6 @@ import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SemantifyrLiveMethodInterce
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.VerificationMessageInterceptor
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.WorkspaceSyncerInterceptor
 import hu.bme.mit.semantifyr.live.backend.server.LspProxyInfo
-import hu.bme.mit.semantifyr.live.backend.utils.lspMessageHandler
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.error
 import hu.bme.mit.semantifyr.logging.info
@@ -28,6 +27,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.eclipse.lsp4j.jsonrpc.json.MessageJsonHandler
 import org.eclipse.lsp4j.jsonrpc.messages.Message
 import org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage
 import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage
@@ -38,7 +38,12 @@ class LspMessageProxy @Inject constructor(
     private val lspServerRawConnector: LspServerRawConnector,
     private val lspClientRawConnector: LspClientRawConnector,
     private val uriRewriter: UriRewriter,
-    private val lspMessageInterceptors: @JvmSuppressWildcards List<LspMessageInterceptor>,
+    private val lspMessageHandler: MessageJsonHandler,
+    lspServerReadinessInterceptor: LspServerReadinessInterceptor,
+    workspaceSyncerInterceptor: WorkspaceSyncerInterceptor,
+    artifactsConfigInterceptor: ArtifactsConfigInterceptor,
+    semantifyrLiveMethodInterceptor: SemantifyrLiveMethodInterceptor,
+    verificationMessageInterceptor: VerificationMessageInterceptor,
 ) : LspBridge {
 
     private val logger by loggerFactory()
