@@ -7,7 +7,7 @@
 import com.github.gradle.node.npm.task.NpmTask
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.frontend")
+    id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
 }
 
 tasks.npmInstall {

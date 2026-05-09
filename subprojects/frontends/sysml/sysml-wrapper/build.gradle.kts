@@ -10,7 +10,7 @@ import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
-    id("hu.bme.mit.semantifyr.gradle.conventions.frontend")
+    id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
     kotlin("jvm")
 }
 
