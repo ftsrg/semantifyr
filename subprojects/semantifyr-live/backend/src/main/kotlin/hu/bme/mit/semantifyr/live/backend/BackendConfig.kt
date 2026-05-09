@@ -81,6 +81,8 @@ data class ServerConfig(
 data class SessionManagerConfig(
     val maxSessionsGlobal: Int = 32,
     val maxSessionsPerIp: Int = 4,
+    val maxConcurrentLspStarts: Int = 4,
+    val lspStartCooldownMillis: Long = 0,
     val lspBinariesDirectory: String? = null,
     val semanticLibrariesDirectory: String? = null,
     val rootWorkDirectory: String = "/var/lib/semantifyr-live",
@@ -88,6 +90,8 @@ data class SessionManagerConfig(
     fun withEnv(env: Map<String, String?>) = copy(
         maxSessionsGlobal = env["SEMANTIFYR_LIVE_MAX_SESSIONS_GLOBAL"]?.toIntOrNull() ?: maxSessionsGlobal,
         maxSessionsPerIp = env["SEMANTIFYR_LIVE_MAX_SESSIONS_PER_IP"]?.toIntOrNull() ?: maxSessionsPerIp,
+        maxConcurrentLspStarts = env["SEMANTIFYR_LIVE_MAX_CONCURRENT_LSP_STARTS"]?.toIntOrNull() ?: maxConcurrentLspStarts,
+        lspStartCooldownMillis = env["SEMANTIFYR_LIVE_LSP_START_COOLDOWN_MILLIS"]?.toLongOrNull() ?: lspStartCooldownMillis,
         lspBinariesDirectory = env["SEMANTIFYR_LIVE_LSP_BINARIES_DIR"] ?: lspBinariesDirectory,
         semanticLibrariesDirectory = env["SEMANTIFYR_LIVE_SEMANTIC_LIBRARIES_DIR"] ?: semanticLibrariesDirectory,
         rootWorkDirectory = env["SEMANTIFYR_LIVE_ROOT_WORK_DIR"] ?: rootWorkDirectory,
