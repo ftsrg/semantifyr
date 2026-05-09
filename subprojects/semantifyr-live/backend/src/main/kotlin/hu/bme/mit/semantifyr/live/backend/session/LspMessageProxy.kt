@@ -8,10 +8,15 @@ package hu.bme.mit.semantifyr.live.backend.session
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.live.backend.lsp.UriRewriter
+import hu.bme.mit.semantifyr.live.backend.lsp.bridge.ArtifactsConfigInterceptor
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.LspBridge
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.LspClientRawConnector
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.LspMessageInterceptor
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.LspServerRawConnector
+import hu.bme.mit.semantifyr.live.backend.lsp.bridge.LspServerReadinessInterceptor
+import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SemantifyrLiveMethodInterceptor
+import hu.bme.mit.semantifyr.live.backend.lsp.bridge.VerificationMessageInterceptor
+import hu.bme.mit.semantifyr.live.backend.lsp.bridge.WorkspaceSyncerInterceptor
 import hu.bme.mit.semantifyr.live.backend.server.LspProxyInfo
 import hu.bme.mit.semantifyr.live.backend.utils.lspMessageHandler
 import hu.bme.mit.semantifyr.logging.debug
@@ -39,8 +44,16 @@ class LspMessageProxy @Inject constructor(
     private val logger by loggerFactory()
     private val startMark = TimeSource.Monotonic.markNow()
 
-    private var lastClientMessageMark: TimeSource.Monotonic.ValueTimeMark = startMark
-    private var lastServerMessageMark: TimeSource.Monotonic.ValueTimeMark = startMark
+    private val lspMessageInterceptors = listOf(
+        lspServerReadinessInterceptor,
+        workspaceSyncerInterceptor,
+        artifactsConfigInterceptor,
+        semantifyrLiveMethodInterceptor,
+        verificationMessageInterceptor,
+    )
+
+    private var lastClientMessageMark = startMark
+    private var lastServerMessageMark = startMark
     private var clientMessageCount = 0L
     private var serverMessageCount = 0L
     private var errorCount = 0L

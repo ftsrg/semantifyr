@@ -11,16 +11,11 @@ import com.google.inject.Provides
 import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.live.backend.lsp.UriRewriter
 import hu.bme.mit.semantifyr.live.backend.lsp.WorkspaceSyncer
-import hu.bme.mit.semantifyr.live.backend.lsp.bridge.ArtifactsConfigInterceptor
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.LspClientRawConnector
-import hu.bme.mit.semantifyr.live.backend.lsp.bridge.LspMessageInterceptor
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.LspServerRawConnector
-import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SemantifyrLiveMethodInterceptor
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SessionControlManager
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SessionInfoProvider
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SessionVerificationManager
-import hu.bme.mit.semantifyr.live.backend.lsp.bridge.VerificationMessageInterceptor
-import hu.bme.mit.semantifyr.live.backend.lsp.bridge.WorkspaceSyncerInterceptor
 import hu.bme.mit.semantifyr.live.backend.lsp.createLspMessageHandler
 import hu.bme.mit.semantifyr.live.backend.session.LspServerRawRunner
 import hu.bme.mit.semantifyr.live.backend.session.LspSession
@@ -47,7 +42,6 @@ class BackendModule(
         bind(SessionInfoProvider::class.java).to(LspSession::class.java)
         bind(SessionVerificationManager::class.java).to(LspSession::class.java)
         bind(SessionControlManager::class.java).to(LspSession::class.java)
-
         bind(LspServerRawConnector::class.java).to(LspServerRawRunner::class.java)
         bind(LspClientRawConnector::class.java).to(WebSocketLspClientRawConnector::class.java)
     }
@@ -68,22 +62,6 @@ class BackendModule(
             clientUri = CLIENT_URI,
             targetFile = context.workingDirectoryPath.resolve(context.flavor.fileName),
             verificationCommand = context.flavor.verificationCommand,
-        )
-    }
-
-    @Provides
-    @SessionScoped
-    fun provideInterceptors(
-        workspaceSyncerInterceptor: WorkspaceSyncerInterceptor,
-        artifactsConfigInterceptor: ArtifactsConfigInterceptor,
-        semantifyrLiveMethodInterceptor: SemantifyrLiveMethodInterceptor,
-        verificationMessageInterceptor: VerificationMessageInterceptor,
-    ): List<LspMessageInterceptor> {
-        return listOf(
-            workspaceSyncerInterceptor,
-            artifactsConfigInterceptor,
-            semantifyrLiveMethodInterceptor,
-            verificationMessageInterceptor,
         )
     }
 
