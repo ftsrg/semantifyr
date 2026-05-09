@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.gradle.conventions
 
 import org.gradle.accessors.dm.LibrariesForLibs
-import org.gradle.testing.jacoco.tasks.JacocoReport
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")

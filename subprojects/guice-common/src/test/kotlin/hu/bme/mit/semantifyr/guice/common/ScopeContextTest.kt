@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.guice.common
 import com.google.inject.AbstractModule
 import com.google.inject.ConfigurationException
 import com.google.inject.Guice
-import com.google.inject.Inject
 import com.google.inject.OutOfScopeException
 import com.google.inject.ProvisionException
 import com.google.inject.ScopeAnnotation
@@ -21,7 +20,6 @@ import kotlinx.coroutines.yield
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
-import java.util.concurrent.atomic.AtomicInteger
 
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)

@@ -16,7 +16,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
-import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
 
 @VerificationScoped

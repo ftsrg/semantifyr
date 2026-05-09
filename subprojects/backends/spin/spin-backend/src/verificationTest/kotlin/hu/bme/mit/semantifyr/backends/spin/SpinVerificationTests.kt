@@ -57,8 +57,8 @@ class SpinVerificationTests {
         helper.checkTestModel(
             context,
             verificationCase,
-            verificationPortfolio = SingleBackendPortfolio(SpinBackend(), SpinConfig.Companion.SafeDfs),
-            outputDirectory = SemantifyrVerifierTestHelper.Companion.testArtifactRoot(SpinVerificationTests::class.java),
+            verificationPortfolio = SingleBackendPortfolio(SpinBackend(), SpinConfig.SafeDfs),
+            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(SpinVerificationTests::class.java),
         )
     }
 }

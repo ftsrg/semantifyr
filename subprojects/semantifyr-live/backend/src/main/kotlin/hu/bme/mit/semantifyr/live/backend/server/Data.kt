@@ -72,7 +72,10 @@ data class AdminStatusResponse(
 )
 
 @Serializable
-enum class VerificationKind { Verify, Validate }
+enum class VerificationKind {
+    Verify,
+    Validate,
+}
 
 @Serializable
 data class ActiveVerificationInfo(
@@ -80,7 +83,6 @@ data class ActiveVerificationInfo(
     val kind: VerificationKind = VerificationKind.Verify,
     val caseLabel: String? = null,
     val portfolioId: String? = null,
-    /** Wall-clock time elapsed since the request was enqueued. */
     val elapsed: Duration = Duration.ZERO,
 )
 

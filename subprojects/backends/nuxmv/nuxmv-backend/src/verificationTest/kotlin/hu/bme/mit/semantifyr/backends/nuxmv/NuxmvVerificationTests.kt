@@ -55,8 +55,8 @@ class NuxmvVerificationTests {
         helper.checkTestModel(
             context,
             verificationCase,
-            verificationPortfolio = SingleBackendPortfolio(NuxmvBackend(), NuxmvConfig.Companion.Ic3Invar),
-            outputDirectory = SemantifyrVerifierTestHelper.Companion.testArtifactRoot(NuxmvVerificationTests::class.java),
+            verificationPortfolio = SingleBackendPortfolio(NuxmvBackend(), NuxmvConfig.Ic3Invar),
+            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(NuxmvVerificationTests::class.java),
         )
     }
 }

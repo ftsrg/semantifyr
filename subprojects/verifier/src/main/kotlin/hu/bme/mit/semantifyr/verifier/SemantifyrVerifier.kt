@@ -19,7 +19,6 @@ import hu.bme.mit.semantifyr.verifier.internal.SemantifyrVerifierImpl
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
-import kotlin.jvm.java
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toKotlinDuration

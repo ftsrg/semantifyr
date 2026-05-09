@@ -55,8 +55,8 @@ class UppaalVerificationTests {
         helper.checkTestModel(
             context,
             verificationCase,
-            verificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.Companion.Default),
-            outputDirectory = SemantifyrVerifierTestHelper.Companion.testArtifactRoot(UppaalVerificationTests::class.java),
+            verificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.Default),
+            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(UppaalVerificationTests::class.java),
         )
     }
 }

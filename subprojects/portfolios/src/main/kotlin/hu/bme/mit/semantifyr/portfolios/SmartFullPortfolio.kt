@@ -99,7 +99,7 @@ class SmartFullPortfolio(
         progress.reportProgress("racing ${available.size} backend(s)")
 
         val outcome = firstDecisive(gate, timeout, progress) {
-            available.forEach { task ->
+            for (task in available) {
                 async {
                     gate.withPermit {
                         task.run(parentInjector, request.withSubPath(task.subPath), environment)

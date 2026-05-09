@@ -41,7 +41,8 @@ public class OxstsUtils {
                 || expression instanceof LiteralNothing
                 || expression instanceof LiteralReal
                 || expression instanceof LiteralString
-                || (expression instanceof ElementReference elementReference && elementReference.getElement() instanceof EnumLiteral);
+                || (expression instanceof ElementReference elementReference
+                        && elementReference.getElement() instanceof EnumLiteral);
     }
 
     public static boolean isGlobalFeature(EObject element) {

@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.backend.execution
 
 import com.github.dockerjava.api.DockerClient
-import hu.bme.mit.semantifyr.logging.error
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn

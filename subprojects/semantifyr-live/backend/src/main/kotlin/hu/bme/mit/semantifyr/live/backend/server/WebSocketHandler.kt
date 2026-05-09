@@ -38,7 +38,9 @@ class WebSocketHandler @Inject constructor(
                     limit = config.server.wsHandshakesPerPeriod,
                     refillPeriod = config.server.wsHandshakeRatePeriod,
                 )
-                requestKey { call -> call.request.local.remoteAddress }
+                requestKey {
+                    it.request.local.remoteAddress
+                }
             }
         }
         routing {

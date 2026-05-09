@@ -13,7 +13,6 @@ import hu.bme.mit.semantifyr.backends.theta.ThetaBackendModule
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.InlinedOxstsParseHelper
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.xsts.lang.XstsStandaloneSetup
 import org.eclipse.emf.common.util.URI
 import java.io.File
 

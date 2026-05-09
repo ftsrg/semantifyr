@@ -21,7 +21,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TemporalOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
-import org.eclipse.xtext.EcoreUtil2
 
 class OxstsInliner @Inject constructor(
     private val inlinedPhaseOptimizer: InlinedPhaseOptimizer,

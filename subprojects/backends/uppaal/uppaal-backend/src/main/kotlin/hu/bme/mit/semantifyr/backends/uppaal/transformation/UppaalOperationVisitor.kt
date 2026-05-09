@@ -27,15 +27,12 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
 class UppaalOperationVisitor @AssistedInject constructor(
     @param:Assisted private val context: UppaalEmissionContext,
-    @Assisted("sourceId") sourceId: String,
-    @Assisted("targetId") targetId: String,
+    @Assisted("sourceId") private var sourceId: String,
+    @Assisted("targetId") private var targetId: String,
     private val uppaalExpressionTransformer: UppaalExpressionTransformer,
     private val uppaalVariableTransformer: UppaalVariableTransformer,
     private val havocValueCollector: HavocValueCollector,
 ) : BackendOperationVisitor<Unit>() {
-
-    private var sourceId: String = sourceId
-    private var targetId: String = targetId
 
     fun transform(operation: Operation) {
         visit(operation)
@@ -69,8 +66,6 @@ class UppaalOperationVisitor @AssistedInject constructor(
     override fun visit(operation: ChoiceOperation) {
         val branches = operation.branches
         if (branches.isEmpty()) {
-            // An empty choice would block forever. Model it with a `false` guard so the Uppaal
-            // model stays well-formed; the edge is provably unreachable.
             context.edges += UppaalEdge(sourceId, targetId, guard = "false")
             return
         }
@@ -156,8 +151,6 @@ class UppaalOperationVisitor @AssistedInject constructor(
     override fun visit(operation: LocalVarDeclarationOperation) {
         val initExpression = operation.expression
         if (initExpression == null) {
-            // Declaration-only: the variable is global-hoisted by the model transformer; nothing
-            // to emit on the edge.
             context.edges += UppaalEdge(sourceId, targetId)
             return
         }
@@ -182,9 +175,6 @@ class UppaalOperationVisitor @AssistedInject constructor(
     }
 
     private fun renderIntegerHavoc(variable: VariableDeclaration, name: String) {
-        // Uppaal's default int domain is [-32768, 32767]; a select : int would force the engine
-        // to enumerate all 65k values per havoc. Emit one parallel edge per value the model
-        // actually distinguishes via comparisons, same strategy Gamma uses for Spin/Promela.
         val values = havocValueCollector.valuesFor(variable)
         for (value in values) {
             context.edges += UppaalEdge(sourceId, targetId, assignment = "$name = $value")

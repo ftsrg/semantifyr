@@ -191,7 +191,12 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         Assertions.assertTrue(
             result.verdict.isDecisive,
         ) {
-            "Portfolio ${verificationPortfolio.id} did not produce a decisive verdict for ${case.qualifiedName} (got ${result.verdict}: ${result.message ?: "no message"}).${backendDiagnostics(outputDirectory, case)}"
+            "Portfolio ${verificationPortfolio.id} did not produce a decisive verdict for ${case.qualifiedName} (got ${result.verdict}: ${result.message ?: "no message"}).${
+                backendDiagnostics(
+                    outputDirectory,
+                    case,
+                )
+            }"
         }
         Assertions.assertEquals(
             expectedVerdict,

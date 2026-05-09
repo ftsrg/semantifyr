@@ -56,8 +56,8 @@ class UppaalSemanticConformanceTest {
         helper.checkTestModel(
             context,
             verificationCase,
-            verificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.Companion.Default),
-            outputDirectory = SemantifyrVerifierTestHelper.Companion.testArtifactRoot(UppaalSemanticConformanceTest::class.java),
+            verificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.Default),
+            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(UppaalSemanticConformanceTest::class.java),
             validationPortfolio = Portfolios.AllAgree,
         )
     }

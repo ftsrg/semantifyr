@@ -38,7 +38,7 @@ class StartCommand : CliktCommand("start") {
 
         Runtime.getRuntime().addShutdownHook(
             Thread {
-                logger.info { "Shutdown hook fired; closing server" }
+                logger.info { "Shutdown hook fired, closing server" }
                 server.close()
             },
         )

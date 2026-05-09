@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.frontends.gamma.examples
 import hu.bme.mit.semantifyr.frontends.gamma.GammaCompiler
 import hu.bme.mit.semantifyr.frontends.gamma.lang.GammaStandaloneSetup
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
-import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.createDirectories

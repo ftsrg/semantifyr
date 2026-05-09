@@ -34,7 +34,7 @@ class XstsWitness(
 
 class XstsWitnessTransformer {
 
-    private inner class TransformerContext(val xstsModel: XstsModel) {
+    private class TransformerContext(val xstsModel: XstsModel) {
         val cexExpressionToXstsExpressionTransformer = CexExpressionToXstsExpressionTransformer(xstsModel)
 
         val mappings = mutableMapOf<CexWitnessState, XstsWitnessState>()

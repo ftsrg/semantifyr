@@ -83,9 +83,6 @@ class PatternOptimizer(
         while (worklist.isNotEmpty()) {
             val current = worklist.pop()
             pops++
-            // A prior pattern may have reparented this node's ancestor into a new container or
-            // dropped it entirely. Such nodes linger in the worklist but have null containment
-            // slots and would NPE the next pattern that touches them. Skip them.
             if (current !== input && current.eResource() == null) {
                 continue
             }

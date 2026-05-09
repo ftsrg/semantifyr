@@ -58,8 +58,8 @@ class SpinSemanticConformanceTest {
         helper.checkTestModel(
             context,
             verificationCase,
-            verificationPortfolio = SingleBackendPortfolio(SpinBackend(), SpinConfig.Companion.SafeDfs),
-            outputDirectory = SemantifyrVerifierTestHelper.Companion.testArtifactRoot(SpinSemanticConformanceTest::class.java),
+            verificationPortfolio = SingleBackendPortfolio(SpinBackend(), SpinConfig.SafeDfs),
+            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(SpinSemanticConformanceTest::class.java),
             validationPortfolio = Portfolios.AllAgree,
         )
     }

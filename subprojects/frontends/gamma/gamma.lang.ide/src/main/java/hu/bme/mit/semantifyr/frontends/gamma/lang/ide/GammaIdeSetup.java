@@ -34,7 +34,7 @@ public class GammaIdeSetup extends GammaStandaloneSetup {
                 new GammaServerModule(), new GammaRuntimeModule(), new GammaIdeModule(), cliOptions.asModule()));
     }
 
-    public static void main(String[] args) throws InterruptedException, ExecutionException, IOException {
+    static void main(String[] args) throws InterruptedException, ExecutionException, IOException {
         Files.deleteIfExists(Path.of("gamma.lsp.log"));
         var parsed = LspCliOptions.parse(args);
         var injector = new GammaIdeSetup(parsed.options()).createInjectorAndDoEMFRegistration();

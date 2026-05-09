@@ -47,15 +47,17 @@ class SessionManagerTest {
         }
 
         val injector = testInjector(config) {
-            bind(LspSession::class.java).toProvider(object : Provider<LspSession> {
-                @Inject
-                lateinit var contextProvider: Provider<SessionContext>
+            bind(LspSession::class.java).toProvider(
+                object : Provider<LspSession> {
+                    @Inject
+                    lateinit var contextProvider: Provider<SessionContext>
 
-                override fun get(): LspSession {
-                    capturedWs.set(contextProvider.get().webSocketSession as WebSocketServerSession)
-                    return mockLspSession
-                }
-            }).`in`(SessionScoped::class.java)
+                    override fun get(): LspSession {
+                        capturedWs.set(contextProvider.get().webSocketSession as WebSocketServerSession)
+                        return mockLspSession
+                    }
+                },
+            ).`in`(SessionScoped::class.java)
         }
 
         return injector.handler<WebSocketHandler>() to injector.handler<SessionManager>()

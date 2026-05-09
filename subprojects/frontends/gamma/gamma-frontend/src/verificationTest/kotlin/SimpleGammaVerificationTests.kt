@@ -7,11 +7,9 @@
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationCase
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaFrontendTestHelper
 import hu.bme.mit.semantifyr.portfolios.Portfolios
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import java.nio.file.Path
 import java.util.stream.Stream
 import kotlin.io.path.Path
 

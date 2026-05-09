@@ -16,7 +16,7 @@ import org.eclipse.emf.ecore.EObject;
 
 public class TypeRenderer {
 
-    private static TypeRenderer instance;
+    private static final TypeRenderer instance;
 
     @Inject
     protected ExpressionSerializer expressionSerializer;

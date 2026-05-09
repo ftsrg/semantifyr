@@ -409,7 +409,11 @@ class LspBenchmark {
         logger.info { "Thread count scenario=$scenarioName lspPid=$targetPid threadCount=$threadCount" }
     }
 
-    private fun runJcmd(jcmdPath: Path, targetPid: Long, command: List<String>): String {
+    private fun runJcmd(
+        jcmdPath: Path,
+        targetPid: Long,
+        command: List<String>,
+    ): String {
         val process = ProcessBuilder(listOf(jcmdPath.toString(), targetPid.toString()) + command)
             .redirectErrorStream(true)
             .start()

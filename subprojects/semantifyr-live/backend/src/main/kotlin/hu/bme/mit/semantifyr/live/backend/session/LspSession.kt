@@ -97,15 +97,16 @@ class LspSession @Inject constructor(
     private lateinit var coroutineScope: CoroutineScope
     private var started = false
 
-    val activeVerifications get() = verificationTrackers.values.map {
-        ActiveVerificationInfo(
-            requestId = it.requestId,
-            kind = it.kind,
-            caseLabel = it.caseLabel,
-            portfolioId = it.portfolioId,
-            elapsed = it.startMark.elapsedNow(),
-        )
-    }
+    val activeVerifications
+        get() = verificationTrackers.values.map {
+            ActiveVerificationInfo(
+                requestId = it.requestId,
+                kind = it.kind,
+                caseLabel = it.caseLabel,
+                portfolioId = it.portfolioId,
+                elapsed = it.startMark.elapsedNow(),
+            )
+        }
 
     override fun getSessionInfo(): SessionInfo {
         return SessionInfo(

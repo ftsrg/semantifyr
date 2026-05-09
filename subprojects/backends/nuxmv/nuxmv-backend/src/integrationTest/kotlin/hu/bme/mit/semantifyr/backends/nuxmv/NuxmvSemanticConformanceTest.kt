@@ -56,8 +56,8 @@ class NuxmvSemanticConformanceTest {
         helper.checkTestModel(
             context,
             verificationCase,
-            verificationPortfolio = SingleBackendPortfolio(NuxmvBackend(), NuxmvConfig.Companion.Ic3Invar),
-            outputDirectory = SemantifyrVerifierTestHelper.Companion.testArtifactRoot(NuxmvSemanticConformanceTest::class.java),
+            verificationPortfolio = SingleBackendPortfolio(NuxmvBackend(), NuxmvConfig.Ic3Invar),
+            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(NuxmvSemanticConformanceTest::class.java),
             validationPortfolio = Portfolios.AllAgree,
         )
     }

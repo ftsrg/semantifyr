@@ -7,7 +7,6 @@
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.frontends.gamma.GammaCompiler
 import hu.bme.mit.semantifyr.frontends.gamma.discovery.GammaVerificationCaseDiscoverer
-import hu.bme.mit.semantifyr.frontends.gamma.lang.GammaStandaloneSetup
 import hu.bme.mit.semantifyr.frontends.gamma.lang.tests.InjectWithGamma
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
 import org.assertj.core.api.Assertions.assertThat

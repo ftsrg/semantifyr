@@ -169,7 +169,11 @@
         "semantifyr.theta.executor": {
           "type": "string",
           "default": "auto",
-          "enum": ["auto", "shell", "docker"],
+          "enum": [
+            "auto",
+            "shell",
+            "docker"
+          ],
           "markdownDescription": "Which Theta executor to use. `auto` picks shell first then Docker; `shell` requires `theta-xsts-cli` on PATH; `docker` uses the configured image."
         },
         "semantifyr.theta.dockerImage": {
@@ -180,7 +184,10 @@
         "semantifyr.artifacts.location": {
           "type": "string",
           "default": "temporary",
-          "enum": ["temporary", "directory"],
+          "enum": [
+            "temporary",
+            "directory"
+          ],
           "markdownDescription": "Where to retain compiled/generated artifacts. `temporary`: a short-lived temp directory cleaned on exit; `directory`: write under `semantifyr.artifacts.directory`."
         },
         "semantifyr.artifacts.directory": {
@@ -191,13 +198,20 @@
         "semantifyr.artifacts.preset": {
           "type": "string",
           "default": "all",
-          "enum": ["none", "all", "debug"],
+          "enum": [
+            "none",
+            "all",
+            "debug"
+          ],
           "markdownDescription": "Artifact preset. `none` disables artifact emission, `all` writes the usual artifacts (models, witness, trace, mapping, report), `debug` additionally writes per-pass step dumps (slow; only for bisecting compiler regressions)."
         },
         "semantifyr.optimization.level": {
           "type": "string",
           "default": "all",
-          "enum": ["none", "all"],
+          "enum": [
+            "none",
+            "all"
+          ],
           "markdownDescription": "Compiler optimization preset. `none` disables all passes; `all` enables the default bundle."
         }
       }

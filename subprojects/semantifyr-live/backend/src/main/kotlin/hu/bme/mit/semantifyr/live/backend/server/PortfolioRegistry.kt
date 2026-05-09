@@ -25,12 +25,12 @@ object PortfolioRegistry {
     )
 
     fun snapshot(environment: ExecutionEnvironment = ExecutionEnvironment.Empty): List<PortfolioResponse> {
-        return entries.map { entry ->
-            val available = entry.portfolio.availability(environment) is AvailabilityReport.Available
+        return entries.map {
+            val available = it.portfolio.availability(environment) is AvailabilityReport.Available
             PortfolioResponse(
-                id = entry.portfolio.id,
-                displayName = entry.displayName,
-                description = entry.portfolio.description,
+                id = it.portfolio.id,
+                displayName = it.displayName,
+                description = it.portfolio.description,
                 available = available,
             )
         }

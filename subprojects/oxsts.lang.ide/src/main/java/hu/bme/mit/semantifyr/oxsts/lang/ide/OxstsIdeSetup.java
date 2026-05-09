@@ -34,7 +34,7 @@ public class OxstsIdeSetup extends OxstsStandaloneSetup {
                 new OxstsServerModule(), new OxstsRuntimeModule(), new OxstsIdeModule(), cliOptions.asModule()));
     }
 
-    public static void main(String[] args) throws InterruptedException, ExecutionException, IOException {
+    static void main(String[] args) throws InterruptedException, ExecutionException, IOException {
         Files.deleteIfExists(Path.of("oxsts.lsp.log"));
         var parsed = LspCliOptions.parse(args);
         var injector = new OxstsIdeSetup(parsed.options()).createInjectorAndDoEMFRegistration();
