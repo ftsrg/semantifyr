@@ -17,10 +17,20 @@ public record VerificationMetrics(
 
     public static VerificationMetrics fromDto(VerificationMetricsDto dto) {
         var backend = dto.getBackend();
-        return new VerificationMetrics(
-                dto.getTotalDuration(),
-                backend != null ? backend.getPreparationDuration() : Duration.ZERO,
-                backend != null ? backend.getVerificationDuration() : Duration.ZERO,
-                backend != null ? backend.getBackAnnotationDuration() : Duration.ZERO);
+        var verifier = dto.getVerifier();
+
+        var preparation = verifier.getCompilationDuration();
+        if (backend != null) {
+            preparation = preparation.plus(backend.getPreparationDuration());
+        }
+
+        var verification = backend != null ? backend.getVerificationDuration() : Duration.ZERO;
+
+        var backAnnotation = verifier.getBackAnnotationDuration();
+        if (backend != null) {
+            backAnnotation = backAnnotation.plus(backend.getBackAnnotationDuration());
+        }
+
+        return new VerificationMetrics(dto.getTotalDuration(), preparation, verification, backAnnotation);
     }
 }
