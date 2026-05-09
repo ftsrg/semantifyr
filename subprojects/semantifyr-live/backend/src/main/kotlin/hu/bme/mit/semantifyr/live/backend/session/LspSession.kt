@@ -11,6 +11,7 @@ import com.google.inject.Provider
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.lsp.UriRewriter
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.InflightChangedParams
+import hu.bme.mit.semantifyr.live.backend.lsp.bridge.LspServerReadinessInterceptor
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SemantifyrLiveMethods
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SessionControlManager
 import hu.bme.mit.semantifyr.live.backend.lsp.bridge.SessionInfoProvider
@@ -28,12 +29,14 @@ import hu.bme.mit.semantifyr.logging.warn
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError
@@ -74,6 +77,8 @@ class LspSession @Inject constructor(
     private val globalVerificationManager: GlobalVerificationManager,
     private val lspServerRunner: LspServerRawRunner,
     private val uriRewriter: UriRewriter,
+    private val lspStartGate: LspStartGate,
+    private val lspServerReadinessInterceptor: LspServerReadinessInterceptor,
     lspMessageProxyProvider: Provider<LspMessageProxy>,
 ) : AutoCloseable,
     SessionInfoProvider,
@@ -125,13 +130,30 @@ class LspSession @Inject constructor(
 
     private suspend fun doRun() = coroutineScope {
         logger.info { "Starting session (flavor=${flavor.id}, workspace=${context.workingDirectoryPath})" }
+
+        lspStartGate.acquire()
+
         val runnerJob = launch { lspServerRunner.run() }
         val idleWatchdog = launch { watchForIdleEviction() }
+        val readinessWatcher = launch {
+            try {
+                lspServerReadinessInterceptor.awaitReady()
+                val cooldownMillis = config.sessionManager.lspStartCooldownMillis
+                if (cooldownMillis > 0) {
+                    delay(cooldownMillis)
+                }
+            } finally {
+                withContext(NonCancellable) {
+                    lspStartGate.release()
+                }
+            }
+        }
         try {
             lspMessageProxy.run()
         } finally {
             runnerJob.cancel()
             idleWatchdog.cancel()
+            readinessWatcher.cancel()
         }
     }
 
