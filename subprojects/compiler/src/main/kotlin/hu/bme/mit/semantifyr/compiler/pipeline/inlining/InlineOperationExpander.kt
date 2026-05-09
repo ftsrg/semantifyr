@@ -39,15 +39,15 @@ class InlineOperationExpander @Inject constructor(
     private val builtinAnnotationHandler: BuiltinAnnotationHandler,
     private val transitionCallTraceTransformer: TransitionCallTraceTransformer,
     private val callTargetResolver: CallTargetResolver,
+    private val localVariableManager: LocalVariableManager,
 ) {
 
     fun expand(
         operation: InlineOperation,
         instance: Instance,
-        allocateLocalVarIndex: () -> Int,
     ): Operation {
         return when (operation) {
-            is InlineCall -> expandCall(operation, instance, allocateLocalVarIndex)
+            is InlineCall -> expandCall(operation, instance)
             is InlineIfOperation -> expandIf(operation, instance)
             is InlineSeqFor -> expandSeqFor(operation, instance)
             is InlineChoiceFor -> expandChoiceFor(operation, instance)
@@ -58,7 +58,6 @@ class InlineOperationExpander @Inject constructor(
     private fun expandCall(
         operation: InlineCall,
         instance: Instance,
-        allocateLocalVarIndex: () -> Int,
     ): Operation {
         val callExpression = operation.callExpression as CallSuffixExpression
 
@@ -68,14 +67,12 @@ class InlineOperationExpander @Inject constructor(
                 target.containerInstance,
                 transitionDeclarationOf(target.targetDeclaration, callExpression),
                 callExpression,
-                allocateLocalVarIndex,
             )
             is CallTarget.VariableDispatch -> dispatchOverVariable(
                 transitionDeclarationOf(target.targetDeclaration, callExpression),
                 callExpression,
                 instance,
                 target,
-                allocateLocalVarIndex,
             )
             is CallTarget.MissingOptional -> OxstsFactory.createSequenceOperation()
         }
@@ -96,7 +93,6 @@ class InlineOperationExpander @Inject constructor(
         callExpression: CallSuffixExpression,
         instance: Instance,
         target: CallTarget.VariableDispatch,
-        allocateLocalVarIndex: () -> Int,
     ): Operation {
         if (target.candidateInstances.isEmpty()) {
             sourceError(
@@ -113,7 +109,6 @@ class InlineOperationExpander @Inject constructor(
                 containerInstance = candidate,
                 transitionDeclaration = transitionDeclaration,
                 callExpression = callExpression,
-                allocateLocalVarIndex = allocateLocalVarIndex,
             )
             val guardedBranch = OxstsFactory.createSequenceOperation().also {
                 it.steps += OxstsFactory.createAssumptionOperation().also { assume ->
@@ -135,7 +130,6 @@ class InlineOperationExpander @Inject constructor(
         containerInstance: Instance,
         transitionDeclaration: TransitionDeclaration,
         callExpression: CallSuffixExpression,
-        allocateLocalVarIndex: () -> Int,
     ): Operation {
         val containerInstanceReference = instanceReferenceProvider.getReference(containerInstance)
 
@@ -159,7 +153,7 @@ class InlineOperationExpander @Inject constructor(
             }
         }
 
-        rewriteLocalVariables(inlined, allocateLocalVarIndex)
+        rewriteLocalVariables(inlined)
 
         val body = if (inlined.branches.size == 1) {
             inlined.branches.single()
@@ -184,10 +178,10 @@ class InlineOperationExpander @Inject constructor(
         }
     }
 
-    private fun rewriteLocalVariables(operation: Operation, allocateLocalVarIndex: () -> Int) {
+    private fun rewriteLocalVariables(operation: Operation) {
         val localVars = operation.eAllOfType<LocalVarDeclarationOperation>().toList()
         for (localVar in localVars) {
-            localVar.name = LocalVarNames.inlinedName(localVar, allocateLocalVarIndex())
+            localVar.name = localVariableManager.allocateInlinedName(localVar)
         }
     }
 

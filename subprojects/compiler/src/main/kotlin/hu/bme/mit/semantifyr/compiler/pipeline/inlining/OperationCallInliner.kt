@@ -46,7 +46,6 @@ class OperationCallInliner @AssistedInject constructor(
     private val expressionCallInliner = expressionCallInlinerFactory.create(instance)
     private val processorQueue = ArrayDeque<Operation>()
 
-    private var localVariableIndex = 0
     private var nestedOptimizeCalls = 0
     private var nestedOptimizeTotal = Duration.ZERO
 
@@ -129,7 +128,7 @@ class OperationCallInliner @AssistedInject constructor(
     }
 
     private fun performInlining(operation: InlineOperation) {
-        val inlined = inlineOperationExpander.expand(operation, instance) { localVariableIndex++ }
+        val inlined = inlineOperationExpander.expand(operation, instance)
         EcoreUtil2.replace(operation, inlined)
 
         val actualInlined = simplifyInlinedOperation(inlined)
