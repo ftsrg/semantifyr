@@ -86,6 +86,7 @@ data class SessionManagerConfig(
     val lspBinariesDirectory: String? = null,
     val semanticLibrariesDirectory: String? = null,
     val rootWorkDirectory: String = "/var/lib/semantifyr-live",
+    val lspJvmOpts: String = "-Xmx256m -XX:+UseSerialGC -XX:ReservedCodeCacheSize=64m -XX:MaxMetaspaceSize=128m -Xss512k",
 ) {
     fun withEnv(env: Map<String, String?>) = copy(
         maxSessionsGlobal = env["SEMANTIFYR_LIVE_MAX_SESSIONS_GLOBAL"]?.toIntOrNull() ?: maxSessionsGlobal,
@@ -95,6 +96,7 @@ data class SessionManagerConfig(
         lspBinariesDirectory = env["SEMANTIFYR_LIVE_LSP_BINARIES_DIR"] ?: lspBinariesDirectory,
         semanticLibrariesDirectory = env["SEMANTIFYR_LIVE_SEMANTIC_LIBRARIES_DIR"] ?: semanticLibrariesDirectory,
         rootWorkDirectory = env["SEMANTIFYR_LIVE_ROOT_WORK_DIR"] ?: rootWorkDirectory,
+        lspJvmOpts = env["SEMANTIFYR_LIVE_LSP_JVM_OPTS"] ?: lspJvmOpts,
     )
 
     val lspBinariesPath by lazy {

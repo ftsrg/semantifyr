@@ -151,6 +151,9 @@ class LspServerRawRunner @Inject constructor(
             .directory(workingDirectoryPath.toFile())
             .redirectOutput(stdoutLog.toFile())
             .redirectError(stderrLog.toFile())
+            .also {
+                it.environment()["JAVA_OPTS"] = config.sessionManager.lspJvmOpts
+            }
             .start()
     }
 
