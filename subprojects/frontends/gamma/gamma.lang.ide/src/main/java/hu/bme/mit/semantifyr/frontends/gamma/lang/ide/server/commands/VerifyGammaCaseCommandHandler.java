@@ -67,41 +67,39 @@ public class VerifyGammaCaseCommandHandler
         var gammaCase = gammaDiscoverer.mapDeclaration(caseDeclaration);
         progressContext.begin("Verifying Gamma case " + gammaCase.getQualifiedName(), "Compiling Gamma to OXSTS");
 
-        LOGGER.info("LSP verify request for Gamma case '{}'", gammaCase.getQualifiedName());
+        LOGGER.info("LSP verification request for Gamma case '{}'", gammaCase.getQualifiedName());
 
         var portfolio = serverSettings.resolvePortfolio(arguments.portfolioId());
         var outputDirectory = serverSettings.resolveArtifactOutputDirectory();
 
-        semantifyrRequestManager.releaseReadLock();
-        try {
-            var frontend = GammaFrontend.builder()
-                    .portfolio(portfolio)
-                    .environment(serverSettings.resolveExecutionEnvironment())
-                    .timeout(serverSettings.resolveTimeout())
-                    .artifacts(serverSettings.resolveArtifactConfig())
-                    .outputDirectory(outputDirectory)
-                    .optimization(serverSettings.resolveOptimizationConfig())
-                    .build();
+        return semantifyrRequestManager.performBackgroundWork(() -> {
+            try {
+                var frontend = GammaFrontend.builder()
+                        .portfolio(portfolio)
+                        .environment(serverSettings.resolveExecutionEnvironment())
+                        .timeout(serverSettings.resolveTimeout())
+                        .artifacts(serverSettings.resolveArtifactConfig())
+                        .outputDirectory(outputDirectory)
+                        .optimization(serverSettings.resolveOptimizationConfig())
+                        .build();
 
-            progressContext.checkIsCancelled();
-            progressContext.reportProgress("Running backend verification");
+                progressContext.checkIsCancelled();
 
-            var gammaResult = frontend.verifyBlocking(gammaCase, progressContext);
-            LOGGER.info(
-                    "LSP verify '{}' -> {}",
-                    gammaCase.getQualifiedName(),
-                    gammaResult.getVerification().getVerdict());
+                var gammaResult = frontend.verifyBlocking(gammaCase, progressContext);
+                LOGGER.info(
+                        "LSP verify '{}' -> {}",
+                        gammaCase.getQualifiedName(),
+                        gammaResult.getVerification().getVerdict());
 
-            return VerificationCaseResult.fromDtoWithoutTrace(gammaResult.getVerification(), portfolio.getId());
-        } catch (Exception e) {
-            LOGGER.error(
-                    "LSP verify '{}' threw {}",
-                    gammaCase.getQualifiedName(),
-                    e.getClass().getSimpleName(),
-                    e);
-            return null;
-        } finally {
-            semantifyrRequestManager.acquireReadLock();
-        }
+                return VerificationCaseResult.fromDtoWithoutTrace(gammaResult.getVerification(), portfolio.getId());
+            } catch (Exception e) {
+                LOGGER.error(
+                        "LSP verify '{}' threw {}",
+                        gammaCase.getQualifiedName(),
+                        e.getClass().getSimpleName(),
+                        e);
+                return null;
+            }
+        });
     }
 }

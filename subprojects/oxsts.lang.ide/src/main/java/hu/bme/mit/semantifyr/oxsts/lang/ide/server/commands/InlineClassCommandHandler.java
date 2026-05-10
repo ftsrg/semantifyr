@@ -76,15 +76,12 @@ public class InlineClassCommandHandler
 
         var compiler = new SemantifyrCompiler(
                 injector, serverSettings.resolveArtifactConfig(), serverSettings.resolveOptimizationConfig());
+        var outputDirectory = serverSettings.resolveArtifactOutputDirectory();
 
-        semantifyrRequestManager.releaseReadLock();
-        try {
+        return semantifyrRequestManager.performBackgroundWork(() -> {
             progressContext.checkIsCancelled();
-            compiler.compile(classDeclaration, serverSettings.resolveArtifactOutputDirectory());
-        } finally {
-            semantifyrRequestManager.acquireReadLock();
-        }
-
-        return null;
+            compiler.compile(classDeclaration, outputDirectory);
+            return null;
+        });
     }
 }

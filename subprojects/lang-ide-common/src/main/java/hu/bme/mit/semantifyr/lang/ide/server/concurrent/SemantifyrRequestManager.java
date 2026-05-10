@@ -12,9 +12,7 @@ import hu.bme.mit.semantifyr.lang.ide.server.concurrent.jobs.ReadJob;
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.jobs.WriteJob;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
 import org.eclipse.xtext.ide.server.concurrent.AbstractRequestManager;
 import org.eclipse.xtext.service.OperationCanceledManager;
 import org.eclipse.xtext.util.CancelIndicator;
@@ -23,33 +21,16 @@ import org.eclipse.xtext.xbase.lib.Functions;
 @Singleton
 public class SemantifyrRequestManager extends AbstractRequestManager {
 
-    private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock(true);
-    private final Lock readLock = readWriteLock.readLock();
-    private final Lock writeLock = readWriteLock.writeLock();
+    private final LockProvider lockProvider = new LockProvider();
     private final ExecutorService executorService;
     private WriteJob<?, ?> lastWriteJob;
 
     @Inject
     public SemantifyrRequestManager(
-            ExecutorService executorService, OperationCanceledManager operationCanceledManager) {
+            ExecutorService executorService,
+            OperationCanceledManager operationCanceledManager) {
         super(operationCanceledManager);
         this.executorService = executorService;
-    }
-
-    public void acquireWriteLock() {
-        writeLock.lock();
-    }
-
-    public void acquireReadLock() {
-        readLock.lock();
-    }
-
-    public void releaseWriteLock() {
-        writeLock.unlock();
-    }
-
-    public void releaseReadLock() {
-        readLock.unlock();
     }
 
     @Override
@@ -59,7 +40,7 @@ public class SemantifyrRequestManager extends AbstractRequestManager {
 
     @Override
     public <V> CompletableFuture<V> runRead(Functions.Function1<? super CancelIndicator, ? extends V> cancellable) {
-        return submit(new ReadJob<>(this, cancellable));
+        return submit(new ReadJob<>(lockProvider, cancellable));
     }
 
     @Override
@@ -75,11 +56,20 @@ public class SemantifyrRequestManager extends AbstractRequestManager {
             lastCancellation = CompletableFuture.completedFuture(null);
         }
 
-        var writeJob = new WriteJob<U, V>(this, nonCancellable, cancellable, lastCancellation);
+        var writeJob = new WriteJob<U, V>(lockProvider, nonCancellable, cancellable, lastCancellation);
 
         lastWriteJob = writeJob;
 
         return submit(writeJob);
+    }
+
+    public <T> T performBackgroundWork(Supplier<T> work) {
+        lockProvider.releaseReadLock();
+        try {
+            return work.get();
+        } finally {
+            lockProvider.acquireReadLock();
+        }
     }
 
     private <V> CompletableFuture<V> submit(AbstractJob<V> request) {

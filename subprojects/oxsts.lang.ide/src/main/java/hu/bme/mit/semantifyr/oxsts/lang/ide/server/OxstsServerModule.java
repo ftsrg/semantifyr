@@ -7,5 +7,13 @@
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server;
 
 import hu.bme.mit.semantifyr.lang.ide.server.AbstractSemantifyrServerModule;
+import hu.bme.mit.semantifyr.lang.ide.server.commands.SemantifyrCommandService;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands.OxstsCommandService;
 
-public class OxstsServerModule extends AbstractSemantifyrServerModule {}
+public class OxstsServerModule extends AbstractSemantifyrServerModule {
+
+    @Override
+    protected void configureLanguageSpecific() {
+        bind(SemantifyrCommandService.class).to(OxstsCommandService.class);
+    }
+}

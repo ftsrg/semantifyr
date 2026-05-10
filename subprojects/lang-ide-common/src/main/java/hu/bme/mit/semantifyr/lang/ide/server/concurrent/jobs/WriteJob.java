@@ -6,25 +6,25 @@
 
 package hu.bme.mit.semantifyr.lang.ide.server.concurrent.jobs;
 
-import hu.bme.mit.semantifyr.lang.ide.server.concurrent.SemantifyrRequestManager;
+import hu.bme.mit.semantifyr.lang.ide.server.concurrent.LockProvider;
 import java.util.concurrent.CompletableFuture;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.eclipse.xtext.xbase.lib.Functions;
 
 public class WriteJob<U, V> extends AbstractJob<V> {
 
-    private final SemantifyrRequestManager semantifyrRequestManager;
+    private final LockProvider lockProvider;
     private final Functions.Function0<? extends U> nonCancellable;
     private final Functions.Function2<? super CancelIndicator, ? super U, ? extends V> cancellable;
     private final CompletableFuture<?> lastCancellation;
 
     public WriteJob(
-            SemantifyrRequestManager semantifyrRequestManager,
+            LockProvider lockProvider,
             Functions.Function0<? extends U> nonCancellable,
             Functions.Function2<? super CancelIndicator, ? super U, ? extends V> cancellable,
             CompletableFuture<?> lastCancellation) {
         super();
-        this.semantifyrRequestManager = semantifyrRequestManager;
+        this.lockProvider = lockProvider;
         this.nonCancellable = nonCancellable;
         this.cancellable = cancellable;
         this.lastCancellation = lastCancellation;
@@ -37,14 +37,14 @@ public class WriteJob<U, V> extends AbstractJob<V> {
         } catch (Throwable ignored) {
         }
 
-        semantifyrRequestManager.acquireWriteLock();
+        lockProvider.acquireWriteLock();
 
         try {
             doRun();
         } catch (Throwable throwable) {
             getFuture().completeExceptionally(throwable);
         } finally {
-            semantifyrRequestManager.releaseWriteLock();
+            lockProvider.releaseWriteLock();
         }
     }
 

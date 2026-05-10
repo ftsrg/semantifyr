@@ -80,40 +80,38 @@ public class VerifyClassCommandHandler
 
         var targetQualifiedName = oxstsQualifiedNameProvider.getFullyQualifiedNameString(classDeclaration);
         LOGGER.info("LSP verify request for case '{}'", targetQualifiedName);
-        var context =
-                semantifyrLoader.fromResourceSet(classDeclaration.eResource().getResourceSet());
+        var context = semantifyrLoader.fromResourceSet(classDeclaration.eResource().getResourceSet());
 
         var portfolio = serverSettings.resolvePortfolio(arguments.portfolioId());
         var outputDirectory = serverSettings.resolveArtifactOutputDirectory();
 
-        semantifyrRequestManager.releaseReadLock();
-        var verifier = SemantifyrVerifier.builder()
-                .injector(injector)
-                .portfolio(portfolio)
-                .environment(serverSettings.resolveExecutionEnvironment())
-                .timeout(serverSettings.resolveTimeout())
-                .artifacts(serverSettings.resolveArtifactConfig())
-                .outputDirectory(outputDirectory)
-                .optimization(serverSettings.resolveOptimizationConfig())
-                .build();
+        return semantifyrRequestManager.performBackgroundWork(() -> {
+            try {
+                var verifier = SemantifyrVerifier.builder()
+                        .injector(injector)
+                        .portfolio(portfolio)
+                        .environment(serverSettings.resolveExecutionEnvironment())
+                        .timeout(serverSettings.resolveTimeout())
+                        .artifacts(serverSettings.resolveArtifactConfig())
+                        .outputDirectory(outputDirectory)
+                        .optimization(serverSettings.resolveOptimizationConfig())
+                        .build();
 
-        try {
-            progressContext.checkIsCancelled();
+                progressContext.checkIsCancelled();
 
-            var match = verificationCaseDiscoverer.findByQualifiedName(context, targetQualifiedName);
+                var match = verificationCaseDiscoverer.findByQualifiedName(context, targetQualifiedName);
 
-            var dto = verifier.verifyBlocking(match, progressContext);
-            LOGGER.info("LSP verify '{}' -> {}", targetQualifiedName, dto.getVerdict());
-            return VerificationCaseResult.fromDto(dto, portfolio.getId());
-        } catch (Exception e) {
-            LOGGER.error(
-                    "LSP verify '{}' threw {}",
-                    targetQualifiedName,
-                    e.getClass().getSimpleName(),
-                    e);
-            return null;
-        } finally {
-            semantifyrRequestManager.acquireReadLock();
-        }
+                var dto = verifier.verifyBlocking(match, progressContext);
+                LOGGER.info("LSP verify '{}' -> {}", targetQualifiedName, dto.getVerdict());
+                return VerificationCaseResult.fromDto(dto, portfolio.getId());
+            } catch (Exception e) {
+                LOGGER.error(
+                        "LSP verify '{}' threw {}",
+                        targetQualifiedName,
+                        e.getClass().getSimpleName(),
+                        e);
+                return null;
+            }
+        });
     }
 }

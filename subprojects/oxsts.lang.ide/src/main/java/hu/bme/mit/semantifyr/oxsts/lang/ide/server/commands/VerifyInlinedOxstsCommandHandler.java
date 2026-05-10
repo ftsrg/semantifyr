@@ -72,31 +72,29 @@ public class VerifyInlinedOxstsCommandHandler
         progressContext.begin("Verifying inlined oxsts", "Initializing");
 
         var inlinedOxsts = arguments.inlinedOxsts();
-
         var portfolio = serverSettings.resolvePortfolio(arguments.portfolioId());
         var outputDirectory = serverSettings.resolveArtifactOutputDirectory();
 
-        semantifyrRequestManager.releaseReadLock();
-        var verifier = SemantifyrVerifier.builder()
-                .injector(injector)
-                .portfolio(portfolio)
-                .environment(serverSettings.resolveExecutionEnvironment())
-                .timeout(serverSettings.resolveTimeout())
-                .artifacts(serverSettings.resolveArtifactConfig())
-                .outputDirectory(outputDirectory)
-                .optimization(serverSettings.resolveOptimizationConfig())
-                .build();
+        return semantifyrRequestManager.performBackgroundWork(() -> {
+            try {
+                var verifier = SemantifyrVerifier.builder()
+                        .injector(injector)
+                        .portfolio(portfolio)
+                        .environment(serverSettings.resolveExecutionEnvironment())
+                        .timeout(serverSettings.resolveTimeout())
+                        .artifacts(serverSettings.resolveArtifactConfig())
+                        .outputDirectory(outputDirectory)
+                        .optimization(serverSettings.resolveOptimizationConfig())
+                        .build();
 
-        try {
-            progressContext.checkIsCancelled();
-            var dto = verifier.verifyBlocking(inlinedOxsts, progressContext);
-            LOGGER.info("LSP verify {}", dto.getVerdict());
-            return VerificationCaseResult.fromDto(dto, portfolio.getId());
-        } catch (Exception e) {
-            LOGGER.warn("Verification threw {}", e.getClass().getSimpleName(), e);
-            return null;
-        } finally {
-            semantifyrRequestManager.acquireReadLock();
-        }
+                progressContext.checkIsCancelled();
+                var dto = verifier.verifyBlocking(inlinedOxsts, progressContext);
+                LOGGER.info("LSP verify {}", dto.getVerdict());
+                return VerificationCaseResult.fromDto(dto, portfolio.getId());
+            } catch (Exception e) {
+                LOGGER.warn("Verification threw {}", e.getClass().getSimpleName(), e);
+                return null;
+            }
+        });
     }
 }

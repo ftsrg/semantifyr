@@ -6,33 +6,33 @@
 
 package hu.bme.mit.semantifyr.lang.ide.server.concurrent.jobs;
 
-import hu.bme.mit.semantifyr.lang.ide.server.concurrent.SemantifyrRequestManager;
+import hu.bme.mit.semantifyr.lang.ide.server.concurrent.LockProvider;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.eclipse.xtext.xbase.lib.Functions;
 
 public class ReadJob<V> extends AbstractJob<V> {
 
-    private final SemantifyrRequestManager semantifyrRequestManager;
+    private final LockProvider lockProvider;
     private final Functions.Function1<? super CancelIndicator, ? extends V> cancellable;
 
     public ReadJob(
-            SemantifyrRequestManager semantifyrRequestManager,
+            LockProvider lockProvider,
             Functions.Function1<? super CancelIndicator, ? extends V> cancellable) {
         super();
-        this.semantifyrRequestManager = semantifyrRequestManager;
+        this.lockProvider = lockProvider;
         this.cancellable = cancellable;
     }
 
     @Override
     public void run() {
-        semantifyrRequestManager.acquireReadLock();
+        lockProvider.acquireReadLock();
 
         try {
             doRun();
         } catch (Throwable throwable) {
             getFuture().completeExceptionally(throwable);
         } finally {
-            semantifyrRequestManager.releaseReadLock();
+            lockProvider.releaseReadLock();
         }
     }
 

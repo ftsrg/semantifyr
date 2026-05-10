@@ -6,6 +6,14 @@
 
 package hu.bme.mit.semantifyr.frontends.gamma.lang.ide.server;
 
+import hu.bme.mit.semantifyr.frontends.gamma.lang.ide.server.commands.GammaCommandService;
 import hu.bme.mit.semantifyr.lang.ide.server.AbstractSemantifyrServerModule;
+import hu.bme.mit.semantifyr.lang.ide.server.commands.SemantifyrCommandService;
 
-public class GammaServerModule extends AbstractSemantifyrServerModule {}
+public class GammaServerModule extends AbstractSemantifyrServerModule {
+
+    @Override
+    protected void configureLanguageSpecific() {
+        bind(SemantifyrCommandService.class).to(GammaCommandService.class);
+    }
+}

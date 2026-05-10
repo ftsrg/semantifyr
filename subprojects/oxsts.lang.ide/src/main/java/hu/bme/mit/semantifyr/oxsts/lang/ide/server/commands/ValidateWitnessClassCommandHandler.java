@@ -76,28 +76,27 @@ public class ValidateWitnessClassCommandHandler
         var portfolio = serverSettings.resolvePortfolio(arguments.portfolioId());
         var outputDirectory = serverSettings.resolveArtifactOutputDirectory();
 
-        semantifyrRequestManager.releaseReadLock();
-        var verifier = SemantifyrVerifier.builder()
-                .injector(injector)
-                .portfolio(portfolio)
-                .environment(serverSettings.resolveExecutionEnvironment())
-                .timeout(serverSettings.resolveTimeout())
-                .artifacts(serverSettings.resolveArtifactConfig())
-                .outputDirectory(outputDirectory)
-                .optimization(serverSettings.resolveOptimizationConfig())
-                .build();
+        return semantifyrRequestManager.performBackgroundWork(() -> {
+            try {
+                var verifier = SemantifyrVerifier.builder()
+                        .injector(injector)
+                        .portfolio(portfolio)
+                        .environment(serverSettings.resolveExecutionEnvironment())
+                        .timeout(serverSettings.resolveTimeout())
+                        .artifacts(serverSettings.resolveArtifactConfig())
+                        .outputDirectory(outputDirectory)
+                        .optimization(serverSettings.resolveOptimizationConfig())
+                        .build();
 
-        try {
-            progressContext.checkIsCancelled();
-            var validationResult = witnessValidator.validateBlocking(verifier, inlinedOxsts, progressContext);
-            LOGGER.info("LSP validateWitness {}", validationResult.getClass().getSimpleName());
-            var dto = VerificationResultDtoKt.toJavaDto(validationResult);
-            return WitnessValidationResult.fromDto(dto, portfolio.getId());
-        } catch (Exception e) {
-            LOGGER.warn("Witness validation threw {}", e.getClass().getSimpleName(), e);
-            return null;
-        } finally {
-            semantifyrRequestManager.acquireReadLock();
-        }
+                progressContext.checkIsCancelled();
+                var validationResult = witnessValidator.validateBlocking(verifier, inlinedOxsts, progressContext);
+                LOGGER.info("LSP validateWitness {}", validationResult.getClass().getSimpleName());
+                var dto = VerificationResultDtoKt.toJavaDto(validationResult);
+                return WitnessValidationResult.fromDto(dto, portfolio.getId());
+            } catch (Exception e) {
+                LOGGER.warn("Witness validation threw {}", e.getClass().getSimpleName(), e);
+                return null;
+            }
+        });
     }
 }
