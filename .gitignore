@@ -6,6 +6,5 @@
 .gradle/
 /**/build/
 .kotlin/
-*.lsp.log
 
 /node_modules/

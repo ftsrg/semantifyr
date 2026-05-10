@@ -28,7 +28,6 @@ public class OxstsIdeSetup extends OxstsStandaloneSetup {
     }
 
     static void main(String[] args) throws InterruptedException, ExecutionException, IOException {
-        Files.deleteIfExists(Path.of("oxsts.lsp.log"));
         var injector = new OxstsIdeSetup().createInjectorAndDoEMFRegistration();
         LanguageServerLauncher.launch(injector, SemantifyrLanguageClient.class, args);
     }

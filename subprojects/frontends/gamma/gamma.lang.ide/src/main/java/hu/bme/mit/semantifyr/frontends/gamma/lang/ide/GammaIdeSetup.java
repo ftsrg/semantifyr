@@ -28,7 +28,6 @@ public class GammaIdeSetup extends GammaStandaloneSetup {
     }
 
     static void main(String[] args) throws InterruptedException, ExecutionException, IOException {
-        Files.deleteIfExists(Path.of("gamma.lsp.log"));
         var injector = new GammaIdeSetup().createInjectorAndDoEMFRegistration();
         LanguageServerLauncher.launch(injector, LanguageClient.class, args);
     }
