@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.codelens;
 
 import com.google.inject.Inject;
-import hu.bme.mit.semantifyr.lang.ide.LspCliOptions;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands.*;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinersFinder;
@@ -56,9 +55,6 @@ public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensServic
     @Inject
     private RedefinersFinder redefinersFinder;
 
-    @Inject
-    private LspCliOptions cliOptions;
-
     @Override
     public CodeLens resolveCodeLens(
             Document document, XtextResource resource, CodeLens codeLens, CancelIndicator indicator) {
@@ -68,10 +64,6 @@ public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensServic
     @Override
     public List<? extends CodeLens> computeCodeLenses(
             Document document, XtextResource resource, CodeLensParams params, CancelIndicator indicator) {
-        if (cliOptions.codeLensMode() == LspCliOptions.CodeLensMode.NONE) {
-            return List.of();
-        }
-
         if (resource.getContents().isEmpty()) {
             return List.of();
         }
