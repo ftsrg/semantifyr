@@ -21,9 +21,9 @@ import org.eclipse.xtext.xbase.lib.Functions;
 @Singleton
 public class SemantifyrRequestManager extends AbstractRequestManager {
 
-    private final LockProvider lockProvider = new LockProvider();
-    private final ExecutorService executorService;
-    private WriteJob<?, ?> lastWriteJob;
+    protected final LockProvider lockProvider = new LockProvider();
+    protected final ExecutorService executorService;
+    protected WriteJob<?, ?> lastWriteJob;
 
     @Inject
     public SemantifyrRequestManager(

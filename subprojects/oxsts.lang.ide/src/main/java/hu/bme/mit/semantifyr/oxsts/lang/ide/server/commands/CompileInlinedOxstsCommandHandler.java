@@ -65,7 +65,7 @@ public class CompileInlinedOxstsCommandHandler extends AbstractCommandHandler<Lo
                 injector, serverSettings.resolveArtifactConfig(), serverSettings.resolveOptimizationConfig());
         var outputDirectory = serverSettings.resolveArtifactOutputDirectory();
 
-        return semantifyrRequestManager.performBackgroundWork(() -> {
+        return performBackgroundWork(() -> {
             compiler.compile(arguments, outputDirectory);
             return null;
         });

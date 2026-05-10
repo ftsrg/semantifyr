@@ -78,7 +78,7 @@ public class InlineClassCommandHandler
                 injector, serverSettings.resolveArtifactConfig(), serverSettings.resolveOptimizationConfig());
         var outputDirectory = serverSettings.resolveArtifactOutputDirectory();
 
-        return semantifyrRequestManager.performBackgroundWork(() -> {
+        return performBackgroundWork(() -> {
             progressContext.checkIsCancelled();
             compiler.compile(classDeclaration, outputDirectory);
             return null;

@@ -8,9 +8,11 @@ package hu.bme.mit.semantifyr.lang.ide.server.commands;
 
 import com.google.gson.JsonElement;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.SemantifyrRequestManager;
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager;
 import java.util.List;
+import java.util.function.Supplier;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.lsp4j.ExecuteCommandParams;
@@ -26,10 +28,10 @@ import org.eclipse.xtext.util.CancelIndicator;
 public abstract class AbstractCommandHandler<TRequest, TArgument> implements CommandHandler {
 
     @Inject
-    protected WorkManager workManager;
+    private Provider<WorkManager> workManagerProvider;
 
     @Inject
-    protected SemantifyrRequestManager semantifyrRequestManager;
+    private Provider<SemantifyrRequestManager> requestManagerProvider;
 
     @Inject
     private IResourceServiceProvider.Registry resourceServiceProviderRegistry;
@@ -47,13 +49,17 @@ public abstract class AbstractCommandHandler<TRequest, TArgument> implements Com
         var request = CommandGson.INSTANCE.fromJson(requestJson, getRequestType());
         var argument = resolveArgument(request, access, cancelIndicator);
 
-        var progressContext = new CommandProgressContext(workManager, cancelIndicator);
+        var progressContext = new CommandProgressContext(workManagerProvider.get(), cancelIndicator);
 
         try {
             return execute(argument, access, progressContext);
         } finally {
             progressContext.end();
         }
+    }
+
+    protected <T> T performBackgroundWork(Supplier<T> work) {
+        return requestManagerProvider.get().performBackgroundWork(work);
     }
 
     public abstract List<Object> serializeArguments(TArgument arguments);

@@ -85,7 +85,7 @@ public class VerifyClassCommandHandler
         var portfolio = serverSettings.resolvePortfolio(arguments.portfolioId());
         var outputDirectory = serverSettings.resolveArtifactOutputDirectory();
 
-        return semantifyrRequestManager.performBackgroundWork(() -> {
+        return performBackgroundWork(() -> {
             try {
                 var verifier = SemantifyrVerifier.builder()
                         .injector(injector)
