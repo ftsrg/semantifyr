@@ -18,6 +18,7 @@ import RemoveCircleOutlineOutlinedIcon from '@mui/icons-material/RemoveCircleOut
 import UpdateIcon from '@mui/icons-material/Update';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import type { VerificationCaseStatus, VerificationCaseState, VerificationState } from '../../lib/verification';
+import { FONT_SIZE } from '../../lib/util/theme';
 
 export const ICON_SIZE = 20;
 const iconBoxSx = { width: ICON_SIZE, height: ICON_SIZE, display: 'flex', alignItems: 'center', justifyContent: 'center' } as const;
@@ -57,10 +58,10 @@ const STATUS_TOOLTIPS: Record<VerificationCaseStatus, string> = {
   passed: 'Passed',
   failed: 'Failed',
   errored: 'Error during verification',
-  inconclusive: 'Inconclusive (timeout or abstraction)',
-  not_supported: 'Not supported by the chosen portfolio',
+  inconclusive: 'Inconclusive',
+  not_supported: 'Not supported',
   running: 'Running',
-  queued: 'Queued for verification',
+  queued: 'Queued',
   stale: 'Not yet verified',
 };
 
@@ -136,7 +137,7 @@ function CountBadge({ category, count }: { category: StatusCategory; count: numb
     <Tooltip title={`${count} ${COUNT_TOOLTIPS[category]}`}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, opacity: count === 0 ? 0.4 : 1 }}>
         <StatusIcon category={category} size={12} />
-        <Typography variant="caption" sx={{ fontSize: '0.78rem', color, fontWeight: 600 }}>{count}</Typography>
+        <Typography variant="caption" sx={{ fontSize: FONT_SIZE.sm, color, fontWeight: 600 }}>{count}</Typography>
       </Box>
     </Tooltip>
   );
@@ -151,7 +152,7 @@ export function SummaryCounts({ cases }: { cases: readonly VerificationCaseState
       <CountBadge category="unknown" count={unresolved} />
       <CountBadge category="failed" count={failed + errored} />
       <CountBadge category="passed" count={passed} />
-      <Typography variant="caption" sx={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}> / {total}</Typography>
+      <Typography variant="caption" sx={{ fontSize: FONT_SIZE.xs, color: 'text.secondary' }}> / {total}</Typography>
     </Box>
   );
 }

@@ -4,25 +4,24 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import trafficlightDirectSnapshot from './snippets/trafficlight-direct-snapshot.oxsts?raw';
-import trafficlightLibrarySnapshot from './snippets/trafficlight-library-snapshot.oxsts?raw';
-import leaderWorkerGamma from './snippets/leader-worker.gamma?raw';
-import leaderWorkerGammaLibrary from './snippets/leader-worker-gamma-library.oxsts?raw';
+const importedTutorialOxsts = import.meta.glob('./snippets/imported/tutorial/*.oxsts', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+}) as Record<string, string>;
 
-// Models populated by the cloneTestModels Gradle task. The maps are eagerly resolved so that
-// vitest and the production Vite build see the same content; missing imports just collapse
-// the corresponding examples list. Run `./gradlew :semantifyr-live-frontend:cloneTestModels`
-// (or any task that depends on it, e.g. assembleFrontend / test) to populate them.
 const importedGammaSources = import.meta.glob('./snippets/imported/gamma/*.gamma', {
   query: '?raw',
   import: 'default',
   eager: true,
 }) as Record<string, string>;
+
 const importedGammaCompiled = import.meta.glob('./snippets/imported/gamma/*.oxsts', {
   query: '?raw',
   import: 'default',
   eager: true,
 }) as Record<string, string>;
+
 const importedSysmlv2Compiled = import.meta.glob('./snippets/imported/sysmlv2/*.oxsts', {
   query: '?raw',
   import: 'default',
@@ -46,36 +45,40 @@ export interface LiveExample {
 export interface LiveFlavor {
   id: LiveFlavorId;
   displayName: string;
+  /** One-line summary shown next to the flavor in the model picker. */
+  description: string;
   languageId: string;
   fileName: string;
   peekCompiledOutput: boolean;
   examples: LiveExample[];
 }
 
-const oxstsExamples: LiveExample[] = [
-  {
-    id: 'trafficlight-direct-snapshot',
-    flavor: 'oxsts',
-    label: 'Tutorial: traffic light (direct modeling)',
-    description:
-      'Final state from the "Direct Modeling" tutorial: a traffic light with a colour-cycling transition relation and two verification cases.',
-    code: trafficlightDirectSnapshot,
-  },
-  {
-    id: 'trafficlight-library-snapshot',
-    flavor: 'oxsts',
-    label: 'Tutorial: traffic light (statechart library)',
-    description:
-      'Final state from the "Building a Library" tutorial: the same traffic light refactored to use a small reusable Statechart base class.',
-    code: trafficlightLibrarySnapshot,
-  },
-];
-
+/**
+ * Descriptor for a snippet whose source body is staged on disk by Gradle. The {@code id} doubles
+ * as the URL ?example= param AND the on-disk filename (sans extension); collapsing the two means
+ * adding a new example is one Gradle task tweak plus one descriptor entry, with no
+ * capitalisation or path-mapping logic to keep in sync.
+ */
 interface ImportedDescriptor {
   id: string;
   label: string;
   description: string;
 }
+
+const TUTORIAL_OXSTS: readonly ImportedDescriptor[] = [
+  {
+    id: 'trafficlight-direct-snapshot',
+    label: 'Tutorial: traffic light (direct modeling)',
+    description:
+      'Final state from the "Direct Modeling" tutorial: a traffic light with a colour-cycling transition relation and two verification cases.',
+  },
+  {
+    id: 'trafficlight-library-snapshot',
+    label: 'Tutorial: traffic light (statechart library)',
+    description:
+      'Final state from the "Building a Library" tutorial: the same traffic light refactored to use a small reusable Statechart base class.',
+  },
+];
 
 const SYSMLV2_IMPORTED: readonly ImportedDescriptor[] = [
   {
@@ -102,126 +105,136 @@ const SYSMLV2_IMPORTED: readonly ImportedDescriptor[] = [
 
 const GAMMA_IMPORTED: readonly ImportedDescriptor[] = [
   {
-    id: 'spacecraft',
+    id: 'Spacecraft',
     label: 'Spacecraft',
     description:
       'Composite Gamma model of a small spacecraft with battery, thermal, and orbit-control subsystems plus reachability cases.',
   },
   {
-    id: 'crossroads',
+    id: 'Crossroads',
     label: 'Crossroads',
     description:
       'Two coordinated traffic lights at an intersection, exposed via Gamma channels with safety reachability cases.',
   },
   {
-    id: 'simple',
-    label: 'Leader-worker (Simple)',
+    id: 'Simple',
+    label: 'Leader-worker',
     description:
       'Two statecharts coordinating via channel-bound events; the canonical leader-worker model used in conformance tests.',
   },
 ];
 
+function loadOrSkip<T>(
+  registry: Record<string, string>,
+  path: string,
+  build: (code: string) => T,
+): T | null {
+  const code = registry[path];
+  return code !== undefined ? build(code) : null;
+}
+
+function buildTutorialOxstsExamples(): LiveExample[] {
+  return TUTORIAL_OXSTS.flatMap((descriptor) => {
+    const example = loadOrSkip(
+      importedTutorialOxsts,
+      `./snippets/imported/tutorial/${descriptor.id}.oxsts`,
+      (code) => ({
+        id: descriptor.id,
+        flavor: 'oxsts' as const,
+        label: descriptor.label,
+        description: descriptor.description,
+        code,
+      }),
+    );
+    return example ? [example] : [];
+  });
+}
+
 function buildImportedGammaExamples(): LiveExample[] {
-  const examples: LiveExample[] = [];
-  for (const descriptor of GAMMA_IMPORTED) {
-    const sourceFile = `./snippets/imported/gamma/${capitalise(descriptor.id)}.gamma`;
-    const code = importedGammaSources[sourceFile];
-    if (!code) continue;
-    examples.push({ id: descriptor.id, flavor: 'gamma', label: descriptor.label, description: descriptor.description, code });
-  }
-  return examples;
+  return GAMMA_IMPORTED.flatMap((descriptor) => {
+    const example = loadOrSkip(
+      importedGammaSources,
+      `./snippets/imported/gamma/${descriptor.id}.gamma`,
+      (code) => ({
+        id: descriptor.id,
+        flavor: 'gamma' as const,
+        label: descriptor.label,
+        description: descriptor.description,
+        code,
+      }),
+    );
+    return example ? [example] : [];
+  });
 }
 
 function buildImportedSysmlv2LibraryExamples(): LiveExample[] {
-  const examples: LiveExample[] = [];
-  for (const descriptor of SYSMLV2_IMPORTED) {
-    const sourceFile = `./snippets/imported/sysmlv2/${descriptor.id}.oxsts`;
-    const code = importedSysmlv2Compiled[sourceFile];
-    if (!code) continue;
-    examples.push({
-      id: `${descriptor.id}-sysmlv2-library`,
-      flavor: 'oxsts-with-sysmlv2-library',
-      label: descriptor.label,
-      description: descriptor.description,
-      code,
-    });
-  }
-  return examples;
+  return SYSMLV2_IMPORTED.flatMap((descriptor) => {
+    const example = loadOrSkip(
+      importedSysmlv2Compiled,
+      `./snippets/imported/sysmlv2/${descriptor.id}.oxsts`,
+      (code) => ({
+        id: `${descriptor.id}-sysmlv2-library`,
+        flavor: 'oxsts-with-sysmlv2-library' as const,
+        label: descriptor.label,
+        description: descriptor.description,
+        code,
+      }),
+    );
+    return example ? [example] : [];
+  });
 }
 
 function buildImportedGammaLibraryExamples(): LiveExample[] {
-  const examples: LiveExample[] = [];
-  for (const descriptor of GAMMA_IMPORTED) {
-    const sourceFile = `./snippets/imported/gamma/${capitalise(descriptor.id)}.oxsts`;
-    const code = importedGammaCompiled[sourceFile];
-    if (!code) continue;
-    examples.push({
-      id: `${descriptor.id}-gamma-library`,
-      flavor: 'oxsts-with-gamma-library',
-      label: `${descriptor.label} (Gamma library)`,
-      description: `OXSTS form of the ${descriptor.label} Gamma model, ready to verify against the Gamma semantic library.`,
-      code,
-    });
-  }
-  return examples;
+  return GAMMA_IMPORTED.flatMap((descriptor) => {
+    const example = loadOrSkip(
+      importedGammaCompiled,
+      `./snippets/imported/gamma/${descriptor.id}.oxsts`,
+      (code) => ({
+        id: `${descriptor.id}-gamma-library`,
+        flavor: 'oxsts-with-gamma-library' as const,
+        label: `${descriptor.label} (Gamma library)`,
+        description: `OXSTS form of the ${descriptor.label} Gamma model, ready to verify against the Gamma semantic library.`,
+        code,
+      }),
+    );
+    return example ? [example] : [];
+  });
 }
 
-function capitalise(s: string): string {
-  return s.length === 0 ? s : `${s[0]!.toUpperCase()}${s.slice(1)}`;
-}
+const blank = (flavor: LiveFlavorId, libraryName: string | null): LiveExample => ({
+  id: 'blank',
+  flavor,
+  label: 'Blank',
+  description: libraryName
+    ? `An empty Semantifyr file with the ${libraryName} library preloaded on the workspace.`
+    : 'An empty file, start writing your own model from scratch.',
+  code: '',
+});
 
-const gammaExamples: LiveExample[] = [
-  {
-    id: 'leader-worker',
-    flavor: 'gamma',
-    label: 'Leader-worker (tutorial)',
-    description: 'Two statecharts coordinating via channel-bound events, with reachability cases.',
-    code: leaderWorkerGamma,
-  },
-  ...buildImportedGammaExamples(),
-  {
-    id: 'blank',
-    flavor: 'gamma',
-    label: 'Blank',
-    description: 'An empty file, start writing your own Gamma model from scratch.',
-    code: '',
-  },
+const oxstsExamples: LiveExample[] = [
+  ...buildTutorialOxstsExamples(),
 ];
 
 const oxstsWithGammaLibraryExamples: LiveExample[] = [
-  {
-    id: 'leader-worker-gamma-library',
-    flavor: 'oxsts-with-gamma-library',
-    label: 'Leader-worker (Gamma library)',
-    description: 'Semantifyr transcription of the leader-worker Gamma model, built on the Gamma semantic library.',
-    code: leaderWorkerGammaLibrary,
-  },
   ...buildImportedGammaLibraryExamples(),
-  {
-    id: 'blank',
-    flavor: 'oxsts-with-gamma-library',
-    label: 'Blank',
-    description: 'An empty Semantifyr file with the Gamma library preloaded on the workspace.',
-    code: '',
-  },
+  blank('oxsts-with-gamma-library', 'Gamma'),
 ];
 
 const oxstsWithSysmlv2LibraryExamples: LiveExample[] = [
   ...buildImportedSysmlv2LibraryExamples(),
-  {
-    id: 'blank',
-    flavor: 'oxsts-with-sysmlv2-library',
-    label: 'Blank',
-    description: 'An empty Semantifyr file with the SysML v2 semantic library preloaded on the workspace.',
-    code: '',
-  },
+  blank('oxsts-with-sysmlv2-library', 'SysML v2'),
+];
+
+const gammaExamples: LiveExample[] = [
+  ...buildImportedGammaExamples(),
+  blank('gamma', null),
 ];
 
 export const LIVE_FLAVORS: readonly LiveFlavor[] = [
-  { id: 'oxsts', displayName: 'Semantifyr', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsExamples },
-  { id: 'oxsts-with-gamma-library', displayName: 'Semantifyr with Gamma library', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsWithGammaLibraryExamples },
-  { id: 'oxsts-with-sysmlv2-library', displayName: 'Semantifyr with SysML v2 library', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsWithSysmlv2LibraryExamples },
-  { id: 'gamma', displayName: 'Gamma', languageId: 'gamma', fileName: 'snippet.gamma', peekCompiledOutput: true, examples: gammaExamples },
+  { id: 'oxsts', displayName: 'Semantifyr', description: 'Plain OXSTS - the core modelling language, no extra libraries.', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsExamples },
+  { id: 'oxsts-with-gamma-library', displayName: 'Semantifyr with Gamma library', description: 'OXSTS with the Gamma statechart library available to import.', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsWithGammaLibraryExamples },
+  { id: 'oxsts-with-sysmlv2-library', displayName: 'Semantifyr with SysML v2 library', description: 'OXSTS with the SysML v2 library available to import.', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsWithSysmlv2LibraryExamples },
+  { id: 'gamma', displayName: 'Gamma', description: 'Gamma statechart source - compiled to OXSTS before verification.', languageId: 'gamma', fileName: 'snippet.gamma', peekCompiledOutput: true, examples: gammaExamples },
 ];
 
 export function findFlavor(id: string | null | undefined): LiveFlavor | undefined {
@@ -235,7 +248,7 @@ export function findExample(flavor: LiveFlavor, id: string | null | undefined): 
 /**
  * Look up an example by id across all flavors. Used when a tutorial links by name with
  * `?example=trafficlight-direct-snapshot` and the URL doesn't redundantly specify the
- * flavor. the registry knows which flavor each named snippet belongs to.
+ * flavor. The registry knows which flavor each named snippet belongs to.
  */
 export function findExampleAcrossFlavors(id: string | null | undefined): { flavor: LiveFlavor; example: LiveExample } | undefined {
   if (!id) return undefined;

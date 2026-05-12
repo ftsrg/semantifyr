@@ -7,7 +7,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import ConnectionStatus from '../components/ConnectionStatus';
+import ConnectionStatus from '../components/shell/ConnectionStatus';
 
 describe('ConnectionStatus', () => {
   const noop = (): void => {};

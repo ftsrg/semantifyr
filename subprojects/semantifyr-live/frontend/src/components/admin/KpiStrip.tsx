@@ -13,8 +13,9 @@ import GroupOutlinedIcon from '@mui/icons-material/GroupOutlined';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutlined';
 import ReportGmailerrorredOutlinedIcon from '@mui/icons-material/ReportGmailerrorredOutlined';
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
-import { formatIsoDuration } from '../../lib/duration';
-import type { SessionInfo } from '../../lib/adminApi';
+import { formatIsoDuration } from '../../lib/util/duration';
+import type { SessionInfo } from '../../lib/api';
+import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
 
 interface Props {
   uptime: string;
@@ -57,11 +58,11 @@ function Tile({ label, value, hint, icon, accent = 'default', tooltip }: TilePro
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Box sx={{ color: 'var(--text-muted)', display: 'inline-flex' }}>{icon}</Box>
+        <Box sx={{ color: 'text.secondary', display: 'inline-flex' }}>{icon}</Box>
         <Typography
           sx={{
-            fontSize: '0.7rem',
-            color: 'var(--text-muted)',
+            fontSize: FONT_SIZE.xs,
+            color: 'text.secondary',
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
             fontWeight: 600,
@@ -74,7 +75,7 @@ function Tile({ label, value, hint, icon, accent = 'default', tooltip }: TilePro
         {value}
       </Typography>
       {hint !== undefined && hint !== null && (
-        <Box sx={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{hint}</Box>
+        <Box sx={{ fontSize: FONT_SIZE.xs, color: 'text.secondary' }}>{hint}</Box>
       )}
     </Box>
   );
@@ -98,13 +99,13 @@ export default function KpiStrip({ uptime, activeSessions, maxSessions, sessions
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mx: 3, mt: 2 }}>
       <Tile
         label="Sessions"
-        icon={<GroupOutlinedIcon sx={{ fontSize: 18 }} />}
+        icon={<GroupOutlinedIcon sx={{ fontSize: ICON_SIZE.md }} />}
         accent={sessionsAccent}
         tooltip={`${activeSessions} of ${maxSessions} concurrent sessions in use across all clients.`}
         value={
           <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
             <Box component="span">{activeSessions}</Box>
-            <Box component="span" sx={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+            <Box component="span" sx={{ fontSize: FONT_SIZE.md, color: 'text.secondary', fontWeight: 500 }}>
               / {maxSessions}
             </Box>
           </Box>
@@ -129,9 +130,9 @@ export default function KpiStrip({ uptime, activeSessions, maxSessions, sessions
                     <Box
                       component="span"
                       sx={{
-                        fontSize: '0.65rem',
+                        fontSize: FONT_SIZE.xs,
                         fontWeight: 600,
-                        color: 'var(--text-muted)',
+                        color: 'text.secondary',
                         bgcolor: 'var(--surface-panel-bg)',
                         border: '1px solid var(--surface-border)',
                         borderRadius: 0.5,
@@ -150,7 +151,7 @@ export default function KpiStrip({ uptime, activeSessions, maxSessions, sessions
       />
       <Tile
         label="Active verifications"
-        icon={<PlayCircleOutlineIcon sx={{ fontSize: 18 }} />}
+        icon={<PlayCircleOutlineIcon sx={{ fontSize: ICON_SIZE.md }} />}
         value={activeVerifications}
         accent={activeVerifications > 0 ? 'warning' : 'default'}
         tooltip="Verifications currently in flight across every session."
@@ -162,7 +163,7 @@ export default function KpiStrip({ uptime, activeSessions, maxSessions, sessions
       />
       <Tile
         label="Errors (cumulative)"
-        icon={<ReportGmailerrorredOutlinedIcon sx={{ fontSize: 18 }} />}
+        icon={<ReportGmailerrorredOutlinedIcon sx={{ fontSize: ICON_SIZE.md }} />}
         value={errorCount}
         accent={errorCount > 0 ? 'danger' : 'success'}
         tooltip="Sum of LSP-proxy error counts across every live session."
@@ -170,7 +171,7 @@ export default function KpiStrip({ uptime, activeSessions, maxSessions, sessions
       />
       <Tile
         label="Backend uptime"
-        icon={<ScheduleOutlinedIcon sx={{ fontSize: 18 }} />}
+        icon={<ScheduleOutlinedIcon sx={{ fontSize: ICON_SIZE.md }} />}
         value={formatIsoDuration(uptime)}
         tooltip={`Raw uptime: ${uptime}`}
       />

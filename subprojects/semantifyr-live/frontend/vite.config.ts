@@ -7,6 +7,7 @@
 import { execSync } from 'node:child_process';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 
 function getGitCommit(): string {
   try {
@@ -30,7 +31,60 @@ export default defineConfig({
     __GIT_COMMIT__: JSON.stringify(getGitCommit()),
     __BACKEND_URL__: JSON.stringify(backendProxyTarget),
   },
-  plugins: [react()],
+  plugins: [
+    react(),
+    // Progressive-web-app shell. The backend serves dist/ verbatim, so the generated
+    // service worker, manifest, and registerSW.js land at the site root. The Monaco-heavy
+    // JS chunks are NOT precached up front (that would make the service-worker install
+    // download ~15 MiB before the app is usable); they go through a CacheFirst runtime
+    // route instead, so they're cached the first time the app actually pulls them and
+    // served from cache on every subsequent visit. /api/* and /ws/* are never touched.
+    VitePWA({
+      disable: process.env.VITEST === 'true',
+      // 'prompt' (not 'autoUpdate'): a new build waits until the user clicks "Reload" in the
+      // ReloadPrompt toast, so an in-progress edit is never reloaded out from under them. The
+      // app drives this via `useRegisterSW` from `virtual:pwa-register/react`.
+      registerType: 'prompt',
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'logo-full-light.svg', 'logo-full-dark.svg'],
+      manifest: {
+        name: 'Semantifyr Live',
+        short_name: 'Semantifyr',
+        description: 'Edit and verify Semantifyr models in your browser.',
+        lang: 'en',
+        start_url: '/',
+        scope: '/',
+        display: 'standalone',
+        theme_color: '#1e1e1e',
+        background_color: '#1e1e1e',
+        icons: [
+          { src: 'pwa-192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'pwa-512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: 'pwa.svg', sizes: 'any', type: 'image/svg+xml' },
+        ],
+      },
+      workbox: {
+        // Precache only the small shell assets; the big JS bundles are handled by the
+        // runtime route below.
+        globPatterns: ['**/*.{css,html,ico,svg,png,json,webmanifest,woff,woff2,ttf}'],
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api\//, /^\/ws\//],
+        cleanupOutdatedCaches: true,
+        runtimeCaching: [
+          {
+            urlPattern: /\/assets\/.*\.js$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'semantifyr-app-chunks',
+              expiration: { maxEntries: 256, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
+      },
+      devOptions: { enabled: false },
+    }),
+  ],
   server: {
     port: 5173,
     host: true,

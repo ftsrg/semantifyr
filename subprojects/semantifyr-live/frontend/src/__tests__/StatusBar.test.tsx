@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import StatusBar from '../components/StatusBar';
+import StatusBar from '../components/shell/StatusBar';
 
 describe('StatusBar', () => {
   it('renders the message text', () => {

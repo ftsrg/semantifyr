@@ -11,9 +11,10 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import HighlightOffOutlinedIcon from '@mui/icons-material/HighlightOffOutlined';
-import { formatIsoDuration } from '../../lib/duration';
-import type { AdminConfigResponse, InfoResponse } from '../../lib/adminApi';
-import type { PortfolioInfo } from '../../lib/portfolios';
+import { formatIsoDuration } from '../../lib/util/duration';
+import type { AdminConfigResponse, InfoResponse } from '../../lib/api';
+import type { PortfolioInfo } from '../../lib/api';
+import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
 
 interface Props {
   info: InfoResponse;
@@ -36,8 +37,8 @@ function Row({ label, value, mono }: RowProps): React.JSX.Element {
       <Typography
         sx={{
           flex: '0 0 130px',
-          fontSize: '0.72rem',
-          color: 'var(--text-muted)',
+          fontSize: FONT_SIZE.xs,
+          color: 'text.secondary',
           textTransform: 'uppercase',
           letterSpacing: '0.04em',
           fontWeight: 600,
@@ -48,8 +49,8 @@ function Row({ label, value, mono }: RowProps): React.JSX.Element {
       <Typography
         sx={{
           flex: 1,
-          fontSize: '0.82rem',
-          color: 'var(--text)',
+          fontSize: FONT_SIZE.sm,
+          color: 'text.primary',
           fontFamily: mono ? 'var(--font-mono)' : 'inherit',
           wordBreak: 'break-all',
         }}
@@ -65,8 +66,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <Box sx={{ p: 1.5 }}>
       <Typography
         sx={{
-          fontSize: '0.7rem',
-          color: 'var(--text-muted)',
+          fontSize: FONT_SIZE.xs,
+          color: 'text.secondary',
           textTransform: 'uppercase',
           letterSpacing: '0.05em',
           fontWeight: 700,
@@ -110,7 +111,7 @@ export default function InfoAside({ info, config, frontendCommit, frontendBuildT
 function PortfolioAvailability({ portfolios }: { portfolios: readonly PortfolioInfo[] }): React.JSX.Element {
   if (portfolios.length === 0) {
     return (
-      <Typography sx={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+      <Typography sx={{ fontSize: FONT_SIZE.sm, color: 'text.secondary', fontStyle: 'italic' }}>
         No portfolios reported.
       </Typography>
     );
@@ -121,15 +122,15 @@ function PortfolioAvailability({ portfolios }: { portfolios: readonly PortfolioI
         <Box key={p.id} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, py: 0.15 }}>
           <Tooltip title={p.available ? 'Backend available' : p.description || 'Backend unavailable'}>
             {p.available ? (
-              <CheckCircleOutlinedIcon sx={{ fontSize: 16, color: 'var(--success)' }} />
+              <CheckCircleOutlinedIcon sx={{ fontSize: ICON_SIZE.sm, color: 'var(--success)' }} />
             ) : (
-              <HighlightOffOutlinedIcon sx={{ fontSize: 16, color: 'var(--danger)' }} />
+              <HighlightOffOutlinedIcon sx={{ fontSize: ICON_SIZE.sm, color: 'var(--danger)' }} />
             )}
           </Tooltip>
-          <Typography sx={{ fontSize: '0.82rem', color: p.available ? 'var(--text)' : 'var(--text-muted)', flex: 1 }}>
+          <Typography sx={{ fontSize: FONT_SIZE.sm, color: p.available ? 'var(--text)' : 'var(--text-muted)', flex: 1 }}>
             {p.displayName}
           </Typography>
-          <Typography sx={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+          <Typography sx={{ fontSize: FONT_SIZE.xs, color: 'text.secondary', fontFamily: 'var(--font-mono)' }}>
             {p.id}
           </Typography>
         </Box>

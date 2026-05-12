@@ -12,7 +12,8 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlineOutlined';
 import WarningAmberIcon from '@mui/icons-material/WarningAmberOutlined';
-import type { LiveEditorHandle, ProblemEntry } from '../LiveEditor';
+import type { LiveEditorHandle, ProblemEntry } from '../editor/LiveEditor';
+import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
 
 interface Props {
   editorHandle: LiveEditorHandle | null;
@@ -47,9 +48,9 @@ export default function ProblemsPill({ editorHandle }: Props): React.JSX.Element
         <Chip
           label={
             <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.4 }}>
-              {errors > 0 && <ErrorOutlineIcon sx={{ fontSize: 14 }} />}
+              {errors > 0 && <ErrorOutlineIcon sx={{ fontSize: ICON_SIZE.sm }} />}
               {errors > 0 && <span>{errors}</span>}
-              {warnings > 0 && <WarningAmberIcon sx={{ fontSize: 14 }} />}
+              {warnings > 0 && <WarningAmberIcon sx={{ fontSize: ICON_SIZE.sm }} />}
               {warnings > 0 && <span>{warnings}</span>}
             </Box>
           }
@@ -57,10 +58,10 @@ export default function ProblemsPill({ editorHandle }: Props): React.JSX.Element
           onClick={(event) => setAnchor(event.currentTarget)}
           sx={{
             ml: 0.5,
-            bgcolor: errors > 0 ? 'rgba(239,68,68,0.15)' : 'rgba(251,191,36,0.15)',
+            bgcolor: errors > 0 ? 'var(--danger-soft-bg)' : 'var(--warning-soft-bg)',
             color: errors > 0 ? 'var(--danger)' : 'var(--warning)',
             fontWeight: 600,
-            fontSize: '0.7rem',
+            fontSize: FONT_SIZE.xs,
             height: 20,
             cursor: 'pointer',
             '&:hover': { opacity: 0.85 },
@@ -75,9 +76,6 @@ export default function ProblemsPill({ editorHandle }: Props): React.JSX.Element
         slotProps={{
           paper: {
             sx: {
-              bgcolor: 'var(--surface-bg)',
-              color: 'var(--text)',
-              border: '1px solid var(--surface-border)',
               minWidth: 360,
               maxWidth: 560,
               maxHeight: 320,
@@ -107,18 +105,18 @@ export default function ProblemsPill({ editorHandle }: Props): React.JSX.Element
           >
             <Box sx={{ pt: '2px' }}>
               {p.severity === 'error' ? (
-                <ErrorOutlineIcon sx={{ fontSize: 16, color: 'var(--danger)' }} />
+                <ErrorOutlineIcon sx={{ fontSize: ICON_SIZE.sm, color: 'var(--danger)' }} />
               ) : p.severity === 'warning' ? (
-                <WarningAmberIcon sx={{ fontSize: 16, color: 'var(--warning)' }} />
+                <WarningAmberIcon sx={{ fontSize: ICON_SIZE.sm, color: 'var(--warning)' }} />
               ) : (
-                <ErrorOutlineIcon sx={{ fontSize: 16, color: 'var(--text-muted)' }} />
+                <ErrorOutlineIcon sx={{ fontSize: ICON_SIZE.sm, color: 'text.secondary' }} />
               )}
             </Box>
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography sx={{ fontSize: '0.78rem', color: 'var(--text)', whiteSpace: 'pre-wrap' }}>
+              <Typography sx={{ fontSize: FONT_SIZE.sm, whiteSpace: 'pre-wrap' }}>
                 {p.message}
               </Typography>
-              <Typography sx={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+              <Typography sx={{ fontSize: FONT_SIZE.xs, color: 'text.secondary' }}>
                 {p.source ? `${p.source} · ` : ''}line {p.startLine + 1}:{p.startColumn + 1}
               </Typography>
             </Box>

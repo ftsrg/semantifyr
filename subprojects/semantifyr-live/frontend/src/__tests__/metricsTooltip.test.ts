@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildMetricsTooltip,
   isMeaningfulDuration,
-} from '../lib/metricsTooltip'
+} from '../lib/verification/metricsTooltip'
 
 describe('isMeaningfulDuration', () => {
   it('rejects empty, missing and zero ISO durations', () => {

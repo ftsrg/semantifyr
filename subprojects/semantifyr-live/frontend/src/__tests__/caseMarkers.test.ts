@@ -9,7 +9,7 @@ import {
   caseStatusToSeverity,
   casesToMarkers,
   defaultMessageForStatus,
-} from '../lib/caseMarkers'
+} from '../lib/session/caseMarkers'
 import type { VerificationCaseState } from '../lib/verification'
 
 function fakeCase(

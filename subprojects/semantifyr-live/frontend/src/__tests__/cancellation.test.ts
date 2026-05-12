@@ -11,22 +11,10 @@ import {
   runAllVerifications,
   verifySingleCase,
   type LspClient,
-  type VerificationCaseSpecification,
   type VerificationState,
 } from '../lib/verification';
-import { wrapClientWithMetrics } from '../lib/lspMetrics';
-
-const sampleCase = (id: string): VerificationCaseSpecification => ({
-  id,
-  label: id,
-  location: {
-    uri: 'file:///workspace/snippet.oxsts',
-    range: {
-      start: { line: 0, character: 0 },
-      end: { line: 0, character: 0 },
-    },
-  },
-});
+import { wrapClientWithMetrics } from '../lib/session/lspMetrics';
+import { sampleCase } from './fixtures/cases';
 
 describe('LSP cancellation plumbing', () => {
   it('createCancellationTokenSource produces a token that vscode-jsonrpc recognises', () => {
@@ -68,6 +56,7 @@ describe('LSP cancellation plumbing', () => {
       (next) => {
         if (typeof next === 'function') next({ phase: 'idle', cases: [] } as VerificationState);
       },
+      (_) => () => {},
     );
     await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -97,6 +86,36 @@ describe('LSP cancellation plumbing', () => {
     const callArgs = sendRequest.mock.calls[0]!;
     expect(callArgs.length).toBe(3);
     expect(VscodeCancellationToken.is(callArgs[2])).toBe(true);
+  });
+
+  it('verifySingleCase cancel sends window/workDoneProgress/cancel for active progress tokens', async () => {
+    const sendNotification = vi.fn();
+    const sendRequest = vi.fn<LspClient['sendRequest']>(() => new Promise<unknown>(() => {
+      // Never resolves; we only care about the cancel side-effect.
+    }));
+    const client: LspClient = { sendRequest, sendNotification };
+
+    const captured: { listener: ((params: unknown) => void) | null } = { listener: null };
+    const onProgress = (listener: (params: unknown) => void) => {
+      captured.listener = listener;
+      return () => { captured.listener = null };
+    };
+
+    const handle = verifySingleCase(
+      client,
+      'foo.case.verify',
+      'file:///x',
+      sampleCase('p'),
+      () => {},
+      onProgress,
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Simulate the LSP server emitting a $/progress begin so the dispatcher tracks the token.
+    captured.listener?.({ token: 'tok-1', value: { kind: 'begin', title: 'Verifying' } });
+
+    handle.cancel();
+    expect(sendNotification).toHaveBeenCalledWith('window/workDoneProgress/cancel', { token: 'tok-1' });
   });
 
   it('cancelling the run handle flips the token before the request resolves', async () => {

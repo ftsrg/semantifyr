@@ -6,7 +6,6 @@
 
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
-import Collapse from '@mui/material/Collapse';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
@@ -18,8 +17,7 @@ import Divider from '@mui/material/Divider';
 import CircularProgress from '@mui/material/CircularProgress';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import CloseIcon from '@mui/icons-material/Close';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import MyLocationOutlinedIcon from '@mui/icons-material/MyLocationOutlined';
 import Badge from '@mui/material/Badge';
@@ -35,16 +33,19 @@ import {
   type VerificationState,
   type RunVerificationHandle,
 } from '../../lib/verification';
-import type { LiveEditorHandle } from '../LiveEditor';
+import type { LiveEditorHandle } from '../editor/LiveEditor';
 import VerifyButton from './VerifyButton';
 import RefreshButton from './RefreshButton';
 import ProblemsPill from './ProblemsPill';
 import { CaseStatusIcon, SummaryCounts, SummaryStatusIcon } from './StatusDisplay';
-import { formatIsoDurationDetailed } from '../../lib/duration';
-import { buildMetricsTooltip, isMeaningfulDuration } from '../../lib/metricsTooltip';
+import { formatIsoDurationDetailed } from '../../lib/util/duration';
+import { buildMetricsTooltip, isMeaningfulDuration } from '../../lib/verification/metricsTooltip';
+import { witnessIconDescriptor } from '../../lib/verification/witnessIcon';
+import { findPortfolioLabel } from '../../lib/verification/portfolioLabel';
+import { PortfolioInfo } from '../../lib/api'
+import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
 
 interface MetricsPillSource {
-  /** Past-participle pill label, e.g. "verified". */
   verb: 'verified' | 'validated';
   totalDuration: string;
   metrics: VerificationCaseState['metrics'];
@@ -52,15 +53,6 @@ interface MetricsPillSource {
   backendId?: string | undefined;
 }
 
-function findPortfolioLabel(
-  portfolios: readonly { id: string; displayName: string }[],
-  id: string | undefined,
-): string | undefined {
-  if (!id) {
-    return undefined;
-  }
-  return portfolios.find((p) => p.id === id)?.displayName ?? id;
-}
 
 interface Props {
   editorHandle: LiveEditorHandle | null;
@@ -69,38 +61,25 @@ interface Props {
   validateWitnessCommand?: string | undefined;
   connected: boolean;
   portfolioId: string;
-  /** Portfolio id used by the auto-validation and the panel's revalidate handle. */
   validationPortfolioId: string;
-  /** When false, verify finishes without firing an automatic follow-up validation. */
   autoValidate: boolean;
-  /** Toggling auto-validate; rendered in the panel header next to the verify controls. */
   onAutoValidateChange?: (enabled: boolean) => void;
-  /** Max pixel height for the case list body; overrides the responsive default. */
-  caseListMaxHeight?: number | undefined;
-  onStatusMessage: (message: string | null) => void;
+  panelHeight: number;
+  onClose: () => void;
+  onStatusMessage: (message: string | null, busy: boolean) => void;
   onCasesChange?: (cases: readonly VerificationCaseState[]) => void;
   onShowWitness?: (caseId: string) => void;
-  /** Portfolio catalogue used to render display names in the pill tooltips. */
-  portfolios?: readonly { id: string; displayName: string }[];
+  portfolios?: PortfolioInfo[];
 }
 
-/** Imperative handle exposed to the parent so the witness pane can re-fire validation per case. */
 export interface VerificationPanelHandle {
-  /** Re-runs witness validation for the given case id; folds the outcome into that case's state. */
   revalidate: (caseId: string) => void;
 }
 
-function isFlaggedValidation(status: VerificationCaseState['witnessValidation']): boolean {
-  // The Show-witness button is decorated with a red dot when the cross-validation portfolio
-  // returned anything other than a clean "valid" - even errored counts; the witness pane
-  // surfaces the detailed reason via ValidationChip.
-  return status === 'invalid' || status === 'inconclusive' || status === 'errored';
-}
-
 const pillSx = {
-  fontSize: '0.7rem',
+  fontSize: FONT_SIZE.xs,
   fontWeight: 500,
-  color: 'var(--text-muted)',
+  color: 'text.secondary',
   bgcolor: 'var(--surface-panel-bg)',
   border: '1px solid var(--surface-border)',
   borderRadius: 999,
@@ -137,6 +116,9 @@ function deriveStatusMessage(state: VerificationState): string | null {
     }
     return state.message ?? 'Running verification...';
   }
+  if (state.phase === 'done' || state.phase === 'cancelled' || state.phase === 'error') {
+    return state.message ?? null;
+  }
   return null;
 }
 
@@ -151,7 +133,8 @@ function VerificationPanelInner(
     validationPortfolioId,
     autoValidate,
     onAutoValidateChange,
-    caseListMaxHeight,
+    panelHeight,
+    onClose,
     onStatusMessage,
     onCasesChange,
     onShowWitness,
@@ -159,7 +142,6 @@ function VerificationPanelInner(
   }: Props,
   ref: React.Ref<VerificationPanelHandle>,
 ): React.JSX.Element {
-  const [drawerOpen, setDrawerOpen] = useState(true);
   const [verifyState, setVerifyState] = useState<VerificationState>({ phase: 'idle', cases: [] });
   const verifyStateRef = useRef(verifyState);
   const runHandleRef = useRef<RunVerificationHandle | null>(null);
@@ -173,9 +155,9 @@ function VerificationPanelInner(
     });
   }, []);
 
-  // Report status message upstream whenever verification state changes
+  // Report status message + busy upstream on every state transition.
   useEffect(() => {
-    onStatusMessage(deriveStatusMessage(verifyState));
+    onStatusMessage(deriveStatusMessage(verifyState), verifyState.phase === 'running');
   }, [verifyState, onStatusMessage]);
 
   // Mirror cases out to the parent so it can drive the witness pane.
@@ -281,6 +263,7 @@ function VerificationPanelInner(
       editorHandle.getFileUri(),
       targetCase,
       stateUpdater,
+      (listener) => editorHandle.addProgressListener(listener),
       { portfolioId, getAutoValidateRequest },
     );
   }, [editorHandle, verificationCommand, stateUpdater, portfolioId, getAutoValidateRequest]);
@@ -316,10 +299,14 @@ function VerificationPanelInner(
   return (
     <Box
       sx={{
+        height: `${panelHeight}px`,
+        display: 'flex',
+        flexDirection: 'column',
         bgcolor: 'var(--surface-panel-bg)',
         borderTop: '1px solid var(--surface-border)',
         opacity: stale ? 0.5 : 1,
         transition: 'opacity 0.2s',
+        overflow: 'hidden',
       }}
     >
       <Box
@@ -331,26 +318,26 @@ function VerificationPanelInner(
           px: { xs: 1, sm: 1.5 },
           py: 0.25,
           gap: 0.5,
+          flex: '0 0 auto',
         }}
       >
         <Typography
           variant="body2"
           sx={{
             fontWeight: 600,
-            fontSize: '0.9rem',
-            color: 'var(--text)',
+            fontSize: FONT_SIZE.md,
           }}
         >
           Verification Cases
         </Typography>
-        <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5, borderColor: 'var(--surface-border)' }} />
+        <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5 }} />
         <SummaryCounts cases={cases} />
         <SummaryStatusIcon cases={cases} phase={phase} />
         <ProblemsPill editorHandle={editorHandle} />
         <Box sx={{ flex: 1 }} />
 
         {validateWitnessCommand && onAutoValidateChange && (
-          <Tooltip title="When enabled, every verify success kicks off a witness cross-validation in the background.">
+          <Tooltip title="Automatically validate the returned witness using a separate portfolio.">
             <FormControlLabel
               control={
                 <Switch
@@ -361,7 +348,7 @@ function VerificationPanelInner(
                 />
               }
               label={
-                <Typography sx={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>auto-validate</Typography>
+                <Typography sx={{ fontSize: FONT_SIZE.sm, color: 'text.secondary' }}>auto-validate</Typography>
               }
               sx={{ mr: 0.5, ml: 0, '& .MuiFormControlLabel-label': { ml: 0.25 } }}
             />
@@ -377,24 +364,29 @@ function VerificationPanelInner(
           disabled={!connected || verifyBusy}
           onClick={(event) => { event.stopPropagation(); handleRefreshCases(); }}
         />
-        <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5, borderColor: 'var(--surface-border)' }} />
-        <Tooltip title={drawerOpen ? 'Collapse panel' : 'Expand panel'}>
-          <IconButton size="small" onClick={() => setDrawerOpen((prev) => !prev)} sx={{ color: 'var(--text-muted)' }}>
-            {drawerOpen ? <KeyboardArrowDownIcon sx={{ fontSize: 20 }} /> : <KeyboardArrowUpIcon sx={{ fontSize: 20 }} />}
+        <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5 }} />
+        <Tooltip title="Close panel">
+          <IconButton
+            size="small"
+            onClick={onClose}
+            aria-label="Close verification panel"
+            sx={{ color: 'text.secondary' }}
+          >
+            <CloseIcon sx={{ fontSize: ICON_SIZE.md }} />
           </IconButton>
         </Tooltip>
       </Box>
 
-      <Collapse in={drawerOpen}>
-        <Box
-          sx={{
-            maxHeight: caseListMaxHeight ?? { xs: 160, sm: 220 },
-            overflowY: 'auto',
-          }}
-        >
+      <Box
+        sx={{
+          flex: '1 1 auto',
+          minHeight: 0,
+          overflowY: 'auto',
+        }}
+      >
           {phase === 'error' && verifyState.message && (
             <Box sx={{ px: 1.5, py: 0.75 }}>
-              <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'var(--danger)' }}>
+              <Typography variant="body2" sx={{ fontSize: FONT_SIZE.md, color: 'var(--danger)' }}>
                 {verifyState.message}
               </Typography>
             </Box>
@@ -413,42 +405,46 @@ function VerificationPanelInner(
                   </ListItemIcon>
                   <ListItemText
                     primary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography component="span" sx={{ fontSize: '0.9rem', color: stale ? 'var(--text-muted)' : 'var(--text)' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', rowGap: 0.25, columnGap: 1, minWidth: 0 }}>
+                        <Typography component="span" sx={{ fontSize: FONT_SIZE.md, color: stale ? 'var(--text-muted)' : 'var(--text)', wordBreak: 'break-word' }}>
                           {caseState.caseInfo.label}
                         </Typography>
                         {caseState.metrics !== undefined && isMeaningfulDuration(caseState.metrics.totalDuration) && (
-                          <MetricsPill
-                            source={{
-                              verb: 'verified',
-                              totalDuration: caseState.metrics.totalDuration,
-                              metrics: caseState.metrics,
-                              portfolioLabel: findPortfolioLabel(
-                                portfolios ?? [],
-                                caseState.portfolioId ?? caseState.backendId,
-                              ),
-                              backendId: caseState.backendId,
-                            }}
-                          />
+                          <Box sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>
+                            <MetricsPill
+                              source={{
+                                verb: 'verified',
+                                totalDuration: caseState.metrics.totalDuration,
+                                metrics: caseState.metrics,
+                                portfolioLabel: findPortfolioLabel(
+                                  portfolios ?? [],
+                                  caseState.portfolioId ?? caseState.backendId,
+                                ),
+                                backendId: caseState.backendId,
+                              }}
+                            />
+                          </Box>
                         )}
                         {caseState.validationMetrics !== undefined && isMeaningfulDuration(caseState.validationMetrics.totalDuration) && (
-                          <MetricsPill
-                            source={{
-                              verb: 'validated',
-                              totalDuration: caseState.validationMetrics.totalDuration,
-                              metrics: caseState.validationMetrics,
-                              portfolioLabel: findPortfolioLabel(
-                                portfolios ?? [],
-                                caseState.validationPortfolioIdUsed ?? caseState.validationBackendId,
-                              ),
-                              backendId: caseState.validationBackendId,
-                            }}
-                          />
+                          <Box sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>
+                            <MetricsPill
+                              source={{
+                                verb: 'validated',
+                                totalDuration: caseState.validationMetrics.totalDuration,
+                                metrics: caseState.validationMetrics,
+                                portfolioLabel: findPortfolioLabel(
+                                  portfolios ?? [],
+                                  caseState.validationPortfolioIdUsed ?? caseState.validationBackendId,
+                                ),
+                                backendId: caseState.validationBackendId,
+                              }}
+                            />
+                          </Box>
                         )}
                         {caseState.validating && (
-                          <Tooltip title="Cross-validating witness in the background">
-                            <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, color: 'var(--text-muted)', fontSize: '0.7rem' }}>
-                              <CircularProgress size={10} thickness={6} sx={{ color: 'var(--text-muted)' }} />
+                          <Tooltip title="Validating witness in the background">
+                            <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, color: 'text.secondary', fontSize: FONT_SIZE.xs }}>
+                              <CircularProgress size={10} thickness={6} sx={{ color: 'text.secondary' }} />
                               <span>validating...</span>
                             </Box>
                           </Tooltip>
@@ -463,28 +459,29 @@ function VerificationPanelInner(
                     slotProps={{
                       secondary: {
                         sx: {
-                          fontSize: '0.82rem',
+                          fontSize: FONT_SIZE.sm,
                           color: caseState.status === 'failed' || caseState.status === 'errored' ? 'var(--danger)' : 'var(--text-muted)',
                         },
                       },
                     }}
                   />
                   {caseState.trace !== undefined && onShowWitness && (() => {
-                    const flagged = isFlaggedValidation(caseState.witnessValidation);
+                    const descriptor = witnessIconDescriptor(caseState.witnessValidation);
                     return (
-                      <Tooltip title={flagged ? 'Show witness (validation portfolio disagreed)' : 'Show witness'}>
+                      <Tooltip title={descriptor.tooltip}>
                         <IconButton
                           size="small"
                           onClick={(event) => { event.stopPropagation(); onShowWitness(caseState.caseInfo.id); }}
-                          sx={{ color: flagged ? 'var(--danger)' : 'var(--text-muted)', ml: 0.5 }}
+                          aria-label={descriptor.ariaLabel}
+                          sx={{ color: descriptor.iconColor, ml: 0.5 }}
                         >
                           <Badge
-                            color="error"
+                            color={descriptor.badgeColor}
                             variant="dot"
-                            invisible={!flagged}
+                            invisible={!descriptor.badgeVisible}
                             overlap="circular"
                           >
-                            <ArticleOutlinedIcon sx={{ fontSize: 18 }} />
+                            <ArticleOutlinedIcon sx={{ fontSize: ICON_SIZE.md }} />
                           </Badge>
                         </IconButton>
                       </Tooltip>
@@ -494,9 +491,10 @@ function VerificationPanelInner(
                     <IconButton
                       size="small"
                       onClick={(event) => { event.stopPropagation(); handleCaseClick(caseState.caseInfo.location); }}
-                      sx={{ color: 'var(--text-muted)', ml: 0.5, display: { xs: 'none', sm: 'inline-flex' } }}
+                      aria-label={`Go to definition of ${caseState.caseInfo.label}`}
+                      sx={{ color: 'text.secondary', ml: 0.5, display: { xs: 'none', sm: 'inline-flex' } }}
                     >
-                      <MyLocationOutlinedIcon sx={{ fontSize: 18 }} />
+                      <MyLocationOutlinedIcon sx={{ fontSize: ICON_SIZE.md }} />
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Verify case">
@@ -505,9 +503,10 @@ function VerificationPanelInner(
                         size="small"
                         onClick={(event) => { event.stopPropagation(); handleVerifySingle(caseState.caseInfo.id); }}
                         disabled={!connected || verifyBusy}
+                        aria-label={`Verify ${caseState.caseInfo.label}`}
                         sx={{ color: 'var(--accent)' }}
                       >
-                        <PlayArrowIcon sx={{ fontSize: 20 }} />
+                        <PlayArrowIcon sx={{ fontSize: ICON_SIZE.lg }} />
                       </IconButton>
                     </span>
                   </Tooltip>
@@ -518,13 +517,12 @@ function VerificationPanelInner(
 
           {cases.length === 0 && connected && (
             <Box sx={{ px: 1.5, py: 1 }}>
-              <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              <Typography variant="body2" sx={{ fontSize: FONT_SIZE.md, color: 'text.secondary' }}>
                 Discovering cases...
               </Typography>
             </Box>
           )}
-        </Box>
-      </Collapse>
+      </Box>
     </Box>
   );
 }

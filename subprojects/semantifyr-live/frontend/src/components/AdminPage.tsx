@@ -11,8 +11,6 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
-import AppBar from '@mui/material/AppBar';
-import MuiToolbar from '@mui/material/Toolbar';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import Snackbar from '@mui/material/Snackbar';
@@ -22,25 +20,22 @@ import PlayCircleOutlinedIcon from '@mui/icons-material/PlayCircleOutlined';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { useColorMode } from '../lib/theme';
-import ColorModeToggle from './ColorModeToggle';
+import type { ColorModePreference, ResolvedColorMode } from '../lib/util/colorMode';
+import AppHeader from './shell/AppHeader';
+import ColorModeToggle from './shell/ColorModeToggle';
 import KpiStrip from './admin/KpiStrip';
 import SessionsTable from './admin/SessionsTable';
 import InfoAside from './admin/InfoAside';
 import {
-  fetchInfo,
-  fetchAdminStatus,
-  fetchAdminConfig,
-  cancelSession,
-  cancelVerification,
-  loginAdmin,
-  logoutAdmin,
-  checkAdminAuth,
-  type InfoResponse,
-  type AdminStatusResponse,
+  createApi,
   type AdminConfigResponse,
-} from '../lib/adminApi';
-import { fetchPortfolios, type PortfolioInfo } from '../lib/portfolios';
+  type AdminStatusResponse,
+  type InfoResponse,
+  type LiveServerApi,
+  type PortfolioInfo,
+} from '../lib/api';
+import { resolveBackendUrl } from '../lib/util/backendUrl';
+import { FONT_SIZE, ICON_SIZE } from '../lib/util/theme';
 
 const REFRESH_INTERVAL_MS = 1000;
 
@@ -49,41 +44,51 @@ interface AdminHeaderProps {
   paused?: boolean;
   onTogglePause?: () => void;
   onLogout?: () => void;
+  preference: ColorModePreference;
+  colorMode: ResolvedColorMode;
+  onToggleColorMode: () => void;
 }
 
-function AdminHeader({ lastRefreshAt, paused, onTogglePause, onLogout }: AdminHeaderProps): React.JSX.Element {
-  const { preference, colorMode, cycle } = useColorMode();
+function AdminHeader({
+  lastRefreshAt,
+  paused,
+  onTogglePause,
+  onLogout,
+  preference,
+  colorMode,
+  onToggleColorMode,
+}: AdminHeaderProps): React.JSX.Element {
   const logoSrc = colorMode === 'dark' ? '/logo-full-dark.svg' : '/logo-full-light.svg';
   return (
-    <AppBar position="static" elevation={0} sx={{ bgcolor: 'var(--surface-toolbar-bg)', borderBottom: '1px solid var(--surface-border)' }}>
-      <MuiToolbar variant="dense" sx={{ px: 2, gap: 1, minHeight: 48 }}>
-        <Box component="a" href="/" sx={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}>
-          <Box component="img" src={logoSrc} alt="Semantifyr" sx={{ height: '1.5rem', width: 'auto' }} />
-        </Box>
-        <Typography sx={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>/ Admin</Typography>
-        <Box sx={{ flex: 1 }} />
-        {lastRefreshAt !== null && (
-          <Typography sx={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-            {paused ? 'Paused' : `Updated ${new Date(lastRefreshAt).toLocaleTimeString()}`}
-          </Typography>
-        )}
-        {onTogglePause && (
-          <Tooltip title={paused ? 'Resume auto-refresh' : 'Pause auto-refresh'}>
-            <IconButton size="small" onClick={onTogglePause} sx={{ color: 'var(--text-muted)' }}>
-              {paused ? <PlayCircleOutlinedIcon sx={{ fontSize: 20 }} /> : <PauseCircleOutlinedIcon sx={{ fontSize: 20 }} />}
-            </IconButton>
-          </Tooltip>
-        )}
-        <ColorModeToggle preference={preference} onToggle={cycle} />
-        {onLogout && (
-          <Tooltip title="Sign out">
-            <IconButton size="small" onClick={onLogout} sx={{ color: 'var(--text-muted)' }}>
-              <LogoutIcon sx={{ fontSize: 20 }} />
-            </IconButton>
-          </Tooltip>
-        )}
-      </MuiToolbar>
-    </AppBar>
+    <AppHeader logoSrc={logoSrc}>
+      <Typography sx={{ color: 'text.secondary', fontSize: FONT_SIZE.md }}>/ Admin</Typography>
+      <Box sx={{ flex: 1 }} />
+      {lastRefreshAt !== null && (
+        <Typography sx={{ fontSize: FONT_SIZE.xs, color: 'text.secondary' }}>
+          {paused ? 'Paused' : `Updated ${new Date(lastRefreshAt).toLocaleTimeString()}`}
+        </Typography>
+      )}
+      {onTogglePause && (
+        <Tooltip title={paused ? 'Resume auto-refresh' : 'Pause auto-refresh'}>
+          <IconButton
+            size="small"
+            onClick={onTogglePause}
+            aria-label={paused ? 'Resume auto-refresh' : 'Pause auto-refresh'}
+            sx={{ color: 'text.secondary' }}
+          >
+            {paused ? <PlayCircleOutlinedIcon sx={{ fontSize: ICON_SIZE.lg }} /> : <PauseCircleOutlinedIcon sx={{ fontSize: ICON_SIZE.lg }} />}
+          </IconButton>
+        </Tooltip>
+      )}
+      <ColorModeToggle preference={preference} onToggle={onToggleColorMode} />
+      {onLogout && (
+        <Tooltip title="Sign out">
+          <IconButton size="small" onClick={onLogout} aria-label="Sign out" sx={{ color: 'text.secondary' }}>
+            <LogoutIcon sx={{ fontSize: ICON_SIZE.lg }} />
+          </IconButton>
+        </Tooltip>
+      )}
+    </AppHeader>
   );
 }
 
@@ -91,7 +96,7 @@ function LoginForm({ onLogin, error }: { onLogin: (password: string) => void; er
   const [password, setPassword] = useState('');
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100dvh', bgcolor: 'var(--page-bg)', gap: 2 }}>
-      <Typography variant="h5" sx={{ color: 'var(--text)', mb: 1 }}>Semantifyr Admin</Typography>
+      <Typography variant="h5" sx={{ mb: 1 }}>Semantifyr Admin</Typography>
       {error && <Alert severity="error">Invalid password</Alert>}
       <Box component="form" onSubmit={(e: React.FormEvent) => { e.preventDefault(); onLogin(password); }} sx={{ display: 'flex', gap: 1 }}>
         <TextField
@@ -102,12 +107,12 @@ function LoginForm({ onLogin, error }: { onLogin: (password: string) => void; er
           onChange={(e) => setPassword(e.target.value)}
           autoFocus
           sx={{
-            '& .MuiInputBase-root': { color: 'var(--text)', bgcolor: 'var(--surface-bg)' },
-            '& .MuiInputLabel-root': { color: 'var(--text-muted)' },
+            '& .MuiInputBase-root': { color: 'text.primary', bgcolor: 'var(--surface-bg)' },
+            '& .MuiInputLabel-root': { color: 'text.secondary' },
             '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--surface-border)' },
           }}
         />
-        <Button type="submit" variant="contained" sx={{ bgcolor: 'var(--accent)', '&:hover': { bgcolor: 'var(--accent-hover)' } }}>
+        <Button type="submit" variant="contained" color="primary">
           Login
         </Button>
       </Box>
@@ -126,7 +131,15 @@ interface ToastState {
   severity: 'success' | 'error' | 'info';
 }
 
-function Dashboard({ onLogout }: { onLogout: () => void }): React.JSX.Element {
+interface DashboardProps {
+  api: LiveServerApi;
+  onLogout: () => void;
+  preference: ColorModePreference;
+  colorMode: ResolvedColorMode;
+  onToggleColorMode: () => void;
+}
+
+function Dashboard({ api, onLogout, preference, colorMode, onToggleColorMode }: DashboardProps): React.JSX.Element {
   const [data, setData] = useState<DashboardData | null>(null);
   const [portfolios, setPortfolios] = useState<readonly PortfolioInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -140,9 +153,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }): React.JSX.Element {
   const refresh = useCallback(async () => {
     try {
       const [info, admin, config] = await Promise.all([
-        fetchInfo(),
-        fetchAdminStatus(),
-        fetchAdminConfig(),
+        api.fetchInfo(),
+        api.fetchAdminStatus(),
+        api.fetchAdminConfig(),
       ]);
       setData({ info, admin, config });
       setError(null);
@@ -152,12 +165,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }): React.JSX.Element {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [api]);
 
   useEffect(() => {
     void refresh();
-    void fetchPortfolios('').then(setPortfolios).catch(() => setPortfolios([]));
-  }, [refresh]);
+    void api.fetchPortfolios().then(setPortfolios).catch(() => setPortfolios([]));
+  }, [refresh, api]);
 
   useEffect(() => {
     if (paused) {
@@ -175,7 +188,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }): React.JSX.Element {
   }, [paused, refresh]);
 
   const handleCancelSession = useCallback(async (sessionId: string) => {
-    const ok = await cancelSession(sessionId);
+    const ok = await api.cancelSession(sessionId);
     setToast({
       message: ok
         ? `Killed session ${sessionId.slice(0, 8)}…`
@@ -183,10 +196,10 @@ function Dashboard({ onLogout }: { onLogout: () => void }): React.JSX.Element {
       severity: ok ? 'success' : 'error',
     });
     void refresh();
-  }, [refresh]);
+  }, [api, refresh]);
 
   const handleCancelVerification = useCallback(async (sessionId: string, requestId: string) => {
-    const ok = await cancelVerification(sessionId, requestId);
+    const ok = await api.cancelVerification(sessionId, requestId);
     setToast({
       message: ok
         ? `Cancelled verification ${requestId}`
@@ -194,7 +207,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }): React.JSX.Element {
       severity: ok ? 'success' : 'error',
     });
     void refresh();
-  }, [refresh]);
+  }, [api, refresh]);
 
   const filteredSessions = useMemo(() => {
     if (!data) return [];
@@ -210,9 +223,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }): React.JSX.Element {
   if (loading) {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100dvh', bgcolor: 'var(--page-bg)' }}>
-        <AdminHeader lastRefreshAt={null} />
+        <AdminHeader
+          lastRefreshAt={null}
+          preference={preference}
+          colorMode={colorMode}
+          onToggleColorMode={onToggleColorMode}
+        />
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
-          <CircularProgress sx={{ color: 'var(--text-muted)' }} />
+          <CircularProgress sx={{ color: 'text.secondary' }} />
         </Box>
       </Box>
     );
@@ -225,6 +243,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }): React.JSX.Element {
         paused={paused}
         onTogglePause={() => setPaused((p) => !p)}
         onLogout={onLogout}
+        preference={preference}
+        colorMode={colorMode}
+        onToggleColorMode={onToggleColorMode}
       />
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
         {error && <Alert severity="error" sx={{ mx: 3, mt: 2 }}>{error}</Alert>}
@@ -302,10 +323,10 @@ function SessionsHeader({ total, shown, filter, onFilterChange }: SessionsHeader
   const filtered = filter.trim().length > 0;
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 0.5, flexWrap: 'wrap' }}>
-      <Typography sx={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text)' }}>
+      <Typography sx={{ fontSize: FONT_SIZE.lg, fontWeight: 600 }}>
         Sessions
       </Typography>
-      <Typography sx={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+      <Typography sx={{ fontSize: FONT_SIZE.sm, color: 'text.secondary' }}>
         {total === 0
           ? 'none active'
           : filtered
@@ -320,20 +341,20 @@ function SessionsHeader({ total, shown, filter, onFilterChange }: SessionsHeader
         onChange={(e) => onFilterChange(e.target.value)}
         sx={{
           width: { xs: '100%', sm: 280 },
-          '& .MuiInputBase-root': { color: 'var(--text)', bgcolor: 'var(--surface-bg)', fontSize: '0.82rem' },
+          '& .MuiInputBase-root': { color: 'text.primary', bgcolor: 'var(--surface-bg)', fontSize: FONT_SIZE.sm },
           '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--surface-border)' },
         }}
         slotProps={{
           input: {
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon sx={{ fontSize: 16, color: 'var(--text-muted)' }} />
+                <SearchIcon sx={{ fontSize: ICON_SIZE.sm, color: 'text.secondary' }} />
               </InputAdornment>
             ),
             endAdornment: filter ? (
               <InputAdornment position="end">
-                <IconButton size="small" onClick={() => onFilterChange('')} sx={{ color: 'var(--text-muted)' }}>
-                  <ClearIcon sx={{ fontSize: 16 }} />
+                <IconButton size="small" onClick={() => onFilterChange('')} sx={{ color: 'text.secondary' }}>
+                  <ClearIcon sx={{ fontSize: ICON_SIZE.sm }} />
                 </IconButton>
               </InputAdornment>
             ) : undefined,
@@ -344,13 +365,23 @@ function SessionsHeader({ total, shown, filter, onFilterChange }: SessionsHeader
   );
 }
 
-export default function AdminPage(): React.JSX.Element {
+interface AdminPageProps {
+  colorModePreference: ColorModePreference;
+  colorMode: ResolvedColorMode;
+  onToggleColorMode: () => void;
+}
+
+export default function AdminPage({ colorModePreference, colorMode, onToggleColorMode }: AdminPageProps): React.JSX.Element {
+  // One bound API client per AdminPage instance. resolveBackendUrl reads the same ?backend= /
+  // VITE_BACKEND_URL the editor uses, so admin always speaks to the configured backend.
+  const api = useMemo(() => createApi(resolveBackendUrl()), []);
+
   const [authState, setAuthState] = useState<'checking' | 'unauthenticated' | 'authenticated'>('checking');
   const [authError, setAuthError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    void checkAdminAuth()
+    void api.checkAdminAuth()
       .then((ok) => {
         if (cancelled) return;
         setAuthState(ok ? 'authenticated' : 'unauthenticated');
@@ -365,11 +396,11 @@ export default function AdminPage(): React.JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [api]);
 
   const handleLogin = useCallback(async (pw: string) => {
     try {
-      const ok = await loginAdmin(pw);
+      const ok = await api.loginAdmin(pw);
       setAuthError(!ok);
       if (ok) {
         setAuthState('authenticated');
@@ -377,21 +408,21 @@ export default function AdminPage(): React.JSX.Element {
     } catch {
       setAuthError(true);
     }
-  }, []);
+  }, [api]);
 
   const handleLogout = useCallback(async () => {
     try {
-      await logoutAdmin();
+      await api.logoutAdmin();
     } catch {
       /* The user clearly wants to leave; flip local state regardless of network outcome. */
     }
     setAuthState('unauthenticated');
-  }, []);
+  }, [api]);
 
   if (authState === 'checking') {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100dvh', bgcolor: 'var(--page-bg)' }}>
-        <CircularProgress sx={{ color: 'var(--text-muted)' }} />
+        <CircularProgress sx={{ color: 'text.secondary' }} />
       </Box>
     );
   }
@@ -400,5 +431,13 @@ export default function AdminPage(): React.JSX.Element {
     return <LoginForm onLogin={handleLogin} error={authError} />;
   }
 
-  return <Dashboard onLogout={handleLogout} />;
+  return (
+    <Dashboard
+      api={api}
+      onLogout={handleLogout}
+      preference={colorModePreference}
+      colorMode={colorMode}
+      onToggleColorMode={onToggleColorMode}
+    />
+  );
 }

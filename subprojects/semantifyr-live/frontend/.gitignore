@@ -1,4 +1,2 @@
 node_modules/
 dist/
-# Populated by the cloneTestModels Gradle task from upstream module artifacts; never committed.
-src/snippets/imported/

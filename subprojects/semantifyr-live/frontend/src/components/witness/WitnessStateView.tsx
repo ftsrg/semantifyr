@@ -12,10 +12,11 @@ import Collapse from '@mui/material/Collapse';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import type { WitnessState, WitnessStateStep, WitnessStateValue } from '../../lib/verification';
+import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
 
 const monoSx = {
   fontFamily: "'JetBrains Mono', monospace",
-  fontSize: '0.85rem',
+  fontSize: FONT_SIZE.md,
 } as const;
 
 interface ChangedBinding {
@@ -51,7 +52,9 @@ interface StateStepRowProps {
 }
 
 function StateStepRow({ label, initial, changed, allValues }: StateStepRowProps): React.JSX.Element {
-  const [open, setOpen] = useState(initial);
+  // Always default closed: even the Initial step typically lists every variable in the model,
+  // which would crowd the panel on first paint. The user opens the rows they care about.
+  const [open, setOpen] = useState(false);
   const changeCount = changed.length;
   const changeBadge = initial
     ? `${allValues.length} variable${allValues.length === 1 ? '' : 's'}`
@@ -72,13 +75,13 @@ function StateStepRow({ label, initial, changed, allValues }: StateStepRowProps)
         }}
         onClick={() => setOpen((prev) => !prev)}
       >
-        <IconButton size="small" sx={{ p: 0, color: 'var(--text-muted)' }}>
-          {open ? <KeyboardArrowDownIcon sx={{ fontSize: 16 }} /> : <KeyboardArrowRightIcon sx={{ fontSize: 16 }} />}
+        <IconButton size="small" sx={{ p: 0, color: 'text.secondary' }}>
+          {open ? <KeyboardArrowDownIcon sx={{ fontSize: ICON_SIZE.sm }} /> : <KeyboardArrowRightIcon sx={{ fontSize: ICON_SIZE.sm }} />}
         </IconButton>
         <Typography
           sx={{
-            fontSize: '0.78rem',
-            color: 'var(--text)',
+            fontSize: FONT_SIZE.sm,
+            color: 'text.primary',
             textTransform: 'uppercase',
             letterSpacing: '0.04em',
             fontWeight: 600,
@@ -87,7 +90,7 @@ function StateStepRow({ label, initial, changed, allValues }: StateStepRowProps)
         >
           {label}
         </Typography>
-        <Typography sx={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{changeBadge}</Typography>
+        <Typography sx={{ fontSize: FONT_SIZE.xs, color: 'text.secondary' }}>{changeBadge}</Typography>
       </Box>
       <Collapse in={open} timeout="auto">
         <Box sx={{ pl: 4.5, pr: 1.5, pb: 1 }}>
@@ -101,7 +104,7 @@ function StateStepRow({ label, initial, changed, allValues }: StateStepRowProps)
                   <Typography key={v.variable} sx={{ ...monoSx, color }}>
                     {v.variable} = {v.value}
                     {isChanged && change.previous !== undefined && (
-                      <Typography component="span" sx={{ ...monoSx, color: 'var(--text-muted)', ml: 1 }}>
+                      <Typography component="span" sx={{ ...monoSx, color: 'text.secondary', ml: 1 }}>
                         (was {change.previous})
                       </Typography>
                     )}
@@ -110,7 +113,7 @@ function StateStepRow({ label, initial, changed, allValues }: StateStepRowProps)
               })}
             </Box>
           ) : (
-            <Typography sx={{ fontSize: '0.78rem', color: 'var(--text-muted)', mt: 0.5, fontStyle: 'italic' }}>
+            <Typography sx={{ fontSize: FONT_SIZE.sm, color: 'text.secondary', mt: 0.5, fontStyle: 'italic' }}>
               (empty)
             </Typography>
           )}

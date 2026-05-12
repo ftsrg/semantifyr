@@ -11,6 +11,7 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import PlaylistPlayIcon from '@mui/icons-material/PlaylistPlay';
 import StopIcon from '@mui/icons-material/Stop';
+import { ICON_SIZE } from '../../lib/util/theme';
 
 interface Props {
   busy: boolean;
@@ -35,7 +36,7 @@ export default function VerifyButton({ busy, disabled, onVerify, onCancel }: Pro
           <Box sx={{ width: ICON_BOX_SIZE, height: ICON_BOX_SIZE, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
             {busy && <CircularProgress size={16} sx={{ color: 'var(--accent)', position: 'absolute' }} />}
             {busy
-              ? <StopIcon sx={{ fontSize: 14 }} />
+              ? <StopIcon sx={{ fontSize: ICON_SIZE.sm }} />
               : <PlaylistPlayIcon sx={{ fontSize: ICON_BOX_SIZE }} />
             }
           </Box>

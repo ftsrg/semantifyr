@@ -5,8 +5,8 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { buildShareableUrl } from '../lib/sharing'
-import { decodeMaybeCompressedBase64Url } from '../lib/urls'
+import { buildShareableUrl } from '../lib/util/sharing'
+import { decodeCompressedBase64Url } from '../lib/api/urls'
 
 describe('buildShareableUrl', () => {
   it('embeds the flavor, example, and code as a decodable code parameter', async () => {
@@ -20,7 +20,7 @@ describe('buildShareableUrl', () => {
     expect(parsed.searchParams.get('example')).toBe('trafficlight-direct-snapshot')
     const code = parsed.searchParams.get('code')
     expect(code).not.toBeNull()
-    const decoded = await decodeMaybeCompressedBase64Url(code!)
+    const decoded = await decodeCompressedBase64Url(code!)
     expect(decoded).toBe('package demo\nclass Foo {}')
   })
 
@@ -32,5 +32,29 @@ describe('buildShareableUrl', () => {
     const parsed = new URL(url)
     expect(parsed.searchParams.has('example')).toBe(false)
     expect(parsed.searchParams.get('mode')).toBe('oxsts-with-gamma-library')
+  })
+
+  it('omits the code parameter when the editor still matches the bundled example', async () => {
+    const exampleCode = 'package demo\nclass Foo {}'
+    const url = await buildShareableUrl('https://example.test/', {
+      flavorId: 'oxsts',
+      exampleId: 'sample',
+      code: exampleCode,
+      exampleCode,
+    })
+    const parsed = new URL(url)
+    expect(parsed.searchParams.has('code')).toBe(false)
+    expect(parsed.searchParams.get('example')).toBe('sample')
+  })
+
+  it('keeps the code parameter when the editor diverges from the bundled example', async () => {
+    const url = await buildShareableUrl('https://example.test/', {
+      flavorId: 'oxsts',
+      exampleId: 'sample',
+      code: 'package demo\nclass Foo { var x: int := 1 }',
+      exampleCode: 'package demo\nclass Foo {}',
+    })
+    const parsed = new URL(url)
+    expect(parsed.searchParams.has('code')).toBe(true)
   })
 })

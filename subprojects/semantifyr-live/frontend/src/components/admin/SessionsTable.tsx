@@ -20,8 +20,10 @@ import Typography from '@mui/material/Typography';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import StopIcon from '@mui/icons-material/Stop';
-import type { SessionInfo } from '../../lib/adminApi';
-import { formatIsoDuration } from '../../lib/duration';
+import type { SessionInfo } from '../../lib/api';
+import { formatIsoDuration } from '../../lib/util/duration';
+import KindChip from '../verification/KindChip';
+import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
 
 interface Props {
   sessions: readonly SessionInfo[];
@@ -30,8 +32,8 @@ interface Props {
 }
 
 const headerCellSx = {
-  color: 'var(--text-muted)',
-  fontSize: '0.7rem',
+  color: 'text.secondary',
+  fontSize: FONT_SIZE.xs,
   textTransform: 'uppercase',
   letterSpacing: '0.04em',
   fontWeight: 600,
@@ -40,8 +42,8 @@ const headerCellSx = {
 } as const;
 
 const cellSx = {
-  color: 'var(--text)',
-  fontSize: '0.85rem',
+  color: 'text.primary',
+  fontSize: FONT_SIZE.md,
   borderColor: 'var(--surface-border)',
   py: 0.5,
 } as const;
@@ -49,8 +51,8 @@ const cellSx = {
 const monoSx = {
   ...cellSx,
   fontFamily: 'var(--font-mono)',
-  fontSize: '0.78rem',
-  color: 'var(--text-muted)',
+  fontSize: FONT_SIZE.sm,
+  color: 'text.secondary',
 } as const;
 
 function shortenSessionId(id: string): string {
@@ -77,15 +79,15 @@ function SessionRow({ session, onCancelSession, onCancelVerification }: SessionR
         sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'var(--surface-panel-bg)' } }}
       >
         <TableCell sx={{ ...cellSx, width: 32, px: 0.5 }}>
-          <IconButton size="small" sx={{ color: 'var(--text-muted)', p: 0.25 }} onClick={(e) => { e.stopPropagation(); setOpen((prev) => !prev); }}>
-            {open ? <KeyboardArrowDownIcon sx={{ fontSize: 18 }} /> : <KeyboardArrowRightIcon sx={{ fontSize: 18 }} />}
+          <IconButton size="small" sx={{ color: 'text.secondary', p: 0.25 }} onClick={(e) => { e.stopPropagation(); setOpen((prev) => !prev); }}>
+            {open ? <KeyboardArrowDownIcon sx={{ fontSize: ICON_SIZE.md }} /> : <KeyboardArrowRightIcon sx={{ fontSize: ICON_SIZE.md }} />}
           </IconButton>
         </TableCell>
         <TableCell sx={cellSx}>
           <Tooltip title={session.started ? 'LSP server is running' : 'Session is starting'}>
             <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
               <Box component="span" sx={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', bgcolor: startedColor }} />
-              <Typography component="span" sx={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+              <Typography component="span" sx={{ fontSize: FONT_SIZE.sm, color: 'text.secondary' }}>
                 {session.started ? 'running' : 'starting'}
               </Typography>
             </Box>
@@ -95,7 +97,7 @@ function SessionRow({ session, onCancelSession, onCancelVerification }: SessionR
           <Chip
             label={session.flavorId}
             size="small"
-            sx={{ bgcolor: 'var(--surface-panel-bg)', color: 'var(--text)', fontWeight: 500, fontSize: '0.72rem', height: 20 }}
+            sx={{ bgcolor: 'var(--surface-panel-bg)', color: 'text.primary', fontWeight: 500, fontSize: FONT_SIZE.xs, height: 20 }}
           />
         </TableCell>
         <TableCell sx={monoSx}>
@@ -119,10 +121,10 @@ function SessionRow({ session, onCancelSession, onCancelVerification }: SessionR
             <Chip
               label={`${inFlight} running`}
               size="small"
-              sx={{ bgcolor: 'rgba(251,191,36,0.15)', color: 'var(--warning)', fontWeight: 600, fontSize: '0.7rem', height: 20 }}
+              sx={{ bgcolor: 'var(--warning-soft-bg)', color: 'var(--warning)', fontWeight: 600, fontSize: FONT_SIZE.xs, height: 20 }}
             />
           ) : (
-            <Box component="span" sx={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>idle</Box>
+            <Box component="span" sx={{ color: 'text.secondary', fontSize: FONT_SIZE.sm }}>idle</Box>
           )}
         </TableCell>
         <TableCell sx={{ ...cellSx, textAlign: 'right', pr: 1 }}>
@@ -132,7 +134,7 @@ function SessionRow({ session, onCancelSession, onCancelVerification }: SessionR
               onClick={(e) => { e.stopPropagation(); onCancelSession(session.sessionId); }}
               sx={{ color: 'var(--danger)' }}
             >
-              <StopIcon sx={{ fontSize: 18 }} />
+              <StopIcon sx={{ fontSize: ICON_SIZE.md }} />
             </IconButton>
           </Tooltip>
         </TableCell>
@@ -162,7 +164,7 @@ function SessionDetails({ session, onCancelVerification }: SessionDetailsProps):
       <Chip
         label={`${session.bridgeInfo.errorCount} error${session.bridgeInfo.errorCount === 1 ? '' : 's'}`}
         size="small"
-        sx={{ bgcolor: 'rgba(239,68,68,0.15)', color: 'var(--danger)', fontWeight: 600, fontSize: '0.7rem', height: 20 }}
+        sx={{ bgcolor: 'var(--danger-soft-bg)', color: 'var(--danger)', fontWeight: 600, fontSize: FONT_SIZE.xs, height: 20 }}
       />
     ) : null;
   return (
@@ -178,7 +180,7 @@ function SessionDetails({ session, onCancelVerification }: SessionDetailsProps):
       </Box>
       {session.activeVerifications.length > 0 && (
         <Box>
-          <Typography sx={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, mb: 0.5 }}>
+          <Typography sx={{ fontSize: FONT_SIZE.xs, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, mb: 0.5 }}>
             In-flight verifications
           </Typography>
           {session.activeVerifications.map((v) => (
@@ -190,46 +192,36 @@ function SessionDetails({ session, onCancelVerification }: SessionDetailsProps):
                 gap: 1,
                 py: 0.25,
                 fontFamily: 'var(--font-mono)',
-                fontSize: '0.78rem',
-                color: 'var(--text)',
+                fontSize: FONT_SIZE.sm,
+                color: 'text.primary',
               }}
             >
-              <Chip
-                label={v.kind === 'Validate' ? 'validate' : 'verify'}
-                size="small"
-                sx={{
-                  bgcolor: v.kind === 'Validate' ? 'rgba(96,165,250,0.18)' : 'rgba(251,191,36,0.15)',
-                  color: v.kind === 'Validate' ? 'var(--accent)' : 'var(--warning)',
-                  fontWeight: 600,
-                  fontSize: '0.7rem',
-                  height: 20,
-                }}
-              />
+              <KindChip kind={v.kind ?? 'Verify'} />
               {v.portfolioId && (
                 <Chip
                   label={v.portfolioId}
                   size="small"
-                  sx={{ bgcolor: 'var(--surface-bg)', color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.7rem', height: 20, fontFamily: 'inherit' }}
+                  sx={{ bgcolor: 'var(--surface-bg)', color: 'text.secondary', fontWeight: 500, fontSize: FONT_SIZE.xs, height: 20, fontFamily: 'inherit' }}
                 />
               )}
               {v.caseLabel && (
-                <Box component="span" sx={{ color: 'var(--text)', fontFamily: 'inherit', fontSize: '0.78rem' }}>
+                <Box component="span" sx={{ color: 'text.primary', fontFamily: 'inherit', fontSize: FONT_SIZE.sm }}>
                   {v.caseLabel}
                 </Box>
               )}
               <Tooltip title={v.requestId}>
-                <Box component="span" sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-muted)' }}>
+                <Box component="span" sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', color: 'text.secondary' }}>
                   #{v.requestId}
                 </Box>
               </Tooltip>
               {v.elapsed && (
-                <Box component="span" sx={{ color: 'var(--text-muted)', fontFamily: 'inherit', fontSize: '0.72rem' }}>
+                <Box component="span" sx={{ color: 'text.secondary', fontFamily: 'inherit', fontSize: FONT_SIZE.xs }}>
                   {formatIsoDuration(v.elapsed)}
                 </Box>
               )}
               <Tooltip title="Cancel">
                 <IconButton size="small" onClick={() => onCancelVerification(v.requestId)} sx={{ color: 'var(--danger)' }}>
-                  <StopIcon sx={{ fontSize: 16 }} />
+                  <StopIcon sx={{ fontSize: ICON_SIZE.sm }} />
                 </IconButton>
               </Tooltip>
             </Box>
@@ -243,10 +235,10 @@ function SessionDetails({ session, onCancelVerification }: SessionDetailsProps):
 function DetailGroup({ label, value, mono }: { label: string; value: string; mono?: boolean }): React.JSX.Element {
   return (
     <Box sx={{ minWidth: 180 }}>
-      <Typography sx={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, mb: 0.25 }}>
+      <Typography sx={{ fontSize: FONT_SIZE.xs, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, mb: 0.25 }}>
         {label}
       </Typography>
-      <Typography sx={{ fontSize: '0.85rem', color: 'var(--text)', fontFamily: mono ? 'var(--font-mono)' : 'inherit', wordBreak: 'break-all' }}>
+      <Typography sx={{ fontSize: FONT_SIZE.md, color: 'text.primary', fontFamily: mono ? 'var(--font-mono)' : 'inherit', wordBreak: 'break-all' }}>
         {value}
       </Typography>
     </Box>
@@ -257,7 +249,7 @@ export default function SessionsTable({ sessions, onCancelSession, onCancelVerif
   if (sessions.length === 0) {
     return (
       <Paper sx={{ bgcolor: 'var(--surface-bg)', border: '1px solid var(--surface-border)' }}>
-        <Typography sx={{ p: 3, color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.85rem', textAlign: 'center' }}>
+        <Typography sx={{ p: 3, color: 'text.secondary', fontStyle: 'italic', fontSize: FONT_SIZE.md, textAlign: 'center' }}>
           No active sessions.
         </Typography>
       </Paper>

@@ -4,61 +4,35 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import WitnessTab from '../components/witness/WitnessTab'
-import type {
-  VerificationCaseSpecification,
-  VerificationTrace,
-} from '../lib/verification'
+import { describe, expect, it, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import WitnessTab from '../components/witness/WitnessTab';
+import { sampleCase } from './fixtures/cases';
+import { sampleTrace as trace } from './fixtures/verification-results';
 
-const caseInfo: VerificationCaseSpecification = {
-  id: 'P1',
-  label: 'P1',
-  location: {
-    uri: 'inmemory:///workspace/Foo.oxsts',
-    range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
-  },
-}
+const caseInfo = sampleCase('P1');
 
-const trace: VerificationTrace = {
-  callTrace: { initialStep: { traces: [] }, steps: [] },
-  witnessState: { initialStep: { values: [] }, steps: [] },
-  backAnnotatedSource: '',
-  witnessUri: 'inmemory:///workspace/Foo.witness.oxsts',
-}
-
-describe('WitnessTab close button', () => {
-  it('renders the close button only when onClose is provided', () => {
-    const { rerender } = render(
+describe('WitnessTab', () => {
+  it('renders the case label, the validation chip, and a revalidate button when validation has run', () => {
+    render(
       <WitnessTab
         caseInfo={caseInfo}
         trace={trace}
-        validation={undefined}
+        validation="valid"
         validating={false}
-        canRevalidate={false}
+        canRevalidate
         onRevalidate={() => {}}
+        editorHandle={null}
+        witnessLanguageId="oxsts"
       />,
-    )
-    expect(screen.queryByRole('button', { name: 'Close witness' })).toBeNull()
+    );
+    expect(screen.getByText(caseInfo.label)).toBeInTheDocument();
+    expect(screen.getByText('Witness valid')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Validate witness' })).toBeInTheDocument();
+  });
 
-    rerender(
-      <WitnessTab
-        caseInfo={caseInfo}
-        trace={trace}
-        validation={undefined}
-        validating={false}
-        canRevalidate={false}
-        onRevalidate={() => {}}
-        onClose={() => {}}
-      />,
-    )
-    expect(screen.getByRole('button', { name: 'Close witness' })).toBeInTheDocument()
-  })
-
-  it('calls onClose when the close button is clicked', async () => {
-    const onClose = vi.fn()
+  it('shows the verifying portfolio caption when supplied', () => {
     render(
       <WitnessTab
         caseInfo={caseInfo}
@@ -67,10 +41,81 @@ describe('WitnessTab close button', () => {
         validating={false}
         canRevalidate={false}
         onRevalidate={() => {}}
-        onClose={onClose}
+        verificationPortfolioLabel="Theta"
+        editorHandle={null}
+        witnessLanguageId="oxsts"
       />,
-    )
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Close witness' }))
-    expect(onClose).toHaveBeenCalledOnce()
-  })
-})
+    );
+    expect(screen.getByText('Theta')).toBeInTheDocument();
+  });
+
+  it('forwards onRevalidate clicks', async () => {
+    const onRevalidate = vi.fn();
+    render(
+      <WitnessTab
+        caseInfo={caseInfo}
+        trace={trace}
+        validation="valid"
+        validating={false}
+        canRevalidate
+        onRevalidate={onRevalidate}
+        editorHandle={null}
+        witnessLanguageId="oxsts"
+      />,
+    );
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Validate witness' }));
+    expect(onRevalidate).toHaveBeenCalledOnce();
+  });
+
+  it('disables the revalidate button when canRevalidate=false', () => {
+    render(
+      <WitnessTab
+        caseInfo={caseInfo}
+        trace={trace}
+        validation="valid"
+        validating={false}
+        canRevalidate={false}
+        onRevalidate={() => {}}
+        editorHandle={null}
+        witnessLanguageId="oxsts"
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Validate witness' })).toBeDisabled();
+  });
+
+  it('shows the "validating..." chip label while a validation is in flight', () => {
+    render(
+      <WitnessTab
+        caseInfo={caseInfo}
+        trace={trace}
+        validation={undefined}
+        validating
+        canRevalidate
+        onRevalidate={() => {}}
+        editorHandle={null}
+        witnessLanguageId="oxsts"
+      />,
+    );
+    expect(screen.getByText('Validating...')).toBeInTheDocument();
+  });
+
+  it('toggles between Trace, State, and Raw views', async () => {
+    render(
+      <WitnessTab
+        caseInfo={caseInfo}
+        trace={trace}
+        validation={undefined}
+        validating={false}
+        canRevalidate={false}
+        onRevalidate={() => {}}
+        editorHandle={null}
+        witnessLanguageId="oxsts"
+      />,
+    );
+    const user = userEvent.setup();
+    // Default view is Trace.
+    expect(screen.getByRole('button', { name: 'Trace' })).toHaveAttribute('aria-pressed', 'true');
+    await user.click(screen.getByRole('button', { name: 'State' }));
+    expect(screen.getByRole('button', { name: 'State' })).toHaveAttribute('aria-pressed', 'true');
+  });
+});

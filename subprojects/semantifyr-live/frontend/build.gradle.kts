@@ -37,6 +37,7 @@ dependencies {
 }
 
 val importedSnippetsDir = project.layout.projectDirectory.dir("src/snippets/imported")
+val importedVscodeDir = project.layout.projectDirectory.dir("src/vscode/imported")
 
 val cloneGammaTestModels by tasks.registering(Sync::class) {
     from(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/examples")) {
@@ -63,6 +64,15 @@ val cloneSysmlv2TestModels by tasks.registering(Sync::class) {
     into(importedSnippetsDir.dir("sysmlv2"))
 }
 
+val cloneTutorialSnippets by tasks.registering(Sync::class) {
+    from(rootProject.layout.projectDirectory.dir("subprojects/semantifyr-vscode-server/examples/tutorial")) {
+        include("basics.oxsts", "intermediate.oxsts")
+    }
+    rename("basics.oxsts", "trafficlight-direct-snapshot.oxsts")
+    rename("intermediate.oxsts", "trafficlight-library-snapshot.oxsts")
+    into(importedSnippetsDir.dir("tutorial"))
+}
+
 val cloneTestModels by tasks.registering {
     dependsOn(cloneGammaTestModels, cloneSysmlv2TestModels, cloneTutorialSnippets)
 }
@@ -86,6 +96,7 @@ val assembleFrontend by tasks.registering(NpmTask::class) {
     group = "build"
 
     inputs.dir(project.layout.projectDirectory.dir("src"))
+    inputs.dir(project.layout.projectDirectory.dir("public"))
     inputs.file(project.layout.projectDirectory.file("index.html"))
     inputs.file(project.layout.projectDirectory.file("vite.config.ts"))
     inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
@@ -95,6 +106,7 @@ val assembleFrontend by tasks.registering(NpmTask::class) {
     inputs.files(tasks.npmInstall)
     inputs.files(editorCommonDist)
     inputs.files(cloneTestModels)
+    inputs.files(cloneVscodeLanguageAssets)
 
     npmCommand.set(listOf("run", "build"))
     outputs.dir(project.layout.projectDirectory.dir("dist"))
@@ -118,6 +130,7 @@ val test by tasks.registering(NpmTask::class) {
     inputs.file(rootProject.layout.projectDirectory.file("package.json"))
     inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
     inputs.files(cloneTestModels)
+    inputs.files(cloneVscodeLanguageAssets)
     npmCommand.set(listOf("test"))
 }
 
@@ -133,5 +146,6 @@ tasks {
     clean {
         delete("dist")
         delete(importedSnippetsDir)
+        delete(importedVscodeDir)
     }
 }
