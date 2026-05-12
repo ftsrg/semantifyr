@@ -97,3 +97,28 @@ export interface VerificationCaseResult {
     metrics: VerificationMetrics | null;
     trace: VerificationTrace | null;
 }
+
+export type ThetaExecutor = "auto" | "shell" | "docker";
+
+export type ArtifactsLocation = "temporary" | "workspace";
+
+export type ArtifactsPreset = "none" | "all" | "debug";
+
+export type OptimizationLevel = "none" | "all";
+
+export interface ServerSettings {
+    portfolio?: string;
+    timeoutSeconds?: number;
+    maxConcurrency?: number;
+    theta?: {
+        executor?: ThetaExecutor;
+        dockerImage?: string;
+    };
+    artifacts?: {
+        location?: ArtifactsLocation;
+        preset?: ArtifactsPreset;
+    };
+    optimization?: {
+        level?: OptimizationLevel;
+    };
+}

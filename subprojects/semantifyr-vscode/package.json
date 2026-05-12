@@ -186,14 +186,9 @@
           "default": "temporary",
           "enum": [
             "temporary",
-            "directory"
+            "workspace"
           ],
-          "markdownDescription": "Where to retain compiled/generated artifacts. `temporary`: a short-lived temp directory cleaned on exit; `directory`: write under `semantifyr.artifacts.directory`."
-        },
-        "semantifyr.artifacts.directory": {
-          "type": "string",
-          "default": "",
-          "markdownDescription": "Directory that receives artifacts when `semantifyr.artifacts.location` is `directory`. Leave empty to fall back to a temporary directory."
+          "markdownDescription": "Where to retain compiled/generated artifacts. `temporary`: a short-lived temp directory cleaned on exit; `workspace`: write under `<workspace>/.artifacts/`."
         },
         "semantifyr.artifacts.preset": {
           "type": "string",

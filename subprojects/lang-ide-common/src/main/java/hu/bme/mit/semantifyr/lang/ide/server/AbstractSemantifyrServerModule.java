@@ -44,6 +44,4 @@ public abstract class AbstractSemantifyrServerModule extends ServerModule {
     protected Class<? extends LanguageServerImpl> resolveLanguageServerClass() {
         return SemantifyrLanguageServer.class;
     }
-
-    protected void configureLanguageSpecific() {}
 }

@@ -1,32 +1,32 @@
 import { workspace } from "vscode";
+import type {
+    ArtifactsLocation,
+    ArtifactsPreset,
+    OptimizationLevel,
+    ServerSettings,
+    ThetaExecutor,
+} from "@semantifyr/editor-common";
 
-export type SemantifyrSettings = {
-    portfolio: string;
-    timeoutSeconds: number;
-    maxConcurrency: number;
-    "theta.executor": string;
-    "theta.dockerImage": string;
-    "artifacts.location": string;
-    "artifacts.directory": string;
-    "artifacts.preset": string;
-    "optimization.level": string;
-};
-
-export function readSemantifyrSettings(): SemantifyrSettings {
+export function readSemantifyrSettings(): ServerSettings {
     const config = workspace.getConfiguration("semantifyr");
     return {
         portfolio: config.get<string>("portfolio", "theta-full"),
         timeoutSeconds: config.get<number>("timeoutSeconds", 300),
         maxConcurrency: config.get<number>("maxConcurrency", 0),
-        "theta.executor": config.get<string>("theta.executor", "auto"),
-        "theta.dockerImage": config.get<string>("theta.dockerImage", "ftsrg/theta-xsts-cli:latest"),
-        "artifacts.location": config.get<string>("artifacts.location", "temporary"),
-        "artifacts.directory": config.get<string>("artifacts.directory", ""),
-        "artifacts.preset": config.get<string>("artifacts.preset", "all"),
-        "optimization.level": config.get<string>("optimization.level", "all"),
+        theta: {
+            executor: config.get<ThetaExecutor>("theta.executor", "auto"),
+            dockerImage: config.get<string>("theta.dockerImage", "ftsrg/theta-xsts-cli:latest"),
+        },
+        artifacts: {
+            location: config.get<ArtifactsLocation>("artifacts.location", "temporary"),
+            preset: config.get<ArtifactsPreset>("artifacts.preset", "all"),
+        },
+        optimization: {
+            level: config.get<OptimizationLevel>("optimization.level", "all"),
+        },
     };
 }
 
-export function readSemantifyrPayload(): { semantifyr: SemantifyrSettings } {
+export function readSemantifyrPayload(): { semantifyr: ServerSettings } {
     return { semantifyr: readSemantifyrSettings() };
 }

@@ -7,16 +7,22 @@
 package hu.bme.mit.semantifyr.lang.ide.server;
 
 import static hu.bme.mit.semantifyr.backends.theta.ThetaXstsExecutorKt.ThetaExecutorKey;
+import static java.util.Objects.requireNonNullElse;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment;
 import hu.bme.mit.semantifyr.backends.theta.ThetaXstsExecutor;
 import hu.bme.mit.semantifyr.backends.theta.ThetaXstsExecutorKt;
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig;
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig;
+import hu.bme.mit.semantifyr.lang.ide.server.wire.ArtifactsLocation;
+import hu.bme.mit.semantifyr.lang.ide.server.wire.ArtifactsPreset;
+import hu.bme.mit.semantifyr.lang.ide.server.wire.OptimizationLevel;
+import hu.bme.mit.semantifyr.lang.ide.server.wire.ServerSettingsPayload;
+import hu.bme.mit.semantifyr.lang.ide.server.wire.ThetaExecutor;
 import hu.bme.mit.semantifyr.portfolios.Portfolios;
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio;
 import java.io.IOException;
@@ -34,35 +40,20 @@ import org.slf4j.LoggerFactory;
 public class ServerSettings {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerSettings.class);
+    private static final Gson GSON = new Gson();
 
     public static final String DEFAULT_PORTFOLIO_ID = "theta-full";
-    public static final long DEFAULT_TIMEOUT_SECONDS = 300L;
-    public static final String DEFAULT_THETA_EXECUTOR = "auto";
-    public static final ArtifactsLocation DEFAULT_ARTIFACTS_LOCATION = ArtifactsLocation.TEMPORARY;
-    public static final String DEFAULT_ARTIFACTS_PRESET = "all";
-    public static final String DEFAULT_OPTIMIZATION_LEVEL = "all";
     private static final String WORKSPACE_ARTIFACTS_SUBDIRECTORY = ".artifacts";
 
-    public enum ArtifactsLocation {
-        TEMPORARY,
-        WORKSPACE;
+    private static final ServerSettingsPayload DEFAULTS = new ServerSettingsPayload(
+            DEFAULT_PORTFOLIO_ID,
+            300L,
+            0,
+            new ServerSettingsPayload.Theta(ThetaExecutor.AUTO, ThetaXstsExecutorKt.THETA_DEFAULT_IMAGE),
+            new ServerSettingsPayload.Artifacts(ArtifactsLocation.TEMPORARY, ArtifactsPreset.ALL),
+            new ServerSettingsPayload.Optimization(OptimizationLevel.ALL));
 
-        static ArtifactsLocation fromJson(String value) {
-            if (value == null) {
-                return DEFAULT_ARTIFACTS_LOCATION;
-            }
-            return switch (value.toLowerCase()) {
-                case "workspace" -> WORKSPACE;
-                case "temporary", "temp" -> TEMPORARY;
-                default -> {
-                    LOGGER.warn("Unknown artifacts.location '{}', falling back to {}", value, DEFAULT_ARTIFACTS_LOCATION);
-                    yield DEFAULT_ARTIFACTS_LOCATION;
-                }
-            };
-        }
-    }
-
-    private final AtomicReference<Snapshot> snapshot = new AtomicReference<>(Snapshot.defaults());
+    private final AtomicReference<ServerSettingsPayload> effective = new AtomicReference<>(DEFAULTS);
 
     public void apply(JsonElement payload) {
         if (payload == null || payload.isJsonNull()) {
@@ -75,9 +66,43 @@ public class ServerSettings {
         JsonObject section = root.has("semantifyr") && root.get("semantifyr").isJsonObject()
                 ? root.getAsJsonObject("semantifyr")
                 : root;
-        Snapshot next = Snapshot.fromJson(section);
-        snapshot.set(next);
+        apply(GSON.fromJson(section, ServerSettingsPayload.class));
+    }
+
+    public void apply(ServerSettingsPayload payload) {
+        if (payload == null) {
+            return;
+        }
+        ServerSettingsPayload next = withDefaults(payload);
+        effective.set(next);
         LOGGER.info("LSP settings applied: {}", next);
+    }
+
+    private static ServerSettingsPayload withDefaults(ServerSettingsPayload payload) {
+        ServerSettingsPayload.Theta theta = payload.theta();
+        ServerSettingsPayload.Artifacts artifacts = payload.artifacts();
+        ServerSettingsPayload.Optimization optimization = payload.optimization();
+        return new ServerSettingsPayload(
+                requireNonNullElse(payload.portfolio(), DEFAULTS.portfolio()),
+                requireNonNullElse(payload.timeoutSeconds(), DEFAULTS.timeoutSeconds()),
+                requireNonNullElse(payload.maxConcurrency(), DEFAULTS.maxConcurrency()),
+                new ServerSettingsPayload.Theta(
+                        requireNonNullElse(
+                                theta != null ? theta.executor() : null,
+                                DEFAULTS.theta().executor()),
+                        requireNonNullElse(
+                                theta != null ? theta.dockerImage() : null,
+                                DEFAULTS.theta().dockerImage())),
+                new ServerSettingsPayload.Artifacts(
+                        requireNonNullElse(
+                                artifacts != null ? artifacts.location() : null,
+                                DEFAULTS.artifacts().location()),
+                        requireNonNullElse(
+                                artifacts != null ? artifacts.preset() : null,
+                                DEFAULTS.artifacts().preset())),
+                new ServerSettingsPayload.Optimization(requireNonNullElse(
+                        optimization != null ? optimization.level() : null,
+                        DEFAULTS.optimization().level())));
     }
 
     public VerificationPortfolio resolvePortfolio(String portfolioIdOverride) {
@@ -88,7 +113,7 @@ public class ServerSettings {
             }
             LOGGER.warn("Unknown per-call portfolio override '{}'; falling back to settings", portfolioIdOverride);
         }
-        String id = snapshot.get().portfolio();
+        String id = effective.get().portfolio();
         VerificationPortfolio portfolio = Portfolios.INSTANCE.byIdOrNull(id);
         if (portfolio == null) {
             LOGGER.warn("Unknown portfolio '{}', falling back to '{}'", id, DEFAULT_PORTFOLIO_ID);
@@ -98,27 +123,27 @@ public class ServerSettings {
     }
 
     public Duration resolveTimeout() {
-        return Duration.ofSeconds(snapshot.get().timeoutSeconds());
+        return Duration.ofSeconds(effective.get().timeoutSeconds());
     }
 
     public Integer resolveMaxConcurrencyOrNull() {
-        int value = snapshot.get().maxConcurrency();
+        int value = effective.get().maxConcurrency();
         return value > 0 ? value : null;
     }
 
     public ExecutionEnvironment resolveExecutionEnvironment() {
-        Snapshot s = snapshot.get();
-        String image = s.thetaDockerImage() != null ? s.thetaDockerImage() : ThetaXstsExecutorKt.THETA_DEFAULT_IMAGE;
-        return switch (s.thetaExecutor()) {
-            case "shell" ->
+        ServerSettingsPayload.Theta theta = effective.get().theta();
+        String image = theta.dockerImage();
+        return switch (theta.executor()) {
+            case SHELL ->
                 ExecutionEnvironment.builder()
                         .put(ThetaExecutorKey, ThetaXstsExecutor.Companion::shell)
                         .build();
-            case "docker" ->
+            case DOCKER ->
                 ExecutionEnvironment.builder()
                         .put(ThetaExecutorKey, () -> ThetaXstsExecutor.Companion.docker(image))
                         .build();
-            default ->
+            case AUTO ->
                 ExecutionEnvironment.builder()
                         .put(ThetaExecutorKey, () -> ThetaXstsExecutor.Companion.autoDetect(image))
                         .build();
@@ -126,16 +151,15 @@ public class ServerSettings {
     }
 
     public ArtifactConfig resolveArtifactConfig() {
-        Snapshot s = snapshot.get();
-        return switch (s.artifactsPreset()) {
-            case "none" -> ArtifactConfig.NONE;
-            case "debug" -> ArtifactConfig.DEBUG;
-            default -> ArtifactConfig.ALL;
+        return switch (effective.get().artifacts().preset()) {
+            case NONE -> ArtifactConfig.NONE;
+            case ALL -> ArtifactConfig.ALL;
+            case DEBUG -> ArtifactConfig.DEBUG;
         };
     }
 
     public Path resolveArtifactOutputDirectory(ILanguageServerAccess access) {
-        return switch (snapshot.get().artifactsLocation()) {
+        return switch (effective.get().artifacts().location()) {
             case WORKSPACE -> workspaceArtifactDirectory(access);
             case TEMPORARY -> createTempDir();
         };
@@ -182,84 +206,9 @@ public class ServerSettings {
     }
 
     public OptimizationConfig resolveOptimizationConfig() {
-        String preset = snapshot.get().optimizationLevel();
-        return switch (preset) {
-            case "none" -> OptimizationConfig.Companion.getNONE();
-            case "all" -> OptimizationConfig.Companion.getALL();
-            default -> OptimizationConfig.Companion.getALL();
+        return switch (effective.get().optimization().level()) {
+            case NONE -> OptimizationConfig.Companion.getNONE();
+            case ALL -> OptimizationConfig.Companion.getALL();
         };
-    }
-
-    private record Snapshot(
-            String portfolio,
-            long timeoutSeconds,
-            int maxConcurrency,
-            String thetaExecutor,
-            String thetaDockerImage,
-            ArtifactsLocation artifactsLocation,
-            String artifactsPreset,
-            String optimizationLevel) {
-        static Snapshot defaults() {
-            return new Snapshot(
-                    DEFAULT_PORTFOLIO_ID,
-                    DEFAULT_TIMEOUT_SECONDS,
-                    0,
-                    DEFAULT_THETA_EXECUTOR,
-                    ThetaXstsExecutorKt.THETA_DEFAULT_IMAGE,
-                    DEFAULT_ARTIFACTS_LOCATION,
-                    DEFAULT_ARTIFACTS_PRESET,
-                    DEFAULT_OPTIMIZATION_LEVEL);
-        }
-
-        static Snapshot fromJson(JsonObject o) {
-            Snapshot d = defaults();
-            return new Snapshot(
-                    stringAt(o, "portfolio", d.portfolio()),
-                    longAt(o, "timeoutSeconds", d.timeoutSeconds()),
-                    intAt(o, "maxConcurrency", d.maxConcurrency()),
-                    stringAt(o, "theta.executor", d.thetaExecutor()),
-                    stringAt(o, "theta.dockerImage", d.thetaDockerImage()),
-                    ArtifactsLocation.fromJson(stringAt(o, "artifacts.location", null)),
-                    stringAt(o, "artifacts.preset", d.artifactsPreset()),
-                    stringAt(o, "optimization.level", d.optimizationLevel()));
-        }
-
-        private static String stringAt(JsonObject o, String path, String fallback) {
-            JsonElement el = lookup(o, path);
-            if (el instanceof JsonPrimitive p && p.isString()) {
-                return p.getAsString();
-            }
-            return fallback;
-        }
-
-        private static long longAt(JsonObject o, String path, long fallback) {
-            JsonElement el = lookup(o, path);
-            if (el instanceof JsonPrimitive p && p.isNumber()) {
-                return p.getAsLong();
-            }
-            return fallback;
-        }
-
-        private static int intAt(JsonObject o, String path, int fallback) {
-            JsonElement el = lookup(o, path);
-            if (el instanceof JsonPrimitive p && p.isNumber()) {
-                return p.getAsInt();
-            }
-            return fallback;
-        }
-
-        private static JsonElement lookup(JsonObject o, String path) {
-            if (o.has(path) && !o.get(path).isJsonNull() && !o.get(path).isJsonArray()) {
-                return o.get(path);
-            }
-            String[] parts = path.split("\\.");
-            JsonElement current = o;
-            for (String part : parts) {
-                if (!(current instanceof JsonObject obj)) return null;
-                if (!obj.has(part)) return null;
-                current = obj.get(part);
-            }
-            return current;
-        }
     }
 }
