@@ -86,7 +86,6 @@ export interface WitnessState {
 export interface VerificationTrace {
     callTrace: CallTrace;
     witnessState: WitnessState;
-    backAnnotatedSource: string | null;
     witnessUri: string | null;
 }
 
