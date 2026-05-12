@@ -70,7 +70,7 @@ public class VerifyGammaCaseCommandHandler
         LOGGER.info("LSP verification request for Gamma case '{}'", gammaCase.getQualifiedName());
 
         var portfolio = serverSettings.resolvePortfolio(arguments.portfolioId());
-        var outputDirectory = serverSettings.resolveArtifactOutputDirectory();
+        var outputDirectory = serverSettings.resolveArtifactOutputDirectory(access);
 
         return performBackgroundWork(() -> {
             try {

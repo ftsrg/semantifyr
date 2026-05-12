@@ -19,9 +19,14 @@ import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig;
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig;
 import hu.bme.mit.semantifyr.portfolios.Portfolios;
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicReference;
+import org.eclipse.lsp4j.InitializeParams;
+import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,9 +38,29 @@ public class ServerSettings {
     public static final String DEFAULT_PORTFOLIO_ID = "theta-full";
     public static final long DEFAULT_TIMEOUT_SECONDS = 300L;
     public static final String DEFAULT_THETA_EXECUTOR = "auto";
-    public static final String DEFAULT_ARTIFACTS_LOCATION = "temporary";
+    public static final ArtifactsLocation DEFAULT_ARTIFACTS_LOCATION = ArtifactsLocation.TEMPORARY;
     public static final String DEFAULT_ARTIFACTS_PRESET = "all";
     public static final String DEFAULT_OPTIMIZATION_LEVEL = "all";
+    private static final String WORKSPACE_ARTIFACTS_SUBDIRECTORY = ".artifacts";
+
+    public enum ArtifactsLocation {
+        TEMPORARY,
+        WORKSPACE;
+
+        static ArtifactsLocation fromJson(String value) {
+            if (value == null) {
+                return DEFAULT_ARTIFACTS_LOCATION;
+            }
+            return switch (value.toLowerCase()) {
+                case "workspace" -> WORKSPACE;
+                case "temporary", "temp" -> TEMPORARY;
+                default -> {
+                    LOGGER.warn("Unknown artifacts.location '{}', falling back to {}", value, DEFAULT_ARTIFACTS_LOCATION);
+                    yield DEFAULT_ARTIFACTS_LOCATION;
+                }
+            };
+        }
+    }
 
     private final AtomicReference<Snapshot> snapshot = new AtomicReference<>(Snapshot.defaults());
 
@@ -76,7 +101,6 @@ public class ServerSettings {
         return Duration.ofSeconds(snapshot.get().timeoutSeconds());
     }
 
-    /** Max concurrent backends, or {@code null} to let the builder choose its default. */
     public Integer resolveMaxConcurrencyOrNull() {
         int value = snapshot.get().maxConcurrency();
         return value > 0 ? value : null;
@@ -110,21 +134,49 @@ public class ServerSettings {
         };
     }
 
-    public Path resolveArtifactOutputDirectory() {
-        Snapshot s = snapshot.get();
-        return switch (s.artifactsLocation()) {
-            case "directory" ->
-                s.artifactsDirectory() != null && !s.artifactsDirectory().isBlank()
-                        ? Path.of(s.artifactsDirectory())
-                        : createTempDir();
-            default -> createTempDir();
+    public Path resolveArtifactOutputDirectory(ILanguageServerAccess access) {
+        return switch (snapshot.get().artifactsLocation()) {
+            case WORKSPACE -> workspaceArtifactDirectory(access);
+            case TEMPORARY -> createTempDir();
         };
+    }
+
+    private Path workspaceArtifactDirectory(ILanguageServerAccess access) {
+        Path workspaceRoot = workspaceRootOrNull(access);
+        if (workspaceRoot == null) {
+            LOGGER.warn("artifacts.location=workspace but no workspace root is available, using a temporary directory");
+            return createTempDir();
+        }
+        Path artifactDirectory = workspaceRoot.resolve(WORKSPACE_ARTIFACTS_SUBDIRECTORY);
+        try {
+            Files.createDirectories(artifactDirectory);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to create workspace artifact directory " + artifactDirectory, e);
+        }
+        return artifactDirectory;
+    }
+
+    private static Path workspaceRootOrNull(ILanguageServerAccess access) {
+        InitializeParams params = access.getInitializeParams();
+        if (params == null) {
+            return null;
+        }
+        String rootUri = params.getRootUri();
+        if (rootUri == null || rootUri.isBlank()) {
+            return null;
+        }
+        try {
+            return Path.of(URI.create(rootUri));
+        } catch (RuntimeException e) {
+            LOGGER.warn("Workspace rootUri '{}' is not a usable file path: {}", rootUri, e.getMessage());
+            return null;
+        }
     }
 
     private static Path createTempDir() {
         try {
-            return java.nio.file.Files.createTempDirectory("semantifyr-");
-        } catch (java.io.IOException e) {
+            return Files.createTempDirectory("semantifyr-");
+        } catch (IOException e) {
             throw new RuntimeException("Failed to create temporary directory for artifacts", e);
         }
     }
@@ -144,8 +196,7 @@ public class ServerSettings {
             int maxConcurrency,
             String thetaExecutor,
             String thetaDockerImage,
-            String artifactsLocation,
-            String artifactsDirectory,
+            ArtifactsLocation artifactsLocation,
             String artifactsPreset,
             String optimizationLevel) {
         static Snapshot defaults() {
@@ -156,7 +207,6 @@ public class ServerSettings {
                     DEFAULT_THETA_EXECUTOR,
                     ThetaXstsExecutorKt.THETA_DEFAULT_IMAGE,
                     DEFAULT_ARTIFACTS_LOCATION,
-                    null,
                     DEFAULT_ARTIFACTS_PRESET,
                     DEFAULT_OPTIMIZATION_LEVEL);
         }
@@ -169,8 +219,7 @@ public class ServerSettings {
                     intAt(o, "maxConcurrency", d.maxConcurrency()),
                     stringAt(o, "theta.executor", d.thetaExecutor()),
                     stringAt(o, "theta.dockerImage", d.thetaDockerImage()),
-                    stringAt(o, "artifacts.location", d.artifactsLocation()),
-                    stringAt(o, "artifacts.directory", d.artifactsDirectory()),
+                    ArtifactsLocation.fromJson(stringAt(o, "artifacts.location", null)),
                     stringAt(o, "artifacts.preset", d.artifactsPreset()),
                     stringAt(o, "optimization.level", d.optimizationLevel()));
         }

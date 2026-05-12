@@ -74,7 +74,7 @@ public class ValidateWitnessClassCommandHandler
 
         var inlinedOxsts = arguments.inlinedOxsts();
         var portfolio = serverSettings.resolvePortfolio(arguments.portfolioId());
-        var outputDirectory = serverSettings.resolveArtifactOutputDirectory();
+        var outputDirectory = serverSettings.resolveArtifactOutputDirectory(access);
 
         return performBackgroundWork(() -> {
             try {

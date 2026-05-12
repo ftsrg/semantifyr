@@ -83,7 +83,7 @@ public class VerifyClassCommandHandler
         var context = semantifyrLoader.fromResourceSet(classDeclaration.eResource().getResourceSet());
 
         var portfolio = serverSettings.resolvePortfolio(arguments.portfolioId());
-        var outputDirectory = serverSettings.resolveArtifactOutputDirectory();
+        var outputDirectory = serverSettings.resolveArtifactOutputDirectory(access);
 
         return performBackgroundWork(() -> {
             try {

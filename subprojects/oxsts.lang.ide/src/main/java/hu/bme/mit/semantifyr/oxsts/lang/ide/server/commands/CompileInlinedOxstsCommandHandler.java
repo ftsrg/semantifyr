@@ -63,7 +63,7 @@ public class CompileInlinedOxstsCommandHandler extends AbstractCommandHandler<Lo
 
         var compiler = new SemantifyrCompiler(
                 injector, serverSettings.resolveArtifactConfig(), serverSettings.resolveOptimizationConfig());
-        var outputDirectory = serverSettings.resolveArtifactOutputDirectory();
+        var outputDirectory = serverSettings.resolveArtifactOutputDirectory(access);
 
         return performBackgroundWork(() -> {
             compiler.compile(arguments, outputDirectory);

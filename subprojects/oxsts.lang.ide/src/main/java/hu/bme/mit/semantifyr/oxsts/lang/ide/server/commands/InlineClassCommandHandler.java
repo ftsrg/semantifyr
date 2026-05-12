@@ -76,7 +76,7 @@ public class InlineClassCommandHandler
 
         var compiler = new SemantifyrCompiler(
                 injector, serverSettings.resolveArtifactConfig(), serverSettings.resolveOptimizationConfig());
-        var outputDirectory = serverSettings.resolveArtifactOutputDirectory();
+        var outputDirectory = serverSettings.resolveArtifactOutputDirectory(access);
 
         return performBackgroundWork(() -> {
             progressContext.checkIsCancelled();
