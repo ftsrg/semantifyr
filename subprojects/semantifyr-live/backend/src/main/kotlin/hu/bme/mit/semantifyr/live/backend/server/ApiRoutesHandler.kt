@@ -9,7 +9,14 @@ package hu.bme.mit.semantifyr.live.backend.server
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.live.backend.BuildInfo
-import hu.bme.mit.semantifyr.live.backend.session.SessionManager
+import hu.bme.mit.semantifyr.live.backend.FlavorRegistry
+import hu.bme.mit.semantifyr.live.backend.PortfolioRegistry
+import hu.bme.mit.semantifyr.live.backend.data.FlavorResponse
+import hu.bme.mit.semantifyr.live.backend.data.FlavorsResponse
+import hu.bme.mit.semantifyr.live.backend.data.HealthResponse
+import hu.bme.mit.semantifyr.live.backend.data.InfoResponse
+import hu.bme.mit.semantifyr.live.backend.data.PortfoliosResponse
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionManager
 import io.ktor.server.application.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.response.*

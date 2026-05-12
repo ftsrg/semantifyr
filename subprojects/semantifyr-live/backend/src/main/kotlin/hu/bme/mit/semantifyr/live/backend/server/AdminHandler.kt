@@ -9,7 +9,9 @@ package hu.bme.mit.semantifyr.live.backend.server
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
-import hu.bme.mit.semantifyr.live.backend.session.SessionManager
+import hu.bme.mit.semantifyr.live.backend.data.AdminConfigResponse
+import hu.bme.mit.semantifyr.live.backend.data.AdminStatusResponse
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionManager
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -105,7 +107,6 @@ class AdminHandler @Inject constructor(
                     call.respond(
                         AdminConfigResponse(
                             maxSessionsGlobal = config.sessionManager.maxSessionsGlobal,
-                            maxSessionsPerIp = config.sessionManager.maxSessionsPerIp,
                             verificationConcurrency = config.verification.concurrency,
                             verificationTimeout = config.verification.timeout,
                         ),
