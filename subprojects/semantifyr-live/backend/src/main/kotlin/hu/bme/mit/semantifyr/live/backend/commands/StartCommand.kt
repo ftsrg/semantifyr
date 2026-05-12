@@ -32,6 +32,7 @@ class StartCommand : CliktCommand("start") {
         logger.info { "Starting Semantifyr Live backend with config: $config" }
 
         BackendConfigValidator.validate(config)
+        sweepOrphanSessionDirectories(config)
 
         val injector = Guice.createInjector(BackendModule(config))
         val server = injector.getInstance(Server::class.java)
@@ -44,5 +45,24 @@ class StartCommand : CliktCommand("start") {
         )
 
         server.start()
+    }
+
+    private fun sweepOrphanSessionDirectories(config: BackendConfig) {
+        val sessionsDir = config.sessionManager.rootWorkPath.resolve("sessions").toFile()
+        if (!sessionsDir.isDirectory) {
+            return
+        }
+        val orphans = sessionsDir.listFiles().orEmpty()
+        if (orphans.isEmpty()) {
+            return
+        }
+        logger.info { "Sweeping ${orphans.size} orphan session directory(s) under $sessionsDir" }
+        for (orphan in orphans) {
+            try {
+                orphan.deleteRecursively()
+            } catch (e: Throwable) {
+                logger.warn(e) { "Failed to delete orphan session directory $orphan" }
+            }
+        }
     }
 }
