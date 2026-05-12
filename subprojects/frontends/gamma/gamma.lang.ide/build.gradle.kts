@@ -10,7 +10,8 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":lang-ide-common"))
+    api(project(":lang-ide-common"))
+    api(project(":gamma.lang"))
     implementation(project(":gamma-frontend"))
 
     ideGeneratedClasspath(project(":gamma.lang", configuration = "ideGeneratedOutput"))

@@ -10,8 +10,8 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":oxsts.lang"))
-    implementation(project(":lang-ide-common"))
+    api(project(":oxsts.lang"))
+    api(project(":lang-ide-common"))
     implementation(project(":portfolios"))
 
     ideGeneratedClasspath(project(":oxsts.lang", configuration = "ideGeneratedOutput"))
