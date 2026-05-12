@@ -10,7 +10,11 @@ import com.google.inject.Guice
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.BackendModule
 import hu.bme.mit.semantifyr.live.backend.ServerConfig
-import hu.bme.mit.semantifyr.live.backend.session.SessionManager
+import hu.bme.mit.semantifyr.live.backend.data.FlavorsResponse
+import hu.bme.mit.semantifyr.live.backend.data.HealthResponse
+import hu.bme.mit.semantifyr.live.backend.data.InfoResponse
+import hu.bme.mit.semantifyr.live.backend.data.PortfoliosResponse
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionManager
 import hu.bme.mit.semantifyr.live.backend.testing.handler
 import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrApp
 import hu.bme.mit.semantifyr.live.backend.testing.jsonClient
@@ -21,7 +25,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.server.application.createApplicationPlugin
-import io.ktor.server.application.install
 import io.ktor.server.testing.testApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

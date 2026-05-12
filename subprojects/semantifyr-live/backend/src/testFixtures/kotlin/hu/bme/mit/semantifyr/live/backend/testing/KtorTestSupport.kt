@@ -10,12 +10,14 @@ import com.google.inject.Binder
 import com.google.inject.Guice
 import com.google.inject.Injector
 import com.google.inject.Module
+import com.google.inject.util.Modules
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.BackendModule
+import hu.bme.mit.semantifyr.live.backend.lsp.service.SharedExecutorProvider
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionManager
 import hu.bme.mit.semantifyr.live.backend.server.AdminHandler
 import hu.bme.mit.semantifyr.live.backend.server.ApiRoutesHandler
 import hu.bme.mit.semantifyr.live.backend.server.WebSocketHandler
-import hu.bme.mit.semantifyr.live.backend.session.SessionManager
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.serialization.kotlinx.json.json
@@ -37,7 +39,7 @@ fun testInjector(
     val overrideModule = Module {
         it.bindings()
     }
-    return Guice.createInjector(BackendModule(config), overrideModule)
+    return Guice.createInjector(Modules.override(BackendModule(config)).with(overrideModule))
 }
 
 inline fun <reified T : Any> Injector.handler(): T {
@@ -100,11 +102,22 @@ suspend fun withRealServer(
                 json()
             }
             install(ClientWebSockets)
+            engine {
+                maxConnectionsCount = 4096
+                endpoint.maxConnectionsPerRoute = 4096
+            }
         }.use {
             block(it, port)
         }
     } finally {
         server.stop(gracePeriodMillis = 500, timeoutMillis = 2_000)
-        injector.getInstance(SessionManager::class.java).close()
+        try {
+            injector.getInstance(SessionManager::class.java).close()
+        } catch (_: Throwable) {
+        }
+        try {
+            injector.getInstance(SharedExecutorProvider::class.java).close()
+        } catch (_: Throwable) {
+        }
     }
 }

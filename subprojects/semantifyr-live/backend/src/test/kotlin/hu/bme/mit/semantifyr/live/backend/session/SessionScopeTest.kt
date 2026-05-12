@@ -9,6 +9,10 @@ package hu.bme.mit.semantifyr.live.backend.session
 import com.google.inject.Key
 import com.google.inject.Provider
 import hu.bme.mit.semantifyr.guice.common.Seed
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScope
+import hu.bme.mit.semantifyr.live.backend.lsp.session.seededKeyProvider
+import hu.bme.mit.semantifyr.live.backend.lsp.session.withSessionScope
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -16,7 +20,7 @@ import org.junit.jupiter.api.Test
 class SessionScopeTest {
 
     @Test
-    fun `seeded value is visible to bindings inside the block`() {
+    suspend fun `seeded value is visible to bindings inside the block`() {
         val key = Key.get(String::class.java)
         val seed = Seed().apply { seed(key, "hello") }
         val unscoped = Provider<String> { error("unscoped provider should not run when value is seeded") }
@@ -33,8 +37,10 @@ class SessionScopeTest {
         val key = Key.get(String::class.java)
 
         assertThatThrownBy {
-            withSessionScope {
-                SessionScope.scope(key, seededKeyProvider<String>()).get()
+            runBlocking {
+                withSessionScope {
+                    SessionScope.scope(key, seededKeyProvider<String>()).get()
+                }
             }
         }.isInstanceOf(IllegalStateException::class.java)
     }

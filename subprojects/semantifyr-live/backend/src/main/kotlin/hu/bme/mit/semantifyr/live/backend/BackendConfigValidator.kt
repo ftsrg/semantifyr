@@ -6,12 +6,8 @@
 
 package hu.bme.mit.semantifyr.live.backend
 
-import hu.bme.mit.semantifyr.live.backend.server.Flavor
-import hu.bme.mit.semantifyr.live.backend.server.FlavorRegistry
-import hu.bme.mit.semantifyr.live.backend.server.WorkspaceLayout
+import hu.bme.mit.semantifyr.live.backend.exceptions.InvalidConfigurationException
 import java.nio.file.Files
-
-class InvalidConfigurationException(message: String) : RuntimeException(message)
 
 object BackendConfigValidator {
 
@@ -22,15 +18,26 @@ object BackendConfigValidator {
         val problems = mutableListOf<String>()
 
         validateRootWorkDirectory(config, problems)
-        validateLspBinaries(config, flavors, problems)
         validateSemanticLibraries(config, flavors, problems)
         validateTimeouts(config, problems)
         validateLimits(config, problems)
+        if (!config.development) {
+            validateProductionPosture(config, problems)
+        }
 
         if (problems.isNotEmpty()) {
             throw InvalidConfigurationException(
                 "Backend configuration is invalid:\n  - ${problems.joinToString("\n  - ")}",
             )
+        }
+    }
+
+    private fun validateProductionPosture(config: BackendConfig, problems: MutableList<String>) {
+        if (config.server.adminPassword.isNullOrBlank()) {
+            problems += "server.adminPassword must be set in production (env: SEMANTIFYR_LIVE_ADMIN_PASSWORD), or run with development=true"
+        }
+        if (!config.server.httpsOnlyCookies) {
+            problems += "server.httpsOnlyCookies must be true in production, or run with development=true"
         }
     }
 
@@ -44,28 +51,6 @@ object BackendConfigValidator {
         }
         if (!Files.isWritable(rootWork)) {
             problems += "rootWorkDirectory '$rootWork' is not writable"
-        }
-    }
-
-    private fun validateLspBinaries(
-        config: BackendConfig,
-        flavors: List<Flavor>,
-        problems: MutableList<String>,
-    ) {
-        val binariesPath = config.sessionManager.lspBinariesPath
-        if (binariesPath == null) {
-            problems += "lspBinariesDirectory is not set (env: SEMANTIFYR_LIVE_LSP_BINARIES_DIR)"
-            return
-        }
-        if (!Files.isDirectory(binariesPath)) {
-            problems += "lspBinariesDirectory '$binariesPath' does not exist or is not a directory"
-            return
-        }
-        for (flavor in flavors) {
-            val binary = binariesPath.resolve(flavor.binaryRelativePath)
-            if (!Files.isExecutable(binary)) {
-                problems += "Flavor '${flavor.id}' binary '$binary' is missing or not executable"
-            }
         }
     }
 
@@ -98,7 +83,7 @@ object BackendConfigValidator {
 
     private fun validateTimeouts(config: BackendConfig, problems: MutableList<String>) {
         if (config.server.sessionIdleTimeout <= config.verification.timeout) {
-            problems += "server.sessionIdleTimeout (${config.server.sessionIdleTimeout}) must be greater than verification.timeout (${config.verification.timeout}) so long verifications aren't evicted"
+            problems += "server.sessionIdleTimeout (${config.server.sessionIdleTimeout}) must be greater than verification.timeout (${config.verification.timeout}) so long verifications are not evicted"
         }
     }
 
@@ -108,9 +93,6 @@ object BackendConfigValidator {
         }
         if (config.sessionManager.maxSessionsGlobal < 1) {
             problems += "sessionManager.maxSessionsGlobal must be >= 1 (got ${config.sessionManager.maxSessionsGlobal})"
-        }
-        if (config.sessionManager.maxSessionsPerIp < 1) {
-            problems += "sessionManager.maxSessionsPerIp must be >= 1 (got ${config.sessionManager.maxSessionsPerIp})"
         }
         if (config.server.wsHandshakesPerPeriod < 1) {
             problems += "server.wsHandshakesPerPeriod must be >= 1 (got ${config.server.wsHandshakesPerPeriod})"

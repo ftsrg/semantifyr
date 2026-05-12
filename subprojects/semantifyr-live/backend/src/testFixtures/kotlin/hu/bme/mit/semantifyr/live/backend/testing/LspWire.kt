@@ -149,12 +149,60 @@ object LspWire {
         )
     }
 
-    fun verifyCaseArgument(uri: String, range: JsonElement): JsonObject {
+    fun verifyCommandArgument(
+        uri: String,
+        range: JsonElement,
+        portfolio: String,
+        caseLabel: String,
+        requestId: String? = null,
+    ): JsonObject {
         return buildJsonObject {
             put("uri", JsonPrimitive(uri))
             put("range", range)
+            put("portfolio", JsonPrimitive(portfolio))
+            put("caseLabel", JsonPrimitive(caseLabel))
+            if (requestId != null) {
+                put("requestId", JsonPrimitive(requestId))
+            }
         }
     }
+
+    fun semanticTokensFullRequest(id: Int, uri: String): String {
+        return request(
+            id = id,
+            method = "textDocument/semanticTokens/full",
+            params = buildJsonObject {
+                put(
+                    "textDocument",
+                    buildJsonObject {
+                        put("uri", JsonPrimitive(uri))
+                    },
+                )
+            },
+        )
+    }
+}
+
+private fun JsonObject.lspMethod(): String? {
+    return this["method"]?.jsonPrimitive?.contentOrNull
+}
+
+private fun JsonObject.publishDiagnosticsUri(): String? {
+    if (lspMethod() != "textDocument/publishDiagnostics") {
+        return null
+    }
+    return this["params"]?.jsonObject?.get("uri")?.jsonPrimitive?.contentOrNull
+}
+
+suspend fun DefaultClientWebSocketSession.ackIfRequest(message: JsonObject) {
+    val method = message.lspMethod() ?: return
+    val id = message["id"] ?: return
+    val ack = buildJsonObject {
+        put("jsonrpc", JsonPrimitive("2.0"))
+        put("id", id)
+        put("result", JsonNull)
+    }
+    send(Frame.Text(ack.toString()))
 }
 
 suspend fun DefaultClientWebSocketSession.awaitResponseFor(
@@ -168,18 +216,49 @@ suspend fun DefaultClientWebSocketSession.awaitResponseFor(
             if (obj["id"]?.jsonPrimitive?.int == id) {
                 return@withTimeout obj
             }
-            val incomingMethod = obj["method"]?.jsonPrimitive?.contentOrNull
-            val incomingId = obj["id"]
-            if (incomingMethod != null && incomingId != null) {
-                val ack = buildJsonObject {
-                    put("jsonrpc", JsonPrimitive("2.0"))
-                    put("id", incomingId)
-                    put("result", JsonNull)
-                }
-                send(Frame.Text(ack.toString()))
-            }
+            ackIfRequest(obj)
         }
         @Suppress("UNREACHABLE_CODE")
         error("unreachable")
     }
+}
+
+suspend fun DefaultClientWebSocketSession.awaitPublishDiagnostics(
+    uri: String,
+    timeout: Duration = 30.seconds,
+) {
+    withTimeout(timeout) {
+        while (true) {
+            val frame = incoming.receive() as? Frame.Text ?: continue
+            val obj = parseToJsonElement(frame.readText()).jsonObject
+            if (obj.publishDiagnosticsUri() == uri) {
+                return@withTimeout
+            }
+            ackIfRequest(obj)
+        }
+    }
+}
+
+suspend fun DefaultClientWebSocketSession.awaitResponseCollectingNotifications(
+    id: Int,
+    method: String,
+    timeout: Duration = 30.seconds,
+): Pair<JsonObject, List<JsonObject>> {
+    val collected = mutableListOf<JsonObject>()
+    val response = withTimeout(timeout) {
+        while (true) {
+            val frame = incoming.receive() as? Frame.Text ?: continue
+            val obj = parseToJsonElement(frame.readText()).jsonObject
+            if (obj["id"]?.jsonPrimitive?.int == id && obj.lspMethod() == null) {
+                return@withTimeout obj
+            }
+            if (obj.lspMethod() == method) {
+                collected += obj
+            }
+            ackIfRequest(obj)
+        }
+        @Suppress("UNREACHABLE_CODE")
+        error("unreachable")
+    }
+    return response to collected
 }

@@ -32,7 +32,7 @@ class StartCommand : CliktCommand("start") {
 
         logger.info { "Starting Semantifyr Live backend with config: $config" }
         if (config.development) {
-            logger.warn { "Running in DEVELOPMENT mode: production posture checks are skipped" }
+            logger.warn { "Running in DEVELOPMENT mode: production config checks are skipped" }
         }
 
         BackendConfigValidator.validate(config)

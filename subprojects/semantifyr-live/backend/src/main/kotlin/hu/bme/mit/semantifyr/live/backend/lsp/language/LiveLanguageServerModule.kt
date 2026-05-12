@@ -1,0 +1,50 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package hu.bme.mit.semantifyr.live.backend.lsp.language
+
+import com.google.inject.AbstractModule
+import com.google.inject.Provider
+import com.google.inject.Provides
+import com.google.inject.Singleton
+import hu.bme.mit.semantifyr.lang.ide.server.ServerSettings
+import hu.bme.mit.semantifyr.lang.ide.server.concurrent.LockingRequestManager
+import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager
+import hu.bme.mit.semantifyr.lang.ide.server.wire.ArtifactsLocation
+import hu.bme.mit.semantifyr.lang.ide.server.wire.ServerSettingsPayload
+import hu.bme.mit.semantifyr.live.backend.lsp.session.LspSession
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScope
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScoped
+import hu.bme.mit.semantifyr.live.backend.lsp.session.seededKeyProvider
+
+class LiveLanguageServerModule : AbstractModule() {
+
+    override fun configure() {
+        bindScope(SessionScoped::class.java, SessionScope)
+
+        bind(LspSession::class.java)
+            .toProvider(seededKeyProvider())
+            .`in`(SessionScoped::class.java)
+    }
+
+    @Provides
+    fun provideRequestManager(sessionProvider: Provider<LspSession>): LockingRequestManager {
+        return sessionProvider.get().requestManager
+    }
+
+    @Provides
+    fun provideWorkManager(sessionProvider: Provider<LspSession>): WorkManager {
+        return sessionProvider.get().workManager
+    }
+
+    @Provides
+    @Singleton
+    fun provideServerSettings(): ServerSettings {
+        return ServerSettings().apply {
+            apply(ServerSettingsPayload.withArtifactsLocation(ArtifactsLocation.WORKSPACE))
+        }
+    }
+}

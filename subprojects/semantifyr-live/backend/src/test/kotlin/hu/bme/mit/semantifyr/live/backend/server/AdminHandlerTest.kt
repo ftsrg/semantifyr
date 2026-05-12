@@ -8,7 +8,12 @@ package hu.bme.mit.semantifyr.live.backend.server
 
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.ServerConfig
-import hu.bme.mit.semantifyr.live.backend.session.SessionManager
+import hu.bme.mit.semantifyr.live.backend.data.ActiveVerificationInfo
+import hu.bme.mit.semantifyr.live.backend.data.AdminConfigResponse
+import hu.bme.mit.semantifyr.live.backend.data.AdminStatusResponse
+import hu.bme.mit.semantifyr.live.backend.data.SessionInfo
+import hu.bme.mit.semantifyr.live.backend.data.SessionLspInfo
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionManager
 import hu.bme.mit.semantifyr.live.backend.testing.handler
 import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrApp
 import hu.bme.mit.semantifyr.live.backend.testing.jsonClient
@@ -30,7 +35,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
-import org.mockito.kotlin.wheneverBlocking
 import java.util.Base64
 import kotlin.time.Duration.Companion.seconds
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
@@ -53,12 +57,8 @@ class AdminHandlerTest {
         `when`(sessionManager.getSessionInfos()).thenReturn(sessionInfos)
         `when`(sessionManager.cancelSession("test-session")).thenReturn(true)
         `when`(sessionManager.cancelSession("nonexistent")).thenReturn(false)
-        wheneverBlocking {
-            sessionManager.cancelVerification("test-session", "req-1")
-        }.thenReturn(true)
-        wheneverBlocking {
-            sessionManager.cancelVerification("test-session", "nonexistent")
-        }.thenReturn(false)
+        `when`(sessionManager.cancelVerification("test-session", "req-1")).thenReturn(true)
+        `when`(sessionManager.cancelVerification("test-session", "nonexistent")).thenReturn(false)
 
         return testInjector(config) {
             bind(SessionManager::class.java).toInstance(sessionManager)
@@ -102,11 +102,7 @@ class AdminHandlerTest {
             uptime = 30.seconds,
             workingDirectory = "/tmp/test",
             activeVerifications = listOf(ActiveVerificationInfo(requestId = "req-1", portfolioId = "smart-full")),
-            started = true,
-            bridgeInfo = LspProxyInfo(
-                clientMessageCount = 10,
-                serverMessageCount = 15,
-                errorCount = 0,
+            sessionLspInfo = SessionLspInfo(
                 timeSinceLastClientMessage = 2.seconds,
                 timeSinceLastServerMessage = 1.seconds,
             ),
@@ -129,9 +125,8 @@ class AdminHandlerTest {
         assertThat(status.sessions[0].sessionId).isEqualTo("test-session")
         assertThat(status.sessions[0].remoteIp).isEqualTo("127.0.0.1")
         assertThat(status.sessions[0].flavorId).isEqualTo("oxsts")
-        assertThat(status.sessions[0].started).isTrue()
-        assertThat(status.sessions[0].bridgeInfo.clientMessageCount).isEqualTo(10)
-        assertThat(status.sessions[0].bridgeInfo.serverMessageCount).isEqualTo(15)
+        assertThat(status.sessions[0].sessionLspInfo.timeSinceLastClientMessage).isEqualTo(2.seconds)
+        assertThat(status.sessions[0].sessionLspInfo.timeSinceLastServerMessage).isEqualTo(1.seconds)
         assertThat(status.sessions[0].activeVerifications).hasSize(1)
         assertThat(status.sessions[0].activeVerifications[0].requestId).isEqualTo("req-1")
         assertThat(status.sessions[0].activeVerifications[0].portfolioId).isEqualTo("smart-full")
@@ -153,8 +148,7 @@ class AdminHandlerTest {
         assertThat(response.status).isEqualTo(HttpStatusCode.OK)
 
         val config = response.body<AdminConfigResponse>()
-        assertThat(config.maxSessionsGlobal).isEqualTo(32)
-        assertThat(config.maxSessionsPerIp).isEqualTo(4)
+        assertThat(config.maxSessionsGlobal).isEqualTo(256)
         assertThat(config.verificationConcurrency).isEqualTo(4)
     }
 

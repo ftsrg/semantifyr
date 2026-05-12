@@ -1,0 +1,124 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package hu.bme.mit.semantifyr.live.backend.lsp.service
+
+import hu.bme.mit.semantifyr.lang.ide.server.concurrent.LockingRequestManager
+import hu.bme.mit.semantifyr.live.backend.utils.coroutineScopeCancelIndicator
+import hu.bme.mit.semantifyr.live.backend.utils.currentMdcContextBlocking
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.future.future
+import kotlinx.coroutines.runInterruptible
+import org.eclipse.xtext.service.OperationCanceledManager
+import org.eclipse.xtext.util.CancelIndicator
+import org.eclipse.xtext.xbase.lib.Functions
+import java.util.concurrent.AbstractExecutorService
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
+import kotlin.coroutines.CoroutineContext
+
+class SessionRequestManager(
+    private val coroutineScope: CoroutineScope,
+    private val sessionCoroutineContext: CoroutineContext,
+    operationCanceledManager: OperationCanceledManager,
+) : LockingRequestManager(NoopExecutor, operationCanceledManager) {
+
+    @Volatile
+    private var pendingWrite: Job? = null
+
+    @Synchronized
+    override fun <V> runRead(cancellable: Functions.Function1<in CancelIndicator, out V>): CompletableFuture<V> {
+        val previousWrite = pendingWrite
+        val callerMdc = currentMdcContextBlocking()
+        return coroutineScope.future(callerMdc) {
+            joinIgnoringCancellation(previousWrite)
+            runInterruptible(sessionCoroutineContext) {
+                lockProvider.acquireReadLock()
+                try {
+                    cancellable.apply(coroutineScopeCancelIndicator())
+                } finally {
+                    lockProvider.releaseReadLock()
+                }
+            }
+        }
+    }
+
+    @Synchronized
+    override fun <U, V> runWrite(
+        nonCancellable: Functions.Function0<out U>,
+        cancellable: Functions.Function2<in CancelIndicator, in U, out V>,
+    ): CompletableFuture<V> {
+        val previousWrite = pendingWrite
+        previousWrite?.cancel()
+        val callerMdc = currentMdcContextBlocking()
+        val deferred = coroutineScope.async(callerMdc) {
+            joinIgnoringCancellation(previousWrite)
+            runInterruptible(sessionCoroutineContext) {
+                lockProvider.acquireWriteLock()
+                try {
+                    val intermediate = nonCancellable.apply()
+                    cancellable.apply(coroutineScopeCancelIndicator(), intermediate)
+                } finally {
+                    lockProvider.releaseWriteLock()
+                }
+            }
+        }
+        pendingWrite = deferred
+        deferred.invokeOnCompletion {
+            synchronized(this) {
+                if (pendingWrite === deferred) {
+                    pendingWrite = null
+                }
+            }
+        }
+        return deferred.asCompletableFuture()
+    }
+
+    private suspend fun joinIgnoringCancellation(job: Job?) {
+        if (job == null) {
+            return
+        }
+        try {
+            job.join()
+        } catch (_: CancellationException) {
+        }
+    }
+}
+
+inline fun <V> SessionRequestManager.runWrite(
+    crossinline cancellable: (CancelIndicator) -> V,
+): CompletableFuture<V> {
+    return runWrite({}, { cancelIndicator, _ ->
+        cancellable(cancelIndicator)
+    })
+}
+
+private object NoopExecutor : AbstractExecutorService() {
+    override fun shutdown() {
+    }
+    override fun shutdownNow(): MutableList<Runnable> {
+        return mutableListOf()
+    }
+
+    override fun isShutdown(): Boolean {
+        return false
+    }
+
+    override fun isTerminated(): Boolean {
+        return false
+    }
+
+    override fun awaitTermination(timeout: Long, unit: TimeUnit): Boolean {
+        return true
+    }
+
+    override fun execute(command: Runnable) {
+    }
+}

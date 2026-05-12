@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.live.backend.utils
 
 import kotlinx.coroutines.ThreadContextElement
+import kotlinx.coroutines.currentCoroutineContext
 import org.slf4j.MDC
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
@@ -19,6 +20,14 @@ class MdcContext(
     companion object Key : CoroutineContext.Key<MdcContext>
 
     constructor(vararg pairs: Pair<String, String>) : this(pairs.toMap())
+
+    operator fun plus(pair: Pair<String, String>): MdcContext {
+        return MdcContext(contextMap + pair)
+    }
+
+    operator fun plus(pairs: Map<String, String>): MdcContext {
+        return MdcContext(contextMap + pairs)
+    }
 
     override fun updateThreadContext(context: CoroutineContext): Map<String, String>? {
         val oldState = MDC.getCopyOfContextMap()
@@ -37,7 +46,11 @@ class MdcContext(
     }
 }
 
-fun currentMdcContext(): MdcContext {
+fun currentMdcContextBlocking(): MdcContext {
     val snapshot = MDC.getCopyOfContextMap() ?: emptyMap()
     return MdcContext(snapshot)
+}
+
+suspend fun currentMdcContext(): MdcContext {
+    return currentCoroutineContext()[MdcContext.Key] ?: MdcContext()
 }
