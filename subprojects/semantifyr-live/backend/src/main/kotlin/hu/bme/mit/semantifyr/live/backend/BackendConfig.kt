@@ -52,7 +52,7 @@ data class ServerConfig(
     val webRootDirectory: String? = null,
     val adminPassword: String? = null,
     val sessionIdleTimeout: Duration = 10.minutes,
-    val wsHandshakesPerPeriod: Int = 10,
+    val wsHandshakesPerPeriod: Int = 120,
     val wsHandshakeRatePeriod: Duration = 1.minutes,
     val maxWsFrameSize: Long = 4 * 1024 * 1024,
     val httpsOnlyCookies: Boolean = true,
@@ -80,31 +80,15 @@ data class ServerConfig(
 
 @Serializable
 data class SessionManagerConfig(
-    val maxSessionsGlobal: Int = 32,
-    val maxSessionsPerIp: Int = 4,
-    val maxConcurrentLspStarts: Int = 4,
-    val lspStartCooldownMillis: Long = 0,
-    val lspBinariesDirectory: String? = null,
+    val maxSessionsGlobal: Int = 256,
     val semanticLibrariesDirectory: String? = null,
     val rootWorkDirectory: String = "/var/lib/semantifyr-live",
-    val lspJvmOpts: String = "-Xmx256m -XX:+UseSerialGC -XX:ReservedCodeCacheSize=64m -XX:MaxMetaspaceSize=128m -Xss512k",
 ) {
     fun withEnv(env: Map<String, String?>) = copy(
         maxSessionsGlobal = env["SEMANTIFYR_LIVE_MAX_SESSIONS_GLOBAL"]?.toIntOrNull() ?: maxSessionsGlobal,
-        maxSessionsPerIp = env["SEMANTIFYR_LIVE_MAX_SESSIONS_PER_IP"]?.toIntOrNull() ?: maxSessionsPerIp,
-        maxConcurrentLspStarts = env["SEMANTIFYR_LIVE_MAX_CONCURRENT_LSP_STARTS"]?.toIntOrNull() ?: maxConcurrentLspStarts,
-        lspStartCooldownMillis = env["SEMANTIFYR_LIVE_LSP_START_COOLDOWN_MILLIS"]?.toLongOrNull() ?: lspStartCooldownMillis,
-        lspBinariesDirectory = env["SEMANTIFYR_LIVE_LSP_BINARIES_DIR"] ?: lspBinariesDirectory,
         semanticLibrariesDirectory = env["SEMANTIFYR_LIVE_SEMANTIC_LIBRARIES_DIR"] ?: semanticLibrariesDirectory,
         rootWorkDirectory = env["SEMANTIFYR_LIVE_ROOT_WORK_DIR"] ?: rootWorkDirectory,
-        lspJvmOpts = env["SEMANTIFYR_LIVE_LSP_JVM_OPTS"] ?: lspJvmOpts,
     )
-
-    val lspBinariesPath by lazy {
-        lspBinariesDirectory?.let {
-            Path.of(it)
-        }
-    }
 
     val semanticLibrariesPath by lazy {
         semanticLibrariesDirectory?.let {

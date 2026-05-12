@@ -17,11 +17,6 @@ plugins {
     kotlin("plugin.serialization")
 }
 
-val lspDistributions by configurations.creating {
-    isCanBeConsumed = false
-    isCanBeResolved = true
-}
-
 val frontendDistribution by configurations.creating {
     isCanBeConsumed = false
     isCanBeResolved = true
@@ -49,8 +44,8 @@ dependencies {
 
     implementation(project(":utils"))
     implementation(project(":logging"))
-    implementation(project(":portfolios"))
-    implementation(project(":guice-common"))
+    implementation(project(":oxsts.lang.ide"))
+    implementation(project(":gamma.lang.ide"))
 
     testFixturesApi(libs.lsp4j)
     testFixturesApi(libs.lsp4j.jsonrpc)
@@ -59,9 +54,6 @@ dependencies {
     testFixturesApi(libs.bundles.ktor.server)
     testFixturesApi(libs.bundles.ktor.client.test)
     testFixturesImplementation(libs.guice)
-
-    lspDistributions(project(":oxsts.lang.ide", configuration = "distributionOutput"))
-    lspDistributions(project(":gamma.lang.ide", configuration = "distributionOutput"))
 
     frontendDistribution(project(":semantifyr-live-frontend", configuration = "distributionOutput"))
 
@@ -97,11 +89,6 @@ val generateBuildInfo by tasks.registering {
 
 sourceSets.main {
     resources.srcDir(generateBuildInfo.map { it.outputs.files.singleFile })
-}
-
-val cloneLspDistributions by tasks.registering(Sync::class) {
-    from(lspDistributions)
-    into(layout.buildDirectory.dir("staging/lsp"))
 }
 
 val cloneSemanticLibraries by tasks.registering(Sync::class) {
@@ -144,7 +131,6 @@ val cloneTheta = tasks.named<Sync>("cloneTheta")
 tasks.named<JavaExec>("run") {
     group = "application"
 
-    inputs.files(cloneLspDistributions)
     inputs.files(cloneSemanticLibraries)
     inputs.files(cloneWebDistributions)
     inputs.files(cloneTheta)
@@ -156,7 +142,6 @@ tasks.named<JavaExec>("run") {
 
     args = listOf("start")
 
-    environment("SEMANTIFYR_LIVE_LSP_BINARIES_DIR", stagingDir.resolve("lsp").absolutePath)
     environment("SEMANTIFYR_LIVE_SEMANTIC_LIBRARIES_DIR", stagingDir.resolve("semantic-libraries").absolutePath)
     environment("SEMANTIFYR_LIVE_WEB_ROOT_DIR", stagingDir.resolve("web").absolutePath)
     environment("SEMANTIFYR_LIVE_PORT", "18080")
@@ -174,7 +159,6 @@ val runDev by tasks.registering(JavaExec::class) {
     classpath = sourceSets["main"].runtimeClasspath
     mainClass = application.mainClass
 
-    inputs.files(cloneLspDistributions)
     inputs.files(cloneSemanticLibraries)
     inputs.files(cloneTheta)
 
@@ -185,7 +169,7 @@ val runDev by tasks.registering(JavaExec::class) {
 
     args = listOf("start")
 
-    environment("SEMANTIFYR_LIVE_LSP_BINARIES_DIR", stagingDir.resolve("lsp").absolutePath)
+    environment("SEMANTIFYR_LIVE_SEMANTIC_LIBRARIES_DIR", stagingDir.resolve("semantic-libraries").absolutePath)
     environment("SEMANTIFYR_LIVE_PORT", "18080")
     environment("SEMANTIFYR_LIVE_ROOT_WORK_DIR", workDir.absolutePath)
     environment("SEMANTIFYR_LIVE_ADMIN_PASSWORD", "testing")
@@ -200,7 +184,6 @@ testing {
         val verificationTest by getting(JvmTestSuite::class) {
             targets.all {
                 testTask.configure {
-                    inputs.files(cloneLspDistributions)
                     inputs.files(cloneSemanticLibraries)
                     inputs.files(cloneWebDistributions)
                     inputs.files(cloneGammaTestModels)
@@ -210,7 +193,6 @@ testing {
 
                     val stagingDir = layout.buildDirectory.dir("staging").get().asFile
 
-                    systemProperty("semantifyr.live.lsp", stagingDir.resolve("lsp").absolutePath)
                     systemProperty("semantifyr.live.semanticLibraries", stagingDir.resolve("semantic-libraries").absolutePath)
                     systemProperty("semantifyr.live.gammaTestModels", stagingDir.resolve("gamma-test-models").absolutePath)
                     systemProperty("semantifyr.live.oxstsTestModels", stagingDir.resolve("oxsts-test-models").absolutePath)
@@ -253,7 +235,6 @@ testing {
 }
 
 val prepareDocker by tasks.registering {
-    inputs.files(cloneLspDistributions)
     inputs.files(cloneSemanticLibraries)
     inputs.files(cloneWebDistributions)
     inputs.files(cloneTheta)
