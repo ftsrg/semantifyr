@@ -6,7 +6,7 @@
 
 package hu.bme.mit.semantifyr.lang.ide.server;
 
-import hu.bme.mit.semantifyr.lang.ide.server.concurrent.SemantifyrRequestManager;
+import hu.bme.mit.semantifyr.lang.ide.server.concurrent.LockingRequestManager;
 import java.util.concurrent.ExecutorService;
 import org.eclipse.lsp4j.services.LanguageServer;
 import org.eclipse.xtext.ide.ExecutorServiceProvider;
@@ -35,13 +35,11 @@ public abstract class AbstractSemantifyrServerModule extends ServerModule {
         bind(IMultiRootWorkspaceConfigFactory.class).to(MultiRootWorkspaceConfigFactory.class);
         bind(IProjectDescriptionFactory.class).to(DefaultProjectDescriptionFactory.class);
         bind(IContainer.Manager.class).to(ProjectDescriptionBasedContainerManager.class);
-        bind(IRequestManager.class).to(SemantifyrRequestManager.class);
-        bind(WorkspaceManager.class).to(SemantifyrWorkspaceManager.class);
-
-        configureLanguageSpecific();
+        bind(IRequestManager.class).to(LockingRequestManager.class);
+        bind(WorkspaceManager.class).to(DirectoryDeleteAwareWorkspaceManager.class);
     }
 
     protected Class<? extends LanguageServerImpl> resolveLanguageServerClass() {
-        return SemantifyrLanguageServer.class;
+        return ExtendedLanguageServer.class;
     }
 }

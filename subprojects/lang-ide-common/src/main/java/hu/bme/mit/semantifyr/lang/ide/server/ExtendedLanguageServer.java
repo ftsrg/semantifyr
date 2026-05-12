@@ -18,9 +18,9 @@ import org.eclipse.xtext.ide.server.LanguageServerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SemantifyrLanguageServer extends LanguageServerImpl {
+public class ExtendedLanguageServer extends LanguageServerImpl {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SemantifyrLanguageServer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExtendedLanguageServer.class);
 
     @Inject
     protected WorkManager workManager;

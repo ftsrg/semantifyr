@@ -19,16 +19,14 @@ import org.eclipse.xtext.util.CancelIndicator;
 import org.eclipse.xtext.xbase.lib.Functions;
 
 @Singleton
-public class SemantifyrRequestManager extends AbstractRequestManager {
+public class LockingRequestManager extends AbstractRequestManager {
 
     protected final LockProvider lockProvider = new LockProvider();
     protected final ExecutorService executorService;
     protected WriteJob<?, ?> lastWriteJob;
 
     @Inject
-    public SemantifyrRequestManager(
-            ExecutorService executorService,
-            OperationCanceledManager operationCanceledManager) {
+    public LockingRequestManager(ExecutorService executorService, OperationCanceledManager operationCanceledManager) {
         super(operationCanceledManager);
         this.executorService = executorService;
     }

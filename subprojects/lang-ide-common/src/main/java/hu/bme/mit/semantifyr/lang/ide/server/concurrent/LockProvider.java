@@ -31,5 +31,4 @@ public class LockProvider {
     public void releaseReadLock() {
         readLock.unlock();
     }
-
 }

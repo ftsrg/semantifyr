@@ -15,9 +15,7 @@ public class ReadJob<V> extends AbstractJob<V> {
     private final LockProvider lockProvider;
     private final Functions.Function1<? super CancelIndicator, ? extends V> cancellable;
 
-    public ReadJob(
-            LockProvider lockProvider,
-            Functions.Function1<? super CancelIndicator, ? extends V> cancellable) {
+    public ReadJob(LockProvider lockProvider, Functions.Function1<? super CancelIndicator, ? extends V> cancellable) {
         super();
         this.lockProvider = lockProvider;
         this.cancellable = cancellable;

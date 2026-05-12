@@ -13,7 +13,9 @@ import hu.bme.mit.semantifyr.lang.ide.server.commands.SemantifyrCommandService;
 public class GammaServerModule extends AbstractSemantifyrServerModule {
 
     @Override
-    protected void configureLanguageSpecific() {
+    protected void configure() {
+        super.configure();
+
         bind(SemantifyrCommandService.class).to(GammaCommandService.class);
     }
 }

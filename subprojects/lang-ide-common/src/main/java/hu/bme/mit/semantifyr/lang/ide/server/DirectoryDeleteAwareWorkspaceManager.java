@@ -13,7 +13,7 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.xtext.ide.server.BuildManager;
 import org.eclipse.xtext.ide.server.WorkspaceManager;
 
-public class SemantifyrWorkspaceManager extends WorkspaceManager {
+public class DirectoryDeleteAwareWorkspaceManager extends WorkspaceManager {
 
     @Override
     public BuildManager.Buildable didChangeFiles(List<URI> dirtyFiles, List<URI> deletedFiles) {

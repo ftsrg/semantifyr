@@ -9,7 +9,7 @@ package hu.bme.mit.semantifyr.lang.ide.server.commands;
 import com.google.gson.JsonElement;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import hu.bme.mit.semantifyr.lang.ide.server.concurrent.SemantifyrRequestManager;
+import hu.bme.mit.semantifyr.lang.ide.server.concurrent.LockingRequestManager;
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager;
 import java.util.List;
 import java.util.function.Supplier;
@@ -31,7 +31,7 @@ public abstract class AbstractCommandHandler<TRequest, TArgument> implements Com
     private Provider<WorkManager> workManagerProvider;
 
     @Inject
-    private Provider<SemantifyrRequestManager> requestManagerProvider;
+    private Provider<LockingRequestManager> requestManagerProvider;
 
     @Inject
     private IResourceServiceProvider.Registry resourceServiceProviderRegistry;
