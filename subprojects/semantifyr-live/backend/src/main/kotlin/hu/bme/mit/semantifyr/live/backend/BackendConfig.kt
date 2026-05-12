@@ -16,11 +16,13 @@ import kotlin.time.Duration.Companion.seconds
 
 @Serializable
 data class BackendConfig(
+    val development: Boolean = false,
     val server: ServerConfig = ServerConfig(),
     val sessionManager: SessionManagerConfig = SessionManagerConfig(),
     val verification: VerificationConfig = VerificationConfig(),
 ) {
     fun withEnv(env: Map<String, String?> = System.getenv()): BackendConfig = copy(
+        development = env["SEMANTIFYR_LIVE_DEVELOPMENT"]?.toBooleanStrictOrNull() ?: development,
         server = server.withEnv(env),
         sessionManager = sessionManager.withEnv(env),
         verification = verification.withEnv(env),

@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.live.backend.BackendModule
 import hu.bme.mit.semantifyr.live.backend.server.Server
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.logging.warn
 import java.nio.file.Path
 
 class StartCommand : CliktCommand("start") {
@@ -30,6 +31,9 @@ class StartCommand : CliktCommand("start") {
         } ?: BackendConfig.fromEnvironment()
 
         logger.info { "Starting Semantifyr Live backend with config: $config" }
+        if (config.development) {
+            logger.warn { "Running in DEVELOPMENT mode: production posture checks are skipped" }
+        }
 
         BackendConfigValidator.validate(config)
         sweepOrphanSessionDirectories(config)
