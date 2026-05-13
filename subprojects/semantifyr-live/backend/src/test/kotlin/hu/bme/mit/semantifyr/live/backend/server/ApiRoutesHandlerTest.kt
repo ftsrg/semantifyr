@@ -32,8 +32,8 @@ class ApiRoutesHandlerTest {
         val sessionManager = mock<SessionManager>()
         whenever(sessionManager.activeSessions).thenReturn(activeSessions)
         whenever(sessionManager.maxSessions).thenReturn(maxSessions)
-        val serverStatus = ServerStatus().also { 
-            it.markStartNow() 
+        val serverStatus = ServerStatus().also {
+            it.markStartNow()
         }
 
         return testInjector {
