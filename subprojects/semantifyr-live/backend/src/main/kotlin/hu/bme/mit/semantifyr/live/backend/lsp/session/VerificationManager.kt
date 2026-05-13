@@ -60,7 +60,7 @@ class VerificationManager @Inject constructor(
         val portfolioId: String,
         val startedAt: TimeSource.Monotonic.ValueTimeMark,
         val job: Job,
-        @Volatile 
+        @Volatile
         var state: VerificationState = VerificationState.Queued,
     )
 

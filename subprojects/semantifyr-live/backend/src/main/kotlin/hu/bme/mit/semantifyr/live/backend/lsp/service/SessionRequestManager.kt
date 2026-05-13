@@ -6,29 +6,31 @@
 
 package hu.bme.mit.semantifyr.live.backend.lsp.service
 
+import com.google.inject.Inject
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.LockingRequestManager
+import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServices
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionRunContext
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScoped
+import hu.bme.mit.semantifyr.live.backend.lsp.session.currentSessionScopeElement
 import hu.bme.mit.semantifyr.live.backend.utils.coroutineScopeCancelIndicator
 import hu.bme.mit.semantifyr.live.backend.utils.currentMdcContextBlocking
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.runInterruptible
-import org.eclipse.xtext.service.OperationCanceledManager
 import org.eclipse.xtext.util.CancelIndicator
 import org.eclipse.xtext.xbase.lib.Functions
 import java.util.concurrent.AbstractExecutorService
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
-import kotlin.coroutines.CoroutineContext
 
-class SessionRequestManager(
-    private val coroutineScope: CoroutineScope,
-    private val sessionCoroutineContext: CoroutineContext,
-    operationCanceledManager: OperationCanceledManager,
-) : LockingRequestManager(NoopExecutor, operationCanceledManager) {
+@SessionScoped
+class SessionRequestManager @Inject constructor(
+    private val sessionRunContext: SessionRunContext,
+    languageServices: LanguageServices,
+) : LockingRequestManager(NoopExecutor, languageServices.operationCanceledManager) {
 
     @Volatile
     private var pendingWrite: Job? = null

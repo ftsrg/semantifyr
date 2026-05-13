@@ -6,7 +6,9 @@
 
 package hu.bme.mit.semantifyr.live.backend.lsp.session
 
+import com.google.inject.Inject
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager
+import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.WorkspaceLayout
 import hu.bme.mit.semantifyr.live.backend.data.ActiveVerificationInfo
 import hu.bme.mit.semantifyr.live.backend.data.SessionInfo
@@ -15,31 +17,31 @@ import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServices
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionLanguageServer
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionLanguageServerAccess
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionRequestManager
-import hu.bme.mit.semantifyr.live.backend.lsp.service.SharedExecutorProvider
 import hu.bme.mit.semantifyr.live.backend.lsp.transport.WebSocketLspConnector
-import hu.bme.mit.semantifyr.live.backend.utils.withSessionIdMdc
+import hu.bme.mit.semantifyr.live.backend.utils.currentMdcContextBlocking
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
-import io.ktor.websocket.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.currentCoroutineContext
 import org.eclipse.lsp4j.ExecuteCommandParams
 import org.eclipse.lsp4j.services.LanguageClient
 import java.nio.file.Files
-import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import kotlin.time.TimeSource
 
-class LspSession(
+@SessionScoped
+class LspSession @Inject constructor(
     val sessionContext: SessionContext,
     val languageServices: LanguageServices,
-    private val sharedExecutorProvider: SharedExecutorProvider,
+    val sessionDocumentManager: SessionDocumentManager,
+    val workManager: WorkManager,
+    val requestManager: SessionRequestManager,
+    private val sessionClient: SessionClient,
+    private val runContext: SessionRunContext,
     private val verificationManager: VerificationManager,
     private val verificationExecutor: VerificationExecutor,
-    private val webSocketSession: WebSocketSession,
-    private val libraryRoot: Path?,
+    backendConfig: BackendConfig,
 ) : AutoCloseable {
 
     private val logger by loggerFactory()
@@ -47,11 +49,12 @@ class LspSession(
     val sessionId = sessionContext.sessionId
     val flavor = sessionContext.flavor
 
-    // FIXME: too much lateinit public fields
+    val coroutineScope: CoroutineScope
+        get() = runContext.coroutineScope
 
-    val workManager = WorkManager()
-    val sessionDocumentManager = SessionDocumentManager(languageServices, sessionContext.workingDirectoryPath)
-    val sessionLanguageServer = SessionLanguageServer(
+    private val libraryRoot = backendConfig.sessionManager.semanticLibrariesPath
+
+    private val sessionLanguageServer = SessionLanguageServer(
         this,
         sessionDocumentManager,
         verificationManager,
@@ -60,25 +63,14 @@ class LspSession(
         workManager,
     )
 
-    lateinit var coroutineScope: CoroutineScope
-        private set
-
-    lateinit var requestManager: SessionRequestManager
-        private set
-
-    lateinit var webSocketLspConnector: WebSocketLspConnector
-        private set
-
-    private lateinit var languageClient: LanguageClient
-
     private val startMark = TimeSource.Monotonic.markNow()
 
     fun client(): LanguageClient {
-        return languageClient
+        return sessionClient.get()
     }
 
     internal fun attachClient(client: LanguageClient) {
-        languageClient = client
+        sessionClient.attach(client)
     }
 
     fun executeCommandUnderReadLock(params: ExecuteCommandParams): CompletableFuture<Any?> {
@@ -89,35 +81,18 @@ class LspSession(
     }
 
     suspend fun run() {
-        withSessionScope(this) {
-            stageLibraryOnDisk()
-            loadLibraryFiles()
+        stageLibraryOnDisk()
+        loadLibraryFiles()
 
-            val sessionCoroutineContext = currentCoroutineContext() + // copy session scope
-                sharedExecutorProvider.dispatcher + // override the caller dispatcher
-                withSessionIdMdc(sessionId)
-
-            coroutineScope = CoroutineScope(sessionCoroutineContext)
-            requestManager = SessionRequestManager(
-                coroutineScope,
-                sessionCoroutineContext,
-                languageServices.operationCanceledManager,
-            )
-            webSocketLspConnector = WebSocketLspConnector(
-                webSocketSession,
-                sessionLanguageServer,
-            )
-
-            // run in the session scope
-            try {
-                coroutineScope.async {
-                    logger.info { "Session $sessionId started flavor=${flavor.id}" }
-                    webSocketLspConnector.run()
-                }.await()
-            } finally {
-                // cancel the whole scope
-                coroutineScope.cancel()
-            }
+        val connector = WebSocketLspConnector(sessionContext.webSocketSession, sessionLanguageServer)
+        val launchContext = currentMdcContextBlocking() + currentSessionScopeElement()
+        try {
+            coroutineScope.async(launchContext) {
+                logger.info { "Session $sessionId started flavor=${flavor.id}" }
+                connector.run()
+            }.await()
+        } finally {
+            coroutineScope.cancel()
         }
     }
 
@@ -136,9 +111,7 @@ class LspSession(
 
     override fun close() {
         logger.info { "Closing session $sessionId" }
-        if (::coroutineScope.isInitialized) {
-            coroutineScope.cancel()
-        }
+        coroutineScope.cancel()
         sessionDocumentManager.unloadAll()
     }
 

@@ -6,8 +6,11 @@
 
 package hu.bme.mit.semantifyr.live.backend.lsp.document
 
+import com.google.inject.Inject
 import hu.bme.mit.semantifyr.live.backend.exceptions.WorkspaceUriException
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServices
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScoped
 import hu.bme.mit.semantifyr.logging.error
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
@@ -35,16 +38,17 @@ import org.eclipse.emf.common.util.URI as EmfURI
 
 private const val CLIENT_PREFIX = "file:///workspace/"
 
-class SessionDocumentManager(
+@SessionScoped
+class SessionDocumentManager @Inject constructor(
     private val languageServices: LanguageServices,
-    workingDirectoryPath: Path,
+    sessionContext: SessionContext,
 ) {
 
     private val logger by loggerFactory()
 
-    val workspaceRoot = workingDirectoryPath.toAbsolutePath().normalize()
+    val workspaceRoot = sessionContext.workingDirectoryPath.toAbsolutePath().normalize()
 
-    private val serverPrefix = ensureTrailingSlash(workingDirectoryPath.toUri().toString())
+    private val serverPrefix = ensureTrailingSlash(sessionContext.workingDirectoryPath.toUri().toString())
 
     private val resourceSet = languageServices.newResourceSet()
 

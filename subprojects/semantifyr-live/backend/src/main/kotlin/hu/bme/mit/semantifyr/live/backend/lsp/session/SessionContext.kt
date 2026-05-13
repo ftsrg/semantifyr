@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.live.backend.lsp.session
 
 import hu.bme.mit.semantifyr.live.backend.Flavor
+import io.ktor.websocket.WebSocketSession
 import java.nio.file.Path
 
 class SessionContext(
@@ -14,4 +15,5 @@ class SessionContext(
     val remoteIp: String,
     val flavor: Flavor,
     val workingDirectoryPath: Path,
+    val webSocketSession: WebSocketSession,
 )

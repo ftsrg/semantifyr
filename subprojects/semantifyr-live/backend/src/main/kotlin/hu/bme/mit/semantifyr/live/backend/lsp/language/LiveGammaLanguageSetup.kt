@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.live.backend.lsp.language
 
 import com.google.inject.AbstractModule
-import com.google.inject.Guice
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.frontends.gamma.lang.GammaRuntimeModule
 import hu.bme.mit.semantifyr.frontends.gamma.lang.GammaStandaloneSetup
@@ -17,12 +16,13 @@ import hu.bme.mit.semantifyr.lang.ide.server.OxstsInjector
 import org.eclipse.xtext.util.Modules2
 
 class LiveGammaLanguageSetup(
+    private val parentInjector: Injector,
     private val oxstsInjector: Injector,
 ) : GammaStandaloneSetup() {
 
     override fun createInjector(): Injector {
         val oxstsHandle = OxstsInjector(oxstsInjector)
-        return Guice.createInjector(
+        return parentInjector.createChildInjector(
             Modules2.mixin(
                 GammaServerModule(),
                 GammaRuntimeModule(),

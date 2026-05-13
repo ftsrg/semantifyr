@@ -6,9 +6,24 @@
 
 package hu.bme.mit.semantifyr.live.backend.testing
 
+import com.google.inject.AbstractModule
+import com.google.inject.Guice
+import com.google.inject.Injector
 import hu.bme.mit.semantifyr.live.backend.Flavor
 import hu.bme.mit.semantifyr.live.backend.Language
 import hu.bme.mit.semantifyr.live.backend.WorkspaceLayout
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScope
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScoped
+
+fun sessionScopedTestParentInjector(): Injector {
+    return Guice.createInjector(
+        object : AbstractModule() {
+            override fun configure() {
+                bindScope(SessionScoped::class.java, SessionScope)
+            }
+        },
+    )
+}
 
 fun testFlavor(
     id: String = "oxsts",

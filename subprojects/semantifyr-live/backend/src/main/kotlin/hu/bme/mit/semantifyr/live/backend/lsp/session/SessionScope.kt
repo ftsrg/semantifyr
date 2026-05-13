@@ -25,9 +25,9 @@ suspend fun <T> withSessionScope(seed: Seed? = null, block: suspend () -> T): T 
     return sessionScopeContext.withScope(seed, block)
 }
 
-suspend fun <T> withSessionScope(lspSession: LspSession, block: suspend () -> T): T {
+suspend fun <T> withSessionScope(sessionContext: SessionContext, block: suspend () -> T): T {
     val seed = Seed().apply {
-        seed(LspSession::class.java, lspSession)
+        seed(SessionContext::class.java, sessionContext)
     }
     return sessionScopeContext.withScope(seed, block)
 }

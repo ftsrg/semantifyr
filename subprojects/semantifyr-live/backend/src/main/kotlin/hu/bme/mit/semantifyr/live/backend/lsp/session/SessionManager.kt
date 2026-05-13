@@ -8,17 +8,19 @@ package hu.bme.mit.semantifyr.live.backend.lsp.session
 
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import hu.bme.mit.semantifyr.guice.common.Seed
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.Flavor
 import hu.bme.mit.semantifyr.live.backend.data.SessionInfo
 import hu.bme.mit.semantifyr.live.backend.exceptions.SessionLimitReachedException
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServiceRegistry
-import hu.bme.mit.semantifyr.live.backend.lsp.service.SharedExecutorProvider
+import hu.bme.mit.semantifyr.live.backend.utils.MdcContext
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import io.ktor.server.websocket.WebSocketServerSession
 import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.withContext
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -26,9 +28,7 @@ import java.util.concurrent.ConcurrentHashMap
 class SessionManager @Inject constructor(
     private val backendConfig: BackendConfig,
     private val languageServiceRegistry: LanguageServiceRegistry,
-    private val sharedExecutorProvider: SharedExecutorProvider,
     private val verificationManager: VerificationManager,
-    private val verificationExecutor: VerificationExecutor,
 ) : AutoCloseable {
 
     private val logger by loggerFactory()
@@ -68,16 +68,22 @@ class SessionManager @Inject constructor(
         remoteIp: String,
         flavor: Flavor,
     ) {
-        val session = createLspSession(flavor, remoteIp, webSocketSession)
-        liveSessions[session.sessionId] = session
-        logger.info { "Created session=${session.sessionId} for ip=$remoteIp flavor=${flavor.id}" }
-        try {
-            session.run()
-        } finally {
-            liveSessions.remove(session.sessionId)
-            session.close()
-            cleanupSessionDirectory(session)
-            logger.info { "Ended session=${session.sessionId} for ip=$remoteIp" }
+        val sessionContext = createSessionContext(webSocketSession, remoteIp, flavor)
+        val injector = languageServiceRegistry.injectorFor(flavor)
+        withSessionScope(sessionContext) {
+            withContext(MdcContext("sessionId" to sessionContext.sessionId)) {
+                val session = injector.getInstance(LspSession::class.java)
+                liveSessions[session.sessionId] = session
+                logger.info { "Created session=${session.sessionId} for ip=$remoteIp flavor=${flavor.id}" }
+                try {
+                    session.run()
+                } finally {
+                    liveSessions.remove(session.sessionId)
+                    session.close()
+                    cleanupSessionDirectory(session)
+                    logger.info { "Ended session=${session.sessionId} for ip=$remoteIp" }
+                }
+            }
         }
     }
 
@@ -105,28 +111,20 @@ class SessionManager @Inject constructor(
         liveSessions.clear()
     }
 
-    private fun createLspSession(
-        flavor: Flavor,
-        remoteIp: String,
+    private fun createSessionContext(
         webSocketSession: WebSocketServerSession,
-    ): LspSession {
+        remoteIp: String,
+        flavor: Flavor,
+    ): SessionContext {
         val sessionId = UUID.randomUUID().toString()
         val workingDirectoryPath = backendConfig.sessionManager.rootWorkPath.resolve("sessions").resolve(sessionId)
         workingDirectoryPath.toFile().mkdirs()
-        val sessionContext = SessionContext(
+        return SessionContext(
             sessionId = sessionId,
             remoteIp = remoteIp,
             flavor = flavor,
             workingDirectoryPath = workingDirectoryPath,
-        )
-        return LspSession(
-            sessionContext = sessionContext,
-            languageServices = languageServiceRegistry.forFlavor(flavor),
-            sharedExecutorProvider = sharedExecutorProvider,
-            verificationManager = verificationManager,
-            verificationExecutor = verificationExecutor,
             webSocketSession = webSocketSession,
-            libraryRoot = backendConfig.sessionManager.semanticLibrariesPath,
         )
     }
 
