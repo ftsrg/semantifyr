@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React from 'react'
+import type React from 'react'
 import ButtonBase from '@mui/material/ButtonBase'
 import { FONT_SIZE } from '../../lib/util/theme'
 

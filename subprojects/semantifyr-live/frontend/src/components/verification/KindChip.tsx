@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React from 'react'
+import type React from 'react'
 import Chip from '@mui/material/Chip'
 import type { VerificationKind } from '../../lib/api/types'
 

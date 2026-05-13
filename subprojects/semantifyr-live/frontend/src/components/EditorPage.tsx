@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type React from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -37,7 +38,7 @@ import ConnectionBanner from './shell/ConnectionBanner';
 import ConfirmDialog from './shell/ConfirmDialog';
 import ErrorBoundary from './shell/ErrorBoundary';
 import EditorLoadError from './editor/EditorLoadError';
-import { type StatusBarInfoItem } from './shell/StatusBar';
+import type { StatusBarInfoItem } from './shell/StatusBar';
 import RightPanel, { type RightPanelTab } from './shell/RightPanel';
 import RunningVerificationsTab from './verification/RunningVerificationsTab';
 import WitnessTab from './witness/WitnessTab';
@@ -48,7 +49,14 @@ import { FONT_SIZE } from '../lib/util/theme';
 
 const LiveEditor = lazy(() => import('./editor/LiveEditor'));
 
-const DEFAULT_FLAVOR = LIVE_FLAVORS[0]!;
+const DEFAULT_FLAVOR = LIVE_FLAVORS[0];
+const DEFAULT_EXAMPLE: LiveExample = (() => {
+  const first = DEFAULT_FLAVOR.examples[0];
+  if (!first) {
+    throw new Error(`flavor ${DEFAULT_FLAVOR.id} has no examples`);
+  }
+  return first;
+})();
 const DEFAULT_PORTFOLIO_ID = 'smart-full';
 const RIGHT_PANE_WIDTH_KEY = 'semantifyr-right-pane-width';
 const DEFAULT_RIGHT_PANE_WIDTH = 480;
@@ -95,13 +103,16 @@ async function resolveInitialState(search: string): Promise<UrlState> {
 
   const decodedCode = codeParam ? await decodeCompressedBase64Url(codeParam) : null;
 
+  const fallback = flavor.examples[0];
+  if (!fallback) {
+    throw new Error(`flavor ${flavor.id} has no examples`);
+  }
   if (exampleParam) {
-    const example = findExample(flavor, exampleParam) ?? flavor.examples[0]!;
+    const example = findExample(flavor, exampleParam) ?? fallback;
     return { flavor, example, code: decodedCode ?? example.code };
   }
 
-  const example = flavor.examples[0]!;
-  return { flavor, example, code: decodedCode ?? example.code };
+  return { flavor, example: fallback, code: decodedCode ?? fallback.code };
 }
 
 function deriveConnectionMessage(status: LiveEditorStatus, statusInfo: string | null): string {
@@ -122,8 +133,8 @@ export default function EditorPage({
   embedded = false,
 }: Props): React.JSX.Element {
   const [flavor, setFlavor] = useState<LiveFlavor>(DEFAULT_FLAVOR);
-  const [example, setExample] = useState<LiveExample>(DEFAULT_FLAVOR.examples[0]!);
-  const [code, setCode] = useState<string>(DEFAULT_FLAVOR.examples[0]!.code);
+  const [example, setExample] = useState<LiveExample>(DEFAULT_EXAMPLE);
+  const [code, setCode] = useState<string>(DEFAULT_EXAMPLE.code);
   const [copyConfirmation, setCopyConfirmation] = useState<string | null>(null);
   const [pendingSwitch, setPendingSwitch] = useState<(() => void) | null>(null);
 
@@ -220,7 +231,9 @@ export default function EditorPage({
   const handleSelectModel = useCallback((flavorId: string, exampleId: string) => {
     const nextFlavor = findFlavor(flavorId);
     if (!nextFlavor) return;
-    const nextExample = findExample(nextFlavor, exampleId) ?? nextFlavor.examples[0]!;
+    const fallbackExample = nextFlavor.examples[0];
+    if (!fallbackExample) return;
+    const nextExample = findExample(nextFlavor, exampleId) ?? fallbackExample;
     if (nextFlavor.id === flavor.id && nextExample.id === example.id) return;
     const flavorChanged = nextFlavor.id !== flavor.id;
     runOrConfirm(() => {
@@ -278,7 +291,7 @@ export default function EditorPage({
     } catch {
       flashCopyConfirmation('Copy failed');
     }
-  }, [flavor.id, example.id, currentEditorContent, flashCopyConfirmation]);
+  }, [flavor.id, example.id, example.code, currentEditorContent, flashCopyConfirmation]);
 
   const editorKey = useMemo(() => `${flavor.id}:${example.id}`, [flavor.id, example.id]);
 
@@ -527,7 +540,7 @@ export default function EditorPage({
             orientation="vertical"
             label="Side panel"
             ariaLabel="Show side panel"
-            onClick={() => setRightPanelOpen(true)}
+            onClick={() => { setRightPanelOpen(true); }}
           />
         )}
       </Box>
@@ -545,22 +558,22 @@ export default function EditorPage({
           />
         )}
 
-        {flavorSupportsVerification && (
+        {flavorSupportsVerification && flavorInfo.verificationCommand && flavorInfo.discoveryCommand && (
           // Hidden, not unmounted, so verification state survives a close/reopen.
           <Box sx={{ display: verificationPanelOpen ? 'flex' : 'none', flexDirection: 'column', flex: '0 0 auto' }}>
             <VerificationPanel
               ref={verificationPanelRef}
               editorHandle={editorHandleRef.current}
-              verificationCommand={flavorInfo!.verificationCommand!}
-              discoveryCommand={flavorInfo!.discoveryCommand!}
-              validateWitnessCommand={flavorInfo!.validateWitnessCommand ?? undefined}
+              verificationCommand={flavorInfo.verificationCommand}
+              discoveryCommand={flavorInfo.discoveryCommand}
+              validateWitnessCommand={flavorInfo.validateWitnessCommand ?? undefined}
               connected={status === 'connected'}
               portfolioId={portfolioId}
               validationPortfolioId={validationPortfolioId}
               autoValidate={autoValidate}
               onAutoValidateChange={handleAutoValidateChange}
               panelHeight={verificationPanelHeight}
-              onClose={() => setVerificationPanelOpen(false)}
+              onClose={() => { setVerificationPanelOpen(false); }}
               onStatusMessage={handleVerificationStatus}
               onCasesChange={setVerificationCases}
               onShowWitness={handleShowWitness}
@@ -574,7 +587,7 @@ export default function EditorPage({
             orientation="horizontal"
             label="Show verification panel"
             ariaLabel="Show verification panel"
-            onClick={() => setVerificationPanelOpen(true)}
+            onClick={() => { setVerificationPanelOpen(true); }}
           />
         )}
       </Box>
@@ -599,7 +612,7 @@ export default function EditorPage({
           currentFlavorId={flavor.id}
           currentExampleId={example.id}
           onSelectModel={handleSelectModel}
-          onCopyLink={handleCopyLink}
+          onCopyLink={() => { void handleCopyLink(); }}
           copyConfirmation={copyConfirmation}
           connectionStatus={status}
           onReconnect={() => editorHandleRef.current?.reconnect()}
@@ -607,7 +620,7 @@ export default function EditorPage({
           statusBarMessage={statusBarMessage}
           statusBarShowProgress={statusBarShowProgress}
           statusBarInfoItems={statusBarInfoItems}
-          onStatusInfoClick={() => setDevPanelOpen((prev) => !prev)}
+          onStatusInfoClick={() => { setDevPanelOpen((prev) => !prev); }}
           onOpenVerificationsTab={handleOpenVerificationsTab}
           portfolios={portfolios}
           portfolioId={portfolioId}
@@ -618,7 +631,7 @@ export default function EditorPage({
           colorModePreference={colorModePreference}
           onToggleColorMode={onToggleColorMode}
           devPanelOpen={devPanelOpen}
-          onCloseDevPanel={() => setDevPanelOpen(false)}
+          onCloseDevPanel={() => { setDevPanelOpen(false); }}
           language={flavor.displayName}
           connectedSince={connectedSince}
           reconnectCount={reconnectCount}
@@ -633,7 +646,7 @@ export default function EditorPage({
         title="Discard unsaved edits?"
         message="You have unsaved edits in the editor. Switching discards them."
         confirmLabel="Discard and switch"
-        onCancel={() => setPendingSwitch(null)}
+        onCancel={() => { setPendingSwitch(null); }}
         onConfirm={() => {
           pendingSwitch?.();
           setPendingSwitch(null);

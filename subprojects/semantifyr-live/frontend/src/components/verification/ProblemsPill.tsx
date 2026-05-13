@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React, { useEffect, useState } from 'react';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Popover from '@mui/material/Popover';
@@ -25,7 +26,7 @@ export default function ProblemsPill({ editorHandle }: Props): React.JSX.Element
 
   useEffect(() => {
     if (!editorHandle) return;
-    const refresh = () => setProblems(editorHandle.getProblems());
+    const refresh = () => { setProblems(editorHandle.getProblems()); };
     refresh();
     const dispose = editorHandle.addProblemsListener(refresh);
     return () => { dispose(); };
@@ -55,7 +56,7 @@ export default function ProblemsPill({ editorHandle }: Props): React.JSX.Element
             </Box>
           }
           size="small"
-          onClick={(event) => setAnchor(event.currentTarget)}
+          onClick={(event) => { setAnchor(event.currentTarget); }}
           sx={{
             ml: 0.5,
             bgcolor: errors > 0 ? 'var(--danger-soft-bg)' : 'var(--warning-soft-bg)',
@@ -71,7 +72,7 @@ export default function ProblemsPill({ editorHandle }: Props): React.JSX.Element
       <Popover
         anchorEl={anchor}
         open={anchor !== null}
-        onClose={() => setAnchor(null)}
+        onClose={() => { setAnchor(null); }}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         slotProps={{
           paper: {

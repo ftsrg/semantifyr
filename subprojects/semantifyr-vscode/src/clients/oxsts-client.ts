@@ -1,12 +1,12 @@
 
-import vscode, { commands, ExtensionContext, Location, Position, Range } from "vscode";
+import vscode, { commands, type ExtensionContext, Location, Position, Range } from "vscode";
 import path from "path";
-import { LanguageClient} from "vscode-languageclient/node.js";
+import type { LanguageClient} from "vscode-languageclient/node.js";
 import { createRemoteLspClient, createLspClient, registerSemantifyrSettingsSync } from "./client-utils.js";
 import { executablePostfix } from "../runner-utils.js";
 import { VerificationTestController } from "./verification-test-controller.js";
 
-type NavigateToParams = {
+interface NavigateToParams {
     locations: Location[]
 }
 
@@ -48,6 +48,11 @@ export async function stopOxstsClient() {
 }
 
 async function navigateToLocation(locations: Location[]) {
+    const firstLocation = locations[0];
+    if (!firstLocation) {
+        return;
+    }
+
     const actualLocations = locations.map(location => {
         const uri = vscode.Uri.parse(location.uri.toString());
         const range = new Range(
@@ -59,8 +64,7 @@ async function navigateToLocation(locations: Location[]) {
 
     let editor = vscode.window.activeTextEditor;
     if (editor === undefined) {
-        const uri = locations[0].uri;
-        const doc = await vscode.workspace.openTextDocument(uri);
+        const doc = await vscode.workspace.openTextDocument(firstLocation.uri);
         editor = await vscode.window.showTextDocument(doc);
     }
 

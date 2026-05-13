@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
@@ -52,7 +53,7 @@ export default function PortfolioSettings({
       <Tooltip title={tooltip}>
         <Button
           size="small"
-          onClick={(event) => setAnchor(event.currentTarget)}
+          onClick={(event) => { setAnchor(event.currentTarget); }}
           sx={{
             color: 'text.secondary',
             fontSize: FONT_SIZE.xs,
@@ -67,7 +68,7 @@ export default function PortfolioSettings({
       <Menu
         anchorEl={anchor}
         open={anchor !== null}
-        onClose={() => setAnchor(null)}
+        onClose={() => { setAnchor(null); }}
         slotProps={{ paper: { sx: { minWidth: 280 } } }}
       >
         <SectionHeader>Verify with</SectionHeader>

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import vscode, { CancellationToken, ExtensionContext, Position, Range, RelativePattern, TestController, TestItem, TestMessage, TestRunProfileKind, TestRunRequest, TextDocument, Uri, WorkspaceFolder, WorkspaceFoldersChangeEvent } from "vscode";
-import { LanguageClient } from "vscode-languageclient/node.js";
+import vscode, { type CancellationToken, type ExtensionContext, Position, Range, RelativePattern, type TestController, type TestItem, TestMessage, TestRunProfileKind, type TestRunRequest, type TextDocument, type Uri, type WorkspaceFolder, type WorkspaceFoldersChangeEvent } from "vscode";
+import type { LanguageClient } from "vscode-languageclient/node.js";
 import { ExecuteCommandRequest } from "vscode-languageclient";
 import {
     VerificationStatus,
@@ -53,19 +53,19 @@ export class VerificationTestController {
         const runProfile = this.controller.createRunProfile(
             'Run',
             TestRunProfileKind.Run,
-            async (request, token) => await this.runTests(request, token),
+            async (request, token) => { await this.runTests(request, token); },
             true
         );
         context.subscriptions.push(runProfile);
 
         const watcher = vscode.workspace.createFileSystemWatcher(this.config.fileGlob);
-        watcher.onDidChange(async (uri) => await this.refreshDocumentUriTests(uri));
-        watcher.onDidCreate(async (uri) => await this.refreshDocumentUriTests(uri));
-        watcher.onDidDelete((uri) => this.controller.items.delete(uri.toString()));
+        watcher.onDidChange(async (uri) => { await this.refreshDocumentUriTests(uri); });
+        watcher.onDidCreate(async (uri) => { await this.refreshDocumentUriTests(uri); });
+        watcher.onDidDelete((uri) => { this.controller.items.delete(uri.toString()); });
 
         context.subscriptions.push(
-            vscode.workspace.onDidChangeWorkspaceFolders(async (event) => await this.updateWorkspaceTests(event)),
-            vscode.workspace.onDidOpenTextDocument(async (document) => await this.refreshDocumentTests(document)),
+            vscode.workspace.onDidChangeWorkspaceFolders(async (event) => { await this.updateWorkspaceTests(event); }),
+            vscode.workspace.onDidOpenTextDocument(async (document) => { await this.refreshDocumentTests(document); }),
             vscode.workspace.onDidRenameFiles(async (event) => {
                 for (const file of event.files) {
                     this.controller.items.delete(file.oldUri.toString());
@@ -151,7 +151,7 @@ export class VerificationTestController {
     protected getDocumentTestItem(uri: Uri): TestItem {
         let fileItem = this.controller.items.get(uri.toString());
         if (!fileItem) {
-            fileItem = this.controller.createTestItem(uri.toString(), uri.path.split('/').pop() || uri.toString(), uri);
+            fileItem = this.controller.createTestItem(uri.toString(), uri.path.split('/').pop() ?? uri.toString(), uri);
             fileItem.range = new Range(new Position(0, 0), new Position(0, 0));
             fileItem.canResolveChildren = true;
             this.controller.items.add(fileItem);
@@ -198,9 +198,13 @@ export class VerificationTestController {
             run.started(testItem);
 
             try {
-                const range = testItem.range!;
+                if (!testItem.range || !testItem.uri) {
+                    run.skipped(testItem);
+                    continue;
+                }
+                const range = testItem.range;
                 const request: VerificationCaseRequest = {
-                    uri: testItem.uri!.toString(),
+                    uri: testItem.uri.toString(),
                     range: {
                         start: { line: range.start.line, character: range.start.character },
                         end: { line: range.end.line, character: range.end.character },

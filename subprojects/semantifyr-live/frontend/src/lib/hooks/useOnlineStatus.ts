@@ -10,7 +10,7 @@ function readOnline(): boolean {
   if (typeof navigator === 'undefined') {
     return true;
   }
-  return navigator.onLine !== false;
+  return navigator.onLine;
 }
 
 // navigator.onLine === false reliably means offline; true is a best-effort hint.

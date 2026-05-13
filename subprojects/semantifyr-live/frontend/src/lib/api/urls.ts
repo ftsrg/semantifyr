@@ -28,8 +28,8 @@ export function normalizeBaseUrl(url: string): LiveServerUrls {
 
 function bytesToBase64Url(bytes: Uint8Array): string {
   let binary = ''
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]!)
+  for (const b of bytes) {
+    binary += String.fromCharCode(b)
   }
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
@@ -49,15 +49,13 @@ async function readAllAsBytes(stream: ReadableStream<Uint8Array>): Promise<Uint8
   const chunks: Uint8Array[] = []
   const reader = stream.getReader()
   let total = 0
-  while (true) {
+  for (;;) {
     const { value, done } = await reader.read()
     if (done) {
       break
     }
-    if (value) {
-      chunks.push(value)
-      total += value.length
-    }
+    chunks.push(value)
+    total += value.length
   }
   const result = new Uint8Array(total)
   let offset = 0

@@ -161,12 +161,12 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
   const statusListeners = new Set<(status: LiveEditorStatus, info?: string) => void>()
   const flavorListeners = new Set<(flavor: FlavorInfo | null) => void>()
   const notificationHandlers = new Map<string, Set<(params: unknown) => void>>()
-  let attachedNotificationDisposables: Array<{ dispose: () => void }> = []
+  let attachedNotificationDisposables: { dispose: () => void }[] = []
 
   let lastFlavor: FlavorInfo | null = null
 
   const reportStatus = (status: LiveEditorStatus, info?: string): void => {
-    notifyListeners(statusListeners, (cb) => cb(status, info), 'status')
+    notifyListeners(statusListeners, (cb) => { cb(status, info); }, 'status')
   }
 
   const ensureVerifyDiagnostics = (): vscode.DiagnosticCollection | null => {
@@ -177,7 +177,7 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
       const collection = vscode.languages.createDiagnosticCollection('semantifyr-verify')
       verifyDiagnosticsSubs = [
         vscode.languages.onDidChangeDiagnostics(() => {
-          notifyListeners(problemsListeners, (cb) => cb(), 'problems')
+          notifyListeners(problemsListeners, (cb) => { cb(); }, 'problems')
         }),
         // Edits invalidate the previous verdict, so wipe the verify markers when the user types.
         vscode.workspace.onDidChangeTextDocument(() => {
@@ -207,7 +207,7 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
     for (const [method, listeners] of notificationHandlers) {
       try {
         const disposable = raw.onNotification(method, (params) => {
-          notifyListeners(listeners, (cb) => cb(params), `notification-${method}`)
+          notifyListeners(listeners, (cb) => { cb(params); }, `notification-${method}`)
         })
         if (disposable) {
           attachedNotificationDisposables.push(disposable)
@@ -235,7 +235,7 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
       options.languageId,
       {
         onProgress: (params: unknown) => {
-          notifyListeners(progressListeners, (cb) => cb(params), 'progress')
+          notifyListeners(progressListeners, (cb) => { cb(params); }, 'progress')
         },
         onStopped: () => {
           if (cancelled) {
@@ -322,11 +322,13 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
       try {
         await doConnect()
       } catch {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- cancelled may flip during await
         if (!cancelled) {
           reportStatus('errored', 'Failed to connect to LSP server')
         }
         return
       }
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- cancelled may flip during await
       if (cancelled) {
         await dispose()
         return
@@ -341,7 +343,7 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
             return
           }
           lastFlavor = found
-          notifyListeners(flavorListeners, (cb) => cb(found), 'flavor')
+          notifyListeners(flavorListeners, (cb) => { cb(found); }, 'flavor')
         })
         .catch(() => { /* non-fatal */ })
     } catch {
@@ -572,7 +574,7 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
     onContentChange: (cb) => {
       const editor = editorApp?.getEditor()
       const disposable = editor?.onDidChangeModelContent(cb)
-      return disposable ? () => disposable.dispose() : undefined
+      return disposable ? () => { disposable.dispose(); } : undefined
     },
 
     onStatusChange: (cb) => {
@@ -590,7 +592,7 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
     onFlavorReady: (cb) => {
       flavorListeners.add(cb)
       if (lastFlavor !== null) {
-        notifyListeners([cb], (fn) => fn(lastFlavor), 'flavor')
+        notifyListeners([cb], (fn) => { fn(lastFlavor); }, 'flavor')
       }
       return () => {
         flavorListeners.delete(cb)

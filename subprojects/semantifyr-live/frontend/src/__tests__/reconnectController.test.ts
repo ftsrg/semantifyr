@@ -14,8 +14,8 @@ import {
 const BACKOFF = [1000, 2000, 4000] as const
 
 interface Harness {
-  statuses: Array<{ status: ReconnectStatus; info?: string }>
-  attemptResults: Array<'success' | 'fail'>
+  statuses: { status: ReconnectStatus; info?: string }[]
+  attemptResults: ('success' | 'fail')[]
   cancelledRef: { value: boolean }
   controller: ReturnType<typeof createReconnectController>
   options: ReconnectControllerOptions
@@ -23,7 +23,7 @@ interface Harness {
 
 function harness(overrides?: Partial<ReconnectControllerOptions>): Harness {
   const statuses: Harness['statuses'] = []
-  const attemptResults: Array<'success' | 'fail'> = []
+  const attemptResults: ('success' | 'fail')[] = []
   const cancelledRef = { value: false }
   const options: ReconnectControllerOptions = {
     maxAttempts: 3,

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React from 'react'
+import type React from 'react'
 import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
 import IconButton from '@mui/material/IconButton'
@@ -94,7 +94,7 @@ export default function ValidationChip({ status, busy, disabled, onRevalidate }:
           <IconButton
             size="small"
             onClick={onRevalidate}
-            disabled={disabled || busy}
+            disabled={(disabled ?? false) || busy}
             aria-label="Validate witness"
             sx={{ color: 'text.secondary' }}
           >

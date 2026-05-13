@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React, { useEffect, useState } from 'react';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
@@ -113,7 +114,7 @@ export default function ConnectionBanner({ status, statusInfo, onReconnect }: Pr
       <IconButton
         size="small"
         aria-label="Dismiss"
-        onClick={() => setDismissed(true)}
+        onClick={() => { setDismissed(true); }}
         sx={{ color: 'text.secondary', p: 0.25, '&:hover': { color: 'text.primary' } }}
       >
         <CloseIcon sx={{ fontSize: ICON_SIZE.sm }} />

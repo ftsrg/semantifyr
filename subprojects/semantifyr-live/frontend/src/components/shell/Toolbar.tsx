@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -28,7 +29,7 @@ import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
 
 interface Props {
   logoSrc: string;
-  flavors: readonly LiveFlavor[];
+  flavors: readonly [LiveFlavor, ...LiveFlavor[]];
   currentFlavorId: string;
   currentExampleId: string;
   onSelectModel: (flavorId: string, exampleId: string) => void;
@@ -114,7 +115,7 @@ export default function Toolbar({
       <Tooltip title="More">
         <IconButton
           size="small"
-          onClick={(e) => setOverflowAnchor(e.currentTarget)}
+          onClick={(e) => { setOverflowAnchor(e.currentTarget); }}
           aria-label="More"
           sx={{ color: 'text.primary', display: { xs: 'inline-flex', sm: 'none' } }}
         >
@@ -124,7 +125,7 @@ export default function Toolbar({
       <Menu
         anchorEl={overflowAnchor}
         open={overflowOpen}
-        onClose={() => setOverflowAnchor(null)}
+        onClose={() => { setOverflowAnchor(null); }}
         slotProps={{ paper: { sx: { minWidth: 200 } } }}
       >
         <MenuItem
@@ -132,7 +133,7 @@ export default function Toolbar({
           href="https://ftsrg.mit.bme.hu/semantifyr"
           target="_blank"
           rel="noopener noreferrer"
-          onClick={() => setOverflowAnchor(null)}
+          onClick={() => { setOverflowAnchor(null); }}
         >
           <MenuBookOutlinedIcon sx={{ fontSize: ICON_SIZE.md, mr: 1, color: 'text.secondary' }} />
           <ListItemText primary="Documentation" slotProps={{ primary: { sx: { fontSize: FONT_SIZE.md } } }} />
@@ -142,7 +143,7 @@ export default function Toolbar({
           href="https://github.com/ftsrg/semantifyr"
           target="_blank"
           rel="noopener noreferrer"
-          onClick={() => setOverflowAnchor(null)}
+          onClick={() => { setOverflowAnchor(null); }}
         >
           <GitHubIcon sx={{ fontSize: ICON_SIZE.md, mr: 1, color: 'text.secondary' }} />
           <ListItemText primary="GitHub" slotProps={{ primary: { sx: { fontSize: FONT_SIZE.md } } }} />

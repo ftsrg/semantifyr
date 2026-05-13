@@ -8,25 +8,25 @@ const importedTutorialOxsts = import.meta.glob('./snippets/imported/tutorial/*.o
   query: '?raw',
   import: 'default',
   eager: true,
-}) as Record<string, string>;
+});
 
 const importedGammaSources = import.meta.glob('./snippets/imported/gamma/*.gamma', {
   query: '?raw',
   import: 'default',
   eager: true,
-}) as Record<string, string>;
+});
 
 const importedGammaCompiled = import.meta.glob('./snippets/imported/gamma/*.oxsts', {
   query: '?raw',
   import: 'default',
   eager: true,
-}) as Record<string, string>;
+});
 
 const importedSysmlv2Compiled = import.meta.glob('./snippets/imported/sysmlv2/*.oxsts', {
   query: '?raw',
   import: 'default',
   eager: true,
-}) as Record<string, string>;
+});
 
 export type LiveFlavorId =
   | 'oxsts'
@@ -115,12 +115,12 @@ const GAMMA_IMPORTED: readonly ImportedDescriptor[] = [
 ];
 
 function loadOrSkip<T>(
-  registry: Record<string, string>,
+  registry: Record<string, unknown>,
   path: string,
   build: (code: string) => T,
 ): T | null {
   const code = registry[path];
-  return code !== undefined ? build(code) : null;
+  return typeof code === 'string' ? build(code) : null;
 }
 
 function buildTutorialOxstsExamples(): LiveExample[] {
@@ -220,7 +220,7 @@ const gammaExamples: LiveExample[] = [
   blank('gamma', null),
 ];
 
-export const LIVE_FLAVORS: readonly LiveFlavor[] = [
+export const LIVE_FLAVORS: readonly [LiveFlavor, ...LiveFlavor[]] = [
   { id: 'oxsts', displayName: 'Semantifyr', description: 'The core Semantifyr modelling language, no extra libraries.', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsExamples },
   { id: 'oxsts-with-gamma-library', displayName: 'Semantifyr with Gamma library', description: 'Semantifyr with the Gamma statechart library available to import.', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsWithGammaLibraryExamples },
   { id: 'oxsts-with-sysmlv2-library', displayName: 'Semantifyr with SysML v2 library', description: 'Semantifyr with the SysML v2 library available to import.', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsWithSysmlv2LibraryExamples },

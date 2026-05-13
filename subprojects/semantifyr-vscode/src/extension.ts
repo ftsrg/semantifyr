@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import {ExtensionContext} from 'vscode';
+import type {ExtensionContext} from 'vscode';
 import {registerOutputChannel} from "./outputChannel.js";
 import {startClients, stopClients} from "./clients/clients.js";
 

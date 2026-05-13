@@ -53,20 +53,23 @@ export function createReconnectController(options: ReconnectControllerOptions): 
     }
     state.attempts = next
     options.onStatus('reconnecting', `Reconnecting (attempt ${next}/${options.maxAttempts})...`)
-    state.timer = setTimeout(async () => {
+    state.timer = setTimeout(() => {
       state.timer = null
-      try {
-        await options.connect()
-        if (options.isCancelled()) {
-          return
+      const run = async (): Promise<void> => {
+        try {
+          await options.connect()
+          if (options.isCancelled()) {
+            return
+          }
+          state.attempts = 0
+        } catch {
+          if (options.isCancelled()) {
+            return
+          }
+          schedule()
         }
-        state.attempts = 0
-      } catch {
-        if (options.isCancelled()) {
-          return
-        }
-        schedule()
       }
+      void run()
     }, delayFor(options.backoffMs, next))
   }
 

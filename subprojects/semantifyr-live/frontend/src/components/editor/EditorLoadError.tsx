@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React from 'react';
+import type React from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -12,7 +12,7 @@ import CloudOffOutlinedIcon from '@mui/icons-material/CloudOffOutlined';
 import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
 
 export default function EditorLoadError(): React.JSX.Element {
-  const online = typeof navigator === 'undefined' || navigator.onLine !== false;
+  const online = typeof navigator === 'undefined' || navigator.onLine;
   return (
     <Box
       role="alert"
@@ -42,7 +42,7 @@ export default function EditorLoadError(): React.JSX.Element {
         size="small"
         variant="contained"
         color="primary"
-        onClick={() => window.location.reload()}
+        onClick={() => { window.location.reload(); }}
         sx={{ mt: 0.5, fontSize: FONT_SIZE.md }}
       >
         Reload page

@@ -10,7 +10,11 @@ export function setLocation(url: string): void {
     configurable: true,
     writable: true,
     value: {
-      ...window.location,
+      ancestorOrigins: window.location.ancestorOrigins,
+      assign: window.location.assign.bind(window.location),
+      reload: window.location.reload.bind(window.location),
+      replace: window.location.replace.bind(window.location),
+      toString: () => parsed.href,
       href: parsed.href,
       origin: parsed.origin,
       hostname: parsed.hostname,
@@ -19,6 +23,6 @@ export function setLocation(url: string): void {
       pathname: parsed.pathname,
       search: parsed.search,
       hash: parsed.hash,
-    } as Location,
+    },
   });
 }

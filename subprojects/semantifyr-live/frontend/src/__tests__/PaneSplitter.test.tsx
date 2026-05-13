@@ -57,7 +57,7 @@ function makeRect(left: number, top: number, width: number, height: number): DOM
     x: left,
     y: top,
     toJSON: () => ({}),
-  } as DOMRect;
+  };
 }
 
 describe('PaneSplitter', () => {

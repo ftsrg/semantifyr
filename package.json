@@ -3,10 +3,20 @@
   "private": true,
   "version": "0.0.0",
   "description": "Workspace root for the Semantifyr TypeScript packages (live editor, vscode extension, shared editor-common).",
+  "type": "module",
   "workspaces": [
     "subprojects/semantifyr-editor-common",
     "subprojects/semantifyr-live/frontend",
     "subprojects/semantifyr-vscode",
     "subprojects/website"
-  ]
+  ],
+  "devDependencies": {
+    "@eslint/js": "^9.20.1",
+    "eslint": "^9.20.1",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.6.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.59.3"
+  }
 }

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React from 'react'
+import type React from 'react'
 import Box from '@mui/material/Box'
 import IconButton from '@mui/material/IconButton'
 import Tab from '@mui/material/Tab'
@@ -39,11 +39,12 @@ const TABS_SX = {
 } as const
 
 export default function RightPanel({ tabs, activeTabId, onActiveTabChange, onClose }: Props): React.JSX.Element {
-  const hasTabs = tabs.length > 0
+  const firstTab = tabs[0]
+  const hasTabs = firstTab !== undefined
   const resolvedActiveId = hasTabs && tabs.some((t) => t.id === activeTabId)
     ? activeTabId
-    : (tabs[0]?.id ?? null)
-  const active = hasTabs ? (tabs.find((t) => t.id === resolvedActiveId) ?? tabs[0]!) : null
+    : (firstTab?.id ?? null)
+  const active = hasTabs ? (tabs.find((t) => t.id === resolvedActiveId) ?? firstTab) : null
 
   return (
     <Box
@@ -59,10 +60,10 @@ export default function RightPanel({ tabs, activeTabId, onActiveTabChange, onClo
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'stretch', bgcolor: 'var(--surface-toolbar-bg)', minHeight: 32 }}>
-        {hasTabs ? (
+        {active ? (
           <Tabs
-            value={active!.id}
-            onChange={(_, value: string) => onActiveTabChange(value)}
+            value={active.id}
+            onChange={(_, value: string) => { onActiveTabChange(value); }}
             sx={TABS_SX}
           >
             {tabs.map((tab) => (

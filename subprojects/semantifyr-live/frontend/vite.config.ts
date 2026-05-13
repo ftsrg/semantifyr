@@ -17,12 +17,6 @@ function getGitCommit(): string {
   }
 }
 
-// In production the backend serves both the SPA and the LSP gateway, so
-// the SPA can use same-origin URLs for /api/* and /ws/lsp/{flavor}. During
-// `npm run dev` we still want that behaviour without having to special-case URLs in
-// the React code, so the dev server proxies those prefixes to the backend on
-// localhost:18080. Override the target with VITE_BACKEND_PROXY_TARGET if you run the
-// backend on a different host or port.
 const backendProxyTarget = process.env.VITE_BACKEND_PROXY_TARGET ?? 'http://localhost:18080';
 
 export default defineConfig({
@@ -33,17 +27,8 @@ export default defineConfig({
   },
   plugins: [
     react(),
-    // Progressive-web-app shell. The backend serves dist/ verbatim, so the generated
-    // service worker, manifest, and registerSW.js land at the site root. The Monaco-heavy
-    // JS chunks are NOT precached up front (that would make the service-worker install
-    // download ~15 MiB before the app is usable); they go through a CacheFirst runtime
-    // route instead, so they're cached the first time the app actually pulls them and
-    // served from cache on every subsequent visit. /api/* and /ws/* are never touched.
     VitePWA({
       disable: process.env.VITEST === 'true',
-      // 'prompt' (not 'autoUpdate'): a new build waits until the user clicks "Reload" in the
-      // ReloadPrompt toast, so an in-progress edit is never reloaded out from under them. The
-      // app drives this via `useRegisterSW` from `virtual:pwa-register/react`.
       registerType: 'prompt',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'logo-full-light.svg', 'logo-full-dark.svg'],
       manifest: {
@@ -64,8 +49,6 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Precache only the small shell assets; the big JS bundles are handled by the
-        // runtime route below.
         globPatterns: ['**/*.{css,html,ico,svg,png,json,webmanifest,woff,woff2,ttf}'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//, /^\/ws\//],

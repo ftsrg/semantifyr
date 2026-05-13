@@ -57,7 +57,7 @@ export async function fetchFlavor(httpBase: string, language: string): Promise<F
 export function encodeBase64Url(s: string): string {
   if (typeof btoa === 'undefined') return s;
   const b64 = btoa(
-    encodeURIComponent(s).replace(/%([0-9A-F]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16))),
+    encodeURIComponent(s).replace(/%([0-9A-F]{2})/g, (_, hex: string) => String.fromCharCode(parseInt(hex, 16))),
   );
   return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }

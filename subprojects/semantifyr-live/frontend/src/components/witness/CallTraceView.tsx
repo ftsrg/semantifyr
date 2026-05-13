@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
@@ -36,7 +37,7 @@ function TraceEntryNode({ call, depth }: TraceEntryNodeProps): React.JSX.Element
     <Box sx={{ pl: depth * 1.5 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
         {hasChildren ? (
-          <IconButton size="small" sx={{ p: 0, color: 'text.secondary' }} onClick={() => setOpen((prev) => !prev)}>
+          <IconButton size="small" sx={{ p: 0, color: 'text.secondary' }} onClick={() => { setOpen((prev) => !prev); }}>
             {open ? <KeyboardArrowDownIcon sx={{ fontSize: ICON_SIZE.sm }} /> : <KeyboardArrowRightIcon sx={{ fontSize: ICON_SIZE.sm }} />}
           </IconButton>
         ) : (
@@ -79,7 +80,7 @@ function CallStepRow({ step, label, defaultOpen }: CallStepRowProps): React.JSX.
           cursor: 'pointer',
           '&:hover': { bgcolor: 'var(--surface-bg)' },
         }}
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => { setOpen((prev) => !prev); }}
       >
         <IconButton size="small" sx={{ p: 0, color: 'text.secondary' }}>
           {open ? <KeyboardArrowDownIcon sx={{ fontSize: ICON_SIZE.sm }} /> : <KeyboardArrowRightIcon sx={{ fontSize: ICON_SIZE.sm }} />}

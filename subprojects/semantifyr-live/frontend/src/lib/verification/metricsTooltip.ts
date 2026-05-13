@@ -15,7 +15,7 @@ export interface MetricsTooltipOptions {
 }
 
 // "PT0S" is how kotlin.time.Duration encodes Duration.ZERO.
-export function isMeaningfulDuration(iso: string | undefined | null): boolean {
+export function isMeaningfulDuration(iso: string | undefined | null): iso is string {
   return typeof iso === 'string' && iso.length > 0 && iso !== 'PT0S'
 }
 
@@ -25,7 +25,7 @@ function appendStage(
   value: string | undefined | null,
 ): void {
   if (isMeaningfulDuration(value)) {
-    parts.push(`${label}: ${formatIsoDurationDetailed(value!)}`)
+    parts.push(`${label}: ${formatIsoDurationDetailed(value)}`)
   }
 }
 

@@ -69,7 +69,7 @@ describe('EditorPage', () => {
     const editor = await waitForEditor();
     expect(editor.dataset.language).toBe('oxsts');
     const code = within(editor).getByTestId('initial-code').textContent;
-    const expectedCode = LIVE_FLAVORS[0]!.examples[0]!.code;
+    const expectedCode = LIVE_FLAVORS[0].examples[0]!.code;
     expect(code).toBe(expectedCode);
   });
 
@@ -99,7 +99,7 @@ describe('EditorPage', () => {
     setLocation('https://test.example/?example=does-not-exist');
     renderPage();
     const editor = await waitForEditor();
-    const defaultCode = LIVE_FLAVORS[0]!.examples[0]!.code;
+    const defaultCode = LIVE_FLAVORS[0].examples[0]!.code;
     expect(within(editor).getByTestId('initial-code').textContent).toBe(defaultCode);
   });
 

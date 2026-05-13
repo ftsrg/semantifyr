@@ -27,7 +27,7 @@ const SUPPORTED_FLAVORS = new Set(['oxsts', 'xsts', 'gamma']);
 //
 //   ```oxsts verify                            ← "Verify this snippet" button
 //   ```oxsts open                              ← "Open in live editor ↗" link, code inline
-//   ```oxsts open=trafficlight-direct-snapshot ← link to a named example in the registry
+//   ```oxsts open=basics                       ← link to a named example in the registry
 //
 // Multiple keywords can be combined: `verify open`, `verify open=...`. Anything else in
 // the metastring is passed through to the default Docusaurus CodeBlock unchanged.
@@ -37,8 +37,7 @@ const OPEN_KEYWORDS = /(^|\s)open(=([\w-]+))?(\s|$)/;
 interface MetaFlags {
   verify: boolean;
   open: boolean;
-  /** Optional id of a snippet registered in the live frontend's examples.ts. */
-  exampleId?: string;
+  exampleId?: string | undefined;
 }
 
 function parseMeta(metastring: string | undefined): MetaFlags {
@@ -48,21 +47,21 @@ function parseMeta(metastring: string | undefined): MetaFlags {
   return {
     verify,
     open: !!openMatch,
-    exampleId: openMatch?.[3],
+    ...(openMatch?.[3] !== undefined && { exampleId: openMatch[3] }),
   };
 }
 
 function extractLanguage(props: Props): string | null {
-  // Docusaurus may pass either a className like "language-oxsts" or a `language` prop.
   const fromLanguageProp = (props as { language?: string }).language;
   if (fromLanguageProp && SUPPORTED_FLAVORS.has(fromLanguageProp)) {
     return fromLanguageProp;
   }
   const className = (props as { className?: string }).className;
   if (className) {
-    const match = className.match(/language-(\w+)/);
-    if (match && SUPPORTED_FLAVORS.has(match[1])) {
-      return match[1];
+    const match = /language-(\w+)/.exec(className);
+    const languageId = match?.[1];
+    if (languageId && SUPPORTED_FLAVORS.has(languageId)) {
+      return languageId;
     }
   }
   return null;
@@ -101,7 +100,11 @@ export default function CodeBlockWrapper(props: Props): React.JSX.Element {
             <Suspense fallback={null}>
               {meta.verify && <VerifyButton language={language} code={code} />}
               {meta.open && (
-                <OpenInLiveLink language={language} code={code} exampleId={meta.exampleId} />
+                <OpenInLiveLink
+                  language={language}
+                  code={code}
+                  {...(meta.exampleId !== undefined && { exampleId: meta.exampleId })}
+                />
               )}
             </Suspense>
           )}

@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Collapse from '@mui/material/Collapse';
@@ -74,7 +75,7 @@ function SessionRow({ session, onCancelSession, onCancelVerification }: SessionR
     <>
       <TableRow
         hover
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => { setOpen((prev) => !prev); }}
         sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'var(--surface-panel-bg)' } }}
       >
         <TableCell sx={{ ...cellSx, width: 32, px: 0.5 }}>
@@ -189,7 +190,7 @@ function SessionDetails({ session, onCancelVerification }: SessionDetailsProps):
                 {formatIsoDuration(v.elapsed)}
               </Box>
               <Tooltip title="Cancel">
-                <IconButton size="small" onClick={() => onCancelVerification(v.verificationId)} sx={{ color: 'var(--danger)' }}>
+                <IconButton size="small" onClick={() => { onCancelVerification(v.verificationId); }} sx={{ color: 'var(--danger)' }}>
                   <StopIcon sx={{ fontSize: ICON_SIZE.sm }} />
                 </IconButton>
               </Tooltip>

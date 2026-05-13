@@ -16,11 +16,12 @@
     "src"
   ],
   "scripts": {
-    "build": "tsc -b",
-    "build:watch": "tsc -b --watch",
-    "clean": "rm -rf dist tsconfig.tsbuildinfo"
-  },
-  "devDependencies": {
-    "typescript": "~5.7.3"
+    "typecheck": "tsc -b",
+    "typecheck:watch": "tsc -b --watch",
+    "lint": "eslint",
+    "check": "npm run typecheck && npm run lint",
+    "assemble": "tsc -b",
+    "assemble:watch": "tsc -b --watch",
+    "build": "npm run check && npm run assemble"
   }
 }

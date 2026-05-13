@@ -17,7 +17,7 @@ import { failedResult, passedResult } from './fixtures/verification-results';
 interface FakeHandle {
   handle: LiveEditorHandle;
   resolveDiscovery: (cases: VerificationCaseSpecification[]) => void;
-  sendRequest: ReturnType<typeof vi.fn>;
+  sendRequest: ReturnType<typeof vi.fn<LspClient['sendRequest']>>;
 }
 
 function createFakeHandle(): FakeHandle {
@@ -32,7 +32,7 @@ function createFakeHandle(): FakeHandle {
     const cmd = (params as { command?: string }).command;
     if (cmd === 'oxsts.case.discover') {
       return new Promise((resolve) => {
-        resolveDiscovery = (cs) => resolve(cs);
+        resolveDiscovery = (cs) => { resolve(cs); };
       });
     }
     if (cmd === 'oxsts.case.verify') {
@@ -61,7 +61,7 @@ function createFakeHandle(): FakeHandle {
   };
   return {
     handle,
-    resolveDiscovery: (cs) => resolveDiscovery(cs),
+    resolveDiscovery: (cs) => { resolveDiscovery(cs); },
     sendRequest: sendRequestRouted,
   };
 }

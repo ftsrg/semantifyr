@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React, { useCallback, useEffect, useRef } from 'react'
+import type React from 'react';
+import { useCallback, useEffect, useRef } from 'react'
 import Box from '@mui/material/Box'
 
 type Orientation = 'vertical' | 'horizontal'

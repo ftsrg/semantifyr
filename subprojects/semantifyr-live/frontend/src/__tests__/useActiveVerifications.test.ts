@@ -90,7 +90,7 @@ describe('useActiveVerifications', () => {
   it('cancel + cancelAll forward to the api', async () => {
     const fake = createFakeApi([fakeVerification({ verificationId: 'r1' })]);
     const { result } = renderHook(() => useActiveVerifications(fake.api, true));
-    await waitFor(() => expect(result.current.items.length).toBe(1));
+    await waitFor(() => { expect(result.current.items.length).toBe(1); });
 
     await act(async () => {
       await result.current.cancel('r1');
@@ -106,7 +106,7 @@ describe('useActiveVerifications', () => {
   it('disposes the subscription on unmount', async () => {
     const fake = createFakeApi([]);
     const { unmount } = renderHook(() => useActiveVerifications(fake.api, true));
-    await waitFor(() => expect(fake.listVerifications).toHaveBeenCalled());
+    await waitFor(() => { expect(fake.listVerifications).toHaveBeenCalled(); });
     unmount();
     expect(fake.unsubscribed()).toBe(true);
   });

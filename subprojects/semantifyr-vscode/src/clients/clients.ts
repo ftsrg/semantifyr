@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { ExtensionContext } from "vscode";
+import type { ExtensionContext } from "vscode";
 import { startGammaClient as startGammaClient, stopGammaClient as stopGammaClient } from "./gamma-client.js";
 import { startOxstsClient, stopOxstsClient } from "./oxsts-client.js";
 

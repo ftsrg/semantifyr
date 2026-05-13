@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import type React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
@@ -117,15 +118,15 @@ export default function DevInfoPanel({
       const api = editorHandle?.getApi() ?? null;
       if (api) {
         api.getSessionInfo()
-          .then((info) => setSessionInfo(info))
-          .catch(() => setSessionInfo(null));
+          .then((info) => { setSessionInfo(info); })
+          .catch(() => { setSessionInfo(null); });
       } else {
         setSessionInfo(null);
       }
     };
     update();
     const interval = setInterval(update, 2000);
-    return () => clearInterval(interval);
+    return () => { clearInterval(interval); };
   }, [open, connectedSince, editorHandle]);
 
   useEffect(() => {

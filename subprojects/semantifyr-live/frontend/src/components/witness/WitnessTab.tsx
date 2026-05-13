@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React, { useEffect, useRef, useState } from 'react'
+import type React from 'react';
+import { useEffect, useRef, useState } from 'react'
 import Box from '@mui/material/Box'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
@@ -94,7 +95,7 @@ function RawWitnessEditor({
         }
         dispose = handle.dispose
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         console.warn('semantifyr-live: failed to attach witness editor', error)
       })
     return () => {
@@ -167,7 +168,7 @@ export default function WitnessTab({
             size="small"
             value={view}
             exclusive
-            onChange={(_, next) => {
+            onChange={(_, next: ViewMode | null) => {
               if (next) {
                 setView(next)
               }

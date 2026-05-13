@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Collapse from '@mui/material/Collapse';
@@ -86,7 +87,7 @@ function SessionCard({ session, onCancelSession, onCancelVerification }: Session
           cursor: 'pointer',
           '&:hover': { bgcolor: 'var(--surface-panel-bg)' },
         }}
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => { setOpen((prev) => !prev); }}
       >
         <IconButton size="small" sx={{ color: 'text.secondary', p: 0.25 }}>
           {open ? <KeyboardArrowDownIcon sx={{ fontSize: ICON_SIZE.md }} /> : <KeyboardArrowRightIcon sx={{ fontSize: ICON_SIZE.md }} />}
@@ -193,7 +194,7 @@ function SessionCard({ session, onCancelSession, onCancelVerification }: Session
                   </Box>
                   <Box sx={{ flex: 1 }} />
                   <Tooltip title="Cancel">
-                    <IconButton size="small" onClick={() => onCancelVerification(v.verificationId)} sx={{ color: 'var(--danger)' }}>
+                    <IconButton size="small" onClick={() => { onCancelVerification(v.verificationId); }} sx={{ color: 'var(--danger)' }}>
                       <StopIcon sx={{ fontSize: ICON_SIZE.sm }} />
                     </IconButton>
                   </Tooltip>

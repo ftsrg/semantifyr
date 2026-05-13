@@ -12,7 +12,7 @@ export function resolveBackendUrl(): string {
     if (fromQuery && fromQuery.length > 0) return fromQuery;
   }
 
-  const fromEnv = import.meta.env?.VITE_BACKEND_URL as string | undefined;
+  const fromEnv = import.meta.env.VITE_BACKEND_URL as string | undefined;
   if (fromEnv && fromEnv.length > 0) return fromEnv;
 
   if (typeof window !== 'undefined') {

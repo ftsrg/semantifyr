@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React from 'react'
+import type React from 'react'
 import Box from '@mui/material/Box'
 
 import Toolbar from './Toolbar'
@@ -19,7 +19,7 @@ import type { FlavorInfo, PortfolioInfo } from '../../lib/api'
 
 interface Props {
   logoSrc: string
-  flavors: readonly LiveFlavor[]
+  flavors: readonly [LiveFlavor, ...LiveFlavor[]]
   currentFlavorId: string
   currentExampleId: string
   onSelectModel: (flavorId: string, exampleId: string) => void

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React from 'react';
+import type React from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import Snackbar from '@mui/material/Snackbar';
 import Box from '@mui/material/Box';
@@ -55,7 +55,7 @@ export default function ReloadPrompt(): React.JSX.Element {
         <IconButton
           size="small"
           aria-label="Dismiss"
-          onClick={() => setNeedRefresh(false)}
+          onClick={() => { setNeedRefresh(false); }}
           sx={{ color: 'text.secondary', p: 0.25, '&:hover': { color: 'text.primary' } }}
         >
           <CloseIcon sx={{ fontSize: ICON_SIZE.sm }} />

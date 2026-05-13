@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
@@ -122,7 +123,7 @@ function LoginForm({ onLogin, error }: { onLogin: (password: string) => void; er
       {error && <Alert severity="error">Invalid password</Alert>}
       <Box
         component="form"
-        onSubmit={(e: React.FormEvent) => {
+        onSubmit={(e: React.SyntheticEvent) => {
           e.preventDefault();
           onLogin(password);
         }}
@@ -133,7 +134,7 @@ function LoginForm({ onLogin, error }: { onLogin: (password: string) => void; er
           label="Admin password"
           size="small"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => { setPassword(e.target.value); }}
           autoFocus
           sx={{
             '& .MuiInputBase-root': { color: 'text.primary', bgcolor: 'var(--surface-bg)' },
@@ -200,8 +201,8 @@ function Dashboard({ api, onLogout, preference, colorMode, onToggleColorMode }: 
 
   useEffect(() => {
     void refresh();
-    void api.fetchPortfolios().then(setPortfolios).catch(() => setPortfolios([]));
-    void api.fetchFlavors().then(setFlavors).catch(() => setFlavors([]));
+    void api.fetchPortfolios().then(setPortfolios).catch(() => { setPortfolios([]); });
+    void api.fetchFlavors().then(setFlavors).catch(() => { setFlavors([]); });
   }, [refresh, api]);
 
   useEffect(() => {
@@ -273,7 +274,7 @@ function Dashboard({ api, onLogout, preference, colorMode, onToggleColorMode }: 
       <AdminHeader
         lastRefreshAt={lastRefreshAt}
         paused={paused}
-        onTogglePause={() => setPaused((p) => !p)}
+        onTogglePause={() => { setPaused((p) => !p); }}
         onLogout={onLogout}
         preference={preference}
         colorMode={colorMode}
@@ -296,7 +297,7 @@ function Dashboard({ api, onLogout, preference, colorMode, onToggleColorMode }: 
             <Box sx={{ px: { xs: 1, sm: 3 }, mt: 2, borderBottom: '1px solid var(--surface-border)' }}>
               <Tabs
                 value={tab}
-                onChange={(_, v: AdminTab) => setTab(v)}
+                onChange={(_, v: AdminTab) => { setTab(v); }}
                 variant="scrollable"
                 scrollButtons="auto"
                 sx={{
@@ -343,11 +344,11 @@ function Dashboard({ api, onLogout, preference, colorMode, onToggleColorMode }: 
       <Snackbar
         open={toast !== null}
         autoHideDuration={4000}
-        onClose={() => setToast(null)}
+        onClose={() => { setToast(null); }}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         {toast ? (
-          <Alert severity={toast.severity} onClose={() => setToast(null)} sx={{ width: '100%' }}>
+          <Alert severity={toast.severity} onClose={() => { setToast(null); }} sx={{ width: '100%' }}>
             {toast.message}
           </Alert>
         ) : undefined}

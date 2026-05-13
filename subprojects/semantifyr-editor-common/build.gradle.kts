@@ -19,29 +19,44 @@ val distributionOutput by configurations.creating {
     isCanBeResolved = false
 }
 
-val buildEditorCommon by tasks.registering(NpmTask::class) {
-    workingDir = project.projectDir
-
+fun NpmTask.configureSharedInputs() {
     inputs.dir(project.layout.projectDirectory.dir("src"))
     inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
+    inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
     inputs.file(project.layout.projectDirectory.file("package.json"))
+    inputs.file(rootProject.layout.projectDirectory.file("tsconfig.base.json"))
+    inputs.file(rootProject.layout.projectDirectory.file("eslint.config.base.js"))
     inputs.file(rootProject.layout.projectDirectory.file("package.json"))
     inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
     inputs.files(tasks.npmInstall)
+}
+
+val npmAssemble by tasks.registering(NpmTask::class) {
+    configureSharedInputs()
 
     outputs.dir(project.layout.projectDirectory.dir("dist"))
 
-    npmCommand.set(listOf("run", "build"))
+    npmCommand.set(listOf("run", "assemble"))
+}
+
+val npmCheck by tasks.registering(NpmTask::class) {
+    configureSharedInputs()
+
+    npmCommand.set(listOf("run", "check"))
 }
 
 artifacts {
     add(distributionOutput.name, project.layout.projectDirectory.dir("dist")) {
-        builtBy(buildEditorCommon)
+        builtBy(npmAssemble)
     }
 }
 
 tasks.assemble {
-    dependsOn(buildEditorCommon)
+    dependsOn(npmAssemble)
+}
+
+tasks.check {
+    dependsOn(npmCheck)
 }
 
 tasks.clean {

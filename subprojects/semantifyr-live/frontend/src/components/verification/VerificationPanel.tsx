@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import type React from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -42,7 +43,7 @@ import { formatIsoDurationDetailed } from '../../lib/util/duration';
 import { buildMetricsTooltip, isMeaningfulDuration } from '../../lib/verification/metricsTooltip';
 import { witnessIconDescriptor } from '../../lib/verification/witnessIcon';
 import { findPortfolioLabel } from '../../lib/verification/portfolioLabel';
-import { PortfolioInfo } from '../../lib/api'
+import type { PortfolioInfo } from '../../lib/api'
 import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
 
 interface MetricsPillSource {
@@ -338,8 +339,8 @@ function VerificationPanelInner(
                 <Switch
                   size="small"
                   checked={autoValidate}
-                  onChange={(_, checked) => onAutoValidateChange(checked)}
-                  onClick={(event) => event.stopPropagation()}
+                  onChange={(_, checked) => { onAutoValidateChange(checked); }}
+                  onClick={(event) => { event.stopPropagation(); }}
                 />
               }
               label={
@@ -392,7 +393,7 @@ function VerificationPanelInner(
               {cases.map((caseState) => (
                 <ListItemButton
                   key={caseState.caseInfo.id}
-                  onClick={() => handleCaseClick(caseState.caseInfo.location)}
+                  onClick={() => { handleCaseClick(caseState.caseInfo.location); }}
                   sx={{ py: 0.25, px: 1.5 }}
                 >
                   <ListItemIcon sx={{ minWidth: 32 }}>

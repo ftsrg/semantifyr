@@ -29,8 +29,8 @@ export async function discoverVerificationCases(
     const result = await client.sendRequest("workspace/executeCommand", {
         command: discoveryCommand,
         arguments: [fileUri],
-    });
-    return (result as VerificationCaseSpecification[]) ?? [];
+    }) as VerificationCaseSpecification[] | null | undefined;
+    return result ?? [];
 }
 
 export interface VerificationCaseLocation {
@@ -58,6 +58,6 @@ export async function verifyCase(
         "workspace/executeCommand",
         { command: verificationCommand, arguments: [args] },
         options.token,
-    );
-    return (response as VerificationCaseResult | null) ?? null;
+    ) as VerificationCaseResult | null;
+    return response;
 }

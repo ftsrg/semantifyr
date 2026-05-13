@@ -11,7 +11,6 @@ import {
   runAllVerifications,
   verifySingleCase,
   type LspClient,
-  type VerificationState,
 } from '../lib/verification';
 import { wrapClientWithMetrics } from '../lib/session/lspMetrics';
 import { sampleCase } from './fixtures/cases';
@@ -53,7 +52,7 @@ describe('LSP cancellation plumbing', () => {
       'file:///x',
       sampleCase('b'),
       (next) => {
-        if (typeof next === 'function') next({ phase: 'idle', cases: [] } as VerificationState);
+        if (typeof next === 'function') next({ phase: 'idle', cases: [] });
       },
       (_) => () => {},
     );

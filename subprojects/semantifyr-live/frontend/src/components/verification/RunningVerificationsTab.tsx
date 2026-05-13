@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React from 'react'
+import type React from 'react'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
 import IconButton from '@mui/material/IconButton'
@@ -153,11 +153,12 @@ export default function RunningVerificationsTab({ api, connected, cases, portfol
       ) : (
         <Box>
           {active.map((item) => {
-            const matchingCase = item.location
+            const itemLocation = item.location
+            const matchingCase = itemLocation
               ? cases.find((cs) => (
                   // Witness validation runs target the witness URI rather than the case site.
-                  sameLocation(cs.caseInfo.location, item.location!)
-                    || cs.trace?.witnessUri === item.location!.uri
+                  sameLocation(cs.caseInfo.location, itemLocation)
+                    || cs.trace?.witnessUri === itemLocation.uri
                 ))
               : undefined
             const label = matchingCase?.caseInfo.label ?? `#${item.verificationId.slice(0, 7)}`
@@ -173,7 +174,7 @@ export default function RunningVerificationsTab({ api, connected, cases, portfol
                   borderBottom: '1px solid var(--surface-border)',
                 }}
               >
-                <KindChip kind={item.kind ?? 'Verify'} density="compact" />
+                <KindChip kind={item.kind} density="compact" />
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography sx={{ fontSize: FONT_SIZE.sm, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {label}

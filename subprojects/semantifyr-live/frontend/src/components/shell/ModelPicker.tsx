@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import type React from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Popover from '@mui/material/Popover';
@@ -23,7 +24,7 @@ import type { LiveExample, LiveFlavor } from '../../examples';
 import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
 
 interface Props {
-  flavors: readonly LiveFlavor[];
+  flavors: readonly [LiveFlavor, ...LiveFlavor[]];
   currentFlavorId: string;
   currentExampleId: string;
   onSelectModel: (flavorId: string, exampleId: string) => void;
@@ -52,7 +53,7 @@ export default function ModelPicker({ flavors, currentFlavorId, currentExampleId
   const [filter, setFilter] = useState('');
   const open = anchorEl !== null;
 
-  const currentFlavor = flavors.find((f) => f.id === currentFlavorId) ?? flavors[0]!;
+  const currentFlavor = flavors.find((f) => f.id === currentFlavorId) ?? flavors[0];
   const pickerFlavor = flavors.find((f) => f.id === pickerFlavorId) ?? currentFlavor;
 
   useEffect(() => {
@@ -90,7 +91,7 @@ export default function ModelPicker({ flavors, currentFlavorId, currentExampleId
           size="small"
           startIcon={<FolderOpenOutlinedIcon />}
           endIcon={<ArrowDropDownIcon />}
-          onClick={(event) => setAnchorEl(event.currentTarget)}
+          onClick={(event) => { setAnchorEl(event.currentTarget); }}
           sx={{
             fontSize: { xs: FONT_SIZE.sm, sm: FONT_SIZE.md },
             px: { xs: 0.75, sm: 1.5 },
@@ -147,7 +148,7 @@ export default function ModelPicker({ flavors, currentFlavorId, currentExampleId
                 autoFocus
                 placeholder="Filter examples"
                 value={filter}
-                onChange={(event) => setFilter(event.target.value)}
+                onChange={(event) => { setFilter(event.target.value); }}
                 slotProps={{
                   input: {
                     startAdornment: (
@@ -173,7 +174,7 @@ export default function ModelPicker({ flavors, currentFlavorId, currentExampleId
                   <ListItemButton
                     key={ex.id}
                     selected={pickerFlavorId === currentFlavorId && ex.id === currentExampleId}
-                    onClick={() => handlePickExample(ex.id)}
+                    onClick={() => { handlePickExample(ex.id); }}
                     sx={{ ...SELECTED_TEXT_SX, py: 0.75 }}
                   >
                     <ListItemText

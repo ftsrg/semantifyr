@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import type React from 'react';
+import { useEffect, useRef, useState } from 'react';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { fetchFlavor, normalizeBaseUrl, type FlavorInfo } from './lib';
 import styles from './styles.module.css';
@@ -17,7 +18,7 @@ interface Props {
 interface CaseResult {
   label: string;
   status: 'passed' | 'failed';
-  message?: string;
+  message?: string | undefined;
 }
 
 interface VerifyOutcome {
@@ -29,11 +30,9 @@ type Phase = 'idle' | 'connecting' | 'verifying' | 'done' | 'error' | 'cancelled
 
 interface ResultState {
   phase: Phase;
-  /** High-level status (e.g. "Discovering verification cases…", "Verifying X (1/2)…"). */
-  message?: string;
-  /** Latest progress text from the LSP via `$/progress` notifications. */
-  progress?: string;
-  outcome?: VerifyOutcome;
+  message?: string | undefined;
+  progress?: string | undefined;
+  outcome?: VerifyOutcome | undefined;
 }
 
 // LSP / JSON-RPC types — kept hand-rolled to avoid pulling in vscode-languageclient on
@@ -108,7 +107,8 @@ function startVerification(
   onPhase: (phase: Phase, message?: string) => void,
   onProgress: (text: string) => void,
 ): VerifyHandle {
-  if (!flavor.verifyCommand) {
+  const verifyCommand = flavor.verifyCommand;
+  if (verifyCommand === null) {
     return {
       promise: Promise.reject(
         new Error(`Verification is not enabled for the "${flavor.id}" flavor`),
@@ -157,7 +157,7 @@ function startVerification(
         const id = nextId++;
         pending.set(id, {
           method,
-          resolve: (v) => res(v as T),
+          resolve: (v) => { res(v as T); },
           reject: rej,
         });
         sendRaw({ jsonrpc: '2.0', id, method, params });
@@ -168,7 +168,7 @@ function startVerification(
     };
 
     const respondToServerRequest = (id: number | string, result: unknown) => {
-      sendRaw({ jsonrpc: '2.0', id, result } as JsonRpcRequest);
+      sendRaw({ jsonrpc: '2.0', id, result });
     };
 
     cancelFn = () => {
@@ -223,7 +223,7 @@ function startVerification(
     ws.onmessage = (event) => {
       let msg: JsonRpcRequest;
       try {
-        msg = JSON.parse(event.data as string);
+        msg = JSON.parse(event.data as string) as JsonRpcRequest;
       } catch {
         return;
       }
@@ -296,10 +296,10 @@ function startVerification(
           });
 
           onPhase('verifying', 'Discovering verification cases…');
-          const cases = (await sendRequest<VerificationCaseSpec[]>(
+          const cases = await sendRequest<VerificationCaseSpec[]>(
             'workspace/executeCommand',
             { command: 'oxsts.case.discover', arguments: [fileUri] },
-          )) ?? [];
+          );
 
           if (cases.length === 0) {
             throw new Error('No verification cases found in this snippet');
@@ -309,12 +309,13 @@ function startVerification(
           for (let i = 0; i < cases.length; i++) {
             if (cancelled) throw new Error('cancelled');
             const c = cases[i];
+            if (!c) continue;
             onPhase('verifying', `Verifying ${c.label} (${i + 1}/${cases.length})…`);
             const r = await sendRequest<VerificationCaseRunResult>('workspace/executeCommand', {
-              command: flavor.verifyCommand!,
+              command: verifyCommand,
               arguments: [{ uri: fileUri, range: c.location.range }],
             });
-            results.push({ label: c.label, status: r.status, message: r.message });
+            results.push({ label: c.label, status: r.status, ...(r.message !== undefined && { message: r.message }) });
           }
 
           // Best-effort graceful shutdown — don't fail the result if it doesn't complete.
@@ -383,7 +384,7 @@ export default function VerifyButton({ language, code }: Props): React.JSX.Eleme
   if (backendAvailable === null) return null;
   // If the backend is down, show a subtle indicator instead of silently hiding.
   if (!backendAvailable || !flavor || !flavor.verify || !flavor.verifyCommand) {
-    return backendAvailable === false ? (
+    return !backendAvailable ? (
       <div className={styles.verifyContainer}>
         <span className={styles.verifyOffline}>Verification server is currently unavailable</span>
       </div>
@@ -397,8 +398,8 @@ export default function VerifyButton({ language, code }: Props): React.JSX.Eleme
       flavor,
       language,
       code,
-      (phase, message) => setState((prev) => ({ ...prev, phase, message })),
-      (progress) => setState((prev) => ({ ...prev, progress })),
+      (phase, message) => { setState((prev) => ({ ...prev, phase, message })); },
+      (progress) => { setState((prev) => ({ ...prev, progress })); },
     );
     handleRef.current = handle;
     handle.promise
@@ -406,12 +407,13 @@ export default function VerifyButton({ language, code }: Props): React.JSX.Eleme
         handleRef.current = null;
         setState({ phase: 'done', outcome });
       })
-      .catch((e: Error) => {
+      .catch((e: unknown) => {
         handleRef.current = null;
-        if (e.message === 'cancelled') {
+        const message = e instanceof Error ? e.message : String(e);
+        if (message === 'cancelled') {
           setState({ phase: 'cancelled', message: 'Verification cancelled' });
         } else {
-          setState({ phase: 'error', message: e.message });
+          setState({ phase: 'error', message });
         }
       });
   };

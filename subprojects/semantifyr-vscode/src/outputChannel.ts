@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import vscode, {ExtensionContext} from "vscode";
+import vscode, {type ExtensionContext} from "vscode";
 
 export let outputChannel: vscode.OutputChannel;
 
-export function writeToOutputChannel(message: string, reveal: boolean = true) {
+export function writeToOutputChannel(message: string, reveal = true) {
     outputChannel.append(message);
     if (reveal) {
         outputChannel.show(true);

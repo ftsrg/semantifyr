@@ -48,24 +48,32 @@ tasks.npmInstall {
     workingDir = rootProject.projectDir
 }
 
-val buildExtension by tasks.registering(NpmTask::class) {
+fun NpmTask.configureSharedInputs() {
     inputs.dir(project.layout.projectDirectory.dir("src"))
     inputs.file(project.layout.projectDirectory.file("esbuild.mjs"))
     inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
     inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
+    inputs.file(project.layout.projectDirectory.file("package.json"))
+    inputs.file(rootProject.layout.projectDirectory.file("tsconfig.base.json"))
+    inputs.file(rootProject.layout.projectDirectory.file("eslint.config.base.js"))
     inputs.file(rootProject.layout.projectDirectory.file("package.json"))
     inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
     inputs.files(tasks.npmInstall)
     inputs.files(editorCommonDist)
+}
 
-    npmCommand.set(
-        listOf(
-            "run",
-            "build",
-        ),
-    )
+val npmAssemble by tasks.registering(NpmTask::class) {
+    configureSharedInputs()
+
+    npmCommand.set(listOf("run", "assemble"))
 
     outputs.dir("dist")
+}
+
+val npmCheck by tasks.registering(NpmTask::class) {
+    configureSharedInputs()
+
+    npmCommand.set(listOf("run", "check"))
 }
 
 val syncPackageVersion by tasks.registering(NpmTask::class) {
@@ -92,17 +100,14 @@ val bundleExtension by tasks.registering(NpmTask::class) {
     inputs.file(project.layout.projectDirectory.file("icons/gamma-file-icon.png"))
     inputs.file(project.layout.projectDirectory.file("README.md"))
     inputs.file(project.layout.projectDirectory.file("CHANGELOG.md"))
+    inputs.file(rootProject.layout.projectDirectory.file("tsconfig.base.json"))
+    inputs.file(rootProject.layout.projectDirectory.file("eslint.config.base.js"))
     inputs.file(rootProject.layout.projectDirectory.file("package.json"))
     inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
     inputs.files(tasks.npmInstall)
     inputs.files(editorCommonDist)
 
-    npmCommand.set(
-        listOf(
-            "run",
-            "bundle",
-        ),
-    )
+    npmCommand.set(listOf("run", "bundle"))
 
     outputs.file(vsixFile)
 }
@@ -110,11 +115,15 @@ val bundleExtension by tasks.registering(NpmTask::class) {
 tasks {
     assemble {
         inputs.files(cloneDistribution)
-        inputs.files(buildExtension)
+        inputs.files(npmAssemble)
+    }
+
+    check {
+        dependsOn(npmCheck)
     }
 
     clean {
-        delete("dist")
+        delete("dist", "build")
     }
 }
 

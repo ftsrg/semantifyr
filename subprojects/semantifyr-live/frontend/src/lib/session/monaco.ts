@@ -78,7 +78,7 @@ function accentColorCustomizations(palette: { accent: string; accentHover: strin
   };
 }
 
-function keywordTokenCustomizations(accent: string): { textMateRules: Array<{ scope: string[]; settings: { foreground: string } }> } {
+function keywordTokenCustomizations(accent: string): { textMateRules: { scope: string[]; settings: { foreground: string } }[] } {
   return {
     textMateRules: [
       { scope: ['keyword.control'], settings: { foreground: accent } },
@@ -248,13 +248,13 @@ export async function createSecondaryEditor(
 
 // TODO: extract a shared editor-common helper; currently duplicated in semantifyr-vscode.
 export interface NavigateToParams {
-  locations: Array<{
+  locations: {
     uri: string;
     range: {
       start: { line: number; character: number };
       end: { line: number; character: number };
     };
-  }>;
+  }[];
 }
 
 async function handleNavigateTo(params: NavigateToParams): Promise<void> {

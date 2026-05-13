@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React from 'react';
+import type React from 'react';
 import AppBar from '@mui/material/AppBar';
 import MuiToolbar from '@mui/material/Toolbar';
 import Box from '@mui/material/Box';

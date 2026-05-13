@@ -130,7 +130,7 @@ function parseResultStatus(response: VerificationCaseResult | null): Verificatio
 
 // Wire shape from oxsts.case.validateWitness; see lang-ide-common WitnessValidationResult.
 interface WitnessValidationResultResponse {
-  status?: WitnessValidationStatus | string
+  status?: string
   message?: string | null
   metrics?: VerificationMetrics | null
   backendId?: string | null
@@ -359,7 +359,10 @@ export function runAllVerifications(
   })
 
   const runOne = async (index: number): Promise<void> => {
-    const currentCase = cases[index]!
+    const currentCase = cases[index]
+    if (!currentCase) {
+      return
+    }
     setState((prev) => ({
       ...prev,
       message: `Verifying ${currentCase.label} (${index + 1}/${cases.length})...`,
@@ -481,6 +484,7 @@ export function verifySingleCase(
         options,
         requestSource.token,
       )
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- cancelled may flip during await
       if (cancelled) {
         return
       }

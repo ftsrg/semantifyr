@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React from 'react';
+import type React from 'react';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -88,7 +88,7 @@ function SessionsHeader({ total, shown, filter, onFilterChange }: SessionsHeader
         size="small"
         placeholder="Filter by session, IP, or flavor"
         value={filter}
-        onChange={(e) => onFilterChange(e.target.value)}
+        onChange={(e) => { onFilterChange(e.target.value); }}
         sx={{
           width: { xs: '100%', sm: 280 },
           '& .MuiInputBase-root': { color: 'text.primary', bgcolor: 'var(--surface-bg)', fontSize: FONT_SIZE.sm },
@@ -103,7 +103,7 @@ function SessionsHeader({ total, shown, filter, onFilterChange }: SessionsHeader
             ),
             endAdornment: filter ? (
               <InputAdornment position="end">
-                <IconButton size="small" onClick={() => onFilterChange('')} sx={{ color: 'text.secondary' }}>
+                <IconButton size="small" onClick={() => { onFilterChange(''); }} sx={{ color: 'text.secondary' }}>
                   <ClearIcon sx={{ fontSize: ICON_SIZE.sm }} />
                 </IconButton>
               </InputAdornment>

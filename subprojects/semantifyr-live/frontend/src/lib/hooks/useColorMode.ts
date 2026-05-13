@@ -22,10 +22,10 @@ function readStoredPreference(): ColorModePreference | null {
 
 function resolveSystemTheme(): ResolvedColorMode {
   if (typeof window === 'undefined') return 'dark';
-  return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
 }
 
-const CYCLE: ColorModePreference[] = ['system', 'light', 'dark'];
+const CYCLE: readonly [ColorModePreference, ...ColorModePreference[]] = ['system', 'light', 'dark'];
 
 export function useColorMode() {
   const [preference, setPreferenceState] = useState<ColorModePreference>(
@@ -40,7 +40,7 @@ export function useColorMode() {
       setSystemTheme(e.matches ? 'light' : 'dark');
     };
     mql.addEventListener('change', handler);
-    return () => mql.removeEventListener('change', handler);
+    return () => { mql.removeEventListener('change', handler); };
   }, []);
 
   const colorMode: ResolvedColorMode = preference === 'system' ? systemTheme : preference;
@@ -57,12 +57,12 @@ export function useColorMode() {
     }
   }, [colorMode, preference]);
 
-  const setPreference = useCallback((p: ColorModePreference) => setPreferenceState(p), []);
+  const setPreference = useCallback((p: ColorModePreference) => { setPreferenceState(p); }, []);
 
   const cycle = useCallback(() => {
     setPreferenceState((prev) => {
       const idx = CYCLE.indexOf(prev);
-      return CYCLE[(idx + 1) % CYCLE.length]!;
+      return CYCLE[(idx + 1) % CYCLE.length] ?? CYCLE[0];
     });
   }, []);
 

@@ -28,7 +28,7 @@ function fakeCase(
       },
     },
     ...overrides,
-  } as VerificationCaseState
+  }
 }
 
 describe('caseStatusToSeverity', () => {

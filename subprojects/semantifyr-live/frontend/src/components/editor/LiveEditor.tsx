@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React, { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
+import type React from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 
 import type { FlavorInfo } from '../../lib/api'
 import type { ResolvedColorMode as ColorMode } from '../../lib/util/colorMode'

@@ -118,56 +118,63 @@ tasks.npmInstall {
     workingDir = rootProject.projectDir
 }
 
-val assembleFrontend by tasks.registering(NpmTask::class) {
-    group = "build"
-
+fun NpmTask.configureSharedInputs() {
     inputs.dir(project.layout.projectDirectory.dir("src"))
-    inputs.dir(project.layout.projectDirectory.dir("public"))
-    inputs.file(project.layout.projectDirectory.file("index.html"))
     inputs.file(project.layout.projectDirectory.file("vite.config.ts"))
     inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
+    inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
     inputs.file(project.layout.projectDirectory.file("package.json"))
+    inputs.file(rootProject.layout.projectDirectory.file("tsconfig.base.json"))
+    inputs.file(rootProject.layout.projectDirectory.file("eslint.config.base.js"))
     inputs.file(rootProject.layout.projectDirectory.file("package.json"))
     inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
     inputs.files(tasks.npmInstall)
     inputs.files(editorCommonDist)
     inputs.files(cloneTestModels)
     inputs.files(cloneVscodeLanguageAssets)
+}
+
+val npmAssemble by tasks.registering(NpmTask::class) {
+    group = "build"
+
+    configureSharedInputs()
+    inputs.dir(project.layout.projectDirectory.dir("public"))
+    inputs.file(project.layout.projectDirectory.file("index.html"))
     inputs.files(cloneBrandingAssets)
 
-    npmCommand.set(listOf("run", "build"))
+    npmCommand.set(listOf("run", "assemble"))
     outputs.dir(project.layout.projectDirectory.dir("dist"))
 }
 
 artifacts {
     add(distributionOutput.name, project.layout.projectDirectory.dir("dist")) {
-        builtBy(assembleFrontend)
+        builtBy(npmAssemble)
     }
 }
 
-val test by tasks.registering(NpmTask::class) {
+val npmCheck by tasks.registering(NpmTask::class) {
     group = "verification"
 
-    inputs.files(tasks.npmInstall)
-    inputs.files(editorCommonDist)
-    inputs.dir(project.layout.projectDirectory.dir("src"))
-    inputs.file(project.layout.projectDirectory.file("vite.config.ts"))
-    inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
-    inputs.file(project.layout.projectDirectory.file("package.json"))
-    inputs.file(rootProject.layout.projectDirectory.file("package.json"))
-    inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
-    inputs.files(cloneTestModels)
-    inputs.files(cloneVscodeLanguageAssets)
-    npmCommand.set(listOf("test"))
+    configureSharedInputs()
+
+    npmCommand.set(listOf("run", "check"))
+}
+
+val runDev by tasks.registering(NpmTask::class) {
+    group = "application"
+
+    configureSharedInputs()
+
+    npmCommand.set(listOf("run", "dev"))
 }
 
 tasks {
     assemble {
-        dependsOn(assembleFrontend)
+        dependsOn(npmAssemble)
     }
 
     check {
-        dependsOn(test)
+        dependsOn(npmCheck)
     }
 
     clean {

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React from 'react';
+import type React from 'react';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { encodeBase64Url } from './lib';
@@ -13,13 +13,7 @@ import styles from './styles.module.css';
 interface Props {
   language: string;
   code: string;
-  /**
-   * Optional id of a snippet that the live frontend has registered in its examples
-   * registry. When supplied, the link points at `?example=<id>` (a stable, pretty URL);
-   * when omitted, the snippet is base64-encoded and shipped inline as `?code=<...>` so
-   * the link is fully self-contained.
-   */
-  exampleId?: string;
+  exampleId?: string | undefined;
 }
 
 /**
@@ -45,7 +39,7 @@ export default function OpenInLiveLink({ language, code, exampleId }: Props): Re
 
   return (
     <div className={styles.openLinkContainer}>
-      <Link to={href} className={styles.openLink} target="_blank" rel="noopener noreferrer">
+      <Link to={href} className={styles.openLink ?? ''} target="_blank" rel="noopener noreferrer">
         Open in live editor ↗
       </Link>
     </div>

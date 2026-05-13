@@ -204,7 +204,7 @@ describe('validateWitness', () => {
     expect(outcome.portfolioId).toBe('smart-full');
 
     const callArgs = sendRequest.mock.calls[0]!;
-    const params = callArgs[1] as { arguments: Array<{ portfolio?: string; caseLabel?: string }> };
+    const params = callArgs[1] as { arguments: { portfolio?: string; caseLabel?: string }[] };
     expect(params.arguments[0]!.portfolio).toBe('smart-full');
     expect(params.arguments[0]!.caseLabel).toBe('Case a');
   });

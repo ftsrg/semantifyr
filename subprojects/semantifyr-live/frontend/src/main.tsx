@@ -31,7 +31,7 @@ const appErrorFallback = (
     <p>The app hit an unexpected error. Reloading the page usually fixes it.</p>
     <button
       type="button"
-      onClick={() => window.location.reload()}
+      onClick={() => { window.location.reload(); }}
       style={{ padding: '0.5rem 1rem', fontSize: '0.95rem', cursor: 'pointer', border: 'none', borderRadius: 4, background: '#c00000', color: '#fff' }}
     >
       Reload page
