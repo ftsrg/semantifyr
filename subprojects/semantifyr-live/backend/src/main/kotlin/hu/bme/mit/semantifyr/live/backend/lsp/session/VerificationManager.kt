@@ -18,6 +18,7 @@ import hu.bme.mit.semantifyr.live.backend.lsp.service.RunningVerification
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionLanguageClient
 import hu.bme.mit.semantifyr.live.backend.lsp.service.VerificationsChangedParams
 import hu.bme.mit.semantifyr.live.backend.utils.currentMdcContext
+import hu.bme.mit.semantifyr.live.backend.utils.currentMdcContextBlocking
 import hu.bme.mit.semantifyr.live.backend.utils.withVerificationIdMdc
 import hu.bme.mit.semantifyr.logging.error
 import hu.bme.mit.semantifyr.logging.info
@@ -76,8 +77,9 @@ class VerificationManager @Inject constructor(
         val location = request.toLocation()
         val portfolioId = request.portfolio()
         val startedAt = TimeSource.Monotonic.markNow()
+        val launchContext = currentMdcContextBlocking() + currentSessionScopeElement()
 
-        return lspSession.coroutineScope.future {
+        return lspSession.coroutineScope.future(launchContext) {
             val mdcContext = withVerificationIdMdc(verificationId)
             withContext(mdcContext) {
                 val entry = Entry(
