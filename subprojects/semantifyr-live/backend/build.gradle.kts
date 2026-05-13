@@ -208,7 +208,7 @@ testing {
     }
 }
 
-val prepareDocker by tasks.registering {
+val prepareDockerBuild by tasks.registering {
     inputs.files(cloneSemanticLibraries)
     inputs.files(cloneWebDistributions)
     inputs.files(cloneTheta)
@@ -224,16 +224,20 @@ val dockerGitSha = providers.exec {
 }
 
 val dockerBuildImage by tasks.registering(DockerBuildImage::class) {
-    dependsOn(prepareDocker)
+    val repo = dockerImageRepo
+    val version = project.version.toString()
+    dependsOn(prepareDockerBuild)
     inputDir.set(projectDir)
-    images.add("$dockerImageRepo:${project.version}")
-    images.add("$dockerImageRepo:latest")
-    images.add(dockerGitSha.map { "$dockerImageRepo:$it" })
+    images.add("$repo:$version")
+    images.add("$repo:latest")
+    images.add(dockerGitSha.map { "$repo:$it" })
 }
 
 val dockerPushImage by tasks.registering(DockerPushImage::class) {
+    val repo = dockerImageRepo
+    val version = project.version.toString()
     dependsOn(dockerBuildImage)
-    images.add("$dockerImageRepo:${project.version}")
-    images.add("$dockerImageRepo:latest")
-    images.add(dockerGitSha.map { "$dockerImageRepo:$it" })
+    images.add("$repo:$version")
+    images.add("$repo:latest")
+    images.add(dockerGitSha.map { "$repo:$it" })
 }

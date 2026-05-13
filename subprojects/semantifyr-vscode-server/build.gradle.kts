@@ -99,16 +99,20 @@ val dockerGitSha = providers.exec {
 }.standardOutput.asText.map { it.trim() }
 
 val dockerBuildImage by tasks.registering(DockerBuildImage::class) {
+    val repo = dockerImageRepo
+    val version = project.version.toString()
     dependsOn(prepareDockerBuild)
     inputDir.set(projectDir)
-    images.add("$dockerImageRepo:${project.version}")
-    images.add("$dockerImageRepo:latest")
-    images.add(dockerGitSha.map { "$dockerImageRepo:$it" })
+    images.add("$repo:$version")
+    images.add("$repo:latest")
+    images.add(dockerGitSha.map { "$repo:$it" })
 }
 
 val dockerPushImage by tasks.registering(DockerPushImage::class) {
+    val repo = dockerImageRepo
+    val version = project.version.toString()
     dependsOn(dockerBuildImage)
-    images.add("$dockerImageRepo:${project.version}")
-    images.add("$dockerImageRepo:latest")
-    images.add(dockerGitSha.map { "$dockerImageRepo:$it" })
+    images.add("$repo:$version")
+    images.add("$repo:latest")
+    images.add(dockerGitSha.map { "$repo:$it" })
 }
