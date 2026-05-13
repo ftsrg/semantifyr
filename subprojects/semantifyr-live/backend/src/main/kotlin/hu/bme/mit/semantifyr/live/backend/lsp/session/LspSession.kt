@@ -109,10 +109,15 @@ class LspSession(
             )
 
             // run in the session scope
-            coroutineScope.async {
-                logger.info { "Session $sessionId started flavor=${flavor.id}" }
-                webSocketLspConnector.run()
-            }.await()
+            try {
+                coroutineScope.async {
+                    logger.info { "Session $sessionId started flavor=${flavor.id}" }
+                    webSocketLspConnector.run()
+                }.await()
+            } finally {
+                // cancel the whole scope
+                coroutineScope.cancel()
+            }
         }
     }
 
