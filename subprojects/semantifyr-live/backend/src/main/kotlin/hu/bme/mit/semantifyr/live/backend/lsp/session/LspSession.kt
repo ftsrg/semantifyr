@@ -151,7 +151,9 @@ class LspSession(
         val source = libraryRoot?.resolve(layout.libraryRelativePath)
             ?: error("Semantic library root is not configured")
         val target = sessionContext.workingDirectoryPath.resolve(layout.workspaceTargetName)
-        require(Files.isDirectory(source)) { "Library directory missing for flavor=${flavor.id}: $source" }
+        require(Files.isDirectory(source)) {
+            "Library directory missing for flavor=${flavor.id}: $source"
+        }
         if (Files.isDirectory(target)) {
             return
         }

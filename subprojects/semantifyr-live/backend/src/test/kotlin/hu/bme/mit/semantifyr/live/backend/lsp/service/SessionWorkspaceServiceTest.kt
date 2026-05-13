@@ -57,10 +57,14 @@ class SessionWorkspaceServiceTest {
         val service = SessionWorkspaceService(lspSession, verificationManager, verificationExecutor)
 
         fun runVerificationWorkInline() {
-            whenever(verificationManager.run(any(), any(), any(), any())) doAnswer { invocation ->
+            whenever(verificationManager.run(any(), any(), any(), any())) doAnswer {
                 @Suppress("UNCHECKED_CAST")
-                val work = invocation.arguments[3] as suspend () -> Any?
-                CompletableFuture.supplyAsync { runBlocking { work() } }
+                val work = it.arguments[3] as suspend () -> Any?
+                CompletableFuture.supplyAsync {
+                    runBlocking {
+                        work()
+                    }
+                }
             }
         }
     }

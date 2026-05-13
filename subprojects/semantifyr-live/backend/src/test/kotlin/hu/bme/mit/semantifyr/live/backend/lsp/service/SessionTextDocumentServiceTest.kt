@@ -49,20 +49,20 @@ class SessionTextDocumentServiceTest {
         val service = SessionTextDocumentService(lspSession, documents, mock<LanguageServices>())
 
         fun runReadsInline() {
-            whenever(requestManager.runRead<Any?>(any())) doAnswer { invocation ->
+            whenever(requestManager.runRead<Any?>(any())) doAnswer {
                 @Suppress("UNCHECKED_CAST")
-                val block = invocation.arguments[0] as Functions.Function1<CancelIndicator, Any?>
+                val block = it.arguments[0] as Functions.Function1<CancelIndicator, Any?>
                 CompletableFuture.completedFuture(block.apply(CancelIndicator.NullImpl))
             }
         }
 
         fun runWritesInline() {
-            whenever(requestManager.runWrite<Any?, Any?>(any(), any())) doAnswer { invocation ->
+            whenever(requestManager.runWrite<Any?, Any?>(any(), any())) doAnswer {
                 @Suppress("UNCHECKED_CAST")
-                val nonCancellable = invocation.arguments[0] as Functions.Function0<Any?>
+                val nonCancellable = it.arguments[0] as Functions.Function0<Any?>
 
                 @Suppress("UNCHECKED_CAST")
-                val cancellable = invocation.arguments[1] as Functions.Function2<CancelIndicator, Any?, Any?>
+                val cancellable = it.arguments[1] as Functions.Function2<CancelIndicator, Any?, Any?>
                 CompletableFuture.completedFuture(cancellable.apply(CancelIndicator.NullImpl, nonCancellable.apply()))
             }
         }

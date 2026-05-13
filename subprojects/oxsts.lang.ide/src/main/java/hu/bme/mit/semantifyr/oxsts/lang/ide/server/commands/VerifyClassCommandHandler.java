@@ -80,7 +80,8 @@ public class VerifyClassCommandHandler
 
         var targetQualifiedName = oxstsQualifiedNameProvider.getFullyQualifiedNameString(classDeclaration);
         LOGGER.info("LSP verify request for case '{}'", targetQualifiedName);
-        var context = semantifyrLoader.fromResourceSet(classDeclaration.eResource().getResourceSet());
+        var context =
+                semantifyrLoader.fromResourceSet(classDeclaration.eResource().getResourceSet());
 
         var portfolio = serverSettings.resolvePortfolio(arguments.portfolioId());
         var outputDirectory = serverSettings.resolveArtifactOutputDirectory(access);

@@ -42,12 +42,12 @@ class LiveVerificationExecutorTest {
         }
 
         fun runWritesInline() {
-            whenever(requestManager.runWrite<Any?, Any?>(any(), any())) doAnswer { invocation ->
+            whenever(requestManager.runWrite<Any?, Any?>(any(), any())) doAnswer {
                 @Suppress("UNCHECKED_CAST")
-                val nonCancellable = invocation.arguments[0] as Functions.Function0<Any?>
+                val nonCancellable = it.arguments[0] as Functions.Function0<Any?>
 
                 @Suppress("UNCHECKED_CAST")
-                val cancellable = invocation.arguments[1] as Functions.Function2<CancelIndicator, Any?, Any?>
+                val cancellable = it.arguments[1] as Functions.Function2<CancelIndicator, Any?, Any?>
                 CompletableFuture.completedFuture(cancellable.apply(CancelIndicator.NullImpl, nonCancellable.apply()))
             }
         }

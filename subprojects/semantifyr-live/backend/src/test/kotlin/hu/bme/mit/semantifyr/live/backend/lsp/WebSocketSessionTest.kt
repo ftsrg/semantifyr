@@ -20,6 +20,7 @@ import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrLiveBackend
 import hu.bme.mit.semantifyr.live.backend.testing.jsonClient
 import hu.bme.mit.semantifyr.live.backend.testing.resultAs
 import hu.bme.mit.semantifyr.live.backend.testing.testInjector
+import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.webSocket
@@ -44,7 +45,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Base64
 import kotlin.time.Duration.Companion.seconds
-
 
 class WebSocketSessionTest {
 
@@ -88,7 +88,9 @@ class WebSocketSessionTest {
 
     @Test
     fun `initialize over websocket returns server capabilities`(@TempDir tmp: Path) = testApplication {
-        installSemantifyrApp(webSockets = true) { installSemantifyrLiveBackend(testInjector(config(tmp))) }
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(config(tmp)))
+        }
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             send(Frame.Text(LspWire.initializeRequest()))
             val response = awaitResponseFor(id = 1).resultAs(InitializeResult::class.java)
@@ -98,7 +100,9 @@ class WebSocketSessionTest {
 
     @Test
     fun `session info request is intercepted and returns metadata`(@TempDir tmp: Path) = testApplication {
-        installSemantifyrApp(webSockets = true) { installSemantifyrLiveBackend(testInjector(config(tmp))) }
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(config(tmp)))
+        }
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             send(Frame.Text(LspWire.initializeRequest()))
             awaitResponseFor(id = 1)
@@ -111,7 +115,9 @@ class WebSocketSessionTest {
 
     @Test
     fun `admin status reports the live session while connected`(@TempDir tmp: Path) = testApplication {
-        installSemantifyrApp(webSockets = true) { installSemantifyrLiveBackend(testInjector(config(tmp))) }
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(config(tmp)))
+        }
         val client = jsonClient(webSockets = true)
         client.webSocket("/ws/lsp/oxsts") {
             send(Frame.Text(LspWire.initializeRequest()))
@@ -127,18 +133,28 @@ class WebSocketSessionTest {
 
     @Test
     fun `discover over websocket returns the verification cases`(@TempDir tmp: Path) = testApplication {
-        installSemantifyrApp(webSockets = true) { installSemantifyrLiveBackend(testInjector(config(tmp))) }
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(config(tmp)))
+        }
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             openWith("file:///workspace/snippet.oxsts")
             val cases = discover(id = 2, uri = "file:///workspace/snippet.oxsts")
             assertThat(cases).isNotEmpty
-            assertThat(cases.map { it.label() }).anyMatch { it.contains("CaseA") }
+            assertThat(
+                cases.map {
+                    it.label()
+                },
+            ).anyMatch {
+                it.contains("CaseA")
+            }
         }
     }
 
     @Test
     fun `semanticTokens full returns a non-empty data array`(@TempDir tmp: Path) = testApplication {
-        installSemantifyrApp(webSockets = true) { installSemantifyrLiveBackend(testInjector(config(tmp))) }
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(config(tmp)))
+        }
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             openWith("file:///workspace/snippet.oxsts")
             send(Frame.Text(LspWire.semanticTokensFullRequest(id = 2, uri = "file:///workspace/snippet.oxsts")))
@@ -148,17 +164,56 @@ class WebSocketSessionTest {
     }
 
     @Test
-    fun `rapid didChange does not break a later discover`(@TempDir tmp: Path) = testApplication {
-        installSemantifyrApp(webSockets = true) { installSemantifyrLiveBackend(testInjector(config(tmp))) }
+    fun `semanticTokens stay populated when an extra OxstsStandaloneSetup is constructed at runtime`(
+        @TempDir tmp: Path,
+    ) = testApplication {
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(config(tmp)))
+        }
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             openWith("file:///workspace/snippet.oxsts")
-            repeat(20) { edit ->
+
+            send(Frame.Text(LspWire.semanticTokensFullRequest(id = 2, uri = "file:///workspace/snippet.oxsts")))
+            val baseline = awaitResponseFor(id = 2).resultAs(SemanticTokens::class.java)
+            assertThat(baseline.data)
+                .withFailMessage("baseline semantic tokens were empty before any overwrite")
+                .isNotEmpty
+
+            // Regression for the live-backend bug where every Gamma verification leaked an
+            // OxstsStandaloneSetup().createInjectorAndDoEMFRegistration() call out of the
+            // GammaFrontend.Builder fallback. That fallback overwrote the LSP injector's
+            // rich IResourceServiceProvider in the global registry with a barebones one,
+            // and Xtext's SemanticTokensService.getPositions (which resolves the highlighter
+            // per-resource through IResourceServiceProvider.Registry.INSTANCE) silently
+            // started routing to the no-op default calculator, returning empty token data.
+            // Definition / hover / formatting kept working because they read services from
+            // the LSP injector directly. Restarting the backend made things work again.
+            // After the fix the registered LSP provider must survive any number of extra
+            // OxstsStandaloneSetup constructions in the same JVM.
+            OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
+
+            send(Frame.Text(LspWire.semanticTokensFullRequest(id = 3, uri = "file:///workspace/snippet.oxsts")))
+            val afterOverwrite = awaitResponseFor(id = 3).resultAs(SemanticTokens::class.java)
+            assertThat(afterOverwrite.data)
+                .withFailMessage("semantic tokens collapsed to empty after a duplicate OxstsStandaloneSetup ran")
+                .isNotEmpty
+        }
+    }
+
+    @Test
+    fun `rapid didChange does not break a later discover`(@TempDir tmp: Path) = testApplication {
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(config(tmp)))
+        }
+        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
+            openWith("file:///workspace/snippet.oxsts")
+            repeat(20) {
                 send(
                     Frame.Text(
                         LspWire.didChangeNotification(
                             uri = "file:///workspace/snippet.oxsts",
-                            version = edit + 2,
-                            text = "$modelWithCase\n// edit $edit",
+                            version = it + 2,
+                            text = "$modelWithCase\n// edit $it",
                         ),
                     ),
                 )
@@ -170,15 +225,17 @@ class WebSocketSessionTest {
 
     @Test
     fun `concurrent websocket sessions each discover independently`(@TempDir tmp: Path) = testApplication {
-        installSemantifyrApp(webSockets = true) { installSemantifyrLiveBackend(testInjector(config(tmp))) }
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(config(tmp)))
+        }
         val client = jsonClient(webSockets = true)
         coroutineScope {
-            val results = (1..4).map { session ->
+            val results = (1..4).map {
                 async {
                     client.webSocket("/ws/lsp/oxsts") {
-                        val uri = "file:///workspace/s$session.oxsts"
+                        val uri = "file:///workspace/s$it.oxsts"
                         openWith(uri)
-                        delay(20L * session)
+                        delay(20L * it)
                         assertThat(discover(id = 2, uri = uri)).isNotEmpty
                     }
                 }
@@ -192,7 +249,9 @@ class WebSocketSessionTest {
     @Test
     fun `a session past the global limit is closed with code 4429`(@TempDir tmp: Path) = testApplication {
         val limitedConfig = config(tmp).run { copy(sessionManager = sessionManager.copy(maxSessionsGlobal = 1)) }
-        installSemantifyrApp(webSockets = true) { installSemantifyrLiveBackend(testInjector(limitedConfig)) }
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(limitedConfig))
+        }
         val client = jsonClient(webSockets = true)
         val firstReady = CompletableDeferred<Unit>()
         val releaseFirst = CompletableDeferred<Unit>()
@@ -221,15 +280,26 @@ class WebSocketSessionTest {
     fun `the per-session working directory is created during a session and removed afterwards`(
         @TempDir tmp: Path,
     ) = testApplication {
-        installSemantifyrApp(webSockets = true) { installSemantifyrLiveBackend(testInjector(config(tmp))) }
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(config(tmp)))
+        }
         val sessionsDir = tmp.resolve("sessions")
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             send(Frame.Text(LspWire.initializeRequest()))
             awaitResponseFor(id = 1)
-            assertThat(Files.list(sessionsDir).use { it.count() }).isEqualTo(1L)
+            val sessionCount = Files.list(sessionsDir).use {
+                it.count()
+            }
+            assertThat(sessionCount).isEqualTo(1L)
         }
         withTimeout(5.seconds) {
-            while (Files.isDirectory(sessionsDir) && Files.list(sessionsDir).use { it.count() } > 0L) {
+            while (Files.isDirectory(sessionsDir)) {
+                val remaining = Files.list(sessionsDir).use {
+                    it.count()
+                }
+                if (remaining == 0L) {
+                    break
+                }
                 delay(20)
             }
         }

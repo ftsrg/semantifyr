@@ -13,5 +13,4 @@ interface SessionLanguageClient : LanguageClient {
 
     @JsonNotification(SemantifyrLiveMethods.VERIFICATIONS_CHANGED)
     fun verificationsChanged(params: VerificationsChangedParams)
-
 }

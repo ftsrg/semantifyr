@@ -103,6 +103,7 @@ inline fun <V> SessionRequestManager.runWrite(
 private object NoopExecutor : AbstractExecutorService() {
     override fun shutdown() {
     }
+
     override fun shutdownNow(): MutableList<Runnable> {
         return mutableListOf()
     }

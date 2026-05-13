@@ -14,8 +14,6 @@ import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.client.SemantifyrLanguageClient;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.OxstsServerModule;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
 import org.eclipse.xtext.util.Modules2;
 
@@ -23,8 +21,8 @@ public class OxstsIdeSetup extends OxstsStandaloneSetup {
 
     @Override
     public Injector createInjector() {
-        return Guice.createInjector(Modules2.mixin(
-                new OxstsServerModule(), new OxstsRuntimeModule(), new OxstsIdeModule()));
+        return Guice.createInjector(
+                Modules2.mixin(new OxstsServerModule(), new OxstsRuntimeModule(), new OxstsIdeModule()));
     }
 
     static void main(String[] args) throws InterruptedException, ExecutionException, IOException {

@@ -22,8 +22,12 @@ class SessionScopeTest {
     @Test
     suspend fun `seeded value is visible to bindings inside the block`() {
         val key = Key.get(String::class.java)
-        val seed = Seed().apply { seed(key, "hello") }
-        val unscoped = Provider<String> { error("unscoped provider should not run when value is seeded") }
+        val seed = Seed().apply {
+            seed(key, "hello")
+        }
+        val unscoped = Provider<String> {
+            error("unscoped provider should not run when value is seeded")
+        }
 
         val value = withSessionScope(seed) {
             SessionScope.scope(key, unscoped).get()

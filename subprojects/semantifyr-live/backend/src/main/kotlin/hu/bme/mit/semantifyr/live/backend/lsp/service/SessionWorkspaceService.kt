@@ -15,9 +15,9 @@ import hu.bme.mit.semantifyr.live.backend.lsp.session.LspSession
 import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationExecutor
 import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationManager
 import org.eclipse.lsp4j.DidChangeConfigurationParams
-import org.eclipse.lsp4j.Location
 import org.eclipse.lsp4j.DidChangeWatchedFilesParams
 import org.eclipse.lsp4j.ExecuteCommandParams
+import org.eclipse.lsp4j.Location
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode

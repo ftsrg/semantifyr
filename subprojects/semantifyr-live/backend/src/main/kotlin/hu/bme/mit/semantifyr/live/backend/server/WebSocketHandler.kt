@@ -69,10 +69,10 @@ class WebSocketHandler @Inject constructor(
                         logger.info { "WebSocket session ended normally for ip=$remoteIp flavor=$flavorId" }
                         CloseReason(CloseReason.Codes.NORMAL, "Session ended")
                     } catch (e: SessionLimitReachedException) {
-                        logger.warn { "Session limit reached for ip=$remoteIp: ${e.message}" }
+                        logger.warn(e) { "Session limit reached for ip=$remoteIp" }
                         CloseReason(4429, e.message ?: "Too many sessions")
                     } catch (e: CancellationException) {
-                        logger.info { "WebSocket session cancelled for ip=$remoteIp flavor=$flavorId: ${e.message}" }
+                        logger.info(e) { "WebSocket session cancelled for ip=$remoteIp flavor=$flavorId" }
                         CloseReason(4000, e.message ?: "Session terminated")
                     } catch (e: Throwable) {
                         logger.error(e) { "WebSocket session error for ip=$remoteIp flavor=$flavorId" }

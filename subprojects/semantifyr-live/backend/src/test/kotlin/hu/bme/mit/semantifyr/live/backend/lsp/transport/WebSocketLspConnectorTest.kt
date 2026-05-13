@@ -27,7 +27,6 @@ import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.seconds
 
-
 class WebSocketLspConnectorTest {
 
     private fun buildLanguageServer(): SessionLanguageServer {

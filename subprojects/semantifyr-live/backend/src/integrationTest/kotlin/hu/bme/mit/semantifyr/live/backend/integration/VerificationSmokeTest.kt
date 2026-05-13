@@ -36,11 +36,11 @@ class VerificationSmokeTest {
             tmp = tmp,
             flavor = "oxsts",
             modelSource = stagedModel(IntegrationTestSupport.oxstsTestModelsDirectory, "semantifyr.live.oxstsTestModels", "trafficlight.oxsts"),
-            pickCase = { cases ->
-                cases.pickByLabelSuffix("GreenColorIsReachable")
+            pickCase = {
+                it.pickByLabelSuffix("GreenColorIsReachable")
             },
-            assertVerdict = { result ->
-                assertThat(result.status()).isEqualTo("passed")
+            assertVerdict = {
+                assertThat(it.status()).isEqualTo("passed")
             },
         )
     }
@@ -55,14 +55,14 @@ class VerificationSmokeTest {
             modelSource = stagedModel(IntegrationTestSupport.gammaTestModelsDirectory, "semantifyr.live.gammaTestModels", "Simple.gamma"),
             discoverCommand = "gamma.case.discover",
             verifyCommand = "gamma.case.verify",
-            pickCase = { cases ->
-                val idleReachable = cases.pickByLabel("LeaderStatechartIdleReachable")
+            pickCase = {
+                val idleReachable = it.pickByLabel("LeaderStatechartIdleReachable")
                 assertThat(idleReachable.id()).isEqualTo("Simple.LeaderStatechartIdleReachable")
                 idleReachable
             },
-            assertVerdict = { result ->
-                acceptAnyKnownStatus("LeaderStatechartIdleReachable", result)
-                assertThat(result.status()).isIn("passed", "not_supported")
+            assertVerdict = {
+                acceptAnyKnownStatus("LeaderStatechartIdleReachable", it)
+                assertThat(it.status()).isIn("passed", "not_supported")
             },
             verifyTimeout = 2.minutes,
         )
@@ -98,8 +98,8 @@ class VerificationSmokeTest {
             pickCase = {
                 it.first()
             },
-            assertVerdict = { result ->
-                acceptAnyKnownStatus(flavor, result)
+            assertVerdict = {
+                acceptAnyKnownStatus(flavor, it)
             },
             verifyTimeout = 2.minutes,
         )

@@ -31,7 +31,6 @@ class SharedExecutorProvider : AutoCloseable {
     override fun close() {
         executor.shutdownNow()
     }
-
 }
 
 private object LspUncaughtHandler : Thread.UncaughtExceptionHandler {

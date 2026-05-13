@@ -38,10 +38,10 @@ class WebSocketHandlerTest {
         val sessionManager = mock<SessionManager>()
         wheneverBlocking {
             sessionManager.runSession(any(), any(), any())
-        } doSuspendableAnswer { invocation ->
-            val ws = invocation.getArgument<WebSocketServerSession>(0)
-            val ip = invocation.getArgument<String>(1)
-            val flavor = invocation.getArgument<Flavor>(2)
+        } doSuspendableAnswer {
+            val ws = it.getArgument<WebSocketServerSession>(0)
+            val ip = it.getArgument<String>(1)
+            val flavor = it.getArgument<Flavor>(2)
             onRunSession(ws, ip, flavor)
         }
 
@@ -59,7 +59,9 @@ class WebSocketHandlerTest {
             }
         }
 
-        val wsClient = createClient { install(ClientWebSockets) }
+        val wsClient = createClient {
+            install(ClientWebSockets)
+        }
         wsClient.webSocket("/ws/lsp/nonexistent") {
             val reason = closeReason.await()
             assertThat(reason?.code).isEqualTo(4404.toShort())
@@ -80,7 +82,9 @@ class WebSocketHandlerTest {
             }
         }
 
-        val wsClient = createClient { install(ClientWebSockets) }
+        val wsClient = createClient {
+            install(ClientWebSockets)
+        }
         wsClient.webSocket("/ws/lsp/oxsts") {
             val reason = closeReason.await()
             assertThat(reason?.code).isEqualTo(CloseReason.Codes.NORMAL.code)
@@ -99,7 +103,9 @@ class WebSocketHandlerTest {
             }
         }
 
-        val wsClient = createClient { install(ClientWebSockets) }
+        val wsClient = createClient {
+            install(ClientWebSockets)
+        }
         wsClient.webSocket("/ws/lsp/oxsts") {
             val reason = closeReason.await()
             assertThat(reason?.code).isEqualTo(4429.toShort())
@@ -117,12 +123,16 @@ class WebSocketHandlerTest {
             }
         }
 
-        val client = createClient { install(ClientWebSockets) }
+        val client = createClient {
+            install(ClientWebSockets)
+        }
         client.webSocket("/ws/lsp/oxsts") {
             closeReason.await()
         }
         val secondAttempt = runCatching {
-            client.webSocket("/ws/lsp/oxsts") { closeReason.await() }
+            client.webSocket("/ws/lsp/oxsts") {
+                closeReason.await()
+            }
         }
         assertThat(secondAttempt.exceptionOrNull()).isNotNull
     }
@@ -138,7 +148,9 @@ class WebSocketHandlerTest {
             }
         }
 
-        val wsClient = createClient { install(ClientWebSockets) }
+        val wsClient = createClient {
+            install(ClientWebSockets)
+        }
         wsClient.webSocket("/ws/lsp/oxsts") {
             val reason = closeReason.await()
             assertThat(reason?.code).isEqualTo(4500.toShort())

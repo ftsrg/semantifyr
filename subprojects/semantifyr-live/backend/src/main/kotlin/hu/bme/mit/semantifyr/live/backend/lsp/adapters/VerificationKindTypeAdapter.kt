@@ -29,5 +29,4 @@ class VerificationKindTypeAdapter : TypeAdapter<VerificationKind>() {
         }
         return VerificationKind.valueOf(reader.nextString())
     }
-
 }

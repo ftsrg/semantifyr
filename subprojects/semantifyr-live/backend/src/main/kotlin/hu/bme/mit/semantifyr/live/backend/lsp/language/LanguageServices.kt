@@ -74,5 +74,4 @@ class LanguageServices @Inject constructor(
     fun newResourceSet(): ResourceSet {
         return resourceSetProvider.get()
     }
-
 }

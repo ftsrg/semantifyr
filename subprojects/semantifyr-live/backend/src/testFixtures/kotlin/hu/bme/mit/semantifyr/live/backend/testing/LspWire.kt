@@ -53,7 +53,11 @@ object LspWire {
         val params: Any,
     )
 
-    fun request(id: Int, method: String, params: Any = emptyMap<String, Any>()): String {
+    fun request(
+        id: Int,
+        method: String,
+        params: Any = emptyMap<String, Any>(),
+    ): String {
         return gson.toJson(JsonRpcRequest(id = id, method = method, params = params))
     }
 
@@ -64,9 +68,13 @@ object LspWire {
     fun initializeRequest(id: Int = 1): String {
         val capabilities = ClientCapabilities().apply {
             workspace = WorkspaceClientCapabilities().apply {
-                executeCommand = ExecuteCommandCapabilities().apply { dynamicRegistration = true }
+                executeCommand = ExecuteCommandCapabilities().apply {
+                    dynamicRegistration = true
+                }
             }
-            window = WindowClientCapabilities().apply { workDoneProgress = true }
+            window = WindowClientCapabilities().apply {
+                workDoneProgress = true
+            }
         }
         return request(
             id,
@@ -82,14 +90,23 @@ object LspWire {
         return notification("initialized", InitializedParams())
     }
 
-    fun didOpenNotification(uri: String, languageId: String, text: String, version: Int = 1): String {
+    fun didOpenNotification(
+        uri: String,
+        languageId: String,
+        text: String,
+        version: Int = 1,
+    ): String {
         return notification(
             "textDocument/didOpen",
             DidOpenTextDocumentParams(TextDocumentItem(uri, languageId, version, text)),
         )
     }
 
-    fun didChangeNotification(uri: String, version: Int, text: String): String {
+    fun didChangeNotification(
+        uri: String,
+        version: Int,
+        text: String,
+    ): String {
         return notification(
             "textDocument/didChange",
             DidChangeTextDocumentParams(
@@ -99,7 +116,11 @@ object LspWire {
         )
     }
 
-    fun executeCommandRequest(id: Int, command: String, arguments: List<Any> = emptyList()): String {
+    fun executeCommandRequest(
+        id: Int,
+        command: String,
+        arguments: List<Any> = emptyList(),
+    ): String {
         return request(id, "workspace/executeCommand", ExecuteCommandParams(command, arguments))
     }
 
@@ -115,7 +136,6 @@ object LspWire {
     ): Range {
         return Range(Position(startLine, startCharacter), Position(endLine, endCharacter))
     }
-
 }
 
 fun <T> JsonObject.resultAs(type: Class<T>): T {
@@ -141,7 +161,9 @@ private data class JsonRpcAck(
 
 private fun JsonObject.lspMethod(): String? {
     val method = get("method") ?: return null
-    if (!method.isJsonPrimitive) return null
+    if (!method.isJsonPrimitive) {
+        return null
+    }
     return method.asJsonPrimitive.takeIf { it.isString }?.asString
 }
 
@@ -156,7 +178,9 @@ private fun JsonObject.publishDiagnosticsUri(): String? {
 
 private fun JsonObject.idAsInt(): Int? {
     val id = get("id") ?: return null
-    if (!id.isJsonPrimitive) return null
+    if (!id.isJsonPrimitive) {
+        return null
+    }
     val primitive = id.asJsonPrimitive
     return if (primitive.isNumber) primitive.asInt else null
 }

@@ -74,10 +74,18 @@ class Server @Inject constructor(
                 maxFrameSize = config.server.maxWsFrameSize
             }
 
-            with(apiRoutesHandler) { configure() }
-            with(adminHandler) { configure() }
-            with(webSocketHandler) { configure() }
-            with(staticFilesHandler) { configure() }
+            with(apiRoutesHandler) {
+                configure()
+            }
+            with(adminHandler) {
+                configure()
+            }
+            with(webSocketHandler) {
+                configure()
+            }
+            with(staticFilesHandler) {
+                configure()
+            }
         }
     }
 }

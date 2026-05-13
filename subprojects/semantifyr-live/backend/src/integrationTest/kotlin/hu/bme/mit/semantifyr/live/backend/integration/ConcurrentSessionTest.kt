@@ -50,8 +50,10 @@ class ConcurrentSessionTest {
         val startNanos = System.nanoTime()
         withRealServer(IntegrationTestSupport.config(tmp, maxSessionsGlobal = sessionCount)) { httpClient, port ->
             val failures = coroutineScope {
-                (0 until sessionCount).map { index ->
-                    async { runSession(httpClient, port, index) }
+                (0 until sessionCount).map {
+                    async {
+                        runSession(httpClient, port, it)
+                    }
                 }.awaitAll().filterNotNull()
             }
             logger.info {

@@ -77,16 +77,18 @@ class SessionDocumentManagerTest {
     @Test
     fun `openByServer rejects URIs outside the workspace`(@TempDir tmp: Path) {
         val manager = buildManager(tmp)
-        assertThatThrownBy { manager.openByServer("file:///etc/passwd", "evil") }
-            .isInstanceOf(WorkspaceUriException::class.java)
+        assertThatThrownBy {
+            manager.openByServer("file:///etc/passwd", "evil")
+        }.isInstanceOf(WorkspaceUriException::class.java)
             .hasMessageContaining("escapes workspace")
     }
 
     @Test
     fun `openByServer rejects non-file URIs`(@TempDir tmp: Path) {
         val manager = buildManager(tmp)
-        assertThatThrownBy { manager.openByServer("http://example.com/a.oxsts", "x") }
-            .isInstanceOf(WorkspaceUriException::class.java)
+        assertThatThrownBy {
+            manager.openByServer("http://example.com/a.oxsts", "x")
+        }.isInstanceOf(WorkspaceUriException::class.java)
             .hasMessageContaining("non-file uri")
     }
 
@@ -116,8 +118,9 @@ class SessionDocumentManagerTest {
     fun `openExistingByServer fails if the file does not exist`(@TempDir tmp: Path) {
         val manager = buildManager(tmp)
         val serverUri = tmp.resolve("ghost.oxsts").toUri().toString()
-        assertThatThrownBy { manager.openExistingByServer(serverUri) }
-            .isInstanceOf(IllegalArgumentException::class.java)
+        assertThatThrownBy {
+            manager.openExistingByServer(serverUri)
+        }.isInstanceOf(IllegalArgumentException::class.java)
             .hasMessageContaining("does not exist")
     }
 

@@ -54,7 +54,9 @@ fun ApplicationTestBuilder.installSemantifyrApp(
     install(
         createApplicationPlugin("semantifyr-live-test") {
             if (contentNegotiation) {
-                application.install(ContentNegotiation) { json() }
+                application.install(ContentNegotiation) {
+                    json()
+                }
             }
             if (webSockets) {
                 application.install(ServerWebSockets)
@@ -65,7 +67,9 @@ fun ApplicationTestBuilder.installSemantifyrApp(
 }
 
 fun ApplicationTestBuilder.jsonClient(webSockets: Boolean = false) = createClient {
-    install(ClientContentNegotiation) { json() }
+    install(ClientContentNegotiation) {
+        json()
+    }
     if (webSockets) {
         install(ClientWebSockets)
     }

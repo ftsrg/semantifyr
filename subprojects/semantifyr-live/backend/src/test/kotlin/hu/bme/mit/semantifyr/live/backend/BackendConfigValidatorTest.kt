@@ -34,15 +34,19 @@ class BackendConfigValidatorTest {
 
     @Test
     fun `a fully specified production config passes`(@TempDir tmp: Path) {
-        assertThatCode { BackendConfigValidator.validate(baseConfig(tmp), flavors = emptyList()) }
-            .doesNotThrowAnyException()
+        assertThatCode {
+            BackendConfigValidator.validate(baseConfig(tmp), flavors = emptyList())
+        }.doesNotThrowAnyException()
     }
 
     @Test
     fun `a production config without an admin password is rejected`(@TempDir tmp: Path) {
-        val config = baseConfig(tmp).run { copy(server = server.copy(adminPassword = null)) }
-        assertThatThrownBy { BackendConfigValidator.validate(config, flavors = emptyList()) }
-            .isInstanceOf(InvalidConfigurationException::class.java)
+        val config = baseConfig(tmp).run {
+            copy(server = server.copy(adminPassword = null))
+        }
+        assertThatThrownBy {
+            BackendConfigValidator.validate(config, flavors = emptyList())
+        }.isInstanceOf(InvalidConfigurationException::class.java)
             .hasMessageContaining("adminPassword")
     }
 
@@ -53,15 +57,19 @@ class BackendConfigValidatorTest {
             server = ServerConfig(adminPassword = null, httpsOnlyCookies = false),
             sessionManager = SessionManagerConfig(rootWorkDirectory = tmp.toString()),
         )
-        assertThatCode { BackendConfigValidator.validate(config, flavors = emptyList()) }
-            .doesNotThrowAnyException()
+        assertThatCode {
+            BackendConfigValidator.validate(config, flavors = emptyList())
+        }.doesNotThrowAnyException()
     }
 
     @Test
     fun `httpsOnlyCookies must be true in production`(@TempDir tmp: Path) {
-        val config = baseConfig(tmp).run { copy(server = server.copy(httpsOnlyCookies = false)) }
-        assertThatThrownBy { BackendConfigValidator.validate(config, flavors = emptyList()) }
-            .isInstanceOf(InvalidConfigurationException::class.java)
+        val config = baseConfig(tmp).run {
+            copy(server = server.copy(httpsOnlyCookies = false))
+        }
+        assertThatThrownBy {
+            BackendConfigValidator.validate(config, flavors = emptyList())
+        }.isInstanceOf(InvalidConfigurationException::class.java)
             .hasMessageContaining("httpsOnlyCookies")
     }
 
@@ -70,8 +78,9 @@ class BackendConfigValidatorTest {
         val config = baseConfig(tmp).run {
             copy(server = server.copy(sessionIdleTimeout = 1.minutes), verification = VerificationConfig(timeout = 5.minutes))
         }
-        assertThatThrownBy { BackendConfigValidator.validate(config, flavors = emptyList()) }
-            .isInstanceOf(InvalidConfigurationException::class.java)
+        assertThatThrownBy {
+            BackendConfigValidator.validate(config, flavors = emptyList())
+        }.isInstanceOf(InvalidConfigurationException::class.java)
             .hasMessageContaining("sessionIdleTimeout")
     }
 
@@ -81,8 +90,9 @@ class BackendConfigValidatorTest {
             verification = VerificationConfig(concurrency = 0),
             sessionManager = SessionManagerConfig(rootWorkDirectory = tmp.toString(), maxSessionsGlobal = 0),
         )
-        assertThatThrownBy { BackendConfigValidator.validate(config, flavors = emptyList()) }
-            .isInstanceOf(InvalidConfigurationException::class.java)
+        assertThatThrownBy {
+            BackendConfigValidator.validate(config, flavors = emptyList())
+        }.isInstanceOf(InvalidConfigurationException::class.java)
             .hasMessageContaining("concurrency")
             .hasMessageContaining("maxSessionsGlobal")
     }

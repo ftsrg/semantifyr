@@ -90,7 +90,8 @@ public class ValidateWitnessClassCommandHandler
 
                 progressContext.checkIsCancelled();
                 var validationResult = witnessValidator.validateBlocking(verifier, inlinedOxsts, progressContext);
-                LOGGER.info("LSP validateWitness {}", validationResult.getClass().getSimpleName());
+                LOGGER.info(
+                        "LSP validateWitness {}", validationResult.getClass().getSimpleName());
                 var dto = VerificationResultDtoKt.toJavaDto(validationResult);
                 return WitnessValidationResult.fromDto(dto, portfolio.getId());
             } catch (Exception e) {

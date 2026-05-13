@@ -52,7 +52,9 @@ class ApiRoutesHandler @Inject constructor(
             get("/api/flavors") {
                 call.respond(
                     FlavorsResponse(
-                        flavors = FlavorRegistry.flavors.map { FlavorResponse.fromFlavor(it) },
+                        flavors = FlavorRegistry.flavors.map {
+                            FlavorResponse.fromFlavor(it)
+                        },
                     ),
                 )
             }

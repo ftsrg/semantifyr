@@ -34,8 +34,8 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.testing.testApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.`when`
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 import java.util.Base64
 import kotlin.time.Duration.Companion.seconds
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
@@ -54,12 +54,12 @@ class AdminHandlerTest {
         val config = BackendConfig(
             server = ServerConfig(adminPassword = adminPassword, httpsOnlyCookies = false),
         )
-        val sessionManager = mock(SessionManager::class.java)
-        `when`(sessionManager.getSessionInfos()).thenReturn(sessionInfos)
-        `when`(sessionManager.cancelSession("test-session")).thenReturn(true)
-        `when`(sessionManager.cancelSession("nonexistent")).thenReturn(false)
-        `when`(sessionManager.cancelVerification("req-1")).thenReturn(true)
-        `when`(sessionManager.cancelVerification("nonexistent")).thenReturn(false)
+        val sessionManager = mock<SessionManager>()
+        whenever(sessionManager.getSessionInfos()).thenReturn(sessionInfos)
+        whenever(sessionManager.cancelSession("test-session")).thenReturn(true)
+        whenever(sessionManager.cancelSession("nonexistent")).thenReturn(false)
+        whenever(sessionManager.cancelVerification("req-1")).thenReturn(true)
+        whenever(sessionManager.cancelVerification("nonexistent")).thenReturn(false)
 
         return testInjector(config) {
             bind(SessionManager::class.java).toInstance(sessionManager)
@@ -217,7 +217,7 @@ class AdminHandlerTest {
 
     @Test
     fun `admin endpoints reject when no password is configured`() = testApplication {
-        val sessionManager = mock(SessionManager::class.java)
+        val sessionManager = mock<SessionManager>()
         val handler = testInjector {
             bind(SessionManager::class.java).toInstance(sessionManager)
         }.handler<AdminHandler>()
@@ -243,7 +243,9 @@ class AdminHandlerTest {
             }
         }
         val client = createClient {
-            install(ClientContentNegotiation) { json() }
+            install(ClientContentNegotiation) {
+                json()
+            }
             install(HttpCookies)
         }
 
@@ -272,7 +274,9 @@ class AdminHandlerTest {
             }
         }
         val client = createClient {
-            install(ClientContentNegotiation) { json() }
+            install(ClientContentNegotiation) {
+                json()
+            }
             install(HttpCookies)
         }
 
@@ -295,7 +299,9 @@ class AdminHandlerTest {
             }
         }
         val client = createClient {
-            install(ClientContentNegotiation) { json() }
+            install(ClientContentNegotiation) {
+                json()
+            }
             install(HttpCookies)
         }
 

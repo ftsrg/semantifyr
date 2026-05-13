@@ -59,8 +59,7 @@ class VerificationManagerTest {
         return session to client
     }
 
-    private fun verifyRequest(portfolio: String = "portfolio-1") =
-        VerificationCaseRequest("file:///workspace/snippet.oxsts", LspWire.range(), portfolio)
+    private fun verifyRequest(portfolio: String = "portfolio-1") = VerificationCaseRequest("file:///workspace/snippet.oxsts", LspWire.range(), portfolio)
 
     @Test
     fun `withPermit acquires and releases permit`() = runTest {

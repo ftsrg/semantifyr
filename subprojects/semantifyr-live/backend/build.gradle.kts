@@ -47,6 +47,7 @@ dependencies {
     implementation(project(":oxsts.lang.ide"))
     implementation(project(":gamma.lang.ide"))
 
+    testFixturesApi(project(":lang-ide-common"))
     testFixturesApi(libs.lsp4j)
     testFixturesApi(libs.lsp4j.jsonrpc)
     testFixturesApi(libs.kotlinx.coroutines.core)

@@ -64,9 +64,9 @@ class AdminHandler @Inject constructor(
         install(Authentication) {
             basic("admin-basic") {
                 realm = "Semantifyr Admin"
-                validate { credentials ->
-                    if (credentials.name == "admin" && passwordMatches(credentials.password)) {
-                        UserIdPrincipal(credentials.name)
+                validate {
+                    if (it.name == "admin" && passwordMatches(it.password)) {
+                        UserIdPrincipal(it.name)
                     } else {
                         null
                     }
@@ -74,7 +74,9 @@ class AdminHandler @Inject constructor(
             }
             session<AdminSession>("admin-session") {
                 validate { it }
-                challenge { call.respond(HttpStatusCode.Unauthorized) }
+                challenge {
+                    call.respond(HttpStatusCode.Unauthorized)
+                }
             }
         }
 

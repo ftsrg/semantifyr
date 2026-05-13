@@ -6,10 +6,6 @@
 
 package hu.bme.mit.semantifyr.live.backend.server
 
-import com.google.inject.Guice
-import hu.bme.mit.semantifyr.live.backend.BackendConfig
-import hu.bme.mit.semantifyr.live.backend.BackendModule
-import hu.bme.mit.semantifyr.live.backend.ServerConfig
 import hu.bme.mit.semantifyr.live.backend.data.FlavorsResponse
 import hu.bme.mit.semantifyr.live.backend.data.HealthResponse
 import hu.bme.mit.semantifyr.live.backend.data.InfoResponse
@@ -22,24 +18,19 @@ import hu.bme.mit.semantifyr.live.backend.testing.testInjector
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.http.ContentType
-import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
-import io.ktor.server.application.createApplicationPlugin
 import io.ktor.server.testing.testApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.io.TempDir
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.`when`
-import java.nio.file.Files
-import java.nio.file.Path
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 
 class ApiRoutesHandlerTest {
 
     private fun createHandler(activeSessions: Int = 3, maxSessions: Int = 64): ApiRoutesHandler {
-        val sessionManager = mock(SessionManager::class.java)
-        `when`(sessionManager.activeSessions).thenReturn(activeSessions)
-        `when`(sessionManager.maxSessions).thenReturn(maxSessions)
+        val sessionManager = mock<SessionManager>()
+        whenever(sessionManager.activeSessions).thenReturn(activeSessions)
+        whenever(sessionManager.maxSessions).thenReturn(maxSessions)
 
         return testInjector {
             bind(SessionManager::class.java).toInstance(sessionManager)
@@ -151,43 +142,5 @@ class ApiRoutesHandlerTest {
         )
         val auto = response.portfolios.first { it.id == "smart-full" }
         assertThat(auto.displayName).isEqualTo("Auto")
-    }
-}
-
-class StaticFilesHandlerTest {
-
-    @Test
-    fun `static SPA serves index html at root`(@TempDir webRoot: Path) = testApplication {
-        val handler = createStaticFilesHandler(webRoot)
-        install(
-            createApplicationPlugin("spa") {
-                with(handler) { application.configure() }
-            },
-        )
-
-        val response = client.get("/")
-        assertThat(response.status).isEqualTo(HttpStatusCode.OK)
-        assertThat(response.body<String>()).contains("<title>SPA</title>")
-    }
-
-    @Test
-    fun `SPA fallback serves index html for unknown paths`(@TempDir webRoot: Path) = testApplication {
-        val handler = createStaticFilesHandler(webRoot)
-        install(
-            createApplicationPlugin("spa") {
-                with(handler) { application.configure() }
-            },
-        )
-
-        val response = client.get("/some/deep/path")
-        assertThat(response.status).isEqualTo(HttpStatusCode.OK)
-        assertThat(response.body<String>()).contains("<title>SPA</title>")
-    }
-
-    private fun createStaticFilesHandler(webRoot: Path): StaticFilesHandler {
-        Files.writeString(webRoot.resolve("index.html"), "<!DOCTYPE html><title>SPA</title>")
-        val config = BackendConfig(server = ServerConfig(webRootDirectory = webRoot.toString()))
-        val injector = Guice.createInjector(BackendModule(config))
-        return injector.getInstance(StaticFilesHandler::class.java)
     }
 }

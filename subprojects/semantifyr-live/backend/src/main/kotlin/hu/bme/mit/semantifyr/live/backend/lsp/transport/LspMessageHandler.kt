@@ -15,8 +15,8 @@ import org.eclipse.lsp4j.jsonrpc.json.MessageJsonHandler
 fun createLspMessageJsonHandler(
     supportedMethods: Map<String, JsonRpcMethod> = emptyMap(),
 ): MessageJsonHandler {
-    return MessageJsonHandler(supportedMethods) { gson ->
-        CommandGson.configure(gson)
-        gson.registerTypeAdapter(VerificationKind::class.java, VerificationKindTypeAdapter())
+    return MessageJsonHandler(supportedMethods) {
+        CommandGson.configure(it)
+        it.registerTypeAdapter(VerificationKind::class.java, VerificationKindTypeAdapter())
     }
 }
