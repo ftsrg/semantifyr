@@ -6,7 +6,9 @@
 
 package hu.bme.mit.semantifyr.live.backend.lsp.service
 
-import hu.bme.mit.semantifyr.live.backend.data.ActiveVerificationInfo
+import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
+import org.eclipse.lsp4j.Location
+import kotlin.time.Duration
 
 object SemantifyrLiveMethods {
     const val SESSION_INFO = "semantifyr/live/session/info"
@@ -18,11 +20,19 @@ object SemantifyrLiveMethods {
 }
 
 data class CancelVerificationParams(
-    val requestId: String,
+    val verificationId: String,
+)
+
+data class RunningVerification(
+    val verificationId: String,
+    val location: Location,
+    val portfolioId: String,
+    val kind: VerificationKind,
+    val elapsed: Duration,
 )
 
 data class VerificationsChangedParams(
-    val active: List<ActiveVerificationInfo>,
+    val active: List<RunningVerification>,
 )
 
 data class ReadDocumentParams(

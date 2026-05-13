@@ -120,10 +120,9 @@ class AdminHandler @Inject constructor(
                         call.respond(HttpStatusCode.NotFound)
                     }
                 }
-                delete("/api/admin/sessions/{sessionId}/verifications/{requestId}") {
-                    val sessionId = call.parameters["sessionId"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
-                    val requestId = call.parameters["requestId"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
-                    if (sessionManager.cancelVerification(sessionId, requestId)) {
+                delete("/api/admin/verifications/{verificationId}") {
+                    val verificationId = call.parameters["verificationId"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                    if (sessionManager.cancelVerification(verificationId)) {
                         call.respond(HttpStatusCode.OK)
                     } else {
                         call.respond(HttpStatusCode.NotFound)

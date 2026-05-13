@@ -6,10 +6,7 @@
 
 package hu.bme.mit.semantifyr.live.backend.lsp.transport
 
-import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson
 import hu.bme.mit.semantifyr.live.backend.data.SessionLspInfo
-import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
-import hu.bme.mit.semantifyr.live.backend.lsp.adapters.VerificationKindTypeAdapter
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionLanguageClient
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionLanguageServer
 import hu.bme.mit.semantifyr.logging.error
@@ -29,7 +26,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer
 import org.eclipse.lsp4j.jsonrpc.RemoteEndpoint
-import org.eclipse.lsp4j.jsonrpc.json.MessageJsonHandler
 import org.eclipse.lsp4j.jsonrpc.services.ServiceEndpoints
 import org.eclipse.lsp4j.services.LanguageClient
 import java.io.IOException
@@ -54,15 +50,12 @@ class WebSocketLspConnector(
 
     private val outgoing = Channel<String>(capacity = OUTGOING_BUFFER)
 
-    private val jsonHandler = MessageJsonHandler(
+    private val jsonHandler = createLspMessageJsonHandler(
         buildMap {
             putAll(ServiceEndpoints.getSupportedMethods(SessionLanguageClient::class.java))
             putAll(sessionLanguageServer.supportedMethods())
         },
-    ) { gson ->
-        CommandGson.configure(gson)
-        gson.registerTypeAdapter(VerificationKind::class.java, VerificationKindTypeAdapter())
-    }
+    )
 
     private val remoteEndpoint = RemoteEndpoint(
         outboundConsumer(),

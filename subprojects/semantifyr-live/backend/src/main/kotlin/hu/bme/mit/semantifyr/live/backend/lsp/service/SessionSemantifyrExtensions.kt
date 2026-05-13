@@ -36,7 +36,7 @@ class SessionSemantifyrExtensions(
 
     @JsonRequest(value = SemantifyrLiveMethods.CANCEL_VERIFICATION, useSegment = false)
     fun cancelVerification(params: CancelVerificationParams): CompletableFuture<Boolean> {
-        return CompletableFuture.completedFuture(verificationManager.cancel(params.requestId))
+        return CompletableFuture.completedFuture(verificationManager.cancel(params.verificationId))
     }
 
     @JsonRequest(value = SemantifyrLiveMethods.CANCEL_ALL_VERIFICATIONS, useSegment = false)

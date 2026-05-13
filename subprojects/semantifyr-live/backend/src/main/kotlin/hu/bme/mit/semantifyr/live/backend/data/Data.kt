@@ -80,10 +80,9 @@ enum class VerificationKind {
 
 @Serializable
 data class ActiveVerificationInfo(
-    val requestId: String,
-    val kind: VerificationKind = VerificationKind.Verify,
-    val caseLabel: String? = null,
-    val portfolioId: String? = null,
+    val verificationId: String,
+    val portfolioId: String,
+    val kind: VerificationKind,
     val elapsed: Duration = Duration.ZERO,
 )
 

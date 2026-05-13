@@ -93,5 +93,4 @@ object FlavorRegistry {
     fun get(id: String): Flavor? {
         return byId[id]
     }
-
 }

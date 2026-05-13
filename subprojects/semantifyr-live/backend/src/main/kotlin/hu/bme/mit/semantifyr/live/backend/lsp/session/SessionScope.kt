@@ -10,7 +10,6 @@ import com.google.inject.Provider
 import com.google.inject.ScopeAnnotation
 import hu.bme.mit.semantifyr.guice.common.ScopeContext
 import hu.bme.mit.semantifyr.guice.common.Seed
-import hu.bme.mit.semantifyr.live.backend.lsp.session.LspSession
 
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)

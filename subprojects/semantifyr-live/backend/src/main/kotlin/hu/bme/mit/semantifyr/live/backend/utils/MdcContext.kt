@@ -29,6 +29,10 @@ class MdcContext(
         return MdcContext(contextMap + pairs)
     }
 
+    operator fun plus(other: MdcContext): MdcContext {
+        return MdcContext(contextMap + other.contextMap)
+    }
+
     override fun updateThreadContext(context: CoroutineContext): Map<String, String>? {
         val oldState = MDC.getCopyOfContextMap()
         for ((key, value) in contextMap) {
@@ -53,4 +57,18 @@ fun currentMdcContextBlocking(): MdcContext {
 
 suspend fun currentMdcContext(): MdcContext {
     return currentCoroutineContext()[MdcContext.Key] ?: MdcContext()
+}
+
+suspend fun withAddedMdc(added: MdcContext): MdcContext {
+    val current = currentMdcContext()
+
+    return current + added
+}
+
+suspend fun withVerificationIdMdc(verificationId: String): MdcContext {
+    return withAddedMdc(MdcContext("verificationId" to verificationId))
+}
+
+suspend fun withSessionIdMdc(sessionId: String): MdcContext {
+    return withAddedMdc(MdcContext("sessionId" to sessionId))
 }

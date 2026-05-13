@@ -100,7 +100,11 @@ class SessionDocumentManager(
             return it.text()
         }
         val diskPath = diskPathOrNull(clientUri) ?: return null
-        return if (Files.isRegularFile(diskPath)) Files.readString(diskPath) else null
+        return if (Files.isRegularFile(diskPath)) {
+            Files.readString(diskPath)
+        } else {
+            null
+        }
     }
 
     fun closeByClient(clientUri: String): Boolean {
@@ -241,7 +245,8 @@ class SessionDocumentManager(
             }
             val issues = provider.resourceValidator.validate(document.resource, CheckMode.ALL, cancelIndicator)
             val publishUri = serverToClient(document.uri)
-            client.publishDiagnostics(PublishDiagnosticsParams(publishUri, issues.map(::toDiagnostic)))
+            val diagnostics = PublishDiagnosticsParams(publishUri, issues.map { toDiagnostic(it) })
+            client.publishDiagnostics(diagnostics)
         } catch (e: Throwable) {
             logger.error(e) { "Validation failed uri=${document.uri}" }
         }

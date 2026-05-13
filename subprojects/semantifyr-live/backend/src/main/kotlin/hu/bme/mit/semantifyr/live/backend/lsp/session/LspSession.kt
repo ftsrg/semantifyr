@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.live.backend.lsp.session
 
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager
 import hu.bme.mit.semantifyr.live.backend.WorkspaceLayout
+import hu.bme.mit.semantifyr.live.backend.data.ActiveVerificationInfo
 import hu.bme.mit.semantifyr.live.backend.data.SessionInfo
 import hu.bme.mit.semantifyr.live.backend.data.SessionLspInfo
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
@@ -17,7 +18,7 @@ import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionLanguageServerAcces
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionRequestManager
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SharedExecutorProvider
 import hu.bme.mit.semantifyr.live.backend.lsp.transport.WebSocketLspConnector
-import hu.bme.mit.semantifyr.live.backend.utils.MdcContext
+import hu.bme.mit.semantifyr.live.backend.utils.withSessionIdMdc
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import io.ktor.websocket.*
@@ -96,7 +97,7 @@ class LspSession(
 
             val sessionCoroutineContext = currentCoroutineContext() + // copy session scope
                 sharedExecutorProvider.dispatcher + // override the caller dispatcher
-                MdcContext("sessionId" to sessionId)
+                withSessionIdMdc(sessionId)
 
             coroutineScope = CoroutineScope(sessionCoroutineContext)
             requestManager = SessionRequestManager(
@@ -130,17 +131,19 @@ class LspSession(
             flavorId = flavor.id,
             uptime = startMark.elapsedNow(),
             workingDirectory = sessionContext.workingDirectoryPath.toString(),
-            activeVerifications = verificationManager.activeFor(sessionId),
+            activeVerifications = verificationManager.activeFor(sessionId).map {
+                ActiveVerificationInfo(it.verificationId, it.portfolioId, it.kind, it.elapsed)
+            },
             sessionLspInfo = lspInfo,
         )
     }
 
     override fun close() {
         logger.info { "Closing session $sessionId" }
-        sessionDocumentManager.unloadAll()
         if (::coroutineScope.isInitialized) {
             coroutineScope.cancel()
         }
+        sessionDocumentManager.unloadAll()
     }
 
     private fun stageLibraryOnDisk() {

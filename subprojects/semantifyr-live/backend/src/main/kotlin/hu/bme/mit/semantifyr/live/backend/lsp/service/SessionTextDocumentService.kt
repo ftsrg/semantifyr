@@ -126,8 +126,10 @@ class SessionTextDocumentService(
                 sessionDocumentManager.referenceResourceAccess(),
                 cancelIndicator,
             ).orEmpty()
-            val translated = raw.map(::toClientLocation).toMutableList<Location>()
-            Either.forLeft<MutableList<out Location>, MutableList<out LocationLink>>(translated)
+            val translated = raw.map {
+                toClientLocation(it)
+            }.toMutableList()
+            Either.forLeft(translated)
         }
     }
 
@@ -142,7 +144,9 @@ class SessionTextDocumentService(
                 emptyIndex,
                 cancelIndicator,
             ).orEmpty()
-            raw.map(::toClientLocation).toMutableList()
+            raw.map {
+                toClientLocation(it)
+            }.toMutableList()
         }
     }
 

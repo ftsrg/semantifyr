@@ -14,12 +14,10 @@ import hu.bme.mit.semantifyr.live.backend.data.SessionInfo
 import hu.bme.mit.semantifyr.live.backend.exceptions.SessionLimitReachedException
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServiceRegistry
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SharedExecutorProvider
-import hu.bme.mit.semantifyr.live.backend.utils.MdcContext
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import io.ktor.server.websocket.WebSocketServerSession
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.sync.Semaphore
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -94,9 +92,9 @@ class SessionManager @Inject constructor(
         return false
     }
 
-    fun cancelVerification(sessionId: String, requestId: String): Boolean {
-        logger.info { "Admin cancels verification sessionId=$sessionId requestId=$requestId" }
-        return verificationManager.cancel(requestId)
+    fun cancelVerification(verificationId: String): Boolean {
+        logger.info { "Admin cancels verification verificationId=$verificationId" }
+        return verificationManager.cancel(verificationId)
     }
 
     override fun close() {
@@ -137,7 +135,7 @@ class SessionManager @Inject constructor(
         try {
             dir.toFile().deleteRecursively()
         } catch (e: Throwable) {
-            logger.warn { "Failed to clean up session directory $dir: $e" }
+            logger.warn(e) { "Failed to clean up session directory $dir" }
         }
     }
 }

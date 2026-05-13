@@ -75,7 +75,7 @@ class WebSocketHandler @Inject constructor(
                         logger.info { "WebSocket session cancelled for ip=$remoteIp flavor=$flavorId: ${e.message}" }
                         CloseReason(4000, e.message ?: "Session terminated")
                     } catch (e: Throwable) {
-                        logger.error { "WebSocket session error for ip=$remoteIp flavor=$flavorId: $e" }
+                        logger.error(e) { "WebSocket session error for ip=$remoteIp flavor=$flavorId" }
                         CloseReason(4500, "Internal server error")
                     }
                     close(closeReason)
