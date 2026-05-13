@@ -292,6 +292,11 @@ export interface LanguageClientCallbacks {
   onStopped: () => void;
 }
 
+export interface LanguageClientConnection {
+  wrapper: LanguageClientWrapper;
+  webSocket: WebSocket;
+}
+
 const LSP_STATE_STOPPED = 1;
 
 export async function connectLanguageClient(
@@ -299,12 +304,13 @@ export async function connectLanguageClient(
   flavorId: string,
   languageId: string,
   callbacks: LanguageClientCallbacks,
-): Promise<LanguageClientWrapper> {
+): Promise<LanguageClientConnection> {
   const { ws: wsBaseUrl } = normalizeBaseUrl(backendUrl);
   const webSocketUrl = `${wsBaseUrl}/ws/lsp/${encodeURIComponent(flavorId)}`;
+  const webSocket = new WebSocket(webSocketUrl);
   const languageClientConfig: LanguageClientConfig = {
     languageId,
-    connection: { options: { $type: 'WebSocketUrl', url: webSocketUrl } },
+    connection: { options: { $type: 'WebSocketDirect', webSocket } },
     clientOptions: {
       documentSelector: [languageId],
       workspaceFolder: {
@@ -343,5 +349,5 @@ export async function connectLanguageClient(
     }
   }
 
-  return languageClient;
+  return { wrapper: languageClient, webSocket };
 }

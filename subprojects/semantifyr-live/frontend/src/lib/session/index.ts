@@ -20,7 +20,7 @@ export {
   createSecondaryEditor,
   type EditorInstance,
   type LanguageClientCallbacks,
-  type NavigateToParams,
+  type LanguageClientConnection,
   type SecondaryEditorHandle,
 } from './monaco'
 

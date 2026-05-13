@@ -26,7 +26,7 @@ export type { LiveEditorStatus, ProblemEntry }
 
 export interface LiveEditorHandle {
   reconnect: () => void
-  disconnect: () => void
+  disconnect: () => Promise<void> | undefined
   goToCase: (location: VerificationCaseLocation) => void
   getLspClient: () => LspClient | undefined
   getLspMetrics: () => LspMetrics | null

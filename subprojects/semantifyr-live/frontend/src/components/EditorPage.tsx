@@ -616,7 +616,7 @@ export default function EditorPage({
           copyConfirmation={copyConfirmation}
           connectionStatus={status}
           onReconnect={() => editorHandleRef.current?.reconnect()}
-          onDisconnect={() => editorHandleRef.current?.disconnect()}
+          onDisconnect={() => { void editorHandleRef.current?.disconnect(); }}
           statusBarMessage={statusBarMessage}
           statusBarShowProgress={statusBarShowProgress}
           statusBarInfoItems={statusBarInfoItems}
