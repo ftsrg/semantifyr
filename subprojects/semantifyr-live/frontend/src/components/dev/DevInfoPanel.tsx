@@ -188,25 +188,28 @@ export default function DevInfoPanel({
         borderRadius: 2,
         minWidth: 380,
         maxHeight: '80vh',
-        overflowY: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
-      <Box sx={{ px: 0.5, py: 0.5 }}>
-        <Box
-          onMouseDown={handleDragStart}
-          sx={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 0.5, pb: 0.25,
-            cursor: 'grab', userSelect: 'none', '&:active': { cursor: 'grabbing' },
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <DragIndicatorIcon sx={{ fontSize: ICON_SIZE.sm, color: 'text.secondary' }} />
-            <Box sx={{ fontSize: FONT_SIZE.sm, fontWeight: 700, color: 'text.primary' }}>Developer Info</Box>
-          </Box>
-          <IconButton size="small" onClick={onClose} sx={{ color: 'text.secondary' }}>
-            <CloseIcon sx={{ fontSize: ICON_SIZE.sm }} />
-          </IconButton>
+      <Box
+        onMouseDown={handleDragStart}
+        sx={{
+          flex: '0 0 auto',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          px: 1, pt: 0.5, pb: 0.25,
+          cursor: 'grab', userSelect: 'none', '&:active': { cursor: 'grabbing' },
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <DragIndicatorIcon sx={{ fontSize: ICON_SIZE.sm, color: 'text.secondary' }} />
+          <Box sx={{ fontSize: FONT_SIZE.sm, fontWeight: 700, color: 'text.primary' }}>Developer Info</Box>
         </Box>
+        <IconButton size="small" onClick={onClose} sx={{ color: 'text.secondary' }}>
+          <CloseIcon sx={{ fontSize: ICON_SIZE.sm }} />
+        </IconButton>
+      </Box>
+      <Box sx={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', px: 0.5, pb: 0.5 }}>
         <Table size="small" sx={{ tableLayout: 'auto' }}>
           <TableBody>
             <SectionHeader title="Frontend" />
