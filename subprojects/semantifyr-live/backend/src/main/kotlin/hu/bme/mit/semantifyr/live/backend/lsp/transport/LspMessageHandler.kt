@@ -8,9 +8,11 @@ package hu.bme.mit.semantifyr.live.backend.lsp.transport
 
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
+import hu.bme.mit.semantifyr.live.backend.lsp.adapters.DurationTypeAdapter
 import hu.bme.mit.semantifyr.live.backend.lsp.adapters.VerificationKindTypeAdapter
 import org.eclipse.lsp4j.jsonrpc.json.JsonRpcMethod
 import org.eclipse.lsp4j.jsonrpc.json.MessageJsonHandler
+import kotlin.time.Duration
 
 fun createLspMessageJsonHandler(
     supportedMethods: Map<String, JsonRpcMethod> = emptyMap(),
@@ -18,5 +20,6 @@ fun createLspMessageJsonHandler(
     return MessageJsonHandler(supportedMethods) {
         CommandGson.configure(it)
         it.registerTypeAdapter(VerificationKind::class.java, VerificationKindTypeAdapter())
+        it.registerTypeAdapter(Duration::class.java, DurationTypeAdapter())
     }
 }
