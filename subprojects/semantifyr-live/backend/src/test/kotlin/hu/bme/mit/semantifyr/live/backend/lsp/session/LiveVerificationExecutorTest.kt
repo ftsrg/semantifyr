@@ -82,7 +82,7 @@ class LiveVerificationExecutorTest {
             "theta",
             "smart-full",
             null,
-            VerificationTrace(null, null, "inline witness source", serverUri),
+            VerificationTrace(null, null, serverUri),
         )
         val fixture = Fixture(raw)
         whenever(fixture.documents.toClientUri(serverUri)).thenReturn("file:///workspace/.artifacts/Case/witness.oxsts")
@@ -90,7 +90,6 @@ class LiveVerificationExecutorTest {
         val result = executor.execute(fixture.lspSession, noArgs()) as VerificationCaseResult
         assertThat(result.status()).isEqualTo("failed")
         assertThat(result.trace().witnessUri()).isEqualTo("file:///workspace/.artifacts/Case/witness.oxsts")
-        assertThat(result.trace().backAnnotatedSource()).isNull()
     }
 
     @Test
@@ -102,7 +101,7 @@ class LiveVerificationExecutorTest {
             "theta",
             "smart-full",
             null,
-            VerificationTrace(null, null, "inline source", outsideUri),
+            VerificationTrace(null, null, outsideUri),
         )
         val fixture = Fixture(raw)
         whenever(fixture.documents.toClientUri(outsideUri)).thenReturn(outsideUri)

@@ -62,7 +62,7 @@ class LiveVerificationExecutor : VerificationExecutor {
             result.backendId(),
             result.portfolioId(),
             result.metrics(),
-            VerificationTrace(trace.callTrace(), trace.witnessState(), null, clientUri),
+            VerificationTrace(trace.callTrace(), trace.witnessState(), clientUri),
         )
     }
 }

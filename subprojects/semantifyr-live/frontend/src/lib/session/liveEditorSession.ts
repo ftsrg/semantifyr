@@ -220,11 +220,8 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
 
   const doConnect = async (): Promise<void> => {
     if (languageClient) {
-      try {
-        await languageClient.dispose()
-      } catch {
-        /* ignore */
-      }
+      // Dispose witout waiting
+      void languageClient.dispose().catch(() => { /* ignore */ })
       languageClient = null
     }
     metricsClient = null
@@ -378,11 +375,8 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
       /* ignore */
     }
     verifyDiagnostics = null
-    try {
-      await languageClient?.dispose()
-    } catch {
-      /* ignore */
-    }
+    // Dispose without waiting
+    languageClient?.dispose().catch(() => { /* ignore */ })
     try {
       await editorApp?.dispose()
     } catch {
