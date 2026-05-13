@@ -38,6 +38,8 @@ dependencies {
 
 val importedSnippetsDir = project.layout.projectDirectory.dir("src/snippets/imported")
 val importedVscodeDir = project.layout.projectDirectory.dir("src/vscode/imported")
+val brandingDir = rootProject.layout.projectDirectory.dir("branding")
+val publicDir = project.layout.projectDirectory.dir("public")
 
 val cloneGammaTestModels by tasks.registering(Sync::class) {
     from(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/examples")) {
@@ -85,6 +87,37 @@ val cloneVscodeLanguageAssets by tasks.registering(Sync::class) {
     into(importedVscodeDir)
 }
 
+val cloneBrandingAssets by tasks.registering(Sync::class) {
+    from(brandingDir) {
+        include("favicon.ico")
+    }
+    from(brandingDir) {
+        include("semantifyr-logo.svg")
+        rename { "pwa.svg" }
+    }
+    from(brandingDir) {
+        include("semantifyr-full-light.svg")
+        rename { "logo-full-light.svg" }
+    }
+    from(brandingDir) {
+        include("semantifyr-full-dark.svg")
+        rename { "logo-full-dark.svg" }
+    }
+    from(brandingDir) {
+        include("semantifyr-logo-192.png")
+        rename { "pwa-192.png" }
+    }
+    from(brandingDir) {
+        include("semantifyr-logo-512.png")
+        rename { "pwa-512.png" }
+    }
+    from(brandingDir) {
+        include("semantifyr-logo-180.png")
+        rename { "apple-touch-icon.png" }
+    }
+    into(publicDir)
+}
+
 // npm workspaces: install runs once at the repo root so all four TS packages share a single
 // node_modules tree. The per-package package-lock.json files were retired with the workspace
 // migration; the only lockfile is at the root.
@@ -107,6 +140,7 @@ val assembleFrontend by tasks.registering(NpmTask::class) {
     inputs.files(editorCommonDist)
     inputs.files(cloneTestModels)
     inputs.files(cloneVscodeLanguageAssets)
+    inputs.files(cloneBrandingAssets)
 
     npmCommand.set(listOf("run", "build"))
     outputs.dir(project.layout.projectDirectory.dir("dist"))
@@ -147,5 +181,6 @@ tasks {
         delete("dist")
         delete(importedSnippetsDir)
         delete(importedVscodeDir)
+        delete(publicDir)
     }
 }

@@ -20,6 +20,7 @@ export default {
   baseUrl: '/semantifyr/',
   baseUrlIssueBanner: false,
   trailingSlash: true,
+  staticDirectories: ['static', 'static-imported-branding'],
   headTags: [
     {
       tagName: 'link',

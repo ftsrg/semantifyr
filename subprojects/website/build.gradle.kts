@@ -14,6 +14,46 @@ tasks.npmInstall {
     workingDir = rootProject.projectDir
 }
 
+val brandingDir = rootProject.layout.projectDirectory.dir("branding")
+val importedBrandingDir = project.layout.projectDirectory.dir("static-imported-branding")
+
+val cloneBrandingAssets by tasks.registering(Sync::class) {
+    from(brandingDir) {
+        include("favicon.ico")
+    }
+    from(brandingDir) {
+        include("semantifyr-logo.svg")
+        rename { "logo.svg" }
+        into("img")
+    }
+    from(brandingDir) {
+        include("semantifyr-full-light.svg")
+        rename { "logo-full-light.svg" }
+        into("img")
+    }
+    from(brandingDir) {
+        include("semantifyr-full-dark.svg")
+        rename { "logo-full-dark.svg" }
+        into("img")
+    }
+    from(brandingDir) {
+        include("semantifyr-logo-192.png")
+        rename { "logo-192.png" }
+        into("img")
+    }
+    from(brandingDir) {
+        include("semantifyr-logo-512.png")
+        rename { "logo-512.png" }
+        into("img")
+    }
+    from(brandingDir) {
+        include("semantifyr-logo-180.png")
+        rename { "apple-touch-icon.png" }
+        into("img")
+    }
+    into(importedBrandingDir)
+}
+
 val assembleFrontend by tasks.registering(NpmTask::class) {
     inputs.dir(project.layout.projectDirectory.dir("src"))
     inputs.dir(project.layout.projectDirectory.dir("static"))
@@ -24,6 +64,7 @@ val assembleFrontend by tasks.registering(NpmTask::class) {
     inputs.file(rootProject.layout.projectDirectory.file("package.json"))
     inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
     inputs.files(tasks.npmInstall)
+    inputs.files(cloneBrandingAssets)
 
     npmCommand.set(listOf("run", "build"))
     outputs.dir(project.layout.buildDirectory.dir("docusaurus"))
@@ -37,5 +78,6 @@ tasks {
     clean {
         delete(".docusaurus")
         delete("build")
+        delete(importedBrandingDir)
     }
 }
