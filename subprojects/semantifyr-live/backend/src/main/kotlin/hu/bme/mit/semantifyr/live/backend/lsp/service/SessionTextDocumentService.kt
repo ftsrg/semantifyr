@@ -44,8 +44,6 @@ import org.eclipse.lsp4j.TextEdit
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.TextDocumentService
 import org.eclipse.xtext.ide.server.codeActions.ICodeActionService2
-import org.eclipse.xtext.resource.IResourceDescriptions
-import org.eclipse.xtext.resource.impl.ResourceDescriptionsData
 import org.eclipse.xtext.util.CancelIndicator
 import java.util.concurrent.CompletableFuture
 
@@ -135,13 +133,12 @@ class SessionTextDocumentService(
 
     override fun references(params: ReferenceParams): CompletableFuture<MutableList<out Location>> {
         return readDocument(params.textDocument.uri, mutableListOf()) { file, cancelIndicator ->
-            val emptyIndex: IResourceDescriptions = ResourceDescriptionsData(emptyList())
             val raw = languageServices.richDocumentSymbolService.getReferences(
                 file.xtextDocument(),
                 file.resource,
                 params,
                 sessionDocumentManager.referenceResourceAccess(),
-                emptyIndex,
+                sessionDocumentManager.referenceIndex(),
                 cancelIndicator,
             ).orEmpty()
             raw.map {
@@ -248,7 +245,7 @@ class SessionTextDocumentService(
     }
 
     private fun toClientLocation(location: Location): Location {
-        val translated = sessionDocumentManager.serverToClient(location.uri)
+        val translated = sessionDocumentManager.toClientUri(location.uri)
         if (translated == location.uri) {
             return location
         }

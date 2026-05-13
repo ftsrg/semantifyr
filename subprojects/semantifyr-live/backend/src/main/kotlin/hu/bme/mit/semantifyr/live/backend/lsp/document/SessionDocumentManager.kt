@@ -20,7 +20,9 @@ import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.services.LanguageClient
 import org.eclipse.xtext.diagnostics.Severity
 import org.eclipse.xtext.findReferences.IReferenceFinder
+import org.eclipse.xtext.resource.IResourceDescriptions
 import org.eclipse.xtext.resource.XtextResource
+import org.eclipse.xtext.resource.impl.ResourceDescriptionsData
 import org.eclipse.xtext.util.CancelIndicator
 import org.eclipse.xtext.util.concurrent.IUnitOfWork
 import org.eclipse.xtext.validation.CheckMode
@@ -149,6 +151,15 @@ class SessionDocumentManager(
                 return work.exec(resourceSet)
             }
         }
+    }
+
+    fun referenceIndex(): IResourceDescriptions {
+        val descriptions = resourceSet.resources.mapNotNull { resource ->
+            val provider = languageServices.resourceServiceProviderRegistry.getResourceServiceProvider(resource.uri)
+                ?: return@mapNotNull null
+            provider.resourceDescriptionManager?.getResourceDescription(resource)
+        }
+        return ResourceDescriptionsData(descriptions)
     }
 
     fun serverToClient(serverUri: String): String {
