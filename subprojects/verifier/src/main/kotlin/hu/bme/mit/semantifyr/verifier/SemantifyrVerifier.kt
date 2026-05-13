@@ -12,7 +12,6 @@ import com.google.inject.assistedinject.FactoryModuleBuilder
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
-import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.internal.SemantifyrVerifierConfiguration
 import hu.bme.mit.semantifyr.verifier.internal.SemantifyrVerifierImpl
@@ -110,8 +109,10 @@ interface SemantifyrVerifier {
             val resolvedOutputDirectory = requireNotNull(outputDirectory) {
                 "SemantifyrVerifier.Builder requires .outputDirectory(...)."
             }
+            val resolvedInjector = requireNotNull(injector) {
+                "SemantifyrVerifier.Builder requires .injector(...)."
+            }
 
-            val resolvedInjector = injector ?: OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
             val verifierInjector = resolvedInjector.createChildInjector(SemantifyrVerifierModule())
 
             val configuration = SemantifyrVerifierConfiguration(

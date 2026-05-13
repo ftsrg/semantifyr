@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.verifier
 
 import com.google.inject.Inject
+import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
@@ -36,6 +37,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 class SemantifyrVerifierTestHelper @Inject constructor(
+    val injector: Injector,
     val semantifyrLoader: SemantifyrLoader,
     val verificationCaseDiscoverer: VerificationCaseDiscoverer,
 ) {
@@ -51,6 +53,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
     ): SemantifyrVerifier {
         outputDirectory.createDirectories()
         return SemantifyrVerifier.builder()
+            .injector(injector)
             .portfolio(verificationPortfolio)
             .environment(environment)
             .artifacts(artifacts)
