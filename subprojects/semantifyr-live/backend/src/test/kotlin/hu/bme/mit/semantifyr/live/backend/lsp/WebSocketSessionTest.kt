@@ -6,16 +6,19 @@
 
 package hu.bme.mit.semantifyr.live.backend.lsp
 
+import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.ServerConfig
 import hu.bme.mit.semantifyr.live.backend.SessionManagerConfig
 import hu.bme.mit.semantifyr.live.backend.data.AdminStatusResponse
+import hu.bme.mit.semantifyr.live.backend.data.SessionInfo
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SemantifyrLiveMethods
 import hu.bme.mit.semantifyr.live.backend.testing.LspWire
 import hu.bme.mit.semantifyr.live.backend.testing.awaitResponseFor
 import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrApp
 import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrLiveBackend
 import hu.bme.mit.semantifyr.live.backend.testing.jsonClient
+import hu.bme.mit.semantifyr.live.backend.testing.resultAs
 import hu.bme.mit.semantifyr.live.backend.testing.testInjector
 import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
@@ -32,13 +35,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
+import org.eclipse.lsp4j.InitializeResult
+import org.eclipse.lsp4j.SemanticTokens
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
@@ -78,17 +77,13 @@ class WebSocketSessionTest {
         send(Frame.Text(LspWire.didOpenNotification(uri = uri, languageId = "oxsts", text = text)))
     }
 
-    private suspend fun DefaultClientWebSocketSession.discover(id: Int, uri: String): JsonArray {
+    private suspend fun DefaultClientWebSocketSession.discover(id: Int, uri: String): List<VerificationCaseSpecification> {
         send(
             Frame.Text(
-                LspWire.executeCommandRequest(
-                    id = id,
-                    command = "oxsts.case.discover",
-                    arguments = listOf(JsonPrimitive(uri)),
-                ),
+                LspWire.executeCommandRequest(id = id, command = "oxsts.case.discover", arguments = listOf(uri)),
             ),
         )
-        return awaitResponseFor(id = id)["result"]?.jsonArray ?: error("discover returned no result")
+        return awaitResponseFor(id = id).resultAs(Array<VerificationCaseSpecification>::class.java).toList()
     }
 
     @Test
@@ -96,8 +91,8 @@ class WebSocketSessionTest {
         installSemantifyrApp(webSockets = true) { installSemantifyrLiveBackend(testInjector(config(tmp))) }
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             send(Frame.Text(LspWire.initializeRequest()))
-            val response = awaitResponseFor(id = 1)
-            assertThat(response["result"]?.jsonObject?.get("capabilities")?.jsonObject).isNotNull
+            val response = awaitResponseFor(id = 1).resultAs(InitializeResult::class.java)
+            assertThat(response.capabilities).isNotNull
         }
     }
 
@@ -108,9 +103,9 @@ class WebSocketSessionTest {
             send(Frame.Text(LspWire.initializeRequest()))
             awaitResponseFor(id = 1)
             send(Frame.Text(LspWire.request(id = 2, method = SemantifyrLiveMethods.SESSION_INFO)))
-            val info = awaitResponseFor(id = 2)["result"]?.jsonObject ?: error("no session info")
-            assertThat(info["flavorId"]?.jsonPrimitive?.contentOrNull).isEqualTo("oxsts")
-            assertThat(info["workingDirectory"]?.jsonPrimitive?.contentOrNull).contains(tmp.toString())
+            val info = awaitResponseFor(id = 2).resultAs(SessionInfo::class.java)
+            assertThat(info.flavorId).isEqualTo("oxsts")
+            assertThat(info.workingDirectory).contains(tmp.toString())
         }
     }
 
@@ -137,8 +132,7 @@ class WebSocketSessionTest {
             openWith("file:///workspace/snippet.oxsts")
             val cases = discover(id = 2, uri = "file:///workspace/snippet.oxsts")
             assertThat(cases).isNotEmpty
-            assertThat(cases.map { it.jsonObject["label"]?.jsonPrimitive?.contentOrNull })
-                .anyMatch { it != null && it.contains("CaseA") }
+            assertThat(cases.map { it.label() }).anyMatch { it.contains("CaseA") }
         }
     }
 
@@ -148,9 +142,8 @@ class WebSocketSessionTest {
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             openWith("file:///workspace/snippet.oxsts")
             send(Frame.Text(LspWire.semanticTokensFullRequest(id = 2, uri = "file:///workspace/snippet.oxsts")))
-            val data = awaitResponseFor(id = 2)["result"]?.jsonObject?.get("data")?.jsonArray
-                ?: error("semanticTokens/full returned no data")
-            assertThat(data).isNotEmpty
+            val tokens = awaitResponseFor(id = 2).resultAs(SemanticTokens::class.java)
+            assertThat(tokens.data).isNotEmpty
         }
     }
 

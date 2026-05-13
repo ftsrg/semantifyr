@@ -6,21 +6,19 @@
 
 package hu.bme.mit.semantifyr.live.backend.integration
 
+import com.google.gson.Gson
+import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
+import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
+import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification
 import hu.bme.mit.semantifyr.live.backend.integration.IntegrationTestSupport.config
 import hu.bme.mit.semantifyr.live.backend.integration.IntegrationTestSupport.stagedModel
 import hu.bme.mit.semantifyr.live.backend.testing.LspWire
 import hu.bme.mit.semantifyr.live.backend.testing.awaitResponseFor
+import hu.bme.mit.semantifyr.live.backend.testing.resultAs
 import hu.bme.mit.semantifyr.live.backend.testing.withRealServer
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.websocket.Frame
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -29,6 +27,8 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 class VerificationSmokeTest {
+
+    private val gson = Gson()
 
     @Test
     suspend fun `oxsts verification case passes end-to-end`(@TempDir tmp: Path) {
@@ -39,8 +39,8 @@ class VerificationSmokeTest {
             pickCase = { cases ->
                 cases.pickByLabelSuffix("GreenColorIsReachable")
             },
-            assertVerdict = { status, _ ->
-                assertThat(status).isEqualTo("passed")
+            assertVerdict = { result ->
+                assertThat(result.status()).isEqualTo("passed")
             },
         )
     }
@@ -57,12 +57,12 @@ class VerificationSmokeTest {
             verifyCommand = "gamma.case.verify",
             pickCase = { cases ->
                 val idleReachable = cases.pickByLabel("LeaderStatechartIdleReachable")
-                assertThat(idleReachable["id"]?.jsonPrimitive?.contentOrNull).isEqualTo("Simple.LeaderStatechartIdleReachable")
+                assertThat(idleReachable.id()).isEqualTo("Simple.LeaderStatechartIdleReachable")
                 idleReachable
             },
-            assertVerdict = { status, result ->
-                acceptAnyKnownStatus("LeaderStatechartIdleReachable", status, result)
-                assertThat(status).isIn("passed", "not_supported")
+            assertVerdict = { result ->
+                acceptAnyKnownStatus("LeaderStatechartIdleReachable", result)
+                assertThat(result.status()).isIn("passed", "not_supported")
             },
             verifyTimeout = 2.minutes,
         )
@@ -96,33 +96,29 @@ class VerificationSmokeTest {
             flavor = flavor,
             modelSource = modelSource,
             pickCase = {
-                it.first().jsonObject
+                it.first()
             },
-            assertVerdict = { status, result ->
-                acceptAnyKnownStatus(flavor, status, result)
+            assertVerdict = { result ->
+                acceptAnyKnownStatus(flavor, result)
             },
             verifyTimeout = 2.minutes,
         )
     }
 
-    private fun List<JsonObject>.pickByLabel(label: String): JsonObject {
+    private fun List<VerificationCaseSpecification>.pickByLabel(label: String): VerificationCaseSpecification {
         return firstOrNull {
-            it["label"]?.jsonPrimitive?.contentOrNull == label
+            it.label() == label
         } ?: error("Expected '$label' verification case in the discovered list: $this")
     }
 
-    private fun List<JsonObject>.pickByLabelSuffix(suffix: String): JsonObject {
+    private fun List<VerificationCaseSpecification>.pickByLabelSuffix(suffix: String): VerificationCaseSpecification {
         return firstOrNull {
-            it["label"]?.jsonPrimitive?.contentOrNull?.endsWith(suffix) == true
+            it.label().endsWith(suffix)
         } ?: error("Expected verification case ending in '$suffix' in the discovered list: $this")
     }
 
-    private fun acceptAnyKnownStatus(
-        label: String,
-        status: String?,
-        result: JsonObject,
-    ) {
-        assertThat(status)
+    private fun acceptAnyKnownStatus(label: String, result: VerificationCaseResult) {
+        assertThat(result.status())
             .describedAs("verification status for $label: $result")
             .isIn("passed", "failed", "inconclusive", "not_supported")
     }
@@ -131,8 +127,8 @@ class VerificationSmokeTest {
         tmp: Path,
         flavor: String,
         modelSource: String,
-        pickCase: (List<JsonObject>) -> JsonObject,
-        assertVerdict: (status: String?, result: JsonObject) -> Unit,
+        pickCase: (List<VerificationCaseSpecification>) -> VerificationCaseSpecification,
+        assertVerdict: (result: VerificationCaseResult) -> Unit,
         languageId: String = "oxsts",
         documentUri: String = "file:///workspace/snippet.oxsts",
         discoverCommand: String = "oxsts.case.discover",
@@ -149,10 +145,6 @@ class VerificationSmokeTest {
 
                 val cases = discoverCases(id = 2, command = discoverCommand, documentUri = documentUri, flavor = flavor)
                 val selectedCase = pickCase(cases)
-                val caseRange = selectedCase["location"]?.jsonObject?.get("range")
-                    ?: error("verification case has no location.range: $selectedCase")
-                val caseLabel = selectedCase["label"]?.jsonPrimitive?.contentOrNull
-                    ?: error("verification case has no label: $selectedCase")
 
                 send(
                     Frame.Text(
@@ -160,21 +152,13 @@ class VerificationSmokeTest {
                             id = 3,
                             command = verifyCommand,
                             arguments = listOf(
-                                LspWire.verifyCommandArgument(
-                                    uri = documentUri,
-                                    range = caseRange,
-                                    portfolio = "smart-full",
-                                    caseLabel = caseLabel,
-                                ),
+                                VerificationCaseRequest(documentUri, selectedCase.location().range, "smart-full"),
                             ),
                         ),
                     ),
                 )
                 val verifyResponse = awaitResponseFor(id = 3, timeout = verifyTimeout)
-                val resultObject = verifyResponse["result"]?.jsonObject
-                    ?: error("verify response had no result: $verifyResponse")
-                val resultStatus = resultObject["status"]?.jsonPrimitive?.contentOrNull
-                assertVerdict(resultStatus, resultObject)
+                assertVerdict(verifyResponse.resultAs(VerificationCaseResult::class.java))
             }
         }
     }
@@ -184,22 +168,17 @@ class VerificationSmokeTest {
         command: String,
         documentUri: String,
         flavor: String,
-    ): List<JsonObject> {
+    ): List<VerificationCaseSpecification> {
         send(
             Frame.Text(
-                LspWire.executeCommandRequest(
-                    id = id,
-                    command = command,
-                    arguments = listOf(JsonPrimitive(documentUri) as JsonElement),
-                ),
+                LspWire.executeCommandRequest(id = id, command = command, arguments = listOf(documentUri)),
             ),
         )
         val discoverResponse = awaitResponseFor(id = id)
-        val cases = discoverResponse["result"] as? JsonArray
+        val resultJson = discoverResponse["result"]?.toString()
             ?: error("discover returned no result for flavor=$flavor: $discoverResponse")
+        val cases = gson.fromJson(resultJson, Array<VerificationCaseSpecification>::class.java).toList()
         assertThat(cases).describedAs("discover for flavor=$flavor").isNotEmpty
-        return cases.map {
-            it.jsonObject
-        }
+        return cases
     }
 }

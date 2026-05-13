@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.live.backend.data.AdminConfigResponse
 import hu.bme.mit.semantifyr.live.backend.data.AdminStatusResponse
 import hu.bme.mit.semantifyr.live.backend.data.SessionInfo
 import hu.bme.mit.semantifyr.live.backend.data.SessionLspInfo
+import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionManager
 import hu.bme.mit.semantifyr.live.backend.testing.handler
 import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrApp
@@ -57,8 +58,8 @@ class AdminHandlerTest {
         `when`(sessionManager.getSessionInfos()).thenReturn(sessionInfos)
         `when`(sessionManager.cancelSession("test-session")).thenReturn(true)
         `when`(sessionManager.cancelSession("nonexistent")).thenReturn(false)
-        `when`(sessionManager.cancelVerification("test-session", "req-1")).thenReturn(true)
-        `when`(sessionManager.cancelVerification("test-session", "nonexistent")).thenReturn(false)
+        `when`(sessionManager.cancelVerification("req-1")).thenReturn(true)
+        `when`(sessionManager.cancelVerification("nonexistent")).thenReturn(false)
 
         return testInjector(config) {
             bind(SessionManager::class.java).toInstance(sessionManager)
@@ -101,7 +102,9 @@ class AdminHandlerTest {
             flavorId = "oxsts",
             uptime = 30.seconds,
             workingDirectory = "/tmp/test",
-            activeVerifications = listOf(ActiveVerificationInfo(requestId = "req-1", portfolioId = "smart-full")),
+            activeVerifications = listOf(
+                ActiveVerificationInfo(verificationId = "req-1", portfolioId = "smart-full", kind = VerificationKind.Verify),
+            ),
             sessionLspInfo = SessionLspInfo(
                 timeSinceLastClientMessage = 2.seconds,
                 timeSinceLastServerMessage = 1.seconds,
@@ -128,7 +131,7 @@ class AdminHandlerTest {
         assertThat(status.sessions[0].sessionLspInfo.timeSinceLastClientMessage).isEqualTo(2.seconds)
         assertThat(status.sessions[0].sessionLspInfo.timeSinceLastServerMessage).isEqualTo(1.seconds)
         assertThat(status.sessions[0].activeVerifications).hasSize(1)
-        assertThat(status.sessions[0].activeVerifications[0].requestId).isEqualTo("req-1")
+        assertThat(status.sessions[0].activeVerifications[0].verificationId).isEqualTo("req-1")
         assertThat(status.sessions[0].activeVerifications[0].portfolioId).isEqualTo("smart-full")
     }
 
@@ -191,7 +194,7 @@ class AdminHandlerTest {
             }
         }
 
-        val response = client.delete("/api/admin/sessions/test-session/verifications/req-1") {
+        val response = client.delete("/api/admin/verifications/req-1") {
             header(HttpHeaders.Authorization, basicAuth())
         }
         assertThat(response.status).isEqualTo(HttpStatusCode.OK)
@@ -206,7 +209,7 @@ class AdminHandlerTest {
             }
         }
 
-        val response = client.delete("/api/admin/sessions/test-session/verifications/nonexistent") {
+        val response = client.delete("/api/admin/verifications/nonexistent") {
             header(HttpHeaders.Authorization, basicAuth())
         }
         assertThat(response.status).isEqualTo(HttpStatusCode.NotFound)

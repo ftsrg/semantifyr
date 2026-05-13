@@ -12,7 +12,6 @@ import hu.bme.mit.semantifyr.live.backend.SessionManagerConfig
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.Base64
 
 object IntegrationTestSupport {
 
@@ -25,7 +24,9 @@ object IntegrationTestSupport {
     val sysmlLibraryModelsDirectory = systemPropertyPath("semantifyr.live.sysmlLibraryModels")
 
     private fun systemPropertyPath(name: String): Path? {
-        return System.getProperty(name)?.let { Path.of(it) }
+        return System.getProperty(name)?.let {
+            Path.of(it)
+        }
     }
 
     fun assumeStaged() {

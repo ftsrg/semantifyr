@@ -6,203 +6,165 @@
 
 package hu.bme.mit.semantifyr.live.backend.testing
 
+import com.google.gson.JsonElement
+import com.google.gson.JsonNull
+import com.google.gson.JsonObject
+import hu.bme.mit.semantifyr.live.backend.lsp.transport.createLspMessageJsonHandler
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
 import kotlinx.coroutines.withTimeout
-import kotlinx.serialization.json.Json.Default.parseToJsonElement
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.int
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
+import org.eclipse.lsp4j.ClientCapabilities
+import org.eclipse.lsp4j.DidChangeTextDocumentParams
+import org.eclipse.lsp4j.DidOpenTextDocumentParams
+import org.eclipse.lsp4j.ExecuteCommandCapabilities
+import org.eclipse.lsp4j.ExecuteCommandParams
+import org.eclipse.lsp4j.InitializeParams
+import org.eclipse.lsp4j.InitializedParams
+import org.eclipse.lsp4j.Position
+import org.eclipse.lsp4j.Range
+import org.eclipse.lsp4j.SemanticTokensParams
+import org.eclipse.lsp4j.TextDocumentContentChangeEvent
+import org.eclipse.lsp4j.TextDocumentIdentifier
+import org.eclipse.lsp4j.TextDocumentItem
+import org.eclipse.lsp4j.VersionedTextDocumentIdentifier
+import org.eclipse.lsp4j.WindowClientCapabilities
+import org.eclipse.lsp4j.WorkspaceClientCapabilities
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
+// Built from the same factory the live-backend's WebSocket connector uses, so the test side
+// decodes through identical Gson configuration (DurationTypeAdapter, VerificationKindTypeAdapter,
+// lsp4j's Either / Enum type adapters).
+private val gson = createLspMessageJsonHandler().gson
+
 object LspWire {
 
-    private val initializeCapabilities: JsonObject = buildJsonObject {
-        put(
-            "workspace",
-            buildJsonObject {
-                put(
-                    "executeCommand",
-                    buildJsonObject {
-                        put("dynamicRegistration", JsonPrimitive(true))
-                    },
-                )
-            },
-        )
-        put(
-            "window",
-            buildJsonObject {
-                put("workDoneProgress", JsonPrimitive(true))
-            },
-        )
+    private data class JsonRpcRequest(
+        val jsonrpc: String = "2.0",
+        val id: Int,
+        val method: String,
+        val params: Any,
+    )
+
+    private data class JsonRpcNotification(
+        val jsonrpc: String = "2.0",
+        val method: String,
+        val params: Any,
+    )
+
+    fun request(id: Int, method: String, params: Any = emptyMap<String, Any>()): String {
+        return gson.toJson(JsonRpcRequest(id = id, method = method, params = params))
     }
 
-    fun request(
-        id: Int,
-        method: String,
-        params: JsonElement = JsonObject(emptyMap()),
-    ): String {
-        return buildJsonObject {
-            put("jsonrpc", JsonPrimitive("2.0"))
-            put("id", JsonPrimitive(id))
-            put("method", JsonPrimitive(method))
-            put("params", params)
-        }.toString()
-    }
-
-    fun notification(method: String, params: JsonElement = JsonObject(emptyMap())): String {
-        return buildJsonObject {
-            put("jsonrpc", JsonPrimitive("2.0"))
-            put("method", JsonPrimitive(method))
-            put("params", params)
-        }.toString()
+    fun notification(method: String, params: Any = emptyMap<String, Any>()): String {
+        return gson.toJson(JsonRpcNotification(method = method, params = params))
     }
 
     fun initializeRequest(id: Int = 1): String {
+        val capabilities = ClientCapabilities().apply {
+            workspace = WorkspaceClientCapabilities().apply {
+                executeCommand = ExecuteCommandCapabilities().apply { dynamicRegistration = true }
+            }
+            window = WindowClientCapabilities().apply { workDoneProgress = true }
+        }
         return request(
-            id = id,
-            method = "initialize",
-            params = buildJsonObject {
-                put("processId", JsonPrimitive(null as String?))
-                put("rootUri", JsonPrimitive("file:///workspace/"))
-                put("capabilities", initializeCapabilities)
+            id,
+            "initialize",
+            InitializeParams().apply {
+                rootUri = "file:///workspace/"
+                this.capabilities = capabilities
             },
         )
     }
 
     fun initializedNotification(): String {
-        return notification(method = "initialized")
+        return notification("initialized", InitializedParams())
     }
 
-    fun didOpenNotification(
-        uri: String,
-        languageId: String,
-        text: String,
-        version: Int = 1,
-    ): String {
+    fun didOpenNotification(uri: String, languageId: String, text: String, version: Int = 1): String {
         return notification(
-            method = "textDocument/didOpen",
-            params = buildJsonObject {
-                put(
-                    "textDocument",
-                    buildJsonObject {
-                        put("uri", JsonPrimitive(uri))
-                        put("languageId", JsonPrimitive(languageId))
-                        put("version", JsonPrimitive(version))
-                        put("text", JsonPrimitive(text))
-                    },
-                )
-            },
+            "textDocument/didOpen",
+            DidOpenTextDocumentParams(TextDocumentItem(uri, languageId, version, text)),
         )
     }
 
-    fun didChangeNotification(
-        uri: String,
-        version: Int,
-        text: String,
-    ): String {
+    fun didChangeNotification(uri: String, version: Int, text: String): String {
         return notification(
-            method = "textDocument/didChange",
-            params = buildJsonObject {
-                put(
-                    "textDocument",
-                    buildJsonObject {
-                        put("uri", JsonPrimitive(uri))
-                        put("version", JsonPrimitive(version))
-                    },
-                )
-                put(
-                    "contentChanges",
-                    JsonArray(
-                        listOf(
-                            buildJsonObject {
-                                put("text", JsonPrimitive(text))
-                            },
-                        ),
-                    ),
-                )
-            },
+            "textDocument/didChange",
+            DidChangeTextDocumentParams(
+                VersionedTextDocumentIdentifier(uri, version),
+                listOf(TextDocumentContentChangeEvent(text)),
+            ),
         )
     }
 
-    fun executeCommandRequest(
-        id: Int,
-        command: String,
-        arguments: List<JsonElement> = emptyList(),
-    ): String {
-        return request(
-            id = id,
-            method = "workspace/executeCommand",
-            params = buildJsonObject {
-                put("command", JsonPrimitive(command))
-                put("arguments", JsonArray(arguments))
-            },
-        )
-    }
-
-    fun verifyCommandArgument(
-        uri: String,
-        range: JsonElement,
-        portfolio: String,
-        caseLabel: String,
-        requestId: String? = null,
-    ): JsonObject {
-        return buildJsonObject {
-            put("uri", JsonPrimitive(uri))
-            put("range", range)
-            put("portfolio", JsonPrimitive(portfolio))
-            put("caseLabel", JsonPrimitive(caseLabel))
-            if (requestId != null) {
-                put("requestId", JsonPrimitive(requestId))
-            }
-        }
+    fun executeCommandRequest(id: Int, command: String, arguments: List<Any> = emptyList()): String {
+        return request(id, "workspace/executeCommand", ExecuteCommandParams(command, arguments))
     }
 
     fun semanticTokensFullRequest(id: Int, uri: String): String {
-        return request(
-            id = id,
-            method = "textDocument/semanticTokens/full",
-            params = buildJsonObject {
-                put(
-                    "textDocument",
-                    buildJsonObject {
-                        put("uri", JsonPrimitive(uri))
-                    },
-                )
-            },
-        )
+        return request(id, "textDocument/semanticTokens/full", SemanticTokensParams(TextDocumentIdentifier(uri)))
     }
+
+    fun range(
+        startLine: Int = 0,
+        startCharacter: Int = 0,
+        endLine: Int = 0,
+        endCharacter: Int = 0,
+    ): Range {
+        return Range(Position(startLine, startCharacter), Position(endLine, endCharacter))
+    }
+
 }
 
+fun <T> JsonObject.resultAs(type: Class<T>): T {
+    val result = get("result") ?: error("response has no result: $this")
+    return gson.fromJson(result, type)
+}
+
+fun <T> JsonObject.paramsAs(type: Class<T>): T {
+    val params = get("params") ?: error("notification has no params: $this")
+    return gson.fromJson(params, type)
+}
+
+fun <T> JsonObject.errorAs(type: Class<T>): T {
+    val error = get("error") ?: error("response has no error: $this")
+    return gson.fromJson(error, type)
+}
+
+private data class JsonRpcAck(
+    val jsonrpc: String = "2.0",
+    val id: JsonElement,
+    val result: JsonElement = JsonNull.INSTANCE,
+)
+
 private fun JsonObject.lspMethod(): String? {
-    return this["method"]?.jsonPrimitive?.contentOrNull
+    val method = get("method") ?: return null
+    if (!method.isJsonPrimitive) return null
+    return method.asJsonPrimitive.takeIf { it.isString }?.asString
 }
 
 private fun JsonObject.publishDiagnosticsUri(): String? {
     if (lspMethod() != "textDocument/publishDiagnostics") {
         return null
     }
-    return this["params"]?.jsonObject?.get("uri")?.jsonPrimitive?.contentOrNull
+    val params = get("params") as? JsonObject ?: return null
+    val uri = params.get("uri") ?: return null
+    return uri.takeIf { it.isJsonPrimitive }?.asJsonPrimitive?.takeIf { it.isString }?.asString
+}
+
+private fun JsonObject.idAsInt(): Int? {
+    val id = get("id") ?: return null
+    if (!id.isJsonPrimitive) return null
+    val primitive = id.asJsonPrimitive
+    return if (primitive.isNumber) primitive.asInt else null
 }
 
 suspend fun DefaultClientWebSocketSession.ackIfRequest(message: JsonObject) {
-    val method = message.lspMethod() ?: return
-    val id = message["id"] ?: return
-    val ack = buildJsonObject {
-        put("jsonrpc", JsonPrimitive("2.0"))
-        put("id", id)
-        put("result", JsonNull)
-    }
-    send(Frame.Text(ack.toString()))
+    message.lspMethod() ?: return
+    val id = message.get("id") ?: return
+    send(Frame.Text(gson.toJson(JsonRpcAck(id = id))))
 }
 
 suspend fun DefaultClientWebSocketSession.awaitResponseFor(
@@ -212,8 +174,8 @@ suspend fun DefaultClientWebSocketSession.awaitResponseFor(
     return withTimeout(timeout) {
         while (true) {
             val frame = incoming.receive() as? Frame.Text ?: continue
-            val obj = parseToJsonElement(frame.readText()).jsonObject
-            if (obj["id"]?.jsonPrimitive?.int == id) {
+            val obj = gson.fromJson(frame.readText(), JsonObject::class.java)
+            if (obj.idAsInt() == id) {
                 return@withTimeout obj
             }
             ackIfRequest(obj)
@@ -230,7 +192,7 @@ suspend fun DefaultClientWebSocketSession.awaitPublishDiagnostics(
     withTimeout(timeout) {
         while (true) {
             val frame = incoming.receive() as? Frame.Text ?: continue
-            val obj = parseToJsonElement(frame.readText()).jsonObject
+            val obj = gson.fromJson(frame.readText(), JsonObject::class.java)
             if (obj.publishDiagnosticsUri() == uri) {
                 return@withTimeout
             }
@@ -248,8 +210,8 @@ suspend fun DefaultClientWebSocketSession.awaitResponseCollectingNotifications(
     val response = withTimeout(timeout) {
         while (true) {
             val frame = incoming.receive() as? Frame.Text ?: continue
-            val obj = parseToJsonElement(frame.readText()).jsonObject
-            if (obj["id"]?.jsonPrimitive?.int == id && obj.lspMethod() == null) {
+            val obj = gson.fromJson(frame.readText(), JsonObject::class.java)
+            if (obj.idAsInt() == id && obj.lspMethod() == null) {
                 return@withTimeout obj
             }
             if (obj.lspMethod() == method) {

@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.live.backend.session
 
+import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationStatus
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
@@ -15,7 +16,7 @@ import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionLanguageClient
 import hu.bme.mit.semantifyr.live.backend.lsp.service.VerificationsChangedParams
 import hu.bme.mit.semantifyr.live.backend.lsp.session.LspSession
 import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationManager
-import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationRequest
+import hu.bme.mit.semantifyr.live.backend.testing.LspWire
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -25,7 +26,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
@@ -59,12 +59,8 @@ class VerificationManagerTest {
         return session to client
     }
 
-    private fun verifyRequest(requestId: String? = null) = VerificationRequest(
-        requestId = requestId,
-        kind = VerificationKind.Verify,
-        caseLabel = "Case",
-        portfolioId = "portfolio-1",
-    )
+    private fun verifyRequest(portfolio: String = "portfolio-1") =
+        VerificationCaseRequest("file:///workspace/snippet.oxsts", LspWire.range(), portfolio)
 
     @Test
     fun `withPermit acquires and releases permit`() = runTest {
@@ -80,7 +76,9 @@ class VerificationManagerTest {
     fun `withPermit releases permit on exception`() = runTest {
         val manager = manager(concurrency = 1)
         try {
-            manager.withPermit { throw RuntimeException("boom") }
+            manager.withPermit {
+                throw RuntimeException("boom")
+            }
         } catch (_: RuntimeException) {
         }
         assertThat(manager.availablePermits).isEqualTo(1)
@@ -92,10 +90,14 @@ class VerificationManagerTest {
         coroutineScope {
             var secondStarted = false
             val first = async {
-                manager.withPermit { assertThat(secondStarted).isFalse() }
+                manager.withPermit {
+                    assertThat(secondStarted).isFalse()
+                }
             }
             val second = async {
-                manager.withPermit { secondStarted = true }
+                manager.withPermit {
+                    secondStarted = true
+                }
             }
             first.await()
             second.await()
@@ -111,113 +113,87 @@ class VerificationManagerTest {
             val (session, _) = fakeSession(scope)
             val manager = manager(concurrency = 1)
 
-            val result = manager.run(session, verifyRequest()) { "work-done" }.await()
+            val result = manager.run(session, verifyRequest(), VerificationKind.Verify) { "work-done" }.await()
 
             assertThat(result).isEqualTo("work-done")
         }
     }
 
     @Test
-    fun `run uses the request's requestId when provided`() = runTest {
-        coroutineScope {
-            val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-            val (session, _) = fakeSession(scope)
-            val manager = manager(concurrency = 1)
-            val started = CompletableDeferred<Unit>()
-            val release = CompletableDeferred<Unit>()
+    suspend fun `run assigns a UUID-shaped verificationId and surfaces it via activeFor`() {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        val (session, _) = fakeSession(scope)
+        val manager = manager(concurrency = 1)
+        val started = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
 
-            val future = manager.run(session, verifyRequest(requestId = "abc-123")) {
-                started.complete(Unit)
-                release.await()
-                "done"
-            }
-            started.await()
-            val active = manager.activeFor("session-1")
-            release.complete(Unit)
-            future.await()
-
-            assertThat(active).hasSize(1)
-            assertThat(active[0].requestId).isEqualTo("abc-123")
+        val future = manager.run(session, verifyRequest(), VerificationKind.Verify) {
+            started.complete(Unit)
+            release.await()
+            "done"
         }
+        started.await()
+        val active = manager.activeFor("session-1")
+        release.complete(Unit)
+        future.await()
+
+        assertThat(active).hasSize(1)
+        assertThat(active[0].verificationId).isNotBlank()
+        assertThat(active[0].verificationId).isNotEqualTo("session-1")
     }
 
     @Test
-    fun `run generates a UUID requestId when none is provided`() = runTest {
-        coroutineScope {
-            val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-            val (session, _) = fakeSession(scope)
-            val manager = manager(concurrency = 1)
-            val started = CompletableDeferred<Unit>()
-            val release = CompletableDeferred<Unit>()
+    suspend fun `run notifies the client of active changes before and after work`() {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        val (session, client) = fakeSession(scope)
+        val manager = manager(concurrency = 1)
 
-            val future = manager.run(session, verifyRequest(requestId = null)) {
-                started.complete(Unit)
-                release.await()
-                "done"
-            }
-            started.await()
-            val active = manager.activeFor("session-1")
-            release.complete(Unit)
-            future.await()
+        manager.run(session, verifyRequest(), VerificationKind.Verify) { "ok" }.await()
 
-            assertThat(active).hasSize(1)
-            assertThat(active[0].requestId).isNotBlank()
-            assertThat(active[0].requestId).isNotEqualTo("session-1")
-        }
+        val captor = argumentCaptor<VerificationsChangedParams>()
+        verify(client, atLeastOnce()).verificationsChanged(captor.capture())
+        // First notification carries the new entry. The last (after finally) carries the empty list.
+        val first = captor.firstValue.active
+        val last = captor.lastValue.active
+        assertThat(first).hasSize(1)
+        assertThat(first[0].verificationId).isNotBlank()
+        assertThat(last).isEmpty()
     }
 
     @Test
-    fun `run notifies the client of active changes before and after work`() = runTest {
-        coroutineScope {
-            val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-            val (session, client) = fakeSession(scope)
-            val manager = manager(concurrency = 1)
-
-            manager.run(session, verifyRequest(requestId = "r-1")) { "ok" }.await()
-
-            val captor = argumentCaptor<VerificationsChangedParams>()
-            verify(client, atLeastOnce()).verificationsChanged(captor.capture())
-            // First notification carries the new entry; the last (after finally) carries the empty list.
-            val first = captor.firstValue.active
-            val last = captor.lastValue.active
-            assertThat(first.map { it.requestId }).containsExactly("r-1")
-            assertThat(last).isEmpty()
-        }
-    }
-
-    @Test
-    fun `cancel cancels an in-flight verification and removes it from active`() = runBlocking<Unit> {
+    suspend fun `cancel cancels an in-flight verification and removes it from active`() {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val (session, _) = fakeSession(scope)
         val manager = manager(concurrency = 1)
         val started = CompletableDeferred<Unit>()
         val never = CompletableDeferred<Unit>()
 
-        val future = manager.run(session, verifyRequest(requestId = "to-cancel")) {
+        val future = manager.run(session, verifyRequest(), VerificationKind.Verify) {
             started.complete(Unit)
             never.await()
             "should not happen"
         }
         started.await()
+        val verificationId = manager.activeFor("session-1").single().verificationId
 
-        assertThat(manager.cancel("to-cancel")).isTrue()
+        assertThat(manager.cancel(verificationId)).isTrue()
         awaitSilently(future)
         assertThat(manager.activeFor("session-1")).isEmpty()
     }
 
     @Test
-    fun `cancel returns false for an unknown requestId`() = runTest {
+    fun `cancel returns false for an unknown verificationId`() = runTest {
         val manager = manager(concurrency = 1)
         assertThat(manager.cancel("unknown")).isFalse()
     }
 
     @Test
-    fun `a timed-out verification yields an errored result and is removed from active`() = runBlocking<Unit> {
+    suspend fun `a timed-out verification yields an errored result and is removed from active`() {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val (session, _) = fakeSession(scope)
         val manager = manager(concurrency = 1, timeout = 50.milliseconds)
 
-        val result = manager.run(session, verifyRequest(requestId = "slow")) {
+        val result = manager.run(session, verifyRequest(), VerificationKind.Verify) {
             delay(10.seconds)
             "never"
         }.await()
@@ -231,12 +207,12 @@ class VerificationManagerTest {
     }
 
     @Test
-    fun `a failing verification yields an errored result and is removed from active`() = runBlocking<Unit> {
+    suspend fun `a failing verification yields an errored result and is removed from active`() {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val (session, _) = fakeSession(scope)
         val manager = manager(concurrency = 1)
 
-        val result = manager.run(session, verifyRequest(requestId = "boom")) {
+        val result = manager.run(session, verifyRequest(), VerificationKind.Verify) {
             throw RuntimeException("verifier exploded")
         }.await()
 
@@ -248,7 +224,7 @@ class VerificationManagerTest {
     }
 
     @Test
-    fun `cancelForSession cancels all sessions in-flight work`() = runBlocking<Unit> {
+    suspend fun `cancelForSession cancels all sessions in-flight work`() {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val (session, _) = fakeSession(scope)
         val manager = manager(concurrency = 2)
@@ -256,12 +232,12 @@ class VerificationManagerTest {
         val started2 = CompletableDeferred<Unit>()
         val never = CompletableDeferred<Unit>()
 
-        val f1 = manager.run(session, verifyRequest(requestId = "r-1")) {
+        val f1 = manager.run(session, verifyRequest(), VerificationKind.Verify) {
             started1.complete(Unit)
             never.await()
             null
         }
-        val f2 = manager.run(session, verifyRequest(requestId = "r-2")) {
+        val f2 = manager.run(session, verifyRequest(), VerificationKind.Verify) {
             started2.complete(Unit)
             never.await()
             null
@@ -278,7 +254,7 @@ class VerificationManagerTest {
     }
 
     @Test
-    fun `verifications respect the concurrency limit`() = runBlocking<Unit> {
+    suspend fun `verifications respect the concurrency limit`() {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val (session, _) = fakeSession(scope)
         val manager = manager(concurrency = 1)
@@ -286,14 +262,14 @@ class VerificationManagerTest {
         val releaseFirst = CompletableDeferred<Unit>()
         var secondAcquired = false
 
-        val first = manager.run(session, verifyRequest(requestId = "r-1")) {
+        val first = manager.run(session, verifyRequest(), VerificationKind.Verify) {
             firstAcquired.complete(Unit)
             releaseFirst.await()
             "first"
         }
         firstAcquired.await()
 
-        val second = manager.run(session, verifyRequest(requestId = "r-2")) {
+        val second = manager.run(session, verifyRequest(), VerificationKind.Verify) {
             secondAcquired = true
             "second"
         }

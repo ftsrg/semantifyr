@@ -36,7 +36,7 @@ class SessionManagerTest {
     @Test
     fun `cancelVerification returns false for an unknown sessionId`() {
         val manager = testInjector().handler<SessionManager>()
-        assertThat(manager.cancelVerification("nonexistent", "request-1")).isFalse()
+        assertThat(manager.cancelVerification("request-1")).isFalse()
     }
 
     @Test

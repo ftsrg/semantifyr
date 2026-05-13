@@ -8,12 +8,13 @@ package hu.bme.mit.semantifyr.live.backend.lsp.service
 
 import com.google.gson.JsonElement
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson
+import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.session.LspSession
 import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationExecutor
 import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationManager
-import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationRequest
+import hu.bme.mit.semantifyr.live.backend.testing.LspWire
 import hu.bme.mit.semantifyr.live.backend.testing.testFlavor
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
@@ -36,15 +37,10 @@ import java.util.concurrent.CompletableFuture
 class SessionWorkspaceServiceTest {
 
     private fun verifyArgs(
-        caseLabel: String? = "CaseA",
+        uri: String = "file:///workspace/snippet.oxsts",
         portfolio: String? = "smart-full",
-        requestId: String? = null,
     ): JsonElement {
-        // Built from the production record so the test exercises exactly the JSON the backend
-        // parses; Gson omits the null fields, matching a real partial argument.
-        return CommandGson.INSTANCE.toJsonTree(
-            VerificationCommandArguments(uri = null, requestId = requestId, caseLabel = caseLabel, portfolio = portfolio),
-        )
+        return CommandGson.INSTANCE.toJsonTree(VerificationCaseRequest(uri, LspWire.range(), portfolio))
     }
 
     private class Fixture {
@@ -60,11 +56,10 @@ class SessionWorkspaceServiceTest {
         }
         val service = SessionWorkspaceService(lspSession, verificationManager, verificationExecutor)
 
-        /** Makes `verificationManager.run { work }` invoke the work lambda inline. */
         fun runVerificationWorkInline() {
-            whenever(verificationManager.run(any(), any(), any())) doAnswer { invocation ->
+            whenever(verificationManager.run(any(), any(), any(), any())) doAnswer { invocation ->
                 @Suppress("UNCHECKED_CAST")
-                val work = invocation.arguments[2] as suspend () -> Any?
+                val work = invocation.arguments[3] as suspend () -> Any?
                 CompletableFuture.supplyAsync { runBlocking { work() } }
             }
         }
@@ -93,11 +88,11 @@ class SessionWorkspaceServiceTest {
         val result = fixture.service.executeCommand(params).await()
         assertThat(result).isEqualTo("verified")
 
-        val requestCaptor = argumentCaptor<VerificationRequest>()
-        verify(fixture.verificationManager).run(any(), requestCaptor.capture(), any())
-        assertThat(requestCaptor.firstValue.kind).isEqualTo(VerificationKind.Verify)
-        assertThat(requestCaptor.firstValue.caseLabel).isEqualTo("CaseA")
-        assertThat(requestCaptor.firstValue.portfolioId).isEqualTo("smart-full")
+        val requestCaptor = argumentCaptor<VerificationCaseRequest>()
+        val kindCaptor = argumentCaptor<VerificationKind>()
+        verify(fixture.verificationManager).run(any(), requestCaptor.capture(), kindCaptor.capture(), any())
+        assertThat(requestCaptor.firstValue.portfolio()).isEqualTo("smart-full")
+        assertThat(kindCaptor.firstValue).isEqualTo(VerificationKind.Verify)
         verifyBlocking(fixture.verificationExecutor) { execute(any(), any()) }
     }
 
@@ -105,28 +100,17 @@ class SessionWorkspaceServiceTest {
     fun `validateWitness command is classified as Validate`() = runTest {
         val fixture = Fixture().apply { runVerificationWorkInline() }
         fixture.service.executeCommand(ExecuteCommandParams("oxsts.case.validateWitness", listOf<Any>(verifyArgs()))).await()
-        val requestCaptor = argumentCaptor<VerificationRequest>()
-        verify(fixture.verificationManager).run(any(), requestCaptor.capture(), any())
-        assertThat(requestCaptor.firstValue.kind).isEqualTo(VerificationKind.Validate)
+        val kindCaptor = argumentCaptor<VerificationKind>()
+        verify(fixture.verificationManager).run(any(), any(), kindCaptor.capture(), any())
+        assertThat(kindCaptor.firstValue).isEqualTo(VerificationKind.Validate)
     }
 
     @Test
-    fun `verify request keeps the client-provided requestId`() = runTest {
-        val fixture = Fixture().apply { runVerificationWorkInline() }
-        fixture.service.executeCommand(
-            ExecuteCommandParams("oxsts.case.verify", listOf<Any>(verifyArgs(requestId = "abc-123"))),
-        ).await()
-        val requestCaptor = argumentCaptor<VerificationRequest>()
-        verify(fixture.verificationManager).run(any(), requestCaptor.capture(), any())
-        assertThat(requestCaptor.firstValue.requestId).isEqualTo("abc-123")
-    }
-
-    @Test
-    fun `verify command without caseLabel is rejected with InvalidParams`() {
+    fun `verify command without a portfolio is rejected with InvalidParams`() {
         val fixture = Fixture()
         assertThatThrownBy {
-            fixture.service.executeCommand(ExecuteCommandParams("oxsts.case.verify", listOf<Any>(verifyArgs(caseLabel = null))))
-        }.isInstanceOf(ResponseErrorException::class.java).hasMessageContaining("caseLabel")
+            fixture.service.executeCommand(ExecuteCommandParams("oxsts.case.verify", listOf<Any>(verifyArgs(portfolio = null))))
+        }.isInstanceOf(ResponseErrorException::class.java).hasMessageContaining("portfolio")
     }
 
     @Test

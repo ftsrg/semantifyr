@@ -7,12 +7,12 @@
 package hu.bme.mit.semantifyr.live.backend.lsp.session
 
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson
+import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationTrace
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocument
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionRequestManager
-import hu.bme.mit.semantifyr.live.backend.lsp.service.VerificationCommandArguments
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.lsp4j.ExecuteCommandParams
@@ -41,7 +41,6 @@ class LiveVerificationExecutorTest {
             on { executeCommandUnderReadLock(any()) } doReturn CompletableFuture.completedFuture(rawResult)
         }
 
-        /** Makes `requestManager.runWrite { ... }` invoke its body inline. */
         fun runWritesInline() {
             whenever(requestManager.runWrite<Any?, Any?>(any(), any())) doAnswer { invocation ->
                 @Suppress("UNCHECKED_CAST")
@@ -58,7 +57,7 @@ class LiveVerificationExecutorTest {
 
     private fun argsWithUri(uri: String) = ExecuteCommandParams(
         "oxsts.case.verify",
-        listOf<Any>(CommandGson.INSTANCE.toJsonTree(VerificationCommandArguments(uri = uri))),
+        listOf<Any>(CommandGson.INSTANCE.toJsonTree(VerificationCaseRequest(uri, null, null))),
     )
 
     @Test

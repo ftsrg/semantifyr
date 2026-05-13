@@ -139,7 +139,7 @@ class ApiRoutesHandlerTest {
 
         val response = client.get("/api/portfolios").body<PortfoliosResponse>()
         val ids = response.portfolios.map { it.id }
-        // The five demo entries; availability depends on host binaries, so we assert presence
+        // The six demo entries. Availability depends on host binaries, so we assert presence
         // rather than the boolean.
         assertThat(ids).containsExactly(
             "smart-full",

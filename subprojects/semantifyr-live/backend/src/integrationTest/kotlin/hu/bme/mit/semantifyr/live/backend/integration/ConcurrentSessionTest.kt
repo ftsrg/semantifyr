@@ -6,9 +6,11 @@
 
 package hu.bme.mit.semantifyr.live.backend.integration
 
+import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification
 import hu.bme.mit.semantifyr.live.backend.testing.LspWire
 import hu.bme.mit.semantifyr.live.backend.testing.awaitPublishDiagnostics
 import hu.bme.mit.semantifyr.live.backend.testing.awaitResponseFor
+import hu.bme.mit.semantifyr.live.backend.testing.resultAs
 import hu.bme.mit.semantifyr.live.backend.testing.withRealServer
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
@@ -19,8 +21,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withTimeout
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -79,16 +79,12 @@ class ConcurrentSessionTest {
                     awaitPublishDiagnostics(uri)
                     send(
                         Frame.Text(
-                            LspWire.executeCommandRequest(
-                                id = 2,
-                                command = "oxsts.case.discover",
-                                arguments = listOf(JsonPrimitive(uri)),
-                            ),
+                            LspWire.executeCommandRequest(id = 2, command = "oxsts.case.discover", arguments = listOf(uri)),
                         ),
                     )
                     val discover = awaitResponseFor(id = 2)
-                    val cases = discover["result"] as? JsonArray
-                    check(! cases.isNullOrEmpty()) { "discover returned no cases: $discover" }
+                    val cases = discover.resultAs(Array<VerificationCaseSpecification>::class.java)
+                    check(cases.isNotEmpty()) { "discover returned no cases: $discover" }
                 }
             }
             null

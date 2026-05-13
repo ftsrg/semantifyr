@@ -18,21 +18,21 @@ class BackendConfigTest {
 
     @Test
     fun `defaults are applied for every setting`() {
-        val cfg = BackendConfig()
-        assertThat(cfg.server.port).isEqualTo(8080)
-        assertThat(cfg.server.pingPeriod).isEqualTo(30.seconds)
-        assertThat(cfg.server.pingTimeout).isEqualTo(15.seconds)
-        assertThat(cfg.server.webRootDirectory).isNull()
-        assertThat(cfg.server.adminPassword).isNull()
-        assertThat(cfg.sessionManager.maxSessionsGlobal).isEqualTo(256)
-        assertThat(cfg.sessionManager.rootWorkDirectory).isEqualTo("/var/lib/semantifyr-live")
-        assertThat(cfg.verification.concurrency).isEqualTo(4)
-        assertThat(cfg.verification.timeout).isEqualTo(5.minutes)
+        val config = BackendConfig()
+        assertThat(config.server.port).isEqualTo(8080)
+        assertThat(config.server.pingPeriod).isEqualTo(30.seconds)
+        assertThat(config.server.pingTimeout).isEqualTo(15.seconds)
+        assertThat(config.server.webRootDirectory).isNull()
+        assertThat(config.server.adminPassword).isNull()
+        assertThat(config.sessionManager.maxSessionsGlobal).isEqualTo(256)
+        assertThat(config.sessionManager.rootWorkDirectory).isEqualTo("/var/lib/semantifyr-live")
+        assertThat(config.verification.concurrency).isEqualTo(4)
+        assertThat(config.verification.timeout).isEqualTo(5.minutes)
     }
 
     @Test
     fun `env vars override defaults`() {
-        val cfg = BackendConfig().withEnv(
+        val config = BackendConfig().withEnv(
             mapOf(
                 "SEMANTIFYR_LIVE_PORT" to "9090",
                 "SEMANTIFYR_LIVE_PING_PERIOD_SECONDS" to "60",
@@ -43,42 +43,44 @@ class BackendConfigTest {
                 "SEMANTIFYR_LIVE_ADMIN_PASSWORD" to "secret123",
             ),
         )
-        assertThat(cfg.server.port).isEqualTo(9090)
-        assertThat(cfg.server.pingPeriod).isEqualTo(60.seconds)
-        assertThat(cfg.server.adminPassword).isEqualTo("secret123")
-        assertThat(cfg.sessionManager.maxSessionsGlobal).isEqualTo(64)
-        assertThat(cfg.sessionManager.rootWorkDirectory).isEqualTo("/tmp/sessions")
-        assertThat(cfg.verification.concurrency).isEqualTo(2)
-        assertThat(cfg.verification.timeout).isEqualTo(180.seconds)
+        assertThat(config.server.port).isEqualTo(9090)
+        assertThat(config.server.pingPeriod).isEqualTo(60.seconds)
+        assertThat(config.server.adminPassword).isEqualTo("secret123")
+        assertThat(config.sessionManager.maxSessionsGlobal).isEqualTo(64)
+        assertThat(config.sessionManager.rootWorkDirectory).isEqualTo("/tmp/sessions")
+        assertThat(config.verification.concurrency).isEqualTo(2)
+        assertThat(config.verification.timeout).isEqualTo(180.seconds)
     }
 
     @Test
     fun `non-numeric values fall back to defaults`() {
-        val cfg = BackendConfig().withEnv(
+        val config = BackendConfig().withEnv(
             mapOf(
                 "SEMANTIFYR_LIVE_PORT" to "not-a-number",
                 "SEMANTIFYR_LIVE_MAX_SESSIONS_GLOBAL" to "garbage",
             ),
         )
-        assertThat(cfg.server.port).isEqualTo(8080)
-        assertThat(cfg.sessionManager.maxSessionsGlobal).isEqualTo(256)
+        assertThat(config.server.port).isEqualTo(8080)
+        assertThat(config.sessionManager.maxSessionsGlobal).isEqualTo(256)
     }
 
     @Test
     fun `web root path is resolved when the directory exists`(@TempDir tmp: Path) {
-        val webRoot = tmp.resolve("web").also(Files::createDirectory)
-        val cfg = BackendConfig().withEnv(
+        val webRoot = tmp.resolve("web").also {
+            Files.createDirectory(it)
+        }
+        val config = BackendConfig().withEnv(
             mapOf("SEMANTIFYR_LIVE_WEB_ROOT_DIR" to webRoot.toString()),
         )
-        assertThat(cfg.server.webRootPath).isEqualTo(webRoot)
+        assertThat(config.server.webRootPath).isEqualTo(webRoot)
     }
 
     @Test
     fun `web root path is null when the directory does not exist`() {
-        val cfg = BackendConfig().withEnv(
+        val config = BackendConfig().withEnv(
             mapOf("SEMANTIFYR_LIVE_WEB_ROOT_DIR" to "/this/path/does/not/exist"),
         )
-        assertThat(cfg.server.webRootPath).isNull()
+        assertThat(config.server.webRootPath).isNull()
     }
 
     @Test
@@ -88,8 +90,8 @@ class BackendConfigTest {
             configFile,
             """{"server": {"port": 3000}, "verification": {"concurrency": 1}}""",
         )
-        val cfg = BackendConfig.fromFile(configFile)
-        assertThat(cfg.server.port).isEqualTo(3000)
-        assertThat(cfg.verification.concurrency).isEqualTo(1)
+        val config = BackendConfig.fromFile(configFile)
+        assertThat(config.server.port).isEqualTo(3000)
+        assertThat(config.verification.concurrency).isEqualTo(1)
     }
 }

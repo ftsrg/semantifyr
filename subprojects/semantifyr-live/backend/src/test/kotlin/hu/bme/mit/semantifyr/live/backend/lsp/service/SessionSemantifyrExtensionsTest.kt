@@ -6,12 +6,15 @@
 
 package hu.bme.mit.semantifyr.live.backend.lsp.service
 
-import hu.bme.mit.semantifyr.live.backend.data.ActiveVerificationInfo
 import hu.bme.mit.semantifyr.live.backend.data.SessionInfo
 import hu.bme.mit.semantifyr.live.backend.data.SessionLspInfo
+import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
 import hu.bme.mit.semantifyr.live.backend.lsp.session.LspSession
 import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationManager
 import org.assertj.core.api.Assertions.assertThat
+import org.eclipse.lsp4j.Location
+import org.eclipse.lsp4j.Position
+import org.eclipse.lsp4j.Range
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
@@ -43,7 +46,15 @@ class SessionSemantifyrExtensionsTest {
 
     @Test
     fun `listVerifications returns this session's active verifications`() {
-        val active = listOf(ActiveVerificationInfo(requestId = "r-1"))
+        val active = listOf(
+            RunningVerification(
+                verificationId = "r-1",
+                location = Location("file:///x.oxsts", Range(Position(0, 0), Position(0, 0))),
+                portfolioId = "smart-full",
+                kind = VerificationKind.Verify,
+                elapsed = Duration.ZERO,
+            ),
+        )
         val verificationManager = mock<VerificationManager> {
             on { activeFor("session-1") } doReturn active
         }
@@ -62,7 +73,7 @@ class SessionSemantifyrExtensionsTest {
         }
         val extensions = SessionSemantifyrExtensions(mock(), verificationManager)
 
-        assertThat(extensions.cancelVerification(CancelVerificationParams("r-1")).get()).isTrue()
+        assertThat(extensions.cancelVerification(CancelVerificationParams(verificationId = "r-1")).get()).isTrue()
         verify(verificationManager).cancel("r-1")
     }
 
