@@ -73,7 +73,7 @@ function Tile({ label, value, hint, icon, accent = 'default', tooltip }: TilePro
           {label}
         </Typography>
       </Box>
-      <Typography sx={{ fontSize: '1.4rem', fontWeight: 700, color: valueColor, lineHeight: 1.1 }}>
+      <Typography component="div" sx={{ fontSize: '1.4rem', fontWeight: 700, color: valueColor, lineHeight: 1.1 }}>
         {value}
       </Typography>
       {hint !== undefined && hint !== null && (
