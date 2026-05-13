@@ -52,7 +52,8 @@ public class WorkManager {
     public void beginWork(Either<String, Integer> token, String title, String message) {
         indicators.put(token, new SimpleCancelIndicator());
 
-        languageClient.createProgress(new WorkDoneProgressCreateParams(token)).join();
+        // not waiting for response
+        languageClient.createProgress(new WorkDoneProgressCreateParams(token));
 
         var begin = new WorkDoneProgressBegin();
         begin.setTitle(title);
