@@ -12,12 +12,10 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
-import hu.bme.mit.semantifyr.frontends.gamma.lang.GammaStandaloneSetup
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
-import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.lang.library.ClasspathBasedOxstsLibrary
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
@@ -338,9 +336,12 @@ class GammaFrontend @Inject private constructor(
             val resolvedOutputDirectory = requireNotNull(outputDirectory) {
                 "GammaFrontend.Builder requires .outputDirectory(...)."
             }
-
-            val effectiveGammaInjector = gammaInjector ?: GammaStandaloneSetup().createInjectorAndDoEMFRegistration()
-            val effectiveOxstsInjector = oxstsInjector ?: OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
+            val effectiveGammaInjector = requireNotNull(gammaInjector) {
+                "GammaFrontend.Builder requires .gammaInjector(...)."
+            }
+            val effectiveOxstsInjector = requireNotNull(oxstsInjector) {
+                "GammaFrontend.Builder requires .oxstsInjector(...)."
+            }
 
             val compiler = effectiveGammaInjector.getInstance(GammaCompiler::class.java)
             val loader = effectiveOxstsInjector.getInstance(SemantifyrLoader::class.java)

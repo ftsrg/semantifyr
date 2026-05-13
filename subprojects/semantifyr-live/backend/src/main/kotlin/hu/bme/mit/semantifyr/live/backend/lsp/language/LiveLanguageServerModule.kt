@@ -23,6 +23,7 @@ import hu.bme.mit.semantifyr.live.backend.lsp.session.seededKeyProvider
 class LiveLanguageServerModule : AbstractModule() {
 
     override fun configure() {
+        super.configure()
         bindScope(SessionScoped::class.java, SessionScope)
 
         bind(LspSession::class.java)

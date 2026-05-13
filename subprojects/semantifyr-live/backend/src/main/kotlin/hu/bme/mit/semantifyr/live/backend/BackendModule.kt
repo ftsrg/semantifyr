@@ -17,6 +17,7 @@ class BackendModule(
 ) : AbstractModule() {
 
     override fun configure() {
+        super.configure()
         bind(BackendConfig::class.java).toInstance(config)
         bind(LanguageServiceRegistry::class.java).to(LiveLanguageServiceRegistry::class.java)
         bind(VerificationExecutor::class.java).to(LiveVerificationExecutor::class.java)

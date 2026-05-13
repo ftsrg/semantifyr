@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.live.backend.lsp.language
 import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.live.backend.Flavor
 import hu.bme.mit.semantifyr.live.backend.Language
+import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 
 interface LanguageServiceRegistry {
     fun forFlavor(flavor: Flavor): LanguageServices
@@ -17,21 +18,15 @@ interface LanguageServiceRegistry {
 @Singleton
 class LiveLanguageServiceRegistry : LanguageServiceRegistry {
 
-    private val oxstsInjector by lazy {
-        LiveOxstsLanguageSetup().createInjectorAndDoEMFRegistration()
-    }
+    private val oxstsInjector = LiveOxstsLanguageSetup().createInjectorAndDoEMFRegistration()
 
-    private val oxsts by lazy {
-        oxstsInjector.getInstance(LanguageServices::class.java)
-    }
+    // injector to be used from the Frontends
+    private val plainOxstsInjector = OxstsStandaloneSetup().createInjectorWithoutGlobalRegistration()
 
-    private val gammaInjector by lazy {
-        LiveGammaLanguageSetup().createInjectorAndDoEMFRegistration()
-    }
+    private val gammaInjector = LiveGammaLanguageSetup(plainOxstsInjector).createInjectorAndDoEMFRegistration()
 
-    private val gamma by lazy {
-        gammaInjector.getInstance(LanguageServices::class.java)
-    }
+    private val oxsts = oxstsInjector.getInstance(LanguageServices::class.java)
+    private val gamma = gammaInjector.getInstance(LanguageServices::class.java)
 
     override fun forFlavor(flavor: Flavor): LanguageServices {
         return when (flavor.language) {

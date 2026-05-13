@@ -15,7 +15,6 @@ import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.frontends.sysml.wrapper.SysMLv2Compiler
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
-import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.lang.library.ClasspathBasedOxstsLibrary
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
@@ -220,8 +219,9 @@ class SysMLv2Frontend private constructor(
             val resolvedOutputDirectory = requireNotNull(outputDirectory) {
                 "SysMLv2Frontend.Builder requires .outputDirectory(...)."
             }
-
-            val effectiveOxstsInjector = oxstsInjector ?: OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
+            val effectiveOxstsInjector = requireNotNull(oxstsInjector) {
+                "SysMLv2Frontend.Builder requires .injector(...)."
+            }
             val effectiveLoader = loader ?: effectiveOxstsInjector.getInstance(SemantifyrLoader::class.java)
             val discoverer = effectiveOxstsInjector.getInstance(VerificationCaseDiscoverer::class.java)
 

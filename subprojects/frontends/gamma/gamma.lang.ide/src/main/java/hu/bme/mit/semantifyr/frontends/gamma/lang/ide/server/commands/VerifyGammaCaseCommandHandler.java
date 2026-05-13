@@ -7,9 +7,11 @@
 package hu.bme.mit.semantifyr.frontends.gamma.lang.ide.server.commands;
 
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import hu.bme.mit.semantifyr.frontends.gamma.GammaFrontend;
 import hu.bme.mit.semantifyr.frontends.gamma.discovery.GammaVerificationCaseDiscoverer;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration;
+import hu.bme.mit.semantifyr.lang.ide.server.OxstsInjector;
 import hu.bme.mit.semantifyr.lang.ide.server.ServerSettings;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
@@ -31,6 +33,12 @@ public class VerifyGammaCaseCommandHandler
 
     @Inject
     protected ServerSettings serverSettings;
+
+    @Inject
+    protected Injector gammaInjector;
+
+    @Inject
+    protected OxstsInjector oxstsInjector;
 
     @Override
     public String getId() {
@@ -75,6 +83,8 @@ public class VerifyGammaCaseCommandHandler
         return performBackgroundWork(() -> {
             try {
                 var frontend = GammaFrontend.builder()
+                        .gammaInjector(gammaInjector)
+                        .oxstsInjector(oxstsInjector.get())
                         .portfolio(portfolio)
                         .environment(serverSettings.resolveExecutionEnvironment())
                         .timeout(serverSettings.resolveTimeout())
@@ -98,7 +108,7 @@ public class VerifyGammaCaseCommandHandler
                         gammaCase.getQualifiedName(),
                         e.getClass().getSimpleName(),
                         e);
-                return null;
+                return VerificationCaseResult.errored(e.toString(), portfolio.getId());
             }
         });
     }
