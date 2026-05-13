@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.live.backend.lsp.transport
 
-import hu.bme.mit.semantifyr.live.backend.data.SessionLspInfo
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionLanguageClient
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionLanguageServer
 import hu.bme.mit.semantifyr.logging.error
@@ -23,7 +22,6 @@ import org.eclipse.lsp4j.jsonrpc.MessageConsumer
 import org.eclipse.lsp4j.jsonrpc.RemoteEndpoint
 import org.eclipse.lsp4j.jsonrpc.services.ServiceEndpoints
 import java.io.IOException
-import kotlin.time.TimeSource
 
 class WebSocketLspConnector(
     private val webSocketSession: WebSocketSession,
@@ -31,14 +29,6 @@ class WebSocketLspConnector(
 ) {
 
     private val logger by loggerFactory()
-
-    private val startMark = TimeSource.Monotonic.markNow()
-
-    @Volatile
-    private var lastClientMessageMark = startMark
-
-    @Volatile
-    private var lastServerMessageMark = startMark
 
     private val outgoing = Channel<String>(capacity = OUTGOING_BUFFER)
 
@@ -60,13 +50,6 @@ class WebSocketLspConnector(
 
     init {
         sessionLanguageServer.connect(proxyClient)
-    }
-
-    fun getInfo(): SessionLspInfo {
-        return SessionLspInfo(
-            timeSinceLastClientMessage = lastClientMessageMark.elapsedNow(),
-            timeSinceLastServerMessage = lastServerMessageMark.elapsedNow(),
-        )
     }
 
     suspend fun run() = coroutineScope {
@@ -101,7 +84,6 @@ class WebSocketLspConnector(
                 if (frame !is Frame.Text) {
                     continue
                 }
-                lastClientMessageMark = TimeSource.Monotonic.markNow()
                 val raw = frame.readText()
                 val message = jsonHandler.parseMessage(raw)
                 remoteEndpoint.consume(message)
@@ -137,7 +119,6 @@ class WebSocketLspConnector(
     private fun outboundConsumer(): MessageConsumer {
         return MessageConsumer {
             val json = jsonHandler.serialize(it)
-            lastServerMessageMark = TimeSource.Monotonic.markNow()
             // we want to throw if the channel is full -> probably dead connection
             val result = outgoing.trySend(json)
             if (result.isClosed) {

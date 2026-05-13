@@ -138,10 +138,6 @@ function SessionCard({ session, onCancelSession, onCancelVerification }: Session
           <DetailRow label="Session id" value={session.sessionId} mono />
           <DetailRow label="Remote IP" value={session.remoteIp} />
           <DetailRow label="Uptime" value={formatIsoDuration(session.uptime)} />
-          <DetailRow
-            label="Idle (client / server)"
-            value={`${formatIsoDuration(session.sessionLspInfo.timeSinceLastClientMessage)} / ${formatIsoDuration(session.sessionLspInfo.timeSinceLastServerMessage)}`}
-          />
           <DetailRow label="Working directory" value={session.workingDirectory} mono />
           {session.activeVerifications.length > 0 && (
             <Box>

@@ -19,7 +19,6 @@ object BackendConfigValidator {
 
         validateRootWorkDirectory(config, problems)
         validateSemanticLibraries(config, flavors, problems)
-        validateTimeouts(config, problems)
         validateLimits(config, problems)
         if (!config.development) {
             validateProductionPosture(config, problems)
@@ -78,12 +77,6 @@ object BackendConfigValidator {
             if (!Files.isDirectory(libraryDir)) {
                 problems += "Flavor '${flavor.id}' library directory '$libraryDir' is missing"
             }
-        }
-    }
-
-    private fun validateTimeouts(config: BackendConfig, problems: MutableList<String>) {
-        if (config.server.sessionIdleTimeout <= config.verification.timeout) {
-            problems += "server.sessionIdleTimeout (${config.server.sessionIdleTimeout}) must be greater than verification.timeout (${config.verification.timeout}) so long verifications are not evicted"
         }
     }
 

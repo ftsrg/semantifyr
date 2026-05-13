@@ -13,10 +13,6 @@ export function fakeSession(overrides: Partial<SessionInfo> & { sessionId: strin
     uptime: 'PT1M',
     workingDirectory: '/tmp/x',
     activeVerifications: [],
-    sessionLspInfo: {
-      timeSinceLastClientMessage: 'PT0S',
-      timeSinceLastServerMessage: 'PT0S',
-    },
     ...overrides,
   };
 }

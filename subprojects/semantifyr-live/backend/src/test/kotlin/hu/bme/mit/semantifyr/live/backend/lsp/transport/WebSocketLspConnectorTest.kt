@@ -18,7 +18,6 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withTimeout
-import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.lsp4j.jsonrpc.services.ServiceEndpoints
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.doReturn
@@ -49,7 +48,6 @@ class WebSocketLspConnectorTest {
             withTimeout(5.seconds) {
                 connector.run()
             }
-            assertThat(connector.getInfo()).isNotNull
         }
     }
 
@@ -65,7 +63,6 @@ class WebSocketLspConnectorTest {
             withTimeout(5.seconds) {
                 connector.run()
             }
-            assertThat(connector.getInfo()).isNotNull
         }
     }
 }

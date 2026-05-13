@@ -15,7 +15,6 @@ export type {
   InfoResponse,
   PortfolioInfo,
   SessionInfo,
-  SessionLspInfo,
   VerificationKind,
 } from './types'
 

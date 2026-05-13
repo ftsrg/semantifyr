@@ -54,7 +54,6 @@ const baseConfig = {
     pingTimeout: 'PT15S',
     webRootDirectory: null,
     adminPasswordSet: true,
-    sessionIdleTimeout: 'PT10M',
     wsHandshakesPerPeriod: 120,
     wsHandshakeRatePeriod: 'PT1M',
     maxWsFrameSize: 4 * 1024 * 1024,

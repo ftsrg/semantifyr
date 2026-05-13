@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.minutes
 
 class BackendConfigValidatorTest {
 
@@ -71,17 +70,6 @@ class BackendConfigValidatorTest {
             BackendConfigValidator.validate(config, flavors = emptyList())
         }.isInstanceOf(InvalidConfigurationException::class.java)
             .hasMessageContaining("httpsOnlyCookies")
-    }
-
-    @Test
-    fun `sessionIdleTimeout must exceed the verification timeout`(@TempDir tmp: Path) {
-        val config = baseConfig(tmp).run {
-            copy(server = server.copy(sessionIdleTimeout = 1.minutes), verification = VerificationConfig(timeout = 5.minutes))
-        }
-        assertThatThrownBy {
-            BackendConfigValidator.validate(config, flavors = emptyList())
-        }.isInstanceOf(InvalidConfigurationException::class.java)
-            .hasMessageContaining("sessionIdleTimeout")
     }
 
     @Test

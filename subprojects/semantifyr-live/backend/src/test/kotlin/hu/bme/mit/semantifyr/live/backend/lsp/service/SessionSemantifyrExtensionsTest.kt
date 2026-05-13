@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.live.backend.lsp.service
 
 import hu.bme.mit.semantifyr.live.backend.data.SessionInfo
-import hu.bme.mit.semantifyr.live.backend.data.SessionLspInfo
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
 import hu.bme.mit.semantifyr.live.backend.lsp.session.LspSession
 import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationManager
@@ -30,7 +29,6 @@ class SessionSemantifyrExtensionsTest {
         uptime = Duration.ZERO,
         workingDirectory = "/tmp/session-1",
         activeVerifications = emptyList(),
-        sessionLspInfo = SessionLspInfo(Duration.ZERO, Duration.ZERO),
     )
 
     @Test

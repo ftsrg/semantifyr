@@ -145,7 +145,6 @@ class AdminHandler @Inject constructor(
                 pingTimeout = config.server.pingTimeout,
                 webRootDirectory = config.server.webRootDirectory,
                 adminPasswordSet = !config.server.adminPassword.isNullOrEmpty(),
-                sessionIdleTimeout = config.server.sessionIdleTimeout,
                 wsHandshakesPerPeriod = config.server.wsHandshakesPerPeriod,
                 wsHandshakeRatePeriod = config.server.wsHandshakeRatePeriod,
                 maxWsFrameSize = config.server.maxWsFrameSize,

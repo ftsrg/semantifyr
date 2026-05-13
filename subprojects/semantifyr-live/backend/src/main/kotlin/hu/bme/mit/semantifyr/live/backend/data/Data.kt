@@ -96,13 +96,6 @@ data class SessionInfo(
     val uptime: Duration,
     val workingDirectory: String,
     val activeVerifications: List<ActiveVerificationInfo>,
-    val sessionLspInfo: SessionLspInfo,
-)
-
-@Serializable
-data class SessionLspInfo(
-    val timeSinceLastClientMessage: Duration,
-    val timeSinceLastServerMessage: Duration,
 )
 
 @Serializable
@@ -120,7 +113,6 @@ data class AdminServerConfigResponse(
     val pingTimeout: Duration,
     val webRootDirectory: String?,
     val adminPasswordSet: Boolean,
-    val sessionIdleTimeout: Duration,
     val wsHandshakesPerPeriod: Int,
     val wsHandshakeRatePeriod: Duration,
     val maxWsFrameSize: Long,

@@ -97,15 +97,6 @@ function SessionRow({ session, onCancelSession, onCancelVerification }: SessionR
         </TableCell>
         <TableCell sx={{ ...cellSx, ...hideBelowLg }}>{session.remoteIp}</TableCell>
         <TableCell sx={cellSx}>{formatIsoDuration(session.uptime)}</TableCell>
-        <TableCell sx={{ ...cellSx, ...hideBelowLg }}>
-          <Tooltip
-            title={`Last client message ${formatIsoDuration(session.sessionLspInfo.timeSinceLastClientMessage)} ago · last server message ${formatIsoDuration(session.sessionLspInfo.timeSinceLastServerMessage)} ago`}
-          >
-            <Box component="span">
-              {formatIsoDuration(session.sessionLspInfo.timeSinceLastClientMessage)} / {formatIsoDuration(session.sessionLspInfo.timeSinceLastServerMessage)}
-            </Box>
-          </Tooltip>
-        </TableCell>
         <TableCell sx={cellSx}>
           {inFlight > 0 ? (
             <Chip
@@ -130,7 +121,7 @@ function SessionRow({ session, onCancelSession, onCancelVerification }: SessionR
         </TableCell>
       </TableRow>
       <TableRow>
-        <TableCell colSpan={8} sx={{ p: 0, borderColor: 'var(--surface-border)', borderBottom: open ? undefined : 'none' }}>
+        <TableCell colSpan={7} sx={{ p: 0, borderColor: 'var(--surface-border)', borderBottom: open ? undefined : 'none' }}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <SessionDetails session={session} onCancelVerification={onCancelVerification} />
           </Collapse>
@@ -151,10 +142,6 @@ function SessionDetails({ session, onCancelVerification }: SessionDetailsProps):
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, alignItems: 'flex-start' }}>
         <DetailGroup label="Session id" value={session.sessionId} mono />
         <DetailGroup label="Remote IP" value={session.remoteIp} />
-        <DetailGroup
-          label="Idle (client / server)"
-          value={`${formatIsoDuration(session.sessionLspInfo.timeSinceLastClientMessage)} / ${formatIsoDuration(session.sessionLspInfo.timeSinceLastServerMessage)}`}
-        />
         <DetailGroup label="Working directory" value={session.workingDirectory} mono />
       </Box>
       {session.activeVerifications.length > 0 && (
@@ -236,7 +223,6 @@ export default function SessionsTable({ sessions, onCancelSession, onCancelVerif
             <TableCell sx={headerCellSx}>Session</TableCell>
             <TableCell sx={{ ...headerCellSx, ...hideBelowLg }}>Remote IP</TableCell>
             <TableCell sx={headerCellSx}>Uptime</TableCell>
-            <TableCell sx={{ ...headerCellSx, ...hideBelowLg }}>Idle (client / server)</TableCell>
             <TableCell sx={headerCellSx}>Verifications</TableCell>
             <TableCell sx={{ ...headerCellSx, textAlign: 'right' }}>Actions</TableCell>
           </TableRow>

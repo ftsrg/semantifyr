@@ -164,7 +164,6 @@ export default function ConfigTab({
           <Row label="HTTPS-only cookies" value={renderBool(config.server.httpsOnlyCookies)} />
           <Row label="Ping period" value={formatIsoDuration(config.server.pingPeriod)} />
           <Row label="Ping timeout" value={formatIsoDuration(config.server.pingTimeout)} />
-          <Row label="Session idle timeout" value={formatIsoDuration(config.server.sessionIdleTimeout)} />
           <Row
             label="WS handshakes / period"
             value={`${config.server.wsHandshakesPerPeriod} per ${formatIsoDuration(config.server.wsHandshakeRatePeriod)}`}

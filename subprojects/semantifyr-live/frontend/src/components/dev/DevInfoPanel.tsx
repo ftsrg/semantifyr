@@ -244,7 +244,6 @@ export default function DevInfoPanel({
             <InfoRow label="Status" value={sessionInfo ? 'connected' : connectionStatus === 'reconnecting' ? 'reconnecting' : 'disconnected'} />
             <InfoRow label="Session ID" value={sessionInfo?.sessionId ?? '-'} mono />
             <InfoRow label="Uptime" value={sessionInfo ? formatIsoDuration(sessionInfo.uptime) : '-'} />
-            <InfoRow label="Last activity (in / out)" value={sessionInfo ? `${formatIsoDuration(sessionInfo.sessionLspInfo.timeSinceLastClientMessage)} / ${formatIsoDuration(sessionInfo.sessionLspInfo.timeSinceLastServerMessage)} ago` : '-'} />
             <InfoRow label="Verifications" value={sessionInfo ? String(sessionInfo.activeVerifications.length) : '-'} />
           </TableBody>
         </Table>

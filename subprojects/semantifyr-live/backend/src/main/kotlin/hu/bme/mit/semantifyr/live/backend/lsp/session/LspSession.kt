@@ -10,7 +10,6 @@ import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager
 import hu.bme.mit.semantifyr.live.backend.WorkspaceLayout
 import hu.bme.mit.semantifyr.live.backend.data.ActiveVerificationInfo
 import hu.bme.mit.semantifyr.live.backend.data.SessionInfo
-import hu.bme.mit.semantifyr.live.backend.data.SessionLspInfo
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServices
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionLanguageServer
@@ -31,7 +30,6 @@ import org.eclipse.lsp4j.services.LanguageClient
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
-import kotlin.time.Duration
 import kotlin.time.TimeSource
 
 class LspSession(
@@ -119,11 +117,6 @@ class LspSession(
     }
 
     fun currentSessionInfo(): SessionInfo {
-        val lspInfo = if (::webSocketLspConnector.isInitialized) {
-            webSocketLspConnector.getInfo()
-        } else {
-            SessionLspInfo(Duration.ZERO, Duration.ZERO)
-        }
         return SessionInfo(
             sessionId = sessionId,
             remoteIp = sessionContext.remoteIp,
@@ -133,7 +126,6 @@ class LspSession(
             activeVerifications = verificationManager.activeFor(sessionId).map {
                 ActiveVerificationInfo(it.verificationId, it.portfolioId, it.kind, it.elapsed)
             },
-            sessionLspInfo = lspInfo,
         )
     }
 

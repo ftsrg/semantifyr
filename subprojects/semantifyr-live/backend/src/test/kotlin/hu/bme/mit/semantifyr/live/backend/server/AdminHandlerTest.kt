@@ -12,7 +12,6 @@ import hu.bme.mit.semantifyr.live.backend.data.ActiveVerificationInfo
 import hu.bme.mit.semantifyr.live.backend.data.AdminConfigResponse
 import hu.bme.mit.semantifyr.live.backend.data.AdminStatusResponse
 import hu.bme.mit.semantifyr.live.backend.data.SessionInfo
-import hu.bme.mit.semantifyr.live.backend.data.SessionLspInfo
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionManager
 import hu.bme.mit.semantifyr.live.backend.testing.handler
@@ -105,10 +104,6 @@ class AdminHandlerTest {
             activeVerifications = listOf(
                 ActiveVerificationInfo(verificationId = "req-1", portfolioId = "smart-full", kind = VerificationKind.Verify),
             ),
-            sessionLspInfo = SessionLspInfo(
-                timeSinceLastClientMessage = 2.seconds,
-                timeSinceLastServerMessage = 1.seconds,
-            ),
         )
         val handler = createHandler(sessionInfos = listOf(testSession))
         installSemantifyrApp {
@@ -128,8 +123,6 @@ class AdminHandlerTest {
         assertThat(status.sessions[0].sessionId).isEqualTo("test-session")
         assertThat(status.sessions[0].remoteIp).isEqualTo("127.0.0.1")
         assertThat(status.sessions[0].flavorId).isEqualTo("oxsts")
-        assertThat(status.sessions[0].sessionLspInfo.timeSinceLastClientMessage).isEqualTo(2.seconds)
-        assertThat(status.sessions[0].sessionLspInfo.timeSinceLastServerMessage).isEqualTo(1.seconds)
         assertThat(status.sessions[0].activeVerifications).hasSize(1)
         assertThat(status.sessions[0].activeVerifications[0].verificationId).isEqualTo("req-1")
         assertThat(status.sessions[0].activeVerifications[0].portfolioId).isEqualTo("smart-full")

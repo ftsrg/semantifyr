@@ -47,11 +47,6 @@ export interface ActiveVerificationInfo {
   location?: Location
 }
 
-export interface SessionLspInfo {
-  timeSinceLastClientMessage: string
-  timeSinceLastServerMessage: string
-}
-
 export interface SessionInfo {
   sessionId: string
   remoteIp: string
@@ -59,7 +54,6 @@ export interface SessionInfo {
   uptime: string
   workingDirectory: string
   activeVerifications: ActiveVerificationInfo[]
-  sessionLspInfo: SessionLspInfo
 }
 
 export interface AdminStatusResponse {
@@ -72,7 +66,6 @@ export interface AdminServerConfigResponse {
   pingTimeout: string
   webRootDirectory: string | null
   adminPasswordSet: boolean
-  sessionIdleTimeout: string
   wsHandshakesPerPeriod: number
   wsHandshakeRatePeriod: string
   maxWsFrameSize: number
