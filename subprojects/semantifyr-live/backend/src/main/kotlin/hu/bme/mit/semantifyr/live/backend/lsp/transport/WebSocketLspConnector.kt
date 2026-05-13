@@ -13,29 +13,21 @@ import hu.bme.mit.semantifyr.logging.error
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
-import io.ktor.websocket.Frame
-import io.ktor.websocket.WebSocketSession
-import io.ktor.websocket.readText
+import io.ktor.websocket.*
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer
 import org.eclipse.lsp4j.jsonrpc.RemoteEndpoint
 import org.eclipse.lsp4j.jsonrpc.services.ServiceEndpoints
-import org.eclipse.lsp4j.services.LanguageClient
 import java.io.IOException
-import kotlin.coroutines.CoroutineContext
 import kotlin.time.TimeSource
 
 class WebSocketLspConnector(
     private val webSocketSession: WebSocketSession,
     private val sessionLanguageServer: SessionLanguageServer,
-    private val coroutineContext: CoroutineContext,
 ) {
 
     private val logger by loggerFactory()
@@ -146,16 +138,14 @@ class WebSocketLspConnector(
         return MessageConsumer {
             val json = jsonHandler.serialize(it)
             lastServerMessageMark = TimeSource.Monotonic.markNow()
-            if (outgoing.isClosedForSend) {
-                // session is tearing down, drop the message rather than throwing back at lsp4j
+            // we want to throw if the channel is full -> probably dead connection
+            val result = outgoing.trySend(json)
+            if (result.isClosed) {
+                // raced the session close
                 return@MessageConsumer
             }
-            try {
-                runBlocking(coroutineContext) {
-                    outgoing.send(json)
-                }
-            } catch (_: ClosedSendChannelException) {
-                // raced the session close; same handling as above
+            if (result.isFailure) {
+                throw IllegalStateException("WebSocket outgoing buffer overflowed (capacity=$OUTGOING_BUFFER)")
             }
         }
     }

@@ -108,7 +108,6 @@ class LspSession(
             webSocketLspConnector = WebSocketLspConnector(
                 webSocketSession,
                 sessionLanguageServer,
-                sessionCoroutineContext,
             )
 
             // run in the session scope
