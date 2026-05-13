@@ -19,7 +19,7 @@ dependencies {
     implementation(project(":logging"))
 }
 
-val sysmlCommit = "e1d22922929d10a26885ff144b654fc247e45e56" // Use spawn instead of exec to inherit stdio
+val sysmlCommit = "e6c281c6801f9a367448caf325ad5caa49abab53" // Support pnpm 11
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.buildDirectory.dir("sysml-2ls").get()
 
