@@ -42,12 +42,12 @@ val cloneTheta by tasks.registering(Sync::class) {
 }
 
 val cloneGammaLibrary by tasks.registering(Sync::class) {
-    from(project(":gamma-frontend").layout.projectDirectory.dir("Library"))
+    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/libraries/default"))
     into("examples/gamma/Library")
 }
 
 val cloneSysMLLibrary by tasks.registering(Sync::class) {
-    from(project(":sysml-frontend").layout.projectDirectory.dir("Library"))
+    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/libraries/default"))
     into("examples/sysml/Library")
 }
 
@@ -71,9 +71,7 @@ val cloneSysMLTestModels by tasks.registering(Sync::class) {
 }
 
 val cloneTutorialModels by tasks.registering(Sync::class) {
-    from(project(":theta-backend").layout.projectDirectory.dir("test-models/Tutorial")) {
-        include("*.oxsts")
-    }
+    from(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial"))
     into("examples/tutorial/")
 }
 
@@ -88,6 +86,10 @@ val prepareDockerBuild by tasks.registering {
     dependsOn(cloneTheta)
     dependsOn(cloneLibraries)
     dependsOn(cloneTestModels)
+}
+
+tasks.assemble {
+    dependsOn(prepareDockerBuild)
 }
 
 val dockerImageRepo = "ftsrgbot/semantifyr-vscode-server"

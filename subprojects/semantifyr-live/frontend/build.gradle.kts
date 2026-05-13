@@ -67,11 +67,7 @@ val cloneSysmlv2TestModels by tasks.registering(Sync::class) {
 }
 
 val cloneTutorialSnippets by tasks.registering(Sync::class) {
-    from(rootProject.layout.projectDirectory.dir("subprojects/semantifyr-vscode-server/examples/tutorial")) {
-        include("basics.oxsts", "intermediate.oxsts")
-    }
-    rename("basics.oxsts", "trafficlight-direct-snapshot.oxsts")
-    rename("intermediate.oxsts", "trafficlight-library-snapshot.oxsts")
+    from(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial"))
     into(importedSnippetsDir.dir("tutorial"))
 }
 
@@ -118,9 +114,6 @@ val cloneBrandingAssets by tasks.registering(Sync::class) {
     into(publicDir)
 }
 
-// npm workspaces: install runs once at the repo root so all four TS packages share a single
-// node_modules tree. The per-package package-lock.json files were retired with the workspace
-// migration; the only lockfile is at the root.
 tasks.npmInstall {
     workingDir = rootProject.projectDir
 }

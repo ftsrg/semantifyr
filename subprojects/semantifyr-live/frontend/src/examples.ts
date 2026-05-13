@@ -67,16 +67,16 @@ interface ImportedDescriptor {
 
 const TUTORIAL_OXSTS: readonly ImportedDescriptor[] = [
   {
-    id: 'trafficlight-direct-snapshot',
-    label: 'Tutorial: traffic light (direct modeling)',
+    id: 'basics',
+    label: 'Tutorial: Basics',
     description:
-      'Final state from the "Direct Modeling" tutorial: a traffic light with a colour-cycling transition relation and two verification cases.',
+      'Final state from the "Direct Modeling" tutorial.',
   },
   {
-    id: 'trafficlight-library-snapshot',
-    label: 'Tutorial: traffic light (statechart library)',
+    id: 'intermediate',
+    label: 'Tutorial: Intermediate',
     description:
-      'Final state from the "Building a Library" tutorial: the same traffic light refactored to use a small reusable Statechart base class.',
+      'Final state from the "Building a Library" tutorial.',
   },
 ];
 
@@ -84,22 +84,22 @@ const SYSMLV2_IMPORTED: readonly ImportedDescriptor[] = [
   {
     id: 'compressedspacecraft',
     label: 'Spacecraft (compressed)',
-    description: 'Compressed variant of the spacecraft model used as a smaller fixture in conformance tests.',
+    description: 'Compressed variant of the spacecraft model.',
   },
   {
     id: 'crossroads',
     label: 'Crossroads',
-    description: 'Two coordinated traffic lights at an intersection, expressed via SysML v2 statecharts and item flows.',
+    description: 'Two coordinated traffic lights at an intersection.',
   },
   {
     id: 'door_access',
     label: 'Door access',
-    description: 'Door-access SysML v2 model with parallel state regions and item flows.',
+    description: 'Door-access model with parallel state regions.',
   },
   {
     id: 'orion_protocol',
     label: 'Orion protocol',
-    description: 'Orion-protocol SysML v2 model exercising item flows and timing-related transitions.',
+    description: 'Orion protocol with item flows and timing transitions.',
   },
 ];
 
@@ -107,20 +107,17 @@ const GAMMA_IMPORTED: readonly ImportedDescriptor[] = [
   {
     id: 'Spacecraft',
     label: 'Spacecraft',
-    description:
-      'Composite Gamma model of a small spacecraft with battery, thermal, and orbit-control subsystems plus reachability cases.',
+    description: 'Small spacecraft with battery, thermal, and orbit-control subsystems.',
   },
   {
     id: 'Crossroads',
     label: 'Crossroads',
-    description:
-      'Two coordinated traffic lights at an intersection, exposed via Gamma channels with safety reachability cases.',
+    description: 'Two coordinated traffic lights at an intersection.',
   },
   {
     id: 'Simple',
     label: 'Leader-worker',
-    description:
-      'Two statecharts coordinating via channel-bound events; the canonical leader-worker model used in conformance tests.',
+    description: 'Two statecharts coordinating via channel-bound events.',
   },
 ];
 
