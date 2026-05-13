@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type React from 'react';
+import { useState, type JSX } from 'react';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import LinkOutlinedIcon from '@mui/icons-material/LinkOutlined';
@@ -15,11 +15,15 @@ interface Props {
   confirmationMessage: string | null;
 }
 
-export default function CopyLinkButton({ onClick, confirmationMessage }: Props): React.JSX.Element {
+export default function CopyLinkButton({ onClick, confirmationMessage }: Props): JSX.Element {
+  const [hovered, setHovered] = useState(false);
+  const forced = confirmationMessage !== null;
   return (
     <Tooltip
       title={confirmationMessage ?? 'Copy link'}
-      open={confirmationMessage !== null ? true : undefined}
+      open={forced || hovered}
+      onOpen={() => { setHovered(true); }}
+      onClose={() => { setHovered(false); }}
     >
       <IconButton
         size="small"
