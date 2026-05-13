@@ -55,12 +55,12 @@ describe('LIVE_FLAVORS registry', () => {
   it('the trafficlight tutorial snapshots are registered as named oxsts examples', () => {
     const oxsts = findFlavor('oxsts')!;
     const ids = oxsts.examples.map((e) => e.id);
-    expect(ids).toContain('trafficlight-direct-snapshot');
-    expect(ids).toContain('trafficlight-library-snapshot');
+    expect(ids).toContain('basics');
+    expect(ids).toContain('intermediate');
   });
 
   it('the trafficlight snapshots contain code that mentions a verification case', () => {
-    const direct = findExample(findFlavor('oxsts')!, 'trafficlight-direct-snapshot');
+    const direct = findExample(findFlavor('oxsts')!, 'basics');
     expect(direct?.code).toContain('@VerificationCase');
   });
 });
@@ -83,7 +83,7 @@ describe('findFlavor', () => {
 describe('findExample', () => {
   it('returns an example by id within the supplied flavor', () => {
     const oxsts = findFlavor('oxsts')!;
-    expect(findExample(oxsts, 'trafficlight-direct-snapshot')?.label).toContain('traffic light');
+    expect(findExample(oxsts, 'basics')?.label).toContain('Basics');
   });
 
   it('returns undefined when the id does not exist in the flavor', () => {
@@ -94,9 +94,9 @@ describe('findExample', () => {
 
 describe('findExampleAcrossFlavors', () => {
   it('locates an oxsts example without a flavor hint', () => {
-    const hit = findExampleAcrossFlavors('trafficlight-direct-snapshot');
+    const hit = findExampleAcrossFlavors('basics');
     expect(hit?.flavor.id).toBe('oxsts');
-    expect(hit?.example.id).toBe('trafficlight-direct-snapshot');
+    expect(hit?.example.id).toBe('basics');
   });
 
   it('returns undefined when no flavor has the example', () => {

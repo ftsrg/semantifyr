@@ -61,26 +61,30 @@ describe('RunningVerificationsTab', () => {
     expect(screen.getByText('No completed verifications yet.')).toBeInTheDocument();
   });
 
-  it('renders one row per active verification and forwards cancel ids', async () => {
+  it('renders one row per active verification, labels it by the matching case, and forwards cancel ids', async () => {
+    const aLocation = {
+      uri: 'inmemory:///snippet.oxsts',
+      range: { start: { line: 1, character: 0 }, end: { line: 1, character: 0 } },
+    };
     const { api, cancelVerification, cancelAllVerifications } = fakeApi([
-      { requestId: 'r1', kind: 'Verify', caseLabel: 'Case a' },
-      { requestId: 'r2', kind: 'Validate', caseLabel: 'Case b' },
+      { verificationId: 'r1', kind: 'Verify', portfolioId: 'smart-full', elapsed: 'PT0S', location: aLocation },
+      { verificationId: 'r2', kind: 'Validate', portfolioId: 'smart-full', elapsed: 'PT0S' },
     ]);
     render(
       <RunningVerificationsTab
         api={api}
         connected
-        cases={[]}
+        cases={[{ caseInfo: { id: 'A', label: 'Case A', location: aLocation }, status: 'queued' }]}
         portfolios={[]}
       />,
     );
     await waitFor(() => {
-      expect(screen.getByText('Case a')).toBeInTheDocument();
+      expect(screen.getByText('Case A')).toBeInTheDocument();
     });
-    expect(screen.getByText('Case b')).toBeInTheDocument();
+    expect(screen.getByText('#r2')).toBeInTheDocument();
 
     const user = userEvent.setup();
-    await user.click(screen.getByLabelText('Cancel Case a'));
+    await user.click(screen.getByLabelText('Cancel Case A'));
     expect(cancelVerification).toHaveBeenCalledWith('r1');
 
     await user.click(screen.getByLabelText('Cancel all active verifications'));

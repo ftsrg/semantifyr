@@ -17,8 +17,6 @@ import {
   type CancellationToken as VscodeCancellationToken,
 } from 'vscode-jsonrpc'
 
-// Live-editor alias for the LSP `Location` shape so call sites that "navigate to case" or
-// "verify here" read by their domain intent rather than the LSP primitive.
 export type VerificationCaseLocation = Location
 
 export type {
@@ -59,25 +57,14 @@ export interface VerificationCaseState {
   status: VerificationCaseStatus
   message?: string
   trace?: VerificationTrace
-  /** End-state of the witness validation (post-verify). */
   witnessValidation?: WitnessValidationStatus
-  /**
-   * True between the moment a witness arrives and the moment the follow-up validateWitness call
-   * resolves. The witness panel uses it to render a "validating..." chip without blocking the
-   * trace from showing immediately.
-   */
+  // True between the trace arriving and the follow-up validateWitness resolving.
   validating?: boolean
-  /** Stage breakdown for the verify run that produced this verdict. */
   metrics?: VerificationMetrics
-  /** Engine that produced the verify verdict (e.g. internal backend id). */
   backendId?: string
-  /** Portfolio id the user picked for the verify run; recorded so the witness pane can label it. */
   portfolioId?: string
-  /** Stage breakdown for the witness validation, parallel to {@link metrics}. */
   validationMetrics?: VerificationMetrics
-  /** Engine that produced the validation verdict. */
   validationBackendId?: string
-  /** Portfolio id used for the validation. */
   validationPortfolioIdUsed?: string
 }
 
@@ -90,9 +77,7 @@ export interface VerificationState {
   cases: VerificationCaseState[]
 }
 
-// Reuse the LSP runtime's own cancellation primitives so the language client recognises the
-// token via the standard `CancellationToken.is(...)` check and dispatches `$/cancelRequest`
-// against the in-flight request id when the source is cancelled.
+// Reuse vscode-jsonrpc's tokens so the language client dispatches $/cancelRequest properly.
 export type CancellationToken = VscodeCancellationToken
 export type CancellationTokenSource = VscodeCancellationTokenSource
 export const CancellationTokenSourceCtor = VscodeCancellationTokenSource
@@ -119,9 +104,7 @@ interface ProgressParams {
 type StateUpdater = (next: VerificationState | ((prev: VerificationState) => VerificationState)) => void
 
 function clearedRunningCase(cs: VerificationCaseState, portfolioId?: string): VerificationCaseState {
-  // Drop trace + witnessValidation + per-run ids when a case starts running again.
-  // exactOptionalPropertyTypes forbids assigning undefined directly, so build a fresh object
-  // without the optional fields.
+  // exactOptionalPropertyTypes forbids assigning undefined; rebuild without the optional fields.
   return {
     caseInfo: cs.caseInfo,
     status: 'running',
@@ -145,12 +128,7 @@ function parseResultStatus(response: VerificationCaseResult | null): Verificatio
   }
 }
 
-/**
- * Wire shape produced by the OXSTS LSP's `oxsts.case.validateWitness` handler (see
- * `lang-ide-common/.../wire/WitnessValidationResult.java`). The handler maps the underlying
- * verify verdict to one of the four witness-validation kinds, then attaches the verifier's
- * regular {@link VerificationMetrics} stage breakdown plus the backend / portfolio ids.
- */
+// Wire shape from oxsts.case.validateWitness; see lang-ide-common WitnessValidationResult.
 interface WitnessValidationResultResponse {
   status?: WitnessValidationStatus | string
   message?: string | null
@@ -177,19 +155,13 @@ export interface RunVerificationHandle {
 }
 
 export interface AutoValidateRequest {
-  /** LSP command to fire for the witness; usually `<lang>.case.validateWitness`. */
   command: string
-  /** Portfolio id to send with the validate request. */
   portfolioId?: string | undefined
 }
 
 export interface RunVerificationOptions {
   portfolioId?: string | undefined
-  /**
-   * Called after each verify response that produced a witness. Returning a non-null
-   * {@link AutoValidateRequest} dispatches a follow-up validateWitness command. The runner
-   * calls this fresh per case so toggling auto-validate mid-batch takes effect immediately.
-   */
+  // Called per case after a witness arrives; returning non-null dispatches validateWitness.
   getAutoValidateRequest?: (() => AutoValidateRequest | null) | undefined
 }
 
@@ -201,8 +173,7 @@ function buildVerifyArguments(
   const payload: Record<string, unknown> = {
     uri: fileUri,
     range: caseInfo.location.range,
-    // Echoed back to the live-server so its active-verifications monitor can label the row
-    // with a human-readable case name; the language server's command handlers ignore it.
+    // Echoed back via the live-server's active-verifications monitor; the LSP server ignores it.
     caseLabel: caseInfo.label,
   }
   if (options.portfolioId) {
@@ -366,10 +337,7 @@ export function runAllVerifications(
     cancelled = true
     activeRequestSource?.cancel()
     progress.cancelAll(client)
-    // Sweep the queue so the user doesn't see "queued" rows hanging around after cancel:
-    // every case that's still queued or running collapses back to stale. The verifier's late
-    // error response (if it arrives) updates the running case to a real verdict and overrides
-    // this stale state.
+    // Collapse queued/running rows to stale so cancel leaves no orphaned spinners.
     setState((prev) => ({
       ...prev,
       phase: 'cancelled',
@@ -419,8 +387,6 @@ export function runAllVerifications(
       }
     }
     if (cancelled) {
-      // The cancel handler already reset queue rows to stale; don't overwrite that with
-      // a (likely error / no-response) verdict that arrives after the user gave up.
       return
     }
 
@@ -462,13 +428,6 @@ export function runAllVerifications(
   return { cancel: cancelHandle }
 }
 
-/**
- * Single-case variant that mirrors the batch flow's cancel + auto-validate semantics so the
- * panel's Cancel button reaches both flows uniformly. The handle's cancel fires both
- * `$/cancelRequest` (via the cancellation token, so the LSP can abort the running verifier
- * without waiting for the progress poll) AND `window/workDoneProgress/cancel` for any active
- * progress token, then resets the case to stale so the UI doesn't pretend it's still running.
- */
 export function verifySingleCase(
   client: LspClient,
   verificationCommand: string,
@@ -577,8 +536,6 @@ export async function validateWitness(
   }
   try {
     const params = { command: validateCommand, arguments: [args] }
-    // Pass `token` through unconditionally; the metrics wrapper this client is wrapped with
-    // gates the trailing token away when undefined, so lsp4j never sees a positional null.
     const response = (await client.sendRequest('workspace/executeCommand', params, token)) as WitnessValidationResultResponse | null
     return toValidationOutcome(response)
   } catch (error) {
@@ -613,12 +570,6 @@ function applyValidationOutcome(
   }
 }
 
-/**
- * Runs validateWitness in the background and folds the outcome into the matching case state.
- * Used right after a verify response with a witness to perform the validation as a
- * separate throttled job, so the user sees the trace immediately and the validating-then-result
- * chip transition happens without blocking witness rendering.
- */
 export function dispatchAutoValidation(
   client: LspClient,
   validateCommand: string,

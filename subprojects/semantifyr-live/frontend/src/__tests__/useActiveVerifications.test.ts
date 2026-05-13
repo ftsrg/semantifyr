@@ -19,6 +19,16 @@ interface FakeApi {
   cancelAllVerifications: ReturnType<typeof vi.fn>;
 }
 
+function fakeVerification(overrides: Partial<ActiveVerificationInfo>): ActiveVerificationInfo {
+  return {
+    verificationId: 'r1',
+    portfolioId: 'smart-full',
+    kind: 'Verify',
+    elapsed: 'PT0S',
+    ...overrides,
+  };
+}
+
 function createFakeApi(initial: ActiveVerificationInfo[]): FakeApi {
   let handler: ((params: { active?: ActiveVerificationInfo[] }) => void) | null = null;
   let unsubscribed = false;
@@ -46,7 +56,7 @@ function createFakeApi(initial: ActiveVerificationInfo[]): FakeApi {
 
 describe('useActiveVerifications', () => {
   it('returns empty items and never calls the api when not connected', async () => {
-    const fake = createFakeApi([{ requestId: 'r1' }]);
+    const fake = createFakeApi([fakeVerification({ verificationId: 'r1' })]);
     const { result } = renderHook(() => useActiveVerifications(fake.api, false));
     expect(result.current.items).toEqual([]);
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -54,18 +64,18 @@ describe('useActiveVerifications', () => {
   });
 
   it('fetches on connect and updates on the changed notification', async () => {
-    const fake = createFakeApi([{ requestId: 'r1' }]);
+    const fake = createFakeApi([fakeVerification({ verificationId: 'r1' })]);
     const { result } = renderHook(() => useActiveVerifications(fake.api, true));
 
     await waitFor(() => {
-      expect(result.current.items).toEqual([{ requestId: 'r1' }]);
+      expect(result.current.items.map((i) => i.verificationId)).toEqual(['r1']);
     });
     expect(fake.listVerifications).toHaveBeenCalled();
 
     act(() => {
-      fake.emit([{ requestId: 'r1' }, { requestId: 'r2', kind: 'Validate' }]);
+      fake.emit([fakeVerification({ verificationId: 'r1' }), fakeVerification({ verificationId: 'r2', kind: 'Validate' })]);
     });
-    expect(result.current.items.map((i) => i.requestId)).toEqual(['r1', 'r2']);
+    expect(result.current.items.map((i) => i.verificationId)).toEqual(['r1', 'r2']);
   });
 
   it('treats a missing active field as empty', async () => {
@@ -78,7 +88,7 @@ describe('useActiveVerifications', () => {
   });
 
   it('cancel + cancelAll forward to the api', async () => {
-    const fake = createFakeApi([{ requestId: 'r1' }]);
+    const fake = createFakeApi([fakeVerification({ verificationId: 'r1' })]);
     const { result } = renderHook(() => useActiveVerifications(fake.api, true));
     await waitFor(() => expect(result.current.items.length).toBe(1));
 

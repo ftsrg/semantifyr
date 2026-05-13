@@ -12,12 +12,12 @@ describe('buildShareableUrl', () => {
   it('embeds the flavor, example, and code as a decodable code parameter', async () => {
     const url = await buildShareableUrl('https://example.test/', {
       flavorId: 'oxsts',
-      exampleId: 'trafficlight-direct-snapshot',
+      exampleId: 'basics',
       code: 'package demo\nclass Foo {}',
     })
     const parsed = new URL(url)
     expect(parsed.searchParams.get('mode')).toBe('oxsts')
-    expect(parsed.searchParams.get('example')).toBe('trafficlight-direct-snapshot')
+    expect(parsed.searchParams.get('example')).toBe('basics')
     const code = parsed.searchParams.get('code')
     expect(code).not.toBeNull()
     const decoded = await decodeCompressedBase64Url(code!)

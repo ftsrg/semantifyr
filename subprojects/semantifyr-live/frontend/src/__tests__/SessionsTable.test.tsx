@@ -52,7 +52,7 @@ describe('SessionsTable', () => {
           fakeSession({
             sessionId: FULL_UUID,
             activeVerifications: [
-              { requestId: 'req-99', kind: 'Verify', caseLabel: 'P1' },
+              { verificationId: 'req-99', portfolioId: 'theta', kind: 'Verify', elapsed: 'PT0S' },
             ],
           }),
         ]}
@@ -63,35 +63,11 @@ describe('SessionsTable', () => {
     const user = userEvent.setup();
     await user.click(screen.getByText('oxsts'));
     expect(screen.getByText('In-flight verifications')).toBeInTheDocument();
-    expect(screen.getByText('P1')).toBeInTheDocument();
+    expect(screen.getByText('#req-99')).toBeInTheDocument();
 
     // The cancel button inside the expanded row carries the verb-only "Cancel" label; the
     // session-level destructor uses "Kill session" so we can disambiguate.
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
-    expect(onCancelVerification).toHaveBeenCalledWith(FULL_UUID, 'req-99');
-  });
-
-  it('expanded row surfaces the bridge error count when non-zero', async () => {
-    render(
-      <SessionsTable
-        sessions={[
-          fakeSession({
-            sessionId: FULL_UUID,
-            bridgeInfo: {
-              clientMessageCount: 0,
-              serverMessageCount: 0,
-              errorCount: 3,
-              timeSinceLastClientMessage: 'PT0S',
-              timeSinceLastServerMessage: 'PT0S',
-            },
-          }),
-        ]}
-        onCancelSession={() => {}}
-        onCancelVerification={() => {}}
-      />,
-    );
-    const user = userEvent.setup();
-    await user.click(screen.getByText('oxsts'));
-    expect(screen.getByText('3 errors')).toBeInTheDocument();
+    expect(onCancelVerification).toHaveBeenCalledWith('req-99');
   });
 });

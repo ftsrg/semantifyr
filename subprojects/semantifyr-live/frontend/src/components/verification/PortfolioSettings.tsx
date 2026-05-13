@@ -18,19 +18,13 @@ import { FONT_SIZE } from '../../lib/util/theme';
 
 interface Props {
   portfolios: readonly PortfolioInfo[];
-  /** Verify-side portfolio. */
   verifyPortfolioId: string;
   onVerifyPortfolioChange: (portfolioId: string) => void;
-  /** Validate-side portfolio. Pass null to hide the Validate section (flavor without validate). */
+  // null hides the Validate section (flavor without validate).
   validationPortfolioId?: string | null;
   onValidationPortfolioChange?: (portfolioId: string) => void;
 }
 
-/**
- * Combined portfolio picker for both verify and validate sides. Lives in the StatusBar trailing
- * slot. The button label only shows the verification portfolio name; the validation-side selection is
- * surfaced as a small caption inside the popover and in the tooltip.
- */
 export default function PortfolioSettings({
   portfolios,
   verifyPortfolioId,
@@ -39,8 +33,6 @@ export default function PortfolioSettings({
   onValidationPortfolioChange,
 }: Props): React.JSX.Element {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-  // The popover only lists installed/usable portfolios; unavailable ones are surfaced on the
-  // admin page's "Available portfolios" panel rather than as greyed-out menu rows here.
   const availablePortfolios = portfolios.filter((p) => p.available);
   const verify = portfolios.find((p) => p.id === verifyPortfolioId);
   const validate = validationPortfolioId

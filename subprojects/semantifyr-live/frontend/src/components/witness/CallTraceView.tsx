@@ -120,8 +120,6 @@ interface Props {
 }
 
 export default function CallTraceView({ trace }: Props): React.JSX.Element {
-  // Open the Initial step by default; every numbered step defaults to closed so a long trace
-  // doesn't drown the user on first paint. The user expands the steps that interest them.
   const rows: React.JSX.Element[] = [];
   rows.push(
     <CallStepRow

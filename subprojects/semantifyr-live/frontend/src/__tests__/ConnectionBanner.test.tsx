@@ -73,11 +73,9 @@ describe('ConnectionBanner', () => {
     await userEvent.setup().click(screen.getByRole('button', { name: 'Dismiss' }));
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
-    // A re-render with the same status keeps it dismissed.
     rerender(<ConnectionBanner status="errored" statusInfo="boom" onReconnect={noop} />);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
-    // A status change (e.g. reconnect succeeded, then errored again) re-opens it.
     rerender(<ConnectionBanner status="reconnecting" statusInfo={null} onReconnect={noop} />);
     rerender(<ConnectionBanner status="errored" statusInfo="boom again" onReconnect={noop} />);
     expect(screen.getByRole('alert')).toBeInTheDocument();

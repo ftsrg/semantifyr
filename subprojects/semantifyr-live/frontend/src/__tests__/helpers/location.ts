@@ -4,14 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-/**
- * Replace {@code window.location} with a parsed URL so tests can drive code paths that read
- * {@code search}, {@code origin}, {@code pathname}, etc. without navigating the jsdom window.
- *
- * <p>Tests that use this should snapshot the original `window.location` in a `beforeEach` and
- * restore it in `afterEach` (the helper does not own the lifecycle, so a single test file
- * stays in control of its own teardown).
- */
 export function setLocation(url: string): void {
   const parsed = new URL(url);
   Object.defineProperty(window, 'location', {

@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-/**
- * Wire types shared by the live-server's two transport surfaces: the REST API ({@link ./rest})
- * and the JSON-RPC method family that rides over the LSP WebSocket
- * ({@link ./lspExtensions}). Both deliver the same session shape, so the type lives here.
- */
+import type { Location } from '@semantifyr/editor-common'
 
 export interface PortfolioInfo {
   id: string
@@ -30,6 +26,9 @@ export interface FlavorInfo {
 
 export interface InfoResponse {
   uptime: string
+  // ISO-8601 instant (e.g. "2026-05-13T14:22:01.123Z"), wall-clock moment the
+  // backend marked itself started.
+  startedAt: string
   commit: string
   buildTime: string
   activeSessions: number
@@ -39,23 +38,20 @@ export interface InfoResponse {
 export type VerificationKind = 'Verify' | 'Validate'
 
 export interface ActiveVerificationInfo {
-  requestId: string
-  kind?: VerificationKind
-  caseLabel?: string | null
-  portfolioId?: string | null
-  /** ISO 8601 duration since the request was enqueued (e.g. "PT3.2S"). */
-  elapsed?: string
+  verificationId: string
+  portfolioId: string
+  kind: VerificationKind
+  // ISO 8601 duration since start (e.g. "PT3.2S").
+  elapsed: string
+  // Present over the verificationsChanged channel; absent from the admin REST status.
+  location?: Location
 }
 
-export interface LspProxyInfo {
-  clientMessageCount: number
-  serverMessageCount: number
-  errorCount: number
+export interface SessionLspInfo {
   timeSinceLastClientMessage: string
   timeSinceLastServerMessage: string
 }
 
-/** Session info returned by both /api/admin/status and the semantifyr/live/session/info JSON-RPC method. */
 export interface SessionInfo {
   sessionId: string
   remoteIp: string
@@ -63,17 +59,40 @@ export interface SessionInfo {
   uptime: string
   workingDirectory: string
   activeVerifications: ActiveVerificationInfo[]
-  started: boolean
-  bridgeInfo: LspProxyInfo
+  sessionLspInfo: SessionLspInfo
 }
 
 export interface AdminStatusResponse {
   sessions: SessionInfo[]
 }
 
-export interface AdminConfigResponse {
+export interface AdminServerConfigResponse {
+  port: number
+  pingPeriod: string
+  pingTimeout: string
+  webRootDirectory: string | null
+  adminPasswordSet: boolean
+  sessionIdleTimeout: string
+  wsHandshakesPerPeriod: number
+  wsHandshakeRatePeriod: string
+  maxWsFrameSize: number
+  httpsOnlyCookies: boolean
+}
+
+export interface AdminSessionManagerConfigResponse {
   maxSessionsGlobal: number
-  maxSessionsPerIp: number
-  verificationConcurrency: number
-  verificationTimeout: string
+  semanticLibrariesDirectory: string | null
+  rootWorkDirectory: string
+}
+
+export interface AdminVerificationConfigResponse {
+  concurrency: number
+  timeout: string
+}
+
+export interface AdminConfigResponse {
+  development: boolean
+  server: AdminServerConfigResponse
+  sessionManager: AdminSessionManagerConfigResponse
+  verification: AdminVerificationConfigResponse
 }

@@ -52,8 +52,7 @@ interface StateStepRowProps {
 }
 
 function StateStepRow({ label, initial, changed, allValues }: StateStepRowProps): React.JSX.Element {
-  // Always default closed: even the Initial step typically lists every variable in the model,
-  // which would crowd the panel on first paint. The user opens the rows they care about.
+  // Default closed to avoid crowding the panel on first paint.
   const [open, setOpen] = useState(false);
   const changeCount = changed.length;
   const changeBadge = initial

@@ -6,12 +6,12 @@
 
 import React from 'react';
 import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid';
 import LinearProgress from '@mui/material/LinearProgress';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import GroupOutlinedIcon from '@mui/icons-material/GroupOutlined';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutlined';
-import ReportGmailerrorredOutlinedIcon from '@mui/icons-material/ReportGmailerrorredOutlined';
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
 import { formatIsoDuration } from '../../lib/util/duration';
 import type { SessionInfo } from '../../lib/api';
@@ -19,8 +19,10 @@ import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
 
 interface Props {
   uptime: string;
+  startedAt: string;
   activeSessions: number;
   maxSessions: number;
+  verificationConcurrency: number;
   sessions: readonly SessionInfo[];
 }
 
@@ -45,8 +47,7 @@ function Tile({ label, value, hint, icon, accent = 'default', tooltip }: TilePro
   const content = (
     <Box
       sx={{
-        flex: '1 1 0',
-        minWidth: 180,
+        height: '100%',
         bgcolor: 'var(--surface-bg)',
         border: '1px solid var(--surface-border)',
         borderRadius: 1,
@@ -55,6 +56,7 @@ function Tile({ label, value, hint, icon, accent = 'default', tooltip }: TilePro
         display: 'flex',
         flexDirection: 'column',
         gap: 0.5,
+        minWidth: 0,
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -82,12 +84,26 @@ function Tile({ label, value, hint, icon, accent = 'default', tooltip }: TilePro
   return tooltip ? <Tooltip title={tooltip}>{content}</Tooltip> : content;
 }
 
-export default function KpiStrip({ uptime, activeSessions, maxSessions, sessions }: Props): React.JSX.Element {
+function formatStartedAt(iso: string): string {
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) {
+    return iso;
+  }
+  return parsed.toLocaleString();
+}
+
+export default function KpiStrip({
+  uptime,
+  startedAt,
+  activeSessions,
+  maxSessions,
+  verificationConcurrency,
+  sessions,
+}: Props): React.JSX.Element {
   const sessionLoad = maxSessions > 0 ? (activeSessions / maxSessions) * 100 : 0;
   const sessionsAccent: TileProps['accent'] = sessionLoad >= 90 ? 'danger' : sessionLoad >= 60 ? 'warning' : 'default';
 
   const activeVerifications = sessions.reduce((sum, s) => sum + s.activeVerifications.length, 0);
-  const errorCount = sessions.reduce((sum, s) => sum + s.bridgeInfo.errorCount, 0);
 
   const flavorCounts = new Map<string, number>();
   for (const s of sessions) {
@@ -96,85 +112,84 @@ export default function KpiStrip({ uptime, activeSessions, maxSessions, sessions
   const flavorBreakdown = [...flavorCounts.entries()].sort((a, b) => b[1] - a[1]);
 
   return (
-    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mx: 3, mt: 2 }}>
-      <Tile
-        label="Sessions"
-        icon={<GroupOutlinedIcon sx={{ fontSize: ICON_SIZE.md }} />}
-        accent={sessionsAccent}
-        tooltip={`${activeSessions} of ${maxSessions} concurrent sessions in use across all clients.`}
-        value={
-          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
-            <Box component="span">{activeSessions}</Box>
-            <Box component="span" sx={{ fontSize: FONT_SIZE.md, color: 'text.secondary', fontWeight: 500 }}>
-              / {maxSessions}
-            </Box>
-          </Box>
-        }
-        hint={
-          <Box>
-            <LinearProgress
-              variant="determinate"
-              value={Math.min(sessionLoad, 100)}
-              sx={{
-                mt: 0.5,
-                height: 4,
-                borderRadius: 2,
-                bgcolor: 'var(--surface-border)',
-                '& .MuiLinearProgress-bar': { bgcolor: ACCENT_VARS[sessionsAccent] },
-              }}
-            />
-            {flavorBreakdown.length > 0 && (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-                {flavorBreakdown.map(([flavorId, count]) => (
-                  <Tooltip key={flavorId} title={`${count} session${count === 1 ? '' : 's'} on flavor ${flavorId}`}>
-                    <Box
-                      component="span"
-                      sx={{
-                        fontSize: FONT_SIZE.xs,
-                        fontWeight: 600,
-                        color: 'text.secondary',
-                        bgcolor: 'var(--surface-panel-bg)',
-                        border: '1px solid var(--surface-border)',
-                        borderRadius: 0.5,
-                        px: 0.5,
-                        py: 0.1,
-                      }}
-                    >
-                      {flavorId} {count}
-                    </Box>
-                  </Tooltip>
-                ))}
+    <Grid container spacing={2} sx={{ mx: 0, mt: 2, px: 3, width: '100%' }}>
+      <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+        <Tile
+          label="Sessions"
+          icon={<GroupOutlinedIcon sx={{ fontSize: ICON_SIZE.md }} />}
+          accent={sessionsAccent}
+          tooltip={`${activeSessions} of ${maxSessions} concurrent sessions in use across all clients.`}
+          value={
+            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
+              <Box component="span">{activeSessions}</Box>
+              <Box component="span" sx={{ fontSize: FONT_SIZE.md, color: 'text.secondary', fontWeight: 500 }}>
+                / {maxSessions}
               </Box>
-            )}
-          </Box>
-        }
-      />
-      <Tile
-        label="Active verifications"
-        icon={<PlayCircleOutlineIcon sx={{ fontSize: ICON_SIZE.md }} />}
-        value={activeVerifications}
-        accent={activeVerifications > 0 ? 'warning' : 'default'}
-        tooltip="Verifications currently in flight across every session."
-        hint={
-          activeVerifications === 0
-            ? 'Idle'
-            : `Across ${sessions.filter((s) => s.activeVerifications.length > 0).length} session(s)`
-        }
-      />
-      <Tile
-        label="Errors (cumulative)"
-        icon={<ReportGmailerrorredOutlinedIcon sx={{ fontSize: ICON_SIZE.md }} />}
-        value={errorCount}
-        accent={errorCount > 0 ? 'danger' : 'success'}
-        tooltip="Sum of LSP-proxy error counts across every live session."
-        hint={errorCount > 0 ? 'Inspect the offending session below' : 'No errors recorded'}
-      />
-      <Tile
-        label="Backend uptime"
-        icon={<ScheduleOutlinedIcon sx={{ fontSize: ICON_SIZE.md }} />}
-        value={formatIsoDuration(uptime)}
-        tooltip={`Raw uptime: ${uptime}`}
-      />
-    </Box>
+            </Box>
+          }
+          hint={
+            <Box>
+              <LinearProgress
+                variant="determinate"
+                value={Math.min(sessionLoad, 100)}
+                sx={{
+                  mt: 0.5,
+                  height: 4,
+                  borderRadius: 2,
+                  bgcolor: 'var(--surface-border)',
+                  '& .MuiLinearProgress-bar': { bgcolor: ACCENT_VARS[sessionsAccent] },
+                }}
+              />
+              {flavorBreakdown.length > 0 && (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                  {flavorBreakdown.map(([flavorId, count]) => (
+                    <Tooltip key={flavorId} title={`${count} session${count === 1 ? '' : 's'} on flavor ${flavorId}`}>
+                      <Box
+                        component="span"
+                        sx={{
+                          fontSize: FONT_SIZE.xs,
+                          fontWeight: 600,
+                          color: 'text.secondary',
+                          bgcolor: 'var(--surface-panel-bg)',
+                          border: '1px solid var(--surface-border)',
+                          borderRadius: 0.5,
+                          px: 0.5,
+                          py: 0.1,
+                        }}
+                      >
+                        {flavorId} {count}
+                      </Box>
+                    </Tooltip>
+                  ))}
+                </Box>
+              )}
+            </Box>
+          }
+        />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+        <Tile
+          label="Active verifications"
+          icon={<PlayCircleOutlineIcon sx={{ fontSize: ICON_SIZE.md }} />}
+          value={activeVerifications}
+          accent={activeVerifications > 0 ? 'warning' : 'default'}
+          tooltip={`${activeVerifications} running, cap ${verificationConcurrency} concurrent`}
+          hint={
+            activeVerifications === 0
+              ? `Idle (cap ${verificationConcurrency})`
+              : `Across ${sessions.filter((s) => s.activeVerifications.length > 0).length} session(s), cap ${verificationConcurrency}`
+          }
+        />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 12, lg: 4 }}>
+        <Tile
+          label="Backend uptime"
+          icon={<ScheduleOutlinedIcon sx={{ fontSize: ICON_SIZE.md }} />}
+          value={formatIsoDuration(uptime)}
+          tooltip={`Started ${formatStartedAt(startedAt)}`}
+          hint={`Started ${formatStartedAt(startedAt)}`}
+        />
+      </Grid>
+    </Grid>
   );
 }

@@ -32,9 +32,7 @@ export function wrapClientWithMetrics(client: LspClient): LspClient & MetricsTra
     notificationCount,
     errorCount,
     lastResponseTimeMs,
-    // Average over successful requests only; errors don't contribute a meaningful elapsed
-    // time (the catch path fires before we can measure a useful round-trip), so including
-    // them in the denominator dilutes the average without telling the user anything.
+    // Average over successful requests only; failures don't have a meaningful round-trip.
     avgResponseTimeMs:
       successCount > 0 ? Math.round(totalSuccessResponseTimeMs / successCount) : null,
   })
@@ -53,13 +51,8 @@ export function wrapClientWithMetrics(client: LspClient): LspClient & MetricsTra
       const start = performance.now()
       requestCount++
       try {
-        // Critical: only forward the token when the caller actually supplied one. The
-        // underlying language client's sendRequest is variadic and routes through
-        // vscode-jsonrpc's `connection.sendRequest`, which detects a CancellationToken in the
-        // last positional argument. Always forwarding three args means an undefined trailing
-        // arg falls through that detection and ends up serialised as `null` in a positional
-        // params array (`[<payload>, null]`), which lsp4j on the server side rejects with
-        // "Expected END_ARRAY but was NULL".
+        // Don't forward an undefined token; vscode-jsonrpc serialises it as a positional null
+        // and lsp4j rejects the array with "Expected END_ARRAY but was NULL".
         const result =
           token === undefined
             ? await client.sendRequest(method, params)

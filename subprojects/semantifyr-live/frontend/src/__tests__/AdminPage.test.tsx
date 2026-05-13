@@ -39,6 +39,7 @@ import AdminPage from '../components/AdminPage';
 
 const baseInfo = {
   uptime: 'PT5M',
+  startedAt: '2026-05-13T14:22:01Z',
   commit: 'abcdef',
   buildTime: '2026-05-09T00:00:00Z',
   activeSessions: 0,
@@ -46,10 +47,28 @@ const baseInfo = {
 };
 
 const baseConfig = {
-  maxSessionsGlobal: 32,
-  maxSessionsPerIp: 4,
-  verificationConcurrency: 8,
-  verificationTimeout: 'PT30S',
+  development: false,
+  server: {
+    port: 8080,
+    pingPeriod: 'PT30S',
+    pingTimeout: 'PT15S',
+    webRootDirectory: null,
+    adminPasswordSet: true,
+    sessionIdleTimeout: 'PT10M',
+    wsHandshakesPerPeriod: 120,
+    wsHandshakeRatePeriod: 'PT1M',
+    maxWsFrameSize: 4 * 1024 * 1024,
+    httpsOnlyCookies: true,
+  },
+  sessionManager: {
+    maxSessionsGlobal: 32,
+    semanticLibrariesDirectory: null,
+    rootWorkDirectory: '/var/lib/semantifyr-live',
+  },
+  verification: {
+    concurrency: 8,
+    timeout: 'PT30S',
+  },
 };
 
 const baseStatus = {
@@ -110,12 +129,9 @@ describe('AdminPage', () => {
 
     const user = userEvent.setup();
     render(<AdminPage colorModePreference="dark" colorMode="dark" onToggleColorMode={() => {}} />);
-    // Wait for the dashboard to finish its initial load. The Sign out button only mounts once
-    // loading=false (the loading-state header omits per-row controls).
     const signOut = await screen.findByRole('button', { name: 'Sign out' });
     await user.click(signOut);
     expect(logoutAdmin).toHaveBeenCalled();
-    // After logout the login form mounts again, even though the network rejected.
     await screen.findByText('Semantifyr Admin');
   });
 
@@ -126,7 +142,6 @@ describe('AdminPage', () => {
     render(<AdminPage colorModePreference="dark" colorMode="dark" onToggleColorMode={() => {}} />);
     const pause = await screen.findByRole('button', { name: 'Pause auto-refresh' });
 
-    // Wait for the first refresh to land before snapshotting the call count.
     await waitFor(() => {
       expect(fetchAdminStatus).toHaveBeenCalled();
     });
@@ -136,7 +151,6 @@ describe('AdminPage', () => {
     expect(screen.getByText('Paused')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Resume auto-refresh' })).toBeInTheDocument();
 
-    // No new refreshes can fire while paused; we never advance fake timers, so the count stays.
     expect(fetchAdminStatus.mock.calls.length).toBe(callsBeforePause);
   });
 });

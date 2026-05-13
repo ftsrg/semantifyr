@@ -7,11 +7,7 @@
 import type { ProblemEntry } from './liveEditorSession'
 import type { VerificationCaseState, VerificationCaseStatus } from '../verification/engine'
 
-/**
- * Map a {@link VerificationCaseStatus} to the Monaco/VS Code marker severity it should render
- * on the `@VerificationCase` line. Returns `null` for non-terminal statuses (queued, running,
- * stale) so the editor stays clean while a run is in progress.
- */
+// Returns null for non-terminal statuses so the editor stays clean during a run.
 export function caseStatusToSeverity(
   status: VerificationCaseStatus,
 ): 'error' | 'warning' | null {
@@ -27,10 +23,6 @@ export function caseStatusToSeverity(
   }
 }
 
-/**
- * Default human-readable message attached to the Monaco marker when the verifier did not
- * supply one. Kept in sync with the verdict copy used in the verification-panel tooltip.
- */
 export function defaultMessageForStatus(
   status: VerificationCaseStatus,
   label: string,
@@ -49,7 +41,6 @@ export function defaultMessageForStatus(
   }
 }
 
-/** Build the marker list (one per terminal-status case) the editor should render. */
 export function casesToMarkers(
   cases: readonly VerificationCaseState[],
 ): ProblemEntry[] {

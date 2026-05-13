@@ -26,12 +26,9 @@ interface Props {
   flavors: readonly LiveFlavor[];
   currentFlavorId: string;
   currentExampleId: string;
-  /** Switch to a flavor and load one of its examples in one step. */
   onSelectModel: (flavorId: string, exampleId: string) => void;
 }
 
-// Selected-item styling: tint the primary label with the accent + bold it, so the current
-// flavor / example reads as "this is the one" without a layout-shifting border or icon.
 const SELECTED_TEXT_SX = {
   '&.Mui-selected, &.Mui-selected:hover': {
     bgcolor: 'action.selected',
@@ -49,13 +46,6 @@ const SECTION_LABEL_SX = {
   color: 'text.secondary',
 } as const;
 
-/**
- * One toolbar control for "what am I editing": the modelling-language flavor and the example
- * loaded into the editor. The button shows the active flavor; clicking opens a popover with a
- * flavor selector (each with a one-line description) on top and the selected flavor's examples
- * (filterable, with descriptions) below. Picking an example commits both the flavor and the
- * example at once; picking a flavor in the popover just previews its examples.
- */
 export default function ModelPicker({ flavors, currentFlavorId, currentExampleId, onSelectModel }: Props): React.JSX.Element {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [pickerFlavorId, setPickerFlavorId] = useState(currentFlavorId);
@@ -65,8 +55,6 @@ export default function ModelPicker({ flavors, currentFlavorId, currentExampleId
   const currentFlavor = flavors.find((f) => f.id === currentFlavorId) ?? flavors[0]!;
   const pickerFlavor = flavors.find((f) => f.id === pickerFlavorId) ?? currentFlavor;
 
-  // Every time the popover opens, start from the flavor the editor is actually on, with a
-  // clean filter.
   useEffect(() => {
     if (open) {
       setPickerFlavorId(currentFlavorId);
@@ -108,7 +96,6 @@ export default function ModelPicker({ flavors, currentFlavorId, currentExampleId
             px: { xs: 0.75, sm: 1.5 },
             minWidth: 'unset',
             whiteSpace: 'nowrap',
-            // At xs widths the toolbar is tight: icon + chevron only, lean on the tooltip.
             '& .MuiButton-startIcon': { mr: { xs: 0, sm: 1 } },
             '& .MuiButton-endIcon': { ml: { xs: 0, sm: 0.25 } },
           }}
@@ -126,7 +113,6 @@ export default function ModelPicker({ flavors, currentFlavorId, currentExampleId
         slotProps={{ paper: { sx: { width: { xs: 'min(560px, calc(100vw - 16px))', sm: 600 } } } }}
       >
         <Box sx={{ display: 'flex', alignItems: 'stretch' }}>
-          {/* Left column: pick the modelling language. */}
           <Box sx={{ flex: '0 0 218px', minWidth: 0, borderRight: '1px solid var(--surface-border)' }}>
             <Typography component="div" sx={SECTION_LABEL_SX}>MODELLING LANGUAGE</Typography>
             <List dense disablePadding>
@@ -150,7 +136,6 @@ export default function ModelPicker({ flavors, currentFlavorId, currentExampleId
             </List>
           </Box>
 
-          {/* Right column: examples for the previewed flavor. */}
           <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
             <Typography component="div" sx={SECTION_LABEL_SX}>
               EXAMPLES &middot; {pickerFlavor.displayName}

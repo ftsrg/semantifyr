@@ -60,95 +60,94 @@ export default function Toolbar({
 
   return (
     <AppHeader logoSrc={logoSrc}>
-        <ConnectionStatus
-          status={connectionStatus}
-          onReconnect={onReconnect}
-          onDisconnect={onDisconnect}
-        />
+      <ConnectionStatus
+        status={connectionStatus}
+        onReconnect={onReconnect}
+        onDisconnect={onDisconnect}
+      />
 
-        <Divider
-          orientation="vertical"
-          flexItem
-          sx={{ mx: 0.5, display: { xs: 'none', sm: 'block' } }}
-        />
+      <Divider
+        orientation="vertical"
+        flexItem
+        sx={{ mx: 0.5, display: { xs: 'none', sm: 'block' } }}
+      />
 
-        <ModelPicker
-          flavors={flavors}
-          currentFlavorId={currentFlavorId}
-          currentExampleId={currentExampleId}
-          onSelectModel={onSelectModel}
-        />
+      <ModelPicker
+        flavors={flavors}
+        currentFlavorId={currentFlavorId}
+        currentExampleId={currentExampleId}
+        onSelectModel={onSelectModel}
+      />
 
-        <CopyLinkButton onClick={onCopyLink} confirmationMessage={copyConfirmation} />
+      <CopyLinkButton onClick={onCopyLink} confirmationMessage={copyConfirmation} />
 
-        <Box sx={{ flex: 1 }} />
+      <Box sx={{ flex: 1 }} />
 
-        <Tooltip title="Documentation">
-          <IconButton
-            size="small"
-            component="a"
-            href="https://ftsrg.mit.bme.hu/semantifyr"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Documentation"
-            sx={{ color: 'text.primary', display: { xs: 'none', sm: 'inline-flex' } }}
-          >
-            <MenuBookOutlinedIcon sx={{ fontSize: ICON_SIZE.lg }} />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="GitHub">
-          <IconButton
-            size="small"
-            component="a"
-            href="https://github.com/ftsrg/semantifyr"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="GitHub"
-            sx={{ color: 'text.primary', display: { xs: 'none', sm: 'inline-flex' } }}
-          >
-            <GitHubIcon sx={{ fontSize: ICON_SIZE.lg }} />
-          </IconButton>
-        </Tooltip>
-        <ColorModeToggle preference={colorModePreference} onToggle={onToggleColorMode} />
-
-        {/* Overflow menu surfaces Docs / GitHub at xs widths where the icon buttons hide. */}
-        <Tooltip title="More">
-          <IconButton
-            size="small"
-            onClick={(e) => setOverflowAnchor(e.currentTarget)}
-            aria-label="More"
-            sx={{ color: 'text.primary', display: { xs: 'inline-flex', sm: 'none' } }}
-          >
-            <MoreVertIcon sx={{ fontSize: ICON_SIZE.lg }} />
-          </IconButton>
-        </Tooltip>
-        <Menu
-          anchorEl={overflowAnchor}
-          open={overflowOpen}
-          onClose={() => setOverflowAnchor(null)}
-          slotProps={{ paper: { sx: { minWidth: 200 } } }}
+      <Tooltip title="Documentation">
+        <IconButton
+          size="small"
+          component="a"
+          href="https://ftsrg.mit.bme.hu/semantifyr"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Documentation"
+          sx={{ color: 'text.primary', display: { xs: 'none', sm: 'inline-flex' } }}
         >
-          <MenuItem
-            component="a"
-            href="https://ftsrg.mit.bme.hu/semantifyr"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => setOverflowAnchor(null)}
-          >
-            <MenuBookOutlinedIcon sx={{ fontSize: ICON_SIZE.md, mr: 1, color: 'text.secondary' }} />
-            <ListItemText primary="Documentation" slotProps={{ primary: { sx: { fontSize: FONT_SIZE.md } } }} />
-          </MenuItem>
-          <MenuItem
-            component="a"
-            href="https://github.com/ftsrg/semantifyr"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => setOverflowAnchor(null)}
-          >
-            <GitHubIcon sx={{ fontSize: ICON_SIZE.md, mr: 1, color: 'text.secondary' }} />
-            <ListItemText primary="GitHub" slotProps={{ primary: { sx: { fontSize: FONT_SIZE.md } } }} />
-          </MenuItem>
-        </Menu>
+          <MenuBookOutlinedIcon sx={{ fontSize: ICON_SIZE.lg }} />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title="GitHub">
+        <IconButton
+          size="small"
+          component="a"
+          href="https://github.com/ftsrg/semantifyr"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="GitHub"
+          sx={{ color: 'text.primary', display: { xs: 'none', sm: 'inline-flex' } }}
+        >
+          <GitHubIcon sx={{ fontSize: ICON_SIZE.lg }} />
+        </IconButton>
+      </Tooltip>
+      <ColorModeToggle preference={colorModePreference} onToggle={onToggleColorMode} />
+
+      <Tooltip title="More">
+        <IconButton
+          size="small"
+          onClick={(e) => setOverflowAnchor(e.currentTarget)}
+          aria-label="More"
+          sx={{ color: 'text.primary', display: { xs: 'inline-flex', sm: 'none' } }}
+        >
+          <MoreVertIcon sx={{ fontSize: ICON_SIZE.lg }} />
+        </IconButton>
+      </Tooltip>
+      <Menu
+        anchorEl={overflowAnchor}
+        open={overflowOpen}
+        onClose={() => setOverflowAnchor(null)}
+        slotProps={{ paper: { sx: { minWidth: 200 } } }}
+      >
+        <MenuItem
+          component="a"
+          href="https://ftsrg.mit.bme.hu/semantifyr"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => setOverflowAnchor(null)}
+        >
+          <MenuBookOutlinedIcon sx={{ fontSize: ICON_SIZE.md, mr: 1, color: 'text.secondary' }} />
+          <ListItemText primary="Documentation" slotProps={{ primary: { sx: { fontSize: FONT_SIZE.md } } }} />
+        </MenuItem>
+        <MenuItem
+          component="a"
+          href="https://github.com/ftsrg/semantifyr"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => setOverflowAnchor(null)}
+        >
+          <GitHubIcon sx={{ fontSize: ICON_SIZE.md, mr: 1, color: 'text.secondary' }} />
+          <ListItemText primary="GitHub" slotProps={{ primary: { sx: { fontSize: FONT_SIZE.md } } }} />
+        </MenuItem>
+      </Menu>
     </AppHeader>
   );
 }

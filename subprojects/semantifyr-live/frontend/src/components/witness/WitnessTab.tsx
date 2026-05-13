@@ -28,9 +28,7 @@ interface Props {
   canRevalidate: boolean
   onRevalidate: () => void
   verificationPortfolioLabel?: string | undefined
-  /** Used by the Raw view to mount a Monaco editor sharing the live LSP session. */
   editorHandle: LiveEditorHandle | null
-  /** Language id for the witness; usually matches the source flavor's languageId. */
   witnessLanguageId: string
 }
 
@@ -46,11 +44,9 @@ const HEADER_BAR_SX = {
   bgcolor: 'var(--surface-toolbar-bg)',
 } as const
 
+// Override MUI's groupedHorizontal so every button keeps its own border (the default
+// shared-border trick erases the rightmost border on our colour scheme).
 const TOGGLE_GROUP_SX = {
-  // Override MUI's default groupedHorizontal rule which sets adjacent right borders
-  // transparent and uses negative left-margin to share borders. With our colour scheme that
-  // erases the rightmost border on certain themes; keep every button's own 1 px border and
-  // drop the negative margin so dividers between buttons render reliably.
   '& .MuiToggleButtonGroup-grouped': {
     color: 'text.secondary',
     border: '1px solid var(--surface-border)',
@@ -63,8 +59,6 @@ const TOGGLE_GROUP_SX = {
       marginLeft: 0,
     },
   },
-  // Selected toggle: lift via --button-bg-hover (brighter than toolbar bg in dark, darker in
-  // light) so it reads as "raised" in either theme, plus the accent foreground for emphasis.
   '& .Mui-selected, & .Mui-selected:hover': {
     color: 'var(--accent) !important',
     bgcolor: 'var(--button-bg-hover) !important',
@@ -111,7 +105,6 @@ function RawWitnessEditor({
         /* ignore */
       }
     }
-    // Re-attach when the underlying witness changes (new verification run produces a new URI).
   }, [editorHandle, witnessUri, language])
 
   return (

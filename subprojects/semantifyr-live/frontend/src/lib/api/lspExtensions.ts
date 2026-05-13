@@ -7,11 +7,7 @@
 import type { ActiveVerificationInfo, SessionInfo } from './types'
 import type { LspClient } from '../verification/engine'
 
-/**
- * Catalog of custom JSON-RPC methods the live-server exposes over the LSP WebSocket.
- * These methods are intercepted by the live-server and never forwarded to the LSP child.
- * The names mirror the backend's {@code SemantifyrLiveMethods} object; keep them in sync.
- */
+// Keep in sync with the backend's SemantifyrLiveMethods.
 export const SemantifyrLiveMethods = {
   SESSION_INFO: 'semantifyr/live/session/info',
   READ_DOCUMENT: 'semantifyr/live/session/document/read',
@@ -22,7 +18,7 @@ export const SemantifyrLiveMethods = {
 } as const
 
 export interface CancelVerificationParams {
-  requestId: string
+  verificationId: string
 }
 
 export interface VerificationsChangedParams {
@@ -42,11 +38,6 @@ export type NotificationListenerRegistrar = (
   listener: (params: unknown) => void,
 ) => () => void
 
-/**
- * Typed wrapper around the live-server's custom JSON-RPC method family. All transport state
- * lives behind {@code getClient} and {@code addNotificationListener}: the API resolves them
- * lazily so the surface stays valid across reconnects.
- */
 export class SemantifyrLiveApi {
   private readonly getClient: () => LspClient | undefined
   private readonly addNotificationListener: NotificationListenerRegistrar
@@ -67,12 +58,6 @@ export class SemantifyrLiveApi {
     return (await client.sendRequest(SemantifyrLiveMethods.SESSION_INFO)) as SessionInfo
   }
 
-  /**
-   * Fetches the current text of a workspace document by URI (the in-memory copy if it is
-   * open, otherwise the on-disk content). The live-server holds the back-annotated witness
-   * on disk under {@code file:///workspace/.artifacts/...}; the browser has no filesystem,
-   * so the witness Raw view pulls the source through this request.
-   */
   async readDocument(uri: string): Promise<string | null> {
     const client = this.getClient()
     if (!client) {
@@ -92,12 +77,12 @@ export class SemantifyrLiveApi {
     return result ?? { active: [] }
   }
 
-  async cancelVerification(requestId: string): Promise<boolean> {
+  async cancelVerification(verificationId: string): Promise<boolean> {
     const client = this.getClient()
     if (!client) {
       return false
     }
-    const params: CancelVerificationParams = { requestId }
+    const params: CancelVerificationParams = { verificationId }
     return (await client.sendRequest(SemantifyrLiveMethods.CANCEL_VERIFICATION, params)) as boolean
   }
 

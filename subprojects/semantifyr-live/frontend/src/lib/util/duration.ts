@@ -34,8 +34,6 @@ export function formatIsoDuration(iso: string): string {
 }
 
 export function isoDurationFromMs(totalMs: number): string {
-  // Round-trip through "PT{seconds}S" so callers can sum a list of ISO durations and pass the
-  // total back through the existing format helpers (formatIsoDuration / ...Detailed).
   return `PT${(totalMs / 1000).toFixed(3)}S`;
 }
 
@@ -56,10 +54,6 @@ export function isoDurationToMs(iso: string): number {
   );
 }
 
-/**
- * Sub-second-aware variant of {@link formatIsoDuration}: keeps millisecond precision for short
- * durations (verification timings often land below 1 s) and degrades gracefully for longer ones.
- */
 export function formatIsoDurationDetailed(iso: string): string {
   let parsed;
   try {

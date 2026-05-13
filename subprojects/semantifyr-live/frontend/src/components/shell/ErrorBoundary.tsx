@@ -7,9 +7,7 @@
 import React from 'react';
 
 interface Props {
-  /** Rendered in place of the children once a descendant throws during render. */
   fallback: React.ReactNode;
-  /** Short label woven into the console error so the source boundary is identifiable. */
   label?: string;
   children: React.ReactNode;
 }
@@ -18,12 +16,6 @@ interface State {
   hasError: boolean;
 }
 
-/**
- * Plain React error boundary. React only supports class components here, so this is the one
- * class component in the app. It does not attempt to recover (a re-mount would re-run the
- * same failing render); the fallback owns whatever recovery affordance makes sense, which in
- * practice is a full reload.
- */
 export default class ErrorBoundary extends React.Component<Props, State> {
   override state: State = { hasError: false };
 

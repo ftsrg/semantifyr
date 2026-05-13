@@ -27,18 +27,12 @@ function resolveSystemTheme(): ResolvedColorMode {
 
 const CYCLE: ColorModePreference[] = ['system', 'light', 'dark'];
 
-/**
- * Tracks the user's color mode preference (light, dark, or system) in localStorage.
- * When set to 'system', follows the OS preference and reacts to changes.
- * Applies the resolved theme as a `data-theme` attribute on `<html>`.
- */
 export function useColorMode() {
   const [preference, setPreferenceState] = useState<ColorModePreference>(
     () => readStoredPreference() ?? 'system',
   );
   const [systemTheme, setSystemTheme] = useState<ResolvedColorMode>(() => resolveSystemTheme());
 
-  // Listen for OS theme changes
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const mql = window.matchMedia('(prefers-color-scheme: light)');
@@ -51,7 +45,6 @@ export function useColorMode() {
 
   const colorMode: ResolvedColorMode = preference === 'system' ? systemTheme : preference;
 
-  // Apply to DOM and persist
   useEffect(() => {
     if (typeof document !== 'undefined') {
       document.documentElement.dataset.theme = colorMode;

@@ -17,18 +17,12 @@ interface Props {
   open: boolean;
   title: string;
   message: string;
-  /** Label for the destructive confirm action. */
   confirmLabel: string;
   cancelLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
 }
 
-/**
- * Small in-app confirmation dialog, used in place of `window.confirm` so destructive prompts
- * (e.g. "switching discards your unsaved edits") look like the rest of the app rather than a
- * browser-chrome alert. Theme-driven - inherits the dark/light surface from the MUI theme.
- */
 export default function ConfirmDialog({
   open,
   title,

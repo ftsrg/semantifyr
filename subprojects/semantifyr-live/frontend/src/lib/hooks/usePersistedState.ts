@@ -14,12 +14,6 @@ import {
   readPersistedString,
 } from '../util/persistence';
 
-/**
- * Codec for one persisted key: how to materialise the stored bytes back into {@code T} (with a
- * fallback when nothing is stored or the value is malformed) and how to write {@code T} back
- * out. The bool / size / string variants below cover today's usage; bring your own codec when
- * the value shape grows.
- */
 export interface PersistedCodec<T> {
   read: (key: string, fallback: T) => T;
   write: (key: string, value: T) => void;
@@ -40,12 +34,6 @@ export const sizeCodec: PersistedCodec<number> = {
   write: persistSize,
 };
 
-/**
- * Stateful hook backed by {@code localStorage}: returns a tuple identical in shape to
- * {@code useState}, but every setter writes through to the configured codec. SSR / blocked
- * storage / malformed stored values all fall back to {@code fallback} per the underlying
- * helpers' contract.
- */
 export function usePersistedState<T>(
   key: string,
   fallback: T,

@@ -28,7 +28,7 @@ import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
 interface Props {
   sessions: readonly SessionInfo[];
   onCancelSession: (sessionId: string) => void;
-  onCancelVerification: (sessionId: string, requestId: string) => void;
+  onCancelVerification: (verificationId: string) => void;
 }
 
 const headerCellSx = {
@@ -55,22 +55,21 @@ const monoSx = {
   color: 'text.secondary',
 } as const;
 
+const hideBelowLg = { display: { xs: 'none', lg: 'table-cell' } } as const;
+
 function shortenSessionId(id: string): string {
-  // UUIDv4 ids are noisy at full width; the leading 8 chars are enough to disambiguate in
-  // practice and stay readable in the table. The full id is one expand-row away.
   return id.length > 8 ? `${id.slice(0, 8)}…` : id;
 }
 
 interface SessionRowProps {
   session: SessionInfo;
   onCancelSession: (sessionId: string) => void;
-  onCancelVerification: (sessionId: string, requestId: string) => void;
+  onCancelVerification: (verificationId: string) => void;
 }
 
 function SessionRow({ session, onCancelSession, onCancelVerification }: SessionRowProps): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const inFlight = session.activeVerifications.length;
-  const startedColor = session.started ? 'var(--success)' : 'var(--text-muted)';
   return (
     <>
       <TableRow
@@ -84,16 +83,6 @@ function SessionRow({ session, onCancelSession, onCancelVerification }: SessionR
           </IconButton>
         </TableCell>
         <TableCell sx={cellSx}>
-          <Tooltip title={session.started ? 'LSP server is running' : 'Session is starting'}>
-            <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
-              <Box component="span" sx={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', bgcolor: startedColor }} />
-              <Typography component="span" sx={{ fontSize: FONT_SIZE.sm, color: 'text.secondary' }}>
-                {session.started ? 'running' : 'starting'}
-              </Typography>
-            </Box>
-          </Tooltip>
-        </TableCell>
-        <TableCell sx={cellSx}>
           <Chip
             label={session.flavorId}
             size="small"
@@ -105,14 +94,14 @@ function SessionRow({ session, onCancelSession, onCancelVerification }: SessionR
             <Box component="span">{shortenSessionId(session.sessionId)}</Box>
           </Tooltip>
         </TableCell>
-        <TableCell sx={cellSx}>{session.remoteIp}</TableCell>
+        <TableCell sx={{ ...cellSx, ...hideBelowLg }}>{session.remoteIp}</TableCell>
         <TableCell sx={cellSx}>{formatIsoDuration(session.uptime)}</TableCell>
-        <TableCell sx={cellSx}>
+        <TableCell sx={{ ...cellSx, ...hideBelowLg }}>
           <Tooltip
-            title={`Last client message ${formatIsoDuration(session.bridgeInfo.timeSinceLastClientMessage)} ago · last server message ${formatIsoDuration(session.bridgeInfo.timeSinceLastServerMessage)} ago`}
+            title={`Last client message ${formatIsoDuration(session.sessionLspInfo.timeSinceLastClientMessage)} ago · last server message ${formatIsoDuration(session.sessionLspInfo.timeSinceLastServerMessage)} ago`}
           >
             <Box component="span">
-              {formatIsoDuration(session.bridgeInfo.timeSinceLastClientMessage)} / {formatIsoDuration(session.bridgeInfo.timeSinceLastServerMessage)}
+              {formatIsoDuration(session.sessionLspInfo.timeSinceLastClientMessage)} / {formatIsoDuration(session.sessionLspInfo.timeSinceLastServerMessage)}
             </Box>
           </Tooltip>
         </TableCell>
@@ -140,12 +129,9 @@ function SessionRow({ session, onCancelSession, onCancelVerification }: SessionR
         </TableCell>
       </TableRow>
       <TableRow>
-        <TableCell colSpan={9} sx={{ p: 0, borderColor: 'var(--surface-border)', borderBottom: open ? undefined : 'none' }}>
+        <TableCell colSpan={8} sx={{ p: 0, borderColor: 'var(--surface-border)', borderBottom: open ? undefined : 'none' }}>
           <Collapse in={open} timeout="auto" unmountOnExit>
-            <SessionDetails
-              session={session}
-              onCancelVerification={(reqId) => onCancelVerification(session.sessionId, reqId)}
-            />
+            <SessionDetails session={session} onCancelVerification={onCancelVerification} />
           </Collapse>
         </TableCell>
       </TableRow>
@@ -155,28 +141,20 @@ function SessionRow({ session, onCancelSession, onCancelVerification }: SessionR
 
 interface SessionDetailsProps {
   session: SessionInfo;
-  onCancelVerification: (requestId: string) => void;
+  onCancelVerification: (verificationId: string) => void;
 }
 
 function SessionDetails({ session, onCancelVerification }: SessionDetailsProps): React.JSX.Element {
-  const errorBadge =
-    session.bridgeInfo.errorCount > 0 ? (
-      <Chip
-        label={`${session.bridgeInfo.errorCount} error${session.bridgeInfo.errorCount === 1 ? '' : 's'}`}
-        size="small"
-        sx={{ bgcolor: 'var(--danger-soft-bg)', color: 'var(--danger)', fontWeight: 600, fontSize: FONT_SIZE.xs, height: 20 }}
-      />
-    ) : null;
   return (
     <Box sx={{ bgcolor: 'var(--surface-panel-bg)', px: 3, py: 1.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, alignItems: 'flex-start' }}>
         <DetailGroup label="Session id" value={session.sessionId} mono />
-        <DetailGroup label="Working directory" value={session.workingDirectory} mono />
+        <DetailGroup label="Remote IP" value={session.remoteIp} />
         <DetailGroup
-          label="Messages (client / server)"
-          value={`${session.bridgeInfo.clientMessageCount} / ${session.bridgeInfo.serverMessageCount}`}
+          label="Idle (client / server)"
+          value={`${formatIsoDuration(session.sessionLspInfo.timeSinceLastClientMessage)} / ${formatIsoDuration(session.sessionLspInfo.timeSinceLastServerMessage)}`}
         />
-        {errorBadge && <Box sx={{ alignSelf: 'flex-end' }}>{errorBadge}</Box>}
+        <DetailGroup label="Working directory" value={session.workingDirectory} mono />
       </Box>
       {session.activeVerifications.length > 0 && (
         <Box>
@@ -185,7 +163,7 @@ function SessionDetails({ session, onCancelVerification }: SessionDetailsProps):
           </Typography>
           {session.activeVerifications.map((v) => (
             <Box
-              key={v.requestId}
+              key={v.verificationId}
               sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -196,31 +174,22 @@ function SessionDetails({ session, onCancelVerification }: SessionDetailsProps):
                 color: 'text.primary',
               }}
             >
-              <KindChip kind={v.kind ?? 'Verify'} />
-              {v.portfolioId && (
-                <Chip
-                  label={v.portfolioId}
-                  size="small"
-                  sx={{ bgcolor: 'var(--surface-bg)', color: 'text.secondary', fontWeight: 500, fontSize: FONT_SIZE.xs, height: 20, fontFamily: 'inherit' }}
-                />
-              )}
-              {v.caseLabel && (
-                <Box component="span" sx={{ color: 'text.primary', fontFamily: 'inherit', fontSize: FONT_SIZE.sm }}>
-                  {v.caseLabel}
-                </Box>
-              )}
-              <Tooltip title={v.requestId}>
+              <KindChip kind={v.kind} />
+              <Chip
+                label={v.portfolioId}
+                size="small"
+                sx={{ bgcolor: 'var(--surface-bg)', color: 'text.secondary', fontWeight: 500, fontSize: FONT_SIZE.xs, height: 20, fontFamily: 'inherit' }}
+              />
+              <Tooltip title={v.verificationId}>
                 <Box component="span" sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', color: 'text.secondary' }}>
-                  #{v.requestId}
+                  #{v.verificationId.slice(0, 8)}
                 </Box>
               </Tooltip>
-              {v.elapsed && (
-                <Box component="span" sx={{ color: 'text.secondary', fontFamily: 'inherit', fontSize: FONT_SIZE.xs }}>
-                  {formatIsoDuration(v.elapsed)}
-                </Box>
-              )}
+              <Box component="span" sx={{ color: 'text.secondary', fontFamily: 'inherit', fontSize: FONT_SIZE.xs }}>
+                {formatIsoDuration(v.elapsed)}
+              </Box>
               <Tooltip title="Cancel">
-                <IconButton size="small" onClick={() => onCancelVerification(v.requestId)} sx={{ color: 'var(--danger)' }}>
+                <IconButton size="small" onClick={() => onCancelVerification(v.verificationId)} sx={{ color: 'var(--danger)' }}>
                   <StopIcon sx={{ fontSize: ICON_SIZE.sm }} />
                 </IconButton>
               </Tooltip>
@@ -258,16 +227,15 @@ export default function SessionsTable({ sessions, onCancelSession, onCancelVerif
 
   return (
     <Paper sx={{ bgcolor: 'var(--surface-bg)', border: '1px solid var(--surface-border)', overflowX: 'auto' }}>
-      <Table size="small" sx={{ minWidth: 760, '& td, & th': { borderBottomColor: 'var(--surface-border)' } }}>
+      <Table size="small" sx={{ '& td, & th': { borderBottomColor: 'var(--surface-border)' } }}>
         <TableHead>
           <TableRow>
             <TableCell sx={{ ...headerCellSx, width: 32 }} />
-            <TableCell sx={headerCellSx}>Status</TableCell>
             <TableCell sx={headerCellSx}>Flavor</TableCell>
             <TableCell sx={headerCellSx}>Session</TableCell>
-            <TableCell sx={headerCellSx}>Remote IP</TableCell>
+            <TableCell sx={{ ...headerCellSx, ...hideBelowLg }}>Remote IP</TableCell>
             <TableCell sx={headerCellSx}>Uptime</TableCell>
-            <TableCell sx={headerCellSx}>Idle (client / server)</TableCell>
+            <TableCell sx={{ ...headerCellSx, ...hideBelowLg }}>Idle (client / server)</TableCell>
             <TableCell sx={headerCellSx}>Verifications</TableCell>
             <TableCell sx={{ ...headerCellSx, textAlign: 'right' }}>Actions</TableCell>
           </TableRow>

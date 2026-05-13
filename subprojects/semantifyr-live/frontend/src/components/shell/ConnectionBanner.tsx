@@ -31,24 +31,11 @@ interface BannerContent {
   actionLabel: string;
 }
 
-/**
- * Compact advisory chip tucked into the bottom-right of the editor when the live session is
- * down: an {@code errored} state (LSP unreachable, reconnect attempts exhausted) or a
- * user-initiated {@code disconnected} state. It is deliberately out of the editing area and
- * dismissible - the editor underneath stays fully usable for plain editing; this just explains
- * why diagnostics / verification are paused and offers a one-click retry. (When the editor
- * *bundle* never loaded at all, EditorLoadError takes over instead - there is no editor to put
- * a chip on.)
- *
- * When the browser reports itself offline, the errored copy leads with that, since "you're
- * offline" is the actionable framing.
- */
 export default function ConnectionBanner({ status, statusInfo, onReconnect }: Props): React.JSX.Element | null {
   const online = useOnlineStatus();
   const [dismissed, setDismissed] = useState(false);
 
-  // Each new errored / disconnected transition re-opens the chip even if the user closed it
-  // for the previous one.
+  // A fresh errored/disconnected transition re-opens the chip after the user dismissed it.
   useEffect(() => {
     setDismissed(false);
   }, [status]);

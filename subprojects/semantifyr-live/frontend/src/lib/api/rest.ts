@@ -22,23 +22,21 @@ interface FlavorsResponse {
 }
 
 export interface LiveServerApi {
-  /** Resolved base URL the client is bound to (HTTP form). */
   readonly httpBase: string
 
-  // Public read endpoints.
   fetchPortfolios(): Promise<PortfolioInfo[]>
   fetchFlavors(): Promise<FlavorInfo[]>
   fetchFlavor(id: string): Promise<FlavorInfo | null>
   fetchInfo(): Promise<InfoResponse>
 
-  // Admin endpoints (cookie-gated).
+  // Cookie-gated.
   loginAdmin(password: string): Promise<boolean>
   logoutAdmin(): Promise<void>
   checkAdminAuth(): Promise<boolean>
   fetchAdminConfig(): Promise<AdminConfigResponse>
   fetchAdminStatus(): Promise<AdminStatusResponse>
   cancelSession(sessionId: string): Promise<boolean>
-  cancelVerification(sessionId: string, requestId: string): Promise<boolean>
+  cancelVerification(verificationId: string): Promise<boolean>
 }
 
 function withBase(httpBase: string, path: string): string {
@@ -55,11 +53,6 @@ async function expectOk<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>
 }
 
-/**
- * Build a {@link LiveServerApi} bound to a specific backend. The {@code rawBackendUrl} can be
- * any of {@code http://}, {@code https://}, {@code ws://}, {@code wss://}, or scheme-less; we
- * normalise to the HTTP form for REST.
- */
 export function createApi(rawBackendUrl: string): LiveServerApi {
   const { http: httpBase } = normalizeBaseUrl(rawBackendUrl)
 
@@ -131,11 +124,10 @@ export function createApi(rawBackendUrl: string): LiveServerApi {
       return response.ok
     },
 
-    async cancelVerification(sessionId, requestId) {
-      const response = await get(
-        `/api/admin/sessions/${encodeURIComponent(sessionId)}/verifications/${encodeURIComponent(requestId)}`,
-        { method: 'DELETE' },
-      )
+    async cancelVerification(verificationId) {
+      const response = await get(`/api/admin/verifications/${encodeURIComponent(verificationId)}`, {
+        method: 'DELETE',
+      })
       return response.ok
     },
   }

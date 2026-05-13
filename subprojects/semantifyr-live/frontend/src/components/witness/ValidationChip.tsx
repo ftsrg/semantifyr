@@ -71,11 +71,6 @@ function chipDescriptor(status: WitnessValidationStatus | undefined): Descriptor
   }
 }
 
-/**
- * Inline witness-validation chip + revalidate button. Renders without its own background or
- * border so it can be embedded next to the witness title in the tab header without looking
- * like a panel-level decoration. Wrap with a {@code Box} if you need spacing.
- */
 export default function ValidationChip({ status, busy, disabled, onRevalidate }: Props): React.JSX.Element {
   const descriptor = chipDescriptor(status)
   return (

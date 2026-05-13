@@ -16,17 +16,9 @@ import { ICON_SIZE } from '../../lib/util/theme';
 interface Props {
   api: SemantifyrLiveApi | null;
   connected: boolean;
-  /** Click handler. The status-bar version opens the side-panel's Verifications tab. */
   onActivate: () => void;
 }
 
-/**
- * Compact status-bar indicator for the current session's active verifications and
- * validations. Just a badge + click handler - the parent decides what to do (typically open
- * the side panel's Verifications tab where the same data is shown in full). Shares its
- * subscription with {@link RunningVerificationsTab} via {@link useActiveVerifications} so both
- * surfaces show the same authoritative server-side state.
- */
 export default function ActiveVerificationsMonitor({ api, connected, onActivate }: Props): React.JSX.Element {
   const { items } = useActiveVerifications(api, connected);
   const count = items.length;

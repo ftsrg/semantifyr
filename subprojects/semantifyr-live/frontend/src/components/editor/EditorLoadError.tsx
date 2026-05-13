@@ -11,13 +11,6 @@ import Typography from '@mui/material/Typography';
 import CloudOffOutlinedIcon from '@mui/icons-material/CloudOffOutlined';
 import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
 
-/**
- * Shown in place of the editor when the editor bundle itself never made it down from the
- * server: the lazy {@code import('./editor/LiveEditor')} rejected (offline on first visit,
- * a stale chunk reference after a deploy, a network blip mid-load). The whole Monaco stack
- * is missing at this point, so a reload is the only sensible recovery; the service worker
- * makes that reload cheap on a repeat visit.
- */
 export default function EditorLoadError(): React.JSX.Element {
   const online = typeof navigator === 'undefined' || navigator.onLine !== false;
   return (

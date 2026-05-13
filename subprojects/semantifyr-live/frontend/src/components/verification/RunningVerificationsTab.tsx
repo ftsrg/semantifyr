@@ -21,10 +21,19 @@ import { useActiveVerifications } from '../../lib/hooks/useActiveVerifications'
 import { isMeaningfulDuration } from '../../lib/verification/metricsTooltip'
 import { CaseStatusIcon } from './StatusDisplay'
 import KindChip from './KindChip'
+import type { Location } from '@semantifyr/editor-common'
 import type { SemantifyrLiveApi } from '../../lib/api/lspExtensions'
 import type { PortfolioInfo } from '../../lib/api'
 import type { VerificationCaseState, VerificationCaseStatus } from '../../lib/verification'
 import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
+
+function sameLocation(a: Location, b: Location): boolean {
+  return a.uri === b.uri
+    && a.range.start.line === b.range.start.line
+    && a.range.start.character === b.range.start.character
+    && a.range.end.line === b.range.end.line
+    && a.range.end.character === b.range.end.character
+}
 
 interface Props {
   api: SemantifyrLiveApi | null
@@ -114,12 +123,6 @@ function deriveSummaryStats(cases: readonly VerificationCaseState[]): SummarySta
   return stats
 }
 
-/**
- * Three-section overview: active verifications (live JSON-RPC subscription), recent verdicts
- * (current cases with terminal status), and a small summary block. Shares the subscription
- * with {@link ActiveVerificationsMonitor} via {@link useActiveVerifications} so both surfaces
- * show the same authoritative server-side state.
- */
 export default function RunningVerificationsTab({ api, connected, cases, portfolios }: Props): React.JSX.Element {
   const { items: active, cancel, cancelAll } = useActiveVerifications(api, connected)
   const terminalCases = cases.filter((cs) => TERMINAL_STATUSES.has(cs.status))
@@ -149,44 +152,54 @@ export default function RunningVerificationsTab({ api, connected, cases, portfol
         </Box>
       ) : (
         <Box>
-          {active.map((item) => (
-            <Box
-              key={item.requestId}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.75,
-                px: 1.5,
-                py: 0.5,
-                borderBottom: '1px solid var(--surface-border)',
-              }}
-            >
-              <KindChip kind={item.kind ?? 'Verify'} density="compact" />
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography sx={{ fontSize: FONT_SIZE.sm, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {item.caseLabel ?? `#${item.requestId}`}
-                  {/* Only surface elapsed once it actually advanced past sub-second noise.
-                      Portfolio is omitted - the user picked it explicitly and seeing "Auto"
-                      on every row adds clutter without adding information. */}
-                  {item.elapsed && isoDurationToMs(item.elapsed) >= 1000 && (
-                    <Box component="span" sx={{ color: 'text.secondary', ml: 0.75, fontSize: FONT_SIZE.xs }}>
-                      {formatIsoDurationDetailed(item.elapsed)}
-                    </Box>
-                  )}
-                </Typography>
+          {active.map((item) => {
+            const matchingCase = item.location
+              ? cases.find((cs) => (
+                  // Witness validation runs target the witness URI rather than the case site.
+                  sameLocation(cs.caseInfo.location, item.location!)
+                    || cs.trace?.witnessUri === item.location!.uri
+                ))
+              : undefined
+            const label = matchingCase?.caseInfo.label ?? `#${item.verificationId.slice(0, 7)}`
+            return (
+              <Box
+                key={item.verificationId}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.75,
+                  px: 1.5,
+                  py: 0.5,
+                  borderBottom: '1px solid var(--surface-border)',
+                }}
+              >
+                <KindChip kind={item.kind ?? 'Verify'} density="compact" />
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography sx={{ fontSize: FONT_SIZE.sm, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {label}
+                    {/* Only surface elapsed once it actually advanced past sub-second noise.
+                        Portfolio is omitted - the user picked it explicitly and seeing "Auto"
+                        on every row adds clutter without adding information. */}
+                    {item.elapsed && isoDurationToMs(item.elapsed) >= 1000 && (
+                      <Box component="span" sx={{ color: 'text.secondary', ml: 0.75, fontSize: FONT_SIZE.xs }}>
+                        {formatIsoDurationDetailed(item.elapsed)}
+                      </Box>
+                    )}
+                  </Typography>
+                </Box>
+                <Tooltip title="Cancel">
+                  <IconButton
+                    size="small"
+                    onClick={() => { void cancel(item.verificationId) }}
+                    aria-label={`Cancel ${label}`}
+                    sx={{ color: 'var(--danger)', p: 0.25 }}
+                  >
+                    <StopIcon sx={{ fontSize: ICON_SIZE.sm }} />
+                  </IconButton>
+                </Tooltip>
               </Box>
-              <Tooltip title="Cancel">
-                <IconButton
-                  size="small"
-                  onClick={() => { void cancel(item.requestId) }}
-                  aria-label={`Cancel ${item.caseLabel ?? item.requestId}`}
-                  sx={{ color: 'var(--danger)', p: 0.25 }}
-                >
-                  <StopIcon sx={{ fontSize: ICON_SIZE.sm }} />
-                </IconButton>
-              </Tooltip>
-            </Box>
-          ))}
+            )
+          })}
         </Box>
       )}
 

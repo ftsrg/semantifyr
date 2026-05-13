@@ -4,13 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-/**
- * Resolve the live-server URL the SPA should talk to. Order of precedence:
- * 1. {@code ?backend=} URL parameter (one-off override for the current session).
- * 2. {@code VITE_BACKEND_URL} build-time env (CI / preview deploys).
- * 3. The current page origin (production: SPA + backend served from the same host).
- * 4. {@code http://localhost:18080} (SSR / test fallback).
- */
+// Precedence: ?backend= -> VITE_BACKEND_URL -> page origin -> localhost:18080.
 export function resolveBackendUrl(): string {
   if (typeof window !== 'undefined') {
     const params = new URLSearchParams(window.location.search);

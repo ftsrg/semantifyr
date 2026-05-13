@@ -10,17 +10,10 @@ import MuiToolbar from '@mui/material/Toolbar';
 import Box from '@mui/material/Box';
 
 interface Props {
-  /** Theme-appropriate logo SVG path (`logo-full-light.svg` / `logo-full-dark.svg`). */
   logoSrc: string;
-  /** Everything to the right of the logo: the toolbar controls / admin status row. */
   children: React.ReactNode;
 }
 
-/**
- * The shared top-bar chrome: a static AppBar (theme-styled) with a dense toolbar that opens
- * with the home-linked Semantifyr logo. Both the editor's `Toolbar` and the admin
- * `AdminHeader` are this shell plus their own content, so the two surfaces read as one app.
- */
 export default function AppHeader({ logoSrc, children }: Props): React.JSX.Element {
   return (
     <AppBar position="static">

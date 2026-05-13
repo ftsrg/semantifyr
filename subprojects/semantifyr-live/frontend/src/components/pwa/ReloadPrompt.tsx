@@ -13,16 +13,6 @@ import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
 
-/**
- * Registers the service worker (we use `registerType: 'prompt'`, so a newer build does not
- * activate on its own) and shows a single toast when one is waiting: "Reload" calls
- * `updateServiceWorker(true)`, which activates the new worker and reloads. The toast stays
- * until the user reloads or dismisses it.
- *
- * Styled with the app's CSS variables (not MUI palette colours) so it follows the
- * `data-theme` light/dark switch like the rest of the chrome. Mounted once at the root next
- * to `<App>` so it covers every route; renders nothing until a waiting build is detected.
- */
 export default function ReloadPrompt(): React.JSX.Element {
   const {
     needRefresh: [needRefresh, setNeedRefresh],

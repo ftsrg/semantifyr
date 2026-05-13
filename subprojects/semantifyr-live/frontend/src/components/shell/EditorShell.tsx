@@ -17,16 +17,7 @@ import type { ColorModePreference } from '../../lib/util/colorMode'
 import type { LiveFlavor } from '../../examples'
 import type { FlavorInfo, PortfolioInfo } from '../../lib/api'
 
-/**
- * Shell that wraps the editor body with toolbar, status bar, and the developer info panel.
- * The {@code ?embed=1} entry point bypasses this component and mounts the body directly, so
- * the body stays the same shape regardless of whether chrome is visible.
- *
- * <p>Lives in {@code shell/} alongside the rest of the chrome pieces. EditorPage owns the
- * underlying state (verification, flavor, etc.) and threads the relevant props in.
- */
 interface Props {
-  // Toolbar
   logoSrc: string
   flavors: readonly LiveFlavor[]
   currentFlavorId: string
@@ -34,27 +25,22 @@ interface Props {
   onSelectModel: (flavorId: string, exampleId: string) => void
   onCopyLink: () => void
   copyConfirmation: string | null
-  // Connection
   connectionStatus: LiveEditorStatus
   onReconnect: () => void
   onDisconnect: () => void
-  // Status bar
   statusBarMessage: string | null
   statusBarShowProgress: boolean
   statusBarInfoItems: readonly StatusBarInfoItem[]
   onStatusInfoClick: () => void
   onOpenVerificationsTab: () => void
-  // Portfolio
   portfolios: readonly PortfolioInfo[]
   portfolioId: string
   onPortfolioChange: (id: string) => void
   validationPortfolioId: string
   onValidationPortfolioChange: (id: string) => void
   flavorInfo: FlavorInfo | null
-  // Color mode
   colorModePreference: ColorModePreference
   onToggleColorMode: () => void
-  // Dev panel
   devPanelOpen: boolean
   onCloseDevPanel: () => void
   language: string
@@ -62,7 +48,6 @@ interface Props {
   reconnectCount: number
   editorHandle: LiveEditorHandle | null
   backendUrl: string
-  // Body
   children: React.ReactNode
 }
 

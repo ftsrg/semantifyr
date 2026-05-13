@@ -63,8 +63,6 @@ const VERIFICATION_PANEL_OPEN_KEY = 'semantifyr-verification-panel-open';
 const RIGHT_PANEL_OPEN_KEY = 'semantifyr-right-panel-open';
 const DEFAULT_VERIFICATION_PANEL_HEIGHT = 220;
 const MIN_VERIFICATION_PANEL_HEIGHT = 80;
-// Editor keeps at least this many pixels above the splitter so the user can never lose the
-// editing surface entirely; the bottom panel can grow up to (containerHeight - this).
 const MIN_EDITOR_AREA_HEIGHT = 120;
 
 const COPY_CONFIRMATION_MS = 2000;
@@ -80,10 +78,6 @@ interface Props {
   colorMode: ResolvedColorMode;
   colorModePreference: ColorModePreference;
   onToggleColorMode: () => void;
-  /**
-   * Embedded entry point: hide toolbar, status bar, and developer panel so the body can be
-   * iframed by another site. The verification + right panels still work normally.
-   */
   embedded?: boolean;
 }
 
@@ -94,8 +88,6 @@ interface UrlState {
 }
 
 async function resolveInitialState(search: string): Promise<UrlState> {
-  // Async because the `code` param is gzip+base64url. DecompressionStream is the cheapest
-  // path that doesn't pull in a JS gzip dependency.
   const flavor = resolveInitialFlavor(search);
   const params = new URLSearchParams(search);
   const exampleParam = params.get('example');
@@ -133,8 +125,6 @@ export default function EditorPage({
   const [example, setExample] = useState<LiveExample>(DEFAULT_FLAVOR.examples[0]!);
   const [code, setCode] = useState<string>(DEFAULT_FLAVOR.examples[0]!.code);
   const [copyConfirmation, setCopyConfirmation] = useState<string | null>(null);
-  // When a flavor/example switch would discard unsaved edits, the action is parked here and
-  // the ConfirmDialog gates it; null when there is nothing pending.
   const [pendingSwitch, setPendingSwitch] = useState<(() => void) | null>(null);
 
   const [status, setStatus] = useState<LiveEditorStatus>('initializing');
@@ -200,7 +190,6 @@ export default function EditorPage({
     };
   }, []);
 
-  // Fetch the portfolio list once per backend.
   useEffect(() => {
     const api = createApi(backendUrl);
     let cancelled = false;
@@ -215,15 +204,11 @@ export default function EditorPage({
     };
   }, [backendUrl]);
 
-  // The Monaco model is the source of truth for the editor's current text; the React `code`
-  // state is the INITIAL load only. Read directly so the dirty check sees user keystrokes.
+  // Monaco's model is the source of truth; `code` is only the initial seed.
   const currentEditorContent = useCallback((): string => {
     return editorHandleRef.current?.getCurrentCode() ?? code;
   }, [code]);
 
-  // Run `apply` immediately when the editor has no unsaved edits; otherwise stash it as a
-  // pending action and let the ConfirmDialog (rendered below) gate it. Replaces a blocking
-  // `window.confirm`, which can't be done with an async MUI dialog.
   const runOrConfirm = useCallback((apply: () => void) => {
     if (typeof window === 'undefined' || currentEditorContent() === example.code) {
       apply();
@@ -232,9 +217,6 @@ export default function EditorPage({
     setPendingSwitch(() => apply);
   }, [currentEditorContent, example.code]);
 
-  // Switch flavor and/or example in one step (the model picker hands both back together).
-  // A flavor change also wipes the verification state; an example-only change keeps it for
-  // the cases that still discover.
   const handleSelectModel = useCallback((flavorId: string, exampleId: string) => {
     const nextFlavor = findFlavor(flavorId);
     if (!nextFlavor) return;
@@ -281,16 +263,12 @@ export default function EditorPage({
 
   const handleCopyLink = useCallback(async () => {
     if (typeof window === 'undefined') return;
-    // Read from the Monaco model so the link reflects the user's actual keystrokes, not just
-    // the initial example body.
     const url = await buildShareableUrl(
       `${window.location.origin}${window.location.pathname}`,
       {
         flavorId: flavor.id,
         exampleId: example.id,
         code: currentEditorContent(),
-        // When the editor is still on the bundled example, drop the code param: the loader
-        // would just override it with example.code anyway.
         exampleCode: example.code,
       },
     );
@@ -304,17 +282,11 @@ export default function EditorPage({
 
   const editorKey = useMemo(() => `${flavor.id}:${example.id}`, [flavor.id, example.id]);
 
-  // The flavor exposes verify+discovery commands. The panel stays MOUNTED whenever this is
-  // true so verifyState (cases, verdicts, witnesses) survives a close-then-reopen; closing
-  // only hides the panel and surfaces a thin reopen button just above the status bar. The
-  // open/closed choice is persisted across reloads.
   const flavorSupportsVerification =
     !!flavorInfo?.verificationCommand && !!flavorInfo.discoveryCommand;
   const logoSrc = colorMode === 'dark' ? '/logo-full-dark.svg' : '/logo-full-light.svg';
 
   const statusBarMessage = verificationStatusMessage ?? deriveConnectionMessage(status, statusInfo);
-  // Linear-progress is wired to "actually doing async work right now": connection setup OR
-  // a verify currently running. Terminal verdicts hold the message but stop the spinner.
   const statusBarShowProgress =
     verificationBusy ||
     status === 'initializing' ||
@@ -333,9 +305,6 @@ export default function EditorPage({
     },
   ], [flavor.displayName]);
 
-  // Reflect the current example in the browser tab title (the flavor is already visible in the
-  // toolbar, and one flavor's display name *is* "Semantifyr", so folding it in here doubles up).
-  // Skipped in embedded mode so we never overwrite the host page's title.
   useEffect(() => {
     if (embedded || typeof document === 'undefined') {
       return;
@@ -347,9 +316,7 @@ export default function EditorPage({
     };
   }, [embedded, example.label]);
 
-  // When the browser regains connectivity after an errored session, retry automatically so the
-  // user does not have to find the reconnect button. A user-initiated `disconnected` state is
-  // left alone - they turned it off on purpose.
+  // Only auto-retry from `errored`; a manual disconnect must stay off.
   useEffect(() => {
     if (typeof window === 'undefined' || status !== 'errored') {
       return;
@@ -363,24 +330,16 @@ export default function EditorPage({
     };
   }, [status]);
 
-  // Mirror the verification outcome onto the editor as Monaco markers, so failed @VerificationCase
-  // lines get squiggles and the ProblemsPill picks them up. Editor auto-clears on text changes.
   useEffect(() => {
     editorHandleRef.current?.setVerifyCaseMarkers(casesToMarkers(verificationCases));
   }, [verificationCases]);
 
-  // The witness pane shows ONLY the case the user explicitly picked via the verification panel's
-  // Show-witness button. If that case has no trace right now (re-running, fresh model, never
-  // produced a witness), the witness tab disappears - we do NOT silently swap to another case.
   const witnessCaseState = useMemo<VerificationCaseState | null>(() => {
     if (!selectedWitnessCaseId) return null;
     const cs = verificationCases.find((c) => c.caseInfo.id === selectedWitnessCaseId);
     return cs?.trace ? cs : null;
   }, [verificationCases, selectedWitnessCaseId]);
 
-  // Mid-run auto-default: when the user has not picked anything yet and a failure produces a
-  // trace, latch onto it so the user sees the first counterexample as soon as it lands. Set
-  // once; the user's later explicit picks take precedence.
   useEffect(() => {
     if (selectedWitnessCaseId) return;
     const firstFailure = verificationCases.find((cs) => cs.status === 'failed' && cs.trace !== undefined);
@@ -389,9 +348,6 @@ export default function EditorPage({
 
   const witnessValidation: WitnessValidationStatus | undefined = witnessCaseState?.witnessValidation;
 
-  // Resolve the user-facing portfolio name (e.g. "Auto", "Theta") for the witness pane. Falls
-  // back to the raw portfolio id (or the verifier's reported backend id) when /api/portfolios
-  // hasn't loaded yet or the chosen one isn't in the demo set.
   const verificationPortfolioLabel: string | undefined = useMemo(
     () =>
       findPortfolioLabel(portfolios, witnessCaseState?.portfolioId ?? witnessCaseState?.backendId),
@@ -403,10 +359,6 @@ export default function EditorPage({
     verificationPanelRef.current?.revalidate(witnessCaseState.caseInfo.id);
   }, [witnessCaseState]);
 
-  // Right-panel tab construction. The Running Verifications tab is always available when the
-  // flavor supports verification - the user benefits from a single place to see what's queued,
-  // running, and recently completed. The Witness tab appears only when a witness has been
-  // selected. Future tabs (Compiled OXSTS, Instances) plug in here.
   const rightTabs = useMemo<readonly RightPanelTab[]>(() => {
     const tabs: RightPanelTab[] = [];
     if (flavorSupportsVerification) {
@@ -458,22 +410,16 @@ export default function EditorPage({
 
   const [activeRightTabId, setActiveRightTabId] = useState<string | null>(null);
 
-  // Closes the right panel without unmounting it; the panel keeps its tab content state so a
-  // subsequent reopen shows the same witness, the same scroll position, etc. Data sources
-  // (e.g. the witness selection) stay populated so reopening surfaces them again.
   const handleCloseRightPane = useCallback(() => {
     setRightPanelOpen(false);
   }, [setRightPanelOpen]);
 
-  // Showing a witness should also pop the panel open if the user previously closed it.
   const handleShowWitness = useCallback((caseId: string) => {
     setSelectedWitnessCaseId(caseId);
     setRightPanelOpen(true);
     setActiveRightTabId('witness');
   }, [setRightPanelOpen]);
 
-  // Status-bar's active-verifications indicator opens the side panel's Verifications tab. A
-  // single source of truth for the data, with the indicator acting as a glance + entry point.
   const handleOpenVerificationsTab = useCallback(() => {
     setRightPanelOpen(true);
     setActiveRightTabId('runs');
@@ -507,9 +453,6 @@ export default function EditorPage({
             statusInfo={statusInfo}
             onReconnect={() => editorHandleRef.current?.reconnect()}
           />
-          {/* If the editor *bundle* never arrives (offline first visit, stale chunk, network
-              blip), the lazy import rejects - the boundary swaps in a reload card instead of
-              letting the failure take down the whole page. */}
           <ErrorBoundary label="editor" fallback={<EditorLoadError />}>
             <Suspense
               fallback={
@@ -603,8 +546,7 @@ export default function EditorPage({
         )}
 
         {flavorSupportsVerification && (
-          // Wrapper hides the panel via display: 'none' instead of unmounting so verifyState
-          // (cases, verdicts, witnesses) survives a close-then-reopen.
+          // Hidden, not unmounted, so verification state survives a close/reopen.
           <Box sx={{ display: verificationPanelOpen ? 'flex' : 'none', flexDirection: 'column', flex: '0 0 auto' }}>
             <VerificationPanel
               ref={verificationPanelRef}

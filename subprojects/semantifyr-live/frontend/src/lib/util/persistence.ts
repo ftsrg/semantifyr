@@ -4,12 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-/**
- * Thin, testable wrappers around `window.localStorage`. Each helper is forgiving by design:
- * SSR (no `window`), private browsing (`localStorage` blocked), and unparseable values all
- * fall back to the supplied default rather than throwing into a render path.
- */
-
 function safeRead(key: string): string | null {
   if (typeof window === 'undefined') {
     return null

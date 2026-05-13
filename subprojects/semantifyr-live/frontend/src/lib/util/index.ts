@@ -14,10 +14,7 @@ export {
   isoDurationFromMs,
   isoDurationToMs,
 } from './duration'
-// `lib/util/persistence` is consumed only via the `usePersistedState` hook + its codecs
-// (`stringCodec`/`boolCodec`/`sizeCodec`). The bare read*/persist* helpers live there as an
-// implementation detail; routing them through this barrel would invite drift between the two
-// front doors, so they are intentionally not re-exported here.
+// `lib/util/persistence` is intentionally not re-exported; use `usePersistedState` instead.
 export {
   buildShareableUrl,
   type ShareablePayload,

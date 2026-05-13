@@ -12,24 +12,24 @@ import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import IconButton from '@mui/material/IconButton';
-import InputAdornment from '@mui/material/InputAdornment';
 import Snackbar from '@mui/material/Snackbar';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
 import Tooltip from '@mui/material/Tooltip';
 import PauseCircleOutlinedIcon from '@mui/icons-material/PauseCircleOutlined';
 import PlayCircleOutlinedIcon from '@mui/icons-material/PlayCircleOutlined';
-import SearchIcon from '@mui/icons-material/Search';
-import ClearIcon from '@mui/icons-material/Clear';
 import LogoutIcon from '@mui/icons-material/Logout';
 import type { ColorModePreference, ResolvedColorMode } from '../lib/util/colorMode';
 import AppHeader from './shell/AppHeader';
 import ColorModeToggle from './shell/ColorModeToggle';
 import KpiStrip from './admin/KpiStrip';
-import SessionsTable from './admin/SessionsTable';
-import InfoAside from './admin/InfoAside';
+import SessionsTab from './admin/SessionsTab';
+import ConfigTab from './admin/ConfigTab';
 import {
   createApi,
   type AdminConfigResponse,
   type AdminStatusResponse,
+  type FlavorInfo,
   type InfoResponse,
   type LiveServerApi,
   type PortfolioInfo,
@@ -38,6 +38,8 @@ import { resolveBackendUrl } from '../lib/util/backendUrl';
 import { FONT_SIZE, ICON_SIZE } from '../lib/util/theme';
 
 const REFRESH_INTERVAL_MS = 1000;
+
+type AdminTab = 'sessions' | 'config';
 
 interface AdminHeaderProps {
   lastRefreshAt: number | null;
@@ -64,7 +66,13 @@ function AdminHeader({
       <Typography sx={{ color: 'text.secondary', fontSize: FONT_SIZE.md }}>/ Admin</Typography>
       <Box sx={{ flex: 1 }} />
       {lastRefreshAt !== null && (
-        <Typography sx={{ fontSize: FONT_SIZE.xs, color: 'text.secondary' }}>
+        <Typography
+          sx={{
+            fontSize: FONT_SIZE.xs,
+            color: 'text.secondary',
+            display: { xs: 'none', sm: 'inline' },
+          }}
+        >
           {paused ? 'Paused' : `Updated ${new Date(lastRefreshAt).toLocaleTimeString()}`}
         </Typography>
       )}
@@ -76,7 +84,11 @@ function AdminHeader({
             aria-label={paused ? 'Resume auto-refresh' : 'Pause auto-refresh'}
             sx={{ color: 'text.secondary' }}
           >
-            {paused ? <PlayCircleOutlinedIcon sx={{ fontSize: ICON_SIZE.lg }} /> : <PauseCircleOutlinedIcon sx={{ fontSize: ICON_SIZE.lg }} />}
+            {paused ? (
+              <PlayCircleOutlinedIcon sx={{ fontSize: ICON_SIZE.lg }} />
+            ) : (
+              <PauseCircleOutlinedIcon sx={{ fontSize: ICON_SIZE.lg }} />
+            )}
           </IconButton>
         </Tooltip>
       )}
@@ -95,10 +107,27 @@ function AdminHeader({
 function LoginForm({ onLogin, error }: { onLogin: (password: string) => void; error: boolean }): React.JSX.Element {
   const [password, setPassword] = useState('');
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100dvh', bgcolor: 'var(--page-bg)', gap: 2 }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100dvh',
+        bgcolor: 'var(--page-bg)',
+        gap: 2,
+      }}
+    >
       <Typography variant="h5" sx={{ mb: 1 }}>Semantifyr Admin</Typography>
       {error && <Alert severity="error">Invalid password</Alert>}
-      <Box component="form" onSubmit={(e: React.FormEvent) => { e.preventDefault(); onLogin(password); }} sx={{ display: 'flex', gap: 1 }}>
+      <Box
+        component="form"
+        onSubmit={(e: React.FormEvent) => {
+          e.preventDefault();
+          onLogin(password);
+        }}
+        sx={{ display: 'flex', gap: 1 }}
+      >
         <TextField
           type="password"
           label="Admin password"
@@ -142,12 +171,14 @@ interface DashboardProps {
 function Dashboard({ api, onLogout, preference, colorMode, onToggleColorMode }: DashboardProps): React.JSX.Element {
   const [data, setData] = useState<DashboardData | null>(null);
   const [portfolios, setPortfolios] = useState<readonly PortfolioInfo[]>([]);
+  const [flavors, setFlavors] = useState<readonly FlavorInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastRefreshAt, setLastRefreshAt] = useState<number | null>(null);
   const [paused, setPaused] = useState(false);
   const [filter, setFilter] = useState('');
   const [toast, setToast] = useState<ToastState | null>(null);
+  const [tab, setTab] = useState<AdminTab>('sessions');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const refresh = useCallback(async () => {
@@ -170,6 +201,7 @@ function Dashboard({ api, onLogout, preference, colorMode, onToggleColorMode }: 
   useEffect(() => {
     void refresh();
     void api.fetchPortfolios().then(setPortfolios).catch(() => setPortfolios([]));
+    void api.fetchFlavors().then(setFlavors).catch(() => setFlavors([]));
   }, [refresh, api]);
 
   useEffect(() => {
@@ -198,12 +230,12 @@ function Dashboard({ api, onLogout, preference, colorMode, onToggleColorMode }: 
     void refresh();
   }, [api, refresh]);
 
-  const handleCancelVerification = useCallback(async (sessionId: string, requestId: string) => {
-    const ok = await api.cancelVerification(sessionId, requestId);
+  const handleCancelVerification = useCallback(async (verificationId: string) => {
+    const ok = await api.cancelVerification(verificationId);
     setToast({
       message: ok
-        ? `Cancelled verification ${requestId}`
-        : `Failed to cancel verification ${requestId}`,
+        ? `Cancelled verification ${verificationId}`
+        : `Failed to cancel verification ${verificationId}`,
       severity: ok ? 'success' : 'error',
     });
     void refresh();
@@ -248,50 +280,62 @@ function Dashboard({ api, onLogout, preference, colorMode, onToggleColorMode }: 
         onToggleColorMode={onToggleColorMode}
       />
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
-        {error && <Alert severity="error" sx={{ mx: 3, mt: 2 }}>{error}</Alert>}
+        {error && <Alert severity="error" sx={{ mx: { xs: 1, sm: 3 }, mt: 2 }}>{error}</Alert>}
 
         {data && (
           <>
             <KpiStrip
               uptime={data.info.uptime}
+              startedAt={data.info.startedAt}
               activeSessions={data.info.activeSessions}
               maxSessions={data.info.maxSessions}
+              verificationConcurrency={data.config.verification.concurrency}
               sessions={data.admin.sessions}
             />
 
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: { xs: 'column', md: 'row' },
-                gap: 2,
-                mx: 3,
-                mt: 2,
-                mb: 3,
-                alignItems: 'flex-start',
-              }}
-            >
-              <Box sx={{ flex: '1 1 auto', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <SessionsHeader
-                  total={data.admin.sessions.length}
-                  shown={filteredSessions.length}
+            <Box sx={{ px: { xs: 1, sm: 3 }, mt: 2, borderBottom: '1px solid var(--surface-border)' }}>
+              <Tabs
+                value={tab}
+                onChange={(_, v: AdminTab) => setTab(v)}
+                variant="scrollable"
+                scrollButtons="auto"
+                sx={{
+                  minHeight: 36,
+                  '& .MuiTab-root': {
+                    minHeight: 36,
+                    fontSize: FONT_SIZE.sm,
+                    color: 'text.secondary',
+                  },
+                  '& .Mui-selected': { color: 'text.primary' },
+                }}
+              >
+                <Tab value="sessions" label={`Sessions (${data.admin.sessions.length})`} />
+                <Tab value="config" label="Config" />
+              </Tabs>
+            </Box>
+
+            <Box sx={{ px: { xs: 1, sm: 3 }, py: 2 }}>
+              {tab === 'sessions' && (
+                <SessionsTab
+                  sessions={filteredSessions}
+                  totalSessions={data.admin.sessions.length}
                   filter={filter}
                   onFilterChange={setFilter}
+                  onCancelSession={(id) => void handleCancelSession(id)}
+                  onCancelVerification={(id) => void handleCancelVerification(id)}
                 />
-                <SessionsTable
-                  sessions={filteredSessions}
-                  onCancelSession={handleCancelSession}
-                  onCancelVerification={handleCancelVerification}
-                />
-              </Box>
-              <Box sx={{ flex: { xs: '1 1 auto', md: '0 0 320px' }, width: { xs: '100%', md: 320 } }}>
-                <InfoAside
+              )}
+              {tab === 'config' && (
+                <ConfigTab
                   info={data.info}
                   config={data.config}
                   frontendCommit={__GIT_COMMIT__}
                   frontendBuildTime={__BUILD_TIME__}
                   portfolios={portfolios}
+                  flavors={flavors}
+                  sessions={data.admin.sessions}
                 />
-              </Box>
+              )}
             </Box>
           </>
         )}
@@ -312,59 +356,6 @@ function Dashboard({ api, onLogout, preference, colorMode, onToggleColorMode }: 
   );
 }
 
-interface SessionsHeaderProps {
-  total: number;
-  shown: number;
-  filter: string;
-  onFilterChange: (value: string) => void;
-}
-
-function SessionsHeader({ total, shown, filter, onFilterChange }: SessionsHeaderProps): React.JSX.Element {
-  const filtered = filter.trim().length > 0;
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 0.5, flexWrap: 'wrap' }}>
-      <Typography sx={{ fontSize: FONT_SIZE.lg, fontWeight: 600 }}>
-        Sessions
-      </Typography>
-      <Typography sx={{ fontSize: FONT_SIZE.sm, color: 'text.secondary' }}>
-        {total === 0
-          ? 'none active'
-          : filtered
-            ? `${shown} of ${total} shown`
-            : `${total} active`}
-      </Typography>
-      <Box sx={{ flex: 1, minWidth: 8 }} />
-      <TextField
-        size="small"
-        placeholder="Filter by session, IP, or flavor"
-        value={filter}
-        onChange={(e) => onFilterChange(e.target.value)}
-        sx={{
-          width: { xs: '100%', sm: 280 },
-          '& .MuiInputBase-root': { color: 'text.primary', bgcolor: 'var(--surface-bg)', fontSize: FONT_SIZE.sm },
-          '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--surface-border)' },
-        }}
-        slotProps={{
-          input: {
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon sx={{ fontSize: ICON_SIZE.sm, color: 'text.secondary' }} />
-              </InputAdornment>
-            ),
-            endAdornment: filter ? (
-              <InputAdornment position="end">
-                <IconButton size="small" onClick={() => onFilterChange('')} sx={{ color: 'text.secondary' }}>
-                  <ClearIcon sx={{ fontSize: ICON_SIZE.sm }} />
-                </IconButton>
-              </InputAdornment>
-            ) : undefined,
-          },
-        }}
-      />
-    </Box>
-  );
-}
-
 interface AdminPageProps {
   colorModePreference: ColorModePreference;
   colorMode: ResolvedColorMode;
@@ -372,8 +363,6 @@ interface AdminPageProps {
 }
 
 export default function AdminPage({ colorModePreference, colorMode, onToggleColorMode }: AdminPageProps): React.JSX.Element {
-  // One bound API client per AdminPage instance. resolveBackendUrl reads the same ?backend= /
-  // VITE_BACKEND_URL the editor uses, so admin always speaks to the configured backend.
   const api = useMemo(() => createApi(resolveBackendUrl()), []);
 
   const [authState, setAuthState] = useState<'checking' | 'unauthenticated' | 'authenticated'>('checking');
@@ -387,9 +376,7 @@ export default function AdminPage({ colorModePreference, colorMode, onToggleColo
         setAuthState(ok ? 'authenticated' : 'unauthenticated');
       })
       .catch(() => {
-        // Network failures must NOT leave us spinning forever; surface the login screen so the
-        // user can retry on their own terms (and see any login error reported by the backend
-        // when the network comes back).
+        // Surface the login screen on network failure rather than spinning forever.
         if (cancelled) return;
         setAuthState('unauthenticated');
       });
@@ -428,13 +415,13 @@ export default function AdminPage({ colorModePreference, colorMode, onToggleColo
   }
 
   if (authState === 'unauthenticated') {
-    return <LoginForm onLogin={handleLogin} error={authError} />;
+    return <LoginForm onLogin={(pw) => void handleLogin(pw)} error={authError} />;
   }
 
   return (
     <Dashboard
       api={api}
-      onLogout={handleLogout}
+      onLogout={() => void handleLogout()}
       preference={colorModePreference}
       colorMode={colorMode}
       onToggleColorMode={onToggleColorMode}

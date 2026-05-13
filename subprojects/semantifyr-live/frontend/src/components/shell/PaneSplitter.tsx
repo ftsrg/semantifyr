@@ -10,30 +10,16 @@ import Box from '@mui/material/Box'
 type Orientation = 'vertical' | 'horizontal'
 
 interface Props {
-  /** Container the splitter measures against, used to clamp the resizable side. */
   containerRef: React.RefObject<HTMLDivElement | null>
-  /**
-   * Vertical splitter (default): width of the trailing pane (right side).
-   * Horizontal splitter: height of the trailing pane (bottom side).
-   */
   size: number
   onChange: (size: number) => void
   orientation?: Orientation
-  /** Minimum size of the leading pane (left/top). */
   minBefore?: number
-  /** Minimum size of the trailing pane (right/bottom). */
   minAfter?: number
 }
 
-/**
- * 4 px draggable divider. Vertical orientation splits left/right (col-resize); horizontal
- * splits top/bottom (row-resize).
- *
- * <p>The pointermove / pointerup listeners are installed once via a stable bridge that reads
- * the latest props from a ref. This avoids a subtle bug: rebuilding the listeners on every
- * prop change would let an effect cleanup remove the in-flight listeners during a drag,
- * leaving the cursor stuck and the size frozen until the user lifts and re-grabs.
- */
+// Pointer listeners are installed once and read latest props via a ref; rebuilding them
+// every prop change would tear down in-flight handlers mid-drag.
 export default function PaneSplitter({
   containerRef,
   size,
@@ -45,14 +31,11 @@ export default function PaneSplitter({
   const draggingRef = useRef(false)
   const cursor = orientation === 'vertical' ? 'col-resize' : 'row-resize'
 
-  // Mirror the latest props into a ref so the stable listeners always read fresh values.
   const propsRef = useRef({ containerRef, onChange, orientation, minBefore, minAfter })
   useEffect(() => {
     propsRef.current = { containerRef, onChange, orientation, minBefore, minAfter }
   })
 
-  // Install pointermove + pointerup ONCE for the lifetime of the splitter. They're cheap
-  // when not dragging (`draggingRef.current === false` returns immediately).
   useEffect(() => {
     const onMove = (event: PointerEvent): void => {
       if (!draggingRef.current) {
@@ -82,7 +65,6 @@ export default function PaneSplitter({
     return () => {
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
-      // Restore body cursor in case unmount fires mid-drag.
       if (draggingRef.current) {
         draggingRef.current = false
         document.body.style.cursor = ''
@@ -102,7 +84,7 @@ export default function PaneSplitter({
   )
 
   const isVertical = orientation === 'vertical'
-  // Visible 1 px track inside a 5 px hit area for easy grabbing.
+  // 1 px visible track in a 5 px hit area.
   return (
     <Box
       role="separator"

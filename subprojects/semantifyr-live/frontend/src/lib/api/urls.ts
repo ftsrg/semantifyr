@@ -9,7 +9,6 @@ export interface LiveServerUrls {
   http: string
 }
 
-/** Normalise the user-supplied liveServerUrl into both ws:// and http:// base URLs. */
 export function normalizeBaseUrl(url: string): LiveServerUrls {
   const base = url.trim().replace(/\/$/, '')
   if (base.startsWith('http://')) {
@@ -69,9 +68,8 @@ async function readAllAsBytes(stream: ReadableStream<Uint8Array>): Promise<Uint8
   return result
 }
 
+// Avoids `new Blob([bytes]).stream()`; jsdom's Blob doesn't ship `stream()`.
 function singleChunkStream(bytes: Uint8Array): ReadableStream<Uint8Array> {
-  // Avoids `new Blob([bytes]).stream()`: jsdom (vitest) ships Blob without `stream()`. A
-  // ReadableStream constructor is universally available wherever CompressionStream is.
   return new ReadableStream<Uint8Array>({
     start(controller) {
       controller.enqueue(bytes)
@@ -80,12 +78,7 @@ function singleChunkStream(bytes: Uint8Array): ReadableStream<Uint8Array> {
   })
 }
 
-/**
- * Encode a UTF-8 string as base64url-of-gzip. Empirically 6-12x smaller than plain base64url
- * for OXSTS / Gamma source: keeps {@code Copy link} URLs comfortably inside both the server's
- * HTTP request-line limit and every modern browser's address-bar cap even for the
- * multi-thousand-line generated models.
- */
+// base64url(gzip(s)); 6-12x smaller than plain base64url on OXSTS / Gamma source.
 export async function encodeCompressedBase64Url(s: string): Promise<string> {
   const bytes = new TextEncoder().encode(s)
   const stream = singleChunkStream(bytes).pipeThrough(
@@ -95,11 +88,6 @@ export async function encodeCompressedBase64Url(s: string): Promise<string> {
   return bytesToBase64Url(compressed)
 }
 
-/**
- * Decode the {@link encodeCompressedBase64Url} payload. Returns null if the input is malformed
- * or not a valid gzip / base64url payload so the caller can fall back to a default (e.g. the
- * example's bundled source).
- */
 export async function decodeCompressedBase64Url(s: string): Promise<string | null> {
   try {
     const bytes = base64UrlToBytes(s)

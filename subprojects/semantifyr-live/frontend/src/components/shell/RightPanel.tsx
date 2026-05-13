@@ -14,10 +14,6 @@ import Typography from '@mui/material/Typography'
 import CloseIcon from '@mui/icons-material/Close'
 import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
 
-/**
- * One content slot rendered by the {@link RightPanel} shell. Each tab is bound to a data
- * source; the parent only adds tabs whose data exists.
- */
 export interface RightPanelTab {
   id: string
   label: string
@@ -28,16 +24,9 @@ interface Props {
   tabs: readonly RightPanelTab[]
   activeTabId: string | null
   onActiveTabChange: (id: string) => void
-  /**
-   * Hides the panel without unmounting. Tabs with mounted state (witness scroll position,
-   * future per-tab UI state) survive a close-then-reopen cycle.
-   */
   onClose: () => void
 }
 
-// Layout only - the colours (idle = text.secondary, selected + indicator = the accent, via
-// the theme palette and `<Tabs>`'s default `textColor`/`indicatorColor="primary"`) and the
-// `textTransform: none` come from the MUI theme.
 const TABS_SX = {
   minHeight: 32,
   flex: 1,
@@ -49,14 +38,7 @@ const TABS_SX = {
   },
 } as const
 
-/**
- * Multi-tab right panel shell. Tabs (Witness, Running Verifications, future Compiled OXSTS /
- * Instances) plug into the same shape. The shell renders even when {@code tabs} is empty so
- * the user can open it proactively. The close affordance is the panel header's X.
- */
 export default function RightPanel({ tabs, activeTabId, onActiveTabChange, onClose }: Props): React.JSX.Element {
-  // Resolve the active tab even if the parent hasn't picked one (or picked an id that
-  // doesn't exist anymore because its data went away).
   const hasTabs = tabs.length > 0
   const resolvedActiveId = hasTabs && tabs.some((t) => t.id === activeTabId)
     ? activeTabId

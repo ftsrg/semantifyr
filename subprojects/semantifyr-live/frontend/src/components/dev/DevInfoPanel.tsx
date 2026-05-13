@@ -28,7 +28,6 @@ interface Props {
   connectedSince: number | null;
   reconnectCount: number;
   editorHandle: LiveEditorHandle | null;
-  /** Resolved backend URL; the dev panel must show info for the SAME backend the editor talks to. */
   backendUrl: string;
 }
 
@@ -108,7 +107,6 @@ export default function DevInfoPanel({
   const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
   const [backendInfoError, setBackendInfoError] = useState(false);
 
-  // Live-update uptimes, metrics, and session info
   useEffect(() => {
     if (!open) return;
     const update = (): void => {
@@ -130,9 +128,6 @@ export default function DevInfoPanel({
     return () => clearInterval(interval);
   }, [open, connectedSince, editorHandle]);
 
-  // Fetch backend info via the same REST client every other consumer uses, so the dev panel
-  // sees identical bytes to /admin and any future surface that surfaces /api/info data. Honours
-  // ?backend= / VITE_BACKEND_URL via the normalised base URL inside the client.
   useEffect(() => {
     if (!open) return;
     setBackendInfoError(false);
@@ -248,9 +243,7 @@ export default function DevInfoPanel({
             <InfoRow label="Status" value={sessionInfo ? 'connected' : connectionStatus === 'reconnecting' ? 'reconnecting' : 'disconnected'} />
             <InfoRow label="Session ID" value={sessionInfo?.sessionId ?? '-'} mono />
             <InfoRow label="Uptime" value={sessionInfo ? formatIsoDuration(sessionInfo.uptime) : '-'} />
-            <InfoRow label="Messages (in / out)" value={sessionInfo ? `${sessionInfo.bridgeInfo.clientMessageCount} / ${sessionInfo.bridgeInfo.serverMessageCount}` : '-'} />
-            <InfoRow label="Last activity (in / out)" value={sessionInfo ? `${formatIsoDuration(sessionInfo.bridgeInfo.timeSinceLastClientMessage)} / ${formatIsoDuration(sessionInfo.bridgeInfo.timeSinceLastServerMessage)} ago` : '-'} />
-            <InfoRow label="Errors" value={sessionInfo ? String(sessionInfo.bridgeInfo.errorCount) : '-'} />
+            <InfoRow label="Last activity (in / out)" value={sessionInfo ? `${formatIsoDuration(sessionInfo.sessionLspInfo.timeSinceLastClientMessage)} / ${formatIsoDuration(sessionInfo.sessionLspInfo.timeSinceLastServerMessage)} ago` : '-'} />
             <InfoRow label="Verifications" value={sessionInfo ? String(sessionInfo.activeVerifications.length) : '-'} />
           </TableBody>
         </Table>

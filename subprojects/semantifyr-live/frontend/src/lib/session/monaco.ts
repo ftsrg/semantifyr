@@ -19,8 +19,7 @@ import type { editor } from 'monaco-editor';
 import { normalizeBaseUrl } from '../api/urls';
 import type { ResolvedColorMode } from '../util/colorMode';
 
-// Grammars + language-configuration are synced from `:semantifyr-vscode` by the
-// `cloneVscodeLanguageAssets` Gradle task; the extension is the single source of truth.
+// Synced from :semantifyr-vscode by the cloneVscodeLanguageAssets Gradle task.
 import oxstsGrammar from '../../vscode/imported/syntaxes/oxsts.tmLanguage.json';
 import gammaGrammar from '../../vscode/imported/syntaxes/gamma.tmLanguage.json';
 import languageConfiguration from '../../vscode/imported/language-configuration.json';
@@ -32,11 +31,6 @@ const EDITOR_USER_CONFIG = {
   'editor.fontSize': 15,
   'editor.fontFamily': "'JetBrains Mono', monospace",
   'editor.fontLigatures': true,
-  // Sticky scroll: enabled. Earlier this had a visual bug in the codingame/monaco-vscode-editor-api
-  // build where pinned headers shifted their gutter left of the rest of the editor. The cost of
-  // navigating long OXSTS / Gamma files without pinned headers outweighs that residual misalignment,
-  // so we ship sticky scroll on. If the gutter offset reappears, the next thing to try is bumping
-  // monaco-vscode-editor-api or composing our own pinned-header strip.
   'editor.stickyScroll.enabled': true,
 } as const;
 
@@ -61,11 +55,7 @@ function themeIdFor(colorMode: ResolvedColorMode): string {
   return colorMode === 'dark' ? 'Default Dark Modern' : 'Default Light Modern';
 }
 
-// Semantifyr brand red. Keep in sync with --accent / --accent-hover in styles.css. Used to
-// re-tint the bits of the default VSCode theme that ship in its accent blue (focus rings,
-// progress bar, links, buttons) and to recolour control keywords - which Dark/Light Modern
-// render in a mauve/pink - so the embedded editor reads as part of the app rather than as a
-// stock VSCode surface.
+// Keep in sync with --accent / --accent-hover in styles.css.
 const BRAND = {
   dark: { accent: '#ff5252', accentHover: '#e23e3e' },
   light: { accent: '#c00000', accentHover: '#a30000' },
@@ -142,8 +132,6 @@ async function ensureVscodeApi(initialColorMode: ResolvedColorMode): Promise<Mon
     userConfiguration: {
       json: JSON.stringify({
         'workbench.colorTheme': themeIdFor(initialColorMode),
-        // Theme-scoped, so a light/dark switch via applyColorTheme picks up the matching set
-        // without any extra wiring.
         'workbench.colorCustomizations': WORKBENCH_COLOR_CUSTOMIZATIONS,
         'editor.tokenColorCustomizations': TOKEN_COLOR_CUSTOMIZATIONS,
         ...EDITOR_USER_CONFIG,
@@ -160,14 +148,6 @@ async function ensureVscodeApi(initialColorMode: ResolvedColorMode): Promise<Mon
   return apiWrapperPromise;
 }
 
-/**
- * Update Monaco's active theme to match the page's resolved color mode. Awaits the API
- * wrapper's start so the call always lands AFTER the workbench config service exists; without
- * that, an early invocation (the colorMode effect runs before the editor's bootstrap effect)
- * would silently no-op via the catch and leave Monaco rendering whatever theme the wrapper
- * was initialised with - flashing the user when the two diverge. Returns silently on no-op
- * when no editor has been mounted at all (admin route, SSR snapshot, etc).
- */
 export async function applyColorTheme(colorMode: ResolvedColorMode): Promise<void> {
   if (!apiWrapperPromise) {
     return
@@ -212,8 +192,6 @@ export async function createEditor(
   };
   const editorApp = new EditorApp(editorAppConfig);
   await editorApp.start(host);
-  // Hand keyboard focus to the editor on mount so the user can start typing right away (also
-  // re-runs on flavor / example switches, which remount via the React key).
   try {
     editorApp.getEditor()?.focus();
   } catch {
@@ -227,19 +205,6 @@ export interface SecondaryEditorHandle {
   dispose: () => void;
 }
 
-/**
- * Mount an additional Monaco editor in {@code host} that shares the workbench, models, and
- * FS overlays with the primary editor, so the active LanguageClient services hover,
- * diagnostics, and definitions for it without any extra wiring. Caller is responsible for
- * disposing when the host element is unmounted.
- *
- * <p>{@code initialContent} seeds the model and the registered overlay file; the witness Raw
- * view pulls this from the live-server via {@code semantifyr/live/session/document/read}
- * because the browser has no filesystem of its own.
- *
- * <p>Pre-condition: {@link ensureVscodeApi} has been called via the primary {@link createEditor};
- * we don't initialise the workbench here so two simultaneous starts can't race.
- */
 export async function createSecondaryEditor(
   host: HTMLElement,
   fileUri: vscode.Uri,
@@ -281,13 +246,7 @@ export async function createSecondaryEditor(
   };
 }
 
-/**
- * Wire shape of the {@code workspace/navigateTo} notification the OXSTS LSP server emits when
- * "go to definition" lands on a redefinition: the server hands the client several candidate
- * locations and asks it to surface a peek-style chooser. Mirrors the vscode extension's
- * {@code subprojects/semantifyr-vscode/src/clients/oxsts-client.ts} shape. Both SHOULD share
- * a common helper from {@code @semantifyr/editor-common} once the wire records consolidate.
- */
+// TODO: extract a shared editor-common helper; currently duplicated in semantifyr-vscode.
 export interface NavigateToParams {
   locations: Array<{
     uri: string;
@@ -333,6 +292,8 @@ export interface LanguageClientCallbacks {
   onStopped: () => void;
 }
 
+const LSP_STATE_STOPPED = 1;
+
 export async function connectLanguageClient(
   backendUrl: string,
   flavorId: string,
@@ -374,10 +335,8 @@ export async function connectLanguageClient(
       console.warn('semantifyr-live: failed to register $/progress listener', error);
     }
     try {
-      // State.Stopped from vscode-languageclient -- hardcoded to avoid pulling
-      // the node entry point into the browser bundle.
       rawClient.onDidChangeState?.((stateChange) => {
-        if (stateChange.newState === 1) callbacks.onStopped();
+        if (stateChange.newState === LSP_STATE_STOPPED) callbacks.onStopped();
       });
     } catch (error) {
       console.warn('semantifyr-live: failed to register onDidChangeState', error);

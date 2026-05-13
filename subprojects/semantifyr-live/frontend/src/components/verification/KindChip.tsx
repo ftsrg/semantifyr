@@ -8,14 +8,8 @@ import React from 'react'
 import Chip from '@mui/material/Chip'
 import type { VerificationKind } from '../../lib/api/types'
 
-/**
- * Visual indicator for a verify-or-validate run. The two kinds map to a fixed colour pair
- * (verification = warning amber, validation = accent blue) used identically across the
- * admin sessions table and the user-side Running Verifications tab.
- */
 interface Props {
   kind: VerificationKind
-  /** Visual density. Default {@code default}; admin row is taller, status-row tab is shorter. */
   density?: 'default' | 'compact'
 }
 

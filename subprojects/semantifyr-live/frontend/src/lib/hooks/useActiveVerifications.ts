@@ -10,20 +10,11 @@ import type { SemantifyrLiveApi } from '../api/lspExtensions'
 
 export interface ActiveVerificationsController {
   items: ActiveVerificationInfo[]
-  cancel: (requestId: string) => Promise<void>
+  cancel: (verificationId: string) => Promise<void>
   cancelAll: () => Promise<void>
   refresh: () => Promise<void>
 }
 
-/**
- * Source of the live-server's active-verifications monitor. The hook wires a typed
- * subscription against the supplied {@link SemantifyrLiveApi} and re-renders both surfaces
- * (status-bar popover, right-panel Verifications tab) from one feed.
- *
- * <p>Decoupled from any component; pass the api in directly so the hook stays unaware of
- * how the surrounding shell exposes it (today via {@code editorHandle.getApi()}, tomorrow
- * via context or another carrier).
- */
 export function useActiveVerifications(
   api: SemantifyrLiveApi | null,
   connected: boolean,
@@ -55,12 +46,12 @@ export function useActiveVerifications(
     }
   }, [api, connected, refresh])
 
-  const cancel = useCallback(async (requestId: string) => {
+  const cancel = useCallback(async (verificationId: string) => {
     if (!api) {
       return
     }
     try {
-      await api.cancelVerification(requestId)
+      await api.cancelVerification(verificationId)
     } catch {
       /* ignore - the changed notification will refresh us */
     }

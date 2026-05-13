@@ -74,7 +74,7 @@ describe('EditorPage', () => {
   });
 
   it('respects ?example=<id> with the flavor inferred from the registry', async () => {
-    setLocation('https://test.example/?example=trafficlight-direct-snapshot');
+    setLocation('https://test.example/?example=basics');
     renderPage();
     const editor = await waitForEditor();
     expect(editor.dataset.language).toBe('oxsts');
@@ -110,10 +110,6 @@ describe('EditorPage', () => {
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: 'Copy link' }));
 
-    // jsdom does not ship a writable navigator.clipboard, so the handler typically lands in
-    // the catch branch and surfaces "Copy failed". When the harness *does* provide a working
-    // clipboard the success message wins instead. We accept both because the contract under
-    // test is "the user always sees a confirmation", not which branch fires.
     const note = await screen.findByText(/Link copied!|Copy failed/);
     expect(note.textContent).toMatch(/^(Link copied!|Copy failed)$/);
   });

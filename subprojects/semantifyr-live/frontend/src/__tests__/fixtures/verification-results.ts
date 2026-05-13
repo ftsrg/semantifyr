@@ -10,7 +10,6 @@ import type {
   VerificationTrace,
 } from '@semantifyr/editor-common';
 
-/** Canonical metrics breakdown for tests that just need a "non-zero stage durations" payload. */
 export const sampleMetrics: VerificationMetrics = {
   totalDuration: 'PT1S',
   preparationDuration: 'PT0.1S',
@@ -18,10 +17,6 @@ export const sampleMetrics: VerificationMetrics = {
   backAnnotationDuration: 'PT0S',
 };
 
-/**
- * Canonical {@link VerificationTrace} fixture: empty call/witness state plus a witness URI so
- * tests that check the auto-validate flow have a witnessUri to dispatch against.
- */
 export const sampleTrace: VerificationTrace = {
   callTrace: { initialStep: { traces: [] }, steps: [] },
   witnessState: { initialStep: { values: [] }, steps: [] },

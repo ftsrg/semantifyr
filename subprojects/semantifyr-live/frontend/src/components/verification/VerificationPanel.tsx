@@ -155,12 +155,10 @@ function VerificationPanelInner(
     });
   }, []);
 
-  // Report status message + busy upstream on every state transition.
   useEffect(() => {
     onStatusMessage(deriveStatusMessage(verifyState), verifyState.phase === 'running');
   }, [verifyState, onStatusMessage]);
 
-  // Mirror cases out to the parent so it can drive the witness pane.
   useEffect(() => {
     onCasesChange?.(verifyState.cases);
   }, [verifyState.cases, onCasesChange]);
@@ -188,7 +186,7 @@ function VerificationPanelInner(
       .catch(() => { /* non-fatal */ });
   }, [editorHandle, discoveryCommand, stateUpdater]);
 
-  // Discovery: run on connect, debounce on text changes
+  // Discovery: run on connect, debounce on text changes.
   useEffect(() => {
     if (!connected || !editorHandle) return;
 
@@ -212,8 +210,7 @@ function VerificationPanelInner(
     };
   }, [connected, editorHandle, handleRefreshCases]);
 
-  // Mirrored into a ref so the runner's getAutoValidateRequest sees the latest values when the
-  // user toggles auto-validate or changes the validation portfolio mid-batch.
+  // Ref so the runner picks up mid-batch toggles to auto-validate / portfolio.
   const autoValidateOptionsRef = useRef({ autoValidate, validateWitnessCommand, validationPortfolioId });
   useEffect(() => {
     autoValidateOptionsRef.current = { autoValidate, validateWitnessCommand, validationPortfolioId };
@@ -255,8 +252,6 @@ function VerificationPanelInner(
     const targetCase = verifyStateRef.current.cases.find((cs) => cs.caseInfo.id === caseId)?.caseInfo;
     if (!targetCase) return;
 
-    // Stash the run handle so the panel-level Cancel button reaches both the batch and the
-    // single-case flow uniformly.
     runHandleRef.current = verifySingleCase(
       client,
       verificationCommand,

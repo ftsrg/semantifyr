@@ -7,12 +7,15 @@
 export type {
   ActiveVerificationInfo,
   AdminConfigResponse,
+  AdminServerConfigResponse,
+  AdminSessionManagerConfigResponse,
   AdminStatusResponse,
+  AdminVerificationConfigResponse,
   FlavorInfo,
   InfoResponse,
-  LspProxyInfo,
   PortfolioInfo,
   SessionInfo,
+  SessionLspInfo,
   VerificationKind,
 } from './types'
 

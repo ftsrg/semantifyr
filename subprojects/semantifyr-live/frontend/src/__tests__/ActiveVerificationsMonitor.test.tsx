@@ -20,6 +20,16 @@ function fakeApi(items: ActiveVerificationInfo[]): SemantifyrLiveApi {
   } as unknown as SemantifyrLiveApi;
 }
 
+function fakeVerification(overrides: Partial<ActiveVerificationInfo>): ActiveVerificationInfo {
+  return {
+    verificationId: 'r1',
+    portfolioId: 'smart-full',
+    kind: 'Verify',
+    elapsed: 'PT0S',
+    ...overrides,
+  };
+}
+
 describe('ActiveVerificationsMonitor', () => {
   it('renders the badge as invisible when nothing is running', () => {
     const onActivate = vi.fn();
@@ -31,13 +41,11 @@ describe('ActiveVerificationsMonitor', () => {
     const onActivate = vi.fn();
     render(
       <ActiveVerificationsMonitor
-        api={fakeApi([{ requestId: 'r1' }, { requestId: 'r2' }])}
+        api={fakeApi([fakeVerification({ verificationId: 'r1' }), fakeVerification({ verificationId: 'r2' })])}
         connected
         onActivate={onActivate}
       />,
     );
-    // The badge surfaces the count as visible text. waitFor because useActiveVerifications
-    // flushes the initial fetch on mount.
     await waitFor(() => {
       expect(screen.getByText('2')).toBeInTheDocument();
     });

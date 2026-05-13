@@ -25,11 +25,6 @@ import { wrapClientWithMetrics, type LspMetrics, type MetricsTracker } from './l
 import { createReconnectController, type ReconnectController } from './reconnectController'
 import { SemantifyrLiveApi } from '../api/lspExtensions'
 
-/**
- * Lifecycle states reported to the consumer. {@code initializing} covers the editor host
- * mount AND the first connect; {@code reconnecting} fires for every backoff attempt, with an
- * info string detailing attempt N/max.
- */
 export type LiveEditorStatus =
   | 'initializing'
   | 'connected'
@@ -57,58 +52,38 @@ export interface LiveEditorSessionOptions {
 }
 
 export interface LiveEditorSession {
-  /** Mount Monaco into {@code host} and run the first connect. Idempotent: subsequent calls no-op. */
   start(host: HTMLElement): Promise<void>
-  /** Tear down the WS + Monaco. Safe to call multiple times. */
   dispose(): Promise<void>
 
-  /** User-initiated reconnect (resets the attempt counter). */
   reconnect(): void
-  /** User-initiated disconnect. The session stays mounted but holds no LSP client. */
   disconnect(): void
 
-  // Wire access
   getEditorApp(): EditorApp | null
   getFileUri(): string
-  /** Returns the editor model's current content, or {@code null} if the editor is not yet up. */
   getCurrentCode(): string | null
   getLspClient(): LspClient | undefined
   getLspMetrics(): LspMetrics | null
 
-  /**
-   * Typed access to the live-server's custom JSON-RPC method family (session info,
-   * active-verifications monitor, cancel). Stable across reconnects: methods on the
-   * returned object resolve the current LSP client lazily.
-   */
   readonly api: SemantifyrLiveApi
 
-  // Marker / problems registry
   setVerifyCaseMarkers(markers: readonly ProblemEntry[]): void
   getProblems(): ProblemEntry[]
   addProblemsListener(cb: () => void): () => void
 
-  // LSP messaging
   addProgressListener(cb: (params: unknown) => void): () => void
   addNotificationListener(method: string, cb: (params: unknown) => void): () => void
 
-  // UI affordances
   applyColorMode(mode: ResolvedColorMode): Promise<void>
   goToCase(loc: VerificationCaseLocation): void
   revealProblem(p: ProblemEntry): void
   onContentChange(cb: () => void): (() => void) | undefined
 
-  /**
-   * Mount a secondary read-only Monaco editor inside {@code host} that shares the workbench
-   * and active LanguageClient with the primary editor. Used by the witness Raw view to show
-   * the back-annotated witness with full LSP support (hover, definitions, diagnostics).
-   */
   attachReadonlyEditor(
     host: HTMLElement,
     fileUri: string,
     language: string,
   ): Promise<SecondaryEditorHandle>
 
-  // Event subscriptions
   onStatusChange(cb: (status: LiveEditorStatus, info?: string) => void): () => void
   onFlavorReady(cb: (flavor: FlavorInfo | null) => void): () => void
 }
@@ -123,11 +98,6 @@ interface RawLanguageClient {
   ) => { dispose: () => void } | undefined
 }
 
-/**
- * Iterate {@code listeners} and call {@code invoke} on each one, isolating exceptions so a
- * single misbehaving subscriber does not stop the rest from being notified. The {@code label}
- * is woven into the warn message so the dev console points at which channel failed.
- */
 function notifyListeners<T extends (...args: never[]) => void>(
   listeners: Iterable<T>,
   invoke: (cb: T) => void,
@@ -171,12 +141,6 @@ function severityToString(s: vscode.DiagnosticSeverity): ProblemEntry['severity'
 export function createLiveEditorSession(options: LiveEditorSessionOptions): LiveEditorSession {
   const fileUri = createFileUri(options.fileName)
 
-  // Lifecycle state.
-  // `cancelled` is the runtime flag used by in-flight callbacks (connect, fetchFlavor, the
-  // reconnect controller) to bail out when the user has disconnected or the session is being
-  // torn down. It flips back to false on a manual `reconnect()` so auto-reconnect resumes.
-  // `disposed` is the terminal flag set by `dispose()`; once true the session never wakes up
-  // again, even if a stale caller invokes `reconnect()`.
   let editorApp: EditorApp | null = null
   let languageClient: LanguageClientWrapper | null = null
   let fsOverlay: { dispose: () => void } | null = null
@@ -184,23 +148,14 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
   let started = false
   let disposed = false
 
-  // Caches to avoid rewrapping the LSP client every time getLspClient is called.
   let metricsClient: (LspClient & MetricsTracker) | null = null
   let metricsRawClient: LspClient | null = null
 
-  // Verify-derived diagnostics live in their own collection so we can replace them wholesale
-  // without touching LSP-emitted diagnostics under the language-server's owner.
   let verifyDiagnostics: vscode.DiagnosticCollection | null = null
   let verifyDiagnosticsSubs: vscode.Disposable[] = []
 
-  // Token colours can land after the visible lines have already painted - the TextMate grammar
-  // loads asynchronously, the LSP's semantic tokens arrive a few round-trips after connect -
-  // and Monaco repaints lines lazily (only as they re-enter the viewport on scroll/resize), so
-  // the first screenful keeps the stale colours until the user moves. Force a repaint once
-  // those are likely to have settled. Cleared on dispose.
   let tokenRenderTimer: ReturnType<typeof setTimeout> | null = null
 
-  // Listener registries.
   const progressListeners = new Set<(params: unknown) => void>()
   const problemsListeners = new Set<() => void>()
   const statusListeners = new Set<(status: LiveEditorStatus, info?: string) => void>()
@@ -232,7 +187,6 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
       verifyDiagnostics = collection
       return collection
     } catch {
-      // vscode services not ready yet - will retry next call.
       return null
     }
   }
@@ -302,9 +256,8 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
     languageClient = connected
     attachNotificationHandlers(connected)
 
-    // The LSP's semantic tokens land a few round-trips from now and Monaco repaints lines only
-    // as they re-enter the viewport, so the first screenful can keep stale colours until the
-    // user scrolls. Force a repaint once the tokens have had time to arrive. See above.
+    // Force a repaint once semantic tokens have likely landed; Monaco won't repaint
+    // already-painted lines on its own until they re-enter the viewport.
     if (tokenRenderTimer) {
       clearTimeout(tokenRenderTimer)
     }
@@ -364,8 +317,6 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
       }
       editorApp = instance.editorApp
       fsOverlay = instance.fsOverlay
-      // Mirror the React-state colorMode into Monaco AFTER the wrapper is up. The earlier
-      // applyColorTheme calls may have no-op'd when the wrapper wasn't ready yet.
       void applyColorTheme(options.initialColorMode)
 
       try {
@@ -383,7 +334,6 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
       reconnectController.resetAttempts()
       reportStatus('connected')
 
-      // Side-fetch the flavor metadata. Non-fatal on failure.
       const api = createApi(options.backendUrl)
       api.fetchFlavor(options.flavorId)
         .then((found) => {
@@ -560,8 +510,6 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
     },
 
     getProblems: () => {
-      // Touch ensureVerifyDiagnostics so the listener subscription is in place before the
-      // caller registers a problems listener; safe to call repeatedly (no-op once init'd).
       ensureVerifyDiagnostics()
       try {
         const all = vscode.languages.getDiagnostics(fileUri)
@@ -641,8 +589,6 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
 
     onFlavorReady: (cb) => {
       flavorListeners.add(cb)
-      // If the flavor already resolved, fire immediately. Reuse notifyListeners' isolation so
-      // the late-add path emits the same warn shape as the live broadcast above.
       if (lastFlavor !== null) {
         notifyListeners([cb], (fn) => fn(lastFlavor), 'flavor')
       }

@@ -45,7 +45,6 @@ export interface LiveExample {
 export interface LiveFlavor {
   id: LiveFlavorId;
   displayName: string;
-  /** One-line summary shown next to the flavor in the model picker. */
   description: string;
   languageId: string;
   fileName: string;
@@ -53,12 +52,6 @@ export interface LiveFlavor {
   examples: LiveExample[];
 }
 
-/**
- * Descriptor for a snippet whose source body is staged on disk by Gradle. The {@code id} doubles
- * as the URL ?example= param AND the on-disk filename (sans extension); collapsing the two means
- * adding a new example is one Gradle task tweak plus one descriptor entry, with no
- * capitalisation or path-mapping logic to keep in sync.
- */
 interface ImportedDescriptor {
   id: string;
   label: string;
@@ -190,7 +183,7 @@ function buildImportedGammaLibraryExamples(): LiveExample[] {
         id: `${descriptor.id}-gamma-library`,
         flavor: 'oxsts-with-gamma-library' as const,
         label: `${descriptor.label} (Gamma library)`,
-        description: `OXSTS form of the ${descriptor.label} Gamma model, ready to verify against the Gamma semantic library.`,
+        description: `Semantifyr form of the ${descriptor.label} Gamma model.`,
         code,
       }),
     );
@@ -203,8 +196,8 @@ const blank = (flavor: LiveFlavorId, libraryName: string | null): LiveExample =>
   flavor,
   label: 'Blank',
   description: libraryName
-    ? `An empty Semantifyr file with the ${libraryName} library preloaded on the workspace.`
-    : 'An empty file, start writing your own model from scratch.',
+    ? `Empty file with the ${libraryName} library preloaded.`
+    : 'Empty file, start from scratch.',
   code: '',
 });
 
@@ -228,10 +221,10 @@ const gammaExamples: LiveExample[] = [
 ];
 
 export const LIVE_FLAVORS: readonly LiveFlavor[] = [
-  { id: 'oxsts', displayName: 'Semantifyr', description: 'Plain OXSTS - the core modelling language, no extra libraries.', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsExamples },
-  { id: 'oxsts-with-gamma-library', displayName: 'Semantifyr with Gamma library', description: 'OXSTS with the Gamma statechart library available to import.', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsWithGammaLibraryExamples },
-  { id: 'oxsts-with-sysmlv2-library', displayName: 'Semantifyr with SysML v2 library', description: 'OXSTS with the SysML v2 library available to import.', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsWithSysmlv2LibraryExamples },
-  { id: 'gamma', displayName: 'Gamma', description: 'Gamma statechart source - compiled to OXSTS before verification.', languageId: 'gamma', fileName: 'snippet.gamma', peekCompiledOutput: true, examples: gammaExamples },
+  { id: 'oxsts', displayName: 'Semantifyr', description: 'The core Semantifyr modelling language, no extra libraries.', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsExamples },
+  { id: 'oxsts-with-gamma-library', displayName: 'Semantifyr with Gamma library', description: 'Semantifyr with the Gamma statechart library available to import.', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsWithGammaLibraryExamples },
+  { id: 'oxsts-with-sysmlv2-library', displayName: 'Semantifyr with SysML v2 library', description: 'Semantifyr with the SysML v2 library available to import.', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsWithSysmlv2LibraryExamples },
+  { id: 'gamma', displayName: 'Gamma', description: 'Gamma statechart source, compiled to Semantifyr before verification.', languageId: 'gamma', fileName: 'snippet.gamma', peekCompiledOutput: true, examples: gammaExamples },
 ];
 
 export function findFlavor(id: string | null | undefined): LiveFlavor | undefined {
@@ -242,11 +235,6 @@ export function findExample(flavor: LiveFlavor, id: string | null | undefined): 
   return flavor.examples.find((e) => e.id === id);
 }
 
-/**
- * Look up an example by id across all flavors. Used when a tutorial links by name with
- * `?example=trafficlight-direct-snapshot` and the URL doesn't redundantly specify the
- * flavor. The registry knows which flavor each named snippet belongs to.
- */
 export function findExampleAcrossFlavors(id: string | null | undefined): { flavor: LiveFlavor; example: LiveExample } | undefined {
   if (!id) return undefined;
   for (const flavor of LIVE_FLAVORS) {

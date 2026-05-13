@@ -31,7 +31,6 @@ describe('LSP cancellation plumbing', () => {
     const onProgress = (_: (params: unknown) => void) => () => {};
 
     runAllVerifications(client, 'foo.case.verify', 'file:///x', [sampleCase('a')], () => {}, onProgress);
-    // Wait a microtask so the first sendRequest call is dispatched.
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(sendRequest).toHaveBeenCalledTimes(1);
@@ -72,7 +71,6 @@ describe('LSP cancellation plumbing', () => {
     await wrapped.sendRequest('workspace/executeCommand', { command: 'noop', arguments: [] });
     expect(sendRequest).toHaveBeenCalledTimes(1);
     const callArgs = sendRequest.mock.calls[0]!;
-    // Asserting the array length keeps the regression explicit: arity 3 is the bug shape.
     expect(callArgs.length).toBe(2);
   });
 
@@ -91,7 +89,7 @@ describe('LSP cancellation plumbing', () => {
   it('verifySingleCase cancel sends window/workDoneProgress/cancel for active progress tokens', async () => {
     const sendNotification = vi.fn();
     const sendRequest = vi.fn<LspClient['sendRequest']>(() => new Promise<unknown>(() => {
-      // Never resolves; we only care about the cancel side-effect.
+      // Never resolves
     }));
     const client: LspClient = { sendRequest, sendNotification };
 
@@ -111,7 +109,6 @@ describe('LSP cancellation plumbing', () => {
     );
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    // Simulate the LSP server emitting a $/progress begin so the dispatcher tracks the token.
     captured.listener?.({ token: 'tok-1', value: { kind: 'begin', title: 'Verifying' } });
 
     handle.cancel();
@@ -121,7 +118,7 @@ describe('LSP cancellation plumbing', () => {
   it('cancelling the run handle flips the token before the request resolves', async () => {
     let capturedToken: unknown = null;
     const pending = new Promise<unknown>(() => {
-      // Never resolves; we only care about the cancel side-effect.
+      // Never resolves
     });
     const sendRequest = vi.fn<LspClient['sendRequest']>((_method, _params, token) => {
       capturedToken = token;
