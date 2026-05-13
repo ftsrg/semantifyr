@@ -122,6 +122,11 @@ class ScopeContext(
         }
     }
 
+    fun currentCoroutineElement(): CoroutineContext.Element {
+        val store = threadLocal.get() ?: throw OutOfScopeException("$name is not active on this thread")
+        return ScopeElement(store, threadLocal, coroutineKey)
+    }
+
     fun <T> withScopeBlocking(
         seed: Seed? = null,
         block: () -> T,

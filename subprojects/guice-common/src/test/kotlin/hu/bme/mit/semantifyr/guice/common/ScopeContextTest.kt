@@ -178,4 +178,24 @@ class ScopeContextTest {
             injector.getInstance(TestScopedService::class.java)
         }.isInstanceOf(ProvisionException::class.java).hasRootCauseInstanceOf(OutOfScopeException::class.java)
     }
+
+    @Test
+    suspend fun `currentCoroutineElement - applied to a foreign coroutine makes the scope active there`() {
+        val injector = Guice.createInjector(ScopeBindingModule())
+        testContext.withScope {
+            val resolvedInside = injector.getInstance(TestScopedService::class.java)
+            val element = testContext.currentCoroutineElement()
+            val resolvedAcross = kotlinx.coroutines.withContext(element) {
+                injector.getInstance(TestScopedService::class.java)
+            }
+            assertThat(resolvedAcross).isSameAs(resolvedInside)
+        }
+    }
+
+    @Test
+    fun `currentCoroutineElement - throws OutOfScopeException when called outside a scope`() {
+        assertThatThrownBy {
+            testContext.currentCoroutineElement()
+        }.isInstanceOf(OutOfScopeException::class.java)
+    }
 }

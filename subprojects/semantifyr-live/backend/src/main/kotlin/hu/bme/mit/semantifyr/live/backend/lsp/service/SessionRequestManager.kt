@@ -36,10 +36,10 @@ class SessionRequestManager(
     @Synchronized
     override fun <V> runRead(cancellable: Functions.Function1<in CancelIndicator, out V>): CompletableFuture<V> {
         val previousWrite = pendingWrite
-        val callerMdc = currentMdcContextBlocking()
-        return coroutineScope.future(callerMdc) {
+        val coroutineContext = currentMdcContextBlocking() + currentSessionScopeElement()
+        return sessionRunContext.coroutineScope.future(coroutineContext) {
             joinIgnoringCancellation(previousWrite)
-            runInterruptible(sessionCoroutineContext) {
+            runInterruptible {
                 lockProvider.acquireReadLock()
                 try {
                     cancellable.apply(coroutineScopeCancelIndicator())
@@ -57,10 +57,10 @@ class SessionRequestManager(
     ): CompletableFuture<V> {
         val previousWrite = pendingWrite
         previousWrite?.cancel()
-        val callerMdc = currentMdcContextBlocking()
-        val deferred = coroutineScope.async(callerMdc) {
+        val coroutineContext = currentMdcContextBlocking() + currentSessionScopeElement()
+        val deferred = sessionRunContext.coroutineScope.async(coroutineContext) {
             joinIgnoringCancellation(previousWrite)
-            runInterruptible(sessionCoroutineContext) {
+            runInterruptible {
                 lockProvider.acquireWriteLock()
                 try {
                     val intermediate = nonCancellable.apply()
