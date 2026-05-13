@@ -51,6 +51,7 @@ tasks.pnpmInstall {
 
 val checkoutLibrary by tasks.registering(NodeTask::class) {
     dependsOn(tasks.pnpmInstall) // node_modules directory is not reliable
+    mustRunAfter(buildExtension)
     inputs.file(sysmlDir.file("packages/syside-languageserver/scripts/clone-sysml-release.mjs"))
     outputs.dir(sysmlDir.dir("SysML-v2-Release"))
 
@@ -117,6 +118,7 @@ val bundleExtension by tasks.registering(PnpmTask::class) {
 
 val buildCli by tasks.registering(PnpmTask::class) {
     dependsOn(tasks.pnpmInstall)
+    mustRunAfter(buildExtension)
     inputs.file(sysmlDir.file("package.json"))
     inputs.file(sysmlDir.file("tsconfig.json"))
     inputs.file(sysmlDir.file("tsconfig.build.json"))
