@@ -31,6 +31,9 @@ class SessionDocument(
     @Volatile
     private var currentText = initialText
 
+    @Volatile
+    private var currentVersion = 0
+
     init {
         loadResourceFromText(initialText)
     }
@@ -40,7 +43,7 @@ class SessionDocument(
     }
 
     fun xtextDocument(): Document {
-        return Document(0, currentText)
+        return Document(currentVersion, currentText)
     }
 
     fun applyChanges(changes: List<TextDocumentContentChangeEvent>) {
@@ -56,6 +59,7 @@ class SessionDocument(
             }
         }
         currentText = newText
+        currentVersion++
         loadResourceFromText(newText)
     }
 
