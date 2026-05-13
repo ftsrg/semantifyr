@@ -178,9 +178,11 @@ export default function RunningVerificationsTab({ api, connected, cases, portfol
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography sx={{ fontSize: FONT_SIZE.sm, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {label}
-                    {/* Only surface elapsed once it actually advanced past sub-second noise.
-                        Portfolio is omitted - the user picked it explicitly and seeing "Auto"
-                        on every row adds clutter without adding information. */}
+                    {item.state === 'Queued' && (
+                      <Box component="span" sx={{ color: 'text.secondary', ml: 0.75, fontSize: FONT_SIZE.xs, fontStyle: 'italic' }}>
+                        queued
+                      </Box>
+                    )}
                     {item.elapsed && isoDurationToMs(item.elapsed) >= 1000 && (
                       <Box component="span" sx={{ color: 'text.secondary', ml: 0.75, fontSize: FONT_SIZE.xs }}>
                         {formatIsoDurationDetailed(item.elapsed)}

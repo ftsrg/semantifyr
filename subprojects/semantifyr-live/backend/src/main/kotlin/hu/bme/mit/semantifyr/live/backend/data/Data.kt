@@ -81,10 +81,17 @@ enum class VerificationKind {
 }
 
 @Serializable
+enum class VerificationState {
+    Queued,
+    Running,
+}
+
+@Serializable
 data class ActiveVerificationInfo(
     val verificationId: String,
     val portfolioId: String,
     val kind: VerificationKind,
+    val state: VerificationState,
     val elapsed: Duration = Duration.ZERO,
 )
 

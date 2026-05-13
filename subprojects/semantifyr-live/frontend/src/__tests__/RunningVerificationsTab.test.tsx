@@ -67,8 +67,8 @@ describe('RunningVerificationsTab', () => {
       range: { start: { line: 1, character: 0 }, end: { line: 1, character: 0 } },
     };
     const { api, cancelVerification, cancelAllVerifications } = fakeApi([
-      { verificationId: 'r1', kind: 'Verify', portfolioId: 'smart-full', elapsed: 'PT0S', location: aLocation },
-      { verificationId: 'r2', kind: 'Validate', portfolioId: 'smart-full', elapsed: 'PT0S' },
+      { verificationId: 'r1', kind: 'Verify', state: 'Running', portfolioId: 'smart-full', elapsed: 'PT0S', location: aLocation },
+      { verificationId: 'r2', kind: 'Validate', state: 'Queued', portfolioId: 'smart-full', elapsed: 'PT0S' },
     ]);
     render(
       <RunningVerificationsTab

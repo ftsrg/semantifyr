@@ -22,7 +22,7 @@ describe('KpiStrip', () => {
           fakeSession({
             sessionId: 's1',
             flavorId: 'oxsts',
-            activeVerifications: [{ verificationId: 'r1', portfolioId: 'p1', kind: 'Verify', elapsed: 'PT0S' }],
+            activeVerifications: [{ verificationId: 'r1', portfolioId: 'p1', kind: 'Verify', state: 'Running', elapsed: 'PT0S' }],
           }),
           fakeSession({ sessionId: 's2', flavorId: 'gamma' }),
           fakeSession({ sessionId: 's3', flavorId: 'oxsts' }),

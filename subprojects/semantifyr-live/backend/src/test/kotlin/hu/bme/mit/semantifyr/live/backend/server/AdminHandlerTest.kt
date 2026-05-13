@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.live.backend.data.AdminConfigResponse
 import hu.bme.mit.semantifyr.live.backend.data.AdminStatusResponse
 import hu.bme.mit.semantifyr.live.backend.data.SessionInfo
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
+import hu.bme.mit.semantifyr.live.backend.data.VerificationState
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionManager
 import hu.bme.mit.semantifyr.live.backend.testing.handler
 import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrApp
@@ -102,7 +103,7 @@ class AdminHandlerTest {
             uptime = 30.seconds,
             workingDirectory = "/tmp/test",
             activeVerifications = listOf(
-                ActiveVerificationInfo(verificationId = "req-1", portfolioId = "smart-full", kind = VerificationKind.Verify),
+                ActiveVerificationInfo(verificationId = "req-1", portfolioId = "smart-full", kind = VerificationKind.Verify, state = VerificationState.Running),
             ),
         )
         val handler = createHandler(sessionInfos = listOf(testSession))

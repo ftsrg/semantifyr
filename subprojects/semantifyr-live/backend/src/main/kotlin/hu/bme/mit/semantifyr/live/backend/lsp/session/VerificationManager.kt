@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationStatus
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
+import hu.bme.mit.semantifyr.live.backend.data.VerificationState
 import hu.bme.mit.semantifyr.live.backend.lsp.service.RunningVerification
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionLanguageClient
 import hu.bme.mit.semantifyr.live.backend.lsp.service.VerificationsChangedParams
@@ -59,6 +60,8 @@ class VerificationManager @Inject constructor(
         val portfolioId: String,
         val startedAt: TimeSource.Monotonic.ValueTimeMark,
         val job: Job,
+        @Volatile 
+        var state: VerificationState = VerificationState.Queued,
     )
 
     private val verifications = ConcurrentHashMap<String, Entry>()
@@ -90,6 +93,8 @@ class VerificationManager @Inject constructor(
                 notifyActiveChanged(lspSession.sessionId, lspSession.client())
                 try {
                     withPermit {
+                        entry.state = VerificationState.Running
+                        notifyActiveChanged(lspSession.sessionId, lspSession.client())
                         withTimeout(backendConfig.verification.timeout) {
                             work()
                         }
@@ -142,6 +147,7 @@ class VerificationManager @Inject constructor(
             location = location,
             portfolioId = portfolioId,
             kind = kind,
+            state = state,
             elapsed = startedAt.elapsedNow(),
         )
     }

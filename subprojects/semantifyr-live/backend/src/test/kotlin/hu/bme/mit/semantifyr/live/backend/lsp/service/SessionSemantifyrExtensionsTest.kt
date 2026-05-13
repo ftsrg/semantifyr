@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.live.backend.lsp.service
 
 import hu.bme.mit.semantifyr.live.backend.data.SessionInfo
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
+import hu.bme.mit.semantifyr.live.backend.data.VerificationState
 import hu.bme.mit.semantifyr.live.backend.lsp.session.LspSession
 import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationManager
 import org.assertj.core.api.Assertions.assertThat
@@ -50,6 +51,7 @@ class SessionSemantifyrExtensionsTest {
                 location = Location("file:///x.oxsts", Range(Position(0, 0), Position(0, 0))),
                 portfolioId = "smart-full",
                 kind = VerificationKind.Verify,
+                state = VerificationState.Running,
                 elapsed = Duration.ZERO,
             ),
         )

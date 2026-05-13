@@ -69,6 +69,8 @@ interface SessionCardProps {
 
 function SessionCard({ session, onCancelSession, onCancelVerification }: SessionCardProps): React.JSX.Element {
   const [open, setOpen] = useState(false);
+  const running = session.activeVerifications.filter((v) => v.state === 'Running').length;
+  const queued = session.activeVerifications.filter((v) => v.state === 'Queued').length;
   const inFlight = session.activeVerifications.length;
   return (
     <Paper
@@ -105,7 +107,7 @@ function SessionCard({ session, onCancelSession, onCancelVerification }: Session
         <Box sx={{ flex: 1, minWidth: 0 }} />
         {inFlight > 0 ? (
           <Chip
-            label={`${inFlight} running`}
+            label={queued > 0 ? `${running} running, ${queued} queued` : `${running} running`}
             size="small"
             sx={{ bgcolor: 'var(--warning-soft-bg)', color: 'var(--warning)', fontWeight: 600, fontSize: FONT_SIZE.xs, height: 20 }}
           />

@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.live.backend.lsp.service
 
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
+import hu.bme.mit.semantifyr.live.backend.data.VerificationState
 import org.eclipse.lsp4j.Location
 import kotlin.time.Duration
 
@@ -28,6 +29,7 @@ data class RunningVerification(
     val location: Location,
     val portfolioId: String,
     val kind: VerificationKind,
+    val state: VerificationState,
     val elapsed: Duration,
 )
 

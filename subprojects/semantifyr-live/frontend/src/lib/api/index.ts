@@ -16,6 +16,7 @@ export type {
   PortfolioInfo,
   SessionInfo,
   VerificationKind,
+  VerificationState,
 } from './types'
 
 export { createApi, type LiveServerApi } from './rest'

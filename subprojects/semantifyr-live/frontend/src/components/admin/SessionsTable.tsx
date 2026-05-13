@@ -70,6 +70,8 @@ interface SessionRowProps {
 
 function SessionRow({ session, onCancelSession, onCancelVerification }: SessionRowProps): React.JSX.Element {
   const [open, setOpen] = useState(false);
+  const running = session.activeVerifications.filter((v) => v.state === 'Running').length;
+  const queued = session.activeVerifications.filter((v) => v.state === 'Queued').length;
   const inFlight = session.activeVerifications.length;
   return (
     <>
@@ -100,7 +102,7 @@ function SessionRow({ session, onCancelSession, onCancelVerification }: SessionR
         <TableCell sx={cellSx}>
           {inFlight > 0 ? (
             <Chip
-              label={`${inFlight} running`}
+              label={queued > 0 ? `${running} running, ${queued} queued` : `${running} running`}
               size="small"
               sx={{ bgcolor: 'var(--warning-soft-bg)', color: 'var(--warning)', fontWeight: 600, fontSize: FONT_SIZE.xs, height: 20 }}
             />
@@ -163,6 +165,15 @@ function SessionDetails({ session, onCancelVerification }: SessionDetailsProps):
               }}
             >
               <KindChip kind={v.kind} />
+              <Chip
+                label={v.state.toLowerCase()}
+                size="small"
+                sx={{
+                  bgcolor: v.state === 'Running' ? 'var(--warning-soft-bg)' : 'var(--surface-bg)',
+                  color: v.state === 'Running' ? 'var(--warning)' : 'text.secondary',
+                  fontWeight: 600, fontSize: FONT_SIZE.xs, height: 20, fontFamily: 'inherit',
+                }}
+              />
               <Chip
                 label={v.portfolioId}
                 size="small"

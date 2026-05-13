@@ -124,7 +124,7 @@ class LspSession(
             uptime = startMark.elapsedNow(),
             workingDirectory = sessionContext.workingDirectoryPath.toString(),
             activeVerifications = verificationManager.activeFor(sessionId).map {
-                ActiveVerificationInfo(it.verificationId, it.portfolioId, it.kind, it.elapsed)
+                ActiveVerificationInfo(it.verificationId, it.portfolioId, it.kind, it.state, it.elapsed)
             },
         )
     }

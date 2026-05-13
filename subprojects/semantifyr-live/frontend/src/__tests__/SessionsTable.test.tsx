@@ -52,7 +52,7 @@ describe('SessionsTable', () => {
           fakeSession({
             sessionId: FULL_UUID,
             activeVerifications: [
-              { verificationId: 'req-99', portfolioId: 'theta', kind: 'Verify', elapsed: 'PT0S' },
+              { verificationId: 'req-99', portfolioId: 'theta', kind: 'Verify', state: 'Running', elapsed: 'PT0S' },
             ],
           }),
         ]}

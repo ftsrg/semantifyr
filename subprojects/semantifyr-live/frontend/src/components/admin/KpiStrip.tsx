@@ -103,7 +103,15 @@ export default function KpiStrip({
   const sessionLoad = maxSessions > 0 ? (activeSessions / maxSessions) * 100 : 0;
   const sessionsAccent: TileProps['accent'] = sessionLoad >= 90 ? 'danger' : sessionLoad >= 60 ? 'warning' : 'default';
 
-  const activeVerifications = sessions.reduce((sum, s) => sum + s.activeVerifications.length, 0);
+  const runningVerifications = sessions.reduce(
+    (sum, s) => sum + s.activeVerifications.filter((v) => v.state === 'Running').length,
+    0,
+  );
+  const queuedVerifications = sessions.reduce(
+    (sum, s) => sum + s.activeVerifications.filter((v) => v.state === 'Queued').length,
+    0,
+  );
+  const activeVerifications = runningVerifications + queuedVerifications;
 
   const flavorCounts = new Map<string, number>();
   for (const s of sessions) {
@@ -171,9 +179,13 @@ export default function KpiStrip({
         <Tile
           label="Active verifications"
           icon={<PlayCircleOutlineIcon sx={{ fontSize: ICON_SIZE.md }} />}
-          value={activeVerifications}
+          value={queuedVerifications > 0 ? `${runningVerifications}+${queuedVerifications}` : runningVerifications}
           accent={activeVerifications > 0 ? 'warning' : 'default'}
-          tooltip={`${activeVerifications} running, cap ${verificationConcurrency} concurrent`}
+          tooltip={
+            queuedVerifications > 0
+              ? `${runningVerifications} running, ${queuedVerifications} queued, cap ${verificationConcurrency} concurrent`
+              : `${runningVerifications} running, cap ${verificationConcurrency} concurrent`
+          }
           hint={
             activeVerifications === 0
               ? `Idle (cap ${verificationConcurrency})`

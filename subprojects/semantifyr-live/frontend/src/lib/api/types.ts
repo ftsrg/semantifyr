@@ -37,10 +37,13 @@ export interface InfoResponse {
 
 export type VerificationKind = 'Verify' | 'Validate'
 
+export type VerificationState = 'Queued' | 'Running'
+
 export interface ActiveVerificationInfo {
   verificationId: string
   portfolioId: string
   kind: VerificationKind
+  state: VerificationState
   // ISO 8601 duration since start (e.g. "PT3.2S").
   elapsed: string
   // Present over the verificationsChanged channel; absent from the admin REST status.

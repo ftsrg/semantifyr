@@ -25,6 +25,7 @@ function fakeVerification(overrides: Partial<ActiveVerificationInfo>): ActiveVer
     verificationId: 'r1',
     portfolioId: 'smart-full',
     kind: 'Verify',
+    state: 'Running',
     elapsed: 'PT0S',
     ...overrides,
   };
