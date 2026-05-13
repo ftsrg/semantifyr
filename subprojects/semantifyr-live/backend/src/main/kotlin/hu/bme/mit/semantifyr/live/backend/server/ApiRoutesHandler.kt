@@ -11,6 +11,7 @@ import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.live.backend.BuildInfo
 import hu.bme.mit.semantifyr.live.backend.FlavorRegistry
 import hu.bme.mit.semantifyr.live.backend.PortfolioRegistry
+import hu.bme.mit.semantifyr.live.backend.ServerStatus
 import hu.bme.mit.semantifyr.live.backend.data.FlavorResponse
 import hu.bme.mit.semantifyr.live.backend.data.FlavorsResponse
 import hu.bme.mit.semantifyr.live.backend.data.HealthResponse
@@ -25,6 +26,7 @@ import io.ktor.server.routing.*
 @Singleton
 class ApiRoutesHandler @Inject constructor(
     private val sessionManager: SessionManager,
+    private val serverStatus: ServerStatus,
 ) {
 
     fun Application.configure() {
@@ -41,7 +43,8 @@ class ApiRoutesHandler @Inject constructor(
             get("/api/info") {
                 call.respond(
                     InfoResponse(
-                        uptime = BuildInfo.uptime,
+                        uptime = serverStatus.uptime,
+                        startedAt = serverStatus.startedAt,
                         commit = BuildInfo.commit,
                         buildTime = BuildInfo.buildTime,
                         activeSessions = sessionManager.activeSessions,

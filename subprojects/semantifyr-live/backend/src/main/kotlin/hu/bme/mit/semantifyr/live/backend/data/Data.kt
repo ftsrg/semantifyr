@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.live.backend.data
 import hu.bme.mit.semantifyr.live.backend.Flavor
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
+import kotlin.time.Instant
 
 @Serializable
 data class HealthResponse(
@@ -18,6 +19,7 @@ data class HealthResponse(
 @Serializable
 data class InfoResponse(
     val uptime: Duration,
+    val startedAt: Instant,
     val commit: String,
     val buildTime: String,
     val activeSessions: Int,
@@ -105,7 +107,35 @@ data class SessionLspInfo(
 
 @Serializable
 data class AdminConfigResponse(
+    val development: Boolean,
+    val server: AdminServerConfigResponse,
+    val sessionManager: AdminSessionManagerConfigResponse,
+    val verification: AdminVerificationConfigResponse,
+)
+
+@Serializable
+data class AdminServerConfigResponse(
+    val port: Int,
+    val pingPeriod: Duration,
+    val pingTimeout: Duration,
+    val webRootDirectory: String?,
+    val adminPasswordSet: Boolean,
+    val sessionIdleTimeout: Duration,
+    val wsHandshakesPerPeriod: Int,
+    val wsHandshakeRatePeriod: Duration,
+    val maxWsFrameSize: Long,
+    val httpsOnlyCookies: Boolean,
+)
+
+@Serializable
+data class AdminSessionManagerConfigResponse(
     val maxSessionsGlobal: Int,
-    val verificationConcurrency: Int,
-    val verificationTimeout: Duration,
+    val semanticLibrariesDirectory: String?,
+    val rootWorkDirectory: String,
+)
+
+@Serializable
+data class AdminVerificationConfigResponse(
+    val concurrency: Int,
+    val timeout: Duration,
 )

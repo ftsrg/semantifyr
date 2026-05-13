@@ -151,8 +151,11 @@ class AdminHandlerTest {
         assertThat(response.status).isEqualTo(HttpStatusCode.OK)
 
         val config = response.body<AdminConfigResponse>()
-        assertThat(config.maxSessionsGlobal).isEqualTo(256)
-        assertThat(config.verificationConcurrency).isEqualTo(4)
+        assertThat(config.sessionManager.maxSessionsGlobal).isEqualTo(256)
+        assertThat(config.verification.concurrency).isEqualTo(4)
+        assertThat(config.server.port).isEqualTo(8080)
+        assertThat(config.server.adminPasswordSet).isTrue()
+        assertThat(config.server.httpsOnlyCookies).isFalse()
     }
 
     @Test

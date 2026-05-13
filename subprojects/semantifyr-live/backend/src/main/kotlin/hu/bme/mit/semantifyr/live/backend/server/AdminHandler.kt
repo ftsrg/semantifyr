@@ -10,7 +10,10 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.data.AdminConfigResponse
+import hu.bme.mit.semantifyr.live.backend.data.AdminServerConfigResponse
+import hu.bme.mit.semantifyr.live.backend.data.AdminSessionManagerConfigResponse
 import hu.bme.mit.semantifyr.live.backend.data.AdminStatusResponse
+import hu.bme.mit.semantifyr.live.backend.data.AdminVerificationConfigResponse
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionManager
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
@@ -106,13 +109,7 @@ class AdminHandler @Inject constructor(
                     )
                 }
                 get("/api/admin/config") {
-                    call.respond(
-                        AdminConfigResponse(
-                            maxSessionsGlobal = config.sessionManager.maxSessionsGlobal,
-                            verificationConcurrency = config.verification.concurrency,
-                            verificationTimeout = config.verification.timeout,
-                        ),
-                    )
+                    call.respond(buildAdminConfigResponse())
                 }
                 delete("/api/admin/sessions/{sessionId}") {
                     val sessionId = call.parameters["sessionId"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
@@ -137,5 +134,32 @@ class AdminHandler @Inject constructor(
     private fun passwordMatches(candidate: String): Boolean {
         val expected = config.server.adminPassword
         return !expected.isNullOrEmpty() && candidate == expected
+    }
+
+    private fun buildAdminConfigResponse(): AdminConfigResponse {
+        return AdminConfigResponse(
+            development = config.development,
+            server = AdminServerConfigResponse(
+                port = config.server.port,
+                pingPeriod = config.server.pingPeriod,
+                pingTimeout = config.server.pingTimeout,
+                webRootDirectory = config.server.webRootDirectory,
+                adminPasswordSet = !config.server.adminPassword.isNullOrEmpty(),
+                sessionIdleTimeout = config.server.sessionIdleTimeout,
+                wsHandshakesPerPeriod = config.server.wsHandshakesPerPeriod,
+                wsHandshakeRatePeriod = config.server.wsHandshakeRatePeriod,
+                maxWsFrameSize = config.server.maxWsFrameSize,
+                httpsOnlyCookies = config.server.httpsOnlyCookies,
+            ),
+            sessionManager = AdminSessionManagerConfigResponse(
+                maxSessionsGlobal = config.sessionManager.maxSessionsGlobal,
+                semanticLibrariesDirectory = config.sessionManager.semanticLibrariesDirectory,
+                rootWorkDirectory = config.sessionManager.rootWorkDirectory,
+            ),
+            verification = AdminVerificationConfigResponse(
+                concurrency = config.verification.concurrency,
+                timeout = config.verification.timeout,
+            ),
+        )
     }
 }

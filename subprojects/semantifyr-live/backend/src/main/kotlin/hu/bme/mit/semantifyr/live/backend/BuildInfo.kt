@@ -7,14 +7,10 @@
 package hu.bme.mit.semantifyr.live.backend
 
 import java.util.Properties
-import kotlin.time.Duration
-import kotlin.time.TimeSource
 
 object BuildInfo {
     val commit: String
     val buildTime: String
-
-    private val startMark = TimeSource.Monotonic.markNow()
 
     init {
         val properties = Properties()
@@ -25,7 +21,4 @@ object BuildInfo {
         commit = properties.getProperty("commit", "unknown")
         buildTime = properties.getProperty("buildTime", "unknown")
     }
-
-    val uptime: Duration
-        get() = startMark.elapsedNow()
 }

@@ -44,7 +44,7 @@ class WebSocketLspConnectorTest {
         val languageServer = buildLanguageServer()
 
         coroutineScope {
-            val connector = WebSocketLspConnector(webSocketSession, languageServer, coroutineContext)
+            val connector = WebSocketLspConnector(webSocketSession, languageServer)
             incoming.close(IOException("Ping timeout"))
             withTimeout(5.seconds) {
                 connector.run()
@@ -60,7 +60,7 @@ class WebSocketLspConnectorTest {
         val languageServer = buildLanguageServer()
 
         coroutineScope {
-            val connector = WebSocketLspConnector(webSocketSession, languageServer, coroutineContext)
+            val connector = WebSocketLspConnector(webSocketSession, languageServer)
             incoming.close()
             withTimeout(5.seconds) {
                 connector.run()

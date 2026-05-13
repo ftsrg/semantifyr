@@ -13,6 +13,7 @@ import com.google.inject.Module
 import com.google.inject.util.Modules
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.BackendModule
+import hu.bme.mit.semantifyr.live.backend.ServerStatus
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SharedExecutorProvider
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionManager
 import hu.bme.mit.semantifyr.live.backend.server.AdminHandler
@@ -76,6 +77,7 @@ fun ApplicationTestBuilder.jsonClient(webSockets: Boolean = false) = createClien
 }
 
 fun Application.installSemantifyrLiveBackend(injector: Injector) {
+    injector.getInstance(ServerStatus::class.java).markStartNow()
     with(injector.getInstance(ApiRoutesHandler::class.java)) {
         configure()
     }

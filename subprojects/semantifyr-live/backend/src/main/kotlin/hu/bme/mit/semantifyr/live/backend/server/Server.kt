@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.live.backend.server
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
+import hu.bme.mit.semantifyr.live.backend.ServerStatus
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SharedExecutorProvider
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionManager
 import hu.bme.mit.semantifyr.logging.info
@@ -27,6 +28,7 @@ import io.ktor.server.websocket.timeout
 @Singleton
 class Server @Inject constructor(
     private val config: BackendConfig,
+    private val serverStatus: ServerStatus,
     private val sessionManager: SessionManager,
     private val executors: SharedExecutorProvider,
     private val apiRoutesHandler: ApiRoutesHandler,
@@ -40,6 +42,7 @@ class Server @Inject constructor(
     private val ktorServer = createKtorServer()
 
     fun start() {
+        serverStatus.markStartNow()
         logger.info { "Starting server on :${config.server.port}" }
         ktorServer.start(wait = true)
     }
