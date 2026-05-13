@@ -21,6 +21,10 @@ public record WitnessValidationResult(
                 VerificationMetrics.fromDto(verification.getMetrics()));
     }
 
+    public static WitnessValidationResult errored(String message, String portfolioId) {
+        return new WitnessValidationResult(WitnessValidationStatus.ERRORED, message, null, portfolioId, null);
+    }
+
     private static String statusOf(WitnessValidationResultDto dto) {
         return switch (dto.getKind()) {
             case VALID -> WitnessValidationStatus.VALID;

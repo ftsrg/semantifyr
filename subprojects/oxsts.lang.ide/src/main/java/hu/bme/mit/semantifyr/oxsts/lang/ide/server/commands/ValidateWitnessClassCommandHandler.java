@@ -95,7 +95,7 @@ public class ValidateWitnessClassCommandHandler
                 return WitnessValidationResult.fromDto(dto, portfolio.getId());
             } catch (Exception e) {
                 LOGGER.warn("Witness validation threw {}", e.getClass().getSimpleName(), e);
-                return null;
+                return WitnessValidationResult.errored(e.toString(), portfolio.getId());
             }
         });
     }

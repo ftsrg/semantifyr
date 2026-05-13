@@ -93,7 +93,7 @@ public class VerifyInlinedOxstsCommandHandler
                 return VerificationCaseResult.fromDto(dto, portfolio.getId());
             } catch (Exception e) {
                 LOGGER.warn("Verification threw {}", e.getClass().getSimpleName(), e);
-                return null;
+                return VerificationCaseResult.errored(e.toString(), portfolio.getId());
             }
         });
     }

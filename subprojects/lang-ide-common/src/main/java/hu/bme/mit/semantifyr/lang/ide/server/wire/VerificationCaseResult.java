@@ -26,6 +26,10 @@ public record VerificationCaseResult(
         return build(dto, portfolioId, null);
     }
 
+    public static VerificationCaseResult errored(String message, String portfolioId) {
+        return new VerificationCaseResult(VerificationStatus.ERRORED, message, null, portfolioId, null, null);
+    }
+
     private static VerificationCaseResult build(
             VerificationResultDto dto, String portfolioId, VerificationTrace trace) {
         return new VerificationCaseResult(

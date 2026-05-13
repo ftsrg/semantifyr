@@ -110,7 +110,7 @@ public class VerifyClassCommandHandler
                         targetQualifiedName,
                         e.getClass().getSimpleName(),
                         e);
-                return null;
+                return VerificationCaseResult.errored(e.toString(), portfolio.getId());
             }
         });
     }
