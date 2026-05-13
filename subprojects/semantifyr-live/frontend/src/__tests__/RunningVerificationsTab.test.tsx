@@ -57,7 +57,7 @@ describe('RunningVerificationsTab', () => {
         portfolios={[]}
       />,
     );
-    expect(screen.getByText('No running verifications or validations.')).toBeInTheDocument();
+    expect(await screen.findByText('No running verifications or validations.')).toBeInTheDocument();
     expect(screen.getByText('No completed verifications yet.')).toBeInTheDocument();
   });
 
@@ -91,7 +91,7 @@ describe('RunningVerificationsTab', () => {
     expect(cancelAllVerifications).toHaveBeenCalled();
   });
 
-  it('summary section reports counts plus wall-clock + average across timed cases', () => {
+  it('summary section reports counts plus wall-clock + average across timed cases', async () => {
     const { api } = fakeApi([]);
     render(
       <RunningVerificationsTab
@@ -105,7 +105,7 @@ describe('RunningVerificationsTab', () => {
         portfolios={[]}
       />,
     );
-    expect(screen.getByText('Total')).toBeInTheDocument();
+    expect(await screen.findByText('Total')).toBeInTheDocument();
     expect(screen.getByText('Passed')).toBeInTheDocument();
     expect(screen.getByText('Failed')).toBeInTheDocument();
     expect(screen.getByText('Inconclusive')).toBeInTheDocument();
