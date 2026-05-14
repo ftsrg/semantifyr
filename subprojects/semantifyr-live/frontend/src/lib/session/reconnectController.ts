@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-export type ReconnectStatus = 'reconnecting' | 'errored'
+export type ReconnectStatus = 'reconnecting' | 'connected' | 'errored'
 
 export interface ReconnectControllerOptions {
   maxAttempts: number
@@ -62,6 +62,7 @@ export function createReconnectController(options: ReconnectControllerOptions): 
             return
           }
           state.attempts = 0
+          options.onStatus('connected')
         } catch {
           if (options.isCancelled()) {
             return

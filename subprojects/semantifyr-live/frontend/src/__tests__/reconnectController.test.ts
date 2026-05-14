@@ -85,6 +85,15 @@ describe('reconnectController', () => {
     expect(h.controller.attempts()).toBe(0)
   })
 
+  it('emits connected status when the connect attempt succeeds', async () => {
+    const h = harness()
+    h.attemptResults.push('success')
+
+    h.controller.schedule()
+    await vi.advanceTimersByTimeAsync(BACKOFF[0])
+    expect(h.statuses.at(-1)?.status).toBe('connected')
+  })
+
   it('stops attempting once isCancelled returns true', async () => {
     const h = harness()
     h.attemptResults.push('fail', 'fail')
