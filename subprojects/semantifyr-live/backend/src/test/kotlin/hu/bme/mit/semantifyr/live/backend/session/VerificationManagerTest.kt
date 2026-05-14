@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionLanguageClient
 import hu.bme.mit.semantifyr.live.backend.lsp.service.VerificationsChangedParams
 import hu.bme.mit.semantifyr.live.backend.lsp.session.LspSession
 import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationManager
+import hu.bme.mit.semantifyr.live.backend.lsp.session.withSessionScope
 import hu.bme.mit.semantifyr.live.backend.testing.LspWire
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -107,7 +108,7 @@ class VerificationManagerTest {
 
     @Test
     fun `run invokes the work lambda and returns its result`() = runTest {
-        coroutineScope {
+        withSessionScope {
             val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
             val (session, _) = fakeSession(scope)
             val manager = manager(concurrency = 1)
@@ -119,7 +120,7 @@ class VerificationManagerTest {
     }
 
     @Test
-    suspend fun `run assigns a UUID-shaped verificationId and surfaces it via activeFor`() {
+    suspend fun `run assigns a UUID-shaped verificationId and surfaces it via activeFor`() = withSessionScope {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val (session, _) = fakeSession(scope)
         val manager = manager(concurrency = 1)
@@ -142,7 +143,7 @@ class VerificationManagerTest {
     }
 
     @Test
-    suspend fun `run notifies the client of active changes before and after work`() {
+    suspend fun `run notifies the client of active changes before and after work`() = withSessionScope {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val (session, client) = fakeSession(scope)
         val manager = manager(concurrency = 1)
@@ -160,7 +161,7 @@ class VerificationManagerTest {
     }
 
     @Test
-    suspend fun `cancel cancels an in-flight verification and removes it from active`() {
+    suspend fun `cancel cancels an in-flight verification and removes it from active`() = withSessionScope {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val (session, _) = fakeSession(scope)
         val manager = manager(concurrency = 1)
@@ -187,7 +188,7 @@ class VerificationManagerTest {
     }
 
     @Test
-    suspend fun `a timed-out verification yields an errored result and is removed from active`() {
+    suspend fun `a timed-out verification yields an errored result and is removed from active`() = withSessionScope {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val (session, _) = fakeSession(scope)
         val manager = manager(concurrency = 1, timeout = 50.milliseconds)
@@ -206,7 +207,7 @@ class VerificationManagerTest {
     }
 
     @Test
-    suspend fun `a failing verification yields an errored result and is removed from active`() {
+    suspend fun `a failing verification yields an errored result and is removed from active`() = withSessionScope {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val (session, _) = fakeSession(scope)
         val manager = manager(concurrency = 1)
@@ -223,7 +224,7 @@ class VerificationManagerTest {
     }
 
     @Test
-    suspend fun `cancelForSession cancels all sessions in-flight work`() {
+    suspend fun `cancelForSession cancels all sessions in-flight work`() = withSessionScope {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val (session, _) = fakeSession(scope)
         val manager = manager(concurrency = 2)
@@ -253,7 +254,7 @@ class VerificationManagerTest {
     }
 
     @Test
-    suspend fun `verifications respect the concurrency limit`() {
+    suspend fun `verifications respect the concurrency limit`() = withSessionScope {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val (session, _) = fakeSession(scope)
         val manager = manager(concurrency = 1)

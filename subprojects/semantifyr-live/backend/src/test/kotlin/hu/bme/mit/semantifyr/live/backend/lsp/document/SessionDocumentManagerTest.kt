@@ -11,7 +11,7 @@ import hu.bme.mit.semantifyr.live.backend.exceptions.WorkspaceUriException
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServices
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LiveOxstsLanguageSetup
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
-import hu.bme.mit.semantifyr.live.backend.testing.sessionScopedTestParentInjector
+import hu.bme.mit.semantifyr.live.backend.testing.emptyGlobalsModule
 import io.ktor.websocket.WebSocketSession
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -24,7 +24,7 @@ import java.nio.file.Path
 class SessionDocumentManagerTest {
 
     private fun buildManager(workingDirectory: Path): SessionDocumentManager {
-        val languageServices = LiveOxstsLanguageSetup(sessionScopedTestParentInjector())
+        val languageServices = LiveOxstsLanguageSetup(emptyGlobalsModule())
             .createInjectorAndDoEMFRegistration()
             .getInstance(LanguageServices::class.java)
         val sessionContext = SessionContext(

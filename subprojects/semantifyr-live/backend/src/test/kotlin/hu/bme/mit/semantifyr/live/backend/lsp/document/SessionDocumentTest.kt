@@ -8,7 +8,7 @@ package hu.bme.mit.semantifyr.live.backend.lsp.document
 
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServices
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LiveOxstsLanguageSetup
-import hu.bme.mit.semantifyr.live.backend.testing.sessionScopedTestParentInjector
+import hu.bme.mit.semantifyr.live.backend.testing.emptyGlobalsModule
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
@@ -23,7 +23,7 @@ class SessionDocumentTest {
     private fun document(text: String): SessionDocument {
         val serverUri = "file:///workspace/test.oxsts"
         val emfUri = EmfURI.createURI(serverUri)
-        val languageServices = LiveOxstsLanguageSetup(sessionScopedTestParentInjector())
+        val languageServices = LiveOxstsLanguageSetup(emptyGlobalsModule())
             .createInjectorAndDoEMFRegistration()
             .getInstance(LanguageServices::class.java)
         val resource = languageServices.newResourceSet().createResource(emfUri) as XtextResource

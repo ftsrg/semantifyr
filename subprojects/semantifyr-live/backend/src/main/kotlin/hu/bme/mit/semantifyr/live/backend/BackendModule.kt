@@ -10,11 +10,7 @@ import com.google.inject.AbstractModule
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServiceRegistry
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LiveLanguageServiceRegistry
 import hu.bme.mit.semantifyr.live.backend.lsp.session.LiveVerificationExecutor
-import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
-import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScope
-import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScoped
 import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationExecutor
-import hu.bme.mit.semantifyr.live.backend.lsp.session.seededKeyProvider
 
 class BackendModule(
     private val config: BackendConfig,
@@ -25,10 +21,5 @@ class BackendModule(
         bind(BackendConfig::class.java).toInstance(config)
         bind(LanguageServiceRegistry::class.java).to(LiveLanguageServiceRegistry::class.java)
         bind(VerificationExecutor::class.java).to(LiveVerificationExecutor::class.java)
-
-        bindScope(SessionScoped::class.java, SessionScope)
-        bind(SessionContext::class.java)
-            .toProvider(seededKeyProvider())
-            .`in`(SessionScoped::class.java)
     }
 }

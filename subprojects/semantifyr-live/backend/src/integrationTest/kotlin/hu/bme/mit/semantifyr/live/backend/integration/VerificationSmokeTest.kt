@@ -10,6 +10,8 @@ import com.google.gson.Gson
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification
+import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult
+import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationStatus
 import hu.bme.mit.semantifyr.live.backend.integration.IntegrationTestSupport.config
 import hu.bme.mit.semantifyr.live.backend.integration.IntegrationTestSupport.stagedModel
 import hu.bme.mit.semantifyr.live.backend.testing.LspWire
@@ -66,6 +68,60 @@ class VerificationSmokeTest {
             },
             verifyTimeout = 2.minutes,
         )
+    }
+
+    @Test
+    suspend fun `oxsts witness validation reports valid after a passing verification`(@TempDir tmp: Path) {
+        IntegrationTestSupport.assumeStaged()
+        val documentUri = "file:///workspace/snippet.oxsts"
+        val modelSource = stagedModel(IntegrationTestSupport.oxstsTestModelsDirectory, "semantifyr.live.oxstsTestModels", "trafficlight.oxsts")
+        withRealServer(config(tmp)) { client, port ->
+            client.webSocket("ws://localhost:$port/ws/lsp/oxsts") {
+                send(Frame.Text(LspWire.initializeRequest()))
+                awaitResponseFor(id = 1)
+                send(Frame.Text(LspWire.initializedNotification()))
+                send(Frame.Text(LspWire.didOpenNotification(uri = documentUri, languageId = "oxsts", text = modelSource)))
+
+                val cases = discoverCases(id = 2, command = "oxsts.case.discover", documentUri = documentUri, flavor = "oxsts")
+                val selectedCase = cases.pickByLabelSuffix("GreenColorIsReachable")
+
+                send(
+                    Frame.Text(
+                        LspWire.executeCommandRequest(
+                            id = 3,
+                            command = "oxsts.case.verify",
+                            arguments = listOf(
+                                VerificationCaseRequest(documentUri, selectedCase.location().range, "smart-full"),
+                            ),
+                        ),
+                    ),
+                )
+                val verifyResponse = awaitResponseFor(id = 3, timeout = 1.minutes)
+                val verifyResult = verifyResponse.resultAs(VerificationCaseResult::class.java)
+                assertThat(verifyResult.status()).isEqualTo("passed")
+                val witnessUri = verifyResult.trace()?.witnessUri()
+                    ?: error("verify produced no witness URI: $verifyResult")
+
+                send(Frame.Text(LspWire.didOpenNotification(uri = witnessUri, languageId = "oxsts", text = "")))
+
+                send(
+                    Frame.Text(
+                        LspWire.executeCommandRequest(
+                            id = 4,
+                            command = "oxsts.case.validateWitness",
+                            arguments = listOf(
+                                VerificationCaseRequest(witnessUri, LspWire.range(), "smart-full"),
+                            ),
+                        ),
+                    ),
+                )
+                val validateResponse = awaitResponseFor(id = 4, timeout = 1.minutes)
+                val validation = validateResponse.resultAs(WitnessValidationResult::class.java)
+                assertThat(validation.status())
+                    .describedAs("witness validation: $validation")
+                    .isEqualTo(WitnessValidationStatus.VALID)
+            }
+        }
     }
 
     @Test

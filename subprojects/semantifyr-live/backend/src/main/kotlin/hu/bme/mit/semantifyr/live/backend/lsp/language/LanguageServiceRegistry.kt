@@ -6,11 +6,17 @@
 
 package hu.bme.mit.semantifyr.live.backend.lsp.language
 
+import com.google.inject.AbstractModule
 import com.google.inject.Inject
 import com.google.inject.Injector
+import com.google.inject.Module
 import com.google.inject.Singleton
+import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.Flavor
 import hu.bme.mit.semantifyr.live.backend.Language
+import hu.bme.mit.semantifyr.live.backend.lsp.service.SharedExecutorProvider
+import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationExecutor
+import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationManager
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 
 interface LanguageServiceRegistry {
@@ -20,15 +26,27 @@ interface LanguageServiceRegistry {
 
 @Singleton
 class LiveLanguageServiceRegistry @Inject constructor(
-    parentInjector: Injector,
+    backendConfig: BackendConfig,
+    verificationManager: VerificationManager,
+    verificationExecutor: VerificationExecutor,
+    sharedExecutorProvider: SharedExecutorProvider,
 ) : LanguageServiceRegistry {
 
-    private val oxstsInjector = LiveOxstsLanguageSetup(parentInjector).createInjectorAndDoEMFRegistration()
+    private val globalsModule: Module = object : AbstractModule() {
+        override fun configure() {
+            bind(BackendConfig::class.java).toInstance(backendConfig)
+            bind(VerificationManager::class.java).toInstance(verificationManager)
+            bind(VerificationExecutor::class.java).toInstance(verificationExecutor)
+            bind(SharedExecutorProvider::class.java).toInstance(sharedExecutorProvider)
+        }
+    }
+
+    private val oxstsInjector = LiveOxstsLanguageSetup(globalsModule).createInjectorAndDoEMFRegistration()
 
     // injector to be used from the Frontends
     private val plainOxstsInjector = OxstsStandaloneSetup().createInjectorWithoutGlobalRegistration()
 
-    private val gammaInjector = LiveGammaLanguageSetup(parentInjector, plainOxstsInjector).createInjectorAndDoEMFRegistration()
+    private val gammaInjector = LiveGammaLanguageSetup(plainOxstsInjector, globalsModule).createInjectorAndDoEMFRegistration()
 
     private val oxsts = oxstsInjector.getInstance(LanguageServices::class.java)
     private val gamma = gammaInjector.getInstance(LanguageServices::class.java)

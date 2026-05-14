@@ -14,12 +14,19 @@ import hu.bme.mit.semantifyr.lang.ide.server.concurrent.LockingRequestManager
 import hu.bme.mit.semantifyr.lang.ide.server.wire.ArtifactsLocation
 import hu.bme.mit.semantifyr.lang.ide.server.wire.ServerSettingsPayload
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionRequestManager
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScope
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScoped
+import hu.bme.mit.semantifyr.live.backend.lsp.session.seededKeyProvider
 
 class LiveLanguageServerModule : AbstractModule() {
 
     override fun configure() {
         super.configure()
+        bindScope(SessionScoped::class.java, SessionScope)
+        bind(SessionContext::class.java)
+            .toProvider(seededKeyProvider())
+            .`in`(SessionScoped::class.java)
         bind(LockingRequestManager::class.java)
             .to(SessionRequestManager::class.java)
             .`in`(SessionScoped::class.java)

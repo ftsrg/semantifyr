@@ -6,7 +6,9 @@
 
 package hu.bme.mit.semantifyr.live.backend.lsp.language
 
+import com.google.inject.Guice
 import com.google.inject.Injector
+import com.google.inject.Module
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsRuntimeModule
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsIdeModule
@@ -14,16 +16,17 @@ import hu.bme.mit.semantifyr.oxsts.lang.ide.server.OxstsServerModule
 import org.eclipse.xtext.util.Modules2
 
 class LiveOxstsLanguageSetup(
-    private val parentInjector: Injector,
+    private val globalsModule: Module,
 ) : OxstsStandaloneSetup() {
 
     override fun createInjector(): Injector {
-        return parentInjector.createChildInjector(
+        return Guice.createInjector(
             Modules2.mixin(
                 OxstsServerModule(),
                 OxstsRuntimeModule(),
                 OxstsIdeModule(),
                 LiveLanguageServerModule(),
+                globalsModule,
             ),
         )
     }
