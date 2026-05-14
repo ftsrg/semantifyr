@@ -10,7 +10,8 @@ import hu.bme.mit.semantifyr.live.backend.exceptions.WorkspaceUriException
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocument
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServices
-import hu.bme.mit.semantifyr.live.backend.lsp.session.LspSession
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionClient
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.lsp4j.DidChangeTextDocumentParams
 import org.eclipse.lsp4j.DidCloseTextDocumentParams
@@ -42,11 +43,20 @@ class SessionTextDocumentServiceTest {
     private class Fixture {
         val documents = mock<SessionDocumentManager>()
         val requestManager = mock<SessionRequestManager>()
-        val lspSession = mock<LspSession> {
-            on { this.requestManager } doReturn requestManager
-            on { client() } doReturn mock<LanguageClient>()
+        val sessionClient = mock<SessionClient> {
+            on { get() } doReturn mock<LanguageClient>()
         }
-        val service = SessionTextDocumentService(lspSession, documents, mock<LanguageServices>())
+        val sessionContext = mock<SessionContext> {
+            on { sessionId } doReturn "test-session"
+        }
+        val service = SessionTextDocumentService(
+            requestManager,
+            sessionClient,
+            sessionContext,
+            documents,
+            mock<LanguageServices>(),
+            mock<SessionLanguageServerAccessFactory>(),
+        )
 
         fun runReadsInline() {
             whenever(requestManager.runRead<Any?>(any())) doAnswer {

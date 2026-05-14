@@ -17,7 +17,7 @@ class SessionManagerTest {
     @Test
     fun `activeSessions starts at zero`() {
         val manager = testInjector().handler<SessionManager>()
-        assertThat(manager.activeSessions).isEqualTo(0)
+        assertThat(manager.activeSessionsCount).isEqualTo(0)
         assertThat(manager.maxSessions).isEqualTo(256)
     }
 
@@ -43,6 +43,6 @@ class SessionManagerTest {
     fun `close on an empty manager does not throw`() {
         val manager = testInjector().handler<SessionManager>()
         manager.close()
-        assertThat(manager.activeSessions).isEqualTo(0)
+        assertThat(manager.activeSessionsCount).isEqualTo(0)
     }
 }

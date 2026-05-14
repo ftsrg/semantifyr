@@ -7,12 +7,8 @@
 package hu.bme.mit.semantifyr.live.backend.lsp.service
 
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager
-import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServices
-import hu.bme.mit.semantifyr.live.backend.lsp.session.LspSession
-import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationExecutor
-import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationManager
-import hu.bme.mit.semantifyr.live.backend.testing.testFlavor
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionClient
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.lsp4j.InitializeParams
 import org.eclipse.lsp4j.ServerCapabilities
@@ -31,17 +27,15 @@ class SessionLanguageServerTest {
     private val languageServices = mock<LanguageServices> {
         on { this.serverCapabilities } doReturn serverCapabilities
     }
-    private val lspSession = mock<LspSession> {
-        on { flavor } doReturn testFlavor()
-    }
+    private val sessionClient = mock<SessionClient>()
 
     private val server = SessionLanguageServer(
-        lspSession,
-        mock<SessionDocumentManager>(),
-        mock<VerificationManager>(),
-        mock<VerificationExecutor>(),
-        languageServices,
+        sessionClient,
         workManager,
+        languageServices,
+        mock<SessionTextDocumentService>(),
+        mock<SessionWorkspaceService>(),
+        mock<SessionSemantifyrExtensions>(),
     )
 
     @Test
@@ -60,7 +54,7 @@ class SessionLanguageServerTest {
     fun `connect attaches the client and initializes the work manager`() {
         val client = mock<LanguageClient>()
         server.connect(client)
-        verify(lspSession).attachClient(client)
+        verify(sessionClient).attach(client)
         verify(workManager).initialize(client)
     }
 

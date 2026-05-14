@@ -11,9 +11,9 @@ import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
-import hu.bme.mit.semantifyr.live.backend.lsp.session.LspSession
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionVerificationManager
 import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationExecutor
-import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationManager
 import hu.bme.mit.semantifyr.live.backend.testing.LspWire
 import hu.bme.mit.semantifyr.live.backend.testing.testFlavor
 import kotlinx.coroutines.future.await
@@ -45,21 +45,28 @@ class SessionWorkspaceServiceTest {
 
     private class Fixture {
         val documentManager = mock<SessionDocumentManager>()
-        val verificationManager = mock<VerificationManager>()
+        val sessionRequestManager = mock<SessionRequestManager> {
+            on { executeCommand(any()) } doReturn CompletableFuture.completedFuture<Any?>("command-result")
+        }
+        val sessionVerificationManager = mock<SessionVerificationManager>()
         val verificationExecutor = mock<VerificationExecutor> {
-            onBlocking { execute(any(), any()) } doReturn "verified"
+            onBlocking { execute(any(), any(), any()) } doReturn "verified"
         }
-        val lspSession = mock<LspSession> {
+        val sessionContext = mock<SessionContext> {
             on { flavor } doReturn testFlavor()
-            on { sessionDocumentManager } doReturn documentManager
-            on { executeCommandUnderReadLock(any()) } doReturn CompletableFuture.completedFuture<Any?>("command-result")
         }
-        val service = SessionWorkspaceService(lspSession, verificationManager, verificationExecutor)
+        val service = SessionWorkspaceService(
+            sessionContext,
+            documentManager,
+            sessionRequestManager,
+            sessionVerificationManager,
+            verificationExecutor,
+        )
 
         fun runVerificationWorkInline() {
-            whenever(verificationManager.run(any(), any(), any(), any())) doAnswer {
+            whenever(sessionVerificationManager.launch(any(), any(), any())) doAnswer {
                 @Suppress("UNCHECKED_CAST")
-                val work = it.arguments[3] as suspend () -> Any?
+                val work = it.arguments[2] as suspend () -> Any?
                 CompletableFuture.supplyAsync {
                     runBlocking {
                         work()
@@ -77,15 +84,15 @@ class SessionWorkspaceServiceTest {
     }
 
     @Test
-    fun `non-throttled command goes through the session command path`() = runTest {
+    fun `non-throttled command goes through the session request manager`() = runTest {
         val fixture = Fixture()
         val result = fixture.service.executeCommand(ExecuteCommandParams("oxsts.case.discover", emptyList())).await()
         assertThat(result).isEqualTo("command-result")
-        verify(fixture.lspSession).executeCommandUnderReadLock(any())
+        verify(fixture.sessionRequestManager).executeCommand(any())
     }
 
     @Test
-    fun `verify command is routed through the verification manager and executor`() = runTest {
+    fun `verify command is routed through the session verification manager and executor`() = runTest {
         val fixture = Fixture().apply { runVerificationWorkInline() }
         val params = ExecuteCommandParams("oxsts.case.verify", listOf<Any>(verifyArgs()))
 
@@ -94,10 +101,10 @@ class SessionWorkspaceServiceTest {
 
         val requestCaptor = argumentCaptor<VerificationCaseRequest>()
         val kindCaptor = argumentCaptor<VerificationKind>()
-        verify(fixture.verificationManager).run(any(), requestCaptor.capture(), kindCaptor.capture(), any())
+        verify(fixture.sessionVerificationManager).launch(requestCaptor.capture(), kindCaptor.capture(), any())
         assertThat(requestCaptor.firstValue.portfolio()).isEqualTo("smart-full")
         assertThat(kindCaptor.firstValue).isEqualTo(VerificationKind.Verify)
-        verifyBlocking(fixture.verificationExecutor) { execute(any(), any()) }
+        verifyBlocking(fixture.verificationExecutor) { execute(any(), any(), any()) }
     }
 
     @Test
@@ -105,7 +112,7 @@ class SessionWorkspaceServiceTest {
         val fixture = Fixture().apply { runVerificationWorkInline() }
         fixture.service.executeCommand(ExecuteCommandParams("oxsts.case.validateWitness", listOf<Any>(verifyArgs()))).await()
         val kindCaptor = argumentCaptor<VerificationKind>()
-        verify(fixture.verificationManager).run(any(), any(), kindCaptor.capture(), any())
+        verify(fixture.sessionVerificationManager).launch(any(), kindCaptor.capture(), any())
         assertThat(kindCaptor.firstValue).isEqualTo(VerificationKind.Validate)
     }
 

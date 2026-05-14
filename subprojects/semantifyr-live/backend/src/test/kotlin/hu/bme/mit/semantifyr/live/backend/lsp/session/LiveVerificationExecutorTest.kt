@@ -34,11 +34,8 @@ class LiveVerificationExecutorTest {
 
     private class Fixture(rawResult: Any?) {
         val documents = mock<SessionDocumentManager>()
-        val requestManager = mock<SessionRequestManager>()
-        val lspSession = mock<LspSession> {
-            on { sessionDocumentManager } doReturn documents
-            on { this.requestManager } doReturn requestManager
-            on { executeCommandUnderReadLock(any()) } doReturn CompletableFuture.completedFuture(rawResult)
+        val requestManager = mock<SessionRequestManager> {
+            on { executeCommand(any()) } doReturn CompletableFuture.completedFuture(rawResult)
         }
 
         fun runWritesInline() {
@@ -63,14 +60,14 @@ class LiveVerificationExecutorTest {
     @Test
     fun `a non-verification-result is returned unchanged`() = runTest {
         val fixture = Fixture("plain-result")
-        assertThat(executor.execute(fixture.lspSession, noArgs())).isEqualTo("plain-result")
+        assertThat(executor.execute(fixture.requestManager, fixture.documents, noArgs())).isEqualTo("plain-result")
     }
 
     @Test
     fun `a result without a trace is returned unchanged`() = runTest {
         val raw = VerificationCaseResult("passed", "ok", "theta", "smart-full", null, null)
         val fixture = Fixture(raw)
-        assertThat(executor.execute(fixture.lspSession, noArgs())).isSameAs(raw)
+        assertThat(executor.execute(fixture.requestManager, fixture.documents, noArgs())).isSameAs(raw)
     }
 
     @Test
@@ -87,7 +84,7 @@ class LiveVerificationExecutorTest {
         val fixture = Fixture(raw)
         whenever(fixture.documents.toClientUri(serverUri)).thenReturn("file:///workspace/.artifacts/Case/witness.oxsts")
 
-        val result = executor.execute(fixture.lspSession, noArgs()) as VerificationCaseResult
+        val result = executor.execute(fixture.requestManager, fixture.documents, noArgs()) as VerificationCaseResult
         assertThat(result.status()).isEqualTo("failed")
         assertThat(result.trace().witnessUri()).isEqualTo("file:///workspace/.artifacts/Case/witness.oxsts")
     }
@@ -106,7 +103,7 @@ class LiveVerificationExecutorTest {
         val fixture = Fixture(raw)
         whenever(fixture.documents.toClientUri(outsideUri)).thenReturn(outsideUri)
 
-        assertThat(executor.execute(fixture.lspSession, noArgs())).isSameAs(raw)
+        assertThat(executor.execute(fixture.requestManager, fixture.documents, noArgs())).isSameAs(raw)
     }
 
     @Test
@@ -117,7 +114,7 @@ class LiveVerificationExecutorTest {
         whenever(fixture.documents.existsOnDisk(uri)).thenReturn(true)
         whenever(fixture.documents.openExistingByClient(uri)).thenReturn(mock<SessionDocument>())
 
-        executor.execute(fixture.lspSession, argsWithUri(uri))
+        executor.execute(fixture.requestManager, fixture.documents, argsWithUri(uri))
 
         verify(fixture.documents).openExistingByClient(uri)
     }
@@ -128,7 +125,7 @@ class LiveVerificationExecutorTest {
         val uri = "file:///workspace/snippet.oxsts"
         whenever(fixture.documents.find(uri)).thenReturn(mock<SessionDocument>())
 
-        executor.execute(fixture.lspSession, argsWithUri(uri))
+        executor.execute(fixture.requestManager, fixture.documents, argsWithUri(uri))
 
         verify(fixture.documents, never()).openExistingByClient(any())
     }

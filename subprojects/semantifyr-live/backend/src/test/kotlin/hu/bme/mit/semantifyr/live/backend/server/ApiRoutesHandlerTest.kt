@@ -30,7 +30,7 @@ class ApiRoutesHandlerTest {
 
     private fun createHandler(activeSessions: Int = 3, maxSessions: Int = 64): ApiRoutesHandler {
         val sessionManager = mock<SessionManager>()
-        whenever(sessionManager.activeSessions).thenReturn(activeSessions)
+        whenever(sessionManager.activeSessionsCount).thenReturn(activeSessions)
         whenever(sessionManager.maxSessions).thenReturn(maxSessions)
         val serverStatus = ServerStatus().also {
             it.markStartNow()

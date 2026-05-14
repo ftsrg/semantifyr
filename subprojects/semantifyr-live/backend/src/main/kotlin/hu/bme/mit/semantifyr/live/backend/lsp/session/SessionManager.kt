@@ -8,19 +8,26 @@ package hu.bme.mit.semantifyr.live.backend.lsp.session
 
 import com.google.inject.Inject
 import com.google.inject.Singleton
-import hu.bme.mit.semantifyr.guice.common.Seed
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.Flavor
+import hu.bme.mit.semantifyr.live.backend.WorkspaceLayout
 import hu.bme.mit.semantifyr.live.backend.data.SessionInfo
 import hu.bme.mit.semantifyr.live.backend.exceptions.SessionLimitReachedException
+import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServiceRegistry
+import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionLanguageServer
+import hu.bme.mit.semantifyr.live.backend.lsp.transport.WebSocketLspConnector
 import hu.bme.mit.semantifyr.live.backend.utils.MdcContext
+import hu.bme.mit.semantifyr.live.backend.utils.currentMdcContextBlocking
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import io.ktor.server.websocket.WebSocketServerSession
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withContext
+import java.nio.file.Files
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -28,22 +35,21 @@ import java.util.concurrent.ConcurrentHashMap
 class SessionManager @Inject constructor(
     private val backendConfig: BackendConfig,
     private val languageServiceRegistry: LanguageServiceRegistry,
-    private val verificationManager: VerificationManager,
 ) : AutoCloseable {
 
     private val logger by loggerFactory()
 
     private val globalGate = Semaphore(backendConfig.sessionManager.maxSessionsGlobal)
-    private val liveSessions = ConcurrentHashMap<String, LspSession>()
+    private val activeSessions = ConcurrentHashMap<String, ActiveSession>()
 
-    val activeSessions: Int
+    val activeSessionsCount: Int
         get() = backendConfig.sessionManager.maxSessionsGlobal - globalGate.availablePermits
 
     val maxSessions = backendConfig.sessionManager.maxSessionsGlobal
 
     fun getSessionInfos(): List<SessionInfo> {
-        return liveSessions.values.map {
-            it.currentSessionInfo()
+        return activeSessions.values.map {
+            it.sessionInfoBuilder.build()
         }
     }
 
@@ -53,7 +59,7 @@ class SessionManager @Inject constructor(
         flavor: Flavor,
     ) {
         if (!globalGate.tryAcquire()) {
-            logger.warn { "Global session limit reached (active=$activeSessions, max=$maxSessions)" }
+            logger.warn { "Global session limit reached (active=$activeSessionsCount, max=$maxSessions)" }
             throw SessionLimitReachedException("Global session limit reached, please try again later.")
         }
         try {
@@ -72,26 +78,51 @@ class SessionManager @Inject constructor(
         val injector = languageServiceRegistry.injectorFor(flavor)
         withSessionScope(sessionContext) {
             withContext(MdcContext("sessionId" to sessionContext.sessionId)) {
-                val session = injector.getInstance(LspSession::class.java)
-                liveSessions[session.sessionId] = session
-                logger.info { "Created session=${session.sessionId} for ip=$remoteIp flavor=${flavor.id}" }
+                val sessionRunContext = injector.getInstance(SessionRunContext::class.java)
+                val sessionDocumentManager = injector.getInstance(SessionDocumentManager::class.java)
+                val sessionLanguageServer = injector.getInstance(SessionLanguageServer::class.java)
+                val sessionVerificationManager = injector.getInstance(SessionVerificationManager::class.java)
+                val sessionInfoBuilder = injector.getInstance(SessionInfoBuilder::class.java)
+
+                val active = ActiveSession(
+                    sessionContext = sessionContext,
+                    sessionRunContext = sessionRunContext,
+                    sessionDocumentManager = sessionDocumentManager,
+                    sessionVerificationManager = sessionVerificationManager,
+                    sessionInfoBuilder = sessionInfoBuilder,
+                )
+                activeSessions[sessionContext.sessionId] = active
+                logger.info { "Created session=${sessionContext.sessionId} for ip=$remoteIp flavor=${flavor.id}" }
+
                 try {
-                    session.run()
+                    stageLibraryOnDisk(sessionContext)
+                    loadLibraryFiles(sessionContext, sessionDocumentManager)
+
+                    val connector = WebSocketLspConnector(sessionContext.webSocketSession, sessionLanguageServer)
+                    val launchContext = currentMdcContextBlocking() + currentSessionScopeElement()
+                    try {
+                        sessionRunContext.coroutineScope.async(launchContext) {
+                            logger.info { "Session ${sessionContext.sessionId} started flavor=${flavor.id}" }
+                            connector.run()
+                        }.await()
+                    } finally {
+                        sessionRunContext.coroutineScope.cancel()
+                    }
                 } finally {
-                    liveSessions.remove(session.sessionId)
-                    session.close()
-                    cleanupSessionDirectory(session)
-                    logger.info { "Ended session=${session.sessionId} for ip=$remoteIp" }
+                    activeSessions.remove(sessionContext.sessionId)
+                    sessionDocumentManager.unloadAll()
+                    cleanupSessionDirectory(sessionContext)
+                    logger.info { "Ended session=${sessionContext.sessionId} for ip=$remoteIp" }
                 }
             }
         }
     }
 
     fun cancelSession(sessionId: String): Boolean {
-        val session = liveSessions[sessionId]
-        if (session != null) {
+        val active = activeSessions[sessionId]
+        if (active != null) {
             logger.info { "Admin cancels sessionId=$sessionId" }
-            session.close()
+            active.sessionRunContext.coroutineScope.cancel()
             return true
         }
         logger.warn { "Admin cancel for unknown sessionId=$sessionId" }
@@ -100,15 +131,20 @@ class SessionManager @Inject constructor(
 
     fun cancelVerification(verificationId: String): Boolean {
         logger.info { "Admin cancels verification verificationId=$verificationId" }
-        return verificationManager.cancel(verificationId)
+        for (active in activeSessions.values) {
+            if (active.sessionVerificationManager.cancel(verificationId)) {
+                return true
+            }
+        }
+        return false
     }
 
     override fun close() {
         logger.info { "Closing session manager" }
-        for (session in liveSessions.values) {
-            session.close()
+        for (active in activeSessions.values) {
+            active.sessionRunContext.coroutineScope.cancel()
         }
-        liveSessions.clear()
+        activeSessions.clear()
     }
 
     private fun createSessionContext(
@@ -128,8 +164,28 @@ class SessionManager @Inject constructor(
         )
     }
 
-    private fun cleanupSessionDirectory(session: LspSession) {
-        val dir = session.sessionContext.workingDirectoryPath
+    private fun stageLibraryOnDisk(sessionContext: SessionContext) {
+        val layout = sessionContext.flavor.workspaceLayout as? WorkspaceLayout.WithLibrary ?: return
+        val source = backendConfig.sessionManager.semanticLibrariesPath?.resolve(layout.libraryRelativePath)
+            ?: error("Semantic library root is not configured")
+        val target = sessionContext.workingDirectoryPath.resolve(layout.workspaceTargetName)
+        require(Files.isDirectory(source)) {
+            "Library directory missing for flavor=${sessionContext.flavor.id}: $source"
+        }
+        if (Files.isDirectory(target)) {
+            return
+        }
+        source.toFile().copyRecursively(target.toFile(), overwrite = true)
+    }
+
+    private fun loadLibraryFiles(sessionContext: SessionContext, sessionDocumentManager: SessionDocumentManager) {
+        val layout = sessionContext.flavor.workspaceLayout as? WorkspaceLayout.WithLibrary ?: return
+        val libraryDir = sessionContext.workingDirectoryPath.resolve(layout.workspaceTargetName)
+        sessionDocumentManager.loadLibraryDirectory(libraryDir)
+    }
+
+    private fun cleanupSessionDirectory(sessionContext: SessionContext) {
+        val dir = sessionContext.workingDirectoryPath
         try {
             dir.toFile().deleteRecursively()
         } catch (e: Throwable) {
@@ -137,3 +193,11 @@ class SessionManager @Inject constructor(
         }
     }
 }
+
+private class ActiveSession(
+    val sessionContext: SessionContext,
+    val sessionRunContext: SessionRunContext,
+    val sessionDocumentManager: SessionDocumentManager,
+    val sessionVerificationManager: SessionVerificationManager,
+    val sessionInfoBuilder: SessionInfoBuilder,
+)

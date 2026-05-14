@@ -7,13 +7,16 @@
 package hu.bme.mit.semantifyr.live.backend.lsp.service
 
 import com.google.gson.JsonElement
+import com.google.inject.Inject
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
-import hu.bme.mit.semantifyr.live.backend.lsp.session.LspSession
+import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScoped
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionVerificationManager
 import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationExecutor
-import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationManager
 import org.eclipse.lsp4j.DidChangeConfigurationParams
 import org.eclipse.lsp4j.DidChangeWatchedFilesParams
 import org.eclipse.lsp4j.ExecuteCommandParams
@@ -24,11 +27,17 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode
 import org.eclipse.lsp4j.services.WorkspaceService
 import java.util.concurrent.CompletableFuture
 
-class SessionWorkspaceService(
-    private val lspSession: LspSession,
-    private val verificationManager: VerificationManager,
+@SessionScoped
+class SessionWorkspaceService @Inject constructor(
+    private val sessionContext: SessionContext,
+    private val sessionDocumentManager: SessionDocumentManager,
+    private val sessionRequestManager: SessionRequestManager,
+    private val sessionVerificationManager: SessionVerificationManager,
     private val verificationExecutor: VerificationExecutor,
 ) : WorkspaceService {
+
+    private val flavor
+        get() = sessionContext.flavor
 
     override fun didChangeConfiguration(params: DidChangeConfigurationParams) {
         // no op
@@ -39,28 +48,28 @@ class SessionWorkspaceService(
     }
 
     override fun executeCommand(params: ExecuteCommandParams): CompletableFuture<Any?> {
-        lspSession.sessionDocumentManager.flushAllToDisk()
+        sessionDocumentManager.flushAllToDisk()
         val kind = verificationKindOf(params.command)
         if (kind == null) {
-            return lspSession.executeCommandUnderReadLock(params).thenApply {
+            return sessionRequestManager.executeCommand(params).thenApply {
                 rewriteResponseUris(params, it)
             }
         }
         val request = parseVerificationCaseRequest(params)
-        return verificationManager.run(lspSession, request, kind) {
-            verificationExecutor.execute(lspSession, params)
+        return sessionVerificationManager.launch(request, kind) {
+            verificationExecutor.execute(sessionRequestManager, sessionDocumentManager, params)
         }
     }
 
     private fun rewriteResponseUris(params: ExecuteCommandParams, result: Any?): Any? {
-        if (params.command != lspSession.flavor.discoveryCommand) {
+        if (params.command != flavor.discoveryCommand) {
             return result
         }
         val list = result as? List<*> ?: return result
         return list.map {
             if (it is VerificationCaseSpecification) {
                 val serverUri = it.location().uri
-                val clientUri = lspSession.sessionDocumentManager.toClientUri(serverUri)
+                val clientUri = sessionDocumentManager.toClientUri(serverUri)
                 if (clientUri == serverUri) {
                     it
                 } else {
@@ -74,8 +83,8 @@ class SessionWorkspaceService(
 
     private fun verificationKindOf(command: String): VerificationKind? {
         return when (command) {
-            lspSession.flavor.verificationCommand -> VerificationKind.Verify
-            lspSession.flavor.validateWitnessCommand -> VerificationKind.Validate
+            flavor.verificationCommand -> VerificationKind.Verify
+            flavor.validateWitnessCommand -> VerificationKind.Validate
             else -> null
         }
     }

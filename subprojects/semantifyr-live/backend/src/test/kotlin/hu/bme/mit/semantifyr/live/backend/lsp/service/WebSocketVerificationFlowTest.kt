@@ -13,7 +13,7 @@ import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.ServerConfig
 import hu.bme.mit.semantifyr.live.backend.SessionManagerConfig
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
-import hu.bme.mit.semantifyr.live.backend.lsp.session.LspSession
+import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationExecutor
 import hu.bme.mit.semantifyr.live.backend.testing.LspWire
 import hu.bme.mit.semantifyr.live.backend.testing.awaitResponseCollectingNotifications
@@ -51,7 +51,11 @@ class WebSocketVerificationFlowTest {
 
     private class FakeVerificationExecutor(private val behaviour: () -> Any?) : VerificationExecutor {
         val calls = mutableListOf<ExecuteCommandParams>()
-        override suspend fun execute(lspSession: LspSession, params: ExecuteCommandParams): Any? {
+        override suspend fun execute(
+            sessionRequestManager: SessionRequestManager,
+            sessionDocumentManager: SessionDocumentManager,
+            params: ExecuteCommandParams,
+        ): Any? {
             calls += params
             return behaviour()
         }

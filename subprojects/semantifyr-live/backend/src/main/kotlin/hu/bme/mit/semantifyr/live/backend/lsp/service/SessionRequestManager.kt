@@ -20,6 +20,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.runInterruptible
+import org.eclipse.lsp4j.ExecuteCommandParams
 import org.eclipse.xtext.util.CancelIndicator
 import org.eclipse.xtext.xbase.lib.Functions
 import java.util.concurrent.AbstractExecutorService
@@ -29,11 +30,19 @@ import java.util.concurrent.TimeUnit
 @SessionScoped
 class SessionRequestManager @Inject constructor(
     private val sessionRunContext: SessionRunContext,
-    languageServices: LanguageServices,
+    private val languageServices: LanguageServices,
+    private val sessionLanguageServerAccessFactory: SessionLanguageServerAccessFactory,
 ) : LockingRequestManager(NoopExecutor, languageServices.operationCanceledManager) {
 
     @Volatile
     private var pendingWrite: Job? = null
+
+    fun executeCommand(params: ExecuteCommandParams): CompletableFuture<Any?> {
+        return runRead {
+            val access = sessionLanguageServerAccessFactory.create(it)
+            languageServices.commandService.execute(params, access, it)
+        }
+    }
 
     @Synchronized
     override fun <V> runRead(cancellable: Functions.Function1<in CancelIndicator, out V>): CompletableFuture<V> {

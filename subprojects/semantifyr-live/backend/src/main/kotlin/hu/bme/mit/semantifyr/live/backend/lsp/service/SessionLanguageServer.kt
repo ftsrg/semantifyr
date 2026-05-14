@@ -6,12 +6,11 @@
 
 package hu.bme.mit.semantifyr.live.backend.lsp.service
 
+import com.google.inject.Inject
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager
-import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServices
-import hu.bme.mit.semantifyr.live.backend.lsp.session.LspSession
-import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationExecutor
-import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationManager
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionClient
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScoped
 import org.eclipse.lsp4j.InitializeParams
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.WorkDoneProgressCancelParams
@@ -25,19 +24,16 @@ import org.eclipse.lsp4j.services.TextDocumentService
 import org.eclipse.lsp4j.services.WorkspaceService
 import java.util.concurrent.CompletableFuture
 
-class SessionLanguageServer(
-    private val lspSession: LspSession,
-    sessionDocumentManager: SessionDocumentManager,
-    verificationManager: VerificationManager,
-    verificationExecutor: VerificationExecutor,
-    private val languageServices: LanguageServices,
+@SessionScoped
+class SessionLanguageServer @Inject constructor(
+    private val sessionClient: SessionClient,
     private val workManager: WorkManager,
+    private val languageServices: LanguageServices,
+    private val textDocumentService: SessionTextDocumentService,
+    private val workspaceService: SessionWorkspaceService,
+    private val extensions: SessionSemantifyrExtensions,
 ) : LanguageServer,
     LanguageClientAware {
-
-    private val textDocumentService = SessionTextDocumentService(lspSession, sessionDocumentManager, languageServices)
-    private val workspaceService = SessionWorkspaceService(lspSession, verificationManager, verificationExecutor)
-    private val extensions = SessionSemantifyrExtensions(lspSession, verificationManager)
 
     private val services = listOf(this, extensions)
 
@@ -54,7 +50,7 @@ class SessionLanguageServer(
     }
 
     override fun connect(client: LanguageClient) {
-        lspSession.attachClient(client)
+        sessionClient.attach(client)
         workManager.initialize(client)
     }
 

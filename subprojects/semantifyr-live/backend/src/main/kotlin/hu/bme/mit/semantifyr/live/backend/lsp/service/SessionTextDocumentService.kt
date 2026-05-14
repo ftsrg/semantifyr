@@ -6,11 +6,14 @@
 
 package hu.bme.mit.semantifyr.live.backend.lsp.service
 
+import com.google.inject.Inject
 import hu.bme.mit.semantifyr.live.backend.exceptions.WorkspaceUriException
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocument
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServices
-import hu.bme.mit.semantifyr.live.backend.lsp.session.LspSession
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionClient
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScoped
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import org.eclipse.lsp4j.CodeAction
@@ -47,26 +50,32 @@ import org.eclipse.xtext.ide.server.codeActions.ICodeActionService2
 import org.eclipse.xtext.util.CancelIndicator
 import java.util.concurrent.CompletableFuture
 
-class SessionTextDocumentService(
-    private val lspSession: LspSession,
+@SessionScoped
+class SessionTextDocumentService @Inject constructor(
+    private val sessionRequestManager: SessionRequestManager,
+    private val sessionClient: SessionClient,
+    private val sessionContext: SessionContext,
     private val sessionDocumentManager: SessionDocumentManager,
     private val languageServices: LanguageServices,
+    private val sessionLanguageServerAccessFactory: SessionLanguageServerAccessFactory,
 ) : TextDocumentService {
 
     private val logger by loggerFactory()
 
+    private val sessionId get() = sessionContext.sessionId
+
     override fun didOpen(params: DidOpenTextDocumentParams) {
         val clientUri = params.textDocument.uri
-        lspSession.requestManager.runWrite {
+        sessionRequestManager.runWrite {
             try {
                 if (sessionDocumentManager.existsOnDisk(clientUri)) {
                     sessionDocumentManager.openExistingByClient(clientUri)
                 } else {
                     sessionDocumentManager.openByClient(clientUri, params.textDocument.text)
                 }
-                sessionDocumentManager.validateAll(lspSession.client(), it)
+                sessionDocumentManager.validateAll(sessionClient.get(), it)
             } catch (e: WorkspaceUriException) {
-                logger.warn(e) { "Rejected didOpen sessionId=${lspSession.sessionId} clientUri=$clientUri" }
+                logger.warn(e) { "Rejected didOpen sessionId=$sessionId clientUri=$clientUri" }
             }
         }
     }
@@ -75,13 +84,13 @@ class SessionTextDocumentService(
         val document = sessionDocumentManager.findByClient(params.textDocument.uri)
 
         if (document == null) {
-            logger.warn { "didChange for unknown file sessionId=${lspSession.sessionId} clientUri=${params.textDocument.uri}" }
+            logger.warn { "didChange for unknown file sessionId=$sessionId clientUri=${params.textDocument.uri}" }
             return
         }
 
-        lspSession.requestManager.runWrite {
+        sessionRequestManager.runWrite {
             document.applyChanges(params.contentChanges)
-            sessionDocumentManager.validateAll(lspSession.client(), it)
+            sessionDocumentManager.validateAll(sessionClient.get(), it)
         }
     }
 
@@ -224,7 +233,7 @@ class SessionTextDocumentService(
                 this.cancelIndicator = cancelIndicator
                 this.document = file.xtextDocument()
                 this.resource = file.resource
-                this.languageServerAccess = SessionLanguageServerAccess.forSession(lspSession, cancelIndicator)
+                this.languageServerAccess = sessionLanguageServerAccessFactory.create(cancelIndicator)
             }
             service.getCodeActions(options).orEmpty().toMutableList()
         }
@@ -235,7 +244,7 @@ class SessionTextDocumentService(
         empty: T,
         crossinline block: (SessionDocument, CancelIndicator) -> T,
     ): CompletableFuture<T> {
-        return lspSession.requestManager.runRead {
+        return sessionRequestManager.runRead {
             val document = sessionDocumentManager.findByClient(clientUri)
             if (document == null) {
                 return@runRead empty

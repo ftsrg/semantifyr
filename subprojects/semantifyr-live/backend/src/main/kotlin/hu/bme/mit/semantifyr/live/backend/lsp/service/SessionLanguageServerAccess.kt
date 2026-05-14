@@ -6,9 +6,11 @@
 
 package hu.bme.mit.semantifyr.live.backend.lsp.service
 
+import com.google.inject.Inject
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServices
-import hu.bme.mit.semantifyr.live.backend.lsp.session.LspSession
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionClient
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScoped
 import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.lsp4j.InitializeParams
 import org.eclipse.lsp4j.InitializeResult
@@ -69,15 +71,20 @@ class SessionLanguageServerAccess(
         val file = sessionDocumentManager.find(uri) ?: error("No resource registered for uri=$uri")
         return Context(file.resource, file.xtextDocument(), true, cancelIndicator)
     }
+}
 
-    companion object {
-        fun forSession(lspSession: LspSession, cancelIndicator: CancelIndicator): SessionLanguageServerAccess {
-            return SessionLanguageServerAccess(
-                lspSession.sessionDocumentManager,
-                lspSession.client(),
-                lspSession.languageServices,
-                cancelIndicator,
-            )
-        }
+@SessionScoped
+class SessionLanguageServerAccessFactory @Inject constructor(
+    private val sessionDocumentManager: SessionDocumentManager,
+    private val sessionClient: SessionClient,
+    private val languageServices: LanguageServices,
+) {
+    fun create(cancelIndicator: CancelIndicator): SessionLanguageServerAccess {
+        return SessionLanguageServerAccess(
+            sessionDocumentManager,
+            sessionClient.get(),
+            languageServices,
+            cancelIndicator,
+        )
     }
 }

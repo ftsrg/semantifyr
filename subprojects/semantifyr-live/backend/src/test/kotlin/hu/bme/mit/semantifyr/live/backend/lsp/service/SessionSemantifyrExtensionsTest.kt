@@ -9,8 +9,9 @@ package hu.bme.mit.semantifyr.live.backend.lsp.service
 import hu.bme.mit.semantifyr.live.backend.data.SessionInfo
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
 import hu.bme.mit.semantifyr.live.backend.data.VerificationState
-import hu.bme.mit.semantifyr.live.backend.lsp.session.LspSession
-import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationManager
+import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionInfoBuilder
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionVerificationManager
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.lsp4j.Location
 import org.eclipse.lsp4j.Position
@@ -35,10 +36,14 @@ class SessionSemantifyrExtensionsTest {
     @Test
     fun `sessionInfo returns the session's current info`() {
         val info = sessionInfo()
-        val lspSession = mock<LspSession> {
-            on { currentSessionInfo() } doReturn info
+        val sessionInfoBuilder = mock<SessionInfoBuilder> {
+            on { build() } doReturn info
         }
-        val extensions = SessionSemantifyrExtensions(lspSession, mock())
+        val extensions = SessionSemantifyrExtensions(
+            sessionInfoBuilder,
+            mock<SessionDocumentManager>(),
+            mock<SessionVerificationManager>(),
+        )
 
         assertThat(extensions.sessionInfo().get()).isSameAs(info)
     }
@@ -55,39 +60,45 @@ class SessionSemantifyrExtensionsTest {
                 elapsed = Duration.ZERO,
             ),
         )
-        val verificationManager = mock<VerificationManager> {
-            on { activeFor("session-1") } doReturn active
+        val sessionVerificationManager = mock<SessionVerificationManager> {
+            on { active() } doReturn active
         }
-        val lspSession = mock<LspSession> {
-            on { sessionId } doReturn "session-1"
-        }
-        val extensions = SessionSemantifyrExtensions(lspSession, verificationManager)
+        val extensions = SessionSemantifyrExtensions(
+            mock<SessionInfoBuilder>(),
+            mock<SessionDocumentManager>(),
+            sessionVerificationManager,
+        )
 
         assertThat(extensions.listVerifications().get().active).isEqualTo(active)
     }
 
     @Test
-    fun `cancelVerification delegates to the manager and returns the result`() {
-        val verificationManager = mock<VerificationManager> {
+    fun `cancelVerification delegates to the session manager and returns the result`() {
+        val sessionVerificationManager = mock<SessionVerificationManager> {
             on { cancel("r-1") } doReturn true
         }
-        val extensions = SessionSemantifyrExtensions(mock(), verificationManager)
+        val extensions = SessionSemantifyrExtensions(
+            mock<SessionInfoBuilder>(),
+            mock<SessionDocumentManager>(),
+            sessionVerificationManager,
+        )
 
         assertThat(extensions.cancelVerification(CancelVerificationParams(verificationId = "r-1")).get()).isTrue()
-        verify(verificationManager).cancel("r-1")
+        verify(sessionVerificationManager).cancel("r-1")
     }
 
     @Test
     fun `cancelAllVerifications cancels everything for this session`() {
-        val verificationManager = mock<VerificationManager> {
-            on { cancelForSession("session-1") } doReturn 3
+        val sessionVerificationManager = mock<SessionVerificationManager> {
+            on { cancelAll() } doReturn 3
         }
-        val lspSession = mock<LspSession> {
-            on { sessionId } doReturn "session-1"
-        }
-        val extensions = SessionSemantifyrExtensions(lspSession, verificationManager)
+        val extensions = SessionSemantifyrExtensions(
+            mock<SessionInfoBuilder>(),
+            mock<SessionDocumentManager>(),
+            sessionVerificationManager,
+        )
 
         assertThat(extensions.cancelAllVerifications().get()).isEqualTo(3)
-        verify(verificationManager).cancelForSession("session-1")
+        verify(sessionVerificationManager).cancelAll()
     }
 }

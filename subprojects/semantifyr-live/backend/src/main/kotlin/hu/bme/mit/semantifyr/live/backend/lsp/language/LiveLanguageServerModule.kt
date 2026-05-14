@@ -11,6 +11,7 @@ import com.google.inject.Provides
 import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.lang.ide.server.ServerSettings
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.LockingRequestManager
+import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager
 import hu.bme.mit.semantifyr.lang.ide.server.wire.ArtifactsLocation
 import hu.bme.mit.semantifyr.lang.ide.server.wire.ServerSettingsPayload
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionRequestManager
@@ -29,6 +30,8 @@ class LiveLanguageServerModule : AbstractModule() {
             .`in`(SessionScoped::class.java)
         bind(LockingRequestManager::class.java)
             .to(SessionRequestManager::class.java)
+            .`in`(SessionScoped::class.java)
+        bind(WorkManager::class.java)
             .`in`(SessionScoped::class.java)
     }
 
