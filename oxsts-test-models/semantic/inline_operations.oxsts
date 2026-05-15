@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
 package semantifyr::verification::lang::inline_operations
 
 // Inline operations are expanded by the compiler at inline time rather

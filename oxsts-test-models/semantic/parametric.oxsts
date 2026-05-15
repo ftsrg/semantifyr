@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
 package semantifyr::verification::lang::parametric
 
 // Parametric transitions and properties. Arguments are substituted
