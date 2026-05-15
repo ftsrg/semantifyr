@@ -56,10 +56,6 @@
   --danger-soft-bg: rgba(239, 68, 68, 0.15);
 }
 
-* {
-  box-sizing: border-box;
-}
-
 html,
 body,
 #root {
