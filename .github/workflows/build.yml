@@ -34,6 +34,10 @@ jobs:
           distribution: adopt
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
