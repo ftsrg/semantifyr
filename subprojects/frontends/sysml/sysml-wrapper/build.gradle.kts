@@ -145,6 +145,15 @@ val buildCli by tasks.registering(PnpmTask::class) {
     )
 }
 
+// workaround until syside becomes esm
+val writeCliBundleCommonjsMarker by tasks.registering {
+    val outputFile = layout.buildDirectory.file("cli-bundle-marker/package.json")
+    outputs.file(outputFile)
+    doLast {
+        outputFile.get().asFile.writeText("""{"type":"commonjs"}""")
+    }
+}
+
 val bundleCli by tasks.registering(Sync::class) {
     inputs.files(checkoutLibrary)
     inputs.files(buildCli)
@@ -154,6 +163,7 @@ val bundleCli by tasks.registering(Sync::class) {
         include("**/*.kerml")
         into("sysml.library")
     }
+    from(writeCliBundleCommonjsMarker)
     into(project.layout.buildDirectory.dir("cli-bundle"))
 }
 
