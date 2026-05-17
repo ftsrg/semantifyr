@@ -19,7 +19,7 @@ dependencies {
     implementation(project(":logging"))
 }
 
-val sysmlCommit = "e6c281c6801f9a367448caf325ad5caa49abab53" // Support pnpm 11
+val sysmlCommit = "e6c281c6801f9a367448caf325ad5caa49abab53" // bump after pushing the wrapper-compatible refactor
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.buildDirectory.dir("sysml-2ls").get()
 
@@ -49,121 +49,84 @@ tasks.pnpmInstall {
     dependsOn(checkoutSysml)
 }
 
+// The stdlib clone moved to the workspace root in sysml-2ls; the wrapper-side
+// `pnpmInstall` already triggers it via the upstream `postinstall` hook, but
+// we keep an explicit task so callers that want only the library don't need to
+// install dev deps.
 val checkoutLibrary by tasks.registering(NodeTask::class) {
-    dependsOn(tasks.pnpmInstall) // node_modules directory is not reliable
-    mustRunAfter(buildExtension)
-    inputs.file(sysmlDir.file("packages/syside-languageserver/scripts/clone-sysml-release.mjs"))
+    dependsOn(tasks.pnpmInstall)
+    inputs.file(sysmlDir.file("scripts/clone-sysml-release.mjs"))
     outputs.dir(sysmlDir.dir("SysML-v2-Release"))
 
-    script = sysmlDir.file("packages/syside-languageserver/scripts/clone-sysml-release.mjs")
+    script = sysmlDir.file("scripts/clone-sysml-release.mjs")
+}
+
+// Shared input set: TS sources, package manifests, helper scripts. The new
+// build pipeline produces per-package `lib/` (tsc output) and `dist/` (esbuild
+// bundles); both are checked in `outputs`.
+val sysmlSourceFiles = fileTree(sysmlDir.dir("packages")) {
+    include("**/src/**/*.ts")
+    include("**/gen/**/*.ts")
+    include("**/tsconfig.json")
+    include("**/package.json")
+    include("**/esbuild.mjs")
+    include("**/scripts/*.*")
+    exclude("**/node_modules/**")
+    exclude("**/lib/**")
+    exclude("**/dist/**")
+}
+
+val sysmlBuildOutputs = fileTree(sysmlDir.dir("packages")) {
+    exclude("**/node_modules/**")
+    include("**/lib/**")
+    include("**/dist/**")
 }
 
 val buildExtension by tasks.registering(PnpmTask::class) {
-    dependsOn(tasks.pnpmInstall) // node_modules directory is not reliable
+    dependsOn(tasks.pnpmInstall)
     inputs.file(sysmlDir.file("package.json"))
     inputs.file(sysmlDir.file("tsconfig.json"))
-    inputs.file(sysmlDir.file("tsconfig.build.json"))
-    inputs.file(sysmlDir.file("tsconfig.eslint.json"))
-    inputs.files(
-        fileTree(sysmlDir.dir("packages")) {
-            include("**/src/**/*.ts")
-            include("**/tsconfig.json")
-            include("**/package.json")
-            include("**/package-lock.json")
-            include("**/scripts/*.*")
-            include("**/scripts/*.*")
-        },
-    )
-    outputs.files(
-        fileTree(sysmlDir.dir("packages")) {
-            exclude("**/node_modules/**")
-            include("**/lib/**")
-            include("**/dist/**")
-        },
-    )
+    inputs.files(sysmlSourceFiles)
+    outputs.files(sysmlBuildOutputs)
 
-    pnpmCommand.set(
-        listOf(
-            "run",
-            "build",
-        ),
-    )
+    pnpmCommand.set(listOf("run", "build"))
 }
 
 val bundleExtension by tasks.registering(PnpmTask::class) {
     inputs.files(buildExtension)
     inputs.file(sysmlDir.file("package.json"))
     inputs.file(sysmlDir.file("tsconfig.json"))
-    inputs.file(sysmlDir.file("tsconfig.build.json"))
-    inputs.file(sysmlDir.file("tsconfig.eslint.json"))
-    inputs.files(
-        fileTree(sysmlDir.dir("packages")) {
-            include("**/src/**/*.ts")
-            include("**/tsconfig.json")
-            include("**/package.json")
-            include("**/package-lock.json")
-            include("**/scripts/*.*")
-            include("**/scripts/*.*")
-        },
-    )
-    outputs.file(sysmlDir.file("packages/syside-vscode/sysml-2ls-0.9.0.vsix"))
+    inputs.files(sysmlSourceFiles)
+    outputs.files(fileTree(sysmlDir.dir("packages/syside-vscode")) { include("*.vsix") })
 
-    pnpmCommand.set(
-        listOf(
-            "run",
-            "vscode:package",
-        ),
-    )
+    pnpmCommand.set(listOf("run", "vscode:package"))
 }
 
+// The CLI bundle is a single self-contained CommonJS file at
+// `packages/syside-cli/dist/cli.cjs` (esbuild output, renamed from the
+// legacy `out/index.js`).
 val buildCli by tasks.registering(PnpmTask::class) {
     dependsOn(tasks.pnpmInstall)
     mustRunAfter(buildExtension)
     inputs.file(sysmlDir.file("package.json"))
     inputs.file(sysmlDir.file("tsconfig.json"))
-    inputs.file(sysmlDir.file("tsconfig.build.json"))
-    inputs.file(sysmlDir.file("tsconfig.eslint.json"))
-    inputs.files(
-        fileTree(sysmlDir.dir("packages")) {
-            include("**/src/**/*.ts")
-            include("**/tsconfig.json")
-            include("**/package.json")
-            include("**/package-lock.json")
-            include("**/scripts/*.*")
-            include("**/scripts/*.*")
-        },
-    )
-    outputs.file(sysmlDir.file("packages/syside-cli/out/index.js"))
+    inputs.files(sysmlSourceFiles)
+    outputs.file(sysmlDir.file("packages/syside-cli/dist/cli.cjs"))
 
-    workingDir = sysmlDir.dir("packages/syside-cli")
+    workingDir = sysmlDir.dir("packages/syside-cli").asFile
 
-    pnpmCommand.set(
-        listOf(
-            "run",
-            "esbuild",
-        ),
-    )
-}
-
-// workaround until syside becomes esm
-val writeCliBundleCommonjsMarker by tasks.registering {
-    val outputFile = layout.buildDirectory.file("cli-bundle-marker/package.json")
-    outputs.file(outputFile)
-    doLast {
-        outputFile.get().asFile.writeText("""{"type":"commonjs"}""")
-    }
+    pnpmCommand.set(listOf("run", "bundle"))
 }
 
 val bundleCli by tasks.registering(Sync::class) {
     inputs.files(checkoutLibrary)
     inputs.files(buildCli)
-    from(sysmlDir.file("packages/syside-cli/out/index.js"))
+    from(sysmlDir.file("packages/syside-cli/dist/cli.cjs"))
     from(fileTree(sysmlDir.dir("SysML-v2-Release/sysml.library"))) {
         include("**/*.sysml")
         include("**/*.kerml")
         into("sysml.library")
     }
-    from(writeCliBundleCommonjsMarker)
     into(project.layout.buildDirectory.dir("cli-bundle"))
 }
 
@@ -190,7 +153,7 @@ fun sysmlExampleTask(name: String) = tasks.register<NodeTask>("compileSysmlExamp
     inputs.file(sourceFile).withPathSensitivity(PathSensitivity.NAME_ONLY)
     outputs.file(targetFile)
     outputs.cacheIf { true }
-    script = cliBundleDir.get().file("index.js").asFile
+    script = cliBundleDir.get().file("cli.cjs").asFile
     args = provider {
         listOf(
             "compile",
