@@ -60,7 +60,9 @@ class CompilationArtifactManager @Inject constructor(
         inlinedOxsts: InlinedOxsts,
         modelFile: File,
     ) {
-        serializer.serialize(inlinedOxsts, modelFile.bufferedWriter(), SaveOptions.defaultOptions())
+        modelFile.bufferedWriter().use {
+            serializer.serialize(inlinedOxsts, it, SaveOptions.defaultOptions())
+        }
     }
 
 }
