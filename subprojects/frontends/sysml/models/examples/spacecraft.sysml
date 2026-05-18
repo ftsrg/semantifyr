@@ -18,7 +18,7 @@ part def GroundStation {
         transition first Idle accept : StartCommand via commandPort then Operation;
 
         state Operation {
-            entry send PingCommand() via spacecraftCommandPort;
+            entry send new PingCommand() via spacecraftCommandPort;
 
             transition first start then Waiting;
 
@@ -70,7 +70,7 @@ part def Spacecraft {
                         if not (data <= 0 or batteryCharge <= 40) 
                         do action {
                             assign data := data - 1;
-                            send Data() via dataPort;
+                            send new Data() via dataPort;
                         }
                         then Sending;
                 }

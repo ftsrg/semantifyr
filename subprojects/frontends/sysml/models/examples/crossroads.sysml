@@ -33,45 +33,45 @@ part def CentralController {
 
             // switch A to Red, B to Red
             transition first BothYellow accept after 1[s] do action {
-                send Toggle() via controlA;
-                send Toggle() via controlB;
+                send new Toggle() via controlA;
+                send new Toggle() via controlB;
             } then BothRed;
 
             state BothRed;
 
             // switch A to Green
             transition first BothRed accept after 2[s] do action {
-                send Toggle() via controlA;
+                send new Toggle() via controlA;
             } then TrafficOnA;
 
             state TrafficOnA;
 
             // switch A to Yellow
             transition first TrafficOnA accept after 2[s] do action {
-                send Toggle() via controlA;
+                send new Toggle() via controlA;
             } then StoppingA;
             
             state StoppingA;
 
             // switch A to Red, B to Green
             transition first StoppingA accept after 1[s] do action {
-                send Toggle() via controlA;
-                send Toggle() via controlB;
+                send new Toggle() via controlA;
+                send new Toggle() via controlB;
             } then TrafficOnB;
             
             state TrafficOnB;
             
             // switch B to Yellow
             transition first TrafficOnB accept after 2[s] do action {
-                send Toggle() via controlB;
+                send new Toggle() via controlB;
             } then StoppingB;
             
             state StoppingB;
             
             // switch A to Green, B to Red
             transition first StoppingB accept after 1[s] do action {
-                send Toggle() via controlA;
-                send Toggle() via controlB;
+                send new Toggle() via controlA;
+                send new Toggle() via controlB;
             } then TrafficOnA;
         }
 
@@ -80,12 +80,12 @@ part def CentralController {
 
         state Interrupted {
             entry action {
-                send Police() via controlA;
-                send Police() via controlB;
+                send new Police() via controlA;
+                send new Police() via controlB;
             }
             exit action {
-                send Police() via controlA;
-                send Police() via controlB;
+                send new Police() via controlA;
+                send new Police() via controlB;
             }
         }
     }
@@ -102,19 +102,19 @@ part def TrafficLightController {
             transition first start then Yellow;
 
             state Yellow {
-                entry send YellowL() via lightControl;
+                entry send new YellowL() via lightControl;
             }
 
             transition first Yellow accept Toggle via control then Red;
 
             state Red {
-                entry send RedL() via lightControl;
+                entry send new RedL() via lightControl;
             }
 
             transition first Red accept Toggle via control then Green;
 
             state Green {
-                entry send GreenL() via lightControl;
+                entry send new GreenL() via lightControl;
             }
 
             transition first Green accept Toggle via control then Yellow;
@@ -127,14 +127,14 @@ part def TrafficLightController {
             transition first start then Yellow;
 
             state Yellow {
-                entry send YellowL() via lightControl;
+                entry send new YellowL() via lightControl;
             }
 
             transition first Yellow accept after 1 [s] then Black;
             transition first Black accept after 1 [s] then Yellow;
 
             state Black {
-                entry send NoneL() via lightControl;
+                entry send new NoneL() via lightControl;
             }
         }
     }

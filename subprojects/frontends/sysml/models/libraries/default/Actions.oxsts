@@ -13,7 +13,7 @@ import semantifyr::sysml::items
 
 abstract class Action
 
-class SendAction : Action {
+class SendItemAction : Action {
     refers viaPort: Port
     refers payload: Item
 

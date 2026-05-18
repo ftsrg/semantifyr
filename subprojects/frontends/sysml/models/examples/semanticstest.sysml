@@ -442,7 +442,7 @@ part def SenderPartModel {
         transition first start then Idle;
         transition
             first Idle
-            do action { send MessageM() via output; }
+            do action { send new MessageM() via output; }
             then Sent;
     }
 }

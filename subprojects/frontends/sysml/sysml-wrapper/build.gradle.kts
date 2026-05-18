@@ -19,9 +19,9 @@ dependencies {
     implementation(project(":logging"))
 }
 
-val sysmlCommit = "e6c281c6801f9a367448caf325ad5caa49abab53" // bump after pushing the wrapper-compatible refactor
+val sysmlCommit = "fdca597594452bca3bd6f31a2210c35a2aefe1a0" // Updated extension name
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
-val sysmlDir = layout.buildDirectory.dir("sysml-2ls").get()
+val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
 node {
     nodeProjectDir = sysmlDir
@@ -49,21 +49,6 @@ tasks.pnpmInstall {
     dependsOn(checkoutSysml)
 }
 
-// The stdlib clone moved to the workspace root in sysml-2ls; the wrapper-side
-// `pnpmInstall` already triggers it via the upstream `postinstall` hook, but
-// we keep an explicit task so callers that want only the library don't need to
-// install dev deps.
-val checkoutLibrary by tasks.registering(NodeTask::class) {
-    dependsOn(tasks.pnpmInstall)
-    inputs.file(sysmlDir.file("scripts/clone-sysml-release.mjs"))
-    outputs.dir(sysmlDir.dir("SysML-v2-Release"))
-
-    script = sysmlDir.file("scripts/clone-sysml-release.mjs")
-}
-
-// Shared input set: TS sources, package manifests, helper scripts. The new
-// build pipeline produces per-package `lib/` (tsc output) and `dist/` (esbuild
-// bundles); both are checked in `outputs`.
 val sysmlSourceFiles = fileTree(sysmlDir.dir("packages")) {
     include("**/src/**/*.ts")
     include("**/gen/**/*.ts")
@@ -82,18 +67,13 @@ val sysmlBuildOutputs = fileTree(sysmlDir.dir("packages")) {
     include("**/dist/**")
 }
 
-val buildExtension by tasks.registering(PnpmTask::class) {
-    dependsOn(tasks.pnpmInstall)
-    inputs.file(sysmlDir.file("package.json"))
-    inputs.file(sysmlDir.file("tsconfig.json"))
-    inputs.files(sysmlSourceFiles)
-    outputs.files(sysmlBuildOutputs)
-
-    pnpmCommand.set(listOf("run", "build"))
+val cleanStaleVsix by tasks.registering(Delete::class) {
+    delete(fileTree(sysmlDir.dir("packages/syside-vscode")) { include("*.vsix") })
 }
 
 val bundleExtension by tasks.registering(PnpmTask::class) {
-    inputs.files(buildExtension)
+    dependsOn(tasks.pnpmInstall)
+    dependsOn(cleanStaleVsix)
     inputs.file(sysmlDir.file("package.json"))
     inputs.file(sysmlDir.file("tsconfig.json"))
     inputs.files(sysmlSourceFiles)
@@ -102,24 +82,26 @@ val bundleExtension by tasks.registering(PnpmTask::class) {
     pnpmCommand.set(listOf("run", "vscode:package"))
 }
 
-// The CLI bundle is a single self-contained CommonJS file at
-// `packages/syside-cli/dist/cli.cjs` (esbuild output, renamed from the
-// legacy `out/index.js`).
+val sysideVsix = layout.buildDirectory.file("vscode-extension/syside-vscode.vsix")
+
+val collectExtension by tasks.registering(Sync::class) {
+    from(bundleExtension)
+    rename(".*\\.vsix", "syside-vscode.vsix")
+    into(sysideVsix.map { it.asFile.parentFile })
+}
+
 val buildCli by tasks.registering(PnpmTask::class) {
     dependsOn(tasks.pnpmInstall)
-    mustRunAfter(buildExtension)
+    mustRunAfter(bundleExtension) // input fileTree at packages/ overlaps bundleExtension's output dir; logically independent
     inputs.file(sysmlDir.file("package.json"))
     inputs.file(sysmlDir.file("tsconfig.json"))
     inputs.files(sysmlSourceFiles)
     outputs.file(sysmlDir.file("packages/syside-cli/dist/cli.cjs"))
 
-    workingDir = sysmlDir.dir("packages/syside-cli").asFile
-
-    pnpmCommand.set(listOf("run", "bundle"))
+    pnpmCommand.set(listOf("run", "cli"))
 }
 
 val bundleCli by tasks.registering(Sync::class) {
-    inputs.files(checkoutLibrary)
     inputs.files(buildCli)
     from(sysmlDir.file("packages/syside-cli/dist/cli.cjs"))
     from(fileTree(sysmlDir.dir("SysML-v2-Release/sysml.library"))) {
@@ -131,8 +113,8 @@ val bundleCli by tasks.registering(Sync::class) {
 }
 
 artifacts {
-    add(distributionOutput.name, bundleExtension.map { it.outputs.files.singleFile }) {
-        builtBy(bundleExtension)
+    add(distributionOutput.name, sysideVsix) {
+        builtBy(collectExtension)
     }
 }
 

@@ -58,14 +58,14 @@ part def Orion_Master_SM {
                 transition first KeepAliveSendTimeout
                     accept after 4 [s]
                     do action {
-                        send OrionKeepAlive() via Send_StateMachine_Port;
+                        send new OrionKeepAlive() via Send_StateMachine_Port;
                     }
                     then KeepAliveSendTimeout;
 
                 transition first KeepAliveSendTimeout
                     accept : Operation_Call_SendData via Block_Port
                     do action {
-                        send OrionAppData() via Send_StateMachine_Port;
+                        send new OrionAppData() via Send_StateMachine_Port;
                     }
                     then KeepAliveSendTimeout;
             }
@@ -82,7 +82,7 @@ part def Orion_Master_SM {
                 transition first KeepAliveReceiveTimeout
                     accept : OrionAppData via StateMachine_Port
                     do action {
-                        send OrionAppData() via Process_StateMachine_Port;
+                        send new OrionAppData() via Process_StateMachine_Port;
                     }
                     then KeepAliveReceiveTimeout;
 
@@ -101,14 +101,14 @@ part def Orion_Master_SM {
         transition first Closed
             accept after 5 [s]
             do action {
-                send OrionConnReq() via Send_StateMachine_Port;
+                send new OrionConnReq() via Send_StateMachine_Port;
             }
             then Connecting;
 
         transition first Closed
             accept : Operation_Call_Connect via Connection_Port
             do action {
-                send OrionConnReq() via Send_StateMachine_Port;
+                send new OrionConnReq() via Send_StateMachine_Port;
             }
             then Connecting;
 
@@ -116,7 +116,7 @@ part def Orion_Master_SM {
         transition first Connecting
             accept : OrionConnResp via StateMachine_Port
             do action {
-                send OrionConnConf() via Send_StateMachine_Port;
+                send new OrionConnConf() via Send_StateMachine_Port;
             }
             then Connected;
 
@@ -177,14 +177,14 @@ part def Orion_Master_SM {
         transition first MasterMerge
             accept when true
             do action {
-                send OrionDisconn() via Send_StateMachine_Port;
+                send new OrionDisconn() via Send_StateMachine_Port;
             }
             then Closed;
 
         transition first MasterMerge2
             accept when true
             do action {
-                send OrionDisconn() via Send_StateMachine_Port;
+                send new OrionDisconn() via Send_StateMachine_Port;
             }
             then Closed;
     }
@@ -211,14 +211,14 @@ part def Orion_Slave_SM {
                 transition first KeepAliveSendTimeout
                     accept after 4 [s]
                     do action {
-                        send OrionKeepAlive() via Send_StateMachine_Port;
+                        send new OrionKeepAlive() via Send_StateMachine_Port;
                     }
                     then KeepAliveSendTimeout;
 
                 transition first KeepAliveSendTimeout
                     accept : Operation_Call_SendData via Block_Port
                     do action {
-                        send OrionAppData() via Send_StateMachine_Port;
+                        send new OrionAppData() via Send_StateMachine_Port;
                     }
                     then KeepAliveSendTimeout;
             }
@@ -235,7 +235,7 @@ part def Orion_Slave_SM {
                 transition first KeepAliveReceiveTimeout
                     accept : OrionAppData via StateMachine_Port
                     do action {
-                        send OrionAppData() via Process_StateMachine_Port;
+                        send new OrionAppData() via Process_StateMachine_Port;
                     }
                     then KeepAliveReceiveTimeout;
 
@@ -254,7 +254,7 @@ part def Orion_Slave_SM {
         transition first Closed
             accept : OrionConnReq via StateMachine_Port
             do action {
-                send OrionConnResp() via Send_StateMachine_Port;
+                send new OrionConnResp() via Send_StateMachine_Port;
             }
             then Connecting;
 
@@ -262,7 +262,7 @@ part def Orion_Slave_SM {
         transition first Connecting
             accept : OrionConnConf via StateMachine_Port
             do action {
-                send OrionConnConf() via Handle_StateMachine_Port;
+                send new OrionConnConf() via Handle_StateMachine_Port;
             }
             then Connected;
 
@@ -323,14 +323,14 @@ part def Orion_Slave_SM {
         transition first SlaveMerge
             accept when true
             do action {
-                send OrionDisconn() via Send_StateMachine_Port;
+                send new OrionDisconn() via Send_StateMachine_Port;
             }
             then Closed;
 
         transition first SlaveMerge2
             accept when true
             do action {
-                send OrionDisconn() via Send_StateMachine_Port;
+                send new OrionDisconn() via Send_StateMachine_Port;
             }
             then Closed;
     }
