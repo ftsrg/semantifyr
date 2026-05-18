@@ -7,23 +7,19 @@
 package hu.bme.mit.semantifyr.live.backend
 
 import com.google.inject.AbstractModule
-import com.google.inject.Provides
-import com.google.inject.assistedinject.FactoryModuleBuilder
-import hu.bme.mit.semantifyr.live.backend.session.LiveSession
-import com.google.inject.Singleton
+import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServiceRegistry
+import hu.bme.mit.semantifyr.live.backend.lsp.language.LiveLanguageServiceRegistry
+import hu.bme.mit.semantifyr.live.backend.lsp.session.LiveVerificationExecutor
+import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationExecutor
 
 class BackendModule(
     private val config: BackendConfig,
 ) : AbstractModule() {
 
     override fun configure() {
-        install(FactoryModuleBuilder().build(LiveSession.Factory::class.java))
+        super.configure()
+        bind(BackendConfig::class.java).toInstance(config)
+        bind(LanguageServiceRegistry::class.java).to(LiveLanguageServiceRegistry::class.java)
+        bind(VerificationExecutor::class.java).to(LiveVerificationExecutor::class.java)
     }
-
-    @Provides
-    @Singleton
-    fun provideConfig(): BackendConfig {
-        return config
-    }
-
 }

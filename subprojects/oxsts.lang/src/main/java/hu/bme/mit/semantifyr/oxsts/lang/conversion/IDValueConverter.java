@@ -5,10 +5,9 @@
  */
 package hu.bme.mit.semantifyr.oxsts.lang.conversion;
 
+import java.util.Set;
 import org.eclipse.xtext.Grammar;
 import org.eclipse.xtext.conversion.impl.AbstractIDValueConverter;
-
-import java.util.Set;
 
 public class IDValueConverter extends AbstractIDValueConverter {
 
@@ -21,5 +20,4 @@ public class IDValueConverter extends AbstractIDValueConverter {
     protected boolean mustEscape(String value) {
         return false;
     }
-
 }

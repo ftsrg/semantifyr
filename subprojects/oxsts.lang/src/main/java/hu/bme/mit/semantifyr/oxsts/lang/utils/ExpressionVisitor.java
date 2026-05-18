@@ -24,6 +24,7 @@ public abstract class ExpressionVisitor<T> {
             case BinaryOperator binaryOperator -> visit(binaryOperator);
             case UnaryOperator unaryOperator -> visit(unaryOperator);
             case TemporalOperator temporalOperator -> visit(temporalOperator);
+            case IfThenElse ifThenElse -> visit(ifThenElse);
             default -> throw new IllegalStateException("Unexpected value: " + expression);
         };
     }
@@ -39,20 +40,29 @@ public abstract class ExpressionVisitor<T> {
     }
 
     protected abstract T visit(RangeExpression expression);
+
     protected abstract T visit(ComparisonOperator expression);
+
     protected abstract T visit(ArithmeticBinaryOperator expression);
+
     protected abstract T visit(BooleanOperator expression);
 
     protected T visit(UnaryOperator expression) {
         return switch (expression) {
             case ArithmeticUnaryOperator arithmeticUnaryOperator -> visit(arithmeticUnaryOperator);
             case NegationOperator negationOperator -> visit(negationOperator);
+            case CastExpression castExpression -> visit(castExpression);
             default -> throw new IllegalStateException("Unexpected value: " + expression);
         };
     }
 
     protected abstract T visit(ArithmeticUnaryOperator expression);
+
     protected abstract T visit(NegationOperator expression);
+
+    protected abstract T visit(CastExpression expression);
+
+    protected abstract T visit(IfThenElse expression);
 
     protected T visit(TemporalOperator expression) {
         return switch (expression) {
@@ -63,11 +73,12 @@ public abstract class ExpressionVisitor<T> {
     }
 
     protected abstract T visit(AG expression);
+
     protected abstract T visit(EF expression);
 
     protected T visit(LiteralExpression expression) {
         return switch (expression) {
-            case ArrayLiteral literalInfinity -> visit(literalInfinity);
+            case ArrayLiteral arrayLiteral -> visit(arrayLiteral);
             case LiteralInfinity literalInfinity -> visit(literalInfinity);
             case LiteralReal literalReal -> visit(literalReal);
             case LiteralInteger literalInteger -> visit(literalInteger);
@@ -79,11 +90,17 @@ public abstract class ExpressionVisitor<T> {
     }
 
     protected abstract T visit(ArrayLiteral expression);
+
     protected abstract T visit(LiteralInfinity expression);
+
     protected abstract T visit(LiteralReal expression);
+
     protected abstract T visit(LiteralInteger expression);
+
     protected abstract T visit(LiteralString expression);
+
     protected abstract T visit(LiteralBoolean expression);
+
     protected abstract T visit(LiteralNothing expression);
 
     protected T visit(ReferenceExpression expression) {
@@ -103,6 +120,7 @@ public abstract class ExpressionVisitor<T> {
     }
 
     protected abstract T visit(ElementReference expression);
+
     protected abstract T visit(SelfReference expression);
 
     protected T visit(PostfixUnaryExpression expression) {
@@ -115,7 +133,8 @@ public abstract class ExpressionVisitor<T> {
     }
 
     protected abstract T visit(NavigationSuffixExpression expression);
-    protected abstract T visit(CallSuffixExpression expression);
-    protected abstract T visit(IndexingSuffixExpression expression);
 
+    protected abstract T visit(CallSuffixExpression expression);
+
+    protected abstract T visit(IndexingSuffixExpression expression);
 }

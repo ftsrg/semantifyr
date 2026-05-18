@@ -6,17 +6,16 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.naming;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
+import java.util.stream.Stream;
 import org.eclipse.xtext.naming.IQualifiedNameConverter;
 import org.eclipse.xtext.naming.QualifiedName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-
-import java.util.stream.Stream;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @InjectWithOxsts
 public class QualifiedNameConverterTests {
@@ -41,8 +40,7 @@ public class QualifiedNameConverterTests {
                 Arguments.of("'a b'::c", QualifiedName.create("a b", "c")),
                 Arguments.of("'a b'::'c d'", QualifiedName.create("a b", "c d")),
                 Arguments.of("a::'b c'", QualifiedName.create("a", "b c")),
-                Arguments.of("'a b'::c1::_d", QualifiedName.create("a b", "c1", "_d"))
-        );
+                Arguments.of("'a b'::c1::_d", QualifiedName.create("a b", "c1", "_d")));
     }
 
     @ParameterizedTest
@@ -62,5 +60,4 @@ public class QualifiedNameConverterTests {
         var qualifiedName = qualifiedNameConverter.toQualifiedName(string);
         assertThat(qualifiedName).isEqualTo(expected);
     }
-
 }

@@ -7,6 +7,7 @@
 import { execSync } from 'node:child_process';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 
 function getGitCommit(): string {
   try {
@@ -16,12 +17,6 @@ function getGitCommit(): string {
   }
 }
 
-// In production the backend serves both the SPA and the LSP gateway, so
-// the SPA can use same-origin URLs for /api/* and /ws/lsp/{flavor}. During
-// `npm run dev` we still want that behaviour without having to special-case URLs in
-// the React code, so the dev server proxies those prefixes to the backend on
-// localhost:18080. Override the target with VITE_BACKEND_PROXY_TARGET if you run the
-// backend on a different host or port.
 const backendProxyTarget = process.env.VITE_BACKEND_PROXY_TARGET ?? 'http://localhost:18080';
 
 export default defineConfig({
@@ -30,7 +25,49 @@ export default defineConfig({
     __GIT_COMMIT__: JSON.stringify(getGitCommit()),
     __BACKEND_URL__: JSON.stringify(backendProxyTarget),
   },
-  plugins: [react()],
+  plugins: [
+    react(),
+    VitePWA({
+      disable: process.env.VITEST === 'true',
+      registerType: 'prompt',
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'logo-full-light.svg', 'logo-full-dark.svg'],
+      manifest: {
+        name: 'Semantifyr Live',
+        short_name: 'Semantifyr',
+        description: 'Edit and verify Semantifyr models in your browser.',
+        lang: 'en',
+        start_url: '/',
+        scope: '/',
+        display: 'standalone',
+        theme_color: '#1e1e1e',
+        background_color: '#1e1e1e',
+        icons: [
+          { src: 'pwa-192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'pwa-512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: 'pwa.svg', sizes: 'any', type: 'image/svg+xml' },
+        ],
+      },
+      workbox: {
+        globPatterns: ['**/*.{css,html,ico,svg,png,json,webmanifest,woff,woff2,ttf}'],
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api\//, /^\/ws\//],
+        cleanupOutdatedCaches: true,
+        runtimeCaching: [
+          {
+            urlPattern: /\/assets\/.*\.js$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'semantifyr-app-chunks',
+              expiration: { maxEntries: 256, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
+      },
+      devOptions: { enabled: false },
+    }),
+  ],
   server: {
     port: 5173,
     host: true,

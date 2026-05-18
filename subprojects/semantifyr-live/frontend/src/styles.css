@@ -26,6 +26,11 @@
   --success: #4ade80;
   --danger: #f87171;
   --warning: #fbbf24;
+  /* Soft-tint chip backgrounds. Tuned for the dark page bg; chips pair these with
+     `var(--warning)` / `var(--danger)` foregrounds so the foreground gives the colour and the
+     tint just suggests "this status applies here". */
+  --warning-soft-bg: rgba(251, 191, 36, 0.15);
+  --danger-soft-bg: rgba(239, 68, 68, 0.15);
 }
 
 :root[data-theme='light'] {
@@ -45,10 +50,10 @@
   --success: #15803d;
   --danger: #b91c1c;
   --warning: #d97706;
-}
-
-* {
-  box-sizing: border-box;
+  /* Light-mode tints share the same rgba as dark mode so chips read consistently across
+     themes. Tweak independently here once we hit a contrast issue. */
+  --warning-soft-bg: rgba(251, 191, 36, 0.15);
+  --danger-soft-bg: rgba(239, 68, 68, 0.15);
 }
 
 html,

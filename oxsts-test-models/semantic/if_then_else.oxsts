@@ -1,0 +1,100 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::lang::if_then_else
+
+// The if-then-else expression (value form, distinct from the if
+// operation). At the reachability site it evaluates to the
+// appropriate branch; at the safety side it never produces a value
+// outside the two branches.
+
+// --- guard selects the then-branch ---
+
+@VerificationCase
+@Tag("expect-pass")
+class IteThenReach {
+    var n: int := 1
+    var result: int := 0
+
+    redefine tran {
+        result := if n > 0 then 1 else -1
+    }
+
+    prop {
+        return EF result == 1
+    }
+}
+
+// --- guard selects the else-branch ---
+
+@VerificationCase
+@Tag("expect-pass")
+class IteElseReach {
+    var n: int := -1
+    var result: int := 0
+
+    redefine tran {
+        result := if n > 0 then 1 else -1
+    }
+
+    prop {
+        return EF result == -1
+    }
+}
+
+// --- safety: output is one of the two branches ---
+
+@VerificationCase
+@Tag("expect-pass")
+class IteBound {
+    var n: int := 0
+    var result: int := 0
+
+    redefine tran {
+        havoc(n)
+        result := if n > 0 then 1 else -1
+    }
+
+    prop {
+        return AG (result == 0 || result == 1 || result == -1)
+    }
+}
+
+// --- nested if-then-else in a property ---
+
+@VerificationCase
+@Tag("expect-pass")
+class IteInPropertyReach {
+    var n: int := 0
+
+    redefine tran {
+        assume(n < 5)
+        n := n + 1
+    }
+
+    prop {
+        return EF (if n > 0 then true else false)
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class IteInPropertyInitialFalse {
+    // `flag` stays false via the guard (preventing the optimizer from
+    // folding it to a constant and dropping the variable entirely,
+    // which would leave Theta with an empty model). The embedded
+    // if-then-else is therefore always `false`.
+    var flag: bool := false
+
+    redefine tran {
+        havoc(flag)
+        assume(flag == false)
+    }
+
+    prop {
+        return AG !(if flag then true else false)
+    }
+}

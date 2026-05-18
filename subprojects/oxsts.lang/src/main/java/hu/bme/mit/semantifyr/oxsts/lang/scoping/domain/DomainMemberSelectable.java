@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.scoping.domain;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Iterables;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
+import java.util.Objects;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
@@ -17,8 +18,6 @@ import org.eclipse.xtext.naming.QualifiedName;
 import org.eclipse.xtext.resource.EObjectDescription;
 import org.eclipse.xtext.resource.IEObjectDescription;
 import org.eclipse.xtext.resource.ISelectable;
-
-import java.util.Objects;
 
 public class DomainMemberSelectable implements ISelectable {
 
@@ -35,25 +34,30 @@ public class DomainMemberSelectable implements ISelectable {
 
     @Override
     public Iterable<IEObjectDescription> getExportedObjects() {
-        return FluentIterable.from(domainMemberCollection.getDeclarations().reversed()).transform(declaration -> {
-            var name = NamingUtil.getName(declaration);
-            if (name == null) {
-                return null;
-            }
-            var element = domainMemberCollection.resolveElement(declaration);
-            if (element == null) {
-                return null;
-            }
-            return EObjectDescription.create(name, element);
-        }).filter(Objects::nonNull);
+        return FluentIterable.from(domainMemberCollection.getDeclarations().reversed())
+                .transform(declaration -> {
+                    var name = NamingUtil.getName(declaration);
+                    if (name == null) {
+                        return null;
+                    }
+                    var element = domainMemberCollection.resolveElement(declaration);
+                    if (element == null) {
+                        return null;
+                    }
+                    return EObjectDescription.create(name, element);
+                })
+                .filter(Objects::nonNull);
     }
 
     @Override
     public Iterable<IEObjectDescription> getExportedObjects(EClass type, QualifiedName name, boolean ignoreCase) {
-        return Iterables.filter(getExportedObjects(), ignoreCase
-                ? input -> name.equalsIgnoreCase(input.getName()) && EcoreUtil2.isAssignableFrom(type, input.getEClass())
-                : input -> name.equals(input.getName()) && EcoreUtil2.isAssignableFrom(type, input.getEClass())
-        );
+        return Iterables.filter(
+                getExportedObjects(),
+                ignoreCase
+                        ? input -> name.equalsIgnoreCase(input.getName())
+                                && EcoreUtil2.isAssignableFrom(type, input.getEClass())
+                        : input ->
+                                name.equals(input.getName()) && EcoreUtil2.isAssignableFrom(type, input.getEClass()));
     }
 
     @Override
@@ -71,5 +75,4 @@ public class DomainMemberSelectable implements ISelectable {
             return uri.equals(input.getEObjectURI());
         });
     }
-
 }

@@ -5,13 +5,9 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { resolveBackendUrl } from '../lib/config';
+import { resolveBackendUrl } from '../lib/util/backendUrl';
+import { setLocation } from './helpers/location';
 
-/**
- * resolveBackendUrl reads from `window.location` and `import.meta.env`. The unit test
- * mutates `window.location` via the jsdom escape hatch and stubs the env via Vitest's
- * vi.stubEnv helper, restoring both between tests.
- */
 describe('resolveBackendUrl', () => {
   let originalLocation: Location;
 
@@ -27,25 +23,6 @@ describe('resolveBackendUrl', () => {
     });
     vi.unstubAllEnvs();
   });
-
-  function setLocation(url: string) {
-    const parsed = new URL(url);
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      writable: true,
-      value: {
-        ...originalLocation,
-        href: parsed.href,
-        origin: parsed.origin,
-        hostname: parsed.hostname,
-        host: parsed.host,
-        protocol: parsed.protocol,
-        pathname: parsed.pathname,
-        search: parsed.search,
-        hash: parsed.hash,
-      } as Location,
-    });
-  }
 
   it('prefers the ?backend= query parameter over everything else', () => {
     setLocation('https://live.semantifyr.org/?backend=https://other.example');

@@ -236,7 +236,7 @@ The next tutorial in the series, the [Advanced Tutorial](advanced-tutorial.md), 
 
 The complete final state of `trafficlight.oxsts`:
 
-```oxsts verify open=trafficlight-library-snapshot
+```oxsts verify open=intermediate
 package example::trafficlight::intermediate
 
 class State {

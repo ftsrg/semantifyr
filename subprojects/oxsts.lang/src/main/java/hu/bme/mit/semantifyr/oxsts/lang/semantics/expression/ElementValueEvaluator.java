@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.oxsts.lang.semantics.expression;
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -23,7 +22,7 @@ public abstract class ElementValueEvaluator<T> {
 
         // cannot use computeIfAbsent due to concurrent modification (recursive calL!)
         if (evaluation == null) {
-            if (! underEvaluation.add(element)) {
+            if (!underEvaluation.add(element)) {
                 throw new IllegalStateException("Circular dependency encountered during element value evaluation!");
             }
 
@@ -40,5 +39,4 @@ public abstract class ElementValueEvaluator<T> {
     }
 
     protected abstract T visit(Element element);
-
 }

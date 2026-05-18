@@ -6,7 +6,12 @@
 
 package hu.bme.mit.semantifyr.xsts.lang.resource;
 
+import static com.google.common.collect.Lists.newArrayList;
+
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import org.apache.log4j.Logger;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.xtext.resource.IDefaultResourceDescriptionStrategy;
@@ -15,19 +20,14 @@ import org.eclipse.xtext.resource.impl.DefaultResourceDescription;
 import org.eclipse.xtext.util.IAcceptor;
 import org.eclipse.xtext.util.IResourceScopeCache;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-
-import static com.google.common.collect.Lists.newArrayList;
-
 public class XstsResourceDescription extends DefaultResourceDescription {
 
-    private final static Logger log = Logger.getLogger(XstsResourceDescription.class);
+    private static final Logger log = Logger.getLogger(XstsResourceDescription.class);
 
     private final IDefaultResourceDescriptionStrategy strategy;
 
-    public XstsResourceDescription(Resource resource, IDefaultResourceDescriptionStrategy strategy, IResourceScopeCache cache) {
+    public XstsResourceDescription(
+            Resource resource, IDefaultResourceDescriptionStrategy strategy, IResourceScopeCache cache) {
         super(resource, strategy, cache);
         this.strategy = strategy;
     }
@@ -48,7 +48,7 @@ public class XstsResourceDescription extends DefaultResourceDescription {
         }
 
         var rootElement = getResource().getContents().getFirst();
-        if (! (rootElement instanceof XstsModel xstsModel)) {
+        if (!(rootElement instanceof XstsModel xstsModel)) {
             // delegate to super, we do not know what this resource is...
             return super.computeExportedObjects();
         }
@@ -68,5 +68,4 @@ public class XstsResourceDescription extends DefaultResourceDescription {
 
         return exportedEObjects;
     }
-
 }

@@ -5,6 +5,4 @@ package hu.bme.mit.semantifyr.cex.lang.formatting2;
 
 import org.eclipse.xtext.formatting2.AbstractJavaFormatter;
 
-public class CexFormatter extends AbstractJavaFormatter {
-
-}
+public class CexFormatter extends AbstractJavaFormatter {}

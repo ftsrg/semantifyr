@@ -19,5 +19,4 @@ public class BuiltinOxstsLibraryProvider implements OxstsLibraryProvider {
     public OxstsLibrary getLibrary() {
         return builtinLibrary;
     }
-
 }

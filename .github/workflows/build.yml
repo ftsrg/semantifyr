@@ -25,6 +25,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
@@ -32,10 +34,41 @@ jobs:
           distribution: adopt
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
       - name: Gradle build
         shell: bash
         run: ./gradlew build
-      - name: Upload GithHub Pages artifact
+      - name: Run integration tests
+        shell: bash
+        run: ./gradlew integrationTest
+      - name: Merge coverage reports
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        shell: bash
+        run: ./gradlew mergedJacocoReport
+      - name: Upload coverage reports
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage-reports
+          path: build/reports/jacoco/mergedJacocoReport/html/
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Publish to SonarCloud
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        shell: bash
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./gradlew sonar
+      - name: Upload GitHub Pages artifact
         if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: actions/upload-pages-artifact@v3
         with:

@@ -4,177 +4,108 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import type React from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
-import Collapse from '@mui/material/Collapse';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import CircularProgress from '@mui/material/CircularProgress';
 import Tooltip from '@mui/material/Tooltip';
 import Divider from '@mui/material/Divider';
-import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
-import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
-import UpdateIcon from '@mui/icons-material/Update';
-import RadioButtonUncheckedOutlinedIcon from '@mui/icons-material/RadioButtonUncheckedOutlined';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import CircularProgress from '@mui/material/CircularProgress';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
+import CloseIcon from '@mui/icons-material/Close';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined';
-import DoneAllIcon from '@mui/icons-material/DoneAll';
 import MyLocationOutlinedIcon from '@mui/icons-material/MyLocationOutlined';
-
+import Badge from '@mui/material/Badge';
+import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 
 import {
+  dispatchAutoValidation,
   discoverVerificationCases,
-  runVerifyAll,
+  runAllVerifications,
   verifySingleCase,
   type VerificationCaseLocation,
-  type VerificationCaseStatus,
   type VerificationCaseState,
   type VerificationState,
   type RunVerificationHandle,
 } from '../../lib/verification';
-import type { LiveEditorHandle } from '../LiveEditor';
+import type { LiveEditorHandle } from '../editor/LiveEditor';
 import VerifyButton from './VerifyButton';
 import RefreshButton from './RefreshButton';
+import ProblemsPill from './ProblemsPill';
+import { CaseStatusIcon, SummaryCounts, SummaryStatusIcon } from './StatusDisplay';
+import { formatIsoDurationDetailed } from '../../lib/util/duration';
+import { buildMetricsTooltip, isMeaningfulDuration } from '../../lib/verification/metricsTooltip';
+import { witnessIconDescriptor } from '../../lib/verification/witnessIcon';
+import { findPortfolioLabel } from '../../lib/verification/portfolioLabel';
+import type { PortfolioInfo } from '../../lib/api'
+import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
+
+interface MetricsPillSource {
+  verb: 'verified' | 'validated';
+  totalDuration: string;
+  metrics: VerificationCaseState['metrics'];
+  portfolioLabel?: string | undefined;
+  backendId?: string | undefined;
+}
+
 
 interface Props {
   editorHandle: LiveEditorHandle | null;
-  verifyCommand: string;
+  verificationCommand: string;
+  discoveryCommand: string;
+  validateWitnessCommand?: string | undefined;
   connected: boolean;
-  onStatusMessage: (message: string | null) => void;
+  portfolioId: string;
+  validationPortfolioId: string;
+  autoValidate: boolean;
+  onAutoValidateChange?: (enabled: boolean) => void;
+  panelHeight: number;
+  onClose: () => void;
+  onStatusMessage: (message: string | null, busy: boolean) => void;
+  onCasesChange?: (cases: readonly VerificationCaseState[]) => void;
+  onShowWitness?: (caseId: string) => void;
+  portfolios?: PortfolioInfo[];
 }
 
-const ICON_SIZE = 20;
-const iconBoxSx = { width: ICON_SIZE, height: ICON_SIZE, display: 'flex', alignItems: 'center', justifyContent: 'center' } as const;
-
-type StatusCategory = 'passed' | 'failed' | 'errored' | 'unknown';
-
-function statusColorVar(category: StatusCategory): string {
-  switch (category) {
-    case 'passed': return 'var(--success)';
-    case 'failed': return 'var(--danger)';
-    case 'errored': return 'var(--danger)';
-    case 'unknown': return 'var(--text-muted)';
-  }
+export interface VerificationPanelHandle {
+  revalidate: (caseId: string) => void;
 }
 
-function StatusIcon({ category, size }: { category: StatusCategory; size: number }): React.JSX.Element {
-  const color = statusColorVar(category);
-  switch (category) {
-    case 'passed':
-      return <CheckCircleOutlinedIcon sx={{ fontSize: size, color }} />;
-    case 'failed':
-      return <CancelOutlinedIcon sx={{ fontSize: size, color }} />;
-    case 'errored':
-      return <ErrorOutlinedIcon sx={{ fontSize: size, color }} />;
-    case 'unknown':
-      return <RadioButtonUncheckedOutlinedIcon sx={{ fontSize: Math.round(size * 0.8), color }} />;
-  }
-}
+const pillSx = {
+  fontSize: FONT_SIZE.xs,
+  fontWeight: 500,
+  color: 'text.secondary',
+  bgcolor: 'var(--surface-panel-bg)',
+  border: '1px solid var(--surface-border)',
+  borderRadius: 999,
+  px: 0.75,
+  py: 0.05,
+  whiteSpace: 'nowrap',
+} as const;
 
-const STATUS_TOOLTIPS: Record<VerificationCaseStatus, string> = {
-  passed: 'Passed',
-  failed: 'Failed',
-  errored: 'Error during verification',
-  running: 'Running',
-  queued: 'Queued for verification',
-  stale: 'Not yet verified',
-};
-
-function CaseStatusIcon({ status }: { status: VerificationCaseStatus }): React.JSX.Element {
-  const tooltip = STATUS_TOOLTIPS[status];
-  switch (status) {
-    case 'passed':
-      return <Tooltip title={tooltip}><Box sx={iconBoxSx}><StatusIcon category="passed" size={ICON_SIZE} /></Box></Tooltip>;
-    case 'failed':
-      return <Tooltip title={tooltip}><Box sx={iconBoxSx}><StatusIcon category="failed" size={ICON_SIZE} /></Box></Tooltip>;
-    case 'errored':
-      return <Tooltip title={tooltip}><Box sx={iconBoxSx}><StatusIcon category="errored" size={ICON_SIZE} /></Box></Tooltip>;
-    case 'running':
-      return <Tooltip title={tooltip}><Box sx={iconBoxSx}><CircularProgress size={16} sx={{ color: 'var(--warning)' }} /></Box></Tooltip>;
-    case 'queued':
-      return <Tooltip title={tooltip}><Box sx={iconBoxSx}><UpdateIcon sx={{ fontSize: ICON_SIZE, color: 'var(--warning)' }} /></Box></Tooltip>;
-    case 'stale':
-      return <Tooltip title={tooltip}><Box sx={iconBoxSx}><StatusIcon category="unknown" size={ICON_SIZE} /></Box></Tooltip>;
-  }
-}
-
-interface CaseCounts {
-  failed: number;
-  errored: number;
-  passed: number;
-  unknown: number;
-  total: number;
-}
-
-function countCases(cases: readonly VerificationCaseState[]): CaseCounts {
-  let failed = 0;
-  let errored = 0;
-  let passed = 0;
-  for (const c of cases) {
-    if (c.status === 'passed') passed++;
-    else if (c.status === 'failed') failed++;
-    else if (c.status === 'errored') errored++;
-  }
-  return { failed, errored, passed, unknown: cases.length - failed - errored - passed, total: cases.length };
-}
-
-const COUNT_TOOLTIPS: Record<StatusCategory, string> = {
-  passed: 'Passed cases',
-  failed: 'Failed or errored cases',
-  errored: 'Errored cases',
-  unknown: 'Not yet verified',
-};
-
-function CountBadge({ category, count }: { category: StatusCategory; count: number }): React.JSX.Element {
-  const color = statusColorVar(category);
-  const muted = count === 0;
+function MetricsPill({
+  source,
+}: {
+  source: MetricsPillSource;
+}): React.JSX.Element {
+  const tooltip = buildMetricsTooltip(source.metrics, {
+    portfolioLabel: source.portfolioLabel,
+    backendId: source.backendId,
+  });
+  const label = `${source.verb} in ${formatIsoDurationDetailed(source.totalDuration)}`;
   return (
-    <Tooltip title={`${count} ${COUNT_TOOLTIPS[category]}`}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, opacity: muted ? 0.4 : 1 }}>
-        <StatusIcon category={category} size={12} />
-        <Typography variant="caption" sx={{ fontSize: '0.78rem', color, fontWeight: 600 }}>{count}</Typography>
+    <Tooltip title={tooltip}>
+      <Box component="span" sx={pillSx}>
+        {label}
       </Box>
     </Tooltip>
   );
-}
-
-function SummaryCounts({ cases }: { cases: readonly VerificationCaseState[] }): React.JSX.Element {
-  const { failed, errored, passed, unknown, total } = countCases(cases);
-  if (total === 0) return <></>;
-
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-      <CountBadge category="unknown" count={unknown} />
-      <CountBadge category="failed" count={failed + errored} />
-
-      <CountBadge category="passed" count={passed} />
-      <Typography variant="caption" sx={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}> / {total}</Typography>
-    </Box>
-  );
-}
-
-function SummaryStatusIcon({ cases, phase }: { cases: readonly VerificationCaseState[]; phase: VerificationState['phase'] }): React.JSX.Element {
-  if (phase === 'running') {
-    return <Tooltip title="Verification in progress"><Box sx={iconBoxSx}><UpdateIcon sx={{ fontSize: ICON_SIZE, color: 'var(--warning)' }} /></Box></Tooltip>;
-  }
-  const { passed, failed, errored } = countCases(cases);
-  if (passed === cases.length && cases.length > 0) {
-    return <Tooltip title="All cases passed"><Box sx={iconBoxSx}><DoneAllIcon sx={{ fontSize: ICON_SIZE, color: 'var(--success)' }} /></Box></Tooltip>;
-  }
-  if (errored > 0 && failed === 0) {
-    return <Tooltip title={`${errored} case${errored === 1 ? '' : 's'} errored`}><Box sx={iconBoxSx}><StatusIcon category="errored" size={ICON_SIZE} /></Box></Tooltip>;
-  }
-  if (failed > 0 || errored > 0) {
-    const parts = [failed > 0 ? `${failed} failed` : '', errored > 0 ? `${errored} errored` : ''].filter(Boolean).join(', ');
-    return <Tooltip title={parts}><Box sx={iconBoxSx}><StatusIcon category="failed" size={ICON_SIZE} /></Box></Tooltip>;
-  }
-  return <Tooltip title="No results yet"><Box sx={iconBoxSx}><StatusIcon category="unknown" size={ICON_SIZE} /></Box></Tooltip>;
 }
 
 function deriveStatusMessage(state: VerificationState): string | null {
@@ -186,16 +117,32 @@ function deriveStatusMessage(state: VerificationState): string | null {
     }
     return state.message ?? 'Running verification...';
   }
+  if (state.phase === 'done' || state.phase === 'cancelled' || state.phase === 'error') {
+    return state.message ?? null;
+  }
   return null;
 }
 
-export default function VerificationPanel({
-  editorHandle,
-  verifyCommand,
-  connected,
-  onStatusMessage,
-}: Props): React.JSX.Element {
-  const [drawerOpen, setDrawerOpen] = useState(true);
+function VerificationPanelInner(
+  {
+    editorHandle,
+    verificationCommand,
+    discoveryCommand,
+    validateWitnessCommand,
+    connected,
+    portfolioId,
+    validationPortfolioId,
+    autoValidate,
+    onAutoValidateChange,
+    panelHeight,
+    onClose,
+    onStatusMessage,
+    onCasesChange,
+    onShowWitness,
+    portfolios,
+  }: Props,
+  ref: React.Ref<VerificationPanelHandle>,
+): React.JSX.Element {
   const [verifyState, setVerifyState] = useState<VerificationState>({ phase: 'idle', cases: [] });
   const verifyStateRef = useRef(verifyState);
   const runHandleRef = useRef<RunVerificationHandle | null>(null);
@@ -209,15 +156,18 @@ export default function VerificationPanel({
     });
   }, []);
 
-  // Report status message upstream whenever verification state changes
   useEffect(() => {
-    onStatusMessage(deriveStatusMessage(verifyState));
+    onStatusMessage(deriveStatusMessage(verifyState), verifyState.phase === 'running');
   }, [verifyState, onStatusMessage]);
+
+  useEffect(() => {
+    onCasesChange?.(verifyState.cases);
+  }, [verifyState.cases, onCasesChange]);
 
   const handleRefreshCases = useCallback((): void => {
     const client = editorHandle?.getLspClient();
     if (!client || !editorHandle) return;
-    void discoverVerificationCases(client, editorHandle.getFileUri())
+    void discoverVerificationCases(client, discoveryCommand, editorHandle.getFileUri())
       .then((discoveredCases) => {
         stateUpdater((prev) => {
           if (prev.phase === 'running') return prev;
@@ -235,9 +185,9 @@ export default function VerificationPanel({
         });
       })
       .catch(() => { /* non-fatal */ });
-  }, [editorHandle, stateUpdater]);
+  }, [editorHandle, discoveryCommand, stateUpdater]);
 
-  // Discovery: run on connect, debounce on text changes
+  // Discovery: run on connect, debounce on text changes.
   useEffect(() => {
     if (!connected || !editorHandle) return;
 
@@ -261,6 +211,18 @@ export default function VerificationPanel({
     };
   }, [connected, editorHandle, handleRefreshCases]);
 
+  // Ref so the runner picks up mid-batch toggles to auto-validate / portfolio.
+  const autoValidateOptionsRef = useRef({ autoValidate, validateWitnessCommand, validationPortfolioId });
+  useEffect(() => {
+    autoValidateOptionsRef.current = { autoValidate, validateWitnessCommand, validationPortfolioId };
+  }, [autoValidate, validateWitnessCommand, validationPortfolioId]);
+
+  const getAutoValidateRequest = useCallback(() => {
+    const { autoValidate: live, validateWitnessCommand: cmd, validationPortfolioId: pid } = autoValidateOptionsRef.current;
+    if (!live || !cmd) return null;
+    return { command: cmd, ...(pid ? { portfolioId: pid } : {}) };
+  }, []);
+
   const handleVerifyAll = useCallback(() => {
     if (verifyStateRef.current.phase === 'running') return;
     const client = editorHandle?.getLspClient();
@@ -272,15 +234,16 @@ export default function VerificationPanel({
       return;
     }
 
-    runHandleRef.current = runVerifyAll(
+    runHandleRef.current = runAllVerifications(
       client,
-      verifyCommand,
+      verificationCommand,
       editorHandle.getFileUri(),
       cases,
       stateUpdater,
       (listener) => editorHandle.addProgressListener(listener),
+      { portfolioId, getAutoValidateRequest },
     );
-  }, [editorHandle, verifyCommand, stateUpdater]);
+  }, [editorHandle, verificationCommand, stateUpdater, portfolioId, getAutoValidateRequest]);
 
   const handleVerifySingle = useCallback((caseId: string) => {
     if (verifyStateRef.current.phase === 'running') return;
@@ -290,8 +253,16 @@ export default function VerificationPanel({
     const targetCase = verifyStateRef.current.cases.find((cs) => cs.caseInfo.id === caseId)?.caseInfo;
     if (!targetCase) return;
 
-    void verifySingleCase(client, verifyCommand, editorHandle.getFileUri(), targetCase, stateUpdater);
-  }, [editorHandle, verifyCommand, stateUpdater]);
+    runHandleRef.current = verifySingleCase(
+      client,
+      verificationCommand,
+      editorHandle.getFileUri(),
+      targetCase,
+      stateUpdater,
+      (listener) => editorHandle.addProgressListener(listener),
+      { portfolioId, getAutoValidateRequest },
+    );
+  }, [editorHandle, verificationCommand, stateUpdater, portfolioId, getAutoValidateRequest]);
 
   const handleCancel = useCallback(() => {
     runHandleRef.current?.cancel();
@@ -302,6 +273,21 @@ export default function VerificationPanel({
     editorHandle?.goToCase(location);
   }, [editorHandle]);
 
+  useImperativeHandle(ref, () => ({
+    revalidate: (caseId: string) => {
+      if (!validateWitnessCommand) return;
+      const client = editorHandle?.getLspClient();
+      if (!client) return;
+      const target = verifyStateRef.current.cases.find((cs) => cs.caseInfo.id === caseId);
+      const witnessUri = target?.trace?.witnessUri;
+      if (!witnessUri) return;
+      dispatchAutoValidation(client, validateWitnessCommand, caseId, witnessUri, stateUpdater, {
+        validationPortfolioId,
+        caseLabel: target.caseInfo.label,
+      });
+    },
+  }), [editorHandle, validateWitnessCommand, stateUpdater, validationPortfolioId]);
+
   const { phase, cases } = verifyState;
   const verifyBusy = phase === 'running';
   const stale = !connected;
@@ -309,36 +295,61 @@ export default function VerificationPanel({
   return (
     <Box
       sx={{
+        height: `${panelHeight}px`,
+        display: 'flex',
+        flexDirection: 'column',
         bgcolor: 'var(--surface-panel-bg)',
         borderTop: '1px solid var(--surface-border)',
         opacity: stale ? 0.5 : 1,
         transition: 'opacity 0.2s',
+        overflow: 'hidden',
       }}
     >
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
-          px: 1.5,
+          flexWrap: 'wrap',
+          rowGap: 0.5,
+          px: { xs: 1, sm: 1.5 },
           py: 0.25,
           gap: 0.5,
+          flex: '0 0 auto',
         }}
       >
         <Typography
           variant="body2"
           sx={{
             fontWeight: 600,
-            fontSize: '0.9rem',
-            color: 'var(--text)',
+            fontSize: FONT_SIZE.md,
           }}
         >
           Verification Cases
         </Typography>
-        <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5, borderColor: 'var(--surface-border)' }} />
+        <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5 }} />
         <SummaryCounts cases={cases} />
         <SummaryStatusIcon cases={cases} phase={phase} />
+        <ProblemsPill editorHandle={editorHandle} />
         <Box sx={{ flex: 1 }} />
 
+        {validateWitnessCommand && onAutoValidateChange && (
+          <Tooltip title="Automatically validate the returned witness using a separate portfolio.">
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  checked={autoValidate}
+                  onChange={(_, checked) => { onAutoValidateChange(checked); }}
+                  onClick={(event) => { event.stopPropagation(); }}
+                />
+              }
+              label={
+                <Typography sx={{ fontSize: FONT_SIZE.sm, color: 'text.secondary' }}>auto-validate</Typography>
+              }
+              sx={{ mr: 0.5, ml: 0, '& .MuiFormControlLabel-label': { ml: 0.25 } }}
+            />
+          </Tooltip>
+        )}
         <VerifyButton
           busy={verifyBusy}
           disabled={!connected}
@@ -349,19 +360,29 @@ export default function VerificationPanel({
           disabled={!connected || verifyBusy}
           onClick={(event) => { event.stopPropagation(); handleRefreshCases(); }}
         />
-        <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5, borderColor: 'var(--surface-border)' }} />
-        <Tooltip title={drawerOpen ? 'Collapse panel' : 'Expand panel'}>
-          <IconButton size="small" onClick={() => setDrawerOpen((prev) => !prev)} sx={{ color: 'var(--text-muted)' }}>
-            {drawerOpen ? <KeyboardArrowDownIcon sx={{ fontSize: 20 }} /> : <KeyboardArrowUpIcon sx={{ fontSize: 20 }} />}
+        <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5 }} />
+        <Tooltip title="Close panel">
+          <IconButton
+            size="small"
+            onClick={onClose}
+            aria-label="Close verification panel"
+            sx={{ color: 'text.secondary' }}
+          >
+            <CloseIcon sx={{ fontSize: ICON_SIZE.md }} />
           </IconButton>
         </Tooltip>
       </Box>
 
-      <Collapse in={drawerOpen}>
-        <Box sx={{ maxHeight: 220, overflowY: 'auto' }}>
+      <Box
+        sx={{
+          flex: '1 1 auto',
+          minHeight: 0,
+          overflowY: 'auto',
+        }}
+      >
           {phase === 'error' && verifyState.message && (
             <Box sx={{ px: 1.5, py: 0.75 }}>
-              <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'var(--danger)' }}>
+              <Typography variant="body2" sx={{ fontSize: FONT_SIZE.md, color: 'var(--danger)' }}>
                 {verifyState.message}
               </Typography>
             </Box>
@@ -372,27 +393,104 @@ export default function VerificationPanel({
               {cases.map((caseState) => (
                 <ListItemButton
                   key={caseState.caseInfo.id}
-                  onClick={() => handleCaseClick(caseState.caseInfo.location)}
+                  onClick={() => { handleCaseClick(caseState.caseInfo.location); }}
                   sx={{ py: 0.25, px: 1.5 }}
                 >
                   <ListItemIcon sx={{ minWidth: 32 }}>
                     <CaseStatusIcon status={caseState.status} />
                   </ListItemIcon>
                   <ListItemText
-                    primary={caseState.caseInfo.label}
-                    secondary={(caseState.status === 'failed' || caseState.status === 'errored') && caseState.message ? caseState.message : null}
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', rowGap: 0.25, columnGap: 1, minWidth: 0 }}>
+                        <Typography component="span" sx={{ fontSize: FONT_SIZE.md, color: stale ? 'var(--text-muted)' : 'var(--text)', wordBreak: 'break-word' }}>
+                          {caseState.caseInfo.label}
+                        </Typography>
+                        {caseState.metrics !== undefined && isMeaningfulDuration(caseState.metrics.totalDuration) && (
+                          <Box sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>
+                            <MetricsPill
+                              source={{
+                                verb: 'verified',
+                                totalDuration: caseState.metrics.totalDuration,
+                                metrics: caseState.metrics,
+                                portfolioLabel: findPortfolioLabel(
+                                  portfolios ?? [],
+                                  caseState.portfolioId ?? caseState.backendId,
+                                ),
+                                backendId: caseState.backendId,
+                              }}
+                            />
+                          </Box>
+                        )}
+                        {caseState.validationMetrics !== undefined && isMeaningfulDuration(caseState.validationMetrics.totalDuration) && (
+                          <Box sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>
+                            <MetricsPill
+                              source={{
+                                verb: 'validated',
+                                totalDuration: caseState.validationMetrics.totalDuration,
+                                metrics: caseState.validationMetrics,
+                                portfolioLabel: findPortfolioLabel(
+                                  portfolios ?? [],
+                                  caseState.validationPortfolioIdUsed ?? caseState.validationBackendId,
+                                ),
+                                backendId: caseState.validationBackendId,
+                              }}
+                            />
+                          </Box>
+                        )}
+                        {caseState.validating && (
+                          <Tooltip title="Validating witness in the background">
+                            <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, color: 'text.secondary', fontSize: FONT_SIZE.xs }}>
+                              <CircularProgress size={10} thickness={6} sx={{ color: 'text.secondary' }} />
+                              <span>validating...</span>
+                            </Box>
+                          </Tooltip>
+                        )}
+                      </Box>
+                    }
+                    secondary={
+                      caseState.message != null && (caseState.status === 'failed' || caseState.status === 'errored' || caseState.status === 'inconclusive' || caseState.status === 'not_supported')
+                        ? caseState.message
+                        : null
+                    }
                     slotProps={{
-                      primary: { sx: { fontSize: '0.9rem', color: stale ? 'var(--text-muted)' : 'var(--text)' } },
-                      secondary: { sx: { fontSize: '0.82rem', color: 'var(--danger)' } },
+                      secondary: {
+                        sx: {
+                          fontSize: FONT_SIZE.sm,
+                          color: caseState.status === 'failed' || caseState.status === 'errored' ? 'var(--danger)' : 'var(--text-muted)',
+                        },
+                      },
                     }}
                   />
+                  {caseState.trace !== undefined && onShowWitness && (() => {
+                    const descriptor = witnessIconDescriptor(caseState.witnessValidation);
+                    return (
+                      <Tooltip title={descriptor.tooltip}>
+                        <IconButton
+                          size="small"
+                          onClick={(event) => { event.stopPropagation(); onShowWitness(caseState.caseInfo.id); }}
+                          aria-label={descriptor.ariaLabel}
+                          sx={{ color: descriptor.iconColor, ml: 0.5 }}
+                        >
+                          <Badge
+                            color={descriptor.badgeColor}
+                            variant="dot"
+                            invisible={!descriptor.badgeVisible}
+                            overlap="circular"
+                          >
+                            <ArticleOutlinedIcon sx={{ fontSize: ICON_SIZE.md }} />
+                          </Badge>
+                        </IconButton>
+                      </Tooltip>
+                    );
+                  })()}
                   <Tooltip title="Go to definition">
                     <IconButton
                       size="small"
                       onClick={(event) => { event.stopPropagation(); handleCaseClick(caseState.caseInfo.location); }}
-                      sx={{ color: 'var(--text-muted)', ml: 0.5 }}
+                      aria-label={`Go to definition of ${caseState.caseInfo.label}`}
+                      sx={{ color: 'text.secondary', ml: 0.5, display: { xs: 'none', sm: 'inline-flex' } }}
                     >
-                      <MyLocationOutlinedIcon sx={{ fontSize: 18 }} />
+                      <MyLocationOutlinedIcon sx={{ fontSize: ICON_SIZE.md }} />
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Verify case">
@@ -401,9 +499,10 @@ export default function VerificationPanel({
                         size="small"
                         onClick={(event) => { event.stopPropagation(); handleVerifySingle(caseState.caseInfo.id); }}
                         disabled={!connected || verifyBusy}
+                        aria-label={`Verify ${caseState.caseInfo.label}`}
                         sx={{ color: 'var(--accent)' }}
                       >
-                        <PlayArrowIcon sx={{ fontSize: 20 }} />
+                        <PlayArrowIcon sx={{ fontSize: ICON_SIZE.lg }} />
                       </IconButton>
                     </span>
                   </Tooltip>
@@ -414,13 +513,16 @@ export default function VerificationPanel({
 
           {cases.length === 0 && connected && (
             <Box sx={{ px: 1.5, py: 1 }}>
-              <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              <Typography variant="body2" sx={{ fontSize: FONT_SIZE.md, color: 'text.secondary' }}>
                 Discovering cases...
               </Typography>
             </Box>
           )}
-        </Box>
-      </Collapse>
+      </Box>
     </Box>
   );
 }
+
+const VerificationPanel = forwardRef<VerificationPanelHandle, Props>(VerificationPanelInner);
+VerificationPanel.displayName = 'VerificationPanel';
+export default VerificationPanel;

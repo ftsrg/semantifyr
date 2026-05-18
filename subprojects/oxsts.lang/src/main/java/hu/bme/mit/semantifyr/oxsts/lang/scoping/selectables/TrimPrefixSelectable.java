@@ -7,15 +7,14 @@
 package hu.bme.mit.semantifyr.oxsts.lang.scoping.selectables;
 
 import com.google.common.collect.Iterables;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.xtext.naming.QualifiedName;
 import org.eclipse.xtext.resource.IEObjectDescription;
 import org.eclipse.xtext.resource.ISelectable;
 import org.eclipse.xtext.resource.impl.AliasedEObjectDescription;
-
-import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 public class TrimPrefixSelectable implements ISelectable {
     private final ISelectable delegateSelectable;
@@ -42,8 +41,8 @@ public class TrimPrefixSelectable implements ISelectable {
         var originalName = prefix.append(name);
         return Iterables.transform(
                 delegateSelectable.getExportedObjects(type, originalName, ignoreCase),
-                description -> new AliasedEObjectDescription(description.getName().skipFirst(prefix.getSegmentCount()), description)
-        );
+                description -> new AliasedEObjectDescription(
+                        description.getName().skipFirst(prefix.getSegmentCount()), description));
     }
 
     @Override
@@ -82,8 +81,10 @@ public class TrimPrefixSelectable implements ISelectable {
                 while (delegateIterator.hasNext()) {
                     var description = delegateIterator.next();
                     var qualifiedName = description.getName();
-                    if (qualifiedName.startsWith(prefix) && qualifiedName.getSegmentCount() > prefix.getSegmentCount()) {
-                        return new AliasedEObjectDescription(qualifiedName.skipFirst(prefix.getSegmentCount()), description);
+                    if (qualifiedName.startsWith(prefix)
+                            && qualifiedName.getSegmentCount() > prefix.getSegmentCount()) {
+                        return new AliasedEObjectDescription(
+                                qualifiedName.skipFirst(prefix.getSegmentCount()), description);
                     }
                 }
                 return null;

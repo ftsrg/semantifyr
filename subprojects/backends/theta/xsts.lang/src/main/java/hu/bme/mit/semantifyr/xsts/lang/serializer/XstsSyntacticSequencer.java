@@ -6,6 +6,4 @@
 
 package hu.bme.mit.semantifyr.xsts.lang.serializer;
 
-
-public class XstsSyntacticSequencer extends AbstractXstsSyntacticSequencer {
-}
+public class XstsSyntacticSequencer extends AbstractXstsSyntacticSequencer {}

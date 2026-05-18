@@ -1,0 +1,59 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression
+
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPattern
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfThenElse
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
+import org.eclipse.emf.ecore.EObject
+import org.eclipse.emf.ecore.util.EcoreUtil
+import org.eclipse.xtext.EcoreUtil2
+
+class IfThenElseConstantGuardPattern : OptimizationPattern {
+    override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
+        if (element !is IfThenElse) {
+            return false
+        }
+        val guard = element.guard as? LiteralBoolean ?: return false
+        val replacement = if (guard.isValue) {
+            element.then
+        } else {
+            element.`else`
+        }
+        if (replacement == null) {
+            return false
+        }
+        val parent = element.eContainer() ?: return false
+        EcoreUtil2.replace(element, replacement)
+        worklist.add(replacement)
+        worklist.add(parent)
+        return true
+    }
+}
+
+class IfThenElseIdenticalBranchesPattern : OptimizationPattern {
+    override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
+        if (element !is IfThenElse) {
+            return false
+        }
+        val thenBranch = element.then ?: return false
+        val elseBranch = element.`else` ?: return false
+        if (!EcoreUtil.equals(thenBranch, elseBranch)) {
+            return false
+        }
+        val parent = element.eContainer() ?: return false
+        // Copy the then-branch before replacing so we don't wrench the original
+        // subtree out of its parent before the replace call reads it.
+        val replacement = thenBranch.copy()
+        EcoreUtil2.replace(element, replacement)
+        worklist.add(replacement)
+        worklist.add(parent)
+        return true
+    }
+}

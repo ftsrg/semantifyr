@@ -3,9 +3,14 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build": "docusaurus build --out-dir build/docusaurus",
-    "serve": "docusaurus serve --dir build/docusaurus --no-open",
+    "typecheck": "tsc",
+    "typecheck:watch": "tsc --watch",
+    "lint": "eslint",
+    "check": "npm run typecheck && npm run lint",
+    "assemble": "docusaurus build --out-dir build/docusaurus",
+    "build": "npm run check && npm run assemble",
     "dev": "docusaurus start --no-open",
+    "serve": "docusaurus serve --dir build/docusaurus --no-open",
     "docusaurus": "docusaurus"
   },
   "dependencies": {
@@ -23,8 +28,7 @@
     "lightningcss": "^1.29.3",
     "prism-react-renderer": "^2.4.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "typescript": "5.8.2"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "^3.7.0",

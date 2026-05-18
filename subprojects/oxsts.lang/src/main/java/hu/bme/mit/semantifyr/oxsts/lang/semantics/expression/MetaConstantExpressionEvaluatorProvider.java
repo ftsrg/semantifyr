@@ -15,7 +15,8 @@ import org.eclipse.emf.ecore.EObject;
 
 public class MetaConstantExpressionEvaluatorProvider {
 
-    private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluatorProvider.CACHE_KEY";
+    private static final String CACHE_KEY =
+            "hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluatorProvider.CACHE_KEY";
 
     @Inject
     private OnResourceSetChangeEvictingCache resourceScopeCache;
@@ -30,5 +31,4 @@ public class MetaConstantExpressionEvaluatorProvider {
     public NamedElement evaluate(Expression expression) {
         return getEvaluator(expression).evaluate(expression);
     }
-
 }

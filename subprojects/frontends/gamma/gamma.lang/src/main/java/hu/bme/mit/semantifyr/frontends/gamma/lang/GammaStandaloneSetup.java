@@ -6,14 +6,10 @@
 
 package hu.bme.mit.semantifyr.frontends.gamma.lang;
 
-
 import com.google.inject.Injector;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaPackage;
 import org.eclipse.emf.ecore.EPackage;
 
-/**
- * Initialization support for running Xtext languages without Equinox extension registry.
- */
 public class GammaStandaloneSetup extends GammaStandaloneSetupGenerated {
 
     @Override

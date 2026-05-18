@@ -55,11 +55,6 @@ class Anything {
      * The base init transition.
      */
     init { }
-
-    /*
-     * The base havoc transition.
-     */
-    havoc { }
 }
 
 /*
@@ -81,3 +76,13 @@ annotation Shared
  * Calls to transitions annotated with @Trace will be traced back in the verification case witness, containing the bindings of it's parameters at the call site.
  */
 annotation Trace
+
+/*
+ * Variables annotated with @Clock allows time-aware backends to handle them in a more optimal way.
+ */
+annotation Clock
+
+/*
+ * Variables annotated with @NonOptimizable are excluded from optimizer passes that could remove or fold them.
+ */
+annotation NonOptimizable

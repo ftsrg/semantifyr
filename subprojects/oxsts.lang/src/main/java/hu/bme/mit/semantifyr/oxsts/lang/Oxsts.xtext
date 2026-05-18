@@ -281,7 +281,6 @@ Operation:
 	| AssignmentOperation
 	| IfOperation
 	| ForOperation
-	| TraceOperation
 	| LocalVarDeclarationOperation
 ;
 
@@ -322,10 +321,6 @@ LoopVariable returns VariableDeclaration:
 ForOperation:
     'for' '(' loopVariable=LoopVariable 'in' rangeExpression=Expression ')'
     body=SequenceOperation
-;
-
-TraceOperation:
-    'trace' name=Identifier
 ;
 
 LocalVarDeclarationOperation:
@@ -464,7 +459,12 @@ MultiplicativeOperator returns Expression:
 UnaryOperator returns Expression:
 	NegationOperator
 	| ArithmeticUnaryOperator
-	| CallExpression
+	| IfThenElse
+	| CastExpression
+;
+
+IfThenElse:
+    'if' guard=Expression 'then' then=Expression 'else' else=Expression
 ;
 
 NegationOperator:
@@ -477,6 +477,12 @@ enum UnaryOp:
 
 ArithmeticUnaryOperator:
     op=UnaryOp body=UnaryOperator
+;
+
+CastExpression returns Expression:
+    CallExpression -> (
+        {CastExpression.body=current} 'as' typespecification=TypeSpecification
+    )?
 ;
 
 CallExpression returns Expression:

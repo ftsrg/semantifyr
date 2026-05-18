@@ -36,5 +36,4 @@ public class OxstsValueConverterService extends DefaultTerminalConverters {
     public IValueConverter<String> QualifiedIdentifier() {
         return qualifiedIdentifierValueConverter;
     }
-
 }

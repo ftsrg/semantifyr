@@ -8,15 +8,14 @@ package hu.bme.mit.semantifyr.oxsts.lang.semantics.expression;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element;
 import org.eclipse.emf.ecore.EObject;
 
-@Singleton
 public class ConstantElementValueEvaluatorProvider {
 
-    private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantElementValueEvaluatorProvider.CACHE_KEY";
+    private static final String CACHE_KEY =
+            "hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantElementValueEvaluatorProvider.CACHE_KEY";
 
     @Inject
     private OnResourceSetChangeEvictingCache resourceScopeCache;
@@ -31,5 +30,4 @@ public class ConstantElementValueEvaluatorProvider {
     public ExpressionEvaluation evaluate(Element element) {
         return getEvaluator(element).evaluate(element);
     }
-
 }

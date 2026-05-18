@@ -8,24 +8,24 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.eclipse.lsp4j.ExecuteCommandParams;
-import org.eclipse.xtext.ide.server.ILanguageServerAccess;
-import org.eclipse.xtext.ide.server.commands.IExecutableCommandService;
-import org.eclipse.xtext.util.CancelIndicator;
-
+import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandHandler;
+import hu.bme.mit.semantifyr.lang.ide.server.commands.SemantifyrCommandService;
 import java.util.List;
 
 @Singleton
-public class OxstsCommandService implements IExecutableCommandService {
+public class OxstsCommandService extends SemantifyrCommandService {
 
     @Inject
-    private InlineOxstsCommandHandler inlineOxstsCommandHandler;
+    private InlineClassCommandHandler inlineClassCommandHandler;
 
     @Inject
-    private VerifyOxstsCommandHandler verifyOxstsCommandHandler;
+    private VerifyClassCommandHandler verifyClassCommandHandler;
 
     @Inject
-    private GenerateTracesOxstsCommandHandler generateTracesOxstsCommandHandler;
+    private VerifyInlinedOxstsCommandHandler verifyInlinedOxstsCommandHandler;
+
+    @Inject
+    private ValidateWitnessClassCommandHandler validateWitnessClassCommandHandler;
 
     @Inject
     private CompileInlinedOxstsCommandHandler compileInlinedOxstsCommandHandler;
@@ -41,31 +41,19 @@ public class OxstsCommandService implements IExecutableCommandService {
 
     private List<CommandHandler> commandHandlers;
 
+    @Override
     protected List<CommandHandler> getCommandHandlers() {
         if (commandHandlers == null) {
             commandHandlers = List.of(
-                    inlineOxstsCommandHandler,
+                    inlineClassCommandHandler,
                     compileInlinedOxstsCommandHandler,
-                    verifyOxstsCommandHandler,
-                    generateTracesOxstsCommandHandler,
+                    verifyClassCommandHandler,
+                    verifyInlinedOxstsCommandHandler,
+                    validateWitnessClassCommandHandler,
                     discoverVerificationCasesCommandHandler,
                     navigateToRedefinedCommandHandler,
-                    navigateToRedefinersCommandHandler
-            );
+                    navigateToRedefinersCommandHandler);
         }
         return commandHandlers;
     }
-
-    @Override
-    public List<String> initialize() {
-        return getCommandHandlers().stream().map(CommandHandler::getId).toList();
-    }
-
-    @Override
-    public Object execute(ExecuteCommandParams params, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
-        var commandHandler = getCommandHandlers().stream().filter(c -> params.getCommand().equals(c.getId())).findFirst();
-
-        return commandHandler.map(handler -> handler.execute(params, access, cancelIndicator)).orElse(null);
-    }
-
 }

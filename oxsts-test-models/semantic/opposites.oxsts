@@ -1,0 +1,56 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::lang::opposites
+
+// Opposite features: a containment and its matching container form a
+// bidirectional link. The compiler maintains the pairing after
+// instantiation. Tests pair a reachability claim (child can navigate to
+// parent) with an invariant that the link is consistent.
+
+class Parent {
+    contains kid: Child[1] opposite parent
+    var gen: int := 0
+}
+
+class Child {
+    container parent: Parent[1] opposite kid
+    tran bumpParent() {
+        assume(parent.gen < 3)
+        parent.gen := parent.gen + 1
+    }
+}
+
+// --- child navigates to parent and mutates it ---
+
+@VerificationCase
+@Tag("expect-pass")
+class OppositeNavigateReach {
+    contains root: Parent[1]
+
+    redefine tran {
+        inline root.kid.bumpParent()
+    }
+
+    prop {
+        return EF root.gen == 3
+    }
+}
+
+// Dual: the nested guard holds - gen never exceeds 3.
+@VerificationCase
+@Tag("expect-pass")
+class OppositeNavigateBound {
+    contains root: Parent[1]
+
+    redefine tran {
+        inline root.kid.bumpParent()
+    }
+
+    prop {
+        return AG root.gen <= 3
+    }
+}

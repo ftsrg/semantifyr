@@ -11,10 +11,9 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration;
+import java.util.*;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.ResourceSet;
-
-import java.util.*;
 
 public class RedefinersFinder {
 
@@ -41,7 +40,8 @@ public class RedefinersFinder {
 
     protected class RedefinersCollection {
 
-        protected final Map<RedefinableDeclaration, List<RedefinableDeclaration>> redefinersCollection = new HashMap<>();
+        protected final Map<RedefinableDeclaration, List<RedefinableDeclaration>> redefinersCollection =
+                new HashMap<>();
 
         public RedefinersCollection(EObject context) {
             var resourceSet = context.eResource().getResourceSet();
@@ -73,7 +73,5 @@ public class RedefinersFinder {
         public List<RedefinableDeclaration> getRedefinersOf(RedefinableDeclaration redefinableDeclaration) {
             return redefinersCollection.getOrDefault(redefinableDeclaration, Collections.emptyList());
         }
-
     }
-
 }

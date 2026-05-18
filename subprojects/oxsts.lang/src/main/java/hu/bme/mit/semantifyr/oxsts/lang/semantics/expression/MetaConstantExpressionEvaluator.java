@@ -1,94 +1,98 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
 package hu.bme.mit.semantifyr.oxsts.lang.semantics.expression;
 
+import hu.bme.mit.semantifyr.oxsts.lang.utils.SourceLocation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 
 public class MetaConstantExpressionEvaluator extends ExpressionEvaluator<NamedElement> {
 
+    private static final String NOT_META = "This expression is not a meta-expression!";
+
     @Override
     protected NamedElement visit(RangeExpression expression) {
-        throw new IllegalStateException("This expression is not a meta-expression!");
+        throw EvaluationFailureException.at(expression, NOT_META);
     }
 
     @Override
     protected NamedElement visit(ComparisonOperator expression) {
-        throw new IllegalStateException("This expression is not a meta-expression!");
+        throw EvaluationFailureException.at(expression, NOT_META);
     }
 
     @Override
     protected NamedElement visit(ArithmeticBinaryOperator expression) {
-        throw new IllegalStateException("This expression is not a meta-expression!");
+        throw EvaluationFailureException.at(expression, NOT_META);
     }
 
     @Override
     protected NamedElement visit(BooleanOperator expressionBooleanOperator) {
-        throw new IllegalStateException("This expression is not a meta-expression!");
+        throw EvaluationFailureException.at(expressionBooleanOperator, NOT_META);
     }
 
     @Override
     protected NamedElement visit(ArithmeticUnaryOperator expression) {
-        throw new IllegalStateException("This expression is not a meta-expression!");
+        throw EvaluationFailureException.at(expression, NOT_META);
     }
 
     @Override
     protected NamedElement visit(NegationOperator expressionNegationOperator) {
-        throw new IllegalStateException("This expression is not a meta-expression!");
+        throw EvaluationFailureException.at(expressionNegationOperator, NOT_META);
     }
 
     @Override
     protected NamedElement visit(AG expression) {
-        throw new IllegalStateException("This expression is not a meta-expression!");
+        throw EvaluationFailureException.at(expression, NOT_META);
     }
 
     @Override
     protected NamedElement visit(EF expression) {
-        throw new IllegalStateException("This expression is not a meta-expression!");
+        throw EvaluationFailureException.at(expression, NOT_META);
     }
 
     @Override
     protected NamedElement visit(ArrayLiteral expression) {
-        throw new IllegalStateException("This expression is not a meta-expression!");
+        throw EvaluationFailureException.at(expression, NOT_META);
     }
 
     @Override
     protected NamedElement visit(LiteralInfinity expression) {
-        throw new IllegalStateException("This expression is not a meta-expression!");
+        throw EvaluationFailureException.at(expression, NOT_META);
     }
 
     @Override
     protected NamedElement visit(LiteralReal expression) {
-        throw new IllegalStateException("This expression is not a meta-expression!");
+        throw EvaluationFailureException.at(expression, NOT_META);
     }
 
     @Override
     protected NamedElement visit(LiteralInteger expression) {
-        throw new IllegalStateException("This expression is not a meta-expression!");
+        throw EvaluationFailureException.at(expression, NOT_META);
     }
 
     @Override
     protected NamedElement visit(LiteralString expression) {
-        throw new IllegalStateException("This expression is not a meta-expression!");
+        throw EvaluationFailureException.at(expression, NOT_META);
     }
 
     @Override
     protected NamedElement visit(LiteralBoolean expression) {
-        throw new IllegalStateException("This expression is not a meta-expression!");
+        throw EvaluationFailureException.at(expression, NOT_META);
     }
 
     @Override
     protected NamedElement visit(LiteralNothing expression) {
-        throw new IllegalStateException("This expression is not a meta-expression!");
+        throw EvaluationFailureException.at(expression, NOT_META);
     }
 
     @Override
     protected NamedElement visit(ElementReference expression) {
         if (expression.getElement().eIsProxy()) {
-            throw new IllegalStateException("Element could not be resolved!");
+            throw new IllegalStateException(SourceLocation.prefixFor(expression)
+                    + "Element reference could not be resolved (unresolved proxy).");
         }
 
         return expression.getElement();
@@ -96,13 +100,14 @@ public class MetaConstantExpressionEvaluator extends ExpressionEvaluator<NamedEl
 
     @Override
     protected NamedElement visit(SelfReference expression) {
-        throw new IllegalStateException("This expression is not a meta-expression!");
+        throw EvaluationFailureException.at(expression, NOT_META);
     }
 
     @Override
     protected NamedElement visit(NavigationSuffixExpression expression) {
         if (expression.getMember().eIsProxy()) {
-            throw new IllegalStateException("Element could not be resolved!");
+            throw new IllegalStateException(SourceLocation.prefixFor(expression)
+                    + "Navigation member could not be resolved (unresolved proxy).");
         }
 
         return expression.getMember();
@@ -110,12 +115,21 @@ public class MetaConstantExpressionEvaluator extends ExpressionEvaluator<NamedEl
 
     @Override
     protected NamedElement visit(CallSuffixExpression expression) {
-        throw new IllegalStateException("This expression is not a meta-expression!");
+        throw EvaluationFailureException.at(expression, NOT_META);
     }
 
     @Override
     protected NamedElement visit(IndexingSuffixExpression expression) {
-        throw new IllegalStateException("This expression is not a meta-expression!");
+        throw EvaluationFailureException.at(expression, NOT_META);
     }
 
+    @Override
+    protected NamedElement visit(CastExpression expression) {
+        throw EvaluationFailureException.at(expression, NOT_META);
+    }
+
+    @Override
+    protected NamedElement visit(IfThenElse expression) {
+        throw EvaluationFailureException.at(expression, NOT_META);
+    }
 }

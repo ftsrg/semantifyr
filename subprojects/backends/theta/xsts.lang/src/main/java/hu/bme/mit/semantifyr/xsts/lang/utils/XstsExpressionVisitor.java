@@ -27,13 +27,21 @@ public abstract class XstsExpressionVisitor<T> {
     }
 
     protected abstract T visit(ArithmeticBinaryOperator expression);
+
     protected abstract T visit(ArithmeticUnaryOperator expression);
+
     protected abstract T visit(BooleanOperator expression);
+
     protected abstract T visit(ComparisonOperator expression);
+
     protected abstract T visit(ElementReferenceExpression expression);
+
     protected abstract T visit(IfThenElseExpression expression);
+
     protected abstract T visit(NegationOperator expression);
+
     protected abstract T visit(ReadIndexingSuffixExpression expression);
+
     protected abstract T visit(WriteIndexingSuffixExpression expression);
 
     protected T visit(LiteralExpression expression) {
@@ -46,6 +54,7 @@ public abstract class XstsExpressionVisitor<T> {
     }
 
     protected abstract T visit(LiteralBoolean expression);
+
     protected abstract T visit(LiteralInteger expression);
 
     protected T visit(LiteralArray expression) {
@@ -57,6 +66,6 @@ public abstract class XstsExpressionVisitor<T> {
     }
 
     protected abstract T visit(ConcreteLiteralArray expression);
-    protected abstract T visit(DefaultLiteralArray expression);
 
+    protected abstract T visit(DefaultLiteralArray expression);
 }

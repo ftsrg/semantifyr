@@ -1,0 +1,108 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::lang::property_calls
+
+// Property calls: inline-expansion of named properties into the main
+// property expression at compile time. Tests cover self-calls, calls
+// via self-navigation, and calls through a single-level navigation.
+
+// --- bare self-call ---
+
+// Reachable: isPositive() returns true once x > 0.
+@VerificationCase
+@Tag("expect-pass")
+class PropSelfBareCallReach {
+    var x: int := 0
+
+    prop isPositive(): bool {
+        return x > 0
+    }
+
+    redefine tran {
+        assume(x < 3)
+        x := x + 1
+    }
+
+    prop {
+        return EF isPositive()
+    }
+}
+
+// Dual: !isPositive() is the invariant when x stays zero (captures
+// the initial state where the inlined body evaluates to false).
+@VerificationCase
+@Tag("expect-pass")
+class PropSelfBareCallInitialState {
+    var x: int := 0
+
+    prop isZero(): bool {
+        return x == 0
+    }
+
+    redefine tran { }
+
+    prop {
+        return AG isZero()
+    }
+}
+
+// --- self-call via explicit self-navigation ---
+
+@VerificationCase
+@Tag("expect-pass")
+class PropSelfNavCallReach {
+    var x: int := 0
+
+    prop isPositive(): bool {
+        return x > 0
+    }
+
+    redefine tran {
+        assume(x < 3)
+        x := x + 1
+    }
+
+    prop {
+        return EF self.isPositive()
+    }
+}
+
+// --- single-level navigation call ---
+
+class PropWorker {
+    var done: bool := false
+    prop isDone(): bool {
+        return done
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class PropNavigationCallReach {
+    contains w: PropWorker[1]
+
+    redefine tran {
+        w.done := true
+    }
+
+    prop {
+        return EF w.isDone()
+    }
+}
+
+// Dual: before the transition fires, w.isDone() is false.
+@VerificationCase
+@Tag("expect-pass")
+class PropNavigationCallInitialState {
+    contains w: PropWorker[1]
+
+    redefine tran { }
+
+    prop {
+        return AG !w.isDone()
+    }
+}

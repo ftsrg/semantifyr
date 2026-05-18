@@ -1,0 +1,48 @@
+/*
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package hu.bme.mit.semantifyr.lang.ide.server.commands;
+
+import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager;
+import hu.bme.mit.semantifyr.verifier.ProgressContext;
+import java.util.UUID;
+import java.util.concurrent.CancellationException;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.xtext.util.CancelIndicator;
+
+public class CommandProgressContext implements ProgressContext {
+
+    private final WorkManager workManager;
+    private final CancelIndicator cancelIndicator;
+    private final Either<String, Integer> token =
+            Either.forLeft(UUID.randomUUID().toString());
+
+    public CommandProgressContext(WorkManager workManager, CancelIndicator cancelIndicator) {
+        this.workManager = workManager;
+        this.cancelIndicator = cancelIndicator;
+    }
+
+    @Override
+    public void checkIsCancelled() {
+        if (cancelIndicator.isCanceled()) {
+            throw new CancellationException();
+        }
+        workManager.checkCanceled(token);
+    }
+
+    public void begin(String title, String message) {
+        workManager.beginWork(token, title, message);
+    }
+
+    public void end() {
+        workManager.endWork(token);
+    }
+
+    @Override
+    public void reportProgress(String message) {
+        workManager.reportProgressOnWork(token, message);
+    }
+}

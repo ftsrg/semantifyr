@@ -30,7 +30,8 @@ public abstract class CexExpressionVisitor<T> {
     }
 
     protected abstract T visit(LiteralInteger expression);
-    protected abstract T visit(LiteralBoolean expression);
-    protected abstract T visit(LiteralEnum expression);
 
+    protected abstract T visit(LiteralBoolean expression);
+
+    protected abstract T visit(LiteralEnum expression);
 }

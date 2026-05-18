@@ -1,0 +1,173 @@
+/*
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package hu.bme.mit.semantifyr.compiler.pipeline.expression
+
+import com.google.inject.assistedinject.Assisted
+import com.google.inject.assistedinject.AssistedInject
+import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.evaluationFailure
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.parentSequence
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.BooleanEvaluation
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluator
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ElementValueEvaluator
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.NothingEvaluation
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
+import org.eclipse.emf.ecore.EObject
+
+class CompileTimeExpressionEvaluator @AssistedInject constructor(
+    @param:Assisted val instance: Instance,
+    private val compileTimeExpressionEvaluatorProvider: CompileTimeExpressionEvaluatorProvider,
+    private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
+    private val compileTimeElementValueEvaluatorProvider: CompileTimeElementValueEvaluatorProvider,
+) : ConstantExpressionEvaluator() {
+
+    override fun getElementValueEvaluator(context: EObject): ElementValueEvaluator<ExpressionEvaluation> {
+        return compileTimeElementValueEvaluatorProvider.getEvaluator(instance)
+    }
+
+    override fun visit(expression: ComparisonOperator): ExpressionEvaluation {
+        val left = evaluate(expression.getLeft())
+        val right = evaluate(expression.getRight())
+
+        if (left is InstanceEvaluation) {
+            if (right is InstanceEvaluation) {
+                return when (expression.getOp()) {
+                    ComparisonOp.EQ -> BooleanEvaluation((left.instances - right.instances).isEmpty())
+                    ComparisonOp.NOT_EQ -> BooleanEvaluation(!(left.instances - right.instances).isEmpty())
+                    else -> sourceError(expression, "Unsupported comparison operator for instance operands: ${expression.getOp()}")
+                }
+            }
+
+            if (right is NothingEvaluation) {
+                return when (expression.getOp()) {
+                    ComparisonOp.EQ -> BooleanEvaluation(left.instances.isEmpty())
+                    ComparisonOp.NOT_EQ -> BooleanEvaluation(left.instances.any())
+                    else -> sourceError(expression, "Unsupported comparison operator when comparing instance to nothing: ${expression.getOp()}")
+                }
+            }
+        }
+
+        if (right is InstanceEvaluation) {
+            if (left is NothingEvaluation) {
+                return when (expression.getOp()) {
+                    ComparisonOp.EQ -> BooleanEvaluation(right.instances.isEmpty())
+                    ComparisonOp.NOT_EQ -> BooleanEvaluation(right.instances.any())
+                    else -> sourceError(expression, "Unsupported comparison operator when comparing nothing to instance: ${expression.getOp()}")
+                }
+            }
+        }
+
+        return super.visit(expression)
+    }
+
+    override fun visit(expression: SelfReference): ExpressionEvaluation {
+        return InstanceEvaluation(instance)
+    }
+
+    override fun visit(expression: NavigationSuffixExpression): ExpressionEvaluation {
+        val instance = evaluateInstances(expression.primary)
+
+        if (instance.isEmpty()) {
+            if (expression.isOptional) {
+                return InstanceEvaluation(setOf())
+            }
+
+            sourceError(expression, "The left side is evaluated to an empty evaluation!")
+        }
+
+        if (instance.size != 1) {
+            sourceError(expression, "Left hand side contains more than a single instance!")
+        }
+
+        val context = instance.single()
+        val resolvedMember = redefinitionAwareReferenceResolver.resolve(context.domain, expression.member)
+
+        val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(context)
+        return evaluator.evaluateElement(resolvedMember)
+    }
+
+    override fun visit(expression: CallSuffixExpression): ExpressionEvaluation {
+        evaluationFailure(expression, "CallSuffixExpression is not compile-time-evaluable. Method/operation calls must be inlined before compile-time evaluation.")
+    }
+
+    override fun visit(expression: IndexingSuffixExpression): ExpressionEvaluation {
+        evaluationFailure(expression, "IndexingSuffixExpression is not compile-time-evaluable. Array/map indexing is not statically evaluable in the general case.")
+    }
+
+    override fun visit(expression: ElementReference): ExpressionEvaluation {
+        val element = expression.element
+
+        if (element !is Declaration || ! OxstsUtils.isElementContextual(element)) {
+            val rootEvaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instance.parentSequence().last())
+            return rootEvaluator.evaluateElement(element)
+        }
+
+        for (candidate in instance.parentSequence()) {
+            val resolvedElement = redefinitionAwareReferenceResolver.resolveOrNull(candidate.domain, element)
+            if (resolvedElement != null) {
+                val candidateEvaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(candidate)
+                return candidateEvaluator.evaluateElement(resolvedElement)
+            }
+        }
+
+        sourceError(expression, "Could not find appropriate context for contextual expression!")
+    }
+
+    fun evaluateInstances(expression: Expression): Set<Instance> {
+        return evaluateInstancesOrNull(expression) ?: sourceError(expression, "This expression is not evaluable to instances!")
+    }
+
+    fun evaluateInstancesOrNull(expression: Expression): Set<Instance>? {
+        val evaluation = evaluate(expression)
+
+        if (evaluation is InstanceEvaluation) {
+            return evaluation.instances
+        }
+
+        return null
+    }
+
+    fun evaluateSingleInstance(expression: Expression): Instance {
+        return evaluateSingleInstanceOrNull(expression) ?: sourceError(expression, "This expression is not evaluable to a single instance!")
+    }
+
+    fun evaluateSingleInstanceOrNull(expression: Expression): Instance? {
+        val evaluation = evaluate(expression)
+
+        if (evaluation is InstanceEvaluation) {
+            return evaluation.instances.singleOrNull()
+        }
+
+        return null
+    }
+
+    fun evaluateBoolean(expression: Expression): Boolean {
+        val evaluation = evaluate(expression)
+
+        if (evaluation is BooleanEvaluation) {
+            return evaluation.value
+        }
+
+        sourceError(expression, "This expression is not evaluable to boolean!")
+    }
+
+    interface Factory {
+        fun create(instance: Instance): CompileTimeExpressionEvaluator
+    }
+
+}

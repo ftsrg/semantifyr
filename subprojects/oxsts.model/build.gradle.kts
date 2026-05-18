@@ -38,7 +38,7 @@ tasks {
     }
 
     compileJava {
-        inputs.files(generateEPackage.get().outputs)
+        inputs.files(generateEPackage)
     }
 
     clean {

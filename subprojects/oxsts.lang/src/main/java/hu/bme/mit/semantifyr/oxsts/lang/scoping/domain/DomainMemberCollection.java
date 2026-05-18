@@ -10,12 +10,11 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration;
-import org.eclipse.xtext.resource.ISelectable;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.eclipse.xtext.resource.ISelectable;
 
 public class DomainMemberCollection {
 
@@ -25,18 +24,22 @@ public class DomainMemberCollection {
         public String toString() {
             return "EMPTY";
         }
-
     };
 
-    public static DomainMemberCollection createCollection(DomainDeclaration domainDeclaration, RedefinitionHandler redefinitionHandler) {
+    public static DomainMemberCollection createCollection(
+            DomainDeclaration domainDeclaration, RedefinitionHandler redefinitionHandler) {
         return createCollection(domainDeclaration, EMPTY, redefinitionHandler);
     }
 
-    public static DomainMemberCollection createCollection(DomainDeclaration domainDeclaration, DomainMemberCollection parent, RedefinitionHandler redefinitionHandler) {
+    public static DomainMemberCollection createCollection(
+            DomainDeclaration domainDeclaration,
+            DomainMemberCollection parent,
+            RedefinitionHandler redefinitionHandler) {
         return new InheritanceAwareDomainMemberCollection(domainDeclaration, parent, redefinitionHandler);
     }
 
-    public static DomainMemberCollection createCollection(List<DomainMemberCollection> parents, RedefinitionHandler redefinitionHandler) {
+    public static DomainMemberCollection createCollection(
+            List<DomainMemberCollection> parents, RedefinitionHandler redefinitionHandler) {
         return switch (parents.size()) {
             case 0 -> EMPTY;
             case 1 -> parents.getFirst();
@@ -104,7 +107,8 @@ public class DomainMemberCollection {
 
     public List<Declaration> getDeclarations() {
         if (actualDeclarations == null) {
-            actualDeclarations = declarationHolders.stream().map(h -> h.declaration).toList();
+            actualDeclarations =
+                    declarationHolders.stream().map(h -> h.declaration).toList();
         }
 
         return actualDeclarations;
@@ -142,5 +146,4 @@ public class DomainMemberCollection {
         redefinedHolder.setDeclaration(declaration);
         redefinitions.put(declaration, redefinedHolder);
     }
-
 }

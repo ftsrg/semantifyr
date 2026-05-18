@@ -24,34 +24,30 @@ val thetaClasspath by configurations.creating {
 
 dependencies {
     distributionClasspath(project(":semantifyr-vscode", configuration = "distributionOutput"))
-    distributionClasspath(project(":sysmlv2-frontend", configuration = "distributionOutput"))
+    distributionClasspath(project(":sysml-wrapper", configuration = "distributionOutput"))
 
-    thetaClasspath(project(":theta-wrapper", configuration = "thetaOutput"))
+    thetaClasspath(project(":theta-executor", configuration = "thetaOutput"))
 }
 
 val cloneDistribution by tasks.registering(Sync::class) {
-    inputs.files(distributionClasspath)
-
     from(distributionClasspath)
 
     into("extensions")
 }
 
 val cloneTheta by tasks.registering(Sync::class) {
-    inputs.files(thetaClasspath)
-
     from(thetaClasspath)
 
     into("theta-xsts-cli")
 }
 
 val cloneGammaLibrary by tasks.registering(Sync::class) {
-    from(project(":gamma-semantics").layout.projectDirectory.dir("Library"))
+    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/libraries/default"))
     into("examples/gamma/Library")
 }
 
 val cloneSysMLLibrary by tasks.registering(Sync::class) {
-    from(project(":sysmlv2-semantics").layout.projectDirectory.dir("Library"))
+    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/libraries/default"))
     into("examples/sysml/Library")
 }
 
@@ -61,23 +57,21 @@ val cloneLibraries by tasks.registering {
 }
 
 val cloneGammaTestModels by tasks.registering(Sync::class) {
-    from(project(":gamma-semantics").layout.projectDirectory.dir("TestModels")) {
+    from(project(":gamma-frontend").layout.projectDirectory.dir("TestModels")) {
         include("*.gamma")
     }
     into("examples/gamma/TestModels")
 }
 
 val cloneSysMLTestModels by tasks.registering(Sync::class) {
-    from(project(":sysmlv2-semantics").layout.projectDirectory.dir("TestModels")) {
+    from(project(":sysml-frontend").layout.projectDirectory.dir("TestModels")) {
         include("*.sysml")
     }
     into("examples/sysml/TestModels")
 }
 
 val cloneTutorialModels by tasks.registering(Sync::class) {
-    from(project(":xsts-verifier").layout.projectDirectory.dir("test-models/Tutorial")) {
-        include("*.oxsts")
-    }
+    from(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial"))
     into("examples/tutorial/")
 }
 
@@ -94,13 +88,31 @@ val prepareDockerBuild by tasks.registering {
     dependsOn(cloneTestModels)
 }
 
+tasks.assemble {
+    dependsOn(prepareDockerBuild)
+}
+
+val dockerImageRepo = "ftsrgbot/semantifyr-vscode-server"
+val dockerGitSha = providers.exec {
+    commandLine("git", "rev-parse", "--short", "HEAD")
+    isIgnoreExitValue = true
+}.standardOutput.asText.map { it.trim() }
+
 val dockerBuildImage by tasks.registering(DockerBuildImage::class) {
+    val repo = dockerImageRepo
+    val version = project.version.toString()
     dependsOn(prepareDockerBuild)
     inputDir.set(projectDir)
-    images.add("ftsrgbot/semantifyr-vscode-server:${project.version}")
+    images.add("$repo:$version")
+    images.add("$repo:latest")
+    images.add(dockerGitSha.map { "$repo:$it" })
 }
 
 val dockerPushImage by tasks.registering(DockerPushImage::class) {
+    val repo = dockerImageRepo
+    val version = project.version.toString()
     dependsOn(dockerBuildImage)
-    images.add("ftsrgbot/semantifyr-vscode-server:${project.version}")
+    images.add("$repo:$version")
+    images.add("$repo:latest")
+    images.add(dockerGitSha.map { "$repo:$it" })
 }

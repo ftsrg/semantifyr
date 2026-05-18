@@ -3,6 +3,4 @@
  */
 package hu.bme.mit.semantifyr.cex.lang.serializer;
 
-
-public class CexSyntacticSequencer extends AbstractCexSyntacticSequencer {
-}
+public class CexSyntacticSequencer extends AbstractCexSyntacticSequencer {}

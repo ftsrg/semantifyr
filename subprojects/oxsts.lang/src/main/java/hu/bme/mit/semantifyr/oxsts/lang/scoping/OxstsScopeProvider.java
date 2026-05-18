@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.scoping;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ImmutableTypeEvaluation;
@@ -22,14 +23,21 @@ import org.eclipse.xtext.scoping.ICaseInsensitivityHelper;
 import org.eclipse.xtext.scoping.IScope;
 import org.eclipse.xtext.scoping.Scopes;
 import org.eclipse.xtext.scoping.impl.SelectableBasedScope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
+
+    private static final Logger logger = LoggerFactory.getLogger(OxstsScopeProvider.class);
 
     @Inject
     private ExpressionTypeEvaluatorProvider expressionTypeEvaluatorProvider;
 
     @Inject
     private DomainMemberCollectionProvider domainMemberCollectionProvider;
+
+    @Inject
+    private MetaConstantExpressionEvaluatorProvider metaConstantExpressionEvaluatorProvider;
 
     @Inject
     private ICaseInsensitivityHelper caseInsensitivityHelper;
@@ -43,8 +51,7 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
         try {
             return calculateScope(context, reference);
         } catch (RuntimeException e) {
-            // FIXME: should log here
-            e.printStackTrace();
+            logger.error("Scope calculation failed for reference {} at {}", reference.getName(), context, e);
             return IScope.NULLSCOPE;
         }
     }
@@ -89,8 +96,10 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
 
                 return scopeFor(declaration.getParameters());
             } else if (parent instanceof CallSuffixExpression callExpression) {
-//                var expression = callExpression.getExpression(); // TODO: implement static evaluator
-
+                var called = metaConstantExpressionEvaluatorProvider.evaluate(callExpression.getPrimary());
+                if (called instanceof ParametricDeclaration parametricDeclaration) {
+                    return scopeFor(parametricDeclaration.getParameters());
+                }
                 return IScope.NULLSCOPE;
             }
 
@@ -101,22 +110,15 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
             var primary = navigationSuffixExpression.getPrimary();
             var primaryEvaluation = expressionTypeEvaluatorProvider.evaluate(primary);
 
-            if (primaryEvaluation instanceof ImmutableTypeEvaluation(DomainDeclaration domainDeclaration, RangeEvaluation rangeEvaluation)) {
+            if (primaryEvaluation
+                    instanceof
+                    ImmutableTypeEvaluation(DomainDeclaration domainDeclaration, RangeEvaluation rangeEvaluation)) {
                 var members = domainMemberCollectionProvider.getMembers(domainDeclaration);
                 return scopeFor(reference, members);
             }
 
             return IScope.NULLSCOPE;
         }
-
-//        if (context instanceof Expression expression) {
-//            var defaultExpressionContainer = OxstsUtils.containingVarOrFeatureIfDefaultExpression(expression);
-//            if (defaultExpressionContainer != null) {
-//                var originalScope = super.getScope(defaultExpressionContainer, reference);
-//
-//                return new FilteringScope(originalScope, e -> e.getEObjectOrProxy() != defaultExpressionContainer);
-//            }
-//        }
 
         return super.getScope(context, reference);
     }
@@ -148,15 +150,20 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
     protected IScope calculateFeatureRedefinedScope(EObject context, EReference reference) {
         var container = (DomainDeclaration) context.eContainer();
 
-        return scopeFor(reference, domainMemberCollectionProvider.getParentCollection(container).getMemberSelectable());
+        return scopeFor(
+                reference,
+                domainMemberCollectionProvider.getParentCollection(container).getMemberSelectable());
     }
 
     protected IScope scopeFor(EReference reference, ISelectable selectable) {
-        return SelectableBasedScope.createScope(IScope.NULLSCOPE, selectable, reference.getEReferenceType(), caseInsensitivityHelper.isIgnoreCase(reference));
+        return SelectableBasedScope.createScope(
+                IScope.NULLSCOPE,
+                selectable,
+                reference.getEReferenceType(),
+                caseInsensitivityHelper.isIgnoreCase(reference));
     }
 
     protected IScope scopeFor(Iterable<? extends Element> elements) {
         return Scopes.scopeFor(elements, QualifiedName.wrapper(NamingUtil::getName), IScope.NULLSCOPE);
     }
-
 }

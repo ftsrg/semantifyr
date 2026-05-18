@@ -6,6 +6,4 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.semantics.expression;
 
-public record RealEvaluation(double value) implements ExpressionEvaluation {
-
-}
+public record RealEvaluation(double value) implements ExpressionEvaluation {}

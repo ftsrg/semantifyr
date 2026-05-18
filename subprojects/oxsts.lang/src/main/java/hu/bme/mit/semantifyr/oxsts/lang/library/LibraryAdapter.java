@@ -51,5 +51,4 @@ public class LibraryAdapter extends AdapterImpl {
 
         return oxstsLibrary;
     }
-
 }

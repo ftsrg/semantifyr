@@ -28,7 +28,6 @@ public class XstsFormatter extends AbstractJavaFormatter {
 
     protected void formatBrackets(EObject eObject, IFormattableDocument document) {
         document.prepend(regionFor(eObject).keyword("{"), this::oneSpace);
-        document.append(regionFor(eObject).keyword("{"), this::newLines);
         document.prepend(regionFor(eObject).keyword("}"), this::newLines);
         document.interior(regionFor(eObject).keyword("{"), regionFor(eObject).keyword("}"), this::indent);
     }
@@ -176,27 +175,25 @@ public class XstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void format(ComparisonOperator comparisonOperator, IFormattableDocument document) {
-        allRegionsFor(comparisonOperator).keywords(
-                "<", "<=", ">", "==", "!="
-        ).forEach(r -> document.surround(r, this::oneSpace));
+        allRegionsFor(comparisonOperator)
+                .keywords("<", "<=", ">", "==", "!=")
+                .forEach(r -> document.surround(r, this::oneSpace));
 
         document.format(comparisonOperator.getLeft());
         document.format(comparisonOperator.getRight());
     }
 
     protected void format(ArithmeticBinaryOperator arithmeticBinaryOperator, IFormattableDocument document) {
-        allRegionsFor(arithmeticBinaryOperator).keywords(
-                "+", "-", "*", "/"
-        ).forEach(r -> document.surround(r, this::oneSpace));
+        allRegionsFor(arithmeticBinaryOperator)
+                .keywords("+", "-", "*", "/")
+                .forEach(r -> document.surround(r, this::oneSpace));
 
         document.format(arithmeticBinaryOperator.getLeft());
         document.format(arithmeticBinaryOperator.getRight());
     }
 
     protected void format(BooleanOperator booleanOperator, IFormattableDocument document) {
-        allRegionsFor(booleanOperator).keywords(
-                "&&", "||", "^^"
-        ).forEach(r -> document.surround(r, this::oneSpace));
+        allRegionsFor(booleanOperator).keywords("&&", "||", "^^").forEach(r -> document.surround(r, this::oneSpace));
 
         document.format(booleanOperator.getLeft());
         document.format(booleanOperator.getRight());
@@ -234,5 +231,4 @@ public class XstsFormatter extends AbstractJavaFormatter {
         document.format(arrayLiteral.getElseExpression());
         document.format(arrayLiteral.getIndexType());
     }
-
 }

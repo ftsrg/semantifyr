@@ -39,7 +39,8 @@ public class XstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopePr
         var globalScope = getGlobalScope(resource, reference);
 
         var resourceDescription = globalResourceDescriptionProvider.getResourceDescription(resource);
-        return SelectableBasedScope.createScope(globalScope, resourceDescription, reference.getEReferenceType(), isIgnoreCase(reference));
+        return SelectableBasedScope.createScope(
+                globalScope, resourceDescription, reference.getEReferenceType(), isIgnoreCase(reference));
     }
 
     protected IScope getLocalScope(IScope containerScope, EObject context, EObject child) {
@@ -50,5 +51,4 @@ public class XstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopePr
 
         return containerScope;
     }
-
 }
