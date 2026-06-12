@@ -11,6 +11,14 @@ import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceTree
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
+import kotlin.time.Duration
+
+data class CompilationMetrics(
+    val createDuration: Duration = Duration.ZERO,
+    val instantiationDuration: Duration = Duration.ZERO,
+    val inliningDuration: Duration = Duration.ZERO,
+    val flatteningDuration: Duration = Duration.ZERO,
+)
 
 interface CompilationContext {
     val inlinedOxsts: InlinedOxsts
@@ -69,6 +77,7 @@ class FlattenedCompilationContext(
     override val rootInstance: Instance,
     val transitionCallTraces: TransitionCallTraceMap,
     val flatteningInfo: FlatteningInfo,
+    val compilationMetrics: CompilationMetrics = CompilationMetrics(),
 ) : EvaluableCompilationContext
 
 class FlatteningInfo(

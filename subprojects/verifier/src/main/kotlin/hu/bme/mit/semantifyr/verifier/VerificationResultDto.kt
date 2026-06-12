@@ -52,8 +52,27 @@ data class BackendMetricsDto(
     }
 }
 
+data class CompilationMetricsDto(
+    val createDuration: Duration,
+    val instantiationDuration: Duration,
+    val inliningDuration: Duration,
+    val flatteningDuration: Duration,
+) {
+    companion object {
+        fun fromMetrics(metrics: CompilationMetrics): CompilationMetricsDto {
+            return CompilationMetricsDto(
+                createDuration = metrics.createDuration.toJavaDuration(),
+                instantiationDuration = metrics.instantiationDuration.toJavaDuration(),
+                inliningDuration = metrics.inliningDuration.toJavaDuration(),
+                flatteningDuration = metrics.flatteningDuration.toJavaDuration(),
+            )
+        }
+    }
+}
+
 data class VerifierMetricsDto(
     val compilationDuration: Duration,
+    val compilation: CompilationMetricsDto,
     val backAnnotationDuration: Duration,
     val portfolioDuration: Duration,
 ) {
@@ -61,6 +80,7 @@ data class VerifierMetricsDto(
         fun fromMetrics(metrics: VerifierMetrics): VerifierMetricsDto {
             return VerifierMetricsDto(
                 compilationDuration = metrics.compilationDuration.toJavaDuration(),
+                compilation = CompilationMetricsDto.fromMetrics(metrics.compilation),
                 backAnnotationDuration = metrics.backAnnotationDuration.toJavaDuration(),
                 portfolioDuration = metrics.portfolioDuration.toJavaDuration(),
             )
@@ -204,6 +224,7 @@ data class VerificationResultDto(
     val metrics: VerificationMetricsDto,
     val message: String?,
     val trace: TraceDto?,
+    val hasTimedOut: Boolean,
 ) {
     companion object {
         fun fromResult(result: VerificationResult): VerificationResultDto {
@@ -213,6 +234,7 @@ data class VerificationResultDto(
                 metrics = VerificationMetricsDto.fromMetrics(result.metrics),
                 message = result.message,
                 trace = result.trace?.let { TraceDto.fromTrace(it) },
+                hasTimedOut = result.hasTimedOut,
             )
         }
     }

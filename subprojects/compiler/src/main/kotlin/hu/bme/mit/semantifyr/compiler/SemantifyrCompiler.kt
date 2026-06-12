@@ -20,6 +20,7 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import java.nio.file.Path
+import kotlin.time.measureTimedValue
 
 class SemantifyrCompiler(
     injector: Injector,
@@ -35,11 +36,19 @@ class SemantifyrCompiler(
 
     fun compile(classDeclaration: ClassDeclaration, outputDirectory: Path): FlattenedCompilationContext {
         logger.info { "Compiling class '${classDeclaration.name}' into ${outputDirectory.toAbsolutePath()}" }
-        val inlinedOxsts = sharedInjector
-            .getInstance(InlinedOxstsModelCreator::class.java)
-            .create(classDeclaration, outputDirectory)
-            .inlinedOxsts
-        return compile(inlinedOxsts, outputDirectory)
+        val (inlinedOxsts, createDuration) = measureTimedValue {
+            sharedInjector.getInstance(InlinedOxstsModelCreator::class.java)
+                .create(classDeclaration, outputDirectory)
+                .inlinedOxsts
+        }
+        val flattened = compile(inlinedOxsts, outputDirectory)
+        return FlattenedCompilationContext(
+            inlinedOxsts = flattened.inlinedOxsts,
+            rootInstance = flattened.rootInstance,
+            transitionCallTraces = flattened.transitionCallTraces,
+            flatteningInfo = flattened.flatteningInfo,
+            compilationMetrics = flattened.compilationMetrics.copy(createDuration = createDuration),
+        )
     }
 
     fun compile(inlinedOxsts: InlinedOxsts, outputDirectory: Path): FlattenedCompilationContext {

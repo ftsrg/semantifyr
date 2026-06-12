@@ -23,6 +23,7 @@ import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.verifier.CompilationMetrics
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.Trace
@@ -51,6 +52,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
+import kotlin.time.TimeSource
 import kotlin.time.measureTimedValue
 
 private val CANCEL_POLL_INTERVAL = 250.milliseconds
@@ -123,19 +125,22 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         val startedAt = Clock.System.now()
         logger.info { "Verifying case '$qualifiedName' with portfolio '${semantifyrVerifierConfiguration.portfolio.id}' (timeout=${semantifyrVerifierConfiguration.timeout})" }
 
+        val portfolioMark = TimeSource.Monotonic.markNow()
+        var hasTimedOut = false
         val (backendResult, portfolioDuration) = try {
             runInTimeout(progress) {
                 runBackend(compilation, case, startedAt, progress)
             }
         } catch (_: TimeoutCancellationException) {
             logger.info { "Verification of '$qualifiedName' timed out after ${semantifyrVerifierConfiguration.timeout}, returning Inconclusive" }
+            hasTimedOut = true
             BackendOutcomeWithDuration(
                 BackendVerificationResult(
                     metadata = VerificationMetadata(backendId = null, startedAt = startedAt),
                     verdict = VerificationVerdict.Inconclusive,
                     message = "Timeout (${semantifyrVerifierConfiguration.timeout}) exceeded.",
                 ),
-                Duration.ZERO,
+                portfolioMark.elapsedNow(),
             )
         } catch (exception: CancellationException) {
             logger.info { "Verification of '$qualifiedName' cancelled" }
@@ -148,7 +153,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
                     verdict = VerificationVerdict.NotSupported,
                     message = exception.message?.takeIf { it.isNotBlank() } ?: exception::class.simpleName,
                 ),
-                Duration.ZERO,
+                portfolioMark.elapsedNow(),
             )
         } catch (exception: Exception) {
             logger.warn(exception) { "Verification of '$qualifiedName' errored." }
@@ -158,7 +163,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
                     verdict = VerificationVerdict.Errored,
                     message = exception.message?.takeIf { it.isNotBlank() } ?: exception::class.simpleName,
                 ),
-                Duration.ZERO,
+                portfolioMark.elapsedNow(),
             )
         }
 
@@ -176,11 +181,18 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
                 backend = backendResult.metrics.takeIf { backendResult.metadata.backendId != null },
                 verifier = VerifierMetrics(
                     compilationDuration = compilationDuration,
+                    compilation = CompilationMetrics(
+                        createDuration = compilation.compilationMetrics.createDuration,
+                        instantiationDuration = compilation.compilationMetrics.instantiationDuration,
+                        inliningDuration = compilation.compilationMetrics.inliningDuration,
+                        flatteningDuration = compilation.compilationMetrics.flatteningDuration,
+                    ),
                     backAnnotationDuration = verifierBackAnnotationDuration,
                     portfolioDuration = portfolioDuration,
                 ),
             ),
             trace = trace,
+            hasTimedOut = hasTimedOut,
             message = backendResult.message,
         )
 

@@ -18,6 +18,7 @@ data class VerificationResult(
     val metrics: VerificationMetrics,
     @Transient val trace: Trace? = null,
     val message: String? = null,
+    val hasTimedOut: Boolean = false,
 ) {
     val isPassed: Boolean
         get() = verdict == VerificationVerdict.Passed

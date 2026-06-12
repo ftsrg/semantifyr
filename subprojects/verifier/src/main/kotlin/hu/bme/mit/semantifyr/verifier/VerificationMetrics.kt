@@ -11,8 +11,17 @@ import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 
 @Serializable
+data class CompilationMetrics(
+    val createDuration: Duration = Duration.ZERO,
+    val instantiationDuration: Duration = Duration.ZERO,
+    val inliningDuration: Duration = Duration.ZERO,
+    val flatteningDuration: Duration = Duration.ZERO,
+)
+
+@Serializable
 data class VerifierMetrics(
     val compilationDuration: Duration = Duration.ZERO,
+    val compilation: CompilationMetrics = CompilationMetrics(),
     val backAnnotationDuration: Duration = Duration.ZERO,
     val portfolioDuration: Duration = Duration.ZERO,
 )

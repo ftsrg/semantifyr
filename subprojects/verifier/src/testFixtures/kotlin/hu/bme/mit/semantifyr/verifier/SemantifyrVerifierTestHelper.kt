@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.logging.info
@@ -50,16 +51,20 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         outputDirectory: Path,
         environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
         artifacts: ArtifactConfig = ArtifactConfig.ALL,
+        optimization: OptimizationConfig? = null,
     ): SemantifyrVerifier {
         outputDirectory.createDirectories()
-        return SemantifyrVerifier.builder()
+        val builder = SemantifyrVerifier.builder()
             .injector(injector)
             .portfolio(verificationPortfolio)
             .environment(environment)
             .artifacts(artifacts)
             .outputDirectory(outputDirectory)
             .timeout(timeout)
-            .build()
+        optimization?.let {
+            builder.optimization(it)
+        }
+        return builder.build()
     }
 
     fun collectVerificationCases(
@@ -86,8 +91,9 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         timeout: Duration = 30.minutes,
         environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
         expectedVerdict: VerificationVerdict = VerificationVerdict.Passed,
+        optimization: OptimizationConfig? = null,
     ) {
-        val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment)
+        val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment, optimization = optimization)
         Assertions.assertEquals(
             expectedVerdict,
             result.verdict,
@@ -164,8 +170,9 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         timeout: Duration = 30.minutes,
         environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
         artifacts: ArtifactConfig = ArtifactConfig.ALL,
+        optimization: OptimizationConfig? = null,
     ): VerificationResult {
-        val verifier = buildVerifier(verificationPortfolio, timeout, outputDirectory, environment, artifacts)
+        val verifier = buildVerifier(verificationPortfolio, timeout, outputDirectory, environment, artifacts, optimization)
         return verifier.verify(case)
     }
 

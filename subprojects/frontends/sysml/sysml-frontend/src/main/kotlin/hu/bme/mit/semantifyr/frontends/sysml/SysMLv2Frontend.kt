@@ -28,6 +28,7 @@ import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import kotlin.io.path.nameWithoutExtension
 import kotlin.time.Duration
+import kotlin.time.measureTimedValue
 import kotlin.time.toKotlinDuration
 
 private val sharedSysMLv2Compiler = SysMLv2Compiler()
@@ -51,6 +52,7 @@ class SysMLv2Frontend private constructor(
     private val verificationCaseDiscoverer: VerificationCaseDiscoverer,
     private val sysmlConfig: SysMLv2FrontendConfig,
     private val compiledOxstsPath: Path,
+    val transformationDuration: Duration,
 ) {
 
     private val logger by loggerFactory()
@@ -227,15 +229,17 @@ class SysMLv2Frontend private constructor(
 
             val resolvedLibraryPaths = libraryOverride ?: extractVariantLibrary()
 
-            val compiledOxsts = compiledOxstsOverride ?: run {
-                val target = resolvedOutputDirectory
-                    .resolve("compiled")
-                    .resolve(variant.name.lowercase())
-                    .resolve("${resolvedSource.nameWithoutExtension}.oxsts")
-                sharedSysMLv2Compiler.compile(
-                    sourcePath = resolvedSource,
-                    outputPath = target,
-                )
+            val (compiledOxsts, transformationDuration) = measureTimedValue {
+                compiledOxstsOverride ?: run {
+                    val target = resolvedOutputDirectory
+                        .resolve("compiled")
+                        .resolve(variant.name.lowercase())
+                        .resolve("${resolvedSource.nameWithoutExtension}.oxsts")
+                    sharedSysMLv2Compiler.compile(
+                        sourcePath = resolvedSource,
+                        outputPath = target,
+                    )
+                }
             }
 
             logger.info {
@@ -261,6 +265,7 @@ class SysMLv2Frontend private constructor(
                 verificationCaseDiscoverer = discoverer,
                 sysmlConfig = sysmlConfig,
                 compiledOxstsPath = compiledOxsts,
+                transformationDuration = transformationDuration,
             )
         }
 
