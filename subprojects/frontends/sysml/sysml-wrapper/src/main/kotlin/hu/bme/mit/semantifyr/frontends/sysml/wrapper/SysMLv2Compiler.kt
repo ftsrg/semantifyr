@@ -23,7 +23,7 @@ class SysMLv2Compiler {
     private val cache = GenericCache<String, String>()
 
     private val bundleDir: Path by lazy { extractBundle() }
-    private val cliPath: Path by lazy { bundleDir.resolve("index.js") }
+    private val cliPath: Path by lazy { bundleDir.resolve("cli.cjs") }
     private val sysmlLibraryPath: Path by lazy { bundleDir.resolve("sysml.library") }
 
     fun compile(sourcePath: Path, outputPath: Path): Path {
