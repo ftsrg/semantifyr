@@ -31,6 +31,7 @@ class SpinExecutionSpecification(
     val extraArguments: List<String> = emptyList(),
     val logFile: File? = null,
     val errorFile: File? = null,
+    val maxSearchDepth: Int? = null,
 )
 
 class SpinReplaySpecification(

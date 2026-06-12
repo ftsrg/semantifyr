@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.backend.BackendConfig
 data class SpinConfig(
     override val id: String,
     val extraArguments: List<String> = emptyList(),
+    val maxSearchDepth: Int? = null,
 ) : BackendConfig {
     companion object {
         val ExhaustiveDfs = SpinConfig(

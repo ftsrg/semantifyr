@@ -99,6 +99,7 @@ class SpinVerificationContext @AssistedInject constructor(
             extraArguments = config.extraArguments,
             logFile = artifactManager.logFile,
             errorFile = artifactManager.errorFile,
+            maxSearchDepth = config.maxSearchDepth,
         )
 
         val result = executor.execute(spec)
@@ -108,11 +109,17 @@ class SpinVerificationContext @AssistedInject constructor(
             error("spin execution failed with exit code ${result.exitCode}")
         }
 
-        return artifactManager.logFile.takeIf {
+        val summary = artifactManager.logFile.takeIf {
             it.exists()
         }?.useLines {
-            spinLogVerdictParser.parse(it)
+            spinLogVerdictParser.summarize(it)
+        } ?: return null
+
+        val verdict = summary.toVerdict()
+        if (verdict == null && summary.reportedNoErrors) {
+            logger.warn { "[$backendId] pan reported no errors but the search was not exhaustive, treating the run as inconclusive. SpinConfig.maxSearchDepth raises pan's depth bound." }
         }
+        return verdict
     }
 
     override fun interpret(rawVerdict: SpinVerdict?, artifacts: SpinArtifacts): VerificationVerdict {

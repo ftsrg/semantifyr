@@ -18,7 +18,10 @@ class ShellBasedSpinExecutor :
     override val binaryName = "spin"
 
     override suspend fun execute(specification: SpinExecutionSpecification): SpinExecutionResult {
-        val args = listOf("-search") + specification.extraArguments + listOf(specification.modelFileName)
+        val depthArguments = specification.maxSearchDepth?.let {
+            listOf("-m$it")
+        } ?: emptyList()
+        val args = listOf("-search") + depthArguments + specification.extraArguments + listOf(specification.modelFileName)
         val exitCode = runProcess(
             args = args,
             workingDirectory = specification.workingDirectory,
