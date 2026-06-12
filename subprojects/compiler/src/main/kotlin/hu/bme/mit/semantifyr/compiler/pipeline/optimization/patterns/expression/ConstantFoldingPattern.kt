@@ -17,6 +17,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralReal
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import org.eclipse.emf.ecore.EObject
@@ -45,21 +46,24 @@ class ConstantFoldingPattern(
 
     private fun Expression.isCollapsibleOperator(): Boolean {
         return when (this) {
-            is ArithmeticBinaryOperator -> left.isSimpleLiteral() && right.isSimpleLiteral()
-            is ComparisonOperator -> left.isSimpleLiteral() && right.isSimpleLiteral()
-            is BooleanOperator -> left.isSimpleLiteral() && right.isSimpleLiteral()
-            is ArithmeticUnaryOperator -> body.isSimpleLiteral() && !isNegativeLiteralInteger()
-            is NegationOperator -> body.isSimpleLiteral()
+            is ArithmeticBinaryOperator -> left.isFoldableLiteral() && right.isFoldableLiteral()
+            is ComparisonOperator -> left.isFoldableLiteral() && right.isFoldableLiteral()
+            is BooleanOperator -> left.isFoldableLiteral() && right.isFoldableLiteral()
+            is ArithmeticUnaryOperator -> body.isFoldableLiteral() && !isSignedNumericLiteral()
+            is NegationOperator -> body.isFoldableLiteral()
             else -> false
         }
     }
 
-    private fun ArithmeticUnaryOperator.isNegativeLiteralInteger(): Boolean {
-        return op == UnaryOp.MINUS && body is LiteralInteger
+    private fun ArithmeticUnaryOperator.isSignedNumericLiteral(): Boolean {
+        return op == UnaryOp.MINUS && (body is LiteralInteger || body is LiteralReal)
     }
 
-    private fun Expression?.isSimpleLiteral(): Boolean {
-        return OxstsUtils.isSimpleExpression(this)
+    private fun Expression?.isFoldableLiteral(): Boolean {
+        if (OxstsUtils.isSimpleExpression(this)) {
+            return true
+        }
+        return this is ArithmeticUnaryOperator && isSignedNumericLiteral()
     }
 
 }
