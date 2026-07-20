@@ -11,13 +11,16 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path
 import com.google.inject.Guice
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
+import hu.bme.mit.semantifyr.live.backend.BackendConfigValidator
 import hu.bme.mit.semantifyr.live.backend.BackendModule
 import hu.bme.mit.semantifyr.live.backend.server.Server
-import org.slf4j.LoggerFactory
+import hu.bme.mit.semantifyr.logging.info
+import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.logging.warn
 import java.nio.file.Path
 
 class StartCommand : CliktCommand("start") {
-    private val logger = LoggerFactory.getLogger(javaClass)
+    private val logger by loggerFactory()
 
     private val configFile: Path? by option("--config", "-c", help = "Path to the config file. If not specified, then config is read from the environment variables.")
         .path(mustExist = true, canBeDir = false, mustBeReadable = true)
@@ -27,15 +30,43 @@ class StartCommand : CliktCommand("start") {
             BackendConfig.fromFile(it)
         } ?: BackendConfig.fromEnvironment()
 
-        logger.info("Starting Semantifyr Live backend with config: {}", config)
+        logger.info { "Starting Semantifyr Live backend with config: $config" }
+        if (config.development) {
+            logger.warn { "Running in DEVELOPMENT mode: production config checks are skipped" }
+        }
+
+        BackendConfigValidator.validate(config)
+        sweepOrphanSessionDirectories(config)
 
         val injector = Guice.createInjector(BackendModule(config))
         val server = injector.getInstance(Server::class.java)
 
-        Runtime.getRuntime().addShutdownHook(Thread {
-            server.close()
-        })
+        Runtime.getRuntime().addShutdownHook(
+            Thread {
+                logger.info { "Shutdown hook fired, closing server" }
+                server.close()
+            },
+        )
 
         server.start()
+    }
+
+    private fun sweepOrphanSessionDirectories(config: BackendConfig) {
+        val sessionsDir = config.sessionManager.rootWorkPath.resolve("sessions").toFile()
+        if (!sessionsDir.isDirectory) {
+            return
+        }
+        val orphans = sessionsDir.listFiles().orEmpty()
+        if (orphans.isEmpty()) {
+            return
+        }
+        logger.info { "Sweeping ${orphans.size} orphan session directory(s) under $sessionsDir" }
+        for (orphan in orphans) {
+            try {
+                orphan.deleteRecursively()
+            } catch (e: Throwable) {
+                logger.warn(e) { "Failed to delete orphan session directory $orphan" }
+            }
+        }
     }
 }

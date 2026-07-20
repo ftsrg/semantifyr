@@ -7,17 +7,14 @@
 package hu.bme.mit.semantifyr.oxsts.lang.semantics;
 
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
-import org.eclipse.xtext.util.Tuples;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import org.eclipse.xtext.util.Tuples;
 
-@Singleton
 public class InheritanceHandler {
     private static final String BASE_CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.semantics.InheritanceHandler";
     private static final String SUPER_CACHE_KEY = BASE_CACHE_KEY + ".SUPER_CACHE_KEY";
@@ -36,11 +33,17 @@ public class InheritanceHandler {
     protected BuiltinSymbolResolver builtinSymbolResolver;
 
     public List<? extends DomainDeclaration> getSuperDomains(DomainDeclaration declaration) {
-        return cache.get(Tuples.create(SUPER_CACHE_KEY, declaration), declaration.eResource(), () -> computeSuperDomains(declaration));
+        return cache.get(
+                Tuples.create(SUPER_CACHE_KEY, declaration),
+                declaration.eResource(),
+                () -> computeSuperDomains(declaration));
     }
 
     public List<? extends DomainDeclaration> getTransitiveSuperDomains(DomainDeclaration declaration) {
-        return cache.get(Tuples.create(TRANSITIVE_SUPER_CACHE_KEY, declaration), declaration.eResource(), () -> computeTransitiveSuperDomains(declaration));
+        return cache.get(
+                Tuples.create(TRANSITIVE_SUPER_CACHE_KEY, declaration),
+                declaration.eResource(),
+                () -> computeTransitiveSuperDomains(declaration));
     }
 
     protected List<? extends DomainDeclaration> computeSuperDomains(DomainDeclaration domainDeclaration) {
@@ -64,7 +67,9 @@ public class InheritanceHandler {
             return List.of(builtinSymbolResolver.anythingClass(classDeclaration));
         }
 
-        return classDeclaration.getSuperTypes().stream().filter(k -> ! k.eIsProxy()).toList();
+        return classDeclaration.getSuperTypes().stream()
+                .filter(k -> !k.eIsProxy())
+                .toList();
     }
 
     protected List<? extends DomainDeclaration> computeSuperDomains(FeatureDeclaration featureDeclaration) {
@@ -72,19 +77,19 @@ public class InheritanceHandler {
 
         var domain = featureDeclaration.getTypeSpecification().getDomain();
         if (domain != null) {
-            if (! domain.eIsProxy()) {
+            if (!domain.eIsProxy()) {
                 superDomains.add(domain);
             }
         }
 
-//        var redefined = redefinitionHandler.getRedefinedDeclaration(featureDeclaration);
-//        if (redefined != null) {
-//            superDomains.add(redefined);
-//        }
+        //        var redefined = redefinitionHandler.getRedefinedDeclaration(featureDeclaration);
+        //        if (redefined != null) {
+        //            superDomains.add(redefined);
+        //        }
 
-//        for (var decl : superSetHandler.getSuperSetFeatures(featureDeclaration)) {
-//            superDomains.add(decl);
-//        }
+        //        for (var decl : superSetHandler.getSuperSetFeatures(featureDeclaration)) {
+        //            superDomains.add(decl);
+        //        }
 
         return superDomains;
     }
@@ -104,5 +109,4 @@ public class InheritanceHandler {
 
         return foundSuperDomains.stream().toList();
     }
-
 }

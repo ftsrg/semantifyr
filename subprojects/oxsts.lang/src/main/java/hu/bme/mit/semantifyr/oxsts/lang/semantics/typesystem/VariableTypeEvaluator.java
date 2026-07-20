@@ -7,16 +7,16 @@
 package hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem;
 
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AbstractForOperation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration;
 import org.eclipse.xtext.util.IResourceScopeCache;
 import org.eclipse.xtext.util.Tuples;
 
-@Singleton
 public class VariableTypeEvaluator {
 
-    private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.VariableTypeEvaluator.CACHE_KEY";
+    private static final String CACHE_KEY =
+            "hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.VariableTypeEvaluator.CACHE_KEY";
 
     @Inject
     private IResourceScopeCache cache;
@@ -25,7 +25,10 @@ public class VariableTypeEvaluator {
     private ExpressionTypeEvaluatorProvider expressionTypeEvaluatorProvider;
 
     public TypeEvaluation evaluate(VariableDeclaration variableDeclaration) {
-        return cache.get(Tuples.create(CACHE_KEY, variableDeclaration), variableDeclaration.eResource(), () -> computeTypeOf(variableDeclaration));
+        return cache.get(
+                Tuples.create(CACHE_KEY, variableDeclaration),
+                variableDeclaration.eResource(),
+                () -> computeTypeOf(variableDeclaration));
     }
 
     private TypeEvaluation computeTypeOf(VariableDeclaration variableDeclaration) {
@@ -46,11 +49,13 @@ public class VariableTypeEvaluator {
         }
 
         if (variableDeclaration.eContainer() instanceof AbstractForOperation abstractForOperation) {
-            // TODO: should get the 'type of an element of the rangeExpression'
-            return expressionTypeEvaluatorProvider.evaluate(abstractForOperation.getRangeExpression());
+            var rangeType = expressionTypeEvaluatorProvider.evaluate(abstractForOperation.getRangeExpression());
+            if (rangeType instanceof ImmutableTypeEvaluation) {
+                return new ImmutableTypeEvaluation(rangeType.getDomain(), RangeEvaluation.ONE);
+            }
+            return rangeType;
         }
 
         return InvalidTypeEvaluation.Instance;
     }
-
 }

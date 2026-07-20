@@ -8,14 +8,13 @@ package hu.bme.mit.semantifyr.oxsts.lang.library;
 
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.ResourceUriProvider;
-import org.eclipse.emf.common.util.URI;
-import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.eclipse.xtext.naming.QualifiedName;
-
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.xtext.naming.QualifiedName;
 
 public abstract class PathBasedOxstsLibrary implements OxstsLibrary {
 
@@ -36,7 +35,8 @@ public abstract class PathBasedOxstsLibrary implements OxstsLibrary {
 
     protected Iterable<URI> getIncludedResourceUris() {
         try (var fileStream = Files.walk(libraryPath, FileVisitOption.FOLLOW_LINKS)) {
-            return fileStream.map(Path::toFile)
+            return fileStream
+                    .map(Path::toFile)
                     .filter(file -> file.getName().endsWith(FILE_NAME_SUFFIX))
                     .map(file -> resourceUriProvider.createFileUri(file.toPath()))
                     .toList();
@@ -51,5 +51,4 @@ public abstract class PathBasedOxstsLibrary implements OxstsLibrary {
             resourceSet.getResource(uri, true);
         }
     }
-
 }

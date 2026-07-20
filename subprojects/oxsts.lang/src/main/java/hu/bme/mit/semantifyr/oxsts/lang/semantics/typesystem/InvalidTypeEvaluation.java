@@ -13,9 +13,7 @@ public final class InvalidTypeEvaluation implements TypeEvaluation {
 
     public static InvalidTypeEvaluation Instance = new InvalidTypeEvaluation();
 
-    private InvalidTypeEvaluation() {
-
-    }
+    private InvalidTypeEvaluation() {}
 
     @Override
     public DomainDeclaration getDomain() {
@@ -26,5 +24,4 @@ public final class InvalidTypeEvaluation implements TypeEvaluation {
     public RangeEvaluation getRange() {
         return RangeEvaluation.NONE;
     }
-
 }

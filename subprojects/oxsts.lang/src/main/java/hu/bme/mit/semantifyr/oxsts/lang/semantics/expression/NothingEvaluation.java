@@ -10,8 +10,5 @@ public class NothingEvaluation implements ExpressionEvaluation {
 
     public static final NothingEvaluation INSTANCE = new NothingEvaluation();
 
-    protected NothingEvaluation() {
-
-    }
-
+    protected NothingEvaluation() {}
 }

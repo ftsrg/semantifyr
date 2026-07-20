@@ -1,0 +1,197 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::lang::arithmetic
+
+// Integer arithmetic: +, -, *, /, unary minus. Each case tests one
+// operator and pairs a reachability claim with a bound so that a
+// silent operator swap during compilation would be caught.
+
+// --- addition ---
+
+// Reachable: 3 + 4 = 7.
+@VerificationCase
+@Tag("expect-pass")
+class AddReach {
+    var r: int := 0
+
+    redefine tran {
+        r := 3 + 4
+    }
+
+    prop {
+        return EF r == 7
+    }
+}
+
+// Dual: r is one of {0, 7}; no other value is produced.
+@VerificationCase
+@Tag("expect-pass")
+class AddBound {
+    var r: int := 0
+
+    redefine tran {
+        r := 3 + 4
+    }
+
+    prop {
+        return AG (r == 0 || r == 7)
+    }
+}
+
+// --- subtraction ---
+
+@VerificationCase
+@Tag("expect-pass")
+class SubReach {
+    var r: int := 0
+
+    redefine tran {
+        r := 10 - 3
+    }
+
+    prop {
+        return EF r == 7
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class SubBound {
+    var r: int := 0
+
+    redefine tran {
+        r := 10 - 3
+    }
+
+    prop {
+        return AG (r == 0 || r == 7)
+    }
+}
+
+// --- multiplication ---
+
+@VerificationCase
+@Tag("expect-pass")
+class MulReach {
+    var r: int := 0
+
+    redefine tran {
+        r := 3 * 4
+    }
+
+    prop {
+        return EF r == 12
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class MulBound {
+    var r: int := 0
+
+    redefine tran {
+        r := 3 * 4
+    }
+
+    prop {
+        return AG (r == 0 || r == 12)
+    }
+}
+
+// --- division ---
+
+@VerificationCase
+@Tag("expect-pass")
+class DivReach {
+    var r: int := 0
+
+    redefine tran {
+        r := 12 / 4
+    }
+
+    prop {
+        return EF r == 3
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class DivBound {
+    var r: int := 0
+
+    redefine tran {
+        r := 12 / 4
+    }
+
+    prop {
+        return AG (r == 0 || r == 3)
+    }
+}
+
+// --- unary minus ---
+
+// Unary minus negates the operand: -5 is reachable.
+@VerificationCase
+@Tag("expect-pass")
+class UnaryMinusReach {
+    var x: int := 5
+
+    redefine tran {
+        x := -x
+    }
+
+    prop {
+        return EF x == -5
+    }
+}
+
+// Dual: x stays in the double-signed orbit {5, -5}.
+@VerificationCase
+@Tag("expect-pass")
+class UnaryMinusBound {
+    var x: int := 5
+
+    redefine tran {
+        x := -x
+    }
+
+    prop {
+        return AG (x == 5 || x == -5)
+    }
+}
+
+// --- precedence: * / binds tighter than + - ---
+
+// Reachable: 2 + 3 * 4 = 14 (not (2 + 3) * 4 = 20).
+@VerificationCase
+@Tag("expect-pass")
+class PrecedenceReach {
+    var r: int := 0
+
+    redefine tran {
+        r := 2 + 3 * 4
+    }
+
+    prop {
+        return EF r == 14
+    }
+}
+
+// Dual: wrong-precedence outcome 20 is unreachable.
+@VerificationCase
+@Tag("expect-pass")
+class PrecedenceBound {
+    var r: int := 0
+
+    redefine tran {
+        r := 2 + 3 * 4
+    }
+
+    prop {
+        return AG r != 20
+    }
+}

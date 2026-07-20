@@ -16,8 +16,10 @@ public class ConstantElementValueEvaluator extends ElementValueEvaluator<Express
         //noinspection SwitchStatementWithTooFewBranches
         return switch (element) {
             case EnumLiteral enumLiteral -> new EnumLiteralEvaluation(enumLiteral);
-            default -> throw new IllegalArgumentException("Unsupported type of element!");
+            default ->
+                throw EvaluationFailureException.at(
+                        element,
+                        "Unsupported type of element: " + element.getClass().getSimpleName());
         };
     }
-
 }

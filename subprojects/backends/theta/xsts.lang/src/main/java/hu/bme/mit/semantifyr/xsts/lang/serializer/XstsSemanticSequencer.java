@@ -3,6 +3,4 @@
  */
 package hu.bme.mit.semantifyr.xsts.lang.serializer;
 
-
-public class XstsSemanticSequencer extends AbstractXstsSemanticSequencer {
-}
+public class XstsSemanticSequencer extends AbstractXstsSemanticSequencer {}

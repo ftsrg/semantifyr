@@ -5,7 +5,11 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { decodeBase64Url, encodeBase64Url, normalizeBaseUrl } from '../lib/urls';
+import {
+  decodeCompressedBase64Url,
+  encodeCompressedBase64Url,
+  normalizeBaseUrl,
+} from '../lib/api/urls';
 
 describe('normalizeBaseUrl', () => {
   it('keeps an http base and derives the matching ws form', () => {
@@ -51,27 +55,35 @@ describe('normalizeBaseUrl', () => {
   });
 });
 
-describe('encodeBase64Url / decodeBase64Url', () => {
-  it('round-trips ASCII', () => {
+describe('encodeCompressedBase64Url / decodeCompressedBase64Url', () => {
+  it('round-trips ASCII', async () => {
     const text = 'package demo\nclass Main { var x: int := 0 }';
-    expect(decodeBase64Url(encodeBase64Url(text))).toBe(text);
+    const encoded = await encodeCompressedBase64Url(text);
+    expect(await decodeCompressedBase64Url(encoded)).toBe(text);
   });
 
-  it('round-trips multi-byte UTF-8', () => {
+  it('round-trips multi-byte UTF-8', async () => {
     const text = '/* émoji 🎉 mix */ var ç := "λ"';
-    expect(decodeBase64Url(encodeBase64Url(text))).toBe(text);
+    const encoded = await encodeCompressedBase64Url(text);
+    expect(await decodeCompressedBase64Url(encoded)).toBe(text);
   });
 
-  it('uses URL-safe alphabet (no +, /, =)', () => {
-    const encoded = encodeBase64Url('?>&%/+ test '.repeat(20));
+  it('uses URL-safe alphabet (no +, /, =)', async () => {
+    const encoded = await encodeCompressedBase64Url('?>&%/+ test '.repeat(20));
     expect(encoded).not.toMatch(/[+/=]/);
   });
 
-  it('returns null for malformed base64url input', () => {
-    expect(decodeBase64Url('!!!not-valid!!!')).toBeNull();
+  it('returns null when the payload is malformed', async () => {
+    expect(await decodeCompressedBase64Url('!!!not-valid!!!')).toBeNull();
   });
 
-  it('round-trips an empty string', () => {
-    expect(decodeBase64Url(encodeBase64Url(''))).toBe('');
+  it('returns null when the payload is not gzip', async () => {
+    // valid base64url but not gzipped bytes
+    expect(await decodeCompressedBase64Url('cGFja2FnZSBkZW1v')).toBeNull();
+  });
+
+  it('round-trips an empty string', async () => {
+    const encoded = await encodeCompressedBase64Url('');
+    expect(await decodeCompressedBase64Url(encoded)).toBe('');
   });
 });

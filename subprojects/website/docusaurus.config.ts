@@ -20,6 +20,7 @@ export default {
   baseUrl: '/semantifyr/',
   baseUrlIssueBanner: false,
   trailingSlash: true,
+  staticDirectories: ['static', 'static-imported-branding'],
   headTags: [
     {
       tagName: 'link',
@@ -167,7 +168,7 @@ export default {
     },
   } satisfies UserThemeConfig,
   future: {
-    experimental_faster: {
+    faster: {
       lightningCssMinimizer: true,
       mdxCrossCompilerCache: true,
       rspackBundler: false,

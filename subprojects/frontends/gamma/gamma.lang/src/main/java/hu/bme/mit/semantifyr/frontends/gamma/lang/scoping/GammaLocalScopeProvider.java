@@ -42,7 +42,8 @@ public class GammaLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
         var resourceDescription = globalResourceDescriptionProvider.getResourceDescription(resource);
         var packageName = qualifiedNameProvider.getFullyQualifiedName(gammaModelPackage);
         var resourceSelectable = new TrimPrefixSelectable(resourceDescription, packageName);
-        return SelectableBasedScope.createScope(globalScope, resourceSelectable, reference.getEReferenceType(), isIgnoreCase(reference));
+        return SelectableBasedScope.createScope(
+                globalScope, resourceSelectable, reference.getEReferenceType(), isIgnoreCase(reference));
     }
 
     protected IScope getLocalScope(IScope containerScope, EObject context) {
@@ -64,5 +65,4 @@ public class GammaLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
 
         return containerScope;
     }
-
 }

@@ -16,5 +16,4 @@ public interface OxstsLibrary {
     Iterable<URI> getImplicitImports();
 
     void loadLibrary(ResourceSet resourceSet);
-
 }

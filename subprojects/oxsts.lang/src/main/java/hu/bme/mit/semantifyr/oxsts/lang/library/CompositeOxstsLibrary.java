@@ -25,5 +25,4 @@ public abstract class CompositeOxstsLibrary implements OxstsLibrary {
             library.loadLibrary(resourceSet);
         }
     }
-
 }

@@ -21,16 +21,11 @@ Workflow {
 					src = null
 				}
 				runtimeTest = {
-					enabled = true
+					enabled = false
 					// Only generate the xtext-gen files and leave the rest of the project alone
 					root = null
 					srcGen = '${rootPath}/cex.lang/src/testFixtures/xtext-gen'
 				}
-				genericIde = {
-					enabled = true
-					root = null
-                    srcGen = "${rootPath}/cex.lang/build/generated/sources/xtext/ide"
-                }
 				mavenLayout = true
 			}
 			code = {

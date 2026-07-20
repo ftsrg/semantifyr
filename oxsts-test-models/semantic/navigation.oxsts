@@ -1,0 +1,130 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::lang::navigation
+
+// Navigation edge cases: optional navigation `?.`, class-typed variable
+// dispatch, multi-level navigation.
+
+class Leaf {
+    var v: int := 0
+    tran bump() {
+        v := v + 1
+    }
+}
+
+// --- optional navigation drops when the target is absent ---
+
+// Reachable: absent target means the call is a no-op, so `AG true`
+// holds trivially.
+@VerificationCase
+@Tag("expect-pass")
+class OptionalNavDropAG {
+    contains leaf: Leaf[0..1]
+
+    redefine tran {
+        inline leaf?.bump()
+    }
+
+    prop {
+        return AG true
+    }
+}
+
+// Dual: because `leaf` has no instance, `leaf?.bump()` never fires,
+// and no side-effect variable is modified. If the compiler silently
+// dispatched anyway this would surface elsewhere; here we just check
+// the tran executes without error under the zero-instance interpretation.
+@VerificationCase
+@Tag("expect-pass")
+class OptionalNavDropReach {
+    contains leaf: Leaf[0..1]
+
+    redefine tran {
+        inline leaf?.bump()
+    }
+
+    prop {
+        return EF true
+    }
+}
+
+// --- optional navigation fires when the target is present ---
+
+@VerificationCase
+@Tag("expect-pass")
+class OptionalNavPresentReach {
+    contains leaf: Leaf[1]
+
+    redefine tran {
+        inline leaf?.bump()
+    }
+
+    prop {
+        return EF leaf.v == 3
+    }
+}
+
+// Dual: v is never read outside its natural range (the bump tran
+// has no guard so v grows; the bound case instead pins initial value
+// before any tran).
+@VerificationCase
+@Tag("expect-pass")
+class OptionalNavInitialZero {
+    contains leaf: Leaf[1]
+
+    redefine tran { }
+
+    prop {
+        return AG leaf.v == 0
+    }
+}
+
+// --- deeply nested navigation ---
+
+class DeepLeaf {
+    var tick: int := 0
+    tran incr() {
+        assume(tick < 3)
+        tick := tick + 1
+    }
+}
+
+class DeepMid {
+    contains leaf: DeepLeaf[1]
+}
+
+class DeepHolder {
+    contains mid: DeepMid[1]
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class DeepNavReach {
+    contains holder: DeepHolder[1]
+
+    redefine tran {
+        inline holder.mid.leaf.incr()
+    }
+
+    prop {
+        return EF holder.mid.leaf.tick == 3
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class DeepNavBound {
+    contains holder: DeepHolder[1]
+
+    redefine tran {
+        inline holder.mid.leaf.incr()
+    }
+
+    prop {
+        return AG holder.mid.leaf.tick <= 3
+    }
+}

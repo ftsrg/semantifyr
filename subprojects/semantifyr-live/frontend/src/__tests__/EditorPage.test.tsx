@@ -5,19 +5,22 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-// LiveEditor pulls in monaco-languageclient + @codingame/* which is too heavy for jsdom
-// (it touches `Worker`, `EventSource` and other browser APIs we don't have here). Replace
-// it with a tiny stand-in that simply records the props it was rendered with so the test
-// can assert against them. This must be `vi.mock`-ed BEFORE importing EditorPage so the
-// dynamic `lazy(() => import('./LiveEditor'))` resolves to the stub.
-vi.mock('../components/LiveEditor', () => ({
-  default: (props: { language: string; initialCode: string; backendUrl: string }) => (
+vi.mock('../components/editor/LiveEditor', () => ({
+  default: (props: {
+    flavorId: string;
+    languageId: string;
+    fileName: string;
+    initialCode: string;
+    backendUrl: string;
+  }) => (
     <div
       data-testid="live-editor"
-      data-language={props.language}
+      data-flavor-id={props.flavorId}
+      data-language={props.languageId}
+      data-file-name={props.fileName}
       data-backend-url={props.backendUrl}
     >
       <pre data-testid="initial-code">{props.initialCode}</pre>
@@ -27,6 +30,8 @@ vi.mock('../components/LiveEditor', () => ({
 
 import EditorPage from '../components/EditorPage';
 import { LIVE_FLAVORS } from '../examples';
+import { encodeCompressedBase64Url } from '../lib/api/urls';
+import { setLocation } from './helpers/location';
 
 describe('EditorPage', () => {
   let originalLocation: Location;
@@ -42,25 +47,6 @@ describe('EditorPage', () => {
       value: originalLocation,
     });
   });
-
-  function setLocation(url: string) {
-    const parsed = new URL(url);
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      writable: true,
-      value: {
-        ...originalLocation,
-        href: parsed.href,
-        origin: parsed.origin,
-        hostname: parsed.hostname,
-        host: parsed.host,
-        protocol: parsed.protocol,
-        pathname: parsed.pathname,
-        search: parsed.search,
-        hash: parsed.hash,
-      } as Location,
-    });
-  }
 
   function renderPage(): ReturnType<typeof render> {
     return render(
@@ -83,12 +69,12 @@ describe('EditorPage', () => {
     const editor = await waitForEditor();
     expect(editor.dataset.language).toBe('oxsts');
     const code = within(editor).getByTestId('initial-code').textContent;
-    const expectedCode = LIVE_FLAVORS[0]!.examples[0]!.code;
+    const expectedCode = LIVE_FLAVORS[0].examples[0]!.code;
     expect(code).toBe(expectedCode);
   });
 
   it('respects ?example=<id> with the flavor inferred from the registry', async () => {
-    setLocation('https://test.example/?example=trafficlight-direct-snapshot');
+    setLocation('https://test.example/?example=basics');
     renderPage();
     const editor = await waitForEditor();
     expect(editor.dataset.language).toBe('oxsts');
@@ -97,29 +83,27 @@ describe('EditorPage', () => {
     expect(code).toContain('class TrafficLight');
   });
 
-  it('respects ?code=<base64> for arbitrary user code', async () => {
-    // base64url-encoded "package custom\nclass Custom { var x: int := 42 }"
-    const encoded = 'cGFja2FnZSBjdXN0b20KY2xhc3MgQ3VzdG9tIHsgdmFyIHg6IGludCA6PSA0MiB9';
-    setLocation(`https://test.example/?code=${encoded}`);
+  it('respects ?code=<gzip+base64url> for arbitrary user code', async () => {
+    const source = 'package custom\nclass Custom { var x: int := 42 }';
+    const encoded = await encodeCompressedBase64Url(source);
+    setLocation(`https://test.example/?code=${encodeURIComponent(encoded)}`);
     renderPage();
     const editor = await waitForEditor();
-    const code = within(editor).getByTestId('initial-code').textContent;
-    expect(code).toBe('package custom\nclass Custom { var x: int := 42 }');
+    // resolveInitialState is async (gzip decode); wait for the state to land before asserting.
+    await waitFor(() => {
+      expect(within(editor).getByTestId('initial-code').textContent).toBe(source);
+    });
   });
 
   it('falls back to the default example when ?example points at an unknown id', async () => {
     setLocation('https://test.example/?example=does-not-exist');
     renderPage();
     const editor = await waitForEditor();
-    const defaultCode = LIVE_FLAVORS[0]!.examples[0]!.code;
+    const defaultCode = LIVE_FLAVORS[0].examples[0]!.code;
     expect(within(editor).getByTestId('initial-code').textContent).toBe(defaultCode);
   });
 
-  it('clicking Copy link reports success and the handler completes', async () => {
-    // We verify that the copy handler runs to completion (shows "Link copied!"
-    // rather than "Copy failed"). The actual clipboard call is backed by jsdom's
-    // navigator.clipboard which is not reliably mockable across versions; we
-    // separately test the URL encoding logic in urls.test.ts.
+  it('clicking Copy link reports back to the user (success or failure depending on jsdom clipboard)', async () => {
     setLocation('https://test.example/');
     renderPage();
     await waitForEditor();
@@ -127,11 +111,6 @@ describe('EditorPage', () => {
     await user.click(screen.getByRole('button', { name: 'Copy link' }));
 
     const note = await screen.findByText(/Link copied!|Copy failed/);
-    // Under jsdom the clipboard.writeText call should succeed silently, so
-    // "Link copied!" is the expected outcome. If jsdom can't complete the write
-    // (e.g. no Permissions API in the test env) the handler falls back to
-    // "Copy failed" — both are acceptable in a jsdom test. What we care about
-    // is that the handler didn't throw and the UI updated.
     expect(note.textContent).toMatch(/^(Link copied!|Copy failed)$/);
   });
 });

@@ -25,5 +25,5 @@ RUN pip3 install --no-cache-dir jupyter-server-proxy
 ADD jupyter_server_config.py /etc/jupyter/jupyter_server_config.py
 
 ADD extensions/ /extensions/
-RUN openvscode-server --install-extension /extensions/semantifyr-0.0.1.vsix
-RUN openvscode-server --install-extension /extensions/sysml-2ls-0.9.0.vsix
+RUN openvscode-server --install-extension /extensions/semantifyr-*.vsix
+RUN openvscode-server --install-extension /extensions/sysml-2ls-*.vsix

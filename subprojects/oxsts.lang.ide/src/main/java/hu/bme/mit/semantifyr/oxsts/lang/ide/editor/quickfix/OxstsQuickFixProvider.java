@@ -14,19 +14,8 @@ import org.eclipse.xtext.ide.editor.quickfix.QuickFix;
 
 @SuppressWarnings({"UnstableApiUsage", "unused"})
 public class OxstsQuickFixProvider extends AbstractDeclarativeIdeQuickfixProvider {
-
-//    @QuickFix(OxstsValidator.DATA_TYPE_NOT_IN_BUILTIN_ISSUE)
-//    public void removeNotBuiltinDataType(DiagnosticResolutionAcceptor acceptor) {
-//        acceptor.accept("Remove", ((diagnostic, object, document) -> {
-//            return createTextEdit(diagnostic, "");
-//        }));
-//    }
-
     @QuickFix(OxstsValidator.DATA_TYPE_NOT_IN_BUILTIN_ISSUE)
     public void removeNotBuiltinDataType(DiagnosticResolutionAcceptor acceptor) {
-        acceptor.accept("Remove", ((diagnostic, object) -> {
-            return (o) -> EcoreUtil2.remove(o);
-        }));
+        acceptor.accept("Remove", ((diagnostic, object) -> EcoreUtil2::remove));
     }
-
 }

@@ -1,25 +1,24 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
+import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.client.NavigateToParams;
-import hu.bme.mit.semantifyr.oxsts.lang.ide.client.OxstsLanguageClient;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.client.SemantifyrLanguageClient;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinersFinder;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration;
+import java.util.List;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 
-import java.util.List;
-
-public class NavigateToRedefinersCommandHandler extends AbstractCommandHandler<RedefinableDeclaration> {
+public class NavigateToRedefinersCommandHandler extends AbstractCommandHandler<Location, RedefinableDeclaration> {
 
     @Inject
     private RedefinersFinder redefinersFinder;
@@ -36,24 +35,24 @@ public class NavigateToRedefinersCommandHandler extends AbstractCommandHandler<R
 
     @Override
     public List<Object> serializeArguments(RedefinableDeclaration arguments) {
-        var location = getLocation(arguments);
-        return List.of(location);
+        return List.of(getLocation(arguments));
     }
 
     @Override
-    protected RedefinableDeclaration parseArguments(List<Object> arguments, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
-        var gsonBuilder = new GsonBuilder();
-        var gson = gsonBuilder.create();
-        var locationJson = (JsonObject) arguments.get(0);
-        var location = gson.fromJson(locationJson, Location.class);
-        var element = getElement(access, location);
-
-        return (RedefinableDeclaration) element;
+    protected Class<Location> getRequestType() {
+        return Location.class;
     }
 
     @Override
-    protected Object execute(RedefinableDeclaration arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
-        var client = (OxstsLanguageClient) access.getLanguageClient();
+    protected RedefinableDeclaration resolveArgument(
+            Location request, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
+        return (RedefinableDeclaration) getElement(access, request);
+    }
+
+    @Override
+    protected Object execute(
+            RedefinableDeclaration arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
+        var client = (SemantifyrLanguageClient) access.getLanguageClient();
 
         var redefiners = redefinersFinder.getRedefinerDeclarations(arguments);
 
@@ -65,5 +64,4 @@ public class NavigateToRedefinersCommandHandler extends AbstractCommandHandler<R
 
         return null;
     }
-
 }

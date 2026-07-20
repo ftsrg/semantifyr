@@ -6,5 +6,4 @@
 
 package hu.bme.mit.semantifyr.frontends.gamma.lang.validation;
 
-public class GammaValidator extends AbstractGammaValidator {
-}
+public class GammaValidator extends AbstractGammaValidator {}

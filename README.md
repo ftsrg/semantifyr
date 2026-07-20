@@ -5,6 +5,10 @@
 -->
 
 [![Continuous Integration](https://github.com/ftsrg/semantifyr/actions/workflows/build.yml/badge.svg)](https://github.com/ftsrg/semantifyr/actions/workflows/build.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ftsrg_semantifyr&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=ftsrg_semantifyr)
+[![Latest release](https://img.shields.io/github/v/release/ftsrg/semantifyr?sort=semver)](https://github.com/ftsrg/semantifyr/releases)
+[![License: EPL-2.0](https://img.shields.io/badge/License-EPL_2.0-blue.svg)](https://www.eclipse.org/legal/epl-2.0/)
+[![REUSE status](https://api.reuse.software/badge/github.com/ftsrg/semantifyr)](https://api.reuse.software/info/github.com/ftsrg/semantifyr)
 
 # Semantifyr
 

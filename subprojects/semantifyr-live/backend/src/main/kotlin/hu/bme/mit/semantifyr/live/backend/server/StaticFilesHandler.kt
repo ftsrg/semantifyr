@@ -9,19 +9,18 @@ package hu.bme.mit.semantifyr.live.backend.server
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
+import hu.bme.mit.semantifyr.logging.info
+import hu.bme.mit.semantifyr.logging.loggerFactory
 import io.ktor.server.application.*
 import io.ktor.server.http.content.*
 import io.ktor.server.routing.*
-import hu.bme.mit.semantifyr.live.backend.utils.info
-import hu.bme.mit.semantifyr.live.backend.utils.loggerFactory
 
 @Singleton
-class StaticFilesHandler {
+class StaticFilesHandler @Inject constructor(
+    private val config: BackendConfig,
+) {
 
     private val logger by loggerFactory()
-
-    @Inject
-    private lateinit var config: BackendConfig
 
     fun Application.configure() {
         val webRoot = config.server.webRootPath

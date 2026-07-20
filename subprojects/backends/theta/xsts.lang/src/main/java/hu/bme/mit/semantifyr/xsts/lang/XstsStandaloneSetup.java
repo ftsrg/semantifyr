@@ -6,13 +6,10 @@
 
 package hu.bme.mit.semantifyr.xsts.lang;
 
-/**
- * Initialization support for running Xtext languages without Equinox extension registry.
- */
+/** Initialization support for running Xtext languages without Equinox extension registry. */
 public class XstsStandaloneSetup extends XstsStandaloneSetupGenerated {
 
     public static void doSetup() {
         new XstsStandaloneSetup().createInjectorAndDoEMFRegistration();
     }
-
 }

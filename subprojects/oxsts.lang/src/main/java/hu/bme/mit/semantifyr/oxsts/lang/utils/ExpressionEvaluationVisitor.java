@@ -26,13 +26,20 @@ public abstract class ExpressionEvaluationVisitor<T> {
     }
 
     protected abstract T visit(ArrayEvaluation evaluation);
-    protected abstract T visit(BooleanEvaluation evaluation);
-    protected abstract T visit(EnumLiteralEvaluation evaluation);
-    protected abstract T visit(InfinityEvaluation evaluation);
-    protected abstract T visit(IntegerEvaluation evaluation);
-    protected abstract T visit(NothingEvaluation evaluation);
-    protected abstract T visit(RangeEvaluation evaluation);
-    protected abstract T visit(RealEvaluation evaluation);
-    protected abstract T visit(StringEvaluation evaluation);
 
+    protected abstract T visit(BooleanEvaluation evaluation);
+
+    protected abstract T visit(EnumLiteralEvaluation evaluation);
+
+    protected abstract T visit(InfinityEvaluation evaluation);
+
+    protected abstract T visit(IntegerEvaluation evaluation);
+
+    protected abstract T visit(NothingEvaluation evaluation);
+
+    protected abstract T visit(RangeEvaluation evaluation);
+
+    protected abstract T visit(RealEvaluation evaluation);
+
+    protected abstract T visit(StringEvaluation evaluation);
 }

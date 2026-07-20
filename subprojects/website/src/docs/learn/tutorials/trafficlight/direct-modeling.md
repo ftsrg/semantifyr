@@ -273,7 +273,7 @@ The next tutorial in the series, [Building a Library](building-a-library.md), ex
 
 The complete final state of `trafficlight.oxsts`:
 
-```oxsts verify open=trafficlight-direct-snapshot
+```oxsts verify open=basics
 package example::trafficlight
 
 enum LightColor {

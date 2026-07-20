@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.oxsts.lang.semantics;
 
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.IntegerEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
@@ -17,9 +16,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.TypeSpecification;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnboundedMultiplicity;
 import org.eclipse.xtext.util.Tuples;
 
-@Singleton
 public class MultiplicityRangeEvaluator {
-    private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator.CACHE_KEY";
+    private static final String CACHE_KEY =
+            "hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator.CACHE_KEY";
 
     @Inject
     private OnResourceSetChangeEvictingCache cache;
@@ -28,7 +27,10 @@ public class MultiplicityRangeEvaluator {
     protected ConstantExpressionEvaluatorProvider constantExpressionEvaluatorProvider;
 
     public RangeEvaluation evaluate(TypeSpecification typeSpecification) {
-        return cache.get(Tuples.create(CACHE_KEY, typeSpecification), typeSpecification.eResource(), () -> compute(typeSpecification));
+        return cache.get(
+                Tuples.create(CACHE_KEY, typeSpecification),
+                typeSpecification.eResource(),
+                () -> compute(typeSpecification));
     }
 
     protected RangeEvaluation compute(TypeSpecification typeSpecification) {
@@ -55,5 +57,4 @@ public class MultiplicityRangeEvaluator {
 
         throw new IllegalArgumentException("Expression could not be evaluated to a range!");
     }
-
 }

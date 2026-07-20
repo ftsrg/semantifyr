@@ -7,46 +7,95 @@
 import com.github.gradle.node.npm.task.NpmTask
 
 plugins {
-    base
-    alias(libs.plugins.gradle.node)
+    id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
 }
 
-node {
-    version = "22.14.0"
-    download = true
+tasks.npmInstall {
+    workingDir = rootProject.projectDir
 }
 
-abstract class NpmService : BuildService<BuildServiceParameters.None>
+val brandingDir = rootProject.layout.projectDirectory.dir("branding")
+val importedBrandingDir = project.layout.projectDirectory.dir("static-imported-branding")
 
-val npmService = gradle.sharedServices.registerIfAbsent("npmService", NpmService::class.java) {
-    maxParallelUsages.set(1)
+val cloneBrandingAssets by tasks.registering(Sync::class) {
+    from(brandingDir) {
+        include("favicon.ico")
+    }
+    from(brandingDir) {
+        include("semantifyr-logo.svg")
+        rename { "logo.svg" }
+        into("img")
+    }
+    from(brandingDir) {
+        include("semantifyr-full-light.svg")
+        rename { "logo-full-light.svg" }
+        into("img")
+    }
+    from(brandingDir) {
+        include("semantifyr-full-dark.svg")
+        rename { "logo-full-dark.svg" }
+        into("img")
+    }
+    from(brandingDir) {
+        include("semantifyr-logo-192.png")
+        rename { "logo-192.png" }
+        into("img")
+    }
+    from(brandingDir) {
+        include("semantifyr-logo-512.png")
+        rename { "logo-512.png" }
+        into("img")
+    }
+    from(brandingDir) {
+        include("semantifyr-logo-180.png")
+        rename { "apple-touch-icon.png" }
+        into("img")
+    }
+    into(importedBrandingDir)
 }
 
-tasks.withType<NpmTask>().configureEach {
-    usesService(npmService)
-}
-
-val assembleFrontend by tasks.registering(NpmTask::class) {
+fun NpmTask.configureSharedInputs() {
     inputs.dir(project.layout.projectDirectory.dir("src"))
     inputs.dir(project.layout.projectDirectory.dir("static"))
     inputs.file(project.layout.projectDirectory.file("docusaurus.config.ts"))
     inputs.file(project.layout.projectDirectory.file("sidebars.ts"))
+    inputs.file(project.layout.projectDirectory.file("babel.config.cts"))
     inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
+    inputs.file(project.layout.projectDirectory.file("eslint.config.mjs"))
     inputs.file(project.layout.projectDirectory.file("package.json"))
-    inputs.file(project.layout.projectDirectory.file("package-lock.json"))
-    inputs.files(tasks.npmInstall.get().outputs)
+    inputs.file(rootProject.layout.projectDirectory.file("tsconfig.base.json"))
+    inputs.file(rootProject.layout.projectDirectory.file("eslint.config.base.js"))
+    inputs.file(rootProject.layout.projectDirectory.file("package.json"))
+    inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
+    inputs.files(tasks.npmInstall)
+    inputs.files(cloneBrandingAssets)
+}
 
-    npmCommand.set(listOf("run", "build"))
+val npmAssemble by tasks.registering(NpmTask::class) {
+    configureSharedInputs()
+
+    npmCommand.set(listOf("run", "assemble"))
     outputs.dir(project.layout.buildDirectory.dir("docusaurus"))
+}
+
+val npmCheck by tasks.registering(NpmTask::class) {
+    configureSharedInputs()
+
+    npmCommand.set(listOf("run", "check"))
 }
 
 tasks {
     assemble {
-        dependsOn(assembleFrontend)
+        dependsOn(npmAssemble)
+    }
+
+    check {
+        dependsOn(npmCheck)
     }
 
     clean {
         delete(".docusaurus")
         delete("build")
+        delete(importedBrandingDir)
     }
 }

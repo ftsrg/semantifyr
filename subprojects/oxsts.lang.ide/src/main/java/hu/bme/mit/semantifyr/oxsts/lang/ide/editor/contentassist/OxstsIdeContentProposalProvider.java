@@ -29,28 +29,29 @@ public class OxstsIdeContentProposalProvider extends IdeContentProposalProvider 
     protected DomainMemberCollectionProvider domainMemberCollectionProvider;
 
     @Override
-    protected void _createProposals(RuleCall ruleCall, ContentAssistContext context, IIdeContentProposalAcceptor acceptor) {
-        if (
-                this.oxstsGrammarAccess.getIdentifierRule().equals(ruleCall.getRule())
-                        && context.getCurrentModel() instanceof RedefinableDeclaration redefinableDeclaration
-                        && redefinableDeclaration.isRedefine()
-        ) {
+    protected void _createProposals(
+            RuleCall ruleCall, ContentAssistContext context, IIdeContentProposalAcceptor acceptor) {
+        if (this.oxstsGrammarAccess.getIdentifierRule().equals(ruleCall.getRule())
+                && context.getCurrentModel() instanceof RedefinableDeclaration redefinableDeclaration
+                && redefinableDeclaration.isRedefine()) {
             // we should redefine some existing element
-            var containerDomain = EcoreUtil2.getContainerOfType(redefinableDeclaration.eContainer(), DomainDeclaration.class);
-            var availableElements = domainMemberCollectionProvider.getParentCollection(containerDomain).getDeclarations();
+            var containerDomain =
+                    EcoreUtil2.getContainerOfType(redefinableDeclaration.eContainer(), DomainDeclaration.class);
+            var availableElements = domainMemberCollectionProvider
+                    .getParentCollection(containerDomain)
+                    .getDeclarations();
 
             for (var declaration : availableElements) {
                 if (EcoreUtil2.isAssignableFrom(redefinableDeclaration.eClass(), declaration.eClass())) {
                     var proposal = NamingUtil.getName(declaration);
-                    var entry = this.getProposalCreator().createProposal(proposal, context, ContentAssistEntry.KIND_REFERENCE, (it) -> {
-                        it.getEditPositions().add(new TextRegion(context.getOffset(), proposal.length()));
-                        it.setDescription(ruleCall.getRule().getName());
-                    });
+                    var entry = this.getProposalCreator()
+                            .createProposal(proposal, context, ContentAssistEntry.KIND_REFERENCE, (it) -> {
+                                it.getEditPositions().add(new TextRegion(context.getOffset(), proposal.length()));
+                                it.setDescription(ruleCall.getRule().getName());
+                            });
                     acceptor.accept(entry, this.getProposalPriorities().getDefaultPriority(entry));
                 }
             }
-
         }
     }
-
 }

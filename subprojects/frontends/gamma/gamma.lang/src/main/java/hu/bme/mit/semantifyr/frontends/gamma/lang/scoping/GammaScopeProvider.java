@@ -55,7 +55,8 @@ public class GammaScopeProvider extends AbstractGammaScopeProvider {
             return Scopes.scopeFor(primaryMembers, IScope.NULLSCOPE);
         }
 
-        if (context instanceof InstancePortReference instancePortReference && reference == GammaPackage.Literals.INSTANCE_PORT_REFERENCE__PORT) {
+        if (context instanceof InstancePortReference instancePortReference
+                && reference == GammaPackage.Literals.INSTANCE_PORT_REFERENCE__PORT) {
             var instance = instancePortReference.getInstance();
 
             return Scopes.scopeFor(instance.getComponent().getPorts(), IScope.NULLSCOPE);
@@ -67,7 +68,8 @@ public class GammaScopeProvider extends AbstractGammaScopeProvider {
             return Scopes.scopeFor(port.getInterface().getEvents(), IScope.NULLSCOPE);
         }
 
-        if (context instanceof RaiseEventAction raiseEventAction && reference == GammaPackage.Literals.RAISE_EVENT_ACTION__EVENT) {
+        if (context instanceof RaiseEventAction raiseEventAction
+                && reference == GammaPackage.Literals.RAISE_EVENT_ACTION__EVENT) {
             var port = raiseEventAction.getPort();
 
             return Scopes.scopeFor(port.getInterface().getEvents(), IScope.NULLSCOPE);
@@ -75,5 +77,4 @@ public class GammaScopeProvider extends AbstractGammaScopeProvider {
 
         return super.getScope(context, reference);
     }
-
 }

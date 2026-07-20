@@ -1,0 +1,23 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::deepreachability
+
+@VerificationCase
+@Tag("expect-pass")
+class DeepCounterReachable {
+    var x: int := 0
+
+    redefine tran {
+        if (x < 12000) {
+            x := x + 1
+        }
+    }
+
+    prop {
+        return EF x == 12000
+    }
+}

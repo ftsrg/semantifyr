@@ -10,18 +10,19 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.getValue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 @Serializable
 data class BackendConfig(
+    val development: Boolean = false,
     val server: ServerConfig = ServerConfig(),
     val sessionManager: SessionManagerConfig = SessionManagerConfig(),
     val verification: VerificationConfig = VerificationConfig(),
 ) {
     fun withEnv(env: Map<String, String?> = System.getenv()): BackendConfig = copy(
+        development = env["SEMANTIFYR_LIVE_DEVELOPMENT"]?.toBooleanStrictOrNull() ?: development,
         server = server.withEnv(env),
         sessionManager = sessionManager.withEnv(env),
         verification = verification.withEnv(env),
@@ -48,18 +49,28 @@ data class ServerConfig(
     val port: Int = 8080,
     val pingPeriod: Duration = 30.seconds,
     val pingTimeout: Duration = 15.seconds,
-    val cors: CorsConfig = CorsConfig(),
     val webRootDirectory: String? = null,
+    val adminPassword: String? = null,
+    val wsHandshakesPerPeriod: Int = 120,
+    val wsHandshakeRatePeriod: Duration = 1.minutes,
+    val maxWsFrameSize: Long = 4 * 1024 * 1024,
+    val httpsOnlyCookies: Boolean = true,
 ) {
     fun withEnv(env: Map<String, String?>) = copy(
         port = env["SEMANTIFYR_LIVE_PORT"]?.toIntOrNull() ?: port,
         pingPeriod = env["SEMANTIFYR_LIVE_PING_PERIOD_SECONDS"]?.toLongOrNull()?.seconds ?: pingPeriod,
-        cors = cors.withEnv(env),
         webRootDirectory = env["SEMANTIFYR_LIVE_WEB_ROOT_DIR"] ?: webRootDirectory,
+        adminPassword = env["SEMANTIFYR_LIVE_ADMIN_PASSWORD"] ?: adminPassword,
+        wsHandshakesPerPeriod = env["SEMANTIFYR_LIVE_WS_HANDSHAKES_PER_PERIOD"]?.toIntOrNull() ?: wsHandshakesPerPeriod,
+        wsHandshakeRatePeriod = env["SEMANTIFYR_LIVE_WS_HANDSHAKE_RATE_PERIOD_SECONDS"]?.toLongOrNull()?.seconds ?: wsHandshakeRatePeriod,
+        maxWsFrameSize = env["SEMANTIFYR_LIVE_MAX_WS_FRAME_SIZE"]?.toLongOrNull() ?: maxWsFrameSize,
+        httpsOnlyCookies = env["SEMANTIFYR_LIVE_HTTPS_ONLY_COOKIES"]?.toBooleanStrictOrNull() ?: httpsOnlyCookies,
     )
 
     val webRootPath by lazy {
-        webRootDirectory?.let(Path::of)?.takeIf {
+        webRootDirectory?.let {
+            Path.of(it)
+        }?.takeIf {
             Files.isDirectory(it)
         }
     }
@@ -67,20 +78,20 @@ data class ServerConfig(
 
 @Serializable
 data class SessionManagerConfig(
-    val maxSessionsGlobal: Int = 32,
-    val maxSessionsPerIp: Int = 4,
-    val lspBinariesDirectory: String? = null,
+    val maxSessionsGlobal: Int = 256,
+    val semanticLibrariesDirectory: String? = null,
     val rootWorkDirectory: String = "/var/lib/semantifyr-live",
 ) {
     fun withEnv(env: Map<String, String?>) = copy(
         maxSessionsGlobal = env["SEMANTIFYR_LIVE_MAX_SESSIONS_GLOBAL"]?.toIntOrNull() ?: maxSessionsGlobal,
-        maxSessionsPerIp = env["SEMANTIFYR_LIVE_MAX_SESSIONS_PER_IP"]?.toIntOrNull() ?: maxSessionsPerIp,
-        lspBinariesDirectory = env["SEMANTIFYR_LIVE_LSP_BINARIES_DIR"] ?: lspBinariesDirectory,
+        semanticLibrariesDirectory = env["SEMANTIFYR_LIVE_SEMANTIC_LIBRARIES_DIR"] ?: semanticLibrariesDirectory,
         rootWorkDirectory = env["SEMANTIFYR_LIVE_ROOT_WORK_DIR"] ?: rootWorkDirectory,
     )
 
-    val lspBinariesPath by lazy {
-        Path.of(lspBinariesDirectory)
+    val semanticLibrariesPath by lazy {
+        semanticLibrariesDirectory?.let {
+            Path.of(it)
+        }
     }
 
     val rootWorkPath by lazy {
@@ -97,16 +108,4 @@ data class VerificationConfig(
         concurrency = env["SEMANTIFYR_LIVE_VERIFY_CONCURRENCY"]?.toIntOrNull() ?: concurrency,
         timeout = env["SEMANTIFYR_LIVE_VERIFY_TIMEOUT_SECONDS"]?.toLongOrNull()?.seconds ?: timeout,
     )
-}
-
-@Serializable
-data class CorsConfig(
-    val allowedOrigins: Set<String> = setOf("ftsrg.mit.bme.hu"),
-) {
-    fun withEnv(env: Map<String, String?>): CorsConfig {
-        val raw = env["SEMANTIFYR_LIVE_ALLOWED_ORIGINS"] ?: return this
-        return copy(
-            allowedOrigins = raw.split(',').map { it.trim() }.filter { it.isNotEmpty() }.toSet()
-        )
-    }
 }
