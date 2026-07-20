@@ -174,6 +174,20 @@ verification def NominalReachable {
     }
 }
 
+verification def NominalUnreachableViolated {
+    subject system : EngineStateMachine;
+
+    objective {
+        verify requirement {
+            require constraint {
+                not eventually(
+                    isStateActive(system.Behaviour.Nominal)
+                )
+            }
+        }
+    }
+}
+
 verification def JFS_FailureReachable {
     subject system : EngineStateMachine;
 
@@ -195,6 +209,20 @@ verification def EngineDownReachable {
         verify requirement {
             require constraint {
                 eventually(
+                    isStateActive(system.Behaviour.EngineDown)
+                )
+            }
+        }
+    }
+}
+
+verification def EngineDownUnreachableViolated {
+    subject system : EngineStateMachine;
+
+    objective {
+        verify requirement {
+            require constraint {
+                not eventually(
                     isStateActive(system.Behaviour.EngineDown)
                 )
             }
@@ -226,6 +254,21 @@ verification def NominalAndIdleNeverSimultaneous {
                     isStateActive(system.Behaviour.Nominal)
                     and isStateActive(system.Behaviour.Idle)
                 ))
+            }
+        }
+    }
+}
+
+verification def NominalAndIdleSimultaneousViolated {
+    subject system : EngineStateMachine;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.Behaviour.Nominal)
+                    and isStateActive(system.Behaviour.Idle)
+                )
             }
         }
     }

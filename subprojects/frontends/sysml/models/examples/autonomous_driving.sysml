@@ -322,6 +322,20 @@ verification def CollisionAvoidanceActiveReachable {
     }
 }
 
+verification def CollisionAvoidanceActiveUnreachableViolated {
+    subject system : AutonomousVehicle;
+
+    objective {
+        verify requirement {
+            require constraint {
+                not eventually(
+                    isStateActive(system.Behaviour.AutonomousMode.ObstacleDetection.CollisionAvoidanceActive)
+                )
+            }
+        }
+    }
+}
+
 verification def AvoidFrontendCollisionReachable {
     subject system : AutonomousVehicle;
 
@@ -343,6 +357,20 @@ verification def DoneReachable {
         verify requirement {
             require constraint {
                 eventually(
+                    isStateActive(system.Behaviour.Done)
+                )
+            }
+        }
+    }
+}
+
+verification def DoneUnreachableViolated {
+    subject system : AutonomousVehicle;
+
+    objective {
+        verify requirement {
+            require constraint {
+                not eventually(
                     isStateActive(system.Behaviour.Done)
                 )
             }

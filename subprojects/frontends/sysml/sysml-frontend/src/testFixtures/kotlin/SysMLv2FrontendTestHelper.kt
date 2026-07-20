@@ -72,7 +72,7 @@ class SysMLv2FrontendTestHelper {
     suspend fun checkVerificationCase(
         frontend: SysMLv2Frontend,
         case: VerificationCase,
-        expectedVerdict: VerificationVerdict = VerificationVerdict.Passed,
+        expectedVerdict: VerificationVerdict = expectedVerdictFor(case),
     ): VerificationResult {
         val matchedCase = frontend.verificationCases().single {
             it.qualifiedName == case.qualifiedName
@@ -90,7 +90,7 @@ class SysMLv2FrontendTestHelper {
         frontend: SysMLv2Frontend,
         case: VerificationCase,
         validationPortfolio: VerificationPortfolio? = null,
-        expectedVerdict: VerificationVerdict = VerificationVerdict.Passed,
+        expectedVerdict: VerificationVerdict = expectedVerdictFor(case),
     ) {
         val matchedCase = frontend.verificationCases().single {
             it.qualifiedName == case.qualifiedName
@@ -115,6 +115,17 @@ class SysMLv2FrontendTestHelper {
 
         fun modelPath(name: String): Path {
             return MODELS_ROOT.resolve(name)
+        }
+
+        private const val VIOLATED_POSTFIX = "Violated"
+
+        fun expectedVerdictFor(case: VerificationCase): VerificationVerdict {
+            val shortName = case.qualifiedName.substringAfterLast("::")
+            return if (shortName.endsWith(VIOLATED_POSTFIX)) {
+                VerificationVerdict.Failed
+            } else {
+                VerificationVerdict.Passed
+            }
         }
     }
 }

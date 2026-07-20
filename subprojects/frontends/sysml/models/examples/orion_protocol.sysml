@@ -390,6 +390,20 @@ verification def MasterConnectedReachable {
     }
 }
 
+verification def MasterConnectedUnreachableViolated {
+    subject system : OrionSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                not eventually(
+                    isStateActive(system.master.Behaviour.Connected)
+                )
+            }
+        }
+    }
+}
+
 verification def SlaveClosedReachable {
     subject system : OrionSystem;
 
@@ -411,6 +425,20 @@ verification def SlaveConnectedReachable {
         verify requirement {
             require constraint {
                 eventually(
+                    isStateActive(system.slave.Behaviour.Connected)
+                )
+            }
+        }
+    }
+}
+
+verification def SlaveConnectedUnreachableViolated {
+    subject system : OrionSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                not eventually(
                     isStateActive(system.slave.Behaviour.Connected)
                 )
             }
@@ -440,6 +468,21 @@ verification def BothMasterAndSlaveConnectedReachable {
         verify requirement {
             require constraint {
                 eventually(
+                    isStateActive(system.master.Behaviour.Connected)
+                    and isStateActive(system.slave.Behaviour.Connected)
+                )
+            }
+        }
+    }
+}
+
+verification def BothMasterAndSlaveConnectedUnreachableViolated {
+    subject system : OrionSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                not eventually(
                     isStateActive(system.master.Behaviour.Connected)
                     and isStateActive(system.slave.Behaviour.Connected)
                 )

@@ -74,6 +74,20 @@ verification def CheckingReachable {
     }
 }
 
+verification def CheckingUnreachableViolated {
+    subject system : AccessController;
+
+    objective {
+        verify requirement {
+            require constraint {
+                not eventually(
+                    isStateActive(system.Behaviour.Checking)
+                )
+            }
+        }
+    }
+}
+
 verification def UnlockedReachable {
     subject system : AccessController;
 
@@ -102,6 +116,20 @@ verification def OpenReachable {
     }
 }
 
+verification def OpenUnreachableViolated {
+    subject system : AccessController;
+
+    objective {
+        verify requirement {
+            require constraint {
+                not eventually(
+                    isStateActive(system.Behaviour.Open)
+                )
+            }
+        }
+    }
+}
+
 verification def LockedAndCheckingNeverSimultaneous {
     subject system : AccessController;
 
@@ -112,6 +140,21 @@ verification def LockedAndCheckingNeverSimultaneous {
                     isStateActive(system.Behaviour.Locked)
                     and isStateActive(system.Behaviour.Checking)
                 ))
+            }
+        }
+    }
+}
+
+verification def LockedAndCheckingSimultaneousViolated {
+    subject system : AccessController;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.Behaviour.Locked)
+                    and isStateActive(system.Behaviour.Checking)
+                )
             }
         }
     }

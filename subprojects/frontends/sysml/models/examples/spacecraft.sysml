@@ -205,8 +205,6 @@ verification def StationBehaviorOperationWaitingReachable {
     }
 }
 
-
-
 // verification def SpacecraftBehaviorCommunicationReachable {
 //     subject mission: Mission;
 
@@ -389,6 +387,20 @@ verification def GroundStationReceivedDataCanReach20 {
     }
 }
 
+verification def GroundStationReceivedDataCannotReach20Violated {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                not eventually(
+                    mission.groundStation.receivedData >= 20
+                )
+            }
+        }
+    }
+}
+
 verification def GroundStationReceivedDataCanReach30 {
     subject mission: Mission;
 
@@ -564,6 +576,20 @@ verification def SpacecraftDataCanReach60 {
         verify requirement {
             require constraint {
                 eventually(
+                    mission.spacecraft.data <= 60
+                )
+            }
+        }
+    }
+}
+
+verification def SpacecraftDataCannotReach60Violated {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                not eventually(
                     mission.spacecraft.data <= 60
                 )
             }

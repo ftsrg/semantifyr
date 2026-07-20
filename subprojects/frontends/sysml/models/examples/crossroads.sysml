@@ -269,7 +269,19 @@ verification def ControllerInterruptedReachable {
     }
 }
 
+verification def ControllerInterruptedUnreachableViolated {
+    subject system : CrossroadSystem;
 
+    objective {
+        verify requirement {
+            require constraint {
+                not eventually(
+                    isStateActive(system.controller.Behaviour.Interrupted)
+                )
+            }
+        }
+    }
+}
 
 verification def TrafficLightABehaviorNormalReachable {
     subject system : CrossroadSystem;
@@ -327,6 +339,20 @@ verification def TrafficLightABehaviorNormalGreenReachable {
     }
 }
 
+verification def TrafficLightABehaviorNormalGreenUnreachableViolated {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                not eventually(
+                    isStateActive(system.trafficLightA.Behaviour.Normal.Green)
+                )
+            }
+        }
+    }
+}
+
 verification def TrafficLightABehaviorInterruptedReachable {
     subject system : CrossroadSystem;
 
@@ -368,8 +394,6 @@ verification def TrafficLightABehaviorInterruptedBlackReachable {
         }
     }
 }
-
-
 
 verification def TrafficLightBBehaviorNormalReachable {
     subject system : CrossroadSystem;
@@ -469,8 +493,6 @@ verification def TrafficLightBBehaviorInterruptedBlackReachable {
     }
 }
 
-
-
 verification def ReachableRedRed {
     subject system : CrossroadSystem;
 
@@ -501,6 +523,21 @@ verification def ReachableRedGreen {
     }
 }
 
+verification def UnreachableRedGreenViolated {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                not eventually(
+                    isStateActive(system.trafficLightA.Behaviour.Normal.Red)
+                    and isStateActive(system.trafficLightB.Behaviour.Normal.Green)
+                )
+            }
+        }
+    }
+}
+
 verification def ReachableRedYellow {
     subject system : CrossroadSystem;
 
@@ -515,7 +552,6 @@ verification def ReachableRedYellow {
         }
     }
 }
-
 
 verification def ReachableGreenRed {
     subject system : CrossroadSystem;
@@ -561,7 +597,6 @@ verification def UnreachableGreenYellow {
         }
     }
 }
-
 
 verification def ReachableYellowRed {
     subject system : CrossroadSystem;

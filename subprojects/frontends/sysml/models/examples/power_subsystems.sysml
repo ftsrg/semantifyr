@@ -61,6 +61,20 @@ verification def OnReachable {
     }
 }
 
+verification def OnUnreachableViolated {
+    subject system : PowerManager;
+
+    objective {
+        verify requirement {
+            require constraint {
+                not eventually(
+                    isStateActive(system.Behaviour.On)
+                )
+            }
+        }
+    }
+}
+
 verification def LowPowerReachable {
     subject system : PowerManager;
 
@@ -68,6 +82,20 @@ verification def LowPowerReachable {
         verify requirement {
             require constraint {
                 eventually(
+                    isStateActive(system.Behaviour.PowerCritical)
+                )
+            }
+        }
+    }
+}
+
+verification def LowPowerUnreachableViolated {
+    subject system : PowerManager;
+
+    objective {
+        verify requirement {
+            require constraint {
+                not eventually(
                     isStateActive(system.Behaviour.PowerCritical)
                 )
             }
@@ -114,6 +142,21 @@ verification def OnAndOffNeverSimultaneous {
                     isStateActive(system.Behaviour.On)
                     and isStateActive(system.Behaviour.Off)
                 ))
+            }
+        }
+    }
+}
+
+verification def OnAndOffSimultaneousViolated {
+    subject system : PowerManager;
+
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.Behaviour.On)
+                    and isStateActive(system.Behaviour.Off)
+                )
             }
         }
     }
