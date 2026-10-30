@@ -14,8 +14,8 @@ import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
 import hu.bme.mit.semantifyr.live.backend.testing.emptyGlobalsModule
 import io.ktor.websocket.WebSocketSession
 import org.assertj.core.api.Assertions.assertThat
-import org.eclipse.emf.common.util.URI
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.eclipse.emf.common.util.URI
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.mockito.kotlin.mock
