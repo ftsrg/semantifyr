@@ -4,15 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
-import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
 import java.time.Instant
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.application")
     id("hu.bme.mit.semantifyr.gradle.conventions.integration")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
-    alias(libs.plugins.bmuschko.docker)
     kotlin("jvm")
     kotlin("plugin.serialization")
 }
@@ -213,31 +210,4 @@ val prepareDockerBuild by tasks.registering {
     inputs.files(cloneWebDistributions)
     inputs.files(cloneTheta)
     inputs.files(tasks.installDist)
-}
-
-val dockerImageRepo = "ftsrgbot/semantifyr-server"
-val dockerGitSha = providers.exec {
-    commandLine("git", "rev-parse", "--short", "HEAD")
-    isIgnoreExitValue = true
-}.standardOutput.asText.map {
-    it.trim()
-}
-
-val dockerBuildImage by tasks.registering(DockerBuildImage::class) {
-    val repo = dockerImageRepo
-    val version = project.version.toString()
-    dependsOn(prepareDockerBuild)
-    inputDir.set(projectDir)
-    images.add("$repo:$version")
-    images.add("$repo:latest")
-    images.add(dockerGitSha.map { "$repo:$it" })
-}
-
-val dockerPushImage by tasks.registering(DockerPushImage::class) {
-    val repo = dockerImageRepo
-    val version = project.version.toString()
-    dependsOn(dockerBuildImage)
-    images.add("$repo:$version")
-    images.add("$repo:latest")
-    images.add(dockerGitSha.map { "$repo:$it" })
 }

@@ -182,6 +182,7 @@ export async function createEditor(
 
   const fileSystemProvider = new RegisteredFileSystemProvider(false);
   fileSystemProvider.registerFile(new RegisteredMemoryFile(fileUri, initialCode));
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-assignment -- monaco-vscode-api declares the file enums in several modules
   const fsOverlay = registerFileSystemOverlay(1, fileSystemProvider);
 
   const editorAppConfig: EditorAppConfig = {
@@ -219,6 +220,7 @@ export async function createSecondaryEditor(
 
   const fileSystemProvider = new RegisteredFileSystemProvider(false);
   fileSystemProvider.registerFile(new RegisteredMemoryFile(fileUri, initialContent));
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-assignment -- monaco-vscode-api declares the file enums in several modules
   const fsOverlay = registerFileSystemOverlay(1, fileSystemProvider);
 
   const editorAppConfig: EditorAppConfig = {

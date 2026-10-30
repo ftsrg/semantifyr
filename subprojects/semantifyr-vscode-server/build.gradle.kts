@@ -4,12 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
-import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
-
 plugins {
     base
-    alias(libs.plugins.bmuschko.docker)
 }
 
 val distributionClasspath by configurations.creating {
@@ -90,29 +86,4 @@ val prepareDockerBuild by tasks.registering {
 
 tasks.assemble {
     dependsOn(prepareDockerBuild)
-}
-
-val dockerImageRepo = "ftsrgbot/semantifyr-vscode-server"
-val dockerGitSha = providers.exec {
-    commandLine("git", "rev-parse", "--short", "HEAD")
-    isIgnoreExitValue = true
-}.standardOutput.asText.map { it.trim() }
-
-val dockerBuildImage by tasks.registering(DockerBuildImage::class) {
-    val repo = dockerImageRepo
-    val version = project.version.toString()
-    dependsOn(prepareDockerBuild)
-    inputDir.set(projectDir)
-    images.add("$repo:$version")
-    images.add("$repo:latest")
-    images.add(dockerGitSha.map { "$repo:$it" })
-}
-
-val dockerPushImage by tasks.registering(DockerPushImage::class) {
-    val repo = dockerImageRepo
-    val version = project.version.toString()
-    dependsOn(dockerBuildImage)
-    images.add("$repo:$version")
-    images.add("$repo:latest")
-    images.add(dockerGitSha.map { "$repo:$it" })
 }

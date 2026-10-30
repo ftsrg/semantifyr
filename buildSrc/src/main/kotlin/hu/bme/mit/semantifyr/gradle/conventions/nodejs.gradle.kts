@@ -14,7 +14,7 @@ plugins {
 }
 
 node {
-    version = "22.14.0"
+    version = "22.23.4"
     download = true
     // CodeQL's autobuild sets empty proxy system properties, which the plugin turns into HTTPS_PROXY=http://:
     nodeProxySettings = ProxySettings.OFF
