@@ -19,3 +19,10 @@ node {
     // CodeQL's autobuild sets empty proxy system properties, which the plugin turns into HTTPS_PROXY=http://:
     nodeProxySettings = ProxySettings.OFF
 }
+
+val npmInstallServiceProvider = gradle.sharedServices.registerNpmInstallService()
+
+// the npm modules share one workspace root, and parallel installs into it corrupt node_modules
+tasks.npmInstall {
+    usesService(npmInstallServiceProvider)
+}
