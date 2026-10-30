@@ -65,10 +65,7 @@ jobs:
           cache-dependency-path: package-lock.json
       - name: Gradle build
         shell: bash
-        run: ./gradlew build
-      - name: Run integration tests
-        shell: bash
-        run: ./gradlew integrationTest
+        run: ./gradlew build -Ptests.requiredBackends=theta
       - name: Merge coverage reports
         if: ${{ matrix.os == 'ubuntu-latest' }}
         shell: bash

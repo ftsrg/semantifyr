@@ -56,7 +56,7 @@ tasks.withType<Test>().configureEach {
     testLogging.showStandardStreams = true
     testLogging.exceptionFormat = TestExceptionFormat.FULL
     workingDir = layout.projectDirectory.asFile
-}
+    systemProperty("semantifyr.tests.requiredBackends", providers.gradleProperty("tests.requiredBackends").getOrElse(""))}
 
 tasks.withType<JacocoReport>().configureEach {
     group = "verification"
