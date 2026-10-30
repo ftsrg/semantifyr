@@ -8,6 +8,7 @@ import java.time.Instant
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.application")
+    id("hu.bme.mit.semantifyr.gradle.conventions.verification")
     id("hu.bme.mit.semantifyr.gradle.conventions.integration")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
     kotlin("jvm")
@@ -106,7 +107,7 @@ val cloneGammaTestModels by tasks.registering(Sync::class) {
 }
 
 val cloneOxstsTestModels by tasks.registering(Sync::class) {
-    from(rootProject.layout.projectDirectory.dir("oxsts-test-models/simple"))
+    from(rootProject.layout.projectDirectory.dir("oxsts-test-models/smoke"))
     into(layout.buildDirectory.dir("staging/oxsts-test-models"))
 }
 
@@ -180,26 +181,28 @@ val runDev by tasks.registering(JavaExec::class) {
 
 testing {
     suites {
-        val integrationTest by getting(JvmTestSuite::class) {
-            dependencies {
-                implementation(project(":logging"))
-            }
+        listOf("verificationTest", "integrationTest").forEach { suite ->
+            named<JvmTestSuite>(suite) {
+                dependencies {
+                    implementation(project(":logging"))
+                }
 
-            targets.all {
-                testTask.configure {
-                    inputs.files(cloneSemanticLibraries)
-                    inputs.files(cloneGammaTestModels)
-                    inputs.files(cloneOxstsTestModels)
-                    inputs.files(cloneGammaLibraryModels)
-                    inputs.files(cloneSysmlLibraryModels)
+                targets.all {
+                    testTask.configure {
+                        inputs.files(cloneSemanticLibraries)
+                        inputs.files(cloneGammaTestModels)
+                        inputs.files(cloneOxstsTestModels)
+                        inputs.files(cloneGammaLibraryModels)
+                        inputs.files(cloneSysmlLibraryModels)
 
-                    val stagingDir = layout.buildDirectory.dir("staging").get().asFile
+                        val stagingDir = layout.buildDirectory.dir("staging").get().asFile
 
-                    systemProperty("semantifyr.live.semanticLibraries", stagingDir.resolve("semantic-libraries").absolutePath)
-                    systemProperty("semantifyr.live.gammaTestModels", stagingDir.resolve("gamma-test-models").absolutePath)
-                    systemProperty("semantifyr.live.oxstsTestModels", stagingDir.resolve("oxsts-test-models").absolutePath)
-                    systemProperty("semantifyr.live.gammaLibraryModels", stagingDir.resolve("gamma-library-models").absolutePath)
-                    systemProperty("semantifyr.live.sysmlLibraryModels", stagingDir.resolve("sysml-library-models").absolutePath)
+                        systemProperty("semantifyr.live.semanticLibraries", stagingDir.resolve("semantic-libraries").absolutePath)
+                        systemProperty("semantifyr.live.gammaTestModels", stagingDir.resolve("gamma-test-models").absolutePath)
+                        systemProperty("semantifyr.live.oxstsTestModels", stagingDir.resolve("oxsts-test-models").absolutePath)
+                        systemProperty("semantifyr.live.gammaLibraryModels", stagingDir.resolve("gamma-library-models").absolutePath)
+                        systemProperty("semantifyr.live.sysmlLibraryModels", stagingDir.resolve("sysml-library-models").absolutePath)
+                    }
                 }
             }
         }

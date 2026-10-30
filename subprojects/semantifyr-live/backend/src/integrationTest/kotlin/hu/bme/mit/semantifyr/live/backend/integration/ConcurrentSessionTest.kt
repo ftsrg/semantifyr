@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.live.backend.integration
 
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification
 import hu.bme.mit.semantifyr.live.backend.testing.LspWire
+import hu.bme.mit.semantifyr.live.backend.testing.StagedTestSupport
 import hu.bme.mit.semantifyr.live.backend.testing.awaitPublishDiagnostics
 import hu.bme.mit.semantifyr.live.backend.testing.awaitResponseFor
 import hu.bme.mit.semantifyr.live.backend.testing.resultAs
@@ -45,10 +46,10 @@ class ConcurrentSessionTest {
 
     @Test
     suspend fun `concurrent sessions all initialize, open, and discover`(@TempDir tmp: Path) {
-        IntegrationTestSupport.assumeStaged()
+        StagedTestSupport.assumeStaged()
 
         val startNanos = System.nanoTime()
-        withRealServer(IntegrationTestSupport.config(tmp, maxSessionsGlobal = sessionCount)) { httpClient, port ->
+        withRealServer(StagedTestSupport.config(tmp, maxSessionsGlobal = sessionCount)) { httpClient, port ->
             val failures = coroutineScope {
                 (0 until sessionCount).map {
                     async {
