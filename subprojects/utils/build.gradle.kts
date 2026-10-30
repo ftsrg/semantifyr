@@ -11,5 +11,4 @@ plugins {
 
 dependencies {
     implementation(project(":logging"))
-    implementation(libs.caffeine)
 }

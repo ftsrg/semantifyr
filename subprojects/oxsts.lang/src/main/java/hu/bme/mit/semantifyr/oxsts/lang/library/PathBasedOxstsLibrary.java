@@ -21,20 +21,16 @@ public abstract class PathBasedOxstsLibrary implements OxstsLibrary {
     @Inject
     protected ResourceUriProvider resourceUriProvider;
 
-    protected final Path libraryPath;
-
-    public PathBasedOxstsLibrary(Path libraryPath) {
-        this.libraryPath = libraryPath;
-    }
+    protected abstract Path getLibraryPath();
 
     protected URI resolveUri(QualifiedName name) {
         var path = LibraryResolutionUtil.qualifiedNameToPath(name);
-        var absolutePath = libraryPath.resolve(path);
+        var absolutePath = getLibraryPath().resolve(path);
         return resourceUriProvider.createFileUri(absolutePath);
     }
 
     protected Iterable<URI> getIncludedResourceUris() {
-        try (var fileStream = Files.walk(libraryPath, FileVisitOption.FOLLOW_LINKS)) {
+        try (var fileStream = Files.walk(getLibraryPath(), FileVisitOption.FOLLOW_LINKS)) {
             return fileStream
                     .map(Path::toFile)
                     .filter(file -> file.getName().endsWith(FILE_NAME_SUFFIX))

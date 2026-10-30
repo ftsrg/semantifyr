@@ -281,7 +281,6 @@ class SysMLv2Frontend private constructor(
                 variant.resourcePrefix,
                 libraryPath,
             )
-            library.prepareLoading()
             return listOf(library.extractedLibraryPath)
         }
     }

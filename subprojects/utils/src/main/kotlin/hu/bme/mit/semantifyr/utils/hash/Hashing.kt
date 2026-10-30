@@ -6,25 +6,20 @@
 
 package hu.bme.mit.semantifyr.utils.hash
 
-import java.io.Reader
-import java.nio.file.Path
+import java.io.DataOutputStream
+import java.io.OutputStream
+import java.security.DigestOutputStream
 import java.security.MessageDigest
+import java.util.HexFormat
 
-fun sha256Hex(reader: Reader): String {
+fun sha256Hex(files: Map<String, ByteArray>): String {
     val digest = MessageDigest.getInstance("SHA-256")
-    val buffer = CharArray(8 * 1024)
-    while (true) {
-        val read = reader.read(buffer)
-        if (read < 0) {
-            break
+    DataOutputStream(DigestOutputStream(OutputStream.nullOutputStream(), digest)).use {
+        for ((name, content) in files.toSortedMap()) {
+            it.writeUTF(name)
+            it.writeInt(content.size)
+            it.write(content)
         }
-        digest.update(String(buffer, 0, read).toByteArray(Charsets.UTF_8))
     }
-    return digest.digest().joinToString("") { "%02x".format(it) }
-}
-
-fun sha256Hex(path: Path): String {
-    path.toFile().bufferedReader().use {
-        return sha256Hex(it)
-    }
+    return HexFormat.of().formatHex(digest.digest())
 }

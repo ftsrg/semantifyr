@@ -9,18 +9,22 @@ package hu.bme.mit.semantifyr.frontends.sysml.wrapper
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
-import hu.bme.mit.semantifyr.utils.cache.GenericCache
+import hu.bme.mit.semantifyr.utils.files.ClasspathBundle
+import hu.bme.mit.semantifyr.utils.files.moveIntoPlace
 import hu.bme.mit.semantifyr.utils.hash.sha256Hex
 import java.io.IOException
-import java.io.InputStream
-import java.net.JarURLConnection
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
+import java.util.UUID
+import kotlin.io.path.extension
+import kotlin.io.path.invariantSeparatorsPathString
 
-class SysMLv2Compiler {
+class SysMLv2Compiler(
+    private val cacheDirectory: Path = Path.of(System.getProperty("user.home"), ".semantifyr", "sysml-cache"),
+) {
 
     private val logger by loggerFactory()
-    private val cache = GenericCache<String, String>()
 
     private val bundleDir: Path by lazy { extractBundle() }
     private val cliPath: Path by lazy { bundleDir.resolve("cli.cjs") }
@@ -31,27 +35,45 @@ class SysMLv2Compiler {
             "SysMLv2 source does not exist or is not a regular file: $sourcePath"
         }
 
-        val key = contentKey(sourcePath)
-        val output = if (key != null) {
-            cache.getOrCompute(key) { runCli(sourcePath) }
+        val entry = cacheEntry(sourcePath)
+        if (Files.isRegularFile(entry)) {
+            logger.info { "Reusing cached OXSTS '$entry' for SysMLv2 source '$sourcePath'" }
         } else {
-            logger.debug { "Could not compute content key for '$sourcePath', skipping cache" }
-            runCli(sourcePath)
+            runCli(sourcePath, entry)
         }
 
-        val parent = outputPath.parent
-        if (parent != null) {
-            Files.createDirectories(parent)
+        Files.createDirectories(outputPath.toAbsolutePath().parent)
+        val temporary = outputPath.resolveSibling(".tmp-${UUID.randomUUID()}.oxsts")
+        try {
+            Files.copy(entry, temporary)
+            Files.move(temporary, outputPath, StandardCopyOption.ATOMIC_MOVE)
+        } finally {
+            runCatching { Files.deleteIfExists(temporary) }
         }
-        Files.writeString(outputPath, output)
-        logger.debug { "Wrote ${output.length} bytes of OXSTS to '$outputPath'" }
+        logger.debug { "Copied cached OXSTS '$entry' to '$outputPath'" }
         return outputPath
     }
 
-    private fun runCli(sourcePath: Path): String {
+    private fun cacheEntry(sourcePath: Path): Path {
+        // the CLI builds every SysML and KerML file under the model's directory as its workspace
+        val workspace = sourcePath.toAbsolutePath().parent
+        val files = Files.walk(workspace).use { walk ->
+            walk.filter {
+                Files.isRegularFile(it) && it.extension in WORKSPACE_EXTENSIONS
+            }.toList().associate {
+                workspace.relativize(it).invariantSeparatorsPathString to Files.readAllBytes(it)
+            }
+        }
+        return cacheDirectory
+            .resolve(bundleDir.fileName.toString())
+            .resolve("${sourcePath.fileName}-${sha256Hex(files)}.oxsts")
+    }
+
+    private fun runCli(sourcePath: Path, entry: Path) {
         logger.info { "Compiling SysMLv2 source '$sourcePath' via bundled CLI '$cliPath'" }
 
-        val tempOutput = Files.createTempFile("semantifyr-sysmlv2-", ".oxsts")
+        Files.createDirectories(entry.parent)
+        val temporary = entry.resolveSibling(".tmp-${UUID.randomUUID()}.oxsts")
         try {
             val builder = ProcessBuilder(
                 "node",
@@ -60,7 +82,7 @@ class SysMLv2Compiler {
                 sourcePath.toString(),
                 sysmlLibraryPath.toString(),
                 "-o",
-                tempOutput.toString(),
+                temporary.toString(),
             ).redirectErrorStream(true)
 
             val process = try {
@@ -78,86 +100,23 @@ class SysMLv2Compiler {
                 "SysMLv2 compilation of '$sourcePath' failed with exit code $exitCode:\n$cliOutput"
             }
 
-            return Files.readString(tempOutput)
+            moveIntoPlace(temporary, entry)
         } finally {
-            runCatching { Files.deleteIfExists(tempOutput) }
+            runCatching { Files.deleteIfExists(temporary) }
         }
-    }
-
-    private fun contentKey(sourcePath: Path): String? {
-        return runCatching { sha256Hex(sourcePath) }.getOrNull()
     }
 
     private fun extractBundle(): Path {
-        val target = Path.of(System.getProperty("user.home"), ".semantifyr", "sysml-cli")
-        Files.createDirectories(target)
-
-        val classLoader = SysMLv2Compiler::class.java.classLoader
-        val bases = classLoader.getResources(BUNDLE_PREFIX)
-        if (!bases.hasMoreElements()) {
-            error("Bundled SysML CLI not found on classpath at '$BUNDLE_PREFIX/'")
+        val bundle = ClasspathBundle(SysMLv2Compiler::class.java.classLoader, BUNDLE_PREFIX) { true }
+        val target = bundle.extractTo(Path.of(System.getProperty("user.home"), ".semantifyr", "sysml-cli"))
+        check(Files.isRegularFile(target.resolve("cli.cjs"))) {
+            "Bundled SysML CLI not found on classpath at '$BUNDLE_PREFIX/'"
         }
-
-        var count = 0
-        while (bases.hasMoreElements()) {
-            val base = bases.nextElement()
-            count += when (base.protocol) {
-                "file" -> extractFromDir(Path.of(base.toURI()), target)
-                "jar" -> extractFromJar(base.openConnection() as JarURLConnection, target)
-                else -> error("Unsupported protocol for bundled SysML CLI: $base")
-            }
-        }
-        logger.info { "Extracted $count bundled SysML CLI file(s) to '$target'" }
         return target
-    }
-
-    private fun extractFromDir(baseDir: Path, target: Path): Int {
-        var count = 0
-        Files.walk(baseDir).use { walk ->
-            for (path in walk) {
-                if (!Files.isRegularFile(path)) {
-                    continue
-                }
-                val relative = baseDir.relativize(path)
-                writeSync(target.resolve(relative.toString()), Files.newInputStream(path))
-                count++
-            }
-        }
-        return count
-    }
-
-    private fun extractFromJar(connection: JarURLConnection, target: Path): Int {
-        val prefix = "$BUNDLE_PREFIX/"
-        val jar = connection.jarFile
-        val entries = jar.entries()
-        var count = 0
-        while (entries.hasMoreElements()) {
-            val entry = entries.nextElement()
-            if (entry.isDirectory || !entry.name.startsWith(prefix)) {
-                continue
-            }
-            val relative = entry.name.substring(prefix.length)
-            jar.getInputStream(entry).use {
-                writeSync(target.resolve(relative), it)
-            }
-            count++
-        }
-        return count
-    }
-
-    private fun writeSync(out: Path, stream: InputStream) {
-        val parent = out.parent
-        if (parent != null) {
-            Files.createDirectories(parent)
-        }
-        val desired = stream.readAllBytes()
-        if (Files.exists(out) && Files.size(out) == desired.size.toLong() && Files.readAllBytes(out).contentEquals(desired)) {
-            return
-        }
-        Files.write(out, desired)
     }
 
     companion object {
         private const val BUNDLE_PREFIX = "sysml-cli"
+        private val WORKSPACE_EXTENSIONS = setOf("sysml", "kerml")
     }
 }

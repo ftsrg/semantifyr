@@ -20,7 +20,6 @@ kotlinxSerialization = "1.12.0"
 cliKt = "5.1.0"
 dockerJava = "3.7.1"
 guice = "7.0.0"
-caffeine = "3.3.1"
 lsp4j = "1.0.0"
 node = "7.1.0"
 spotless = "8.10.4"
@@ -56,7 +55,6 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 guice = { group = "com.google.inject", name = "guice", version.ref = "guice" }
 guice-extensions-assistedinject = { group = "com.google.inject.extensions", name = "guice-assistedinject", version.ref = "guice" }
-caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
 docker-java-core = { group = "com.github.docker-java", name = "docker-java-core", version.ref = "dockerJava" }
 docker-java-transport = { group = "com.github.docker-java", name = "docker-java-transport-httpclient5", version.ref = "dockerJava" }
 lsp4j = { group = "org.eclipse.lsp4j", name = "org.eclipse.lsp4j", version.ref = "lsp4j" }
