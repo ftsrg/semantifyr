@@ -67,6 +67,16 @@ val sysmlBuildOutputs = fileTree(sysmlDir.dir("packages")) {
     include("**/dist/**")
 }
 
+val buildCli by tasks.registering(PnpmTask::class) {
+    dependsOn(tasks.pnpmInstall)
+    inputs.file(sysmlDir.file("package.json"))
+    inputs.file(sysmlDir.file("tsconfig.json"))
+    inputs.files(sysmlSourceFiles)
+    outputs.file(sysmlDir.file("packages/syside-cli/dist/cli.cjs"))
+
+    pnpmCommand.set(listOf("run", "cli"))
+}
+
 val cleanStaleVsix by tasks.registering(Delete::class) {
     delete(fileTree(sysmlDir.dir("packages/syside-vscode")) { include("*.vsix") })
 }
@@ -74,6 +84,7 @@ val cleanStaleVsix by tasks.registering(Delete::class) {
 val bundleExtension by tasks.registering(PnpmTask::class) {
     dependsOn(tasks.pnpmInstall)
     dependsOn(cleanStaleVsix)
+    mustRunAfter(buildCli)
     inputs.file(sysmlDir.file("package.json"))
     inputs.file(sysmlDir.file("tsconfig.json"))
     inputs.files(sysmlSourceFiles)
@@ -88,17 +99,6 @@ val collectExtension by tasks.registering(Sync::class) {
     from(bundleExtension)
     rename(".*\\.vsix", "syside-vscode.vsix")
     into(sysideVsix.map { it.asFile.parentFile })
-}
-
-val buildCli by tasks.registering(PnpmTask::class) {
-    dependsOn(tasks.pnpmInstall)
-    mustRunAfter(bundleExtension) // input fileTree at packages/ overlaps bundleExtension's output dir; logically independent
-    inputs.file(sysmlDir.file("package.json"))
-    inputs.file(sysmlDir.file("tsconfig.json"))
-    inputs.files(sysmlSourceFiles)
-    outputs.file(sysmlDir.file("packages/syside-cli/dist/cli.cjs"))
-
-    pnpmCommand.set(listOf("run", "cli"))
 }
 
 val bundleCli by tasks.registering(Sync::class) {
