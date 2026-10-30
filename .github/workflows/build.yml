@@ -10,6 +10,8 @@ on:
     branches: [ "main" ]
 env:
   CI: true
+  # the portfolios race several Theta processes, and the 4 GB default exhausts a hosted runner
+  THETA_JAVA_OPTS: -Xss512M -Xms256M -Xmx1500M
 jobs:
   build:
     permissions:
