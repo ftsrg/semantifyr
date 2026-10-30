@@ -57,14 +57,14 @@ val cloneLibraries by tasks.registering {
 }
 
 val cloneGammaTestModels by tasks.registering(Sync::class) {
-    from(project(":gamma-frontend").layout.projectDirectory.dir("TestModels")) {
+    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/examples")) {
         include("*.gamma")
     }
     into("examples/gamma/TestModels")
 }
 
 val cloneSysMLTestModels by tasks.registering(Sync::class) {
-    from(project(":sysml-frontend").layout.projectDirectory.dir("TestModels")) {
+    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/examples")) {
         include("*.sysml")
     }
     into("examples/sysml/TestModels")

@@ -26,4 +26,4 @@ ADD jupyter_server_config.py /etc/jupyter/jupyter_server_config.py
 
 ADD extensions/ /extensions/
 RUN openvscode-server --install-extension /extensions/semantifyr-*.vsix
-RUN openvscode-server --install-extension /extensions/sysml-2ls-*.vsix
+RUN openvscode-server --install-extension /extensions/syside-vscode.vsix
