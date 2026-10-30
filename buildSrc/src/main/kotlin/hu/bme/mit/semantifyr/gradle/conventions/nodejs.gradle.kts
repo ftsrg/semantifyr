@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.gradle.conventions
 
+import com.github.gradle.node.npm.proxy.ProxySettings
+
 plugins {
     base
     id("com.github.node-gradle.node")
@@ -14,4 +16,6 @@ plugins {
 node {
     version = "22.14.0"
     download = true
+    // CodeQL's autobuild sets empty proxy system properties, which the plugin turns into HTTPS_PROXY=http://:
+    nodeProxySettings = ProxySettings.OFF
 }
