@@ -20,6 +20,7 @@ data class HealthResponse(
 data class InfoResponse(
     val uptime: Duration,
     val startedAt: Instant,
+    val version: String,
     val commit: String,
     val buildTime: String,
     val activeSessions: Int,

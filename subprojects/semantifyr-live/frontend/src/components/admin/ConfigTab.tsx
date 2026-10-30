@@ -25,6 +25,7 @@ import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
 interface Props {
   info: InfoResponse;
   config: AdminConfigResponse;
+  frontendVersion: string;
   frontendCommit: string;
   frontendBuildTime: string;
   portfolios: readonly PortfolioInfo[];
@@ -130,6 +131,7 @@ function renderBool(value: boolean): React.ReactNode {
 export default function ConfigTab({
   info,
   config,
+  frontendVersion,
   frontendCommit,
   frontendBuildTime,
   portfolios,
@@ -145,12 +147,14 @@ export default function ConfigTab({
     <Grid container spacing={2}>
       <Grid size={{ xs: 12, md: 6 }}>
         <Card title="Backend build">
+          <Row label="Version" value={info.version} mono />
           <Row label="Commit" value={info.commit} mono />
           <Row label="Built" value={info.buildTime} />
         </Card>
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
         <Card title="Frontend build">
+          <Row label="Version" value={frontendVersion} mono />
           <Row label="Commit" value={frontendCommit} mono />
           <Row label="Built" value={frontendBuildTime} />
         </Card>

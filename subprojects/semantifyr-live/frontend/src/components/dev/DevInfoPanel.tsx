@@ -214,6 +214,7 @@ export default function DevInfoPanel({
           <TableBody>
             <SectionHeader title="Frontend" />
             <InfoRow label="Language" value={language} />
+            <InfoRow label="Version" value={__VERSION__} mono />
             <InfoRow label="Commit" value={__GIT_COMMIT__} mono />
             <InfoRow label="Built" value={__BUILD_TIME__} />
             <InfoRow label="Browser" value={browser} />
@@ -226,6 +227,7 @@ export default function DevInfoPanel({
               <InfoRow label="Status" value="loading..." />
             ) : (
               <>
+                <InfoRow label="Version" value={backendInfo.version} mono />
                 <InfoRow label="Commit" value={backendInfo.commit} mono />
                 <InfoRow label="Built" value={backendInfo.buildTime} />
                 <InfoRow label="Uptime" value={formatIsoDuration(backendInfo.uptime)} />

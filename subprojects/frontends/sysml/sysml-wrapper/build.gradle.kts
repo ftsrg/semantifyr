@@ -19,7 +19,7 @@ dependencies {
     implementation(project(":logging"))
 }
 
-val sysmlCommit = "aac01ac8b25d91b15d13a614965cd2f5fe37ba78" // chore: prettier 3.9 formatting updates
+val sysmlCommit = "7893df64d2f51ab60e6ecb1124bfb7a219d90bd9" // chore: bumped vscode to 1.109
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 

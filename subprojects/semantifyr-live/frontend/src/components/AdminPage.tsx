@@ -330,6 +330,7 @@ function Dashboard({ api, onLogout, preference, colorMode, onToggleColorMode }: 
                 <ConfigTab
                   info={data.info}
                   config={data.config}
+                  frontendVersion={__VERSION__}
                   frontendCommit={__GIT_COMMIT__}
                   frontendBuildTime={__BUILD_TIME__}
                   portfolios={portfolios}

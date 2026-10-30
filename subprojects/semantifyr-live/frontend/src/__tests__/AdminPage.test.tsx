@@ -40,6 +40,7 @@ import AdminPage from '../components/AdminPage';
 const baseInfo = {
   uptime: 'PT5M',
   startedAt: '2026-05-13T14:22:01Z',
+  version: '0.1.0',
   commit: 'abcdef',
   buildTime: '2026-05-09T00:00:00Z',
   activeSessions: 0,

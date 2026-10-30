@@ -128,6 +128,7 @@ fun NpmTask.configureSharedInputs() {
     inputs.file(rootProject.layout.projectDirectory.file("eslint.config.base.js"))
     inputs.file(rootProject.layout.projectDirectory.file("package.json"))
     inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
+    inputs.file(rootProject.layout.projectDirectory.file("gradle.properties"))
     inputs.files(tasks.npmInstall)
     inputs.files(editorCommonDist)
     inputs.files(cloneTestModels)

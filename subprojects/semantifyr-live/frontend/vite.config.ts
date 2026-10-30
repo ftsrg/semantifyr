@@ -5,9 +5,15 @@
  */
 
 import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+
+function getVersion(): string {
+  const properties = readFileSync(new URL('../../../gradle.properties', import.meta.url), 'utf-8');
+  return /^version=(.+)$/m.exec(properties)?.[1]?.trim() ?? 'unknown';
+}
 
 function getGitCommit(): string {
   try {
@@ -21,6 +27,7 @@ const backendProxyTarget = process.env.VITE_BACKEND_PROXY_TARGET ?? 'http://loca
 
 export default defineConfig({
   define: {
+    __VERSION__: JSON.stringify(getVersion()),
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
     __GIT_COMMIT__: JSON.stringify(getGitCommit()),
     __BACKEND_URL__: JSON.stringify(backendProxyTarget),

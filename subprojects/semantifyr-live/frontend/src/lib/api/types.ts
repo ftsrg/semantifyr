@@ -29,6 +29,7 @@ export interface InfoResponse {
   // ISO-8601 instant (e.g. "2026-05-13T14:22:01.123Z"), wall-clock moment the
   // backend marked itself started.
   startedAt: string
+  version: string
   commit: string
   buildTime: string
   activeSessions: number

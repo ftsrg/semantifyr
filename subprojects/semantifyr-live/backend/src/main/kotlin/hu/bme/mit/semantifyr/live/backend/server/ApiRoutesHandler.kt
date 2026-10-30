@@ -45,6 +45,7 @@ class ApiRoutesHandler @Inject constructor(
                     InfoResponse(
                         uptime = serverStatus.uptime,
                         startedAt = serverStatus.startedAt,
+                        version = BuildInfo.version,
                         commit = BuildInfo.commit,
                         buildTime = BuildInfo.buildTime,
                         activeSessions = sessionManager.activeSessionsCount,

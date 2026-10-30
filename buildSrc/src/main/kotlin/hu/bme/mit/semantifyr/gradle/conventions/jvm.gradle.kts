@@ -45,6 +45,12 @@ java.toolchain {
     languageVersion = JavaLanguageVersion.of(25)
 }
 
+tasks.jar {
+    manifest {
+        attributes("Implementation-Version" to project.version)
+    }
+}
+
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     testLogging.showStandardStreams = true

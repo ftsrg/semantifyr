@@ -66,6 +66,7 @@ application {
 
 val generateBuildInfo by tasks.registering {
     val outputDir = layout.buildDirectory.dir("generated/buildinfo")
+    val version = project.version.toString()
     outputs.dir(outputDir)
 
     doLast {
@@ -80,7 +81,7 @@ val generateBuildInfo by tasks.registering {
 
         outputDir.get().asFile.mkdirs()
         outputDir.get().file("build-info.properties").asFile.writeText(
-            "commit=$commitHash\nbuildTime=$buildTime\n",
+            "version=$version\ncommit=$commitHash\nbuildTime=$buildTime\n",
         )
     }
 }

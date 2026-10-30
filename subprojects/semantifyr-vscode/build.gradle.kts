@@ -45,8 +45,6 @@ val cloneDistribution by tasks.registering(Sync::class) {
 }
 
 tasks.npmInstall {
-    inputs.files(syncPackageVersion)
-
     workingDir = rootProject.projectDir
 }
 
@@ -78,15 +76,11 @@ val npmCheck by tasks.registering(NpmTask::class) {
     npmCommand.set(listOf("run", "check"))
 }
 
-val syncPackageVersion by tasks.registering(NpmTask::class) {
-    inputs.property("version", project.version.toString())
-    outputs.file(project.layout.projectDirectory.file("package.json"))
-    npmCommand.set(listOf("pkg", "set", "version=${project.version}"))
-}
-
 val vsixFile = project.layout.buildDirectory.file("semantifyr-${project.version}.vsix")
 
 val bundleExtension by tasks.registering(NpmTask::class) {
+    val version = project.version.toString()
+    inputs.property("version", version)
 
     inputs.files(cloneDistribution)
     inputs.dir(project.layout.projectDirectory.dir("src"))
@@ -107,7 +101,7 @@ val bundleExtension by tasks.registering(NpmTask::class) {
     inputs.files(tasks.npmInstall)
     inputs.files(editorCommonDist)
 
-    npmCommand.set(listOf("run", "bundle"))
+    npmCommand.set(listOf("run", "bundle", "--", version, "--no-git-tag-version", "--no-update-package-json"))
 
     outputs.file(vsixFile)
 }
