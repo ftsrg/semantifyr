@@ -60,5 +60,5 @@ tasks.check {
 }
 
 tasks.clean {
-    delete("dist", "tsconfig.tsbuildinfo")
+    delete("dist")
 }

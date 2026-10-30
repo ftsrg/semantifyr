@@ -16,12 +16,12 @@
     "src"
   ],
   "scripts": {
-    "typecheck": "tsc -b",
-    "typecheck:watch": "tsc -b --watch",
+    "typecheck": "tsc --noEmit",
+    "typecheck:watch": "tsc --noEmit --watch",
     "lint": "eslint",
     "check": "npm run typecheck && npm run lint",
-    "assemble": "tsc -b",
-    "assemble:watch": "tsc -b --watch",
+    "assemble": "tsc",
+    "assemble:watch": "tsc --watch",
     "build": "npm run check && npm run assemble"
   }
 }
