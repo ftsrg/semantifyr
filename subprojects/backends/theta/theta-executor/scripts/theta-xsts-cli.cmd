@@ -7,4 +7,5 @@ if "%1"=="--version" (
     java "-Djava.library.path=%SCRIPTDIR%lib" -jar "%SCRIPTDIR%jars\theta-xsts-cli.jar" CEGAR --version
     exit /b %ERRORLEVEL%
 )
-java -Xss512M -Xms1G -Xmx4G "-Djava.library.path=%SCRIPTDIR%lib" -jar "%SCRIPTDIR%jars\theta-xsts-cli.jar" %*
+if not defined THETA_JAVA_OPTS set THETA_JAVA_OPTS=-Xss512M -Xms1G -Xmx4G
+java %THETA_JAVA_OPTS% "-Djava.library.path=%SCRIPTDIR%lib" -jar "%SCRIPTDIR%jars\theta-xsts-cli.jar" %*
