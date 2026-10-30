@@ -69,7 +69,8 @@ val sysmlBuildOutputs = fileTree(sysmlDir.dir("packages")) {
 }
 
 val buildCli = tasks.register<PnpmTask>("buildCli") {
-    inputs.files(tasks.pnpmInstall)
+    // node_modules links back into the workspace packages, so it changes whenever they are built
+    dependsOn(tasks.pnpmInstall)
     inputs.file(sysmlDir.file("package.json"))
     inputs.file(sysmlDir.file("tsconfig.json"))
     inputs.files(sysmlSourceFiles)
@@ -79,7 +80,7 @@ val buildCli = tasks.register<PnpmTask>("buildCli") {
 }
 
 val bundleExtension = tasks.register<PnpmTask>("bundleExtension") {
-    inputs.files(tasks.pnpmInstall)
+    dependsOn(tasks.pnpmInstall)
     mustRunAfter(buildCli)
     inputs.file(sysmlDir.file("package.json"))
     inputs.file(sysmlDir.file("tsconfig.json"))
