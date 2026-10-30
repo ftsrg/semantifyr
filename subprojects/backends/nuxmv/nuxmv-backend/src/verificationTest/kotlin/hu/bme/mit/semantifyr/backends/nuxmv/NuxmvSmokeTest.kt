@@ -31,7 +31,7 @@ class NuxmvSmokeTest {
     }
 
     @Test
-    suspend fun `smoke case verifies and returns a witness`() {
+    suspend fun `smoke case verifies and its witness re-verifies`() {
         val context = helper.semantifyrLoader
             .startContext()
             .loadModels(Path("build/test-models/smoke"))
@@ -41,6 +41,7 @@ class NuxmvSmokeTest {
             context = context,
             case = helper.collectVerificationCases(context).single(),
             verificationPortfolio = SingleBackendPortfolio(NuxmvBackend(), NuxmvConfig.Ic3Invar),
+            validationPortfolio = SingleBackendPortfolio(NuxmvBackend(), NuxmvConfig.Ic3Invar),
             outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(NuxmvSmokeTest::class.java),
         )
     }

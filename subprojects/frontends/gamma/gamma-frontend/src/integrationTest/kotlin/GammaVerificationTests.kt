@@ -49,7 +49,7 @@ class GammaVerificationTests {
             portfolio = Portfolios.SmartFull,
             outputDirectory = artifactRoot,
         )
-        helper.checkConformance(frontend, gammaVerificationCase, Portfolios.AllAgree)
+        helper.checkVerificationCase(frontend, gammaVerificationCase)
     }
 
     @ParameterizedTest

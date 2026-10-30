@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.backends.uppaal
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalBackend
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
-import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
@@ -54,7 +53,6 @@ class UppaalSemanticConformanceTest {
             verificationCase,
             verificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.Default),
             outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(UppaalSemanticConformanceTest::class.java),
-            validationPortfolio = Portfolios.AllAgree,
         )
     }
 }

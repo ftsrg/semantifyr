@@ -17,6 +17,7 @@ import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
@@ -92,6 +93,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
         expectedVerdict: VerificationVerdict = VerificationVerdict.Passed,
         optimization: OptimizationConfig? = null,
+        validationPortfolio: VerificationPortfolio? = null,
     ) {
         val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment, optimization = optimization)
         Assertions.assertEquals(
@@ -113,12 +115,16 @@ class SemantifyrVerifierTestHelper @Inject constructor(
                 .isTrue()
 
             assertWitnessFilesPersisted(outputDirectory, case)
+
+            if (validationPortfolio != null) {
+                assertWitnessRevalidates(case, trace, validationPortfolio, outputDirectory, timeout, environment, expectedVerdict)
+            }
         }
     }
 
     private fun expectsWitness(case: VerificationCase, verdict: VerificationVerdict): Boolean {
         val prop = case.classDeclaration.eAllContents().asSequence().filterIsInstance<PropertyDeclaration>().firstOrNull {
-            it.name == "prop"
+            NamingUtil.getName(it) == "prop"
         } ?: return false
         return when (prop.expression) {
             is AG -> verdict == VerificationVerdict.Failed
@@ -220,6 +226,18 @@ class SemantifyrVerifierTestHelper @Inject constructor(
 
         val trace = result.trace ?: return
         val validation = validationPortfolio ?: return
+        assertWitnessRevalidates(case, trace, validation, outputDirectory, validationTimeout, environment, expectedVerdict)
+    }
+
+    private suspend fun assertWitnessRevalidates(
+        case: VerificationCase,
+        trace: Trace,
+        validation: VerificationPortfolio,
+        outputDirectory: Path,
+        timeout: Duration,
+        environment: ExecutionEnvironment,
+        originalVerdict: VerificationVerdict,
+    ) {
         val report = validation.availability(environment)
         Assumptions.assumeTrue(
             report is AvailabilityReport.Available,
@@ -229,10 +247,10 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         logger.info { "Validating returned witness" }
 
         val validationDirectory = outputDirectory.resolve(qualifiedNameToDirectoryName(case.qualifiedName)).resolve("validation")
-        val verifier = buildVerifier(validation, validationTimeout, validationDirectory, environment)
+        val verifier = buildVerifier(validation, timeout, validationDirectory, environment)
         val outcome = WitnessValidator().validate(verifier, trace)
         assertThat(outcome.isValid)
-            .describedAs("Witness for ${case.qualifiedName} (original verdict $expectedVerdict) must re-verify Passed via ${validation.id} but got ${outcome.verification.verdict} (${outcome.verification.message ?: "no message"})")
+            .describedAs("Witness for ${case.qualifiedName} (original verdict $originalVerdict) must re-verify Passed via ${validation.id} but got ${outcome.verification.verdict} (${outcome.verification.message ?: "no message"})")
             .isTrue()
     }
 

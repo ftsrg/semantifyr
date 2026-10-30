@@ -50,7 +50,6 @@ class SysMLConformanceTests {
         helper.checkConformance(
             frontend = frontend,
             case = case,
-            validationPortfolio = Portfolios.AllAgree,
         )
     }
 

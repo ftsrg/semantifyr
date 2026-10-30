@@ -15,12 +15,10 @@ import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import kotlin.io.path.Path
 import kotlin.time.Duration.Companion.minutes
 
-@Tag("slow")
 @InjectWithOxsts
 class SpinSearchDepthTests {
 

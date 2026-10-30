@@ -11,6 +11,7 @@ plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
     id("hu.bme.mit.semantifyr.gradle.conventions.verification")
     id("hu.bme.mit.semantifyr.gradle.conventions.integration")
+    id("hu.bme.mit.semantifyr.gradle.conventions.nightly")
 }
 
 val cloneOxstsTestModels = tasks.register<Sync>("cloneOxstsTestModels") {
@@ -23,6 +24,10 @@ tasks.named("verificationTest") {
 }
 
 val integrationTest = tasks.named("integrationTest") {
+    inputs.files(cloneOxstsTestModels)
+}
+
+tasks.named("nightlyTest") {
     inputs.files(cloneOxstsTestModels)
 }
 

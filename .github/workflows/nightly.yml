@@ -1,0 +1,48 @@
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+name: Nightly
+on:
+  schedule:
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+permissions: {}
+jobs:
+  nightly:
+    name: Nightly
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    permissions: {}
+    concurrency:
+      group: nightly
+      cancel-in-progress: false
+    environment: nightly-fured
+    steps:
+      - name: Configure SSH
+        env:
+          NIGHTLY_SSH_KEY: ${{ secrets.NIGHTLY_SSH_KEY }}
+          NIGHTLY_KNOWN_HOSTS: ${{ secrets.NIGHTLY_KNOWN_HOSTS }}
+          NIGHTLY_HOST: ${{ vars.NIGHTLY_HOST }}
+          NIGHTLY_PORT: ${{ vars.NIGHTLY_PORT }}
+          NIGHTLY_USER: ${{ vars.NIGHTLY_USER }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$NIGHTLY_SSH_KEY" > ~/.ssh/nightly
+          chmod 600 ~/.ssh/nightly
+          printf '%s\n' "$NIGHTLY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          printf 'Host fured\n  HostName %s\n  Port %s\n  User %s\n  IdentityFile ~/.ssh/nightly\n  ServerAliveInterval 60\n' \
+            "$NIGHTLY_HOST" "$NIGHTLY_PORT" "$NIGHTLY_USER" > ~/.ssh/config
+      - name: Run the integration and nightly suites on fured
+        run: ssh fured run "$GITHUB_SHA"
+      - name: Fetch the test results
+        if: ${{ !cancelled() }}
+        run: ssh fured results "$GITHUB_SHA" > nightly-test-results.tar.gz
+      - name: Upload the test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: nightly-test-results
+          path: nightly-test-results.tar.gz
+          compression-level: 0
+          retention-days: 30

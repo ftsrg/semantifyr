@@ -31,7 +31,7 @@ class UppaalSmokeTest {
     }
 
     @Test
-    suspend fun `smoke case verifies and returns a witness`() {
+    suspend fun `smoke case verifies and its witness re-verifies`() {
         val context = helper.semantifyrLoader
             .startContext()
             .loadModels(Path("build/test-models/smoke"))
@@ -41,6 +41,7 @@ class UppaalSmokeTest {
             context = context,
             case = helper.collectVerificationCases(context).single(),
             verificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.Default),
+            validationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.Default),
             outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(UppaalSmokeTest::class.java),
         )
     }

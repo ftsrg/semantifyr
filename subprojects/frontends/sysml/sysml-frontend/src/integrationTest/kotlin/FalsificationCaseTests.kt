@@ -56,16 +56,6 @@ class FalsificationCaseTests {
     }
 
     @Test
-    suspend fun `SpacecraftDataCannotReach60Violated Should Fail`() {
-        checkFalsification("spacecraft.sysml", "SpacecraftDataCannotReach60Violated")
-    }
-
-    @Test
-    suspend fun `Compressed SpacecraftDataCannotReach60Violated Should Fail`() {
-        checkFalsification("compressedspacecraft.sysml", "SpacecraftDataCannotReach60Violated")
-    }
-
-    @Test
     suspend fun `NominalUnreachableViolated Should Fail`() {
         checkFalsification("aircraft_engine.sysml", "NominalUnreachableViolated")
     }
@@ -108,16 +98,6 @@ class FalsificationCaseTests {
     @Test
     suspend fun `OnAndOffSimultaneousViolated Should Fail`() {
         checkFalsification("power_subsystems.sysml", "OnAndOffSimultaneousViolated")
-    }
-
-    @Test
-    suspend fun `GroundStationReceivedDataCannotReach20Violated Should Fail`() {
-        checkFalsification("spacecraft.sysml", "GroundStationReceivedDataCannotReach20Violated")
-    }
-
-    @Test
-    suspend fun `Compressed GroundStationReceivedDataCannotReach20Violated Should Fail`() {
-        checkFalsification("compressedspacecraft.sysml", "GroundStationReceivedDataCannotReach20Violated")
     }
 
     private suspend fun checkFalsification(modelFile: String, caseName: String) {

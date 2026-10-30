@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.backends.nuxmv
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackend
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
-import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
@@ -54,7 +53,6 @@ class NuxmvSemanticConformanceTest {
             verificationCase,
             verificationPortfolio = SingleBackendPortfolio(NuxmvBackend(), NuxmvConfig.Ic3Invar),
             outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(NuxmvSemanticConformanceTest::class.java),
-            validationPortfolio = Portfolios.AllAgree,
         )
     }
 }

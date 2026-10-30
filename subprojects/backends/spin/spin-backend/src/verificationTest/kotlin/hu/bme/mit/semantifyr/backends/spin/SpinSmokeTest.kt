@@ -31,7 +31,7 @@ class SpinSmokeTest {
     }
 
     @Test
-    suspend fun `smoke case verifies and returns a witness`() {
+    suspend fun `smoke case verifies and its witness re-verifies`() {
         val context = helper.semantifyrLoader
             .startContext()
             .loadModels(Path("build/test-models/smoke"))
@@ -41,6 +41,7 @@ class SpinSmokeTest {
             context = context,
             case = helper.collectVerificationCases(context).single(),
             verificationPortfolio = SingleBackendPortfolio(SpinBackend(), SpinConfig.SafeDfs),
+            validationPortfolio = SingleBackendPortfolio(SpinBackend(), SpinConfig.SafeDfs),
             outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(SpinSmokeTest::class.java),
         )
     }

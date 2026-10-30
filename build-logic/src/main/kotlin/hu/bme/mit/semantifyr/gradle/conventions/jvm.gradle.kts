@@ -52,14 +52,8 @@ tasks.jar {
     }
 }
 
-val includeSlowTests = providers.gradleProperty("tests.slow").isPresent
-
 tasks.withType<Test>().configureEach {
-    useJUnitPlatform {
-        if (!includeSlowTests) {
-            excludeTags("slow")
-        }
-    }
+    useJUnitPlatform()
     testLogging.showStandardStreams = true
     testLogging.exceptionFormat = TestExceptionFormat.FULL
     workingDir = layout.projectDirectory.asFile
@@ -99,7 +93,8 @@ tasks.jacocoTestReport {
 }
 
 tasks.named("sonarResolver") {
-    inputs.files(tasks.withType<JacocoReport>())
+    // the nightly runs only on fured, so its report must not pull nightlyTest into CI
+    inputs.files(tasks.withType<JacocoReport>().matching { it.name != "jacocoNightlyTestReport" })
 }
 
 sonar {
