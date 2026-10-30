@@ -15,7 +15,10 @@ public class InheritanceAwareDomainMemberCollection extends DomainMemberCollecti
     private final DomainMemberCollection parent;
     private final DomainDeclaration domainDeclaration;
 
-    public InheritanceAwareDomainMemberCollection(DomainDeclaration domainDeclaration, DomainMemberCollection parent, RedefinitionHandler redefinitionHandler) {
+    public InheritanceAwareDomainMemberCollection(
+            DomainDeclaration domainDeclaration,
+            DomainMemberCollection parent,
+            RedefinitionHandler redefinitionHandler) {
         super(parent, redefinitionHandler);
 
         this.domainDeclaration = domainDeclaration;
@@ -28,5 +31,4 @@ public class InheritanceAwareDomainMemberCollection extends DomainMemberCollecti
     public String toString() {
         return "'" + domainDeclaration.getName() + "'" + " -> " + parent.toString();
     }
-
 }

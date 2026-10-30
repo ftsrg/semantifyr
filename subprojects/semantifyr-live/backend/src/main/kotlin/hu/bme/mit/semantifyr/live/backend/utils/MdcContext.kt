@@ -7,29 +7,31 @@
 package hu.bme.mit.semantifyr.live.backend.utils
 
 import kotlinx.coroutines.ThreadContextElement
+import kotlinx.coroutines.currentCoroutineContext
 import org.slf4j.MDC
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
-/**
- * Coroutine context element that propagates SLF4J MDC values across coroutine
- * suspensions and thread switches. The MDC state is captured at creation time
- * and restored whenever the coroutine resumes on a thread.
- *
- * Usage:
- * ```
- * withContext(MdcContext("sessionId" to sessionId)) {
- *     // all log calls here (and in child coroutines) will have sessionId in MDC
- * }
- * ```
- */
 class MdcContext(
     private val contextMap: Map<String, String>,
-) : AbstractCoroutineContextElement(Key), ThreadContextElement<Map<String, String>?> {
+) : AbstractCoroutineContextElement(Key),
+    ThreadContextElement<Map<String, String>?> {
 
     companion object Key : CoroutineContext.Key<MdcContext>
 
     constructor(vararg pairs: Pair<String, String>) : this(pairs.toMap())
+
+    operator fun plus(pair: Pair<String, String>): MdcContext {
+        return MdcContext(contextMap + pair)
+    }
+
+    operator fun plus(pairs: Map<String, String>): MdcContext {
+        return MdcContext(contextMap + pairs)
+    }
+
+    operator fun plus(other: MdcContext): MdcContext {
+        return MdcContext(contextMap + other.contextMap)
+    }
 
     override fun updateThreadContext(context: CoroutineContext): Map<String, String>? {
         val oldState = MDC.getCopyOfContextMap()
@@ -46,4 +48,27 @@ class MdcContext(
             MDC.setContextMap(oldState)
         }
     }
+}
+
+fun currentMdcContextBlocking(): MdcContext {
+    val snapshot = MDC.getCopyOfContextMap() ?: emptyMap()
+    return MdcContext(snapshot)
+}
+
+suspend fun currentMdcContext(): MdcContext {
+    return currentCoroutineContext()[MdcContext.Key] ?: MdcContext()
+}
+
+suspend fun withAddedMdc(added: MdcContext): MdcContext {
+    val current = currentMdcContext()
+
+    return current + added
+}
+
+suspend fun withVerificationIdMdc(verificationId: String): MdcContext {
+    return withAddedMdc(MdcContext("verificationId" to verificationId))
+}
+
+suspend fun withSessionIdMdc(sessionId: String): MdcContext {
+    return withAddedMdc(MdcContext("sessionId" to sessionId))
 }

@@ -6,12 +6,11 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 
 @InjectWithOxsts
 public class SimpleOxstsParsingTest {
@@ -23,7 +22,7 @@ public class SimpleOxstsParsingTest {
     void simpleTest() {
         var model = parseHelper.parse("""
                 package test
-                
+
                 class Element
                 class Holder {
                     features elements: Element[0..*]
@@ -44,5 +43,4 @@ public class SimpleOxstsParsingTest {
                 """);
         assertThat(model.getResourceErrors()).isEmpty();
     }
-
 }

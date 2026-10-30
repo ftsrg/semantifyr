@@ -25,7 +25,8 @@ public class PropertyTypeHandler {
     protected BuiltinSymbolResolver builtinSymbolResolver;
 
     public TypeSpecification getPropertyReturnType(PropertyDeclaration property) {
-        return cache.get(Tuples.create(CACHE_KEY, property), property.eResource(), () -> computePropertyReturnType(property));
+        return cache.get(
+                Tuples.create(CACHE_KEY, property), property.eResource(), () -> computePropertyReturnType(property));
     }
 
     protected TypeSpecification computePropertyReturnType(PropertyDeclaration property) {
@@ -40,5 +41,4 @@ public class PropertyTypeHandler {
 
         return typeSpecification;
     }
-
 }

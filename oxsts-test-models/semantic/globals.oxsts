@@ -1,0 +1,44 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::lang::globals
+
+// Global containment features: a package-level singleton that any
+// verification case in the package can reference.
+
+class GlobalCounter {
+    var tick: int := 0
+}
+
+global containment counter: GlobalCounter[1]
+
+// Reachable: the global counter reaches 3 ticks.
+@VerificationCase
+@Tag("expect-pass")
+class GlobalTickReach {
+    redefine tran {
+        assume(counter.tick < 3)
+        counter.tick := counter.tick + 1
+    }
+
+    prop {
+        return EF counter.tick == 3
+    }
+}
+
+// Dual: guard prevents overshoot.
+@VerificationCase
+@Tag("expect-pass")
+class GlobalTickBound {
+    redefine tran {
+        assume(counter.tick < 3)
+        counter.tick := counter.tick + 1
+    }
+
+    prop {
+        return AG counter.tick <= 3
+    }
+}

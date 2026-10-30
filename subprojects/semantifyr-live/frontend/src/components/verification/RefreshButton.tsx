@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React from 'react';
+import type React from 'react';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined';
+import { ICON_SIZE } from '../../lib/util/theme';
 
 interface Props {
   disabled: boolean;
@@ -23,9 +24,9 @@ export default function RefreshButton({ disabled, onClick }: Props): React.JSX.E
           onClick={onClick}
           disabled={disabled}
           aria-label="Refresh cases"
-          sx={{ color: 'var(--text-muted)' }}
+          sx={{ color: 'text.secondary' }}
         >
-          <RefreshOutlinedIcon sx={{ fontSize: 20 }} />
+          <RefreshOutlinedIcon sx={{ fontSize: ICON_SIZE.lg }} />
         </IconButton>
       </span>
     </Tooltip>

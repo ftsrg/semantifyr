@@ -6,62 +6,62 @@
 
 package hu.bme.mit.semantifyr.live.backend.server
 
-import com.google.inject.AbstractModule
-import com.google.inject.Guice
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
-import hu.bme.mit.semantifyr.live.backend.BackendModule
 import hu.bme.mit.semantifyr.live.backend.Flavor
-import hu.bme.mit.semantifyr.live.backend.session.SessionLimitReachedException
-import hu.bme.mit.semantifyr.live.backend.session.SessionManager
-import io.ktor.client.plugins.websocket.WebSockets as ClientWebSockets
+import hu.bme.mit.semantifyr.live.backend.ServerConfig
+import hu.bme.mit.semantifyr.live.backend.exceptions.SessionLimitReachedException
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionManager
+import hu.bme.mit.semantifyr.live.backend.testing.handler
+import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrApp
+import hu.bme.mit.semantifyr.live.backend.testing.testInjector
 import io.ktor.client.plugins.websocket.webSocket
-import io.ktor.server.application.*
-import io.ktor.server.testing.*
-import io.ktor.server.websocket.WebSockets as ServerWebSockets
+import io.ktor.server.testing.testApplication
 import io.ktor.server.websocket.WebSocketServerSession
-import io.ktor.websocket.*
+import io.ktor.websocket.CloseReason
+import io.ktor.websocket.close
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.doSuspendableAnswer
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.wheneverBlocking
+import io.ktor.client.plugins.websocket.WebSockets as ClientWebSockets
 
 class WebSocketHandlerTest {
 
     private fun createHandler(
+        config: BackendConfig = BackendConfig(),
         onRunSession: suspend (WebSocketServerSession, String, Flavor) -> Unit = { ws, _, _ ->
             ws.close(CloseReason(CloseReason.Codes.NORMAL, "done"))
         },
     ): WebSocketHandler {
         val sessionManager = mock<SessionManager>()
-        wheneverBlocking { sessionManager.runSession(any(), any(), any()) }.thenAnswer { invocation ->
-            val ws = invocation.getArgument<WebSocketServerSession>(0)
-            val ip = invocation.getArgument<String>(1)
-            val flavor = invocation.getArgument<Flavor>(2)
-            kotlinx.coroutines.runBlocking { onRunSession(ws, ip, flavor) }
+        wheneverBlocking {
+            sessionManager.runSession(any(), any(), any())
+        } doSuspendableAnswer {
+            val ws = it.getArgument<WebSocketServerSession>(0)
+            val ip = it.getArgument<String>(1)
+            val flavor = it.getArgument<Flavor>(2)
+            onRunSession(ws, ip, flavor)
         }
 
-        val config = BackendConfig()
-        val injector = Guice.createInjector(BackendModule(config), object : AbstractModule() {
-            override fun configure() {
-                bind(SessionManager::class.java).toInstance(sessionManager)
-            }
-        })
-        return injector.getInstance(WebSocketHandler::class.java)
-    }
-
-    private fun ApplicationTestBuilder.installHandler(handler: WebSocketHandler) {
-        install(createApplicationPlugin("ws-setup") {
-            application.install(ServerWebSockets)
-            with(handler) { application.configure() }
-        })
+        return testInjector(config) {
+            bind(SessionManager::class.java).toInstance(sessionManager)
+        }.handler<WebSocketHandler>()
     }
 
     @Test
     fun `unknown flavor returns close code 4404`() = testApplication {
-        installHandler(createHandler())
+        val handler = createHandler()
+        installSemantifyrApp(contentNegotiation = false, webSockets = true) {
+            with(handler) {
+                configure()
+            }
+        }
 
-        val wsClient = createClient { install(ClientWebSockets) }
+        val wsClient = createClient {
+            install(ClientWebSockets)
+        }
         wsClient.webSocket("/ws/lsp/nonexistent") {
             val reason = closeReason.await()
             assertThat(reason?.code).isEqualTo(4404.toShort())
@@ -76,9 +76,15 @@ class WebSocketHandlerTest {
             ranWithFlavor = flavor.id
             ws.close(CloseReason(CloseReason.Codes.NORMAL, "done"))
         }
-        installHandler(handler)
+        installSemantifyrApp(contentNegotiation = false, webSockets = true) {
+            with(handler) {
+                configure()
+            }
+        }
 
-        val wsClient = createClient { install(ClientWebSockets) }
+        val wsClient = createClient {
+            install(ClientWebSockets)
+        }
         wsClient.webSocket("/ws/lsp/oxsts") {
             val reason = closeReason.await()
             assertThat(reason?.code).isEqualTo(CloseReason.Codes.NORMAL.code)
@@ -91,9 +97,15 @@ class WebSocketHandlerTest {
         val handler = createHandler { _, _, _ ->
             throw SessionLimitReachedException("Too many sessions")
         }
-        installHandler(handler)
+        installSemantifyrApp(contentNegotiation = false, webSockets = true) {
+            with(handler) {
+                configure()
+            }
+        }
 
-        val wsClient = createClient { install(ClientWebSockets) }
+        val wsClient = createClient {
+            install(ClientWebSockets)
+        }
         wsClient.webSocket("/ws/lsp/oxsts") {
             val reason = closeReason.await()
             assertThat(reason?.code).isEqualTo(4429.toShort())
@@ -102,13 +114,43 @@ class WebSocketHandlerTest {
     }
 
     @Test
+    fun `exceeding handshake rate limit rejects second handshake`() = testApplication {
+        val config = BackendConfig(server = ServerConfig(wsHandshakesPerPeriod = 1))
+        val handler = createHandler(config)
+        installSemantifyrApp(contentNegotiation = false, webSockets = true) {
+            with(handler) {
+                configure()
+            }
+        }
+
+        val client = createClient {
+            install(ClientWebSockets)
+        }
+        client.webSocket("/ws/lsp/oxsts") {
+            closeReason.await()
+        }
+        val secondAttempt = runCatching {
+            client.webSocket("/ws/lsp/oxsts") {
+                closeReason.await()
+            }
+        }
+        assertThat(secondAttempt.exceptionOrNull()).isNotNull
+    }
+
+    @Test
     fun `internal error returns close code 4500`() = testApplication {
         val handler = createHandler { _, _, _ ->
             throw RuntimeException("something broke")
         }
-        installHandler(handler)
+        installSemantifyrApp(contentNegotiation = false, webSockets = true) {
+            with(handler) {
+                configure()
+            }
+        }
 
-        val wsClient = createClient { install(ClientWebSockets) }
+        val wsClient = createClient {
+            install(ClientWebSockets)
+        }
         wsClient.webSocket("/ws/lsp/oxsts") {
             val reason = closeReason.await()
             assertThat(reason?.code).isEqualTo(4500.toShort())

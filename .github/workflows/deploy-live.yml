@@ -1,0 +1,55 @@
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+name: Deploy Live
+on:
+  workflow_call:
+    inputs:
+      instance:
+        type: string
+        required: true
+      tag:
+        description: Empty deploys the tag staging runs.
+        type: string
+        default: ''
+      url:
+        type: string
+        required: true
+permissions: {}
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.instance }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    concurrency:
+      group: deploy-${{ inputs.instance }}
+      cancel-in-progress: false
+    environment:
+      name: live-fured
+      url: ${{ inputs.url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Configure SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          printf 'Host live\n  HostName %s\n  Port %s\n  User %s\n  IdentityFile ~/.ssh/deploy\n' \
+            "$DEPLOY_HOST" "$DEPLOY_PORT" "$DEPLOY_USER" > ~/.ssh/config
+      - name: Deploy
+        env:
+          INSTANCE: ${{ inputs.instance }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          tag=${TAG:-$(ssh live status semantifyr-live-staging)}
+          tar -C deploy/live -cz compose.yaml deploy.sh | ssh live deploy "$INSTANCE" "$tag"

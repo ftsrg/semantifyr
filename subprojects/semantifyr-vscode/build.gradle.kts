@@ -1,124 +1,124 @@
 /*
- * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
 import com.github.gradle.node.npm.task.NpmTask
-import com.github.gradle.node.task.NodeTask
+import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
 
 plugins {
-    base
-    alias(libs.plugins.gradle.node)
+    id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
 }
 
-node {
-    version = "22.14.0"
-    download = true
+val languageServers = configurations.dependencyScope("languageServers")
+val languageServersFiles = configurations.resolvable("languageServersFiles") {
+    extendsFrom(languageServers.get())
+    attributes(semantifyrArtifact("application-distribution"))
 }
 
-abstract class NpmService : BuildService<BuildServiceParameters.None>
-
-val npmService = gradle.sharedServices.registerIfAbsent("npmService", NpmService::class.java) {
-    maxParallelUsages.set(1)
-}
-
-// node tasks must not run in parallel, as pnpm is sensitive to that
-tasks.withType<NpmTask>().configureEach {
-    usesService(npmService)
-}
-tasks.withType<NodeTask>().configureEach {
-    usesService(npmService)
-}
-
-val distributionOutput by configurations.creating {
-    isCanBeConsumed = true
-    isCanBeResolved = false
-}
-
-val distributionClasspath by configurations.creating {
-    isCanBeConsumed = false
-    isCanBeResolved = true
+val editorCommon = configurations.dependencyScope("editorCommon")
+val editorCommonFiles = configurations.resolvable("editorCommonFiles") {
+    extendsFrom(editorCommon.get())
+    attributes(semantifyrArtifact("npm-package"))
 }
 
 dependencies {
-    distributionClasspath(project(":oxsts.lang.ide", configuration = "distributionOutput"))
-//    distributionClasspath(project(":semantifyr-cli", configuration = "distributionOutput"))
-    distributionClasspath(project(":xsts.lang.ide", configuration = "distributionOutput"))
-//    distributionClasspath(project(":cex.lang.ide", configuration = "distributionOutput"))
-    distributionClasspath(project(":gamma.lang.ide", configuration = "distributionOutput"))
-    distributionClasspath(project(":gamma-cli", configuration = "distributionOutput"))
+    languageServers(project(":oxsts.lang.ide"))
+    languageServers(project(":gamma.lang.ide"))
+
+    editorCommon(project(":semantifyr-editor-common"))
 }
 
-val cloneDistribution by tasks.registering(Sync::class) {
-    inputs.files(distributionClasspath)
-
-    from(
-        distributionClasspath.map {
-            fileTree(it)
-        },
-    )
+val cloneDistribution = tasks.register<Sync>("cloneDistribution") {
+    from(languageServersFiles)
 
     into("bin")
 }
 
-val buildExtension by tasks.registering(NpmTask::class) {
+tasks.npmInstall {
+    workingDir = rootProject.projectDir
+}
+
+fun NpmTask.configureSharedInputs() {
     inputs.dir(project.layout.projectDirectory.dir("src"))
     inputs.file(project.layout.projectDirectory.file("esbuild.mjs"))
     inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
-    inputs.file(project.layout.projectDirectory.file("package-lock.json"))
     inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
-    inputs.files(tasks.npmInstall.get().outputs)
+    inputs.file(project.layout.projectDirectory.file("package.json"))
+    inputs.file(rootProject.layout.projectDirectory.file("tsconfig.base.json"))
+    inputs.file(rootProject.layout.projectDirectory.file("eslint.config.base.js"))
+    inputs.file(rootProject.layout.projectDirectory.file("package.json"))
+    inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
+    inputs.files(tasks.npmInstall)
+    inputs.files(editorCommonFiles)
+}
 
-    npmCommand.set(
-        listOf(
-            "run",
-            "build",
-        ),
-    )
+val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
+    configureSharedInputs()
+
+    npmCommand.set(listOf("run", "assemble"))
 
     outputs.dir("dist")
 }
 
-val bundleExtension by tasks.registering(NpmTask::class) {
-    inputs.files(cloneDistribution.get().outputs)
+val npmCheck = tasks.register<NpmTask>("npmCheck") {
+    configureSharedInputs()
+
+    npmCommand.set(listOf("run", "check"))
+
+    stampOnSuccess()
+}
+
+val vsixFile = project.layout.buildDirectory.file("semantifyr-${project.version}.vsix")
+
+val bundleExtension = tasks.register<NpmTask>("bundleExtension") {
+    val version = project.version.toString()
+    inputs.property("version", version)
+
+    inputs.files(cloneDistribution)
     inputs.dir(project.layout.projectDirectory.dir("src"))
     inputs.dir(project.layout.projectDirectory.dir("syntaxes"))
     inputs.file(project.layout.projectDirectory.file("esbuild.mjs"))
     inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
     inputs.file(project.layout.projectDirectory.file("language-configuration.json"))
-    inputs.file(project.layout.projectDirectory.file("package.json"))
     inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
     inputs.file(project.layout.projectDirectory.file("icons/icon.png"))
     inputs.file(project.layout.projectDirectory.file("icons/semantifyr-file-icon.png"))
     inputs.file(project.layout.projectDirectory.file("icons/gamma-file-icon.png"))
     inputs.file(project.layout.projectDirectory.file("README.md"))
     inputs.file(project.layout.projectDirectory.file("CHANGELOG.md"))
-    inputs.files(tasks.npmInstall.get().outputs)
+    inputs.file(rootProject.layout.projectDirectory.file("tsconfig.base.json"))
+    inputs.file(rootProject.layout.projectDirectory.file("eslint.config.base.js"))
+    inputs.file(rootProject.layout.projectDirectory.file("package.json"))
+    inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
+    inputs.files(tasks.npmInstall)
+    inputs.files(editorCommonFiles)
 
-    npmCommand.set(
-        listOf(
-            "run",
-            "bundle",
-        ),
-    )
+    npmCommand.set(listOf("run", "bundle", "--", version, "--no-git-tag-version", "--no-update-package-json"))
 
-    outputs.file(project.layout.buildDirectory.file("semantifyr-0.0.1.vsix"))
+    outputs.file(vsixFile)
 }
 
 tasks {
     assemble {
-        inputs.files(cloneDistribution.get().outputs)
-        inputs.files(buildExtension.get().outputs)
+        inputs.files(cloneDistribution)
+        inputs.files(npmAssemble)
+    }
+
+    check {
+        dependsOn(npmCheck)
     }
 
     clean {
-        delete("dist")
+        delete("dist", "build")
     }
 }
 
-artifacts {
-    add(distributionOutput.name, project.layout.buildDirectory.file("semantifyr-0.0.1.vsix")) {
+configurations.consumable("vscodeExtensionElements") {
+    attributes(semantifyrArtifact("vscode-extension"))
+    outgoing.artifact(vsixFile) {
         builtBy(bundleExtension)
     }
 }

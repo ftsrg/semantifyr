@@ -10,8 +10,5 @@ public class InfinityEvaluation implements ExpressionEvaluation {
 
     public static final InfinityEvaluation INSTANCE = new InfinityEvaluation();
 
-    protected InfinityEvaluation() {
-
-    }
-
+    protected InfinityEvaluation() {}
 }

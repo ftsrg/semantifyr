@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -7,22 +7,26 @@
 package hu.bme.mit.semantifyr.oxsts.lang.library.builtin;
 
 import com.google.inject.Singleton;
-import hu.bme.mit.semantifyr.oxsts.lang.library.ResourceBasedOxstsLibrary;
+import hu.bme.mit.semantifyr.oxsts.lang.library.ClasspathBasedOxstsLibrary;
+import java.nio.file.Path;
+import java.util.List;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.xtext.naming.QualifiedName;
 
-import java.nio.file.Path;
-import java.util.List;
-
 @Singleton
-public class BuiltinLibrary extends ResourceBasedOxstsLibrary {
+public class BuiltinLibrary extends ClasspathBasedOxstsLibrary {
 
     public static final QualifiedName BUILTIN_LIBRARY_NAME = QualifiedName.create("semantifyr");
+
+    private static final String RESOURCE_PREFIX = "hu/bme/mit/semantifyr/oxsts/lang/library";
 
     private URI builtinLibraryUri;
 
     public BuiltinLibrary() {
-        super(getHomePath().resolve(".semantifyr").resolve("builtin"));
+        super(
+                BuiltinLibrary.class.getClassLoader(),
+                RESOURCE_PREFIX,
+                Path.of(System.getProperty("user.home")).resolve(".semantifyr").resolve("builtin"));
     }
 
     public URI getBuiltinResourceUri() {
@@ -35,23 +39,6 @@ public class BuiltinLibrary extends ResourceBasedOxstsLibrary {
 
     @Override
     public Iterable<URI> getImplicitImports() {
-        return List.of(
-                getBuiltinResourceUri()
-        );
+        return List.of(getBuiltinResourceUri());
     }
-
-    protected static Path getHomePath() {
-        return Path.of(System.getProperty("user.home"));
-    }
-
-    @Override
-    protected void saveResources() {
-        saveResource("hu/bme/mit/semantifyr/oxsts/lang/library/semantifyr.oxsts", Path.of("semantifyr.oxsts"));
-    }
-
-    @Override
-    protected ClassLoader getClassLoader() {
-        return BuiltinLibrary.class.getClassLoader();
-    }
-
 }

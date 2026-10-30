@@ -19,5 +19,4 @@ public class EmptyGlobalScopeProvider implements IGlobalScopeProvider {
     public IScope getScope(Resource context, EReference reference, Predicate<IEObjectDescription> filter) {
         return IScope.NULLSCOPE;
     }
-
 }

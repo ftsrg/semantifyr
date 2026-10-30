@@ -48,8 +48,8 @@ Workflow {
 			fragment = ecore2xtext.Ecore2XtextValueConverterServiceFragment2 auto-inject {}
 
             parserGenerator = {
-                removeBacktrackingGuards = true
-                lookaheadThreshold = '5'
+                removeBacktrackingGuards = false
+                lookaheadThreshold = '3'
                 partialParsing = true
                 //debugGrammar = true
                 options = auto-inject {}
@@ -73,7 +73,7 @@ Workflow {
 			junitSupport = {
 				generateStub = false
 				skipXbaseTestingPackage = true
-				junitVersion = '5'
+				junitVersion = '6'
 			}
 		}
 	}

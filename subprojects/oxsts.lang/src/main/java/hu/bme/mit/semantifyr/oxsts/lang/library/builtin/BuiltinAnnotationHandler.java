@@ -7,12 +7,10 @@
 package hu.bme.mit.semantifyr.oxsts.lang.library.builtin;
 
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 
-@Singleton
 public class BuiltinAnnotationHandler {
 
     @Inject
@@ -25,6 +23,18 @@ public class BuiltinAnnotationHandler {
         var controlAnnotation = builtinSymbolResolver.controlAnnotation(variableDeclaration);
 
         return OxstsUtils.isAnnotatedWith(variableDeclaration, controlAnnotation);
+    }
+
+    public boolean isClockVariable(VariableDeclaration variableDeclaration) {
+        var clockAnnotation = builtinSymbolResolver.clockAnnotation(variableDeclaration);
+
+        return OxstsUtils.isAnnotatedWith(variableDeclaration, clockAnnotation);
+    }
+
+    public boolean isNonOptimizable(VariableDeclaration variableDeclaration) {
+        var nonOptimizableAnnotation = builtinSymbolResolver.nonOptimizableAnnotation(variableDeclaration);
+
+        return OxstsUtils.isAnnotatedWith(variableDeclaration, nonOptimizableAnnotation);
     }
 
     public boolean isSharedFeature(FeatureDeclaration featureDeclaration) {
@@ -41,7 +51,8 @@ public class BuiltinAnnotationHandler {
 
     public String getVerificationCaseSummary(ClassDeclaration classDeclaration) {
         var verificationCaseAnnotation = builtinSymbolResolver.verificationCaseAnnotation(classDeclaration);
-        var verificationCaseAnnotationSummary = builtinSymbolResolver.verificationCaseAnnotationSummary(classDeclaration);
+        var verificationCaseAnnotationSummary =
+                builtinSymbolResolver.verificationCaseAnnotationSummary(classDeclaration);
         var annotation = OxstsUtils.getAnnotation(classDeclaration, verificationCaseAnnotation);
         var value = OxstsUtils.getAnnotationValue(annotation, verificationCaseAnnotationSummary);
 
@@ -59,19 +70,16 @@ public class BuiltinAnnotationHandler {
 
         assert annotations != null;
 
-        var values = annotations.map(annotation ->
-                OxstsUtils.getAnnotationValue(annotation, tagAnnotationCategory)
-        ).filter(value ->
-                value instanceof LiteralString
-        ).map(value ->
-                ((LiteralString) value).getValue()
-        );
+        var values = annotations
+                .map(annotation -> OxstsUtils.getAnnotationValue(annotation, tagAnnotationCategory))
+                .filter(value -> value instanceof LiteralString)
+                .map(value -> ((LiteralString) value).getValue());
 
         return values.anyMatch(category::equals);
     }
 
     public boolean isNotTaggedWith(ClassDeclaration classDeclaration, String category) {
-        return ! isTaggedWith(classDeclaration, category);
+        return !isTaggedWith(classDeclaration, category);
     }
 
     public boolean isTransitionTraced(TransitionDeclaration transitionDeclaration) {
@@ -80,7 +88,8 @@ public class BuiltinAnnotationHandler {
         return isTransitivelyAnnotatedWith(transitionDeclaration, traceAnnotation);
     }
 
-    protected boolean isTransitivelyAnnotatedWith(RedefinableDeclaration annotatedElement, AnnotationDeclaration annotation) {
+    protected boolean isTransitivelyAnnotatedWith(
+            RedefinableDeclaration annotatedElement, AnnotationDeclaration annotation) {
         var element = annotatedElement;
 
         while (element != null) {
@@ -92,5 +101,4 @@ public class BuiltinAnnotationHandler {
 
         return false;
     }
-
 }

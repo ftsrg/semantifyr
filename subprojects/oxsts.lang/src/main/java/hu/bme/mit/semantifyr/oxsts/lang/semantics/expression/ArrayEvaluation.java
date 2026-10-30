@@ -8,6 +8,4 @@ package hu.bme.mit.semantifyr.oxsts.lang.semantics.expression;
 
 import java.util.List;
 
-public record ArrayEvaluation(List<ExpressionEvaluation> elements) implements ExpressionEvaluation {
-
-}
+public record ArrayEvaluation(List<ExpressionEvaluation> elements) implements ExpressionEvaluation {}

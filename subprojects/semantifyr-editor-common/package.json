@@ -1,0 +1,27 @@
+{
+  "name": "@semantifyr/editor-common",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "typecheck:watch": "tsc --noEmit --watch",
+    "lint": "eslint",
+    "check": "npm run typecheck && npm run lint",
+    "assemble": "tsc",
+    "assemble:watch": "tsc --watch",
+    "build": "npm run check && npm run assemble"
+  }
+}

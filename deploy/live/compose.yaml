@@ -1,0 +1,36 @@
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+services:
+  live:
+    image: ghcr.io/ftsrg/semantifyr-live:${IMAGE_TAG:?IMAGE_TAG is not set}
+    restart: unless-stopped
+    environment:
+      SEMANTIFYR_LIVE_ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD is not set}
+      SEMANTIFYR_LIVE_VERIFY_CONCURRENCY: ${VERIFY_CONCURRENCY:?VERIFY_CONCURRENCY is not set}
+      SEMANTIFYR_LIVE_VERIFY_TIMEOUT_SECONDS: ${VERIFY_TIMEOUT_SECONDS:?VERIFY_TIMEOUT_SECONDS is not set}
+      SEMANTIFYR_LIVE_CLIENT_ADDRESS_HEADER: CF-Connecting-IP
+      SEMANTIFYR_LIVE_TRUSTED_PROXIES: 172.30.0.2/32
+      THETA_JAVA_OPTS: ${THETA_JAVA_OPTS:?THETA_JAVA_OPTS is not set}
+    mem_limit: ${MEMORY_LIMIT:?MEMORY_LIMIT is not set}
+    cpus: ${CPUS:?CPUS is not set}
+    pids_limit: 4096
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+    networks:
+      edge:
+        aliases:
+          - ${INSTANCE:?INSTANCE is not set}
+
+networks:
+  edge:
+    external: true

@@ -34,27 +34,27 @@ function Hero() {
   const lightLogo = useBaseUrl('/img/logo-full-light.svg');
   const darkLogo = useBaseUrl('/img/logo-full-dark.svg');
   return (
-    <header className={styles['hero']}>
-      <div className={clsx('container', styles['hero__inner'])}>
-        <h1 className={styles['hero__title']}>
-          <span className={styles['hero__sr']}>Semantifyr</span>
+    <header className={styles.hero}>
+      <div className={clsx('container', styles.hero__inner)}>
+        <h1 className={styles.hero__title}>
+          <span className={styles.hero__sr}>Semantifyr</span>
           <ThemedImage
-            className={styles['hero__logo']}
+            className={styles.hero__logo}
             alt="Semantifyr"
             sources={{ light: lightLogo, dark: darkLogo }}
           />
         </h1>
-        <p className={styles['hero__tagline']}>
+        <p className={styles.hero__tagline}>
           Semantic library-driven formal verification of engineering models.
         </p>
-        <div className={styles['hero__buttons']}>
+        <div className={styles.hero__buttons}>
           <Link
             href={LIVE_URL}
             className={clsx(
               'button',
               'button--lg',
               'button--primary',
-              styles['hero__button'],
+              styles.hero__button,
             )}
           >
             Try it live <OpenInNewIcon />
@@ -66,7 +66,7 @@ function Hero() {
               'button--lg',
               'button--outline',
               'button--primary',
-              styles['hero__button'],
+              styles.hero__button,
             )}
           >
             Learn the language <ArrowForwardIcon />
@@ -85,11 +85,11 @@ function useHealthCheck(healthUrl: string): HealthStatus {
   React.useEffect(() => {
     let cancelled = false;
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 5000);
+    const timer = setTimeout(() => { controller.abort(); }, 5000);
     fetch(healthUrl, { signal: controller.signal })
       .then((res) => { if (!cancelled) setStatus(res.ok ? 'online' : 'offline'); })
       .catch(() => { if (!cancelled) setStatus('offline'); })
-      .finally(() => clearTimeout(timer));
+      .finally(() => { clearTimeout(timer); });
     return () => { cancelled = true; controller.abort(); };
   }, [healthUrl]);
 
@@ -108,38 +108,38 @@ function TryIt() {
   const hubHealth = useHealthCheck('https://jupyter.semantifyr.org/hub/health');
 
   return (
-    <section className={styles['section']}>
+    <section className={styles.section}>
       <div className="container">
-        <h2 className={styles['section__title']}>Try it online</h2>
-        <div className={styles['cards']}>
-          <div className={styles['card']}>
-            <div className={styles['card__header']}>
-              <h3 className={styles['card__title']}>In-browser editor</h3>
+        <h2 className={styles.section__title}>Try it online</h2>
+        <div className={styles.cards}>
+          <div className={styles.card}>
+            <div className={styles.card__header}>
+              <h3 className={styles.card__title}>In-browser editor</h3>
               <HealthDot status={liveHealth} />
             </div>
-            <p className={styles['card__body']}>
+            <p className={styles.card__body}>
               A lightweight editor for quick experimentation. Supports syntax
               highlighting, diagnostics, content assist, and an integrated
               verification panel. No installation or account required.
             </p>
             <Link
               href={LIVE_URL}
-              className={clsx('button', 'button--primary', 'button--block', styles['card__button'])}
+              className={clsx('button', 'button--primary', 'button--block', styles.card__button)}
             >
               Open the live editor <OpenInNewIcon />
             </Link>
           </div>
-          <div className={styles['card']}>
-            <div className={styles['card__header']}>
-              <h3 className={styles['card__title']}>JupyterHub environment</h3>
+          <div className={styles.card}>
+            <div className={styles.card__header}>
+              <h3 className={styles.card__title}>JupyterHub environment</h3>
               <HealthDot status={hubHealth} />
             </div>
-            <p className={styles['card__body']}>
+            <p className={styles.card__body}>
               A full-fledged VS Code environment with the Semantifyr extension,
               multi-file project support, and integration with SysML v2 and the
               Theta model checker backend.
             </p>
-            <p className={styles['card__note']}>
+            <p className={styles.card__note}>
               Access requires a user account.{' '}
               <Link href="https://github.com/ftsrg/semantifyr/blob/main/CONTRIBUTORS.md">
                 Contact the maintainers
@@ -148,7 +148,7 @@ function TryIt() {
             </p>
             <Link
               href="https://jupyter.semantifyr.org"
-              className={clsx('button', 'button--primary', 'button--block', styles['card__button'])}
+              className={clsx('button', 'button--primary', 'button--block', styles.card__button)}
             >
               Launch JupyterHub <OpenInNewIcon />
             </Link>
@@ -161,12 +161,12 @@ function TryIt() {
 
 function LearnMore() {
   return (
-    <section className={clsx(styles['section'], styles['section--alt'])}>
+    <section className={clsx(styles.section, styles['section--alt'])}>
       <div className="container">
-        <h2 className={styles['section__title']}>Get started</h2>
+        <h2 className={styles.section__title}>Get started</h2>
         <div className={clsx('row', styles['features-row'])}>
           <div className="col col--4">
-            <div className={styles['feature']}>
+            <div className={styles.feature}>
               <h3>Tutorials</h3>
               <p>
                 Build a traffic light model from scratch, discover and fix a
@@ -176,7 +176,7 @@ function LearnMore() {
             </div>
           </div>
           <div className="col col--4">
-            <div className={styles['feature']}>
+            <div className={styles.feature}>
               <h3>Language Reference</h3>
               <p>
                 Quick-lookup reference for every Semantifyr construct: classes,
@@ -186,7 +186,7 @@ function LearnMore() {
             </div>
           </div>
           <div className="col col--4">
-            <div className={styles['feature']}>
+            <div className={styles.feature}>
               <h3>Contribute</h3>
               <p>
                 Semantifyr is open source. Fork the repository, build from
@@ -205,7 +205,7 @@ function LearnMore() {
 export default function Home() {
   return (
     <Layout>
-      <div className={styles['page']}>
+      <div className={styles.page}>
         <Hero />
         <TryIt />
         <LearnMore />

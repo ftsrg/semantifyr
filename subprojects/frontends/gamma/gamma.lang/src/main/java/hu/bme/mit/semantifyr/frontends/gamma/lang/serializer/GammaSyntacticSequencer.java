@@ -6,6 +6,4 @@
 
 package hu.bme.mit.semantifyr.frontends.gamma.lang.serializer;
 
-
-public class GammaSyntacticSequencer extends AbstractGammaSyntacticSequencer {
-}
+public class GammaSyntacticSequencer extends AbstractGammaSyntacticSequencer {}

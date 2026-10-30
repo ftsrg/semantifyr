@@ -6,6 +6,4 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.semantics.expression;
 
-public interface ExpressionEvaluation {
-
-}
+public interface ExpressionEvaluation {}

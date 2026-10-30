@@ -12,6 +12,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration;
 public sealed interface TypeEvaluation permits ImmutableTypeEvaluation, InvalidTypeEvaluation, NothingTypeEvaluation {
 
     DomainDeclaration getDomain();
-    RangeEvaluation getRange();
 
+    RangeEvaluation getRange();
 }

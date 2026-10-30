@@ -1,0 +1,31 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::constantguards
+
+@VerificationCase
+@Tag("expect-pass")
+class ConstantGuardReachable {
+    var sentinel: int := -1
+    var state: int := 0
+
+    redefine tran {
+        choice {
+            assume(sentinel == 3)
+            state := 99
+        } or {
+            assume(state == 0)
+            state := 1
+        } or {
+            assume(state == 1)
+            state := 2
+        }
+    }
+
+    prop {
+        return EF state == 2
+    }
+}

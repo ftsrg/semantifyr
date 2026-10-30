@@ -13,9 +13,7 @@ public final class NothingTypeEvaluation implements TypeEvaluation {
 
     public static NothingTypeEvaluation Instance = new NothingTypeEvaluation();
 
-    private NothingTypeEvaluation() {
-
-    }
+    private NothingTypeEvaluation() {}
 
     @Override
     public DomainDeclaration getDomain() {
@@ -26,5 +24,4 @@ public final class NothingTypeEvaluation implements TypeEvaluation {
     public RangeEvaluation getRange() {
         return RangeEvaluation.NONE;
     }
-
 }

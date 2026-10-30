@@ -6,5 +6,4 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.serializer;
 
-public class OxstsSemanticSequencer extends AbstractOxstsSemanticSequencer {
-}
+public class OxstsSemanticSequencer extends AbstractOxstsSemanticSequencer {}

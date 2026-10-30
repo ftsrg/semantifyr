@@ -9,6 +9,4 @@ package hu.bme.mit.semantifyr.oxsts.lang.library;
 public interface OxstsLibraryProvider {
 
     OxstsLibrary getLibrary();
-
 }
-

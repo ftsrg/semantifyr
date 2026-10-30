@@ -6,11 +6,10 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.scoping.selectables;
 
-import org.eclipse.xtext.resource.ISelectable;
-import org.eclipse.xtext.resource.impl.AbstractCompoundSelectable;
-
 import java.util.Collection;
 import java.util.List;
+import org.eclipse.xtext.resource.ISelectable;
+import org.eclipse.xtext.resource.impl.AbstractCompoundSelectable;
 
 public class CompositeSelectable extends AbstractCompoundSelectable {
     private static final CompositeSelectable EMPTY = new CompositeSelectable(List.of());
@@ -27,12 +26,12 @@ public class CompositeSelectable extends AbstractCompoundSelectable {
     }
 
     public static ISelectable of(Collection<? extends ISelectable> children) {
-        var filteredChildren = children.stream().filter(selectable -> !selectable.isEmpty()).toList();
+        var filteredChildren =
+                children.stream().filter(selectable -> !selectable.isEmpty()).toList();
         return switch (filteredChildren.size()) {
             case 0 -> EMPTY;
             case 1 -> filteredChildren.getFirst();
             default -> new CompositeSelectable(filteredChildren);
         };
     }
-
 }

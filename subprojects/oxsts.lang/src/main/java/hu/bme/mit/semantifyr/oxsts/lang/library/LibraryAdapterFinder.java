@@ -8,13 +8,11 @@ package hu.bme.mit.semantifyr.oxsts.lang.library;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import com.google.inject.Singleton;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 
-@Singleton
 public class LibraryAdapterFinder {
 
     @Inject
@@ -49,5 +47,4 @@ public class LibraryAdapterFinder {
     private static LibraryAdapter getAdapter(ResourceSet resourceSet) {
         return (LibraryAdapter) EcoreUtil.getAdapter(resourceSet.eAdapters(), LibraryAdapter.class);
     }
-
 }

@@ -6,11 +6,10 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.library;
 
-import org.eclipse.xtext.naming.QualifiedName;
-
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
+import org.eclipse.xtext.naming.QualifiedName;
 
 public final class LibraryResolutionUtil {
     private LibraryResolutionUtil() {
@@ -44,10 +43,10 @@ public final class LibraryResolutionUtil {
 
     private static boolean isValidPathName(QualifiedName qualifiedName) {
         for (var segment : qualifiedName.getSegments()) {
-            if (segment.contains("/") ||
-                    segment.contains(File.separator) ||
-                    ".".equals(segment) ||
-                    "..".equals(segment)) {
+            if (segment.contains("/")
+                    || segment.contains(File.separator)
+                    || ".".equals(segment)
+                    || "..".equals(segment)) {
                 // Invalid character in qualified name.
                 return false;
             }

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -19,11 +19,11 @@ xtext {
     xtextFile = "src/main/java/hu/bme/mit/semantifyr/oxsts/lang/Oxsts.xtext"
 }
 
-val syncModel by tasks.registering(Sync::class) {
+val syncModel = tasks.register<Sync>("syncModel") {
     from("../oxsts.model/model")
     into("model")
 }
 
-val generateXtextLanguage by tasks.getting(JavaExec::class) {
-    inputs.files(syncModel.get().outputs)
+tasks.named("generateXtextLanguage") {
+    inputs.files(syncModel).withPathSensitivity(PathSensitivity.RELATIVE)
 }

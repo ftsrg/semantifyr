@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+name: Deploy Production
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Image tag (0.1.0 or 0.1.0-dev.abc1234). Empty deploys the tag staging runs; an older tag rolls back.
+        required: false
+permissions: {}
+jobs:
+  deploy:
+    name: Deploy Production
+    uses: ./.github/workflows/deploy-live.yml
+    permissions:
+      contents: read
+    with:
+      instance: semantifyr-live
+      tag: ${{ inputs.tag }}
+      url: https://live.semantifyr.org

@@ -7,12 +7,10 @@
 package hu.bme.mit.semantifyr.oxsts.lang.semantics;
 
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration;
 import org.eclipse.xtext.util.Tuples;
 
-@Singleton
 public class OppositeHandler {
 
     private static final String CACHE_KEY = "hu.bme.mit.semantifyr.oxsts.lang.semantics.OppositeHandler.CACHE_KEY";
@@ -54,5 +52,4 @@ public class OppositeHandler {
 
         return getOppositeFeature(subsetFeature);
     }
-
 }
