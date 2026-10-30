@@ -97,45 +97,26 @@ tasks.named("sonarResolver") {
     inputs.files(tasks.withType<JacocoReport>().matching { it.name != "jacocoNightlyTestReport" })
 }
 
+// plain values only, as the plugin is not yet updated to providers
+// FIXME: when the plugin is updated
 sonar {
     properties {
         val nonMainSourceSets = sourceSets.filter {
             it.name != "main" && it.name != "testFixtures"
         }
 
-        property("sonar.tests", provider {
-            nonMainSourceSets.flatMap {
-                it.allSource.srcDirs
-            }.filter {
-                it.exists()
-            }.joinToString(",") {
-                it.absolutePath
-            }
+        property("sonar.tests", nonMainSourceSets.flatMap {
+            it.allSource.srcDirs
+        }.filter {
+            it.exists()
         })
-        property("sonar.java.test.binaries", provider {
-            nonMainSourceSets.flatMap {
-                it.output.classesDirs.files
-            }.joinToString(",") {
-                it.absolutePath
-            }
+        property("sonar.java.test.binaries", nonMainSourceSets.flatMap {
+            it.output.classesDirs.files
         })
-        property("sonar.java.test.libraries", provider {
-            nonMainSourceSets.flatMap {
-                it.runtimeClasspath.files
-            }.filter {
-                it.exists()
-            }.joinToString(",") {
-                it.absolutePath
-            }
-        })
-        property("sonar.coverage.jacoco.xmlReportPaths", provider {
-            tasks.withType<JacocoReport>().map {
-                it.reports.xml.outputLocation.get().asFile
-            }.filter {
-                it.exists()
-            }.joinToString(",") {
-                it.absolutePath
-            }
+        property("sonar.coverage.jacoco.xmlReportPaths", tasks.withType<JacocoReport>().map {
+            it.reports.xml.outputLocation.get().asFile
+        }.filter {
+            it.exists()
         })
     }
 }
