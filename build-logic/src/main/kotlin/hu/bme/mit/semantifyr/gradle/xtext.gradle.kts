@@ -53,8 +53,8 @@ val generateXtextLanguage = tasks.register<JavaExec>("generateXtextLanguage") {
     classpath(configurations.named("mwe2Classpath"))
     mainClass.set("org.eclipse.emf.mwe2.launch.runtime.Mwe2Launcher")
 
-    inputs.file(extension.mweFile)
-    inputs.file(extension.xtextFile)
+    inputs.file(extension.mweFile).withPathSensitivity(PathSensitivity.NONE)
+    inputs.file(extension.xtextFile).withPathSensitivity(PathSensitivity.NONE)
 
     outputs.dir(extension.genPath)
     outputs.dir(extension.testFixtureGenPath)
@@ -63,6 +63,8 @@ val generateXtextLanguage = tasks.register<JavaExec>("generateXtextLanguage") {
     val mweFile = extension.mweFile
     val rootPath = "rootPath=/$projectDir/.."
     argumentProviders += CommandLineArgumentProvider { listOf(mweFile.get(), "-p", rootPath) }
+
+    outputs.cacheIf { true }
 }
 
 configurations.consumable("ideGeneratedElements") {

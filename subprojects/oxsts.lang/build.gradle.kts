@@ -25,5 +25,5 @@ val syncModel = tasks.register<Sync>("syncModel") {
 }
 
 tasks.named("generateXtextLanguage") {
-    inputs.files(syncModel)
+    inputs.files(syncModel).withPathSensitivity(PathSensitivity.RELATIVE)
 }
