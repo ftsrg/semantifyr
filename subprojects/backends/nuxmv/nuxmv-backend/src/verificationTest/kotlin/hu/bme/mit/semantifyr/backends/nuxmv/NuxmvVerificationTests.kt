@@ -6,14 +6,13 @@
 
 package hu.bme.mit.semantifyr.backends.nuxmv
 
-import hu.bme.mit.semantifyr.backends.nuxmv.execution.ShellBasedNuxmvExecutor
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackend
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
+import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
-import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -37,10 +36,7 @@ class NuxmvVerificationTests {
         @JvmStatic
         @BeforeAll
         fun assumeNuxmvAvailable() {
-            Assumptions.assumeTrue(
-                ShellBasedNuxmvExecutor().isAvailable(),
-                "nuXmv not on PATH - skipping nuXmv backend tests",
-            )
+            assumeBackendAvailable(NuxmvExecutorKey)
         }
 
         @JvmStatic

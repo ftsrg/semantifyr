@@ -6,13 +6,12 @@
 
 package hu.bme.mit.semantifyr.backends.theta
 
-import hu.bme.mit.semantifyr.backends.theta.execution.ShellBasedThetaXstsExecutor
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
+import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
-import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -35,10 +34,7 @@ class ThetaSemanticConformanceTest {
         @JvmStatic
         @BeforeAll
         fun assumeThetaAvailable() {
-            Assumptions.assumeTrue(
-                ShellBasedThetaXstsExecutor().isAvailable(),
-                "theta-xsts-cli not on PATH - skipping Theta conformance tests",
-            )
+            assumeBackendAvailable(ThetaExecutorKey)
         }
 
         @JvmStatic

@@ -7,14 +7,13 @@
 package hu.bme.mit.semantifyr.backends.spin
 
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
-import hu.bme.mit.semantifyr.backends.spin.execution.ShellBasedSpinExecutor
 import hu.bme.mit.semantifyr.backends.spin.verification.SpinBackend
 import hu.bme.mit.semantifyr.backends.spin.verification.SpinConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
+import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
-import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.io.path.Path
@@ -38,10 +37,7 @@ class SpinSearchDepthTests {
         @JvmStatic
         @BeforeAll
         fun assumeSpinAvailable() {
-            Assumptions.assumeTrue(
-                ShellBasedSpinExecutor().isAvailable(),
-                "spin not on PATH - skipping Spin backend tests",
-            )
+            assumeBackendAvailable(SpinExecutorKey)
         }
     }
 
