@@ -130,13 +130,17 @@ tasks.processResources {
 
 val compiledExamplesDir = layout.buildDirectory.dir("compiled-examples")
 val examplesSourceDir = layout.projectDirectory.dir("../models/examples")
+// the CLI builds every SysML and KerML file under the model's directory as its workspace
+val examplesWorkspace = fileTree(examplesSourceDir) {
+    include("**/*.sysml", "**/*.kerml")
+}
 val cliBundleDir = layout.buildDirectory.dir("cli-bundle")
 
 fun sysmlExampleTask(name: String) = tasks.register<NodeTask>("compileSysmlExample_$name") {
     inputs.files(bundleCli)
     val sourceFile = examplesSourceDir.file("$name.sysml")
     val targetFile = compiledExamplesDir.map { it.file("$name.oxsts") }
-    inputs.file(sourceFile).withPathSensitivity(PathSensitivity.NAME_ONLY)
+    inputs.files(examplesWorkspace).withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.file(targetFile)
     outputs.cacheIf { true }
     script = cliBundleDir.map { it.file("cli.cjs") }
