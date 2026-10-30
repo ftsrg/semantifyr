@@ -1,0 +1,49 @@
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+name: Continuous Delivery
+on:
+  push:
+    branches: [ "main" ]
+concurrency:
+  group: cd
+  cancel-in-progress: false
+permissions: {}
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      publish: true
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  website:
+    name: Deploy Website
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
+
+  staging:
+    name: Deploy Staging
+    needs: ci
+    uses: ./.github/workflows/deploy-live.yml
+    permissions:
+      contents: read
+    with:
+      instance: semantifyr-live-staging
+      tag: ${{ needs.ci.outputs.tag }}
+      url: https://live-staging.semantifyr.org

@@ -1,0 +1,44 @@
+#!/bin/sh
+
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+set -euf
+
+usage() {
+    echo "usage: deploy <instance> <tag> < files.tar.gz | status <instance>" >&2
+    exit 64
+}
+
+set -- ${SSH_ORIGINAL_COMMAND:-}
+[ $# -ge 2 ] || usage
+
+action=$1
+instance=$2
+
+case "$instance" in
+    semantifyr-live | semantifyr-live-staging) ;;
+    *) usage ;;
+esac
+
+directory=/srv/$instance
+
+case "$action" in
+    status)
+        [ $# -eq 2 ] || usage
+        sed -n 's/^IMAGE_TAG=//p' "$directory/.env"
+        ;;
+    deploy)
+        [ $# -eq 3 ] || usage
+        tag=$3
+        echo "$tag" | grep -Eqx '[0-9]+\.[0-9]+\.[0-9]+(-dev\.[0-9a-f]{7,40})?' || usage
+        unpacked=$(mktemp -d)
+        trap 'rm -rf "$unpacked"' EXIT
+        tar -xzf - -C "$unpacked" compose.yaml deploy.sh
+        install -m 640 "$unpacked/compose.yaml" "$directory/compose.yaml"
+        install -m 750 "$unpacked/deploy.sh" "$directory/deploy.sh"
+        "$directory/deploy.sh" "$tag"
+        ;;
+    *) usage ;;
+esac

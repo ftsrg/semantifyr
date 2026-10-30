@@ -1,0 +1,31 @@
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+name: Prune Images
+on:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+permissions: {}
+jobs:
+  prune:
+    name: Prune Live Snapshots
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Delete dev versions older than 90 days, keeping the newest 10
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSIONS: /orgs/${{ github.repository_owner }}/packages/container/semantifyr-live/versions
+        # a version is a digest with all its tags, so only versions carrying nothing but dev tags qualify
+        run: |
+          cutoff=$(date -u -d '90 days ago' +%FT%TZ)
+          gh api --paginate "$VERSIONS" --jq '.[]' \
+            | jq -rs --arg cutoff "$cutoff" '
+                map(select(.metadata.container.tags | length > 0 and all(test("-dev\\."))))
+                | sort_by(.created_at) | reverse | .[10:][]
+                | select(.created_at < $cutoff) | .id' \
+            | while read -r id; do gh api -X DELETE "$VERSIONS/$id"; done
