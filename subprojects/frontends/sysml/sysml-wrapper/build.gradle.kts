@@ -19,7 +19,7 @@ dependencies {
     implementation(project(":logging"))
 }
 
-val sysmlCommit = "fdca597594452bca3bd6f31a2210c35a2aefe1a0" // Updated extension name
+val sysmlCommit = "b05b8c9aaa0ef4ce4d95e202ba729ded55ed2f35" // Upgraded to pnpm 12, fixed deprecated overrides
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
