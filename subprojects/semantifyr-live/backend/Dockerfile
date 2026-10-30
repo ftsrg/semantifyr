@@ -5,9 +5,10 @@
 FROM eclipse-temurin:25-jre-noble
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends libgomp1 libmpfr-dev spin \
+ && apt-get install -y --no-install-recommends curl libgomp1 libmpfr-dev spin \
  && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/* \
+ && useradd --system --create-home semantifyr
 
 COPY build/install/semantifyr-live-backend /opt/semantifyr/backend
 COPY build/staging /opt/semantifyr/staging
@@ -22,5 +23,7 @@ ENV SEMANTIFYR_LIVE_PORT=8080
 ENV SEMANTIFYR_LIVE_ROOT_WORK_DIR=/tmp/semantifyr
 
 EXPOSE 8080
+
+USER semantifyr
 
 ENTRYPOINT ["/opt/semantifyr/backend/bin/semantifyr-live-backend", "start"]
