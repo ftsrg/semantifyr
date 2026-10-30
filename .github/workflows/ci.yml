@@ -39,6 +39,9 @@ jobs:
           - windows-latest
           - macos-latest
     runs-on: ${{ matrix.os }}
+    env:
+      # one value for every Gradle step, since it is a test input and a change reruns all tests
+      REQUIRED_BACKENDS: ${{ matrix.os == 'ubuntu-latest' && 'theta,spin' || 'theta' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -70,14 +73,14 @@ jobs:
           sudo apt-get install -y spin
       - name: Gradle build
         shell: bash
-        run: ./gradlew build -Ptests.requiredBackends=theta
+        run: ./gradlew build -Ptests.requiredBackends=$REQUIRED_BACKENDS
       - name: Run integration tests
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: ./gradlew integrationTest -Ptests.requiredBackends=theta,spin
+        run: ./gradlew integrationTest -Ptests.requiredBackends=$REQUIRED_BACKENDS
       - name: Merge coverage reports
         if: ${{ matrix.os == 'ubuntu-latest' }}
         shell: bash
-        run: ./gradlew mergedJacocoReport
+        run: ./gradlew mergedJacocoReport -Ptests.requiredBackends=$REQUIRED_BACKENDS
       - name: Upload coverage reports
         if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: actions/upload-artifact@v7
@@ -93,7 +96,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           if [ -n "$SONAR_TOKEN" ]; then
-            ./gradlew sonar
+            ./gradlew sonar -Ptests.requiredBackends=$REQUIRED_BACKENDS
           fi
       - name: Upload GitHub Pages artifact
         if: ${{ matrix.os == 'ubuntu-latest' }}
