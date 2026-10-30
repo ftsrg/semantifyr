@@ -7,7 +7,6 @@
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
-    id("hu.bme.mit.semantifyr.gradle.conventions.verification")
     id("hu.bme.mit.semantifyr.gradle.conventions.integration")
     kotlin("jvm")
     kotlin("plugin.serialization")
@@ -23,17 +22,6 @@ dependencies {
 
     testFixturesApi(project(":portfolios"))
     testFixturesApi(testFixtures(project(":verifier")))
-}
-
-testing {
-    suites {
-        val verificationTest by getting(JvmTestSuite::class) {
-            dependencies {
-                implementation(project(":portfolios"))
-                implementation(testFixtures(project(":verifier")))
-            }
-        }
-    }
 }
 
 val syncSysmlLibrary by tasks.registering(Sync::class) {

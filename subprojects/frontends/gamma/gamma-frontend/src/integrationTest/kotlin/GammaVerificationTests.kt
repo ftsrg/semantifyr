@@ -20,11 +20,17 @@ class GammaVerificationTests {
         private val artifactRoot = GammaFrontendTestHelper.testArtifactRoot(GammaVerificationTests::class.java)
 
         private val MODELS_ROOT = Path("build", "test-models")
+        private val SIMPLE = MODELS_ROOT.resolve("Simple.gamma")
         private val CROSSROADS = MODELS_ROOT.resolve("Crossroads.gamma")
         private val SPACECRAFT = MODELS_ROOT.resolve("Spacecraft.gamma")
 
         private fun argumentsFor(sourcePath: java.nio.file.Path): Stream<Arguments> {
             return helper.discoverAsArguments(sourcePath)
+        }
+
+        @JvmStatic
+        fun `Simple Model Verification Cases Should Pass`(): Stream<Arguments> {
+            return argumentsFor(SIMPLE)
         }
 
         @JvmStatic
@@ -44,6 +50,12 @@ class GammaVerificationTests {
             outputDirectory = artifactRoot,
         )
         helper.checkConformance(frontend, gammaVerificationCase, Portfolios.AllAgree)
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    suspend fun `Simple Model Verification Cases Should Pass`(gammaVerificationCase: GammaVerificationCase) {
+        assertPasses(gammaVerificationCase)
     }
 
     @ParameterizedTest

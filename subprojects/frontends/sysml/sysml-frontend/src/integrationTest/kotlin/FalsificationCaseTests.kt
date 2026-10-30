@@ -124,7 +124,7 @@ class FalsificationCaseTests {
         val frontend = helper.buildFrontend(
             sourcePath = SysMLv2FrontendTestHelper.modelPath(modelFile),
             portfolio = Portfolios.ThetaFull,
-            outputDirectory = artifactRoot.resolve("$modelFile-$caseName"),
+            outputDirectory = artifactRoot,
             timeout = 300.seconds,
         )
         val case = frontend.verificationCases().single {

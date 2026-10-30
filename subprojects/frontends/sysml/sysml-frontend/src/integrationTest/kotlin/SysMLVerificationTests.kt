@@ -21,6 +21,7 @@ class SysMLVerificationTests {
         private val helper = SysMLv2FrontendTestHelper()
         private val artifactRoot = SysMLv2FrontendTestHelper.testArtifactRoot(SysMLVerificationTests::class.java)
 
+        private val DOOR_ACCESS = SysMLv2FrontendTestHelper.modelPath("door_access.sysml")
         private val CROSSROADS = SysMLv2FrontendTestHelper.modelPath("crossroads.sysml")
         private val COMPRESSED_SPACECRAFT = SysMLv2FrontendTestHelper.modelPath("compressedspacecraft.sysml")
         private val SPACECRAFT = SysMLv2FrontendTestHelper.modelPath("spacecraft.sysml")
@@ -31,6 +32,11 @@ class SysMLVerificationTests {
 
         private fun argumentsFor(sourcePath: Path): Stream<Arguments> {
             return helper.discoverAsArguments(sourcePath, Portfolios.SmartFull, artifactRoot)
+        }
+
+        @JvmStatic
+        fun `Door Access Model Verification Cases Should Pass`(): Stream<Arguments> {
+            return argumentsFor(DOOR_ACCESS)
         }
 
         @JvmStatic
@@ -80,6 +86,15 @@ class SysMLVerificationTests {
             case = case,
             validationPortfolio = Portfolios.AllAgree,
         )
+    }
+
+    @ParameterizedTest(name = "{0} - {1}")
+    @MethodSource
+    suspend fun `Door Access Model Verification Cases Should Pass`(
+        variant: SysMLv2Variant,
+        verificationCase: VerificationCase,
+    ) {
+        assertPassed(DOOR_ACCESS, variant, verificationCase)
     }
 
     @ParameterizedTest(name = "{0} - {1}")
