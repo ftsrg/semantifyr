@@ -51,8 +51,14 @@ tasks.jar {
     }
 }
 
+val includeSlowTests = providers.gradleProperty("tests.slow").isPresent
+
 tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        if (!includeSlowTests) {
+            excludeTags("slow")
+        }
+    }
     testLogging.showStandardStreams = true
     testLogging.exceptionFormat = TestExceptionFormat.FULL
     workingDir = layout.projectDirectory.asFile
