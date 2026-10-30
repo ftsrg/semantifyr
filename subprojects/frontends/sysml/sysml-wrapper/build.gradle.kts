@@ -44,6 +44,10 @@ val checkoutSysml = tasks.register<Exec>("checkoutSysml") {
 tasks.pnpmInstall {
     // the checkout's working tree is not a declared output of checkoutSysml
     dependsOn(checkoutSysml)
+    // every pnpm run records its run state here
+    nodeModulesOutputFilter {
+        exclude(".pnpm-task-run-state-v1")
+    }
 }
 
 val sysmlSourceFiles = fileTree(sysmlDir.dir("packages")) {
@@ -65,8 +69,7 @@ val sysmlBuildOutputs = fileTree(sysmlDir.dir("packages")) {
 }
 
 val buildCli = tasks.register<PnpmTask>("buildCli") {
-    // every pnpm run writes run state into node_modules, so the install cannot be an input
-    dependsOn(tasks.pnpmInstall)
+    inputs.files(tasks.pnpmInstall)
     inputs.file(sysmlDir.file("package.json"))
     inputs.file(sysmlDir.file("tsconfig.json"))
     inputs.files(sysmlSourceFiles)
@@ -75,18 +78,19 @@ val buildCli = tasks.register<PnpmTask>("buildCli") {
     pnpmCommand.set(listOf("run", "cli"))
 }
 
-val cleanStaleVsix = tasks.register<Delete>("cleanStaleVsix") {
-    delete(fileTree(sysmlDir.dir("packages/syside-vscode")) { include("*.vsix") })
-}
-
 val bundleExtension = tasks.register<PnpmTask>("bundleExtension") {
-    dependsOn(tasks.pnpmInstall)
-    dependsOn(cleanStaleVsix)
+    inputs.files(tasks.pnpmInstall)
     mustRunAfter(buildCli)
     inputs.file(sysmlDir.file("package.json"))
     inputs.file(sysmlDir.file("tsconfig.json"))
     inputs.files(sysmlSourceFiles)
-    outputs.files(fileTree(sysmlDir.dir("packages/syside-vscode")) { include("*.vsix") })
+    val vscodePackageDir = sysmlDir.dir("packages/syside-vscode")
+    outputs.files(fileTree(vscodePackageDir) { include("*.vsix") })
+
+    // the vsix name carries the fork's version, and collectExtension must find only the current one
+    doFirst {
+        vscodePackageDir.asFile.listFiles { file -> file.extension == "vsix" }?.forEach { it.delete() }
+    }
 
     pnpmCommand.set(listOf("run", "vscode:package"))
 }

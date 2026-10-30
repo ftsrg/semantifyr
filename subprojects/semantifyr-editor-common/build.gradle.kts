@@ -6,6 +6,7 @@
 
 import com.github.gradle.node.npm.task.NpmTask
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
@@ -39,6 +40,8 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
     configureSharedInputs()
 
     npmCommand.set(listOf("run", "check"))
+
+    stampOnSuccess()
 }
 
 configurations.consumable("npmPackageElements") {
