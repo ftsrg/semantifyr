@@ -24,12 +24,12 @@ dependencies {
     testFixturesApi(testFixtures(project(":verifier")))
 }
 
-val syncSysmlLibrary by tasks.registering(Sync::class) {
+val syncSysmlLibrary = tasks.register<Sync>("syncSysmlLibrary") {
     from(layout.projectDirectory.dir("../models/libraries"))
     into(layout.buildDirectory.dir("libraries"))
 }
 
-val syncSysmlTestModels by tasks.registering(Sync::class) {
+val syncSysmlTestModels = tasks.register<Sync>("syncSysmlTestModels") {
     from(layout.projectDirectory.dir("../models/examples"))
     into(layout.buildDirectory.dir("test-models"))
 }

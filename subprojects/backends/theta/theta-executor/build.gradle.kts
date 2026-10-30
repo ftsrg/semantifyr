@@ -1,15 +1,18 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
+
+import hu.bme.mit.semantifyr.gradle.conventions.javaRuntimeLibrary
+import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
     kotlin("jvm")
 }
 
-val thetaXstsCliVersion: String by project
+val thetaXstsCliVersion = providers.gradleProperty("thetaXstsCliVersion").get()
 
 val currentOs = when {
     System.getProperty("os.name").lowercase().contains("win") -> "windows"
@@ -26,56 +29,25 @@ val nativeExt = when (currentOs) {
     else -> "so"
 }
 
-repositories {
-    exclusiveContent {
-        forRepository {
-            ivy {
-                name = "Theta GitHub Releases"
-                url = uri("https://github.com/ftsrg/theta/releases/download/")
-                patternLayout {
-                    artifact("v[revision]/[artifact].[ext]")
-                }
-                metadataSources { artifact() }
-            }
-        }
-        filter { includeGroup("hu.bme.mit.ftsrg.theta") }
-    }
-    exclusiveContent {
-        forRepository {
-            ivy {
-                name = "Theta GitHub Raw"
-                url = uri("https://raw.githubusercontent.com/ftsrg/theta/")
-                patternLayout {
-                    artifact("v[revision]/lib/[artifact].[ext]")
-                }
-                metadataSources { artifact() }
-            }
-        }
-        filter { includeGroup("hu.bme.mit.ftsrg.theta.lib") }
-    }
-}
-
-val thetaCliJarClasspath by configurations.creating {
+val thetaCli = configurations.dependencyScope("thetaCli")
+val thetaCliFiles = configurations.resolvable("thetaCliFiles") {
+    extendsFrom(thetaCli.get())
     isTransitive = false
-    isCanBeConsumed = false
-    isCanBeResolved = true
+    attributes(javaRuntimeLibrary())
 }
 
-val thetaNativeLibs by configurations.creating {
+val thetaNativeLibs = configurations.dependencyScope("thetaNativeLibs")
+val thetaNativeLibFiles = configurations.resolvable("thetaNativeLibFiles") {
+    extendsFrom(thetaNativeLibs.get())
     isTransitive = false
-    isCanBeConsumed = false
-    isCanBeResolved = true
+    attributes(javaRuntimeLibrary())
 }
 
-val thetaZ3LegacyLibs by configurations.creating {
+val thetaZ3LegacyLibs = configurations.dependencyScope("thetaZ3LegacyLibs")
+val thetaZ3LegacyLibFiles = configurations.resolvable("thetaZ3LegacyLibFiles") {
+    extendsFrom(thetaZ3LegacyLibs.get())
     isTransitive = false
-    isCanBeConsumed = false
-    isCanBeResolved = true
-}
-
-val thetaOutput by configurations.creating {
-    isCanBeConsumed = true
-    isCanBeResolved = false
+    attributes(javaRuntimeLibrary())
 }
 
 dependencies {
@@ -88,9 +60,9 @@ dependencies {
     implementation(libs.docker.java.core)
     implementation(libs.docker.java.transport)
 
-    thetaCliJarClasspath("hu.bme.mit.ftsrg.theta:theta-xsts-cli:$thetaXstsCliVersion@jar")
+    thetaCli("hu.bme.mit.ftsrg.theta:theta-xsts-cli:$thetaXstsCliVersion@jar")
 
-    // Z3 — available on all platforms and architectures
+    // Z3 - available on all platforms and architectures
     thetaNativeLibs("org.sosy-lab:javasmt-solver-z3:4.14.0:libz3-$currentArch@$nativeExt")
     thetaNativeLibs("org.sosy-lab:javasmt-solver-z3:4.14.0:libz3java-$currentArch@$nativeExt")
 
@@ -111,13 +83,13 @@ dependencies {
         }
     }
 
-    // Z3 legacy — a custom Z3 4.5.0 fork with renamed library symbols, committed to the theta repo
+    // Z3 legacy - a custom Z3 4.5.0 fork with renamed library symbols, committed to the theta repo
     thetaZ3LegacyLibs("hu.bme.mit.ftsrg.theta.lib:libz3legacy:$thetaXstsCliVersion@$nativeExt")
     thetaZ3LegacyLibs("hu.bme.mit.ftsrg.theta.lib:libz3javalegacy:$thetaXstsCliVersion@$nativeExt")
 }
 
-val prepareThetaXstsCli by tasks.registering(Sync::class) {
-    from(thetaNativeLibs) {
+val prepareThetaXstsCli = tasks.register<Sync>("prepareThetaXstsCli") {
+    from(thetaNativeLibFiles) {
         into("lib")
         val arch = currentArch
         rename { filename ->
@@ -127,7 +99,7 @@ val prepareThetaXstsCli by tasks.registering(Sync::class) {
         }
     }
 
-    from(thetaZ3LegacyLibs) {
+    from(thetaZ3LegacyLibFiles) {
         into("lib")
         rename { filename ->
             val ext = filename.substringAfterLast('.')
@@ -135,7 +107,7 @@ val prepareThetaXstsCli by tasks.registering(Sync::class) {
         }
     }
 
-    from(thetaCliJarClasspath) {
+    from(thetaCliFiles) {
         into("jars")
         rename { "theta-xsts-cli.jar" }
     }
@@ -145,8 +117,9 @@ val prepareThetaXstsCli by tasks.registering(Sync::class) {
     into(project.layout.buildDirectory.dir("theta-xsts-cli"))
 }
 
-artifacts {
-    add(thetaOutput.name, layout.buildDirectory.dir("theta-xsts-cli")) {
+configurations.consumable("thetaXstsCliElements") {
+    attributes(semantifyrArtifact("theta-xsts-cli"))
+    outgoing.artifact(layout.buildDirectory.dir("theta-xsts-cli")) {
         builtBy(prepareThetaXstsCli)
     }
 }

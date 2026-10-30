@@ -1,45 +1,37 @@
 /*
- * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
 import com.github.gradle.node.npm.task.NpmTask
+import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
 }
 
-val distributionOutput by configurations.creating {
-    isCanBeConsumed = true
-    isCanBeResolved = false
+val languageServers = configurations.dependencyScope("languageServers")
+val languageServersFiles = configurations.resolvable("languageServersFiles") {
+    extendsFrom(languageServers.get())
+    attributes(semantifyrArtifact("application-distribution"))
 }
 
-val distributionClasspath by configurations.creating {
-    isCanBeConsumed = false
-    isCanBeResolved = true
-}
-
-val editorCommonDist by configurations.creating {
-    isCanBeConsumed = false
-    isCanBeResolved = true
+val editorCommon = configurations.dependencyScope("editorCommon")
+val editorCommonFiles = configurations.resolvable("editorCommonFiles") {
+    extendsFrom(editorCommon.get())
+    attributes(semantifyrArtifact("npm-package"))
 }
 
 dependencies {
-    distributionClasspath(project(":oxsts.lang.ide", configuration = "distributionOutput"))
-    distributionClasspath(project(":gamma.lang.ide", configuration = "distributionOutput"))
+    languageServers(project(":oxsts.lang.ide"))
+    languageServers(project(":gamma.lang.ide"))
 
-    editorCommonDist(project(":semantifyr-editor-common", configuration = "distributionOutput"))
+    editorCommon(project(":semantifyr-editor-common"))
 }
 
-val cloneDistribution by tasks.registering(Sync::class) {
-    inputs.files(distributionClasspath)
-
-    from(
-        distributionClasspath.map {
-            fileTree(it)
-        },
-    )
+val cloneDistribution = tasks.register<Sync>("cloneDistribution") {
+    from(languageServersFiles)
 
     into("bin")
 }
@@ -59,10 +51,10 @@ fun NpmTask.configureSharedInputs() {
     inputs.file(rootProject.layout.projectDirectory.file("package.json"))
     inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
     inputs.files(tasks.npmInstall)
-    inputs.files(editorCommonDist)
+    inputs.files(editorCommonFiles)
 }
 
-val npmAssemble by tasks.registering(NpmTask::class) {
+val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     configureSharedInputs()
 
     npmCommand.set(listOf("run", "assemble"))
@@ -70,7 +62,7 @@ val npmAssemble by tasks.registering(NpmTask::class) {
     outputs.dir("dist")
 }
 
-val npmCheck by tasks.registering(NpmTask::class) {
+val npmCheck = tasks.register<NpmTask>("npmCheck") {
     configureSharedInputs()
 
     npmCommand.set(listOf("run", "check"))
@@ -78,7 +70,7 @@ val npmCheck by tasks.registering(NpmTask::class) {
 
 val vsixFile = project.layout.buildDirectory.file("semantifyr-${project.version}.vsix")
 
-val bundleExtension by tasks.registering(NpmTask::class) {
+val bundleExtension = tasks.register<NpmTask>("bundleExtension") {
     val version = project.version.toString()
     inputs.property("version", version)
 
@@ -99,7 +91,7 @@ val bundleExtension by tasks.registering(NpmTask::class) {
     inputs.file(rootProject.layout.projectDirectory.file("package.json"))
     inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
     inputs.files(tasks.npmInstall)
-    inputs.files(editorCommonDist)
+    inputs.files(editorCommonFiles)
 
     npmCommand.set(listOf("run", "bundle", "--", version, "--no-git-tag-version", "--no-update-package-json"))
 
@@ -121,8 +113,9 @@ tasks {
     }
 }
 
-artifacts {
-    add(distributionOutput.name, vsixFile) {
+configurations.consumable("vscodeExtensionElements") {
+    attributes(semantifyrArtifact("vscode-extension"))
+    outgoing.artifact(vsixFile) {
         builtBy(bundleExtension)
     }
 }

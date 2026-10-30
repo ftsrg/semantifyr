@@ -13,19 +13,15 @@ plugins {
     application
 }
 
-val distributionOutput by configurations.creating {
-    isCanBeConsumed = true
-    isCanBeResolved = false
-}
-
 val libs = the<LibrariesForLibs>()
 
 dependencies {
     runtimeOnly(libs.slf4j.log4j)
 }
 
-artifacts {
-    add(distributionOutput.name, layout.buildDirectory.dir("install")) {
+configurations.consumable("distributionElements") {
+    attributes(semantifyrArtifact("application-distribution"))
+    outgoing.artifact(layout.buildDirectory.dir("install")) {
         builtBy(tasks.installDist)
     }
 }

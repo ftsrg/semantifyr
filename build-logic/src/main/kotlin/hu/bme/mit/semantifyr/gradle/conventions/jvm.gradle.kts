@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -25,20 +25,21 @@ plugins {
     id("org.sonarqube")
 }
 
-repositories {
-    mavenCentral()
-}
-
 val libs = the<LibrariesForLibs>()
 
-val mockitoAgent by configurations.creating
+val mockitoAgent = configurations.dependencyScope("mockitoAgent")
+val mockitoAgentClasspath = configurations.resolvable("mockitoAgentClasspath") {
+    extendsFrom(mockitoAgent.get())
+    isTransitive = false
+    attributes(javaRuntimeLibrary())
+}
 
 dependencies {
     testFixturesApi(libs.bundles.junit.fixtures)
     testFixturesApi(libs.assertj.core)
     testFixturesApi(libs.bundles.mockito)
 
-    mockitoAgent(libs.mockito.core) { isTransitive = false }
+    mockitoAgent(libs.mockito.core)
 }
 
 java.toolchain {
@@ -76,17 +77,16 @@ tasks.withType<JacocoReport>().configureEach {
 
 testing {
     suites {
-        val test by getting(JvmTestSuite::class) {
-            useJUnitJupiter()
+        named<JvmTestSuite>("test") {
+            useJUnitJupiter(libs.versions.junit)
 
             dependencies {
-                runtimeOnly.bundle(libs.bundles.junit.runtime)
                 runtimeOnly(libs.slf4j.log4j)
             }
 
             targets.all {
                 testTask.configure {
-                    jvmArgumentProviders.add(MockitoAgentArgumentProvider(mockitoAgent))
+                    jvmArgumentProviders.add(MockitoAgentArgumentProvider(files(mockitoAgentClasspath)))
                     finalizedBy(tasks.jacocoTestReport)
                 }
             }
@@ -99,7 +99,7 @@ tasks.jacocoTestReport {
 }
 
 tasks.named("sonarResolver") {
-    inputs.files(tasks.withType<JacocoReport>().map { it.outputs.files })
+    inputs.files(tasks.withType<JacocoReport>())
 }
 
 sonar {

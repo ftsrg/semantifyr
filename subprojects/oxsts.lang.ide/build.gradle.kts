@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -14,7 +14,7 @@ dependencies {
     api(project(":lang-ide-common"))
     implementation(project(":portfolios"))
 
-    ideGeneratedClasspath(project(":oxsts.lang", configuration = "ideGeneratedOutput"))
+    ideGenerated(project(":oxsts.lang"))
 }
 
 application {

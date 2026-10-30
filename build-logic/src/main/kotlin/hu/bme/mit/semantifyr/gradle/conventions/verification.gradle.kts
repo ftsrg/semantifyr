@@ -16,17 +16,20 @@ val verificationTestServiceProvider = gradle.sharedServices.registerVerification
 
 val libs = the<LibrariesForLibs>()
 
+val jacocoVerificationTestReport = tasks.register<JacocoReport>("jacocoVerificationTestReport") {
+    executionData.from(tasks.named<Test>("verificationTest").map { it.the<JacocoTaskExtension>().destinationFile!! })
+}
+
 testing {
     suites {
-        val integrationTest by registering(JvmTestSuite::class) {
-            useJUnitJupiter()
+        register<JvmTestSuite>("verificationTest") {
+            useJUnitJupiter(libs.versions.junit)
 
             dependencies {
                 implementation(project())
                 implementation(testFixtures(project()))
 
                 implementation(testFixtures(project(":verifier")))
-                implementation(project(":portfolios"))
 
                 runtimeOnly(libs.slf4j.log4j)
             }
@@ -37,15 +40,13 @@ testing {
 
                     shouldRunAfter(suites.named("test"))
 
-                    finalizedBy(jacocoIntegrationTestReport)
+                    finalizedBy(jacocoVerificationTestReport)
                 }
             }
         }
     }
 }
 
-val jacocoIntegrationTestReport by tasks.registering(JacocoReport::class) {
-    val integrationTestSuite = tasks.named<Test>("integrationTest").get()
-    inputs.files(integrationTestSuite)
-    executionData(integrationTestSuite)
+tasks.named("check") {
+    dependsOn(testing.suites.named("verificationTest"))
 }

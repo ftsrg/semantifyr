@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import java.time.Instant
 
 plugins {
@@ -15,19 +16,22 @@ plugins {
     kotlin("plugin.serialization")
 }
 
-val frontendDistribution by configurations.creating {
-    isCanBeConsumed = false
-    isCanBeResolved = true
+val frontendDistribution = configurations.dependencyScope("frontendDistribution")
+val frontendDistributionFiles = configurations.resolvable("frontendDistributionFiles") {
+    extendsFrom(frontendDistribution.get())
+    attributes(semantifyrArtifact("web-distribution"))
 }
 
-val gammaCompiledExamples by configurations.creating {
-    isCanBeConsumed = false
-    isCanBeResolved = true
+val gammaCompiledExamples = configurations.dependencyScope("gammaCompiledExamples")
+val gammaCompiledExamplesFiles = configurations.resolvable("gammaCompiledExamplesFiles") {
+    extendsFrom(gammaCompiledExamples.get())
+    attributes(semantifyrArtifact("compiled-examples"))
 }
 
-val sysmlCompiledExamples by configurations.creating {
-    isCanBeConsumed = false
-    isCanBeResolved = true
+val sysmlCompiledExamples = configurations.dependencyScope("sysmlCompiledExamples")
+val sysmlCompiledExamplesFiles = configurations.resolvable("sysmlCompiledExamplesFiles") {
+    extendsFrom(sysmlCompiledExamples.get())
+    attributes(semantifyrArtifact("compiled-examples"))
 }
 
 dependencies {
@@ -54,10 +58,10 @@ dependencies {
     testFixturesApi(libs.bundles.ktor.client.test)
     testFixturesImplementation(libs.guice)
 
-    frontendDistribution(project(":semantifyr-live-frontend", configuration = "distributionOutput"))
+    frontendDistribution(project(":semantifyr-live-frontend"))
 
-    gammaCompiledExamples(project(":gamma-frontend", configuration = "compiledExamples"))
-    sysmlCompiledExamples(project(":sysml-wrapper", configuration = "compiledExamples"))
+    gammaCompiledExamples(project(":gamma-frontend"))
+    sysmlCompiledExamples(project(":sysml-wrapper"))
 }
 
 application {
@@ -65,24 +69,23 @@ application {
     mainClass = "hu.bme.mit.semantifyr.live.backend.SemantifyrLiveCliKt"
 }
 
-val generateBuildInfo by tasks.registering {
+val generateBuildInfo = tasks.register("generateBuildInfo") {
     val outputDir = layout.buildDirectory.dir("generated/buildinfo")
     val version = project.version.toString()
+    val commitHash = providers.exec {
+        commandLine("git", "rev-parse", "--short", "HEAD")
+        isIgnoreExitValue = true
+    }.standardOutput.asText.map { it.trim() }
+    inputs.property("version", version)
+    inputs.property("commitHash", commitHash)
     outputs.dir(outputDir)
 
     doLast {
-        val commitHash = ProcessBuilder("git", "rev-parse", "--short", "HEAD")
-            .redirectErrorStream(true)
-            .start()
-            .inputStream
-            .bufferedReader()
-            .readText()
-            .trim()
         val buildTime = Instant.now().toString()
 
         outputDir.get().asFile.mkdirs()
         outputDir.get().file("build-info.properties").asFile.writeText(
-            "version=$version\ncommit=$commitHash\nbuildTime=$buildTime\n",
+            "version=$version\ncommit=${commitHash.get()}\nbuildTime=$buildTime\n",
         )
     }
 }
@@ -91,7 +94,7 @@ sourceSets.main {
     resources.srcDir(generateBuildInfo.map { it.outputs.files.singleFile })
 }
 
-val cloneSemanticLibraries by tasks.registering(Sync::class) {
+val cloneSemanticLibraries = tasks.register<Sync>("cloneSemanticLibraries") {
     from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/libraries/default")) {
         into("sysmlv2")
     }
@@ -101,28 +104,28 @@ val cloneSemanticLibraries by tasks.registering(Sync::class) {
     into(layout.buildDirectory.dir("staging/semantic-libraries"))
 }
 
-val cloneGammaTestModels by tasks.registering(Sync::class) {
+val cloneGammaTestModels = tasks.register<Sync>("cloneGammaTestModels") {
     from(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/examples"))
     into(layout.buildDirectory.dir("staging/gamma-test-models"))
 }
 
-val cloneOxstsTestModels by tasks.registering(Sync::class) {
+val cloneOxstsTestModels = tasks.register<Sync>("cloneOxstsTestModels") {
     from(rootProject.layout.projectDirectory.dir("oxsts-test-models/smoke"))
     into(layout.buildDirectory.dir("staging/oxsts-test-models"))
 }
 
-val cloneGammaLibraryModels by tasks.registering(Sync::class) {
-    from(gammaCompiledExamples)
+val cloneGammaLibraryModels = tasks.register<Sync>("cloneGammaLibraryModels") {
+    from(gammaCompiledExamplesFiles)
     into(layout.buildDirectory.dir("staging/gamma-library-models"))
 }
 
-val cloneSysmlLibraryModels by tasks.registering(Sync::class) {
-    from(sysmlCompiledExamples)
+val cloneSysmlLibraryModels = tasks.register<Sync>("cloneSysmlLibraryModels") {
+    from(sysmlCompiledExamplesFiles)
     into(layout.buildDirectory.dir("staging/sysml-library-models"))
 }
 
-val cloneWebDistributions by tasks.registering(Sync::class) {
-    from(frontendDistribution)
+val cloneWebDistributions = tasks.register<Sync>("cloneWebDistributions") {
+    from(frontendDistributionFiles)
     into(layout.buildDirectory.dir("staging/web"))
 }
 
@@ -153,7 +156,7 @@ tasks.named<JavaExec>("run") {
     }
 }
 
-val runDev by tasks.registering(JavaExec::class) {
+tasks.register<JavaExec>("runDev") {
     group = "application"
 
     classpath = sourceSets["main"].runtimeClasspath
@@ -209,7 +212,7 @@ testing {
     }
 }
 
-val prepareDockerBuild by tasks.registering {
+tasks.register("prepareDockerBuild") {
     inputs.files(cloneSemanticLibraries)
     inputs.files(cloneWebDistributions)
     inputs.files(cloneTheta)

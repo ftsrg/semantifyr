@@ -10,17 +10,18 @@ plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
 }
 
-val thetaClasspath by configurations.creating {
-    isCanBeConsumed = false
-    isCanBeResolved = true
+val theta = configurations.dependencyScope("theta")
+val thetaFiles = configurations.resolvable("thetaFiles") {
+    extendsFrom(theta.get())
+    attributes(semantifyrArtifact("theta-xsts-cli"))
 }
 
 dependencies {
-    thetaClasspath(project(":theta-executor", configuration = "thetaOutput"))
+    theta(project(":theta-executor"))
 }
 
-val cloneTheta by tasks.registering(Sync::class) {
-    from(thetaClasspath)
+val cloneTheta = tasks.register<Sync>("cloneTheta") {
+    from(thetaFiles)
     into(layout.buildDirectory.dir("theta-xsts-cli"))
 }
 

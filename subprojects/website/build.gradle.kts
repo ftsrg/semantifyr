@@ -17,7 +17,7 @@ tasks.npmInstall {
 val brandingDir = rootProject.layout.projectDirectory.dir("branding")
 val importedBrandingDir = project.layout.projectDirectory.dir("static-imported-branding")
 
-val cloneBrandingAssets by tasks.registering(Sync::class) {
+val cloneBrandingAssets = tasks.register<Sync>("cloneBrandingAssets") {
     from(brandingDir) {
         include("favicon.ico")
     }
@@ -71,14 +71,14 @@ fun NpmTask.configureSharedInputs() {
     inputs.files(cloneBrandingAssets)
 }
 
-val npmAssemble by tasks.registering(NpmTask::class) {
+val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     configureSharedInputs()
 
     npmCommand.set(listOf("run", "assemble"))
     outputs.dir(project.layout.buildDirectory.dir("docusaurus"))
 }
 
-val npmCheck by tasks.registering(NpmTask::class) {
+val npmCheck = tasks.register<NpmTask>("npmCheck") {
     configureSharedInputs()
 
     npmCommand.set(listOf("run", "check"))

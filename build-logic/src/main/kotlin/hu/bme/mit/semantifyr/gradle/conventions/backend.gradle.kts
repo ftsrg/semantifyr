@@ -13,19 +13,20 @@ plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.integration")
 }
 
-val cloneOxstsTestModels by tasks.registering(Sync::class) {
+val cloneOxstsTestModels = tasks.register<Sync>("cloneOxstsTestModels") {
     from(rootProject.layout.projectDirectory.dir("oxsts-test-models"))
     into(layout.buildDirectory.dir("test-models"))
 }
 
-val verificationTest by tasks.getting {
-    inputs.files(cloneOxstsTestModels)
-}
-val integrationTest by tasks.getting {
+tasks.named("verificationTest") {
     inputs.files(cloneOxstsTestModels)
 }
 
-val backendIntegrationTest by tasks.registering {
+val integrationTest = tasks.named("integrationTest") {
+    inputs.files(cloneOxstsTestModels)
+}
+
+tasks.register("backendIntegrationTest") {
     group = "verification"
     inputs.files(integrationTest)
 }

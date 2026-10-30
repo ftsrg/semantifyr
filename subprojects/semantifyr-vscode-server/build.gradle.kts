@@ -1,83 +1,88 @@
 /*
- * SPDX-FileCopyrightText: 2023-2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
+
 plugins {
     base
+    id("hu.bme.mit.semantifyr.gradle.conventions.formatting")
 }
 
-val distributionClasspath by configurations.creating {
-    isCanBeConsumed = false
-    isCanBeResolved = true
+val vscodeExtensions = configurations.dependencyScope("vscodeExtensions")
+val vscodeExtensionsFiles = configurations.resolvable("vscodeExtensionsFiles") {
+    extendsFrom(vscodeExtensions.get())
+    attributes(semantifyrArtifact("vscode-extension"))
 }
 
-val thetaClasspath by configurations.creating {
-    isCanBeConsumed = false
-    isCanBeResolved = true
+val theta = configurations.dependencyScope("theta")
+val thetaFiles = configurations.resolvable("thetaFiles") {
+    extendsFrom(theta.get())
+    attributes(semantifyrArtifact("theta-xsts-cli"))
 }
 
 dependencies {
-    distributionClasspath(project(":semantifyr-vscode", configuration = "distributionOutput"))
-    distributionClasspath(project(":sysml-wrapper", configuration = "distributionOutput"))
+    vscodeExtensions(project(":semantifyr-vscode"))
+    vscodeExtensions(project(":sysml-wrapper"))
 
-    thetaClasspath(project(":theta-executor", configuration = "thetaOutput"))
+    theta(project(":theta-executor"))
 }
 
-val cloneDistribution by tasks.registering(Sync::class) {
-    from(distributionClasspath)
+val cloneDistribution = tasks.register<Sync>("cloneDistribution") {
+    from(vscodeExtensionsFiles)
 
     into("extensions")
 }
 
-val cloneTheta by tasks.registering(Sync::class) {
-    from(thetaClasspath)
+val cloneTheta = tasks.register<Sync>("cloneTheta") {
+    from(thetaFiles)
 
     into("theta-xsts-cli")
 }
 
-val cloneGammaLibrary by tasks.registering(Sync::class) {
+val cloneGammaLibrary = tasks.register<Sync>("cloneGammaLibrary") {
     from(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/libraries/default"))
     into("examples/gamma/Library")
 }
 
-val cloneSysMLLibrary by tasks.registering(Sync::class) {
+val cloneSysMLLibrary = tasks.register<Sync>("cloneSysMLLibrary") {
     from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/libraries/default"))
     into("examples/sysml/Library")
 }
 
-val cloneLibraries by tasks.registering {
+val cloneLibraries = tasks.register("cloneLibraries") {
     dependsOn(cloneGammaLibrary)
     dependsOn(cloneSysMLLibrary)
 }
 
-val cloneGammaTestModels by tasks.registering(Sync::class) {
+val cloneGammaTestModels = tasks.register<Sync>("cloneGammaTestModels") {
     from(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/examples")) {
         include("*.gamma")
     }
     into("examples/gamma/TestModels")
 }
 
-val cloneSysMLTestModels by tasks.registering(Sync::class) {
+val cloneSysMLTestModels = tasks.register<Sync>("cloneSysMLTestModels") {
     from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/examples")) {
         include("*.sysml")
     }
     into("examples/sysml/TestModels")
 }
 
-val cloneTutorialModels by tasks.registering(Sync::class) {
+val cloneTutorialModels = tasks.register<Sync>("cloneTutorialModels") {
     from(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial"))
     into("examples/tutorial/")
 }
 
-val cloneTestModels by tasks.registering {
+val cloneTestModels = tasks.register("cloneTestModels") {
     dependsOn(cloneGammaTestModels)
     dependsOn(cloneSysMLTestModels)
     dependsOn(cloneTutorialModels)
 }
 
-val prepareDockerBuild by tasks.registering {
+val prepareDockerBuild = tasks.register("prepareDockerBuild") {
     dependsOn(cloneDistribution)
     dependsOn(cloneTheta)
     dependsOn(cloneLibraries)

@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
+
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.application")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
@@ -24,12 +26,12 @@ dependencies {
     testFixturesApi(testFixtures(project(":verifier")))
 }
 
-val syncGammaLibrary by tasks.registering(Sync::class) {
+val syncGammaLibrary = tasks.register<Sync>("syncGammaLibrary") {
     from(layout.projectDirectory.dir("../models/libraries"))
     into(layout.buildDirectory.dir("libraries"))
 }
 
-val syncGammaTestModels by tasks.registering(Sync::class) {
+val syncGammaTestModels = tasks.register<Sync>("syncGammaTestModels") {
     from(layout.projectDirectory.dir("../models/examples"))
     into(layout.buildDirectory.dir("test-models"))
 }
@@ -63,19 +65,15 @@ val compileGammaExampleCrossroads = gammaExampleTask("Crossroads")
 val compileGammaExampleSimple = gammaExampleTask("Simple")
 val compileGammaExampleSpacecraft = gammaExampleTask("Spacecraft")
 
-val compileGammaExamples by tasks.registering {
+val compileGammaExamples = tasks.register("compileGammaExamples") {
     inputs.files(compileGammaExampleCrossroads)
     inputs.files(compileGammaExampleSimple)
     inputs.files(compileGammaExampleSpacecraft)
 }
 
-val compiledExamples by configurations.creating {
-    isCanBeConsumed = true
-    isCanBeResolved = false
-}
-
-artifacts {
-    add(compiledExamples.name, compiledExamplesDir) {
+configurations.consumable("compiledExamplesElements") {
+    attributes(semantifyrArtifact("compiled-examples"))
+    outgoing.artifact(compiledExamplesDir) {
         builtBy(compileGammaExamples)
     }
 }

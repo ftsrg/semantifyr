@@ -4,6 +4,60 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+pluginManagement {
+    includeBuild("build-logic")
+}
+
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
+
+dependencyResolutionManagement {
+    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+    repositories {
+        exclusiveContent {
+            forRepository {
+                ivy {
+                    name = "Theta GitHub Releases"
+                    url = uri("https://github.com/ftsrg/theta/releases/download/")
+                    patternLayout {
+                        artifact("v[revision]/[artifact].[ext]")
+                    }
+                    metadataSources { artifact() }
+                }
+            }
+            filter { includeGroup("hu.bme.mit.ftsrg.theta") }
+        }
+        exclusiveContent {
+            forRepository {
+                ivy {
+                    name = "Theta GitHub Raw"
+                    url = uri("https://raw.githubusercontent.com/ftsrg/theta/")
+                    patternLayout {
+                        artifact("v[revision]/lib/[artifact].[ext]")
+                    }
+                    metadataSources { artifact() }
+                }
+            }
+            filter { includeGroup("hu.bme.mit.ftsrg.theta.lib") }
+        }
+        exclusiveContent {
+            forRepository {
+                ivy {
+                    name = "Node.js"
+                    url = uri("https://nodejs.org/dist/")
+                    patternLayout {
+                        artifact("v[revision]/[artifact](-v[revision]-[classifier]).[ext]")
+                    }
+                    metadataSources { artifact() }
+                }
+            }
+            filter { includeModule("org.nodejs", "node") }
+        }
+        mavenCentral()
+    }
+}
+
 rootProject.name = "semantifyr"
 
 include(

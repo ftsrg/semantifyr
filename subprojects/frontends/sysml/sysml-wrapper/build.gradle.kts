@@ -6,6 +6,7 @@
 
 import com.github.gradle.node.pnpm.task.PnpmTask
 import com.github.gradle.node.task.NodeTask
+import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
@@ -27,12 +28,7 @@ node {
     nodeProjectDir = sysmlDir
 }
 
-val distributionOutput by configurations.creating {
-    isCanBeConsumed = true
-    isCanBeResolved = false
-}
-
-val checkoutSysml by tasks.registering(Exec::class) {
+val checkoutSysml = tasks.register<Exec>("checkoutSysml") {
     inputs.property("sysmlUrl", sysmlUrl)
     inputs.property("sysmlCommit", sysmlCommit)
     inputs.dir("scripts")
@@ -46,6 +42,7 @@ val checkoutSysml by tasks.registering(Exec::class) {
 }
 
 tasks.pnpmInstall {
+    // the checkout's working tree is not a declared output of checkoutSysml
     dependsOn(checkoutSysml)
 }
 
@@ -67,7 +64,8 @@ val sysmlBuildOutputs = fileTree(sysmlDir.dir("packages")) {
     include("**/dist/**")
 }
 
-val buildCli by tasks.registering(PnpmTask::class) {
+val buildCli = tasks.register<PnpmTask>("buildCli") {
+    // every pnpm run writes run state into node_modules, so the install cannot be an input
     dependsOn(tasks.pnpmInstall)
     inputs.file(sysmlDir.file("package.json"))
     inputs.file(sysmlDir.file("tsconfig.json"))
@@ -77,11 +75,11 @@ val buildCli by tasks.registering(PnpmTask::class) {
     pnpmCommand.set(listOf("run", "cli"))
 }
 
-val cleanStaleVsix by tasks.registering(Delete::class) {
+val cleanStaleVsix = tasks.register<Delete>("cleanStaleVsix") {
     delete(fileTree(sysmlDir.dir("packages/syside-vscode")) { include("*.vsix") })
 }
 
-val bundleExtension by tasks.registering(PnpmTask::class) {
+val bundleExtension = tasks.register<PnpmTask>("bundleExtension") {
     dependsOn(tasks.pnpmInstall)
     dependsOn(cleanStaleVsix)
     mustRunAfter(buildCli)
@@ -95,13 +93,13 @@ val bundleExtension by tasks.registering(PnpmTask::class) {
 
 val sysideVsix = layout.buildDirectory.file("vscode-extension/syside-vscode.vsix")
 
-val collectExtension by tasks.registering(Sync::class) {
+val collectExtension = tasks.register<Sync>("collectExtension") {
     from(bundleExtension)
     rename(".*\\.vsix", "syside-vscode.vsix")
     into(sysideVsix.map { it.asFile.parentFile })
 }
 
-val bundleCli by tasks.registering(Sync::class) {
+val bundleCli = tasks.register<Sync>("bundleCli") {
     inputs.files(buildCli)
     from(sysmlDir.file("packages/syside-cli/dist/cli.cjs"))
     from(fileTree(sysmlDir.dir("SysML-v2-Release/sysml.library"))) {
@@ -112,8 +110,9 @@ val bundleCli by tasks.registering(Sync::class) {
     into(project.layout.buildDirectory.dir("cli-bundle"))
 }
 
-artifacts {
-    add(distributionOutput.name, sysideVsix) {
+configurations.consumable("vscodeExtensionElements") {
+    attributes(semantifyrArtifact("vscode-extension"))
+    outgoing.artifact(sysideVsix) {
         builtBy(collectExtension)
     }
 }
@@ -135,7 +134,7 @@ fun sysmlExampleTask(name: String) = tasks.register<NodeTask>("compileSysmlExamp
     inputs.file(sourceFile).withPathSensitivity(PathSensitivity.NAME_ONLY)
     outputs.file(targetFile)
     outputs.cacheIf { true }
-    script = cliBundleDir.get().file("cli.cjs").asFile
+    script = cliBundleDir.map { it.file("cli.cjs") }
     args = provider {
         listOf(
             "compile",
@@ -152,20 +151,16 @@ val compileSysmlExampleCrossroads = sysmlExampleTask("crossroads")
 val compileSysmlExampleDoorAccess = sysmlExampleTask("door_access")
 val compileSysmlExampleOrionProtocol = sysmlExampleTask("orion_protocol")
 
-val compileSysmlExamples by tasks.registering {
+val compileSysmlExamples = tasks.register("compileSysmlExamples") {
     inputs.files(compileSysmlExampleCompressedSpacecraft)
     inputs.files(compileSysmlExampleCrossroads)
     inputs.files(compileSysmlExampleDoorAccess)
     inputs.files(compileSysmlExampleOrionProtocol)
 }
 
-val compiledExamples by configurations.creating {
-    isCanBeConsumed = true
-    isCanBeResolved = false
-}
-
-artifacts {
-    add(compiledExamples.name, compiledExamplesDir) {
+configurations.consumable("compiledExamplesElements") {
+    attributes(semantifyrArtifact("compiled-examples"))
+    outgoing.artifact(compiledExamplesDir) {
         builtBy(compileSysmlExamples)
     }
 }

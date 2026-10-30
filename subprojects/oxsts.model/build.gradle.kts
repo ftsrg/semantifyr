@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -23,10 +23,10 @@ sourceSets.main {
 }
 
 tasks {
-    val generateEPackage by registering(JavaExec::class) {
+    val generateEPackage = register<JavaExec>("generateEPackage") {
         mainClass.set("org.eclipse.emf.mwe2.launch.runtime.Mwe2Launcher")
 
-        classpath(configurations.mwe2)
+        classpath(configurations.named("mwe2Classpath"))
 
         inputs.file("./GenerateModel.mwe2")
         inputs.file("model/oxsts.ecore")

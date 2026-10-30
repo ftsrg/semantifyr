@@ -5,6 +5,7 @@
  */
 
 import com.github.gradle.node.npm.task.NpmTask
+import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
@@ -12,11 +13,6 @@ plugins {
 
 tasks.npmInstall {
     workingDir = rootProject.projectDir
-}
-
-val distributionOutput by configurations.creating {
-    isCanBeConsumed = true
-    isCanBeResolved = false
 }
 
 fun NpmTask.configureSharedInputs() {
@@ -31,7 +27,7 @@ fun NpmTask.configureSharedInputs() {
     inputs.files(tasks.npmInstall)
 }
 
-val npmAssemble by tasks.registering(NpmTask::class) {
+val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     configureSharedInputs()
 
     outputs.dir(project.layout.projectDirectory.dir("dist"))
@@ -39,14 +35,15 @@ val npmAssemble by tasks.registering(NpmTask::class) {
     npmCommand.set(listOf("run", "assemble"))
 }
 
-val npmCheck by tasks.registering(NpmTask::class) {
+val npmCheck = tasks.register<NpmTask>("npmCheck") {
     configureSharedInputs()
 
     npmCommand.set(listOf("run", "check"))
 }
 
-artifacts {
-    add(distributionOutput.name, project.layout.projectDirectory.dir("dist")) {
+configurations.consumable("npmPackageElements") {
+    attributes(semantifyrArtifact("npm-package"))
+    outgoing.artifact(project.layout.projectDirectory.dir("dist")) {
         builtBy(npmAssemble)
     }
 }

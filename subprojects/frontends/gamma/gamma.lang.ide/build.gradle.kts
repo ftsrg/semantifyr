@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -14,7 +14,7 @@ dependencies {
     api(project(":gamma.lang"))
     implementation(project(":gamma-frontend"))
 
-    ideGeneratedClasspath(project(":gamma.lang", configuration = "ideGeneratedOutput"))
+    ideGenerated(project(":gamma.lang"))
 }
 
 application {

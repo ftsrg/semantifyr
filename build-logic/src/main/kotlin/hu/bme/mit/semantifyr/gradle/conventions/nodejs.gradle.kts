@@ -16,6 +16,8 @@ plugins {
 node {
     version = "22.23.4"
     download = true
+    // the Node.js repository is declared in settings, which forbids project repositories
+    distBaseUrl = null
     // CodeQL's autobuild sets empty proxy system properties, which the plugin turns into HTTPS_PROXY=http://:
     nodeProxySettings = ProxySettings.OFF
 }

@@ -5,35 +5,34 @@
  */
 
 import com.github.gradle.node.npm.task.NpmTask
+import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
 }
 
-val distributionOutput by configurations.creating {
-    isCanBeConsumed = true
-    isCanBeResolved = false
+val editorCommon = configurations.dependencyScope("editorCommon")
+val editorCommonFiles = configurations.resolvable("editorCommonFiles") {
+    extendsFrom(editorCommon.get())
+    attributes(semantifyrArtifact("npm-package"))
 }
 
-val editorCommonDist by configurations.creating {
-    isCanBeConsumed = false
-    isCanBeResolved = true
+val gammaCompiledExamples = configurations.dependencyScope("gammaCompiledExamples")
+val gammaCompiledExamplesFiles = configurations.resolvable("gammaCompiledExamplesFiles") {
+    extendsFrom(gammaCompiledExamples.get())
+    attributes(semantifyrArtifact("compiled-examples"))
 }
 
-val gammaCompiledExamples by configurations.creating {
-    isCanBeConsumed = false
-    isCanBeResolved = true
-}
-
-val sysmlCompiledExamples by configurations.creating {
-    isCanBeConsumed = false
-    isCanBeResolved = true
+val sysmlCompiledExamples = configurations.dependencyScope("sysmlCompiledExamples")
+val sysmlCompiledExamplesFiles = configurations.resolvable("sysmlCompiledExamplesFiles") {
+    extendsFrom(sysmlCompiledExamples.get())
+    attributes(semantifyrArtifact("compiled-examples"))
 }
 
 dependencies {
-    editorCommonDist(project(":semantifyr-editor-common", configuration = "distributionOutput"))
-    gammaCompiledExamples(project(":gamma-frontend", configuration = "compiledExamples"))
-    sysmlCompiledExamples(project(":sysml-wrapper", configuration = "compiledExamples"))
+    editorCommon(project(":semantifyr-editor-common"))
+    gammaCompiledExamples(project(":gamma-frontend"))
+    sysmlCompiledExamples(project(":sysml-wrapper"))
 }
 
 val importedSnippetsDir = project.layout.projectDirectory.dir("src/snippets/imported")
@@ -41,17 +40,17 @@ val importedVscodeDir = project.layout.projectDirectory.dir("src/vscode/imported
 val brandingDir = rootProject.layout.projectDirectory.dir("branding")
 val publicDir = project.layout.projectDirectory.dir("public")
 
-val cloneGammaTestModels by tasks.registering(Sync::class) {
+val cloneGammaTestModels = tasks.register<Sync>("cloneGammaTestModels") {
     from(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/examples")) {
         include("*.gamma")
     }
-    from(gammaCompiledExamples) {
+    from(gammaCompiledExamplesFiles) {
         include("*.oxsts")
     }
     into(importedSnippetsDir.dir("gamma"))
 }
 
-val cloneSysmlv2TestModels by tasks.registering(Sync::class) {
+val cloneSysmlv2TestModels = tasks.register<Sync>("cloneSysmlv2TestModels") {
     from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/examples")) {
         include(
             "compressedspacecraft.sysml",
@@ -60,22 +59,22 @@ val cloneSysmlv2TestModels by tasks.registering(Sync::class) {
             "orion_protocol.sysml",
         )
     }
-    from(sysmlCompiledExamples) {
+    from(sysmlCompiledExamplesFiles) {
         include("*.oxsts")
     }
     into(importedSnippetsDir.dir("sysmlv2"))
 }
 
-val cloneTutorialSnippets by tasks.registering(Sync::class) {
+val cloneTutorialSnippets = tasks.register<Sync>("cloneTutorialSnippets") {
     from(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial"))
     into(importedSnippetsDir.dir("tutorial"))
 }
 
-val cloneTestModels by tasks.registering {
+val cloneTestModels = tasks.register("cloneTestModels") {
     dependsOn(cloneGammaTestModels, cloneSysmlv2TestModels, cloneTutorialSnippets)
 }
 
-val cloneVscodeLanguageAssets by tasks.registering(Sync::class) {
+val cloneVscodeLanguageAssets = tasks.register<Sync>("cloneVscodeLanguageAssets") {
     from(rootProject.layout.projectDirectory.dir("subprojects/semantifyr-vscode")) {
         include("language-configuration.json")
         include("syntaxes/*.tmLanguage.json")
@@ -83,7 +82,7 @@ val cloneVscodeLanguageAssets by tasks.registering(Sync::class) {
     into(importedVscodeDir)
 }
 
-val cloneBrandingAssets by tasks.registering(Sync::class) {
+val cloneBrandingAssets = tasks.register<Sync>("cloneBrandingAssets") {
     from(brandingDir) {
         include("favicon.ico")
     }
@@ -130,12 +129,12 @@ fun NpmTask.configureSharedInputs() {
     inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
     inputs.file(rootProject.layout.projectDirectory.file("gradle.properties"))
     inputs.files(tasks.npmInstall)
-    inputs.files(editorCommonDist)
+    inputs.files(editorCommonFiles)
     inputs.files(cloneTestModels)
     inputs.files(cloneVscodeLanguageAssets)
 }
 
-val npmAssemble by tasks.registering(NpmTask::class) {
+val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     group = "build"
 
     configureSharedInputs()
@@ -147,13 +146,14 @@ val npmAssemble by tasks.registering(NpmTask::class) {
     outputs.dir(project.layout.projectDirectory.dir("dist"))
 }
 
-artifacts {
-    add(distributionOutput.name, project.layout.projectDirectory.dir("dist")) {
+configurations.consumable("webDistributionElements") {
+    attributes(semantifyrArtifact("web-distribution"))
+    outgoing.artifact(project.layout.projectDirectory.dir("dist")) {
         builtBy(npmAssemble)
     }
 }
 
-val npmCheck by tasks.registering(NpmTask::class) {
+val npmCheck = tasks.register<NpmTask>("npmCheck") {
     group = "verification"
 
     configureSharedInputs()
@@ -161,7 +161,7 @@ val npmCheck by tasks.registering(NpmTask::class) {
     npmCommand.set(listOf("run", "check"))
 }
 
-val runDev by tasks.registering(NpmTask::class) {
+tasks.register<NpmTask>("runDev") {
     group = "application"
 
     configureSharedInputs()

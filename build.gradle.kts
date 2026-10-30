@@ -7,60 +7,40 @@
 plugins {
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.serialization) apply false
-    id("org.sonarqube")
+    alias(libs.plugins.sonarqube)
     `jacoco-report-aggregation`
 }
 
-repositories {
-    mavenCentral()
-}
-
-val jvmConventionIds = setOf(
-    "hu.bme.mit.semantifyr.gradle.conventions.jvm",
-)
-
 dependencies {
     subprojects.forEach { subproject ->
-        jvmConventionIds.forEach { conventionId ->
-            subproject.plugins.withId(conventionId) {
-                jacocoAggregation(subproject)
-            }
+        subproject.plugins.withId("hu.bme.mit.semantifyr.gradle.conventions.jvm") {
+            jacocoAggregation(project(subproject.path))
         }
     }
 }
 
-reporting {
+val suiteReportTasks = reporting.reports.run {
+    listOf(
+        register<JacocoCoverageReport>("mergedJacocoTestReport") { testSuiteName = "test" },
+        register<JacocoCoverageReport>("mergedJacocoVerificationTestReport") { testSuiteName = "verificationTest" },
+        register<JacocoCoverageReport>("mergedJacocoIntegrationTestReport") { testSuiteName = "integrationTest" },
+    ).map { report ->
+        report.flatMap { it.reportTask }
+    }
+}
+
+tasks.register<JacocoReport>("mergedJacocoReport") {
+    group = "verification"
+
+    suiteReportTasks.forEach { reportTask ->
+        executionData.from(reportTask.map { it.executionData })
+        sourceDirectories.from(reportTask.map { it.sourceDirectories })
+        classDirectories.from(reportTask.map { it.classDirectories })
+    }
+
     reports {
-        val mergedJacocoTestReport by creating(JacocoCoverageReport::class) {
-            testSuiteName = "test"
-        }
-        val mergedJacocoVerificationTestReport by creating(JacocoCoverageReport::class) {
-            testSuiteName = "verificationTest"
-        }
-        val mergedJacocoIntegrationTestReport by creating(JacocoCoverageReport::class) {
-            testSuiteName = "integrationTest"
-        }
-
-        val perSuiteReportTasks = listOf(
-            mergedJacocoTestReport.reportTask,
-            mergedJacocoVerificationTestReport.reportTask,
-            mergedJacocoIntegrationTestReport.reportTask,
-        )
-
-        val mergedJacocoReport by tasks.registering(JacocoReport::class) {
-            group = "verification"
-
-            perSuiteReportTasks.forEach { reportTask ->
-                executionData.from(reportTask.map { it.executionData })
-                sourceDirectories.from(reportTask.map { it.sourceDirectories })
-                classDirectories.from(reportTask.map { it.classDirectories })
-            }
-
-            reports {
-                xml.required = true
-                html.required = true
-            }
-        }
+        xml.required = true
+        html.required = true
     }
 }
 

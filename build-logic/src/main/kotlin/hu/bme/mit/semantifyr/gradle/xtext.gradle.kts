@@ -1,25 +1,21 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2023-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
 package hu.bme.mit.semantifyr.gradle
 
+import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import org.gradle.accessors.dm.LibrariesForLibs
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.mwe2")
 }
 
-val mwe2 by configurations.getting
-
-val ideGeneratedOutput by configurations.creating {
-    isCanBeConsumed = true
-    isCanBeResolved = false
-}
-
 val libs = the<LibrariesForLibs>()
+
+val mwe2 = configurations.named<DependencyScopeConfiguration>("mwe2")
 
 dependencies {
     api(libs.slf4j.api)
@@ -31,10 +27,10 @@ dependencies {
     testFixturesApi(libs.xtext.testing)
 
     mwe2(libs.xtext.generator)
-    mwe2(libs.xtext.generator.antlr)
+    "mwe2"(libs.xtext.generator.antlr)
 }
 
-val extension = extensions.create("xtext", XtextPluginConfiguration::class.java).apply {
+val extension = extensions.create<XtextPluginConfiguration>("xtext").apply {
     genPath.convention(layout.projectDirectory.dir("src/main/xtext-gen"))
     testFixtureGenPath.convention(layout.projectDirectory.dir("src/testFixtures/xtext-gen"))
     ideOutput.convention(layout.buildDirectory.dir("generated/sources/xtext/ide"))
@@ -51,10 +47,10 @@ sourceSets {
     }
 }
 
-val generateXtextLanguage by tasks.registering(JavaExec::class) {
+val generateXtextLanguage = tasks.register<JavaExec>("generateXtextLanguage") {
     group = "build"
 
-    classpath(mwe2)
+    classpath(configurations.named("mwe2Classpath"))
     mainClass.set("org.eclipse.emf.mwe2.launch.runtime.Mwe2Launcher")
 
     inputs.file(extension.mweFile)
@@ -64,11 +60,14 @@ val generateXtextLanguage by tasks.registering(JavaExec::class) {
     outputs.dir(extension.testFixtureGenPath)
     outputs.dir(extension.ideOutput)
 
-    args(extension.mweFile.get(), "-p", "rootPath=/$projectDir/..")
+    val mweFile = extension.mweFile
+    val rootPath = "rootPath=/$projectDir/.."
+    argumentProviders += CommandLineArgumentProvider { listOf(mweFile.get(), "-p", rootPath) }
 }
 
-artifacts {
-    add(ideGeneratedOutput.name, extension.ideOutput) {
+configurations.consumable("ideGeneratedElements") {
+    attributes(semantifyrArtifact("xtext-ide-sources"))
+    outgoing.artifact(extension.ideOutput) {
         builtBy(generateXtextLanguage)
     }
 }
