@@ -217,8 +217,7 @@ class SessionDocumentManager @Inject constructor(
     private fun fileUriToPathOrNull(uri: String): Path? {
         return try {
             when {
-                uri.startsWith("file://") -> Path.of(URI.create(uri))
-                uri.startsWith("file:/") -> Path.of(URI.create(uri).schemeSpecificPart)
+                uri.startsWith("file:/") -> Path.of(URI.create(uri))
                 uri.startsWith("/") -> Path.of(uri)
                 else -> null
             }

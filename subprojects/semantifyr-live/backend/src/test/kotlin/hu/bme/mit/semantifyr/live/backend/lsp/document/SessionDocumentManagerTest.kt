@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
 import hu.bme.mit.semantifyr.live.backend.testing.emptyGlobalsModule
 import io.ktor.websocket.WebSocketSession
 import org.assertj.core.api.Assertions.assertThat
+import org.eclipse.emf.common.util.URI
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -148,7 +149,7 @@ class SessionDocumentManagerTest {
     fun `toClientUri accepts the EMF single-slash file uri form`(@TempDir tmp: Path) {
         val manager = buildManager(tmp)
         val witnessPath = tmp.resolve(".artifacts").resolve("Case").resolve("witness.oxsts")
-        val emfStyleUri = "file:${witnessPath.toAbsolutePath().normalize()}"
+        val emfStyleUri = URI.createFileURI(witnessPath.toAbsolutePath().normalize().toString()).toString()
         assertThat(manager.toClientUri(emfStyleUri))
             .isEqualTo("file:///workspace/.artifacts/Case/witness.oxsts")
     }
