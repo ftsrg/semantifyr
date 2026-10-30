@@ -20,7 +20,7 @@ class IndentingStringBuilder(
             }
             sb.append(text)
         }
-        sb.append(System.lineSeparator())
+        sb.append('\n')
     }
 
     fun indented(block: IndentingStringBuilder.() -> Unit) {
