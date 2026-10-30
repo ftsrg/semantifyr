@@ -18,7 +18,8 @@ class ShellBasedThetaXstsExecutor :
     override val binaryName: String = "theta-xsts-cli"
 
     override fun isAvailable(): Boolean {
-        return probeAvailability(probeArgs = listOf("--version"))
+        // The CLI is a JVM; a cold start on a loaded host exceeds the 2s default and AUTO falls back to Docker
+        return probeAvailability(probeArgs = listOf("--version"), timeoutSeconds = 10)
     }
 
     override suspend fun execute(thetaExecutionSpecification: ThetaExecutionSpecification): ThetaExecutionResult {
