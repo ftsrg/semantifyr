@@ -62,6 +62,28 @@ class BackendConfigValidatorTest {
     }
 
     @Test
+    fun `a client address header without trusted proxies is rejected`(@TempDir tmp: Path) {
+        val config = baseConfig(tmp).run {
+            copy(server = server.copy(clientAddressHeader = "CF-Connecting-IP"))
+        }
+        assertThatThrownBy {
+            BackendConfigValidator.validate(config, flavors = emptyList())
+        }.isInstanceOf(InvalidConfigurationException::class.java)
+            .hasMessageContaining("trustedProxies")
+    }
+
+    @Test
+    fun `a malformed trusted proxy is rejected`(@TempDir tmp: Path) {
+        val config = baseConfig(tmp).run {
+            copy(server = server.copy(clientAddressHeader = "CF-Connecting-IP", trustedProxies = listOf("cloudflared")))
+        }
+        assertThatThrownBy {
+            BackendConfigValidator.validate(config, flavors = emptyList())
+        }.isInstanceOf(InvalidConfigurationException::class.java)
+            .hasMessageContaining("cloudflared")
+    }
+
+    @Test
     fun `httpsOnlyCookies must be true in production`(@TempDir tmp: Path) {
         val config = baseConfig(tmp).run {
             copy(server = server.copy(httpsOnlyCookies = false))

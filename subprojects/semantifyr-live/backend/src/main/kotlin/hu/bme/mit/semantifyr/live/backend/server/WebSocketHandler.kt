@@ -28,6 +28,7 @@ import kotlinx.coroutines.CancellationException
 class WebSocketHandler @Inject constructor(
     private val config: BackendConfig,
     private val sessionManager: SessionManager,
+    private val clientAddressResolver: ClientAddressResolver,
 ) {
 
     private val logger by loggerFactory()
@@ -40,14 +41,14 @@ class WebSocketHandler @Inject constructor(
                     refillPeriod = config.server.wsHandshakeRatePeriod,
                 )
                 requestKey {
-                    it.request.local.remoteAddress
+                    clientAddressResolver.resolve(it.request.local.remoteAddress, it.request.headers)
                 }
             }
         }
         routing {
             rateLimit(RateLimitName("ws-handshake")) {
                 webSocket("/ws/lsp/{flavor}") {
-                    val remoteIp = call.request.local.remoteAddress
+                    val remoteIp = clientAddressResolver.resolve(call.request.local.remoteAddress, call.request.headers)
                     logger.info { "WebSocket connection from ip=$remoteIp" }
 
                     val flavorId = call.parameters["flavor"]

@@ -55,6 +55,8 @@ data class ServerConfig(
     val wsHandshakeRatePeriod: Duration = 1.minutes,
     val maxWsFrameSize: Long = 4 * 1024 * 1024,
     val httpsOnlyCookies: Boolean = true,
+    val clientAddressHeader: String? = null,
+    val trustedProxies: List<String> = emptyList(),
 ) {
     fun withEnv(env: Map<String, String?>) = copy(
         port = env["SEMANTIFYR_LIVE_PORT"]?.toIntOrNull() ?: port,
@@ -65,6 +67,12 @@ data class ServerConfig(
         wsHandshakeRatePeriod = env["SEMANTIFYR_LIVE_WS_HANDSHAKE_RATE_PERIOD_SECONDS"]?.toLongOrNull()?.seconds ?: wsHandshakeRatePeriod,
         maxWsFrameSize = env["SEMANTIFYR_LIVE_MAX_WS_FRAME_SIZE"]?.toLongOrNull() ?: maxWsFrameSize,
         httpsOnlyCookies = env["SEMANTIFYR_LIVE_HTTPS_ONLY_COOKIES"]?.toBooleanStrictOrNull() ?: httpsOnlyCookies,
+        clientAddressHeader = env["SEMANTIFYR_LIVE_CLIENT_ADDRESS_HEADER"] ?: clientAddressHeader,
+        trustedProxies = env["SEMANTIFYR_LIVE_TRUSTED_PROXIES"]?.split(',')?.map {
+            it.trim()
+        }?.filter {
+            it.isNotEmpty()
+        } ?: trustedProxies,
     )
 
     val webRootPath by lazy {

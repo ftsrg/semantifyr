@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.live.backend
 
 import hu.bme.mit.semantifyr.live.backend.exceptions.InvalidConfigurationException
+import hu.bme.mit.semantifyr.live.backend.utils.AddressRange
 import java.nio.file.Files
 
 object BackendConfigValidator {
@@ -20,6 +21,7 @@ object BackendConfigValidator {
         validateRootWorkDirectory(config, problems)
         validateSemanticLibraries(config, flavors, problems)
         validateLimits(config, problems)
+        validateClientAddress(config, problems)
         if (!config.development) {
             validateProductionPosture(config, problems)
         }
@@ -37,6 +39,19 @@ object BackendConfigValidator {
         }
         if (!config.server.httpsOnlyCookies) {
             problems += "server.httpsOnlyCookies must be true in production, or run with development=true"
+        }
+    }
+
+    private fun validateClientAddress(config: BackendConfig, problems: MutableList<String>) {
+        for (range in config.server.trustedProxies) {
+            try {
+                AddressRange.parse(range)
+            } catch (e: IllegalArgumentException) {
+                problems += "server.trustedProxies entry '$range' is not an address or CIDR range: ${e.message}"
+            }
+        }
+        if (config.server.clientAddressHeader != null && config.server.trustedProxies.isEmpty()) {
+            problems += "server.trustedProxies must be set when server.clientAddressHeader is (env: SEMANTIFYR_LIVE_TRUSTED_PROXIES)"
         }
     }
 

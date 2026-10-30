@@ -53,6 +53,25 @@ class BackendConfigTest {
     }
 
     @Test
+    fun `client address settings come from env`() {
+        val config = BackendConfig().withEnv(
+            mapOf(
+                "SEMANTIFYR_LIVE_CLIENT_ADDRESS_HEADER" to "CF-Connecting-IP",
+                "SEMANTIFYR_LIVE_TRUSTED_PROXIES" to "172.30.0.2/32, 10.0.0.0/8,",
+            ),
+        )
+        assertThat(config.server.clientAddressHeader).isEqualTo("CF-Connecting-IP")
+        assertThat(config.server.trustedProxies).containsExactly("172.30.0.2/32", "10.0.0.0/8")
+    }
+
+    @Test
+    fun `client address forwarding is off by default`() {
+        val config = BackendConfig()
+        assertThat(config.server.clientAddressHeader).isNull()
+        assertThat(config.server.trustedProxies).isEmpty()
+    }
+
+    @Test
     fun `non-numeric values fall back to defaults`() {
         val config = BackendConfig().withEnv(
             mapOf(
