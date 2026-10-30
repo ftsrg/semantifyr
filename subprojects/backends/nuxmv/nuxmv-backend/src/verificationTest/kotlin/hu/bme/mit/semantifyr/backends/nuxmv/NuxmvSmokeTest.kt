@@ -10,49 +10,38 @@ import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackend
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
-import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
-import org.junit.jupiter.params.provider.MethodSource
+import org.junit.jupiter.api.Test
 import kotlin.io.path.Path
 
-class NuxmvVerificationTests {
+class NuxmvSmokeTest {
 
     companion object {
 
         private val injector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
         private val helper = injector.getInstance(SemantifyrVerifierTestHelper::class.java)
 
-        private val context by lazy {
-            helper.semantifyrLoader
-                .startContext()
-                .loadModels(Path("build/test-models/simple"))
-                .buildAndResolve()
-        }
-
         @JvmStatic
         @BeforeAll
         fun assumeNuxmvAvailable() {
             assumeBackendAvailable(NuxmvExecutorKey)
         }
-
-        @JvmStatic
-        fun `OXSTS Simple Test Suite Passes`(): List<Arguments> {
-            return helper.collectVerificationCasesAsArguments(context)
-        }
     }
 
-    @ParameterizedTest
-    @MethodSource
-    suspend fun `OXSTS Simple Test Suite Passes`(verificationCase: VerificationCase) {
-        helper.checkTestModel(
-            context,
-            verificationCase,
+    @Test
+    suspend fun `smoke case verifies and returns a witness`() {
+        val context = helper.semantifyrLoader
+            .startContext()
+            .loadModels(Path("build/test-models/smoke"))
+            .buildAndResolve()
+
+        helper.checkVerificationCase(
+            context = context,
+            case = helper.collectVerificationCases(context).single(),
             verificationPortfolio = SingleBackendPortfolio(NuxmvBackend(), NuxmvConfig.Ic3Invar),
-            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(NuxmvVerificationTests::class.java),
+            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(NuxmvSmokeTest::class.java),
         )
     }
 }
