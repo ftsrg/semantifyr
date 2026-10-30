@@ -11,7 +11,6 @@ import hu.bme.mit.semantifyr.frontends.gamma.GammaCompiler;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
-import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 import org.eclipse.emf.common.util.URI;
@@ -77,9 +76,10 @@ public class CompileGammaCommandHandler extends AbstractCommandHandler<String, R
         if (!sourceUri.isFile()) {
             throw new IllegalArgumentException("gamma.compile only supports file:// URIs (got: " + sourceUri + ")");
         }
-        var sourceFile = new File(sourceUri.toFileString());
-        var targetName = stripExtension(sourceFile.getName()) + ".oxsts";
-        return sourceFile.toPath().resolveSibling(targetName);
+        // toFileString() keeps an empty authority, yielding \\\C:\... on Windows
+        var sourcePath = Path.of(java.net.URI.create(sourceUri.toString()));
+        var targetName = stripExtension(sourcePath.getFileName().toString()) + ".oxsts";
+        return sourcePath.resolveSibling(targetName);
     }
 
     private static String stripExtension(String fileName) {
