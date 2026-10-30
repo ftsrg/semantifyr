@@ -38,11 +38,16 @@ abstract class DockerBasedBackendExecutor(
     }
 
     override fun isAvailable(): Boolean {
-        try {
-            dockerClient.pingCmd().exec()
+        val osType = try {
+            dockerClient.infoCmd().exec().osType
         } catch (throwable: Throwable) {
             logger.debug(throwable) { "Docker daemon is unreachable." }
 
+            return false
+        }
+
+        if (osType != "linux") {
+            logger.debug { "Docker daemon runs $osType containers, the backend images need linux" }
             return false
         }
 
