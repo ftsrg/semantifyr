@@ -7,7 +7,7 @@
 import { workspace } from "vscode";
 import * as net from "net";
 import { spawn } from "child_process";
-import { LanguageClient, type LanguageClientOptions, type ServerOptions, type StreamInfo } from "vscode-languageclient/node.js";
+import { LanguageClient, type LanguageClientOptions, type ServerOptions, type StreamInfo } from "vscode-languageclient/node";
 import { DidChangeConfigurationNotification } from "vscode-languageclient";
 import { readSemantifyrPayload } from "./settings.js";
 
