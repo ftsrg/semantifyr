@@ -16,23 +16,24 @@ import org.eclipse.xtext.resource.XtextResourceSet
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
+// one injector per JVM, and one parse at a time: Xtext registers global EMF state and initializes
+// its parser lazily, neither safe for racing legs
+private val cexInjector by lazy {
+    CexStandaloneSetup().createInjectorAndDoEMFRegistration()
+}
+
 @VerificationScoped
 class CexReader {
-
-    private val cexInjector by lazy {
-        CexStandaloneSetup().createInjectorAndDoEMFRegistration()
-    }
-    private val resourceSetProvider by lazy {
-        cexInjector.getProvider(XtextResourceSet::class.java)
-    }
 
     private fun loadFile(resourceSet: ResourceSet, path: Path): Resource {
         return resourceSet.getResource(URI.createFileURI(path.absolutePathString()), true)
     }
 
     fun loadCexModel(model: Path): CexModel {
-        val resourceSet = resourceSetProvider.get()
-        val resource = loadFile(resourceSet, model)
-        return resource.contents.single() as CexModel
+        synchronized(cexInjector) {
+            val resourceSet = cexInjector.getInstance(XtextResourceSet::class.java)
+            val resource = loadFile(resourceSet, model)
+            return resource.contents.single() as CexModel
+        }
     }
 }

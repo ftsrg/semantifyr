@@ -30,6 +30,7 @@ import hu.bme.mit.semantifyr.backends.theta.trace.ThetaLogVerdictParser
 import hu.bme.mit.semantifyr.backends.theta.trace.ThetaVerdict
 import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaCapabilityChecker
 import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaModelTransformer
+import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.XstsModelCreator
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
@@ -74,6 +75,7 @@ class ThetaVerificationContext @AssistedInject constructor(
     @Assisted request: BackendVerificationRequest,
     override val capabilityChecker: ThetaCapabilityChecker,
     private val thetaModelTransformer: ThetaModelTransformer,
+    private val xstsModelCreator: XstsModelCreator,
     private val thetaLogVerdictParser: ThetaLogVerdictParser,
     private val cexReader: CexReader,
     private val cexWitnessTransformer: CexWitnessTransformer,
@@ -89,13 +91,7 @@ class ThetaVerificationContext @AssistedInject constructor(
     override suspend fun prepare(): XstsModel {
         logger.info { "[$backendId] transforming InlinedOxsts -> XSTS" }
         val xsts = thetaModelTransformer.transform(request.inlinedOxsts, artifactManager.xstsUri)
-
-        val resourceSet = request.inlinedOxsts.eResource().resourceSet
-        resourceSet.getResource(artifactManager.xstsUri, false)?.delete(emptyMap<Any, Any>())
-        val resource = resourceSet.createResource(artifactManager.xstsUri)
-        resource.contents += xsts
-        xsts.eResource().save(emptyMap<Any, Any>())
-
+        xstsModelCreator.save(xsts)
         return xsts
     }
 
