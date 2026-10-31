@@ -44,6 +44,7 @@ public class ServerSettings {
 
     public static final String DEFAULT_PORTFOLIO_ID = "theta-full";
     private static final String WORKSPACE_ARTIFACTS_SUBDIRECTORY = ".artifacts";
+    private static final String SETTINGS_SECTION = "semantifyr";
 
     private static final ServerSettingsPayload DEFAULTS = new ServerSettingsPayload(
             DEFAULT_PORTFOLIO_ID,
@@ -63,9 +64,10 @@ public class ServerSettings {
             LOGGER.warn("Ignoring non-object LSP settings payload: {}", payload);
             return;
         }
-        JsonObject section = root.has("semantifyr") && root.get("semantifyr").isJsonObject()
-                ? root.getAsJsonObject("semantifyr")
-                : root;
+        JsonObject section =
+                root.has(SETTINGS_SECTION) && root.get(SETTINGS_SECTION).isJsonObject()
+                        ? root.getAsJsonObject(SETTINGS_SECTION)
+                        : root;
         apply(GSON.fromJson(section, ServerSettingsPayload.class));
     }
 
