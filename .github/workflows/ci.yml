@@ -73,10 +73,10 @@ jobs:
           sudo apt-get install -y spin
       - name: Gradle build
         shell: bash
-        run: ./gradlew build -Ptests.requiredBackends=$REQUIRED_BACKENDS -Pwebsite.apiDocs=$WEBSITE_API_DOCS
+        run: ./gradlew build --continue -Ptests.requiredBackends=$REQUIRED_BACKENDS -Pwebsite.apiDocs=$WEBSITE_API_DOCS
       - name: Run integration tests
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: ./gradlew integrationTest -Ptests.requiredBackends=$REQUIRED_BACKENDS
+        run: ./gradlew integrationTest --continue -Ptests.requiredBackends=$REQUIRED_BACKENDS
       - name: Merge coverage reports
         if: ${{ matrix.os == 'ubuntu-latest' }}
         shell: bash
