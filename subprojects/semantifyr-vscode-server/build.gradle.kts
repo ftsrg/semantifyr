@@ -5,6 +5,7 @@
  */
 
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.conventions.sysmlCorpusModels
 
 plugins {
     base
@@ -64,9 +65,17 @@ val cloneGammaTestModels = tasks.register<Sync>("cloneGammaTestModels") {
     into("examples/gamma/TestModels")
 }
 
+val sysmlCorpusDir = rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/examples")
+
 val cloneSysMLTestModels = tasks.register<Sync>("cloneSysMLTestModels") {
-    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/examples")) {
-        include("*.sysml")
+    from(sysmlCorpusDir) {
+        // the corpus models share its isStateActive and eventually
+        include("Verification.sysml")
+        include(
+            sysmlCorpusModels(sysmlCorpusDir).map {
+                it.file
+            },
+        )
     }
     into("examples/sysml/TestModels")
 }
