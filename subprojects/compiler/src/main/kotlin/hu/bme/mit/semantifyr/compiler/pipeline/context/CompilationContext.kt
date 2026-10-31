@@ -108,12 +108,18 @@ class ArraySlot(
     val index: Int,
 )
 
+class RecordField(
+    val recordVariable: VariableDeclaration,
+    val fields: List<VariableDeclaration>,
+)
+
 class FlatteningInfo(
     val variableHolders: Map<VariableDeclaration, Instance>,
     val variableInstanceDomains: Map<VariableDeclaration, Set<Instance>>,
     val variableMappings: Map<Instance, Map<VariableDeclaration, VariableDeclaration>>,
     val instanceIdMapping: InstanceIdMapping,
     val arraySlots: Map<VariableDeclaration, ArraySlot> = emptyMap(),
+    val recordFields: Map<VariableDeclaration, RecordField> = emptyMap(),
 ) {
     private val reverseVariableMappings: Map<Instance, Map<VariableDeclaration, VariableDeclaration>> =
         variableMappings.mapValues { (_, mapping) ->

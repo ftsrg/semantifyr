@@ -4,8 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package semantifyr::constructs::record_declaration
+package semantifyr::constructs::record_feature
 
 record Point {
     var x: int
+}
+
+class Host {
+    refers origin: Point
 }
