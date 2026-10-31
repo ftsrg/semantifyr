@@ -58,7 +58,7 @@ Categorizes verification cases. For example, `@Tag(category = "slow")` marks lon
 annotation Control
 ```
 
-Signals that a variable is important to track during verification. May affect how the model checker reports counterexamples.
+Declares the variable a control variable of the Theta model (`ctrl var`), which Theta's `cegar-expl` and `cegar-expl-pred-combined` configurations track precisely from the first abstraction. The other engines ignore it, and counterexamples carry every variable either way, so mark only variables that steer the model, never ones that only record what happened.
 
 ### `@Shared`
 
@@ -74,7 +74,7 @@ Instances contained in a `@Shared` containment feature are shared across all ins
 annotation Trace
 ```
 
-Calls to `@Trace`-annotated transitions are recorded in the verification witness, including parameter bindings at each call site. Only the calls that fired are listed, each with the receiver's feature path from the root instance (`root.kitchen.lamp`). The witness files `trace.json` and `witness.json` hold `initialStep` (the state before `init`), `initializedStep` (the state after `init`, with the calls traced during it) and `steps`, one per step of the main transition. The SysML v2 library traces a minimal set: transition firing, item sending, and the time advance at the root. The Gamma library traces transition firing, events raised on ports in either direction, and the time advance at the root, and the Gamma frontend writes the trace back as a Gamma execution trace, `trace.gamma` next to the witness: one `step` per witness step whose `act` block raises the input events, schedules the component and lets one second elapse, and whose `assert` block lists the fired transitions (by source and target state, with the trigger when that is ambiguous), the raised events, the active leaf states and the variable values, each referenced by its path from the verification case's component instance (`system.controller.Main.Operating`).
+Calls to `@Trace`-annotated transitions are recorded in the verification witness, including parameter bindings at each call site. Only the calls that fired are listed, each with the receiver's feature path from the root instance (`root.kitchen.lamp`). The witness files `trace.json` and `witness.json` hold `initialStep` (the state before `init`), `initializedStep` (the state after `init`, with the calls traced during it) and `steps`, one per step of the main transition. The SysML v2 library traces a minimal set: transition firing, item sending, and the time advance at the root. The Gamma library traces transition firing, events raised on ports in either direction, and the time advance at the root, and the Gamma frontend writes the trace back as a Gamma execution trace, `trace.gamma` next to the witness: one `step` per witness step whose `act` block raises the input events, schedules the component and lets one second elapse, and whose `assert` block lists the fired transitions (by source and target state, with the trigger when that is ambiguous), the raised events, the active leaf states and the variable values, each referenced by its path from the verification case's component instance (`system.controller.Main.Operating`). Each traced call site the compiler keeps costs one boolean state variable, which is not a `@Control` variable.
 
 ### `@Clock`
 

@@ -36,9 +36,6 @@ class TransitionCallTraceTransformerTest {
     private val boolDatatype = OxstsFactory.createDataTypeDeclaration().also {
         it.name = "bool"
     }
-    private val controlAnnotation = OxstsFactory.createAnnotationDeclaration().also {
-        it.name = "Control"
-    }
     private val nonOptimizableAnnotation = OxstsFactory.createAnnotationDeclaration().also {
         it.name = "NonOptimizable"
     }
@@ -53,7 +50,6 @@ class TransitionCallTraceTransformerTest {
     private fun newTransformer(): TransitionCallTraceTransformer {
         whenever(evaluatorProvider.getEvaluator(any())).thenReturn(evaluator)
         whenever(builtinSymbolResolver.boolDatatype(any())).thenReturn(boolDatatype)
-        whenever(builtinSymbolResolver.controlAnnotation(any())).thenReturn(controlAnnotation)
         whenever(builtinSymbolResolver.nonOptimizableAnnotation(any())).thenReturn(nonOptimizableAnnotation)
         return TransitionCallTraceTransformer(evaluatorProvider, builtinSymbolResolver)
     }
@@ -79,7 +75,7 @@ class TransitionCallTraceTransformerTest {
     }
 
     @Test
-    fun `tracer variable is annotated NonOptimizable and Control with bool default false`() {
+    fun `tracer variable is annotated NonOptimizable only with bool default false`() {
         val transformer = newTransformer()
 
         val operation = transformer.traceTransitionCall(
@@ -97,7 +93,7 @@ class TransitionCallTraceTransformerTest {
         val annotationDeclarations = variable.annotation.annotations.map {
             it.declaration
         }
-        assertThat(annotationDeclarations).containsExactlyInAnyOrder(controlAnnotation, nonOptimizableAnnotation)
+        assertThat(annotationDeclarations).containsExactly(nonOptimizableAnnotation)
     }
 
     @Test
