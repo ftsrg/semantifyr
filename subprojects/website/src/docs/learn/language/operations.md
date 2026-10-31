@@ -13,7 +13,7 @@ Operations (and whole transitions) are atomic in nature, which means either the 
 
 ### Assignment
 
-`lhs := rhs;` updates a variable's value. The left-hand side may be a navigation expression.
+`lhs := rhs;` updates a variable's value. The left-hand side may be a navigation expression. Only runtime variables can be written: the validator rejects an assignment or havoc whose target is substituted at compile time, such as the loop variable of an [`inline for`](inline-operations.md) (`OXSTS.INCORRECT_ASSIGNMENT`).
 
 ```oxsts
 value := value + 1
@@ -94,7 +94,7 @@ if (value < maximum()) {
 
 ### `for`
 
-A runtime loop over a range. The loop variable takes each value in the range in turn. The expression can be any runtime expression. Only the Theta backend supports runtime `for`; the other backends report the case as not supported.
+A runtime loop over a range. The loop variable takes each value in the range in turn. The expression can be any runtime expression. Only the Theta backend supports runtime `for`, and only over a range; the other backends report the case as not supported.
 
 ```oxsts
 for (i in 1..10) {
@@ -104,7 +104,7 @@ for (i in 1..10) {
 
 ### Local Variable
 
-Local variables allow the definition of temporary locals in the operation structure
+Local variables allow the definition of temporary locals in the operation structure. A local variable cannot be an array (`OXSTS.UNSUPPORTED_FEATURE`).
 
 ```oxsts
 var choiceTaken := false

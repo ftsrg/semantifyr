@@ -42,4 +42,24 @@ if (current == Color::Red) {
 
 ## Records
 
-Records are not supported yet. The grammar accepts `record` declarations, but the validator rejects them. Use [Classes](classes.md) to group data.
+:::info[Planned]
+The grammar accepts `record` declarations, but the validator rejects them today (`OXSTS.UNSUPPORTED_FEATURE`). Use [Classes](classes.md) to group data until then.
+
+Records are **value-typed** objects. They have no identity: two records with equal field values are interchangeable. Records are analogous to Java Valhalla value classes or C structs. Records have no inheritance and no behavior; they only carry data.
+
+```oxsts
+record Point {
+  var x: int
+  var y: int
+}
+```
+
+A record literal lists the fields by name inside curly braces:
+
+```oxsts
+var origin: Point := Point {
+  x = 0,
+  y = 0
+}
+```
+:::

@@ -18,6 +18,7 @@ Expressions compute values. They appear in [property](properties.md) bodies, on 
 | Nothing | `nothing` |
 | Infinity | `*` |
 | Array | `[a, b, c]`, `[]` |
+| Record (planned, see [Records](datatypes.md#records)) | `Point { x = 0, y = 0 }` |
 
 See [Datatypes](datatypes.md) for the corresponding types.
 
@@ -88,10 +89,6 @@ The boolean operators `&&`, `||`, and `^^` share one precedence level and are le
 | `a..b` | Inclusive range from `a` to `b` |
 | `a..<b` | Exclusive range from `a` to `b-1` |
 
-:::caution
-The compiler currently evaluates `a..<b` like `a..b`, including `b`.
-:::
-
 ## Member Access (`.`)
 
 The `.` operator names a member of an instance.
@@ -145,6 +142,12 @@ prop {
 }
 ```
 
-:::note
-Additional temporal operators will be supported in the future.
+:::info[Planned]
+More temporal operators are planned: `AF expr` (`expr` eventually holds on every execution), `EG expr` (`expr` always holds on some execution), `AX expr` and `EX expr` (`expr` holds in every or in some next state). The parser rejects them today; only `AG` and `EF` parse.
+
+```oxsts
+prop {
+  return AF counter.value == 100
+}
+```
 :::

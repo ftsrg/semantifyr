@@ -22,7 +22,7 @@ Because these transitions are inherited, declaring your own [`init`](transitions
 
 ## Class Declaration
 
-A class declaration consists of the `class` keyword, a name, an optional list of superclasses, and a body in `{ }`. Members may appear in any order.
+A class declaration consists of the `class` keyword, a name, an optional superclass, and a body in `{ }`. Members may appear in any order.
 
 ```oxsts
 class Counter {
@@ -67,7 +67,7 @@ abstract class Shape {
 
 ## Inheritance
 
-A class extends a superclass listed after `:`.
+A class extends one superclass, listed after `:`.
 
 ```oxsts
 class Square : Shape {
@@ -80,21 +80,12 @@ class Square : Shape {
 ```
 
 :::caution
-The grammar accepts several superclasses separated by commas, but multiple inheritance is not supported yet: with more than one superclass, member references in the file do not resolve.
+The grammar accepts several superclasses separated by commas, but a class has one superclass: the validator rejects every superclass after the first (`OXSTS.MULTIPLE_INHERITANCE`).
 :::
-
-{/* Not yet
-Multiple inheritance is also supported.
-
-```oxsts
-class Logged : Counter, Loggable {
-}
-```
-*/}
 
 ## Redefining Members
 
-`redefine` overrides an inherited member of the **same name**. The redefining member must match the signature (parameter types and return type for [transitions](transitions.md) and [properties](properties.md)). Redefining is the primary mechanism by which semantic libraries specialize behavior.
+`redefine` overrides an inherited member of the **same name**. A redefined [transition](transitions.md) or [property](properties.md) takes as many parameters as the inherited one (`OXSTS.REDEFINITION_SIGNATURE_MISMATCH`), and a redefined property's return type, feature's type or variable's type must be assignable to the inherited one (`OXSTS.TYPE_MISMATCH`). Redefining is the primary mechanism by which semantic libraries specialize behavior.
 
 ```oxsts
 redefine tran fire() {

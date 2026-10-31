@@ -45,7 +45,7 @@ This runs the unit tests and the verification smoke tests, and assembles every a
 ./gradlew nightlyTest       # long-running cases and witness re-checks on all backends
 ```
 
-Pass `-Ptests.requiredBackends=theta,spin` to fail instead of skip when a listed backend is missing.
+Pass `-Ptests.requiredBackends=theta,spin` to fail instead of skip when a listed backend is missing. A listed backend that returns Inconclusive or Not supported also fails the case, unless the case names it in `@Tag("engine-limit:...")`; a Timeout skips.
 
 ## Where to start
 

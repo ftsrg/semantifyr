@@ -14,8 +14,6 @@ Transitions define **behavior**: how the system changes state. A transition body
 | `init` | Initialization transition; runs once at startup. |
 | `tran` | Step transition; runs on every step. |
 
-The grammar also accepts the `env` and `havoc` transition kinds; the validator rejects them.
-
 The implicit base class [`Anything`](standard-library.md) provides empty `init` and `tran` transitions, so any class that does not declare its own inherits these no-ops.
 
 ## Declaring a Transition
@@ -36,7 +34,7 @@ tran setBy(amount: int) {
 }
 ```
 
-Parameters are passed by value when the transition is invoked through an [inline call](inline-operations.md#inline-call).
+Parameters are passed by value when the transition is invoked through an [inline call](inline-operations.md#inline-call). A parameter cannot be an array (`OXSTS.UNSUPPORTED_FEATURE`).
 
 ## The Implicit `main` and `init`
 
