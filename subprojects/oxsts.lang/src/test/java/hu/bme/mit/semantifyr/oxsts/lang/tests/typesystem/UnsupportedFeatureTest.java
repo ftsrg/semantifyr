@@ -38,21 +38,23 @@ public class UnsupportedFeatureTest {
     private OxstsPackageParseHelper parseHelper;
 
     @Test
-    void localArrayIsRejected() {
+    void localArrayPasses() {
         var pkg = parseHelper.parse("""
             package test
             class C {
                 var x: int := 0
+                var i: int := 0
                 redefine tran {
-                    var values: int[2] := [1, 2]
-                    x := values[1]
+                    var values: int[2] := [1, x]
+                    var scratch: int[3]
+                    scratch[i] := values[1]
+                    x := scratch[i]
                 }
             }
             """, CheckMode.ALL);
 
         pkg.assertNoResourceErrors();
-        pkg.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "Local array");
-        assertOnlyErrorsAreUnsupportedAtLine(pkg, 5);
+        pkg.assertNoValidationErrors();
     }
 
     @Test
@@ -70,7 +72,7 @@ public class UnsupportedFeatureTest {
         assertThat(pkg.getIssues())
                 .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
                 .singleElement()
-                .satisfies(issue -> assertThat(issue.getMessage()).contains("Local array"));
+                .satisfies(issue -> assertThat(issue.getMessage()).contains("Arrays of class or feature type"));
     }
 
     @Test

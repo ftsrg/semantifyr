@@ -6,7 +6,7 @@ Indexing `a[i]` (runtime)	pass	semantic/arrays.oxsts	ArrayRuntimeIndexReach
 Array `[lb..ub]` multiplicity	pass	semantic/arrays.oxsts	ArrayRangedMultiplicityReach
 Class-typed arrays	reject	constructs/class_typed_array.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Feature-typed arrays	reject	constructs/feature_typed_array.oxsts	OXSTS.UNSUPPORTED_FEATURE
-Local arrays	reject	constructs/local_array.oxsts	OXSTS.UNSUPPORTED_FEATURE
+Local arrays	pass	semantic/arrays.oxsts	LocalArrayRuntimeIndexReach
 Parameter arrays	reject	constructs/parameter_array.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Unbounded variable multiplicity `[]`, `[lb..*]`	reject	constructs/unbounded_variable.oxsts	OXSTS.TYPE_MISMATCH
 Call through a variable `v.t()`	pass	semantic/variable_dispatch.oxsts	ClassTypedDispatchReach
