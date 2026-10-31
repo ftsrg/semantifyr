@@ -77,12 +77,13 @@ export default {
         resolve: {
           alias: {
             '@oxsts-test-models': path.resolve(__dirname, '../../oxsts-test-models'),
+            '@sysml-tutorial-models': path.resolve(__dirname, '../frontends/sysml/models/tutorial'),
             // written by the cliReference_* Gradle tasks
             '@cli-reference': path.resolve(__dirname, 'build/cli-reference'),
           },
         },
         module: {
-          rules: [{ test: /\.(oxsts|txt)$/, type: 'asset/source' }],
+          rules: [{ test: /\.(oxsts|sysml|txt)$/, type: 'asset/source' }],
         },
       }),
     }),
