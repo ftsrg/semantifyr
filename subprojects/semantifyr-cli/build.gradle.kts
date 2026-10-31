@@ -16,6 +16,8 @@ dependencies {
 
     implementation(libs.clikt)
     implementation(libs.kotlinx.coroutines.core)
+
+    testImplementation(testFixtures(project(":verifier")))
 }
 
 application {
@@ -24,6 +26,12 @@ application {
 }
 
 val rootDirectory = isolated.rootProject.projectDirectory
+
+tasks.named("test") {
+    inputs.dir(rootDirectory.dir("oxsts-test-models"))
+        .withPropertyName("oxstsTestModels")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}
 
 distributions.main {
     contents {
