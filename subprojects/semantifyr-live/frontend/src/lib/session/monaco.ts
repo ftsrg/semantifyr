@@ -12,7 +12,7 @@ import {
 } from '@codingame/monaco-vscode-files-service-override';
 import { configureDefaultWorkerFactory } from 'monaco-languageclient/workerFactory';
 import { MonacoVscodeApiWrapper, type MonacoVscodeApiConfig, type ExtensionConfig } from 'monaco-languageclient/vscodeApiWrapper';
-import { LanguageClientWrapper, type LanguageClientConfig } from 'monaco-languageclient/lcwrapper';
+import { LanguageClientWrapper, LcWebSocket, type LanguageClientConfig } from 'monaco-languageclient/lcwrapper';
 import { EditorApp, type EditorAppConfig } from 'monaco-languageclient/editorApp';
 import type { editor } from 'monaco-editor';
 
@@ -294,11 +294,6 @@ export interface LanguageClientCallbacks {
   onStopped: () => void;
 }
 
-export interface LanguageClientConnection {
-  wrapper: LanguageClientWrapper;
-  webSocket: WebSocket;
-}
-
 const LSP_STATE_STOPPED = 1;
 
 export async function connectLanguageClient(
@@ -306,13 +301,18 @@ export async function connectLanguageClient(
   flavorId: string,
   languageId: string,
   callbacks: LanguageClientCallbacks,
-): Promise<LanguageClientConnection> {
+): Promise<LanguageClientWrapper> {
   const { ws: wsBaseUrl } = normalizeBaseUrl(backendUrl);
-  const webSocketUrl = `${wsBaseUrl}/ws/lsp/${encodeURIComponent(flavorId)}`;
-  const webSocket = new WebSocket(webSocketUrl);
   const languageClientConfig: LanguageClientConfig = {
     languageId,
-    connection: { options: { $type: 'WebSocketDirect', webSocket } },
+    connection: {
+      options: {
+        $family: 'WebSocket',
+        realization: () => new LcWebSocket(),
+        webSocketUrl: `${wsBaseUrl}/ws/lsp/${encodeURIComponent(flavorId)}`,
+        disposeResources: true,
+      },
+    },
     clientOptions: {
       documentSelector: [languageId],
       workspaceFolder: {
@@ -351,5 +351,5 @@ export async function connectLanguageClient(
     }
   }
 
-  return { wrapper: languageClient, webSocket };
+  return languageClient;
 }
