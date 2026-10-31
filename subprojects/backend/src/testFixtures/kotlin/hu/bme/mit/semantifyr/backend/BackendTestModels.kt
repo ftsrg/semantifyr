@@ -44,6 +44,16 @@ class BackendTestModels @Inject constructor(
             tran { assume(x < 3) x := x + 1 }
             prop { EF x == 5 }
         """
+
+        const val ONE_OF_SEVERAL_CHANGES = """
+            inlined oxsts of semantifyr::Anything
+            var y : int := 0
+            var x : int := 5
+            var b : bool := true
+            init { }
+            tran { y := y + 1 }
+            prop { AG y < 2 }
+        """
     }
 
     fun parse(source: String, vararg packages: String): InlinedOxsts {

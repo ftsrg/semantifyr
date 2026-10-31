@@ -39,10 +39,17 @@ class XstsWitnessTransformer {
 
         val mappings = mutableMapOf<CexWitnessState, XstsWitnessState>()
 
+        // Theta 8 prints a state's variables sorted by name, the witness keeps the declaration order
+        private val declarationOrder = xstsModel.variableDeclarations.withIndex().associate {
+            it.value.name to it.index
+        }
+
         fun transform(cexAssumptionWitnessState: CexWitnessState) = mappings.getOrPut(cexAssumptionWitnessState) {
             XstsWitnessState(
                 cexAssumptionWitnessState.variableValues.filterNot {
                     LocalVarNames.isLocalVar(it.variableName)
+                }.sortedBy {
+                    declarationOrder[it.variableName]
                 }.map {
                     transform(it)
                 },
@@ -50,12 +57,11 @@ class XstsWitnessTransformer {
         }
 
         private fun transform(variableValue: CexWitnessStateVariableValue): XstsWitnessStateVariableValue {
-            val variable = xstsModel.variableDeclarations.firstOrNull {
-                it.name == variableValue.variableName
-            }
-            check(variable != null) {
+            val index = declarationOrder[variableValue.variableName]
+            check(index != null) {
                 "Variable with name ${variableValue.variableName} not found!"
             }
+            val variable = xstsModel.variableDeclarations[index]
 
             return XstsWitnessStateVariableValue(
                 variable,
