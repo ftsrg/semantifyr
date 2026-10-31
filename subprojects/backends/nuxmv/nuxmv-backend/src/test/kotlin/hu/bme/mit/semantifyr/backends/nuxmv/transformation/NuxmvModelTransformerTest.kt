@@ -79,21 +79,6 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
     }
 
     @Test
-    suspend fun `a variable starting with an underscore is renamed so traces show it`() {
-        val artifacts = transform(
-            """
-                var __x : int := 0
-                init { }
-                tran { }
-                prop { AG __x == 0 }
-            """,
-        )
-
-        assertThat(artifacts.smv.lines().map { it.trim() }).containsSequence("VAR", "v__x : integer;")
-        assertThat(artifacts.property.invariant).isEqualTo("(v__x = 0)")
-    }
-
-    @Test
     suspend fun `boolean and enum variables get their domains`() {
         val lines = smvLines(
             """

@@ -25,21 +25,21 @@
 *** See http://mathsat.fbk.eu
 
 -- no proof or counterexample found with bound 0
--- invariant !(v__root__x = 1)  is false
+-- invariant !(__root__x = 1)  is false
 -- as demonstrated by the following execution sequence
 Trace Description: IC3 smt counterexample 
 Trace Type: Counterexample 
   -> State: 1.1 <-
-    v__root__x = 0
-    v__root__x__init_b0_seed = 0
-    v__root__x__tran_b0_1 = 1
-    v__root__x__tran_b0_2 = 0
-    v__root__x__tran_b0_3 = 1
+    __root__x = 0
+    __root__x__init_b0_seed = 0
+    __root__x__tran_b0_1 = 1
+    __root__x__tran_b0_2 = 0
+    __root__x__tran_b0_3 = 1
   -> Input: 1.2 <-
     nondet_tran_b0_0 = 0
   -> State: 1.2 <-
-    v__root__x = 1
-    v__root__x__init_b0_seed = 0
-    v__root__x__tran_b0_1 = 0
-    v__root__x__tran_b0_2 = 0
-    v__root__x__tran_b0_3 = 0
+    __root__x = 1
+    __root__x__init_b0_seed = 0
+    __root__x__tran_b0_1 = 0
+    __root__x__tran_b0_2 = 0
+    __root__x__tran_b0_3 = 0

@@ -36,12 +36,7 @@ class NuxmvVariableTransformer @Inject constructor(
     private val descriptionCache = mutableMapOf<VariableDeclaration, NuxmvVariable>()
 
     fun nameOf(variableDeclaration: VariableDeclaration): String {
-        val name = mangler.nameOf(variableDeclaration)
-        // nuXmv leaves identifiers starting with two underscores out of its traces
-        if (name.startsWith("__")) {
-            return "v$name"
-        }
-        return name
+        return mangler.nameOf(variableDeclaration)
     }
 
     fun describe(variableDeclaration: VariableDeclaration): NuxmvVariable {

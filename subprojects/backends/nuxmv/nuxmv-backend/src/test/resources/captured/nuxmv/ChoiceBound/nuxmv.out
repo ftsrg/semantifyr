@@ -26,4 +26,4 @@
 
 -- no proof or counterexample found with bound 0
 -- no proof or counterexample found with bound 1
--- invariant ((v__root__x = 0 | v__root__x = 1) | v__root__x = 2)  is true
+-- invariant ((__root__x = 0 | __root__x = 1) | __root__x = 2)  is true
