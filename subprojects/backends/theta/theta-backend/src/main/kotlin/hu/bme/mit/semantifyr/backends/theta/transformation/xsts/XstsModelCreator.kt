@@ -12,19 +12,17 @@ import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 import org.eclipse.emf.common.util.URI
 import org.eclipse.xtext.resource.XtextResourceSet
 
+// one injector per JVM, and one serialization at a time: Xtext registers global EMF state and fills
+// its serializer caches lazily, neither safe for racing legs
+private val xstsInjector by lazy {
+    XstsStandaloneSetup().createInjectorAndDoEMFRegistration()
+}
+
 @VerificationScoped
 class XstsModelCreator {
 
-    private val xstsInjector by lazy {
-        XstsStandaloneSetup().createInjectorAndDoEMFRegistration()
-    }
-
-    private val resourceSetProvider by lazy {
-        xstsInjector.getProvider(XtextResourceSet::class.java)
-    }
-
     fun createEmptyXsts(xstsUri: URI): XstsModel {
-        val resourceSet = resourceSetProvider.get()
+        val resourceSet = xstsInjector.getInstance(XtextResourceSet::class.java)
         val resource = resourceSet.createResource(xstsUri)
 
         val xstsModel = XstsFactory.createXstsModel()
@@ -33,4 +31,9 @@ class XstsModelCreator {
         return xstsModel
     }
 
+    fun save(xstsModel: XstsModel) {
+        synchronized(xstsInjector) {
+            xstsModel.eResource().save(emptyMap<Any, Any>())
+        }
+    }
 }

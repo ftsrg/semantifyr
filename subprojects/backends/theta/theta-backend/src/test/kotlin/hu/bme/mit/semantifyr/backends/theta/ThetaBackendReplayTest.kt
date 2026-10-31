@@ -13,6 +13,10 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.valuesByName
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
@@ -114,5 +118,26 @@ class ThetaBackendReplayTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
         assertThat(result.message).matches("theta:cegar-expl does not support \\S+:2: variables of type real; \\S+:2: real literals")
+    }
+
+    @Test
+    suspend fun `racing legs on one request do not interfere`() {
+        val artifactDirectory = cleanArtifactDirectory("RacingLegs")
+        val inlinedOxsts = models.compile("control_flow", "ChoiceBranch1Reach", artifactDirectory)
+        val environment = ExecutionEnvironment.builder().put(ThetaExecutorKey) {
+            ReplayingThetaExecutor("ChoiceBranch1Reach")
+        }.build()
+
+        val results = coroutineScope {
+            (0 until 16).map { leg ->
+                async(Dispatchers.Default) {
+                    val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory.resolve("leg$leg"))
+                    ThetaBackend().verify(models.injector, ThetaConfig.CegarExpl, request, environment)
+                }
+            }.awaitAll()
+        }
+
+        assertThat(results.map { "${it.verdict} ${it.message}" }).containsOnly("Passed null")
+        assertThat(results.map { it.inlinedWitness }).doesNotContainNull()
     }
 }

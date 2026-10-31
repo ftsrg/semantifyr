@@ -20,6 +20,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
 
     testImplementation(testFixtures(project(":backend")))
+    testImplementation(libs.kotlinx.coroutines.core)
 }
 
 tasks.named("test") {
