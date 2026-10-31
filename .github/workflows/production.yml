@@ -20,3 +20,5 @@ jobs:
       instance: semantifyr-live
       tag: ${{ inputs.tag }}
       url: https://live.semantifyr.org
+    # without inherit the called job sees its environment secrets as empty (actions/runner#4453)
+    secrets: inherit

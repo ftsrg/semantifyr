@@ -48,3 +48,5 @@ jobs:
       instance: semantifyr-live-staging
       tag: ${{ needs.ci.outputs.tag }}
       url: https://live-staging.semantifyr.org
+    # without inherit the called job sees its environment secrets as empty (actions/runner#4453)
+    secrets: inherit
