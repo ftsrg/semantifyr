@@ -10,6 +10,7 @@ import {
   findExample,
   findExampleAcrossFlavors,
   findFlavor,
+  importedSysmlv2Manifest,
 } from '../examples';
 
 describe('LIVE_FLAVORS registry', () => {
@@ -62,6 +63,21 @@ describe('LIVE_FLAVORS registry', () => {
   it('the trafficlight snapshots contain code that mentions a verification case', () => {
     const direct = findExample(findFlavor('oxsts')!, 'basics');
     expect(direct?.code).toContain('@VerificationCase');
+  });
+});
+
+describe('SysML v2 corpus examples', () => {
+  it('registers every example of the corpus manifest with its compiled model', () => {
+    const manifests = Object.values(importedSysmlv2Manifest);
+    expect(manifests).toHaveLength(1);
+    const expected = manifests[0]!.models
+      .filter((model) => model.example)
+      .map((model) => `${model.file.replace(/\.sysml$/, '')}-sysmlv2-library`);
+    const registered = findFlavor('oxsts-with-sysmlv2-library')!
+      .examples.filter((example) => example.id !== 'blank')
+      .map((example) => example.id);
+    expect(expected.length).toBeGreaterThan(0);
+    expect(registered).toEqual(expected);
   });
 });
 
