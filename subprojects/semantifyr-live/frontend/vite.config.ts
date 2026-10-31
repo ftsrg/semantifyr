@@ -36,7 +36,7 @@ export default defineConfig({
     react(),
     VitePWA({
       disable: process.env.VITEST === 'true',
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'logo-full-light.svg', 'logo-full-dark.svg'],
       manifest: {
         name: 'Semantifyr Live',
@@ -57,17 +57,23 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{css,html,ico,svg,png,json,webmanifest,woff,woff2,ttf}'],
-        navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//, /^\/ws\//],
+        // pages come from the network, so a returning browser starts the deployed build; the precached index.html is only the offline page
+        navigateFallback: null,
+        directoryIndex: null,
         cleanupOutdatedCaches: true,
         runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkOnly',
+            options: { precacheFallback: { fallbackURL: 'index.html' } },
+          },
           {
             urlPattern: /\/assets\/.*\.js$/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'semantifyr-app-chunks',
               expiration: { maxEntries: 256, maxAgeSeconds: 60 * 60 * 24 * 30 },
-              cacheableResponse: { statuses: [0, 200] },
+              cacheableResponse: { statuses: [200] },
             },
           },
         ],
