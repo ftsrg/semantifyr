@@ -19,6 +19,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.readText
 
 class NuxmvBackendReplayTest {
 
@@ -63,6 +64,8 @@ class NuxmvBackendReplayTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(result.inlinedWitness!!.transitionStates.last().valuesByName()).containsEntry("\$\$root\$\$x", 1)
+        val commands = Path("build", "test-artifacts", "NuxmvBackendReplayTest", "ChoiceBranch1Reach", "commands.cmd").readText()
+        assertThat(commands).contains("set traces_hiding_prefix \"~\"")
     }
 
     @Test

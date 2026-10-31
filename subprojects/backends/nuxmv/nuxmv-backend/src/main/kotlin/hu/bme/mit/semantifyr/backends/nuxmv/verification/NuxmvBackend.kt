@@ -97,6 +97,8 @@ class NuxmvVerificationContext @AssistedInject constructor(
         val checkCommand = """${config.checkCommand} "${artifacts.property.invariant}""""
         val cmdScript = buildString {
             appendLine("set on_failure_script_quits")
+            // mangled names start with "__", the default prefix nuXmv hides from printed traces
+            appendLine("""set traces_hiding_prefix "~"""")
             appendLine("""set input_file "${artifactManager.modelFile.absolutePath}"""")
             appendLine(config.setupCommand)
             appendLine("set default_trace_plugin 1")

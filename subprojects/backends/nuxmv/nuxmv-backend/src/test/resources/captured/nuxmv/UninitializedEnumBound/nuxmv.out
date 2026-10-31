@@ -24,10 +24,10 @@
 *** Copyright (C) 2009-2019 by University of Trento and others
 *** See http://mathsat.fbk.eu
 
--- invariant v__root__light = Off  is false
+-- invariant __root__light = Off  is false
 -- as demonstrated by the following execution sequence
 Trace Description: IC3 smt counterexample 
 Trace Type: Counterexample 
   -> State: 1.1 <-
-    v__root__light = On
-    v__root__light__init_b0_seed = On
+    __root__light = On
+    __root__light__init_b0_seed = On
