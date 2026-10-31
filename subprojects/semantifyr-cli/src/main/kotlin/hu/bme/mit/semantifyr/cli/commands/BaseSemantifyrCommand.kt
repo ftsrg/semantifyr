@@ -21,10 +21,10 @@ import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.oxsts.lang.library.OxstsLibrary
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.extension
+import kotlin.io.path.name
 
 private fun isOxstsFileOrDirectory(path: Path): Boolean {
-    return Files.isDirectory(path) || path.extension == OxstsLibrary.FILE_NAME_SUFFIX
+    return Files.isDirectory(path) || path.name.endsWith(OxstsLibrary.FILE_NAME_SUFFIX)
 }
 
 abstract class BaseSemantifyrCommand(
