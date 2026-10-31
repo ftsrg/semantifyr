@@ -44,7 +44,7 @@ public class DomainMemberCollectionProvider {
                 .map(this::getMemberCollection)
                 .toList();
 
-        return DomainMemberCollection.createCollection(superDomains, redefinitionHandler);
+        return DomainMemberCollection.createCollection(superDomains);
     }
 
     public DomainMemberCollection getMemberCollection(DomainDeclaration domain) {

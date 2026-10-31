@@ -8,13 +8,27 @@ package hu.bme.mit.semantifyr.oxsts.lang.tests;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.inject.Guice;
 import com.google.inject.Inject;
+import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
+import com.google.inject.util.Modules;
+import hu.bme.mit.semantifyr.oxsts.lang.OxstsRuntimeModule;
+import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
+import hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineCall;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.xtext.EcoreUtil2;
+import org.eclipse.xtext.diagnostics.Severity;
+import org.eclipse.xtext.resource.ISelectable;
+import org.eclipse.xtext.testing.util.ParseHelper;
+import org.eclipse.xtext.validation.CheckMode;
 import org.junit.jupiter.api.Test;
 
 @InjectWithOxsts
@@ -148,5 +162,73 @@ public class ScopingTest {
         assertThat(reference.getElement())
                 .as("`Color::Red` must resolve to the Red enum literal")
                 .isSameAs(red);
+    }
+
+    @Test
+    void membersOfTheFirstSupertypeResolveUnderMultipleInheritance() {
+        var pkg = parseHelper.parse("""
+            package test
+            class Left { var x: int := 0 }
+            class Right { var y: int := 0 }
+            class Both : Left, Right {
+                redefine tran { x := 1 }
+            }
+            class User {
+                contains both: Both
+                redefine tran { both.x := 2 }
+            }
+            """);
+
+        pkg.assertNoResourceErrors();
+    }
+
+    @Test
+    void multipleInheritanceIsRejectedAtTheSecondSupertype() {
+        var pkg = parseHelper.parse("""
+            package test
+            class Left { var x: int := 0 }
+            class Right { var y: int := 0 }
+            class Both : Left, Right {
+                redefine tran { x := 1 }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        pkg.assertHasValidationIssue(OxstsValidator.MULTIPLE_INHERITANCE, "'Right'");
+        assertThat(pkg.getIssues())
+                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .allSatisfy(issue -> {
+                    assertThat(issue.getCode()).isEqualTo(OxstsValidator.MULTIPLE_INHERITANCE);
+                    assertThat(issue.getLineNumber()).isEqualTo(4);
+                });
+    }
+
+    @Test
+    void scopeFailureIsReportedInsteadOfAnUnexplainedUnresolvedReference() throws Exception {
+        var failingInjector = Guice.createInjector(Modules.override(new OxstsRuntimeModule())
+                .with(binder -> binder.bind(DomainMemberCollectionProvider.class)
+                        .to(FailingDomainMemberCollectionProvider.class)));
+        var failingParseHelper =
+                failingInjector.getInstance(Key.get(new TypeLiteral<ParseHelper<OxstsModelPackage>>() {}));
+
+        var oxstsPackage = failingParseHelper.parse("""
+            package test
+            class Worker { var done: bool := false }
+            class Host {
+                contains w: Worker
+                redefine tran { w.done := true }
+            }
+            """);
+        EcoreUtil.resolveAll(oxstsPackage);
+
+        assertThat(oxstsPackage.eResource().getErrors())
+                .anySatisfy(error -> assertThat(error.getMessage()).contains("member collection unavailable"));
+    }
+
+    public static class FailingDomainMemberCollectionProvider extends DomainMemberCollectionProvider {
+        @Override
+        public ISelectable getMembers(DomainDeclaration domain) {
+            throw new IllegalStateException("member collection unavailable");
+        }
     }
 }

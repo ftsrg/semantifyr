@@ -95,6 +95,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String EXPRESSION_MODALITY_TOO_HIGH = ISSUE_PREFIX + "EXPRESSION_MODALITY_TOO_HIGH";
     public static final String TYPE_MISMATCH = ISSUE_PREFIX + "TYPE_MISMATCH";
     public static final String INVALID_CAST = ISSUE_PREFIX + "INVALID_CAST";
+    public static final String MULTIPLE_INHERITANCE = ISSUE_PREFIX + "MULTIPLE_INHERITANCE";
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
@@ -339,6 +340,25 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     "Transition kind `" + kind.getLiteral() + "` is not yet supported by the compiler.",
                     transitionDeclaration,
                     UNSUPPORTED_FEATURE);
+        }
+    }
+
+    @Check
+    public void checkSingleSupertype(ClassDeclaration classDeclaration) {
+        var superTypes = classDeclaration.getSuperTypes();
+        for (int i = 1; i < superTypes.size(); i++) {
+            acceptError(
+                    "Multiple inheritance is not supported; class '"
+                            + NamingUtil.getName(classDeclaration)
+                            + "' may extend only '"
+                            + NamingUtil.getName(superTypes.getFirst())
+                            + "', not also '"
+                            + NamingUtil.getName(superTypes.get(i))
+                            + "'.",
+                    classDeclaration,
+                    OxstsPackage.Literals.CLASS_DECLARATION__SUPER_TYPES,
+                    i,
+                    MULTIPLE_INHERITANCE);
         }
     }
 
