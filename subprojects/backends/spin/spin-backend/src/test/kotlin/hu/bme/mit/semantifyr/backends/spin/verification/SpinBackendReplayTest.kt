@@ -78,7 +78,21 @@ class SpinBackendReplayTest {
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
         val states = listOfNotNull(witness.initializedState) + witness.transitionStates
-        assertThat(states.map { it.valuesByName()["x"] }).hasSize(3).endsWith(1, 2)
+        assertThat(states.map { it.valuesByName()["x"] }).containsExactly(0, 1, 2)
+    }
+
+    @Test
+    suspend fun `unchanged values carry over from the declarations and the previous state`() {
+        val result = verify("OneOfSeveralChanges", models.parse(BackendTestModels.ONE_OF_SEVERAL_CHANGES))
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        val witness = result.inlinedWitness!!
+        val states = listOfNotNull(witness.initializedState) + witness.transitionStates
+        assertThat(states.map { it.valuesByName() }).containsExactly(
+            mapOf("y" to 0, "x" to 5, "b" to true),
+            mapOf("y" to 1, "x" to 5, "b" to true),
+            mapOf("y" to 2, "x" to 5, "b" to true),
+        )
     }
 
     @Test
