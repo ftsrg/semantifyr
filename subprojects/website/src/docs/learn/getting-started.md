@@ -39,9 +39,13 @@ The Semantifyr VS Code extension bundles the language servers and the compiler. 
 
 **Install**
 
-1. Open the Extensions view in VS Code (`Ctrl+Shift+X` / `Cmd+Shift+X`).
-2. Search for **Semantifyr** (publisher: *ftsrg*) and click **Install**.
+1. Download `semantifyr-<version>.vsix` from the [latest release](https://github.com/ftsrg/semantifyr/releases/latest), or build it locally with `./gradlew build`, which writes it to `subprojects/semantifyr-vscode/build/`.
+2. In VS Code, run **Extensions: Install from VSIX...** from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and select the `.vsix` file.
 3. Open any folder containing a `.oxsts` or `.gamma` file. The extension activates automatically and provides syntax highlighting, diagnostics, and the verification cases in the *Testing* view.
+
+:::info[Planned]
+Publication on the Visual Studio Marketplace is planned.
+:::
 
 ## Option D: Install the command-line interface (for scripts and CI)
 
