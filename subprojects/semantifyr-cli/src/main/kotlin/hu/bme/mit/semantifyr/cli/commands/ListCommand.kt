@@ -30,12 +30,9 @@ class ListCommand @Inject constructor(
     override suspend fun run() {
         logger.info { "list model=$model libraries=$libraries" }
 
+        checkInputs()
         val semantifyrModelContext = readModelContext()
         val cases = caseSpecificationOptions.collectVerificationCases(semantifyrModelContext)
-        if (cases.isEmpty()) {
-            echo("No verification case found.")
-            return
-        }
 
         echo("Found ${cases.size} verification case(s):")
         for (case in cases) {

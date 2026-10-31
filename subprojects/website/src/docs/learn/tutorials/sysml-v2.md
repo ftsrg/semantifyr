@@ -88,9 +88,9 @@ node "$SYSIDE/cli.cjs" compile room.sysml "$SYSIDE/sysml.library" -o out/room.ox
 "$SEMANTIFYR_HOME/bin/semantifyr" verify out --library "$SEMANTIFYR_HOME/libraries/sysmlv2" --artifact-directory artifacts
 ```
 
-The translation takes about a minute and writes `out/room.oxsts`, an OXSTS model that instantiates the classes of the SysML v2 semantic library. The `verify` command loads the library given with `--library`, finds the three verification cases in `out` and verifies each with the default `theta-full` portfolio. Pass the directory `out`, not the file: today the command rejects a path to an `.oxsts` file.
+The translation takes about a minute and writes `out/room.oxsts`, an OXSTS model that instantiates the classes of the SysML v2 semantic library. The `verify` command loads the library given with `--library`, finds the three verification cases in `out` and verifies each with the default `theta-full` portfolio.
 
-The command prints one line per case, `PASSED` or `FAILED` with the time it took, and exits with status 1 if any case did not pass. Expect `LampLitReachable` to pass and both `Violated` cases to fail. The case names start with `semantifyr::sysml::model`, the package the translator gives every model.
+For each case, the command prints its name, `PASSED` or `FAILED` with the time it took, and the path of its `report.json`, and it exits with status 5 when a case fails (the [exit codes](../cli/index.mdx#exit-codes)). Expect `LampLitReachable` to pass and both `Violated` cases to fail. The case names start with `semantifyr::sysml::model`, the package the translator gives every model.
 
 ## Reading the Witness
 

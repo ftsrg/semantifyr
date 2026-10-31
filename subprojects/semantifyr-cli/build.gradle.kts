@@ -7,6 +7,7 @@
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.application")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
+    id("hu.bme.mit.semantifyr.gradle.conventions.verification")
     kotlin("jvm")
 }
 
@@ -16,6 +17,7 @@ dependencies {
 
     implementation(libs.clikt)
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.serialization.json)
 
     testImplementation(testFixtures(project(":verifier")))
 }
@@ -33,6 +35,26 @@ tasks.named("test") {
     inputs.dir(rootDirectory.dir("oxsts-test-models"))
         .withPropertyName("oxstsTestModels")
         .withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+testing {
+    suites {
+        named<JvmTestSuite>("verificationTest") {
+            dependencies {
+                implementation(project(":theta-executor"))
+                implementation(libs.kotlinx.serialization.json)
+            }
+
+            targets.all {
+                testTask.configure {
+                    inputs.dir(rootDirectory.dir("oxsts-test-models"))
+                        .withPropertyName("oxstsTestModels")
+                        .withPathSensitivity(PathSensitivity.RELATIVE)
+                    inputs.files(tasks.installDist)
+                }
+            }
+        }
+    }
 }
 
 distributions.main {
