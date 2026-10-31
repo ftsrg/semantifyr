@@ -6,3 +6,4 @@
 
 export * from "./wire.js";
 export * from "./client.js";
+export * from "./live.js";

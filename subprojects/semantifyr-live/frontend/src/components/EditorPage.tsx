@@ -57,7 +57,6 @@ const DEFAULT_EXAMPLE: LiveExample = (() => {
   }
   return first;
 })();
-const DEFAULT_PORTFOLIO_ID = 'smart-full';
 const RIGHT_PANE_WIDTH_KEY = 'semantifyr-right-pane-width';
 const DEFAULT_RIGHT_PANE_WIDTH = 480;
 const MIN_LEFT_WIDTH = 320;
@@ -150,7 +149,7 @@ export default function EditorPage({
   const [connectedSince, setConnectedSince] = useState<number | null>(null);
   const [reconnectCount, setReconnectCount] = useState(0);
   const [portfolios, setPortfolios] = useState<PortfolioInfo[]>([]);
-  const [portfolioId, setPortfolioId] = useState<string>(DEFAULT_PORTFOLIO_ID);
+  const [portfolioId, setPortfolioId] = useState<string>('');
   const [validationPortfolioId, handleValidationPortfolioChange] = usePersistedState(
     VALIDATION_PORTFOLIO_KEY,
     DEFAULT_VALIDATION_PORTFOLIO_ID,
@@ -209,9 +208,10 @@ export default function EditorPage({
     const api = createApi(backendUrl);
     let cancelled = false;
     void api.fetchPortfolios()
-      .then((list) => {
+      .then((response) => {
         if (cancelled) return;
-        setPortfolios(list);
+        setPortfolios(response.portfolios);
+        setPortfolioId((current) => current || response.defaultPortfolio);
       })
       .catch(() => { /* non-fatal */ });
     return () => {

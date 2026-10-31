@@ -4,27 +4,20 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import type { FlavorsResponse } from '@semantifyr/editor-common'
 import { normalizeBaseUrl } from './urls'
 import type {
   AdminConfigResponse,
   AdminStatusResponse,
   FlavorInfo,
   InfoResponse,
-  PortfolioInfo,
+  PortfoliosResponse,
 } from './types'
-
-interface PortfoliosResponse {
-  portfolios: PortfolioInfo[]
-}
-
-interface FlavorsResponse {
-  flavors: FlavorInfo[]
-}
 
 export interface LiveServerApi {
   readonly httpBase: string
 
-  fetchPortfolios(): Promise<PortfolioInfo[]>
+  fetchPortfolios(): Promise<PortfoliosResponse>
   fetchFlavors(): Promise<FlavorInfo[]>
   fetchFlavor(id: string): Promise<FlavorInfo | null>
   fetchInfo(): Promise<InfoResponse>
@@ -63,11 +56,7 @@ export function createApi(rawBackendUrl: string): LiveServerApi {
 
     async fetchPortfolios() {
       const response = await get('/api/portfolios')
-      if (!response.ok) {
-        return []
-      }
-      const data = (await response.json()) as PortfoliosResponse
-      return data.portfolios
+      return expectOk<PortfoliosResponse>(response)
     },
 
     async fetchFlavors() {
