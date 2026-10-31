@@ -3,6 +3,9 @@ title: Expressions
 sidebar_position: 4
 ---
 
+import { ConstructStatus, Planned } from '@site/src/components/Constructs';
+import constructs from '@oxsts-test-models/constructs/constructs.tsv';
+
 # Expressions
 
 Expressions compute values. They appear in [property](properties.md) bodies, on the right-hand side of assignments, in [operation](operations.md) guards, in feature multiplicities, and in feature bindings.
@@ -18,7 +21,7 @@ Expressions compute values. They appear in [property](properties.md) bodies, on 
 | Nothing | `nothing` |
 | Infinity | `*` |
 | Array | `[a, b, c]`, `[]` |
-| Record literal (planned, see [Records](datatypes.md#records)) | `Point { x = 0, y = 0 }` |
+| Record literal (<ConstructStatus table={constructs} construct="Record literal `Point { x = 0 }`" />, see [Records](datatypes.md#records)) | `Point { x = 0, y = 0 }` |
 
 See [Datatypes](datatypes.md) for the corresponding types.
 
@@ -142,7 +145,8 @@ prop {
 }
 ```
 
-:::info[Planned]
+<Planned table={constructs} construct="AF, EG, AX, EX temporal operators">
+
 More temporal operators are planned: `AF expr` (`expr` eventually holds on every execution), `EG expr` (`expr` always holds on some execution), `AX expr` and `EX expr` (`expr` holds in every or in some next state). The parser rejects them today; only `AG` and `EF` parse.
 
 ```oxsts
@@ -150,4 +154,5 @@ prop {
   return AF counter.value == 100
 }
 ```
-:::
+
+</Planned>

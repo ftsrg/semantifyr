@@ -83,7 +83,7 @@ export default {
           },
         },
         module: {
-          rules: [{ test: /\.(oxsts|sysml|txt)$/, type: 'asset/source' }],
+          rules: [{ test: /\.(oxsts|sysml|txt|tsv)$/, type: 'asset/source' }],
         },
       }),
     }),
