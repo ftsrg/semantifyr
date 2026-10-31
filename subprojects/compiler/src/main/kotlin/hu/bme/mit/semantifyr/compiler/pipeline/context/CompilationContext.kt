@@ -80,11 +80,17 @@ class FlattenedCompilationContext(
     val compilationMetrics: CompilationMetrics = CompilationMetrics(),
 ) : EvaluableCompilationContext
 
+class ArraySlot(
+    val arrayVariable: VariableDeclaration,
+    val index: Int,
+)
+
 class FlatteningInfo(
     val variableHolders: Map<VariableDeclaration, Instance>,
     val variableInstanceDomains: Map<VariableDeclaration, Set<Instance>>,
     val variableMappings: Map<Instance, Map<VariableDeclaration, VariableDeclaration>>,
     val instanceIdMapping: InstanceIdMapping,
+    val arraySlots: Map<VariableDeclaration, ArraySlot> = emptyMap(),
 ) {
     private val reverseVariableMappings: Map<Instance, Map<VariableDeclaration, VariableDeclaration>> =
         variableMappings.mapValues { (_, mapping) ->
