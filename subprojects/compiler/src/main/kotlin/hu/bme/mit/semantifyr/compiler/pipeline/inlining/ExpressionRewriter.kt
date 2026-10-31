@@ -10,7 +10,9 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ImmutableTypeEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
@@ -29,6 +31,7 @@ import org.eclipse.xtext.EcoreUtil2
 class ExpressionRewriter @Inject constructor(
     private val domainMemberCollectionProvider: DomainMemberCollectionProvider,
     private val expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider,
+    private val multiplicityRangeEvaluator: MultiplicityRangeEvaluator,
 ) {
 
     fun rewriteExpressionsToContext(rootElement: Element, newContext: Expression) {
@@ -48,12 +51,21 @@ class ExpressionRewriter @Inject constructor(
         }.toList()
 
         for (parameterReference in parameterReferences) {
-            val index = parametricDeclaration.parameters.indexOf(parameterReference.element)
-            val argument = callSuffixExpression.arguments[index].expression.copy()
+            val parameter = parameterReference.element as ParameterDeclaration
+            val index = parametricDeclaration.parameters.indexOf(parameter)
+            val argument = OxstsUtils.getArgumentFor(callSuffixExpression.arguments, parameter, index)?.expression?.copy()
+                ?: omittedArgument(parameter, callSuffixExpression)
 
             EcoreUtil2.replace(parameterReference, argument)
             fixRedefinitions(argument)
         }
+    }
+
+    private fun omittedArgument(parameter: ParameterDeclaration, callSuffixExpression: CallSuffixExpression): Expression {
+        if (multiplicityRangeEvaluator.evaluate(parameter.typeSpecification).lowerBound != 0) {
+            sourceError(callSuffixExpression, "No argument for the required parameter '${parameter.name}'")
+        }
+        return OxstsFactory.createLiteralNothing()
     }
 
     private fun rewriteContextualExpressionsToContext(rootElement: Element, newContext: Expression) {

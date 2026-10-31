@@ -198,6 +198,29 @@ class PackageInliningExpressionTest : InliningTestBase() {
         }
     }
 
+    @Test
+    fun `named arguments of a property call bind by name when out of declaration order`() {
+        prepare(
+            "Host",
+            """
+                package inlining::tests
+                @VerificationCase
+                class Host {
+                    var x : int := 0
+                    var y : int := 0
+                    prop difference(minuend : int, subtrahend : int) : int {
+                        return minuend - subtrahend
+                    }
+                    prop { return EF x == difference(subtrahend = 1, minuend = y) }
+                }
+            """,
+        ) {
+            inlineAll(it)
+            assertNoPropertyCallsInProperty(it)
+            assertPropertyContains(it, "root.y - 1")
+        }
+    }
+
     private fun assertNoPropertyCallsInProperty(prepared: Prepared) {
         val remaining = prepared.inlinedOxsts.property
             .eAllOfType<CallSuffixExpression>()
