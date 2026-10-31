@@ -1,4 +1,9 @@
 @echo off
+
+rem SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+rem
+rem SPDX-License-Identifier: EPL-2.0
+
 setlocal
 set SCRIPTDIR=%~dp0
 set PATH=%SCRIPTDIR%lib;%PATH%
