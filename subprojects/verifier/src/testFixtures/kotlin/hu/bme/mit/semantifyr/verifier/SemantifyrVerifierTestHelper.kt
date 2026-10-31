@@ -20,6 +20,7 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.verifier.discovery.CaseFilter
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
@@ -227,6 +228,42 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         val trace = result.trace ?: return
         val validation = validationPortfolio ?: return
         assertWitnessRevalidates(case, trace, validation, outputDirectory, validationTimeout, environment, expectedVerdict)
+    }
+
+    suspend fun checkWitnessReparses(
+        modelPath: Path,
+        qualifiedName: String,
+        verificationPortfolio: VerificationPortfolio,
+        outputDirectory: Path,
+        timeout: Duration = 1.minutes,
+        environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
+    ): VerificationResult {
+        val context = semantifyrLoader.loadStandaloneModel(modelPath)
+        val case = verificationCaseDiscoverer.findByQualifiedName(context, qualifiedName)
+        val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment)
+        Assertions.assertEquals(expectedVerdictFromTags(case), result.verdict) {
+            "Expected ${case.qualifiedName} verdict ${expectedVerdictFromTags(case)}, got ${result.verdict} (${result.message ?: "no message"})"
+        }
+
+        val witnessPath = outputDirectory.resolve(qualifiedNameToDirectoryName(case.qualifiedName)).resolve("witness.oxsts")
+        assertThat(witnessPath.exists())
+            .describedAs("witness.oxsts must be written for ${case.qualifiedName} at $witnessPath")
+            .isTrue()
+
+        val reparsedContext = semantifyrLoader.startContext()
+            .loadModel(modelPath)
+            .loadModel(witnessPath)
+            .buildAndResolve()
+        val witness = reparsedContext.modelResources.last().contents.filterIsInstance<InlinedOxsts>().single()
+
+        val validationDirectory = outputDirectory.resolve(qualifiedNameToDirectoryName(case.qualifiedName)).resolve("reparsed-validation")
+        val verifier = buildVerifier(verificationPortfolio, timeout, validationDirectory, environment)
+        val outcome = WitnessValidator().validate(verifier, witness)
+        assertThat(outcome.isValid)
+            .describedAs("Reparsed witness for ${case.qualifiedName} must re-verify Passed via ${verificationPortfolio.id} but got ${outcome.verification.verdict} (${outcome.verification.message ?: "no message"})")
+            .isTrue()
+
+        return result
     }
 
     private suspend fun assertWitnessRevalidates(
