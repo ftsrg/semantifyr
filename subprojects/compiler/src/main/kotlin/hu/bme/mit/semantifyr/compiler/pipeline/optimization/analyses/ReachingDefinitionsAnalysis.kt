@@ -185,7 +185,9 @@ class ReachingDefinitionsComputation(
                 incoming
             }
             is LocalVarDeclarationOperation -> {
-                recordReads(operation.expression, incoming)
+                operation.expression?.let {
+                    recordReads(it, incoming)
+                }
                 incoming + (operation to setOf<EObject>(operation))
             }
             else -> incoming

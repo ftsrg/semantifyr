@@ -112,3 +112,39 @@ class LocalVarNotPersistedBound {
         return AG total >= 0
     }
 }
+
+// --- local variable without an initializer ---
+
+// Reachable: an uninitialized local is havoced at its declaration, so it may hold 3.
+@VerificationCase
+@Tag("expect-pass")
+class LocalVarUninitializedReach {
+    var x: int := 0
+
+    redefine tran {
+        var delta: int
+        assume(delta >= 1 && delta <= 3)
+        x := delta
+    }
+
+    prop {
+        return EF x == 3
+    }
+}
+
+// Violated: the havoced local is not bound to its smallest admissible value.
+@VerificationCase
+@Tag("expect-fail")
+class LocalVarUninitializedBound {
+    var x: int := 0
+
+    redefine tran {
+        var delta: int
+        assume(delta >= 1 && delta <= 3)
+        x := delta
+    }
+
+    prop {
+        return AG x <= 1
+    }
+}
