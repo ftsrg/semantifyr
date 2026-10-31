@@ -14,7 +14,7 @@ import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import java.io.File
 
-const val THETA_DEFAULT_IMAGE = "ftsrg/theta-xsts-cli:6.28.1"
+const val THETA_DEFAULT_IMAGE = "ftsrg/theta-xsts-cli:8.6.0"
 
 @JvmField
 val ThetaExecutorKey = ExecutorKey(

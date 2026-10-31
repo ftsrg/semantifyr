@@ -84,6 +84,16 @@ class ThetaBackendReplayTest {
     }
 
     @Test
+    suspend fun `witness values keep the declaration order`() {
+        val result = verify("OneOfSeveralChanges", models.parse(BackendTestModels.ONE_OF_SEVERAL_CHANGES))
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        val witness = result.inlinedWitness!!
+        val states = listOfNotNull(witness.initializedState) + witness.transitionStates
+        assertThat(states.map { state -> state.values.map { it.variable.name } }).containsOnly(listOf("y", "x", "b"))
+    }
+
+    @Test
     suspend fun `an unreachable target fails without a witness`() {
         val result = verify("UnreachableTarget", models.parse(BackendTestModels.UNREACHABLE_TARGET))
 

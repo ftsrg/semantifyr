@@ -178,7 +178,7 @@
         },
         "semantifyr.theta.dockerImage": {
           "type": "string",
-          "default": "ftsrg/theta-xsts-cli:6.28.1",
+          "default": "ftsrg/theta-xsts-cli:8.6.0",
           "markdownDescription": "Docker image reference (repository:tag or @digest) for the Theta image. Only used when `semantifyr.theta.executor` is `docker`."
         },
         "semantifyr.artifacts.location": {
