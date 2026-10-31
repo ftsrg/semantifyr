@@ -45,6 +45,8 @@ class Counter {
 }
 ```
 
+The property is also checked in the state before `init` runs, where only an initializer fixes the value, so an `AG` property over a variable assigned only in `init` must also hold for its arbitrary initial value.
+
 ## Multiplicity on the Type
 
 A variable type may include a multiplicity bracket. This is how optional values are declared. A bounded multiplicity above one declares a fixed-size array, such as `var slots: int[3]`; the validator rejects arrays of class or feature type (`OXSTS.UNSUPPORTED_FEATURE`).
