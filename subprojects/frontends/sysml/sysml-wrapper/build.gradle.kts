@@ -26,6 +26,10 @@ val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
 node {
     nodeProjectDir = sysmlDir
+    // pnpm switches itself to the fork's packageManager, so the installed one must match it
+    pnpmVersion = providers.fileContents(sysmlDir.file("package.json")).asText.map {
+        Regex("\"packageManager\"\\s*:\\s*\"pnpm@([^\"+]+)").find(it)?.groupValues?.get(1)
+    }.orElse(libs.versions.pnpm)
 }
 
 val checkoutSysml = tasks.register<Exec>("checkoutSysml") {
