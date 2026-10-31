@@ -5,7 +5,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 const fetchInfo = vi.fn();
@@ -139,21 +139,27 @@ describe('AdminPage', () => {
   });
 
   it('toggling pause flips the icon button label and stops further refreshes', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
     checkAdminAuth.mockResolvedValue(true);
 
     const user = userEvent.setup();
     render(<AdminPage colorModePreference="dark" colorMode="dark" onToggleColorMode={() => {}} />);
     const pause = await screen.findByRole('button', { name: 'Pause auto-refresh' });
 
-    await waitFor(() => {
-      expect(fetchAdminStatus).toHaveBeenCalled();
+    const callsBeforeTick = fetchAdminStatus.mock.calls.length;
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
     });
-    const callsBeforePause = fetchAdminStatus.mock.calls.length;
+    expect(fetchAdminStatus.mock.calls.length).toBe(callsBeforeTick + 1);
 
     await user.click(pause);
     expect(screen.getByText('Paused')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Resume auto-refresh' })).toBeInTheDocument();
 
-    expect(fetchAdminStatus.mock.calls.length).toBe(callsBeforePause);
+    const callsAtPause = fetchAdminStatus.mock.calls.length;
+    await act(async () => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(fetchAdminStatus.mock.calls.length).toBe(callsAtPause);
   });
 });
