@@ -150,12 +150,14 @@ data class CallTraceStepDto(
 
 data class CallTraceDto(
     val initialStep: CallTraceStepDto,
+    val initializedStep: CallTraceStepDto?,
     val steps: List<CallTraceStepDto>,
 ) {
     companion object {
         fun fromCallTrace(callTrace: CallTrace): CallTraceDto {
             return CallTraceDto(
                 initialStep = CallTraceStepDto.fromCallTraceStep(callTrace.initialStep),
+                initializedStep = callTrace.initializedStep?.let { CallTraceStepDto.fromCallTraceStep(it) },
                 steps = callTrace.steps.map { CallTraceStepDto.fromCallTraceStep(it) },
             )
         }
@@ -190,12 +192,14 @@ data class WitnessStateStepDto(
 
 data class WitnessStateDto(
     val initialStep: WitnessStateStepDto,
+    val initializedStep: WitnessStateStepDto?,
     val steps: List<WitnessStateStepDto>,
 ) {
     companion object {
         fun fromWitnessState(state: WitnessState): WitnessStateDto {
             return WitnessStateDto(
                 initialStep = WitnessStateStepDto.fromWitnessStateStep(state.initialStep),
+                initializedStep = state.initializedStep?.let { WitnessStateStepDto.fromWitnessStateStep(it) },
                 steps = state.steps.map { WitnessStateStepDto.fromWitnessStateStep(it) },
             )
         }

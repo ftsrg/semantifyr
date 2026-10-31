@@ -130,6 +130,16 @@ export default function CallTraceView({ trace }: Props): React.JSX.Element {
       defaultOpen
     />,
   );
+  if (trace.initializedStep) {
+    rows.push(
+      <CallStepRow
+        key="initialized"
+        step={trace.initializedStep}
+        label="After init"
+        defaultOpen
+      />,
+    );
+  }
   trace.steps.forEach((step, i) => {
     rows.push(
       <CallStepRow

@@ -80,6 +80,7 @@ class BackAnnotationFidelityTest {
 
         val callTrace = readCallTrace(output, case)
         assertThat(callTrace.initialStep.traces).isEmpty()
+        assertThat(callTrace.initializedStep?.traces).isEmpty()
         assertThat(
             callTrace.steps.map { step ->
                 step.traces.map { it.self }
@@ -152,7 +153,7 @@ class BackAnnotationFidelityTest {
     }
 
     @Test
-    suspend fun `initial step is the state after init for a witness without a pre-init state`(@TempDir output: Path) {
+    suspend fun `state after init is the initialized step for a witness without a pre-init state`(@TempDir output: Path) {
         val case = loadCase("tracing.oxsts", tracingCase)
 
         verifyWithWitness(case, output) { model ->
@@ -165,12 +166,14 @@ class BackAnnotationFidelityTest {
             )
         }
 
-        assertThat(readWitnessState(output, case).initialStep.values).contains(
+        val witnessState = readWitnessState(output, case)
+        assertThat(witnessState.initialStep.values).isEmpty()
+        assertThat(witnessState.initializedStep?.values).contains(
             WitnessStateValue("root.kitchen.lamp.on", "false"),
             WitnessStateValue("root.hall.lamp.on", "false"),
         )
         val callTrace = readCallTrace(output, case)
-        assertThat(callTrace.initialStep.traces).isEmpty()
+        assertThat(callTrace.initializedStep?.traces).isEmpty()
         assertThat(callTrace.steps.single().traces.map { it.self }).containsExactly("root.kitchen.lamp")
     }
 

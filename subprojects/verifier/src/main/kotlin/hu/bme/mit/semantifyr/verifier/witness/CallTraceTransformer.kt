@@ -36,6 +36,7 @@ data class CallTraceStep(
 @Serializable
 data class CallTrace(
     val initialStep: CallTraceStep,
+    val initializedStep: CallTraceStep?,
     val steps: List<CallTraceStep>,
 )
 
@@ -53,6 +54,7 @@ data class WitnessStateStep(
 @Serializable
 data class WitnessState(
     val initialStep: WitnessStateStep,
+    val initializedStep: WitnessStateStep?,
     val steps: List<WitnessStateStep>,
 )
 
@@ -67,7 +69,10 @@ class CallTraceTransformer @Inject constructor(
         traces: TransitionCallTraceMap,
     ): CallTrace {
         return CallTrace(
-            transformCallTraceStep(classWitness.initialStepState, traces),
+            transformCallTraceStep(classWitness.initialState, traces),
+            classWitness.initializedState?.let {
+                transformCallTraceStep(it, traces)
+            },
             classWitness.transitionStates.map {
                 transformCallTraceStep(it, traces)
             },
@@ -76,16 +81,15 @@ class CallTraceTransformer @Inject constructor(
 
     fun transformWitnessState(classWitness: ClassWitness): WitnessState {
         return WitnessState(
-            transformWitnessStateStep(classWitness.initialStepState),
+            transformWitnessStateStep(classWitness.initialState),
+            classWitness.initializedState?.let {
+                transformWitnessStateStep(it)
+            },
             classWitness.transitionStates.map {
                 transformWitnessStateStep(it)
             },
         )
     }
-
-    // after init: init's traced calls fire there, and linear witnesses have an empty pre-init state
-    private val ClassWitness.initialStepState: ClassWitnessState
-        get() = initializedState ?: initialState
 
     private fun transformCallTraceStep(
         state: ClassWitnessState,
