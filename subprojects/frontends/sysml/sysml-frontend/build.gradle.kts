@@ -23,6 +23,7 @@ dependencies {
 
     testFixturesApi(project(":portfolios"))
     testFixturesApi(testFixtures(project(":verifier")))
+    testFixturesImplementation(libs.kotlinx.serialization.json)
 }
 
 val syncSysmlLibrary = tasks.register<Sync>("syncSysmlLibrary") {
