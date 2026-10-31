@@ -46,6 +46,8 @@ data class BackendVerificationResult(
     val metrics: BackendMetrics = BackendMetrics(),
     val inlinedWitness: InlinedWitness? = null,
     val message: String? = null,
+    val soundness: SoundnessDirection = SoundnessDirection.Exact,
+    val isTrusted: Boolean = verdict.isDecisive,
 ) {
     val isDecisive = verdict.isDecisive
 }

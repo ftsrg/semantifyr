@@ -21,6 +21,7 @@ import kotlin.time.measureTimedValue
 
 abstract class VerificationContext<TArtifacts, TRawVerdict>(
     protected val backendId: String,
+    private val soundness: SoundnessDirection,
     protected val request: BackendVerificationRequest,
 ) {
     protected val logger by loggerFactory()
@@ -130,6 +131,8 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
                 backAnnotationDuration = backAnnotationDuration,
             ),
             inlinedWitness = witness,
+            soundness = soundness,
+            isTrusted = soundness.trusts(verdict, request.inlinedOxsts.property.expression),
         )
     }
 
