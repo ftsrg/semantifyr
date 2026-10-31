@@ -86,7 +86,7 @@ class ThetaBackendReplayTest {
         val result = verifyFixture("initial_values", "UninitializedIntegerBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
-        assertThat(result.inlinedWitness!!.initialState.valuesByName()["\$\$root\$\$x"]).isNotEqualTo(0)
+        assertThat(result.inlinedWitness!!.initialState.valuesByName()["\$\$root\$\$x"]).isNotNull().isNotEqualTo(0)
     }
 
     @Test

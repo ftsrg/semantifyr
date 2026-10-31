@@ -44,12 +44,12 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
                 |MODULE main
                 |VAR
                 |    x : integer;
-                |    x__init_seed_0 : integer;
+                |    x__init_b0_seed : integer;
                 |    x__tran_b0_1 : integer;
                 |INIT
                 |    (
-                |          (x__init_seed_0 = 0)
-                |        & (x = x__init_seed_0)
+                |          (x__init_b0_seed = 0)
+                |        & (x = x__init_b0_seed)
                 |    )
                 |TRANS
                 |    (
@@ -73,7 +73,22 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
             """,
         )
 
-        assertThat(lines).containsSequence("INIT", "(", "(x = x__init_seed_0)", ")")
+        assertThat(lines).containsSequence("INIT", "(", "(x = x__init_b0_seed)", ")")
+    }
+
+    @Test
+    suspend fun `a variable starting with an underscore is renamed so traces show it`() {
+        val artifacts = transform(
+            """
+                var __x : int := 0
+                init { }
+                tran { }
+                prop { AG __x == 0 }
+            """,
+        )
+
+        assertThat(artifacts.smv.lines().map { it.trim() }).containsSequence("VAR", "v__x : integer;")
+        assertThat(artifacts.property.invariant).isEqualTo("(v__x = 0)")
     }
 
     @Test
@@ -88,7 +103,7 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
             """,
         )
 
-        assertThat(lines).contains("b : boolean;", "c : { Red, Green };", "(b__init_seed_0 = TRUE)", "& (c__init_seed_0 = Green)")
+        assertThat(lines).contains("b : boolean;", "c : { Red, Green };", "(b__init_b0_seed = TRUE)", "& (c__init_b0_seed = Green)")
     }
 
     @Test
@@ -116,10 +131,10 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
             """,
         )
 
-        assertThat(lines).containsSequence("IVAR", "nondet_tran_0 : 0..1;")
+        assertThat(lines).containsSequence("IVAR", "nondet_tran_b0_0 : 0..1;")
         assertThat(lines).containsSequence(
-            "(case nondet_tran_0 = 0 : (x__tran_b0_1 = 1); nondet_tran_0 = 1 : TRUE; esac)",
-            "& (x__tran_b0_2 = case nondet_tran_0 = 0 : x__tran_b0_1; nondet_tran_0 = 1 : x; esac)",
+            "(case nondet_tran_b0_0 = 0 : (x__tran_b0_1 = 1); nondet_tran_b0_0 = 1 : TRUE; esac)",
+            "& (x__tran_b0_2 = case nondet_tran_b0_0 = 0 : x__tran_b0_1; nondet_tran_b0_0 = 1 : x; esac)",
             "& (next(x) = x__tran_b0_2)",
         )
     }
@@ -135,7 +150,7 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
             """,
         )
 
-        assertThat(lines).containsSequence("FROZENVAR", "nondet_init_0 : 0..1;")
+        assertThat(lines).containsSequence("FROZENVAR", "nondet_init_b0_0 : 0..1;")
         assertThat(lines).doesNotContain("IVAR")
     }
 
@@ -274,6 +289,57 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
             "& (next(x) = x__tran_b1_1)",
             ")",
         )
+    }
+
+    private fun declaredNames(smv: String): List<String> {
+        val sections = setOf("VAR", "IVAR", "FROZENVAR")
+        var inSection = false
+        val names = mutableListOf<String>()
+        for (line in smv.lines()) {
+            if (!line.startsWith(" ")) {
+                inSection = line.trim() in sections
+                continue
+            }
+            if (inSection) {
+                names += line.trim().substringBefore(" :")
+            }
+        }
+        return names
+    }
+
+    @Test
+    suspend fun `choices in several transition branches get distinct input variables`() {
+        val smv = transform(
+            """
+                var x : int := 0
+                var step : int := 0
+                init { }
+                tran {
+                    assume(step == 0) choice { x := 1 } or { x := 2 } step := 1
+                } or {
+                    assume(step == 1) choice { x := 3 } or { x := 4 } step := 2
+                }
+                prop { AG true }
+            """,
+        ).smv
+
+        assertThat(declaredNames(smv)).doesNotHaveDuplicates()
+        assertThat(smv.lines().map { it.trim() }).containsSequence("IVAR", "nondet_tran_b0_0 : 0..1;", "nondet_tran_b1_0 : 0..1;")
+    }
+
+    @Test
+    suspend fun `several init branches get distinct seeds and frozen variables`() {
+        val smv = transform(
+            """
+                var x : int := 0
+                init { choice { x := 1 } or { x := 2 } } or { choice { x := 3 } or { x := 4 } }
+                tran { }
+                prop { AG true }
+            """,
+        ).smv
+
+        assertThat(declaredNames(smv)).doesNotHaveDuplicates()
+        assertThat(smv.lines().map { it.trim() }).containsSequence("FROZENVAR", "nondet_init_b0_0 : 0..1;", "nondet_init_b1_0 : 0..1;")
     }
 
     @Test

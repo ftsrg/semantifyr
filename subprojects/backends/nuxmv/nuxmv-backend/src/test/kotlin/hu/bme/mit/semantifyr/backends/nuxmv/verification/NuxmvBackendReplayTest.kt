@@ -58,11 +58,35 @@ class NuxmvBackendReplayTest {
     }
 
     @Test
-    suspend fun `a reached target passes with a witness`() {
+    suspend fun `a reached target passes with a witness ending in the target`() {
         val result = verifyFixture("control_flow", "ChoiceBranch1Reach")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
-        assertThat(result.inlinedWitness).isNotNull()
+        assertThat(result.inlinedWitness!!.transitionStates.last().valuesByName()).containsEntry("\$\$root\$\$x", 1)
+    }
+
+    @Test
+    suspend fun `choices in several transition branches are decided independently`() {
+        val result = verify(
+            "WitnessShapedChoices",
+            models.parse(
+                """
+                    inlined oxsts of semantifyr::Anything
+                    var x : int := 0
+                    var step : int := 0
+                    init { }
+                    tran {
+                        assume(step == 0) choice { x := 1 } or { x := 2 } step := 1
+                    } or {
+                        assume(step == 1) choice { x := 3 } or { x := 4 } step := 2
+                    }
+                    prop { EF x == 4 }
+                """,
+            ),
+        )
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(result.inlinedWitness!!.transitionStates.last().valuesByName()).containsEntry("x", 4)
     }
 
     @Test
@@ -88,6 +112,7 @@ class NuxmvBackendReplayTest {
         val result = verifyFixture("initial_values", "UninitializedIntegerBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        assertThat(result.inlinedWitness!!.initializedState!!.valuesByName()["\$\$root\$\$x"]).isNotNull().isNotEqualTo(0)
     }
 
     @Test
@@ -95,5 +120,6 @@ class NuxmvBackendReplayTest {
         val result = verifyFixture("initial_values", "UninitializedEnumBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        assertThat(result.inlinedWitness!!.initializedState!!.valuesByName()["\$\$root\$\$light"]).isEqualTo("On")
     }
 }
