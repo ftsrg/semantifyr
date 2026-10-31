@@ -77,7 +77,10 @@ fun summarize(records: List<BenchmarkRecord>): List<CellSummary> {
         }.map {
             it.measurement
         }
-        val sized = measured.firstOrNull { it.metrics != null }?.metrics?.verifier?.compilation
+        // sizes do not depend on the repetition, so a cell that stopped in its warmup still has them
+        val sized = cellRecords.firstNotNullOfOrNull {
+            it.measurement.metrics
+        }?.verifier?.compilation
         CellSummary(
             cell = cellRecords.first().cell,
             outcome = last.outcome,

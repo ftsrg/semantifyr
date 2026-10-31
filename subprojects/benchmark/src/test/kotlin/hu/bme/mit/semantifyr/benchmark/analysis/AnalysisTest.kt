@@ -83,6 +83,18 @@ class AnalysisTest {
     }
 
     @Test
+    fun `a cell that timed out in its warmup keeps its outcome and sizes but has no times`() {
+        val record = record(crossroadsTheta, 1, 300.seconds, verdict = VerificationVerdict.Timeout, decidedBy = null, outcome = Outcome.TimedOut)
+
+        val summary = summarize(listOf(record)).single()
+
+        assertThat(summary.outcome).isEqualTo(Outcome.TimedOut)
+        assertThat(summary.repetitions).isZero()
+        assertThat(summary.wallTime).isNull()
+        assertThat(summary.flattenedSize).isEqualTo(ModelSize(variables = 7, operations = 5, expressions = 30))
+    }
+
+    @Test
     fun `an even number of repetitions takes the mean of the middle two`() {
         assertThat(Statistic.of(listOf(4.seconds, 1.seconds, 2.seconds, 3.seconds))!!.median).isEqualTo(2.5.seconds)
     }

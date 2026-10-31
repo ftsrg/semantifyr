@@ -5,7 +5,7 @@ sidebar_position: 1
 
 # Benchmarking
 
-The `:benchmark` module (`subprojects/benchmark/`) measures verification. A campaign runs every cell of its axes, repeats each cell, and stores one record per run. Campaign output is build output; only the reference results are committed.
+The `:benchmark` module (`subprojects/benchmark/`) measures verification. A campaign runs every cell of its axes, repeats each cell, and stores one record per run. Campaign output is build output, so `clean` deletes it; only the reference results are committed.
 
 ## Defining a campaign
 
