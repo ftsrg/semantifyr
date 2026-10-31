@@ -7,17 +7,22 @@
 package hu.bme.mit.semantifyr.cli.commands.options
 
 import com.github.ajalt.clikt.parameters.groups.OptionGroup
+import com.github.ajalt.clikt.parameters.options.convert
 import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.defaultLazy
 import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.long
 import com.github.ajalt.clikt.parameters.types.path
+import com.github.ajalt.clikt.parameters.types.restrictTo
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backends.theta.THETA_DEFAULT_IMAGE
 import hu.bme.mit.semantifyr.backends.theta.ThetaExecutorKey
 import hu.bme.mit.semantifyr.backends.theta.ThetaXstsExecutor
+import hu.bme.mit.semantifyr.cli.CommandExit
+import hu.bme.mit.semantifyr.cli.ExitCode
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactKind
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
@@ -52,13 +57,18 @@ class VerificationCaseSpecificationOptionGroup(
     fun collectVerificationCases(context: SemantifyrModelContext): List<VerificationCase> {
         if (caseNames.isNotEmpty()) {
             return caseNames.map {
-                verificationCaseDiscoverer.findByQualifiedName(context, it)
+                verificationCaseDiscoverer.findByQualifiedNameOrNull(context, it)
+                    ?: throw CommandExit(ExitCode.Input, "No verification case is named '$it'.")
             }
         }
-        return verificationCaseDiscoverer.discover(
+        val cases = verificationCaseDiscoverer.discover(
             context,
             CaseFilter.Tags(including = includeTags.toSet(), excluding = excludeTags.toSet()),
         )
+        if (cases.isEmpty()) {
+            throw CommandExit(ExitCode.Input, "No verification case matches the selection.")
+        }
+        return cases
     }
 }
 
@@ -105,9 +115,16 @@ enum class ThetaExecutor { Auto, Shell, Docker }
 
 const val DEFAULT_PORTFOLIO_ID = "theta-full"
 
-class BackendOptionGroup : OptionGroup("Backend options") {
-    val portfolioId by option("--portfolio")
-        .default(DEFAULT_PORTFOLIO_ID)
+class BackendOptionGroup(
+    private val portfolios: () -> List<VerificationPortfolio>,
+) : OptionGroup("Backend options") {
+    val portfolio by option("--portfolio")
+        .convert { id ->
+            portfolios().firstOrNull { it.id == id } ?: fail("unknown portfolio '$id'")
+        }
+        .defaultLazy {
+            portfolios().first { it.id == DEFAULT_PORTFOLIO_ID }
+        }
         .help("Portfolio id. Default: '$DEFAULT_PORTFOLIO_ID'. Options: ${Portfolios.all.joinToString(", ") { it.id }}")
 
     val thetaExecutor by option("--theta-executor")
@@ -123,16 +140,12 @@ class BackendOptionGroup : OptionGroup("Backend options") {
 
     val timeoutSeconds by option("-t", "--timeout-seconds")
         .long()
+        .restrictTo(min = 1L)
         .default(300L)
         .help("Total verification wall-clock timeout, in seconds. Default: 300 (5 minutes).")
 
     val timeout: Duration
         get() = timeoutSeconds.seconds
-
-    fun resolvePortfolio(): VerificationPortfolio {
-        return Portfolios.byIdOrNull(portfolioId)
-            ?: error("Unknown portfolio '$portfolioId'. Options: ${Portfolios.all.joinToString { it.id }}")
-    }
 
     val resolved by lazy {
         val builder = ExecutionEnvironment.builder()
