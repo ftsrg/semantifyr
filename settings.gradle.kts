@@ -67,6 +67,7 @@ include(
     "compiler",
     "verifier",
     "portfolios",
+    "benchmark",
     "backend",
     "lang-ide-common",
     "semantifyr-cli",
