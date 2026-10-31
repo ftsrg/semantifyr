@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationContext
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
@@ -245,7 +246,7 @@ class SemantifyrVerifierImplTest {
 
     private class RejectingVariablesContext(
         request: BackendVerificationRequest,
-    ) : VerificationContext<Unit, Unit>("scripted", request) {
+    ) : VerificationContext<Unit, Unit>("scripted", SoundnessDirection.Exact, request) {
         override val executor = object : BackendExecutor {
             override fun isAvailable(): Boolean {
                 return true

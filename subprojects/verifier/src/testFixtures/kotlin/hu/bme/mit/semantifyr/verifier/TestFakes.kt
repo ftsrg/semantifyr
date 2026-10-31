@@ -17,6 +17,7 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
@@ -109,9 +110,15 @@ class FakeBackend(
     }
 
     companion object {
-        fun verdict(id: String, verdict: VerificationVerdict): FakeBackend {
+        private val invariant = OxstsFactory.createAG()
+
+        fun verdict(
+            id: String,
+            verdict: VerificationVerdict,
+            soundness: SoundnessDirection = SoundnessDirection.Exact,
+        ): FakeBackend {
             return FakeBackend(id) {
-                BackendVerificationResult(verdict = verdict, metadata = fakeMetadata(id))
+                result(id, verdict, soundness)
             }
         }
 
@@ -119,11 +126,25 @@ class FakeBackend(
             id: String,
             delayMillis: Long,
             verdict: VerificationVerdict,
+            soundness: SoundnessDirection = SoundnessDirection.Exact,
         ): FakeBackend {
             return FakeBackend(id) {
                 delay(delayMillis)
-                BackendVerificationResult(verdict = verdict, metadata = fakeMetadata(id))
+                result(id, verdict, soundness)
             }
+        }
+
+        private fun result(
+            id: String,
+            verdict: VerificationVerdict,
+            soundness: SoundnessDirection,
+        ): BackendVerificationResult {
+            return BackendVerificationResult(
+                verdict = verdict,
+                metadata = fakeMetadata(id),
+                soundness = soundness,
+                isTrusted = soundness.trusts(verdict, invariant),
+            )
         }
 
         fun throwing(id: String, throwable: Throwable): FakeBackend {

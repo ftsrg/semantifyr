@@ -80,6 +80,7 @@ class SpinVerificationContext @AssistedInject constructor(
     private val spinInlinedOxstsWitnessTransformer: SpinInlinedOxstsWitnessTransformer,
 ) : VerificationContext<SpinArtifacts, SpinVerdict>(
     backendId = "spin:${config.id}",
+    soundness = config.soundness,
     request = request,
 ) {
 
