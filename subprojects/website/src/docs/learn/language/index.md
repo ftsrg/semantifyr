@@ -5,7 +5,7 @@ sidebar_position: 0
 
 # Language Reference
 
-Semantifyr is a **declarative-operational** language for writing the [semantic libraries](../index.md) used by the verification framework. A Semantifyr model is a collection of classes, features, transitions, and properties that the compiler unfolds into a flat XSTS (Extended Symbolic Transition System) model and hands to a model checker such as Theta.
+Semantifyr is a **declarative-operational** language for writing the [semantic libraries](../index.md) used by the verification framework. A Semantifyr model is a collection of classes, features, transitions, and properties that the compiler unfolds into a flat transition system and hands to a model checker: Theta, nuXmv, Spin or Uppaal.
 
 This is the **language reference**. Each page covers a single construct and is designed for **quick lookup**. Pages are self-contained and may be read in any order. For a guided walk-through of a complete Semantifyr workflow, see the [Traffic Light tutorials](../tutorials/trafficlight/) instead.
 
@@ -36,4 +36,4 @@ A pervasive distinction throughout the language is **compile-time vs runtime**. 
 
 - The **internals** of the Semantifyr compiler. See the [Developer Guide](../../develop/index.md).
 - The **frontends** that produce Semantifyr code from higher-level languages such as Gamma or SysML v2. They live in the [Semantifyr repository](https://github.com/ftsrg/semantifyr).
-- The **XSTS formalism** itself or model-checking algorithms.
+- The input languages of the model checkers or model-checking algorithms.

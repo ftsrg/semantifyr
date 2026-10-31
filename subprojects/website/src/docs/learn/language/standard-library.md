@@ -19,16 +19,7 @@ The `semantifyr` package is implicitly available in every Semantifyr file. It de
 
 ## Backend Support
 
-Not every model checker backend supports every primitive datatype. The Theta backend currently supports:
-
-| Primitive | Theta backend |
-|-----------|---------------|
-| `int` | Supported |
-| `bool` | Supported |
-| `real` | Limited / not supported |
-| `string` | Limited / not supported |
-
-Use of `real` and `string` requires a backend with the corresponding theory. The `any` type is a structural feature of the language and works regardless of backend.
+All four backends (Theta, nuXmv, Spin and Uppaal) support variables of type `int`, `bool` and enumerations. No backend supports `real` or `string` variables yet. The `any` type is a structural feature of the language and works regardless of backend.
 
 ## The `Anything` Class
 
@@ -38,7 +29,6 @@ Implicit supertype of all classes. Provides empty base transitions:
 class Anything {
   tran { }
   init { }
-  havoc { }
 }
 ```
 
@@ -85,3 +75,19 @@ annotation Trace
 ```
 
 Calls to `@Trace`-annotated transitions are recorded in the verification witness, including parameter bindings at each call site.
+
+### `@Clock`
+
+```oxsts
+annotation Clock
+```
+
+Marks a variable as a clock. Uppaal models it as a clock; the other backends treat it as an ordinary variable.
+
+### `@NonOptimizable`
+
+```oxsts
+annotation NonOptimizable
+```
+
+Excludes a variable from optimizer passes that could remove or fold it.

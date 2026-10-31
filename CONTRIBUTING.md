@@ -14,7 +14,7 @@
 
 ## Licensing
 
-By contributing you agree that your contribution is licensed under the [Eclipse Public License v2.0](LICENSE), the same license as the rest of the codebase. Every source file must carry a valid SPDX header — see the [REUSE compliance section](https://ftsrg.mit.bme.hu/semantifyr/develop/contributing/#licensing-and-reuse-compliance) of the handbook for the exact format. The CI `reuse-check` job will fail your pull request if a new file is missing one.
+By contributing you agree that your contribution is licensed under the [Eclipse Public License v2.0](LICENSE), the same license as the rest of the codebase. Every source file must carry a valid SPDX header in the [REUSE](https://reuse.software/) format; copy it from a neighbouring file of the same type. The CI `reuse-check` job will fail your pull request if a new file is missing one.
 
 ## Code of conduct
 

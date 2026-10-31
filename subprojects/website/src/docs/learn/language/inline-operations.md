@@ -5,7 +5,7 @@ sidebar_position: 12
 
 # Inline Operations
 
-Inline operations are resolved at **compile time** during unfolding. They do not exist in the final XSTS model.
+Inline operations are resolved at **compile time** during unfolding. They never reach the model checker.
 
 ## Inline Call
 

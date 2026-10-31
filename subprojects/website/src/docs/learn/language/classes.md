@@ -9,17 +9,16 @@ A `class` describes a part of the modeled system. Classes have state ([variables
 
 ## The `Anything` Base Class
 
-Every class declared in Semantifyr implicitly extends `Anything` from the [standard library](standard-library.md). `Anything` provides empty `init`, `tran`, and `havoc` transitions:
+Every class declared in Semantifyr implicitly extends `Anything` from the [standard library](standard-library.md). `Anything` provides empty `init` and `tran` transitions:
 
 ```oxsts
 class Anything {
   tran { }
   init { }
-  havoc { }
 }
 ```
 
-Because these transitions are inherited, declaring your own [`init`](transitions.md), [implicit `tran`](transitions.md#the-implicit-main-init-and-havoc) (named `main`), or [`havoc`](transitions.md) requires `redefine`. See [Redefining members](#redefining-members).
+Because these transitions are inherited, declaring your own [`init`](transitions.md) or [implicit `tran`](transitions.md#the-implicit-main-and-init) (named `main`) requires `redefine`. See [Redefining members](#redefining-members).
 
 ## Class Declaration
 
@@ -68,7 +67,7 @@ abstract class Shape {
 
 ## Inheritance
 
-A class extends one or more superclasses listed after `:`, separated by commas.
+A class extends a superclass listed after `:`.
 
 ```oxsts
 class Square : Shape {
@@ -79,6 +78,10 @@ class Square : Shape {
   }
 }
 ```
+
+:::caution
+The grammar accepts several superclasses separated by commas, but multiple inheritance is not supported yet: with more than one superclass, member references in the file do not resolve.
+:::
 
 {/* Not yet
 Multiple inheritance is also supported.

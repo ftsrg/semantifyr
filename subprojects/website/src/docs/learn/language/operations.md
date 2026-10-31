@@ -5,7 +5,7 @@ sidebar_position: 11
 
 # Operations
 
-Operations are the statements inside [transition](transitions.md) bodies. They divide into **runtime operations** (described on this page, present in the final XSTS model) and **[inline operations](inline-operations.md)** (expanded at compile time during unfolding).
+Operations are the statements inside [transition](transitions.md) bodies. They divide into **runtime operations** (described on this page, passed to the model checker) and **[inline operations](inline-operations.md)** (expanded at compile time during unfolding).
 
 Operations (and whole transitions) are atomic in nature, which means either the whole is executed as one, or not at all.
 
@@ -94,7 +94,7 @@ if (value < maximum()) {
 
 ### `for`
 
-A runtime loop over a range. The loop variable takes each value in the range in turn. The expression can be any runtime expression.
+A runtime loop over a range. The loop variable takes each value in the range in turn. The expression can be any runtime expression. Only the Theta backend supports runtime `for`; the other backends report the case as not supported.
 
 ```oxsts
 for (i in 1..10) {

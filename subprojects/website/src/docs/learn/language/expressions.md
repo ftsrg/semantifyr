@@ -18,7 +18,6 @@ Expressions compute values. They appear in [property](properties.md) bodies, on 
 | Nothing | `nothing` |
 | Infinity | `*` |
 | Array | `[a, b, c]`, `[]` |
-| Record | `Point { x = 0, y = 0 }` |
 
 See [Datatypes](datatypes.md) for the corresponding types.
 
@@ -88,6 +87,10 @@ The boolean operators `&&`, `||`, and `^^` share one precedence level and are le
 |--------|-------------|
 | `a..b` | Inclusive range from `a` to `b` |
 | `a..<b` | Exclusive range from `a` to `b-1` |
+
+:::caution
+The compiler currently evaluates `a..<b` like `a..b`, including `b`.
+:::
 
 ## Member Access (`.`)
 
