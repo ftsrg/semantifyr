@@ -120,6 +120,7 @@ class VerifyCommand @Inject constructor(
             VerificationVerdict.Passed -> "PASSED"
             VerificationVerdict.Failed -> "FAILED"
             VerificationVerdict.Inconclusive -> "INCONCLUSIVE"
+            VerificationVerdict.Timeout -> "TIMEOUT"
             VerificationVerdict.Errored -> "ERRORED"
             VerificationVerdict.NotSupported -> "NOT_SUPPORTED"
         }

@@ -11,6 +11,7 @@ public final class VerificationStatus {
     public static final String PASSED = "passed";
     public static final String FAILED = "failed";
     public static final String INCONCLUSIVE = "inconclusive";
+    public static final String TIMEOUT = "timeout";
     public static final String NOT_SUPPORTED = "not_supported";
     public static final String ERRORED = "errored";
 

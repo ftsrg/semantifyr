@@ -123,6 +123,8 @@ function parseResultStatus(response: VerificationCaseResult | null): Verificatio
     case VerificationStatus.Inconclusive:
     case VerificationStatus.NotSupported:
       return response.status
+    case VerificationStatus.Timeout:
+      return 'inconclusive'
     default:
       return 'errored'
   }

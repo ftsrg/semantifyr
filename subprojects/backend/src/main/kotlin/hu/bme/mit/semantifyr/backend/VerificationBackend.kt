@@ -54,6 +54,7 @@ enum class VerificationVerdict(
     Passed(true),
     Failed(true),
     Inconclusive(false),
+    Timeout(false),
     Errored(false),
     NotSupported(false),
 }

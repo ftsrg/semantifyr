@@ -224,7 +224,6 @@ data class VerificationResultDto(
     val metrics: VerificationMetricsDto,
     val message: String?,
     val trace: TraceDto?,
-    val hasTimedOut: Boolean,
 ) {
     companion object {
         fun fromResult(result: VerificationResult): VerificationResultDto {
@@ -234,7 +233,6 @@ data class VerificationResultDto(
                 metrics = VerificationMetricsDto.fromMetrics(result.metrics),
                 message = result.message,
                 trace = result.trace?.let { TraceDto.fromTrace(it) },
-                hasTimedOut = result.hasTimedOut,
             )
         }
     }

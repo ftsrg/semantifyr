@@ -126,18 +126,16 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         logger.info { "Verifying case '$qualifiedName' with portfolio '${semantifyrVerifierConfiguration.portfolio.id}' (timeout=${semantifyrVerifierConfiguration.timeout})" }
 
         val portfolioMark = TimeSource.Monotonic.markNow()
-        var hasTimedOut = false
         val (backendResult, portfolioDuration) = try {
             runInTimeout(progress) {
                 runBackend(compilation, case, startedAt, progress)
             }
         } catch (_: TimeoutCancellationException) {
-            logger.info { "Verification of '$qualifiedName' timed out after ${semantifyrVerifierConfiguration.timeout}, returning Inconclusive" }
-            hasTimedOut = true
+            logger.info { "Verification of '$qualifiedName' timed out after ${semantifyrVerifierConfiguration.timeout}" }
             BackendOutcomeWithDuration(
                 BackendVerificationResult(
                     metadata = VerificationMetadata(backendId = null, startedAt = startedAt),
-                    verdict = VerificationVerdict.Inconclusive,
+                    verdict = VerificationVerdict.Timeout,
                     message = "Timeout (${semantifyrVerifierConfiguration.timeout}) exceeded.",
                 ),
                 portfolioMark.elapsedNow(),
@@ -192,7 +190,6 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
                 ),
             ),
             trace = trace,
-            hasTimedOut = hasTimedOut,
             message = backendResult.message,
         )
 

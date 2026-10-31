@@ -35,6 +35,7 @@ export const VerificationStatus = {
     Passed: "passed",
     Failed: "failed",
     Inconclusive: "inconclusive",
+    Timeout: "timeout",
     NotSupported: "not_supported",
     Errored: "errored",
 } as const;

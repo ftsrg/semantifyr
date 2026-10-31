@@ -67,7 +67,7 @@ class SemantifyrVerifierImplTest {
     }
 
     @Test
-    fun `portfolio timeout maps to Inconclusive with a Timeout message`(@TempDir output: Path) = runTest {
+    fun `verifier timeout maps to Timeout`(@TempDir output: Path) = runTest {
         val portfolio = ScriptedPortfolio { _, _ ->
             delay(10.seconds)
             decisiveResult(VerificationVerdict.Passed)
@@ -76,7 +76,7 @@ class SemantifyrVerifierImplTest {
         val result = build(portfolio, output, timeout = 50.milliseconds)
             .verify(loadFirstCase())
 
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
         assertThat(result.message).contains("Timeout").contains("exceeded")
         assertThat(result.metadata.backendId).isNull()
     }
