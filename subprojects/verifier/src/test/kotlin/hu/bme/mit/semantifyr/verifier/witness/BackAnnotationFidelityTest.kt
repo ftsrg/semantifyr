@@ -32,6 +32,7 @@ import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
+import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import hu.bme.mit.semantifyr.verifier.qualifiedNameToDirectoryName
 import kotlinx.serialization.json.Json
@@ -312,6 +313,7 @@ class BackAnnotationFidelityTest {
         override val displayName = "witness"
         override val description = "test-only"
         override val executorKeys: Set<ExecutorKey<*>> = emptySet()
+        override val legs: List<PortfolioLeg> = emptyList()
 
         override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
             return AvailabilityReport.Available

@@ -10,6 +10,7 @@ import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
@@ -43,6 +44,11 @@ class PortfolioScope internal constructor(
         }
     }
 }
+
+data class PortfolioLeg(
+    val id: String,
+    val soundness: SoundnessDirection,
+)
 
 fun BackendVerificationRequest.withSubPath(subpath: String): BackendVerificationRequest {
     return this.copy(artifactOutputPath = artifactOutputPath.resolve(subpath))
@@ -133,6 +139,7 @@ abstract class VerificationPortfolio {
     abstract val displayName: String
     abstract val description: String
     abstract val executorKeys: Set<ExecutorKey<*>>
+    abstract val legs: List<PortfolioLeg>
 
     abstract fun availability(environment: ExecutionEnvironment = ExecutionEnvironment.Empty): AvailabilityReport
 

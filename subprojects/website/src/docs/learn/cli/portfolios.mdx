@@ -12,3 +12,9 @@ import verifyHelp from '@cli-reference/verify.txt';
 A portfolio selects the backends and backend configurations that verify a case: Theta, nuXmv, Spin, Uppaal, or a combination of them. Choose one with `semantifyr verify --portfolio <id>`. A single-backend portfolio needs its backend installed, a combined one at least one of its backends; `semantifyr portfolios` reports which portfolios are available on your machine.
 
 <PortfolioTable listing={listing} verifyHelp={verifyHelp} />
+
+## Soundness directions
+
+Each leg of a portfolio is one backend configuration, listed with the direction in which its verdicts can be trusted. An `Exact` leg is trusted both ways. An `UnderApproximating` leg explores only part of the behaviour, so it is trusted when it finds a trace (a Failed `AG` or a Passed `EF` property) and not when it reports that none exists. An `OverApproximating` leg is trusted the other way round; no built-in configuration is one. Spin and Uppaal are under-approximating, since they havoc an uninitialized variable only among candidate values; Theta and nuXmv are exact.
+
+`smart-full` and `theta-full` race their legs and report the first verdict its leg's direction trusts. When no such verdict arrives the case is Inconclusive, or Timeout when a leg ran out of time, and the message lists what every leg reported. `all-agree-full` runs every leg and reports the verdict its trusted legs agree on, naming any untrusted leg it overrules; trusted legs that disagree make the case Errored, since one of them is unsound. A single-backend portfolio reports its configuration's verdict as it is.

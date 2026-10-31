@@ -32,6 +32,7 @@ import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
+import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
@@ -281,6 +282,7 @@ class SemantifyrVerifierImplTest {
         override val displayName: String = "scripted"
         override val description: String = "test-only"
         override val executorKeys: Set<ExecutorKey<*>> = emptySet()
+        override val legs: List<PortfolioLeg> = emptyList()
 
         var invocations: Int = 0
             private set

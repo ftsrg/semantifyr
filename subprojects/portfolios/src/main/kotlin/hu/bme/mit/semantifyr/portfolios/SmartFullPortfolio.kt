@@ -42,7 +42,7 @@ class SmartFullPortfolio(
 ) : VerificationPortfolio() {
     override val id: String = "smart-full"
     override val displayName: String = "Race across all backends"
-    override val description: String = "Races all representative backend configurations in parallel."
+    override val description: String = "Races representative configurations of every backend in parallel and takes the first verdict its leg's soundness direction trusts."
 
     private val tasks: List<PortfolioTask<*>> = listOf(
 //        PortfolioTask(nuxmv, NuxmvConfig.BmcInvar, "nuxmv-bmc"),
@@ -58,6 +58,7 @@ class SmartFullPortfolio(
     )
 
     override val executorKeys: Set<ExecutorKey<*>> = tasks.map { it.executorKey }.toSet()
+    override val legs = tasks.map { it.leg }
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
         val anyAvailable = tasks.any {
