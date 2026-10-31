@@ -72,13 +72,17 @@ export default {
     ],
     '@docusaurus/plugin-sitemap',
     () => ({
-      name: 'oxsts-test-models',
+      name: 'raw-sources',
       configureWebpack: () => ({
         resolve: {
-          alias: { '@oxsts-test-models': path.resolve(__dirname, '../../oxsts-test-models') },
+          alias: {
+            '@oxsts-test-models': path.resolve(__dirname, '../../oxsts-test-models'),
+            // written by the cliReference_* Gradle tasks
+            '@cli-reference': path.resolve(__dirname, 'build/cli-reference'),
+          },
         },
         module: {
-          rules: [{ test: /\.oxsts$/, type: 'asset/source' }],
+          rules: [{ test: /\.(oxsts|txt)$/, type: 'asset/source' }],
         },
       }),
     }),

@@ -1,0 +1,14 @@
+---
+title: Portfolios
+sidebar_position: 1
+---
+
+import PortfolioTable from '@site/src/components/PortfolioTable';
+import listing from '@cli-reference/portfolios.txt';
+import verifyHelp from '@cli-reference/verify.txt';
+
+# Portfolios
+
+A portfolio selects the backends and backend configurations that verify a case: Theta, nuXmv, Spin, Uppaal, or a combination of them. Choose one with `semantifyr verify --portfolio <id>`. A single-backend portfolio needs its backend installed, a combined one at least one of its backends; `semantifyr portfolios` reports which portfolios are available on your machine.
+
+<PortfolioTable listing={listing} verifyHelp={verifyHelp} />
