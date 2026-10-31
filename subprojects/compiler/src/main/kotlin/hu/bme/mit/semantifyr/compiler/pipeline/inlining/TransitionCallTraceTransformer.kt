@@ -60,10 +60,11 @@ class TransitionCallTraceTransformer @Inject constructor(
         val transitionCallTrace = TransitionCallTrace(
             self = InstanceEvaluation(containerInstance),
             transitionDeclaration = transitionDeclaration,
-            arguments = callExpression.arguments.map {
+            // bound by position like the inliner; argument.parameter is null unless the argument is named
+            arguments = callExpression.arguments.mapIndexed { index, argument ->
                 ArgumentTrace(
-                    it.parameter,
-                    evaluator.evaluateTyped(ExpressionEvaluation::class.java, it.expression),
+                    transitionDeclaration.parameters[index],
+                    evaluator.evaluateTyped(ExpressionEvaluation::class.java, argument.expression),
                 )
             },
             parent = parent,
