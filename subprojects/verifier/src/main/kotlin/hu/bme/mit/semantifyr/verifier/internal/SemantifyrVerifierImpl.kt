@@ -23,7 +23,6 @@ import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.verifier.CompilationMetrics
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.Trace
@@ -93,11 +92,9 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         progressContext.reportProgress("Compiling ${verificationCase.qualifiedName}")
         logger.info { "Compiling '${verificationCase.qualifiedName}'" }
         val caseDirectory = prepareCaseDirectory(verificationCase.qualifiedName)
-        val (compilation, compilationDuration) = measureTimedValue {
-            compiler.compile(verificationCase.classDeclaration, caseDirectory)
-        }
+        val compilation = compiler.compile(verificationCase.classDeclaration, caseDirectory)
 
-        return verifyCompilation(compilation, verificationCase, compilationDuration, progressContext)
+        return verifyCompilation(compilation, verificationCase, progressContext)
     }
 
     override suspend fun verify(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext): VerificationResult {
@@ -109,16 +106,13 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         progressContext.reportProgress("Compiling $qualifiedName")
         logger.info { "Compiling inlined of '$qualifiedName'" }
         val caseDirectory = prepareCaseDirectory(qualifiedName)
-        val (compilation, compilationDuration) = measureTimedValue {
-            compiler.compile(inlinedOxsts, caseDirectory)
-        }
-        return verifyCompilation(compilation, case, compilationDuration, progressContext)
+        val compilation = compiler.compile(inlinedOxsts, caseDirectory)
+        return verifyCompilation(compilation, case, progressContext)
     }
 
     private suspend fun verifyCompilation(
         compilation: FlattenedCompilationContext,
         case: VerificationCase,
-        compilationDuration: Duration,
         progress: ProgressContext,
     ): VerificationResult {
         val qualifiedName = case.qualifiedName
@@ -126,18 +120,16 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         logger.info { "Verifying case '$qualifiedName' with portfolio '${semantifyrVerifierConfiguration.portfolio.id}' (timeout=${semantifyrVerifierConfiguration.timeout})" }
 
         val portfolioMark = TimeSource.Monotonic.markNow()
-        var hasTimedOut = false
         val (backendResult, portfolioDuration) = try {
             runInTimeout(progress) {
                 runBackend(compilation, case, startedAt, progress)
             }
         } catch (_: TimeoutCancellationException) {
-            logger.info { "Verification of '$qualifiedName' timed out after ${semantifyrVerifierConfiguration.timeout}, returning Inconclusive" }
-            hasTimedOut = true
+            logger.info { "Verification of '$qualifiedName' timed out after ${semantifyrVerifierConfiguration.timeout}" }
             BackendOutcomeWithDuration(
                 BackendVerificationResult(
                     metadata = VerificationMetadata(backendId = null, startedAt = startedAt),
-                    verdict = VerificationVerdict.Inconclusive,
+                    verdict = VerificationVerdict.Timeout,
                     message = "Timeout (${semantifyrVerifierConfiguration.timeout}) exceeded.",
                 ),
                 portfolioMark.elapsedNow(),
@@ -180,19 +172,13 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
                 totalDuration = totalDuration,
                 backend = backendResult.metrics.takeIf { backendResult.metadata.backendId != null },
                 verifier = VerifierMetrics(
-                    compilationDuration = compilationDuration,
-                    compilation = CompilationMetrics(
-                        createDuration = compilation.compilationMetrics.createDuration,
-                        instantiationDuration = compilation.compilationMetrics.instantiationDuration,
-                        inliningDuration = compilation.compilationMetrics.inliningDuration,
-                        flatteningDuration = compilation.compilationMetrics.flatteningDuration,
-                    ),
+                    compilationDuration = compilation.compilationMetrics.unfoldingDuration,
+                    compilation = compilation.compilationMetrics,
                     backAnnotationDuration = verifierBackAnnotationDuration,
                     portfolioDuration = portfolioDuration,
                 ),
             ),
             trace = trace,
-            hasTimedOut = hasTimedOut,
             message = backendResult.message,
         )
 
@@ -232,6 +218,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         val request = BackendVerificationRequest(
             inlinedOxsts = inlinedOxsts,
             artifactOutputPath = caseDirectoryFor(case.qualifiedName),
+            flatteningInfo = compilation.flatteningInfo,
         )
 
         val (result, duration) = measureTimedValue {

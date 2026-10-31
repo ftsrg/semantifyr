@@ -9,21 +9,20 @@ A `class` describes a part of the modeled system. Classes have state ([variables
 
 ## The `Anything` Base Class
 
-Every class declared in Semantifyr implicitly extends `Anything` from the [standard library](standard-library.md). `Anything` provides empty `init`, `tran`, and `havoc` transitions:
+Every class declared in Semantifyr implicitly extends `Anything` from the [standard library](standard-library.md). `Anything` provides empty `init` and `tran` transitions:
 
 ```oxsts
 class Anything {
   tran { }
   init { }
-  havoc { }
 }
 ```
 
-Because these transitions are inherited, declaring your own [`init`](transitions.md), [implicit `tran`](transitions.md#the-implicit-main-init-and-havoc) (named `main`), or [`havoc`](transitions.md) requires `redefine`. See [Redefining members](#redefining-members).
+Because these transitions are inherited, declaring your own [`init`](transitions.md) or [implicit `tran`](transitions.md#the-implicit-main-and-init) (named `main`) requires `redefine`. See [Redefining members](#redefining-members).
 
 ## Class Declaration
 
-A class declaration consists of the `class` keyword, a name, an optional list of superclasses, and a body in `{ }`. Members may appear in any order.
+A class declaration consists of the `class` keyword, a name, an optional superclass, and a body in `{ }`. Members may appear in any order.
 
 ```oxsts
 class Counter {
@@ -68,7 +67,7 @@ abstract class Shape {
 
 ## Inheritance
 
-A class extends one or more superclasses listed after `:`, separated by commas.
+A class extends one superclass, listed after `:`.
 
 ```oxsts
 class Square : Shape {
@@ -80,18 +79,13 @@ class Square : Shape {
 }
 ```
 
-{/* Not yet
-Multiple inheritance is also supported.
-
-```oxsts
-class Logged : Counter, Loggable {
-}
-```
-*/}
+:::caution
+The grammar accepts several superclasses separated by commas, but a class has one superclass: the validator rejects every superclass after the first (`OXSTS.MULTIPLE_INHERITANCE`).
+:::
 
 ## Redefining Members
 
-`redefine` overrides an inherited member of the **same name**. The redefining member must match the signature (parameter types and return type for [transitions](transitions.md) and [properties](properties.md)). Redefining is the primary mechanism by which semantic libraries specialize behavior.
+`redefine` overrides an inherited member of the **same name**. A redefined [transition](transitions.md) or [property](properties.md) takes as many parameters as the inherited one (`OXSTS.REDEFINITION_SIGNATURE_MISMATCH`), and a redefined property's return type, feature's type or variable's type must be assignable to the inherited one (`OXSTS.TYPE_MISMATCH`). Redefining is the primary mechanism by which semantic libraries specialize behavior.
 
 ```oxsts
 redefine tran fire() {

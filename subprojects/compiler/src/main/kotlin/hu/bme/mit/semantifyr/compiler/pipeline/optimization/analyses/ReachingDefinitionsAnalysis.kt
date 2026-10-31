@@ -123,12 +123,8 @@ class ReachingDefinitionsComputation(
                 continue
             }
             val variable = evaluateVariable(read) ?: continue
-            val baseDefs = initialIn[variable].orEmpty()
-            definitionsOf[read] = if (initMustWrite(variable)) {
-                baseDefs
-            } else {
-                baseDefs + variable
-            }
+            // the property is checked in the pre-init state too, where the declaration holds
+            definitionsOf[read] = initialIn[variable].orEmpty() + variable
         }
     }
 

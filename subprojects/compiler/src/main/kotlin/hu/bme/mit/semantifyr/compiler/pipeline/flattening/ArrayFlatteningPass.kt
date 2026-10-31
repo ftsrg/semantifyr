@@ -35,12 +35,10 @@ class ArrayFlatteningPass @Inject constructor(
     private val constantExpressionEvaluatorProvider: ConstantExpressionEvaluatorProvider,
 ) {
 
-    fun flattenArrays(inlinedOxsts: InlinedOxsts): Int {
-        val arrayVariables = collectArrayVariables(inlinedOxsts)
-        for (variable in arrayVariables) {
-            flattenVariable(variable)
+    fun flattenArrays(inlinedOxsts: InlinedOxsts): Map<VariableDeclaration, List<VariableDeclaration>> {
+        return collectArrayVariables(inlinedOxsts).associateWith {
+            flattenVariable(it)
         }
-        return arrayVariables.size
     }
 
     private fun collectArrayVariables(inlinedOxsts: InlinedOxsts): List<VariableDeclaration> {
@@ -53,12 +51,12 @@ class ArrayFlatteningPass @Inject constructor(
         }.toList()
     }
 
-    private fun flattenVariable(arrayVariable: VariableDeclaration) {
-        val typeSpec = arrayVariable.typeSpecification ?: return
+    private fun flattenVariable(arrayVariable: VariableDeclaration): List<VariableDeclaration> {
+        val typeSpec = arrayVariable.typeSpecification ?: return emptyList()
         val range = multiplicityRangeEvaluator.evaluate(typeSpec)
         val slotCount = range.upperBound
         if (slotCount <= 0) {
-            return
+            return emptyList()
         }
 
         val elementDomain = typeSpec.domain ?: sourceError(arrayVariable, "Array variable '${arrayVariable.name}' has no element domain.")
@@ -69,6 +67,8 @@ class ArrayFlatteningPass @Inject constructor(
         rewriteIndexingReferences(root, arrayVariable, slotVariables)
 
         insertSlotsAndRemoveOriginal(arrayVariable, slotVariables)
+
+        return slotVariables
     }
 
     private fun createSlotVariables(

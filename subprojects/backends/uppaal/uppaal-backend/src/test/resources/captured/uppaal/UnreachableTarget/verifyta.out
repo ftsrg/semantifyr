@@ -1,0 +1,10 @@
+Options for the verification:
+  Generating shortest trace
+  Search order is breadth first
+  Using conservative space optimisation
+  Seed is 1793408922
+  State space representation uses minimal constraint systems with future testing
+  Using HashMap + Compress integers for discrete state storage
+[2K
+Verifying formula 1 at model.q:1
+[2K -- Formula is NOT satisfied.

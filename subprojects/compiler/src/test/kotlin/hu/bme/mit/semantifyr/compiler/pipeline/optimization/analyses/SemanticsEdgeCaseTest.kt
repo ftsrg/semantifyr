@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test
 
 class SemanticsEdgeCaseTest : AnalysisTestBase() {
     @Test
-    fun `non-local variable declaration is NOT a reaching def for property reads`() {
+    fun `variable declaration is a reaching def for property reads although init overwrites it`() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
@@ -34,7 +34,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         )
         val a = inlined.varNamed("a")
         val propRead = inlined.findPropertyReadOf(a)
-        assertThat(result.definitionsOf[propRead]!!).doesNotContain(a as EObject)
+        assertThat(result.definitionsOf[propRead]!!).contains(a as EObject)
     }
 
     @Test

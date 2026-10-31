@@ -18,6 +18,9 @@ plugins {
 dependencies {
     implementation(project(":utils"))
     implementation(project(":logging"))
+
+    testImplementation(project(":compiler"))
+    testImplementation(testFixtures(project(":compiler")))
 }
 
 val sysmlCommit = "7893df64d2f51ab60e6ecb1124bfb7a219d90bd9" // chore: bumped vscode to 1.109
@@ -26,6 +29,10 @@ val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
 node {
     nodeProjectDir = sysmlDir
+    // pnpm switches itself to the fork's packageManager, so the installed one must match it
+    pnpmVersion = providers.fileContents(sysmlDir.file("package.json")).asText.map {
+        Regex("\"packageManager\"\\s*:\\s*\"pnpm@([^\"+]+)").find(it)?.groupValues?.get(1)
+    }.orElse(libs.versions.pnpm)
 }
 
 val checkoutSysml = tasks.register<Exec>("checkoutSysml") {
@@ -172,4 +179,14 @@ configurations.consumable("compiledExamplesElements") {
     outgoing.artifact(compiledExamplesDir) {
         builtBy(compileSysmlExamples)
     }
+}
+
+tasks.test {
+    inputs.files(
+        examplesSourceDir.file("crossroads.sysml"),
+        examplesSourceDir.file("Verification.sysml"),
+        layout.projectDirectory.file("../models/etc/crossroads-green.trace.sysml"),
+        layout.projectDirectory.file("../models/etc/crossroads-green.witness.oxsts"),
+    ).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir(layout.projectDirectory.dir("../models/libraries/default")).withPathSensitivity(PathSensitivity.RELATIVE)
 }

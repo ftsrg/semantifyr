@@ -36,6 +36,7 @@ data class CallTraceStep(
 @Serializable
 data class CallTrace(
     val initialStep: CallTraceStep,
+    val initializedStep: CallTraceStep?,
     val steps: List<CallTraceStep>,
 )
 
@@ -53,6 +54,7 @@ data class WitnessStateStep(
 @Serializable
 data class WitnessState(
     val initialStep: WitnessStateStep,
+    val initializedStep: WitnessStateStep?,
     val steps: List<WitnessStateStep>,
 )
 
@@ -68,6 +70,9 @@ class CallTraceTransformer @Inject constructor(
     ): CallTrace {
         return CallTrace(
             transformCallTraceStep(classWitness.initialState, traces),
+            classWitness.initializedState?.let {
+                transformCallTraceStep(it, traces)
+            },
             classWitness.transitionStates.map {
                 transformCallTraceStep(it, traces)
             },
@@ -77,6 +82,9 @@ class CallTraceTransformer @Inject constructor(
     fun transformWitnessState(classWitness: ClassWitness): WitnessState {
         return WitnessState(
             transformWitnessStateStep(classWitness.initialState),
+            classWitness.initializedState?.let {
+                transformWitnessStateStep(it)
+            },
             classWitness.transitionStates.map {
                 transformWitnessStateStep(it)
             },

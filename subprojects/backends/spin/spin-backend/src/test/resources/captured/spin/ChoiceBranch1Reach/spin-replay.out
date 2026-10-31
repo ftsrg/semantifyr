@@ -1,0 +1,24 @@
+ltl p: [] (! ((__semantifyr_stable) && ((__root__x==1))))
+starting claim 1
+Never claim moves to line 4	[(1)]
+  2:	proc  0 (:init::1) model.pml:7 (state 1)	[semantifyr_stable = 0]
+  3:	proc  0 (:init::1) model.pml:8 (state 2)	[(1)]
+  3:	proc  0 (:init::1) model.pml:9 (state 3)	[semantifyr_stable = 1]
+		__semantifyr_stable = 1
+  5:	proc  0 (:init::1) model.pml:13 (state 5)	[semantifyr_stable = 0]
+		__semantifyr_stable = 0
+  6:	proc  0 (:init::1) model.pml:16 (state 6)	[root__x = 1]
+		__root__x = 1
+  6:	proc  0 (:init::1) model.pml:22 (state 12)	[semantifyr_stable = 1]
+		__root__x = 1
+		__semantifyr_stable = 1
+spin: _spin_nvr.tmp:3, Error: assertion violated
+spin: text of failed assertion: assert(!(!(!((semantifyr_stable&&(root__x==1))))))
+Never claim moves to line 3	[assert(!(!(!((semantifyr_stable&&(root__x==1))))))]
+spin: trail ends after 7 steps
+#processes: 1
+		__root__x = 1
+		__semantifyr_stable = 1
+  7:	proc  0 (:init::1) model.pml:11 (state 14)
+  7:	proc  - (p:1) _spin_nvr.tmp:2 (state 6)
+1 processes created

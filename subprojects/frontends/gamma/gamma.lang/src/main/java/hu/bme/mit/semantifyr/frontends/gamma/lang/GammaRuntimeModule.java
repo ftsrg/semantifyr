@@ -10,6 +10,9 @@ import com.google.inject.Binder;
 import com.google.inject.name.Names;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.scoping.EmptyGlobalScopeProvider;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.scoping.GammaLocalScopeProvider;
+import org.eclipse.xtext.formatting2.FormatterPreferenceKeys;
+import org.eclipse.xtext.formatting2.FormatterRequest;
+import org.eclipse.xtext.preferences.MapBasedPreferenceValues;
 import org.eclipse.xtext.scoping.IGlobalScopeProvider;
 import org.eclipse.xtext.scoping.IScopeProvider;
 import org.eclipse.xtext.scoping.impl.AbstractDeclarativeScopeProvider;
@@ -26,5 +29,14 @@ public class GammaRuntimeModule extends AbstractGammaRuntimeModule {
         binder.bind(IScopeProvider.class)
                 .annotatedWith(Names.named(AbstractDeclarativeScopeProvider.NAMED_DELEGATE))
                 .to(GammaLocalScopeProvider.class);
+    }
+
+    @SuppressWarnings("unused")
+    public void configureFormatterRequest(Binder binder) {
+        binder.bind(FormatterRequest.class).toProvider(() -> {
+            MapBasedPreferenceValues preferences = new MapBasedPreferenceValues();
+            preferences.put(FormatterPreferenceKeys.lineSeparator, "\n");
+            return new FormatterRequest().setPreferences(preferences);
+        });
     }
 }

@@ -6,10 +6,14 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.typesystem;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.WrappedOxstsPackage;
 import hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator;
+import org.eclipse.xtext.diagnostics.Severity;
 import org.eclipse.xtext.validation.CheckMode;
 import org.junit.jupiter.api.Test;
 
@@ -103,6 +107,78 @@ public class ArrayTypeTest {
             """, CheckMode.ALL);
 
         pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "compile-time upper bound");
+    }
+
+    @Test
+    void classTypedArrayIsRejectedAtItsTypeSpecification() {
+        var pkg = parseHelper.parse("""
+            package test
+            class Worker { }
+            class C {
+                contains worker: Worker
+                var slots: Worker[2]
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        pkg.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "element type 'Worker'");
+        assertOnlyErrorsAreUnsupportedAtLine(pkg, 5);
+    }
+
+    @Test
+    void featureTypedArrayIsRejectedAtItsTypeSpecification() {
+        var pkg = parseHelper.parse("""
+            package test
+            class Worker { }
+            class C {
+                contains workers: Worker[0..*]
+                contains first: Worker subsets workers
+                var slots: workers[1..2]
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        pkg.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "element type 'workers'");
+        assertOnlyErrorsAreUnsupportedAtLine(pkg, 6);
+    }
+
+    @Test
+    void optionalClassTypedVariableIsNotAnArray() {
+        var pkg = parseHelper.parse("""
+            package test
+            class Worker { }
+            class C {
+                contains worker: Worker
+                var current: Worker[0..1] := nothing
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        pkg.assertNoValidationErrors();
+    }
+
+    @Test
+    void enumTypedArrayPasses() {
+        var pkg = parseHelper.parse("""
+            package test
+            enum Color { Red, Green }
+            class C {
+                var colors: Color[2] := [Color::Red, Color::Green]
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        pkg.assertNoValidationErrors();
+    }
+
+    private static void assertOnlyErrorsAreUnsupportedAtLine(WrappedOxstsPackage pkg, int line) {
+        assertThat(pkg.getIssues())
+                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .isNotEmpty()
+                .allSatisfy(issue -> {
+                    assertThat(issue.getCode()).isEqualTo(OxstsValidator.UNSUPPORTED_FEATURE);
+                    assertThat(issue.getLineNumber()).isEqualTo(line);
+                });
     }
 
     @Test

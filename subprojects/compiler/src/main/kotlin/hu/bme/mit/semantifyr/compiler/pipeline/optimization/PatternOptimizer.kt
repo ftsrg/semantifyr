@@ -63,9 +63,9 @@ class PatternOptimizer(
 
     private val logger by loggerFactory()
 
-    override fun optimize(input: EObject): Boolean {
+    override fun optimize(input: EObject): OptimizationStats {
         if (patterns.isEmpty()) {
-            return false
+            return OptimizationStats()
         }
 
         val totalMark = markNow()
@@ -77,7 +77,6 @@ class PatternOptimizer(
         }
         val seedElapsed = totalMark.elapsedNow()
 
-        var changed = false
         var pops = 0
         var applications = 0
         while (worklist.isNotEmpty()) {
@@ -88,7 +87,6 @@ class PatternOptimizer(
             }
             for (pattern in patterns) {
                 if (pattern.tryApply(current, worklist)) {
-                    changed = true
                     applications++
                     artifactManager.commitStep(pass)
                     break
@@ -98,9 +96,19 @@ class PatternOptimizer(
 
         val totalElapsed = totalMark.elapsedNow()
         logger.debug {
-            "WorklistOptimizer[${pass.name}]: $totalElapsed total (seed $seedElapsed), $pops pop(s), $applications application(s), ${patterns.size} pattern(s), changed=$changed"
+            "WorklistOptimizer[${pass.name}]: $totalElapsed total (seed $seedElapsed), $pops pop(s), $applications application(s), ${patterns.size} pattern(s)"
         }
-        return changed
+        return OptimizationStats(
+            duration = totalElapsed,
+            passes = listOf(
+                PassStats(
+                    name = pass.name,
+                    duration = totalElapsed,
+                    runs = 1,
+                    firings = applications,
+                ),
+            ),
+        )
     }
 
 }

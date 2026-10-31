@@ -101,7 +101,7 @@ class State : AbstractState {
     }
 
     redefine tran activateRecursive() {
-        inline start.enter()
+        inline start.enter(self)
     }
 
     redefine tran deactivateRecursive(_deactivate: bool) {
@@ -185,6 +185,7 @@ class Transition {
         }
     }
 
+    @Trace
     tran fire() {
         assume (isEnabled())
         inline performTransition()
@@ -323,13 +324,14 @@ class EntryState : StateNode {
         return false
     }
 
-    redefine tran enter() {
+    redefine tran enter(commonState: StateNode) {
         inline for choice (transition in outgoingTransitions) {
+            assume (transition.guard.isOpen())
             inline transition.performTransition()
         }
     }
 
-    redefine tran exit() {
+    redefine tran exit(commonState: StateNode) {
         
     }
 

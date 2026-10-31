@@ -6,144 +6,297 @@
 
 package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
-import hu.bme.mit.semantifyr.xsts.lang.xsts.AssignmentOperation
-import hu.bme.mit.semantifyr.xsts.lang.xsts.BooleanType
-import hu.bme.mit.semantifyr.xsts.lang.xsts.ChoiceOperation
-import hu.bme.mit.semantifyr.xsts.lang.xsts.IntegerType
-import hu.bme.mit.semantifyr.xsts.lang.xsts.NegationOperator
-import hu.bme.mit.semantifyr.xsts.lang.xsts.SequenceOperation
+import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class ThetaModelTransformerTest : ThetaTransformationTestBase() {
 
-    @Test
-    suspend fun `int variable produces a TopLevelVariableDeclaration with IntegerType`() {
-        withTransformer {
-            val xsts = it.transform(
-                parse(
-                    """
-                        inlined oxsts of semantifyr::Anything
-                        var x : int := 0
-                        init { }
-                        tran { }
-                        prop { AG true }
-                    """,
-                ),
-                testXstsUri,
-            )
+    private val colors = """
+        package test::colors
+        enum Color { Red, Green }
+    """
 
-            assertThat(xsts.variableDeclarations).hasSize(1)
-            val variable = xsts.variableDeclarations.single()
-            assertThat(variable.name).isEqualTo("x")
-            assertThat(variable.type).isInstanceOf(IntegerType::class.java)
+    private suspend fun xsts(body: String): String {
+        return withTransformer {
+            serialize(it.transform(parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors), testXstsUri))
+        }
+    }
+
+    private suspend fun xstsLines(body: String): List<String> {
+        return xsts(body).lines().map {
+            it.trim()
+        }.filter {
+            it.isNotEmpty()
         }
     }
 
     @Test
-    suspend fun `boolean variable produces BooleanType`() {
-        withTransformer {
-            val xsts = it.transform(
-                parse(
-                    """
-                        inlined oxsts of semantifyr::Anything
-                        var b : bool := false
-                        init { }
-                        tran { }
-                        prop { AG true }
-                    """,
-                ),
-                testXstsUri,
-            )
+    suspend fun `a model renders variables, the transitions and the property`() {
+        val xsts = xsts(
+            """
+                var x : int := 0
+                init { x := 1 }
+                tran { x := x + 1 }
+                prop { AG x < 3 }
+            """,
+        )
 
-            assertThat(xsts.variableDeclarations.single().type).isInstanceOf(BooleanType::class.java)
-        }
+        assertThat(xsts).isEqualTo(
+            """
+                |
+                |var x: integer = 0
+                |trans {
+                |	x := x + 1;
+                |}
+                |init {
+                |	x := 1;
+                |}
+                |env {
+                |}
+                |prop { x < 3
+                |}
+                |
+            """.trimMargin(),
+        )
     }
 
     @Test
-    suspend fun `assignment in tran appears as an AssignmentOperation in tran branches`() {
-        withTransformer {
-            val xsts = it.transform(
-                parse(
-                    """
-                        inlined oxsts of semantifyr::Anything
-                        var x : int := 0
-                        init { }
-                        tran { x := x + 1 }
-                        prop { AG true }
-                    """,
-                ),
-                testXstsUri,
-            )
+    suspend fun `the serialized model separates its lines with a line feed alone`() {
+        val xsts = xsts(
+            """
+                var x : int := 0
+                var c : test::colors::Color := test::colors::Color::Red
+                init { x := 1 }
+                tran {
+                    choice { x := 1 } or { c := test::colors::Color::Green }
+                    if (x < 3) { x := 1 } else { x := 2 }
+                }
+                prop { AG x < 3 }
+            """,
+        )
 
-            val tranBranches = xsts.tran.branches
-            assertThat(tranBranches).hasSize(1)
-            val branchSteps = (tranBranches.single() as SequenceOperation).steps
-            assertThat(branchSteps).hasSize(1)
-            assertThat(branchSteps.single()).isInstanceOf(AssignmentOperation::class.java)
-        }
+        assertThat(xsts).contains("\n").doesNotContain("\r")
     }
 
     @Test
-    suspend fun `choice in tran produces a ChoiceOperation with two branches`() {
-        withTransformer {
-            val xsts = it.transform(
-                parse(
-                    """
-                        inlined oxsts of semantifyr::Anything
-                        var x : int := 0
-                        init { }
-                        tran { choice { x := 1 } or { x := 2 } }
-                        prop { AG true }
-                    """,
-                ),
-                testXstsUri,
-            )
+    suspend fun `variables keep their types and initializers`() {
+        val lines = xstsLines(
+            """
+                var x : int
+                var b : bool := true
+                var c : test::colors::Color := test::colors::Color::Green
+                init { }
+                tran { }
+                prop { AG true }
+            """,
+        )
 
-            val tranBranch = xsts.tran.branches.single() as SequenceOperation
-            val first = tranBranch.steps.single()
-            assertThat(first).isInstanceOf(ChoiceOperation::class.java)
-            assertThat((first as ChoiceOperation).branches).hasSize(2)
-        }
+        assertThat(lines).containsSequence("type Color : { Red, Green", "}", "var x: integer", "var b: boolean = true", "var c: Color = Color.Green")
     }
 
     @Test
-    suspend fun `AG property maps to an invariant equal to its body (no negation)`() {
-        withTransformer {
-            val xsts = it.transform(
-                parse(
-                    """
-                        inlined oxsts of semantifyr::Anything
-                        var x : int := 0
-                        init { }
-                        tran { }
-                        prop { AG (x == 5) }
-                    """,
-                ),
-                testXstsUri,
-            )
+    suspend fun `assumptions, choices and ifs map to their XSTS forms`() {
+        val lines = xstsLines(
+            """
+                var x : int := 0
+                init { }
+                tran {
+                    assume(x < 3)
+                    choice { x := 1 } or { }
+                    if (x < 3) { x := 1 } else { x := 2 }
+                    if (x > 3) { x := 3 }
+                }
+                prop { AG true }
+            """,
+        )
 
-            assertThat(xsts.property.invariant).isNotInstanceOf(NegationOperator::class.java)
-        }
+        assertThat(lines).containsSequence(
+            "trans {",
+            "assume x < 3;",
+            "choice {",
+            "x := 1;",
+            "} or {",
+            "}",
+            "if ( x < 3 ) {",
+            "x := 1;",
+            "} else {",
+            "x := 2;",
+            "}",
+            "if ( x > 3 ) {",
+            "x := 3;",
+            "}",
+            "}",
+        )
     }
 
     @Test
-    suspend fun `EF property maps to a NegationOperator over the body`() {
-        withTransformer {
-            val xsts = it.transform(
-                parse(
-                    """
-                        inlined oxsts of semantifyr::Anything
-                        var x : int := 0
-                        init { }
-                        tran { }
-                        prop { EF (x == 5) }
-                    """,
-                ),
-                testXstsUri,
-            )
+    suspend fun `havocs are native`() {
+        val lines = xstsLines(
+            """
+                var x : int := 0
+                var b : bool := false
+                var c : test::colors::Color := test::colors::Color::Red
+                init { }
+                tran { havoc(x) havoc(b) havoc(c) }
+                prop { AG true }
+            """,
+        )
 
-            assertThat(xsts.property.invariant).isInstanceOf(NegationOperator::class.java)
+        assertThat(lines).containsSequence("havoc x;", "havoc b;", "havoc c;")
+    }
+
+    @Test
+    suspend fun `local variables are declared in the step`() {
+        val lines = xstsLines(
+            """
+                var x : int := 0
+                init { }
+                tran { var d : int := 2 var e : int x := x + d + e }
+                prop { AG true }
+            """,
+        )
+
+        assertThat(lines).containsSequence("local var d : integer = 2;", "local var e : integer;", "x := x + d + e;")
+    }
+
+    @Test
+    suspend fun `operators keep the meaning of the source grouping`() {
+        val lines = xstsLines(
+            """
+                var x : int := 0
+                var a : bool := false
+                var b : bool := true
+                init { }
+                tran {
+                    x := ((x + 1) - (2 * x)) / 3
+                    x := x - (1 - x)
+                    a := (a && b) || !(a ^^ b)
+                    a := a && (b || a)
+                    a := (a || b) && a
+                    a := (a ^^ b) ^^ a
+                    a := (x == 0) == a
+                    a := (x < 1) != (x < 2)
+                    assume(x < 1 && x <= 2 && x > -3 && x >= -4 && x == 0 && x != 5)
+                    x := if x < 3 then x + 1 else 0
+                }
+                prop { AG x == -(x + 1) }
+            """,
+        )
+
+        assertThat(lines).containsSequence(
+            "x := ( x + 1 - 2 * x ) / 3;",
+            "x := x - ( 1 - x );",
+            "a := a && b || !( a xor b );",
+            "a := a && ( b || a );",
+            "a := ( a || b ) && a;",
+            "a := ( a xor b ) xor a;",
+            "a := ( x == 0 ) == a;",
+            "a := x < 1 != x < 2;",
+            "assume x < 1 && x <= 2 && x > - 3 && x >= - 4 && x == 0 && x != 5;",
+            "x := if x < 3 then x + 1 else 0;",
+        )
+        assertThat(lines).contains("prop { x == - ( x + 1 )")
+    }
+
+    @Test
+    suspend fun `several branches become an or of sequences`() {
+        val lines = xstsLines(
+            """
+                var x : int := 0
+                init { }
+                tran { x := 1 } or { x := 2 }
+                prop { AG true }
+            """,
+        )
+
+        assertThat(lines).containsSequence("trans {", "x := 1;", "} or {", "x := 2;", "}")
+    }
+
+    @Test
+    suspend fun `an AG property is the invariant itself`() {
+        val lines = xstsLines(
+            """
+                var x : int := 0
+                init { }
+                tran { }
+                prop { AG x == 5 }
+            """,
+        )
+
+        assertThat(lines).contains("prop { x == 5")
+    }
+
+    @Test
+    suspend fun `an EF property is the negated invariant`() {
+        val lines = xstsLines(
+            """
+                var c : test::colors::Color := test::colors::Color::Red
+                init { }
+                tran { }
+                prop { EF c == test::colors::Color::Green }
+            """,
+        )
+
+        assertThat(lines).contains("prop { !( c == Color.Green )")
+    }
+
+    @Test
+    suspend fun `a real variable is not supported`() {
+        val exception = assertThrows<BackendUnsupportedException> {
+            xsts(
+                """
+                    var r : real := 0.5
+                    init { }
+                    tran { }
+                    prop { AG true }
+                """,
+            )
+        }
+
+        assertThat(exception.message).isEqualTo("Theta does not support variables of type real")
+    }
+
+    @Test
+    suspend fun `a for operation over an inclusive range runs up to and including its end`() {
+        val lines = xstsLines(
+            """
+                var x : int := 0
+                init { }
+                tran { for (i in 0 .. 2) { x := x + i } }
+                prop { AG true }
+            """,
+        )
+
+        assertThat(lines).containsSequence("for", "i\$\$\$local0", "from 0 to 2 + 1 do {", "x := x + i\$\$\$local0;", "}")
+    }
+
+    @Test
+    suspend fun `a for operation over an exclusive range stops before its end`() {
+        val lines = xstsLines(
+            """
+                var x : int := 0
+                init { }
+                tran { for (i in 0 ..< 3) { x := x + i } }
+                prop { AG true }
+            """,
+        )
+
+        assertThat(lines).containsSequence("for", "i\$\$\$local0", "from 0 to 3 do {", "x := x + i\$\$\$local0;", "}")
+    }
+
+    @Test
+    suspend fun `a real literal is not supported`() {
+        assertThrows<BackendUnsupportedException> {
+            xsts(
+                """
+                    var b : bool := false
+                    init { }
+                    tran { b := 1.5 > 1.0 }
+                    prop { AG true }
+                """,
+            )
         }
     }
 }

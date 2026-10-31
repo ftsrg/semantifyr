@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
 
 import vscode, { commands, type ExtensionContext, Location, Position, Range } from "vscode";
 import path from "path";

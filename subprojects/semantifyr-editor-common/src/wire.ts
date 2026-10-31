@@ -35,6 +35,7 @@ export const VerificationStatus = {
     Passed: "passed",
     Failed: "failed",
     Inconclusive: "inconclusive",
+    Timeout: "timeout",
     NotSupported: "not_supported",
     Errored: "errored",
 } as const;
@@ -66,6 +67,7 @@ export interface CallTraceStep {
 
 export interface CallTrace {
     initialStep: CallTraceStep;
+    initializedStep: CallTraceStep | null;
     steps: CallTraceStep[];
 }
 
@@ -80,6 +82,7 @@ export interface WitnessStateStep {
 
 export interface WitnessState {
     initialStep: WitnessStateStep;
+    initializedStep: WitnessStateStep | null;
     steps: WitnessStateStep[];
 }
 

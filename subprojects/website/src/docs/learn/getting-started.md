@@ -5,7 +5,7 @@ sidebar_position: 1
 
 # Getting Started
 
-There are three ways to start using Semantifyr. Pick whichever fits your situation — all three give you the same language, the same compiler, and the same Theta backend.
+There are four ways to start using Semantifyr. Pick whichever fits your situation. All four give you the same language and the same compiler; the verification backends available depend on the environment.
 
 ## Option A: Try in the browser (no installation)
 
@@ -29,19 +29,30 @@ The JupyterHub environment is a managed deployment, so you need a user account t
 
 ## Option C: Install the VS Code extension (for local work)
 
-:::caution Work in progress
-The VS Code extension is not yet published on the Marketplace. This section describes the planned setup for when it becomes available.
-:::
-
-The Semantifyr VS Code extension bundles the language server, the compiler, and the Theta verification backend. Use it when you want to work on your own machine, keep models in your own repository, or integrate Semantifyr into a longer-lived project.
+The Semantifyr VS Code extension bundles the language servers and the compiler. Verification runs on the backends installed on your machine. Use it when you want to work on your own machine, keep models in your own repository, or integrate Semantifyr into a longer-lived project.
 
 **Requirements**
 
-- [Visual Studio Code](https://code.visualstudio.com/) 1.93 or newer
-- A Java 21+ runtime on your `PATH` (the extension uses it to run the bundled Semantifyr CLI)
+- [Visual Studio Code](https://code.visualstudio.com/) 1.109 or newer
+- A Java 25 runtime, found through `JAVA_HOME` or `PATH` (the extension uses it to run the bundled language servers)
+- At least one verification backend: Theta (`theta-xsts-cli` on `PATH`, or Docker), Spin (`spin` and a C compiler on `PATH`), nuXmv (`nuXmv` on `PATH`) or Uppaal (`verifyta` on `PATH`)
 
 **Install**
 
-1. Open the Extensions view in VS Code (`Ctrl+Shift+X` / `Cmd+Shift+X`).
-2. Search for **Semantifyr** (publisher: *ftsrg*) and click **Install**.
-3. Open any folder containing a `.oxsts` file. The extension activates automatically and provides syntax highlighting, diagnostics, and the *Verify* command.
+1. Download `semantifyr-<version>.vsix` from the [latest release](https://github.com/ftsrg/semantifyr/releases/latest), or build it locally with `./gradlew build`, which writes it to `subprojects/semantifyr-vscode/build/`.
+2. In VS Code, run **Extensions: Install from VSIX...** from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and select the `.vsix` file.
+3. Open any folder containing a `.oxsts` or `.gamma` file. The extension activates automatically and provides syntax highlighting, diagnostics, and the verification cases in the *Testing* view.
+
+:::info[Planned]
+Publication on the Visual Studio Marketplace is planned.
+:::
+
+## Option D: Install the command-line interface (for scripts and CI)
+
+The `semantifyr` command lists, compiles and verifies the verification cases of OXSTS models from a terminal. It needs a Java 25 runtime.
+
+1. Download `semantifyr-<version>.zip` from the [latest release](https://github.com/ftsrg/semantifyr/releases/latest) and unzip it.
+2. Run `semantifyr-<version>/bin/semantifyr` (`bin\semantifyr.bat` on Windows). The zip bundles the Theta backend, which the Linux and macOS launcher puts on `PATH`; install other backends as for the VS Code extension.
+3. Verify the bundled smoke model: `semantifyr-<version>/bin/semantifyr verify semantifyr-<version>/models/smoke`.
+
+The zip also carries the Gamma and SysML v2 semantic libraries under `libraries/`. See [Command Line](cli/index.mdx) for the commands and options.

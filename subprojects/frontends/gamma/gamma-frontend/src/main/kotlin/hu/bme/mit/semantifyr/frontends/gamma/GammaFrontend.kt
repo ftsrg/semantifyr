@@ -17,6 +17,7 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclarat
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.library.ClasspathBasedOxstsLibrary
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.Trace
@@ -26,8 +27,11 @@ import hu.bme.mit.semantifyr.verifier.VerificationResultDto
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import hu.bme.mit.semantifyr.verifier.toJavaDto
+import hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult
+import hu.bme.mit.semantifyr.verifier.witness.WitnessValidator
 import kotlinx.coroutines.runBlocking
 import org.eclipse.xtext.EcoreUtil2
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.time.Duration
 import kotlin.time.toKotlinDuration
@@ -119,13 +123,6 @@ class GammaFrontend @Inject private constructor(
     val timeout: Duration?
         get() = gammaFrontendConfig.timeout
 
-    fun buildVerifierWith(
-        portfolio: VerificationPortfolio,
-        outputDirectory: Path,
-    ): SemantifyrVerifier {
-        return buildVerifier(outputDirectory, portfolio)
-    }
-
     suspend fun verify(
         gammaVerificationCase: GammaVerificationCase,
         progress: ProgressContext = ProgressContext.NoOp,
@@ -173,60 +170,57 @@ class GammaFrontend @Inject private constructor(
         }
     }
 
-    // TODO: Re-enable once back-annotated witness output type-checks against the OXSTS validator.
-    //       The current witness emits e.g. `port.outputEvent == port.interface.start` which the
-    //       validator rejects with TYPE_MISMATCH. Reloading the witness via SemantifyrLoader
-    //       therefore fails. This needs a fix in the back-annotator (or the gamma library).
-    // suspend fun validateWitness(
-    //     gammaVerificationCase: GammaVerificationCase,
-    //     witness: GammaWitness,
-    //     progress: ProgressContext = ProgressContext.NoOp,
-    // ): WitnessValidationResult {
-    //     val qualifiedName = gammaVerificationCase.qualifiedName
-    //     val baseDirectory = gammaFrontendConfig.outputDirectory.resolve(qualifiedName)
-    //     val verifier = buildVerifier(baseDirectory.resolve("witness-validation"))
-    //
-    //     logger.info { "Validating witness for Gamma case '$qualifiedName' from '${witness.witnessPath}'" }
-    //
-    //     val backAnnotatedModel = loadWitnessModel(witness)
-    //     val result = witnessValidator.validate(verifier, backAnnotatedModel, progress)
-    //     logger.info {
-    //         "Witness validation for Gamma case '$qualifiedName' -> ${result.verification.verdict} (${result::class.simpleName})"
-    //     }
-    //     return result
-    // }
-    //
-    // private fun loadWitnessModel(witness: GammaWitness): InlinedOxsts {
-    //     require(Files.isRegularFile(witness.witnessPath)) {
-    //         "Witness file does not exist: '${witness.witnessPath}'"
-    //     }
-    //     require(Files.isRegularFile(witness.compiledModelPath)) {
-    //         "Compiled OXSTS model does not exist: '${witness.compiledModelPath}'"
-    //     }
-    //
-    //     val context = semantifyrLoader.startContext()
-    //         .loadLibraryPaths(gammaFrontendConfig.libraryPaths)
-    //         .loadModel(witness.compiledModelPath)
-    //         .loadModel(witness.witnessPath)
-    //         .buildAndResolve()
-    //
-    //     return context.modelResources
-    //         .asSequence()
-    //         .flatMap { it.contents.asSequence() }
-    //         .filterIsInstance<InlinedOxsts>()
-    //         .firstOrNull()
-    //         ?: error("Witness file '${witness.witnessPath}' did not contain an InlinedOxsts")
-    // }
-    //
-    // fun validateWitnessBlocking(
-    //     gammaVerificationCase: GammaVerificationCase,
-    //     witness: GammaWitness,
-    //     progress: ProgressContext = ProgressContext.NoOp,
-    // ): WitnessValidationResult {
-    //     return runBlocking {
-    //         validateWitness(gammaVerificationCase, witness, progress)
-    //     }
-    // }
+    suspend fun validateWitness(
+        gammaVerificationCase: GammaVerificationCase,
+        witness: GammaWitness,
+        portfolio: VerificationPortfolio = gammaFrontendConfig.portfolio,
+        progress: ProgressContext = ProgressContext.NoOp,
+    ): WitnessValidationResult {
+        val qualifiedName = gammaVerificationCase.qualifiedName
+        val baseDirectory = gammaFrontendConfig.outputDirectory.resolve(qualifiedName)
+        val verifier = buildVerifier(baseDirectory.resolve("witness-validation"), portfolio)
+
+        logger.info { "Validating witness for Gamma case '$qualifiedName' from '${witness.witnessPath}'" }
+
+        val backAnnotatedModel = loadWitnessModel(witness)
+        val result = WitnessValidator().validate(verifier, backAnnotatedModel, progress)
+        logger.info {
+            "Witness validation for Gamma case '$qualifiedName' -> ${result.verification.verdict} (${result::class.simpleName})"
+        }
+        return result
+    }
+
+    private fun loadWitnessModel(witness: GammaWitness): InlinedOxsts {
+        require(Files.isRegularFile(witness.witnessPath)) {
+            "Witness file does not exist: '${witness.witnessPath}'"
+        }
+        require(Files.isRegularFile(witness.compiledModelPath)) {
+            "Compiled OXSTS model does not exist: '${witness.compiledModelPath}'"
+        }
+
+        val context = semantifyrLoader.startContext()
+            .loadLibraryPaths(gammaFrontendConfig.libraryPaths)
+            .loadModel(witness.compiledModelPath)
+            .loadModel(witness.witnessPath)
+            .buildAndResolve()
+
+        return context.modelResources
+            .asSequence()
+            .flatMap { it.contents.asSequence() }
+            .filterIsInstance<InlinedOxsts>()
+            .firstOrNull()
+            ?: error("Witness file '${witness.witnessPath}' did not contain an InlinedOxsts")
+    }
+
+    fun validateWitnessBlocking(
+        gammaVerificationCase: GammaVerificationCase,
+        witness: GammaWitness,
+        progress: ProgressContext = ProgressContext.NoOp,
+    ): WitnessValidationResult {
+        return runBlocking {
+            validateWitness(gammaVerificationCase, witness, progress = progress)
+        }
+    }
 
     private fun buildVerifier(
         outputPath: Path,

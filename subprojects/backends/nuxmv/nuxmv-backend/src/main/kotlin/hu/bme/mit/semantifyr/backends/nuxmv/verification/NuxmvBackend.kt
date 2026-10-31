@@ -30,6 +30,7 @@ import hu.bme.mit.semantifyr.backends.nuxmv.trace.NuxmvLogVerdictParser
 import hu.bme.mit.semantifyr.backends.nuxmv.trace.NuxmvTraceParser
 import hu.bme.mit.semantifyr.backends.nuxmv.trace.NuxmvVerdict
 import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvArtifacts
+import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvCapabilityChecker
 import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvExpressionVisitor
 import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvModelTransformer
 import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvOperationVisitor
@@ -73,6 +74,7 @@ class NuxmvVerificationContext @AssistedInject constructor(
     @param:Assisted private val config: NuxmvConfig,
     @param:Assisted override val executor: NuxmvExecutor,
     @Assisted request: BackendVerificationRequest,
+    override val capabilityChecker: NuxmvCapabilityChecker,
     private val nuxmvModelTransformer: NuxmvModelTransformer,
     private val nuxmvTraceParser: NuxmvTraceParser,
     private val nuxmvLogVerdictParser: NuxmvLogVerdictParser,
@@ -95,6 +97,8 @@ class NuxmvVerificationContext @AssistedInject constructor(
         val checkCommand = """${config.checkCommand} "${artifacts.property.invariant}""""
         val cmdScript = buildString {
             appendLine("set on_failure_script_quits")
+            // mangled names start with "__", the default prefix nuXmv hides from printed traces
+            appendLine("""set traces_hiding_prefix "~"""")
             appendLine("""set input_file "${artifactManager.modelFile.absolutePath}"""")
             appendLine(config.setupCommand)
             appendLine("set default_trace_plugin 1")

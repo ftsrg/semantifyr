@@ -13,9 +13,8 @@ Transitions define **behavior**: how the system changes state. A transition body
 |---------|------|
 | `init` | Initialization transition; runs once at startup. |
 | `tran` | Step transition; runs on every step. |
-| `havoc` | Non-deterministic reset of variables. |
 
-The implicit base class [`Anything`](standard-library.md) provides empty `init`, `tran`, and `havoc` transitions, so any class that does not declare its own inherits these no-ops.
+The implicit base class [`Anything`](standard-library.md) provides empty `init` and `tran` transitions, so any class that does not declare its own inherits these no-ops.
 
 ## Declaring a Transition
 
@@ -35,9 +34,9 @@ tran setBy(amount: int) {
 }
 ```
 
-Parameters are passed by value when the transition is invoked through an [inline call](inline-operations.md#inline-call).
+Parameters are passed by value when the transition is invoked through an [inline call](inline-operations.md#inline-call). A parameter cannot be an array (`OXSTS.UNSUPPORTED_FEATURE`).
 
-## The Implicit `main`, `init`, and `havoc`
+## The Implicit `main` and `init`
 
 A transition declared **without** a name has an **implicit name** based on its kind:
 
@@ -45,7 +44,6 @@ A transition declared **without** a name has an **implicit name** based on its k
 |-------------|---------------|
 | `tran { ... }` | `main` |
 | `init { ... }` | `init` |
-| `havoc { ... }` | `havoc` |
 
 Hence `tran { value := value + 1 }` is equivalent to a transition `tran main() { value := value + 1 }`. The implicit `main` and `init` transitions are the special transitions checked and run by the model checker.
 

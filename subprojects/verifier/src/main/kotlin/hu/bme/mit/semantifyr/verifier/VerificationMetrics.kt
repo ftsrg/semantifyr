@@ -7,16 +7,9 @@
 package hu.bme.mit.semantifyr.verifier
 
 import hu.bme.mit.semantifyr.backend.BackendMetrics
+import hu.bme.mit.semantifyr.compiler.pipeline.context.CompilationMetrics
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
-
-@Serializable
-data class CompilationMetrics(
-    val createDuration: Duration = Duration.ZERO,
-    val instantiationDuration: Duration = Duration.ZERO,
-    val inliningDuration: Duration = Duration.ZERO,
-    val flatteningDuration: Duration = Duration.ZERO,
-)
 
 @Serializable
 data class VerifierMetrics(

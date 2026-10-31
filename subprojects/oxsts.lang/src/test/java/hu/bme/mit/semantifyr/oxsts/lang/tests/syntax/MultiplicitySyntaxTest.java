@@ -78,6 +78,20 @@ public class MultiplicitySyntaxTest {
     }
 
     @Test
+    void exclusiveRangeMultiplicityExcludesUpperBound() {
+        var pkg = parseHelper.parse("""
+            package test
+            class Leaf { }
+            class Host { contains leaves: Leaf[0..<3] }
+            """);
+        pkg.assertNoResourceErrors();
+        var typeSpec = pkg.classByName("Host").featureByName("leaves").typeSpecification();
+        var range = multiplicityRangeEvaluator.evaluate(typeSpec);
+        assertThat(range.getLowerBound()).isEqualTo(0);
+        assertThat(range.getUpperBound()).isEqualTo(2);
+    }
+
+    @Test
     void rangeMultiplicityWithInfinityUpper() {
         var pkg = parseHelper.parse("""
             package test

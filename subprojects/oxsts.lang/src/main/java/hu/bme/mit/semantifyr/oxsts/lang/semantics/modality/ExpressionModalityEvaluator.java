@@ -172,6 +172,10 @@ public class ExpressionModalityEvaluator extends ExpressionEvaluator<Modality> {
             // validate separately. Treating them as COMPILE_TIME lets
             // parametric compile-time calls pass the body-level check.
             case ParameterDeclaration ignored -> Modality.COMPILE_TIME;
+            // `inline for` substitutes its loop variable before the body is evaluated.
+            case VariableDeclaration variable
+            when variable.eContainer() instanceof InlineForOperation forOperation
+                    && forOperation.getLoopVariable() == variable -> Modality.COMPILE_TIME;
             // Runtime - reading state that only exists when the model executes.
             case VariableDeclaration ignored -> Modality.RUNTIME;
             // Calls resolve through CallSuffixExpression; a direct reference

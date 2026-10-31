@@ -148,7 +148,7 @@ class NuxmvOperationVisitor @AssistedInject constructor(
     }
 
     private fun allocateChoiceKeys(branchCount: Int): List<String> {
-        val name = "nondet_${transitionKind.tagName}_${nextChoiceId++}"
+        val name = "nondet_${transitionKind.tagName}_${branchTag}_${nextChoiceId++}"
         val keyName = when (transitionKind) {
             NuxmvTransitionKind.Init -> freshFrozenVariable(name, branchCount).name
             NuxmvTransitionKind.Tran -> freshInputVariable(name, branchCount).name

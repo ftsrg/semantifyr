@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.compiler.pipeline.context.FlatteningInfo
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import kotlinx.serialization.Serializable
@@ -23,6 +24,7 @@ class BackendUnsupportedException(message: String, cause: Throwable? = null) : E
 data class BackendVerificationRequest(
     val inlinedOxsts: InlinedOxsts,
     val artifactOutputPath: Path,
+    val flatteningInfo: FlatteningInfo? = null,
 )
 
 @Serializable
@@ -54,6 +56,7 @@ enum class VerificationVerdict(
     Passed(true),
     Failed(true),
     Inconclusive(false),
+    Timeout(false),
     Errored(false),
     NotSupported(false),
 }

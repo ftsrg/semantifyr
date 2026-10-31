@@ -7,8 +7,10 @@
 package hu.bme.mit.semantifyr.xsts.lang.scoping;
 
 import com.google.inject.Inject;
+import hu.bme.mit.semantifyr.xsts.lang.xsts.ForOperation;
 import hu.bme.mit.semantifyr.xsts.lang.xsts.SequenceOperation;
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel;
+import java.util.List;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.xtext.scoping.IScope;
@@ -47,6 +49,10 @@ public class XstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopePr
         if (context instanceof SequenceOperation operation) {
             var index = operation.getSteps().indexOf(child);
             return Scopes.scopeFor(operation.eContents().subList(0, index), containerScope);
+        }
+
+        if (context instanceof ForOperation operation && child == operation.getBody()) {
+            return Scopes.scopeFor(List.of(operation.getLoopVar()), containerScope);
         }
 
         return containerScope;

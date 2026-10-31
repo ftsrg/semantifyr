@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.spin.transformation
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.backend.transformation.BackendNameMangler
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
@@ -55,7 +56,7 @@ class SpinVariableTransformer @Inject constructor(
             domain is EnumDeclaration -> SpinVariableKind.Enum
             domain === builtinSymbolResolver.intDatatype(variableDeclaration) -> SpinVariableKind.Integer
             domain === builtinSymbolResolver.boolDatatype(variableDeclaration) -> SpinVariableKind.Boolean
-            else -> error("Unsupported variable domain for Spin: ${domain.name} on ${variableDeclaration.name}")
+            else -> throw BackendUnsupportedException("Spin does not support variables of type ${domain.name} (${variableDeclaration.name})")
         }
     }
 

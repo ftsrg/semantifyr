@@ -6,38 +6,32 @@
 
 package hu.bme.mit.semantifyr.frontends.sysml
 
+import hu.bme.mit.semantifyr.frontends.sysml.testing.CorpusEntry
+import hu.bme.mit.semantifyr.frontends.sysml.testing.CorpusTier
+import hu.bme.mit.semantifyr.frontends.sysml.testing.CorpusVerdict
+import hu.bme.mit.semantifyr.frontends.sysml.testing.SysMLCorpus
 import hu.bme.mit.semantifyr.frontends.sysml.testing.SysMLv2FrontendTestHelper
 import hu.bme.mit.semantifyr.portfolios.Portfolios
-import hu.bme.mit.semantifyr.verifier.VerificationCase
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import java.util.stream.Stream
 
 class CrossroadsVerificationTests {
     companion object {
         private val helper = SysMLv2FrontendTestHelper()
         private val artifactRoot = SysMLv2FrontendTestHelper.testArtifactRoot(CrossroadsVerificationTests::class.java)
 
-        private val CROSSROADS = SysMLv2FrontendTestHelper.modelPath("crossroads.sysml")
-
         @JvmStatic
-        fun `Crossroads Model Verification Cases Should Pass`(): Stream<Arguments> {
-            return helper.discoverAsArguments(CROSSROADS, Portfolios.SmartFull, artifactRoot)
+        fun `Crossroads Model Cases Reach Their Expected Verdict`(): List<CorpusEntry> {
+            return SysMLCorpus.load().entries.filter {
+                it.model.file == "crossroads.sysml" && it.case.tier == CorpusTier.Nightly && it.case.verdict != CorpusVerdict.Unknown
+            }
         }
     }
 
-    @ParameterizedTest(name = "{0} - {1}")
+    @ParameterizedTest(name = "{0}")
     @MethodSource
-    suspend fun `Crossroads Model Verification Cases Should Pass`(
-        variant: SysMLv2Variant,
-        verificationCase: VerificationCase,
-    ) {
-        val frontend = helper.buildFrontend(CROSSROADS, Portfolios.SmartFull, artifactRoot, variant)
-        helper.checkConformance(
-            frontend = frontend,
-            case = verificationCase,
-            validationPortfolio = Portfolios.AllAgree,
-        )
+    suspend fun `Crossroads Model Cases Reach Their Expected Verdict`(entry: CorpusEntry) {
+        val frontend = helper.buildFrontend(entry, Portfolios.SmartFull, artifactRoot)
+        helper.checkConformance(frontend, entry, validationPortfolio = Portfolios.AllAgree)
     }
 }

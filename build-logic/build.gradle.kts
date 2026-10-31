@@ -15,4 +15,5 @@ dependencies {
     implementation(libs.node.plugin)
     implementation(libs.spotless.plugin)
     implementation(libs.sonarqube.plugin)
+    implementation(libs.dokka.plugin)
 }

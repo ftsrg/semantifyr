@@ -8,20 +8,25 @@ package hu.bme.mit.semantifyr.verifier.internal
 
 import com.google.inject.Inject
 import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
+import hu.bme.mit.semantifyr.backend.VerificationContext
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
+import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
@@ -29,14 +34,18 @@ import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.eclipse.emf.ecore.EObject
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.Path
 import kotlin.io.path.exists
+import kotlin.io.path.readText
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -67,7 +76,7 @@ class SemantifyrVerifierImplTest {
     }
 
     @Test
-    fun `portfolio timeout maps to Inconclusive with a Timeout message`(@TempDir output: Path) = runTest {
+    fun `verifier timeout maps to Timeout`(@TempDir output: Path) = runTest {
         val portfolio = ScriptedPortfolio { _, _ ->
             delay(10.seconds)
             decisiveResult(VerificationVerdict.Passed)
@@ -76,9 +85,21 @@ class SemantifyrVerifierImplTest {
         val result = build(portfolio, output, timeout = 50.milliseconds)
             .verify(loadFirstCase())
 
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
         assertThat(result.message).contains("Timeout").contains("exceeded")
         assertThat(result.metadata.backendId).isNull()
+    }
+
+    @Test
+    suspend fun `NotSupported names a flattened variable as declared in the source`(@TempDir output: Path) {
+        val portfolio = ScriptedPortfolio { request, _ ->
+            RejectingVariablesContext(request).execute()
+        }
+
+        val result = build(portfolio, output, timeout = 5.seconds).verify(loadFirstCase())
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
+        assertThat(result.message).isEqualTo("scripted does not support simple.oxsts:12: variables of type int (x)")
     }
 
     @Test
@@ -158,6 +179,29 @@ class SemantifyrVerifierImplTest {
         assertThat(reportFile.exists()).isTrue
     }
 
+    @Test
+    suspend fun `report json carries phase durations, optimizer stats and model sizes`(@TempDir output: Path) {
+        val portfolio = ScriptedPortfolio { _, _ -> decisiveResult(VerificationVerdict.Passed) }
+        val case = loadFirstCase()
+
+        val result = build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(case)
+
+        val report = Json.parseToJsonElement(output.resolve(case.qualifiedName.replace("::", ".")).resolve("report.json").readText())
+        val verifier = report.jsonObject.getValue("result").jsonObject.getValue("metrics").jsonObject.getValue("verifier").jsonObject
+        assertThat(verifier.getValue("compilation").jsonObject.keys).contains(
+            "createDuration",
+            "instantiationDuration",
+            "inliningDuration",
+            "flatteningDuration",
+            "inliningOptimization",
+            "flatteningOptimization",
+            "inputSize",
+            "inlinedSize",
+            "flattenedSize",
+        )
+        assertThat(result.metrics.verifier.compilationDuration).isEqualTo(result.metrics.verifier.compilation.unfoldingDuration)
+    }
+
     private fun build(
         portfolio: VerificationPortfolio,
         output: Path,
@@ -199,12 +243,43 @@ class SemantifyrVerifierImplTest {
         )
     }
 
+    private class RejectingVariablesContext(
+        request: BackendVerificationRequest,
+    ) : VerificationContext<Unit, Unit>("scripted", request) {
+        override val executor = object : BackendExecutor {
+            override fun isAvailable(): Boolean {
+                return true
+            }
+        }
+
+        override val capabilityChecker = object : BackendCapabilityChecker() {
+            override fun describeUnsupported(element: EObject): String? {
+                if (element is VariableDeclaration) {
+                    return "variables of type int"
+                }
+                return null
+            }
+        }
+
+        override suspend fun prepare() {
+        }
+
+        override suspend fun run(artifacts: Unit): Unit? {
+            return null
+        }
+
+        override fun interpret(rawVerdict: Unit?, artifacts: Unit): VerificationVerdict {
+            return VerificationVerdict.Inconclusive
+        }
+    }
+
     private class ScriptedPortfolio(
         private val behavior: suspend (BackendVerificationRequest, ProgressContext) -> BackendVerificationResult,
     ) : VerificationPortfolio() {
         override val id: String = "scripted"
         override val displayName: String = "scripted"
         override val description: String = "test-only"
+        override val executorKeys: Set<ExecutorKey<*>> = emptySet()
 
         var invocations: Int = 0
             private set

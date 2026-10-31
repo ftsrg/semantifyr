@@ -31,6 +31,7 @@ sealed class WitnessValidationResult {
             VerificationVerdict.Passed -> Valid(verification)
             VerificationVerdict.Failed -> Invalid(verification)
             VerificationVerdict.Inconclusive -> Inconclusive(verification)
+            VerificationVerdict.Timeout -> Inconclusive(verification)
             VerificationVerdict.Errored -> Errored(verification)
             VerificationVerdict.NotSupported -> Inconclusive(verification)
         }

@@ -11,10 +11,11 @@
 - **Have a question or proposal?** Open a [GitHub Discussion](https://github.com/ftsrg/semantifyr/discussions) or an [issue](https://github.com/ftsrg/semantifyr/issues). For larger changes, please discuss the design before you start coding.
 - **Found a bug?** Open an [issue](https://github.com/ftsrg/semantifyr/issues) with a minimal reproduction.
 - **Want to make a code change?** Fork, branch from `main`, and open a pull request against `main`. Run `./gradlew build` locally before pushing.
+- **Changing what users see?** Update the website pages under `subprojects/website/src/docs` in the same pull request. The command-line help and the portfolio table on the website are generated from the CLI at build time.
 
 ## Licensing
 
-By contributing you agree that your contribution is licensed under the [Eclipse Public License v2.0](LICENSE), the same license as the rest of the codebase. Every source file must carry a valid SPDX header — see the [REUSE compliance section](https://ftsrg.mit.bme.hu/semantifyr/develop/contributing/#licensing-and-reuse-compliance) of the handbook for the exact format. The CI `reuse-check` job will fail your pull request if a new file is missing one.
+By contributing you agree that your contribution is licensed under the [Eclipse Public License v2.0](LICENSE), the same license as the rest of the codebase. Every source file must carry a valid SPDX header in the [REUSE](https://reuse.software/) format; copy it from a neighbouring file of the same type. The CI `reuse-check` job will fail your pull request if a new file is missing one.
 
 ## Code of conduct
 

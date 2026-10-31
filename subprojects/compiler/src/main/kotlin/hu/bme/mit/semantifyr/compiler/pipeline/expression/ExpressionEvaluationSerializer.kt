@@ -18,9 +18,12 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.NothingEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RealEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.StringEvaluation
+import hu.bme.mit.semantifyr.oxsts.lang.serializer.ExpressionSerializer
 
 class ExpressionEvaluationSerializer @Inject constructor(
     private val oxstsQualifiedNameProvider: OxstsQualifiedNameProvider,
+    private val instanceReferenceProvider: InstanceReferenceProvider,
+    private val expressionSerializer: ExpressionSerializer,
 ) : CompileTimeExpressionEvaluationVisitor<String>() {
 
     fun serialize(evaluation: ExpressionEvaluation): String {
@@ -68,15 +71,15 @@ class ExpressionEvaluationSerializer @Inject constructor(
     }
 
     override fun visit(evaluation: InstanceEvaluation): String {
-        if (evaluation.instances.size > 1) {
-            val values = evaluation.instances.joinToString(", ") {
-                oxstsQualifiedNameProvider.getFullyQualifiedNameString(it.domain)
-            }
-
-            return "[$values]"
+        val paths = evaluation.instances.map {
+            expressionSerializer.serialize(instanceReferenceProvider.getReference(it))
         }
 
-        return oxstsQualifiedNameProvider.getFullyQualifiedNameString(evaluation.instances.single().domain)
+        if (paths.size == 1) {
+            return paths.single()
+        }
+
+        return "[${paths.joinToString(", ")}]"
     }
 
 }

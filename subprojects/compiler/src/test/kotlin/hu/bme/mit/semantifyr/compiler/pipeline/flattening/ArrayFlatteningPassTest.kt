@@ -43,11 +43,12 @@ class ArrayFlatteningPassTest {
 
         val flattened = pass.flattenArrays(inlined)
 
-        assertThat(flattened).isEqualTo(1)
         val names = inlined.variables.map {
             it.name
         }
         assertThat(names).containsExactly("a_0", "a_1", "a_2")
+        assertThat(flattened.keys.map { it.name }).containsExactly("a")
+        assertThat(flattened.values.single()).containsExactlyElementsOf(inlined.variables)
     }
 
     @Test
@@ -144,7 +145,7 @@ class ArrayFlatteningPassTest {
 
         val flattened = pass.flattenArrays(inlined)
 
-        assertThat(flattened).isEqualTo(0)
+        assertThat(flattened).isEmpty()
         assertThat(inlined.variables.map { it.name }).containsExactly("x")
     }
 

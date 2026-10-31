@@ -31,6 +31,7 @@ import hu.bme.mit.semantifyr.backends.uppaal.trace.UppaalLogVerdictParser
 import hu.bme.mit.semantifyr.backends.uppaal.trace.UppaalTraceParser
 import hu.bme.mit.semantifyr.backends.uppaal.trace.UppaalVerdict
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalArtifacts
+import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalCapabilityChecker
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalModelTransformer
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalOperationVisitor
 import hu.bme.mit.semantifyr.logging.info
@@ -71,6 +72,7 @@ class UppaalVerificationContext @AssistedInject constructor(
     @param:Assisted private val config: UppaalConfig,
     @param:Assisted override val executor: UppaalExecutor,
     @Assisted request: BackendVerificationRequest,
+    override val capabilityChecker: UppaalCapabilityChecker,
     private val uppaalModelTransformer: UppaalModelTransformer,
     private val uppaalTraceParser: UppaalTraceParser,
     private val uppaalLogVerdictParser: UppaalLogVerdictParser,

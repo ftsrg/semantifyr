@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.verifier
 import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.compiler.pipeline.context.CompilationMetrics
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.witness.CallTrace
 import hu.bme.mit.semantifyr.verifier.witness.CallTraceStep
@@ -150,12 +151,14 @@ data class CallTraceStepDto(
 
 data class CallTraceDto(
     val initialStep: CallTraceStepDto,
+    val initializedStep: CallTraceStepDto?,
     val steps: List<CallTraceStepDto>,
 ) {
     companion object {
         fun fromCallTrace(callTrace: CallTrace): CallTraceDto {
             return CallTraceDto(
                 initialStep = CallTraceStepDto.fromCallTraceStep(callTrace.initialStep),
+                initializedStep = callTrace.initializedStep?.let { CallTraceStepDto.fromCallTraceStep(it) },
                 steps = callTrace.steps.map { CallTraceStepDto.fromCallTraceStep(it) },
             )
         }
@@ -190,12 +193,14 @@ data class WitnessStateStepDto(
 
 data class WitnessStateDto(
     val initialStep: WitnessStateStepDto,
+    val initializedStep: WitnessStateStepDto?,
     val steps: List<WitnessStateStepDto>,
 ) {
     companion object {
         fun fromWitnessState(state: WitnessState): WitnessStateDto {
             return WitnessStateDto(
                 initialStep = WitnessStateStepDto.fromWitnessStateStep(state.initialStep),
+                initializedStep = state.initializedStep?.let { WitnessStateStepDto.fromWitnessStateStep(it) },
                 steps = state.steps.map { WitnessStateStepDto.fromWitnessStateStep(it) },
             )
         }
@@ -224,7 +229,6 @@ data class VerificationResultDto(
     val metrics: VerificationMetricsDto,
     val message: String?,
     val trace: TraceDto?,
-    val hasTimedOut: Boolean,
 ) {
     companion object {
         fun fromResult(result: VerificationResult): VerificationResultDto {
@@ -234,7 +238,6 @@ data class VerificationResultDto(
                 metrics = VerificationMetricsDto.fromMetrics(result.metrics),
                 message = result.message,
                 trace = result.trace?.let { TraceDto.fromTrace(it) },
-                hasTimedOut = result.hasTimedOut,
             )
         }
     }

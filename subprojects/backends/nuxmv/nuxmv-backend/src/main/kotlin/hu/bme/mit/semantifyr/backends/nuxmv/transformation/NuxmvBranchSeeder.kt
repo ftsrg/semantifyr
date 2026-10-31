@@ -16,13 +16,14 @@ class NuxmvBranchSeeder @Inject constructor(
     fun seedInitBranch(
         allVariables: List<VariableDeclaration>,
         declaredInitial: Map<VariableDeclaration, String>,
+        branchTag: String,
     ): NuxmvBranch {
         val constraints = mutableListOf<String>()
         val currentPrime = mutableMapOf<VariableDeclaration, String>()
         val newPrimes = mutableListOf<NuxmvPrimedDeclaration>()
         for (variable in allVariables) {
             val base = nuxmvVariableTransformer.nameOf(variable)
-            val name = "${base}__${NuxmvTransitionKind.Init.tagName}_seed_0"
+            val name = "${base}__${NuxmvTransitionKind.Init.tagName}_${branchTag}_seed"
             val primed = NuxmvPrimedDeclaration(name, variable)
             newPrimes += primed
             currentPrime[variable] = name

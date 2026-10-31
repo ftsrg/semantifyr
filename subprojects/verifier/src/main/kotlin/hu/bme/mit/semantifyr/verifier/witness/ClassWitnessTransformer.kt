@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
@@ -41,18 +42,31 @@ class ClassWitnessTransformer @Inject constructor(
                 realVariableValues.map {
                     transform(it)
                 },
-                tracerVariableValues,
+                tracerVariableValues.filter {
+                    val value = it.value
+                    value is LiteralBoolean && value.isValue
+                },
             )
         }
 
         private fun transform(variableValue: WitnessStateValue): ClassWitnessStateValue {
             val holder = compilation.flatteningInfo.variableHolders[variableValue.variable]
                 ?: error("Witness value references variable '${variableValue.variable.name}' with no holder instance in flatteningInfo.variableHolders. Synthetic root-level variables should be filtered out before reaching transform(WitnessStateValue).")
-            val originalVariable = compilation.flatteningInfo.resolveOriginalVariable(holder, variableValue.variable)
+            val arraySlot = compilation.flatteningInfo.arraySlots[variableValue.variable]
+            val originalVariable = arraySlot?.arrayVariable
+                ?: compilation.flatteningInfo.resolveOriginalVariable(holder, variableValue.variable)
             val holderReference = instanceReferenceProvider.getReference(holder)
-            val variableReference = OxstsFactory.createNavigationSuffixExpression().also {
+            val memberReference = OxstsFactory.createNavigationSuffixExpression().also {
                 it.primary = holderReference
                 it.member = originalVariable
+            }
+            val variableReference = if (arraySlot == null) {
+                memberReference
+            } else {
+                OxstsFactory.createIndexingSuffixExpression().also {
+                    it.primary = memberReference
+                    it.index = OxstsFactory.createLiteralInteger(arraySlot.index)
+                }
             }
 
             return ClassWitnessStateValue(

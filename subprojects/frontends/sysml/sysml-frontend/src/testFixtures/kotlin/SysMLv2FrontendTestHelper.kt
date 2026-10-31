@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.frontends.sysml.testing
 
-import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.frontends.sysml.SysMLv2Frontend
@@ -14,15 +13,10 @@ import hu.bme.mit.semantifyr.frontends.sysml.SysMLv2Variant
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
-import hu.bme.mit.semantifyr.verifier.VerificationResult
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Named
-import org.junit.jupiter.params.provider.Arguments
 import java.nio.file.Path
-import java.util.stream.Stream
 import kotlin.io.path.Path
-import kotlin.streams.asStream
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
@@ -52,57 +46,47 @@ class SysMLv2FrontendTestHelper {
             .build()
     }
 
-    fun discoverAsArguments(
-        sourcePath: Path,
+    fun buildFrontend(
+        entry: CorpusEntry,
         portfolio: VerificationPortfolio,
         outputDirectory: Path,
-        variants: List<SysMLv2Variant> = listOf(SysMLv2Variant.Default),
-    ): Stream<Arguments> {
-        return variants.asSequence().flatMap {
-            val frontend = buildFrontend(sourcePath, portfolio, outputDirectory, it)
-            frontend.verificationCases().asSequence().map { case ->
-                Arguments.of(
-                    Named.of(it.name.lowercase(), it),
-                    Named.of(case.qualifiedName, case),
-                )
-            }
-        }.asStream()
+        timeout: Duration = 2.minutes,
+    ): SysMLv2Frontend {
+        return buildFrontend(modelPath(entry.model.file), portfolio, outputDirectory, entry.model.variant, timeout)
+    }
+
+    private fun verificationCase(frontend: SysMLv2Frontend, entry: CorpusEntry): VerificationCase {
+        return frontend.verificationCases().single {
+            it.qualifiedName.substringAfterLast("::") == entry.case.name
+        }
     }
 
     suspend fun checkVerificationCase(
         frontend: SysMLv2Frontend,
-        case: VerificationCase,
-        expectedVerdict: VerificationVerdict = expectedVerdictFor(case),
-    ): VerificationResult {
-        val matchedCase = frontend.verificationCases().single {
-            it.qualifiedName == case.qualifiedName
-        }
-        val result = frontend.verify(matchedCase)
+        entry: CorpusEntry,
+    ) {
+        val case = verificationCase(frontend, entry)
+        val result = frontend.verify(case)
         Assertions.assertEquals(
-            expectedVerdict,
+            entry.case.expectedVerdict,
             result.verdict,
-            "Expected ${case.qualifiedName} verdict $expectedVerdict, got ${result.verdict} (${result.message ?: "no message"})",
+            "Expected ${case.qualifiedName} verdict ${entry.case.expectedVerdict}, got ${result.verdict} (${result.message ?: "no message"})",
         )
-        return result
     }
 
     suspend fun checkConformance(
         frontend: SysMLv2Frontend,
-        case: VerificationCase,
+        entry: CorpusEntry,
         validationPortfolio: VerificationPortfolio? = null,
-        expectedVerdict: VerificationVerdict = expectedVerdictFor(case),
     ) {
-        val matchedCase = frontend.verificationCases().single {
-            it.qualifiedName == case.qualifiedName
-        }
         verifierTestHelper.checkTestModel(
             context = frontend.modelContext,
-            case = matchedCase,
+            case = verificationCase(frontend, entry),
             verificationPortfolio = frontend.portfolio,
             outputDirectory = frontend.outputDirectory,
             validationPortfolio = validationPortfolio,
             timeout = frontend.timeout ?: 30.minutes,
-            expectedVerdict = expectedVerdict,
+            expectedVerdict = entry.case.expectedVerdict,
         )
     }
 
@@ -115,17 +99,6 @@ class SysMLv2FrontendTestHelper {
 
         fun modelPath(name: String): Path {
             return MODELS_ROOT.resolve(name)
-        }
-
-        private const val VIOLATED_POSTFIX = "Violated"
-
-        fun expectedVerdictFor(case: VerificationCase): VerificationVerdict {
-            val shortName = case.qualifiedName.substringAfterLast("::")
-            return if (shortName.endsWith(VIOLATED_POSTFIX)) {
-                VerificationVerdict.Failed
-            } else {
-                VerificationVerdict.Passed
-            }
         }
     }
 }

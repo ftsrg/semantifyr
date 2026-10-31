@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.backends.nuxmv.transformation
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.utils.text.IndentingStringBuilder
@@ -28,7 +29,9 @@ class NuxmvModelTransformer @Inject constructor(
 ) {
 
     fun transform(inlinedOxsts: InlinedOxsts): NuxmvArtifacts {
-        val variables = inlinedOxsts.eAllOfType<VariableDeclaration>().toList()
+        val variables = inlinedOxsts.eAllOfType<VariableDeclaration>().filter {
+            it.eContainer() !is ForOperation
+        }.toList()
         val nuxmvVariables = variables.map {
             nuxmvVariableTransformer.describe(it)
         }
@@ -65,8 +68,9 @@ class NuxmvModelTransformer @Inject constructor(
         initializedVariables: Map<VariableDeclaration, String>,
     ): List<NuxmvBranchResult> {
         return inlinedOxsts.initTransition.branches.mapIndexed { branchIndex, branch ->
-            val seed = nuxmvBranchSeeder.seedInitBranch(variables, initializedVariables)
-            nuxmvOperationTransformer.transform(branch, NuxmvTransitionKind.Init, "b$branchIndex", seed)
+            val branchTag = "b$branchIndex"
+            val seed = nuxmvBranchSeeder.seedInitBranch(variables, initializedVariables, branchTag)
+            nuxmvOperationTransformer.transform(branch, NuxmvTransitionKind.Init, branchTag, seed)
         }
     }
 

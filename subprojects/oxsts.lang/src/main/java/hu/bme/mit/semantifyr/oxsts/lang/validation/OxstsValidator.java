@@ -15,6 +15,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.OppositeHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.PropertyTypeHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluatorProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.ExpressionModalityEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.Modality;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider;
@@ -29,6 +30,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.resource.ILocationInFileProvider;
 import org.eclipse.xtext.validation.Check;
@@ -94,6 +96,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String EXPRESSION_MODALITY_TOO_HIGH = ISSUE_PREFIX + "EXPRESSION_MODALITY_TOO_HIGH";
     public static final String TYPE_MISMATCH = ISSUE_PREFIX + "TYPE_MISMATCH";
     public static final String INVALID_CAST = ISSUE_PREFIX + "INVALID_CAST";
+    public static final String MULTIPLE_INHERITANCE = ISSUE_PREFIX + "MULTIPLE_INHERITANCE";
+    public static final String REDEFINITION_SIGNATURE_MISMATCH = ISSUE_PREFIX + "REDEFINITION_SIGNATURE_MISMATCH";
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
@@ -342,6 +346,25 @@ public class OxstsValidator extends AbstractOxstsValidator {
     }
 
     @Check
+    public void checkSingleSupertype(ClassDeclaration classDeclaration) {
+        var superTypes = classDeclaration.getSuperTypes();
+        for (int i = 1; i < superTypes.size(); i++) {
+            acceptError(
+                    "Multiple inheritance is not supported; class '"
+                            + NamingUtil.getName(classDeclaration)
+                            + "' may extend only '"
+                            + NamingUtil.getName(superTypes.getFirst())
+                            + "', not also '"
+                            + NamingUtil.getName(superTypes.get(i))
+                            + "'.",
+                    classDeclaration,
+                    OxstsPackage.Literals.CLASS_DECLARATION__SUPER_TYPES,
+                    i,
+                    MULTIPLE_INHERITANCE);
+        }
+    }
+
+    @Check
     public void checkUniqueMembers(ClassDeclaration classDeclaration) {
         checkUniqueSimpleNames(classDeclaration.getMembers());
     }
@@ -437,13 +460,9 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
         var parameters = parametricDeclaration.getParameters();
         var arguments = callSuffixExpression.getArguments();
-        int pairs = Math.min(parameters.size(), arguments.size());
-        for (int i = 0; i < pairs; i++) {
-            var argument = arguments.get(i);
-            if (argument.getParameter() != null) {
-                // Named argument: rely on its resolved parameter if any.
-                checkArgumentAssignableToParameter(argument, argument.getParameter());
-            } else {
+        for (int i = 0; i < parameters.size(); i++) {
+            var argument = OxstsUtils.getArgumentFor(arguments, parameters.get(i), i);
+            if (argument != null) {
                 checkArgumentAssignableToParameter(argument, parameters.get(i));
             }
         }
@@ -464,6 +483,18 @@ public class OxstsValidator extends AbstractOxstsValidator {
             } else if (positional < parameters.size()) {
                 checkArgumentAssignableToParameter(argument, parameters.get(positional));
                 positional++;
+            }
+        }
+    }
+
+    @Check
+    public void checkAnnotationArgumentModality(Annotation annotation) {
+        for (var argument : annotation.getArguments()) {
+            if (argument.getExpression() != null) {
+                checkModalityAtMost(
+                        argument.getExpression(),
+                        Modality.CONSTANT,
+                        "Annotation argument must be a constant, annotations have no instance context");
             }
         }
     }
@@ -665,6 +696,43 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
     }
 
+    // Parameter modality is uniform until `static` parameters exist, so only the arity can differ.
+    @Check
+    public void checkRedefinitionArity(RedefinableDeclaration declaration) {
+        if (!declaration.isRedefine() || !(declaration instanceof ParametricDeclaration parametricDeclaration)) {
+            return;
+        }
+        RedefinableDeclaration inherited;
+        try {
+            inherited = redefinitionHandler.getRedefinedDeclaration(declaration);
+        } catch (RuntimeException e) {
+            return;
+        }
+        if (!(inherited instanceof ParametricDeclaration inheritedParametricDeclaration)) {
+            return;
+        }
+        var parameters = parametricDeclaration.getParameters();
+        var inheritedParameters = inheritedParametricDeclaration.getParameters();
+        if (parameters.size() != inheritedParameters.size()) {
+            acceptError(
+                    "Redefinition of '"
+                            + NamingUtil.getName(declaration)
+                            + "' takes "
+                            + parameterCount(parameters.size())
+                            + ", the inherited declaration takes "
+                            + parameterCount(inheritedParameters.size())
+                            + ".",
+                    declaration,
+                    OxstsPackage.Literals.NAMED_ELEMENT__NAME,
+                    0,
+                    REDEFINITION_SIGNATURE_MISMATCH);
+        }
+    }
+
+    private static String parameterCount(int count) {
+        return count == 1 ? "1 parameter" : count + " parameters";
+    }
+
     private TypeSpecification typeSpecificationOf(RedefinableDeclaration declaration) {
         return switch (declaration) {
             case VariableDeclaration variable -> variable.getTypeSpecification();
@@ -687,6 +755,47 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     "Only variables can be assigned to!",
                     assignmentOperation,
                     OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE,
+                    0,
+                    INCORRECT_ASSIGNMENT);
+        }
+    }
+
+    @Check
+    public void checkAssignmentTargetIsRuntime(AssignmentOperation assignmentOperation) {
+        checkWriteTargetIsRuntime(
+                assignmentOperation.getReference(),
+                assignmentOperation,
+                OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE);
+    }
+
+    @Check
+    public void checkHavocTargetIsRuntime(HavocOperation havocOperation) {
+        checkWriteTargetIsRuntime(
+                havocOperation.getReference(), havocOperation, OxstsPackage.Literals.HAVOC_OPERATION__REFERENCE);
+    }
+
+    // The right-hand side is at most RUNTIME, so it always fits a runtime target.
+    private void checkWriteTargetIsRuntime(Expression target, EObject host, EStructuralFeature feature) {
+        if (target == null) {
+            return;
+        }
+        EObject written;
+        Modality modality;
+        try {
+            written = metaConstantExpressionEvaluatorProvider.evaluate(unwrapAssignmentTarget(target));
+            modality = modalityEvaluatorProvider.evaluate(target);
+        } catch (RuntimeException e) {
+            return;
+        }
+        if (written instanceof VariableDeclaration variable && modality != Modality.RUNTIME) {
+            acceptError(
+                    "Cannot write '"
+                            + variable.getName()
+                            + "': it has modality "
+                            + modality
+                            + " and is substituted at compile time, only runtime variables can be written.",
+                    host,
+                    feature,
                     0,
                     INCORRECT_ASSIGNMENT);
         }
@@ -871,7 +980,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
             return;
         }
         var upper = primaryType.getRange().getUpperBound();
-        if (upper != hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation.INFINITY
+        if (upper != RangeEvaluation.INFINITY
                 && upper <= 1
                 && primaryType.getRange().getLowerBound() <= 1) {
             acceptError(
@@ -926,6 +1035,92 @@ public class OxstsValidator extends AbstractOxstsValidator {
             return;
         }
         rejectIfUnboundedMultiplicity(typeSpec.getMultiplicity(), variableDeclaration);
+    }
+
+    @Check
+    public void checkArrayVariableSupported(VariableDeclaration variableDeclaration) {
+        var typeSpecification = variableDeclaration.getTypeSpecification();
+        if (typeSpecification == null || !isFixedSizeArray(typeSpecification)) {
+            return;
+        }
+        if (OxstsUtils.isLocalVariable(variableDeclaration)) {
+            acceptError(
+                    "Local array variables are not yet supported by the compiler; declare '"
+                            + variableDeclaration.getName()
+                            + "' as a class variable.",
+                    variableDeclaration,
+                    OxstsPackage.Literals.VARIABLE_DECLARATION__TYPE_SPECIFICATION,
+                    0,
+                    UNSUPPORTED_FEATURE);
+            return;
+        }
+        var domain = typeSpecification.getDomain();
+        if (domain instanceof ClassDeclaration || domain instanceof FeatureDeclaration) {
+            acceptError(
+                    "Arrays of class or feature type are not yet supported by the compiler; '"
+                            + variableDeclaration.getName()
+                            + "' has element type '"
+                            + NamingUtil.getName(domain)
+                            + "'.",
+                    variableDeclaration,
+                    OxstsPackage.Literals.VARIABLE_DECLARATION__TYPE_SPECIFICATION,
+                    0,
+                    UNSUPPORTED_FEATURE);
+        }
+    }
+
+    @Check
+    public void checkParameterNotArray(ParameterDeclaration parameterDeclaration) {
+        var typeSpecification = parameterDeclaration.getTypeSpecification();
+        if (typeSpecification != null && isFixedSizeArray(typeSpecification)) {
+            acceptError(
+                    "Array parameters are not yet supported by the compiler; '"
+                            + parameterDeclaration.getName()
+                            + "' is an array.",
+                    parameterDeclaration,
+                    OxstsPackage.Literals.PARAMETER_DECLARATION__TYPE_SPECIFICATION,
+                    0,
+                    UNSUPPORTED_FEATURE);
+        }
+    }
+
+    @Check
+    public void checkNoMemberAccessThroughVariable(NavigationSuffixExpression expression) {
+        if (expression.eContainer() instanceof CallSuffixExpression call && call.getPrimary() == expression) {
+            return;
+        }
+        EObject holder;
+        Modality holderModality;
+        try {
+            holder = metaConstantExpressionEvaluatorProvider.evaluate(expression.getPrimary());
+            holderModality = modalityEvaluatorProvider.evaluate(expression.getPrimary());
+        } catch (RuntimeException e) {
+            return;
+        }
+        if (holder instanceof VariableDeclaration variable && holderModality == Modality.RUNTIME) {
+            acceptError(
+                    "Member access through variable '"
+                            + variable.getName()
+                            + "' is not yet supported by the compiler; only a call such as '"
+                            + variable.getName()
+                            + ".step()' dispatches over the instances a variable may hold.",
+                    expression,
+                    UNSUPPORTED_FEATURE);
+        }
+    }
+
+    private boolean isFixedSizeArray(TypeSpecification typeSpecification) {
+        if (typeSpecification.getMultiplicity() == null) {
+            return false;
+        }
+        RangeEvaluation range;
+        try {
+            range = multiplicityRangeEvaluator.evaluate(typeSpecification);
+        } catch (RuntimeException e) {
+            return false;
+        }
+        var upperBound = range.getUpperBound();
+        return upperBound != RangeEvaluation.INFINITY && upperBound > 1;
     }
 
     private void rejectIfUnboundedMultiplicity(Multiplicity multiplicity, EObject host) {

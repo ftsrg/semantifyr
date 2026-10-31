@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.transformation.BackendOperationVisitor
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
@@ -51,15 +52,28 @@ class ThetaOperationTransformer @Inject constructor(
     }
 
     override fun visit(operation: ForOperation): XstsOperation {
+        val range = operation.rangeExpression as? RangeExpression
+            ?: throw BackendUnsupportedException("Theta supports for-operations over ranges only")
         return XstsFactory.createForOperation().also {
             it.loopVar = thetaVariableTransformer.transform(operation.loopVariable)
-            val range = operation.rangeExpression
-            if (range is RangeExpression) {
-                // TODO: handle inclusive-exclusive!
-                it.from = thetaExpressionTransformer.transform(range.left)
-                it.to = thetaExpressionTransformer.transform(range.right)
-            }
+            it.from = thetaExpressionTransformer.transform(range.left)
+            it.to = transformRangeEnd(range)
             it.body = transform(operation.body)
+        }
+    }
+
+    // XSTS ranges exclude their end
+    private fun transformRangeEnd(range: RangeExpression): XstsExpression {
+        val end = thetaExpressionTransformer.transform(range.right)
+        if (range.isExclusive) {
+            return end
+        }
+        return XstsFactory.createArithmeticBinaryOperator().also {
+            it.left = end
+            it.op = XstsArithmeticOp.ADD
+            it.right = XstsFactory.createLiteralInteger().also { one ->
+                one.value = 1
+            }
         }
     }
 

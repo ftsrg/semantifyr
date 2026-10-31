@@ -1,0 +1,7 @@
+(XstsStateSequence
+  (XstsState pre_init last_env (ExplState (x 0)))
+  (XstsState post_init last_internal (ExplState (x 0)))
+  (XstsState post_init last_env (ExplState (x 0)))
+  (XstsState post_init last_internal (ExplState (x 1)))
+  (XstsState post_init last_env (ExplState (x 1)))
+  (XstsState post_init last_internal (ExplState (x 2))))

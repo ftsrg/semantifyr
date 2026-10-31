@@ -4,12 +4,15 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import path from 'node:path';
 import type { Options as DocsOptions } from '@docusaurus/plugin-content-docs';
 import type { Options as PagesOptions } from '@docusaurus/plugin-content-pages';
 import type { Options as ClassicThemeOptions } from '@docusaurus/theme-classic';
 import type { UserThemeConfig } from '@docusaurus/theme-common';
 import type { Config } from '@docusaurus/types';
 import { themes } from 'prism-react-renderer';
+
+const liveBackendUrl = process.env.SEMANTIFYR_LIVE_URL ?? 'https://live.semantifyr.org';
 
 export default {
   title: 'Semantifyr',
@@ -20,7 +23,10 @@ export default {
   baseUrl: '/semantifyr/',
   baseUrlIssueBanner: false,
   trailingSlash: true,
-  staticDirectories: ['static', 'static-imported-branding'],
+  staticDirectories: ['static', 'static-imported-branding', 'build/api-static'],
+  customFields: {
+    liveBackendUrl,
+  },
   headTags: [
     {
       tagName: 'link',
@@ -65,6 +71,21 @@ export default {
       {} satisfies PagesOptions,
     ],
     '@docusaurus/plugin-sitemap',
+    () => ({
+      name: 'raw-sources',
+      configureWebpack: () => ({
+        resolve: {
+          alias: {
+            '@oxsts-test-models': path.resolve(__dirname, '../../oxsts-test-models'),
+            // written by the cliReference_* Gradle tasks
+            '@cli-reference': path.resolve(__dirname, 'build/cli-reference'),
+          },
+        },
+        module: {
+          rules: [{ test: /\.(oxsts|txt)$/, type: 'asset/source' }],
+        },
+      }),
+    }),
   ],
   themes: [
     [
@@ -105,6 +126,13 @@ export default {
           position: 'left',
         },
         {
+          label: 'API',
+          // the API docs are published next to the site, outside the Docusaurus router
+          to: 'pathname:///api/',
+          target: '_self',
+          position: 'left',
+        },
+        {
           href: 'https://github.com/ftsrg/semantifyr',
           position: 'right',
           className: 'header-github-link',
@@ -113,7 +141,7 @@ export default {
         {
           label: 'Try Live',
           position: 'right',
-          href: 'https://live.semantifyr.org',
+          href: liveBackendUrl,
           className: 'navbar__link--try-now',
         },
       ],

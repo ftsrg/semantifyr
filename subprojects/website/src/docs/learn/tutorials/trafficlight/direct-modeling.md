@@ -3,6 +3,9 @@ title: 'Direct Modeling'
 sidebar_position: 1
 ---
 
+import LiveEmbed from '@site/src/components/LiveEmbed';
+import basics from '@oxsts-test-models/tutorial/basics.oxsts';
+
 # Direct Modeling
 
 This is the entry-level tutorial for Semantifyr. It walks through modeling a small traffic-light system as a single class with the entire state machine inline, and specifies verification cases using safety and reachability properties. There are no reusable abstractions in this tutorial; the [Building a Library](building-a-library.md) tutorial refactors the same example into something more general.
@@ -13,14 +16,14 @@ You can follow this tutorial in any Semantifyr environment. The quickest way is 
 No setup required. See [Getting Started](../../getting-started.md) for other options like the JupyterHub environment.
 
 :::tip Finished example
-If you want to skip ahead and see the completed model, use the **Load example** button in the toolbar and select *Tutorial: traffic light (direct modeling)*.
+If you want to skip ahead and see the completed model, open the model picker in the live editor's toolbar and select *Tutorial: Basics*.
 :::
 
 ## The Live Editor
 
 If you are using the live editor, here is a quick overview of the interface:
 
-- The **toolbar** at the top contains the Semantifyr logo, a connection indicator, a **Load example** button, a **Copy link** button, and links to the documentation and GitHub.
+- The **toolbar** at the top contains the Semantifyr logo, a connection indicator, the **model picker** (language and example), a **Copy link** button, links to the documentation and GitHub, and a color mode toggle.
 - The **editor** in the center is a Monaco-based code editor with syntax highlighting, diagnostics (red underlines for errors), and content assist (triggered with `Ctrl+Space`).
 - The **verification panel** at the bottom lists verification cases found in your code. It updates automatically as you type. Each case shows its status: a small circle means not yet verified, a check mark means passed, and an X means failed.
 - The **status bar** at the very bottom shows the current connection state and activity messages.
@@ -39,7 +42,7 @@ package example::trafficlight::basics
 The language supports semicolons `;`, however, their use is entirely optional.
 :::
 
-Every Semantifyr file specifies its own package, `example::trafficlight` in this case. The language uses double colons `::` to denote fully-qualified identifiers.
+Every Semantifyr file specifies its own package, `example::trafficlight::basics` in this case. The language uses double colons `::` to denote fully-qualified identifiers.
 
 The simple traffic light has three possible colors: red, yellow, and green. Declare a top-level enumeration of the colors:
 
@@ -273,82 +276,4 @@ The next tutorial in the series, [Building a Library](building-a-library.md), ex
 
 The complete final state of `trafficlight.oxsts`:
 
-```oxsts verify open=basics
-package example::trafficlight
-
-enum LightColor {
-    Red,
-    Yellow,
-    Green
-}
-
-class TrafficLight {
-    var color: LightColor := LightColor::Red
-
-    tran assumeColor(color: LightColor) {
-        assume (self.color == color)
-    }
-
-    tran setColor(color: LightColor) {
-        self.color := color
-    }
-
-    redefine tran {
-        choice {
-            inline assumeColor(LightColor::Red)
-            inline setColor(LightColor::Green)
-        } or {
-            inline assumeColor(LightColor::Green)
-            inline setColor(LightColor::Yellow)
-        } or {
-            inline assumeColor(LightColor::Yellow)
-            inline setColor(LightColor::Red)
-        }
-    }
-
-    prop isColor(color: LightColor): bool {
-        return self.color == color
-    }
-}
-
-class Intersection {
-    contains north: TrafficLight
-    contains east: TrafficLight
-
-    redefine tran {
-        choice {
-            assume (!east.isColor(LightColor::Green))
-            inline north.main()
-        } or {
-            assume (!north.isColor(LightColor::Green))
-            inline east.main()
-        }
-    }
-}
-
-@VerificationCase
-class GreenColorIsReachable {
-    contains light: TrafficLight[1]
-
-    redefine tran {
-        inline light.main()
-    }
-
-    prop {
-        return EF (light.color == LightColor::Green)
-    }
-}
-
-@VerificationCase
-class IntersectionNeverBothGreen {
-    contains intersection: Intersection
-
-    redefine tran {
-        inline intersection.main()
-    }
-
-    prop {
-        return AG !(intersection.north.color == LightColor::Green && intersection.east.color == LightColor::Green)
-    }
-}
-```
+<LiveEmbed code={basics} />

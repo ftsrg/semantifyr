@@ -23,6 +23,7 @@ dependencies {
 
     testFixturesApi(project(":portfolios"))
     testFixturesApi(testFixtures(project(":verifier")))
+    testFixturesImplementation(libs.kotlinx.serialization.json)
 }
 
 val syncSysmlLibrary = tasks.register<Sync>("syncSysmlLibrary") {
@@ -41,4 +42,5 @@ tasks.processResources {
 
 tasks.withType<Test>().configureEach {
     inputs.files(syncSysmlTestModels)
+    inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
 }

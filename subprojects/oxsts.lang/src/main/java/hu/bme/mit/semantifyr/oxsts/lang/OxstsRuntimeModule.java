@@ -19,9 +19,11 @@ import hu.bme.mit.semantifyr.oxsts.lang.scoping.OxstsGlobalScopeProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.OxstsLocalScopeProvider;
 import org.eclipse.xtext.conversion.IValueConverterService;
 import org.eclipse.xtext.conversion.impl.AbstractIDValueConverter;
+import org.eclipse.xtext.formatting2.FormatterPreferenceKeys;
 import org.eclipse.xtext.formatting2.FormatterRequest;
 import org.eclipse.xtext.naming.IQualifiedNameConverter;
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
+import org.eclipse.xtext.preferences.MapBasedPreferenceValues;
 import org.eclipse.xtext.resource.IResourceDescription;
 import org.eclipse.xtext.scoping.IGlobalScopeProvider;
 import org.eclipse.xtext.scoping.IScopeProvider;
@@ -74,7 +76,10 @@ public class OxstsRuntimeModule extends AbstractOxstsRuntimeModule {
 
     @SuppressWarnings("unused")
     public void configureFormatterRequest(Binder binder) {
-        binder.bind(FormatterRequest.class)
-                .toProvider(() -> new FormatterRequest().setExceptionHandler(ExceptionAcceptor.THROWING));
+        binder.bind(FormatterRequest.class).toProvider(() -> {
+            MapBasedPreferenceValues preferences = new MapBasedPreferenceValues();
+            preferences.put(FormatterPreferenceKeys.lineSeparator, "\n");
+            return new FormatterRequest().setPreferences(preferences).setExceptionHandler(ExceptionAcceptor.THROWING);
+        });
     }
 }

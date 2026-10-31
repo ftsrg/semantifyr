@@ -1,0 +1,83 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::lang::runtime_for
+
+// A runtime for-operation iterates its whole range within one step:
+// `a .. b` includes b, `a ..< b` stops before it. Summing the loop
+// variable distinguishes every off-by-one.
+
+@VerificationCase
+@Tag("expect-pass")
+@Tag("engine-limit:nuxmv,spin,uppaal")
+class InclusiveRangeReach {
+    var x: int := 0
+
+    redefine tran {
+        assume(x == 0)
+        for (i in 0 .. 2) {
+            x := x + i
+        }
+    }
+
+    prop {
+        return EF x == 3
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+@Tag("engine-limit:nuxmv,spin,uppaal")
+class InclusiveRangeBound {
+    var x: int := 0
+
+    redefine tran {
+        assume(x == 0)
+        for (i in 0 .. 2) {
+            x := x + i
+        }
+    }
+
+    prop {
+        return AG x <= 3
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+@Tag("engine-limit:nuxmv,spin,uppaal")
+class ExclusiveRangeReach {
+    var x: int := 0
+
+    redefine tran {
+        assume(x == 0)
+        for (i in 0 ..< 3) {
+            x := x + i
+        }
+    }
+
+    prop {
+        return EF x == 3
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+@Tag("engine-limit:nuxmv,spin,uppaal")
+class ExclusiveRangeBound {
+    var x: int := 0
+
+    redefine tran {
+        assume(x == 0)
+        for (i in 0 ..< 3) {
+            x := x + i
+        }
+    }
+
+    prop {
+        return AG x <= 3
+    }
+}

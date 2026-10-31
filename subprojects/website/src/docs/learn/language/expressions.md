@@ -18,7 +18,7 @@ Expressions compute values. They appear in [property](properties.md) bodies, on 
 | Nothing | `nothing` |
 | Infinity | `*` |
 | Array | `[a, b, c]`, `[]` |
-| Record | `Point { x = 0, y = 0 }` |
+| Record (planned, see [Records](datatypes.md#records)) | `Point { x = 0, y = 0 }` |
 
 See [Datatypes](datatypes.md) for the corresponding types.
 
@@ -142,6 +142,12 @@ prop {
 }
 ```
 
-:::note
-Additional temporal operators will be supported in the future.
+:::info[Planned]
+More temporal operators are planned: `AF expr` (`expr` eventually holds on every execution), `EG expr` (`expr` always holds on some execution), `AX expr` and `EX expr` (`expr` holds in every or in some next state). The parser rejects them today; only `AG` and `EF` parse.
+
+```oxsts
+prop {
+  return AF counter.value == 100
+}
+```
 :::

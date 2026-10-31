@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.IntegerEvaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
@@ -44,7 +45,7 @@ class TransitionCallTraceTransformerTest {
     private val emptyCallExpression = OxstsFactory.createCallSuffixExpression()
 
     private fun mockTransitionDeclaration(): TransitionDeclaration {
-        return mock()
+        return OxstsFactory.createTransitionDeclaration()
     }
 
     private fun newTransformer(): TransitionCallTraceTransformer {
@@ -172,6 +173,70 @@ class TransitionCallTraceTransformerTest {
         assertThat(trace.transitionDeclaration).isSameAs(transition)
         assertThat(trace.self.instances).containsExactly(container)
         assertThat(trace.parent).isNull()
+    }
+
+    @Test
+    fun `positional arguments are traced against the parameters of the called transition`() {
+        val transformer = newTransformer()
+        val parameter = OxstsFactory.createParameterDeclaration().also {
+            it.name = "n"
+        }
+        val transition = OxstsFactory.createTransitionDeclaration().also {
+            it.parameters += parameter
+        }
+        val argumentExpression = OxstsFactory.createLiteralInteger(3)
+        val callExpression = OxstsFactory.createCallSuffixExpression().also {
+            it.arguments += OxstsFactory.createArgument().also { argument ->
+                argument.expression = argumentExpression
+            }
+        }
+        whenever(evaluator.evaluate(argumentExpression)).thenReturn(IntegerEvaluation(3))
+        val inlinedOxsts = OxstsFactory.createInlinedOxsts().also {
+            it.mainTransition = OxstsFactory.createTransitionDeclaration()
+        }
+
+        val operation = transformer.traceTransitionCall(instance, container, transition, callExpression)
+        val variable = (operation.reference as ElementReference).element as VariableDeclaration
+        val trace = transformer.finalize(inlinedOxsts).getTransitionCallTrace(variable)
+
+        assertThat(trace.arguments.single().parameterDeclaration).isSameAs(parameter)
+        assertThat(trace.arguments.single().evaluation).isEqualTo(IntegerEvaluation(3))
+    }
+
+    @Test
+    fun `named arguments are traced against the parameter of that name`() {
+        val transformer = newTransformer()
+        val first = OxstsFactory.createParameterDeclaration().also {
+            it.name = "first"
+        }
+        val second = OxstsFactory.createParameterDeclaration().also {
+            it.name = "second"
+        }
+        val transition = OxstsFactory.createTransitionDeclaration().also {
+            it.parameters += first
+            it.parameters += second
+        }
+        val baseSecond = OxstsFactory.createParameterDeclaration().also {
+            it.name = "second"
+        }
+        val secondExpression = OxstsFactory.createLiteralInteger(3)
+        val callExpression = OxstsFactory.createCallSuffixExpression().also {
+            it.arguments += OxstsFactory.createArgument().also { argument ->
+                argument.parameter = baseSecond
+                argument.expression = secondExpression
+            }
+        }
+        whenever(evaluator.evaluate(secondExpression)).thenReturn(IntegerEvaluation(3))
+        val inlinedOxsts = OxstsFactory.createInlinedOxsts().also {
+            it.mainTransition = OxstsFactory.createTransitionDeclaration()
+        }
+
+        val operation = transformer.traceTransitionCall(instance, container, transition, callExpression)
+        val variable = (operation.reference as ElementReference).element as VariableDeclaration
+        val trace = transformer.finalize(inlinedOxsts).getTransitionCallTrace(variable)
+
+        assertThat(trace.arguments.single().parameterDeclaration).isSameAs(second)
+        assertThat(trace.arguments.single().evaluation).isEqualTo(IntegerEvaluation(3))
     }
 
     private fun tracerVariableNameOf(operation: AssignmentOperation): String {

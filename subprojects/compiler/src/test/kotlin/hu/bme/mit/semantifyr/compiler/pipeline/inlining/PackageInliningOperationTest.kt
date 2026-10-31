@@ -10,6 +10,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.serializeFormatted
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineOperation
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
 class PackageInliningOperationTest : InliningTestBase() {
@@ -376,6 +377,115 @@ class PackageInliningOperationTest : InliningTestBase() {
             assertThat(distinctNames)
                 .`as`("the two inlined tmp declarations must be renamed apart: $distinctNames")
                 .hasSize(2)
+        }
+    }
+
+    @Test
+    fun `named arguments bind by name when out of declaration order`() {
+        prepare(
+            "Host",
+            """
+                package inlining::tests
+                @VerificationCase
+                class Host {
+                    var x : int := 0
+                    var y : int := 0
+                    tran set(first : int, second : int) {
+                        x := first
+                        y := second
+                    }
+                    redefine tran { inline set(second = 2, first = 1) }
+                    prop { return EF x == 1 }
+                }
+            """,
+        ) {
+            inlineAll(it)
+            assertMainContains(it, "root.x := 1")
+            assertMainContains(it, "root.y := 2")
+        }
+    }
+
+    @Test
+    fun `named arguments bind by name in a redefinition`() {
+        prepare(
+            "Host",
+            """
+                package inlining::tests
+                abstract class Base {
+                    abstract tran set(first : int, second : int)
+                }
+                class Leaf : Base {
+                    var x : int := 0
+                    var y : int := 0
+                    redefine tran set(first : int, second : int) {
+                        x := first
+                        y := second
+                    }
+                }
+                @VerificationCase
+                class Host {
+                    contains leaf : Leaf[1]
+                    redefine tran { inline leaf.set(second = 2, first = 1) }
+                    prop { return EF leaf.x == 1 }
+                }
+            """,
+        ) {
+            inlineAll(it)
+            assertMainContains(it, "root.leaf.x := 1")
+            assertMainContains(it, "root.leaf.y := 2")
+        }
+    }
+
+    @Test
+    fun `an omitted optional argument binds nothing`() {
+        prepare(
+            "Host",
+            """
+                package inlining::tests
+                class Worker { }
+                @VerificationCase
+                class Host {
+                    contains worker : Worker[1]
+                    var current : Worker[0..1] := worker
+                    tran select(target : Worker[0..1]) {
+                        current := target
+                    }
+                    redefine tran { inline select() }
+                    prop { return EF current == nothing }
+                }
+            """,
+        ) {
+            inlineAll(it)
+            assertMainContains(it, "root.current := nothing")
+        }
+    }
+
+    @Test
+    fun `a required parameter without an argument is a source error`() {
+        prepare(
+            "Host",
+            """
+                package inlining::tests
+                abstract class Base {
+                    abstract tran set()
+                }
+                class Leaf : Base {
+                    var x : int := 0
+                    redefine tran set(value : int) {
+                        x := value
+                    }
+                }
+                @VerificationCase
+                class Host {
+                    contains leaf : Leaf[1]
+                    redefine tran { inline leaf.set() }
+                    prop { return EF leaf.x == 1 }
+                }
+            """,
+        ) {
+            assertThatThrownBy { inlineAll(it) }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessageContaining("No argument for the required parameter 'value'")
         }
     }
 

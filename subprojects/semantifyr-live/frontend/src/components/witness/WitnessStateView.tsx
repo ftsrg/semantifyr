@@ -147,6 +147,20 @@ export default function WitnessStateView({ trace }: Props): React.JSX.Element {
   );
   previousValues = valuesAfter(trace.initialStep, previousValues);
 
+  const initialized = trace.initializedStep;
+  if (initialized) {
+    rows.push(
+      <StateStepRow
+        key="initialized"
+        label="After init"
+        initial={false}
+        changed={diffBindings(initialized, previousValues)}
+        allValues={initialized.values}
+      />,
+    );
+    previousValues = valuesAfter(initialized, previousValues);
+  }
+
   trace.steps.forEach((step, i) => {
     const changed = diffBindings(step, previousValues);
     rows.push(

@@ -37,8 +37,8 @@ private typealias XstsElement = EObject
 private typealias XstsComparisonOp = hu.bme.mit.semantifyr.xsts.lang.xsts.ComparisonOp
 private typealias XstsBooleanOp = hu.bme.mit.semantifyr.xsts.lang.xsts.BooleanOp
 private typealias XstsUnaryOp = hu.bme.mit.semantifyr.xsts.lang.xsts.UnaryOp
-private typealias XstsArithmeticOp = hu.bme.mit.semantifyr.xsts.lang.xsts.ArithmeticOp
-private typealias XstsExpression = hu.bme.mit.semantifyr.xsts.lang.xsts.Expression
+typealias XstsArithmeticOp = hu.bme.mit.semantifyr.xsts.lang.xsts.ArithmeticOp
+typealias XstsExpression = hu.bme.mit.semantifyr.xsts.lang.xsts.Expression
 private typealias XstsElementReferenceExpression = ElementReferenceExpression
 
 class ThetaExpressionTransformer @Inject constructor(

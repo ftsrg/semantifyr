@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
@@ -93,6 +94,20 @@ sealed interface PortfolioOutcome {
         }
     }
 
+    data class TimedOut(val reason: String) : PortfolioOutcome {
+        override fun toBackendVerificationResult(startedAt: Instant): BackendVerificationResult {
+            return BackendVerificationResult(
+                metadata = VerificationMetadata(
+                    backendId = null,
+                    startedAt = startedAt,
+                ),
+                verdict = VerificationVerdict.Timeout,
+                metrics = BackendMetrics(),
+                message = reason,
+            )
+        }
+    }
+
     data class AllNotSupported(val reason: String) : PortfolioOutcome {
         override fun toBackendVerificationResult(startedAt: Instant): BackendVerificationResult {
             return BackendVerificationResult(
@@ -117,6 +132,7 @@ abstract class VerificationPortfolio {
     abstract val id: String
     abstract val displayName: String
     abstract val description: String
+    abstract val executorKeys: Set<ExecutorKey<*>>
 
     abstract fun availability(environment: ExecutionEnvironment = ExecutionEnvironment.Empty): AvailabilityReport
 
@@ -130,7 +146,7 @@ abstract class VerificationPortfolio {
 
     /**
      * Launch every job registered in [block] in parallel, returns the first decisive result and cancels every still-running child.
-     * When no decisive result arrives in time the outcome distinguishes "all jobs errored" from "some jobs still pending at timeout" so callers can surface the right verdict (Errored vs Inconclusive).
+     * When no decisive result arrives the outcome distinguishes "all jobs errored", "a job timed out or was still pending at timeout" and "every job finished undecided" (Errored, Timeout, Inconclusive).
      */
     protected suspend fun firstDecisive(
         gate: ConcurrencyGate,
@@ -192,7 +208,7 @@ abstract class VerificationPortfolio {
 
         cancelRemainingJobs()
 
-        if (outcome is PortfolioOutcome.NoDecision && decisive.size >= count) {
+        if (outcome !is PortfolioOutcome.Decided && decisive.size >= count) {
             val breakdown = decisive.joinToString(", ") { "${it.metadata.backendId}=${it.verdict}" }
             PortfolioOutcome.NoDecision("$id: firstNDecisive(n=$count) disagreement ($breakdown)")
         } else {
@@ -205,6 +221,7 @@ abstract class VerificationPortfolio {
      * If every decisive result agrees, returns that verdict.
      * Disagreement among decisive verdicts is treated as Inconclusive with a logged conflict.
      * Jobs that error are surfaced as [PortfolioOutcome.AllErrored] when nothing else reported.
+     * Without a decisive result, a job that timed out or was still pending at [timeout] makes the outcome [PortfolioOutcome.TimedOut].
      */
     protected suspend fun all(
         gate: ConcurrencyGate,
@@ -233,6 +250,7 @@ abstract class VerificationPortfolio {
                 val backends = collected.joinToString(", ") { it.metadata.backendId ?: "?" }
                 PortfolioOutcome.AllNotSupported("$id: every backend reported NotSupported ($backends)")
             }
+            decisive.isEmpty() && outcome is PortfolioOutcome.TimedOut -> outcome
             decisive.isEmpty() -> PortfolioOutcome.Decided(collected.first())
             decisive.map { it.verdict }.distinct().size == 1 -> PortfolioOutcome.Decided(decisive.first())
             else -> {
@@ -264,8 +282,8 @@ abstract class VerificationPortfolio {
         val total = scope.jobs.size
         val errors = mutableListOf<Throwable>()
         val collected = mutableListOf<BackendVerificationResult>()
+        var done = 0
         val decided = withTimeoutOrNull(timeout) {
-            var done = 0
             while (done < total) {
                 val received = results.receive()
                 done++
@@ -290,12 +308,17 @@ abstract class VerificationPortfolio {
             collected.all { it.verdict == VerificationVerdict.NotSupported }
         return when {
             decided != null -> PortfolioOutcome.Decided(decided)
+            done < total -> PortfolioOutcome.TimedOut("$id: no decisive result within $timeout")
             allNotSupported -> {
                 val backends = collected.joinToString(", ") { it.metadata.backendId ?: "?" }
                 PortfolioOutcome.AllNotSupported("$id: every backend reported NotSupported ($backends)")
             }
             errors.size == total -> PortfolioOutcome.AllErrored(errors)
-            else -> PortfolioOutcome.NoDecision("$id: no decisive result within $timeout")
+            collected.any { it.verdict == VerificationVerdict.Timeout } -> {
+                val backends = collected.filter { it.verdict == VerificationVerdict.Timeout }.joinToString(", ") { it.metadata.backendId ?: "?" }
+                PortfolioOutcome.TimedOut("$id: no decisive result, timed out: $backends")
+            }
+            else -> PortfolioOutcome.NoDecision("$id: no decisive result, every job finished undecided")
         }
     }
 

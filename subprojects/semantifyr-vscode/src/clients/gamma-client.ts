@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
 import path from "path";
 import { commands, type ExtensionContext, type Uri, window } from "vscode";
 import { ExecuteCommandRequest, type LanguageClient } from "vscode-languageclient/node.js";

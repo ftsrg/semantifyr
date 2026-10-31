@@ -46,6 +46,7 @@ public record VerificationCaseResult(
             case Passed -> VerificationStatus.PASSED;
             case Failed -> VerificationStatus.FAILED;
             case Inconclusive -> VerificationStatus.INCONCLUSIVE;
+            case Timeout -> VerificationStatus.TIMEOUT;
             case NotSupported -> VerificationStatus.NOT_SUPPORTED;
             case Errored -> VerificationStatus.ERRORED;
         };

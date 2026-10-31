@@ -3,6 +3,9 @@ title: 'Building a Library'
 sidebar_position: 2
 ---
 
+import LiveEmbed from '@site/src/components/LiveEmbed';
+import intermediate from '@oxsts-test-models/tutorial/intermediate.oxsts';
+
 # Building a Library
 
 This is the second tutorial in the Traffic Light series. It refactors the basic traffic light from the [Direct Modeling](direct-modeling.md) tutorial into a small reusable library: a `Statechart` base class with first-class `State` and `Transition` instances. The traffic light becomes a thin specialization of `Statechart`. This is the same pattern used by real semantic libraries like Gamma's `Statecharts.oxsts` and SysML v2's `States.oxsts`.
@@ -12,7 +15,7 @@ This is the second tutorial in the Traffic Light series. It refactors the basic 
 You can follow this tutorial in the **live editor** directly in your browser: [Open the live editor](https://live.semantifyr.org). No setup required. See [Getting Started](../../getting-started.md) for other options like the JupyterHub environment.
 
 :::tip Finished example
-If you want to skip ahead and see the completed model, use the **Load example** button in the toolbar and select *Tutorial: traffic light (statechart library)*.
+If you want to skip ahead and see the completed model, open the model picker in the live editor's toolbar and select *Tutorial: Intermediate*.
 :::
 
 The design changes significantly compared to the Direct Modeling tutorial, so start with a fresh file rather than editing the previous one. Create a new file alongside `trafficlight.oxsts` with a new package declaration:
@@ -236,123 +239,4 @@ The next tutorial in the series, the [Advanced Tutorial](advanced-tutorial.md), 
 
 The complete final state of `trafficlight.oxsts`:
 
-```oxsts verify open=intermediate
-package example::trafficlight::intermediate
-
-class State {
-    container parent: Statechart opposite states
-
-    prop isActive(): bool {
-        return parent.activeState == self
-    }
-
-    tran activate() {
-        parent.activeState := self
-    }
-}
-
-class Transition {
-    refers from: State
-    refers to: State
-
-    prop isEnabled(): bool {
-        return from.isActive()
-    }
-
-    redefine tran {
-        assume (isEnabled())
-        inline to.activate()
-    }
-}
-
-class Statechart {    
-    contains states: State[0..*] opposite parent
-    contains transitions: Transition[0..*]
-
-    @Control
-    var activeState: states[0..1] := nothing
-
-    redefine tran {
-        inline for choice (transition in transitions) {
-            inline transition.main()
-        }
-    }
-}
-
-class TrafficLight : Statechart {
-    contains red: State subsets states
-    contains yellow: State subsets states
-    contains green: State subsets states
-
-    contains redToGreen: Transition subsets transitions {
-        redefine refers from: State[1] = red
-        redefine refers to: State[1] = green
-    }
-    contains greenToYellow: Transition subsets transitions {
-        redefine refers from: State[1] = green
-        redefine refers to: State[1] = yellow
-    }
-    contains yellowToRed: Transition subsets transitions {
-        redefine refers from: State[1] = yellow
-        redefine refers to: State[1] = red
-    }
-
-    redefine init {
-        activeState := red
-    }
-}
-
-class Intersection {
-    contains north: TrafficLight
-    contains east: TrafficLight
-
-    redefine init {
-        inline north.init()
-        inline east.init()
-    }
-
-    redefine tran {
-        choice {
-            assume (!east.green.isActive())
-            inline north.main()
-        } or {
-            assume (!north.green.isActive())
-            inline east.main()
-        }
-    }
-}
-
-@VerificationCase
-class GreenColorIsReachable {
-    contains light: TrafficLight[1]
-
-    redefine init {
-        inline light.init()
-    }
-
-    redefine tran {
-        inline light.main()
-    }
-
-    prop {
-        return EF light.green.isActive()
-    }
-}
-
-@VerificationCase
-class IntersectionNeverBothGreen {
-    contains intersection: Intersection
-
-    redefine init {
-        inline intersection.init()
-    }
-
-    redefine tran {
-        inline intersection.main()
-    }
-
-    prop {
-        return AG !(intersection.north.green.isActive() && intersection.east.green.isActive())
-    }
-}
-```
+<LiveEmbed code={intermediate} />

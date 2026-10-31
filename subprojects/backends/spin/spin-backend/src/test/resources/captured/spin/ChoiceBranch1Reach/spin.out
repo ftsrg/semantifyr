@@ -1,0 +1,31 @@
+pan:1: assertion violated  !( !( !((semantifyr_stable&&(root__x==1))))) (at depth 6)
+pan: wrote model.pml.trail
+
+(Spin Version 6.5.2 -- 6 December 2019)
+Warning: Search not completed
+	+ Partial Order Reduction
+
+Full statespace search for:
+	never claim         	+ (p)
+	assertion violations	+ (if within scope of claim)
+	cycle checks       	- (disabled by -DSAFETY)
+	invalid end states	- (disabled by never claim)
+
+State-vector 28 byte, depth reached 6, errors: 1
+        3 states, stored
+        0 states, matched
+        3 transitions (= stored+matched)
+        2 atomic steps
+hash conflicts:         0 (resolved)
+
+Stats on memory usage (in Megabytes):
+    0.000	equivalent memory usage for states (stored*(State-vector + overhead))
+    0.289	actual memory usage for states
+  128.000	memory used for hash table (-w24)
+    0.534	memory used for DFS stack (-m10000)
+  128.730	total actual memory usage
+
+
+
+pan: elapsed time 0 seconds
+ltl p: [] (! ((__semantifyr_stable) && ((__root__x==1))))

@@ -31,6 +31,7 @@ import hu.bme.mit.semantifyr.backends.spin.trace.SpinLogVerdictParser
 import hu.bme.mit.semantifyr.backends.spin.trace.SpinTraceParser
 import hu.bme.mit.semantifyr.backends.spin.trace.SpinVerdict
 import hu.bme.mit.semantifyr.backends.spin.transformation.SpinArtifacts
+import hu.bme.mit.semantifyr.backends.spin.transformation.SpinCapabilityChecker
 import hu.bme.mit.semantifyr.backends.spin.transformation.SpinModelTransformer
 import hu.bme.mit.semantifyr.backends.spin.transformation.SpinOperationVisitor
 import hu.bme.mit.semantifyr.logging.info
@@ -72,6 +73,7 @@ class SpinVerificationContext @AssistedInject constructor(
     @param:Assisted private val config: SpinConfig,
     @param:Assisted override val executor: SpinExecutor,
     @Assisted request: BackendVerificationRequest,
+    override val capabilityChecker: SpinCapabilityChecker,
     private val spinModelTransformer: SpinModelTransformer,
     private val spinTraceParser: SpinTraceParser,
     private val spinLogVerdictParser: SpinLogVerdictParser,

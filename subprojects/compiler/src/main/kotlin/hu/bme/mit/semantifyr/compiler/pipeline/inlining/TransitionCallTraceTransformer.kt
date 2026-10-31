@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.scopes.CompilationScoped
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
@@ -60,11 +61,13 @@ class TransitionCallTraceTransformer @Inject constructor(
         val transitionCallTrace = TransitionCallTrace(
             self = InstanceEvaluation(containerInstance),
             transitionDeclaration = transitionDeclaration,
-            arguments = callExpression.arguments.map {
-                ArgumentTrace(
-                    it.parameter,
-                    evaluator.evaluateTyped(ExpressionEvaluation::class.java, it.expression),
-                )
+            arguments = transitionDeclaration.parameters.mapIndexedNotNull { index, parameter ->
+                OxstsUtils.getArgumentFor(callExpression.arguments, parameter, index)?.let {
+                    ArgumentTrace(
+                        parameter,
+                        evaluator.evaluateTyped(ExpressionEvaluation::class.java, it.expression),
+                    )
+                }
             },
             parent = parent,
         )

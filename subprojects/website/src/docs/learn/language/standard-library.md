@@ -19,16 +19,7 @@ The `semantifyr` package is implicitly available in every Semantifyr file. It de
 
 ## Backend Support
 
-Not every model checker backend supports every primitive datatype. The Theta backend currently supports:
-
-| Primitive | Theta backend |
-|-----------|---------------|
-| `int` | Supported |
-| `bool` | Supported |
-| `real` | Limited / not supported |
-| `string` | Limited / not supported |
-
-Use of `real` and `string` requires a backend with the corresponding theory. The `any` type is a structural feature of the language and works regardless of backend.
+All four backends (Theta, nuXmv, Spin and Uppaal) support variables of type `int`, `bool` and enumerations. No backend supports `real` or `string` variables yet. The `any` type is a structural feature of the language and works regardless of backend. A backend reports a model it cannot translate as not supported before it runs, naming each construct and its source line: besides these types, runtime [`for`](operations.md#for) runs only on Theta and only over a range, and Spin cannot evaluate an if-then-else expression of a non-boolean type inside a property.
 
 ## The `Anything` Class
 
@@ -38,7 +29,6 @@ Implicit supertype of all classes. Provides empty base transitions:
 class Anything {
   tran { }
   init { }
-  havoc { }
 }
 ```
 
@@ -60,7 +50,7 @@ Marks a class as a verification target. The optional `summary` parameter describ
 annotation Tag(category: string)
 ```
 
-Categorizes verification cases. For example, `@Tag(category = "slow")` marks long-running cases.
+Categorizes verification cases. For example, `@Tag(category = "slow")` marks long-running cases. The repository's conformance suites read `@Tag("expect-pass")` and `@Tag("expect-fail")` on a case as its expected verdict, and `@Tag("engine-limit:spin,uppaal")` as the engines that cannot decide it: an Inconclusive or Not supported verdict from those engines passes, a decisive one must still match.
 
 ### `@Control`
 
@@ -84,4 +74,20 @@ Instances contained in a `@Shared` containment feature are shared across all ins
 annotation Trace
 ```
 
-Calls to `@Trace`-annotated transitions are recorded in the verification witness, including parameter bindings at each call site.
+Calls to `@Trace`-annotated transitions are recorded in the verification witness, including parameter bindings at each call site. Only the calls that fired are listed, each with the receiver's feature path from the root instance (`root.kitchen.lamp`). The witness files `trace.json` and `witness.json` hold `initialStep` (the state before `init`), `initializedStep` (the state after `init`, with the calls traced during it) and `steps`, one per step of the main transition. The SysML v2 library traces a minimal set: transition firing, item sending, and the time advance at the root.
+
+### `@Clock`
+
+```oxsts
+annotation Clock
+```
+
+Marks a variable as a clock. Uppaal models it as a clock; the other backends treat it as an ordinary variable. Uppaal accepts `@Clock` only on data-typed variables, resets a clock only to `0` and cannot havoc it; it reports anything else as not supported.
+
+### `@NonOptimizable`
+
+```oxsts
+annotation NonOptimizable
+```
+
+Excludes a variable from optimizer passes that could remove or fold it.
