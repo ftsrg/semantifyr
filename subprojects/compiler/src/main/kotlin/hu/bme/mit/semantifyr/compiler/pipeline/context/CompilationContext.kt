@@ -8,17 +8,35 @@ package hu.bme.mit.semantifyr.compiler.pipeline.context
 
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceTree
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationStats
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
+import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 
+@Serializable
+data class ModelSize(
+    val variables: Int = 0,
+    val operations: Int = 0,
+    val expressions: Int = 0,
+)
+
+@Serializable
 data class CompilationMetrics(
     val createDuration: Duration = Duration.ZERO,
     val instantiationDuration: Duration = Duration.ZERO,
     val inliningDuration: Duration = Duration.ZERO,
     val flatteningDuration: Duration = Duration.ZERO,
-)
+    val inliningOptimization: OptimizationStats = OptimizationStats(),
+    val flatteningOptimization: OptimizationStats = OptimizationStats(),
+    val inputSize: ModelSize = ModelSize(),
+    val inlinedSize: ModelSize = ModelSize(),
+    val flattenedSize: ModelSize = ModelSize(),
+) {
+    val unfoldingDuration: Duration
+        get() = createDuration + instantiationDuration + inliningDuration + flatteningDuration
+}
 
 interface CompilationContext {
     val inlinedOxsts: InlinedOxsts
@@ -46,8 +64,8 @@ class InstantiatedCompilationContext(
     override val rootInstance: Instance
         get() = instanceTree.rootInstance
 
-    fun inlined(transitionCallTraces: TransitionCallTraceMap): InlinedCompilationContext {
-        return InlinedCompilationContext(inlinedOxsts, instanceTree, transitionCallTraces)
+    fun inlined(transitionCallTraces: TransitionCallTraceMap, optimization: OptimizationStats): InlinedCompilationContext {
+        return InlinedCompilationContext(inlinedOxsts, instanceTree, transitionCallTraces, optimization)
     }
 
 }
@@ -56,17 +74,22 @@ class InlinedCompilationContext(
     override val inlinedOxsts: InlinedOxsts,
     val instanceTree: InstanceTree,
     val transitionCallTraces: TransitionCallTraceMap,
+    val optimization: OptimizationStats,
 ) : EvaluableCompilationContext {
 
     override val rootInstance: Instance
         get() = instanceTree.rootInstance
 
-    fun flattened(flatteningInfo: FlatteningInfo): FlattenedCompilationContext {
+    fun flattened(flatteningInfo: FlatteningInfo, flatteningOptimization: OptimizationStats): FlattenedCompilationContext {
         return FlattenedCompilationContext(
             inlinedOxsts = inlinedOxsts,
             rootInstance = instanceTree.rootInstance,
             transitionCallTraces = transitionCallTraces,
             flatteningInfo = flatteningInfo,
+            compilationMetrics = CompilationMetrics(
+                inliningOptimization = optimization,
+                flatteningOptimization = flatteningOptimization,
+            ),
         )
     }
 

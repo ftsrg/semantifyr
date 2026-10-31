@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationStats
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PatternOptimizer
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.NegationNormalizationPatterns
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -23,7 +24,7 @@ class PropertyExpressionNormalizationPass @Inject constructor(
         artifactManager = artifactManager,
     )
 
-    fun normalize(inlinedOxsts: InlinedOxsts): Boolean {
+    fun normalize(inlinedOxsts: InlinedOxsts): OptimizationStats {
         return optimizer.optimize(inlinedOxsts.property.expression)
     }
 

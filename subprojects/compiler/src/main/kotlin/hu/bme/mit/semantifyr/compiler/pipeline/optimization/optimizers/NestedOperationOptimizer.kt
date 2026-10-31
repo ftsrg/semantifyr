@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.ConstantExpressionEvaluationTransformer
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationStats
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Optimizer
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PatternOptimizer
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.AssumeFalsePropagationPattern
@@ -45,7 +46,7 @@ class NestedOperationOptimizer @Inject constructor(
         artifactManager = artifactManager,
     )
 
-    override fun optimize(input: Operation): Boolean {
+    override fun optimize(input: Operation): OptimizationStats {
         return patternOptimizer.optimize(input)
     }
 

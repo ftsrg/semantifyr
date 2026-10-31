@@ -112,7 +112,7 @@ class OxstsFlattener @Inject constructor(
         rewriteStaticExpressions(inlinedOxsts, instanceTree, variableInstanceDomain, flattenedEvaluationTransformer)
 
         logger.info { "Running post-flattening optimizers" }
-        flattenedPhaseOptimizer.optimize(inlinedCompilationContext)
+        val optimization = flattenedPhaseOptimizer.optimize(inlinedCompilationContext)
 
         compilationArtifactManager.commitStep(CompilationPass.Flattening)
 
@@ -131,7 +131,7 @@ class OxstsFlattener @Inject constructor(
             instanceIdMapping = instanceIdMapping,
         )
 
-        return inlinedCompilationContext.flattened(flatteningInfo)
+        return inlinedCompilationContext.flattened(flatteningInfo, optimization)
     }
 
     private fun pullDownVariables(

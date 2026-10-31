@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.context.InlinedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationStats
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.InlinedPhaseOptimizer
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.PropertyExpressionNormalizationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
@@ -38,10 +39,10 @@ class OxstsInliner @Inject constructor(
         val instanceTree = instantiatedContext.instanceTree
 
         logger.debug { "Inlining init transition" }
-        inlineOperationCalls(instanceTree.rootInstance, inlinedOxsts.initTransition)
+        val initOptimization = inlineOperationCalls(instanceTree.rootInstance, inlinedOxsts.initTransition)
 
         logger.debug { "Inlining main transition" }
-        inlineOperationCalls(instanceTree.rootInstance, inlinedOxsts.mainTransition)
+        val mainOptimization = inlineOperationCalls(instanceTree.rootInstance, inlinedOxsts.mainTransition)
 
         logger.debug { "Inlining property expression" }
         inlineExpressionCalls(instanceTree.rootInstance, inlinedOxsts.property)
@@ -50,14 +51,14 @@ class OxstsInliner @Inject constructor(
         val transitionCallTraces = transitionCallTraceTransformer.finalize(inlinedOxsts)
 
         logger.info { "Running post-inlining optimizers" }
-        inlinedPhaseOptimizer.optimize(instantiatedContext)
+        val phaseOptimization = inlinedPhaseOptimizer.optimize(instantiatedContext)
 
         logger.info { "Normalizing property expression" }
-        propertyExpressionNormalizationPass.normalize(inlinedOxsts)
+        val normalization = propertyExpressionNormalizationPass.normalize(inlinedOxsts)
 
         ensureTemporalExpressions(inlinedOxsts)
 
-        return instantiatedContext.inlined(transitionCallTraces)
+        return instantiatedContext.inlined(transitionCallTraces, initOptimization + mainOptimization + phaseOptimization + normalization)
     }
 
     private fun ensureTemporalExpressions(inlinedOxsts: InlinedOxsts) {
@@ -84,11 +85,11 @@ class OxstsInliner @Inject constructor(
         }
     }
 
-    private fun inlineOperationCalls(rootInstance: Instance, transition: TransitionDeclaration) {
+    private fun inlineOperationCalls(rootInstance: Instance, transition: TransitionDeclaration): OptimizationStats {
         val processor = operationCallInlinerProvider.create(rootInstance)
 
-        for (branch in transition.branches) {
-            processor.process(branch)
+        return transition.branches.fold(OptimizationStats()) { optimization, branch ->
+            optimization + processor.process(branch)
         }
     }
 
