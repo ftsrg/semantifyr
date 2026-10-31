@@ -6,13 +6,12 @@
 
 package hu.bme.mit.semantifyr.backend
 
+import com.google.inject.Inject
 import com.google.inject.Injector
-import com.google.inject.Key
-import com.google.inject.TypeLiteral
+import com.google.inject.Provider
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
-import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
@@ -22,7 +21,13 @@ import org.eclipse.xtext.testing.util.ParseHelper
 import java.nio.file.Path
 import kotlin.io.path.Path
 
-class BackendTestModels {
+class BackendTestModels @Inject constructor(
+    private val injector: Injector,
+    private val loader: SemantifyrLoader,
+    private val resourceSetProvider: Provider<XtextResourceSet>,
+    private val inlinedParser: ParseHelper<InlinedOxsts>,
+    private val packageParser: ParseHelper<OxstsModelPackage>,
+) {
     companion object {
         const val COUNTER_EXCEEDS_BOUND = """
             inlined oxsts of semantifyr::Anything
@@ -40,14 +45,6 @@ class BackendTestModels {
             prop { EF x == 5 }
         """
     }
-
-    val injector: Injector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
-
-    private val loader = injector.getInstance(SemantifyrLoader::class.java)
-    private val compiler = SemantifyrCompiler(injector, ArtifactConfig.NONE)
-    private val resourceSetProvider = injector.getProvider(XtextResourceSet::class.java)
-    private val inlinedParser = injector.getInstance(Key.get(object : TypeLiteral<ParseHelper<InlinedOxsts>>() {}))
-    private val packageParser = injector.getInstance(Key.get(object : TypeLiteral<ParseHelper<OxstsModelPackage>>() {}))
 
     fun parse(source: String, vararg packages: String): InlinedOxsts {
         val resourceSet = resourceSetProvider.get()
@@ -68,6 +65,6 @@ class BackendTestModels {
         val classDeclaration = context.modelResources.single().allContents.asSequence().filterIsInstance<ClassDeclaration>().single {
             it.name == className
         }
-        return compiler.compile(classDeclaration, outputDirectory).inlinedOxsts
+        return SemantifyrCompiler(injector, ArtifactConfig.NONE).compile(classDeclaration, outputDirectory).inlinedOxsts
     }
 }

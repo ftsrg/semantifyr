@@ -6,12 +6,15 @@
 
 package hu.bme.mit.semantifyr.backends.theta
 
+import com.google.inject.Inject
+import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendTestModels
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.valuesByName
+import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -22,11 +25,14 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import kotlin.io.path.Path
 
+@InjectWithOxsts
 class ThetaBackendReplayTest {
 
-    companion object {
-        private val models = BackendTestModels()
-    }
+    @Inject
+    private lateinit var models: BackendTestModels
+
+    @Inject
+    private lateinit var injector: Injector
 
     private fun cleanArtifactDirectory(case: String): Path {
         val directory = Path("build", "test-artifacts", "ThetaBackendReplayTest", case)
@@ -43,7 +49,7 @@ class ThetaBackendReplayTest {
             ReplayingThetaExecutor(case)
         }.build()
         val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory)
-        return ThetaBackend().verify(models.injector, ThetaConfig.CegarExpl, request, environment)
+        return ThetaBackend().verify(injector, ThetaConfig.CegarExpl, request, environment)
     }
 
     private suspend fun verifyFixture(file: String, className: String): BackendVerificationResult {
@@ -132,7 +138,7 @@ class ThetaBackendReplayTest {
             (0 until 16).map { leg ->
                 async(Dispatchers.Default) {
                     val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory.resolve("leg$leg"))
-                    ThetaBackend().verify(models.injector, ThetaConfig.CegarExpl, request, environment)
+                    ThetaBackend().verify(injector, ThetaConfig.CegarExpl, request, environment)
                 }
             }.awaitAll()
         }

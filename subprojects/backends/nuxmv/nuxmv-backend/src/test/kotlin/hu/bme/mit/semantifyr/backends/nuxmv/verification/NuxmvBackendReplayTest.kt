@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.backends.nuxmv.verification
 
+import com.google.inject.Inject
+import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendTestModels
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
@@ -14,6 +16,7 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.valuesByName
 import hu.bme.mit.semantifyr.backends.nuxmv.NuxmvExecutorKey
 import hu.bme.mit.semantifyr.backends.nuxmv.ReplayingNuxmvExecutor
+import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -21,11 +24,14 @@ import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.readText
 
+@InjectWithOxsts
 class NuxmvBackendReplayTest {
 
-    companion object {
-        private val models = BackendTestModels()
-    }
+    @Inject
+    private lateinit var models: BackendTestModels
+
+    @Inject
+    private lateinit var injector: Injector
 
     private fun cleanArtifactDirectory(case: String): Path {
         val directory = Path("build", "test-artifacts", "NuxmvBackendReplayTest", case)
@@ -42,7 +48,7 @@ class NuxmvBackendReplayTest {
             ReplayingNuxmvExecutor(case)
         }.build()
         val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory)
-        return NuxmvBackend().verify(models.injector, NuxmvConfig.Ic3Invar, request, environment)
+        return NuxmvBackend().verify(injector, NuxmvConfig.Ic3Invar, request, environment)
     }
 
     private suspend fun verifyFixture(file: String, className: String): BackendVerificationResult {

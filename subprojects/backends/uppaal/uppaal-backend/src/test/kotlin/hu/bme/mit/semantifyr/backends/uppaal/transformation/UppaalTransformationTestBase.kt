@@ -6,19 +6,25 @@
 
 package hu.bme.mit.semantifyr.backends.uppaal.transformation
 
+import com.google.inject.Inject
+import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendTestModels
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalBackendModule
+import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 
+@InjectWithOxsts
 abstract class UppaalTransformationTestBase {
 
-    companion object {
-        private val models = BackendTestModels()
+    @Inject
+    private lateinit var models: BackendTestModels
 
-        private val childInjector by lazy {
-            models.injector.createChildInjector(UppaalBackendModule())
-        }
+    @Inject
+    private lateinit var oxstsInjector: Injector
+
+    private val childInjector by lazy {
+        oxstsInjector.createChildInjector(UppaalBackendModule())
     }
 
     protected fun capabilityChecker(): UppaalCapabilityChecker {

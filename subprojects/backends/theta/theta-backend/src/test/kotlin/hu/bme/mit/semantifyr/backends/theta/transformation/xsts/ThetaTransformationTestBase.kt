@@ -6,23 +6,29 @@
 
 package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
+import com.google.inject.Inject
+import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendTestModels
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
 import hu.bme.mit.semantifyr.backends.theta.ThetaBackendModule
+import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 import org.eclipse.emf.common.util.URI
 import java.io.ByteArrayOutputStream
 import java.io.File
 
+@InjectWithOxsts
 abstract class ThetaTransformationTestBase {
 
-    companion object {
-        private val models = BackendTestModels()
+    @Inject
+    private lateinit var models: BackendTestModels
 
-        private val childInjector by lazy {
-            models.injector.createChildInjector(ThetaBackendModule())
-        }
+    @Inject
+    private lateinit var oxstsInjector: Injector
+
+    private val childInjector by lazy {
+        oxstsInjector.createChildInjector(ThetaBackendModule())
     }
 
     protected val testXstsUri: URI by lazy {

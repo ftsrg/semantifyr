@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.backends.uppaal.verification
 
+import com.google.inject.Inject
+import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendTestModels
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
@@ -14,17 +16,21 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.valuesByName
 import hu.bme.mit.semantifyr.backends.uppaal.ReplayingUppaalExecutor
 import hu.bme.mit.semantifyr.backends.uppaal.UppaalExecutorKey
+import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import kotlin.io.path.Path
 
+@InjectWithOxsts
 class UppaalBackendReplayTest {
 
-    companion object {
-        private val models = BackendTestModels()
-    }
+    @Inject
+    private lateinit var models: BackendTestModels
+
+    @Inject
+    private lateinit var injector: Injector
 
     private fun cleanArtifactDirectory(case: String): Path {
         val directory = Path("build", "test-artifacts", "UppaalBackendReplayTest", case)
@@ -41,7 +47,7 @@ class UppaalBackendReplayTest {
             ReplayingUppaalExecutor(case)
         }.build()
         val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory)
-        return UppaalBackend().verify(models.injector, UppaalConfig.Default, request, environment)
+        return UppaalBackend().verify(injector, UppaalConfig.Default, request, environment)
     }
 
     private suspend fun verifyFixture(file: String, className: String): BackendVerificationResult {
