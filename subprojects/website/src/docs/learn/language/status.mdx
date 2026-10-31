@@ -1,0 +1,13 @@
+---
+title: Status
+sidebar_position: 15
+---
+
+import ConstructTable from '@site/src/components/Constructs';
+import constructs from '@oxsts-test-models/constructs/constructs.tsv';
+
+# Status
+
+The grammar accepts more than the compiler handles. The table lists the constructs where the two part ways: a supported construct compiles and verifies, a rejected one parses and the validator reports the named diagnostic at its source line, a planned one does not parse yet. The compiler's tests check every row, and this page is generated from the same table, so it describes the current build.
+
+<ConstructTable table={constructs} />

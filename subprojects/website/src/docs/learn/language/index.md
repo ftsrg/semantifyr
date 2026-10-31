@@ -7,7 +7,7 @@ sidebar_position: 0
 
 Semantifyr is a **declarative-operational** language for writing the [semantic libraries](../index.md) used by the verification framework. A Semantifyr model is a collection of classes, features, transitions, and properties that the compiler unfolds into a flat transition system and hands to a model checker: Theta, nuXmv, Spin or Uppaal.
 
-This is the **language reference**. Each page covers a single construct and is designed for **quick lookup**. Pages are self-contained and may be read in any order. For a guided walk-through of a complete Semantifyr workflow, see the [Traffic Light tutorials](../tutorials/trafficlight/) instead.
+This is the **language reference**. Each page covers a single construct and is designed for **quick lookup**. Pages are self-contained and may be read in any order. For a guided walk-through of a complete Semantifyr workflow, see the [Traffic Light tutorials](../tutorials/trafficlight/) instead. [Status](status.mdx) lists the constructs the compiler supports, rejects or plans.
 
 ## The Language at a Glance
 
