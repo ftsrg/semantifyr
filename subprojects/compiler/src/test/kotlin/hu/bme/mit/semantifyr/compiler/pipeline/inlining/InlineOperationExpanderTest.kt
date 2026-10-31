@@ -158,6 +158,93 @@ class InlineOperationExpanderTest : InliningTestBase() {
     )
 
     @Test
+    fun `inline seq for over an exclusive range stops before the upper bound`() = assertFirstExpansion(
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var total : int := 0
+            init { }
+            tran {
+                inline for (n in 1..<3) {
+                    total := total + n
+                }
+            }
+            prop { AG true }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var total : int := 0
+            init { }
+            tran {
+                {
+                    {
+                        total := total + 1
+                    }
+                    {
+                        total := total + 2
+                    }
+                }
+            }
+            prop { AG true }
+        """,
+    )
+
+    @Test
+    fun `inline choice for over an exclusive range omits the upper bound`() = assertFirstExpansion(
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var chosen : int := 0
+            init { }
+            tran {
+                inline for choice (n in 0..<2) {
+                    chosen := n
+                }
+            }
+            prop { AG true }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var chosen : int := 0
+            init { }
+            tran {
+                choice {
+                    chosen := 0
+                } or {
+                    chosen := 1
+                }
+            }
+            prop { AG true }
+        """,
+    )
+
+    @Test
+    fun `inline seq for over an empty exclusive range takes the else branch`() = assertFirstExpansion(
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var total : int := 0
+            init { }
+            tran {
+                inline for (n in 3..<3) {
+                    total := total + n
+                } else {
+                    total := 7
+                }
+            }
+            prop { AG true }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var total : int := 0
+            init { }
+            tran {
+                {
+                    total := 7
+                }
+            }
+            prop { AG true }
+        """,
+    )
+
+    @Test
     fun `inline seq for over an empty range with no else branch produces empty sequence`() = assertFirstExpansion(
         input = """
             inlined oxsts of semantifyr::Anything

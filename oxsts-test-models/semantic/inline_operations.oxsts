@@ -107,6 +107,81 @@ class InlineSeqForBound {
     }
 }
 
+// --- inline for over an exclusive range ---
+
+// An exclusive range still runs every iteration below its upper bound.
+@VerificationCase
+@Tag("expect-pass")
+class InlineSeqForExclusiveReach {
+    var count: int := 0
+
+    redefine init {
+        inline for (n in 0..<3) {
+            count := count + 1
+        }
+    }
+
+    prop {
+        return EF count == 3
+    }
+}
+
+// Dual: an exclusive range stops before its upper bound, so 0..<3 unrolls
+// three times, not four.
+@VerificationCase
+@Tag("expect-pass")
+class InlineSeqForExclusiveBound {
+    var count: int := 0
+
+    redefine init {
+        inline for (n in 0..<3) {
+            count := count + 1
+        }
+    }
+
+    redefine tran { }
+
+    prop {
+        return AG count <= 3
+    }
+}
+
+// Dual: no fourth iteration happens, so a count of 4 is unreachable.
+@VerificationCase
+@Tag("expect-fail")
+class InlineSeqForExclusiveNoFourthIteration {
+    var count: int := 0
+
+    redefine init {
+        inline for (n in 0..<3) {
+            count := count + 1
+        }
+    }
+
+    redefine tran { }
+
+    prop {
+        return EF count == 4
+    }
+}
+
+// Dual: the upper bound of an exclusive range is never chosen.
+@VerificationCase
+@Tag("expect-pass")
+class InlineChoiceForExclusiveBound {
+    var chosen: int := 0
+
+    redefine tran {
+        inline for choice (n in 0..<3) {
+            chosen := n
+        }
+    }
+
+    prop {
+        return AG chosen != 3
+    }
+}
+
 // --- inline choice-for ---
 
 // Inline choice-for produces a nondeterministic choice over each value:
