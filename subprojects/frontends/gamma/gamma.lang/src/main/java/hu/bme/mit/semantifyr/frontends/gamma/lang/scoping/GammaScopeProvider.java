@@ -12,8 +12,12 @@ import org.eclipse.emf.ecore.EReference;
 import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.scoping.IScope;
 import org.eclipse.xtext.scoping.Scopes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GammaScopeProvider extends AbstractGammaScopeProvider {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GammaScopeProvider.class);
 
     private boolean isTypeReference(EReference reference) {
         return reference == GammaPackage.Literals.COMPONENT_INSTANCE__COMPONENT;
@@ -28,8 +32,7 @@ public class GammaScopeProvider extends AbstractGammaScopeProvider {
         try {
             return calculateScope(context, reference);
         } catch (RuntimeException e) {
-            // FIXME: should log here
-            e.printStackTrace();
+            LOGGER.error("Scoping {} failed", reference.getName(), e);
             return IScope.NULLSCOPE;
         }
     }
