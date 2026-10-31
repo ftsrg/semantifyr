@@ -52,7 +52,7 @@ Publication on the Visual Studio Marketplace is planned.
 The `semantifyr` command lists, compiles and verifies the verification cases of OXSTS models from a terminal. It needs a Java 25 runtime.
 
 1. Build the distribution from a clone of the [repository](https://github.com/ftsrg/semantifyr) with `./gradlew :semantifyr-cli:installDist`, which installs it to `subprojects/semantifyr-cli/build/install/semantifyr`; `./gradlew :semantifyr-cli:distZip` packs the same files into `subprojects/semantifyr-cli/build/distributions/semantifyr-<version>.zip`. Once a release is published, you can download `semantifyr-<version>.zip` from the [latest release](https://github.com/ftsrg/semantifyr/releases/latest) and unzip it instead.
-2. Run `bin/semantifyr` in the installed directory (`bin\semantifyr.bat` on Windows). The distribution bundles the Theta backend, which the Linux and macOS launcher puts on `PATH`; install other backends as for the VS Code extension.
+2. Run `bin/semantifyr` in the installed directory (`bin\semantifyr.bat` on Windows). The distribution bundles the Theta backend, which the launcher puts on `PATH`; install other backends as for the VS Code extension.
 3. Verify the bundled smoke model from the installed directory: `bin/semantifyr verify models/smoke`.
 
 The distribution also carries the Gamma and SysML v2 semantic libraries under `libraries/`. See [Command Line](cli/index.mdx) for the commands and options, and the [SysML v2 tutorial](tutorials/sysml-v2.md) for verifying SysML v2 models.
