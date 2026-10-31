@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DataTypeDeclaration
@@ -50,7 +51,7 @@ class ThetaDomainTransformer @Inject constructor(
         return when (dataTypeDeclaration) {
             builtinSymbolResolver.intDatatype(dataTypeDeclaration) -> XstsFactory.createIntegerType()
             builtinSymbolResolver.boolDatatype(dataTypeDeclaration) -> XstsFactory.createBooleanType()
-            else -> error("Unexpected data type: $this")
+            else -> throw BackendUnsupportedException("Theta does not support variables of type ${dataTypeDeclaration.name}")
         }
     }
 

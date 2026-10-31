@@ -432,6 +432,22 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
     }
 
     @Test
+    suspend fun `a real variable is not supported`() {
+        val exception = assertThrows<BackendUnsupportedException> {
+            transform(
+                """
+                    var r : real := 0.5
+                    init { }
+                    tran { }
+                    prop { AG true }
+                """,
+            )
+        }
+
+        assertThat(exception.message).isEqualTo("Spin does not support variables of type real (r)")
+    }
+
+    @Test
     suspend fun `a for operation is not supported`() {
         assertThrows<BackendUnsupportedException> {
             transform(

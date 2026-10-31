@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.uppaal.transformation
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.backend.transformation.BackendNameMangler
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
@@ -66,14 +67,14 @@ class UppaalVariableTransformer @Inject constructor(
             domain is EnumDeclaration -> UppaalVariableKind.Enum
             domain === builtinSymbolResolver.intDatatype(variableDeclaration) -> UppaalVariableKind.Integer
             domain === builtinSymbolResolver.boolDatatype(variableDeclaration) -> UppaalVariableKind.Boolean
-            else -> error("Unsupported variable domain for Uppaal: ${domain.name} on ${variableDeclaration.name}")
+            else -> throw BackendUnsupportedException("Uppaal does not support variables of type ${domain.name} (${variableDeclaration.name})")
         }
     }
 
     private fun resolveClockKind(variableDeclaration: VariableDeclaration): UppaalVariableKind {
         val domain = variableDeclaration.typeSpecification?.domain
         if (domain !is DataTypeDeclaration) {
-            error("@Clock annotations are only supported on data-typed variables; got ${domain?.javaClass?.simpleName} on ${variableDeclaration.name}")
+            throw BackendUnsupportedException("Uppaal supports @Clock only on data-typed variables (${variableDeclaration.name})")
         }
         return UppaalVariableKind.Clock
     }

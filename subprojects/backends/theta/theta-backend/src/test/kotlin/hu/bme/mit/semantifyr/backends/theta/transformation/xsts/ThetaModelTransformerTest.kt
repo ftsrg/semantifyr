@@ -217,6 +217,38 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
     }
 
     @Test
+    suspend fun `a real variable is not supported`() {
+        val exception = assertThrows<BackendUnsupportedException> {
+            xsts(
+                """
+                    var r : real := 0.5
+                    init { }
+                    tran { }
+                    prop { AG true }
+                """,
+            )
+        }
+
+        assertThat(exception.message).isEqualTo("Theta does not support variables of type real")
+    }
+
+    @Test
+    suspend fun `a for operation is not supported`() {
+        val exception = assertThrows<BackendUnsupportedException> {
+            xsts(
+                """
+                    var x : int := 0
+                    init { }
+                    tran { for (i in 0 .. 2) { x := x + i } }
+                    prop { AG true }
+                """,
+            )
+        }
+
+        assertThat(exception.message).isEqualTo("Theta does not support for-operations")
+    }
+
+    @Test
     suspend fun `a real literal is not supported`() {
         assertThrows<BackendUnsupportedException> {
             xsts(

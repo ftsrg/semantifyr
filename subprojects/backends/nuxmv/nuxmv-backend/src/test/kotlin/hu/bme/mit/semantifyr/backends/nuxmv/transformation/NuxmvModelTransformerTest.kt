@@ -6,8 +6,10 @@
 
 package hu.bme.mit.semantifyr.backends.nuxmv.transformation
 
+import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
 
@@ -370,5 +372,37 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
 
         assertThat(property.invertVerdict).isTrue()
         assertThat(property.invariant).isEqualTo("!((x = 5))")
+    }
+
+    @Test
+    suspend fun `a real variable is not supported`() {
+        val exception = assertThrows<BackendUnsupportedException> {
+            transform(
+                """
+                    var r : real := 0.5
+                    init { }
+                    tran { }
+                    prop { AG true }
+                """,
+            )
+        }
+
+        assertThat(exception.message).isEqualTo("nuXmv does not support variables of type real (r)")
+    }
+
+    @Test
+    suspend fun `a for operation is not supported`() {
+        val exception = assertThrows<BackendUnsupportedException> {
+            transform(
+                """
+                    var x : int := 0
+                    init { }
+                    tran { for (i in 0 .. 2) { x := x + i } }
+                    prop { AG true }
+                """,
+            )
+        }
+
+        assertThat(exception.message).isEqualTo("nuXmv does not support for-operations")
     }
 }
