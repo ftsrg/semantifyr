@@ -6,7 +6,6 @@
 
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { CancellationTokenSource } from 'vscode-jsonrpc';
 import { ConsoleLogger, createWebSocketConnection, toSocket } from 'vscode-ws-jsonrpc';
 import { discoverVerificationCases, verifyCase } from '@semantifyr/editor-common';
 import { createApi, normalizeBaseUrl } from '../lib/api';
@@ -66,8 +65,7 @@ describe(`live deployment at ${url}`, () => {
           connection,
           flavor.verificationCommand,
           { uri, range: verificationCase.location.range },
-          // vscode-jsonrpc sends a trailing undefined token as a second parameter
-          { portfolio: 'smart-full', token: new CancellationTokenSource().token },
+          { portfolio: 'smart-full' },
         );
         expect(result?.status, verificationCase.label).toBe('passed');
       }
