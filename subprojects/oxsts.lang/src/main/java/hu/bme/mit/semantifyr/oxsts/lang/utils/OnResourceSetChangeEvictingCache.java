@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.utils;
 
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,13 +16,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.log4j.Logger;
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.common.util.WrappedException;
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.xtext.util.IResourceScopeCache;
 import org.eclipse.xtext.util.NonRecursiveEContentAdapter;
-import org.eclipse.xtext.util.Pair;
-import org.eclipse.xtext.util.Tuples;
 import org.eclipse.xtext.util.concurrent.IUnitOfWork;
 
 /**
@@ -110,7 +110,7 @@ public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
 
         private static final Object EMPTY_VALUE = new Object();
 
-        private final Map<Pair<Resource, Object>, Object> values;
+        private final Map<Resource, Map<Object, Object>> values;
 
         private final AtomicInteger ignoreNotificationCounter = new AtomicInteger(0);
 
@@ -129,13 +129,10 @@ public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
             values = new ConcurrentHashMap<>(initialCapacity);
         }
 
-        protected Pair<Resource, Object> getRealKey(Resource resource, Object key) {
-            return Tuples.create(resource, key);
-        }
-
         public void set(Resource resource, Object key, Object value) {
             empty = false;
-            values.put(getRealKey(resource, key), Objects.requireNonNullElse(value, EMPTY_VALUE));
+            values.computeIfAbsent(resource, ignored -> new ConcurrentHashMap<>())
+                    .put(key, Objects.requireNonNullElse(value, EMPTY_VALUE));
         }
 
         protected void cacheMiss() {
@@ -160,8 +157,12 @@ public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
             if (empty) {
                 return null;
             }
+            var resourceValues = values.get(resource);
+            if (resourceValues == null) {
+                return null;
+            }
             //noinspection unchecked
-            return (T) this.values.get(getRealKey(resource, key));
+            return (T) resourceValues.get(key);
         }
 
         public <T> T get(Resource resource, Object key) {
@@ -176,8 +177,28 @@ public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
         public void notifyChanged(Notification notification) {
             super.notifyChanged(notification);
             if (ignoreNotificationCounter.get() == 0 && isSemanticStateChange(notification)) {
-                clearValues();
+                var inlinedResource = changedInlinedResource(notification);
+                if (inlinedResource != null) {
+                    values.remove(inlinedResource);
+                } else {
+                    clearValues();
+                }
             }
+        }
+
+        // an inlined model exports no name and nothing imports it, so only its own entries can go stale
+        private static Resource changedInlinedResource(Notification notification) {
+            if (!(notification.getNotifier() instanceof EObject root)) {
+                return null;
+            }
+            var resource = root.eResource();
+            if (resource == null || resource.getContents().isEmpty()) {
+                return null;
+            }
+            if (resource.getContents().getFirst() instanceof InlinedOxsts) {
+                return resource;
+            }
+            return null;
         }
 
         public void clearValues() {
