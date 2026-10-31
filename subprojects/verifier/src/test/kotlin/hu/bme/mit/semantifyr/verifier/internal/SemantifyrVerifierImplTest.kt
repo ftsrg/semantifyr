@@ -31,6 +31,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
+import hu.bme.mit.semantifyr.verifier.caseDirectoryName
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
@@ -172,13 +173,13 @@ class SemantifyrVerifierImplTest {
     }
 
     @Test
-    suspend fun `report json is written to the per-case output directory`(@TempDir output: Path) {
+    suspend fun `report json is written to a directory named after the model file and the case`(@TempDir output: Path) {
         val portfolio = ScriptedPortfolio { _, _ -> decisiveResult(VerificationVerdict.Passed) }
         val case = loadFirstCase()
 
         build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(case)
 
-        val caseDir = output.resolve(case.qualifiedName.replace("::", "."))
+        val caseDir = output.resolve("simple.${case.classDeclaration.name}")
         val reportFile = caseDir.resolve("report.json")
         assertThat(reportFile.exists()).isTrue
     }
@@ -190,7 +191,7 @@ class SemantifyrVerifierImplTest {
 
         val result = build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(case)
 
-        val report = Json.parseToJsonElement(output.resolve(case.qualifiedName.replace("::", ".")).resolve("report.json").readText())
+        val report = Json.parseToJsonElement(output.resolve(caseDirectoryName(case)).resolve("report.json").readText())
         val verifier = report.jsonObject.getValue("result").jsonObject.getValue("metrics").jsonObject.getValue("verifier").jsonObject
         assertThat(verifier.getValue("compilation").jsonObject.keys).contains(
             "createDuration",

@@ -57,8 +57,7 @@ class SysMLv2FrontendTestHelper {
         outputDirectory: Path,
         timeout: Duration = 2.minutes,
     ): SysMLv2Frontend {
-        // short names repeat across models, so each model gets its own artifact directory
-        return buildFrontend(modelPath(entry.model.file), portfolio, outputDirectory.resolve(entry.model.file.removeSuffix(".sysml")), entry.model.variant, timeout)
+        return buildFrontend(modelPath(entry.model.file), portfolio, outputDirectory, entry.model.variant, timeout)
     }
 
     private fun verificationCase(frontend: SysMLv2Frontend, entry: CorpusEntry): VerificationCase {

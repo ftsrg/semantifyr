@@ -22,8 +22,8 @@ import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.VerificationCase
+import hu.bme.mit.semantifyr.verifier.caseDirectoryName
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
-import hu.bme.mit.semantifyr.verifier.qualifiedNameToDirectoryName
 import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
 import java.nio.file.Files
@@ -96,7 +96,7 @@ class CompileCommand @Inject constructor(
     ) {
         runCompiler { compiler ->
             echo("Compiling ${case.qualifiedName} to $target")
-            val caseDirectory = artifactOptions.resolvedOutputDirectory.resolve(qualifiedNameToDirectoryName(case.qualifiedName))
+            val caseDirectory = artifactOptions.resolvedOutputDirectory.resolve(caseDirectoryName(case))
             val compiled = compiler.compile(case.classDeclaration, caseDirectory)
             writeInlinedOxsts(compiled.inlinedOxsts, target)
         }
@@ -110,7 +110,7 @@ class CompileCommand @Inject constructor(
             for (case in cases) {
                 val target = directory.resolve("${case.qualifiedName}.oxsts")
                 echo("Compiling ${case.qualifiedName} to $target")
-                val caseDirectory = artifactOptions.resolvedOutputDirectory.resolve(qualifiedNameToDirectoryName(case.qualifiedName))
+                val caseDirectory = artifactOptions.resolvedOutputDirectory.resolve(caseDirectoryName(case))
                 val compiled = compiler.compile(case.classDeclaration, caseDirectory)
                 writeInlinedOxsts(compiled.inlinedOxsts, target)
             }
