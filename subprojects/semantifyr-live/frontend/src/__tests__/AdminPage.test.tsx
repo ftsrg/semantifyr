@@ -106,7 +106,8 @@ describe('AdminPage', () => {
     loginAdmin.mockResolvedValueOnce(false);
     loginAdmin.mockResolvedValueOnce(true);
 
-    const user = userEvent.setup();
+    // no timer between keystrokes, so the typing does not wait on a loaded event loop
+    const user = userEvent.setup({ delay: null });
     render(<AdminPage colorModePreference="dark" colorMode="dark" onToggleColorMode={() => {}} />);
     await screen.findByText('Semantifyr Admin');
 
