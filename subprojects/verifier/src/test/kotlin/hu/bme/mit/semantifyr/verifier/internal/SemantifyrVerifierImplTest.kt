@@ -8,20 +8,22 @@ package hu.bme.mit.semantifyr.verifier.internal
 
 import com.google.inject.Inject
 import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
+import hu.bme.mit.semantifyr.backend.VerificationContext
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
+import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
-import hu.bme.mit.semantifyr.oxsts.lang.utils.SourceLocation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
@@ -89,20 +91,15 @@ class SemantifyrVerifierImplTest {
     }
 
     @Test
-    suspend fun `the request maps flattened variables to their source declarations`(@TempDir output: Path) {
-        var sourceElements = emptyList<EObject>()
+    suspend fun `NotSupported names a flattened variable as declared in the source`(@TempDir output: Path) {
         val portfolio = ScriptedPortfolio { request, _ ->
-            sourceElements = request.inlinedOxsts.variables.map {
-                request.sourceElementOf(it)
-            }
-            decisiveResult(VerificationVerdict.Passed)
+            RejectingVariablesContext(request).execute()
         }
 
-        build(portfolio, output, timeout = 5.seconds).verify(loadFirstCase())
+        val result = build(portfolio, output, timeout = 5.seconds).verify(loadFirstCase())
 
-        val source = sourceElements.single() as VariableDeclaration
-        assertThat(source.name).isEqualTo("x")
-        assertThat(SourceLocation.prefixFor(source)).isEqualTo("simple.oxsts:12: ")
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
+        assertThat(result.message).isEqualTo("scripted does not support simple.oxsts:12: variables of type int (x)")
     }
 
     @Test
@@ -244,6 +241,36 @@ class SemantifyrVerifierImplTest {
             verdict = verdict,
             metrics = BackendMetrics(),
         )
+    }
+
+    private class RejectingVariablesContext(
+        request: BackendVerificationRequest,
+    ) : VerificationContext<Unit, Unit>("scripted", request) {
+        override val executor = object : BackendExecutor {
+            override fun isAvailable(): Boolean {
+                return true
+            }
+        }
+
+        override val capabilityChecker = object : BackendCapabilityChecker() {
+            override fun describeUnsupported(element: EObject): String? {
+                if (element is VariableDeclaration) {
+                    return "variables of type int"
+                }
+                return null
+            }
+        }
+
+        override suspend fun prepare() {
+        }
+
+        override suspend fun run(artifacts: Unit): Unit? {
+            return null
+        }
+
+        override fun interpret(rawVerdict: Unit?, artifacts: Unit): VerificationVerdict {
+            return VerificationVerdict.Inconclusive
+        }
     }
 
     private class ScriptedPortfolio(

@@ -115,6 +115,6 @@ class UppaalBackendReplayTest {
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).matches("uppaal:default does not support \\S+:2: variables of type real")
+        assertThat(result.message).matches("uppaal:default does not support \\S+:2: variables of type real \\(r\\)")
     }
 }

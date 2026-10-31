@@ -117,7 +117,7 @@ class ThetaBackendReplayTest {
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).matches("theta:cegar-expl does not support \\S+:2: variables of type real; \\S+:2: real literals")
+        assertThat(result.message).matches("theta:cegar-expl does not support \\S+:2: variables of type real \\(r\\); \\S+:2: real literals")
     }
 
     @Test

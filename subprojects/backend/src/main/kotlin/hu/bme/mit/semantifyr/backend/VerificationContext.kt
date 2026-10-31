@@ -12,6 +12,8 @@ import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.utils.SourceLocation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
+import org.eclipse.emf.ecore.EObject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.Duration
@@ -70,7 +72,7 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
         unsupported: List<UnsupportedConstruct>,
     ): BackendVerificationResult {
         val constructs = unsupported.joinToString("; ") {
-            "${SourceLocation.prefixFor(request.sourceElementOf(it.element))}${it.description}"
+            describe(it)
         }
         logger.info { "[$backendId] verification not supported: $constructs" }
         return BackendVerificationResult(
@@ -78,6 +80,22 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
             metadata = metadata,
             message = "$backendId does not support $constructs",
         )
+    }
+
+    private fun describe(construct: UnsupportedConstruct): String {
+        val source = sourceElementOf(construct.element)
+        val location = SourceLocation.prefixFor(source)
+        if (source is VariableDeclaration) {
+            return "$location${construct.description} (${source.name})"
+        }
+        return "$location${construct.description}"
+    }
+
+    private fun sourceElementOf(element: EObject): EObject {
+        val flatteningInfo = request.flatteningInfo ?: return element
+        val variable = element as? VariableDeclaration ?: return element
+        val holder = flatteningInfo.variableHolders[variable] ?: return element
+        return flatteningInfo.resolveOriginalVariable(holder, variable)
     }
 
     private suspend fun runVerification(metadata: VerificationMetadata): BackendVerificationResult {

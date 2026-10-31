@@ -174,15 +174,19 @@ class VerificationContextTest {
     suspend fun `unsupported constructs are NotSupported before the executor is prepared`() {
         val executor = CountingExecutor()
         val inlinedOxsts = OxstsFactory.createInlinedOxsts().also {
-            it.variables += OxstsFactory.createVariableDeclaration()
-            it.variables += OxstsFactory.createVariableDeclaration()
+            it.variables += OxstsFactory.createVariableDeclaration().also { variable ->
+                variable.name = "first"
+            }
+            it.variables += OxstsFactory.createVariableDeclaration().also { variable ->
+                variable.name = "second"
+            }
         }
         val context = ScriptedContext(executor, inlinedOxsts = inlinedOxsts)
 
         val result = context.execute()
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).isEqualTo("scripted does not support variables of type real; variables of type real")
+        assertThat(result.message).isEqualTo("scripted does not support variables of type real (first); variables of type real (second)")
         assertThat(executor.preparations).isZero()
         assertThat(context.phases).isEmpty()
     }
