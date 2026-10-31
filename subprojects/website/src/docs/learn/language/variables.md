@@ -33,6 +33,10 @@ var value: int
 
 A variable declared **without** an initializer is unbound at declaration time. Before the [`init`](transitions.md) transition runs, the verifier `havoc`s every uninitialized variable, picking an arbitrary value of its type. This causes the model checker to explore all possible starting values.
 
+:::caution
+The Spin and Uppaal backends currently start uninitialized variables at zero instead.
+:::
+
 To start from a known value, supply an initializer or assign the variable inside the [`init`](transitions.md) transition:
 
 ```oxsts

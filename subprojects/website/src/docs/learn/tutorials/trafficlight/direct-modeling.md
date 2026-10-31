@@ -13,14 +13,14 @@ You can follow this tutorial in any Semantifyr environment. The quickest way is 
 No setup required. See [Getting Started](../../getting-started.md) for other options like the JupyterHub environment.
 
 :::tip Finished example
-If you want to skip ahead and see the completed model, use the **Load example** button in the toolbar and select *Tutorial: traffic light (direct modeling)*.
+If you want to skip ahead and see the completed model, open the model picker in the live editor's toolbar and select *Tutorial: Basics*.
 :::
 
 ## The Live Editor
 
 If you are using the live editor, here is a quick overview of the interface:
 
-- The **toolbar** at the top contains the Semantifyr logo, a connection indicator, a **Load example** button, a **Copy link** button, and links to the documentation and GitHub.
+- The **toolbar** at the top contains the Semantifyr logo, a connection indicator, the **model picker** (language and example), a **Copy link** button, links to the documentation and GitHub, and a color mode toggle.
 - The **editor** in the center is a Monaco-based code editor with syntax highlighting, diagnostics (red underlines for errors), and content assist (triggered with `Ctrl+Space`).
 - The **verification panel** at the bottom lists verification cases found in your code. It updates automatically as you type. Each case shows its status: a small circle means not yet verified, a check mark means passed, and an X means failed.
 - The **status bar** at the very bottom shows the current connection state and activity messages.
@@ -39,7 +39,7 @@ package example::trafficlight::basics
 The language supports semicolons `;`, however, their use is entirely optional.
 :::
 
-Every Semantifyr file specifies its own package, `example::trafficlight` in this case. The language uses double colons `::` to denote fully-qualified identifiers.
+Every Semantifyr file specifies its own package, `example::trafficlight::basics` in this case. The language uses double colons `::` to denote fully-qualified identifiers.
 
 The simple traffic light has three possible colors: red, yellow, and green. Declare a top-level enumeration of the colors:
 

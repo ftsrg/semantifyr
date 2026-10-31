@@ -7,7 +7,7 @@ sidebar_position: 0
 
 **Semantifyr** is a verification framework that brings formal methods to high-level engineering languages without requiring users to write the verification model by hand. Instead of building a single, monolithic translator from each engineering language to a model checker, Semantifyr lets you encode the *execution semantics* of a language in a reusable **semantic library**, and then verify any model in that language by transforming it into a thin instantiation of the library.
 
-The result: the same library can verify many models, the same model can be checked against different semantic variants, and the underlying model checker (currently [Theta](https://github.com/ftsrg/theta)) never has to know about the high-level language.
+The result: the same library can verify many models, the same model can be checked against different semantic variants, and the underlying model checkers ([Theta](https://github.com/ftsrg/theta), [nuXmv](https://nuxmv.fbk.eu/), [Spin](https://spinroot.com/) and [Uppaal](https://uppaal.org/)) never have to know about the high-level language.
 
 ## Where to go next
 

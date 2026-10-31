@@ -12,7 +12,7 @@ This is the second tutorial in the Traffic Light series. It refactors the basic 
 You can follow this tutorial in the **live editor** directly in your browser: [Open the live editor](https://live.semantifyr.org). No setup required. See [Getting Started](../../getting-started.md) for other options like the JupyterHub environment.
 
 :::tip Finished example
-If you want to skip ahead and see the completed model, use the **Load example** button in the toolbar and select *Tutorial: traffic light (statechart library)*.
+If you want to skip ahead and see the completed model, open the model picker in the live editor's toolbar and select *Tutorial: Intermediate*.
 :::
 
 The design changes significantly compared to the Direct Modeling tutorial, so start with a fresh file rather than editing the previous one. Create a new file alongside `trafficlight.oxsts` with a new package declaration:

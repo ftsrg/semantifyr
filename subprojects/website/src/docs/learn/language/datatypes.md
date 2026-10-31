@@ -5,7 +5,7 @@ sidebar_position: 2
 
 # Datatypes
 
-This page describes the **data values** Semantifyr can represent: primitives, value-typed records, and enumerations.
+This page describes the **data values** Semantifyr can represent: primitives and enumerations.
 
 ## Primitive Datatypes
 
@@ -18,7 +18,7 @@ The [standard library](standard-library.md) declares the following primitive dat
 | `real` | Real numbers |
 | `string` | Sequences of characters |
 
-Backend support varies. See [Standard Library / Backend support](standard-library.md#backend-support) for which primitives the Theta backend handles.
+Backend support varies. See [Standard Library / Backend support](standard-library.md#backend-support) for which primitives the backends handle.
 
 ## Enumerations
 
@@ -42,22 +42,4 @@ if (current == Color::Red) {
 
 ## Records
 
-Records are **value-typed** objects. They have no identity: two records with equal field values are interchangeable. Records are analogous to Java Valhalla value classes or C structs. Records have no inheritance and no behavior; they only carry data.
-
-```oxsts
-record Point {
-  var x: int
-  var y: int
-}
-```
-
-A record literal lists the fields by name inside curly braces:
-
-```oxsts
-var origin: Point := Point {
-  x = 0,
-  y = 0
-}
-```
-
-For an identity-bearing alternative, see [Classes](classes.md).
+Records are not supported yet. The grammar accepts `record` declarations, but the validator rejects them. Use [Classes](classes.md) to group data.

@@ -38,12 +38,14 @@ This gives you a place to push branches and open pull requests from.
 
 The first build downloads the JDK toolchain, a project-local Node distribution, the Theta CLI, and Maven dependencies. Subsequent builds use the Gradle cache and are much faster.
 
-This runs all unit tests and assembles every artifact. It does **not** run the verification test suites, which require Docker:
+This runs the unit tests and the verification smoke tests, and assembles every artifact. Tests that need a backend binary skip when it is missing; the build provides Theta. The broader suites run separately:
 
 ```bash
-./gradlew testVerificationCases       # core verification suite
-./gradlew testSlowVerificationCases   # longer-running cases
+./gradlew integrationTest   # the semantic conformance and frontend corpus suites
+./gradlew nightlyTest       # long-running cases and witness re-checks on all backends
 ```
+
+Pass `-Ptests.requiredBackends=theta,spin` to fail instead of skip when a listed backend is missing.
 
 ## Where to start
 
@@ -51,10 +53,14 @@ The repository is organized under `subprojects/`:
 
 | Area | Path | Description |
 |------|------|-------------|
-| Compiler | `subprojects/semantics/` | Instantiator, inliner, flattener, XSTS emitter |
-| Language servers | `subprojects/oxsts.lang.ide/` | OXSTS, XSTS, CEX language servers |
-| Frontends | `subprojects/frontends/` | Gamma frontend (the worked example to follow for new frontends) |
-| Backends | `subprojects/backends/theta/` | Theta model checker integration |
+| Language | `subprojects/oxsts.lang/` | Grammar, validator, scoping, type system |
+| Language server | `subprojects/oxsts.lang.ide/` | OXSTS language server |
+| Compiler | `subprojects/compiler/` | Instantiator, inliner, flattener, optimizer |
+| Verifier | `subprojects/verifier/` | Verification cases, verdicts, witnesses |
+| Backends | `subprojects/backends/` | Theta, nuXmv, Spin and Uppaal integrations |
+| Portfolios | `subprojects/portfolios/` | Backend configurations raced or combined per case |
+| Frontends | `subprojects/frontends/` | Gamma and SysML v2 frontends |
+| CLI | `subprojects/semantifyr-cli/` | The `semantifyr` command-line interface |
 | VS Code extension | `subprojects/semantifyr-vscode/` | Extension packaging and launch configs |
 | Live editor | `subprojects/semantifyr-live/` | The browser-based editor frontend and backend |
 | Website | `subprojects/website/` | This documentation site |

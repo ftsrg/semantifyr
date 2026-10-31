@@ -88,3 +88,5 @@ See the [Standard Library](standard-library.md) for full details.
 | `@Control` | Marks a variable as important to track |
 | `@Shared` | Marks containment feature instances as shared across instances |
 | `@Trace` | Marks transitions for counterexample tracing |
+| `@Clock` | Marks a variable as a clock for time-aware backends |
+| `@NonOptimizable` | Excludes a variable from optimization |

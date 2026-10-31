@@ -5,7 +5,7 @@ sidebar_position: 1
 
 # Getting Started
 
-There are three ways to start using Semantifyr. Pick whichever fits your situation — all three give you the same language, the same compiler, and the same Theta backend.
+There are three ways to start using Semantifyr. Pick whichever fits your situation. All three give you the same language and the same compiler; the verification backends available depend on the environment.
 
 ## Option A: Try in the browser (no installation)
 
@@ -33,15 +33,16 @@ The JupyterHub environment is a managed deployment, so you need a user account t
 The VS Code extension is not yet published on the Marketplace. This section describes the planned setup for when it becomes available.
 :::
 
-The Semantifyr VS Code extension bundles the language server, the compiler, and the Theta verification backend. Use it when you want to work on your own machine, keep models in your own repository, or integrate Semantifyr into a longer-lived project.
+The Semantifyr VS Code extension bundles the language servers and the compiler. Verification runs on the backends installed on your machine. Use it when you want to work on your own machine, keep models in your own repository, or integrate Semantifyr into a longer-lived project.
 
 **Requirements**
 
-- [Visual Studio Code](https://code.visualstudio.com/) 1.93 or newer
-- A Java 21+ runtime on your `PATH` (the extension uses it to run the bundled Semantifyr CLI)
+- [Visual Studio Code](https://code.visualstudio.com/) 1.109 or newer
+- A Java 25 runtime, found through `JAVA_HOME` or `PATH` (the extension uses it to run the bundled language servers)
+- At least one verification backend: Theta (`theta-xsts-cli` on `PATH`, or Docker), Spin (`spin` and a C compiler on `PATH`), nuXmv (`nuXmv` on `PATH`) or Uppaal (`verifyta` on `PATH`)
 
 **Install**
 
 1. Open the Extensions view in VS Code (`Ctrl+Shift+X` / `Cmd+Shift+X`).
 2. Search for **Semantifyr** (publisher: *ftsrg*) and click **Install**.
-3. Open any folder containing a `.oxsts` file. The extension activates automatically and provides syntax highlighting, diagnostics, and the *Verify* command.
+3. Open any folder containing a `.oxsts` or `.gamma` file. The extension activates automatically and provides syntax highlighting, diagnostics, and the verification cases in the *Testing* view.
