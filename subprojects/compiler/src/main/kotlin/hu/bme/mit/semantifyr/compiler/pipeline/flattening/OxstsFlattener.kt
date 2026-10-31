@@ -247,14 +247,12 @@ class OxstsFlattener @Inject constructor(
     ) {
         val featureTypedVariables = variableInstanceDomain.keys
 
-        for (variable in featureTypedVariables) {
-            val references = inlinedOxsts.eAllOfType<ElementReference>().filter {
-                it.element == variable
-            }.toList()
+        val references = inlinedOxsts.eAllOfType<ElementReference>().filter {
+            it.element in featureTypedVariables
+        }.toList()
 
-            for (reference in references) {
-                transformFeatureTypedVariableReference(reference, variableInstanceDomain)
-            }
+        for (reference in references) {
+            transformFeatureTypedVariableReference(reference, variableInstanceDomain)
         }
     }
 
@@ -350,23 +348,24 @@ class OxstsFlattener @Inject constructor(
     ) {
         val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instanceTree.rootInstance)
 
-        var iteration = 0
-        while (true) {
-            val featureExpression = inlinedOxsts.eAllOfType<ReferenceExpression>().firstOrNull {
-                metaCompileTimeExpressionEvaluatorProvider.evaluate(instanceTree.rootInstance, it) is FeatureDeclaration
+        val featureExpressions = mutableListOf<ReferenceExpression>()
+        val contents = inlinedOxsts.eAllContents()
+        while (contents.hasNext()) {
+            val content = contents.next()
+            if (content is ReferenceExpression && metaCompileTimeExpressionEvaluatorProvider.evaluate(instanceTree.rootInstance, content) is FeatureDeclaration) {
+                featureExpressions += content
+                // the rewrite replaces the whole subtree
+                contents.prune()
             }
+        }
 
-            if (featureExpression == null) {
-                logger.debug { "rewriteFeatureExpressions finished after $iteration iteration(s)" }
-                return
-            }
-
+        for (featureExpression in featureExpressions) {
             val evaluation = evaluator.evaluate(featureExpression)
             val expression = flattenedEvaluationTransformer.transformEvaluation(evaluation)
 
             EcoreUtil2.replace(featureExpression, expression)
-            iteration++
         }
+        logger.debug { "rewriteFeatureExpressions rewrote ${featureExpressions.size} expression(s)" }
     }
 
 }
