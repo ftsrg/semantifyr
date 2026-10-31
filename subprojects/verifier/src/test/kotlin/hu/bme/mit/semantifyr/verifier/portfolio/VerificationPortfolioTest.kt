@@ -374,6 +374,48 @@ class VerificationPortfolioTest {
     }
 
     @Test
+    suspend fun `firstDecisive is Errored when every job returns or throws Errored`() {
+        val returned = FakeBackend.verdict("returned", VerificationVerdict.Errored)
+        val thrown = FakeBackend.throwing("thrown", IllegalStateException("broken"))
+
+        val outcome = portfolio.runFirstDecisive(noopGate) {
+            enqueue(returned)
+            enqueue(thrown)
+        }
+
+        assertThat(outcome).isInstanceOf(PortfolioOutcome.AllErrored::class.java)
+        val result = outcome.toBackendVerificationResult(Clock.System.now())
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.message).contains("All portfolio jobs errored", "(+1 more)")
+    }
+
+    @Test
+    suspend fun `all is Errored when every job returns Errored`() {
+        val a = FakeBackend.verdict("a", VerificationVerdict.Errored)
+        val b = FakeBackend.verdict("b", VerificationVerdict.Errored)
+
+        val outcome = portfolio.runAll(noopGate) {
+            enqueue(a)
+            enqueue(b)
+        }
+
+        assertThat(outcome).isInstanceOf(PortfolioOutcome.AllErrored::class.java)
+    }
+
+    @Test
+    suspend fun `firstDecisive is Inconclusive when an Errored job has an Inconclusive sibling`() {
+        val errored = FakeBackend.verdict("errored", VerificationVerdict.Errored)
+        val inconclusive = FakeBackend.verdict("inconclusive", VerificationVerdict.Inconclusive)
+
+        val outcome = portfolio.runFirstDecisive(noopGate) {
+            enqueue(errored)
+            enqueue(inconclusive)
+        }
+
+        assertThat(outcome).isInstanceOf(PortfolioOutcome.NoDecision::class.java)
+    }
+
+    @Test
     suspend fun `empty combinator block is rejected`() {
         val exception = runCatching {
             portfolio.runFirstDecisive(noopGate) {}
