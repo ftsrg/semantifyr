@@ -54,6 +54,13 @@ class BackendTestModels @Inject constructor(
             tran { y := y + 1 }
             prop { AG y < 2 }
         """
+
+        const val STATELESS_VIOLATION = """
+            inlined oxsts of semantifyr::Anything
+            init { }
+            tran { choice { } or { assume (true) } }
+            prop { AG false }
+        """
     }
 
     fun parse(source: String, vararg packages: String): InlinedOxsts {

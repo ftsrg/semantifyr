@@ -54,7 +54,7 @@ StateValue:
 ;
 
 ExplStateValue:
-    '(' 'ExplState'
+    {ExplStateValue} '(' 'ExplState'
         variableValues+=ExplVariableValue*
     ')'
 ;
