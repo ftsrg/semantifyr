@@ -17,7 +17,6 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.GammaStandaloneSetup
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
-import hu.bme.mit.semantifyr.verifier.witness.WitnessValidator
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Named
@@ -88,11 +87,7 @@ class GammaFrontendTestHelper {
         val result = checkVerificationCase(frontend, gammaVerificationCase, expectedVerdict)
         val witness = result.witness ?: return result
 
-        val validationDirectory = frontend.outputDirectory
-            .resolve(gammaVerificationCase.qualifiedName)
-            .resolve("validation")
-        val validationVerifier = frontend.buildVerifierWith(validationPortfolio, validationDirectory)
-        val outcome = WitnessValidator().validate(validationVerifier, witness.trace)
+        val outcome = frontend.validateWitness(gammaVerificationCase, witness, validationPortfolio)
         assertThat(outcome.isValid)
             .describedAs(
                 "Witness for ${gammaVerificationCase.qualifiedName} must re-verify Passed via ${validationPortfolio.id} but got ${outcome.verification.verdict} (${outcome.verification.message ?: "no message"})",
