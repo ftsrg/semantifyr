@@ -88,7 +88,7 @@ class UppaalBackendReplayTest {
         val result = verifyFixture("initial_values", "UninitializedIntegerBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
-        assertThat(result.inlinedWitness!!.initializedState!!.valuesByName()["\$\$root\$\$x"]).isNotEqualTo(0)
+        assertThat(result.inlinedWitness!!.initializedState!!.valuesByName()["\$\$root\$\$x"]).isNotNull().isNotEqualTo(0)
     }
 
     @Test

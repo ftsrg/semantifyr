@@ -65,8 +65,9 @@ class NuxmvModelTransformer @Inject constructor(
         initializedVariables: Map<VariableDeclaration, String>,
     ): List<NuxmvBranchResult> {
         return inlinedOxsts.initTransition.branches.mapIndexed { branchIndex, branch ->
-            val seed = nuxmvBranchSeeder.seedInitBranch(variables, initializedVariables)
-            nuxmvOperationTransformer.transform(branch, NuxmvTransitionKind.Init, "b$branchIndex", seed)
+            val branchTag = "b$branchIndex"
+            val seed = nuxmvBranchSeeder.seedInitBranch(variables, initializedVariables, branchTag)
+            nuxmvOperationTransformer.transform(branch, NuxmvTransitionKind.Init, branchTag, seed)
         }
     }
 
