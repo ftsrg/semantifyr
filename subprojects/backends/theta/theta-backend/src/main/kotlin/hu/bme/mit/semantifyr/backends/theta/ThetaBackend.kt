@@ -26,6 +26,8 @@ import hu.bme.mit.semantifyr.backends.theta.backannotation.CexReader
 import hu.bme.mit.semantifyr.backends.theta.backannotation.CexWitnessTransformer
 import hu.bme.mit.semantifyr.backends.theta.backannotation.InlinedWitnessTransformer
 import hu.bme.mit.semantifyr.backends.theta.backannotation.XstsWitnessTransformer
+import hu.bme.mit.semantifyr.backends.theta.trace.ThetaLogVerdictParser
+import hu.bme.mit.semantifyr.backends.theta.trace.ThetaVerdict
 import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaModelTransformer
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
@@ -70,11 +72,12 @@ class ThetaVerificationContext @AssistedInject constructor(
     @param:Assisted override val executor: ThetaXstsExecutor,
     @Assisted request: BackendVerificationRequest,
     private val thetaModelTransformer: ThetaModelTransformer,
+    private val thetaLogVerdictParser: ThetaLogVerdictParser,
     private val cexReader: CexReader,
     private val cexWitnessTransformer: CexWitnessTransformer,
     private val xstsWitnessTransformer: XstsWitnessTransformer,
     private val inlinedWitnessTransformer: InlinedWitnessTransformer,
-) : VerificationContext<XstsModel, ThetaVerificationContext.ThetaVerdict>(
+) : VerificationContext<XstsModel, ThetaVerdict>(
     backendId = "theta:${config.id}",
     request = request,
 ) {
@@ -113,8 +116,8 @@ class ThetaVerificationContext @AssistedInject constructor(
             error("Theta execution failed with exit code ${result.exitCode}")
         }
 
-        return spec.logFile?.takeIf { it.exists() }?.useLines { lines ->
-            lines.firstNotNullOfOrNull(::detectSafety)
+        return spec.logFile?.takeIf { it.exists() }?.useLines {
+            thetaLogVerdictParser.parse(it)
         }
     }
 
@@ -142,16 +145,6 @@ class ThetaVerificationContext @AssistedInject constructor(
         val xstsWitness = xstsWitnessTransformer.transform(xsts, cexWitness)
         return inlinedWitnessTransformer.transform(request.inlinedOxsts, xstsWitness)
     }
-
-    private fun detectSafety(line: String): ThetaVerdict? {
-        return when {
-            line.contains("SafetyResult Unsafe") -> ThetaVerdict.Unsafe
-            line.contains("SafetyResult Safe") -> ThetaVerdict.Safe
-            else -> null
-        }
-    }
-
-    enum class ThetaVerdict { Safe, Unsafe }
 
     interface Factory {
         fun create(
