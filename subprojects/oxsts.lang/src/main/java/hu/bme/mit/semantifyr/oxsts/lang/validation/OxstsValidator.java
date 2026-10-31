@@ -1189,13 +1189,12 @@ public class OxstsValidator extends AbstractOxstsValidator {
             return;
         }
         var domain = typeSpecification.getDomain();
-        if (domain instanceof ClassDeclaration || domain instanceof FeatureDeclaration) {
+        if (OxstsUtils.isLocalVariable(variableDeclaration)
+                && (domain instanceof ClassDeclaration || domain instanceof FeatureDeclaration)) {
             acceptError(
-                    "Arrays of class or feature type are not yet supported by the compiler; '"
+                    "Local arrays of class or feature type are not yet supported by the compiler; declare '"
                             + variableDeclaration.getName()
-                            + "' has element type '"
-                            + NamingUtil.getName(domain)
-                            + "'.",
+                            + "' as a class variable.",
                     variableDeclaration,
                     OxstsPackage.Literals.VARIABLE_DECLARATION__TYPE_SPECIFICATION,
                     0,
@@ -1230,7 +1229,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
         EObject holder;
         Modality holderModality;
         try {
-            holder = metaConstantExpressionEvaluatorProvider.evaluate(expression.getPrimary());
+            holder = metaConstantExpressionEvaluatorProvider.evaluate(unwrapAssignmentTarget(expression.getPrimary()));
             holderModality = modalityEvaluatorProvider.evaluate(expression.getPrimary());
         } catch (RuntimeException e) {
             return;
