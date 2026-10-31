@@ -11,6 +11,8 @@ import type { UserThemeConfig } from '@docusaurus/theme-common';
 import type { Config } from '@docusaurus/types';
 import { themes } from 'prism-react-renderer';
 
+const liveBackendUrl = process.env.SEMANTIFYR_LIVE_URL ?? 'https://live.semantifyr.org';
+
 export default {
   title: 'Semantifyr',
   tagline:
@@ -21,6 +23,9 @@ export default {
   baseUrlIssueBanner: false,
   trailingSlash: true,
   staticDirectories: ['static', 'static-imported-branding', 'build/api-static'],
+  customFields: {
+    liveBackendUrl,
+  },
   headTags: [
     {
       tagName: 'link',
@@ -113,7 +118,7 @@ export default {
         {
           label: 'Try Live',
           position: 'right',
-          href: 'https://live.semantifyr.org',
+          href: liveBackendUrl,
           className: 'navbar__link--try-now',
         },
       ],

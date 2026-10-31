@@ -12,6 +12,16 @@ plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
 }
 
+val editorCommon = configurations.dependencyScope("editorCommon")
+val editorCommonFiles = configurations.resolvable("editorCommonFiles") {
+    extendsFrom(editorCommon.get())
+    attributes(semantifyrArtifact("npm-package"))
+}
+
+dependencies {
+    editorCommon(project(":semantifyr-editor-common"))
+}
+
 tasks.npmInstall {
     workingDir = rootProject.projectDir
 }
@@ -88,10 +98,12 @@ fun NpmTask.configureSharedInputs() {
     inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
     inputs.files(tasks.npmInstall)
     inputs.files(cloneBrandingAssets)
+    inputs.files(editorCommonFiles)
 }
 
 val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     configureSharedInputs()
+    inputs.property("liveBackendUrl", providers.environmentVariable("SEMANTIFYR_LIVE_URL").orElse(""))
 
     npmCommand.set(listOf("run", "assemble"))
     inputs.files(cloneApiDocs)
