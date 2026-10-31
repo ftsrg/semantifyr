@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.utils;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 import org.eclipse.emf.ecore.EObject;
 
@@ -182,6 +183,22 @@ public class OxstsUtils {
         }
 
         return argument.getExpression();
+    }
+
+    // By name, so a call resolved against a base declaration also binds the redefinition's parameters.
+    public static Argument getArgumentFor(List<Argument> arguments, ParameterDeclaration parameter, int position) {
+        for (var argument : arguments) {
+            var named = argument.getParameter();
+            if (named != null && !named.eIsProxy() && Objects.equals(named.getName(), parameter.getName())) {
+                return argument;
+            }
+        }
+        if (position >= 0
+                && position < arguments.size()
+                && arguments.get(position).getParameter() == null) {
+            return arguments.get(position);
+        }
+        return null;
     }
 
     public static boolean isWriteExpression(Expression expression) {
