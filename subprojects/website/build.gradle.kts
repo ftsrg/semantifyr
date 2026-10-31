@@ -62,6 +62,7 @@ val cliReference = listOf(
     cliReferenceTask("verify", "verify", "--help"),
     cliReferenceTask("compile", "compile", "--help"),
     cliReferenceTask("list", "list", "--help"),
+    cliReferenceTask("metrics", "metrics", "--help"),
     cliReferenceTask("portfolios-help", "portfolios", "--help"),
     cliReferenceTask("portfolios", "portfolios"),
 )

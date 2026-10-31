@@ -8,11 +8,12 @@ import help from '@cli-reference/help.txt';
 import verify from '@cli-reference/verify.txt';
 import compile from '@cli-reference/compile.txt';
 import list from '@cli-reference/list.txt';
+import metrics from '@cli-reference/metrics.txt';
 import portfolios from '@cli-reference/portfolios-help.txt';
 
 # Command Line
 
-The `semantifyr` command lists, compiles and verifies the verification cases of OXSTS models. Install it from the release zip ([Getting Started](../getting-started.md#option-d-install-the-command-line-interface-for-scripts-and-ci)) or build it from source with `./gradlew :semantifyr-cli:installDist`; the launcher is `subprojects/semantifyr-cli/build/install/semantifyr/bin/semantifyr`. It needs a Java 25 runtime and at least one verification backend.
+The `semantifyr` command lists, compiles, measures and verifies the verification cases of OXSTS models. Install it from the release zip ([Getting Started](../getting-started.md#option-d-install-the-command-line-interface-for-scripts-and-ci)) or build it from source with `./gradlew :semantifyr-cli:installDist`; the launcher is `subprojects/semantifyr-cli/build/install/semantifyr/bin/semantifyr`. It needs a Java 25 runtime and at least one verification backend.
 
 <CodeBlock language="text">{help}</CodeBlock>
 
@@ -22,6 +23,16 @@ A model or library path is an `.oxsts` file or a directory, which is searched re
 
 <CodeBlock language="text">{verify}</CodeBlock>
 
+For each case, `verify` prints `Verifying <case> ...`, then the verdict with the time it took, then the path of the `report.json` it wrote for the case. With `--quiet` it prints only the verdict of each case, one per line: `PASSED`, `FAILED`, `INCONCLUSIVE`, `NOT_SUPPORTED`, `TIMEOUT` or `ERRORED`.
+
+With `--json` it prints one JSON object per case and line, as each case finishes:
+
+```json
+{"case":"semantifyr::verification::smoke::CounterReachesThree","exitCode":0,"report":"/tmp/semantifyr-123/semantifyr.verification.smoke.CounterReachesThree/report.json"}
+```
+
+`case` is the qualified name of the case, `exitCode` its [exit code](#exit-codes) and `report` the absolute path of its `report.json`. A case that does not compile has `error`, the compiler's message, instead of `report`, and ends the run. `report.json` holds the rest: `verificationCase`, `portfolioId`, `optimization`, `timeout` and `result`, whose `verdict` is `Passed`, `Failed`, `Inconclusive`, `NotSupported`, `Timeout` or `Errored`, with the `message` of the backend, `metadata.backendId`, the backend configuration that answered, and `metrics`: the durations of the run, of the backend and of the compiler's phases, the optimizer's statistics and the model sizes.
+
 ## `compile`
 
 <CodeBlock language="text">{compile}</CodeBlock>
@@ -30,8 +41,36 @@ A model or library path is an `.oxsts` file or a directory, which is searched re
 
 <CodeBlock language="text">{list}</CodeBlock>
 
+## `metrics`
+
+<CodeBlock language="text">{metrics}</CodeBlock>
+
+For each case, `metrics` prints the size of the input model, of the inlined model and of the flattened model a backend receives, each as its number of variables, operations and expressions. With `--json` it prints one JSON object per case and line, with `case` and the sizes under the keys `report.json` has under `result.metrics.verifier.compilation`:
+
+```json
+{"case":"semantifyr::verification::smoke::CounterReachesThree","inputSize":{"variables":1,"operations":4,"expressions":13},"inlinedSize":{"variables":1,"operations":5,"expressions":15},"flattenedSize":{"variables":1,"operations":5,"expressions":12}}
+```
+
+`metrics` and `verify` report the same sizes for the same case and compilation options.
+
 ## `portfolios`
 
 <CodeBlock language="text">{portfolios}</CodeBlock>
 
 The portfolio ids are listed under [Portfolios](portfolios.mdx).
+
+## Exit codes
+
+| Code | Meaning |
+| --- | --- |
+| 0 | Every selected case passed, or the command completed. |
+| 1 | Internal error: an unexpected exception, or the launcher could not start Java. |
+| 2 | Usage error: an unknown command or option, a missing or invalid value, conflicting options, an unknown portfolio. |
+| 3 | Input error: a model or library path does not exist, is not readable, or is neither an `.oxsts` file nor a directory holding one, or the case selection names or matches no case. |
+| 4 | Compilation error: the model does not parse or validate, or a case does not compile. |
+| 5 | Failed: a property does not hold. |
+| 6 | Inconclusive or NotSupported: a backend could not decide a case. |
+| 7 | Timeout. |
+| 8 | Errored: a backend failed, or the portfolio has no available backend. |
+
+Codes 2 to 4 and an unavailable portfolio stop the command before it verifies anything, or at the case that does not compile. When `verify` runs several cases, it runs all of them and exits with the highest of their codes: 0 means every case passed, 5 that every case was decided and at least one failed.
