@@ -20,24 +20,11 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Step;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableValueAssertion;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.xtext.formatting2.AbstractJavaFormatter;
-import org.eclipse.xtext.formatting2.FormatterPreferenceKeys;
-import org.eclipse.xtext.formatting2.FormatterRequest;
 import org.eclipse.xtext.formatting2.IFormattableDocument;
 import org.eclipse.xtext.formatting2.IHiddenRegionFormatter;
-import org.eclipse.xtext.preferences.MapBasedPreferenceValues;
 
 @SuppressWarnings("UnstableApiUsage")
 public class GammaFormatter extends AbstractJavaFormatter {
-
-    @Override
-    protected void initialize(FormatterRequest request) {
-        // the Xtext serializer sends no preferences, editors send their own indentation
-        if (request.getPreferences() instanceof MapBasedPreferenceValues preferences
-                && !preferences.getValues().containsKey(FormatterPreferenceKeys.indentation.getId())) {
-            preferences.put(FormatterPreferenceKeys.indentation, "    ");
-        }
-        super.initialize(request);
-    }
 
     protected void format(GammaModelPackage gammaModelPackage, IFormattableDocument document) {
         document.append(regionFor(gammaModelPackage).keyword("package"), this::oneSpace);
