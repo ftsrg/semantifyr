@@ -28,17 +28,20 @@ class GammaReader @Inject constructor(
     private val logger by loggerFactory()
 
     fun readGammaFile(file: File): GammaModelPackage {
-        logger.info { "Reading Gamma source '$file'" }
-        val resource = loadStandaloneModel(file.toPath())
-
-        return resource.contents.single() as GammaModelPackage
+        return readGammaFiles(listOf(file)).single()
     }
 
-    private fun loadStandaloneModel(model: Path): Resource {
+    fun readGammaFiles(files: List<File>): List<GammaModelPackage> {
+        logger.info { "Reading Gamma sources $files" }
         val resourceSet = resourceSetProvider.get()
-        val resource = loadFile(resourceSet, model)
+        val resources = files.map {
+            loadFile(resourceSet, it.toPath())
+        }
         resourceSetLoader.resolveAllAndValidate(resourceSet)
-        return resource
+
+        return resources.map {
+            it.contents.single() as GammaModelPackage
+        }
     }
 
     private fun loadFile(

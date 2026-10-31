@@ -22,6 +22,8 @@ dependencies {
     implementation(project(":utils"))
     implementation(libs.kotlinx.coroutines.core)
 
+    testImplementation(libs.kotlinx.serialization.json)
+
     testFixturesApi(project(":gamma.lang"))
     testFixturesApi(testFixtures(project(":gamma.lang")))
     testFixturesApi(testFixtures(project(":verifier")))
@@ -43,6 +45,7 @@ tasks.processResources {
 
 tasks.withType<Test>().configureEach {
     inputs.files(syncGammaTestModels)
+    inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 val compiledExamplesDir = layout.buildDirectory.dir("compiled-examples")

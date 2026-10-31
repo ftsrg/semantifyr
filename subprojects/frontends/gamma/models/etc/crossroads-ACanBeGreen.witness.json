@@ -1,0 +1,480 @@
+{
+    "initialStep": {
+        "values": [
+            {
+                "variable": "root.system.controller.Main.Operating.OperatingRegion.activeState",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.controller.Main.activeState",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.controller.control.inputEvent",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.controller.controlA.outputEvent",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.controller.controlB.outputEvent",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.controller.toggleTimeout.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.trafficLightA.Main.Interrupted.InterruptedRegion.activeState",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.trafficLightA.Main.Normal.NormalRegion.activeState",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.trafficLightA.Main.activeState",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.trafficLightA.blinkingTimeout.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.trafficLightA.control.inputEvent",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.trafficLightB.Main.Interrupted.InterruptedRegion.activeState",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.trafficLightB.Main.Normal.NormalRegion.activeState",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.trafficLightB.Main.activeState",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.trafficLightB.blinkingTimeout.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.trafficLightB.control.inputEvent",
+                "value": "nothing"
+            }
+        ]
+    },
+    "initializedStep": {
+        "values": [
+            {
+                "variable": "root.system.controller.Main.Operating.OperatingRegion.activeState",
+                "value": "root.system.controller.Main.Operating.OperatingRegion.BothYellow"
+            },
+            {
+                "variable": "root.system.controller.Main.activeState",
+                "value": "root.system.controller.Main.Operating"
+            },
+            {
+                "variable": "root.system.controller.control.inputEvent",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.controller.controlA.outputEvent",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.controller.controlB.outputEvent",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.controller.toggleTimeout.remainingTime",
+                "value": "1"
+            },
+            {
+                "variable": "root.system.trafficLightA.Main.Interrupted.InterruptedRegion.activeState",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.trafficLightA.Main.Normal.NormalRegion.activeState",
+                "value": "root.system.trafficLightA.Main.Normal.NormalRegion.Yellow"
+            },
+            {
+                "variable": "root.system.trafficLightA.Main.activeState",
+                "value": "root.system.trafficLightA.Main.Normal"
+            },
+            {
+                "variable": "root.system.trafficLightA.blinkingTimeout.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.trafficLightA.control.inputEvent",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.trafficLightB.Main.Interrupted.InterruptedRegion.activeState",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.trafficLightB.Main.Normal.NormalRegion.activeState",
+                "value": "root.system.trafficLightB.Main.Normal.NormalRegion.Yellow"
+            },
+            {
+                "variable": "root.system.trafficLightB.Main.activeState",
+                "value": "root.system.trafficLightB.Main.Normal"
+            },
+            {
+                "variable": "root.system.trafficLightB.blinkingTimeout.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.trafficLightB.control.inputEvent",
+                "value": "nothing"
+            }
+        ]
+    },
+    "steps": [
+        {
+            "values": [
+                {
+                    "variable": "root.system.controller.Main.Operating.OperatingRegion.activeState",
+                    "value": "root.system.controller.Main.Operating.OperatingRegion.BothYellow"
+                },
+                {
+                    "variable": "root.system.controller.Main.activeState",
+                    "value": "root.system.controller.Main.Operating"
+                },
+                {
+                    "variable": "root.system.controller.control.inputEvent",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.controlA.outputEvent",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.controlB.outputEvent",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.toggleTimeout.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Main.Interrupted.InterruptedRegion.activeState",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Main.Normal.NormalRegion.activeState",
+                    "value": "root.system.trafficLightA.Main.Normal.NormalRegion.Yellow"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Main.activeState",
+                    "value": "root.system.trafficLightA.Main.Normal"
+                },
+                {
+                    "variable": "root.system.trafficLightA.blinkingTimeout.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightA.control.inputEvent",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Main.Interrupted.InterruptedRegion.activeState",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Main.Normal.NormalRegion.activeState",
+                    "value": "root.system.trafficLightB.Main.Normal.NormalRegion.Yellow"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Main.activeState",
+                    "value": "root.system.trafficLightB.Main.Normal"
+                },
+                {
+                    "variable": "root.system.trafficLightB.blinkingTimeout.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightB.control.inputEvent",
+                    "value": "nothing"
+                }
+            ]
+        },
+        {
+            "values": [
+                {
+                    "variable": "root.system.controller.Main.Operating.OperatingRegion.activeState",
+                    "value": "root.system.controller.Main.Operating.OperatingRegion.BothRed"
+                },
+                {
+                    "variable": "root.system.controller.Main.activeState",
+                    "value": "root.system.controller.Main.Operating"
+                },
+                {
+                    "variable": "root.system.controller.control.inputEvent",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.controlA.outputEvent",
+                    "value": "root.system.controller.control.interface.toggle"
+                },
+                {
+                    "variable": "root.system.controller.controlB.outputEvent",
+                    "value": "root.system.controller.control.interface.toggle"
+                },
+                {
+                    "variable": "root.system.controller.toggleTimeout.remainingTime",
+                    "value": "1"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Main.Interrupted.InterruptedRegion.activeState",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Main.Normal.NormalRegion.activeState",
+                    "value": "root.system.trafficLightA.Main.Normal.NormalRegion.Yellow"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Main.activeState",
+                    "value": "root.system.trafficLightA.Main.Normal"
+                },
+                {
+                    "variable": "root.system.trafficLightA.blinkingTimeout.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightA.control.inputEvent",
+                    "value": "root.system.controller.control.interface.toggle"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Main.Interrupted.InterruptedRegion.activeState",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Main.Normal.NormalRegion.activeState",
+                    "value": "root.system.trafficLightB.Main.Normal.NormalRegion.Yellow"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Main.activeState",
+                    "value": "root.system.trafficLightB.Main.Normal"
+                },
+                {
+                    "variable": "root.system.trafficLightB.blinkingTimeout.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightB.control.inputEvent",
+                    "value": "root.system.controller.control.interface.toggle"
+                }
+            ]
+        },
+        {
+            "values": [
+                {
+                    "variable": "root.system.controller.Main.Operating.OperatingRegion.activeState",
+                    "value": "root.system.controller.Main.Operating.OperatingRegion.BothRed"
+                },
+                {
+                    "variable": "root.system.controller.Main.activeState",
+                    "value": "root.system.controller.Main.Operating"
+                },
+                {
+                    "variable": "root.system.controller.control.inputEvent",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.controlA.outputEvent",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.controlB.outputEvent",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.toggleTimeout.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Main.Interrupted.InterruptedRegion.activeState",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Main.Normal.NormalRegion.activeState",
+                    "value": "root.system.trafficLightA.Main.Normal.NormalRegion.Red"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Main.activeState",
+                    "value": "root.system.trafficLightA.Main.Normal"
+                },
+                {
+                    "variable": "root.system.trafficLightA.blinkingTimeout.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightA.control.inputEvent",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Main.Interrupted.InterruptedRegion.activeState",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Main.Normal.NormalRegion.activeState",
+                    "value": "root.system.trafficLightB.Main.Normal.NormalRegion.Red"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Main.activeState",
+                    "value": "root.system.trafficLightB.Main.Normal"
+                },
+                {
+                    "variable": "root.system.trafficLightB.blinkingTimeout.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightB.control.inputEvent",
+                    "value": "nothing"
+                }
+            ]
+        },
+        {
+            "values": [
+                {
+                    "variable": "root.system.controller.Main.Operating.OperatingRegion.activeState",
+                    "value": "root.system.controller.Main.Operating.OperatingRegion.TrafficOnA"
+                },
+                {
+                    "variable": "root.system.controller.Main.activeState",
+                    "value": "root.system.controller.Main.Operating"
+                },
+                {
+                    "variable": "root.system.controller.control.inputEvent",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.controlA.outputEvent",
+                    "value": "root.system.controller.control.interface.toggle"
+                },
+                {
+                    "variable": "root.system.controller.controlB.outputEvent",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.toggleTimeout.remainingTime",
+                    "value": "1"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Main.Interrupted.InterruptedRegion.activeState",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Main.Normal.NormalRegion.activeState",
+                    "value": "root.system.trafficLightA.Main.Normal.NormalRegion.Red"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Main.activeState",
+                    "value": "root.system.trafficLightA.Main.Normal"
+                },
+                {
+                    "variable": "root.system.trafficLightA.blinkingTimeout.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightA.control.inputEvent",
+                    "value": "root.system.controller.control.interface.toggle"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Main.Interrupted.InterruptedRegion.activeState",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Main.Normal.NormalRegion.activeState",
+                    "value": "root.system.trafficLightB.Main.Normal.NormalRegion.Red"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Main.activeState",
+                    "value": "root.system.trafficLightB.Main.Normal"
+                },
+                {
+                    "variable": "root.system.trafficLightB.blinkingTimeout.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightB.control.inputEvent",
+                    "value": "nothing"
+                }
+            ]
+        },
+        {
+            "values": [
+                {
+                    "variable": "root.system.controller.Main.Operating.OperatingRegion.activeState",
+                    "value": "root.system.controller.Main.Operating.OperatingRegion.TrafficOnA"
+                },
+                {
+                    "variable": "root.system.controller.Main.activeState",
+                    "value": "root.system.controller.Main.Operating"
+                },
+                {
+                    "variable": "root.system.controller.control.inputEvent",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.controlA.outputEvent",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.controlB.outputEvent",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.toggleTimeout.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Main.Interrupted.InterruptedRegion.activeState",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Main.Normal.NormalRegion.activeState",
+                    "value": "root.system.trafficLightA.Main.Normal.NormalRegion.Green"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Main.activeState",
+                    "value": "root.system.trafficLightA.Main.Normal"
+                },
+                {
+                    "variable": "root.system.trafficLightA.blinkingTimeout.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightA.control.inputEvent",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Main.Interrupted.InterruptedRegion.activeState",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Main.Normal.NormalRegion.activeState",
+                    "value": "root.system.trafficLightB.Main.Normal.NormalRegion.Red"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Main.activeState",
+                    "value": "root.system.trafficLightB.Main.Normal"
+                },
+                {
+                    "variable": "root.system.trafficLightB.blinkingTimeout.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightB.control.inputEvent",
+                    "value": "nothing"
+                }
+            ]
+        }
+    ]
+}
