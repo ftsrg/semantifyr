@@ -72,7 +72,7 @@ export default function prismIncludeLanguages(
       { pattern: /\/\/.*/, greedy: true },
     ],
     keyword:
-      /\b(?:AG|Boolean|EF|Integer|and|bind|case|channel|component|entry|event|exit|false|in|interface|isActive|not|or|out|package|port|property|provides|raise|region|requires|set|state|statechart|sync|timeout|to|transition|true|var|verification|when)\b/,
+      /\b(?:AG|Boolean|EF|Integer|act|and|assert|bind|case|channel|component|elapse|entry|event|exit|false|in|interface|isActive|not|of|or|out|package|port|property|provides|raise|region|requires|reset|schedule|set|state|statechart|step|sync|timeout|to|trace|transition|true|var|variable|verification|when)\b/,
     operator: /(:=|==|!=|<=|>=|&&|\|\||<|>|\+|-|\*|\/|!)/,
     number: /\b\d+\b/,
     punctuation: /[{}[\]();:,.]/,
