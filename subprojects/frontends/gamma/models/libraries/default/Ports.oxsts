@@ -37,6 +37,7 @@ class Port {
         inputEvent := event
     }
 
+    @Trace
     tran setOutputEvent(event: Event) {
         outputEvent := event
     }
@@ -49,12 +50,23 @@ class Port {
         outputEvent := nothing
     }
 
-    // @Trace
     tran havocInputEvent() {
-        havoc (inputEvent)
+        choice {
+            inputEvent := nothing
+        } or {
+            inline for choice (event in inputEvents) {
+                inline raiseInputEvent(event)
+            } else {
+                assume (false)
+            }
+        }
     }
 
-    // @Trace
+    @Trace
+    tran raiseInputEvent(event: Event) {
+        inputEvent := event
+    }
+
     tran havocOutputEvent() {
         havoc (outputEvent)
     }
