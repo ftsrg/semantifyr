@@ -23,7 +23,7 @@
       "patterns": [
         {
           "name": "keyword.control.xsts",
-          "match": "\\b(property|var|assign|and|or|package|sync|statechart|timeout|region|state|entry|exit|transition|when|in|event|out|raise|set|component|channel|port|interface|verification|reachable|case|requires|provides|to|bind|isActive|not|EF|AG)\\b"
+          "match": "\\b(property|var|assign|and|or|package|sync|statechart|timeout|region|state|entry|exit|transition|when|in|event|out|raise|set|component|channel|port|interface|verification|reachable|case|requires|provides|to|bind|isActive|not|EF|AG|trace|of|step|act|assert|reset|schedule|elapse|variable)\\b"
         }
       ]
     },

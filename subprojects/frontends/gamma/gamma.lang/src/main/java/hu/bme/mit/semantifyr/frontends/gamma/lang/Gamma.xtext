@@ -17,6 +17,7 @@ GammaModelPackage:
         interfaces += InterfaceDeclaration
         | components += ComponentDeclaration
         | verificationCases += VerificationCaseDeclaration
+        | traces += ExecutionTrace
     )*
 ;
 
@@ -183,6 +184,74 @@ VerificationCaseDeclaration:
         component = ComponentInstance
         'property' '{' expression=Expression '}'
     '}'
+;
+
+ExecutionTrace:
+    'trace' name=Identifier 'of' verificationCase=[VerificationCaseDeclaration|Identifier] '{'
+        steps += Step*
+    '}'
+;
+
+Step:
+    {Step} 'step' '{'
+        ('act' '{' acts += Act+ '}')?
+        'assert' '{' asserts += Assertion* '}'
+    '}'
+;
+
+Act:
+    ResetAct
+    | ScheduleAct
+    | TimeElapseAct
+    | RaiseEventAct
+;
+
+ResetAct:
+    {ResetAct} 'reset'
+;
+
+ScheduleAct:
+    {ScheduleAct} 'schedule' 'component'
+;
+
+TimeElapseAct:
+    'elapse' time=INT 's'
+;
+
+RaiseEventAct:
+    'raise' event=ElementPath
+;
+
+Assertion:
+    FiredTransitionAssertion
+    | RaisedEventAssertion
+    | ActiveStateAssertion
+    | VariableValueAssertion
+;
+
+FiredTransitionAssertion:
+    'transition' from=ElementPath 'to' to=[State|Identifier] ('when' trigger=Trigger)?
+;
+
+RaisedEventAssertion:
+    'raise' event=ElementPath
+;
+
+ActiveStateAssertion:
+    'state' state=ElementPath
+;
+
+VariableValueAssertion:
+    'variable' variable=ElementPath '==' value=TraceValue
+;
+
+TraceValue returns Expression:
+    LiteralExpression
+    | {ArithmeticUnaryOperator} op=UnaryOp body=LiteralInteger
+;
+
+ElementPath returns Expression:
+    ElementReferenceExpression ({NavigationSuffixExpression.primary=current} '.' member=[Ecore::EObject|Identifier])*
 ;
 
 Expression:
