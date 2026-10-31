@@ -339,4 +339,188 @@ class CopyPropagationPassTest : PassTestBase() {
     ) {
         it.getInstance(CopyPropagationPass::class.java)
     }
+
+    @Test
+    fun `a copy is not propagated across a later write of its source`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var p : int := 0
+            var q : int := 0
+            init { }
+            tran {
+                q := p
+                p := p + 1
+                assume (q == 0)
+            }
+            prop { AG true }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var p : int := 0
+            var q : int := 0
+            init { }
+            tran {
+                q := p
+                p := p + 1
+                assume (q == 0)
+            }
+            prop { AG true }
+        """,
+        analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
+    ) {
+        it.getInstance(CopyPropagationPass::class.java)
+    }
+
+    @Test
+    fun `a copy is not propagated when a branch between the copy and the read writes its source`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var p : int := 0
+            var q : int := 0
+            init { }
+            tran {
+                q := p
+                choice { p := 1 } or { }
+                assume (q == 0)
+            }
+            prop { AG true }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var p : int := 0
+            var q : int := 0
+            init { }
+            tran {
+                q := p
+                choice { p := 1 } or { }
+                assume (q == 0)
+            }
+            prop { AG true }
+        """,
+        analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
+    ) {
+        it.getInstance(CopyPropagationPass::class.java)
+    }
+
+    @Test
+    fun `a copy is not propagated into a loop whose body writes its source`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var p : int := 0
+            var q : int := 0
+            init { }
+            tran {
+                q := p
+                for (i in 0 .. 2) {
+                    assume (q == 0)
+                    p := p + 1
+                }
+            }
+            prop { AG true }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var p : int := 0
+            var q : int := 0
+            init { }
+            tran {
+                q := p
+                for (i in 0 .. 2) {
+                    assume (q == 0)
+                    p := p + 1
+                }
+            }
+            prop { AG true }
+        """,
+        analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
+    ) {
+        it.getInstance(CopyPropagationPass::class.java)
+    }
+
+    @Test
+    fun `a copy made in init is not propagated into tran when tran writes its source`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var p : int := 0
+            var q : int := 0
+            init { q := p }
+            tran {
+                p := p + 1
+                assume (q == 0)
+            }
+            prop { AG true }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var p : int := 0
+            var q : int := 0
+            init { q := p }
+            tran {
+                p := p + 1
+                assume (q == 0)
+            }
+            prop { AG true }
+        """,
+        analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
+    ) {
+        it.getInstance(CopyPropagationPass::class.java)
+    }
+
+    @Test
+    fun `a copy is propagated when its source is written only after the read`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var p : int := 0
+            var q : int := 0
+            init { }
+            tran {
+                q := p
+                assume (q == 0)
+                p := p + 1
+            }
+            prop { AG true }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var p : int := 0
+            var q : int := 0
+            init { }
+            tran {
+                q := p
+                assume (p == 0)
+                p := p + 1
+            }
+            prop { AG true }
+        """,
+        analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
+    ) {
+        it.getInstance(CopyPropagationPass::class.java)
+    }
+
+    @Test
+    fun `a copy made in init is propagated into tran when nothing writes its source after it`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var p : int := 0
+            var q : int := 0
+            init { q := p }
+            tran {
+                assume (q == 0)
+            }
+            prop { AG true }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var p : int := 0
+            var q : int := 0
+            init { q := p }
+            tran {
+                assume (p == 0)
+            }
+            prop { AG true }
+        """,
+        analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
+    ) {
+        it.getInstance(CopyPropagationPass::class.java)
+    }
 }
