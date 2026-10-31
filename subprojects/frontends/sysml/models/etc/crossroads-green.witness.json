@@ -1,0 +1,676 @@
+{
+    "initialStep": {
+        "values": [
+            {
+                "variable": "root.system.controller.Behaviour.activeState",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.controller.control.incomingItem",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.controller.controlA.outgoingItem",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.controller.controlB.outgoingItem",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.trafficLightA.Behaviour.activeState",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.trafficLightA.control.incomingItem",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.trafficLightB.Behaviour.activeState",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.trafficLightB.control.incomingItem",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.controller.Behaviour.Operating.activeState",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.trafficLightA.Behaviour.Normal.activeState",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.trafficLightA.Behaviour.Interrupted.activeState",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.trafficLightB.Behaviour.Normal.activeState",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.trafficLightB.Behaviour.Interrupted.activeState",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage2.acceptAction.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage3.acceptAction.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage4.acceptAction.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage5.acceptAction.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage6.acceptAction.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage7.acceptAction.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.trafficLightA.Behaviour.Interrupted.UnnamedTransitionUsage18.acceptAction.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.trafficLightA.Behaviour.Interrupted.UnnamedTransitionUsage19.acceptAction.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.trafficLightB.Behaviour.Interrupted.UnnamedTransitionUsage18.acceptAction.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.trafficLightB.Behaviour.Interrupted.UnnamedTransitionUsage19.acceptAction.remainingTime",
+                "value": "0"
+            }
+        ]
+    },
+    "initializedStep": {
+        "values": [
+            {
+                "variable": "root.system.controller.Behaviour.activeState",
+                "value": "root.system.controller.Behaviour.Operating"
+            },
+            {
+                "variable": "root.system.controller.control.incomingItem",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.controller.controlA.outgoingItem",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.controller.controlB.outgoingItem",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.trafficLightA.Behaviour.activeState",
+                "value": "root.system.trafficLightA.Behaviour.Normal"
+            },
+            {
+                "variable": "root.system.trafficLightA.control.incomingItem",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.trafficLightB.Behaviour.activeState",
+                "value": "root.system.trafficLightB.Behaviour.Normal"
+            },
+            {
+                "variable": "root.system.trafficLightB.control.incomingItem",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.controller.Behaviour.Operating.activeState",
+                "value": "root.system.controller.Behaviour.Operating.BothYellow"
+            },
+            {
+                "variable": "root.system.trafficLightA.Behaviour.Normal.activeState",
+                "value": "root.system.trafficLightA.Behaviour.Normal.Yellow"
+            },
+            {
+                "variable": "root.system.trafficLightA.Behaviour.Interrupted.activeState",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.trafficLightB.Behaviour.Normal.activeState",
+                "value": "root.system.trafficLightB.Behaviour.Normal.Yellow"
+            },
+            {
+                "variable": "root.system.trafficLightB.Behaviour.Interrupted.activeState",
+                "value": "nothing"
+            },
+            {
+                "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage2.acceptAction.remainingTime",
+                "value": "1"
+            },
+            {
+                "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage3.acceptAction.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage4.acceptAction.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage5.acceptAction.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage6.acceptAction.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage7.acceptAction.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.trafficLightA.Behaviour.Interrupted.UnnamedTransitionUsage18.acceptAction.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.trafficLightA.Behaviour.Interrupted.UnnamedTransitionUsage19.acceptAction.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.trafficLightB.Behaviour.Interrupted.UnnamedTransitionUsage18.acceptAction.remainingTime",
+                "value": "0"
+            },
+            {
+                "variable": "root.system.trafficLightB.Behaviour.Interrupted.UnnamedTransitionUsage19.acceptAction.remainingTime",
+                "value": "0"
+            }
+        ]
+    },
+    "steps": [
+        {
+            "values": [
+                {
+                    "variable": "root.system.controller.Behaviour.activeState",
+                    "value": "root.system.controller.Behaviour.Operating"
+                },
+                {
+                    "variable": "root.system.controller.control.incomingItem",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.controlA.outgoingItem",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.controlB.outgoingItem",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.activeState",
+                    "value": "root.system.trafficLightA.Behaviour.Normal"
+                },
+                {
+                    "variable": "root.system.trafficLightA.control.incomingItem",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.activeState",
+                    "value": "root.system.trafficLightB.Behaviour.Normal"
+                },
+                {
+                    "variable": "root.system.trafficLightB.control.incomingItem",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.activeState",
+                    "value": "root.system.controller.Behaviour.Operating.BothYellow"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.Normal.activeState",
+                    "value": "root.system.trafficLightA.Behaviour.Normal.Yellow"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.Interrupted.activeState",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.Normal.activeState",
+                    "value": "root.system.trafficLightB.Behaviour.Normal.Yellow"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.Interrupted.activeState",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage2.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage3.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage4.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage5.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage6.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage7.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.Interrupted.UnnamedTransitionUsage18.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.Interrupted.UnnamedTransitionUsage19.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.Interrupted.UnnamedTransitionUsage18.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.Interrupted.UnnamedTransitionUsage19.acceptAction.remainingTime",
+                    "value": "0"
+                }
+            ]
+        },
+        {
+            "values": [
+                {
+                    "variable": "root.system.controller.Behaviour.activeState",
+                    "value": "root.system.controller.Behaviour.Operating"
+                },
+                {
+                    "variable": "root.system.controller.control.incomingItem",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.controlA.outgoingItem",
+                    "value": "semantifyr::sysml::model::global_Toggle"
+                },
+                {
+                    "variable": "root.system.controller.controlB.outgoingItem",
+                    "value": "semantifyr::sysml::model::global_Toggle"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.activeState",
+                    "value": "root.system.trafficLightA.Behaviour.Normal"
+                },
+                {
+                    "variable": "root.system.trafficLightA.control.incomingItem",
+                    "value": "semantifyr::sysml::model::global_Toggle"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.activeState",
+                    "value": "root.system.trafficLightB.Behaviour.Normal"
+                },
+                {
+                    "variable": "root.system.trafficLightB.control.incomingItem",
+                    "value": "semantifyr::sysml::model::global_Toggle"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.activeState",
+                    "value": "root.system.controller.Behaviour.Operating.BothRed"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.Normal.activeState",
+                    "value": "root.system.trafficLightA.Behaviour.Normal.Yellow"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.Interrupted.activeState",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.Normal.activeState",
+                    "value": "root.system.trafficLightB.Behaviour.Normal.Yellow"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.Interrupted.activeState",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage2.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage3.acceptAction.remainingTime",
+                    "value": "1"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage4.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage5.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage6.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage7.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.Interrupted.UnnamedTransitionUsage18.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.Interrupted.UnnamedTransitionUsage19.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.Interrupted.UnnamedTransitionUsage18.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.Interrupted.UnnamedTransitionUsage19.acceptAction.remainingTime",
+                    "value": "0"
+                }
+            ]
+        },
+        {
+            "values": [
+                {
+                    "variable": "root.system.controller.Behaviour.activeState",
+                    "value": "root.system.controller.Behaviour.Operating"
+                },
+                {
+                    "variable": "root.system.controller.control.incomingItem",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.controlA.outgoingItem",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.controlB.outgoingItem",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.activeState",
+                    "value": "root.system.trafficLightA.Behaviour.Normal"
+                },
+                {
+                    "variable": "root.system.trafficLightA.control.incomingItem",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.activeState",
+                    "value": "root.system.trafficLightB.Behaviour.Normal"
+                },
+                {
+                    "variable": "root.system.trafficLightB.control.incomingItem",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.activeState",
+                    "value": "root.system.controller.Behaviour.Operating.BothRed"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.Normal.activeState",
+                    "value": "root.system.trafficLightA.Behaviour.Normal.Red"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.Interrupted.activeState",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.Normal.activeState",
+                    "value": "root.system.trafficLightB.Behaviour.Normal.Red"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.Interrupted.activeState",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage2.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage3.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage4.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage5.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage6.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage7.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.Interrupted.UnnamedTransitionUsage18.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.Interrupted.UnnamedTransitionUsage19.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.Interrupted.UnnamedTransitionUsage18.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.Interrupted.UnnamedTransitionUsage19.acceptAction.remainingTime",
+                    "value": "0"
+                }
+            ]
+        },
+        {
+            "values": [
+                {
+                    "variable": "root.system.controller.Behaviour.activeState",
+                    "value": "root.system.controller.Behaviour.Operating"
+                },
+                {
+                    "variable": "root.system.controller.control.incomingItem",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.controlA.outgoingItem",
+                    "value": "semantifyr::sysml::model::global_Toggle"
+                },
+                {
+                    "variable": "root.system.controller.controlB.outgoingItem",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.activeState",
+                    "value": "root.system.trafficLightA.Behaviour.Normal"
+                },
+                {
+                    "variable": "root.system.trafficLightA.control.incomingItem",
+                    "value": "semantifyr::sysml::model::global_Toggle"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.activeState",
+                    "value": "root.system.trafficLightB.Behaviour.Normal"
+                },
+                {
+                    "variable": "root.system.trafficLightB.control.incomingItem",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.activeState",
+                    "value": "root.system.controller.Behaviour.Operating.TrafficOnA"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.Normal.activeState",
+                    "value": "root.system.trafficLightA.Behaviour.Normal.Red"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.Interrupted.activeState",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.Normal.activeState",
+                    "value": "root.system.trafficLightB.Behaviour.Normal.Red"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.Interrupted.activeState",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage2.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage3.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage4.acceptAction.remainingTime",
+                    "value": "1"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage5.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage6.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage7.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.Interrupted.UnnamedTransitionUsage18.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.Interrupted.UnnamedTransitionUsage19.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.Interrupted.UnnamedTransitionUsage18.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.Interrupted.UnnamedTransitionUsage19.acceptAction.remainingTime",
+                    "value": "0"
+                }
+            ]
+        },
+        {
+            "values": [
+                {
+                    "variable": "root.system.controller.Behaviour.activeState",
+                    "value": "root.system.controller.Behaviour.Operating"
+                },
+                {
+                    "variable": "root.system.controller.control.incomingItem",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.controlA.outgoingItem",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.controlB.outgoingItem",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.activeState",
+                    "value": "root.system.trafficLightA.Behaviour.Normal"
+                },
+                {
+                    "variable": "root.system.trafficLightA.control.incomingItem",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.activeState",
+                    "value": "root.system.trafficLightB.Behaviour.Normal"
+                },
+                {
+                    "variable": "root.system.trafficLightB.control.incomingItem",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.activeState",
+                    "value": "root.system.controller.Behaviour.Operating.TrafficOnA"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.Normal.activeState",
+                    "value": "root.system.trafficLightA.Behaviour.Normal.Green"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.Interrupted.activeState",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.Normal.activeState",
+                    "value": "root.system.trafficLightB.Behaviour.Normal.Red"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.Interrupted.activeState",
+                    "value": "nothing"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage2.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage3.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage4.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage5.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage6.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage7.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.Interrupted.UnnamedTransitionUsage18.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightA.Behaviour.Interrupted.UnnamedTransitionUsage19.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.Interrupted.UnnamedTransitionUsage18.acceptAction.remainingTime",
+                    "value": "0"
+                },
+                {
+                    "variable": "root.system.trafficLightB.Behaviour.Interrupted.UnnamedTransitionUsage19.acceptAction.remainingTime",
+                    "value": "0"
+                }
+            ]
+        }
+    ]
+}
