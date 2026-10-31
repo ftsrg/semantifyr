@@ -156,6 +156,10 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
                     x := x - (1 - x)
                     a := (a && b) || !(a ^^ b)
                     a := a && (b || a)
+                    a := (a || b) && a
+                    a := (a ^^ b) ^^ a
+                    a := (x == 0) == a
+                    a := (x < 1) != (x < 2)
                     assume(x < 1 && x <= 2 && x > -3 && x >= -4 && x == 0 && x != 5)
                     x := if x < 3 then x + 1 else 0
                 }
@@ -168,6 +172,10 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
             "x := x - ( 1 - x );",
             "a := a && b || !( a xor b );",
             "a := a && ( b || a );",
+            "a := ( a || b ) && a;",
+            "a := ( a xor b ) xor a;",
+            "a := ( x == 0 ) == a;",
+            "a := x < 1 != x < 2;",
             "assume x < 1 && x <= 2 && x > - 3 && x >= - 4 && x == 0 && x != 5;",
             "x := if x < 3 then x + 1 else 0;",
         )

@@ -160,9 +160,54 @@ enum BooleanOp:
     AND='&&' | OR='||' | XOR='xor' | IFF='iff' | imply='=>'
 ;
 
+// The levels mirror Theta's grammar, so the serializer adds the parentheses Theta needs.
+enum IffOp returns BooleanOp:
+    IFF='iff'
+;
+
+enum ImplyOp returns BooleanOp:
+    imply='=>'
+;
+
+enum OrOp returns BooleanOp:
+    OR='||'
+;
+
+enum XorOp returns BooleanOp:
+    XOR='xor'
+;
+
+enum AndOp returns BooleanOp:
+    AND='&&'
+;
+
 BooleanOperator returns Expression:
-    ComparisonOperator (
-        {BooleanOperator.left=current} op=BooleanOp right=ComparisonOperator
+    ImplyOperator (
+        {BooleanOperator.left=current} op=IffOp right=ImplyOperator
+    )?
+;
+
+ImplyOperator returns Expression:
+    OrOperator (
+        {BooleanOperator.left=current} op=ImplyOp right=OrOperator
+    )?
+;
+
+OrOperator returns Expression:
+    XorOperator (
+        {BooleanOperator.left=current} op=OrOp right=XorOperator
+    )*
+;
+
+XorOperator returns Expression:
+    AndOperator (
+        {BooleanOperator.left=current} op=XorOp right=AndOperator
+    )?
+;
+
+AndOperator returns Expression:
+    EqualityOperator (
+        {BooleanOperator.left=current} op=AndOp right=EqualityOperator
     )*
 ;
 
@@ -170,10 +215,24 @@ enum ComparisonOp:
 	LESS="<" | LESS_EQ="<=" | GREATER=">" | GREATER_EQ=">=" | EQ="==" | NOT_EQ="!="
 ;
 
-ComparisonOperator returns Expression:
+enum EqualityOp returns ComparisonOp:
+	EQ="==" | NOT_EQ="!="
+;
+
+enum RelationOp returns ComparisonOp:
+	LESS="<" | LESS_EQ="<=" | GREATER=">" | GREATER_EQ=">="
+;
+
+EqualityOperator returns Expression:
+    RelationOperator (
+        {ComparisonOperator.left=current} op=EqualityOp right=RelationOperator
+    )?
+;
+
+RelationOperator returns Expression:
     AdditiveOperator (
-        {ComparisonOperator.left=current} op=ComparisonOp right=AdditiveOperator
-    )*
+        {ComparisonOperator.left=current} op=RelationOp right=AdditiveOperator
+    )?
 ;
 
 enum AdditiveOp returns ArithmeticOp:
