@@ -25,6 +25,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.utils.mayWriteBetween
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableReadExpressions
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableWrites
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -90,7 +91,7 @@ class VariableLivenessComputation(
         }
 
         val allVariables = inlinedOxsts.eAllOfType<VariableDeclaration>().filterNot {
-            builtinAnnotationHandler.isNonOptimizable(it)
+            builtinAnnotationHandler.isNonOptimizable(it) || OxstsUtils.isLoopVariable(it)
         }.toSet()
 
         for (it in allVariables - variableReads.keys) {

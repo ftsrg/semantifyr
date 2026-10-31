@@ -241,4 +241,58 @@ class VariableLivenessPassTest : PassTestBase() {
     ) {
         it.getInstance(VariableLivenessPass::class.java)
     }
+
+    @Test
+    fun `an unread runtime loop variable is kept`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var x : int := 0
+            init { }
+            tran {
+                for (i in 0 .. 2) {
+                    x := x + 1
+                }
+            }
+            prop { AG (x <= 3) }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var x : int := 0
+            init { }
+            tran {
+                for (i in 0 .. 2) {
+                    x := x + 1
+                }
+            }
+            prop { AG (x <= 3) }
+        """,
+    ) {
+        it.getInstance(VariableLivenessPass::class.java)
+    }
+
+    @Test
+    fun `an unread runtime loop variable is kept when the loop body is empty`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var x : int := 0
+            init { }
+            tran {
+                for (i in 0 .. 2) { }
+                x := 1
+            }
+            prop { AG (x <= 1) }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var x : int := 0
+            init { }
+            tran {
+                for (i in 0 .. 2) { }
+                x := 1
+            }
+            prop { AG (x <= 1) }
+        """,
+    ) {
+        it.getInstance(VariableLivenessPass::class.java)
+    }
 }

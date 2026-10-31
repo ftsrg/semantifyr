@@ -81,3 +81,41 @@ class ExclusiveRangeBound {
         return AG x <= 3
     }
 }
+
+// A loop variable the body never reads still drives the iteration count.
+
+@VerificationCase
+@Tag("expect-pass")
+@Tag("engine-limit:nuxmv,spin,uppaal")
+class UnreadLoopVariableReach {
+    var x: int := 0
+
+    redefine tran {
+        assume(x == 0)
+        for (i in 0 .. 2) {
+            x := x + 1
+        }
+    }
+
+    prop {
+        return EF x == 3
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+@Tag("engine-limit:nuxmv,spin,uppaal")
+class UnreadLoopVariableBound {
+    var x: int := 0
+
+    redefine tran {
+        assume(x == 0)
+        for (i in 0 .. 2) {
+            x := x + 1
+        }
+    }
+
+    prop {
+        return AG x <= 3
+    }
+}
