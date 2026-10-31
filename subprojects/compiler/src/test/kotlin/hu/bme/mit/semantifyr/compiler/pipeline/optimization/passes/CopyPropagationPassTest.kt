@@ -523,4 +523,39 @@ class CopyPropagationPassTest : PassTestBase() {
     ) {
         it.getInstance(CopyPropagationPass::class.java)
     }
+
+    @Test
+    fun `an init write on one branch is not propagated to a later init read`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var c : bool := false
+            var q : int := 0
+            var r : int := 9
+            init {
+                if (c) {
+                    q := 5
+                }
+                r := q
+            }
+            tran { }
+            prop { AG true }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var c : bool := false
+            var q : int := 0
+            var r : int := 9
+            init {
+                if (c) {
+                    q := 5
+                }
+                r := q
+            }
+            tran { }
+            prop { AG true }
+        """,
+        analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
+    ) {
+        it.getInstance(CopyPropagationPass::class.java)
+    }
 }
