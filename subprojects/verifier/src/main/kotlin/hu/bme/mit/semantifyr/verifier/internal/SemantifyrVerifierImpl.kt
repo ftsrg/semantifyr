@@ -31,9 +31,9 @@ import hu.bme.mit.semantifyr.verifier.VerificationMetrics
 import hu.bme.mit.semantifyr.verifier.VerificationReport
 import hu.bme.mit.semantifyr.verifier.VerificationResult
 import hu.bme.mit.semantifyr.verifier.VerifierMetrics
+import hu.bme.mit.semantifyr.verifier.caseDirectoryName
 import hu.bme.mit.semantifyr.verifier.portfolio.LimitedConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
-import hu.bme.mit.semantifyr.verifier.qualifiedNameToDirectoryName
 import hu.bme.mit.semantifyr.verifier.witness.CallTraceTransformer
 import hu.bme.mit.semantifyr.verifier.witness.ClassWitnessBackAnnotator
 import hu.bme.mit.semantifyr.verifier.witness.ClassWitnessTransformer
@@ -91,7 +91,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
     override suspend fun verify(verificationCase: VerificationCase, progressContext: ProgressContext): VerificationResult {
         progressContext.reportProgress("Compiling ${verificationCase.qualifiedName}")
         logger.info { "Compiling '${verificationCase.qualifiedName}'" }
-        val caseDirectory = prepareCaseDirectory(verificationCase.qualifiedName)
+        val caseDirectory = prepareCaseDirectory(verificationCase)
         val compilation = compiler.compile(verificationCase.classDeclaration, caseDirectory)
 
         return verifyCompilation(compilation, verificationCase, progressContext)
@@ -105,7 +105,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         )
         progressContext.reportProgress("Compiling $qualifiedName")
         logger.info { "Compiling inlined of '$qualifiedName'" }
-        val caseDirectory = prepareCaseDirectory(qualifiedName)
+        val caseDirectory = prepareCaseDirectory(case)
         val compilation = compiler.compile(inlinedOxsts, caseDirectory)
         return verifyCompilation(compilation, case, progressContext)
     }
@@ -159,7 +159,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
             )
         }
 
-        val caseArtifactPath = caseDirectoryFor(qualifiedName)
+        val caseArtifactPath = caseDirectoryFor(case)
 
         val (trace, verifierBackAnnotationDuration) = backAnnotateWitness(backendResult, compilation, qualifiedName)
 
@@ -217,7 +217,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
 
         val request = BackendVerificationRequest(
             inlinedOxsts = inlinedOxsts,
-            artifactOutputPath = caseDirectoryFor(case.qualifiedName),
+            artifactOutputPath = caseDirectoryFor(case),
             flatteningInfo = compilation.flatteningInfo,
         )
 
@@ -276,12 +276,12 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         }
     }
 
-    private fun caseDirectoryFor(qualifiedName: String): Path {
-        return semantifyrVerifierConfiguration.outputDirectory.resolve(qualifiedNameToDirectoryName(qualifiedName))
+    private fun caseDirectoryFor(case: VerificationCase): Path {
+        return semantifyrVerifierConfiguration.outputDirectory.resolve(caseDirectoryName(case))
     }
 
-    private fun prepareCaseDirectory(qualifiedName: String): Path {
-        val caseDirectory = caseDirectoryFor(qualifiedName)
+    private fun prepareCaseDirectory(case: VerificationCase): Path {
+        val caseDirectory = caseDirectoryFor(case)
         if (caseDirectory.toFile().exists()) {
             caseDirectory.toFile().deleteRecursively()
         }

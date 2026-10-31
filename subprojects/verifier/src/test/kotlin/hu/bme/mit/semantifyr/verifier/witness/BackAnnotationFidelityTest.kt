@@ -30,11 +30,11 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
+import hu.bme.mit.semantifyr.verifier.caseDirectoryName
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
-import hu.bme.mit.semantifyr.verifier.qualifiedNameToDirectoryName
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -291,7 +291,7 @@ class BackAnnotationFidelityTest {
     }
 
     private fun caseDirectory(output: Path, case: VerificationCase): Path {
-        return output.resolve(qualifiedNameToDirectoryName(case.qualifiedName))
+        return output.resolve(caseDirectoryName(case))
     }
 
     private fun readCallTrace(output: Path, case: VerificationCase): CallTrace {

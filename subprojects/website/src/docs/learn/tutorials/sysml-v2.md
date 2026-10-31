@@ -94,13 +94,13 @@ The command prints one line per case, `PASSED` or `FAILED` with the time it took
 
 ## Reading the Witness
 
-`--artifact-directory artifacts` keeps the artifacts of every case in a directory named after the case. Next to the backend's working files, the compiler's intermediate models (`pipeline/`) and the run's measurements (`report.json`), a case with a witness has three files:
+`--artifact-directory artifacts` keeps the artifacts of every case in a directory named after the model file and the case, shortened with a hash when longer than 64 characters. Next to the backend's working files, the compiler's intermediate models (`pipeline/`) and the run's measurements (`report.json`), a case with a witness has three files:
 
 - `witness.json`: the values of the model's state in every step of the witness: `initialStep` before initialization, `initializedStep` after it, then one entry per step. State names are paths from the verified instance, `root`.
 - `trace.json`: per step, the traced calls of the semantic library: the transitions that fired and the items that were sent.
 - `witness.oxsts`: the witness as an OXSTS model that replays exactly this execution.
 
-A failed `mustAlways` requirement has a counterexample. Open `trace.json` and `witness.json` in `artifacts/semantifyr.sysml.model.LampLitOnlyWhileSwitchOnViolated/`. The shortest counterexample has two steps:
+A failed `mustAlways` requirement has a counterexample. Open `trace.json` and `witness.json` in `artifacts/room.LampLitOnlyWhileSwitchOnViolated/`. The shortest counterexample has two steps:
 
 1. The button is pressed: `root.system.switch.Behaviour.turnOn` fires and the switch's output sends a `Toggle`. Afterwards the switch is `On`, the lamp is still `Dark`, and the toggle waits on `root.system.lamp.input`.
 2. The button is pressed again: `turnOff` fires and sends a second `Toggle`, while the lamp accepts the first one and `root.system.lamp.Behaviour.lightUp` fires. Afterwards the switch is `Off` and the lamp is `Lit`.
