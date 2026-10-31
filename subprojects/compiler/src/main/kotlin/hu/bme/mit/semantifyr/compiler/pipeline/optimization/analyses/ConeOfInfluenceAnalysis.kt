@@ -86,6 +86,15 @@ class ConeOfInfluenceComputation(
             val variable = variableWorklist.pop()
             val assignments = variableAssignments[variable] ?: emptyList()
 
+            val initializerReads = variable.expression?.let {
+                variablesReadsIn(it)
+            }.orEmpty()
+            for (read in initializerReads) {
+                if (relevantVariables.add(read)) {
+                    variableWorklist.add(read)
+                }
+            }
+
             for (assignment in assignments) {
                 if (!relevantAssignments.add(assignment)) {
                     continue

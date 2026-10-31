@@ -465,6 +465,54 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
             .isTrue
     }
 
+    @Test
+    fun `a local initializer's reads are in the cone of whatever reads the local`() {
+        val (inlined, result) = runConeOfInfluence(
+            """
+                inlined oxsts of semantifyr::Anything
+                var a : int := 0
+                var seen : int := 0
+                init { }
+                tran {
+                    a := 1 - a
+                    var s : int := a
+                    seen := s
+                }
+                prop { EF (seen == 1) }
+            """,
+        )
+
+        val a = inlined.varNamed("a")
+        assertThat(result.isRelevant(a))
+            .`as`("'a' feeds the local 's' through its initializer, and 's' feeds the property")
+            .isTrue
+        assertThat(result.isRelevant(inlined.assignmentsTo(a).single())).isTrue
+    }
+
+    @Test
+    fun `a local initializer's reads stay out of the cone when nothing relevant reads the local`() {
+        val (inlined, result) = runConeOfInfluence(
+            """
+                inlined oxsts of semantifyr::Anything
+                var a : int := 0
+                var seen : int := 0
+                var other : int := 0
+                init { }
+                tran {
+                    a := 1 - a
+                    var s : int := a
+                    other := s
+                    seen := 1
+                }
+                prop { EF (seen == 1) }
+            """,
+        )
+
+        val a = inlined.varNamed("a")
+        assertThat(result.isRelevant(a)).isFalse
+        assertThat(result.isRelevant(inlined.assignmentsTo(a).single())).isFalse
+    }
+
     private fun InlinedOxsts.varNamed(name: String): VariableDeclaration {
         return eAllOfType<VariableDeclaration>().firstOrNull {
             it.name == name
