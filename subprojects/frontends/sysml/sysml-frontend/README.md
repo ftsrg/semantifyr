@@ -6,7 +6,7 @@
 
 # SysML v2 frontend
 
-The semantic library lives in `../models/libraries` (`default`, and the `topdown` variant with top-down transition priority); the example models in `../models/examples`.
+The semantic library lives in `../models/libraries/default`, the example models in `../models/examples`. A variant is a package of the library that imports the base packages and subclasses the classes it changes: `semantifyr::sysml::topdown` (`TopDown.oxsts`) gives `State` top-down transition priority. `SysMLv2Variant.TopDown` puts its import before the base imports of the compiled model, and the first import that declares a name wins.
 
 Running the tests:
 
