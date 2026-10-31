@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.IntegerEvaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
@@ -132,7 +133,7 @@ class TransitionCallTraceTransformerTest {
     }
 
     @Test
-    fun `finalize registers tracer variables and prepends resets to every main transition branch`() {
+    fun `declareTracers registers tracer variables and prepends resets to every main transition branch`() {
         val transformer = newTransformer()
         val inlinedOxsts = OxstsFactory.createInlinedOxsts().also {
             it.mainTransition = OxstsFactory.createTransitionDeclaration().also { transition ->
@@ -145,7 +146,7 @@ class TransitionCallTraceTransformerTest {
         val firstVariable = (firstAssignment.reference as ElementReference).element as VariableDeclaration
         val secondVariable = (secondAssignment.reference as ElementReference).element as VariableDeclaration
 
-        transformer.finalize(inlinedOxsts)
+        transformer.declareTracers(inlinedOxsts)
 
         assertThat(inlinedOxsts.variables).containsExactly(firstVariable, secondVariable)
         for (branch in inlinedOxsts.mainTransition.branches) {
@@ -164,18 +165,40 @@ class TransitionCallTraceTransformerTest {
     fun `finalize returns a map that resolves recorded traces by tracer variable`() {
         val transformer = newTransformer()
         val transition = mockTransitionDeclaration()
-        val inlinedOxsts = OxstsFactory.createInlinedOxsts().also {
-            it.mainTransition = OxstsFactory.createTransitionDeclaration()
-        }
 
         val operation = transformer.traceTransitionCall(instance, container, transition, emptyCallExpression, emptyBody)
         val variable = (operation.reference as ElementReference).element as VariableDeclaration
-        val map = transformer.finalize(inlinedOxsts)
+        val map = transformer.finalize(inlinedOxstsCalling(operation))
 
         val trace = map.getTransitionCallTrace(variable)
         assertThat(trace.transitionDeclaration).isSameAs(transition)
         assertThat(trace.self.instances).containsExactly(container)
         assertThat(trace.parent).isNull()
+    }
+
+    @Test
+    fun `finalize drops the tracers whose assignment left the model`() {
+        val transformer = newTransformer()
+        val calledAssignment = transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody)
+        val uncalledAssignment = transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody)
+        val calledVariable = (calledAssignment.reference as ElementReference).element as VariableDeclaration
+        val uncalledVariable = (uncalledAssignment.reference as ElementReference).element as VariableDeclaration
+        val inlinedOxsts = inlinedOxstsCalling(calledAssignment)
+        transformer.declareTracers(inlinedOxsts)
+
+        val map = transformer.finalize(inlinedOxsts)
+
+        assertThat(inlinedOxsts.variables).containsExactly(calledVariable)
+        val assignedVariables = inlinedOxsts.mainTransition.branches.single().steps.map {
+            ((it as AssignmentOperation).reference as ElementReference).element
+        }
+        assertThat(assignedVariables).containsExactly(calledVariable, calledVariable)
+        assertThat(map.getTransitionCallTrace(calledVariable).self.instances).containsExactly(container)
+        assertThat(
+            runCatching {
+                map.getTransitionCallTrace(uncalledVariable)
+            }.isFailure,
+        ).isTrue
     }
 
     @Test
@@ -194,13 +217,9 @@ class TransitionCallTraceTransformerTest {
             }
         }
         whenever(evaluator.evaluate(argumentExpression)).thenReturn(IntegerEvaluation(3))
-        val inlinedOxsts = OxstsFactory.createInlinedOxsts().also {
-            it.mainTransition = OxstsFactory.createTransitionDeclaration()
-        }
-
         val operation = transformer.traceTransitionCall(instance, container, transition, callExpression, emptyBody)
         val variable = (operation.reference as ElementReference).element as VariableDeclaration
-        val trace = transformer.finalize(inlinedOxsts).getTransitionCallTrace(variable)
+        val trace = transformer.finalize(inlinedOxstsCalling(operation)).getTransitionCallTrace(variable)
 
         assertThat(trace.arguments.single().parameterDeclaration).isSameAs(parameter)
         assertThat(trace.arguments.single().evaluation).isEqualTo(IntegerEvaluation(3))
@@ -230,16 +249,22 @@ class TransitionCallTraceTransformerTest {
             }
         }
         whenever(evaluator.evaluate(secondExpression)).thenReturn(IntegerEvaluation(3))
-        val inlinedOxsts = OxstsFactory.createInlinedOxsts().also {
-            it.mainTransition = OxstsFactory.createTransitionDeclaration()
-        }
-
         val operation = transformer.traceTransitionCall(instance, container, transition, callExpression, emptyBody)
         val variable = (operation.reference as ElementReference).element as VariableDeclaration
-        val trace = transformer.finalize(inlinedOxsts).getTransitionCallTrace(variable)
+        val trace = transformer.finalize(inlinedOxstsCalling(operation)).getTransitionCallTrace(variable)
 
         assertThat(trace.arguments.single().parameterDeclaration).isSameAs(second)
         assertThat(trace.arguments.single().evaluation).isEqualTo(IntegerEvaluation(3))
+    }
+
+    private fun inlinedOxstsCalling(operation: AssignmentOperation): InlinedOxsts {
+        return OxstsFactory.createInlinedOxsts().also {
+            it.mainTransition = OxstsFactory.createTransitionDeclaration().also { transition ->
+                transition.branches += OxstsFactory.createSequenceOperation().also { branch ->
+                    branch.steps += operation
+                }
+            }
+        }
     }
 
     private fun tracerVariableNameOf(operation: AssignmentOperation): String {

@@ -28,6 +28,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParameterDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
+import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtext.EcoreUtil2
 
 class ArgumentTrace(
@@ -90,7 +91,7 @@ class TransitionCallTraceTransformer @Inject constructor(
         enclose(expansion, enclosingTrace)
     }
 
-    fun finalize(inlinedOxsts: InlinedOxsts): TransitionCallTraceMap {
+    fun declareTracers(inlinedOxsts: InlinedOxsts) {
         val tracerVariables = tracerAssignments.keys.map {
             it.tracerVariable
         }
@@ -102,8 +103,27 @@ class TransitionCallTraceTransformer @Inject constructor(
                 }
             }
         }
+    }
+
+    // a tracer whose assignment the optimizer removed belongs to a call that cannot execute
+    fun finalize(inlinedOxsts: InlinedOxsts): TransitionCallTraceMap {
+        val (calledTraces, uncalledTraces) = tracerAssignments.entries.partition {
+            EcoreUtil.isAncestor(inlinedOxsts, it.key)
+        }
+        val uncalledVariables = uncalledTraces.map {
+            it.key.tracerVariable
+        }.toSet()
+        if (uncalledVariables.isNotEmpty()) {
+            val resets = inlinedOxsts.eAllOfType<AssignmentOperation>().filter {
+                (it.reference as? ElementReference)?.element in uncalledVariables
+            }.toList()
+            for (reset in resets) {
+                EcoreUtil2.remove(reset)
+            }
+            inlinedOxsts.variables -= uncalledVariables
+        }
         return TransitionCallTraceMap(
-            tracerAssignments.entries.associate {
+            calledTraces.associate {
                 it.key.tracerVariable to it.value
             },
         )
