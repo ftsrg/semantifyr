@@ -53,3 +53,28 @@ jobs:
         run: |
           tag=${TAG:-$(ssh live status semantifyr-live-staging)}
           tar -C deploy/live -cz compose.yaml deploy.sh | ssh live deploy "$INSTANCE" "$tag"
+
+  smoke-test:
+    name: Smoke test ${{ inputs.instance }}
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Build editor-common
+        run: npm run assemble -w @semantifyr/editor-common
+      - name: Smoke test
+        timeout-minutes: 5
+        env:
+          SEMANTIFYR_LIVE_URL: ${{ inputs.url }}
+        run: npm run smoke -w @ftsrg/semantifyr-live-frontend

@@ -8,6 +8,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "smoke": "vitest run --config vitest.smoke.config.ts",
     "check": "npm run typecheck && npm run lint && npm run test",
     "assemble": "vite build",
     "build": "npm run check && npm run assemble",
