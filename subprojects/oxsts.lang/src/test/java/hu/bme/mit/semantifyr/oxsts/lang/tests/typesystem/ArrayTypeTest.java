@@ -172,35 +172,69 @@ public class ArrayTypeTest {
     }
 
     @Test
-    void classTypedArrayIsRejectedAtItsTypeSpecification() {
+    void classAndFeatureTypedArraysPass() {
+        var pkg = parseHelper.parse("""
+            package test
+            class Worker {
+                var done: bool := false
+                tran step() { done := true }
+                prop isDone(): bool { return done }
+            }
+            class C {
+                contains workers: Worker[0..*]
+                contains first: Worker subsets workers
+                contains second: Worker subsets workers
+                var queue: Worker[2] := [first, second]
+                var picks: workers[1..2]
+                var i: int := 0
+                redefine tran {
+                    queue[i] := second
+                    picks := queue
+                    havoc(picks)
+                    inline queue[i].step()
+                }
+                prop { return EF (picks[0] == first && queue[1].isDone()) }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        pkg.assertNoValidationErrors();
+    }
+
+    @Test
+    void memberAccessThroughAnArraySlotIsRejected() {
+        var pkg = parseHelper.parse("""
+            package test
+            class Worker {
+                var done: bool := false
+            }
+            class C {
+                contains first: Worker
+                var queue: Worker[2] := [first, first]
+                prop { return EF queue[0].done }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        pkg.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'queue'");
+        assertOnlyErrorsAreUnsupportedAtLine(pkg, 8);
+    }
+
+    @Test
+    void localClassTypedArrayIsRejected() {
         var pkg = parseHelper.parse("""
             package test
             class Worker { }
             class C {
                 contains worker: Worker
-                var slots: Worker[2]
+                redefine tran {
+                    var slots: Worker[2]
+                }
             }
             """, CheckMode.ALL);
 
         pkg.assertNoResourceErrors();
-        pkg.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "element type 'Worker'");
-        assertOnlyErrorsAreUnsupportedAtLine(pkg, 5);
-    }
-
-    @Test
-    void featureTypedArrayIsRejectedAtItsTypeSpecification() {
-        var pkg = parseHelper.parse("""
-            package test
-            class Worker { }
-            class C {
-                contains workers: Worker[0..*]
-                contains first: Worker subsets workers
-                var slots: workers[1..2]
-            }
-            """, CheckMode.ALL);
-
-        pkg.assertNoResourceErrors();
-        pkg.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "element type 'workers'");
+        pkg.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "Local arrays of class or feature type");
         assertOnlyErrorsAreUnsupportedAtLine(pkg, 6);
     }
 

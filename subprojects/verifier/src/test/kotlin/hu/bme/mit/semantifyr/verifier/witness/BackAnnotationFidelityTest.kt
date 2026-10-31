@@ -26,6 +26,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
@@ -60,6 +61,7 @@ class BackAnnotationFidelityTest {
     private val tracingCase = "semantifyr::verification::lang::tracing::TracedChoiceBranchReach"
     private val arraysCase = "semantifyr::verification::lang::arrays::ArraySlotIndependenceReach"
     private val recordsCase = "semantifyr::verification::lang::records::ContainedRecordReach"
+    private val classTypedArraysCase = "semantifyr::verification::lang::arrays::ClassTypedArrayDispatchReach"
 
     private val kitchenOn = flattenedName("root", "kitchen", "lamp", "on")
     private val hallOn = flattenedName("root", "hall", "lamp", "on")
@@ -173,6 +175,29 @@ class BackAnnotationFidelityTest {
             WitnessStateValue("root.robot.position.x", "1"),
         )
         assertThat(readWitnessModel(output, case)).contains("root.robot.position.x == 1")
+    }
+
+    @Test
+    suspend fun `class-typed array slots back-annotate to the instance path they hold`(@TempDir output: Path) {
+        val case = loadCase("arrays.oxsts", classTypedArraysCase)
+        val slots = (0..1).map {
+            flattenedName("root", "queue_$it")
+        }
+
+        verifyWithWitness(case, output) { model ->
+            val secondId = (model.variables.single { it.name == slots[1] }.expression as LiteralInteger).value
+            thetaShapedWitness(
+                model,
+                model.state(slots[0] to secondId, slots[1] to secondId),
+                model.state(slots[0] to secondId, slots[1] to secondId),
+            )
+        }
+
+        assertThat(readWitnessState(output, case).initialStep.values).contains(
+            WitnessStateValue("root.queue[0]", "root.second"),
+            WitnessStateValue("root.queue[1]", "root.second"),
+        )
+        assertThat(readWitnessModel(output, case)).contains("root.queue[0] == root.second")
     }
 
     @Test

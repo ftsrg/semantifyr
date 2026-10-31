@@ -115,7 +115,7 @@ class OxstsFlattener @Inject constructor(
         logger.debug { "Flattening array variables" }
         val arraySlotVariables = arrayFlatteningPass.flattenArrays(inlinedOxsts)
         logger.debug { "Flattened ${arraySlotVariables.size} array variable(s)" }
-        val arraySlots = registerArraySlots(arraySlotVariables, variableHolders, variableMappings)
+        val arraySlots = registerArraySlots(arraySlotVariables, variableHolders, variableMappings, variableInstanceDomain)
 
         havocUninitializedLocals(inlinedOxsts)
 
@@ -184,9 +184,15 @@ class OxstsFlattener @Inject constructor(
         arraySlotVariables: Map<VariableDeclaration, List<VariableDeclaration>>,
         variableHolders: MutableMap<VariableDeclaration, Instance>,
         variableMappings: Map<Instance, Map<VariableDeclaration, VariableDeclaration>>,
+        variableInstanceDomain: MutableMap<VariableDeclaration, Set<Instance>>,
     ): Map<VariableDeclaration, ArraySlot> {
         val arraySlots = mutableMapOf<VariableDeclaration, ArraySlot>()
         for ((arrayVariable, slotVariables) in arraySlotVariables) {
+            variableInstanceDomain.remove(arrayVariable)?.let { instances ->
+                for (slotVariable in slotVariables) {
+                    variableInstanceDomain[slotVariable] = instances
+                }
+            }
             val holder = variableHolders[arrayVariable] ?: continue
             val originalVariable = variableMappings.getValue(holder).entries.single {
                 it.value == arrayVariable

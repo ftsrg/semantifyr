@@ -4,11 +4,14 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package semantifyr::constructs::class_typed_array
+package semantifyr::constructs::local_class_typed_array
 
 class Worker { }
 
 class Host {
     contains worker: Worker
-    var slots: Worker[2]
+
+    redefine tran {
+        var slots: Worker[2] := [worker, worker]
+    }
 }

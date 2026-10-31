@@ -72,7 +72,7 @@ public class UnsupportedFeatureTest {
         assertThat(pkg.getIssues())
                 .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
                 .singleElement()
-                .satisfies(issue -> assertThat(issue.getMessage()).contains("Arrays of class or feature type"));
+                .satisfies(issue -> assertThat(issue.getMessage()).contains("Local arrays of class or feature type"));
     }
 
     @Test

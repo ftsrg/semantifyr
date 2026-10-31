@@ -4,9 +4,10 @@ Array literals `[a, b, c]`	pass	semantic/arrays.oxsts	ArrayLiteralInit0Reach
 Indexing `a[K]` (constant)	pass	semantic/arrays.oxsts	ArraySlotIndependenceReach
 Indexing `a[i]` (runtime)	pass	semantic/arrays.oxsts	ArrayRuntimeIndexReach
 Array `[lb..ub]` multiplicity	pass	semantic/arrays.oxsts	ArrayRangedMultiplicityReach
-Class-typed arrays	reject	constructs/class_typed_array.oxsts	OXSTS.UNSUPPORTED_FEATURE
-Feature-typed arrays	reject	constructs/feature_typed_array.oxsts	OXSTS.UNSUPPORTED_FEATURE
+Class-typed arrays	pass	semantic/arrays.oxsts	ClassTypedArrayReach
+Feature-typed arrays	pass	semantic/arrays.oxsts	FeatureTypedArrayHavocBound
 Local arrays	pass	semantic/arrays.oxsts	LocalArrayRuntimeIndexReach
+Local arrays of class or feature type	reject	constructs/local_class_typed_array.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Parameter arrays	reject	constructs/parameter_array.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Unbounded variable multiplicity `[]`, `[lb..*]`	reject	constructs/unbounded_variable.oxsts	OXSTS.TYPE_MISMATCH
 Call through a variable `v.t()`	pass	semantic/variable_dispatch.oxsts	ClassTypedDispatchReach
