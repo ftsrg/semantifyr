@@ -29,6 +29,37 @@ import example::library
 
 Without an `import`, symbols from another package can still be referenced by their fully qualified name (for example, `example::library::Foo`).
 
+## Name Resolution
+
+A name is looked up in the enclosing declarations first, then in the file's own package, then in the explicit imports in the order they are written, then in the implicit imports. When two imported packages declare the same name, the first import wins.
+
+## Variants
+
+A library ships a semantic variant as a package that imports the base package and subclasses the classes it changes under the same name:
+
+```oxsts
+package example::topdown
+
+import example::library
+
+class State : example::library::State {
+    redefine tran fireTransitions() {
+        inline fireLocalTransitions()
+    }
+}
+```
+
+A model selects the variant by importing it before the base package, so its `State` shadows the base one:
+
+```oxsts
+package example::application
+
+import example::topdown
+import example::library
+```
+
+The SysML v2 library's `semantifyr::sysml::topdown` package is such a variant: its `State` gives the transitions of an outer state priority over those of its inner states.
+
 ## Implicit Imports
 
 The [`semantifyr` standard library](standard-library.md) is always in scope.

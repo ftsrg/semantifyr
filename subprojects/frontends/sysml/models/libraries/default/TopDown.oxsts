@@ -1,0 +1,14 @@
+package semantifyr::sysml::topdown
+
+import semantifyr::sysml::states
+
+class State : semantifyr::sysml::states::State {
+    redefine tran fireTransitions() {
+        choice {
+            inline fireLocalTransitions()
+        } or {
+            inline assumeNoLocalTransitionEnabled()
+            inline fireInnerTransitions()
+        }
+    }
+}

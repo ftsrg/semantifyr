@@ -27,6 +27,8 @@ import hu.bme.mit.semantifyr.verifier.toJavaDto
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 import kotlin.time.Duration
 import kotlin.time.measureTimedValue
 import kotlin.time.toKotlinDuration
@@ -227,7 +229,7 @@ class SysMLv2Frontend private constructor(
             val effectiveLoader = loader ?: effectiveOxstsInjector.getInstance(SemantifyrLoader::class.java)
             val discoverer = effectiveOxstsInjector.getInstance(VerificationCaseDiscoverer::class.java)
 
-            val resolvedLibraryPaths = libraryOverride ?: extractVariantLibrary()
+            val resolvedLibraryPaths = libraryOverride ?: extractLibrary()
 
             val (compiledOxsts, transformationDuration) = measureTimedValue {
                 compiledOxstsOverride ?: run {
@@ -238,7 +240,9 @@ class SysMLv2Frontend private constructor(
                     sharedSysMLv2Compiler.compile(
                         sourcePath = resolvedSource,
                         outputPath = target,
-                    )
+                    ).also {
+                        importVariant(it)
+                    }
                 }
             }
 
@@ -269,16 +273,24 @@ class SysMLv2Frontend private constructor(
             )
         }
 
-        private fun extractVariantLibrary(): List<Path> {
+        // the first import that declares a name wins, so the variant's classes shadow the base library's
+        private fun importVariant(compiledOxsts: Path) {
+            val variantPackage = variant.importedPackage ?: return
+            val source = compiledOxsts.readText()
+            val packageDeclaration = Regex("^package .*$", RegexOption.MULTILINE).find(source) ?: error("Compiled OXSTS '$compiledOxsts' declares no package")
+            compiledOxsts.writeText(source.replaceRange(packageDeclaration.range, "${packageDeclaration.value}\n\nimport $variantPackage"))
+        }
+
+        private fun extractLibrary(): List<Path> {
             val libraryPath = Path.of(
                 System.getProperty("user.home"),
                 ".semantifyr",
                 "sysmlv2",
-                variant.name.lowercase(),
+                LIBRARY_RESOURCE_PREFIX,
             )
             val library = ClasspathBasedOxstsLibrary(
                 javaClass.classLoader,
-                variant.resourcePrefix,
+                LIBRARY_RESOURCE_PREFIX,
                 libraryPath,
             )
             return listOf(library.extractedLibraryPath)
@@ -286,6 +298,8 @@ class SysMLv2Frontend private constructor(
     }
 
     companion object {
+        private const val LIBRARY_RESOURCE_PREFIX = "default"
+
         @JvmStatic
         fun builder(): Builder {
             return Builder()

@@ -7,8 +7,8 @@
 package hu.bme.mit.semantifyr.frontends.sysml
 
 enum class SysMLv2Variant(
-    internal val resourcePrefix: String,
+    internal val importedPackage: String?,
 ) {
-    Default("default"),
-    TopDown("topdown"),
+    Default(null),
+    TopDown("semantifyr::sysml::topdown"),
 }
