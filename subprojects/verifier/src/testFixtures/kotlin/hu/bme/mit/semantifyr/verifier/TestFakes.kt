@@ -10,6 +10,7 @@ import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendConfig
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
@@ -78,7 +79,10 @@ val FakeExecutorKey = ExecutorKey<AlwaysAvailableExecutor>(name = "fake") {
     AlwaysAvailableExecutor()
 }
 
-data class FakeConfig(override val id: String = "fake") : BackendConfig
+data class FakeConfig(
+    override val id: String = "fake",
+    override val soundness: SoundnessDirection = SoundnessDirection.Exact,
+) : BackendConfig
 
 class FakeBackend(
     override val id: String,
