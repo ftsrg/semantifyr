@@ -81,6 +81,97 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
         assertThat(result.isConstant(a)).isFalse
     }
 
+    @Test
+    fun `uninitialized variable read by the property is not constant although init writes it`() {
+        val (inlined, result) = runConstantValue(
+            """
+                inlined oxsts of semantifyr::Anything
+                var x : int
+                init { x := 3 }
+                tran { }
+                prop { AG (x == 3) }
+            """,
+        )
+
+        assertThat(result.isConstant(inlined.varNamed("x")))
+            .`as`("the property is checked in the pre-init state, where x is havoced")
+            .isFalse
+    }
+
+    @Test
+    fun `uninitialized variable written only conditionally in init is not constant`() {
+        val (inlined, result) = runConstantValue(
+            """
+                inlined oxsts of semantifyr::Anything
+                var x : int
+                var y : int := 3
+                init {
+                    choice { x := 3 } or { }
+                }
+                tran { y := x }
+                prop { AG (y == 3) }
+            """,
+        )
+
+        assertThat(result.isConstant(inlined.varNamed("x"))).isFalse
+    }
+
+    @Test
+    fun `uninitialized variable written only in tran is not constant`() {
+        val (inlined, result) = runConstantValue(
+            """
+                inlined oxsts of semantifyr::Anything
+                var x : int
+                var y : int := 3
+                init { }
+                tran {
+                    y := x
+                    x := 3
+                }
+                prop { AG (y == 3) }
+            """,
+        )
+
+        assertThat(result.isConstant(inlined.varNamed("x"))).isFalse
+    }
+
+    @Test
+    fun `uninitialized variable read in init is not constant`() {
+        val (inlined, result) = runConstantValue(
+            """
+                inlined oxsts of semantifyr::Anything
+                var x : int
+                var y : int := 3
+                init {
+                    y := x
+                    x := 3
+                }
+                tran { }
+                prop { AG (y == 3) }
+            """,
+        )
+
+        assertThat(result.isConstant(inlined.varNamed("x"))).isFalse
+    }
+
+    @Test
+    fun `uninitialized variable that init must write and only tran reads is constant`() {
+        val (inlined, result) = runConstantValue(
+            """
+                inlined oxsts of semantifyr::Anything
+                var x : int
+                var y : int := 3
+                init {
+                    choice { x := 3 } or { x := 3 }
+                }
+                tran { y := x }
+                prop { AG (y == 3) }
+            """,
+        )
+
+        assertThat(result.isConstant(inlined.varNamed("x"))).isTrue
+    }
+
     private fun InlinedOxsts.varNamed(name: String): VariableDeclaration {
         return eAllOfType<VariableDeclaration>().firstOrNull { it.name == name }
             ?: error("No variable named '$name' in inlined oxsts")

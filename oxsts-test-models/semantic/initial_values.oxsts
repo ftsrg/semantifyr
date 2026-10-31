@@ -83,17 +83,39 @@ class UninitializedEnumReach {
 
 // --- init runs after the initial choice ---
 
-// The init transition overwrites the arbitrary initial value.
+// The init transition overwrites the arbitrary initial value. The property is also checked in the pre-init state, so it holds there through the guard.
 @VerificationCase
 @Tag("expect-pass")
 class InitOverwritesUninitialized {
     var x: int
+    var initialized: bool := false
 
     redefine init {
         x := 3
+        initialized := true
     }
 
     prop {
-        return AG x == 3
+        return AG (!initialized || x == 3)
+    }
+}
+
+// A conditional init write keeps the arbitrary initial value on the branch that skips it.
+@VerificationCase
+@Tag("expect-fail")
+class ConditionalInitKeepsUninitialized {
+    var x: int
+    var initialized: bool := false
+
+    redefine init {
+        choice {
+            x := 3
+        } or {
+        }
+        initialized := true
+    }
+
+    prop {
+        return AG (!initialized || x == 3)
     }
 }
