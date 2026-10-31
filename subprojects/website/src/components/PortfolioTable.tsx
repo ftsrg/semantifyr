@@ -11,22 +11,32 @@ interface Props {
   verifyHelp: string;
 }
 
+interface Leg {
+  id: string;
+  soundness: string;
+}
+
 interface Portfolio {
   id: string;
   description: string;
+  legs: Leg[];
 }
 
 // The line format of `semantifyr portfolios`; availability depends on the build host, so it is dropped.
 const ENTRY = /^(\S+) {2}- {2}.+? {2}(?:Available|Unavailable \(.*\))$/;
+const LEG = /^ {4}leg: (\S+) \((\w+)\)$/;
 const DEFAULT_PORTFOLIO = /Portfolio id\. Default: '([^']+)'/;
 
 function parsePortfolios(listing: string): Portfolio[] {
   const portfolios: Portfolio[] = [];
   for (const line of listing.split('\n')) {
     const id = ENTRY.exec(line)?.[1];
+    const [, legId, soundness] = LEG.exec(line) ?? [];
     const last = portfolios.at(-1);
     if (id !== undefined) {
-      portfolios.push({ id, description: '' });
+      portfolios.push({ id, description: '', legs: [] });
+    } else if (last && legId !== undefined && soundness !== undefined) {
+      last.legs.push({ id: legId, soundness });
     } else if (last && line.startsWith('    ') && !line.trimStart().startsWith('hint:')) {
       last.description = line.trim();
     }
@@ -48,6 +58,7 @@ export default function PortfolioTable({ listing, verifyHelp }: Props): React.JS
         <tr>
           <th>Portfolio</th>
           <th>Description</th>
+          <th>Legs</th>
         </tr>
       </thead>
       <tbody>
@@ -58,6 +69,13 @@ export default function PortfolioTable({ listing, verifyHelp }: Props): React.JS
               {portfolio.id === defaultId && ' (default)'}
             </td>
             <td>{portfolio.description}</td>
+            <td>
+              {portfolio.legs.map((leg) => (
+                <div key={leg.id}>
+                  <code>{leg.id}</code> {leg.soundness}
+                </div>
+              ))}
+            </td>
           </tr>
         ))}
       </tbody>

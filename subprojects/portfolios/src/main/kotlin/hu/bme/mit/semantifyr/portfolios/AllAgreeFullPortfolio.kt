@@ -42,7 +42,7 @@ class AllAgreeFullPortfolio(
 ) : VerificationPortfolio() {
     override val id: String = "all-agree-full"
     override val displayName: String = "All backends agree portfolio"
-    override val description: String = "Runs one representative config per backend in parallel."
+    override val description: String = "Runs one representative configuration per backend in parallel and requires the trusted verdicts to agree."
 
     private val tasks: List<PortfolioTask<*>> = listOf(
         PortfolioTask(theta, ThetaConfig.CegarExplPredCombined, "theta-cegar-combined"),
@@ -52,6 +52,7 @@ class AllAgreeFullPortfolio(
     )
 
     override val executorKeys: Set<ExecutorKey<*>> = tasks.map { it.executorKey }.toSet()
+    override val legs = tasks.map { it.leg }
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
         val anyAvailable = tasks.any {
