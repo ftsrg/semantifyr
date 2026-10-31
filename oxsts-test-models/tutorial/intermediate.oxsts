@@ -32,7 +32,7 @@ class Transition {
     }
 }
 
-class Statechart {    
+class Statechart {
     contains states: State[0..*] opposite parent
     contains transitions: Transition[0..*]
 
@@ -90,6 +90,7 @@ class Intersection {
 }
 
 @VerificationCase
+@Tag("expect-pass")
 class GreenColorIsReachable {
     contains light: TrafficLight[1]
 
@@ -107,6 +108,7 @@ class GreenColorIsReachable {
 }
 
 @VerificationCase
+@Tag("expect-pass")
 class IntersectionNeverBothGreen {
     contains intersection: Intersection
 
