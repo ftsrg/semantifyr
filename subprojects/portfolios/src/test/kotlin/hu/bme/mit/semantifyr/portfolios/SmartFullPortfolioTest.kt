@@ -10,6 +10,7 @@ import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.portfolio.LimitedConcurrencyGate
 import org.assertj.core.api.Assertions.assertThat
@@ -56,6 +57,60 @@ class SmartFullPortfolioTest {
         val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+    }
+
+    @Test
+    suspend fun `a Passed from an under-approximating leg does not win the race`(
+        @TempDir output: Path,
+    ) {
+        val portfolio = SmartFullPortfolio(
+            timeout = 5.seconds,
+            theta = SlowBackend("theta", delayMillis = 200, verdict = VerificationVerdict.Failed),
+            uppaal = PassingBackend("uppaal"),
+            nuxmv = PassingBackend("nuxmv"),
+            spin = PassingBackend("spin"),
+        )
+
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        assertThat(result.metadata.backendId).isEqualTo("theta")
+    }
+
+    @Test
+    suspend fun `an under-approximating leg that reaches the target decides a reachability property`(
+        @TempDir output: Path,
+    ) {
+        val portfolio = SmartFullPortfolio(
+            timeout = 5.seconds,
+            theta = NotSupportedBackend("theta"),
+            uppaal = NotSupportedBackend("uppaal"),
+            nuxmv = NotSupportedBackend("nuxmv"),
+            spin = PassingBackend("spin"),
+        )
+
+        val result = portfolio.verify(parentInjector, stubRequest(output, OxstsFactory.createEF()), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(result.metadata.backendId).isEqualTo("spin")
+    }
+
+    @Test
+    suspend fun `untrusted verdicts alone yield Inconclusive naming every leg`(
+        @TempDir output: Path,
+    ) {
+        val portfolio = SmartFullPortfolio(
+            timeout = 5.seconds,
+            theta = NotSupportedBackend("theta"),
+            uppaal = PassingBackend("uppaal"),
+            nuxmv = NotSupportedBackend("nuxmv"),
+            spin = PassingBackend("spin"),
+        )
+
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
+        assertThat(result.message).contains("spin=Passed (not trusted, UnderApproximating)", "uppaal=Passed (not trusted, UnderApproximating)", "theta=NotSupported")
     }
 
     @Test

@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.backend
 import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import kotlinx.coroutines.TimeoutCancellationException
@@ -58,9 +59,11 @@ class VerificationContextTest {
         private val prepareStep: () -> String = { "artifacts" },
         private val runStep: suspend () -> String? = { "pass" },
         private val witness: InlinedWitness? = null,
-        inlinedOxsts: InlinedOxsts = OxstsFactory.createInlinedOxsts(),
+        inlinedOxsts: InlinedOxsts = modelChecking(OxstsFactory.createAG()),
+        soundness: SoundnessDirection = SoundnessDirection.Exact,
     ) : VerificationContext<String, String>(
         backendId = "scripted",
+        soundness = soundness,
         request = BackendVerificationRequest(inlinedOxsts, Path("build")),
     ) {
         override val capabilityChecker = RejectingVariables()
@@ -104,6 +107,30 @@ class VerificationContextTest {
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(result.metadata.backendId).isEqualTo("scripted")
         assertThat(result.message).isNull()
+    }
+
+    @Test
+    suspend fun `the result carries the direction and does not trust a verdict outside it`() {
+        val context = ScriptedContext(soundness = SoundnessDirection.UnderApproximating)
+
+        val result = context.execute()
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(result.soundness).isEqualTo(SoundnessDirection.UnderApproximating)
+        assertThat(result.isTrusted).isFalse
+    }
+
+    @Test
+    suspend fun `an under-approximating context trusts a reached target`() {
+        val context = ScriptedContext(
+            inlinedOxsts = modelChecking(OxstsFactory.createEF()),
+            soundness = SoundnessDirection.UnderApproximating,
+        )
+
+        val result = context.execute()
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(result.isTrusted).isTrue
     }
 
     @Test
@@ -219,5 +246,13 @@ class VerificationContextTest {
     @Test
     fun `Timeout is not decisive`() {
         assertThat(VerificationVerdict.Timeout.isDecisive).isFalse
+    }
+}
+
+private fun modelChecking(property: Expression): InlinedOxsts {
+    return OxstsFactory.createInlinedOxsts().also {
+        it.property = OxstsFactory.createPropertyDeclaration().also { declaration ->
+            declaration.expression = property
+        }
     }
 }

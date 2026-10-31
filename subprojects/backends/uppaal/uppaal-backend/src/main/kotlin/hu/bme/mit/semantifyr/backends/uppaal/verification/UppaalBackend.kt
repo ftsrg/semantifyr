@@ -79,6 +79,7 @@ class UppaalVerificationContext @AssistedInject constructor(
     private val uppaalInlinedOxstsWitnessTransformer: UppaalInlinedOxstsWitnessTransformer,
 ) : VerificationContext<UppaalArtifacts, UppaalVerdict>(
     backendId = "uppaal:${config.id}",
+    soundness = config.soundness,
     request = request,
 ) {
 
