@@ -59,6 +59,7 @@ The repository is organized under `subprojects/`:
 | Verifier | `subprojects/verifier/` | Verification cases, verdicts, witnesses |
 | Backends | `subprojects/backends/` | Theta, nuXmv, Spin and Uppaal integrations |
 | Portfolios | `subprojects/portfolios/` | Backend configurations raced or combined per case |
+| Benchmark | `subprojects/benchmark/` | Benchmark campaigns, see [Benchmarking](benchmarking.md) |
 | Frontends | `subprojects/frontends/` | Gamma and SysML v2 frontends |
 | CLI | `subprojects/semantifyr-cli/` | The `semantifyr` command-line interface |
 | VS Code extension | `subprojects/semantifyr-vscode/` | Extension packaging and launch configs |
