@@ -233,19 +233,31 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
     }
 
     @Test
-    suspend fun `a for operation is not supported`() {
-        val exception = assertThrows<BackendUnsupportedException> {
-            xsts(
-                """
-                    var x : int := 0
-                    init { }
-                    tran { for (i in 0 .. 2) { x := x + i } }
-                    prop { AG true }
-                """,
-            )
-        }
+    suspend fun `a for operation over an inclusive range runs up to and including its end`() {
+        val lines = xstsLines(
+            """
+                var x : int := 0
+                init { }
+                tran { for (i in 0 .. 2) { x := x + i } }
+                prop { AG true }
+            """,
+        )
 
-        assertThat(exception.message).isEqualTo("Theta does not support for-operations")
+        assertThat(lines).containsSequence("for", "i\$\$\$local0", "from 0 to 2 + 1 do {", "x := x + i\$\$\$local0;", "}")
+    }
+
+    @Test
+    suspend fun `a for operation over an exclusive range stops before its end`() {
+        val lines = xstsLines(
+            """
+                var x : int := 0
+                init { }
+                tran { for (i in 0 ..< 3) { x := x + i } }
+                prop { AG true }
+            """,
+        )
+
+        assertThat(lines).containsSequence("for", "i\$\$\$local0", "from 0 to 3 do {", "x := x + i\$\$\$local0;", "}")
     }
 
     @Test
