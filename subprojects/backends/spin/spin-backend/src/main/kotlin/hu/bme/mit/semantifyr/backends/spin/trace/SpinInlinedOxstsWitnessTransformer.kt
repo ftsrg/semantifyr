@@ -31,24 +31,25 @@ class SpinInlinedOxstsWitnessTransformer @Inject constructor(
             spinVariableTransformer.nameOf(it)
         }
 
+        // the replay prints a global only when it changes, so every value starts from its declaration
         val running = mutableMapOf<VariableDeclaration, Expression>()
-        val updated = mutableSetOf<VariableDeclaration>()
+        for (variable in inlinedOxsts.variables) {
+            declaredValue(variable)?.let {
+                running[variable] = it
+            }
+        }
 
         val states = trace.states.mapNotNull { state ->
             for ((name, raw) in state.variableValues) {
                 val variable = nameToVar[name] ?: continue
                 val value = parseValue(variable, raw) ?: continue
                 running[variable] = value
-                updated += variable
             }
             val stable = state.variableValues[SPIN_STABLE_FLAG]
             if (stable != "1" && stable != "true") {
                 return@mapNotNull null
             }
             val values = inlinedOxsts.variables.mapNotNull { variable ->
-                if (variable !in updated) {
-                    return@mapNotNull null
-                }
                 running[variable]?.let {
                     WitnessStateValue(variable, it.copy())
                 }
@@ -57,6 +58,19 @@ class SpinInlinedOxstsWitnessTransformer @Inject constructor(
         }
 
         return linearInlinedWitness(inlinedOxsts, states)
+    }
+
+    // Promela starts an uninitialized int or bool at 0, an uninitialized mtype is always havoced
+    private fun declaredValue(variable: VariableDeclaration): Expression? {
+        val initializer = variable.expression
+        if (initializer != null) {
+            return initializer.copy()
+        }
+        return when (spinVariableTransformer.describe(variable).kind) {
+            SpinVariableKind.Integer -> OxstsFactory.createLiteralInteger(0)
+            SpinVariableKind.Boolean -> OxstsFactory.createLiteralBoolean(false)
+            SpinVariableKind.Enum -> null
+        }
     }
 
     private fun parseValue(variable: VariableDeclaration, raw: String): Expression? {
