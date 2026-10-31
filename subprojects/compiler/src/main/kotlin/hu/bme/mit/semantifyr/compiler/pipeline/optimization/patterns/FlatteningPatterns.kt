@@ -25,6 +25,8 @@ class FlatteningPattern : CompositeOptimizationPattern() {
 }
 
 class FlattenNestedChoicePattern : OptimizationPattern {
+    override val rootTypes = setOf(ChoiceOperation::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is ChoiceOperation) {
             return false
@@ -42,6 +44,8 @@ class FlattenNestedChoicePattern : OptimizationPattern {
 }
 
 class FlattenNestedSequencePattern : OptimizationPattern {
+    override val rootTypes = setOf(SequenceOperation::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is SequenceOperation) {
             return false
@@ -57,6 +61,8 @@ class FlattenNestedSequencePattern : OptimizationPattern {
 }
 
 class FlattenSingleBranchChoicePattern : OptimizationPattern {
+    override val rootTypes = setOf(ChoiceOperation::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is ChoiceOperation) {
             return false
