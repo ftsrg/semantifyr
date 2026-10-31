@@ -15,6 +15,7 @@ import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackend
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvConfig
 import hu.bme.mit.semantifyr.backends.spin.verification.SpinBackend
@@ -49,6 +50,8 @@ class AllAgreeFullPortfolio(
         PortfolioTask(uppaal, UppaalConfig.Default, "uppaal-default"),
         PortfolioTask(spin, SpinConfig.SafeDfs, "spin-safe-dfs"),
     )
+
+    override val executorKeys: Set<ExecutorKey<*>> = tasks.map { it.executorKey }.toSet()
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
         val anyAvailable = tasks.any {

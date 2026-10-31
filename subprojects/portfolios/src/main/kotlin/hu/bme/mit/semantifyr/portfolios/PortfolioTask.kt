@@ -18,6 +18,8 @@ class PortfolioTask<T : BackendConfig>(
     private val config: T,
     val subPath: String,
 ) {
+    val executorKey = backend.executorKey
+
     fun isAvailable(environment: ExecutionEnvironment): Boolean {
         return environment.availability(backend.executorKey).isUsable
     }

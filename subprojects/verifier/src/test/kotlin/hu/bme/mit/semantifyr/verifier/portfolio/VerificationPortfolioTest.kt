@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.verifier.FakeBackend
 import hu.bme.mit.semantifyr.verifier.FakeConfig
 import hu.bme.mit.semantifyr.verifier.ProgressContext
@@ -30,6 +31,7 @@ private class TestPortfolio(
 ) : VerificationPortfolio() {
     override val displayName = id
     override val description = "test portfolio"
+    override val executorKeys: Set<ExecutorKey<*>> = emptySet()
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
         return AvailabilityReport.Available
