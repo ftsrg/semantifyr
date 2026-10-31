@@ -111,8 +111,15 @@ public class TypeCompatibility {
             return true;
         }
 
-        return isDomainAssignable(left.getDomain(), right.getDomain(), context)
-                || isDomainAssignable(right.getDomain(), left.getDomain(), context);
+        var leftDomain = left.getDomain();
+        var rightDomain = right.getDomain();
+        if (leftDomain instanceof FeatureDeclaration && rightDomain instanceof FeatureDeclaration) {
+            // instances of unrelated features are still comparable by identity when their classes are
+            leftDomain = unwrap(leftDomain);
+            rightDomain = unwrap(rightDomain);
+        }
+        return isDomainAssignable(leftDomain, rightDomain, context)
+                || isDomainAssignable(rightDomain, leftDomain, context);
     }
 
     /**
