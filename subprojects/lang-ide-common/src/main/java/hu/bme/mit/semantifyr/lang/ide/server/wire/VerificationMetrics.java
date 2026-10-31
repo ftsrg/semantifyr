@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.lang.ide.server.wire;
 
+import hu.bme.mit.semantifyr.verifier.CompilationMetricsDto;
 import hu.bme.mit.semantifyr.verifier.VerificationMetricsDto;
 import java.time.Duration;
 
@@ -13,7 +14,8 @@ public record VerificationMetrics(
         Duration totalDuration,
         Duration preparationDuration,
         Duration verificationDuration,
-        Duration backAnnotationDuration) {
+        Duration backAnnotationDuration,
+        CompilationMetricsDto compilation) {
 
     public static VerificationMetrics fromDto(VerificationMetricsDto dto) {
         var backend = dto.getBackend();
@@ -31,6 +33,7 @@ public record VerificationMetrics(
             backAnnotation = backAnnotation.plus(backend.getBackAnnotationDuration());
         }
 
-        return new VerificationMetrics(dto.getTotalDuration(), preparation, verification, backAnnotation);
+        return new VerificationMetrics(
+                dto.getTotalDuration(), preparation, verification, backAnnotation, verifier.getCompilation());
     }
 }
