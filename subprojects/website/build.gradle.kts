@@ -24,9 +24,18 @@ val cliDistributionFiles = configurations.resolvable("cliDistributionFiles") {
     attributes(semantifyrArtifact("application-distribution"))
 }
 
+val apiDocs = configurations.dependencyScope("apiDocs")
+val apiDocsFiles = configurations.resolvable("apiDocsFiles") {
+    extendsFrom(apiDocs.get())
+    attributes(semantifyrArtifact("api-docs"))
+}
+
 dependencies {
     editorCommon(project(":semantifyr-editor-common"))
     cliDistribution(project(":semantifyr-cli"))
+    if (providers.gradleProperty("website.apiDocs").getOrElse("false").toBoolean()) {
+        apiDocs(project(":"))
+    }
 }
 
 val cliReferenceDir = layout.buildDirectory.dir("cli-reference")
@@ -97,18 +106,6 @@ val cloneBrandingAssets = tasks.register<Sync>("cloneBrandingAssets") {
         into("img")
     }
     into(importedBrandingDir)
-}
-
-val apiDocs = configurations.dependencyScope("apiDocs")
-val apiDocsFiles = configurations.resolvable("apiDocsFiles") {
-    extendsFrom(apiDocs.get())
-    attributes(semantifyrArtifact("api-docs"))
-}
-
-dependencies {
-    if (providers.gradleProperty("website.apiDocs").getOrElse("false").toBoolean()) {
-        apiDocs(project(":"))
-    }
 }
 
 val cloneApiDocs = tasks.register<Sync>("cloneApiDocs") {
