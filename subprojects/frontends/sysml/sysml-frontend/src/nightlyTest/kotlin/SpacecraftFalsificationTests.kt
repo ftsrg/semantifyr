@@ -4,49 +4,32 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.frontends.sysml
-
+import hu.bme.mit.semantifyr.frontends.sysml.testing.CorpusEntry
+import hu.bme.mit.semantifyr.frontends.sysml.testing.CorpusTier
+import hu.bme.mit.semantifyr.frontends.sysml.testing.SysMLCorpus
 import hu.bme.mit.semantifyr.frontends.sysml.testing.SysMLv2FrontendTestHelper
 import hu.bme.mit.semantifyr.portfolios.Portfolios
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 import kotlin.time.Duration.Companion.seconds
 
 class SpacecraftFalsificationTests {
     companion object {
         private val helper = SysMLv2FrontendTestHelper()
         private val artifactRoot = SysMLv2FrontendTestHelper.testArtifactRoot(SpacecraftFalsificationTests::class.java)
-    }
 
-    @Test
-    suspend fun `SpacecraftDataCannotReach60Violated Should Fail`() {
-        checkFalsification("spacecraft.sysml", "SpacecraftDataCannotReach60Violated")
-    }
-
-    @Test
-    suspend fun `Compressed SpacecraftDataCannotReach60Violated Should Fail`() {
-        checkFalsification("compressedspacecraft.sysml", "SpacecraftDataCannotReach60Violated")
-    }
-
-    @Test
-    suspend fun `GroundStationReceivedDataCannotReach20Violated Should Fail`() {
-        checkFalsification("spacecraft.sysml", "GroundStationReceivedDataCannotReach20Violated")
-    }
-
-    @Test
-    suspend fun `Compressed GroundStationReceivedDataCannotReach20Violated Should Fail`() {
-        checkFalsification("compressedspacecraft.sysml", "GroundStationReceivedDataCannotReach20Violated")
-    }
-
-    private suspend fun checkFalsification(modelFile: String, caseName: String) {
-        val frontend = helper.buildFrontend(
-            sourcePath = SysMLv2FrontendTestHelper.modelPath(modelFile),
-            portfolio = Portfolios.ThetaFull,
-            outputDirectory = artifactRoot,
-            timeout = 300.seconds,
-        )
-        val case = frontend.verificationCases().single {
-            it.qualifiedName.endsWith("::$caseName")
+        @JvmStatic
+        fun `Nightly Falsification Twins Should Fail`(): List<CorpusEntry> {
+            return SysMLCorpus.load().entries.filter {
+                it.case.falsification && it.case.tier == CorpusTier.Nightly
+            }
         }
-        helper.checkVerificationCase(frontend, case)
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    suspend fun `Nightly Falsification Twins Should Fail`(entry: CorpusEntry) {
+        val frontend = helper.buildFrontend(entry, Portfolios.ThetaFull, artifactRoot, timeout = 300.seconds)
+        helper.checkVerificationCase(frontend, entry)
     }
 }
