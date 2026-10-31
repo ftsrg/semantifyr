@@ -219,8 +219,8 @@ abstract class VerificationPortfolio {
 
     /**
      * Launch every job registered in [block] in parallel and wait for all of them (or [timeout]).
-     * If every decisive result agrees, returns that verdict.
-     * Disagreement among decisive verdicts is treated as Inconclusive with a logged conflict.
+     * If every trusted result agrees, returns that verdict and records the untrusted legs it overrules.
+     * Trusted results that disagree are Errored, since one of those legs is unsound; decisive results none of which is trusted are Inconclusive.
      * Jobs that error are surfaced as [PortfolioOutcome.AllErrored] when nothing else reported.
      * Without a decisive result, a job that timed out or was still pending at [timeout] makes the outcome [PortfolioOutcome.TimedOut].
      */
@@ -245,6 +245,7 @@ abstract class VerificationPortfolio {
         cancelRemainingJobs()
 
         val decisive = collected.filter { it.isDecisive }
+        val trusted = decisive.filter { it.isTrusted }
         when {
             decisive.isEmpty() && collected.isEmpty() -> outcome
             decisive.isEmpty() && collected.all { it.verdict == VerificationVerdict.NotSupported } -> {
@@ -253,22 +254,31 @@ abstract class VerificationPortfolio {
             }
             decisive.isEmpty() && outcome is PortfolioOutcome.TimedOut -> outcome
             decisive.isEmpty() -> PortfolioOutcome.Decided(collected.first())
-            decisive.map { it.verdict }.distinct().size == 1 -> PortfolioOutcome.Decided(decisive.first())
-            else -> {
-                val breakdown = decisive.joinToString(", ") { "${it.metadata.backendId}=${it.verdict}" }
-                logger.warn { "$id: decisive verdicts disagree ($breakdown); returning Inconclusive (at least one backend must be unsound or report a bug)" }
-                val reference = decisive.first()
+            trusted.isEmpty() -> outcome
+            trusted.map { it.verdict }.distinct().size > 1 -> {
+                val breakdown = trusted.joinToString(", ") { "${it.metadata.backendId}=${it.verdict} (${it.soundness})" }
+                logger.warn { "$id: trusted verdicts disagree ($breakdown), one of these legs is unsound" }
                 PortfolioOutcome.Decided(
                     BackendVerificationResult(
-                        verdict = VerificationVerdict.Inconclusive,
+                        verdict = VerificationVerdict.Errored,
                         metadata = VerificationMetadata(
                             backendId = null,
-                            startedAt = reference.metadata.startedAt,
+                            startedAt = trusted.first().metadata.startedAt,
                         ),
-                        metrics = reference.metrics,
-                        message = "Portfolio '$id' saw disagreeing decisive verdicts: $breakdown",
+                        message = "Portfolio '$id' saw trusted verdicts disagree: $breakdown",
                     ),
                 )
+            }
+            else -> {
+                val agreed = trusted.first()
+                val overruled = decisive.filter { it.verdict != agreed.verdict }
+                if (overruled.isEmpty()) {
+                    PortfolioOutcome.Decided(agreed)
+                } else {
+                    val breakdown = overruled.joinToString(", ") { "${it.metadata.backendId}=${it.verdict} (not trusted, ${it.soundness})" }
+                    logger.info { "$id: resolved to ${agreed.verdict} over $breakdown" }
+                    PortfolioOutcome.Decided(agreed.copy(message = "Portfolio '$id' resolved to ${agreed.verdict} from ${agreed.metadata.backendId} over $breakdown"))
+                }
             }
         }
     }
