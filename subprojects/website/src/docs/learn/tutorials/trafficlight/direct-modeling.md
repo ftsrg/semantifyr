@@ -4,6 +4,10 @@ sidebar_position: 1
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
+import step1 from '@oxsts-test-models/tutorial/basics-step1.oxsts';
+import step2 from '@oxsts-test-models/tutorial/basics-step2.oxsts';
+import step3 from '@oxsts-test-models/tutorial/basics-step3.oxsts';
+import step4 from '@oxsts-test-models/tutorial/basics-step4.oxsts';
 import basics from '@oxsts-test-models/tutorial/basics.oxsts';
 
 # Direct Modeling
@@ -12,248 +16,119 @@ This is the entry-level tutorial for Semantifyr. It walks through modeling a sma
 
 ## Requirements
 
-You can follow this tutorial in any Semantifyr environment. The quickest way is to use the **live editor** directly in your browser: [Open the live editor](https://live.semantifyr.org).
-No setup required. See [Getting Started](../../getting-started.md) for other options like the JupyterHub environment.
+A browser is enough. Every step of this tutorial ends in a complete model: the **Open this step in the editor** button below a code block loads the model of that step into a live editor embedded in this page, where you can edit it and verify its cases. The same editor runs standalone at [live.semantifyr.org](https://live.semantifyr.org). See [Getting Started](../../getting-started.md) for the other ways to run Semantifyr.
 
 :::tip Finished example
-If you want to skip ahead and see the completed model, open the model picker in the live editor's toolbar and select *Tutorial: Basics*.
+The completed model is at the end of this page under [Snapshot](#snapshot). The standalone live editor also offers it in its model picker as *Tutorial: Basics*.
 :::
 
 ## The Live Editor
 
-If you are using the live editor, here is a quick overview of the interface:
+The embedded editor stacks three parts:
 
-- The **toolbar** at the top contains the Semantifyr logo, a connection indicator, the **model picker** (language and example), a **Copy link** button, links to the documentation and GitHub, and a color mode toggle.
-- The **editor** in the center is a Monaco-based code editor with syntax highlighting, diagnostics (red underlines for errors), and content assist (triggered with `Ctrl+Space`).
-- The **verification panel** at the bottom lists verification cases found in your code. It updates automatically as you type. Each case shows its status: a small circle means not yet verified, a check mark means passed, and an X means failed.
-- The **status bar** at the very bottom shows the current connection state and activity messages.
+- The **editor** is a Monaco-based code editor with syntax highlighting, diagnostics (red underlines for errors), and content assist (triggered with `Ctrl+Space`). The language server validates the model as you type.
+- The **side panel** lists running and recent verifications on its *Verifications* tab. After a verification that produced a witness, its *Witness* tab shows the witness in three views: *Trace* lists the traced calls of each step, *State* the variable values of each step, and *Raw* the witness as an OXSTS model. In a wide window, such as the standalone editor, the side panel sits to the right of the editor.
+- The **Verification Cases** panel lists the verification cases of the model and updates as you type. A circle means not yet verified, a green check mark means passed, and a red cross means failed. The play button at the end of a row verifies that case, the button with a list and a play arrow in the panel header verifies all of them, and the crosshair button jumps to the case in the editor. Once a case has a witness, a document button in its row opens it. With *auto-validate* on, every witness is checked by a second verification, shown as *validated* next to the verification time.
 
-You can start typing directly in the editor. The language server connects automatically and provides feedback as you write.
+The standalone editor adds a toolbar with a model picker (language and example), a **Copy link** button that encodes your model into a shareable URL, and links to this documentation and to GitHub.
 
-## Initial Traffic Light Model
+## The Traffic Light
 
-If you are using the live editor, start with an empty editor. In a local environment, create a new file called `trafficlight.oxsts`. Add a single line at the top:
+Every Semantifyr file starts with its package. The language uses double colons `::` to separate the parts of a qualified name. Each step of this tutorial is a separate file, so each step gets its own package below `example::trafficlight::basics`.
 
-```oxsts
-package example::trafficlight::basics
-```
+The simple traffic light has three possible colors: red, yellow, and green. Declare a top-level enumeration of the colors:
+
+<LiveEmbed code={step1} show={['package', 'LightColor']} />
+
+Enums are one of the simplest user-definable types. In this case, the type `LightColor` specifies the `Red`, `Yellow`, and `Green` literal values.
 
 :::note
 The language supports semicolons `;`, however, their use is entirely optional.
 :::
 
-Every Semantifyr file specifies its own package, `example::trafficlight::basics` in this case. The language uses double colons `::` to denote fully-qualified identifiers.
-
-The simple traffic light has three possible colors: red, yellow, and green. Declare a top-level enumeration of the colors:
-
-```oxsts
-enum LightColor {
-    Red,
-    Yellow,
-    Green
-}
-```
-
-Enums are one of the simplest user-definable types. In this case, the type `LightColor` specifies the `Red`, `Yellow`, and `Green` literal values.
-
 Next, declare the `TrafficLight` class:
 
-```oxsts
-class TrafficLight {
-    var color: LightColor := LightColor::Red
-}
-```
+<LiveEmbed code={step1} show={['TrafficLight']} />
 
-Initially, it contains a single **variable** of type `LightColor` _bound_ to the value `LightColor::Red`, which is the fully-qualified name of the `Red` **enum literal**.
+The class contains a single **variable** of type `LightColor` that starts with the value `LightColor::Red`, the qualified name of the `Red` **enum literal**. Variables specify the _state_ of the model.
 
-Variables specify the _state_ of the model. To specify _behavior_ we must introduce **transitions**. The most basic transition is the _main_ transition.
+To specify _behavior_ we need **transitions**. Every class implicitly extends the `Anything` base class, which declares an empty `init` transition (run once at startup) and an empty _main_ transition (run on every step). Writing `tran` without a name declares the main transition, and since `TrafficLight` inherits one, it has to `redefine` it. See the [language reference](../../language/transitions.md) for details.
 
-```oxsts
-class TrafficLight {
-    var color: LightColor := LightColor::Red
+The main transition is a non-deterministic `choice` of three branches. Each branch uses an `assume` to state its precondition (the color the light must currently have) and an assignment `:=` to set the next color. Only a branch whose `assume` holds in the current state can fire, so the model behaves like a state machine that cycles `Red`, `Green`, `Yellow`, `Red`.
 
-    redefine tran {
-        choice {
-            assume (color == LightColor::Red)
-            color := LightColor::Green
-        } or {
-            assume (color == LightColor::Green)
-            color := LightColor::Yellow
-        } or {
-            assume (color == LightColor::Yellow)
-            color := LightColor::Red
-        }
-    }
-}
-```
-
-:::note
-Every class implicitly inherits from the `Anything` base class, which declares the base redefinable `init` and `main` transitions. See the [language reference](../../language/transitions.md) for more details.
-:::
-
-Here we _redefined_ the _main_ transition with a non-deterministic `choice` made up of three branches. Each branch uses an `assume` to declare its precondition (the current color the light must be in) and an assignment to set the next color. Only the branch whose `assume` succeeds in the current state can fire, so the model behaves like a state machine that cycles `Red`, `Green`, `Yellow`, `Red`.
-
-Transitions can also be used to structure and simplify code by extracting it into reusable parts. Let's extract the color matching and the color assignment into separate transitions.
-
-```oxsts
-class TrafficLight {
-    // var color as before
-
-    tran assumeColor(color: LightColor) {
-        assume (self.color == color)
-    }
-
-    tran setColor(color: LightColor) {
-        self.color := color
-    }
-
-    redefine tran {
-        choice {
-            inline assumeColor(LightColor::Red)
-            inline setColor(LightColor::Green)
-        } or {
-            inline assumeColor(LightColor::Green)
-            inline setColor(LightColor::Yellow)
-        } or {
-            inline assumeColor(LightColor::Yellow)
-            inline setColor(LightColor::Red)
-        }
-    }
-}
-```
-
-We introduced two helper transitions here. `assumeColor` is a parameterized transition that asserts the current color matches the given argument. The `color` parameter shadows the `color` variable: to differentiate we can use `self.color` to refer to the variable instead of the parameter. The `self` keyword always refers to the current instance. The `setColor` transition is a parameterized transition that assigns the parameter to the variable, using the same `self.color` qualifier for the same reason.
-
-The redefined main transition now `inline`s these helpers in each branch of the `choice`. The `inline` call substitutes the body of the called transition at the call site, with each parameter replaced by the corresponding argument.
+Open the step in the editor and try content assist or introduce a typo to see a diagnostic. The verification panel stays empty: the model has no verification case yet.
 
 ## Verification Cases
 
-The main functionality of Semantifyr is exposed through classes _annotated_ with the `VerificationCase` annotation, which is similar to a `Test` annotation in `JUnit` for example. To make our model into a verification case, we add the annotation and a _property_ that the verifier will check.
+The main functionality of Semantifyr is exposed through classes _annotated_ with `@VerificationCase`, similar to a `@Test` annotation in JUnit. To make the traffic light a verification case, annotate it and add a _property_ for the verifier to check:
 
-Add the annotation to the existing `TrafficLight` class and give it a `prop`:
+<LiveEmbed code={step2} show={['TrafficLight']} />
 
-```oxsts
-@VerificationCase
-class TrafficLight {
-    // add the following property
+The anonymous `prop` is the property the verifier checks. Its body uses a temporal operator (see the [language reference](../../language/expressions.md#temporal-operators)): `EF` ("exists finally") is the reachability operator, so the property states that there is at least one execution of the system in which `color` takes the value `LightColor::Yellow`. Its sibling `AG` ("always globally") is the safety operator we will use later in this tutorial.
 
-    prop {
-        return EF color == LightColor::Yellow
-    }
-}
-```
+The `@Tag` annotation attaches a free-form label to a verification case. The tutorial models carry `expect-pass` or `expect-fail`, the verdict we expect, and Semantifyr's own test suite checks every tutorial model against these tags. Your own models do not need them.
 
-The body uses a temporal operator (see the [language reference](../../language/expressions.md#temporal-operators)). Here it specifies that there is at least one execution of the system in which the `color` variable takes the `LightColor::Yellow` value. `EF` ("exists finally") is the reachability operator; its sibling `AG` ("always globally") is the safety operator we will use later in this tutorial.
+**Task:** Open the step in the editor. The verification panel lists `TrafficLight`. Click the play button at the end of its row.
 
-After annotating the class, the **verification panel** at the bottom of the editor discovers it automatically. You should see a new entry appear in the panel:
+**Check:** While the verification runs, the row shows a spinner. When it finishes, a green check mark appears: the property holds. Click the document button that appeared in the row to open the witness and switch to *State*: the witness is an execution that drives `color` from `Red` through `Green` to `Yellow`, which proves the `EF` property.
 
-- The case starts with a small circle icon, meaning it has not been verified yet.
-- Click the **play button** next to the case name to verify it, or use the **play-all button** in the panel header to run all cases at once.
-- While verification is running, the case icon changes to a spinner and the status bar shows progress messages.
-- When it finishes, a green check mark appears if the property holds, or a red X if it does not. Error messages are shown inline below the case name.
-- You can click a case name to jump to its definition in the editor. The **refresh button** in the panel header re-discovers cases if the panel gets out of sync.
+## Helper Transitions
 
-Run the verification now. It should succeed: the verifier finds a witness trace that drives `color` from `Red` to `Green` to `Yellow`, confirming the `EF` reachability property.
+Transitions can also structure code by extracting it into reusable parts. Extract the color check and the color assignment into separate transitions:
+
+<LiveEmbed code={step3} show={['TrafficLight']} />
+
+`assumeColor` is a parameterized transition that assumes the current color matches the given argument. The `color` parameter shadows the `color` variable, so the body uses `self.color` to refer to the variable; the `self` keyword always refers to the current instance. `setColor` assigns the parameter to the variable, with the same `self.color` qualifier for the same reason.
+
+The main transition now `inline`s these helpers in each branch of the `choice`. An `inline` call substitutes the body of the called transition at the call site, with each parameter replaced by the corresponding argument.
+
+**Task:** Open the step and verify `TrafficLight` again.
+
+**Check:** It still passes: the refactoring did not change the behavior.
 
 ## Features and Composition
 
-Variables define the _state_ of the system, transitions define the _behavior_ of the system, and **features** define the _structure_ of the system. The simplest feature is a containment feature, which specifies that all instances of the encompassing class own a fixed number of child instances of the feature type.
+Variables define the _state_ of the system, transitions define the _behavior_ of the system, and **features** define the _structure_ of the system. The simplest feature is a containment feature: every instance of the class owns a fixed number of instances of the feature's type.
 
-Let's extract the traffic light logic and instantiate it from a separate verification case. Start by removing the `@VerificationCase` annotation and the implicit `prop` from `TrafficLight` (so that it goes back to its previous form), then add a new verification case below it:
+Take the verification case off the traffic light (remove `@VerificationCase`, the `@Tag` and the `prop` from `TrafficLight`, so that it goes back to a plain class) and add a separate verification case that contains a light:
 
-```oxsts
-@VerificationCase
-class GreenColorIsReachable {
-    contains light: TrafficLight[1]
+<LiveEmbed code={step4} show={['GreenColorIsReachable']} />
 
-    redefine tran {
-        inline light.main()
-    }
+Every `GreenColorIsReachable` instance contains exactly one `TrafficLight` instance, accessible through the `light` feature; `[1]` is the multiplicity. The case's main transition lets the light take a step by inlining the light's main transition, `light.main()`. See the [features reference](../../language/features.md) for more on containment.
 
-    prop {
-        return EF (light.color == LightColor::Green)
-    }
-}
-```
+The benefit of the compositional approach is the ability to reuse parts of the model. A real intersection has more than one traffic light. Add a class that composes two lights:
 
-This declares that every `GreenColorIsReachable` instance must contain exactly one `TrafficLight` instance, accessible through the `light` feature. See the [features reference](../../language/features.md) for more details on containment.
+<LiveEmbed code={step4} show={['Intersection']} />
 
-The benefit of the compositional approach is the ability to reuse parts of the model. A real intersection has more than one traffic light. Add a new class that composes two lights:
-
-```oxsts
-class Intersection {
-    contains north: TrafficLight // [1] is the implicit multiplicity
-    contains east: TrafficLight
-
-    redefine tran {
-        choice {
-            inline north.main()
-        } or {
-            inline east.main()
-        }
-    }
-}
-```
-
-The intersection contains two named lights. The implicit `tran` of `Intersection` non-deterministically lets one light or the other take a step. Each light is its own complete state machine; the intersection chooses which one runs on a given step.
+The intersection contains two named lights. Without a multiplicity, a feature holds exactly one instance, as if written `[1]`. The main transition of `Intersection` non-deterministically lets one light or the other take a step. Each light is its own complete state machine; the intersection chooses which one runs on a given step.
 
 The crucial question for any intersection is whether the two lights can ever be green at the same time. Add a verification case that asks exactly that:
 
-```oxsts
-@VerificationCase
-class IntersectionNeverBothGreen {
-    contains intersection: Intersection
+<LiveEmbed code={step4} show={['IntersectionNeverBothGreen']} />
 
-    redefine tran {
-        inline intersection.main()
-    }
+This is an `AG` safety property: on every execution, the two lights are never green at the same time. The tag already gives away what we expect.
 
-    prop {
-        return AG !(intersection.north.color == LightColor::Green && intersection.east.color == LightColor::Green)
-    }
-}
-```
+**Task:** Open the step in the editor. The verification panel now shows `GreenColorIsReachable` and `IntersectionNeverBothGreen`. Click the button with a list and a play arrow in the panel header to verify both.
 
-Here we used an `AG` safety property, which specifies that the two lights' colors must not both be green on any execution.
+**Check:** `GreenColorIsReachable` passes, and `IntersectionNeverBothGreen` fails with a red cross; the editor also marks its property with an error. A failed safety property comes with a counterexample: open its witness and switch to *State* to see the steps that drive both lights to `Green`, one after the other.
 
-**Task:** Run the verifier on `IntersectionNeverBothGreen`. In the live editor, the verification panel now shows both `GreenColorIsReachable` and `IntersectionNeverBothGreen`. Click the play button next to `IntersectionNeverBothGreen` to run it individually, or use the play-all button in the panel header to run all cases.
+## Fixing the Intersection
 
-**Check:** The verification case fails: a red X appears next to it in the panel. The counter-example is a sequence of steps that drives both lights to `Green` at the same time, violating the `AG` safety property.
+To coordinate the lights, the intersection needs a way to ask whether a light is currently green. Add a property to `TrafficLight`, after the main transition:
 
-To coordinate the lights, the intersection needs a way to ask whether a specific light is currently green (or any other color). Add a small property to `TrafficLight`, after the `redefine tran` block:
+<LiveEmbed code={basics} show={['TrafficLight']} />
 
-```oxsts
-prop isColor(color: LightColor): bool {
-    return self.color == color
-}
-```
+`isColor` is a named property that takes a color as a parameter and returns a `bool`. Properties are pure functions of the state; unlike transitions, they cannot change it. As with `assumeColor` and `setColor`, the parameter shadows the variable, so the body uses `self.color`.
 
-Here we declared a property called `isColor` that takes a color as a parameter and returns a `bool` value. As with `assumeColor` and `setColor`, the parameter name `color` shadows the class variable, so the body uses `self.color` to refer to the variable.
+Next, guard each branch of the intersection's `choice` so that a light only steps when the other light is not green:
 
-Next, guard each branch of the intersection's `choice` so that a light only steps when the other light is not currently green. Replace `Intersection` with:
+<LiveEmbed code={basics} show={['Intersection']} />
 
-```oxsts
-class Intersection {
-    contains north: TrafficLight
-    contains east: TrafficLight
+Now a light can only take a step when the other light is not green. As soon as one light turns `Green`, the other one cannot move until the green light has moved on to `Yellow`. In the finished model, both verification cases carry `@Tag("expect-pass")`.
 
-    redefine tran {
-        choice {
-            assume (!east.isColor(LightColor::Green))
-            inline north.main()
-        } or {
-            assume (!north.isColor(LightColor::Green))
-            inline east.main()
-        }
-    }
-}
-```
+**Task:** Open the step and verify all cases again.
 
-Now a light can only take a step when the other light is not green. As soon as one light enters `Green`, the other is blocked from advancing into `Green` itself, and must wait for the green light to move on to `Yellow`.
-
-**Task:** Re-run the verifier on `IntersectionNeverBothGreen`. Note that after editing the code, the verification panel marks all cases as stale (small circle icon) since the results may no longer be valid.
-
-**Check:** The case now shows a green check mark. The safety issue has been fixed. If you run all cases, both `GreenColorIsReachable` and `IntersectionNeverBothGreen` should pass.
+**Check:** Both cases show a green check mark. The safety issue is fixed.
 
 ## Wrap-up
 
@@ -274,6 +149,6 @@ The next tutorial in the series, [Building a Library](building-a-library.md), ex
 
 ## Snapshot
 
-The complete final state of `trafficlight.oxsts`:
+The complete final model:
 
 <LiveEmbed code={basics} />
