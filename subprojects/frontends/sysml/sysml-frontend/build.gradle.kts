@@ -42,4 +42,5 @@ tasks.processResources {
 
 tasks.withType<Test>().configureEach {
     inputs.files(syncSysmlTestModels)
+    inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
 }
