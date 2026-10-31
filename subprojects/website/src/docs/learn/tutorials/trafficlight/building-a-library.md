@@ -4,6 +4,9 @@ sidebar_position: 2
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
+import step1 from '@oxsts-test-models/tutorial/intermediate-step1.oxsts';
+import step2 from '@oxsts-test-models/tutorial/intermediate-step2.oxsts';
+import step3 from '@oxsts-test-models/tutorial/intermediate-step3.oxsts';
 import intermediate from '@oxsts-test-models/tutorial/intermediate.oxsts';
 
 # Building a Library
@@ -12,220 +15,123 @@ This is the second tutorial in the Traffic Light series. It refactors the basic 
 
 ## Requirements
 
-You can follow this tutorial in the **live editor** directly in your browser: [Open the live editor](https://live.semantifyr.org). No setup required. See [Getting Started](../../getting-started.md) for other options like the JupyterHub environment.
+A browser is enough. As in [Direct Modeling](direct-modeling.md), every step ends in a complete model that the **Open this step in the editor** button loads into a live editor embedded in this page; the [Direct Modeling](direct-modeling.md#the-live-editor) tutorial describes the editor. See [Getting Started](../../getting-started.md) for the other ways to run Semantifyr.
 
 :::tip Finished example
-If you want to skip ahead and see the completed model, open the model picker in the live editor's toolbar and select *Tutorial: Intermediate*.
+The completed model is at the end of this page under [Snapshot](#snapshot). The standalone live editor also offers it in its model picker as *Tutorial: Intermediate*.
 :::
 
-The design changes significantly compared to the Direct Modeling tutorial, so start with a fresh file rather than editing the previous one. Create a new file alongside `trafficlight.oxsts` with a new package declaration:
+In the Direct Modeling tutorial the entire state machine lived inside a single class: a `LightColor` enum, a `var color`, and a main transition that hard-coded the cycle as a `choice` of guarded branches. That works for one specific traffic light, but it does not scale: every new state or transition forces another branch in the `choice`, and the host has no way to query the structure of its own state machine. By the end of this tutorial the `LightColor` enum and the `assumeColor`, `setColor` and `isColor` helpers will be gone, replaced by a small reusable `Statechart` base class that any state-based system could extend.
 
-```oxsts
-package example::trafficlight::intermediate
-```
+The design changes significantly, so this tutorial starts from a fresh file with its own package:
 
-In the Direct Modeling tutorial the entire state machine lived inside a single class: a `LightColor` enum, a `var color`, and a `redefine tran` body that hard-coded the cycle as a `choice` of guarded branches. That works for one specific traffic light, but it does not scale: every new state or transition forces another branch in the `choice`, and the host has no way to query the structure of its own state machine. By the end of this tutorial the `LightColor` enum and the `assumeColor`/`setColor`/`isColor` helpers will be gone, replaced by a small reusable `Statechart` base class that any state-based system could extend.
+<LiveEmbed code={step1} show={['package']} />
 
 ## States and Transitions
 
 The most basic building block is a `State`. A state knows whether it is currently active by consulting its containing statechart, and exposes an `activate` transition that other code can call to switch into it. Declare the `State` class:
 
-```oxsts
-class State {
-    container parent: Statechart opposite states
+<LiveEmbed code={step1} show={['State']} />
 
-    prop isActive(): bool {
-        return parent.activeState == self
-    }
+The `container` keyword declares the inverse of a `contains` feature. The `Statechart` class (which we add in the next section) will own its `State` instances through `contains states`, and each `State` knows its containing statechart through `container parent`. The `opposite` keyword wires the two directions together: the validator checks that opposite features name each other, so declaring one direction without the other is an error.
 
-    tran activate() {
-        parent.activeState := self
-    }
-}
-```
-
-The `container` keyword declares the inverse of a `contains` feature. The `Statechart` class (which we add in the next section) will own its `State` instances via `contains states: State[...]`, and each `State` will know its containing statechart through `container parent`. The `opposite` keyword wires the two directions together: a validation rule checks that opposite features are reciprocal, so declaring one direction without the other is an error.
-
-The `isActive` property reads "I am active if my parent's `activeState` is me". The `self` keyword always refers to the current instance. The `activate` transition is the only place where a state mutates its host: it assigns `self` to the parent's `activeState`. Encapsulating this assignment in `activate` keeps the rule about how a state becomes active in one place, which we will rely on later when transitions fire.
+The `isActive` property reads "I am active if my parent's `activeState` is me". The `self` keyword always refers to the current instance. The `activate` transition is the only place where a state changes its host: it assigns `self` to the parent's `activeState`. Keeping this assignment in `activate` puts the rule for how a state becomes active in one place, which transitions rely on below.
 
 :::note
-`Statechart` does not exist yet; we declare it in the next section. Forward references between classes are allowed.
+`Statechart` is declared in the next section. Forward references between classes are allowed.
 :::
 
 Next, declare a `Transition` class below `State`:
 
-```oxsts
-class Transition {
-    refers from: State
-    refers to: State
+<LiveEmbed code={step1} show={['Transition']} />
 
-    prop isEnabled(): bool {
-        return from.isActive()
-    }
+A transition is a first-class object with two references and the behavior "if I am enabled, activate my destination state". Modeling transitions as their own class lets the host hold a _collection_ of them and pick one to fire.
 
-    redefine tran {
-        assume (isEnabled())
-        inline to.activate()
-    }
-}
-```
+The `refers` keyword declares a **reference feature**: unlike `contains` (which establishes ownership), `refers` is a non-owning pointer. Each transition points to two `State` instances but does not own them; the statechart owns the states. The default multiplicity is `[1]` (exactly one), which is what we want here, so we omit it.
 
-A transition is a first-class object with two references and the behavior of "if I am enabled, activate my destination state". Modeling transitions as their own class lets the host hold a _collection_ of them and pick one to fire.
-
-The `refers` keyword declares a **reference feature**: unlike `contains` (which establishes ownership), `refers` is a non-owning pointer. Each transition points to two `State` instances but does not own them; the statechart owns the states. The default multiplicity is `[1]` (exactly one), which is what we want here, so we can omit the bracket.
-
-The redefined main transition first asserts `isEnabled()`, then `inline`s the destination state's `activate` transition. Inlining substitutes the body of `to.activate()` at the call site, which in turn assigns the parent's `activeState` to the destination. We do not need to clear the source state explicitly because both states share the same parent, so the assignment overwrites the previous value.
+The main transition first assumes `isEnabled()`, then `inline`s the destination state's `activate` transition. Inlining substitutes the body of `to.activate()` at the call site, which assigns the destination to the parent's `activeState`. The source state needs no explicit clearing: both states share the same parent, so the assignment overwrites the previous value.
 
 ## The Statechart Base Class
 
-Now declare the `Statechart` class that will host states and transitions:
+Now declare the `Statechart` class that hosts states and transitions:
 
-```oxsts
-class Statechart {
-    contains states: State[0..*] opposite parent
-    contains transitions: Transition[0..*]
+<LiveEmbed code={step1} show={['Statechart']} />
 
-    @Control
-    var activeState: states[0..1] := nothing
+The `Statechart` owns _any number_ of states and transitions through containment features with multiplicity `[0..*]` (zero or more). A generic statechart does not fix the count; concrete subclasses decide which instances actually appear.
 
-    redefine tran {
-        inline for choice (transition in transitions) {
-            inline transition.main()
-        }
-    }
-}
-```
-
-The `Statechart` owns _any number_ of states and transitions through containment features with multiplicity `[0..*]` (zero or more). This is more flexible than fixing the count: a generic statechart can have any number of children, and concrete subclasses pin down which instances actually appear.
-
-The `var activeState` is a **feature-typed variable**: its type is the `states` feature, not a class, and its value domain is the set of instances reachable through `states`. The compiler turns it into an integer at flatten time. The `[0..1]` multiplicity means it can hold one of the contained states or `nothing`. The `nothing` literal denotes the absence of a value, and is the alternative inhabitant of an optional `[0..1]` slot. Initializing `activeState` to `nothing` means a fresh statechart is _inactive_ until something explicitly assigns a state to it.
+The `var activeState` is a **feature-typed variable**: its type is the `states` feature, not a class, and its values are the instances reachable through `states`. The compiler turns it into an integer when it flattens the model. The `[0..1]` multiplicity means it holds one of the contained states or `nothing`, the literal for the absence of a value. Starting from `nothing` means a fresh statechart is _inactive_ until something assigns a state to `activeState`.
 
 The `@Control` annotation makes it a control variable for Theta, whose CEGAR configurations track it precisely from the start; it suits a variable like `activeState` that steers which transitions are enabled. Counterexamples report every variable either way.
 
-The redefined main transition uses `inline for choice` over the `transitions` collection. This is a compile-time **inline operation** that unrolls into a non-deterministic `choice` of one branch per element. With three transitions, the body becomes a `choice` of three branches after unrolling. The unrolling happens at compile time; at runtime the model checker only sees the resulting `choice`. Each `inline transition.main()` invokes the chosen transition's implicit `main`, which first asserts `assume(isEnabled())`. Disabled transitions therefore block their own branch automatically: only enabled transitions can fire on a given step.
+The main transition uses `inline for choice` over the `transitions` collection. This compile-time **inline operation** unrolls into a non-deterministic `choice` with one branch per transition; the model checker only sees the resulting `choice`. Each branch inlines the transition's main transition, which first assumes `isEnabled()`, so a disabled transition blocks its own branch: only enabled transitions can fire on a given step.
 
-When `activeState` is `nothing`, _no_ state is active, so every transition's `from.isActive()` returns false, every `assume(isEnabled())` blocks, and the whole `choice` becomes unfireable. An inactive statechart simply does nothing until something assigns a state to `activeState`.
+When `activeState` is `nothing`, _no_ state is active, so every transition is disabled and the whole `choice` blocks. An inactive statechart does nothing until something assigns a state to `activeState`.
+
+**Task:** Open the step in the editor. The library validates without errors; it has no verification case yet.
 
 ## Refactoring the Traffic Light
 
 Now declare a `TrafficLight` class that extends `Statechart`:
 
-```oxsts
-class TrafficLight : Statechart {
-    contains red: State subsets states
-    contains yellow: State subsets states
-    contains green: State subsets states
+<LiveEmbed code={step2} show={['TrafficLight']} />
 
-    contains redToGreen: Transition subsets transitions {
-        redefine refers from: State[1] = red
-        redefine refers to: State[1] = green
-    }
-    contains greenToYellow: Transition subsets transitions {
-        redefine refers from: State[1] = green
-        redefine refers to: State[1] = yellow
-    }
-    contains yellowToRed: Transition subsets transitions {
-        redefine refers from: State[1] = yellow
-        redefine refers to: State[1] = red
-    }
+The `class TrafficLight : Statechart` syntax declares **inheritance**: `TrafficLight` extends `Statechart` and inherits all of its members (`states`, `transitions`, `activeState`, and the main transition). A class has at most one superclass.
 
-    redefine init {
-        activeState := red
-    }
-}
-```
+Each color is its own contained `State` instance. The `subsets` modifier on the `red`, `yellow`, and `green` features declares that they are also part of the inherited `states` collection. The three transitions are subsets of the inherited `transitions` collection in the same way, so the `inline for choice (transition in transitions)` inherited from `Statechart` iterates over all three of them.
 
-The `class TrafficLight : Statechart` syntax declares **single inheritance**: `TrafficLight` extends `Statechart` and inherits all of its members (`states`, `transitions`, `activeState`, and the redefined main transition).
+Each `Transition` is contained with a **nested redefinition block** (`{ ... }` after the feature declaration). Inside the block we redefine the `from` and `to` references of the contained `Transition` and bind them to the host's states with `=`. The `=` form binds a feature to a _compile-time_ expression, fixed when the model is compiled. Compare it with `:=`, the runtime assignment of variables.
 
-Each color is its own contained `State` instance. The _subsets_ modifier on the `red`, `yellow`, and `green` features declares that they are also part of the inherited `states` collection: a single feature can be put into a more general parent feature without redefining it. The same `subsets` mechanism applies to the three transitions, which are all declared as subsets of the inherited `transitions` collection. Because of `subsets`, the `inline for choice (transition in transitions)` body inherited from `Statechart` will iterate over all three of them automatically.
+Finally, `redefine init { activeState := red }` overrides the inherited `init` transition so the light starts in a known state. Like the main transition, `init` is inherited from the implicit `Anything` base class with an empty body, so it has to be redefined.
 
-Each `Transition` is contained with a **nested redefining block** (`{ ... }` after the feature name). Inside the block we redefine the `from` and `to` references on the contained `Transition` and bind them to the host's state instances using `=`. The `=` form binds a feature to a _compile-time_ expression: the binding is fixed when the model is unfolded. Compare with `:=`, which is the runtime assignment operator for variables.
+Add a verification case that asks whether the light can turn green:
 
-Finally, `redefine init { activeState := red }` overrides the inherited `init` transition so the light begins in a known state. The `init` kind is inherited from the implicit `Anything` base class with an empty default body, so we have to `redefine` it the same way we redefine `tran`. The `init` transition runs once at startup.
+<LiveEmbed code={step2} show={['GreenColorIsReachable']} />
 
-Now declare the `Intersection` class. It composes two traffic lights and chains their initialization through `init`:
+**Task:** Open the step and verify `GreenColorIsReachable`.
 
-```oxsts
-class Intersection {
-    contains north: TrafficLight
-    contains east: TrafficLight
+**Check:** It fails. Only the `init` and main transitions of the verified class run: `GreenColorIsReachable` inlines the light's main transition, but nothing calls the light's `init`, so `activeState` stays `nothing`, no transition is ever enabled, and the light never turns green. A failed reachability property has no witness to show.
 
-    redefine init {
-        inline north.init()
-        inline east.init()
-    }
+## The Init Chain
 
-    redefine tran {
-        choice {
-            assume (!east.green.isActive())
-            inline north.main()
-        } or {
-            assume (!north.green.isActive())
-            inline east.main()
-        }
-    }
-}
-```
+Delegate the initialization to the light:
 
-The `redefine init` block delegates initialization to the contained lights by `inline`-calling each one's `init` transition. This is the **init chain pattern**: a host class's `init` walks its containment tree and calls `init` on each child, so the whole hierarchy becomes active in one go. There is no separate `start` transition: initialization happens entirely through `init` cascades.
+<LiveEmbed code={step3} show={['GreenColorIsReachable']} />
 
-The `redefine tran` body is the same coordinated step from the Direct Modeling tutorial, but the safety guard now uses `green.isActive()` instead of the old `isColor(LightColor::Green)`: it navigates to the `green` state on the other light and asks whether it is currently active.
+The `redefine init` of the verification case inlines the light's `init`. This is the **init chain pattern**: the `init` of a class calls the `init` of each contained instance that needs one, so the whole hierarchy is initialized in one go.
 
-Finally, declare the verification cases:
+**Task:** Open the step and verify `GreenColorIsReachable` again.
 
-```oxsts
-@VerificationCase
-class GreenColorIsReachable {
-    contains light: TrafficLight[1]
+**Check:** It passes. In the *State* view of the witness, `root.light.activeState` starts as `nothing` and holds `root.light.green` after the first step.
 
-    redefine init {
-        inline light.init()
-    }
+## The Intersection
 
-    redefine tran {
-        inline light.main()
-    }
+Now declare the `Intersection` class. It composes two traffic lights and chains their initialization:
 
-    prop {
-        return EF light.green.isActive()
-    }
-}
+<LiveEmbed code={intermediate} show={['Intersection']} />
 
-@VerificationCase
-class IntersectionNeverBothGreen {
-    contains intersection: Intersection
+The `redefine init` block initializes both lights, continuing the init chain. The main transition is the coordinated step from the Direct Modeling tutorial, but the guard now uses `green.isActive()` instead of the old `isColor(LightColor::Green)`: it navigates to the `green` state of the other light and asks whether it is currently active.
 
-    redefine init {
-        inline intersection.init()
-    }
+Finally, add the safety case:
 
-    redefine tran {
-        inline intersection.main()
-    }
+<LiveEmbed code={intermediate} show={['IntersectionNeverBothGreen']} />
 
-    prop {
-        return AG !(intersection.north.green.isActive() && intersection.east.green.isActive())
-    }
-}
-```
+Both verification cases follow the same pattern: a single `contains` feature for the system under verification, a `redefine init` that starts the init chain, a main transition that lets the system take a step, and a `prop` that queries the state instances directly through `isActive()`.
 
-Both verification cases follow the same pattern: a single `contains` feature for the system under test, a `redefine init` that delegates initialization down the chain via a single `inline ... .init()` call, a `redefine tran` that delegates each step via `inline ... .main()`, and a `prop` that uses `green.isActive()` to query the state instances directly.
+**Task:** Open the step and verify both cases.
 
-**Task** Run the verifications on `GreenColorIsReachable` and `IntersectionNeverBothGreen`.
-
-**Check** Both produce the same answers as in the Direct Modeling tutorial: `GreenColorIsReachable` succeeds because the green state is reachable, and `IntersectionNeverBothGreen` succeeds because the safety guard prevents both lights from being green at the same time.
+**Check:** Both pass, as in the Direct Modeling tutorial: the green state is reachable, and the guard prevents both lights from being green at the same time.
 
 ## Wrap-up
 
 This tutorial refactored a one-class traffic light into a small reusable `Statechart` base class with first-class `State` and `Transition` instances. Along the way you used:
 
-- Single inheritance with the `:` syntax
+- Inheritance with the `:` syntax
 - `container` and `opposite` for bidirectional features
 - `contains ... subsets ...` for putting one feature into a parent collection
 - Multiplicities `[1]`, `[0..1]`, `[0..*]`
 - `refers` for non-owning references
 - Feature-typed variables and the `nothing` literal
-- Nested feature redefining blocks and the compile-time binding form `=`
+- Nested redefinition blocks and the compile-time binding form `=`
 - `inline for choice` for compile-time unrolling over a feature collection
 - `inline` calls that delegate behavior between transitions
 - `redefine init` and the init chain pattern for one-time setup
@@ -233,10 +139,10 @@ This tutorial refactored a one-class traffic light into a small reusable `Statec
 
 For deeper details on any of these constructs, see the [language reference](../../language/index.md).
 
-The next tutorial in the series, the [Advanced Tutorial](advanced-tutorial.md), extends this small library with more advanced patterns: hierarchical states, transitions with optional triggers, entry actions, and other idioms used by real semantic libraries. *(That tutorial is currently a placeholder while the content is being written.)*
+The [Advanced Tutorial](advanced-tutorial.md) is planned to extend this small library with the patterns real semantic libraries use.
 
 ## Snapshot
 
-The complete final state of `trafficlight.oxsts`:
+The complete final model:
 
 <LiveEmbed code={intermediate} />

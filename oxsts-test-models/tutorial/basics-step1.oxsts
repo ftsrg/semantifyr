@@ -1,0 +1,30 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package example::trafficlight::basics::step1
+
+enum LightColor {
+    Red,
+    Yellow,
+    Green
+}
+
+class TrafficLight {
+    var color: LightColor := LightColor::Red
+
+    redefine tran {
+        choice {
+            assume (color == LightColor::Red)
+            color := LightColor::Green
+        } or {
+            assume (color == LightColor::Green)
+            color := LightColor::Yellow
+        } or {
+            assume (color == LightColor::Yellow)
+            color := LightColor::Red
+        }
+    }
+}

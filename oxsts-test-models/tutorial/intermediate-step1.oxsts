@@ -1,0 +1,47 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package example::trafficlight::intermediate::step1
+
+class State {
+    container parent: Statechart opposite states
+
+    prop isActive(): bool {
+        return parent.activeState == self
+    }
+
+    tran activate() {
+        parent.activeState := self
+    }
+}
+
+class Transition {
+    refers from: State
+    refers to: State
+
+    prop isEnabled(): bool {
+        return from.isActive()
+    }
+
+    redefine tran {
+        assume (isEnabled())
+        inline to.activate()
+    }
+}
+
+class Statechart {
+    contains states: State[0..*] opposite parent
+    contains transitions: Transition[0..*]
+
+    @Control
+    var activeState: states[0..1] := nothing
+
+    redefine tran {
+        inline for choice (transition in transitions) {
+            inline transition.main()
+        }
+    }
+}

@@ -10,7 +10,7 @@ This tutorial series explores how to model the same example system, a small traf
 The tutorials share the same example so you can compare the encodings side by side. They are designed to be read in order, but each one is self-contained and starts from a fresh file.
 
 :::tip Try it live
-You can follow along in the [live editor](https://live.semantifyr.org): a lightweight in-browser editor with syntax highlighting, diagnostics, content assist, and an integrated verification panel. Each tutorial's **Snapshot** section holds the finished model, which you can edit and verify in place.
+Every step of a tutorial ends in a complete model that you can open in a live editor embedded in the page: a lightweight in-browser editor with syntax highlighting, diagnostics, content assist, and an integrated verification panel. Each tutorial's **Snapshot** section holds the finished model.
 :::
 
 ## Tutorials
@@ -21,7 +21,7 @@ The first tutorial encodes the traffic light directly: a single class with an en
 
 ### 2. [Building a Library](building-a-library.md)
 
-The second tutorial refactors the traffic light into a small reusable library: a `Statechart` base class with first-class `State` and `Transition` instances. The concrete traffic light becomes a thin specialization of `Statechart`. This tutorial introduces single inheritance, the container-opposite pattern, the `subsets` modifier, feature-typed variables, the `nothing` literal, `inline for choice`, and the init-chain pattern.
+The second tutorial refactors the traffic light into a small reusable library: a `Statechart` base class with first-class `State` and `Transition` instances. The concrete traffic light becomes a thin specialization of `Statechart`. This tutorial introduces inheritance, the container-opposite pattern, the `subsets` modifier, feature-typed variables, the `nothing` literal, `inline for choice`, and the init-chain pattern.
 
 ### 3. [Advanced Tutorial](advanced-tutorial.md) *(coming soon)*
 
