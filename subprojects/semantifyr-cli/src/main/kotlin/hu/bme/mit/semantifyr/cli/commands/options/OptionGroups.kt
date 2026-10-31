@@ -119,7 +119,7 @@ class BackendOptionGroup(
     private val portfolios: () -> List<VerificationPortfolio>,
 ) : OptionGroup("Backend options") {
     val portfolio by option("--portfolio")
-        .convert { id ->
+        .convert("text") { id ->
             portfolios().firstOrNull { it.id == id } ?: fail("unknown portfolio '$id'")
         }
         .defaultLazy {
