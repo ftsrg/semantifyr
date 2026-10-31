@@ -25,6 +25,7 @@ class FeatureTypedNothingComparisonPattern(
     private val metaEvaluatorProvider: MetaConstantExpressionEvaluatorProvider,
     private val multiplicityRangeEvaluator: MultiplicityRangeEvaluator,
 ) : OptimizationPattern {
+    override val rootTypes = setOf(ComparisonOperator::class.java)
 
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is ComparisonOperator) {

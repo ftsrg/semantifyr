@@ -37,6 +37,8 @@ class AssumeFalsePropagationPattern : CompositeOptimizationPattern() {
 }
 
 class PropagateBothBranchesConstantFalsePattern : OptimizationPattern {
+    override val rootTypes = setOf(IfOperation::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is IfOperation) {
             return false
@@ -56,6 +58,8 @@ class PropagateBothBranchesConstantFalsePattern : OptimizationPattern {
 }
 
 class PropagateConstantFalseInSequencePattern : OptimizationPattern {
+    override val rootTypes = setOf(SequenceOperation::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is SequenceOperation) {
             return false
@@ -72,6 +76,8 @@ class PropagateConstantFalseInSequencePattern : OptimizationPattern {
 }
 
 class PropagateSingleBranchConstantFalsePattern : OptimizationPattern {
+    override val rootTypes = setOf(ChoiceOperation::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is ChoiceOperation) {
             return false
@@ -87,6 +93,8 @@ class PropagateSingleBranchConstantFalsePattern : OptimizationPattern {
 }
 
 class RemoveConstantFalseChoiceBranchPattern : OptimizationPattern {
+    override val rootTypes = setOf(ChoiceOperation::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is ChoiceOperation) {
             return false
