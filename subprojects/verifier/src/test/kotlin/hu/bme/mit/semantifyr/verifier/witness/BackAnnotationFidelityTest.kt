@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
@@ -263,6 +264,7 @@ class BackAnnotationFidelityTest {
         override val id = "witness"
         override val displayName = "witness"
         override val description = "test-only"
+        override val executorKeys: Set<ExecutorKey<*>> = emptySet()
 
         override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
             return AvailabilityReport.Available
