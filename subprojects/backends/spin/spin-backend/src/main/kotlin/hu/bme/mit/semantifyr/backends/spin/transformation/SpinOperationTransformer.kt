@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.backends.spin.transformation
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.utils.text.IndentingStringBuilder
 
 class SpinOperationTransformer @Inject constructor(
@@ -16,5 +17,9 @@ class SpinOperationTransformer @Inject constructor(
 
     fun transform(operation: Operation, builder: IndentingStringBuilder) {
         spinOperationVisitorFactory.create(builder).transform(operation)
+    }
+
+    fun havoc(variable: VariableDeclaration, builder: IndentingStringBuilder) {
+        spinOperationVisitorFactory.create(builder).havoc(variable)
     }
 }

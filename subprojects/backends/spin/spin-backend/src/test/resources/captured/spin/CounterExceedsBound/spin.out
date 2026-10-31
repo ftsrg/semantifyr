@@ -27,5 +27,5 @@ Stats on memory usage (in Megabytes):
 
 
 
-pan: elapsed time 0 seconds
+pan: elapsed time 0.01 seconds
 ltl p: [] ((! (__semantifyr_stable)) || ((x<2)))

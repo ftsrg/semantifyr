@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.backends.spin.transformation
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.utils.text.IndentingStringBuilder
 
 class SpinProctypeRenderer @Inject constructor(
@@ -18,8 +19,25 @@ class SpinProctypeRenderer @Inject constructor(
     fun renderInitProctype(builder: IndentingStringBuilder, inlinedOxsts: InlinedOxsts) {
         builder.appendLine("init {")
         builder.indented {
+            renderInitialHavoc(this, inlinedOxsts.variables)
             renderInitBody(this, inlinedOxsts.initTransition.branches)
             renderTranLoop(this, inlinedOxsts.mainTransition.branches)
+        }
+        builder.appendLine("}")
+    }
+
+    private fun renderInitialHavoc(builder: IndentingStringBuilder, variables: List<VariableDeclaration>) {
+        val uninitialized = variables.filter {
+            it.expression == null
+        }
+        if (uninitialized.isEmpty()) {
+            return
+        }
+        builder.appendLine("atomic {")
+        builder.indented {
+            for (variable in uninitialized) {
+                spinOperationTransformer.havoc(variable, this)
+            }
         }
         builder.appendLine("}")
     }

@@ -98,10 +98,13 @@ class SpinOperationVisitor @AssistedInject constructor(
     override fun visit(operation: LocalVarDeclarationOperation) {
         val name = spinVariableTransformer.nameOf(operation)
         val type = renderLocalType(operation)
-        val initializer = operation.expression?.let {
-            " = ${spinExpressionTransformer.transform(it)}"
-        } ?: ""
-        builder.appendLine("$type $name$initializer;")
+        val initializer = operation.expression
+        if (initializer == null) {
+            builder.appendLine("$type $name;")
+            havoc(operation)
+            return
+        }
+        builder.appendLine("$type $name = ${spinExpressionTransformer.transform(initializer)};")
     }
 
     private fun renderLocalType(operation: LocalVarDeclarationOperation): String {
@@ -114,7 +117,10 @@ class SpinOperationVisitor @AssistedInject constructor(
     }
 
     override fun visit(operation: HavocOperation) {
-        val variable = OxstsUtils.requireVariableReference(operation.reference)
+        havoc(OxstsUtils.requireVariableReference(operation.reference))
+    }
+
+    fun havoc(variable: VariableDeclaration) {
         val described = spinVariableTransformer.describe(variable)
         when (described.kind) {
             SpinVariableKind.Boolean -> renderBooleanHavoc(described.name)
