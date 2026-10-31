@@ -194,14 +194,14 @@ public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
                 return false;
             }
             if (notification.getNotifier() instanceof Resource) {
-                switch (notification.getFeatureID(Resource.class)) {
-                    case Resource.RESOURCE__IS_MODIFIED:
-                    case Resource.RESOURCE__IS_TRACKING_MODIFICATION:
-                    case Resource.RESOURCE__TIME_STAMP:
-                    case Resource.RESOURCE__ERRORS:
-                    case Resource.RESOURCE__WARNINGS:
-                        return false;
-                }
+                return switch (notification.getFeatureID(Resource.class)) {
+                    case Resource.RESOURCE__IS_MODIFIED,
+                            Resource.RESOURCE__IS_TRACKING_MODIFICATION,
+                            Resource.RESOURCE__TIME_STAMP,
+                            Resource.RESOURCE__ERRORS,
+                            Resource.RESOURCE__WARNINGS -> false;
+                    default -> true;
+                };
             }
             return true;
         }
