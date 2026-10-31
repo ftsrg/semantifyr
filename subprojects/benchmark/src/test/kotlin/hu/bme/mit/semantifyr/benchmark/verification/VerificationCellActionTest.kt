@@ -84,6 +84,7 @@ class VerificationCellActionTest {
         override val displayName = delegate.displayName
         override val description = delegate.description
         override val executorKeys: Set<ExecutorKey<*>> = delegate.executorKeys
+        override val legs = delegate.legs
 
         override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
             probes++
@@ -110,6 +111,7 @@ class VerificationCellActionTest {
         override val displayName = delegate.displayName
         override val description = delegate.description
         override val executorKeys: Set<ExecutorKey<*>> = delegate.executorKeys
+        override val legs = delegate.legs
 
         override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
             return AvailabilityReport.Available
