@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.scopes.CompilationScoped
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
@@ -20,12 +21,14 @@ import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParameterDeclaration
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
+import org.eclipse.xtext.EcoreUtil2
 
 class ArgumentTrace(
     val parameterDeclaration: ParameterDeclaration,
@@ -48,11 +51,15 @@ class TransitionCallTraceTransformer @Inject constructor(
     private var tracerCount = 0
     private val tracerAssignments = mutableMapOf<AssignmentOperation, TransitionCallTrace>()
 
+    // inlined sequences are spliced into their parent, so the enclosing call is recorded per pending inline operation
+    private val enclosingTraces = mutableMapOf<InlineOperation, TransitionCallTrace>()
+
     fun traceTransitionCall(
         instance: Instance,
         containerInstance: Instance,
         transitionDeclaration: TransitionDeclaration,
         callExpression: CallSuffixExpression,
+        body: Operation,
     ): AssignmentOperation {
         val tracerVariable = createTracerVariable(transitionDeclaration)
         val parent = findEnclosingTracer(callExpression)
@@ -71,10 +78,16 @@ class TransitionCallTraceTransformer @Inject constructor(
             },
             parent = parent,
         )
+        enclose(body, transitionCallTrace)
 
         val tracerAssignment = createTracerAssignment(tracerVariable, value = true)
         tracerAssignments[tracerAssignment] = transitionCallTrace
         return tracerAssignment
+    }
+
+    fun inheritEnclosingTrace(operation: InlineOperation, expansion: Operation) {
+        val enclosingTrace = enclosingTraces.remove(operation) ?: return
+        enclose(expansion, enclosingTrace)
     }
 
     fun finalize(inlinedOxsts: InlinedOxsts): TransitionCallTraceMap {
@@ -121,21 +134,15 @@ class TransitionCallTraceTransformer @Inject constructor(
         }
     }
 
-    private fun findEnclosingTracer(node: EObject): TransitionCallTrace? {
-        var current = node
-        while (true) {
-            val container = current.eContainer() ?: return null
-            if (container is SequenceOperation) {
-                val currentIndex = container.steps.indexOf(current)
-                for (siblingIndex in (currentIndex - 1) downTo 0) {
-                    val parent = tracerAssignments[container.steps[siblingIndex]]
-                    if (parent != null) {
-                        return parent
-                    }
-                }
-            }
-            current = container
+    private fun enclose(operation: Operation, trace: TransitionCallTrace) {
+        for (inlineOperation in operation.eAllOfType<InlineOperation>()) {
+            enclosingTraces.putIfAbsent(inlineOperation, trace)
         }
+    }
+
+    private fun findEnclosingTracer(callExpression: CallSuffixExpression): TransitionCallTrace? {
+        val inlineOperation = EcoreUtil2.getContainerOfType(callExpression, InlineOperation::class.java) ?: return null
+        return enclosingTraces[inlineOperation]
     }
 
     private val AssignmentOperation.tracerVariable: VariableDeclaration
