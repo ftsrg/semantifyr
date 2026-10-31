@@ -1,0 +1,184 @@
+{
+    "initialStep": {
+        "traces": []
+    },
+    "initializedStep": {
+        "traces": [
+            {
+                "self": "root.system.trafficLightA.lightControl",
+                "calledTransition": "semantifyr::sysml::ports::Port::setOutgoingItem",
+                "arguments": [
+                    {
+                        "parameter": "item",
+                        "value": "semantifyr::sysml::model::global_YellowL"
+                    }
+                ],
+                "innerTraces": null
+            },
+            {
+                "self": "root.system.trafficLightB.lightControl",
+                "calledTransition": "semantifyr::sysml::ports::Port::setOutgoingItem",
+                "arguments": [
+                    {
+                        "parameter": "item",
+                        "value": "semantifyr::sysml::model::global_YellowL"
+                    }
+                ],
+                "innerTraces": null
+            }
+        ]
+    },
+    "steps": [
+        {
+            "traces": [
+                {
+                    "self": "root",
+                    "calledTransition": "semantifyr::sysml::verification::VerificationCaseDefinition::passTime",
+                    "arguments": [],
+                    "innerTraces": null
+                }
+            ]
+        },
+        {
+            "traces": [
+                {
+                    "self": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage2",
+                    "calledTransition": "semantifyr::sysml::states::Transition::fire",
+                    "arguments": [],
+                    "innerTraces": [
+                        {
+                            "self": "root.system.controller.controlA",
+                            "calledTransition": "semantifyr::sysml::ports::Port::setOutgoingItem",
+                            "arguments": [
+                                {
+                                    "parameter": "item",
+                                    "value": "semantifyr::sysml::model::global_Toggle"
+                                }
+                            ],
+                            "innerTraces": null
+                        },
+                        {
+                            "self": "root.system.controller.controlB",
+                            "calledTransition": "semantifyr::sysml::ports::Port::setOutgoingItem",
+                            "arguments": [
+                                {
+                                    "parameter": "item",
+                                    "value": "semantifyr::sysml::model::global_Toggle"
+                                }
+                            ],
+                            "innerTraces": null
+                        }
+                    ]
+                },
+                {
+                    "self": "root",
+                    "calledTransition": "semantifyr::sysml::verification::VerificationCaseDefinition::passTime",
+                    "arguments": [],
+                    "innerTraces": null
+                }
+            ]
+        },
+        {
+            "traces": [
+                {
+                    "self": "root.system.trafficLightA.Behaviour.Normal.UnnamedTransitionUsage12",
+                    "calledTransition": "semantifyr::sysml::states::Transition::fire",
+                    "arguments": [],
+                    "innerTraces": [
+                        {
+                            "self": "root.system.trafficLightA.lightControl",
+                            "calledTransition": "semantifyr::sysml::ports::Port::setOutgoingItem",
+                            "arguments": [
+                                {
+                                    "parameter": "item",
+                                    "value": "semantifyr::sysml::model::global_RedL"
+                                }
+                            ],
+                            "innerTraces": null
+                        }
+                    ]
+                },
+                {
+                    "self": "root.system.trafficLightB.Behaviour.Normal.UnnamedTransitionUsage12",
+                    "calledTransition": "semantifyr::sysml::states::Transition::fire",
+                    "arguments": [],
+                    "innerTraces": [
+                        {
+                            "self": "root.system.trafficLightB.lightControl",
+                            "calledTransition": "semantifyr::sysml::ports::Port::setOutgoingItem",
+                            "arguments": [
+                                {
+                                    "parameter": "item",
+                                    "value": "semantifyr::sysml::model::global_RedL"
+                                }
+                            ],
+                            "innerTraces": null
+                        }
+                    ]
+                },
+                {
+                    "self": "root",
+                    "calledTransition": "semantifyr::sysml::verification::VerificationCaseDefinition::passTime",
+                    "arguments": [],
+                    "innerTraces": null
+                }
+            ]
+        },
+        {
+            "traces": [
+                {
+                    "self": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage3",
+                    "calledTransition": "semantifyr::sysml::states::Transition::fire",
+                    "arguments": [],
+                    "innerTraces": [
+                        {
+                            "self": "root.system.controller.controlA",
+                            "calledTransition": "semantifyr::sysml::ports::Port::setOutgoingItem",
+                            "arguments": [
+                                {
+                                    "parameter": "item",
+                                    "value": "semantifyr::sysml::model::global_Toggle"
+                                }
+                            ],
+                            "innerTraces": null
+                        }
+                    ]
+                },
+                {
+                    "self": "root",
+                    "calledTransition": "semantifyr::sysml::verification::VerificationCaseDefinition::passTime",
+                    "arguments": [],
+                    "innerTraces": null
+                }
+            ]
+        },
+        {
+            "traces": [
+                {
+                    "self": "root.system.trafficLightA.Behaviour.Normal.UnnamedTransitionUsage13",
+                    "calledTransition": "semantifyr::sysml::states::Transition::fire",
+                    "arguments": [],
+                    "innerTraces": [
+                        {
+                            "self": "root.system.trafficLightA.lightControl",
+                            "calledTransition": "semantifyr::sysml::ports::Port::setOutgoingItem",
+                            "arguments": [
+                                {
+                                    "parameter": "item",
+                                    "value": "semantifyr::sysml::model::global_GreenL"
+                                }
+                            ],
+                            "innerTraces": null
+                        }
+                    ]
+                },
+                {
+                    "self": "root",
+                    "calledTransition": "semantifyr::sysml::verification::VerificationCaseDefinition::passTime",
+                    "arguments": [],
+                    "innerTraces": null
+                }
+            ]
+        }
+    ]
+}

@@ -177,3 +177,8 @@ configurations.consumable("compiledExamplesElements") {
         builtBy(compileSysmlExamples)
     }
 }
+
+tasks.test {
+    inputs.files(examplesSourceDir.file("crossroads.sysml"), layout.projectDirectory.file("../models/etc/crossroads-green.trace.sysml"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}
