@@ -9,7 +9,9 @@ package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 import com.google.inject.Inject
 import com.google.inject.Provider
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.LocalVarNames
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.xsts.lang.xsts.LocalVarDeclOperation
@@ -33,12 +35,25 @@ class ThetaVariableTransformer @Inject constructor(
 
     private val topVariableMap = mutableMapOf<VariableDeclaration, XstsTopLevelVariableDeclaration>()
     private val localVariableMap = mutableMapOf<LocalVarDeclarationOperation, XstsLocalVarDeclarationOperation>()
+    private val loopVariableMap = mutableMapOf<VariableDeclaration, XstsVariableDeclaration>()
 
     fun transform(variableDeclaration: VariableDeclaration): XstsVariableDeclaration {
         if (variableDeclaration is LocalVarDeclarationOperation) {
             return transformLocalVar(variableDeclaration)
         }
+        if (variableDeclaration.eContainer() is ForOperation) {
+            return transformLoopVariable(variableDeclaration)
+        }
         return transformTopLevel(variableDeclaration)
+    }
+
+    // named as a step-local variable, so the witness chain skips its values in the cex
+    private fun transformLoopVariable(variableDeclaration: VariableDeclaration): XstsVariableDeclaration {
+        return loopVariableMap.getOrPut(variableDeclaration) {
+            XstsFactory.createVariableDeclaration().also {
+                it.name = "${variableDeclaration.name}${LocalVarNames.LOCAL_VAR_SUFFIX}${loopVariableMap.size}"
+            }
+        }
     }
 
     fun transformTopLevel(variableDeclaration: VariableDeclaration): XstsTopLevelVariableDeclaration {

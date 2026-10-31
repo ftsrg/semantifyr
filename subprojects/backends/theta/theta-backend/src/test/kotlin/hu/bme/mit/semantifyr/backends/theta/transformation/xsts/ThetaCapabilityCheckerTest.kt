@@ -56,7 +56,6 @@ class ThetaCapabilityCheckerTest : ThetaTransformationTestBase() {
             "variables of type real",
             "real literals",
             "variables of type string",
-            "for-operations",
         )
     }
 }

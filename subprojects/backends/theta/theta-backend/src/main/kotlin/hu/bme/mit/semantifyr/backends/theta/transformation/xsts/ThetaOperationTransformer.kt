@@ -17,9 +17,12 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 
 typealias XstsOperation = hu.bme.mit.semantifyr.xsts.lang.xsts.Operation
+private typealias XstsExpression = hu.bme.mit.semantifyr.xsts.lang.xsts.Expression
+private typealias XstsArithmeticOp = hu.bme.mit.semantifyr.xsts.lang.xsts.ArithmeticOp
 
 class ThetaOperationTransformer @Inject constructor(
     private val thetaExpressionTransformer: ThetaExpressionTransformer,
@@ -50,9 +53,30 @@ class ThetaOperationTransformer @Inject constructor(
         return thetaVariableTransformer.transformLocalVar(operation)
     }
 
-    // XSTS for ranges exclude their end, unlike OXSTS ranges
     override fun visit(operation: ForOperation): XstsOperation {
-        throw BackendUnsupportedException("Theta does not support for-operations")
+        val range = operation.rangeExpression as? RangeExpression
+            ?: throw BackendUnsupportedException("Theta supports for-operations over ranges only")
+        return XstsFactory.createForOperation().also {
+            it.loopVar = thetaVariableTransformer.transform(operation.loopVariable)
+            it.from = thetaExpressionTransformer.transform(range.left)
+            it.to = transformRangeEnd(range)
+            it.body = transform(operation.body)
+        }
+    }
+
+    // XSTS ranges exclude their end
+    private fun transformRangeEnd(range: RangeExpression): XstsExpression {
+        val end = thetaExpressionTransformer.transform(range.right)
+        if (range.isExclusive) {
+            return end
+        }
+        return XstsFactory.createArithmeticBinaryOperator().also {
+            it.left = end
+            it.op = XstsArithmeticOp.ADD
+            it.right = XstsFactory.createLiteralInteger().also { one ->
+                one.value = 1
+            }
+        }
     }
 
     override fun visit(operation: IfOperation): XstsOperation {

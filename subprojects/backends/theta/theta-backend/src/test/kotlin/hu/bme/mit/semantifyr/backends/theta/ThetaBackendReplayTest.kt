@@ -140,4 +140,19 @@ class ThetaBackendReplayTest {
         assertThat(results.map { "${it.verdict} ${it.message}" }).containsOnly("Passed null")
         assertThat(results.map { it.inlinedWitness }).doesNotContainNull()
     }
+
+    @Test
+    suspend fun `a runtime for operation iterates its whole inclusive range`() {
+        val result = verifyFixture("runtime_for", "InclusiveRangeReach")
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(result.inlinedWitness!!.transitionStates.last().valuesByName()).containsEntry("\$\$root\$\$x", 3)
+    }
+
+    @Test
+    suspend fun `a runtime for operation stops before the end of an exclusive range`() {
+        val result = verifyFixture("runtime_for", "ExclusiveRangeBound")
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
+    }
 }
