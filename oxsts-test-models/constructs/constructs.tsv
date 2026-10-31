@@ -7,7 +7,7 @@ Array `[lb..ub]` multiplicity	pass	semantic/arrays.oxsts	ArrayRangedMultiplicity
 Class-typed arrays	pass	semantic/arrays.oxsts	ClassTypedArrayReach
 Feature-typed arrays	pass	semantic/arrays.oxsts	FeatureTypedArrayHavocBound
 Local arrays	pass	semantic/arrays.oxsts	LocalArrayRuntimeIndexReach
-Local arrays of class or feature type	reject	constructs/local_class_typed_array.oxsts	OXSTS.UNSUPPORTED_FEATURE
+Local arrays of class or feature type	pass	semantic/local_instances.oxsts	LocalFeatureTypedArrayHavocBound
 Parameter arrays	reject	constructs/parameter_array.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Unbounded variable multiplicity `[]`, `[lb..*]`	reject	constructs/unbounded_variable.oxsts	OXSTS.TYPE_MISMATCH
 Call through a variable `v.t()`	pass	semantic/variable_dispatch.oxsts	ClassTypedDispatchReach

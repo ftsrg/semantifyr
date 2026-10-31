@@ -58,21 +58,19 @@ public class UnsupportedFeatureTest {
     }
 
     @Test
-    void localClassTypedArrayIsRejectedOnce() {
+    void localFeatureTypedArrayIsAccepted() {
         var pkg = parseHelper.parse(WORKERS + """
             class C {
-                contains a: Worker
+                contains workers: Worker[0..*]
+                contains a: Worker subsets workers
                 redefine tran {
-                    var slots: Worker[2]
+                    var slots: workers[2]
                 }
             }
             """, CheckMode.ALL);
 
         pkg.assertNoResourceErrors();
-        assertThat(pkg.getIssues())
-                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
-                .singleElement()
-                .satisfies(issue -> assertThat(issue.getMessage()).contains("Local arrays of class or feature type"));
+        pkg.assertNoValidationErrors();
     }
 
     @Test

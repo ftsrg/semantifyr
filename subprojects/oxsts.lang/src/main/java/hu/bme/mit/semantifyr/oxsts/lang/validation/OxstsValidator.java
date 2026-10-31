@@ -1172,26 +1172,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
     }
 
     @Check
-    public void checkArrayVariableSupported(VariableDeclaration variableDeclaration) {
-        var typeSpecification = variableDeclaration.getTypeSpecification();
-        if (typeSpecification == null || !isFixedSizeArray(typeSpecification)) {
-            return;
-        }
-        var domain = typeSpecification.getDomain();
-        if (OxstsUtils.isLocalVariable(variableDeclaration)
-                && (domain instanceof ClassDeclaration || domain instanceof FeatureDeclaration)) {
-            acceptError(
-                    "Local arrays of class or feature type are not yet supported by the compiler; declare '"
-                            + variableDeclaration.getName()
-                            + "' as a class variable.",
-                    variableDeclaration,
-                    OxstsPackage.Literals.VARIABLE_DECLARATION__TYPE_SPECIFICATION,
-                    0,
-                    UNSUPPORTED_FEATURE);
-        }
-    }
-
-    @Check
     public void checkParameterNotArray(ParameterDeclaration parameterDeclaration) {
         var typeSpecification = parameterDeclaration.getTypeSpecification();
         if (typeSpecification != null && isFixedSizeArray(typeSpecification)) {
