@@ -423,17 +423,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
     }
 
     @Check
-    public void checkTransitionKindSupported(TransitionDeclaration transitionDeclaration) {
-        var kind = transitionDeclaration.getKind();
-        if (kind == TransitionKind.ENV || kind == TransitionKind.HAVOC) {
-            acceptError(
-                    "Transition kind `" + kind.getLiteral() + "` is not yet supported by the compiler.",
-                    transitionDeclaration,
-                    UNSUPPORTED_FEATURE);
-        }
-    }
-
-    @Check
     public void checkSingleSupertype(ClassDeclaration classDeclaration) {
         var superTypes = classDeclaration.getSuperTypes();
         for (int i = 1; i < superTypes.size(); i++) {

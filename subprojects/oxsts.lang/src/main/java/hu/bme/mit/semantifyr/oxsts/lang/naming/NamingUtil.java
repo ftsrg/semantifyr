@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.naming;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionKind;
 import java.util.regex.Pattern;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.xtext.util.Strings;
@@ -29,12 +30,7 @@ public class NamingUtil {
 
     protected static String getTransitionName(TransitionDeclaration transition) {
         if (Strings.isEmpty(transition.getName())) {
-            return switch (transition.getKind()) {
-                case TRAN -> "main";
-                case ENV -> "env";
-                case INIT -> "init";
-                case HAVOC -> "havoc";
-            };
+            return transition.getKind() == TransitionKind.INIT ? "init" : "main";
         }
 
         return transition.getName();

@@ -194,8 +194,6 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.append(regionFor(transitionDeclaration).keyword("redefine"), this::oneSpace);
         document.append(regionFor(transitionDeclaration).keyword("tran"), this::oneSpace);
         document.append(regionFor(transitionDeclaration).keyword("init"), this::oneSpace);
-        document.append(regionFor(transitionDeclaration).keyword("env"), this::oneSpace);
-        document.append(regionFor(transitionDeclaration).keyword("havoc"), this::oneSpace);
 
         document.format(transitionDeclaration.getAnnotation());
 

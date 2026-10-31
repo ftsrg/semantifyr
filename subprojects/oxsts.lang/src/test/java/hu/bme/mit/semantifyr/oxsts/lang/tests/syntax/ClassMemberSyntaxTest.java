@@ -13,6 +13,8 @@ import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionKind;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 @InjectWithOxsts
 public class ClassMemberSyntaxTest {
@@ -85,6 +87,18 @@ public class ClassMemberSyntaxTest {
             """);
         pkg.assertNoResourceErrors();
         assertThat(pkg.classByName("C").anonymousInit().kind()).isEqualTo(TransitionKind.INIT);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"env", "havoc"})
+    void removedTransitionKindDoesNotParse(String kind) {
+        var pkg = parseHelper.parse("""
+            package test
+            class C {
+                %s { }
+            }
+            """.formatted(kind));
+        assertThat(pkg.getResourceErrors()).isNotEmpty();
     }
 
     @Test

@@ -259,9 +259,7 @@ InnerFeature returns FeatureDeclaration:
 
 enum TransitionKind:
     TRAN='tran'
-    | ENV='env'
     | INIT='init'
-    | HAVOC='havoc'
 ;
 
 enum FeatureKind:

@@ -48,7 +48,7 @@ export default function prismIncludeLanguages(
     ],
     string: { pattern: /"(?:\\.|[^"\\])*"/, greedy: true },
     keyword:
-      /\b(?:abstract|annotation|any|assume|bool|choice|class|containment|container|contains|datatype|derived|else|enum|env|extern|false|feature|features|for|global|havoc|if|import|in|inline|inlined|init|int|main|nothing|of|opposite|or|oxsts|package|prop|real|record|redefine|redefines|refers|reference|return|self|string|subsets|trace|tran|true|var|witness)\b/,
+      /\b(?:abstract|annotation|any|assume|bool|choice|class|containment|container|contains|datatype|derived|else|enum|extern|false|feature|features|for|global|havoc|if|import|in|inline|inlined|init|int|main|nothing|of|opposite|or|oxsts|package|prop|real|record|redefine|redefines|refers|reference|return|self|string|subsets|trace|tran|true|var|witness)\b/,
     operator: /(:=|==|!=|<=|>=|&&|\|\||\^\^|<|>|\+|-|\*|\/|!|\?\.)/,
     number: /\b\d+(?:\.\d+)?\b/,
     punctuation: /[{}[\]();:,.@]/,

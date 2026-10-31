@@ -16,8 +16,6 @@ Member access through a variable `v.x`	reject	constructs/member_access_through_v
 Record literal `Point { x = 0 }`	parse	constructs/record_literal.oxsts	-
 Arrays of records, array fields in records	reject	constructs/record_array.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Record-typed features	reject	constructs/record_feature.oxsts	OXSTS.UNSUPPORTED_FEATURE
-`env` transition kind	reject	constructs/env_transition.oxsts	OXSTS.UNSUPPORTED_FEATURE
-`havoc` transition kind	reject	constructs/havoc_transition.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Multiple inheritance `class C : A, B`	reject	constructs/multiple_inheritance.oxsts	OXSTS.MULTIPLE_INHERITANCE
 `fun` declarations	parse	constructs/function_declaration.oxsts	-
 `pattern` declarations	parse	constructs/pattern_declaration.oxsts	-
