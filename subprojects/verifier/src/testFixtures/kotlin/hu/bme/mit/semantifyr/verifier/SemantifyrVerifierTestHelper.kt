@@ -203,12 +203,15 @@ class SemantifyrVerifierTestHelper @Inject constructor(
     ) {
         logger.info { "Checking test case $case (artifacts at $outputDirectory)" }
 
-        val required = verificationPortfolio.executorKeys.any {
-            it.name in requiredBackends
-        }
         val limitedEngines = engineLimitsFromTags(case)
         val engineLimited = verificationPortfolio.executorKeys.isNotEmpty() && verificationPortfolio.executorKeys.all {
             it.name in limitedEngines
+        }
+        if (engineLimited) {
+            Assumptions.abort<Unit>("${case.qualifiedName} is tagged $ENGINE_LIMIT_TAG_PREFIX${limitedEngines.joinToString(",")}, skipping it on ${verificationPortfolio.id}")
+        }
+        val required = verificationPortfolio.executorKeys.any {
+            it.name in requiredBackends
         }
         val availability = verificationPortfolio.availability(environment)
         if (availability is AvailabilityReport.Unavailable) {
@@ -224,10 +227,6 @@ class SemantifyrVerifierTestHelper @Inject constructor(
             "Portfolio ${verificationPortfolio.id} timed out on ${case.qualifiedName} within $timeout: ${result.message ?: "no message"}",
         )
         if (!result.verdict.isDecisive) {
-            if (engineLimited && result.verdict != VerificationVerdict.Errored) {
-                logger.info { "${case.qualifiedName} is tagged $ENGINE_LIMIT_TAG_PREFIX${limitedEngines.joinToString(",")}, accepting ${result.verdict} from ${verificationPortfolio.id}" }
-                return
-            }
             Assumptions.assumeTrue(
                 required || result.verdict == VerificationVerdict.Errored,
                 "Portfolio ${verificationPortfolio.id} reports ${result.verdict} for ${case.qualifiedName} and none of its engines is required: ${result.message ?: "no message"}",
@@ -243,10 +242,6 @@ class SemantifyrVerifierTestHelper @Inject constructor(
             "Expected ${case.qualifiedName} verdict $expectedVerdict, got ${result.verdict} " +
                 "(${result.message ?: "no message"}).${backendDiagnostics(outputDirectory, case)}"
         }
-        if (engineLimited) {
-            logger.info { "${case.qualifiedName} is tagged $ENGINE_LIMIT_TAG_PREFIX${limitedEngines.joinToString(",")} but ${verificationPortfolio.id} decided it, the tag is stale" }
-        }
-
         logger.info { "Result: ${result.verdict}" }
 
         val trace = result.trace ?: return

@@ -24,6 +24,7 @@ import org.junit.jupiter.api.io.TempDir
 import org.opentest4j.AssertionFailedError
 import org.opentest4j.TestAbortedException
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.Path
 
 private val OtherExecutorKey = ExecutorKey("other") {
@@ -93,32 +94,11 @@ class SemantifyrVerifierTestHelperTest {
     }
 
     @Test
-    suspend fun `Inconclusive on an engine-limited engine passes`() {
-        assertThat(check(FixedPortfolio(VerificationVerdict.Inconclusive), requiredFake, "engine-limit:other,fake")).isNull()
-    }
-
-    @Test
-    suspend fun `NotSupported on an engine-limited engine passes`() {
-        assertThat(check(FixedPortfolio(VerificationVerdict.NotSupported), requiredFake, "engine-limit:fake")).isNull()
-    }
-
-    @Test
-    suspend fun `wrong decisive verdict on an engine-limited engine fails`() {
-        assertThat(check(FixedPortfolio(VerificationVerdict.Failed), requiredFake, "engine-limit:fake"))
-            .isInstanceOf(AssertionFailedError::class.java)
-    }
-
-    @Test
-    suspend fun `correct decisive verdict on an engine-limited engine passes`() {
-        assertThat(check(FixedPortfolio(VerificationVerdict.Passed), requiredFake, "engine-limit:fake")).isNull()
-    }
-
-    @Test
-    suspend fun `Errored and Timeout on an engine-limited engine keep their outcome`() {
-        assertThat(check(FixedPortfolio(VerificationVerdict.Errored), requiredFake, "engine-limit:fake"))
-            .isInstanceOf(AssertionFailedError::class.java)
-        assertThat(check(FixedPortfolio(VerificationVerdict.Timeout), requiredFake, "engine-limit:fake"))
+    suspend fun `an engine-limited case is skipped before dispatch`() {
+        val portfolio = FixedPortfolio(VerificationVerdict.Passed)
+        assertThat(check(portfolio, requiredFake, "engine-limit:other,fake"))
             .isInstanceOf(TestAbortedException::class.java)
+        assertThat(portfolio.invocations.get()).isZero()
     }
 
     @Test
@@ -164,6 +144,8 @@ class SemantifyrVerifierTestHelperTest {
         override val description: String = "test-only"
         override val legs: List<PortfolioLeg> = emptyList()
 
+        val invocations = AtomicInteger()
+
         override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
             return if (available) {
                 AvailabilityReport.Available
@@ -179,6 +161,7 @@ class SemantifyrVerifierTestHelperTest {
             environment: ExecutionEnvironment,
             progress: ProgressContext,
         ): BackendVerificationResult {
+            invocations.incrementAndGet()
             return BackendVerificationResult(verdict = verdict, metadata = fakeMetadata(FakeExecutorKey.name))
         }
     }
