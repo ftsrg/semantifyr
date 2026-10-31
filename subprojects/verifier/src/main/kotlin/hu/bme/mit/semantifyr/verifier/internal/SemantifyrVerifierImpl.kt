@@ -32,6 +32,7 @@ import hu.bme.mit.semantifyr.verifier.VerificationReport
 import hu.bme.mit.semantifyr.verifier.VerificationResult
 import hu.bme.mit.semantifyr.verifier.VerifierMetrics
 import hu.bme.mit.semantifyr.verifier.caseDirectoryName
+import hu.bme.mit.semantifyr.verifier.caseReportPath
 import hu.bme.mit.semantifyr.verifier.portfolio.LimitedConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import hu.bme.mit.semantifyr.verifier.witness.CallTraceTransformer
@@ -192,7 +193,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
             result = result,
         )
 
-        verificationArtifactWriter.writeReport(caseArtifactPath, report)
+        verificationArtifactWriter.writeReport(caseReportPath(semantifyrVerifierConfiguration.outputDirectory, case), report)
         if (trace != null) {
             verificationArtifactWriter.writeWitnessArtifacts(trace, caseArtifactPath, qualifiedName)
         }

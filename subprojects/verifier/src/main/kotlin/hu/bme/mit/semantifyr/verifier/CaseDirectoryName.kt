@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.verifier
 
+import java.nio.file.Path
+
 private val NON_FS_SAFE = Regex("[^A-Za-z0-9._-]")
 
 private const val MAX_CASE_DIRECTORY_LENGTH = 64
@@ -19,4 +21,8 @@ fun caseDirectoryName(case: VerificationCase): String {
     }
     val hash = "%08x".format(name.hashCode())
     return "${name.take(MAX_CASE_DIRECTORY_LENGTH - hash.length - 1)}-$hash"
+}
+
+fun caseReportPath(outputDirectory: Path, case: VerificationCase): Path {
+    return outputDirectory.resolve(caseDirectoryName(case)).resolve("report.json")
 }

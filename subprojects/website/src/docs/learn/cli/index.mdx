@@ -28,7 +28,7 @@ For each case, `verify` prints `Verifying <case> ...`, then the verdict with the
 With `--json` it prints one JSON object per case and line, as each case finishes:
 
 ```json
-{"case":"semantifyr::verification::smoke::CounterReachesThree","exitCode":0,"report":"/tmp/semantifyr-123/semantifyr.verification.smoke.CounterReachesThree/report.json"}
+{"case":"semantifyr::verification::smoke::CounterReachesThree","exitCode":0,"report":"/tmp/semantifyr-123/smoke.CounterReachesThree/report.json"}
 ```
 
 `case` is the qualified name of the case, `exitCode` its [exit code](#exit-codes) and `report` the absolute path of its `report.json`. A case that does not compile has `error`, the compiler's message, instead of `report`, and ends the run. `report.json` holds the rest: `verificationCase`, `portfolioId`, `optimization`, `timeout` and `result`, whose `verdict` is `Passed`, `Failed`, `Inconclusive`, `NotSupported`, `Timeout` or `Errored`, with the `message` of the backend, `metadata.backendId`, the backend configuration that answered, and `metrics`: the durations of the run, of the backend and of the compiler's phases, the optimizer's statistics and the model sizes.
