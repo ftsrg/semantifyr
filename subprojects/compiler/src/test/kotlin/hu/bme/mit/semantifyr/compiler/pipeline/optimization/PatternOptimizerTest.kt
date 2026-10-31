@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.emf.ecore.EObject
 import org.junit.jupiter.api.Test
@@ -34,7 +35,7 @@ class PatternOptimizerTest {
 
     @Test
     fun `patterns that never match report no change and never commit`() {
-        val pattern: OptimizationPattern = mock()
+        val pattern = matchingEverything()
         whenever(pattern.tryApply(any(), any())).thenReturn(false)
 
         val optimizer = PatternOptimizer(listOf(pattern), CompilationPass.ExpressionSimplification, artifacts)
@@ -46,7 +47,7 @@ class PatternOptimizerTest {
 
     @Test
     fun `a matching pattern triggers commitStep and reports change`() {
-        val pattern: OptimizationPattern = mock()
+        val pattern = matchingEverything()
         // Fire once on the first element examined, then return false forever.
         var fired = false
         whenever(pattern.tryApply(any(), any())).thenAnswer {
@@ -67,8 +68,8 @@ class PatternOptimizerTest {
 
     @Test
     fun `once a pattern matches later patterns are not tried on the same element`() {
-        val first: OptimizationPattern = mock()
-        val second: OptimizationPattern = mock()
+        val first = matchingEverything()
+        val second = matchingEverything()
         // Match first time only, for `first` pattern. After that, short-circuits.
         var fired = false
         whenever(first.tryApply(any(), any())).thenAnswer {
@@ -92,5 +93,23 @@ class PatternOptimizerTest {
 
         verify(first, times(1)).tryApply(eq(input), any())
         verify(second, never()).tryApply(eq(input), any())
+    }
+
+    @Test
+    fun `a pattern is never tried on elements outside its root types`() {
+        val pattern: OptimizationPattern = mock()
+        whenever(pattern.rootTypes).thenReturn(setOf(IfOperation::class.java))
+
+        val optimizer = PatternOptimizer(listOf(pattern), CompilationPass.ExpressionSimplification, artifacts)
+
+        optimizer.optimize(OxstsFactory.createLiteralBoolean(true))
+
+        verify(pattern, never()).tryApply(any(), any())
+    }
+
+    private fun matchingEverything(): OptimizationPattern {
+        val pattern: OptimizationPattern = mock()
+        whenever(pattern.rootTypes).thenReturn(setOf(EObject::class.java))
+        return pattern
     }
 }

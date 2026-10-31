@@ -18,6 +18,8 @@ import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
 
 class NegatedComparisonPattern : OptimizationPattern {
+    override val rootTypes = setOf(NegationOperator::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is NegationOperator) {
             return false
@@ -50,6 +52,8 @@ class NegatedComparisonPattern : OptimizationPattern {
 }
 
 class DoubleNegationPattern : OptimizationPattern {
+    override val rootTypes = setOf(NegationOperator::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is NegationOperator) {
             return false
@@ -63,6 +67,8 @@ class DoubleNegationPattern : OptimizationPattern {
 }
 
 class DeMorganPattern : OptimizationPattern {
+    override val rootTypes = setOf(NegationOperator::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is NegationOperator) {
             return false
