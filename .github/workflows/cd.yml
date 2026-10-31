@@ -16,12 +16,12 @@ jobs:
     uses: ./.github/workflows/ci.yml
     permissions:
       contents: read
-      packages: write
     with:
       publish: true
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   website:
     name: Deploy Website

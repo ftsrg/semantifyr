@@ -16,6 +16,8 @@ on:
         required: false
       GRADLE_ENCRYPTION_KEY:
         required: false
+      DOCKERHUB_TOKEN:
+        required: false
     outputs:
       tag:
         value: ${{ jobs.live-image.outputs.tag }}
@@ -146,11 +148,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
     env:
-      IMAGE: ghcr.io/ftsrg/semantifyr-live
+      IMAGE: docker.io/ftsrgbot/semantifyr-live
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -200,13 +201,12 @@ jobs:
       - name: Show the container log
         if: ${{ failure() }}
         run: docker logs live
-      - name: Log in to GHCR
+      - name: Log in to Docker Hub
         if: ${{ inputs.publish }}
         uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ftsrgbot
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Push
         if: ${{ inputs.publish }}
         env:

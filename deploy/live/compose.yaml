@@ -4,7 +4,7 @@
 
 services:
   live:
-    image: ghcr.io/ftsrg/semantifyr-live:${IMAGE_TAG:?IMAGE_TAG is not set}
+    image: docker.io/ftsrgbot/semantifyr-live:${IMAGE_TAG:?IMAGE_TAG is not set}
     restart: unless-stopped
     environment:
       SEMANTIFYR_LIVE_ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD is not set}

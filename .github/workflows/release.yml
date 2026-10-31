@@ -14,7 +14,8 @@ jobs:
     permissions:
       actions: read
       contents: write
-      packages: write
+    env:
+      IMAGE: docker.io/ftsrgbot/semantifyr-live
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -47,21 +48,20 @@ jobs:
           gh run download "$run" --name distributions --dir distributions
       - name: Set up Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-      - name: Log in to GHCR
+      - name: Log in to Docker Hub
         uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ftsrgbot
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Tag the snapshot image as the release
         env:
           VERSION: ${{ steps.version.outputs.version }}
           SNAPSHOT: ${{ steps.version.outputs.snapshot }}
         run: |
           docker buildx imagetools create \
-            --tag "ghcr.io/ftsrg/semantifyr-live:$VERSION" \
-            --tag ghcr.io/ftsrg/semantifyr-live:latest \
-            "ghcr.io/ftsrg/semantifyr-live:$SNAPSHOT"
+            --tag "$IMAGE:$VERSION" \
+            --tag "$IMAGE:latest" \
+            "$IMAGE:$SNAPSHOT"
       - name: Create the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
