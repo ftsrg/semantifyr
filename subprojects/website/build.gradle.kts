@@ -5,6 +5,7 @@
  */
 
 import com.github.gradle.node.npm.task.NpmTask
+import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
 
 plugins {
@@ -55,6 +56,23 @@ val cloneBrandingAssets = tasks.register<Sync>("cloneBrandingAssets") {
     into(importedBrandingDir)
 }
 
+val apiDocs = configurations.dependencyScope("apiDocs")
+val apiDocsFiles = configurations.resolvable("apiDocsFiles") {
+    extendsFrom(apiDocs.get())
+    attributes(semantifyrArtifact("api-docs"))
+}
+
+dependencies {
+    if (providers.gradleProperty("website.apiDocs").getOrElse("false").toBoolean()) {
+        apiDocs(project(":"))
+    }
+}
+
+val cloneApiDocs = tasks.register<Sync>("cloneApiDocs") {
+    from(apiDocsFiles)
+    into(layout.buildDirectory.dir("api-static/api"))
+}
+
 fun NpmTask.configureSharedInputs() {
     inputs.dir(project.layout.projectDirectory.dir("src"))
     inputs.dir(project.layout.projectDirectory.dir("static"))
@@ -76,6 +94,7 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     configureSharedInputs()
 
     npmCommand.set(listOf("run", "assemble"))
+    inputs.files(cloneApiDocs)
     outputs.dir(project.layout.buildDirectory.dir("docusaurus"))
 }
 

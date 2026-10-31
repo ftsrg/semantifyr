@@ -44,6 +44,8 @@ jobs:
     env:
       # one value for every Gradle step, since it is a test input and a change reruns all tests
       REQUIRED_BACKENDS: ${{ matrix.os == 'ubuntu-latest' && 'theta,spin' || 'theta' }}
+      # only the ubuntu leg uploads the website
+      WEBSITE_API_DOCS: ${{ matrix.os == 'ubuntu-latest' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -71,7 +73,7 @@ jobs:
           sudo apt-get install -y spin
       - name: Gradle build
         shell: bash
-        run: ./gradlew build -Ptests.requiredBackends=$REQUIRED_BACKENDS
+        run: ./gradlew build -Ptests.requiredBackends=$REQUIRED_BACKENDS -Pwebsite.apiDocs=$WEBSITE_API_DOCS
       - name: Run integration tests
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: ./gradlew integrationTest -Ptests.requiredBackends=$REQUIRED_BACKENDS

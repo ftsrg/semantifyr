@@ -60,6 +60,23 @@ tasks.withType<Test>().configureEach {
     systemProperty("semantifyr.tests.requiredBackends", providers.gradleProperty("tests.requiredBackends").getOrElse(""))
 }
 
+plugins.withId("org.jetbrains.kotlin.jvm") {
+    apply(plugin = "org.jetbrains.dokka")
+}
+
+tasks.javadoc {
+    // EMF and Xtext generate Javadoc that doclint rejects
+    (options as StandardJavadocDocletOptions).addBooleanOption("Xdoclint:none", true)
+    destinationDir = layout.buildDirectory.dir("javadoc/${project.name}").get().asFile
+}
+
+configurations.consumable("javadocDirectoryElements") {
+    attributes(semantifyrArtifact("javadoc"))
+    outgoing.artifact(layout.buildDirectory.dir("javadoc")) {
+        builtBy(tasks.javadoc)
+    }
+}
+
 tasks.withType<JacocoReport>().configureEach {
     group = "verification"
     sourceSets(sourceSets.main.get())
