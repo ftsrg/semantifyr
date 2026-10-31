@@ -152,6 +152,14 @@ class VerificationContextTest {
     }
 
     @Test
+    suspend fun `a resource limit hit by the tool is a Timeout`() {
+        val result = ScriptedContext(runStep = { throw BackendTimeoutException("spin exceeded the runexec cputime limit") }).execute()
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
+        assertThat(result.message).isEqualTo("spin exceeded the runexec cputime limit")
+    }
+
+    @Test
     suspend fun `any other failure is Errored with its message`() {
         val result = ScriptedContext(runStep = { error("spin execution failed with exit code 2") }).execute()
 
