@@ -51,8 +51,9 @@ public class RedefinitionHandler {
                     .getMemberSelectable()
                     .getExportedObjects(declaration.eClass(), QualifiedName.create(name), false);
 
-            for (var element : found) {
-                var toReturn = (RedefinableDeclaration) element.getEObjectOrProxy();
+            var iterator = found.iterator();
+            if (iterator.hasNext()) {
+                var toReturn = (RedefinableDeclaration) iterator.next().getEObjectOrProxy();
                 if (toReturn.eIsProxy()) {
                     return null;
                 }
