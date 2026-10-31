@@ -118,4 +118,127 @@ class VariableLivenessPassTest : PassTestBase() {
     ) {
         it.getInstance(VariableLivenessPass::class.java)
     }
+
+    @Test
+    fun `a local's initializer is not moved past a later write of its source`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            var seen : int := 0
+            init { }
+            tran {
+                var s : int := a
+                a := a + 1
+                seen := s
+            }
+            prop { AG (seen != a) }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            var seen : int := 0
+            init { }
+            tran {
+                var s : int := a
+                a := a + 1
+                seen := s
+            }
+            prop { AG (seen != a) }
+        """,
+    ) {
+        it.getInstance(VariableLivenessPass::class.java)
+    }
+
+    @Test
+    fun `a local's initializer is not moved past a write of its source on one branch`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            var seen : int := 0
+            init { }
+            tran {
+                var s : int := a
+                choice { a := 1 } or { }
+                seen := s
+            }
+            prop { AG (seen != a) }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            var seen : int := 0
+            init { }
+            tran {
+                var s : int := a
+                choice { a := 1 } or { }
+                seen := s
+            }
+            prop { AG (seen != a) }
+        """,
+    ) {
+        it.getInstance(VariableLivenessPass::class.java)
+    }
+
+    @Test
+    fun `a local's initializer is not moved into a loop whose body writes its source`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            var seen : int := 0
+            init { }
+            tran {
+                var s : int := a
+                for (i in 0 .. 2) {
+                    seen := s
+                    a := a + i
+                }
+            }
+            prop { AG (seen != a) }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            var seen : int := 0
+            init { }
+            tran {
+                var s : int := a
+                for (i in 0 .. 2) {
+                    seen := s
+                    a := a + i
+                }
+            }
+            prop { AG (seen != a) }
+        """,
+    ) {
+        it.getInstance(VariableLivenessPass::class.java)
+    }
+
+    @Test
+    fun `a local's initializer is substituted when its source is written only after the reads`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            var seen : int := 0
+            init { }
+            tran {
+                var s : int := a
+                seen := s
+                a := a + 1
+            }
+            prop { AG (seen != a) }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := 0
+            var seen : int := 0
+            init { }
+            tran {
+                seen := a
+                a := a + 1
+            }
+            prop { AG (seen != a) }
+        """,
+    ) {
+        it.getInstance(VariableLivenessPass::class.java)
+    }
 }

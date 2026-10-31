@@ -50,3 +50,21 @@ class CopyFromInitAcrossSourceWrite {
         return EF seen
     }
 }
+
+// Variable liveness: a local's initializer is evaluated at the declaration, before the write to its source.
+@VerificationCase
+@Tag("expect-pass")
+class LocalInitializerBeforeSourceWrite {
+    var a: int := 0
+    var seen: int := 0
+
+    redefine tran {
+        var s: int := a
+        a := 1 - a
+        seen := s
+    }
+
+    prop {
+        return EF (a == 1 && seen == 0)
+    }
+}
