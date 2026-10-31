@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import kotlinx.serialization.Serializable
+import org.eclipse.emf.ecore.EObject
 import java.nio.file.Path
 import kotlin.time.Duration
 import kotlin.time.Instant
@@ -23,6 +24,7 @@ class BackendUnsupportedException(message: String, cause: Throwable? = null) : E
 data class BackendVerificationRequest(
     val inlinedOxsts: InlinedOxsts,
     val artifactOutputPath: Path,
+    val sourceElementOf: (EObject) -> EObject = { it },
 )
 
 @Serializable

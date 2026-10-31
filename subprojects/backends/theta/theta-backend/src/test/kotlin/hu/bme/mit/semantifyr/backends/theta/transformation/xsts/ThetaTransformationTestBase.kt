@@ -29,6 +29,10 @@ abstract class ThetaTransformationTestBase {
         URI.createFileURI(File("build/test-tmp/model.xsts").absolutePath)
     }
 
+    protected fun capabilityChecker(): ThetaCapabilityChecker {
+        return childInjector.getInstance(ThetaCapabilityChecker::class.java)
+    }
+
     protected fun parse(source: String, vararg packages: String): InlinedOxsts {
         return models.parse(source, *packages)
     }

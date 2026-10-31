@@ -124,7 +124,7 @@ class NuxmvBackendReplayTest {
     }
 
     @Test
-    suspend fun `an unsupported variable type is NotSupported`() {
+    suspend fun `unsupported constructs are NotSupported with their source location`() {
         val result = verify(
             "RealVariable",
             models.parse(
@@ -139,6 +139,6 @@ class NuxmvBackendReplayTest {
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).contains("real")
+        assertThat(result.message).matches("nuxmv:ic3-invar does not support \\S+:2: variables of type real")
     }
 }

@@ -8,8 +8,11 @@ package hu.bme.mit.semantifyr.backend
 
 import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.assertj.core.api.Assertions.assertThat
+import org.eclipse.emf.ecore.EObject
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.mock
@@ -17,7 +20,7 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.Path
 import kotlin.time.Duration
 
-class VerificationContextTest {
+class VerificationContextTemplateTest {
 
     private class CountingExecutor(
         private val failPreparation: Boolean = false,
@@ -36,15 +39,27 @@ class VerificationContextTest {
         }
     }
 
+    private class RejectingVariables : BackendCapabilityChecker() {
+        override fun describeUnsupported(element: EObject): String? {
+            if (element is VariableDeclaration) {
+                return "variables of type real"
+            }
+            return null
+        }
+    }
+
     private class ScriptedContext(
         override val executor: CountingExecutor = CountingExecutor(),
         private val prepareStep: () -> String = { "artifacts" },
         private val runStep: () -> String? = { "pass" },
         private val witness: InlinedWitness? = null,
+        inlinedOxsts: InlinedOxsts = OxstsFactory.createInlinedOxsts(),
     ) : VerificationContext<String, String>(
         backendId = "scripted",
-        request = BackendVerificationRequest(mock<InlinedOxsts>(), Path("build")),
+        request = BackendVerificationRequest(inlinedOxsts, Path("build")),
     ) {
+        override val capabilityChecker = RejectingVariables()
+
         val phases = mutableListOf<String>()
 
         override suspend fun prepare(): String {
@@ -147,6 +162,23 @@ class VerificationContextTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.message).isEqualTo("image pull failed")
+        assertThat(context.phases).isEmpty()
+    }
+
+    @Test
+    suspend fun `unsupported constructs are NotSupported before the executor is prepared`() {
+        val executor = CountingExecutor()
+        val inlinedOxsts = OxstsFactory.createInlinedOxsts().also {
+            it.variables += OxstsFactory.createVariableDeclaration()
+            it.variables += OxstsFactory.createVariableDeclaration()
+        }
+        val context = ScriptedContext(executor, inlinedOxsts = inlinedOxsts)
+
+        val result = context.execute()
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
+        assertThat(result.message).isEqualTo("scripted does not support variables of type real; variables of type real")
+        assertThat(executor.preparations).isZero()
         assertThat(context.phases).isEmpty()
     }
 

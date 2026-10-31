@@ -21,6 +21,10 @@ abstract class SpinTransformationTestBase {
         }
     }
 
+    protected fun capabilityChecker(): SpinCapabilityChecker {
+        return childInjector.getInstance(SpinCapabilityChecker::class.java)
+    }
+
     protected fun parse(source: String, vararg packages: String): InlinedOxsts {
         return models.parse(source, *packages)
     }

@@ -21,6 +21,10 @@ abstract class UppaalTransformationTestBase {
         }
     }
 
+    protected fun capabilityChecker(): UppaalCapabilityChecker {
+        return childInjector.getInstance(UppaalCapabilityChecker::class.java)
+    }
+
     protected fun parse(source: String, vararg packages: String): InlinedOxsts {
         return models.parse(source, *packages)
     }
