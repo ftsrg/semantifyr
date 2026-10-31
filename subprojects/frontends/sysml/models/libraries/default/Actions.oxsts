@@ -18,7 +18,7 @@ class SendItemAction : Action {
     refers payload: Item
 
     redefine tran {
-        inline viaPort.setOutgoingItem(payload)
+        inline viaPort.setOutgoingItem(item = payload)
     }
 }
 

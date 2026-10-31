@@ -30,6 +30,7 @@ abstract class Port {
         incomingItem := item
     }
 
+    @Trace
     tran setOutgoingItem(item: Item) {
         outgoingItem := item
     }

@@ -185,6 +185,7 @@ class Transition {
         }
     }
 
+    @Trace
     tran fire() {
         assume (isEnabled())
         inline performTransition()
