@@ -5,7 +5,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 const fetchInfo = vi.fn();
@@ -101,27 +101,29 @@ describe('AdminPage', () => {
     expect(await screen.findByText('Semantifyr Admin')).toBeInTheDocument();
   });
 
-  it('flips to authenticated when login succeeds and surfaces the error otherwise', async () => {
+  // fireEvent instead of user-event: its pointer and focus simulation on the MUI form took this past the timeout on a loaded machine
+  it('surfaces the error when login fails', async () => {
     checkAdminAuth.mockResolvedValue(false);
     loginAdmin.mockResolvedValueOnce(false);
+
+    render(<AdminPage colorModePreference="dark" colorMode="dark" onToggleColorMode={() => {}} />);
+    fireEvent.change(await screen.findByLabelText('Admin password'), { target: { value: 'wrong' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Login' }));
+
+    expect(await screen.findByText('Invalid password')).toBeInTheDocument();
+    expect(loginAdmin).toHaveBeenCalledWith('wrong');
+  });
+
+  it('flips to authenticated when login succeeds', async () => {
+    checkAdminAuth.mockResolvedValue(false);
     loginAdmin.mockResolvedValueOnce(true);
 
-    // no timer between keystrokes, so the typing does not wait on a loaded event loop
-    const user = userEvent.setup({ delay: null });
     render(<AdminPage colorModePreference="dark" colorMode="dark" onToggleColorMode={() => {}} />);
-    await screen.findByText('Semantifyr Admin');
+    fireEvent.change(await screen.findByLabelText('Admin password'), { target: { value: 'right' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Login' }));
 
-    const password = screen.getByLabelText('Admin password');
-    const submit = screen.getByRole('button', { name: 'Login' });
-
-    await user.type(password, 'wrong');
-    await user.click(submit);
-    expect(await screen.findByText('Invalid password')).toBeInTheDocument();
-
-    await user.clear(password);
-    await user.type(password, 'right');
-    await user.click(submit);
-    await screen.findByText('/ Admin');
+    expect(await screen.findByText('/ Admin')).toBeInTheDocument();
+    expect(loginAdmin).toHaveBeenCalledWith('right');
   });
 
   it('logout flips local state to unauthenticated even when the network call rejects', async () => {
