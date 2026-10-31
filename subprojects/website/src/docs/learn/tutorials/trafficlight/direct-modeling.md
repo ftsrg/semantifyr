@@ -3,6 +3,9 @@ title: 'Direct Modeling'
 sidebar_position: 1
 ---
 
+import LiveEmbed from '@site/src/components/LiveEmbed';
+import basics from '@oxsts-test-models/tutorial/basics.oxsts';
+
 # Direct Modeling
 
 This is the entry-level tutorial for Semantifyr. It walks through modeling a small traffic-light system as a single class with the entire state machine inline, and specifies verification cases using safety and reachability properties. There are no reusable abstractions in this tutorial; the [Building a Library](building-a-library.md) tutorial refactors the same example into something more general.
@@ -273,82 +276,4 @@ The next tutorial in the series, [Building a Library](building-a-library.md), ex
 
 The complete final state of `trafficlight.oxsts`:
 
-```oxsts verify open
-package example::trafficlight
-
-enum LightColor {
-    Red,
-    Yellow,
-    Green
-}
-
-class TrafficLight {
-    var color: LightColor := LightColor::Red
-
-    tran assumeColor(color: LightColor) {
-        assume (self.color == color)
-    }
-
-    tran setColor(color: LightColor) {
-        self.color := color
-    }
-
-    redefine tran {
-        choice {
-            inline assumeColor(LightColor::Red)
-            inline setColor(LightColor::Green)
-        } or {
-            inline assumeColor(LightColor::Green)
-            inline setColor(LightColor::Yellow)
-        } or {
-            inline assumeColor(LightColor::Yellow)
-            inline setColor(LightColor::Red)
-        }
-    }
-
-    prop isColor(color: LightColor): bool {
-        return self.color == color
-    }
-}
-
-class Intersection {
-    contains north: TrafficLight
-    contains east: TrafficLight
-
-    redefine tran {
-        choice {
-            assume (!east.isColor(LightColor::Green))
-            inline north.main()
-        } or {
-            assume (!north.isColor(LightColor::Green))
-            inline east.main()
-        }
-    }
-}
-
-@VerificationCase
-class GreenColorIsReachable {
-    contains light: TrafficLight[1]
-
-    redefine tran {
-        inline light.main()
-    }
-
-    prop {
-        return EF (light.color == LightColor::Green)
-    }
-}
-
-@VerificationCase
-class IntersectionNeverBothGreen {
-    contains intersection: Intersection
-
-    redefine tran {
-        inline intersection.main()
-    }
-
-    prop {
-        return AG !(intersection.north.color == LightColor::Green && intersection.east.color == LightColor::Green)
-    }
-}
-```
+<LiveEmbed code={basics} />

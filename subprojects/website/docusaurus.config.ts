@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import path from 'node:path';
 import type { Options as DocsOptions } from '@docusaurus/plugin-content-docs';
 import type { Options as PagesOptions } from '@docusaurus/plugin-content-pages';
 import type { Options as ClassicThemeOptions } from '@docusaurus/theme-classic';
@@ -70,6 +71,17 @@ export default {
       {} satisfies PagesOptions,
     ],
     '@docusaurus/plugin-sitemap',
+    () => ({
+      name: 'oxsts-test-models',
+      configureWebpack: () => ({
+        resolve: {
+          alias: { '@oxsts-test-models': path.resolve(__dirname, '../../oxsts-test-models') },
+        },
+        module: {
+          rules: [{ test: /\.oxsts$/, type: 'asset/source' }],
+        },
+      }),
+    }),
   ],
   themes: [
     [

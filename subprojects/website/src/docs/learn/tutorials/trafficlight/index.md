@@ -10,7 +10,7 @@ This tutorial series explores how to model the same example system, a small traf
 The tutorials share the same example so you can compare the encodings side by side. They are designed to be read in order, but each one is self-contained and starts from a fresh file.
 
 :::tip Try it live
-You can follow along in the [live editor](https://live.semantifyr.org) : a lightweight in-browser editor with syntax highlighting, diagnostics, content assist, and an integrated verification panel. Each tutorial's **Snapshot** section links directly to a pre-loaded version you can edit and verify immediately.
+You can follow along in the [live editor](https://live.semantifyr.org): a lightweight in-browser editor with syntax highlighting, diagnostics, content assist, and an integrated verification panel. Each tutorial's **Snapshot** section holds the finished model, which you can edit and verify in place.
 :::
 
 ## Tutorials
