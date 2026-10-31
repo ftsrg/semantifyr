@@ -14,6 +14,9 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration
+import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaNameStore
+import hu.bme.mit.semantifyr.frontends.gamma.trace.GammaTraceGenerator
+import hu.bme.mit.semantifyr.frontends.gamma.trace.GammaTraceSerializer
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.library.ClasspathBasedOxstsLibrary
@@ -33,6 +36,7 @@ import kotlinx.coroutines.runBlocking
 import org.eclipse.xtext.EcoreUtil2
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.writeText
 import kotlin.time.Duration
 import kotlin.time.toKotlinDuration
 
@@ -45,6 +49,7 @@ class GammaWitness(
     val trace: Trace,
     val witnessPath: Path,
     val compiledModelPath: Path,
+    val gammaTracePath: Path,
 )
 
 data class GammaVerificationResult(
@@ -56,6 +61,7 @@ data class GammaWitnessDto(
     val trace: TraceDto,
     val witnessPath: Path,
     val compiledModelPath: Path,
+    val gammaTracePath: Path,
 ) {
     companion object {
         fun fromGammaWitness(witness: GammaWitness): GammaWitnessDto {
@@ -63,6 +69,7 @@ data class GammaWitnessDto(
                 trace = witness.trace.toJavaDto(),
                 witnessPath = witness.witnessPath,
                 compiledModelPath = witness.compiledModelPath,
+                gammaTracePath = witness.gammaTracePath,
             )
         }
     }
@@ -110,6 +117,8 @@ class GammaFrontendConfig(
 
 class GammaFrontend @Inject private constructor(
     private val gammaCompiler: GammaCompiler,
+    private val gammaTraceGenerator: GammaTraceGenerator,
+    private val gammaTraceSerializer: GammaTraceSerializer,
     private val semantifyrLoader: SemantifyrLoader,
     private val verificationCaseDiscoverer: VerificationCaseDiscoverer,
     private val gammaFrontendConfig: GammaFrontendConfig,
@@ -134,7 +143,7 @@ class GammaFrontend @Inject private constructor(
 
         logger.info { "Verifying Gamma case '$qualifiedName'" }
 
-        gammaCompiler.compile(gammaModel, outputPath)
+        val nameStore = gammaCompiler.compile(gammaModel, outputPath)
 
         val context = semantifyrLoader.startContext()
             .loadLibraryPaths(gammaFrontendConfig.libraryPaths)
@@ -152,13 +161,27 @@ class GammaFrontend @Inject private constructor(
             require(witnessUri.isFile) {
                 "Witness resource has no file URI, got '$witnessUri'"
             }
-            GammaWitness(it, Path.of(witnessUri.toFileString()), outputPath)
+            val witnessPath = Path.of(witnessUri.toFileString())
+            val gammaTracePath = witnessPath.resolveSibling("trace.gamma")
+            writeGammaTrace(gammaVerificationCase, it, nameStore, gammaTracePath)
+            GammaWitness(it, witnessPath, outputPath, gammaTracePath)
         }
         logger.info { "Gamma case '$qualifiedName' -> ${result.verdict}" }
         if (witness != null) {
             logger.info { "Gamma case '$qualifiedName' produced witness at '${witness.witnessPath}'" }
         }
         return GammaVerificationResult(result, witness)
+    }
+
+    private fun writeGammaTrace(
+        gammaVerificationCase: GammaVerificationCase,
+        trace: Trace,
+        nameStore: GammaNameStore,
+        gammaTracePath: Path,
+    ) {
+        val gammaTrace = gammaTraceGenerator.generate(gammaVerificationCase.declaration, trace.callTrace, trace.witnessState, nameStore)
+        gammaTracePath.writeText(gammaTraceSerializer.serialize(gammaTrace))
+        logger.info { "Gamma case '${gammaVerificationCase.qualifiedName}' wrote its Gamma trace to '$gammaTracePath'" }
     }
 
     fun verifyBlocking(
@@ -338,6 +361,8 @@ class GammaFrontend @Inject private constructor(
             }
 
             val compiler = effectiveGammaInjector.getInstance(GammaCompiler::class.java)
+            val traceGenerator = effectiveGammaInjector.getInstance(GammaTraceGenerator::class.java)
+            val traceSerializer = effectiveGammaInjector.getInstance(GammaTraceSerializer::class.java)
             val loader = effectiveOxstsInjector.getInstance(SemantifyrLoader::class.java)
             val discoverer = effectiveOxstsInjector.getInstance(VerificationCaseDiscoverer::class.java)
 
@@ -358,6 +383,8 @@ class GammaFrontend @Inject private constructor(
 
             return GammaFrontend(
                 gammaCompiler = compiler,
+                gammaTraceGenerator = traceGenerator,
+                gammaTraceSerializer = traceSerializer,
                 semantifyrLoader = loader,
                 verificationCaseDiscoverer = discoverer,
                 gammaFrontendConfig = gammaFrontendConfig,
