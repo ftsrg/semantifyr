@@ -11,9 +11,13 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.tryEvaluateTypedOrNull
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
 
@@ -62,5 +66,31 @@ fun EObject.variableWrites(evaluator: MetaCompileTimeExpressionEvaluator): Map<V
 
     return writes.groupBy {
         evaluator.evaluateTyped(VariableDeclaration::class.java, it.writeReference())
+    }
+}
+
+fun InlinedOxsts.initMustWrite(variable: VariableDeclaration, evaluator: MetaCompileTimeExpressionEvaluator): Boolean {
+    val transition = initTransition ?: return false
+    if (transition.branches.isEmpty()) {
+        return false
+    }
+    return transition.branches.all {
+        it.mustWrite(variable, evaluator)
+    }
+}
+
+private fun Operation.mustWrite(variable: VariableDeclaration, evaluator: MetaCompileTimeExpressionEvaluator): Boolean {
+    return when (this) {
+        is SequenceOperation -> steps.any { it.mustWrite(variable, evaluator) }
+        is ChoiceOperation -> {
+            branches.isNotEmpty() && branches.all { it.mustWrite(variable, evaluator) }
+        }
+        is IfOperation -> {
+            val elseBranch = `else` ?: return false
+            body.mustWrite(variable, evaluator) && elseBranch.mustWrite(variable, evaluator)
+        }
+        is AssignmentOperation -> evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, reference) == variable
+        is HavocOperation -> evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, reference) == variable
+        else -> false
     }
 }
