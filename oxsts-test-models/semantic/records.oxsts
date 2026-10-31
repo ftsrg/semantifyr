@@ -1,0 +1,276 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::lang::records
+
+// Records are values: the compiler flattens each record variable into one
+// scalar variable per field, nested records recursively. Assignment copies
+// every field and comparison is by value.
+
+enum Light { Off, On }
+
+record Point {
+    var x: int := 0
+    var y: int := 0
+}
+
+record Reading {
+    var value: int
+    var valid: bool := false
+}
+
+record Cell {
+    var position: Point
+    var light: Light := Light::Off
+}
+
+// --- field read and write ---
+
+// Reachable: independent field writes reach (2, 1).
+@VerificationCase
+@Tag("expect-pass")
+class RecordFieldWriteReach {
+    var p: Point
+
+    redefine tran {
+        choice {
+            assume(p.x < 2)
+            p.x := p.x + 1
+        } or {
+            assume(p.y < 1)
+            p.y := p.y + 1
+        }
+    }
+
+    prop {
+        return EF (p.x == 2 && p.y == 1)
+    }
+}
+
+// Violated: the fields leave the origin.
+@VerificationCase
+@Tag("expect-fail")
+class RecordFieldWriteBound {
+    var p: Point
+
+    redefine tran {
+        choice {
+            assume(p.x < 2)
+            p.x := p.x + 1
+        } or {
+            assume(p.y < 1)
+            p.y := p.y + 1
+        }
+    }
+
+    prop {
+        return AG p.x + p.y <= 2
+    }
+}
+
+// --- assignment copies, comparison by value ---
+
+// Holds: a copy taken after every write equals the original.
+@VerificationCase
+@Tag("expect-pass")
+class RecordCopyEqualityBound {
+    var p: Point
+    var q: Point
+
+    redefine tran {
+        choice {
+            assume(p.x < 3)
+            p.x := p.x + 1
+        } or {
+            assume(p.y < 3)
+            p.y := p.y + 1
+        }
+        q := p
+    }
+
+    prop {
+        return AG p == q
+    }
+}
+
+// Violated: a copy does not alias, so writing the original after the copy leaves the copy behind.
+@VerificationCase
+@Tag("expect-fail")
+class RecordCopyIsNoAlias {
+    var p: Point
+    var q: Point
+    var copied: bool := false
+
+    redefine tran {
+        choice {
+            q := p
+            copied := true
+        } or {
+            assume(p.x < 2)
+            p.x := p.x + 1
+        }
+    }
+
+    prop {
+        return AG (!copied || p == q)
+    }
+}
+
+// --- nested records ---
+
+// Reachable: a nested field write and an enum field travel together in a record copy.
+@VerificationCase
+@Tag("expect-pass")
+class NestedRecordReach {
+    var a: Cell
+    var b: Cell
+
+    redefine tran {
+        choice {
+            assume(a.position.x < 2)
+            a.position.x := a.position.x + 1
+        } or {
+            a.light := Light::On
+        } or {
+            b := a
+        }
+    }
+
+    prop {
+        return EF (b == a && b.light == Light::On && b.position.x == 2)
+    }
+}
+
+// Violated: the light of a copied cell does not stay off.
+@VerificationCase
+@Tag("expect-fail")
+class NestedRecordBound {
+    var a: Cell
+    var b: Cell
+
+    redefine tran {
+        choice {
+            a.light := Light::On
+        } or {
+            b.position := a.position
+            b.light := a.light
+        }
+    }
+
+    prop {
+        return AG b.light == Light::Off
+    }
+}
+
+// --- local records and havoc ---
+
+// Reachable: a havoced local record is copied into the state.
+@VerificationCase
+@Tag("expect-pass")
+class LocalRecordHavocReach {
+    var p: Point
+
+    redefine tran {
+        var next: Point
+        havoc(next)
+        assume(next.x >= 0 && next.x <= 3 && next.y == next.x)
+        p := next
+    }
+
+    prop {
+        return EF (p.x == 3 && p.y == 3)
+    }
+}
+
+// Violated: the havoced local record reaches beyond 2.
+@VerificationCase
+@Tag("expect-fail")
+class LocalRecordHavocBound {
+    var p: Point
+
+    redefine tran {
+        var next: Point
+        havoc(next)
+        assume(next.x >= 0 && next.x <= 3 && next.y == next.x)
+        p := next
+    }
+
+    prop {
+        return AG p.x <= 2
+    }
+}
+
+// Holds: an uninitialized local record havocs only the fields without a default, so a copied reading stays invalid.
+@VerificationCase
+@Tag("expect-pass")
+class LocalRecordDefaultsBound {
+    var last: Reading
+
+    redefine tran {
+        choice {
+            var next: Reading
+            assume(next.value == 3)
+            last := next
+        } or {
+            last.value := 0
+            last.valid := true
+        }
+    }
+
+    prop {
+        return AG (!last.valid || last.value == 0)
+    }
+}
+
+// --- record parameters and records in contained instances ---
+
+// Holds: a record argument is copied field by field.
+@VerificationCase
+@Tag("expect-pass")
+class RecordParameterBound {
+    var p: Point
+    var origin: Point
+
+    tran moveTo(target: Point) {
+        p := target
+    }
+
+    redefine tran {
+        choice {
+            p.x := 1
+        } or {
+            inline moveTo(origin)
+        }
+    }
+
+    prop {
+        return AG (p.y == 0 && p.x <= 1)
+    }
+}
+
+class Robot {
+    var position: Point
+
+    tran step() {
+        assume(position.x < 3)
+        position.x := position.x + 1
+    }
+}
+
+// Reachable: a record variable of a contained instance.
+@VerificationCase
+@Tag("expect-pass")
+class ContainedRecordReach {
+    contains robot: Robot
+
+    redefine tran {
+        inline robot.step()
+    }
+
+    prop {
+        return EF robot.position.x == 3
+    }
+}

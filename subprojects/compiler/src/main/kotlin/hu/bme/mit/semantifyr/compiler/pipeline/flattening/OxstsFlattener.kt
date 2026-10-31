@@ -15,6 +15,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationConte
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlatteningInfo
 import hu.bme.mit.semantifyr.compiler.pipeline.context.InlinedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.context.InstanceIdMapping
+import hu.bme.mit.semantifyr.compiler.pipeline.context.RecordField
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.ConstantExpressionEvaluationTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
@@ -44,8 +45,11 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralNothing
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.xtext.EcoreUtil2
@@ -83,6 +87,7 @@ class OxstsFlattener @Inject constructor(
     private val domainMappingSerializer: DomainMappingSerializer,
     private val instanceCollector: InstanceCollector,
     private val arrayFlatteningPass: ArrayFlatteningPass,
+    private val recordFlatteningPass: RecordFlatteningPass,
 ) {
 
     private val logger by loggerFactory()
@@ -102,10 +107,17 @@ class OxstsFlattener @Inject constructor(
         logger.debug { "Rewriting variable references (${inlinedOxsts.variables.size} variable(s))" }
         rewriteVariableReferences(inlinedOxsts, instanceTree, variableMappings)
 
+        logger.debug { "Flattening record variables" }
+        val recordFieldVariables = recordFlatteningPass.flattenRecords(inlinedOxsts)
+        logger.debug { "Flattened ${recordFieldVariables.size} record variable(s)" }
+        val recordFields = registerRecordFields(recordFieldVariables, variableHolders, variableMappings)
+
         logger.debug { "Flattening array variables" }
         val arraySlotVariables = arrayFlatteningPass.flattenArrays(inlinedOxsts)
         logger.debug { "Flattened ${arraySlotVariables.size} array variable(s)" }
         val arraySlots = registerArraySlots(arraySlotVariables, variableHolders, variableMappings)
+
+        havocUninitializedLocals(inlinedOxsts)
 
         logger.debug { "Rewriting feature-typed variables" }
         rewriteFeatureTypedVariables(inlinedOxsts, variableInstanceDomain)
@@ -132,6 +144,7 @@ class OxstsFlattener @Inject constructor(
             variableMappings = survivingMappings,
             instanceIdMapping = instanceIdMapping,
             arraySlots = arraySlots.filterKeys { it in survivingVariables },
+            recordFields = recordFields.filterKeys { it in survivingVariables },
         )
 
         return inlinedCompilationContext.flattened(flatteningInfo, optimization)
@@ -186,6 +199,40 @@ class OxstsFlattener @Inject constructor(
         return arraySlots
     }
 
+    private fun registerRecordFields(
+        recordFieldVariables: Map<VariableDeclaration, Map<List<VariableDeclaration>, VariableDeclaration>>,
+        variableHolders: MutableMap<VariableDeclaration, Instance>,
+        variableMappings: Map<Instance, Map<VariableDeclaration, VariableDeclaration>>,
+    ): Map<VariableDeclaration, RecordField> {
+        val recordFields = mutableMapOf<VariableDeclaration, RecordField>()
+        for ((recordVariable, fieldVariables) in recordFieldVariables) {
+            val holder = variableHolders[recordVariable] ?: continue
+            val originalVariable = variableMappings.getValue(holder).entries.single {
+                it.value == recordVariable
+            }.key
+            for ((path, fieldVariable) in fieldVariables) {
+                variableHolders[fieldVariable] = holder
+                recordFields[fieldVariable] = RecordField(originalVariable, path)
+            }
+        }
+        return recordFields
+    }
+
+    private fun havocUninitializedLocals(inlinedOxsts: InlinedOxsts) {
+        val uninitializedLocals = inlinedOxsts.eAllOfType<LocalVarDeclarationOperation>().filter {
+            it.expression == null
+        }.toList()
+        for (local in uninitializedLocals) {
+            val sequence = local.eContainer() as SequenceOperation
+            sequence.steps.add(
+                sequence.steps.indexOf(local) + 1,
+                OxstsFactory.createHavocOperation().also {
+                    it.reference = OxstsFactory.createElementReference(local)
+                },
+            )
+        }
+    }
+
     private fun pullDownVariable(
         domainVariable: VariableDeclaration,
         instance: Instance,
@@ -225,7 +272,7 @@ class OxstsFlattener @Inject constructor(
         val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instanceTree.rootInstance)
 
         val variableReferences = inlinedOxsts.eAllOfType<NavigationSuffixExpression>().filter {
-            it.member is VariableDeclaration
+            it.member is VariableDeclaration && it.member.eContainer() !is RecordDeclaration
         }.toList()
 
         for (variableReference in variableReferences) {
