@@ -22,6 +22,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.ExpressionRewriter
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.LocalVariableManager
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceCollector
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceNames
@@ -88,6 +89,7 @@ class OxstsFlattener @Inject constructor(
     private val instanceCollector: InstanceCollector,
     private val arrayFlatteningPass: ArrayFlatteningPass,
     private val recordFlatteningPass: RecordFlatteningPass,
+    private val localVariableManager: LocalVariableManager,
 ) {
 
     private val logger by loggerFactory()
@@ -106,6 +108,8 @@ class OxstsFlattener @Inject constructor(
 
         logger.debug { "Rewriting variable references (${inlinedOxsts.variables.size} variable(s))" }
         rewriteVariableReferences(inlinedOxsts, instanceTree, variableMappings)
+
+        registerLocalInstanceDomains(inlinedOxsts, variableInstanceDomain)
 
         logger.debug { "Flattening record variables" }
         val recordFieldVariables = recordFlatteningPass.flattenRecords(inlinedOxsts)
@@ -222,6 +226,22 @@ class OxstsFlattener @Inject constructor(
             }
         }
         return recordFields
+    }
+
+    private fun registerLocalInstanceDomains(
+        inlinedOxsts: InlinedOxsts,
+        variableInstanceDomain: MutableMap<VariableDeclaration, Set<Instance>>,
+    ) {
+        val builtinAnything = builtinSymbolResolver.anythingClass(inlinedOxsts)
+
+        for (local in inlinedOxsts.eAllOfType<LocalVarDeclarationOperation>()) {
+            if (local.typeSpecification?.domain !is ClassDeclaration) {
+                continue
+            }
+            variableInstanceDomain[local] = localVariableManager.instanceDomainOf(local)
+                ?: sourceError(local, "No instance domain registered for local variable '${local.name}'.")
+            local.typeSpecification.domain = builtinAnything
+        }
     }
 
     private fun havocUninitializedLocals(inlinedOxsts: InlinedOxsts) {

@@ -26,6 +26,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
@@ -56,6 +57,7 @@ class CallTargetResolver @Inject constructor(
     private val compileTimeExpressionEvaluatorProvider: CompileTimeExpressionEvaluatorProvider,
     private val metaCompileTimeExpressionEvaluatorProvider: MetaCompileTimeExpressionEvaluatorProvider,
     private val instanceCollector: InstanceCollector,
+    private val localVariableManager: LocalVariableManager,
 ) {
 
     fun resolve(callExpression: CallSuffixExpression, instance: Instance): CallTarget {
@@ -113,6 +115,10 @@ class CallTargetResolver @Inject constructor(
     ): Set<Instance> {
         if (OxstsUtils.isLoopVariable(variable)) {
             return candidateInstanceOfLoopVariable(variable, instance)
+        }
+
+        if (variable is LocalVarDeclarationOperation) {
+            return localVariableManager.instanceDomainOf(variable).orEmpty()
         }
 
         val domain = variable.typeSpecification?.domain ?: return emptySet()

@@ -221,7 +221,7 @@ public class ArrayTypeTest {
     }
 
     @Test
-    void localClassTypedArrayIsRejected() {
+    void localClassTypedArrayIsAccepted() {
         var pkg = parseHelper.parse("""
             package test
             class Worker { }
@@ -234,8 +234,7 @@ public class ArrayTypeTest {
             """, CheckMode.ALL);
 
         pkg.assertNoResourceErrors();
-        pkg.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "Local arrays of class or feature type");
-        assertOnlyErrorsAreUnsupportedAtLine(pkg, 6);
+        pkg.assertNoValidationErrors();
     }
 
     @Test
