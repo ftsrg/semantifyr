@@ -47,7 +47,7 @@ class Counter {
 
 ## Multiplicity on the Type
 
-A variable type may include a multiplicity bracket. This is how optional values are declared. A bounded multiplicity above one declares a fixed-size array, such as `var slots: int[3]`; the validator rejects arrays of class or feature type (`OXSTS.UNSUPPORTED_FEATURE`).
+A variable type may include a multiplicity bracket. This is how optional values are declared. A bounded multiplicity above one declares a fixed-size array, such as `var slots: int[3]`; the validator rejects arrays of class or feature type (`OXSTS.UNSUPPORTED_FEATURE`). An array is read and written slot by slot (`slots[i]`), or as a whole: `slots := other`, `slots := [0, 0, 0]`, `havoc(slots)` and `slots == other` act on every slot.
 
 ```oxsts
 var occupant: Item[0..1] := nothing

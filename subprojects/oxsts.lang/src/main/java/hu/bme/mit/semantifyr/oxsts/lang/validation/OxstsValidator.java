@@ -1092,7 +1092,25 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     "Records can only be compared with == and != to a record of the same type.",
                     operator,
                     TYPE_MISMATCH);
+        } else if ((isFixedSizeArray(leftType) || isFixedSizeArray(rightType))
+                && (!isFixedSizeArray(leftType)
+                        || !isFixedSizeArray(rightType)
+                        || leftType.getRange().getUpperBound()
+                                != rightType.getRange().getUpperBound()
+                        || (operator.getOp() != ComparisonOp.EQ && operator.getOp() != ComparisonOp.NOT_EQ))) {
+            acceptError(
+                    "Arrays can only be compared with == and != to an array of the same size.",
+                    operator,
+                    TYPE_MISMATCH);
         }
+    }
+
+    private static boolean isFixedSizeArray(TypeEvaluation type) {
+        var range = type.getRange();
+        return range != null
+                && range.getUpperBound() != RangeEvaluation.INFINITY
+                && range.getUpperBound() > 1
+                && !(type.getDomain() instanceof ClassDeclaration || type.getDomain() instanceof FeatureDeclaration);
     }
 
     @Check
@@ -1168,17 +1186,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public void checkArrayVariableSupported(VariableDeclaration variableDeclaration) {
         var typeSpecification = variableDeclaration.getTypeSpecification();
         if (typeSpecification == null || !isFixedSizeArray(typeSpecification)) {
-            return;
-        }
-        if (OxstsUtils.isLocalVariable(variableDeclaration)) {
-            acceptError(
-                    "Local array variables are not yet supported by the compiler; declare '"
-                            + variableDeclaration.getName()
-                            + "' as a class variable.",
-                    variableDeclaration,
-                    OxstsPackage.Literals.VARIABLE_DECLARATION__TYPE_SPECIFICATION,
-                    0,
-                    UNSUPPORTED_FEATURE);
             return;
         }
         var domain = typeSpecification.getDomain();
