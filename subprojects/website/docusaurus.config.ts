@@ -126,6 +126,13 @@ export default {
           position: 'left',
         },
         {
+          label: 'API',
+          // the API docs are published next to the site, outside the Docusaurus router
+          to: 'pathname:///api/',
+          target: '_self',
+          position: 'left',
+        },
+        {
           href: 'https://github.com/ftsrg/semantifyr',
           position: 'right',
           className: 'header-github-link',
