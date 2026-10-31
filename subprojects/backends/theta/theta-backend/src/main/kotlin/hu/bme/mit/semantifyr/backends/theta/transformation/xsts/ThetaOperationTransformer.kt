@@ -21,8 +21,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 
 typealias XstsOperation = hu.bme.mit.semantifyr.xsts.lang.xsts.Operation
-private typealias XstsExpression = hu.bme.mit.semantifyr.xsts.lang.xsts.Expression
-private typealias XstsArithmeticOp = hu.bme.mit.semantifyr.xsts.lang.xsts.ArithmeticOp
 
 class ThetaOperationTransformer @Inject constructor(
     private val thetaExpressionTransformer: ThetaExpressionTransformer,
