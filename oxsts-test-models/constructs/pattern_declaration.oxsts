@@ -1,0 +1,10 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::constructs::pattern_declaration
+
+pattern connected(a: Anything, b: Anything) {
+}

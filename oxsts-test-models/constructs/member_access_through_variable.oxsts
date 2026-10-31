@@ -1,0 +1,24 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::constructs::member_access_through_variable
+
+class Worker {
+    var done: bool := false
+}
+
+class Host {
+    contains worker: Worker
+    var current: Worker[0..1] := nothing
+
+    redefine tran {
+        current := worker
+    }
+
+    prop {
+        return EF current.done
+    }
+}
