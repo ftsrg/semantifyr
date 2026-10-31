@@ -72,6 +72,7 @@
         },
         {
             "file": "door_access.sysml",
+            "example": { "label": "Door access", "description": "Door-access model with parallel state regions." },
             "cases": [
                 { "name": "LockedReachable", "verdict": "Passed", "tier": "Smoke", "engines": ["spin", "uppaal"] },
                 { "name": "CheckingReachable", "verdict": "Passed", "tier": "Integration", "engines": ["spin", "uppaal"] },
@@ -129,6 +130,7 @@
         },
         {
             "file": "orion_protocol.sysml",
+            "example": { "label": "Orion protocol", "description": "Orion protocol with item flows and timing transitions." },
             "cases": [
                 { "name": "MasterClosedReachable", "verdict": "Passed", "tier": "Integration", "engines": ["theta", "uppaal"] },
                 { "name": "MasterConnectingReachable", "verdict": "Passed", "tier": "Integration", "engines": ["theta", "uppaal"] },
@@ -145,6 +147,7 @@
         },
         {
             "file": "crossroads.sysml",
+            "example": { "label": "Crossroads", "description": "Two coordinated traffic lights at an intersection." },
             "cases": [
                 { "name": "ControllerOperatingReachable", "verdict": "Passed", "tier": "Nightly", "engines": ["nuxmv", "uppaal"] },
                 { "name": "ControllerOperatingBothYellowReachable", "verdict": "Passed", "tier": "Nightly", "engines": ["nuxmv", "uppaal"] },
@@ -184,6 +187,7 @@
         },
         {
             "file": "compressedspacecraft.sysml",
+            "example": { "label": "Spacecraft (compressed)", "description": "Compressed variant of the spacecraft model." },
             "cases": [
                 { "name": "StationBehaviorIdleReachable", "verdict": "Passed", "tier": "Nightly", "engines": ["nuxmv", "uppaal"] },
                 { "name": "StationBehaviorOperationReachable", "verdict": "Passed", "tier": "Nightly", "engines": ["nuxmv", "uppaal"] },
