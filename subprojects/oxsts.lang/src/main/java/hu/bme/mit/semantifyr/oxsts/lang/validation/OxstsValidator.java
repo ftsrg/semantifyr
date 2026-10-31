@@ -697,7 +697,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
     }
 
     // Parameter modality is uniform until `static` parameters exist, so only the arity can differ.
-    // A warning until the SysML library's EntryState matches the arity of StateNode.
     @Check
     public void checkRedefinitionArity(RedefinableDeclaration declaration) {
         if (!declaration.isRedefine() || !(declaration instanceof ParametricDeclaration parametricDeclaration)) {
@@ -715,7 +714,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
         var parameters = parametricDeclaration.getParameters();
         var inheritedParameters = inheritedParametricDeclaration.getParameters();
         if (parameters.size() != inheritedParameters.size()) {
-            acceptWarning(
+            acceptError(
                     "Redefinition of '"
                             + NamingUtil.getName(declaration)
                             + "' takes "

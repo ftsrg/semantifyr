@@ -72,7 +72,7 @@ public class RedefinitionSignatureTest {
     }
 
     @Test
-    void signatureMismatchIsAWarningUntilTheSysmlLibraryIsFixed() {
+    void signatureMismatchIsAnError() {
         var pkg = parseHelper.parse("""
             package test
             class Node { }
@@ -87,6 +87,6 @@ public class RedefinitionSignatureTest {
         assertThat(pkg.getIssues())
                 .filteredOn(issue -> OxstsValidator.REDEFINITION_SIGNATURE_MISMATCH.equals(issue.getCode()))
                 .extracting(issue -> issue.getSeverity())
-                .containsOnly(Severity.WARNING);
+                .containsOnly(Severity.ERROR);
     }
 }
