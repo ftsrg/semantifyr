@@ -323,6 +323,7 @@ class EntryState : StateNode {
 
     redefine tran enter() {
         inline for choice (transition in outgoingTransitions) {
+            assume (transition.guard.isOpen())
             inline transition.performTransition()
         }
     }
