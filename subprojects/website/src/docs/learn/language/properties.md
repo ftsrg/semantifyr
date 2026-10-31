@@ -86,4 +86,4 @@ When the class is verified, the model checker checks that the body expression ho
 | Side effects | None (pure) | Modify variables |
 | Return value | Yes        | No |
 | Used as     | Expressions | Statements |
-| Keyword     | `prop`     | `tran`, `init`, `havoc` |
+| Keyword     | `prop`     | `tran`, `init` |

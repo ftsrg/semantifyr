@@ -1043,9 +1043,20 @@ public class OxstsValidator extends AbstractOxstsValidator {
     }
 
     @Check
-    public void checkArrayElementTypeSupported(VariableDeclaration variableDeclaration) {
+    public void checkArrayVariableSupported(VariableDeclaration variableDeclaration) {
         var typeSpecification = variableDeclaration.getTypeSpecification();
         if (typeSpecification == null || !isFixedSizeArray(typeSpecification)) {
+            return;
+        }
+        if (OxstsUtils.isLocalVariable(variableDeclaration)) {
+            acceptError(
+                    "Local array variables are not yet supported by the compiler; declare '"
+                            + variableDeclaration.getName()
+                            + "' as a class variable.",
+                    variableDeclaration,
+                    OxstsPackage.Literals.VARIABLE_DECLARATION__TYPE_SPECIFICATION,
+                    0,
+                    UNSUPPORTED_FEATURE);
             return;
         }
         var domain = typeSpecification.getDomain();
@@ -1059,6 +1070,46 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     variableDeclaration,
                     OxstsPackage.Literals.VARIABLE_DECLARATION__TYPE_SPECIFICATION,
                     0,
+                    UNSUPPORTED_FEATURE);
+        }
+    }
+
+    @Check
+    public void checkParameterNotArray(ParameterDeclaration parameterDeclaration) {
+        var typeSpecification = parameterDeclaration.getTypeSpecification();
+        if (typeSpecification != null && isFixedSizeArray(typeSpecification)) {
+            acceptError(
+                    "Array parameters are not yet supported by the compiler; '"
+                            + parameterDeclaration.getName()
+                            + "' is an array.",
+                    parameterDeclaration,
+                    OxstsPackage.Literals.PARAMETER_DECLARATION__TYPE_SPECIFICATION,
+                    0,
+                    UNSUPPORTED_FEATURE);
+        }
+    }
+
+    @Check
+    public void checkNoMemberAccessThroughVariable(NavigationSuffixExpression expression) {
+        if (expression.eContainer() instanceof CallSuffixExpression call && call.getPrimary() == expression) {
+            return;
+        }
+        EObject holder;
+        Modality holderModality;
+        try {
+            holder = metaConstantExpressionEvaluatorProvider.evaluate(expression.getPrimary());
+            holderModality = modalityEvaluatorProvider.evaluate(expression.getPrimary());
+        } catch (RuntimeException e) {
+            return;
+        }
+        if (holder instanceof VariableDeclaration variable && holderModality == Modality.RUNTIME) {
+            acceptError(
+                    "Member access through variable '"
+                            + variable.getName()
+                            + "' is not yet supported by the compiler; only a call such as '"
+                            + variable.getName()
+                            + ".step()' dispatches over the instances a variable may hold.",
+                    expression,
                     UNSUPPORTED_FEATURE);
         }
     }

@@ -13,7 +13,7 @@ Transitions define **behavior**: how the system changes state. A transition body
 |---------|------|
 | `init` | Initialization transition; runs once at startup. |
 | `tran` | Step transition; runs on every step. |
-| `havoc` | Non-deterministic reset of variables. |
+| `havoc` | Reserved; rejected by the validator (`OXSTS.UNSUPPORTED_FEATURE`). |
 
 The implicit base class [`Anything`](standard-library.md) provides empty `init`, `tran`, and `havoc` transitions, so any class that does not declare its own inherits these no-ops.
 

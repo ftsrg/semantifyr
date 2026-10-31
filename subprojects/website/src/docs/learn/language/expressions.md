@@ -18,7 +18,7 @@ Expressions compute values. They appear in [property](properties.md) bodies, on 
 | Nothing | `nothing` |
 | Infinity | `*` |
 | Array | `[a, b, c]`, `[]` |
-| Record | `Point { x = 0, y = 0 }` |
+| Record | Not supported; `record` declarations are rejected (`OXSTS.UNSUPPORTED_FEATURE`) |
 
 See [Datatypes](datatypes.md) for the corresponding types.
 
