@@ -38,13 +38,12 @@ public class DomainMemberCollection {
         return new InheritanceAwareDomainMemberCollection(domainDeclaration, parent, redefinitionHandler);
     }
 
-    public static DomainMemberCollection createCollection(
-            List<DomainMemberCollection> parents, RedefinitionHandler redefinitionHandler) {
-        return switch (parents.size()) {
-            case 0 -> EMPTY;
-            case 1 -> parents.getFirst();
-            default -> new MergedDomainMemberCollection(parents, redefinitionHandler);
-        };
+    // Multiple inheritance is rejected by the validator; scoping follows the first supertype only.
+    public static DomainMemberCollection createCollection(List<DomainMemberCollection> parents) {
+        if (parents.isEmpty()) {
+            return EMPTY;
+        }
+        return parents.getFirst();
     }
 
     private final RedefinitionHandler redefinitionHandler;

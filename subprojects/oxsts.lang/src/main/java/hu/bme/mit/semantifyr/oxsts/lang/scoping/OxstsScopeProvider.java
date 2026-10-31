@@ -48,12 +48,7 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
             return IScope.NULLSCOPE;
         }
 
-        try {
-            return calculateScope(context, reference);
-        } catch (RuntimeException e) {
-            logger.error("Scope calculation failed for reference {} at {}", reference.getName(), context, e);
-            return IScope.NULLSCOPE;
-        }
+        return calculateScope(context, reference);
     }
 
     protected IScope calculateScope(EObject context, EReference reference) {
@@ -90,8 +85,9 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
             if (parent instanceof Annotation annotation) {
                 var declaration = annotation.getDeclaration();
 
+                // the unresolved annotation already carries its own linking diagnostic
                 if (declaration.eIsProxy()) {
-                    throw new IllegalStateException("Annotation declaration could not be resolved!");
+                    return IScope.NULLSCOPE;
                 }
 
                 return scopeFor(declaration.getParameters());
@@ -130,11 +126,7 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
         }
         var domain = featureDeclaration.getTypeSpecification().getDomain();
 
-        if (domain.eIsProxy()) {
-            throw new IllegalStateException("Class supertype could not be resolved!");
-        }
-
-        if (!(domain instanceof ClassDeclaration classDeclaration)) {
+        if (!(domain instanceof ClassDeclaration classDeclaration) || domain.eIsProxy()) {
             return IScope.NULLSCOPE;
         }
 
@@ -142,7 +134,9 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
     }
 
     protected IScope calculateFeatureSuperSetsScope(EObject context, EReference reference) {
-        var container = (DomainDeclaration) context.eContainer();
+        if (!(context.eContainer() instanceof DomainDeclaration container)) {
+            return super.getScope(context, reference);
+        }
 
         return scopeFor(reference, domainMemberCollectionProvider.getMembers(container));
     }
