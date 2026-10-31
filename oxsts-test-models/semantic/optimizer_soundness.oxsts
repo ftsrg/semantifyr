@@ -68,3 +68,21 @@ class LocalInitializerBeforeSourceWrite {
         return EF (a == 1 && seen == 0)
     }
 }
+
+// Cone of influence: the writes to a stay live because the local's initializer reads it.
+@VerificationCase
+@Tag("expect-pass")
+class LocalInitializerSourceInCone {
+    var a: int := 0
+    var seen: int := 0
+
+    redefine tran {
+        a := 1 - a
+        var s: int := a
+        seen := s
+    }
+
+    prop {
+        return EF seen == 1
+    }
+}
