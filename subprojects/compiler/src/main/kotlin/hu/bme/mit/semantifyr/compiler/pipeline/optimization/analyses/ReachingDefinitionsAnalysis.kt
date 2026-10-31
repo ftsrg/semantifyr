@@ -66,7 +66,10 @@ class ReachingDefinitionsComputation(
 
     fun compute(): ReachingDefinitionsInfo {
         val initialIn = buildInitialIn()
-        walkTransition(inlinedOxsts.initTransition, emptyMap())
+        val declarations = inlinedOxsts.variables.associateWith {
+            setOf<EObject>(it)
+        }
+        walkTransition(inlinedOxsts.initTransition, declarations)
         walkTransition(inlinedOxsts.mainTransition, initialIn)
         recordFallbackReads(initialIn)
 
