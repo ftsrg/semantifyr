@@ -86,3 +86,24 @@ class LocalInitializerSourceInCone {
         return EF seen == 1
     }
 }
+
+// Copy propagation in init: the write on one branch does not reach the read along the other.
+@VerificationCase
+@Tag("expect-pass")
+class InitCopyOnOneBranch {
+    var c: bool := false
+    var q: int := 0
+    var r: int := 9
+
+    redefine init {
+        havoc(c)
+        if (c) {
+            q := 5
+        }
+        r := q
+    }
+
+    prop {
+        return EF r == 0
+    }
+}
