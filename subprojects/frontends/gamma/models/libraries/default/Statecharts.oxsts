@@ -261,7 +261,6 @@ abstract class AbstractTransition {
 
     abstract prop isEnabled(): bool
 
-    // @Trace
     tran fire() {
         inline to.enter(parentRegion)
     }
@@ -294,7 +293,7 @@ class Transition : AbstractTransition {
         return trigger.isTriggered() && from.isActive() && guard.isOpen()
     }
 
-    // @Trace
+    @Trace
     redefine tran fire() {
         inline from.exit(parentRegion)
         inline for (action in actions) {
