@@ -3,8 +3,23 @@
  */
 package hu.bme.mit.semantifyr.cex.lang;
 
+import com.google.inject.Binder;
+import org.eclipse.xtext.formatting2.FormatterPreferenceKeys;
+import org.eclipse.xtext.formatting2.FormatterRequest;
+import org.eclipse.xtext.preferences.MapBasedPreferenceValues;
+
 /**
  * Use this class to register components to be used at runtime / without the Equinox extension
  * registry.
  */
-public class CexRuntimeModule extends AbstractCexRuntimeModule {}
+public class CexRuntimeModule extends AbstractCexRuntimeModule {
+
+    @SuppressWarnings("unused")
+    public void configureFormatterRequest(Binder binder) {
+        binder.bind(FormatterRequest.class).toProvider(() -> {
+            MapBasedPreferenceValues preferences = new MapBasedPreferenceValues();
+            preferences.put(FormatterPreferenceKeys.lineSeparator, "\n");
+            return new FormatterRequest().setPreferences(preferences);
+        });
+    }
+}
