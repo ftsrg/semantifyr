@@ -1,0 +1,21 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::constructs::multiple_inheritance
+
+class Left {
+    var x: int := 0
+}
+
+class Right {
+    var y: int := 0
+}
+
+class Both : Left, Right {
+    redefine tran {
+        x := 1
+    }
+}

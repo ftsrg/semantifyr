@@ -24,3 +24,9 @@ dependencies {
     testFixturesApi(project(":oxsts.lang"))
     testFixturesApi(testFixtures(project(":oxsts.lang")))
 }
+
+tasks.named("test") {
+    inputs.dir(rootProject.layout.projectDirectory.dir("oxsts-test-models"))
+        .withPropertyName("oxstsTestModels")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}
