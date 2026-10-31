@@ -23,6 +23,8 @@ exit /b 1
 cd /d "%TARGET_DIR%"
 
 git init
+rem the fork's scripts parse its sources and expect the committed LF endings
+git config core.autocrlf false
 echo Adding remote
 git remote add origin "%REMOTE_URL%" 2> nul || rem
 echo Fetch latest
