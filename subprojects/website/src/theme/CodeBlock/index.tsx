@@ -10,61 +10,26 @@ import CodeBlock from '@theme-original/CodeBlock';
 import type CodeBlockType from '@theme/CodeBlock';
 import type { WrapperProps } from '@docusaurus/types';
 
-// Lazy-load the lightweight addons so docs pages without an opt-in metastring pay zero
-// bundle cost. Both chunks are tiny — no Monaco, no @codingame.
 const VerifyButton = lazy(() => import('./VerifyButton'));
 const OpenInLiveLink = lazy(() => import('./OpenInLiveLink'));
 
 type Props = WrapperProps<typeof CodeBlockType>;
 
-// Languages that have a flavor in the live backend's FlavorRegistry. Keep in sync with
-// subprojects/semantifyr-live/backend/src/main/kotlin/.../FlavorRegistry.kt.
-const SUPPORTED_FLAVORS = new Set(['oxsts', 'xsts', 'gamma']);
+// Code block languages that are also live flavor ids.
+const LIVE_FLAVORS = new Set(['oxsts', 'gamma']);
 
-// Code blocks are inert by default — most snippets in the docs are excerpts that wouldn't
-// compile on their own. Two opt-in addons are available, picked by the fenced code
-// block's metastring:
-//
-//   ```oxsts verify                            ← "Verify this snippet" button
-//   ```oxsts open                              ← "Open in live editor ↗" link, code inline
-//   ```oxsts open=basics                       ← link to a named example in the registry
-//
-// Multiple keywords can be combined: `verify open`, `verify open=...`. Anything else in
-// the metastring is passed through to the default Docusaurus CodeBlock unchanged.
-const VERIFY_KEYWORDS = /(^|\s)verify(\s|$)/;
-const OPEN_KEYWORDS = /(^|\s)open(=([\w-]+))?(\s|$)/;
-
-interface MetaFlags {
-  verify: boolean;
-  open: boolean;
-  exampleId?: string | undefined;
-}
-
-function parseMeta(metastring: string | undefined): MetaFlags {
-  if (!metastring) return { verify: false, open: false };
-  const verify = VERIFY_KEYWORDS.test(metastring);
-  const openMatch = OPEN_KEYWORDS.exec(metastring);
-  return {
-    verify,
-    open: !!openMatch,
-    ...(openMatch?.[3] !== undefined && { exampleId: openMatch[3] }),
-  };
-}
+// Opt in per code block through the metastring: ```oxsts verify open
+const VERIFY_KEYWORD = /(^|\s)verify(\s|$)/;
+const OPEN_KEYWORD = /(^|\s)open(\s|$)/;
 
 function extractLanguage(props: Props): string | null {
   const fromLanguageProp = (props as { language?: string }).language;
-  if (fromLanguageProp && SUPPORTED_FLAVORS.has(fromLanguageProp)) {
+  if (fromLanguageProp && LIVE_FLAVORS.has(fromLanguageProp)) {
     return fromLanguageProp;
   }
   const className = (props as { className?: string }).className;
-  if (className) {
-    const match = /language-(\w+)/.exec(className);
-    const languageId = match?.[1];
-    if (languageId && SUPPORTED_FLAVORS.has(languageId)) {
-      return languageId;
-    }
-  }
-  return null;
+  const languageId = className ? /language-(\w+)/.exec(className)?.[1] : undefined;
+  return languageId && LIVE_FLAVORS.has(languageId) ? languageId : null;
 }
 
 function extractText(node: React.ReactNode): string {
@@ -86,26 +51,20 @@ function extractText(node: React.ReactNode): string {
 
 export default function CodeBlockWrapper(props: Props): React.JSX.Element {
   const language = extractLanguage(props);
-  const metastring = (props as { metastring?: string }).metastring;
-  const meta = parseMeta(metastring);
-  const wantAddon = language !== null && (meta.verify || meta.open);
-  const code = wantAddon ? extractText((props as { children?: React.ReactNode }).children) : '';
+  const metastring = (props as { metastring?: string }).metastring ?? '';
+  const verify = VERIFY_KEYWORD.test(metastring);
+  const open = OPEN_KEYWORD.test(metastring);
+  const code = language !== null && (verify || open) ? extractText((props as { children?: React.ReactNode }).children) : '';
 
   return (
     <>
       <CodeBlock {...props} />
-      {wantAddon && language && (
+      {code && language && (
         <BrowserOnly>
           {() => (
             <Suspense fallback={null}>
-              {meta.verify && <VerifyButton language={language} code={code} />}
-              {meta.open && (
-                <OpenInLiveLink
-                  language={language}
-                  code={code}
-                  {...(meta.exampleId !== undefined && { exampleId: meta.exampleId })}
-                />
-              )}
+              {verify && <VerifyButton language={language} code={code} />}
+              {open && <OpenInLiveLink language={language} code={code} />}
             </Suspense>
           )}
         </BrowserOnly>

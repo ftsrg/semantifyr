@@ -7,6 +7,7 @@
 import React from 'react';
 import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
+import { useLiveBackendUrl } from '@site/src/lib/live';
 import Layout from '@theme/Layout';
 import ThemedImage from '@theme/ThemedImage';
 import clsx from 'clsx';
@@ -29,8 +30,8 @@ function ArrowForwardIcon(): React.ReactNode {
 
 import styles from './index.module.css';
 
-const LIVE_URL = 'https://live.semantifyr.org';
 function Hero() {
+  const liveUrl = useLiveBackendUrl();
   const lightLogo = useBaseUrl('/img/logo-full-light.svg');
   const darkLogo = useBaseUrl('/img/logo-full-dark.svg');
   return (
@@ -49,7 +50,7 @@ function Hero() {
         </p>
         <div className={styles.hero__buttons}>
           <Link
-            href={LIVE_URL}
+            href={liveUrl}
             className={clsx(
               'button',
               'button--lg',
@@ -104,7 +105,8 @@ function HealthDot({ status }: { status: HealthStatus }): React.ReactNode {
 }
 
 function TryIt() {
-  const liveHealth = useHealthCheck(`${LIVE_URL}/api/health`);
+  const liveUrl = useLiveBackendUrl();
+  const liveHealth = useHealthCheck(`${liveUrl}/api/health`);
   const hubHealth = useHealthCheck('https://jupyter.semantifyr.org/hub/health');
 
   return (
@@ -123,7 +125,7 @@ function TryIt() {
               verification panel. No installation or account required.
             </p>
             <Link
-              href={LIVE_URL}
+              href={liveUrl}
               className={clsx('button', 'button--primary', 'button--block', styles.card__button)}
             >
               Open the live editor <OpenInNewIcon />
