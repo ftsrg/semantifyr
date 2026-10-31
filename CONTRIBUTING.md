@@ -11,6 +11,7 @@
 - **Have a question or proposal?** Open a [GitHub Discussion](https://github.com/ftsrg/semantifyr/discussions) or an [issue](https://github.com/ftsrg/semantifyr/issues). For larger changes, please discuss the design before you start coding.
 - **Found a bug?** Open an [issue](https://github.com/ftsrg/semantifyr/issues) with a minimal reproduction.
 - **Want to make a code change?** Fork, branch from `main`, and open a pull request against `main`. Run `./gradlew build` locally before pushing.
+- **Changing what users see?** Update the website pages under `subprojects/website/src/docs` in the same pull request. The command-line help and the portfolio table on the website are generated from the CLI at build time.
 
 ## Licensing
 

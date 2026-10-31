@@ -1,0 +1,35 @@
+---
+title: Command Line
+sidebar_position: 0
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import help from '@cli-reference/help.txt';
+import verify from '@cli-reference/verify.txt';
+import compile from '@cli-reference/compile.txt';
+import list from '@cli-reference/list.txt';
+import portfolios from '@cli-reference/portfolios-help.txt';
+
+# Command Line
+
+The `semantifyr` command lists, compiles and verifies the verification cases of OXSTS models. Build it from source with `./gradlew :semantifyr-cli:installDist`; the launcher is `subprojects/semantifyr-cli/build/install/semantifyr/bin/semantifyr`. It needs a Java 25 runtime and at least one verification backend.
+
+<CodeBlock language="text">{help}</CodeBlock>
+
+## `verify`
+
+<CodeBlock language="text">{verify}</CodeBlock>
+
+## `compile`
+
+<CodeBlock language="text">{compile}</CodeBlock>
+
+## `list`
+
+<CodeBlock language="text">{list}</CodeBlock>
+
+## `portfolios`
+
+<CodeBlock language="text">{portfolios}</CodeBlock>
+
+The portfolio ids are listed under [Portfolios](portfolios.mdx).
