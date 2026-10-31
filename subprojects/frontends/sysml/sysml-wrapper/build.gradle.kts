@@ -7,6 +7,7 @@
 import com.github.gradle.node.pnpm.task.PnpmTask
 import com.github.gradle.node.task.NodeTask
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.conventions.sysmlCorpusModels
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
@@ -162,16 +163,14 @@ fun sysmlExampleTask(name: String) = tasks.register<NodeTask>("compileSysmlExamp
     }
 }
 
-val compileSysmlExampleCompressedSpacecraft = sysmlExampleTask("compressedspacecraft")
-val compileSysmlExampleCrossroads = sysmlExampleTask("crossroads")
-val compileSysmlExampleDoorAccess = sysmlExampleTask("door_access")
-val compileSysmlExampleOrionProtocol = sysmlExampleTask("orion_protocol")
+val compileSysmlExampleTasks = sysmlCorpusModels(examplesSourceDir).filter {
+    it.isExample
+}.map {
+    sysmlExampleTask(it.name)
+}
 
 val compileSysmlExamples = tasks.register("compileSysmlExamples") {
-    inputs.files(compileSysmlExampleCompressedSpacecraft)
-    inputs.files(compileSysmlExampleCrossroads)
-    inputs.files(compileSysmlExampleDoorAccess)
-    inputs.files(compileSysmlExampleOrionProtocol)
+    inputs.files(compileSysmlExampleTasks)
 }
 
 configurations.consumable("compiledExamplesElements") {

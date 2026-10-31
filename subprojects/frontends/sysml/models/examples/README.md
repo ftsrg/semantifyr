@@ -19,4 +19,4 @@ The artifacts produced by Semantifyr will reside in the `./out` directory.
 
 The verification cases were either added as natural "state reachability" properties, or were derived as safety properties from the model.
 
-`manifest.json` lists every verification case with its expected verdict (`Unknown` cases are benchmarked, not asserted), the cheapest test tier that runs it, whether it is a falsification twin, and the engines observed to decide it fast (a lower bound, empty where none was measured). The SysML frontend's tests read it, and `SysMLCorpusTest` fails when it drifts from the models.
+`manifest.json` lists every verification case with its expected verdict (`Unknown` cases are benchmarked, not asserted), the cheapest test tier that runs it, whether it is a falsification twin, and the engines observed to decide it fast (a lower bound, empty where none was measured). A model with an `example` entry is compiled by the SysML wrapper into the examples the live backend and editor ship. The SysML frontend's tests and the wrapper read it, and `SysMLCorpusTest` fails when it drifts from the models.
