@@ -16,12 +16,12 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration;
 import java.util.ArrayList;
 import java.util.List;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.lsp4j.CodeLens;
 import org.eclipse.lsp4j.CodeLensParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
-import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.ide.server.Document;
 import org.eclipse.xtext.ide.server.codelens.ICodeLensResolver;
 import org.eclipse.xtext.ide.server.codelens.ICodeLensService;
@@ -76,7 +76,7 @@ public class OxstsCodeLensProvider implements ICodeLensResolver, ICodeLensServic
 
         var lenses = new ArrayList<CodeLens>();
 
-        EcoreUtil2.getAllProperContents(resource, false).forEachRemaining(element -> {
+        EcoreUtil.getAllProperContents(resource, false).forEachRemaining(element -> {
             if (element instanceof ClassDeclaration classDeclaration) {
                 if (annotationHandler.isVerificationCase(classDeclaration)) {
                     lenses.add(createCompileInlinedOxstsLens(classDeclaration, false));
