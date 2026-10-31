@@ -5,7 +5,7 @@
  */
 
 import vscode, { type CancellationToken, type ExtensionContext, Position, Range, RelativePattern, type TestController, type TestItem, TestMessage, TestRunProfileKind, type TestRunRequest, type TextDocument, type Uri, type WorkspaceFolder, type WorkspaceFoldersChangeEvent } from "vscode";
-import type { LanguageClient } from "vscode-languageclient/node.js";
+import type { LanguageClient } from "vscode-languageclient/node";
 import { ExecuteCommandRequest } from "vscode-languageclient";
 import {
     VerificationStatus,

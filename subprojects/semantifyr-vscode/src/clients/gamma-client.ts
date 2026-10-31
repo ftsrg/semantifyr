@@ -6,7 +6,7 @@
 
 import path from "path";
 import { commands, type ExtensionContext, type Uri, window } from "vscode";
-import { ExecuteCommandRequest, type LanguageClient } from "vscode-languageclient/node.js";
+import { ExecuteCommandRequest, type LanguageClient } from "vscode-languageclient/node";
 import { executablePostfix } from "../runner-utils.js";
 import { createLspClient, createRemoteLspClient, registerSemantifyrSettingsSync } from "./client-utils.js";
 import { VerificationTestController } from "./verification-test-controller.js";
