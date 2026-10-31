@@ -15,6 +15,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.OppositeHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.PropertyTypeHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluatorProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.ExpressionModalityEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.Modality;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider;
@@ -871,7 +872,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
             return;
         }
         var upper = primaryType.getRange().getUpperBound();
-        if (upper != hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation.INFINITY
+        if (upper != RangeEvaluation.INFINITY
                 && upper <= 1
                 && primaryType.getRange().getLowerBound() <= 1) {
             acceptError(
@@ -926,6 +927,41 @@ public class OxstsValidator extends AbstractOxstsValidator {
             return;
         }
         rejectIfUnboundedMultiplicity(typeSpec.getMultiplicity(), variableDeclaration);
+    }
+
+    @Check
+    public void checkArrayElementTypeSupported(VariableDeclaration variableDeclaration) {
+        var typeSpecification = variableDeclaration.getTypeSpecification();
+        if (typeSpecification == null || !isFixedSizeArray(typeSpecification)) {
+            return;
+        }
+        var domain = typeSpecification.getDomain();
+        if (domain instanceof ClassDeclaration || domain instanceof FeatureDeclaration) {
+            acceptError(
+                    "Arrays of class or feature type are not yet supported by the compiler; '"
+                            + variableDeclaration.getName()
+                            + "' has element type '"
+                            + NamingUtil.getName(domain)
+                            + "'.",
+                    variableDeclaration,
+                    OxstsPackage.Literals.VARIABLE_DECLARATION__TYPE_SPECIFICATION,
+                    0,
+                    UNSUPPORTED_FEATURE);
+        }
+    }
+
+    private boolean isFixedSizeArray(TypeSpecification typeSpecification) {
+        if (typeSpecification.getMultiplicity() == null) {
+            return false;
+        }
+        RangeEvaluation range;
+        try {
+            range = multiplicityRangeEvaluator.evaluate(typeSpecification);
+        } catch (RuntimeException e) {
+            return false;
+        }
+        var upperBound = range.getUpperBound();
+        return upperBound != RangeEvaluation.INFINITY && upperBound > 1;
     }
 
     private void rejectIfUnboundedMultiplicity(Multiplicity multiplicity, EObject host) {
