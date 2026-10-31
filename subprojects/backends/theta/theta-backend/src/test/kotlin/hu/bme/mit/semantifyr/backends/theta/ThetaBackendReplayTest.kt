@@ -94,6 +94,14 @@ class ThetaBackendReplayTest {
     }
 
     @Test
+    suspend fun `a model without state variables fails with an empty witness`() {
+        val result = verify("StatelessViolation", models.parse(BackendTestModels.STATELESS_VIOLATION))
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        assertThat(result.inlinedWitness!!.initialState.values).isEmpty()
+    }
+
+    @Test
     suspend fun `an unreachable target fails without a witness`() {
         val result = verify("UnreachableTarget", models.parse(BackendTestModels.UNREACHABLE_TARGET))
 
