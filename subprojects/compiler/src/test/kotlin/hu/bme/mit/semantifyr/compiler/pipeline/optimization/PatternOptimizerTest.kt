@@ -28,7 +28,7 @@ class PatternOptimizerTest {
         val optimizer = PatternOptimizer(emptyList(), CompilationPass.ExpressionSimplification, artifacts)
         val input = OxstsFactory.createLiteralBoolean(true)
 
-        assertThat(optimizer.optimize(input)).isFalse
+        assertThat(optimizer.optimize(input).changed).isFalse
         verify(artifacts, never()).commitStep(any())
     }
 
@@ -40,7 +40,7 @@ class PatternOptimizerTest {
         val optimizer = PatternOptimizer(listOf(pattern), CompilationPass.ExpressionSimplification, artifacts)
         val input = OxstsFactory.createLiteralBoolean(true)
 
-        assertThat(optimizer.optimize(input)).isFalse
+        assertThat(optimizer.optimize(input).changed).isFalse
         verify(artifacts, never()).commitStep(any())
     }
 
@@ -61,7 +61,7 @@ class PatternOptimizerTest {
         val optimizer = PatternOptimizer(listOf(pattern), CompilationPass.ExpressionSimplification, artifacts)
         val input = OxstsFactory.createLiteralBoolean(true)
 
-        assertThat(optimizer.optimize(input)).isTrue
+        assertThat(optimizer.optimize(input).changed).isTrue
         verify(artifacts, times(1)).commitStep(eq(CompilationPass.ExpressionSimplification))
     }
 

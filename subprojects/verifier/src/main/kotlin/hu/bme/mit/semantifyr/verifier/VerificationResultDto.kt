@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.verifier
 import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.compiler.pipeline.context.CompilationMetrics
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.witness.CallTrace
 import hu.bme.mit.semantifyr.verifier.witness.CallTraceStep

@@ -30,6 +30,8 @@ import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -38,6 +40,7 @@ import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.Path
 import kotlin.io.path.exists
+import kotlin.io.path.readText
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -157,6 +160,29 @@ class SemantifyrVerifierImplTest {
         val caseDir = output.resolve(case.qualifiedName.replace("::", "."))
         val reportFile = caseDir.resolve("report.json")
         assertThat(reportFile.exists()).isTrue
+    }
+
+    @Test
+    suspend fun `report json carries phase durations, optimizer stats and model sizes`(@TempDir output: Path) {
+        val portfolio = ScriptedPortfolio { _, _ -> decisiveResult(VerificationVerdict.Passed) }
+        val case = loadFirstCase()
+
+        val result = build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(case)
+
+        val report = Json.parseToJsonElement(output.resolve(case.qualifiedName.replace("::", ".")).resolve("report.json").readText())
+        val verifier = report.jsonObject.getValue("result").jsonObject.getValue("metrics").jsonObject.getValue("verifier").jsonObject
+        assertThat(verifier.getValue("compilation").jsonObject.keys).contains(
+            "createDuration",
+            "instantiationDuration",
+            "inliningDuration",
+            "flatteningDuration",
+            "inliningOptimization",
+            "flatteningOptimization",
+            "inputSize",
+            "inlinedSize",
+            "flattenedSize",
+        )
+        assertThat(result.metrics.verifier.compilationDuration).isEqualTo(result.metrics.verifier.compilation.unfoldingDuration)
     }
 
     private fun build(

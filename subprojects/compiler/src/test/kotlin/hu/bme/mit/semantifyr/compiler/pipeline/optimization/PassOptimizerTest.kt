@@ -16,6 +16,7 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
+import kotlin.time.Duration.Companion.milliseconds
 
 class PassOptimizerTest {
     private class StubAnalysis : Analysis<Any> {
@@ -28,12 +29,86 @@ class PassOptimizerTest {
         var value: Int = 0,
     )
 
+    private class IncrementsTwice : Pass<Bag> {
+        override fun run(input: Bag, analysisManager: AnalysisManager): PassResult {
+            if (input.value >= 2) {
+                return PassResult.Unchanged
+            }
+            input.value++
+            return PassResult.Changed
+        }
+    }
+
+    private class ReadsAnalysis(
+        private val context: EvaluableCompilationContext,
+    ) : Pass<Bag> {
+        override fun run(input: Bag, analysisManager: AnalysisManager): PassResult {
+            analysisManager.get(StubAnalysis::class.java, context)
+            return PassResult.Unchanged
+        }
+    }
+
+    @Test
+    fun `stats count runs and firings per pass and analysis recomputations`() {
+        val manager = AnalysisManager(listOf(StubAnalysis()))
+        val optimizer = PassOptimizer(listOf(IncrementsTwice(), ReadsAnalysis(mock())), manager)
+
+        val stats = optimizer.optimize(Bag())
+
+        assertThat(stats.changed).isTrue
+        assertThat(stats.passes.map { Triple(it.name, it.runs, it.firings) }).containsExactly(
+            Triple("IncrementsTwice", 3, 2),
+            Triple("ReadsAnalysis", 3, 0),
+        )
+        assertThat(stats.analyses.map { it.name to it.computations }).containsExactly("StubAnalysis" to 2)
+    }
+
+    @Test
+    fun `statistics restart with every optimize call`() {
+        val manager = AnalysisManager(listOf(StubAnalysis()))
+        val optimizer = PassOptimizer(listOf(IncrementsTwice(), ReadsAnalysis(mock())), manager)
+        val bag = Bag()
+        optimizer.optimize(bag)
+
+        val stats = optimizer.optimize(bag)
+
+        assertThat(stats.changed).isFalse
+        assertThat(stats.passes.map { Triple(it.name, it.runs, it.firings) }).containsExactly(
+            Triple("IncrementsTwice", 1, 0),
+            Triple("ReadsAnalysis", 1, 0),
+        )
+        assertThat(stats.analyses.map { it.name to it.computations }).containsExactly("StubAnalysis" to 1)
+    }
+
+    @Test
+    fun `merged stats sum per pass and keep first-seen order`() {
+        val first = OptimizationStats(
+            duration = 3.milliseconds,
+            passes = listOf(PassStats("A", 1.milliseconds, 1, 1), PassStats("B", 2.milliseconds, 1, 0)),
+            analyses = listOf(AnalysisStats("X", 1.milliseconds, 1)),
+        )
+        val second = OptimizationStats(
+            duration = 4.milliseconds,
+            passes = listOf(PassStats("B", 4.milliseconds, 2, 2)),
+            analyses = listOf(AnalysisStats("X", 2.milliseconds, 3)),
+        )
+
+        val merged = first + second
+
+        assertThat(merged.duration).isEqualTo(7.milliseconds)
+        assertThat(merged.passes).containsExactly(
+            PassStats("A", 1.milliseconds, 1, 1),
+            PassStats("B", 6.milliseconds, 3, 2),
+        )
+        assertThat(merged.analyses).containsExactly(AnalysisStats("X", 3.milliseconds, 4))
+    }
+
     @Test
     fun `empty pass list reports no change`() {
         val manager = AnalysisManager(emptyList())
         val optimizer = PassOptimizer<Bag>(emptyList(), manager)
 
-        assertThat(optimizer.optimize(Bag())).isFalse
+        assertThat(optimizer.optimize(Bag()).changed).isFalse
     }
 
     @Test
@@ -51,7 +126,7 @@ class PassOptimizerTest {
         }
 
         val optimizer = PassOptimizer(listOf(pass1, pass2), manager)
-        val changed = optimizer.optimize(Bag())
+        val changed = optimizer.optimize(Bag()).changed
 
         assertThat(changed).isFalse
         verify(pass1, times(1)).run(any(), eq(manager))
@@ -77,7 +152,7 @@ class PassOptimizerTest {
         }
 
         val optimizer = PassOptimizer(listOf(pass), manager)
-        val changed = optimizer.optimize(Bag())
+        val changed = optimizer.optimize(Bag()).changed
 
         assertThat(changed).isTrue
         verify(pass, times(2)).run(any(), eq(manager))
@@ -105,7 +180,7 @@ class PassOptimizerTest {
             } doReturn PassResult.Unchanged
         }
 
-        val changed = PassOptimizer(listOf(pass1, pass2), manager).optimize(Bag())
+        val changed = PassOptimizer(listOf(pass1, pass2), manager).optimize(Bag()).changed
 
         assertThat(changed).isTrue
         verify(pass1, times(3)).run(any(), eq(manager))

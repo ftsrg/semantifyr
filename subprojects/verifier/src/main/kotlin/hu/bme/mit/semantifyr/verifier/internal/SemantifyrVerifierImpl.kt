@@ -23,7 +23,6 @@ import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.verifier.CompilationMetrics
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.Trace
@@ -93,11 +92,9 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         progressContext.reportProgress("Compiling ${verificationCase.qualifiedName}")
         logger.info { "Compiling '${verificationCase.qualifiedName}'" }
         val caseDirectory = prepareCaseDirectory(verificationCase.qualifiedName)
-        val (compilation, compilationDuration) = measureTimedValue {
-            compiler.compile(verificationCase.classDeclaration, caseDirectory)
-        }
+        val compilation = compiler.compile(verificationCase.classDeclaration, caseDirectory)
 
-        return verifyCompilation(compilation, verificationCase, compilationDuration, progressContext)
+        return verifyCompilation(compilation, verificationCase, progressContext)
     }
 
     override suspend fun verify(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext): VerificationResult {
@@ -109,16 +106,13 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         progressContext.reportProgress("Compiling $qualifiedName")
         logger.info { "Compiling inlined of '$qualifiedName'" }
         val caseDirectory = prepareCaseDirectory(qualifiedName)
-        val (compilation, compilationDuration) = measureTimedValue {
-            compiler.compile(inlinedOxsts, caseDirectory)
-        }
-        return verifyCompilation(compilation, case, compilationDuration, progressContext)
+        val compilation = compiler.compile(inlinedOxsts, caseDirectory)
+        return verifyCompilation(compilation, case, progressContext)
     }
 
     private suspend fun verifyCompilation(
         compilation: FlattenedCompilationContext,
         case: VerificationCase,
-        compilationDuration: Duration,
         progress: ProgressContext,
     ): VerificationResult {
         val qualifiedName = case.qualifiedName
@@ -178,13 +172,8 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
                 totalDuration = totalDuration,
                 backend = backendResult.metrics.takeIf { backendResult.metadata.backendId != null },
                 verifier = VerifierMetrics(
-                    compilationDuration = compilationDuration,
-                    compilation = CompilationMetrics(
-                        createDuration = compilation.compilationMetrics.createDuration,
-                        instantiationDuration = compilation.compilationMetrics.instantiationDuration,
-                        inliningDuration = compilation.compilationMetrics.inliningDuration,
-                        flatteningDuration = compilation.compilationMetrics.flatteningDuration,
-                    ),
+                    compilationDuration = compilation.compilationMetrics.unfoldingDuration,
+                    compilation = compilation.compilationMetrics,
                     backAnnotationDuration = verifierBackAnnotationDuration,
                     portfolioDuration = portfolioDuration,
                 ),

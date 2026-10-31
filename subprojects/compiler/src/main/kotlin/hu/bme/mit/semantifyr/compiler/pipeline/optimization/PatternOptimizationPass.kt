@@ -28,7 +28,7 @@ abstract class PatternOptimizationPass(
         if (!config.isEnabled(pass)) {
             return PassResult.Unchanged
         }
-        val changed = patternOptimizer.optimize(input.inlinedOxsts)
+        val changed = patternOptimizer.optimize(input.inlinedOxsts).changed
         return if (changed) {
             PassResult.Changed
         } else {
