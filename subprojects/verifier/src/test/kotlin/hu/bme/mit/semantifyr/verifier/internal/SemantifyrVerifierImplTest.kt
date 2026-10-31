@@ -31,7 +31,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
-import hu.bme.mit.semantifyr.verifier.caseDirectoryName
+import hu.bme.mit.semantifyr.verifier.caseReportPath
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
@@ -191,7 +191,7 @@ class SemantifyrVerifierImplTest {
 
         val result = build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(case)
 
-        val report = Json.parseToJsonElement(output.resolve(caseDirectoryName(case)).resolve("report.json").readText())
+        val report = Json.parseToJsonElement(caseReportPath(output, case).readText())
         val verifier = report.jsonObject.getValue("result").jsonObject.getValue("metrics").jsonObject.getValue("verifier").jsonObject
         assertThat(verifier.getValue("compilation").jsonObject.keys).contains(
             "createDuration",
