@@ -409,9 +409,9 @@ class VerificationPortfolioTest {
     }
 
     @Test
-    suspend fun `all maps disagreeing decisive verdicts to Inconclusive with a disagreement message`() {
+    suspend fun `all reports Errored naming both legs when trusted verdicts disagree`() {
         val pass = FakeBackend.verdict("pass", VerificationVerdict.Passed)
-        val fail = FakeBackend.verdict("fail", VerificationVerdict.Failed)
+        val fail = FakeBackend.verdict("fail", VerificationVerdict.Failed, SoundnessDirection.UnderApproximating)
 
         val outcome = portfolio.runAll(noopGate) {
             enqueue(pass)
@@ -419,8 +419,39 @@ class VerificationPortfolioTest {
         }
 
         val result = outcome.orFail("expected aggregated result")
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.message).contains("pass=Passed (Exact)", "fail=Failed (UnderApproximating)")
+    }
+
+    @Test
+    suspend fun `all resolves a disagreement explained by the directions in favour of the trusted leg`() {
+        val trusted = FakeBackend.verdict("trusted", VerificationVerdict.Failed)
+        val untrusted = FakeBackend.verdict("untrusted", VerificationVerdict.Passed, SoundnessDirection.UnderApproximating)
+
+        val outcome = portfolio.runAll(noopGate) {
+            enqueue(trusted)
+            enqueue(untrusted)
+        }
+
+        val result = outcome.orFail("expected the trusted verdict")
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        assertThat(result.metadata.backendId).isEqualTo("trusted")
+        assertThat(result.message).contains("untrusted=Passed (not trusted, UnderApproximating)")
+    }
+
+    @Test
+    suspend fun `all reports Inconclusive with every leg's verdict when no verdict is trusted`() {
+        val untrusted = FakeBackend.verdict("untrusted", VerificationVerdict.Passed, SoundnessDirection.UnderApproximating)
+        val undecided = FakeBackend.verdict("undecided", VerificationVerdict.Inconclusive)
+
+        val outcome = portfolio.runAll(noopGate) {
+            enqueue(untrusted)
+            enqueue(undecided)
+        }
+
+        val result = outcome.toBackendVerificationResult(Clock.System.now())
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
-        assertThat(result.message).contains("disagreeing")
+        assertThat(result.message).contains("untrusted=Passed (not trusted, UnderApproximating)", "undecided=Inconclusive")
     }
 
     @Test
