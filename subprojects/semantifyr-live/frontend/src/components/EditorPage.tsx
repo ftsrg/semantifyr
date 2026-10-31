@@ -93,6 +93,8 @@ interface UrlState {
   flavor: LiveFlavor;
   example: LiveExample;
   code: string;
+  // code from a link that names no example
+  shared: boolean;
 }
 
 async function resolveInitialState(search: string): Promise<UrlState> {
@@ -109,10 +111,10 @@ async function resolveInitialState(search: string): Promise<UrlState> {
   }
   if (exampleParam) {
     const example = findExample(flavor, exampleParam) ?? fallback;
-    return { flavor, example, code: decodedCode ?? example.code };
+    return { flavor, example, code: decodedCode ?? example.code, shared: false };
   }
 
-  return { flavor, example: fallback, code: decodedCode ?? fallback.code };
+  return { flavor, example: fallback, code: decodedCode ?? fallback.code, shared: decodedCode !== null };
 }
 
 function deriveConnectionMessage(status: LiveEditorStatus, statusInfo: string | null): string {
@@ -135,6 +137,7 @@ export default function EditorPage({
   const [flavor, setFlavor] = useState<LiveFlavor>(DEFAULT_FLAVOR);
   const [example, setExample] = useState<LiveExample>(DEFAULT_EXAMPLE);
   const [code, setCode] = useState<string>(DEFAULT_EXAMPLE.code);
+  const [shared, setShared] = useState(false);
   const [copyConfirmation, setCopyConfirmation] = useState<string | null>(null);
   const [pendingSwitch, setPendingSwitch] = useState<(() => void) | null>(null);
 
@@ -195,6 +198,7 @@ export default function EditorPage({
       setFlavor(initial.flavor);
       setExample(initial.example);
       setCode(initial.code);
+      setShared(initial.shared);
     });
     return () => {
       cancelled = true;
@@ -240,6 +244,7 @@ export default function EditorPage({
       setFlavor(nextFlavor);
       setExample(nextExample);
       setCode(nextExample.code);
+      setShared(false);
       setSelectedWitnessCaseId(null);
       if (flavorChanged) {
         setVerificationCases([]);
@@ -278,12 +283,14 @@ export default function EditorPage({
     if (typeof window === 'undefined') return;
     const url = await buildShareableUrl(
       `${window.location.origin}${window.location.pathname}`,
-      {
-        flavorId: flavor.id,
-        exampleId: example.id,
-        code: currentEditorContent(),
-        exampleCode: example.code,
-      },
+      shared
+        ? { flavorId: flavor.id, code: currentEditorContent() }
+        : {
+            flavorId: flavor.id,
+            exampleId: example.id,
+            code: currentEditorContent(),
+            exampleCode: example.code,
+          },
     );
     try {
       await navigator.clipboard.writeText(url);
@@ -291,7 +298,7 @@ export default function EditorPage({
     } catch {
       flashCopyConfirmation('Copy failed');
     }
-  }, [flavor.id, example.id, example.code, currentEditorContent, flashCopyConfirmation]);
+  }, [shared, flavor.id, example.id, example.code, currentEditorContent, flashCopyConfirmation]);
 
   const editorKey = useMemo(() => `${flavor.id}:${example.id}`, [flavor.id, example.id]);
 
@@ -323,11 +330,11 @@ export default function EditorPage({
       return;
     }
     const previous = document.title;
-    document.title = `${example.label} - Semantifyr Live`;
+    document.title = `${shared ? 'Shared model' : example.label} - Semantifyr Live`;
     return () => {
       document.title = previous;
     };
-  }, [embedded, example.label]);
+  }, [embedded, shared, example.label]);
 
   // Only auto-retry from `errored`; a manual disconnect must stay off.
   useEffect(() => {
