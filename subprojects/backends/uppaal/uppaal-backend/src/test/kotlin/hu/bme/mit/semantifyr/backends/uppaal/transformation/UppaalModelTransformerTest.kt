@@ -86,6 +86,67 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     }
 
     @Test
+    suspend fun `variables without an initializer start at any value of their type`() {
+        val template = nta(
+            """
+                var x : int
+                var b : bool
+                var c : test::colors::Color
+                init { x := x + 1 }
+                tran { }
+                prop { AG x < 5 }
+            """,
+        ).templates.single()
+
+        assertThat(template.initialLocationId).isEqualTo("initial")
+        assertThat(template.locations).contains(UppaalLocation("initial", "Initial", UppaalLocationKind.Committed))
+        assertThat(template.edges).containsExactly(
+            UppaalEdge("initial", "loc_0", assignment = "x = 1"),
+            UppaalEdge("initial", "loc_0", assignment = "x = 4"),
+            UppaalEdge("initial", "loc_0", assignment = "x = 5"),
+            UppaalEdge("loc_0", "loc_1", select = "havoc_b_0 : int[0, 1]", assignment = "b = havoc_b_0"),
+            UppaalEdge("loc_1", "start", select = "havoc_c_1 : int[0, 1]", assignment = "c = havoc_c_1"),
+            UppaalEdge("start", "running", assignment = "x = (x + 1)"),
+            UppaalEdge("running", "running"),
+        )
+    }
+
+    @Test
+    suspend fun `a model whose variables are initialized starts at start`() {
+        val template = nta(
+            """
+                var x : int := 0
+                init { }
+                tran { }
+                prop { AG x < 5 }
+            """,
+        ).templates.single()
+
+        assertThat(template.initialLocationId).isEqualTo("start")
+        assertThat(template.locations.map { it.id }).containsExactly("start", "running")
+    }
+
+    @Test
+    suspend fun `a local variable without an initializer starts at any value in every step`() {
+        val model = nta(
+            """
+                var x : int := 0
+                init { }
+                tran { var d : int x := d }
+                prop { AG x < 3 }
+            """,
+        )
+
+        val local = model.globalDeclarations.variables.last().name
+        assertThat(model.templates.single().edges).containsExactly(
+            startToRunning,
+            UppaalEdge("running", "loc_0", assignment = "$local = 0"),
+            UppaalEdge("running", "loc_0", assignment = "$local = 3"),
+            UppaalEdge("loc_0", "running", assignment = "x = $local"),
+        )
+    }
+
+    @Test
     suspend fun `an assumption is an edge guard`() {
         val edges = edges(
             """

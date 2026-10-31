@@ -75,5 +75,7 @@ class UppaalModelTransformer @Inject constructor(
         const val STARTING_LOCATION_NAME = "Start"
         const val STABLE_LOCATION_ID = "running"
         const val STARTING_LOCATION_ID = "start"
+        const val INITIAL_LOCATION_NAME = "Initial"
+        const val INITIAL_LOCATION_ID = "initial"
     }
 }

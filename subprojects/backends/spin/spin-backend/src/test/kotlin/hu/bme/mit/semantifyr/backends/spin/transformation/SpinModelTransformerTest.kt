@@ -84,6 +84,80 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
     }
 
     @Test
+    suspend fun `variables without an initializer start at any value of their type`() {
+        val lines = promelaLines(
+            """
+                var x : int
+                var b : bool
+                var c : test::colors::Color
+                init { x := x + 1 }
+                tran { }
+                prop { AG x < 5 }
+            """,
+        )
+
+        assertThat(lines).containsSequence(
+            "init {",
+            "atomic {",
+            "if",
+            ":: x = 1",
+            ":: x = 4",
+            ":: x = 5",
+            "fi;",
+            "if",
+            ":: b = false",
+            ":: b = true",
+            "fi;",
+            "if",
+            ":: c = Red",
+            ":: c = Green",
+            "fi;",
+            "}",
+            "atomic {",
+            "$SPIN_STABLE_FLAG = false;",
+            "x = (x + 1);",
+            "$SPIN_STABLE_FLAG = true;",
+            "}",
+        )
+    }
+
+    @Test
+    suspend fun `variables with an initializer are not chosen again`() {
+        val lines = promelaLines(
+            """
+                var x : int := 0
+                init { }
+                tran { }
+                prop { AG x < 5 }
+            """,
+        )
+
+        assertThat(lines).containsSequence("init {", "atomic {", "$SPIN_STABLE_FLAG = false;", "skip;")
+    }
+
+    @Test
+    suspend fun `a local variable without an initializer starts at any value in every step`() {
+        val promela = transform(
+            """
+                var x : int := 0
+                init { }
+                tran { var d : int x := d }
+                prop { AG x < 3 }
+            """,
+        ).promela
+
+        val local = Regex("int (d_\\d+);").find(promela)!!.groupValues[1]
+        assertThat(promela.lines().map { it.trim() }).containsSequence(
+            "int $local;",
+            "if",
+            ":: $local = 0",
+            ":: $local = 3",
+            "fi;",
+            "x = $local;",
+        )
+    }
+
+    @Test
     suspend fun `an enum variable declares its mtype`() {
         val lines = promelaLines(
             """

@@ -151,7 +151,7 @@ class UppaalOperationVisitor @AssistedInject constructor(
     override fun visit(operation: LocalVarDeclarationOperation) {
         val initExpression = operation.expression
         if (initExpression == null) {
-            context.edges += UppaalEdge(sourceId, targetId)
+            havoc(operation)
             return
         }
         val name = uppaalVariableTransformer.nameOf(operation)
@@ -160,7 +160,10 @@ class UppaalOperationVisitor @AssistedInject constructor(
     }
 
     override fun visit(operation: HavocOperation) {
-        val variable = OxstsUtils.requireVariableReference(operation.reference)
+        havoc(OxstsUtils.requireVariableReference(operation.reference))
+    }
+
+    fun havoc(variable: VariableDeclaration) {
         val name = uppaalVariableTransformer.nameOf(variable)
         if (uppaalVariableTransformer.isClock(variable)) {
             error("Uppaal backend does not support havoc on clock variable '$name' (clocks may only be reset to 0).")

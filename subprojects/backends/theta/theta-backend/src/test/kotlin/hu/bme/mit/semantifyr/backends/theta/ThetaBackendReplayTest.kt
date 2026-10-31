@@ -24,20 +24,27 @@ class ThetaBackendReplayTest {
         private val models = BackendTestModels()
     }
 
-    private fun artifactDirectory(case: String): Path {
-        return Path("build", "test-artifacts", "ThetaBackendReplayTest", case)
+    private fun cleanArtifactDirectory(case: String): Path {
+        val directory = Path("build", "test-artifacts", "ThetaBackendReplayTest", case)
+        directory.toFile().deleteRecursively()
+        return directory
     }
 
-    private suspend fun verify(case: String, inlinedOxsts: InlinedOxsts): BackendVerificationResult {
+    private suspend fun verify(
+        case: String,
+        inlinedOxsts: InlinedOxsts,
+        artifactDirectory: Path = cleanArtifactDirectory(case),
+    ): BackendVerificationResult {
         val environment = ExecutionEnvironment.builder().put(ThetaExecutorKey) {
             ReplayingThetaExecutor(case)
         }.build()
-        val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory(case))
+        val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory)
         return ThetaBackend().verify(models.injector, ThetaConfig.CegarExpl, request, environment)
     }
 
     private suspend fun verifyFixture(file: String, className: String): BackendVerificationResult {
-        return verify(className, models.compile(file, className, artifactDirectory(className)))
+        val artifactDirectory = cleanArtifactDirectory(className)
+        return verify(className, models.compile(file, className, artifactDirectory), artifactDirectory)
     }
 
     @Test
@@ -72,5 +79,21 @@ class ThetaBackendReplayTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.inlinedWitness).isNull()
+    }
+
+    @Test
+    suspend fun `an uninitialized variable can violate an invariant in the initial state`() {
+        val result = verifyFixture("initial_values", "UninitializedIntegerBound")
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        assertThat(result.inlinedWitness!!.initialState.valuesByName()["\$\$root\$\$x"]).isNotEqualTo(0)
+    }
+
+    @Test
+    suspend fun `an uninitialized enum variable can violate an invariant in the initial state`() {
+        val result = verifyFixture("initial_values", "UninitializedEnumBound")
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        assertThat(result.inlinedWitness!!.initialState.valuesByName()["\$\$root\$\$light"]).isEqualTo("On")
     }
 }

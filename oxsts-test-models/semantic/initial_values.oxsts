@@ -1,0 +1,99 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::lang::initial_values
+
+// A variable without an initializer starts at any value of its type. The
+// expect-fail cases hold only on a backend that fixes the initial value,
+// e.g. by zero-initializing it.
+
+enum Light {
+    Off,
+    On
+}
+
+// --- integer ---
+
+@VerificationCase
+@Tag("expect-fail")
+class UninitializedIntegerBound {
+    var x: int
+
+    prop {
+        return AG x == 0
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class UninitializedIntegerReach {
+    var x: int
+
+    prop {
+        return EF x == 7
+    }
+}
+
+// --- boolean ---
+
+@VerificationCase
+@Tag("expect-fail")
+class UninitializedBooleanBound {
+    var b: bool
+
+    prop {
+        return AG b == false
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class UninitializedBooleanReach {
+    var b: bool
+
+    prop {
+        return EF b == true
+    }
+}
+
+// --- enum ---
+
+@VerificationCase
+@Tag("expect-fail")
+class UninitializedEnumBound {
+    var light: Light
+
+    prop {
+        return AG light == Light::Off
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class UninitializedEnumReach {
+    var light: Light
+
+    prop {
+        return EF light == Light::On
+    }
+}
+
+// --- init runs after the initial choice ---
+
+// The init transition overwrites the arbitrary initial value.
+@VerificationCase
+@Tag("expect-pass")
+class InitOverwritesUninitialized {
+    var x: int
+
+    redefine init {
+        x := 3
+    }
+
+    prop {
+        return AG x == 3
+    }
+}
