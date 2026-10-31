@@ -110,13 +110,22 @@ jobs:
           ./gradlew :semantifyr-vscode:bundleExtension :semantifyr-live-backend:prepareDockerBuild
           tar -czf live-image-context.tar.gz -C subprojects/semantifyr-live/backend \
             Dockerfile build/install build/staging build/theta-xsts-cli
+          mkdir distributions
+          cp subprojects/semantifyr-vscode/build/semantifyr-*.vsix subprojects/semantifyr-cli/build/distributions/semantifyr-*.zip distributions/
+      - name: Smoke test the CLI distribution
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          version=$(sed -n 's/^version=//p' gradle.properties)
+          unzip -q "distributions/semantifyr-$version.zip" -d cli
+          "cli/semantifyr-$version/bin/semantifyr" verify --theta-executor shell "cli/semantifyr-$version/models/smoke"
       - name: Upload the distributions
         if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: actions/upload-artifact@v7
         with:
           name: distributions
-          path: subprojects/semantifyr-vscode/build/semantifyr-*.vsix
+          path: distributions/
           if-no-files-found: error
+          compression-level: 0
           retention-days: 90
       - name: Upload the live image context
         if: ${{ matrix.os == 'ubuntu-latest' }}

@@ -54,6 +54,7 @@ jobs:
           username: ftsrgbot
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Tag the snapshot image as the release
+        id: image
         env:
           VERSION: ${{ steps.version.outputs.version }}
           SNAPSHOT: ${{ steps.version.outputs.snapshot }}
@@ -62,8 +63,24 @@ jobs:
             --tag "$IMAGE:$VERSION" \
             --tag "$IMAGE:latest" \
             "$IMAGE:$SNAPSHOT"
+          digest=$(docker buildx imagetools inspect "$IMAGE:$VERSION" --format '{{.Manifest.Digest}}')
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+      - name: Publish the extension to the marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if [ -z "$VSCE_PAT" ]; then
+            echo "VSCE_PAT is not set; the extension is not published to the marketplace"
+            exit 0
+          fi
+          vsce=$(jq -r '.packages["node_modules/@vscode/vsce"].version' package-lock.json)
+          npx --yes "@vscode/vsce@$vsce" publish --packagePath "distributions/semantifyr-$VERSION.vsix" --skip-duplicate
       - name: Create the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
-        run: gh release create "v$VERSION" distributions/* --target "$GITHUB_SHA" --title "v$VERSION" --generate-notes
+          DIGEST: ${{ steps.image.outputs.digest }}
+        run: |
+          gh release create "v$VERSION" distributions/* --target "$GITHUB_SHA" --title "v$VERSION" \
+            --notes "Live image: \`$IMAGE@$DIGEST\`" --generate-notes
