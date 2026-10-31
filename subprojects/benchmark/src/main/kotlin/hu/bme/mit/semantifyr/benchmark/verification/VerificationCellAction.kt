@@ -22,7 +22,7 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationReport
-import hu.bme.mit.semantifyr.verifier.qualifiedNameToDirectoryName
+import hu.bme.mit.semantifyr.verifier.caseDirectoryName
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import org.eclipse.emf.ecore.resource.Resource
@@ -90,7 +90,7 @@ class VerificationCellAction(
             val wallTime = mark.elapsedNow()
             val cpu = CpuClock.sample() - cpuBefore
 
-            val reportFile = workDirectory.resolve(qualifiedNameToDirectoryName(verificationCase.qualifiedName)).resolve("report.json")
+            val reportFile = workDirectory.resolve(caseDirectoryName(verificationCase)).resolve("report.json")
             val result = json.decodeFromString<VerificationReport>(reportFile.readText()).result
             return Measurement(
                 outcome = Outcome.of(result.verdict),
