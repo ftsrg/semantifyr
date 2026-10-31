@@ -18,14 +18,19 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.IntegerEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
@@ -36,9 +41,100 @@ class ArrayFlatteningPass @Inject constructor(
 ) {
 
     fun flattenArrays(inlinedOxsts: InlinedOxsts): Map<VariableDeclaration, List<VariableDeclaration>> {
-        return collectArrayVariables(inlinedOxsts).associateWith {
+        val arrayVariables = collectArrayVariables(inlinedOxsts)
+        expandWholeArrayOperations(inlinedOxsts, arrayVariables.associateWith { slotCount(it) })
+        return arrayVariables.associateWith {
             flattenVariable(it)
         }
+    }
+
+    private fun slotCount(arrayVariable: VariableDeclaration): Int {
+        return multiplicityRangeEvaluator.evaluate(arrayVariable.typeSpecification).upperBound
+    }
+
+    private fun expandWholeArrayOperations(inlinedOxsts: InlinedOxsts, slotCounts: Map<VariableDeclaration, Int>) {
+        fun arrayOf(expression: Expression?): VariableDeclaration? {
+            val variable = when (expression) {
+                is ElementReference -> expression.element
+                is NavigationSuffixExpression -> expression.member
+                else -> null
+            }
+            return (variable as? VariableDeclaration)?.takeIf {
+                it in slotCounts
+            }
+        }
+
+        for (comparison in inlinedOxsts.eAllOfType<ComparisonOperator>().toList()) {
+            val array = arrayOf(comparison.left) ?: arrayOf(comparison.right) ?: continue
+            val slotComparisons = (0 until slotCounts.getValue(array)).map { index ->
+                OxstsFactory.createComparisonOperator().also {
+                    it.op = comparison.op
+                    it.left = slotOf(comparison.left, index)
+                    it.right = slotOf(comparison.right, index)
+                }
+            }
+            val combined = when (comparison.op) {
+                ComparisonOp.EQ -> slotComparisons.reduce<Expression, Expression> { left, right ->
+                    OxstsFactory.createBooleanOperator(BooleanOp.AND, left, right)
+                }
+                ComparisonOp.NOT_EQ -> slotComparisons.reduce<Expression, Expression> { left, right ->
+                    OxstsFactory.createBooleanOperator(BooleanOp.OR, left, right)
+                }
+                else -> sourceError(comparison, "Arrays can only be compared with == and !=.")
+            }
+            EcoreUtil2.replace(comparison, combined)
+        }
+        for (assignment in inlinedOxsts.eAllOfType<AssignmentOperation>().toList()) {
+            val array = arrayOf(assignment.reference) ?: continue
+            replaceInSequence(
+                assignment,
+                (0 until slotCounts.getValue(array)).map { index ->
+                    OxstsFactory.createAssignmentOperation().also {
+                        it.reference = slotOf(assignment.reference, index)
+                        it.expression = slotOf(assignment.expression, index)
+                    }
+                },
+            )
+        }
+        for (havoc in inlinedOxsts.eAllOfType<HavocOperation>().toList()) {
+            val array = arrayOf(havoc.reference) ?: continue
+            replaceInSequence(
+                havoc,
+                (0 until slotCounts.getValue(array)).map { index ->
+                    OxstsFactory.createHavocOperation().also {
+                        it.reference = slotOf(havoc.reference, index)
+                    }
+                },
+            )
+        }
+        for ((arrayVariable, slotCount) in slotCounts) {
+            val initializer = arrayVariable.expression
+            if (arrayOf(initializer) != null) {
+                arrayVariable.expression = OxstsFactory.createArrayLiteral().also { literal ->
+                    (0 until slotCount).mapTo(literal.values) {
+                        slotOf(initializer, it)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun slotOf(arrayExpression: Expression, index: Int): Expression {
+        if (arrayExpression is ArrayLiteral) {
+            return arrayExpression.values.getOrNull(index)?.copy()
+                ?: sourceError(arrayExpression, "Array literal has no value at index $index.")
+        }
+        return OxstsFactory.createIndexingSuffixExpression().also {
+            it.primary = arrayExpression.copy()
+            it.index = OxstsFactory.createLiteralInteger(index)
+        }
+    }
+
+    private fun replaceInSequence(operation: Operation, replacement: List<Operation>) {
+        val sequence = operation.eContainer() as? SequenceOperation ?: sourceError(operation, "Expected the operation in a sequence.")
+        val index = sequence.steps.indexOf(operation)
+        sequence.steps.addAll(index + 1, replacement)
+        sequence.steps.removeAt(index)
     }
 
     private fun collectArrayVariables(inlinedOxsts: InlinedOxsts): List<VariableDeclaration> {
@@ -303,6 +399,12 @@ class ArrayFlatteningPass @Inject constructor(
                 val index = list.indexOf(arrayVariable)
                 list.addAll(index + 1, slotVariables)
                 list.remove(arrayVariable)
+            }
+            is SequenceOperation -> {
+                val steps = container.steps
+                val index = steps.indexOf(arrayVariable as LocalVarDeclarationOperation)
+                steps.addAll(index + 1, slotVariables.map { it as LocalVarDeclarationOperation })
+                steps.removeAt(index)
             }
             else -> sourceError(
                 arrayVariable,

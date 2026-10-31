@@ -57,6 +57,68 @@ public class ArrayTypeTest {
     }
 
     @Test
+    void wholeArrayOperationsPass() {
+        var pkg = parseHelper.parse("""
+            package test
+            class C {
+                var values: int[2] := [0, 0]
+                var backup: int[2] := [0, 0]
+                var same: bool := false
+                redefine tran {
+                    backup := values
+                    values := [1, 2]
+                    havoc(values)
+                    same := values == backup || values != [3, 4]
+                }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        pkg.assertNoValidationErrors();
+    }
+
+    @Test
+    void comparingArraysOfDifferentSizesIsRejected() {
+        var pkg = parseHelper.parse("""
+            package test
+            class C {
+                var pair: int[2] := [0, 0]
+                var triple: int[3] := [0, 0, 0]
+                prop { return AG pair == triple }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "array of the same size");
+    }
+
+    @Test
+    void comparingAnArrayWithAScalarIsRejected() {
+        var pkg = parseHelper.parse("""
+            package test
+            class C {
+                var pair: int[2] := [0, 0]
+                prop { return AG pair != 1 }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "array of the same size");
+    }
+
+    @Test
+    void orderingArraysIsRejected() {
+        var pkg = parseHelper.parse("""
+            package test
+            class C {
+                var pair: int[2] := [0, 0]
+                var other: int[2] := [0, 0]
+                prop { return AG pair < other }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "array of the same size");
+    }
+
+    @Test
     void indexingWithBoolIsRejected() {
         var pkg = parseHelper.parse("""
             package test

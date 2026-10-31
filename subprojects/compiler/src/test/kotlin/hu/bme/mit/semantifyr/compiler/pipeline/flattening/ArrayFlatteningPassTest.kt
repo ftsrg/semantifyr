@@ -204,6 +204,103 @@ class ArrayFlatteningPassTest {
     }
 
     @Test
+    fun `local array is split into per-index local declarations in place`() {
+        val inlined = parseHelper.parse(
+            """
+                inlined oxsts of semantifyr::Anything
+                var x : int := 0
+                var i : int := 0
+                init { }
+                tran {
+                    var a : int[3] := [1, 2, x]
+                    x := a[i]
+                    a[2] := a[0]
+                }
+                prop { AG true }
+            """.trimIndent(),
+        )
+
+        pass.flattenArrays(inlined)
+
+        assertThat(inlined.eAllOfType<IndexingSuffixExpression>().toList()).isEmpty()
+        assertThat(inlined.variables.map { it.name }).containsExactly("x", "i")
+        val serialized = serialize(inlined)
+        assertThat(serialized).contains("var a_0 : int := 1", "var a_1 : int := 2", "var a_2 : int := x", "a_2 := a_0")
+        assertThat(serialized).containsPattern("x := if i == 0 then a_0 else if i == 1 then a_1 else a_2")
+    }
+
+    @Test
+    fun `local array without initializer produces uninitialized local slots`() {
+        val inlined = parseHelper.parse(
+            """
+                inlined oxsts of semantifyr::Anything
+                var x : int := 0
+                init { }
+                tran {
+                    var a : int[2]
+                    x := a[1]
+                }
+                prop { AG true }
+            """.trimIndent(),
+        )
+
+        pass.flattenArrays(inlined)
+
+        val serialized = serialize(inlined)
+        assertThat(serialized).contains("var a_0 : int", "var a_1 : int", "x := a_1")
+        assertThat(serialized).doesNotContain(":= [")
+    }
+
+    @Test
+    fun `whole-array assignment, havoc and comparison work slot by slot`() {
+        val inlined = parseHelper.parse(
+            """
+                inlined oxsts of semantifyr::Anything
+                var a : int[2] := [1, 2]
+                var b : int[2] := [3, 4]
+                var same : bool := false
+                init { }
+                tran {
+                    a := b
+                    b := [5, 6]
+                    havoc(a)
+                    same := a == b
+                }
+                prop { AG a != b }
+            """.trimIndent(),
+        )
+
+        pass.flattenArrays(inlined)
+
+        val serialized = serialize(inlined)
+        assertThat(serialized).contains("a_0 := b_0", "a_1 := b_1", "b_0 := 5", "b_1 := 6", "havoc (a_0)", "havoc (a_1)")
+        assertThat(serialized).contains("same := a_0 == b_0 && a_1 == b_1", "AG a_0 != b_0 || a_1 != b_1")
+    }
+
+    @Test
+    fun `local array initialized from another array copies every slot`() {
+        val inlined = parseHelper.parse(
+            """
+                inlined oxsts of semantifyr::Anything
+                var a : int[2] := [1, 2]
+                var x : int := 0
+                init { }
+                tran {
+                    var copy : int[2] := a
+                    a[0] := 9
+                    x := copy[0]
+                }
+                prop { AG true }
+            """.trimIndent(),
+        )
+
+        pass.flattenArrays(inlined)
+
+        val serialized = serialize(inlined)
+        assertThat(serialized).contains("var copy_0 : int := a_0", "var copy_1 : int := a_1", "a_0 := 9", "x := copy_0")
+    }
+
+    @Test
     fun `out-of-bounds constant index is rejected`() {
         val inlined = parseHelper.parse(
             """

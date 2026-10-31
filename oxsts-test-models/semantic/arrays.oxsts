@@ -155,3 +155,143 @@ class ArrayRangedMultiplicityReach {
         return EF seen == 3
     }
 }
+
+// --- whole-array assignment, comparison and havoc ---
+
+// Reachable: whole-array assignment and comparison work slot by slot.
+@VerificationCase
+@Tag("expect-pass")
+class ArrayWholeCopyReach {
+    var slots: int[2] := [0, 0]
+    var backup: int[2] := [0, 0]
+
+    redefine tran {
+        choice {
+            assume(slots[0] < 2)
+            slots[0] := slots[0] + 1
+        } or {
+            backup := slots
+        } or {
+            slots := [0, 0]
+        }
+    }
+
+    prop {
+        return EF (backup == slots && backup[0] == 2)
+    }
+}
+
+// Violated: havoc of a whole array reaches values beyond 2.
+@VerificationCase
+@Tag("expect-fail")
+class ArrayWholeHavocBound {
+    var slots: int[2] := [0, 0]
+
+    redefine tran {
+        havoc(slots)
+        assume(slots[0] >= 0 && slots[0] <= 3 && slots[1] == slots[0])
+    }
+
+    prop {
+        return AG slots[1] <= 2
+    }
+}
+
+// --- local arrays ---
+
+// Reachable: a local array is initialized every step and read at a runtime index.
+@VerificationCase
+@Tag("expect-pass")
+class LocalArrayRuntimeIndexReach {
+    var i: int := 0
+    var seen: int := 0
+
+    redefine tran {
+        var values: int[3] := [10, 20, 30]
+        seen := values[i]
+        if (i < 2) {
+            i := i + 1
+        }
+    }
+
+    prop {
+        return EF seen == 30
+    }
+}
+
+// Violated: a runtime-index write into a local array reaches a constant-index read.
+@VerificationCase
+@Tag("expect-fail")
+class LocalArrayRuntimeWriteBound {
+    var i: int := 0
+    var seen: int := 0
+
+    redefine tran {
+        var values: int[3] := [0, 0, 0]
+        values[i] := 5
+        seen := values[2]
+        if (i < 2) {
+            i := i + 1
+        }
+    }
+
+    prop {
+        return AG seen == 0
+    }
+}
+
+// Holds: a local array starts from its initializer every step.
+@VerificationCase
+@Tag("expect-pass")
+class LocalArrayNotPersistedBound {
+    var seen: int := 0
+
+    redefine tran {
+        var values: int[2] := [1, 2]
+        seen := values[0]
+        values[0] := 9
+    }
+
+    prop {
+        return AG seen <= 1
+    }
+}
+
+// Reachable: an uninitialized local array is havoced at its declaration.
+@VerificationCase
+@Tag("expect-pass")
+class LocalArrayUninitializedReach {
+    var seen: int := 0
+
+    redefine tran {
+        var values: int[2]
+        assume(values[0] >= 0 && values[0] <= 4 && values[1] == values[0])
+        seen := values[1]
+    }
+
+    prop {
+        return EF seen == 4
+    }
+}
+
+// Reachable: a local array initialized from a class array holds its values.
+@VerificationCase
+@Tag("expect-pass")
+class LocalArrayCopyReach {
+    var slots: int[2] := [0, 0]
+    var seen: int := 0
+
+    redefine tran {
+        var snapshot: int[2] := slots
+        seen := snapshot[0] + snapshot[1]
+        choice {
+            slots[0] := 1
+        } or {
+            slots[1] := 2
+        }
+    }
+
+    prop {
+        return EF (seen == 3 && slots[0] + slots[1] == 3)
+    }
+}
