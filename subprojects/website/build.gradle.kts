@@ -129,6 +129,7 @@ fun NpmTask.configureSharedInputs() {
     inputs.file(rootProject.layout.projectDirectory.file("package.json"))
     inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
     inputs.dir(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial"))
+    inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/tutorial"))
     inputs.files(tasks.npmInstall)
     inputs.files(cloneBrandingAssets)
     inputs.files(editorCommonFiles)
