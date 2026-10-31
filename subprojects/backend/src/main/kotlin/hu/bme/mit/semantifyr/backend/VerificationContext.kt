@@ -21,6 +21,7 @@ import kotlin.time.measureTimedValue
 
 abstract class VerificationContext<TArtifacts, TRawVerdict>(
     protected val backendId: String,
+    private val soundness: SoundnessDirection,
     protected val request: BackendVerificationRequest,
 ) {
     protected val logger by loggerFactory()
@@ -55,6 +56,14 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
                 metadata = metadata,
                 metrics = BackendMetrics(),
                 message = e.message ?: "Unsupported by $backendId",
+            )
+        } catch (e: BackendTimeoutException) {
+            logger.info { "[$backendId] verification timed out: ${e.message}" }
+            BackendVerificationResult(
+                verdict = VerificationVerdict.Timeout,
+                metadata = metadata,
+                metrics = BackendMetrics(),
+                message = e.message,
             )
         } catch (e: Exception) {
             logger.warn("[$backendId] verification threw ${e::class.simpleName}", e)
@@ -130,6 +139,8 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
                 backAnnotationDuration = backAnnotationDuration,
             ),
             inlinedWitness = witness,
+            soundness = soundness,
+            isTrusted = soundness.trusts(verdict, request.inlinedOxsts.property.expression),
         )
     }
 

@@ -17,6 +17,7 @@ import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 import org.eclipse.emf.common.util.URI
 import java.io.ByteArrayOutputStream
 import java.io.File
+import kotlin.io.path.Path
 
 @InjectWithOxsts
 abstract class ThetaTransformationTestBase {
@@ -41,6 +42,10 @@ abstract class ThetaTransformationTestBase {
 
     protected fun parse(source: String, vararg packages: String): InlinedOxsts {
         return models.parse(source, *packages)
+    }
+
+    protected fun compile(file: String, className: String): InlinedOxsts {
+        return models.compile(file, className, Path("build", "test-artifacts", javaClass.simpleName, className))
     }
 
     protected fun serialize(xsts: XstsModel): String {

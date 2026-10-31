@@ -1,0 +1,109 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::lang::optimizer_soundness
+
+// Models the optimizer once decided wrongly; each case names the rewrite it guards.
+
+// Copy propagation: q keeps the value p had at the copy, not the value p has at the read.
+@VerificationCase
+@Tag("expect-pass")
+class CopyAcrossSourceWrite {
+    var p: int := 0
+    var q: int := 0
+    var seen: bool := false
+
+    redefine tran {
+        q := p
+        p := 1 - p
+        assume(q == 0)
+        seen := true
+    }
+
+    prop {
+        return EF seen
+    }
+}
+
+// Copy propagation: a copy made in init does not follow later writes of its source in tran.
+@VerificationCase
+@Tag("expect-pass")
+class CopyFromInitAcrossSourceWrite {
+    var p: int := 0
+    var q: int := 0
+    var seen: bool := false
+
+    redefine init {
+        q := p
+    }
+
+    redefine tran {
+        p := 1 - p
+        assume(q == 0)
+        seen := true
+    }
+
+    prop {
+        return EF seen
+    }
+}
+
+// Variable liveness: a local's initializer is evaluated at the declaration, before the write to its source.
+@VerificationCase
+@Tag("expect-pass")
+class LocalInitializerBeforeSourceWrite {
+    var a: int := 0
+    var seen: int := 0
+
+    redefine tran {
+        var s: int := a
+        a := 1 - a
+        seen := s
+    }
+
+    prop {
+        return EF (a == 1 && seen == 0)
+    }
+}
+
+// Cone of influence: the writes to a stay live because the local's initializer reads it.
+@VerificationCase
+@Tag("expect-pass")
+class LocalInitializerSourceInCone {
+    var a: int := 0
+    var seen: int := 0
+
+    redefine tran {
+        a := 1 - a
+        var s: int := a
+        seen := s
+    }
+
+    prop {
+        return EF seen == 1
+    }
+}
+
+// Copy propagation in init: the write on one branch does not reach the read along the other.
+@VerificationCase
+@Tag("expect-pass")
+class InitCopyOnOneBranch {
+    var c: bool := false
+    var q: int := 0
+    var r: int := 9
+
+    redefine init {
+        havoc(c)
+        if (c) {
+            q := 5
+        }
+        r := q
+    }
+
+    prop {
+        return EF r == 0
+    }
+}

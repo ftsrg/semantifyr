@@ -46,13 +46,15 @@ class InlineOperationExpander @Inject constructor(
         operation: InlineOperation,
         instance: Instance,
     ): Operation {
-        return when (operation) {
+        val expansion = when (operation) {
             is InlineCall -> expandCall(operation, instance)
             is InlineIfOperation -> expandIf(operation, instance)
             is InlineSeqFor -> expandSeqFor(operation, instance)
             is InlineChoiceFor -> expandChoiceFor(operation, instance)
             else -> sourceError(operation, "Unknown inline operation kind: ${operation::class.simpleName}")
         }
+        transitionCallTraceTransformer.inheritEnclosingTrace(operation, expansion)
+        return expansion
     }
 
     private fun expandCall(
@@ -170,6 +172,7 @@ class InlineOperationExpander @Inject constructor(
             containerInstance,
             actualTransition,
             callExpression,
+            body,
         )
 
         return OxstsFactory.createSequenceOperation().also {

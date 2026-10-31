@@ -27,6 +27,13 @@ class ConstantFoldingPattern(
     private val evaluator: ConstantExpressionEvaluatorProvider,
     private val transformer: ConstantExpressionEvaluationTransformer,
 ) : OptimizationPattern {
+    override val rootTypes = setOf(
+        ArithmeticBinaryOperator::class.java,
+        ComparisonOperator::class.java,
+        BooleanOperator::class.java,
+        ArithmeticUnaryOperator::class.java,
+        NegationOperator::class.java,
+    )
 
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is Expression) {

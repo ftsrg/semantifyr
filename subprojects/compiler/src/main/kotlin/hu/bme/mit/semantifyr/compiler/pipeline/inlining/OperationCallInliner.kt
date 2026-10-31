@@ -82,7 +82,9 @@ class OperationCallInliner @AssistedInject constructor(
     }
 
     override fun visit(operation: LocalVarDeclarationOperation) {
-        expressionCallInliner.process(operation.expression)
+        operation.expression?.let {
+            expressionCallInliner.process(it)
+        }
     }
 
     override fun visit(operation: ForOperation) {

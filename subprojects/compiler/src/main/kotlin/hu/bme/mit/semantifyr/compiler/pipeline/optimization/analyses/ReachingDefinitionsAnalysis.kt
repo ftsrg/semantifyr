@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpress
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.tryEvaluateTypedOrNull
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.initMustWrite
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableReadExpressions
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableWrites
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
@@ -21,7 +22,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
@@ -66,7 +66,10 @@ class ReachingDefinitionsComputation(
 
     fun compute(): ReachingDefinitionsInfo {
         val initialIn = buildInitialIn()
-        walkTransition(inlinedOxsts.initTransition, emptyMap())
+        val declarations = inlinedOxsts.variables.associateWith {
+            setOf<EObject>(it)
+        }
+        walkTransition(inlinedOxsts.initTransition, declarations)
         walkTransition(inlinedOxsts.mainTransition, initialIn)
         recordFallbackReads(initialIn)
 
@@ -80,7 +83,7 @@ class ReachingDefinitionsComputation(
 
         val initial = LinkedHashMap<VariableDeclaration, Set<EObject>>()
         for ((variable, defs) in writesByVariable) {
-            initial[variable] = if (initMustWrite(variable)) {
+            initial[variable] = if (inlinedOxsts.initMustWrite(variable, evaluator)) {
                 defs
             } else {
                 defs + variable
@@ -128,40 +131,6 @@ class ReachingDefinitionsComputation(
         }
     }
 
-    private fun initMustWrite(variable: VariableDeclaration): Boolean {
-        val transition = inlinedOxsts.initTransition ?: return false
-        return transition.transitionMustWrite(variable)
-    }
-
-    private fun TransitionDeclaration.transitionMustWrite(variable: VariableDeclaration): Boolean {
-        if (branches.isEmpty()) {
-            return false
-        }
-        return branches.all {
-            mustWrite(it, variable)
-        }
-    }
-
-    private fun mustWrite(operation: Operation, variable: VariableDeclaration): Boolean {
-        return when (operation) {
-            is SequenceOperation -> operation.steps.any { mustWrite(it, variable) }
-            is ChoiceOperation -> {
-                operation.branches.isNotEmpty() && operation.branches.all { mustWrite(it, variable) }
-            }
-            is IfOperation -> {
-                val elseBranch = operation.`else` ?: return false
-                mustWrite(operation.body, variable) && mustWrite(elseBranch, variable)
-            }
-            is AssignmentOperation -> evaluateVariable(operation.reference) == variable
-            is HavocOperation -> evaluateVariable(operation.reference) == variable
-            is AssumptionOperation -> false
-            is LocalVarDeclarationOperation -> false
-            is ForOperation -> false
-            is InlineOperation -> false
-            else -> false
-        }
-    }
-
     private fun walkOperation(
         operation: Operation,
         incoming: Map<VariableDeclaration, Set<EObject>>,
@@ -185,7 +154,9 @@ class ReachingDefinitionsComputation(
                 incoming
             }
             is LocalVarDeclarationOperation -> {
-                recordReads(operation.expression, incoming)
+                operation.expression?.let {
+                    recordReads(it, incoming)
+                }
                 incoming + (operation to setOf<EObject>(operation))
             }
             else -> incoming

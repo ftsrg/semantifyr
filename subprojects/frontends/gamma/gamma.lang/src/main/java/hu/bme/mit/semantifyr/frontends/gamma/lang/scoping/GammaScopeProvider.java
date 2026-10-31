@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.frontends.gamma.lang.scoping;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.*;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
+import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.scoping.IScope;
 import org.eclipse.xtext.scoping.Scopes;
 
@@ -73,6 +74,29 @@ public class GammaScopeProvider extends AbstractGammaScopeProvider {
             var port = raiseEventAction.getPort();
 
             return Scopes.scopeFor(port.getInterface().getEvents(), IScope.NULLSCOPE);
+        }
+
+        if (context instanceof FiredTransitionAssertion firedTransitionAssertion
+                && reference == GammaPackage.Literals.FIRED_TRANSITION_ASSERTION__TO) {
+            if (!(GammaUtils.getPathElement(firedTransitionAssertion.getFrom()) instanceof State from)) {
+                return IScope.NULLSCOPE;
+            }
+            var region = (Region) from.eContainer();
+
+            return Scopes.scopeFor(region.getStates(), IScope.NULLSCOPE);
+        }
+
+        var firedTransitionAssertion = EcoreUtil2.getContainerOfType(context, FiredTransitionAssertion.class);
+        if (firedTransitionAssertion != null
+                && (reference == GammaPackage.Literals.TIMEOUT_TRIGGER__TIMEOUT
+                        || reference == GammaPackage.Literals.EVENT_TRIGGER__PORT)) {
+            var from = GammaUtils.getPathElement(firedTransitionAssertion.getFrom());
+            var statechart = EcoreUtil2.getContainerOfType(from, StatechartDeclaration.class);
+            if (statechart == null) {
+                return IScope.NULLSCOPE;
+            }
+
+            return Scopes.scopeFor(GammaUtils.getAllMembers(statechart), IScope.NULLSCOPE);
         }
 
         return super.getScope(context, reference);

@@ -104,10 +104,10 @@ for (i in 1..10) {
 
 ### Local Variable
 
-Local variables allow the definition of temporary locals in the operation structure. A local variable cannot be an array (`OXSTS.UNSUPPORTED_FEATURE`).
+Local variables allow the definition of temporary locals in the operation structure. A local variable may be a fixed-size array, such as `var values: int[3] := [1, 2, 3]`, indexed like a class array. A local variable without an initializer is havoced each time its declaration runs.
 
 ```oxsts
-var choiceTaken := false
+var choiceTaken: bool := false
 choice {
     choiceTaken := true
 } or {

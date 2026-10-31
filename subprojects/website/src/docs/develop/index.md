@@ -59,11 +59,14 @@ The repository is organized under `subprojects/`:
 | Verifier | `subprojects/verifier/` | Verification cases, verdicts, witnesses |
 | Backends | `subprojects/backends/` | Theta, nuXmv, Spin and Uppaal integrations |
 | Portfolios | `subprojects/portfolios/` | Backend configurations raced or combined per case |
+| Benchmark | `subprojects/benchmark/` | Benchmark campaigns, see [Benchmarking](benchmarking.md) |
 | Frontends | `subprojects/frontends/` | Gamma and SysML v2 frontends |
 | CLI | `subprojects/semantifyr-cli/` | The `semantifyr` command-line interface |
 | VS Code extension | `subprojects/semantifyr-vscode/` | Extension packaging and launch configs |
 | Live editor | `subprojects/semantifyr-live/` | The browser-based editor frontend and backend |
 | Website | `subprojects/website/` | This documentation site |
+
+[SysML v2 traces](sysml-trace.md) describes the form of a SysML v2 counterexample written as a SysML v2 model.
 
 ## Contributing a change
 

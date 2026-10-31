@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 
 class PortfolioTask<T : BackendConfig>(
     private val backend: VerificationBackend<T>,
@@ -19,6 +20,7 @@ class PortfolioTask<T : BackendConfig>(
     val subPath: String,
 ) {
     val executorKey = backend.executorKey
+    val leg = PortfolioLeg("${backend.id}:${config.id}", config.soundness)
 
     fun isAvailable(environment: ExecutionEnvironment): Boolean {
         return environment.availability(backend.executorKey).isUsable

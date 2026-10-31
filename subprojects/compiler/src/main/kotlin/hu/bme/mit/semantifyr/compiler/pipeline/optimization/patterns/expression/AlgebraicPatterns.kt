@@ -26,6 +26,8 @@ fun Expression.asIntegerValueOrNull(): Int? {
 }
 
 class ArithmeticIdentityPattern : OptimizationPattern {
+    override val rootTypes = setOf(ArithmeticBinaryOperator::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is ArithmeticBinaryOperator) {
             return false
@@ -70,6 +72,8 @@ class ArithmeticIdentityPattern : OptimizationPattern {
 }
 
 class DoubleUnaryMinusPattern : OptimizationPattern {
+    override val rootTypes = setOf(ArithmeticUnaryOperator::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is ArithmeticUnaryOperator || element.op != UnaryOp.MINUS) {
             return false

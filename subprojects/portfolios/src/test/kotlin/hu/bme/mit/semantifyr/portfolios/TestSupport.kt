@@ -17,9 +17,9 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import kotlinx.coroutines.delay
-import org.mockito.Mockito.mock
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.cancellation.CancellationException
@@ -50,11 +50,7 @@ class PassingBackend<T : BackendConfig>(
         request: BackendVerificationRequest,
         environment: ExecutionEnvironment,
     ): BackendVerificationResult {
-        return BackendVerificationResult(
-            verdict = VerificationVerdict.Passed,
-            metadata = VerificationMetadata(id, Clock.System.now()),
-            metrics = BackendMetrics(),
-        )
+        return judgedResult(id, VerificationVerdict.Passed, config, request)
     }
 }
 
@@ -69,11 +65,7 @@ class FailingBackend<T : BackendConfig>(
         request: BackendVerificationRequest,
         environment: ExecutionEnvironment,
     ): BackendVerificationResult {
-        return BackendVerificationResult(
-            verdict = VerificationVerdict.Failed,
-            metadata = VerificationMetadata(id, Clock.System.now()),
-            metrics = BackendMetrics(),
-        )
+        return judgedResult(id, VerificationVerdict.Failed, config, request)
     }
 }
 
@@ -135,17 +127,36 @@ class SlowBackend<T : BackendConfig>(
             cancellations.incrementAndGet()
             throw c
         }
-        return BackendVerificationResult(
-            verdict = verdict,
-            metadata = VerificationMetadata(id, Clock.System.now()),
-            metrics = BackendMetrics(),
-        )
+        return judgedResult(id, verdict, config, request)
     }
 }
 
-fun stubRequest(outputDirectory: Path): BackendVerificationRequest {
+private fun judgedResult(
+    id: String,
+    verdict: VerificationVerdict,
+    config: BackendConfig,
+    request: BackendVerificationRequest,
+): BackendVerificationResult {
+    return BackendVerificationResult(
+        verdict = verdict,
+        metadata = VerificationMetadata(id, Clock.System.now()),
+        metrics = BackendMetrics(),
+        soundness = config.soundness,
+        isTrusted = config.soundness.trusts(verdict, request.inlinedOxsts.property.expression),
+    )
+}
+
+fun stubRequest(
+    outputDirectory: Path,
+    property: Expression = OxstsFactory.createAG(),
+): BackendVerificationRequest {
+    val inlinedOxsts = OxstsFactory.createInlinedOxsts().also {
+        it.property = OxstsFactory.createPropertyDeclaration().also { declaration ->
+            declaration.expression = property
+        }
+    }
     return BackendVerificationRequest(
-        inlinedOxsts = mock(InlinedOxsts::class.java),
+        inlinedOxsts = inlinedOxsts,
         artifactOutputPath = outputDirectory,
     )
 }

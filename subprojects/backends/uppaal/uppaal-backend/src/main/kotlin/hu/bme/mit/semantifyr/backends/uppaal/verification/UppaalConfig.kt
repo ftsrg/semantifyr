@@ -7,11 +7,14 @@
 package hu.bme.mit.semantifyr.backends.uppaal.verification
 
 import hu.bme.mit.semantifyr.backend.BackendConfig
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 
 data class UppaalConfig(
     override val id: String,
     val parameters: String,
 ) : BackendConfig {
+    override val soundness = SoundnessDirection.UnderApproximating
+
     companion object {
         private const val TRACE_FLAG = "-t 1"
 

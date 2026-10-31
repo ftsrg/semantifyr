@@ -10,10 +10,13 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluator
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.tryEvaluateTypedOrNull
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.initMustWrite
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableAssignments
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableHavocs
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableReadExpressions
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
@@ -54,6 +57,14 @@ class ConstantValueComputation(
     private val constantExpressionEvaluatorProvider: ConstantExpressionEvaluatorProvider,
 ) {
 
+    private val propertyAndInitReads by lazy {
+        listOfNotNull(inlinedOxsts.property, inlinedOxsts.initTransition).flatMap {
+            it.variableReadExpressions(evaluator)
+        }.mapNotNull {
+            evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, it)
+        }.toSet()
+    }
+
     fun compute(): ConstantValueInfo {
         val variableHavocs = inlinedOxsts.variableHavocs(evaluator)
         val variableAssignments = inlinedOxsts.variableAssignments(evaluator)
@@ -87,6 +98,11 @@ class ConstantValueComputation(
             }
             val unique = writtenValues.distinct()
             if (unique.size != 1) {
+                continue
+            }
+
+            // the property is checked in the pre-init state, where an uninitialized variable is havoced
+            if (variable.expression == null && (variable in propertyAndInitReads || !inlinedOxsts.initMustWrite(variable, evaluator))) {
                 continue
             }
 

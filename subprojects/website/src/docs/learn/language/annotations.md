@@ -29,7 +29,7 @@ var value: int := 0
 
 ## With Arguments
 
-Annotation arguments use named-argument syntax (`name = value`). Arguments must be constants: annotations are read without an instance, so the validator rejects a reference to a feature or variable (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
+Annotation arguments bind like call arguments: a named argument (`name = value`) binds the parameter of that name, a positional argument the parameter at its position. Arguments must be constants: annotations are read without an instance, so the validator rejects a reference to a feature or variable (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
 
 ```oxsts
 @VerificationCase(summary = "Reaches the limit")
@@ -85,7 +85,7 @@ See the [Standard Library](standard-library.md) for full details.
 |------------|---------|
 | `@VerificationCase` | Marks a class as a verification target |
 | `@Tag` | Categorizes verification cases |
-| `@Control` | Marks a variable as important to track |
+| `@Control` | Makes a variable a Theta control variable, tracked from the first abstraction |
 | `@Shared` | Marks containment feature instances as shared across instances |
 | `@Trace` | Marks transitions for counterexample tracing |
 | `@Clock` | Marks a variable as a clock for time-aware backends |

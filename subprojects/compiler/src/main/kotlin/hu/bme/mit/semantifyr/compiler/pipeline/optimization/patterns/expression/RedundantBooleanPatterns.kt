@@ -15,6 +15,8 @@ import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
 
 class IdempotentBooleanPattern : OptimizationPattern {
+    override val rootTypes = setOf(BooleanOperator::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is BooleanOperator) {
             return false
@@ -34,6 +36,8 @@ class IdempotentBooleanPattern : OptimizationPattern {
 }
 
 class RedundantAndPattern : OptimizationPattern {
+    override val rootTypes = setOf(BooleanOperator::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is BooleanOperator || element.op != BooleanOp.AND) {
             return false
@@ -51,6 +55,8 @@ class RedundantAndPattern : OptimizationPattern {
 }
 
 class RedundantOrPattern : OptimizationPattern {
+    override val rootTypes = setOf(BooleanOperator::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is BooleanOperator || element.op != BooleanOp.OR) {
             return false
@@ -68,6 +74,8 @@ class RedundantOrPattern : OptimizationPattern {
 }
 
 class ConstantFalseAndPattern : OptimizationPattern {
+    override val rootTypes = setOf(BooleanOperator::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is BooleanOperator || element.op != BooleanOp.AND) {
             return false
@@ -85,6 +93,8 @@ class ConstantFalseAndPattern : OptimizationPattern {
 }
 
 class ConstantTrueOrPattern : OptimizationPattern {
+    override val rootTypes = setOf(BooleanOperator::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is BooleanOperator || element.op != BooleanOp.OR) {
             return false

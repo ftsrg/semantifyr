@@ -7,11 +7,13 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.expression
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsPackage
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration
@@ -72,6 +74,31 @@ class RedefinitionAwareReferenceResolver @Inject constructor(
         }
 
         return reference
+    }
+
+    fun resolve(
+        instance: Instance,
+        reference: NamedElement,
+    ): NamedElement {
+        return resolveOrNull(instance, reference) ?: sourceError(reference, "Could not resolve element '${reference.name}' in domain '${instance.domain.name}'")
+    }
+
+    fun resolveOrNull(
+        instance: Instance,
+        reference: NamedElement,
+    ): NamedElement? {
+        val domain = instance.domain
+        // the inlined model is the root domain, and its members change while it compiles
+        if (domain is InlinedOxsts) {
+            return resolveOrNull(domain, reference)
+        }
+        val resolvedMembers = instance.resolvedMembers
+        if (reference in resolvedMembers) {
+            return resolvedMembers[reference]
+        }
+        return resolveOrNull(domain, reference).also {
+            resolvedMembers[reference] = it
+        }
     }
 
     fun resolve(

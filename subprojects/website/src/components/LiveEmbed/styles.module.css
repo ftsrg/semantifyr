@@ -11,7 +11,7 @@
 .frame {
   display: block;
   width: 100%;
-  height: 640px;
+  height: 800px;
   border: 1px solid var(--ifm-color-emphasis-300);
   border-radius: 6px;
 }

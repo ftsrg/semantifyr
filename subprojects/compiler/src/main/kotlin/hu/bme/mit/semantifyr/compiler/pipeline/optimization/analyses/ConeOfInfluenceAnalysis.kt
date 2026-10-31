@@ -24,9 +24,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
-import org.eclipse.emf.ecore.EObject
 
 /**
  * Variable reads and writes that are relevant to the 'prop' expression
@@ -88,6 +86,15 @@ class ConeOfInfluenceComputation(
             val variable = variableWorklist.pop()
             val assignments = variableAssignments[variable] ?: emptyList()
 
+            val initializerReads = variable.expression?.let {
+                variablesReadsIn(it)
+            }.orEmpty()
+            for (read in initializerReads) {
+                if (relevantVariables.add(read)) {
+                    variableWorklist.add(read)
+                }
+            }
+
             for (assignment in assignments) {
                 if (!relevantAssignments.add(assignment)) {
                     continue
@@ -138,27 +145,7 @@ class ConeOfInfluenceComputation(
             current = current.eContainer()
         }
 
-        val transitionBody = transitionBodyContaining(operation) ?: return result
-        for (assumption in transitionBody.eAllOfType<AssumptionOperation>()) {
-            if (assumption === operation) {
-                continue
-            }
-            result += variablesReadsIn(assumption.expression)
-        }
         return result
-    }
-
-    private fun transitionBodyContaining(operation: Operation): EObject? {
-        var child = operation as EObject
-        var current = operation.eContainer()
-        while (current != null) {
-            if (current is TransitionDeclaration) {
-                return child
-            }
-            child = current
-            current = current.eContainer()
-        }
-        return null
     }
 
 }

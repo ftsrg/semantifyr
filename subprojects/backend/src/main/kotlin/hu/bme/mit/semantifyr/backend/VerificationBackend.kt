@@ -21,6 +21,8 @@ import kotlin.time.Instant
 
 class BackendUnsupportedException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
+class BackendTimeoutException(message: String) : Exception(message)
+
 data class BackendVerificationRequest(
     val inlinedOxsts: InlinedOxsts,
     val artifactOutputPath: Path,
@@ -46,6 +48,8 @@ data class BackendVerificationResult(
     val metrics: BackendMetrics = BackendMetrics(),
     val inlinedWitness: InlinedWitness? = null,
     val message: String? = null,
+    val soundness: SoundnessDirection = SoundnessDirection.Exact,
+    val isTrusted: Boolean = verdict.isDecisive,
 ) {
     val isDecisive = verdict.isDecisive
 }

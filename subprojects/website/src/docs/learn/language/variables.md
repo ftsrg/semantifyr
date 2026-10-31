@@ -45,9 +45,11 @@ class Counter {
 }
 ```
 
+The property is also checked in the state before `init` runs, where only an initializer fixes the value, so an `AG` property over a variable assigned only in `init` must also hold for its arbitrary initial value.
+
 ## Multiplicity on the Type
 
-A variable type may include a multiplicity bracket. This is how optional values are declared. A bounded multiplicity above one declares a fixed-size array, such as `var slots: int[3]`; the validator rejects arrays of class or feature type (`OXSTS.UNSUPPORTED_FEATURE`).
+A variable type may include a multiplicity bracket. This is how optional values are declared. A bounded multiplicity above one declares a fixed-size array, such as `var slots: int[3]`. An array of class or feature type, such as `var queue: Job[2] := [first, second]`, holds one instance per slot, and a call through a slot, such as `inline queue[i].finish()`, runs on the instance the slot holds; the validator rejects such an array as a local variable (`OXSTS.UNSUPPORTED_FEATURE`). An array is read and written slot by slot (`slots[i]`), or as a whole: `slots := other`, `slots := [0, 0, 0]`, `havoc(slots)` and `slots == other` act on every slot.
 
 ```oxsts
 var occupant: Item[0..1] := nothing
@@ -55,7 +57,7 @@ var occupant: Item[0..1] := nothing
 
 ## Feature-Typed Variables
 
-A variable's type may be a [feature](features.md). The value domain of such a *feature-typed variable* is the set of instances reachable through that feature. A call through the variable, such as `inline active.step()`, runs the call on the instance the variable holds; the validator rejects member access through a variable, such as `active.value` (`OXSTS.UNSUPPORTED_FEATURE`).
+A variable's type may be a [feature](features.md). The value domain of such a *feature-typed variable* is the set of instances reachable through that feature. A call through the variable, such as `inline active.step()`, runs the call on the instance the variable holds; the validator rejects member access through a variable or an array slot, such as `active.value` (`OXSTS.UNSUPPORTED_FEATURE`).
 
 ```oxsts
 class Region {

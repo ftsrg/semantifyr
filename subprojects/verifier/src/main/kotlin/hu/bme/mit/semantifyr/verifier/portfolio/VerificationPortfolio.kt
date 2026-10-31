@@ -10,6 +10,7 @@ import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
@@ -43,6 +44,11 @@ class PortfolioScope internal constructor(
         }
     }
 }
+
+data class PortfolioLeg(
+    val id: String,
+    val soundness: SoundnessDirection,
+)
 
 fun BackendVerificationRequest.withSubPath(subpath: String): BackendVerificationRequest {
     return this.copy(artifactOutputPath = artifactOutputPath.resolve(subpath))
@@ -133,6 +139,7 @@ abstract class VerificationPortfolio {
     abstract val displayName: String
     abstract val description: String
     abstract val executorKeys: Set<ExecutorKey<*>>
+    abstract val legs: List<PortfolioLeg>
 
     abstract fun availability(environment: ExecutionEnvironment = ExecutionEnvironment.Empty): AvailabilityReport
 
@@ -145,8 +152,9 @@ abstract class VerificationPortfolio {
     ): BackendVerificationResult
 
     /**
-     * Launch every job registered in [block] in parallel, returns the first decisive result and cancels every still-running child.
-     * When no decisive result arrives the outcome distinguishes "all jobs errored", "a job timed out or was still pending at timeout" and "every job finished undecided" (Errored, Timeout, Inconclusive).
+     * Launch every job registered in [block] in parallel, returns the first trusted result and cancels every still-running child.
+     * A decisive verdict outside its leg's soundness direction is not trusted and does not settle the race.
+     * When no trusted result arrives the outcome distinguishes "all jobs errored", "a job timed out or was still pending at timeout" and "every job finished without a trusted verdict" (Errored, Timeout, Inconclusive), naming every leg's verdict.
      */
     protected suspend fun firstDecisive(
         gate: ConcurrencyGate,
@@ -161,8 +169,8 @@ abstract class VerificationPortfolio {
         logger.info { "$id: firstDecisive over ${scope.jobs.size} job(s), timeout=$timeout" }
 
         val outcome = receiveResultsWithTimeout(scope, timeout, progress) {
-            if (it.isDecisive) {
-                logger.info { "$id: job produced decisive ${it.verdict}" }
+            if (it.isTrusted) {
+                logger.info { "$id: job produced trusted ${it.verdict}" }
                 it
             } else {
                 null
@@ -174,9 +182,9 @@ abstract class VerificationPortfolio {
     }
 
     /**
-     * Launch every job registered in [block] in parallel. Waits for [count] decisive results.
+     * Launch every job registered in [block] in parallel. Waits for [count] trusted results.
      * If they all agree, returns that verdict.
-     * On disagreement, fewer-than-[count] decisive results within [timeout], or too many job errors, returns a non-decided outcome.
+     * On disagreement, fewer-than-[count] trusted results within [timeout], or too many job errors, returns a non-decided outcome.
      */
     protected suspend fun firstNDecisive(
         count: Int,
@@ -193,7 +201,7 @@ abstract class VerificationPortfolio {
 
         val decisive = mutableListOf<BackendVerificationResult>()
         val outcome = receiveResultsWithTimeout(scope, timeout, progress) { result ->
-            if (!result.isDecisive) return@receiveResultsWithTimeout null
+            if (!result.isTrusted) return@receiveResultsWithTimeout null
             decisive += result
             if (decisive.size < count) return@receiveResultsWithTimeout null
             val allAgree = decisive.map { it.verdict }.distinct().size == 1
@@ -218,8 +226,8 @@ abstract class VerificationPortfolio {
 
     /**
      * Launch every job registered in [block] in parallel and wait for all of them (or [timeout]).
-     * If every decisive result agrees, returns that verdict.
-     * Disagreement among decisive verdicts is treated as Inconclusive with a logged conflict.
+     * If every trusted result agrees, returns that verdict and records the untrusted legs it overrules.
+     * Trusted results that disagree are Errored, since one of those legs is unsound; decisive results none of which is trusted are Inconclusive.
      * Jobs that error are surfaced as [PortfolioOutcome.AllErrored] when nothing else reported.
      * Without a decisive result, a job that timed out or was still pending at [timeout] makes the outcome [PortfolioOutcome.TimedOut].
      */
@@ -244,6 +252,7 @@ abstract class VerificationPortfolio {
         cancelRemainingJobs()
 
         val decisive = collected.filter { it.isDecisive }
+        val trusted = decisive.filter { it.isTrusted }
         when {
             decisive.isEmpty() && collected.isEmpty() -> outcome
             decisive.isEmpty() && collected.all { it.verdict == VerificationVerdict.NotSupported } -> {
@@ -252,22 +261,31 @@ abstract class VerificationPortfolio {
             }
             decisive.isEmpty() && outcome is PortfolioOutcome.TimedOut -> outcome
             decisive.isEmpty() -> PortfolioOutcome.Decided(collected.first())
-            decisive.map { it.verdict }.distinct().size == 1 -> PortfolioOutcome.Decided(decisive.first())
-            else -> {
-                val breakdown = decisive.joinToString(", ") { "${it.metadata.backendId}=${it.verdict}" }
-                logger.warn { "$id: decisive verdicts disagree ($breakdown); returning Inconclusive (at least one backend must be unsound or report a bug)" }
-                val reference = decisive.first()
+            trusted.isEmpty() -> outcome
+            trusted.map { it.verdict }.distinct().size > 1 -> {
+                val breakdown = trusted.joinToString(", ") { "${it.metadata.backendId}=${it.verdict} (${it.soundness})" }
+                logger.warn { "$id: trusted verdicts disagree ($breakdown), one of these legs is unsound" }
                 PortfolioOutcome.Decided(
                     BackendVerificationResult(
-                        verdict = VerificationVerdict.Inconclusive,
+                        verdict = VerificationVerdict.Errored,
                         metadata = VerificationMetadata(
                             backendId = null,
-                            startedAt = reference.metadata.startedAt,
+                            startedAt = trusted.first().metadata.startedAt,
                         ),
-                        metrics = reference.metrics,
-                        message = "Portfolio '$id' saw disagreeing decisive verdicts: $breakdown",
+                        message = "Portfolio '$id' saw trusted verdicts disagree: $breakdown",
                     ),
                 )
+            }
+            else -> {
+                val agreed = trusted.first()
+                val overruled = decisive.filter { it.verdict != agreed.verdict }
+                if (overruled.isEmpty()) {
+                    PortfolioOutcome.Decided(agreed)
+                } else {
+                    val breakdown = overruled.joinToString(", ") { "${it.metadata.backendId}=${it.verdict} (not trusted, ${it.soundness})" }
+                    logger.info { "$id: resolved to ${agreed.verdict} over $breakdown" }
+                    PortfolioOutcome.Decided(agreed.copy(message = "Portfolio '$id' resolved to ${agreed.verdict} from ${agreed.metadata.backendId} over $breakdown"))
+                }
             }
         }
     }
@@ -306,9 +324,10 @@ abstract class VerificationPortfolio {
         val allNotSupported = errors.isEmpty() &&
             collected.isNotEmpty() &&
             collected.all { it.verdict == VerificationVerdict.NotSupported }
+        val observed = describeObserved(collected, errors)
         return when {
             decided != null -> PortfolioOutcome.Decided(decided)
-            done < total -> PortfolioOutcome.TimedOut("$id: no decisive result within $timeout")
+            done < total -> PortfolioOutcome.TimedOut("$id: no trusted verdict within $timeout$observed")
             allNotSupported -> {
                 val backends = collected.joinToString(", ") { it.metadata.backendId ?: "?" }
                 PortfolioOutcome.AllNotSupported("$id: every backend reported NotSupported ($backends)")
@@ -316,10 +335,26 @@ abstract class VerificationPortfolio {
             errors.size == total -> PortfolioOutcome.AllErrored(errors)
             collected.any { it.verdict == VerificationVerdict.Timeout } -> {
                 val backends = collected.filter { it.verdict == VerificationVerdict.Timeout }.joinToString(", ") { it.metadata.backendId ?: "?" }
-                PortfolioOutcome.TimedOut("$id: no decisive result, timed out: $backends")
+                PortfolioOutcome.TimedOut("$id: no trusted verdict, timed out: $backends$observed")
             }
-            else -> PortfolioOutcome.NoDecision("$id: no decisive result, every job finished undecided")
+            else -> PortfolioOutcome.NoDecision("$id: no trusted verdict$observed")
         }
+    }
+
+    private fun describeObserved(collected: List<BackendVerificationResult>, errors: List<Throwable>): String {
+        val legs = collected.map {
+            if (it.isDecisive && !it.isTrusted) {
+                "${it.metadata.backendId}=${it.verdict} (not trusted, ${it.soundness})"
+            } else {
+                "${it.metadata.backendId}=${it.verdict}"
+            }
+        } + errors.map {
+            "threw ${it::class.simpleName}"
+        }
+        if (legs.isEmpty()) {
+            return ""
+        }
+        return ", observed ${legs.joinToString(", ")}"
     }
 
     private fun CoroutineScope.funnelJobsIntoChannel(scope: PortfolioScope): Channel<Result<BackendVerificationResult>> {
