@@ -23,6 +23,8 @@ dependencies {
 application {
     mainClass = "hu.bme.mit.semantifyr.cli.SemantifyrCliKt"
     applicationName = "semantifyr"
+    // Mordant loads its terminal library natively, Guice's bytecode generation calls sun.misc.Unsafe; both warn on every run
+    applicationDefaultJvmArgs = listOf("--enable-native-access=ALL-UNNAMED", "-Dguice_bytecode_gen_option=DISABLED")
 }
 
 val rootDirectory = isolated.rootProject.projectDirectory
@@ -54,13 +56,19 @@ distributions.main {
     }
 }
 
-// the CLI finds Theta on PATH; the Windows script cannot export PATH past its endlocal
+// the CLI finds Theta on PATH; the Windows script keeps its setlocal scope until java exits, so PATH reaches java but not the caller
 tasks.startScripts {
     val script = unixScript
+    val windowsScriptFile = windowsScript
     doLast {
         val text = script.readText()
         check("\nCLASSPATH=" in text) { "${script.name} has no CLASSPATH line" }
         script.writeText(text.replaceFirst("\nCLASSPATH=", "\nPATH=\$APP_HOME/theta-xsts-cli:\$PATH\nexport PATH\n\nCLASSPATH="))
+
+        val windowsLaunch = "@rem endlocal doesn't take effect until after the line is parsed and variables are expanded\r\n@rem which allows us to clear the local environment before executing the java command\r\nendlocal & \"%JAVA_EXE%\""
+        val windowsText = windowsScriptFile.readText()
+        check(windowsLaunch in windowsText) { "${windowsScriptFile.name} has no endlocal launch line" }
+        windowsScriptFile.writeText(windowsText.replace(windowsLaunch, "set \"PATH=%APP_HOME%\\theta-xsts-cli;%PATH%\" & set \"CLASSPATH=\" & \"%JAVA_EXE%\""))
     }
 }
 
