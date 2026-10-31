@@ -95,6 +95,43 @@ describe('EditorPage', () => {
     });
   });
 
+  it('titles the page with the example it opens', async () => {
+    setLocation('https://test.example/?example=basics');
+    renderPage();
+    await waitForEditor();
+    const basics = LIVE_FLAVORS[0].examples.find((example) => example.id === 'basics')!;
+    await waitFor(() => {
+      expect(document.title).toBe(`${basics.label} - Semantifyr Live`);
+    });
+  });
+
+  it('does not title code from a link with the default example', async () => {
+    const encoded = await encodeCompressedBase64Url('package custom\nclass Custom { var x: int := 42 }');
+    setLocation(`https://test.example/?mode=oxsts&code=${encodeURIComponent(encoded)}`);
+    renderPage();
+    await waitForEditor();
+    await waitFor(() => {
+      expect(document.title).toBe('Shared model - Semantifyr Live');
+    });
+  });
+
+  it('copies a link to code from a link without naming an example', async () => {
+    const encoded = await encodeCompressedBase64Url('package custom\nclass Custom { var x: int := 42 }');
+    setLocation(`https://test.example/?mode=oxsts&code=${encodeURIComponent(encoded)}`);
+    renderPage();
+    await waitForEditor();
+    await waitFor(() => {
+      expect(document.title).toBe('Shared model - Semantifyr Live');
+    });
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Copy link' }));
+
+    await screen.findByText('Link copied!');
+    const copied = new URL(await navigator.clipboard.readText());
+    expect(copied.searchParams.has('example')).toBe(false);
+    expect(copied.searchParams.get('code')).not.toBeNull();
+  });
+
   it('falls back to the default example when ?example points at an unknown id', async () => {
     setLocation('https://test.example/?example=does-not-exist');
     renderPage();
