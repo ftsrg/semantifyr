@@ -47,11 +47,14 @@ class OxstsInliner @Inject constructor(
         logger.debug { "Inlining property expression" }
         inlineExpressionCalls(instanceTree.rootInstance, inlinedOxsts.property)
 
-        logger.debug { "Finalizing transition call tracer state" }
-        val transitionCallTraces = transitionCallTraceTransformer.finalize(inlinedOxsts)
+        logger.debug { "Declaring transition call tracer state" }
+        transitionCallTraceTransformer.declareTracers(inlinedOxsts)
 
         logger.info { "Running post-inlining optimizers" }
         val phaseOptimization = inlinedPhaseOptimizer.optimize(instantiatedContext)
+
+        logger.debug { "Finalizing transition call tracer state" }
+        val transitionCallTraces = transitionCallTraceTransformer.finalize(inlinedOxsts)
 
         logger.info { "Normalizing property expression" }
         val normalization = propertyExpressionNormalizationPass.normalize(inlinedOxsts)
