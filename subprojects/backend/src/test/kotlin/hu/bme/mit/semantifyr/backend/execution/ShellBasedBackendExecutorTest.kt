@@ -6,7 +6,9 @@
 
 package hu.bme.mit.semantifyr.backend.execution
 
+import hu.bme.mit.semantifyr.backend.BackendTimeoutException
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -177,6 +179,81 @@ class ShellBasedBackendExecutorTest {
 
         assertThat(mark.elapsedNow()).isLessThan(10.seconds)
         assertThat(workingDirectory.resolve("produced.txt")).doesNotExist()
+    }
+
+    private fun fakeRunexec(vararg options: String): Runexec {
+        val script = temporaryDirectory.resolve("fake-runexec.sh")
+        javaClass.getResourceAsStream("/fake-runexec.sh")!!.use {
+            script.writeBytes(it.readAllBytes())
+        }
+        script.setExecutable(true)
+        return Runexec(options.toList(), script.absolutePath)
+    }
+
+    @Test
+    @DisabledOnOs(OS.WINDOWS, disabledReason = "runexec is Linux only")
+    suspend fun `under runexec the tool keeps its own output files and exit code`() {
+        val workingDirectory = workingDirectory()
+        val logFile = workingDirectory.resolve("tool.out")
+        val errorFile = workingDirectory.resolve("tool.err")
+        val runexec = fakeRunexec("--no-container")
+
+        val exitCode = withContext(runexec) {
+            stub().run(listOf("two words"), workingDirectory, logFile, errorFile)
+        }
+
+        assertThat(exitCode).isEqualTo(3)
+        val lines = logFile.readLines().map { it.trim() }
+        assertPrintedWorkingDirectory(lines.first(), workingDirectory)
+        assertThat(lines.drop(1)).containsExactly("arg=two words")
+        assertThat(errorFile.readText().trim()).isEqualTo("stub error")
+        assertThat(runexec.runs.single().cpuTime).isEqualTo(250.milliseconds)
+        assertThat(runexec.runs.single().memory).isEqualTo(1048576)
+    }
+
+    @Test
+    @DisabledOnOs(OS.WINDOWS, disabledReason = "runexec is Linux only")
+    suspend fun `a runexec time limit is a timeout of the backend`() {
+        val workingDirectory = workingDirectory()
+
+        val exception = assertThrows<BackendTimeoutException> {
+            withContext(fakeRunexec("--fake-reason", "cputime")) {
+                stub().run(emptyList(), workingDirectory)
+            }
+        }
+
+        assertThat(exception.message).endsWith("exceeded the runexec cputime limit")
+    }
+
+    @Test
+    @DisabledOnOs(OS.WINDOWS, disabledReason = "runexec is Linux only")
+    suspend fun `a runexec memory limit is an error of the backend`() {
+        val workingDirectory = workingDirectory()
+
+        val exception = assertThrows<IllegalStateException> {
+            withContext(fakeRunexec("--fake-reason", "memory")) {
+                stub().run(emptyList(), workingDirectory)
+            }
+        }
+
+        assertThat(exception.message).endsWith("exceeded the runexec memory limit")
+    }
+
+    @Test
+    @DisabledOnOs(OS.WINDOWS, disabledReason = "runexec is Linux only")
+    fun `a runexec that runs a command is usable`() {
+        assertThat(fakeRunexec("--no-container").isUsable()).isTrue()
+    }
+
+    @Test
+    @DisabledOnOs(OS.WINDOWS, disabledReason = "runexec is Linux only")
+    fun `a runexec that cannot run a command is not usable`() {
+        assertThat(fakeRunexec("--fake-reason", "failed").isUsable()).isFalse()
+    }
+
+    @Test
+    fun `a missing runexec is not usable`() {
+        assertThat(Runexec(emptyList(), temporaryDirectory.resolve("missing-runexec").absolutePath).isUsable()).isFalse()
     }
 
     @Test

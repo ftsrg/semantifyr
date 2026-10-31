@@ -21,6 +21,8 @@ import kotlin.time.Instant
 
 class BackendUnsupportedException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
+class BackendTimeoutException(message: String) : Exception(message)
+
 data class BackendVerificationRequest(
     val inlinedOxsts: InlinedOxsts,
     val artifactOutputPath: Path,

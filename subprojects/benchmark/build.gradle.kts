@@ -45,6 +45,8 @@ tasks.register<JavaExec>("campaign") {
     val fresh = providers.gradleProperty("benchmark.fresh").map { it.toBoolean() }.orElse(false)
     val baseline = providers.gradleProperty("benchmark.baseline").map { rootDirectory.dir(it).asFile.absolutePath }
     val timeTolerance = providers.gradleProperty("benchmark.timeTolerance")
+    val runexec = providers.gradleProperty("benchmark.runexec").map { it.toBoolean() }.orElse(true)
+    val runexecOptions = providers.gradleProperty("benchmark.runexecOptions")
     val outputDirectory = layout.buildDirectory.dir("benchmark").map { it.asFile.absolutePath }
     val referenceDirectory = layout.projectDirectory.dir("reference").asFile.absolutePath
     val sysmlExamples = rootDirectory.dir("subprojects/frontends/sysml/models/examples").asFile.absolutePath
@@ -55,7 +57,9 @@ tasks.register<JavaExec>("campaign") {
             listOf("run", name, "--output", outputDirectory.get(), "--reference", referenceDirectory, "--sysml-examples", sysmlExamples, "--oxsts-models", oxstsModels) +
                 listOfNotNull("--fresh".takeIf { fresh.get() }) +
                 (baseline.orNull?.let { listOf("--baseline", it) } ?: emptyList()) +
-                (timeTolerance.orNull?.let { listOf("--time-tolerance", it) } ?: emptyList())
+                (timeTolerance.orNull?.let { listOf("--time-tolerance", it) } ?: emptyList()) +
+                listOfNotNull("--no-runexec".takeUnless { runexec.get() }) +
+                (runexecOptions.orNull?.let { listOf("--runexec-options", it) } ?: emptyList())
         },
     )
 

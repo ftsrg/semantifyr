@@ -36,6 +36,8 @@ class ReferenceTest {
             wallTime = Statistic(wallMedian, wallMedian, wallMedian),
             cpuTime = null,
             backendCpuTime = null,
+            runexecCpuTime = null,
+            peakMemory = null,
             compilationTime = null,
             optimizationTime = null,
             backendTime = null,

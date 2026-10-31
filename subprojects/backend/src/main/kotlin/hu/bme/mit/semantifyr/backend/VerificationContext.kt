@@ -57,6 +57,14 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
                 metrics = BackendMetrics(),
                 message = e.message ?: "Unsupported by $backendId",
             )
+        } catch (e: BackendTimeoutException) {
+            logger.info { "[$backendId] verification timed out: ${e.message}" }
+            BackendVerificationResult(
+                verdict = VerificationVerdict.Timeout,
+                metadata = metadata,
+                metrics = BackendMetrics(),
+                message = e.message,
+            )
         } catch (e: Exception) {
             logger.warn("[$backendId] verification threw ${e::class.simpleName}", e)
             BackendVerificationResult(

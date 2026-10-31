@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.benchmark
 
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.execution.RunexecRun
 import hu.bme.mit.semantifyr.verifier.VerificationMetrics
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -47,6 +48,7 @@ data class Measurement(
     val wallTime: Duration? = null,
     val cpuTime: Duration? = null,
     val backendCpuTime: Duration? = null,
+    val runexec: RunexecTotals? = null,
     val message: String? = null,
     val metrics: VerificationMetrics? = null,
     val extensions: Map<String, JsonElement> = emptyMap(),
@@ -58,6 +60,25 @@ data class Measurement(
                 return null
             }
             return verdict == expected
+        }
+    }
+}
+
+@Serializable
+data class RunexecTotals(
+    val runs: Int,
+    val cpuTime: Duration,
+    val wallTime: Duration,
+    val peakMemory: Long?,
+) {
+    companion object {
+        fun of(runs: List<RunexecRun>): RunexecTotals {
+            return RunexecTotals(
+                runs = runs.size,
+                cpuTime = runs.mapNotNull { it.cpuTime }.fold(Duration.ZERO) { total, time -> total + time },
+                wallTime = runs.mapNotNull { it.wallTime }.fold(Duration.ZERO) { total, time -> total + time },
+                peakMemory = runs.mapNotNull { it.memory }.maxOrNull(),
+            )
         }
     }
 }
