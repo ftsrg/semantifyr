@@ -21,3 +21,7 @@ dependencies {
 
     testImplementation(testFixtures(project(":backend")))
 }
+
+tasks.named("test") {
+    inputs.files(tasks.named("cloneOxstsTestModels"))
+}
