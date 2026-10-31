@@ -58,7 +58,7 @@ class MetaCompileTimeExpressionEvaluator @AssistedInject constructor(
             sourceError(expression, "Element reference could not be resolved (unresolved proxy)")
         }
 
-        return redefinitionAwareReferenceResolver.resolve(instance.domain, expression.element)
+        return redefinitionAwareReferenceResolver.resolve(instance, expression.element)
     }
 
     override fun visit(expression: NavigationSuffixExpression): NamedElement {
@@ -72,7 +72,7 @@ class MetaCompileTimeExpressionEvaluator @AssistedInject constructor(
             return expression.member
         }
 
-        return redefinitionAwareReferenceResolver.resolve(context.domain, expression.member)
+        return redefinitionAwareReferenceResolver.resolve(context, expression.member)
     }
 
     interface Factory {
