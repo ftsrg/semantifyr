@@ -28,6 +28,7 @@ ktlint = "1.8.0"
 palantirJavaFormat = "2.103.0"
 sonarqube = "7.5.0.8588"
 ktor = "3.6.1"
+dokka = "2.2.0"
 
 [libraries]
 ecore = { group = "org.eclipse.emf", name = "org.eclipse.emf.ecore", version.ref = "ecore" }
@@ -77,6 +78,7 @@ ktor-server-test-host = { group = "io.ktor", name = "ktor-server-test-host", ver
 node-plugin = { group = "com.github.node-gradle", name = "gradle-node-plugin", version.ref = "node" }
 spotless-plugin = { group = "com.diffplug.spotless", name = "spotless-plugin-gradle", version.ref = "spotless" }
 sonarqube-plugin = { group = "org.sonarqube", name = "org.sonarqube.gradle.plugin", version.ref = "sonarqube" }
+dokka-plugin = { group = "org.jetbrains.dokka", name = "dokka-gradle-plugin", version.ref = "dokka" }
 
 [bundles]
 junit-fixtures = ["junit-api", "junit-params"]
@@ -104,3 +106,4 @@ ktor-client-test = [
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
