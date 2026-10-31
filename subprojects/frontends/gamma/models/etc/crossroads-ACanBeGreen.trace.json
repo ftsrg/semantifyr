@@ -1,0 +1,197 @@
+{
+    "initialStep": {
+        "traces": []
+    },
+    "initializedStep": {
+        "traces": [
+            {
+                "self": "root.system.trafficLightA.lightControl",
+                "calledTransition": "semantifyr::gamma::ports::Port::setOutputEvent",
+                "arguments": [
+                    {
+                        "parameter": "event",
+                        "value": "root.system.trafficLightA.lightControl.interface.yellow"
+                    }
+                ],
+                "innerTraces": [
+                    {
+                        "self": "root.system.trafficLightB.lightControl",
+                        "calledTransition": "semantifyr::gamma::ports::Port::setOutputEvent",
+                        "arguments": [
+                            {
+                                "parameter": "event",
+                                "value": "root.system.trafficLightA.lightControl.interface.yellow"
+                            }
+                        ],
+                        "innerTraces": null
+                    }
+                ]
+            }
+        ]
+    },
+    "steps": [
+        {
+            "traces": [
+                {
+                    "self": "root",
+                    "calledTransition": "semantifyr::gamma::verification::GammaVerificationCase::passTime",
+                    "arguments": [],
+                    "innerTraces": null
+                }
+            ]
+        },
+        {
+            "traces": [
+                {
+                    "self": "root.system.controller.Main.Operating.OperatingRegion.transition2",
+                    "calledTransition": "semantifyr::gamma::statecharts::Transition::fire",
+                    "arguments": [],
+                    "innerTraces": [
+                        {
+                            "self": "root.system.controller.controlA",
+                            "calledTransition": "semantifyr::gamma::ports::Port::setOutputEvent",
+                            "arguments": [
+                                {
+                                    "parameter": "event",
+                                    "value": "root.system.controller.control.interface.toggle"
+                                }
+                            ],
+                            "innerTraces": [
+                                {
+                                    "self": "root.system.controller.controlB",
+                                    "calledTransition": "semantifyr::gamma::ports::Port::setOutputEvent",
+                                    "arguments": [
+                                        {
+                                            "parameter": "event",
+                                            "value": "root.system.controller.control.interface.toggle"
+                                        }
+                                    ],
+                                    "innerTraces": null
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "self": "root",
+                    "calledTransition": "semantifyr::gamma::verification::GammaVerificationCase::passTime",
+                    "arguments": [],
+                    "innerTraces": null
+                }
+            ]
+        },
+        {
+            "traces": [
+                {
+                    "self": "root.system.trafficLightA.Main.Normal.NormalRegion.transition12",
+                    "calledTransition": "semantifyr::gamma::statecharts::Transition::fire",
+                    "arguments": [],
+                    "innerTraces": [
+                        {
+                            "self": "root.system.trafficLightA.lightControl",
+                            "calledTransition": "semantifyr::gamma::ports::Port::setOutputEvent",
+                            "arguments": [
+                                {
+                                    "parameter": "event",
+                                    "value": "root.system.trafficLightA.lightControl.interface.red"
+                                }
+                            ],
+                            "innerTraces": null
+                        }
+                    ]
+                },
+                {
+                    "self": "root.system.trafficLightB.Main.Normal.NormalRegion.transition12",
+                    "calledTransition": "semantifyr::gamma::statecharts::Transition::fire",
+                    "arguments": [],
+                    "innerTraces": [
+                        {
+                            "self": "root.system.trafficLightB.lightControl",
+                            "calledTransition": "semantifyr::gamma::ports::Port::setOutputEvent",
+                            "arguments": [
+                                {
+                                    "parameter": "event",
+                                    "value": "root.system.trafficLightA.lightControl.interface.red"
+                                }
+                            ],
+                            "innerTraces": null
+                        }
+                    ]
+                },
+                {
+                    "self": "root",
+                    "calledTransition": "semantifyr::gamma::verification::GammaVerificationCase::passTime",
+                    "arguments": [],
+                    "innerTraces": null
+                }
+            ]
+        },
+        {
+            "traces": [
+                {
+                    "self": "root.system.controller.Main.Operating.OperatingRegion.transition3",
+                    "calledTransition": "semantifyr::gamma::statecharts::Transition::fire",
+                    "arguments": [],
+                    "innerTraces": [
+                        {
+                            "self": "root.system.controller.controlA",
+                            "calledTransition": "semantifyr::gamma::ports::Port::setOutputEvent",
+                            "arguments": [
+                                {
+                                    "parameter": "event",
+                                    "value": "root.system.controller.control.interface.toggle"
+                                }
+                            ],
+                            "innerTraces": null
+                        }
+                    ]
+                },
+                {
+                    "self": "root",
+                    "calledTransition": "semantifyr::gamma::verification::GammaVerificationCase::passTime",
+                    "arguments": [],
+                    "innerTraces": null
+                }
+            ]
+        },
+        {
+            "traces": [
+                {
+                    "self": "root.system.controller.control",
+                    "calledTransition": "semantifyr::gamma::ports::Port::raiseInputEvent",
+                    "arguments": [
+                        {
+                            "parameter": "event",
+                            "value": "root.system.controller.control.interface.toggle"
+                        }
+                    ],
+                    "innerTraces": null
+                },
+                {
+                    "self": "root.system.trafficLightA.Main.Normal.NormalRegion.transition13",
+                    "calledTransition": "semantifyr::gamma::statecharts::Transition::fire",
+                    "arguments": [],
+                    "innerTraces": [
+                        {
+                            "self": "root.system.trafficLightA.lightControl",
+                            "calledTransition": "semantifyr::gamma::ports::Port::setOutputEvent",
+                            "arguments": [
+                                {
+                                    "parameter": "event",
+                                    "value": "root.system.trafficLightA.lightControl.interface.green"
+                                }
+                            ],
+                            "innerTraces": null
+                        }
+                    ]
+                },
+                {
+                    "self": "root",
+                    "calledTransition": "semantifyr::gamma::verification::GammaVerificationCase::passTime",
+                    "arguments": [],
+                    "innerTraces": null
+                }
+            ]
+        }
+    ]
+}

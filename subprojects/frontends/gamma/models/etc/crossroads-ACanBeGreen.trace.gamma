@@ -1,0 +1,89 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package Crossroads
+
+trace ACanBeGreenTrace of ACanBeGreen {
+    step {
+        act {
+            reset
+        }
+        assert {
+            raise system.trafficLightA.lightControl.yellow
+            raise system.trafficLightB.lightControl.yellow
+            state system.controller.Main.Operating.OperatingRegion.BothYellow
+            state system.trafficLightA.Main.Normal.NormalRegion.Yellow
+            state system.trafficLightB.Main.Normal.NormalRegion.Yellow
+        }
+    }
+    step {
+        act {
+            schedule component
+            elapse 1 s
+        }
+        assert {
+            state system.controller.Main.Operating.OperatingRegion.BothYellow
+            state system.trafficLightA.Main.Normal.NormalRegion.Yellow
+            state system.trafficLightB.Main.Normal.NormalRegion.Yellow
+        }
+    }
+    step {
+        act {
+            schedule component
+            elapse 1 s
+        }
+        assert {
+            transition system.controller.Main.Operating.OperatingRegion.BothYellow to BothRed
+            raise system.controller.controlA.toggle
+            raise system.controller.controlB.toggle
+            state system.controller.Main.Operating.OperatingRegion.BothRed
+            state system.trafficLightA.Main.Normal.NormalRegion.Yellow
+            state system.trafficLightB.Main.Normal.NormalRegion.Yellow
+        }
+    }
+    step {
+        act {
+            schedule component
+            elapse 1 s
+        }
+        assert {
+            transition system.trafficLightA.Main.Normal.NormalRegion.Yellow to Red
+            raise system.trafficLightA.lightControl.red
+            transition system.trafficLightB.Main.Normal.NormalRegion.Yellow to Red
+            raise system.trafficLightB.lightControl.red
+            state system.controller.Main.Operating.OperatingRegion.BothRed
+            state system.trafficLightA.Main.Normal.NormalRegion.Red
+            state system.trafficLightB.Main.Normal.NormalRegion.Red
+        }
+    }
+    step {
+        act {
+            schedule component
+            elapse 1 s
+        }
+        assert {
+            transition system.controller.Main.Operating.OperatingRegion.BothRed to TrafficOnA
+            raise system.controller.controlA.toggle
+            state system.controller.Main.Operating.OperatingRegion.TrafficOnA
+            state system.trafficLightA.Main.Normal.NormalRegion.Red
+            state system.trafficLightB.Main.Normal.NormalRegion.Red
+        }
+    }
+    step {
+        act {
+            raise system.controller.control.toggle
+            schedule component
+            elapse 1 s
+        }
+        assert {
+            transition system.trafficLightA.Main.Normal.NormalRegion.Red to Green
+            raise system.trafficLightA.lightControl.green
+            state system.controller.Main.Operating.OperatingRegion.TrafficOnA
+            state system.trafficLightA.Main.Normal.NormalRegion.Green
+            state system.trafficLightB.Main.Normal.NormalRegion.Red
+        }
+    }
+}
