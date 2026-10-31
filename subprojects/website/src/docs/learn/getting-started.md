@@ -17,10 +17,6 @@ The fastest way to try Semantifyr. The **in-browser live editor** is a lightweig
 
 Sessions are ephemeral. Use the **Copy link** button in the toolbar to save your work as a shareable URL.
 
-:::note
-If the live editor stays blank after an update of the server, your browser is still running the previous version it cached. Delete the stored site data of `live.semantifyr.org` in your browser's site settings and reload.
-:::
-
 ## Option B: Use the JupyterHub environment (full IDE, no installation)
 
 :::info[Planned]
