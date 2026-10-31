@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.exists
 import kotlin.io.path.listDirectoryEntries
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -59,7 +60,11 @@ class ThetaCampaignSmokeTest {
         assertThat(measurement.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(measurement.asExpected).isTrue()
         assertThat(measurement.decidedBy).isEqualTo("theta:cegar-expl-pred-combined")
-        assertThat(measurement.backendCpuTime!!).isGreaterThan(Duration.ZERO)
+        if (Path("/proc/self/stat").exists()) {
+            assertThat(measurement.backendCpuTime!!).isGreaterThan(Duration.ZERO)
+        } else {
+            assertThat(measurement.backendCpuTime).isNull()
+        }
         assertThat(measurement.metrics!!.backend!!.verificationDuration).isGreaterThan(Duration.ZERO)
         assertThat(directory.resolve("cells").listDirectoryEntries()).isEmpty()
     }
