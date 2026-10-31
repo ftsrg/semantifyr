@@ -17,7 +17,7 @@ class PortfoliosCommand : SuspendingCliktCommand("portfolios") {
     private val logger by loggerFactory()
 
     override fun help(context: Context): String {
-        return "List the backend portfolios including their backing provider and availability."
+        return "List the backend portfolios including their legs, each leg's soundness direction and availability."
     }
 
     override suspend fun run() {
@@ -36,6 +36,9 @@ class PortfoliosCommand : SuspendingCliktCommand("portfolios") {
             }
             echo("${portfolio.id}  -  ${portfolio.displayName}  $tag")
             echo("    ${portfolio.description}")
+            portfolio.legs.forEach {
+                echo("    leg: ${it.id} (${it.soundness})")
+            }
             if (availability is AvailabilityReport.Unavailable && availability.hints.isNotEmpty()) {
                 availability.hints.forEach { echo("    hint: $it") }
             }

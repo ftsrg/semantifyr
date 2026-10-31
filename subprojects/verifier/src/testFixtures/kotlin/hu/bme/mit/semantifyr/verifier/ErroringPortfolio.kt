@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
+import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -22,6 +23,7 @@ class ErroringPortfolio(
     override val displayName: String = id
     override val description: String = "test-only"
     override val executorKeys: Set<ExecutorKey<*>> = emptySet()
+    override val legs: List<PortfolioLeg> = emptyList()
 
     val invocations = AtomicInteger(0)
 

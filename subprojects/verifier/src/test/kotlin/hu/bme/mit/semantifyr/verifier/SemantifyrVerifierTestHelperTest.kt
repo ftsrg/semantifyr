@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
+import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -161,6 +162,7 @@ class SemantifyrVerifierTestHelperTest {
         override val id: String = "fixed"
         override val displayName: String = id
         override val description: String = "test-only"
+        override val legs: List<PortfolioLeg> = emptyList()
 
         override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
             return if (available) {

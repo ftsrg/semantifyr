@@ -33,6 +33,7 @@ private class TestPortfolio(
     override val displayName = id
     override val description = "test portfolio"
     override val executorKeys: Set<ExecutorKey<*>> = emptySet()
+    override val legs: List<PortfolioLeg> = emptyList()
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
         return AvailabilityReport.Available
