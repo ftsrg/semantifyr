@@ -30,6 +30,7 @@ data class ReferenceCell(
 
 object Reference {
     private val json = Json {
+        encodeDefaults = true
         explicitNulls = false
     }
 
