@@ -30,6 +30,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.resource.ILocationInFileProvider;
 import org.eclipse.xtext.validation.Check;
@@ -96,6 +97,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String TYPE_MISMATCH = ISSUE_PREFIX + "TYPE_MISMATCH";
     public static final String INVALID_CAST = ISSUE_PREFIX + "INVALID_CAST";
     public static final String MULTIPLE_INHERITANCE = ISSUE_PREFIX + "MULTIPLE_INHERITANCE";
+    public static final String REDEFINITION_SIGNATURE_MISMATCH = ISSUE_PREFIX + "REDEFINITION_SIGNATURE_MISMATCH";
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
@@ -489,6 +491,18 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
     }
 
+    @Check
+    public void checkAnnotationArgumentModality(Annotation annotation) {
+        for (var argument : annotation.getArguments()) {
+            if (argument.getExpression() != null) {
+                checkModalityAtMost(
+                        argument.getExpression(),
+                        Modality.CONSTANT,
+                        "Annotation argument must be a constant, annotations have no instance context");
+            }
+        }
+    }
+
     private void checkArgumentAssignableToParameter(Argument argument, ParameterDeclaration parameter) {
         if (parameter == null || parameter.eIsProxy() || parameter.getTypeSpecification() == null) {
             return;
@@ -686,6 +700,44 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
     }
 
+    // Parameter modality is uniform until `static` parameters exist, so only the arity can differ.
+    // A warning until the SysML library's EntryState matches the arity of StateNode.
+    @Check
+    public void checkRedefinitionArity(RedefinableDeclaration declaration) {
+        if (!declaration.isRedefine() || !(declaration instanceof ParametricDeclaration parametricDeclaration)) {
+            return;
+        }
+        RedefinableDeclaration inherited;
+        try {
+            inherited = redefinitionHandler.getRedefinedDeclaration(declaration);
+        } catch (RuntimeException e) {
+            return;
+        }
+        if (!(inherited instanceof ParametricDeclaration inheritedParametricDeclaration)) {
+            return;
+        }
+        var parameters = parametricDeclaration.getParameters();
+        var inheritedParameters = inheritedParametricDeclaration.getParameters();
+        if (parameters.size() != inheritedParameters.size()) {
+            acceptWarning(
+                    "Redefinition of '"
+                            + NamingUtil.getName(declaration)
+                            + "' takes "
+                            + parameterCount(parameters.size())
+                            + ", the inherited declaration takes "
+                            + parameterCount(inheritedParameters.size())
+                            + ".",
+                    declaration,
+                    OxstsPackage.Literals.NAMED_ELEMENT__NAME,
+                    0,
+                    REDEFINITION_SIGNATURE_MISMATCH);
+        }
+    }
+
+    private static String parameterCount(int count) {
+        return count == 1 ? "1 parameter" : count + " parameters";
+    }
+
     private TypeSpecification typeSpecificationOf(RedefinableDeclaration declaration) {
         return switch (declaration) {
             case VariableDeclaration variable -> variable.getTypeSpecification();
@@ -708,6 +760,47 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     "Only variables can be assigned to!",
                     assignmentOperation,
                     OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE,
+                    0,
+                    INCORRECT_ASSIGNMENT);
+        }
+    }
+
+    @Check
+    public void checkAssignmentTargetIsRuntime(AssignmentOperation assignmentOperation) {
+        checkWriteTargetIsRuntime(
+                assignmentOperation.getReference(),
+                assignmentOperation,
+                OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE);
+    }
+
+    @Check
+    public void checkHavocTargetIsRuntime(HavocOperation havocOperation) {
+        checkWriteTargetIsRuntime(
+                havocOperation.getReference(), havocOperation, OxstsPackage.Literals.HAVOC_OPERATION__REFERENCE);
+    }
+
+    // The right-hand side is at most RUNTIME, so it always fits a runtime target.
+    private void checkWriteTargetIsRuntime(Expression target, EObject host, EStructuralFeature feature) {
+        if (target == null) {
+            return;
+        }
+        EObject written;
+        Modality modality;
+        try {
+            written = metaConstantExpressionEvaluatorProvider.evaluate(unwrapAssignmentTarget(target));
+            modality = modalityEvaluatorProvider.evaluate(target);
+        } catch (RuntimeException e) {
+            return;
+        }
+        if (written instanceof VariableDeclaration variable && modality != Modality.RUNTIME) {
+            acceptError(
+                    "Cannot write '"
+                            + variable.getName()
+                            + "': it has modality "
+                            + modality
+                            + " and is substituted at compile time, only runtime variables can be written.",
+                    host,
+                    feature,
                     0,
                     INCORRECT_ASSIGNMENT);
         }

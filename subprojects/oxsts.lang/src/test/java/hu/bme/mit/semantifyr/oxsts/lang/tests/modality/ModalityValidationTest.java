@@ -130,6 +130,138 @@ public class ModalityValidationTest {
     }
 
     @Test
+    void inlineIfGuardOverInlineForLoopVariable_passes() {
+        var pkg = parseHelper.parse("""
+            package test
+            class C {
+                var total: int := 0
+                redefine tran {
+                    inline for (n in 1..3) {
+                        inline if (n == 2) {
+                            total := total + n
+                        }
+                    }
+                }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        pkg.assertNoValidationErrors();
+    }
+
+    @Test
+    void inlineIfGuardOverRuntimeForLoopVariable_isRejected() {
+        var pkg = parseHelper.parse("""
+            package test
+            class C {
+                var total: int := 0
+                redefine tran {
+                    for (n in 1..3) {
+                        inline if (n == 2) {
+                            total := total + n
+                        }
+                    }
+                }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "inline if");
+    }
+
+    @Test
+    void assignmentToInlineForLoopVariable_isRejected() {
+        var pkg = parseHelper.parse("""
+            package test
+            class C {
+                redefine tran {
+                    inline for (n in 1..3) {
+                        n := 5
+                    }
+                }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertHasValidationIssue(OxstsValidator.INCORRECT_ASSIGNMENT, "modality COMPILE_TIME");
+    }
+
+    @Test
+    void havocOfInlineForLoopVariable_isRejected() {
+        var pkg = parseHelper.parse("""
+            package test
+            class C {
+                redefine tran {
+                    inline for (n in 1..3) {
+                        havoc(n)
+                    }
+                }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertHasValidationIssue(OxstsValidator.INCORRECT_ASSIGNMENT, "modality COMPILE_TIME");
+    }
+
+    @Test
+    void assignmentOfCompileTimeValueToVariable_passes() {
+        var pkg = parseHelper.parse("""
+            package test
+            class C {
+                refers limit: int = 3
+                var total: int := 0
+                redefine tran {
+                    inline for (n in 1..3) {
+                        total := n + limit
+                    }
+                }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        pkg.assertNoValidationErrors();
+    }
+
+    @Test
+    void annotationArgumentWithConstant_passes() {
+        var pkg = parseHelper.parse("""
+            package test
+            @Tag("slow")
+            class C { }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        pkg.assertNoValidationErrors();
+    }
+
+    @Test
+    void annotationArgumentWithFeatureReference_isRejected() {
+        var pkg = parseHelper.parse("""
+            package test
+            annotation Limit(value: int)
+            class C {
+                refers limit: int = 3
+                @Limit(limit)
+                var x: int := 0
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "Annotation argument");
+    }
+
+    @Test
+    void annotationArgumentWithVariableReference_isRejected() {
+        var pkg = parseHelper.parse("""
+            package test
+            annotation Limit(value: int)
+            class C {
+                var limit: int := 3
+                @Limit(limit)
+                var x: int := 0
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "Annotation argument");
+    }
+
+    @Test
     void inlineForOverVariable_isRejected() {
         var pkg = parseHelper.parse("""
             package test
