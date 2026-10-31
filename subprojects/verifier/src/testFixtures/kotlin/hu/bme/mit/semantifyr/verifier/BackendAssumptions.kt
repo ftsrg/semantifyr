@@ -11,7 +11,7 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import org.junit.jupiter.api.Assumptions
 
-private val requiredBackends = System.getProperty("semantifyr.tests.requiredBackends").orEmpty()
+val hostRequiredBackends = System.getProperty("semantifyr.tests.requiredBackends").orEmpty()
     .split(',')
     .map { it.trim() }
     .filter { it.isNotEmpty() }
@@ -19,7 +19,7 @@ private val requiredBackends = System.getProperty("semantifyr.tests.requiredBack
 
 fun assumeBackendAvailable(key: ExecutorKey<*>) {
     val report = ExecutionEnvironment.Empty.availability(key) as? AvailabilityReport.Unavailable ?: return
-    check(key.name !in requiredBackends) {
+    check(key.name !in hostRequiredBackends) {
         "${key.name} is required on this host: ${report.reason}"
     }
     Assumptions.abort<Unit>("${report.reason}, skipping")

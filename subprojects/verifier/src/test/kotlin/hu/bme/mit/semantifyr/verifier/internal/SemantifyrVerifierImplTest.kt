@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
@@ -205,6 +206,7 @@ class SemantifyrVerifierImplTest {
         override val id: String = "scripted"
         override val displayName: String = "scripted"
         override val description: String = "test-only"
+        override val executorKeys: Set<ExecutorKey<*>> = emptySet()
 
         var invocations: Int = 0
             private set

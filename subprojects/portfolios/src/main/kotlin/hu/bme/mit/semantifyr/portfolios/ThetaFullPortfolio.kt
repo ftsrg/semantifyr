@@ -15,6 +15,7 @@ import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.backends.theta.ThetaBackend
 import hu.bme.mit.semantifyr.backends.theta.ThetaConfig
 import hu.bme.mit.semantifyr.logging.info
@@ -40,6 +41,8 @@ class ThetaFullPortfolio(
         PortfolioTask(theta, ThetaConfig.CegarPredCart, "cegarexplcart"),
         PortfolioTask(theta, ThetaConfig.BoundedKInduction, "kinduction"),
     )
+
+    override val executorKeys: Set<ExecutorKey<*>> = tasks.map { it.executorKey }.toSet()
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
         val anyAvailable = tasks.any {

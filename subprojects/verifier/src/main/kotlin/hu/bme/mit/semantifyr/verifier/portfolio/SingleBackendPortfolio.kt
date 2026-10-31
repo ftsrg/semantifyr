@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import kotlin.time.Clock
 
@@ -24,6 +25,7 @@ class SingleBackendPortfolio<T : BackendConfig>(
     override val id: String = "${backend.id}-${config.id}"
     override val displayName: String = "${backend.id} ${config.id}"
     override val description: String = "Single ${backend.id} configuration: ${config.id}"
+    override val executorKeys: Set<ExecutorKey<*>> = setOf(backend.executorKey)
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
         return environment.availability(backend.executorKey)

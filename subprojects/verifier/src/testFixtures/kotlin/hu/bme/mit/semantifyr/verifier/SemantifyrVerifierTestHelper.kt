@@ -192,27 +192,34 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         validationTimeout: Duration = 1.minutes,
         environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
         expectedVerdict: VerificationVerdict = expectedVerdictFromTags(case),
+        requiredBackends: Set<String> = hostRequiredBackends,
     ) {
         logger.info { "Checking test case $case (artifacts at $outputDirectory)" }
 
+        val required = verificationPortfolio.executorKeys.any {
+            it.name in requiredBackends
+        }
+        val availability = verificationPortfolio.availability(environment)
+        if (availability is AvailabilityReport.Unavailable) {
+            if (required) {
+                Assertions.fail<Unit>("Portfolio ${verificationPortfolio.id} is required on this host: ${availability.reason}")
+            }
+            Assumptions.abort<Unit>("${availability.reason}, skipping")
+        }
+
         val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment)
         Assumptions.assumeFalse(
-            result.verdict == VerificationVerdict.NotSupported,
-            "Portfolio ${verificationPortfolio.id} reports ${case.qualifiedName} is not supported: ${result.message ?: "no message"}",
+            result.verdict == VerificationVerdict.Timeout,
+            "Portfolio ${verificationPortfolio.id} timed out on ${case.qualifiedName} within $timeout: ${result.message ?: "no message"}",
         )
-        Assumptions.assumeFalse(
-            result.verdict == VerificationVerdict.Inconclusive,
-            "Portfolio ${verificationPortfolio.id} could not decide ${case.qualifiedName} within $timeout: ${result.message ?: "no message"}",
-        )
-        Assertions.assertTrue(
-            result.verdict.isDecisive,
-        ) {
-            "Portfolio ${verificationPortfolio.id} did not produce a decisive verdict for ${case.qualifiedName} (got ${result.verdict}: ${result.message ?: "no message"}).${
-                backendDiagnostics(
-                    outputDirectory,
-                    case,
-                )
-            }"
+        if (!result.verdict.isDecisive) {
+            Assumptions.assumeTrue(
+                required || result.verdict == VerificationVerdict.Errored,
+                "Portfolio ${verificationPortfolio.id} reports ${result.verdict} for ${case.qualifiedName} and none of its engines is required: ${result.message ?: "no message"}",
+            )
+            Assertions.fail<Unit>(
+                "Portfolio ${verificationPortfolio.id} did not produce a decisive verdict for ${case.qualifiedName} (got ${result.verdict}: ${result.message ?: "no message"}).${backendDiagnostics(outputDirectory, case)}",
+            )
         }
         Assertions.assertEquals(
             expectedVerdict,
