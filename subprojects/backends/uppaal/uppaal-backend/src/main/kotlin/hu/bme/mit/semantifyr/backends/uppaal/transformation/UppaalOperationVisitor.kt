@@ -93,9 +93,8 @@ class UppaalOperationVisitor @AssistedInject constructor(
 
     private fun renderClockReset(name: String, operation: AssignmentOperation): String {
         val literal = operation.expression as? LiteralInteger
-            ?: error("Clock variable '$name' can only be reset to 0 (got a non-literal expression)")
-        require(literal.value == 0) {
-            "Clock variable '$name' can only be reset to 0 (got ${literal.value})"
+        if (literal?.value != 0) {
+            throw BackendUnsupportedException("Uppaal resets clock $name only to 0")
         }
         return "$name = 0"
     }
@@ -166,7 +165,7 @@ class UppaalOperationVisitor @AssistedInject constructor(
     fun havoc(variable: VariableDeclaration) {
         val name = uppaalVariableTransformer.nameOf(variable)
         if (uppaalVariableTransformer.isClock(variable)) {
-            error("Uppaal backend does not support havoc on clock variable '$name' (clocks may only be reset to 0).")
+            throw BackendUnsupportedException("Uppaal does not support havoc on clock $name")
         }
         val described = uppaalVariableTransformer.describe(variable)
         when (described.kind) {

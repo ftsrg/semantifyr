@@ -96,4 +96,23 @@ class ThetaBackendReplayTest {
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.inlinedWitness!!.initialState.valuesByName()["\$\$root\$\$light"]).isEqualTo("On")
     }
+
+    @Test
+    suspend fun `an unsupported variable type is NotSupported`() {
+        val result = verify(
+            "RealVariable",
+            models.parse(
+                """
+                    inlined oxsts of semantifyr::Anything
+                    var r : real := 0.5
+                    init { }
+                    tran { }
+                    prop { AG true }
+                """,
+            ),
+        )
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
+        assertThat(result.message).contains("real")
+    }
 }

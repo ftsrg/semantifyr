@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.nuxmv.transformation
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.backend.transformation.BackendNameMangler
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
@@ -60,7 +61,7 @@ class NuxmvVariableTransformer @Inject constructor(
             domain is EnumDeclaration -> NuxmvVariableKind.Enum
             domain === builtinSymbolResolver.intDatatype(variableDeclaration) -> NuxmvVariableKind.Integer
             domain === builtinSymbolResolver.boolDatatype(variableDeclaration) -> NuxmvVariableKind.Boolean
-            else -> error("Unsupported variable domain for nuXmv: ${domain.name} on ${variableDeclaration.name}")
+            else -> throw BackendUnsupportedException("nuXmv does not support variables of type ${domain.name} (${variableDeclaration.name})")
         }
     }
 

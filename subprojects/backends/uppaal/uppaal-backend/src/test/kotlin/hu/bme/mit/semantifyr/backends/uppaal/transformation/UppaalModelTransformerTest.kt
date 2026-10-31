@@ -367,4 +367,95 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
             )
         }
     }
+
+    private suspend fun unsupportedMessage(body: String): String? {
+        return assertThrows<BackendUnsupportedException> {
+            nta(body)
+        }.message
+    }
+
+    @Test
+    suspend fun `a real variable is not supported`() {
+        val message = unsupportedMessage(
+            """
+                var r : real := 0.5
+                init { }
+                tran { }
+                prop { AG true }
+            """,
+        )
+
+        assertThat(message).isEqualTo("Uppaal does not support variables of type real (r)")
+    }
+
+    @Test
+    suspend fun `a clock must be data-typed`() {
+        val message = unsupportedMessage(
+            """
+                @semantifyr::Clock var c : test::colors::Color := test::colors::Color::Red
+                init { }
+                tran { }
+                prop { AG true }
+            """,
+        )
+
+        assertThat(message).isEqualTo("Uppaal supports @Clock only on data-typed variables (c)")
+    }
+
+    @Test
+    suspend fun `a clock is reset only to zero`() {
+        val message = unsupportedMessage(
+            """
+                @semantifyr::Clock var c : int := 0
+                init { }
+                tran { c := 5 }
+                prop { AG true }
+            """,
+        )
+
+        assertThat(message).isEqualTo("Uppaal resets clock c only to 0")
+    }
+
+    @Test
+    suspend fun `a clock is not reset to an expression`() {
+        val message = unsupportedMessage(
+            """
+                @semantifyr::Clock var c : int := 0
+                var x : int := 0
+                init { }
+                tran { c := x }
+                prop { AG true }
+            """,
+        )
+
+        assertThat(message).isEqualTo("Uppaal resets clock c only to 0")
+    }
+
+    @Test
+    suspend fun `a clock is not havoced`() {
+        val message = unsupportedMessage(
+            """
+                @semantifyr::Clock var c : int := 0
+                init { }
+                tran { havoc(c) }
+                prop { AG true }
+            """,
+        )
+
+        assertThat(message).isEqualTo("Uppaal does not support havoc on clock c")
+    }
+
+    @Test
+    suspend fun `a clock is reset to zero`() {
+        val edges = edges(
+            """
+                @semantifyr::Clock var c : int := 0
+                init { }
+                tran { c := 0 }
+                prop { AG true }
+            """,
+        )
+
+        assertThat(edges).containsExactly(startToRunning, UppaalEdge("running", "running", assignment = "c = 0"))
+    }
 }
