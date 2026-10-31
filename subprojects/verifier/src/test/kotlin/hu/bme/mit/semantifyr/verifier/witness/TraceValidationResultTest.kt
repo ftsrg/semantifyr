@@ -38,6 +38,12 @@ class TraceValidationResultTest {
     }
 
     @Test
+    fun `Timeout maps to Inconclusive`() {
+        val mapped = WitnessValidationResult.from(fakeVerificationResult(verdict = VerificationVerdict.Timeout))
+        assertThat(mapped).isInstanceOf(WitnessValidationResult.Inconclusive::class.java)
+    }
+
+    @Test
     fun `Errored maps to Errored`() {
         val mapped = WitnessValidationResult.from(fakeVerificationResult(verdict = VerificationVerdict.Errored))
         assertThat(mapped).isInstanceOf(WitnessValidationResult.Errored::class.java)

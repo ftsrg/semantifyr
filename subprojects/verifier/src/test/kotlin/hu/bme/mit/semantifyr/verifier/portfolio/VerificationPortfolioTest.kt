@@ -21,6 +21,7 @@ import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
+import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -110,6 +111,88 @@ class VerificationPortfolioTest {
         val result = outcome.orFail("no decisive result")
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.metadata.backendId).isEqualTo("mid")
+    }
+
+    @Test
+    fun `firstDecisive times out when a job is still pending at the timeout`() = runTest {
+        val fastInconclusive = FakeBackend.delayed("fast", 10, VerificationVerdict.Inconclusive)
+        val slow = FakeBackend.delayed("slow", 10_000, VerificationVerdict.Passed)
+
+        val outcome = portfolio.runFirstDecisive(noopGate, timeout = 1.seconds) {
+            enqueue(fastInconclusive)
+            enqueue(slow)
+        }
+
+        assertThat(outcome).isInstanceOf(PortfolioOutcome.TimedOut::class.java)
+        assertThat(outcome.toBackendVerificationResult(Clock.System.now()).verdict).isEqualTo(VerificationVerdict.Timeout)
+        assertThat(slow.cancellations.get()).isEqualTo(1)
+    }
+
+    @Test
+    fun `firstDecisive skips a Timeout job and waits for a decisive one`() = runTest {
+        val timedOut = FakeBackend.verdict("timed-out", VerificationVerdict.Timeout)
+        val decisive = FakeBackend.delayed("decisive", 10, VerificationVerdict.Failed)
+
+        val outcome = portfolio.runFirstDecisive(noopGate, timeout = 1.seconds) {
+            enqueue(timedOut)
+            enqueue(decisive)
+        }
+
+        assertThat(outcome.orFail("expected decisive").metadata.backendId).isEqualTo("decisive")
+    }
+
+    @Test
+    suspend fun `firstDecisive times out when every job finished undecided and one timed out`() {
+        val inconclusive = FakeBackend.verdict("inconclusive", VerificationVerdict.Inconclusive)
+        val timedOut = FakeBackend.verdict("timed-out", VerificationVerdict.Timeout)
+
+        val outcome = portfolio.runFirstDecisive(noopGate) {
+            enqueue(inconclusive)
+            enqueue(timedOut)
+        }
+
+        assertThat(outcome).isInstanceOf(PortfolioOutcome.TimedOut::class.java)
+        assertThat((outcome as PortfolioOutcome.TimedOut).reason).contains("timed-out")
+    }
+
+    @Test
+    suspend fun `firstDecisive yields NoDecision when every job finished Inconclusive`() {
+        val a = FakeBackend.verdict("a", VerificationVerdict.Inconclusive)
+        val b = FakeBackend.verdict("b", VerificationVerdict.Inconclusive)
+
+        val outcome = portfolio.runFirstDecisive(noopGate) {
+            enqueue(a)
+            enqueue(b)
+        }
+
+        assertThat(outcome).isInstanceOf(PortfolioOutcome.NoDecision::class.java)
+        assertThat(outcome.toBackendVerificationResult(Clock.System.now()).verdict).isEqualTo(VerificationVerdict.Inconclusive)
+    }
+
+    @Test
+    fun `all times out when nothing is decisive and a job is pending at the timeout`() = runTest {
+        val fastInconclusive = FakeBackend.delayed("fast", 10, VerificationVerdict.Inconclusive)
+        val slow = FakeBackend.delayed("slow", 10_000, VerificationVerdict.Passed)
+
+        val outcome = portfolio.runAll(noopGate, timeout = 1.seconds) {
+            enqueue(fastInconclusive)
+            enqueue(slow)
+        }
+
+        assertThat(outcome).isInstanceOf(PortfolioOutcome.TimedOut::class.java)
+    }
+
+    @Test
+    suspend fun `all ignores a Timeout job when the decisive jobs agree`() {
+        val timedOut = FakeBackend.verdict("timed-out", VerificationVerdict.Timeout)
+        val passed = FakeBackend.verdict("passed", VerificationVerdict.Passed)
+
+        val outcome = portfolio.runAll(noopGate) {
+            enqueue(timedOut)
+            enqueue(passed)
+        }
+
+        assertThat(outcome.orFail("expected decisive").verdict).isEqualTo(VerificationVerdict.Passed)
     }
 
     @Test

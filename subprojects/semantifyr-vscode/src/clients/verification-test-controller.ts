@@ -225,6 +225,9 @@ export class VerificationTestController {
                     case VerificationStatus.Inconclusive:
                         run.errored(testItem, new TestMessage(`Inconclusive: ${result.message ?? 'no message'}`));
                         break;
+                    case VerificationStatus.Timeout:
+                        run.errored(testItem, new TestMessage(`Timed out: ${result.message ?? 'no message'}`));
+                        break;
                     case VerificationStatus.NotSupported:
                         run.errored(testItem, new TestMessage(`Not supported by the chosen portfolio: ${result.message ?? 'no message'}`));
                         break;
