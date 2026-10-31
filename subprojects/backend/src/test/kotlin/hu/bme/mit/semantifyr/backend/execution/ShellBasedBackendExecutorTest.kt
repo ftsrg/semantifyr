@@ -15,6 +15,7 @@ import org.junit.jupiter.api.condition.DisabledOnOs
 import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
+import java.nio.file.Path
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
@@ -93,6 +94,11 @@ class ShellBasedBackendExecutorTest {
         }
     }
 
+    private fun assertPrintedWorkingDirectory(line: String, workingDirectory: File) {
+        assertThat(line).startsWith("cwd=")
+        assertThat(Path.of(line.removePrefix("cwd=")).toRealPath()).isEqualTo(workingDirectory.toPath().toRealPath())
+    }
+
     @Test
     suspend fun `the tool runs in the working directory with its arguments`() {
         val workingDirectory = workingDirectory()
@@ -101,8 +107,9 @@ class ShellBasedBackendExecutorTest {
         val exitCode = stub().run(listOf("-search", "two words", "model.pml"), workingDirectory, logFile)
 
         assertThat(exitCode).isEqualTo(3)
-        assertThat(logFile.readLines().map { it.trim() }).containsExactly(
-            "cwd=${workingDirectory.canonicalPath}",
+        val lines = logFile.readLines().map { it.trim() }
+        assertPrintedWorkingDirectory(lines.first(), workingDirectory)
+        assertThat(lines.drop(1)).containsExactly(
             "arg=-search",
             "arg=two words",
             "arg=model.pml",
@@ -154,7 +161,7 @@ class ShellBasedBackendExecutorTest {
         val exitCode = stub().run(listOf("model.xsts"), workingDirectory, logFile)
 
         assertThat(exitCode).isEqualTo(3)
-        assertThat(logFile.readLines().first().trim()).isEqualTo("cwd=${workingDirectory.canonicalPath}")
+        assertPrintedWorkingDirectory(logFile.readLines().first().trim(), workingDirectory)
     }
 
     @Test
