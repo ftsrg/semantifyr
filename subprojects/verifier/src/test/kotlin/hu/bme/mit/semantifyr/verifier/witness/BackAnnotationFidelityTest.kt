@@ -18,6 +18,7 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
+import hu.bme.mit.semantifyr.compiler.pipeline.flattening.RecordFlatteningPass
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceNames
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
@@ -58,6 +59,7 @@ class BackAnnotationFidelityTest {
 
     private val tracingCase = "semantifyr::verification::lang::tracing::TracedChoiceBranchReach"
     private val arraysCase = "semantifyr::verification::lang::arrays::ArraySlotIndependenceReach"
+    private val recordsCase = "semantifyr::verification::lang::records::ContainedRecordReach"
 
     private val kitchenOn = flattenedName("root", "kitchen", "lamp", "on")
     private val hallOn = flattenedName("root", "hall", "lamp", "on")
@@ -151,6 +153,26 @@ class BackAnnotationFidelityTest {
             WitnessStateValue("root.slots[2]", "1"),
         )
         assertThat(readWitnessModel(output, case)).contains("root.slots[2] == 1")
+    }
+
+    @Test
+    suspend fun `record field values reach the witness state and the back-annotated witness by field path`(@TempDir output: Path) {
+        val case = loadCase("records.oxsts", recordsCase)
+        val positionX = flattenedName("root", "robot", "position") + "${RecordFlatteningPass.FIELD_SEPARATOR}x"
+
+        verifyWithWitness(case, output) { model ->
+            thetaShapedWitness(
+                model,
+                model.state(positionX to 0),
+                model.state(positionX to 0),
+                model.state(positionX to 1),
+            )
+        }
+
+        assertThat(readWitnessState(output, case).steps.single().values).containsExactly(
+            WitnessStateValue("root.robot.position.x", "1"),
+        )
+        assertThat(readWitnessModel(output, case)).contains("root.robot.position.x == 1")
     }
 
     @Test

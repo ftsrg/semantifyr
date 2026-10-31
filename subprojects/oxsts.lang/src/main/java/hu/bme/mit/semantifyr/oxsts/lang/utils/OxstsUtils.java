@@ -212,9 +212,7 @@ public class OxstsUtils {
     }
 
     public static boolean isCallable(Element declaration) {
-        return declaration instanceof TransitionDeclaration
-                || declaration instanceof RecordDeclaration
-                || declaration instanceof PropertyDeclaration;
+        return declaration instanceof TransitionDeclaration || declaration instanceof PropertyDeclaration;
     }
 
     public static boolean isInstanceFeature(FeatureDeclaration featureDeclaration) {

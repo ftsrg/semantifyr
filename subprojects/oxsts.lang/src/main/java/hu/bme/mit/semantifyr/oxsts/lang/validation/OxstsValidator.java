@@ -20,6 +20,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.ExpressionModalityEva
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.Modality;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.InvalidTypeEvaluation;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.NothingTypeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.TypeCompatibility;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.TypeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils;
@@ -98,6 +99,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String INVALID_CAST = ISSUE_PREFIX + "INVALID_CAST";
     public static final String MULTIPLE_INHERITANCE = ISSUE_PREFIX + "MULTIPLE_INHERITANCE";
     public static final String REDEFINITION_SIGNATURE_MISMATCH = ISSUE_PREFIX + "REDEFINITION_SIGNATURE_MISMATCH";
+    public static final String RECURSIVE_RECORD = ISSUE_PREFIX + "RECURSIVE_RECORD";
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
@@ -325,13 +327,99 @@ public class OxstsValidator extends AbstractOxstsValidator {
     }
 
     @Check
-    public void checkRecordDeclarationNotYetSupported(RecordDeclaration recordDeclaration) {
-        acceptError(
-                "Record types are not yet supported by the compiler. Use a class or a primitive type instead.",
-                recordDeclaration,
-                OxstsPackage.Literals.NAMED_ELEMENT__NAME,
-                0,
-                UNSUPPORTED_FEATURE);
+    public void checkRecordNotRecursive(RecordDeclaration recordDeclaration) {
+        if (containsRecord(recordDeclaration, recordDeclaration, new LinkedHashSet<>())) {
+            acceptError(
+                    "Record '" + recordDeclaration.getName() + "' contains itself, so it has no finite value.",
+                    recordDeclaration,
+                    OxstsPackage.Literals.NAMED_ELEMENT__NAME,
+                    0,
+                    RECURSIVE_RECORD);
+        }
+    }
+
+    private static boolean containsRecord(
+            RecordDeclaration holder, RecordDeclaration target, Set<RecordDeclaration> visited) {
+        if (!visited.add(holder)) {
+            return false;
+        }
+        for (var member : holder.getMembers()) {
+            if (member instanceof VariableDeclaration field
+                    && field.getTypeSpecification() != null
+                    && field.getTypeSpecification().getDomain() instanceof RecordDeclaration fieldRecord
+                    && (fieldRecord == target || containsRecord(fieldRecord, target, visited))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Check
+    public void checkRecordFieldSupported(VariableDeclaration variableDeclaration) {
+        var typeSpecification = variableDeclaration.getTypeSpecification();
+        if (!(variableDeclaration.eContainer() instanceof RecordDeclaration) || typeSpecification == null) {
+            return;
+        }
+        var domain = typeSpecification.getDomain();
+        if (!(domain instanceof DataTypeDeclaration
+                || domain instanceof EnumDeclaration
+                || domain instanceof RecordDeclaration)) {
+            acceptError(
+                    "Record fields must have a data, enum or record type; '"
+                            + variableDeclaration.getName()
+                            + "' has type '"
+                            + NamingUtil.getName(domain)
+                            + "'.",
+                    variableDeclaration,
+                    OxstsPackage.Literals.VARIABLE_DECLARATION__TYPE_SPECIFICATION,
+                    0,
+                    UNSUPPORTED_FEATURE);
+        } else if (!(domain instanceof RecordDeclaration) && isFixedSizeArray(typeSpecification)) {
+            acceptError(
+                    "Array fields in records are not yet supported by the compiler; '"
+                            + variableDeclaration.getName()
+                            + "' is an array.",
+                    variableDeclaration,
+                    OxstsPackage.Literals.VARIABLE_DECLARATION__TYPE_SPECIFICATION,
+                    0,
+                    UNSUPPORTED_FEATURE);
+        }
+    }
+
+    @Check
+    public void checkRecordMultiplicity(TypeSpecification typeSpecification) {
+        if (!(typeSpecification.getDomain() instanceof RecordDeclaration record)
+                || typeSpecification.getMultiplicity() == null) {
+            return;
+        }
+        RangeEvaluation range;
+        try {
+            range = multiplicityRangeEvaluator.evaluate(typeSpecification);
+        } catch (RuntimeException e) {
+            return;
+        }
+        if (range.getLowerBound() == 1 && range.getUpperBound() == 1) {
+            return;
+        }
+        var message = isFixedSizeArray(typeSpecification)
+                ? "Arrays of records are not yet supported by the compiler."
+                : "A value of record type '" + record.getName() + "' must hold exactly one record.";
+        acceptError(message, typeSpecification, UNSUPPORTED_FEATURE);
+    }
+
+    @Check
+    public void checkFeatureNotRecordTyped(FeatureDeclaration featureDeclaration) {
+        var typeSpecification = featureDeclaration.getTypeSpecification();
+        if (typeSpecification != null && typeSpecification.getDomain() instanceof RecordDeclaration) {
+            acceptError(
+                    "Record-typed features are not yet supported by the compiler; declare '"
+                            + featureDeclaration.getName()
+                            + "' as a variable.",
+                    featureDeclaration,
+                    OxstsPackage.Literals.FEATURE_DECLARATION__TYPE_SPECIFICATION,
+                    0,
+                    UNSUPPORTED_FEATURE);
+        }
     }
 
     @Check
@@ -771,6 +859,39 @@ public class OxstsValidator extends AbstractOxstsValidator {
                 havocOperation.getReference(), havocOperation, OxstsPackage.Literals.HAVOC_OPERATION__REFERENCE);
     }
 
+    @Check
+    public void checkNoFieldWriteThroughParameter(AssignmentOperation assignmentOperation) {
+        rejectFieldWriteThroughParameter(
+                assignmentOperation.getReference(),
+                assignmentOperation,
+                OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE);
+    }
+
+    @Check
+    public void checkNoFieldHavocThroughParameter(HavocOperation havocOperation) {
+        rejectFieldWriteThroughParameter(
+                havocOperation.getReference(), havocOperation, OxstsPackage.Literals.HAVOC_OPERATION__REFERENCE);
+    }
+
+    private void rejectFieldWriteThroughParameter(Expression target, EObject host, EStructuralFeature feature) {
+        var current = target;
+        while (current instanceof NavigationSuffixExpression navigation
+                && navigation.getMember() instanceof VariableDeclaration member
+                && member.eContainer() instanceof RecordDeclaration) {
+            current = navigation.getPrimary();
+        }
+        if (current != target
+                && current instanceof ElementReference reference
+                && reference.getElement() instanceof ParameterDeclaration parameter) {
+            acceptError(
+                    "Cannot write a field of parameter '" + parameter.getName() + "': parameters are passed by value.",
+                    host,
+                    feature,
+                    0,
+                    INCORRECT_ASSIGNMENT);
+        }
+    }
+
     // The right-hand side is at most RUNTIME, so it always fits a runtime target.
     private void checkWriteTargetIsRuntime(Expression target, EObject host, EStructuralFeature feature) {
         if (target == null) {
@@ -962,6 +1083,15 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     "Cannot compare values of type " + formatType(leftType) + " and " + formatType(rightType) + ".",
                     operator,
                     TYPE_MISMATCH);
+        } else if ((leftType.getDomain() instanceof RecordDeclaration
+                        || rightType.getDomain() instanceof RecordDeclaration)
+                && (leftType instanceof NothingTypeEvaluation
+                        || rightType instanceof NothingTypeEvaluation
+                        || (operator.getOp() != ComparisonOp.EQ && operator.getOp() != ComparisonOp.NOT_EQ))) {
+            acceptError(
+                    "Records can only be compared with == and != to a record of the same type.",
+                    operator,
+                    TYPE_MISMATCH);
         }
     }
 
@@ -1084,6 +1214,10 @@ public class OxstsValidator extends AbstractOxstsValidator {
     @Check
     public void checkNoMemberAccessThroughVariable(NavigationSuffixExpression expression) {
         if (expression.eContainer() instanceof CallSuffixExpression call && call.getPrimary() == expression) {
+            return;
+        }
+        if (expression.getMember() instanceof VariableDeclaration member
+                && member.eContainer() instanceof RecordDeclaration) {
             return;
         }
         EObject holder;

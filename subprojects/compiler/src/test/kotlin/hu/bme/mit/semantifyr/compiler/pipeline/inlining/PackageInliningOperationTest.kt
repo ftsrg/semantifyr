@@ -8,11 +8,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.serializeFormatted
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -381,33 +377,6 @@ class PackageInliningOperationTest : InliningTestBase() {
             assertThat(distinctNames)
                 .`as`("the two inlined tmp declarations must be renamed apart: $distinctNames")
                 .hasSize(2)
-        }
-    }
-
-    @Test
-    fun `a local var without an initializer is havoced at its declaration`() {
-        prepare(
-            "Host",
-            """
-                package inlining::tests
-                @VerificationCase
-                class Host {
-                    var x : int := 0
-                    redefine tran {
-                        var delta : int
-                        assume(delta > 0)
-                        x := delta
-                    }
-                    prop { return EF x == 1 }
-                }
-            """,
-        ) {
-            inlineAll(it)
-            val local = it.inlinedOxsts.mainTransition.eAllOfType<LocalVarDeclarationOperation>().single()
-            val steps = (local.eContainer() as SequenceOperation).steps
-            assertThat(steps[steps.indexOf(local) + 1]).isInstanceOfSatisfying(HavocOperation::class.java) { havoc ->
-                assertThat((havoc.reference as ElementReference).element).isSameAs(local)
-            }
         }
     }
 

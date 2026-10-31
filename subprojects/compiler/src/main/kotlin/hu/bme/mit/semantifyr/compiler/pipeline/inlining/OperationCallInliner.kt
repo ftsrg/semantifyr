@@ -13,7 +13,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationStats
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.NestedOperationOptimizer
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OperationVisitor
@@ -83,18 +82,9 @@ class OperationCallInliner @AssistedInject constructor(
     }
 
     override fun visit(operation: LocalVarDeclarationOperation) {
-        val expression = operation.expression
-        if (expression != null) {
-            expressionCallInliner.process(expression)
-            return
+        operation.expression?.let {
+            expressionCallInliner.process(it)
         }
-        val sequence = operation.eContainer() as SequenceOperation
-        sequence.steps.add(
-            sequence.steps.indexOf(operation) + 1,
-            OxstsFactory.createHavocOperation().also {
-                it.reference = OxstsFactory.createElementReference(operation)
-            },
-        )
     }
 
     override fun visit(operation: ForOperation) {
