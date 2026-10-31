@@ -29,7 +29,7 @@ var value: int := 0
 
 ## With Arguments
 
-Annotation arguments use named-argument syntax (`name = value`). Arguments must be constants: annotations are read without an instance, so the validator rejects a reference to a feature or variable (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
+Annotation arguments are positional or named (`name = value`), as in calls. Arguments must be constants: annotations are read without an instance, so the validator rejects a reference to a feature or variable (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
 
 ```oxsts
 @VerificationCase(summary = "Reaches the limit")
