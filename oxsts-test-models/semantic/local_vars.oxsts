@@ -98,6 +98,7 @@ class LocalVarHavocBound {
 // accidentally promoted the local to a class variable this would fail.
 @VerificationCase
 @Tag("expect-pass")
+@Tag("engine-limit:spin,uppaal")
 class LocalVarNotPersistedBound {
     var total: int := 0
 

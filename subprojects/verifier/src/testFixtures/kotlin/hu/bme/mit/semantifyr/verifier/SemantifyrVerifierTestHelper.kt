@@ -199,6 +199,10 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         val required = verificationPortfolio.executorKeys.any {
             it.name in requiredBackends
         }
+        val limitedEngines = engineLimitsFromTags(case)
+        val engineLimited = verificationPortfolio.executorKeys.isNotEmpty() && verificationPortfolio.executorKeys.all {
+            it.name in limitedEngines
+        }
         val availability = verificationPortfolio.availability(environment)
         if (availability is AvailabilityReport.Unavailable) {
             if (required) {
@@ -213,6 +217,10 @@ class SemantifyrVerifierTestHelper @Inject constructor(
             "Portfolio ${verificationPortfolio.id} timed out on ${case.qualifiedName} within $timeout: ${result.message ?: "no message"}",
         )
         if (!result.verdict.isDecisive) {
+            if (engineLimited && result.verdict != VerificationVerdict.Errored) {
+                logger.info { "${case.qualifiedName} is tagged $ENGINE_LIMIT_TAG_PREFIX${limitedEngines.joinToString(",")}, accepting ${result.verdict} from ${verificationPortfolio.id}" }
+                return
+            }
             Assumptions.assumeTrue(
                 required || result.verdict == VerificationVerdict.Errored,
                 "Portfolio ${verificationPortfolio.id} reports ${result.verdict} for ${case.qualifiedName} and none of its engines is required: ${result.message ?: "no message"}",
@@ -227,6 +235,9 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         ) {
             "Expected ${case.qualifiedName} verdict $expectedVerdict, got ${result.verdict} " +
                 "(${result.message ?: "no message"}).${backendDiagnostics(outputDirectory, case)}"
+        }
+        if (engineLimited) {
+            logger.info { "${case.qualifiedName} is tagged $ENGINE_LIMIT_TAG_PREFIX${limitedEngines.joinToString(",")} but ${verificationPortfolio.id} decided it, the tag is stale" }
         }
 
         logger.info { "Result: ${result.verdict}" }
@@ -282,6 +293,16 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         return "\n\nBackend diagnostics (last $tailLineLimit lines per file):\n${sections.joinToString("\n")}"
     }
 
+    private fun engineLimitsFromTags(case: VerificationCase): Set<String> {
+        return case.tags.filter {
+            it.startsWith(ENGINE_LIMIT_TAG_PREFIX)
+        }.flatMap {
+            it.removePrefix(ENGINE_LIMIT_TAG_PREFIX).split(',')
+        }.map {
+            it.trim()
+        }.toSet()
+    }
+
     private fun expectedVerdictFromTags(case: VerificationCase): VerificationVerdict {
         return when {
             "expect-pass" in case.tags -> VerificationVerdict.Passed
@@ -293,6 +314,8 @@ class SemantifyrVerifierTestHelper @Inject constructor(
     }
 
     companion object {
+        private const val ENGINE_LIMIT_TAG_PREFIX = "engine-limit:"
+
         @JvmStatic
         fun testArtifactRoot(testClass: Class<*>): Path {
             return Path("build", "test-artifacts", testClass.simpleName)

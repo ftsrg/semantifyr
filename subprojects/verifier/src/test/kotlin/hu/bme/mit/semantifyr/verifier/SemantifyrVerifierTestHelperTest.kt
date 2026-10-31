@@ -25,6 +25,10 @@ import org.opentest4j.TestAbortedException
 import java.nio.file.Path
 import kotlin.io.path.Path
 
+private val OtherExecutorKey = ExecutorKey("other") {
+    AlwaysAvailableExecutor()
+}
+
 @InjectWithOxsts
 class SemantifyrVerifierTestHelperTest {
 
@@ -87,7 +91,53 @@ class SemantifyrVerifierTestHelperTest {
             .isInstanceOf(AssertionFailedError::class.java)
     }
 
-    private suspend fun check(portfolio: VerificationPortfolio, requiredBackends: Set<String>): Throwable? {
+    @Test
+    suspend fun `Inconclusive on an engine-limited engine passes`() {
+        assertThat(check(FixedPortfolio(VerificationVerdict.Inconclusive), requiredFake, "engine-limit:other,fake")).isNull()
+    }
+
+    @Test
+    suspend fun `NotSupported on an engine-limited engine passes`() {
+        assertThat(check(FixedPortfolio(VerificationVerdict.NotSupported), requiredFake, "engine-limit:fake")).isNull()
+    }
+
+    @Test
+    suspend fun `wrong decisive verdict on an engine-limited engine fails`() {
+        assertThat(check(FixedPortfolio(VerificationVerdict.Failed), requiredFake, "engine-limit:fake"))
+            .isInstanceOf(AssertionFailedError::class.java)
+    }
+
+    @Test
+    suspend fun `correct decisive verdict on an engine-limited engine passes`() {
+        assertThat(check(FixedPortfolio(VerificationVerdict.Passed), requiredFake, "engine-limit:fake")).isNull()
+    }
+
+    @Test
+    suspend fun `Errored and Timeout on an engine-limited engine keep their outcome`() {
+        assertThat(check(FixedPortfolio(VerificationVerdict.Errored), requiredFake, "engine-limit:fake"))
+            .isInstanceOf(AssertionFailedError::class.java)
+        assertThat(check(FixedPortfolio(VerificationVerdict.Timeout), requiredFake, "engine-limit:fake"))
+            .isInstanceOf(TestAbortedException::class.java)
+    }
+
+    @Test
+    suspend fun `Inconclusive on an engine not named by engine-limit fails`() {
+        assertThat(check(FixedPortfolio(VerificationVerdict.Inconclusive), requiredFake, "engine-limit:spin,uppaal"))
+            .isInstanceOf(AssertionFailedError::class.java)
+    }
+
+    @Test
+    suspend fun `a portfolio with an unlisted engine is not engine-limited`() {
+        val mixed = FixedPortfolio(VerificationVerdict.Inconclusive, executorKeys = setOf(FakeExecutorKey, OtherExecutorKey))
+        assertThat(check(mixed, requiredFake, "engine-limit:fake"))
+            .isInstanceOf(AssertionFailedError::class.java)
+    }
+
+    private suspend fun check(
+        portfolio: VerificationPortfolio,
+        requiredBackends: Set<String>,
+        vararg extraTags: String,
+    ): Throwable? {
         val context = helper.semantifyrLoader.loadStandaloneModel(Path("../../oxsts-test-models/simple/simple.oxsts"))
         val case = helper.collectVerificationCases(context).first {
             it.qualifiedName.endsWith("::Incrementing")
@@ -95,7 +145,7 @@ class SemantifyrVerifierTestHelperTest {
         return runCatching {
             helper.checkTestModel(
                 context = context,
-                case = case,
+                case = case.copy(tags = case.tags + extraTags),
                 verificationPortfolio = portfolio,
                 outputDirectory = output,
                 requiredBackends = requiredBackends,
@@ -106,11 +156,11 @@ class SemantifyrVerifierTestHelperTest {
     private class FixedPortfolio(
         private val verdict: VerificationVerdict,
         private val available: Boolean = true,
+        override val executorKeys: Set<ExecutorKey<*>> = setOf(FakeExecutorKey),
     ) : VerificationPortfolio() {
         override val id: String = "fixed"
         override val displayName: String = id
         override val description: String = "test-only"
-        override val executorKeys: Set<ExecutorKey<*>> = setOf(FakeExecutorKey)
 
         override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
             return if (available) {
