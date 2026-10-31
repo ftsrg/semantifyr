@@ -100,7 +100,7 @@ The `Statechart` owns _any number_ of states and transitions through containment
 
 The `var activeState` is a **feature-typed variable**: its type is the `states` feature, not a class, and its value domain is the set of instances reachable through `states`. The compiler turns it into an integer at flatten time. The `[0..1]` multiplicity means it can hold one of the contained states or `nothing`. The `nothing` literal denotes the absence of a value, and is the alternative inhabitant of an optional `[0..1]` slot. Initializing `activeState` to `nothing` means a fresh statechart is _inactive_ until something explicitly assigns a state to it.
 
-The `@Control` annotation marks the variable as important to track, so the verifier may report it specifically in counterexamples.
+The `@Control` annotation makes it a control variable for Theta, whose CEGAR configurations track it precisely from the start; it suits a variable like `activeState` that steers which transitions are enabled. Counterexamples report every variable either way.
 
 The redefined main transition uses `inline for choice` over the `transitions` collection. This is a compile-time **inline operation** that unrolls into a non-deterministic `choice` of one branch per element. With three transitions, the body becomes a `choice` of three branches after unrolling. The unrolling happens at compile time; at runtime the model checker only sees the resulting `choice`. Each `inline transition.main()` invokes the chosen transition's implicit `main`, which first asserts `assume(isEnabled())`. Disabled transitions therefore block their own branch automatically: only enabled transitions can fire on a given step.
 

@@ -136,10 +136,8 @@ class TransitionCallTraceTransformer @Inject constructor(
                 it.domain = builtinSymbolResolver.boolDatatype(context)
             }
             it.expression = OxstsFactory.createLiteralBoolean(false)
+            // not @Control: Theta's CEGAR configs would track every tracer from the start, and the counterexample carries them anyway
             it.annotation = OxstsFactory.createAnnotationContainer().also {
-                it.annotations += OxstsFactory.createAnnotation().also {
-                    it.declaration = builtinSymbolResolver.controlAnnotation(context)
-                }
                 it.annotations += OxstsFactory.createAnnotation().also {
                     it.declaration = builtinSymbolResolver.nonOptimizableAnnotation(context)
                 }
