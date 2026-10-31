@@ -81,7 +81,7 @@ describe('AdminPage', () => {
     fetchInfo.mockResolvedValue(baseInfo);
     fetchAdminStatus.mockResolvedValue(baseStatus);
     fetchAdminConfig.mockResolvedValue(baseConfig);
-    fetchPortfolios.mockResolvedValue([]);
+    fetchPortfolios.mockResolvedValue({ portfolios: [], defaultPortfolio: 'smart-full' });
   });
 
   afterEach(() => {

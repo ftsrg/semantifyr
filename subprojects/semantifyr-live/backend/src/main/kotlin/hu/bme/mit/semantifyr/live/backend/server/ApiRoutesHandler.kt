@@ -31,14 +31,8 @@ class ApiRoutesHandler @Inject constructor(
 
     fun Application.configure() {
         routing {
-            route("/api/health") {
-                install(CORS) {
-                    anyHost()
-                    anyMethod()
-                }
-                get {
-                    call.respond(HealthResponse(status = "ok"))
-                }
+            crossOriginGet("/api/health") {
+                call.respond(HealthResponse(status = "ok"))
             }
             get("/api/info") {
                 call.respond(
@@ -53,7 +47,7 @@ class ApiRoutesHandler @Inject constructor(
                     ),
                 )
             }
-            get("/api/flavors") {
+            crossOriginGet("/api/flavors") {
                 call.respond(
                     FlavorsResponse(
                         flavors = FlavorRegistry.flavors.map {
@@ -62,9 +56,23 @@ class ApiRoutesHandler @Inject constructor(
                     ),
                 )
             }
-            get("/api/portfolios") {
-                call.respond(PortfoliosResponse(portfolios = PortfolioRegistry.snapshot()))
+            crossOriginGet("/api/portfolios") {
+                call.respond(
+                    PortfoliosResponse(
+                        portfolios = PortfolioRegistry.snapshot(),
+                        defaultPortfolio = PortfolioRegistry.defaultPortfolio.id,
+                    ),
+                )
             }
+        }
+    }
+
+    private fun Route.crossOriginGet(path: String, body: RoutingHandler) {
+        route(path) {
+            install(CORS) {
+                anyHost()
+            }
+            get(body)
         }
     }
 }

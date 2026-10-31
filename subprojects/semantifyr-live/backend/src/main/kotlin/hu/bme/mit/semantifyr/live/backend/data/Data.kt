@@ -63,6 +63,7 @@ data class PortfolioResponse(
 @Serializable
 data class PortfoliosResponse(
     val portfolios: List<PortfolioResponse>,
+    val defaultPortfolio: String,
 )
 
 @Serializable

@@ -18,7 +18,9 @@ import hu.bme.mit.semantifyr.live.backend.testing.jsonClient
 import hu.bme.mit.semantifyr.live.backend.testing.testInjector
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.server.testing.testApplication
 import org.assertj.core.api.Assertions.assertThat
@@ -148,5 +150,27 @@ class ApiRoutesHandlerTest {
         )
         val auto = response.portfolios.first { it.id == "smart-full" }
         assertThat(auto.displayName).isEqualTo("Auto")
+        assertThat(response.defaultPortfolio).isEqualTo("smart-full")
+    }
+
+    @Test
+    fun `the website can read health, flavors and portfolios from another origin`() = testApplication {
+        val handler = createHandler()
+        installSemantifyrApp {
+            with(handler) {
+                configure()
+            }
+        }
+
+        for (path in listOf("/api/health", "/api/flavors", "/api/portfolios")) {
+            val response = client.get(path) {
+                header(HttpHeaders.Origin, "https://ftsrg.mit.bme.hu")
+            }
+            assertThat(response.headers[HttpHeaders.AccessControlAllowOrigin]).`as`(path).isEqualTo("*")
+        }
+        val info = client.get("/api/info") {
+            header(HttpHeaders.Origin, "https://ftsrg.mit.bme.hu")
+        }
+        assertThat(info.headers[HttpHeaders.AccessControlAllowOrigin]).isNull()
     }
 }

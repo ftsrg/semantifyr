@@ -6,23 +6,7 @@
 
 import type { Location } from '@semantifyr/editor-common'
 
-export interface PortfolioInfo {
-  id: string
-  displayName: string
-  description: string
-  available: boolean
-}
-
-export interface FlavorInfo {
-  id: string
-  displayName: string
-  languageId: string
-  fileName: string
-  verificationCommand: string | null
-  discoveryCommand: string | null
-  validateWitnessCommand: string | null
-  peekCompiledOutput: boolean
-}
+export type { FlavorInfo, PortfolioInfo, PortfoliosResponse } from '@semantifyr/editor-common'
 
 export interface InfoResponse {
   uptime: string

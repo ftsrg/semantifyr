@@ -201,7 +201,7 @@ function Dashboard({ api, onLogout, preference, colorMode, onToggleColorMode }: 
 
   useEffect(() => {
     void refresh();
-    void api.fetchPortfolios().then(setPortfolios).catch(() => { setPortfolios([]); });
+    void api.fetchPortfolios().then((response) => { setPortfolios(response.portfolios); }).catch(() => { setPortfolios([]); });
     void api.fetchFlavors().then(setFlavors).catch(() => { setFlavors([]); });
   }, [refresh, api]);
 
