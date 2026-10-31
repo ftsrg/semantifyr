@@ -432,6 +432,38 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
     }
 
     @Test
+    suspend fun `the stable flag is written only at the boundaries of whole steps`() {
+        val promela = transform(
+            """
+                var x : int
+                var b : bool := false
+                init { choice { x := 1 } or { havoc(b) } } or { x := 2 }
+                tran {
+                    assume(x < 5)
+                    if (b) { choice { x := x + 1 } or { var d : int := 1 x := x - d } } else { havoc(x) }
+                } or {
+                    b := !b
+                }
+                prop { AG x < 5 }
+            """,
+        ).promela
+        val lines = promela.lines()
+        val flagLines = lines.withIndex().filter {
+            SPIN_STABLE_FLAG in it.value && !it.value.startsWith("bool ") && !it.value.startsWith("ltl ")
+        }
+
+        assertThat(flagLines).hasSize(8)
+        for ((index, line) in flagLines) {
+            if (line == "        $SPIN_STABLE_FLAG = false;") {
+                assertThat(lines[index - 1]).matches("    (:: )?atomic \\{")
+            } else {
+                assertThat(line).isEqualTo("        $SPIN_STABLE_FLAG = true;")
+                assertThat(lines[index + 1]).isEqualTo("    }")
+            }
+        }
+    }
+
+    @Test
     suspend fun `a real variable is not supported`() {
         val exception = assertThrows<BackendUnsupportedException> {
             transform(

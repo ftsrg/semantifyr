@@ -327,6 +327,33 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     }
 
     @Test
+    suspend fun `only the running location lets time pass between whole steps`() {
+        val template = nta(
+            """
+                var x : int
+                var b : bool := false
+                init { choice { x := 1 } or { havoc(b) } } or { x := 2 }
+                tran {
+                    assume(x < 5)
+                    if (b) { choice { x := x + 1 } or { var d : int := 1 x := x - d } } else { havoc(x) }
+                } or {
+                    b := !b
+                }
+                prop { AG x < 5 }
+            """,
+        ).templates.single()
+
+        val stable = template.locations.filter {
+            it.kind != UppaalLocationKind.Committed
+        }
+        assertThat(stable).containsExactly(UppaalLocation("running", "Running", UppaalLocationKind.Normal))
+        val boundaries = template.locations.filter {
+            it.name.endsWith("Start") || it.name.endsWith("Running")
+        }
+        assertThat(boundaries.map { it.id }).containsExactly("start", "running")
+    }
+
+    @Test
     suspend fun `an AG property is an invariant over the running location`() {
         val query = query(
             """
