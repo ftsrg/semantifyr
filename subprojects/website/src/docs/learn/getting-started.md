@@ -5,7 +5,9 @@ sidebar_position: 1
 
 # Getting Started
 
-There are four ways to start using Semantifyr. Pick whichever fits your situation. All four give you the same language and the same compiler; the verification backends available depend on the environment.
+New to Semantifyr? Start with the [Tutorials](tutorials/index.md): the first ones run in the browser with nothing to install.
+
+There are three ways to start using Semantifyr today, and a fourth is planned. Pick whichever fits your situation. All of them give you the same language and the same compiler; the verification backends available depend on the environment.
 
 ## Option A: Try in the browser (no installation)
 
@@ -15,16 +17,14 @@ The fastest way to try Semantifyr. The **in-browser live editor** is a lightweig
 
 Sessions are ephemeral. Use the **Copy link** button in the toolbar to save your work as a shareable URL.
 
+:::note
+If the live editor stays blank after an update of the server, your browser is still running the previous version it cached. Delete the stored site data of `live.semantifyr.org` in your browser's site settings and reload.
+:::
+
 ## Option B: Use the JupyterHub environment (full IDE, no installation)
 
-If you want a full-fledged VS Code environment with multi-file project support, the hosted JupyterHub environment is a good fit. It runs a VS Code instance in your browser with the Semantifyr extension, the Theta backend, and example models for SysML v2 and Gamma already in place.
-
-[Launch the JupyterHub environment](https://jupyter.semantifyr.org)
-
-You'll get a personal workspace with everything wired up: no Java install, no extension setup, no project scaffolding.
-
-:::note Access requires an account
-The JupyterHub environment is a managed deployment, so you need a user account to log in. If you don't have one yet, [contact the maintainers](https://github.com/ftsrg/semantifyr/blob/main/CONTRIBUTORS.md) to request access.
+:::info[Planned]
+A hosted JupyterHub environment that runs VS Code in the browser with the Semantifyr extension, the Theta backend, and example models for SysML v2 and Gamma. It is offline until it is rebuilt; until then, use the live editor or a local install.
 :::
 
 ## Option C: Install the VS Code extension (for local work)
@@ -39,7 +39,7 @@ The Semantifyr VS Code extension bundles the language servers and the compiler. 
 
 **Install**
 
-1. Download `semantifyr-<version>.vsix` from the [latest release](https://github.com/ftsrg/semantifyr/releases/latest), or build it locally with `./gradlew build`, which writes it to `subprojects/semantifyr-vscode/build/`.
+1. Build the extension from a clone of the [repository](https://github.com/ftsrg/semantifyr) with `./gradlew :semantifyr-vscode:bundleExtension`, which writes `subprojects/semantifyr-vscode/build/semantifyr-<version>.vsix`. The build needs Git and a Java 25 runtime and downloads everything else. Once a release is published, you can download the `.vsix` from the [latest release](https://github.com/ftsrg/semantifyr/releases/latest) instead.
 2. In VS Code, run **Extensions: Install from VSIX...** from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and select the `.vsix` file.
 3. Open any folder containing a `.oxsts` or `.gamma` file. The extension activates automatically and provides syntax highlighting, diagnostics, and the verification cases in the *Testing* view.
 
@@ -51,8 +51,8 @@ Publication on the Visual Studio Marketplace is planned.
 
 The `semantifyr` command lists, compiles and verifies the verification cases of OXSTS models from a terminal. It needs a Java 25 runtime.
 
-1. Download `semantifyr-<version>.zip` from the [latest release](https://github.com/ftsrg/semantifyr/releases/latest) and unzip it.
-2. Run `semantifyr-<version>/bin/semantifyr` (`bin\semantifyr.bat` on Windows). The zip bundles the Theta backend, which the Linux and macOS launcher puts on `PATH`; install other backends as for the VS Code extension.
-3. Verify the bundled smoke model: `semantifyr-<version>/bin/semantifyr verify semantifyr-<version>/models/smoke`.
+1. Build the distribution from a clone of the [repository](https://github.com/ftsrg/semantifyr) with `./gradlew :semantifyr-cli:installDist`, which installs it to `subprojects/semantifyr-cli/build/install/semantifyr`; `./gradlew :semantifyr-cli:distZip` packs the same files into `subprojects/semantifyr-cli/build/distributions/semantifyr-<version>.zip`. Once a release is published, you can download `semantifyr-<version>.zip` from the [latest release](https://github.com/ftsrg/semantifyr/releases/latest) and unzip it instead.
+2. Run `bin/semantifyr` in the installed directory (`bin\semantifyr.bat` on Windows). The distribution bundles the Theta backend, which the Linux and macOS launcher puts on `PATH`; install other backends as for the VS Code extension.
+3. Verify the bundled smoke model from the installed directory: `bin/semantifyr verify models/smoke`.
 
-The zip also carries the Gamma and SysML v2 semantic libraries under `libraries/`. See [Command Line](cli/index.mdx) for the commands and options.
+The distribution also carries the Gamma and SysML v2 semantic libraries under `libraries/`. See [Command Line](cli/index.mdx) for the commands and options, and the [SysML v2 tutorial](tutorials/sysml-v2.md) for verifying SysML v2 models.

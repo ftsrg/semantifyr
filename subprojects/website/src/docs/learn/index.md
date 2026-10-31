@@ -12,5 +12,5 @@ The result: the same library can verify many models, the same model can be check
 ## Where to go next
 
 - [Getting Started](getting-started.md) to set up your environment.
-- [Language Reference](language/index.md) to look up specific constructs.
 - [Tutorials](tutorials/index.md) to build your first model from scratch.
+- [Language Reference](language/index.md) to look up specific constructs.
