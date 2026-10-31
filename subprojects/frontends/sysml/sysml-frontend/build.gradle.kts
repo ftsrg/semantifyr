@@ -23,6 +23,7 @@ dependencies {
 
     testFixturesApi(project(":portfolios"))
     testFixturesApi(testFixtures(project(":verifier")))
+    testFixturesImplementation(project(":logging"))
     testFixturesImplementation(libs.kotlinx.serialization.json)
 }
 

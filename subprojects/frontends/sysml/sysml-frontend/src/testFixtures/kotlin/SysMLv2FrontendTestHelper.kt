@@ -6,10 +6,13 @@
 
 package hu.bme.mit.semantifyr.frontends.sysml.testing
 
+import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.frontends.sysml.SysMLv2Frontend
 import hu.bme.mit.semantifyr.frontends.sysml.SysMLv2Variant
+import hu.bme.mit.semantifyr.logging.info
+import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
@@ -21,6 +24,8 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 class SysMLv2FrontendTestHelper {
+
+    private val logger by loggerFactory()
 
     private val injector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
     private val loader = injector.getInstance(SemantifyrLoader::class.java)
@@ -52,7 +57,8 @@ class SysMLv2FrontendTestHelper {
         outputDirectory: Path,
         timeout: Duration = 2.minutes,
     ): SysMLv2Frontend {
-        return buildFrontend(modelPath(entry.model.file), portfolio, outputDirectory, entry.model.variant, timeout)
+        // short names repeat across models, so each model gets its own artifact directory
+        return buildFrontend(modelPath(entry.model.file), portfolio, outputDirectory.resolve(entry.model.file.removeSuffix(".sysml")), entry.model.variant, timeout)
     }
 
     private fun verificationCase(frontend: SysMLv2Frontend, entry: CorpusEntry): VerificationCase {
@@ -72,6 +78,17 @@ class SysMLv2FrontendTestHelper {
             result.verdict,
             "Expected ${case.qualifiedName} verdict ${entry.case.expectedVerdict}, got ${result.verdict} (${result.message ?: "no message"})",
         )
+    }
+
+    suspend fun recordVerificationCase(
+        frontend: SysMLv2Frontend,
+        entry: CorpusEntry,
+    ) {
+        val result = frontend.verify(verificationCase(frontend, entry))
+        logger.info { "$entry: ${result.verdict} after ${result.metrics.totalDuration} (${result.message ?: "no message"})" }
+        Assertions.assertNotEquals(VerificationVerdict.Errored, result.verdict) {
+            "$entry errored: ${result.message ?: "no message"}"
+        }
     }
 
     suspend fun checkConformance(

@@ -15,23 +15,37 @@ import hu.bme.mit.semantifyr.portfolios.Portfolios
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
-class CompressedSpacecraftVerificationTests {
+class SysMLNightlyVerificationTests {
     companion object {
         private val helper = SysMLv2FrontendTestHelper()
-        private val artifactRoot = SysMLv2FrontendTestHelper.testArtifactRoot(CompressedSpacecraftVerificationTests::class.java)
+        private val artifactRoot = SysMLv2FrontendTestHelper.testArtifactRoot(SysMLNightlyVerificationTests::class.java)
 
         @JvmStatic
-        fun `Compressed Spacecraft Model Cases Reach Their Expected Verdict`(): List<CorpusEntry> {
+        fun `Nightly Cases Reach Their Expected Verdict`(): List<CorpusEntry> {
             return SysMLCorpus.load().entries.filter {
-                it.model.file == "compressedspacecraft.sysml" && it.case.tier == CorpusTier.Nightly && it.case.verdict != CorpusVerdict.Unknown
+                it.case.tier == CorpusTier.Nightly && it.case.verdict != CorpusVerdict.Unknown
+            }
+        }
+
+        @JvmStatic
+        fun `Nightly Cases Without A Known Verdict Are Recorded`(): List<CorpusEntry> {
+            return SysMLCorpus.load().entries.filter {
+                it.case.tier == CorpusTier.Nightly && it.case.verdict == CorpusVerdict.Unknown
             }
         }
     }
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
-    suspend fun `Compressed Spacecraft Model Cases Reach Their Expected Verdict`(entry: CorpusEntry) {
+    suspend fun `Nightly Cases Reach Their Expected Verdict`(entry: CorpusEntry) {
         val frontend = helper.buildFrontend(entry, Portfolios.SmartFull, artifactRoot)
         helper.checkConformance(frontend, entry, validationPortfolio = Portfolios.AllAgree)
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    suspend fun `Nightly Cases Without A Known Verdict Are Recorded`(entry: CorpusEntry) {
+        val frontend = helper.buildFrontend(entry, Portfolios.SmartFull, artifactRoot)
+        helper.recordVerificationCase(frontend, entry)
     }
 }
