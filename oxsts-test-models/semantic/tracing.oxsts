@@ -1,0 +1,67 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::lang::tracing
+
+// Traced transitions inside choice branches, called on two instances of
+// the same feature. Only the branch that fires may appear in a step of
+// the witness trace, named by its instance path.
+
+class Lamp {
+    var on: bool := false
+
+    @Trace
+    tran toggle(partner: Lamp) {
+        on := !on
+    }
+}
+
+class Room {
+    contains lamp: Lamp
+}
+
+// Reachable: only the kitchen lamp toggles.
+@VerificationCase
+@Tag("expect-pass")
+class TracedChoiceBranchReach {
+    contains kitchen: Room
+    contains hall: Room
+
+    redefine tran {
+        choice {
+            inline kitchen.lamp.toggle(hall.lamp)
+        } or {
+            inline hall.lamp.toggle(kitchen.lamp)
+        }
+    }
+
+    prop {
+        return EF (kitchen.lamp.on && !hall.lamp.on)
+    }
+}
+
+// Dual: exactly one lamp toggles per step, so the lamps differ after
+// every odd step and agree after every even one.
+@VerificationCase
+@Tag("expect-pass")
+class TracedChoiceBranchParity {
+    contains kitchen: Room
+    contains hall: Room
+    var odd: bool := false
+
+    redefine tran {
+        odd := !odd
+        choice {
+            inline kitchen.lamp.toggle(hall.lamp)
+        } or {
+            inline hall.lamp.toggle(kitchen.lamp)
+        }
+    }
+
+    prop {
+        return AG ((kitchen.lamp.on != hall.lamp.on) == odd)
+    }
+}

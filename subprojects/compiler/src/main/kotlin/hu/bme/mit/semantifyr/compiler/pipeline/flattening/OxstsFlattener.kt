@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.DomainMappingSerializer
+import hu.bme.mit.semantifyr.compiler.pipeline.context.ArraySlot
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlatteningInfo
 import hu.bme.mit.semantifyr.compiler.pipeline.context.InlinedCompilationContext
@@ -102,8 +103,9 @@ class OxstsFlattener @Inject constructor(
         rewriteVariableReferences(inlinedOxsts, instanceTree, variableMappings)
 
         logger.debug { "Flattening array variables" }
-        val flattenedArrayCount = arrayFlatteningPass.flattenArrays(inlinedOxsts)
-        logger.debug { "Flattened $flattenedArrayCount array variable(s)" }
+        val arraySlotVariables = arrayFlatteningPass.flattenArrays(inlinedOxsts)
+        logger.debug { "Flattened ${arraySlotVariables.size} array variable(s)" }
+        val arraySlots = registerArraySlots(arraySlotVariables, variableHolders, variableMappings)
 
         logger.debug { "Rewriting feature-typed variables" }
         rewriteFeatureTypedVariables(inlinedOxsts, variableInstanceDomain)
@@ -129,6 +131,7 @@ class OxstsFlattener @Inject constructor(
             variableInstanceDomains = variableInstanceDomain.filterKeys { it in survivingVariables },
             variableMappings = survivingMappings,
             instanceIdMapping = instanceIdMapping,
+            arraySlots = arraySlots.filterKeys { it in survivingVariables },
         )
 
         return inlinedCompilationContext.flattened(flatteningInfo)
@@ -162,6 +165,25 @@ class OxstsFlattener @Inject constructor(
             }
             variableMappings[instance] = instanceMappings
         }
+    }
+
+    private fun registerArraySlots(
+        arraySlotVariables: Map<VariableDeclaration, List<VariableDeclaration>>,
+        variableHolders: MutableMap<VariableDeclaration, Instance>,
+        variableMappings: Map<Instance, Map<VariableDeclaration, VariableDeclaration>>,
+    ): Map<VariableDeclaration, ArraySlot> {
+        val arraySlots = mutableMapOf<VariableDeclaration, ArraySlot>()
+        for ((arrayVariable, slotVariables) in arraySlotVariables) {
+            val holder = variableHolders[arrayVariable] ?: continue
+            val originalVariable = variableMappings.getValue(holder).entries.single {
+                it.value == arrayVariable
+            }.key
+            for ((index, slotVariable) in slotVariables.withIndex()) {
+                variableHolders[slotVariable] = holder
+                arraySlots[slotVariable] = ArraySlot(originalVariable, index)
+            }
+        }
+        return arraySlots
     }
 
     private fun pullDownVariable(

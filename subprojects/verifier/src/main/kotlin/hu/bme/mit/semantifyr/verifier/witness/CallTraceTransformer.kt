@@ -67,7 +67,7 @@ class CallTraceTransformer @Inject constructor(
         traces: TransitionCallTraceMap,
     ): CallTrace {
         return CallTrace(
-            transformCallTraceStep(classWitness.initialState, traces),
+            transformCallTraceStep(classWitness.initialStepState, traces),
             classWitness.transitionStates.map {
                 transformCallTraceStep(it, traces)
             },
@@ -76,12 +76,16 @@ class CallTraceTransformer @Inject constructor(
 
     fun transformWitnessState(classWitness: ClassWitness): WitnessState {
         return WitnessState(
-            transformWitnessStateStep(classWitness.initialState),
+            transformWitnessStateStep(classWitness.initialStepState),
             classWitness.transitionStates.map {
                 transformWitnessStateStep(it)
             },
         )
     }
+
+    // after init: init's traced calls fire there, and linear witnesses have an empty pre-init state
+    private val ClassWitness.initialStepState: ClassWitnessState
+        get() = initializedState ?: initialState
 
     private fun transformCallTraceStep(
         state: ClassWitnessState,
