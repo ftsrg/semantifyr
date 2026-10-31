@@ -169,19 +169,11 @@ public class OxstsUtils {
     }
 
     public static Expression getAnnotationValue(Annotation annotation, ParameterDeclaration parameterDeclaration) {
-        var argument = annotation.getArguments().stream()
-                .filter(a -> a.getParameter() == parameterDeclaration)
-                .findFirst()
-                .orElse(null);
-
+        var position = annotation.getDeclaration().getParameters().indexOf(parameterDeclaration);
+        var argument = getArgumentFor(annotation.getArguments(), parameterDeclaration, position);
         if (argument == null) {
-            var position = annotation.getDeclaration().getParameters().indexOf(parameterDeclaration);
-            if (annotation.getArguments().size() <= position) {
-                return null;
-            }
-            argument = annotation.getArguments().get(position);
+            return null;
         }
-
         return argument.getExpression();
     }
 

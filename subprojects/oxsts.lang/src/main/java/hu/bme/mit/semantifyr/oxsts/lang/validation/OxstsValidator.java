@@ -476,13 +476,10 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
         var parameters = declaration.getParameters();
         var arguments = annotation.getArguments();
-        int positional = 0;
-        for (var argument : arguments) {
-            if (argument.getParameter() != null) {
-                checkArgumentAssignableToParameter(argument, argument.getParameter());
-            } else if (positional < parameters.size()) {
-                checkArgumentAssignableToParameter(argument, parameters.get(positional));
-                positional++;
+        for (int i = 0; i < parameters.size(); i++) {
+            var argument = OxstsUtils.getArgumentFor(arguments, parameters.get(i), i);
+            if (argument != null) {
+                checkArgumentAssignableToParameter(argument, parameters.get(i));
             }
         }
     }
