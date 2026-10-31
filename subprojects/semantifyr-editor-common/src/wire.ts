@@ -42,11 +42,49 @@ export const VerificationStatus = {
 
 export type VerificationStatus = (typeof VerificationStatus)[keyof typeof VerificationStatus];
 
+export interface PassStats {
+    name: string;
+    duration: string;
+    runs: number;
+    firings: number;
+}
+
+export interface AnalysisStats {
+    name: string;
+    duration: string;
+    computations: number;
+}
+
+export interface OptimizationStats {
+    duration: string;
+    passes: PassStats[];
+    analyses: AnalysisStats[];
+}
+
+export interface ModelSize {
+    variables: number;
+    operations: number;
+    expressions: number;
+}
+
+export interface CompilationMetrics {
+    createDuration: string;
+    instantiationDuration: string;
+    inliningDuration: string;
+    flatteningDuration: string;
+    inliningOptimization: OptimizationStats;
+    flatteningOptimization: OptimizationStats;
+    inputSize: ModelSize;
+    inlinedSize: ModelSize;
+    flattenedSize: ModelSize;
+}
+
 export interface VerificationMetrics {
     totalDuration: string;
     preparationDuration: string;
     verificationDuration: string;
     backAnnotationDuration: string;
+    compilation?: CompilationMetrics;
 }
 
 export interface TraceArgument {
