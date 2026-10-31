@@ -28,6 +28,15 @@ const importedSysmlv2Compiled = import.meta.glob('./snippets/imported/sysmlv2/*.
   eager: true,
 });
 
+interface SysmlCorpusManifest {
+  models: { file: string; example?: { label: string; description: string } }[];
+}
+
+export const importedSysmlv2Manifest = import.meta.glob<SysmlCorpusManifest>('./snippets/imported/sysmlv2/manifest.json', {
+  import: 'default',
+  eager: true,
+});
+
 export type LiveFlavorId =
   | 'oxsts'
   | 'oxsts-with-gamma-library'
@@ -73,28 +82,11 @@ const TUTORIAL_OXSTS: readonly ImportedDescriptor[] = [
   },
 ];
 
-const SYSMLV2_IMPORTED: readonly ImportedDescriptor[] = [
-  {
-    id: 'compressedspacecraft',
-    label: 'Spacecraft (compressed)',
-    description: 'Compressed variant of the spacecraft model.',
-  },
-  {
-    id: 'crossroads',
-    label: 'Crossroads',
-    description: 'Two coordinated traffic lights at an intersection.',
-  },
-  {
-    id: 'door_access',
-    label: 'Door access',
-    description: 'Door-access model with parallel state regions.',
-  },
-  {
-    id: 'orion_protocol',
-    label: 'Orion protocol',
-    description: 'Orion protocol with item flows and timing transitions.',
-  },
-];
+const SYSMLV2_IMPORTED: readonly ImportedDescriptor[] = Object.values(importedSysmlv2Manifest).flatMap((manifest) =>
+  manifest.models.flatMap((model) =>
+    model.example ? [{ id: model.file.replace(/\.sysml$/, ''), ...model.example }] : [],
+  ),
+);
 
 const GAMMA_IMPORTED: readonly ImportedDescriptor[] = [
   {
