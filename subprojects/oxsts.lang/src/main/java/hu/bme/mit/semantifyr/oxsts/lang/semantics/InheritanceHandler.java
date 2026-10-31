@@ -75,7 +75,12 @@ public class InheritanceHandler {
     protected List<? extends DomainDeclaration> computeSuperDomains(FeatureDeclaration featureDeclaration) {
         var superDomains = new ArrayList<DomainDeclaration>();
 
-        var domain = featureDeclaration.getTypeSpecification().getDomain();
+        var typeSpecification = featureDeclaration.getTypeSpecification();
+        if (typeSpecification == null) {
+            return superDomains;
+        }
+
+        var domain = typeSpecification.getDomain();
         if (domain != null) {
             if (!domain.eIsProxy()) {
                 superDomains.add(domain);
