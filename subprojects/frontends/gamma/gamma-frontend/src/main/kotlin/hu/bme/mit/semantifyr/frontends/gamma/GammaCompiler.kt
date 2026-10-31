@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import com.google.inject.Provider
 import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
+import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaNameStore
 import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaToOxstsSerializer
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
@@ -22,17 +23,14 @@ class GammaCompiler @Inject constructor(
 
     private val logger by loggerFactory()
 
-    fun compile(gammaModel: GammaModelPackage, outputPath: Path) {
+    fun compile(gammaModel: GammaModelPackage, outputPath: Path): GammaNameStore {
         logger.info { "Compiling Gamma package '${gammaModel.name}'" }
-        val output = serialize(gammaModel)
+        val serializer = gammaToOxstsSerializerProvider.get()
+        val output = serializer.transformToOxsts(gammaModel)
         val outputFile = outputPath.toFile()
         outputFile.parentFile?.mkdirs()
         outputFile.writeText(output)
-    }
-
-    private fun serialize(gammaModel: GammaModelPackage): String {
-        logger.info { "Serializing Gamma package '${gammaModel.name}'" }
-        return gammaToOxstsSerializerProvider.get().transformToOxsts(gammaModel)
+        return serializer.nameStore
     }
 
 }

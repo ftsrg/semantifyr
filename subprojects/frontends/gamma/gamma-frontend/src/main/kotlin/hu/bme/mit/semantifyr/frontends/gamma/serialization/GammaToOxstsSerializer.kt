@@ -61,6 +61,8 @@ import hu.bme.mit.semantifyr.utils.text.buildIndented
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 
 class GammaToOxstsSerializer {
+    val nameStore = GammaNameStore()
+
     fun transformToOxsts(gammaPackage: GammaModelPackage) = buildIndented {
         appendLine("package ${gammaPackage.name}")
         appendLine()
@@ -104,8 +106,9 @@ class GammaToOxstsSerializer {
     }
 
     private fun IndentingStringBuilder.serialize(event: EventDeclaration) {
+        val name = nameStore.declare(event.eContainer(), event, event.name)
         appendLine("@Shared")
-        appendLine("contains ${event.name}: Event subsets ${getEventDirection(event)}")
+        appendLine("contains $name: Event subsets ${getEventDirection(event)}")
     }
 
     private fun IndentingStringBuilder.serialize(component: ComponentDeclaration) = when (component) {
@@ -146,23 +149,28 @@ class GammaToOxstsSerializer {
     }
 
     private fun IndentingStringBuilder.serialize(port: PortDeclaration) {
-        appendIndent("contains ${port.name}: ${getPortType(port)} subsets ports") {
-            appendLine("redefine contains interface: ${port.`interface`.name}")
+        val name = nameStore.declare(port.eContainer(), port, port.name)
+        appendIndent("contains $name: ${getPortType(port)} subsets ports") {
+            val interfaceName = nameStore.declare(port, port.`interface`, "interface")
+            appendLine("redefine contains $interfaceName: ${port.`interface`.name}")
         }
     }
 
     private fun IndentingStringBuilder.serialize(portBinding: PortBinding) {
+        val name = nameStore.declare(portBinding.eContainer(), portBinding.port, portBinding.port.name)
         appendLine(
-            "refers ${portBinding.port.name}: Port subsets ports = ${portBinding.boundPort.instance.name}.${portBinding.boundPort.port.name}",
+            "refers $name: Port subsets ports = ${portBinding.boundPort.instance.name}.${portBinding.boundPort.port.name}",
         )
     }
 
     private fun IndentingStringBuilder.serialize(instance: ComponentInstance) {
-        appendLine("contains ${instance.name}: ${instance.component.name} subsets components")
+        val name = nameStore.declareTyped(instance.eContainer(), instance, instance.name, instance.component)
+        appendLine("contains $name: ${instance.component.name} subsets components")
     }
 
     private fun IndentingStringBuilder.serialize(channel: Channel) {
-        appendIndent("contains ${channel.name}: Channel subsets channels") {
+        val name = nameStore.declareGenerated(channel.eContainer(), channel, "channel")
+        appendIndent("contains $name: Channel subsets channels") {
             appendLine("redefine refers inputPort: Port = ${channel.providedPort.instance.name}.${channel.providedPort.port.name}")
             appendLine("redefine refers outputPort: Port = ${channel.requiredPort.instance.name}.${channel.requiredPort.port.name}")
         }
@@ -211,7 +219,8 @@ class GammaToOxstsSerializer {
     }
 
     private fun IndentingStringBuilder.serialize(variable: VariableDeclaration) {
-        appendIndent("contains ${variable.name}: ${getTypeReferenceName(variable.type)}Variable subsets variables") {
+        val name = nameStore.declare(variable.eContainer(), variable, variable.name)
+        appendIndent("contains $name: ${getTypeReferenceName(variable.type)}Variable subsets variables") {
             if (variable.default != null) {
                 val default = serializeInline(variable.default)
 
@@ -221,11 +230,13 @@ class GammaToOxstsSerializer {
     }
 
     private fun IndentingStringBuilder.serialize(timeout: TimeoutDeclaration) {
-        appendLine("contains ${timeout.name}: Timeout subsets timeouts")
+        val name = nameStore.declare(timeout.eContainer(), timeout, timeout.name)
+        appendLine("contains $name: Timeout subsets timeouts")
     }
 
     private fun IndentingStringBuilder.serialize(region: Region) {
-        appendIndent("contains ${region.name}: Region subsets regions") {
+        val name = nameStore.declare(region.eContainer(), region, region.name)
+        appendIndent("contains $name: Region subsets regions") {
             for (state in region.states) {
                 serialize(state)
             }
@@ -237,7 +248,8 @@ class GammaToOxstsSerializer {
     }
 
     private fun IndentingStringBuilder.serialize(state: State) {
-        appendIndent("contains ${state.name}: State subsets states") {
+        val name = nameStore.declare(state.eContainer(), state, state.name)
+        appendIndent("contains $name: State subsets states") {
             for (action in state.entryActions) {
                 serialize(action, "entryActions")
             }
@@ -259,13 +271,15 @@ class GammaToOxstsSerializer {
     }
 
     private fun IndentingStringBuilder.serialize(transition: EntryTransition) {
-        appendIndent("contains ${transition.name}: EntryTransition subsets entryTransitions") {
+        val name = nameStore.declareGenerated(transition.eContainer(), transition, "transition")
+        appendIndent("contains $name: EntryTransition subsets entryTransitions") {
             appendLine("redefine refers to: State = ${transition.to.name}")
         }
     }
 
     private fun IndentingStringBuilder.serialize(transition: StateTransition) {
-        appendIndent("contains ${transition.name}: Transition subsets transitions") {
+        val name = nameStore.declareGenerated(transition.eContainer(), transition, "transition")
+        appendIndent("contains $name: Transition subsets transitions") {
             appendLine("redefine refers from: State = ${transition.from.name}")
             appendLine("redefine refers to: State = ${transition.to.name}")
 
@@ -318,7 +332,8 @@ class GammaToOxstsSerializer {
         action: RaiseEventAction,
         subsets: String,
     ) {
-        appendIndent("contains ${action.name}: RaiseEventAction subsets $subsets") {
+        val name = nameStore.declareGenerated(action.eContainer(), action, "action")
+        appendIndent("contains $name: RaiseEventAction subsets $subsets") {
             appendLine("redefine refers port: Port = ${action.port.name}")
             appendLine("redefine refers event: Event = ${action.port.name}.interface.${action.event.name}")
         }
@@ -328,7 +343,8 @@ class GammaToOxstsSerializer {
         action: SetTimeoutAction,
         subsets: String,
     ) {
-        appendIndent("contains ${action.name}: SetTimeoutAction subsets $subsets") {
+        val name = nameStore.declareGenerated(action.eContainer(), action, "action")
+        appendIndent("contains $name: SetTimeoutAction subsets $subsets") {
             appendLine("redefine refers timeout: Timeout = ${action.timeout.name}")
             serialize(action.value, "expression")
         }
@@ -338,7 +354,8 @@ class GammaToOxstsSerializer {
         action: AssignmentAction,
         subsets: String,
     ) {
-        appendIndent("contains ${action.name}: AssignmentAction subsets $subsets") {
+        val name = nameStore.declareGenerated(action.eContainer(), action, "action")
+        appendIndent("contains $name: AssignmentAction subsets $subsets") {
             appendLine("redefine refers variable: Variable = ${action.variable.name}")
             serialize(action.expression, "expression")
         }
@@ -347,7 +364,9 @@ class GammaToOxstsSerializer {
     private fun IndentingStringBuilder.serialize(verificationCase: VerificationCaseDeclaration) {
         appendLine("@VerificationCase")
         appendIndent("class ${verificationCase.name} : GammaVerificationCase") {
-            appendLine("contains ${verificationCase.component.name}: ${verificationCase.component.component.name} redefines component")
+            val component = verificationCase.component
+            val name = nameStore.declareTyped(verificationCase, component, component.name, component.component)
+            appendLine("contains $name: ${component.component.name} redefines component")
 
             serialize(verificationCase.expression, "propertyExpression")
         }
@@ -546,13 +565,4 @@ class GammaToOxstsSerializer {
         val node = NodeModelUtils.getNode(expression)
         return NodeModelUtils.getTokenText(node)
     }
-
-    private val actionNameProvider = EObjectNameProvider("action")
-    private val Action.name by actionNameProvider
-
-    private val transitionNameProvider = EObjectNameProvider("transition")
-    private val Transition.name by transitionNameProvider
-
-    private val channelNameProvider = EObjectNameProvider("channel")
-    private val Channel.name by channelNameProvider
 }
