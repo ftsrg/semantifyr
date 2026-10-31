@@ -54,10 +54,10 @@ export async function verifyCase(
         range: location.range,
         ...(options.portfolio ? { portfolio: options.portfolio } : {}),
     };
-    const response = await client.sendRequest(
-        "workspace/executeCommand",
-        { command: verificationCommand, arguments: [args] },
-        options.token,
-    ) as VerificationCaseResult | null;
-    return response;
+    const params = { command: verificationCommand, arguments: [args] };
+    // vscode-jsonrpc sends a trailing undefined as a second positional parameter, which lsp4j rejects
+    const response = options.token
+        ? await client.sendRequest("workspace/executeCommand", params, options.token)
+        : await client.sendRequest("workspace/executeCommand", params);
+    return response as VerificationCaseResult | null;
 }
