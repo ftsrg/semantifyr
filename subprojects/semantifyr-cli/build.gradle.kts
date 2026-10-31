@@ -57,8 +57,24 @@ testing {
     }
 }
 
+// cmd.exe rejects a line over 8191 characters, which the expanded jar list exceeds under a long install path
+val windowsClasspathJar = tasks.register<Jar>("windowsClasspathJar") {
+    val classPath = files(tasks.jar, configurations.runtimeClasspath).elements.map { elements ->
+        elements.joinToString(" ") { it.asFile.name }
+    }
+    inputs.property("classPath", classPath)
+    archiveFileName = "semantifyr-classpath.jar"
+    destinationDirectory = layout.buildDirectory.dir("windows-classpath")
+    manifest {
+        attributes("Class-Path" to classPath)
+    }
+}
+
 distributions.main {
     contents {
+        from(windowsClasspathJar) {
+            into("lib")
+        }
         from(tasks.named("cloneTheta")) {
             into("theta-xsts-cli")
             // archives get fixed permissions, which drop the launcher's execute bit
@@ -88,9 +104,15 @@ tasks.startScripts {
         script.writeText(text.replaceFirst("\nCLASSPATH=", "\nPATH=\$APP_HOME/theta-xsts-cli:\$PATH\nexport PATH\n\nCLASSPATH="))
 
         val windowsLaunch = "@rem endlocal doesn't take effect until after the line is parsed and variables are expanded\r\n@rem which allows us to clear the local environment before executing the java command\r\nendlocal & \"%JAVA_EXE%\""
+        val windowsClasspath = Regex("\r\nset CLASSPATH=[^\r\n]*")
         val windowsText = windowsScriptFile.readText()
         check(windowsLaunch in windowsText) { "${windowsScriptFile.name} has no endlocal launch line" }
-        windowsScriptFile.writeText(windowsText.replace(windowsLaunch, "set \"PATH=%APP_HOME%\\theta-xsts-cli;%PATH%\" & set \"CLASSPATH=\" & \"%JAVA_EXE%\""))
+        check(windowsClasspath in windowsText) { "${windowsScriptFile.name} has no CLASSPATH line" }
+        windowsScriptFile.writeText(
+            windowsText
+                .replace(windowsClasspath) { "\r\nset CLASSPATH=%APP_HOME%\\lib\\semantifyr-classpath.jar" }
+                .replace(windowsLaunch, "set \"PATH=%APP_HOME%\\theta-xsts-cli;%PATH%\"\r\nset \"CLASSPATH=\" & \"%JAVA_EXE%\""),
+        )
     }
 }
 
