@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.ServerConfig
 import hu.bme.mit.semantifyr.live.backend.SessionManagerConfig
+import hu.bme.mit.semantifyr.live.backend.VerificationConfig
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationExecutor
@@ -28,6 +29,7 @@ import hu.bme.mit.semantifyr.live.backend.testing.testInjector
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.server.testing.testApplication
 import io.ktor.websocket.Frame
+import kotlinx.coroutines.awaitCancellation
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.lsp4j.ExecuteCommandParams
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError
@@ -35,6 +37,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
+import kotlin.time.Duration.Companion.milliseconds
 
 class WebSocketVerificationFlowTest {
 
@@ -49,7 +52,7 @@ class WebSocketVerificationFlowTest {
         )
     }
 
-    private class FakeVerificationExecutor(private val behaviour: () -> Any?) : VerificationExecutor {
+    private class FakeVerificationExecutor(private val behaviour: suspend () -> Any?) : VerificationExecutor {
         val calls = mutableListOf<ExecuteCommandParams>()
         override suspend fun execute(
             sessionRequestManager: SessionRequestManager,
@@ -140,6 +143,30 @@ class WebSocketVerificationFlowTest {
             val result = awaitResponseFor(id = 2).resultAs(VerificationCaseResult::class.java)
             assertThat(result.status()).isEqualTo("errored")
             assertThat(result.message()).contains("verifier exploded")
+            assertThat(result.portfolioId()).isEqualTo("smart-full")
+        }
+    }
+
+    @Test
+    fun `a verification that outlasts the session timeout comes back as a timeout result over the socket`(@TempDir tmp: Path) = testApplication {
+        val executor = FakeVerificationExecutor {
+            awaitCancellation()
+        }
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(
+                testInjector(config(tmp).copy(verification = VerificationConfig(timeout = 200.milliseconds))) {
+                    bind(VerificationExecutor::class.java).toInstance(executor)
+                },
+            )
+        }
+
+        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
+            send(Frame.Text(LspWire.initializeRequest()))
+            awaitResponseFor(id = 1)
+            send(Frame.Text(verifyCommand(id = 2)))
+            val result = awaitResponseFor(id = 2).resultAs(VerificationCaseResult::class.java)
+            assertThat(result.status()).isEqualTo("timeout")
+            assertThat(result.message()).contains("timed out")
             assertThat(result.portfolioId()).isEqualTo("smart-full")
         }
     }

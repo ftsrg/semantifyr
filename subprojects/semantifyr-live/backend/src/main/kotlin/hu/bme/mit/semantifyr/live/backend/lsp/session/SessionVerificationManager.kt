@@ -94,7 +94,7 @@ class SessionVerificationManager @Inject constructor(
                 } catch (e: TimeoutCancellationException) {
                     val message = "Verification timed out after ${backendConfig.verification.timeout}"
                     logger.warn(e) { message }
-                    erroredResult(portfolioId, message)
+                    VerificationCaseResult(VerificationStatus.TIMEOUT, message, null, portfolioId, null, null)
                 } catch (e: CancellationException) {
                     logger.info(e) { "Verification cancelled" }
                     null

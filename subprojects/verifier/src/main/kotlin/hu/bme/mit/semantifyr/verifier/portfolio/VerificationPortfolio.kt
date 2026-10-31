@@ -63,12 +63,10 @@ sealed interface PortfolioOutcome {
         }
     }
 
-    data class AllErrored(val exceptions: List<Throwable>) : PortfolioOutcome {
+    data class AllErrored(val failures: List<String>) : PortfolioOutcome {
         override fun toBackendVerificationResult(startedAt: Instant): BackendVerificationResult {
-            val firstMessage = exceptions.firstOrNull()?.let {
-                "${it::class.simpleName}: ${it.message ?: ""}"
-            } ?: "(no message)"
-            val trailingCount = (exceptions.size - 1).coerceAtLeast(0)
+            val firstMessage = failures.firstOrNull() ?: "(no message)"
+            val trailingCount = (failures.size - 1).coerceAtLeast(0)
             val summary = if (trailingCount > 0) {
                 "$firstMessage (+$trailingCount more)"
             } else {
@@ -228,7 +226,7 @@ abstract class VerificationPortfolio {
      * Launch every job registered in [block] in parallel and wait for all of them (or [timeout]).
      * If every trusted result agrees, returns that verdict and records the untrusted legs it overrules.
      * Trusted results that disagree are Errored, since one of those legs is unsound; decisive results none of which is trusted are Inconclusive.
-     * Jobs that error are surfaced as [PortfolioOutcome.AllErrored] when nothing else reported.
+     * Jobs that error, by throwing or by returning Errored, are surfaced as [PortfolioOutcome.AllErrored] when nothing else reported.
      * Without a decisive result, a job that timed out or was still pending at [timeout] makes the outcome [PortfolioOutcome.TimedOut].
      */
     protected suspend fun all(
@@ -259,7 +257,7 @@ abstract class VerificationPortfolio {
                 val backends = collected.joinToString(", ") { it.metadata.backendId ?: "?" }
                 PortfolioOutcome.AllNotSupported("$id: every backend reported NotSupported ($backends)")
             }
-            decisive.isEmpty() && outcome is PortfolioOutcome.TimedOut -> outcome
+            decisive.isEmpty() && (outcome is PortfolioOutcome.TimedOut || outcome is PortfolioOutcome.AllErrored) -> outcome
             decisive.isEmpty() -> PortfolioOutcome.Decided(collected.first())
             trusted.isEmpty() -> outcome
             trusted.map { it.verdict }.distinct().size > 1 -> {
@@ -332,7 +330,14 @@ abstract class VerificationPortfolio {
                 val backends = collected.joinToString(", ") { it.metadata.backendId ?: "?" }
                 PortfolioOutcome.AllNotSupported("$id: every backend reported NotSupported ($backends)")
             }
-            errors.size == total -> PortfolioOutcome.AllErrored(errors)
+            errors.size + collected.count { it.verdict == VerificationVerdict.Errored } == total -> {
+                val failures = errors.map {
+                    "${it::class.simpleName}: ${it.message ?: ""}"
+                } + collected.map {
+                    "${it.metadata.backendId}: ${it.message ?: ""}"
+                }
+                PortfolioOutcome.AllErrored(failures)
+            }
             collected.any { it.verdict == VerificationVerdict.Timeout } -> {
                 val backends = collected.filter { it.verdict == VerificationVerdict.Timeout }.joinToString(", ") { it.metadata.backendId ?: "?" }
                 PortfolioOutcome.TimedOut("$id: no trusted verdict, timed out: $backends$observed")
