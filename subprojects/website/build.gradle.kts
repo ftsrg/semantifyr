@@ -52,6 +52,8 @@ fun cliReferenceTask(name: String, vararg arguments: String) = tasks.register<Ja
     }
     doLast {
         standardOutput.close()
+        val file = outputFile.get().asFile
+        file.writeText(file.readText().replace("\r\n", "\n"))
     }
 }
 
