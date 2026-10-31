@@ -9,6 +9,8 @@ package hu.bme.mit.semantifyr.oxsts.lang.tests.syntax;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.Inject;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG;
@@ -32,6 +34,9 @@ public class OperatorSyntaxTest {
 
     @Inject
     private OxstsPackageParseHelper parseHelper;
+
+    @Inject
+    private ConstantExpressionEvaluatorProvider constantExpressionEvaluatorProvider;
 
     @Test
     void arithmeticAdd() {
@@ -209,6 +214,50 @@ public class OperatorSyntaxTest {
         var ranges = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), RangeExpression.class);
         assertThat(ranges).hasSize(1);
         assertThat(ranges.getFirst().isExclusive()).isTrue();
+    }
+
+    @Test
+    void rangeInclusiveEvaluatesToBothBounds() {
+        var range = evaluateFirstRange("1..5");
+        assertThat(range.getLowerBound()).isEqualTo(1);
+        assertThat(range.getUpperBound()).isEqualTo(5);
+    }
+
+    @Test
+    void rangeExclusiveEvaluatesWithoutUpperBound() {
+        var range = evaluateFirstRange("1..<5");
+        assertThat(range.getLowerBound()).isEqualTo(1);
+        assertThat(range.getUpperBound()).isEqualTo(4);
+    }
+
+    @Test
+    void rangeExclusiveWithEqualBoundsIsEmpty() {
+        var range = evaluateFirstRange("2..<2");
+        assertThat(range.getLowerBound()).isEqualTo(2);
+        assertThat(range.getUpperBound()).isEqualTo(1);
+    }
+
+    @Test
+    void rangeExclusiveWithInfinityStaysUnbounded() {
+        var range = evaluateFirstRange("1..<*");
+        assertThat(range.getLowerBound()).isEqualTo(1);
+        assertThat(range.getUpperBound()).isEqualTo(RangeEvaluation.INFINITY);
+    }
+
+    private RangeEvaluation evaluateFirstRange(String rangeText) {
+        var pkg = parseHelper.parse("""
+            package test
+            class C {
+                var total: int := 0
+                redefine tran { inline for (n in %s) { total := total + 1 } }
+            }
+            """.formatted(rangeText));
+        pkg.assertNoResourceErrors();
+        var ranges = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), RangeExpression.class);
+        assertThat(ranges).hasSize(1);
+        var evaluation = constantExpressionEvaluatorProvider.evaluate(ranges.getFirst());
+        assertThat(evaluation).isInstanceOf(RangeEvaluation.class);
+        return (RangeEvaluation) evaluation;
     }
 
     @Test

@@ -25,6 +25,10 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
         var left = evaluate(expression.getLeft());
         var right = evaluate(expression.getRight());
 
+        if (expression.isExclusive() && right instanceof IntegerEvaluation(int upperValue)) {
+            right = new IntegerEvaluation(upperValue - 1);
+        }
+
         return RangeEvaluation.of(left, right);
     }
 
