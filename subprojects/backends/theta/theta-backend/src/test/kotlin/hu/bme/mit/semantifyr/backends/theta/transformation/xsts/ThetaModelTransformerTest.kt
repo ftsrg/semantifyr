@@ -63,6 +63,24 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
     }
 
     @Test
+    suspend fun `the serialized model separates its lines with a line feed alone`() {
+        val xsts = xsts(
+            """
+                var x : int := 0
+                var c : test::colors::Color := test::colors::Color::Red
+                init { x := 1 }
+                tran {
+                    choice { x := 1 } or { c := test::colors::Color::Green }
+                    if (x < 3) { x := 1 } else { x := 2 }
+                }
+                prop { AG x < 3 }
+            """,
+        )
+
+        assertThat(xsts).contains("\n").doesNotContain("\r")
+    }
+
+    @Test
     suspend fun `variables keep their types and initializers`() {
         val lines = xstsLines(
             """
