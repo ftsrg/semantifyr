@@ -40,20 +40,20 @@ class CopyPropagationPassTest : PassTestBase() {
     }
 
     @Test
-    fun `initializer plus a single tran write folds the property read to the init value`() = assertPassTransforms(
+    fun `a single init write does not fold the property read since the property holds before init too`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
             var a : int := 0
             init { a := 1 }
             tran { }
-            prop { AG (a != 27) }
+            prop { AG (a == 1) }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var a : int := 0
             init { a := 1 }
             tran { }
-            prop { AG (1 != 27) }
+            prop { AG (a == 1) }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -231,32 +231,26 @@ class CopyPropagationPassTest : PassTestBase() {
     }
 
     @Test
-    fun `init choice that writes on every branch counts as must-write so the initializer is masked`() = assertPassTransforms(
+    fun `a single init write folds a tran read since init masks the initializer there`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var current : int := -1
-            init {
-                choice {
-                    current := 0
-                } or {
-                    current := 1
-                }
+            var a : int := 0
+            var b : int := 0
+            init { a := 1 }
+            tran {
+                b := a
             }
-            tran { }
-            prop { AG (current != 99) }
+            prop { AG (b != 99) }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var current : int := -1
-            init {
-                choice {
-                    current := 0
-                } or {
-                    current := 1
-                }
+            var a : int := 0
+            var b : int := 0
+            init { a := 1 }
+            tran {
+                b := 1
             }
-            tran { }
-            prop { AG (current != 99) }
+            prop { AG (b != 99) }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {

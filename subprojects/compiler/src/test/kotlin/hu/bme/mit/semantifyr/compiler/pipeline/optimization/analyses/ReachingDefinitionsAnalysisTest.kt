@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test
 
 class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
     @Test
-    fun `property read after a single init write sees exactly that write`() {
+    fun `property read after a single init write sees that write and the initializer`() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
@@ -38,11 +38,11 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val defs = result.definitionsOf[propertyRead]!!
 
         val initWrite = inlined.assignmentsTo(a).single()
-        assertThat(defs).containsExactly(initWrite as EObject)
+        assertThat(defs).containsExactlyInAnyOrder(initWrite as EObject, a as EObject)
     }
 
     @Test
-    fun `property read sees every write to a variable`() {
+    fun `property read sees every write to a variable and the initializer`() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
@@ -65,7 +65,7 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         for (write in writes) {
             assertThat(defs).contains(write as EObject)
         }
-        assertThat(defs).doesNotContain(a as EObject)
+        assertThat(defs).contains(a as EObject)
     }
 
     @Test
@@ -98,11 +98,12 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
     }
 
     @Test
-    fun `property read of variable with init choice writing on every branch does not see the initializer`() {
+    fun `tran read of variable with init choice writing on every branch does not see the initializer`() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
                 var current : int := -1
+                var copy : int := 0
                 init {
                     choice {
                         current := 0
@@ -110,14 +111,15 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
                         current := 1
                     }
                 }
-                tran { }
-                prop { AG (current != 99) }
+                tran {
+                    copy := current
+                }
+                prop { AG true }
             """,
         )
 
         val current = inlined.varNamed("current")
-        val propertyRead = inlined.findPropertyReadOf(current)
-        val defs = result.definitionsOf[propertyRead]!!
+        val defs = result.definitionsOf[inlined.tranReadOf(current, "copy")]!!
 
         val writes = inlined.assignmentsTo(current)
         assertThat(defs).containsExactlyInAnyOrderElementsOf(writes.map { it as EObject })
@@ -125,30 +127,29 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
     }
 
     @Test
-    fun `property read of variable with init choice that has an empty branch sees the initializer`() {
+    fun `tran read of variable with init choice that has an empty branch sees the initializer`() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
                 var current : int := -1
+                var copy : int := 0
                 init {
                     choice {
                         current := 0
                     } or { }
                 }
-                tran { }
-                prop { AG (current != 99) }
+                tran {
+                    copy := current
+                }
+                prop { AG true }
             """,
         )
 
         val current = inlined.varNamed("current")
-        val propertyRead = inlined.findPropertyReadOf(current)
-        val defs = result.definitionsOf[propertyRead]!!
+        val defs = result.definitionsOf[inlined.tranReadOf(current, "copy")]!!
 
-        val writes = inlined.assignmentsTo(current)
-        assertThat(defs).contains(current as EObject)
-        for (write in writes) {
-            assertThat(defs).contains(write as EObject)
-        }
+        val write = inlined.assignmentsTo(current).single()
+        assertThat(defs).containsExactlyInAnyOrder(write as EObject, current as EObject)
     }
 
     @Test
@@ -179,19 +180,21 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var a : int := 0
+                var b : int := 0
                 init {
                     if (true) {
                         a := 1
                     }
                 }
-                tran { }
-                prop { AG (a != 99) }
+                tran {
+                    b := a
+                }
+                prop { AG true }
             """,
         )
 
         val a = inlined.varNamed("a")
-        val propertyRead = inlined.findPropertyReadOf(a)
-        val defs = result.definitionsOf[propertyRead]!!
+        val defs = result.definitionsOf[inlined.tranReadOf(a, "b")]!!
 
         val initWrite = inlined.assignmentsTo(a).single()
         assertThat(defs).containsExactlyInAnyOrder(initWrite as EObject, a as EObject)
@@ -203,6 +206,7 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var a : int := 0
+                var b : int := 0
                 init {
                     if (true) {
                         a := 1
@@ -210,14 +214,15 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
                         a := 2
                     }
                 }
-                tran { }
-                prop { AG (a != 99) }
+                tran {
+                    b := a
+                }
+                prop { AG true }
             """,
         )
 
         val a = inlined.varNamed("a")
-        val propertyRead = inlined.findPropertyReadOf(a)
-        val defs = result.definitionsOf[propertyRead]!!
+        val defs = result.definitionsOf[inlined.tranReadOf(a, "b")]!!
 
         val writes = inlined.assignmentsTo(a)
         assertThat(defs).containsExactlyInAnyOrderElementsOf(writes.map { it as EObject })
@@ -331,6 +336,12 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
                 it.element === variable
             }
         }.toList()
+    }
+
+    private fun InlinedOxsts.tranReadOf(variable: VariableDeclaration, target: String): Expression {
+        val read = assignmentsTo(varNamed(target)).single().expression as ElementReference
+        assertThat(read.element).isSameAs(variable)
+        return read
     }
 
     private fun InlinedOxsts.findPropertyReadOf(variable: VariableDeclaration): Expression {
