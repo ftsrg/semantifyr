@@ -7,12 +7,15 @@
 package hu.bme.mit.semantifyr.backends.spin.verification
 
 import hu.bme.mit.semantifyr.backend.BackendConfig
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 
 data class SpinConfig(
     override val id: String,
     val extraArguments: List<String> = emptyList(),
     val maxSearchDepth: Int? = null,
 ) : BackendConfig {
+    override val soundness = SoundnessDirection.UnderApproximating
+
     companion object {
         val ExhaustiveDfs = SpinConfig(
             id = "exhaustive-dfs",
