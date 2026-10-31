@@ -9,11 +9,13 @@ package hu.bme.mit.semantifyr.benchmark.verification
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.execution.Runexec
 import hu.bme.mit.semantifyr.benchmark.Cell
 import hu.bme.mit.semantifyr.benchmark.CellAction
 import hu.bme.mit.semantifyr.benchmark.CpuClock
 import hu.bme.mit.semantifyr.benchmark.Measurement
 import hu.bme.mit.semantifyr.benchmark.Outcome
+import hu.bme.mit.semantifyr.benchmark.RunexecTotals
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
@@ -21,11 +23,13 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationReport
 import hu.bme.mit.semantifyr.verifier.qualifiedNameToDirectoryName
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.ResourceSet
 import java.nio.file.Path
 import java.util.UUID
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.createDirectories
 import kotlin.io.path.readText
 import kotlin.time.Duration
@@ -36,6 +40,7 @@ class VerificationCellAction(
     private val timeout: Duration,
     private val environment: ExecutionEnvironment,
     private val modelDirectory: Path,
+    private val runexecOptions: List<String>? = null,
 ) : CellAction {
     private val logger by loggerFactory()
 
@@ -73,9 +78,15 @@ class VerificationCellAction(
                 .optimization(cell[VerificationAxes.optimization].config)
                 .build()
 
+            // runexec enforces the CPU-time limit, the verifier still enforces the wall-time one
+            val runexec = runexecOptions?.let {
+                Runexec(it + listOf("--timelimit", timeout.inWholeSeconds.toString()))
+            }
             val cpuBefore = CpuClock.sample()
             val mark = TimeSource.Monotonic.markNow()
-            verifier.verify(verificationCase)
+            withContext(runexec ?: EmptyCoroutineContext) {
+                verifier.verify(verificationCase)
+            }
             val wallTime = mark.elapsedNow()
             val cpu = CpuClock.sample() - cpuBefore
 
@@ -90,6 +101,9 @@ class VerificationCellAction(
                 wallTime = wallTime,
                 cpuTime = cpu.total,
                 backendCpuTime = cpu.children,
+                runexec = runexec?.runs?.takeIf { it.isNotEmpty() }?.let {
+                    RunexecTotals.of(it)
+                },
                 message = result.message,
                 metrics = result.metrics,
                 extensions = prepared.extensions,

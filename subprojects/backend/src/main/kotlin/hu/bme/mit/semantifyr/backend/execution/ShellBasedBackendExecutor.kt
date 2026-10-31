@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.backend.execution
 
+import hu.bme.mit.semantifyr.backend.BackendTimeoutException
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
@@ -62,18 +63,31 @@ abstract class ShellBasedBackendExecutor : BackendExecutor {
 
         prepareOutputFiles(logFile, errorFile)
 
-        val logRedirect = logFile?.let {
-            ProcessBuilder.Redirect.appendTo(it)
-        } ?: ProcessBuilder.Redirect.DISCARD
+        val runexec = coroutineContext[Runexec]?.takeUnless { isWindows }
+        val runexecResults = runexec?.let {
+            File.createTempFile("runexec-", ".txt", workingDirectory)
+        }
 
-        val errorRedirect = errorFile?.let {
-            ProcessBuilder.Redirect.appendTo(it)
-        } ?: ProcessBuilder.Redirect.DISCARD
+        val builder = if (runexec != null && runexecResults != null) {
+            ProcessBuilder(runexec.wrap(listOf(binaryName) + args, workingDirectory, logFile, errorFile))
+                .redirectOutput(runexecResults)
+                .redirectErrorStream(true)
+        } else {
+            val logRedirect = logFile?.let {
+                ProcessBuilder.Redirect.appendTo(it)
+            } ?: ProcessBuilder.Redirect.DISCARD
 
-        val process = buildProcess(args)
+            val errorRedirect = errorFile?.let {
+                ProcessBuilder.Redirect.appendTo(it)
+            } ?: ProcessBuilder.Redirect.DISCARD
+
+            buildProcess(args)
+                .redirectOutput(logRedirect)
+                .redirectError(errorRedirect)
+        }
+
+        val process = builder
             .directory(workingDirectory)
-            .redirectOutput(logRedirect)
-            .redirectError(errorRedirect)
             .start()
 
         logger.debug { "$binaryName process started (pid ${process.pid()})" }
@@ -91,9 +105,28 @@ abstract class ShellBasedBackendExecutor : BackendExecutor {
             }
         }
 
-        val exitCode = process.exitValue()
+        val exitCode = if (runexec != null && runexecResults != null) {
+            runexecExitCode(runexec, runexecResults, process.exitValue())
+        } else {
+            process.exitValue()
+        }
         logger.info { "$binaryName exited with code $exitCode" }
         exitCode
+    }
+
+    private fun runexecExitCode(
+        runexec: Runexec,
+        results: File,
+        runexecExitCode: Int,
+    ): Int {
+        val output = results.readText()
+        val run = RunexecRun.parse(output)
+        runexec.record(run)
+        if (run.isTimeout) {
+            throw BackendTimeoutException("$binaryName exceeded the runexec ${run.terminationReason} limit")
+        }
+        check(run.terminationReason != "memory") { "$binaryName exceeded the runexec memory limit" }
+        return run.exitCode ?: error("runexec exited with $runexecExitCode without running $binaryName: ${output.lines().lastOrNull { it.isNotBlank() }.orEmpty()}")
     }
 
     private fun buildProcess(args: List<String>): ProcessBuilder {

@@ -14,10 +14,13 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
+import hu.bme.mit.semantifyr.backend.execution.Runexec
+import hu.bme.mit.semantifyr.backend.execution.RunexecRun
 import hu.bme.mit.semantifyr.benchmark.BenchmarkRecord
 import hu.bme.mit.semantifyr.benchmark.CampaignRunner
 import hu.bme.mit.semantifyr.benchmark.Outcome
 import hu.bme.mit.semantifyr.benchmark.ResultStore
+import hu.bme.mit.semantifyr.benchmark.RunexecTotals
 import hu.bme.mit.semantifyr.benchmark.campaign
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
@@ -28,6 +31,7 @@ import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
+import kotlinx.coroutines.currentCoroutineContext
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.emf.ecore.resource.ResourceSet
 import org.junit.jupiter.api.Test
@@ -97,6 +101,36 @@ class VerificationCellActionTest {
         }
     }
 
+    private class RunexecReadingPortfolio(
+        private val delegate: VerificationPortfolio,
+    ) : VerificationPortfolio() {
+        var options: List<String>? = null
+
+        override val id = delegate.id
+        override val displayName = delegate.displayName
+        override val description = delegate.description
+        override val executorKeys: Set<ExecutorKey<*>> = delegate.executorKeys
+
+        override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
+            return AvailabilityReport.Available
+        }
+
+        override suspend fun verify(
+            parentInjector: Injector,
+            request: BackendVerificationRequest,
+            gate: ConcurrencyGate,
+            environment: ExecutionEnvironment,
+            progress: ProgressContext,
+        ): BackendVerificationResult {
+            currentCoroutineContext()[Runexec]?.let {
+                options = it.options
+                it.record(RunexecRun(returnValue = 0, exitSignal = null, terminationReason = null, wallTime = 2.seconds, cpuTime = 3.seconds, memory = 1000))
+                it.record(RunexecRun(returnValue = 0, exitSignal = null, terminationReason = null, wallTime = 1.seconds, cpuTime = 1.seconds, memory = 4000))
+            }
+            return delegate.verify(parentInjector, request, gate, environment, progress)
+        }
+    }
+
     private fun fakePortfolio(verdict: VerificationVerdict, config: String = "fake"): ProbedPortfolio {
         return ProbedPortfolio(SingleBackendPortfolio(FakeBackend.verdict("fake", verdict), FakeConfig(config)))
     }
@@ -105,6 +139,7 @@ class VerificationCellActionTest {
         model: BenchmarkModel,
         portfolios: List<VerificationPortfolio>,
         levels: List<OptimizationLevel> = listOf(OptimizationLevel.All),
+        runexecOptions: List<String>? = null,
     ): List<BenchmarkRecord> {
         val campaign = campaign("smoke") {
             axis(VerificationAxes.model, listOf(model))
@@ -116,7 +151,7 @@ class VerificationCellActionTest {
             repetitions = 1
             warmups = 0
         }
-        val action = VerificationCellAction(injector, 10.seconds, ExecutionEnvironment.builder().build(), directory.resolve("models"))
+        val action = VerificationCellAction(injector, 10.seconds, ExecutionEnvironment.builder().build(), directory.resolve("models"), runexecOptions)
         return CampaignRunner(campaign, ResultStore(directory), action).run()
     }
 
@@ -169,6 +204,23 @@ class VerificationCellActionTest {
         assertThat(records).hasSize(2)
         assertThat(model.preparations).isEqualTo(1)
         assertThat(portfolio.probes).isEqualTo(1)
+    }
+
+    @Test
+    suspend fun `backend runs under runexec get the campaign timeout as CPU limit and are totalled`() {
+        val portfolio = RunexecReadingPortfolio(SingleBackendPortfolio(FakeBackend.verdict("fake", VerificationVerdict.Passed), FakeConfig()))
+
+        val record = runCampaign(SmokeModel(), listOf(portfolio), runexecOptions = listOf("--no-container")).single()
+
+        assertThat(portfolio.options).containsExactly("--no-container", "--timelimit", "10")
+        assertThat(record.measurement.runexec).isEqualTo(RunexecTotals(runs = 2, cpuTime = 4.seconds, wallTime = 3.seconds, peakMemory = 4000))
+    }
+
+    @Test
+    suspend fun `without runexec the record has no runexec totals`() {
+        val record = runCampaign(SmokeModel(), listOf(fakePortfolio(VerificationVerdict.Passed))).single()
+
+        assertThat(record.measurement.runexec).isNull()
     }
 
     @Test

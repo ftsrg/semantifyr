@@ -53,6 +53,8 @@ data class CellSummary(
     val wallTime: Statistic?,
     val cpuTime: Statistic?,
     val backendCpuTime: Statistic?,
+    val runexecCpuTime: Statistic?,
+    val peakMemory: Long?,
     val compilationTime: Statistic?,
     val optimizationTime: Statistic?,
     val backendTime: Statistic?,
@@ -88,6 +90,8 @@ fun summarize(records: List<BenchmarkRecord>): List<CellSummary> {
             wallTime = Statistic.of(measured.mapNotNull { it.wallTime }),
             cpuTime = Statistic.of(measured.mapNotNull { it.cpuTime }),
             backendCpuTime = Statistic.of(measured.mapNotNull { it.backendCpuTime }),
+            runexecCpuTime = Statistic.of(measured.mapNotNull { it.runexec?.cpuTime }),
+            peakMemory = measured.mapNotNull { it.runexec?.peakMemory }.maxOrNull(),
             compilationTime = Statistic.of(measured.mapNotNull { it.metrics?.verifier?.compilationDuration }),
             optimizationTime = Statistic.of(
                 measured.mapNotNull {

@@ -49,12 +49,19 @@ Running the task again resumes the campaign: completed and timed-out cells are k
 - `-Pbenchmark.fresh=true` discards the earlier results of the campaign.
 - `-Pbenchmark.baseline=<directory>` compares the median wall time of every cell with the results in another campaign output directory, failing when a cell is slower by more than `-Pbenchmark.timeTolerance` (default `0.2`, that is 20%).
 
+## Resource control with runexec
+
+When BenchExec's `runexec` is on `PATH` and can run a command, every backend process runs under it: runexec measures its CPU time and peak memory through cgroups and enforces a CPU-time limit equal to the campaign's timeout, and a backend stopped at that limit comes back as `Timeout`. `runexec` needs cgroups delegated to the user, which it arranges itself when the Python library `pystemd` is installed. Without a usable runexec the backends run directly and their CPU time comes from the JVM's reaped child processes, which misses a backend killed on a timeout.
+
+- `-Pbenchmark.runexec=false` runs the backends without runexec even when it is installed.
+- `-Pbenchmark.runexecOptions="--no-container --memlimit 8GB"` replaces the default options (`--no-container`). Container mode needs the backends' working directories given with `--full-access-dir`, or what they write is discarded.
+
 ## Reading the results
 
 The output is in `subprojects/benchmark/build/benchmark/<campaign>/`:
 
-- `results.jsonl` holds one record per run: the cell, the repetition, whether it was a warmup, the outcome (`Completed`, `TimedOut`, `Errored` or `Unavailable`), the verdict, the expected verdict, `asExpected` (false for a wrong decisive verdict, absent when the verdict is not decisive or nothing is expected), the falsification flag, the engine that decided, wall time, CPU time of the JVM and the backend processes together and of the backends alone, the verifier's metrics from `report.json` (phase durations, per-pass optimizer statistics, model sizes at input, inlined and flattened level), and what a frontend adds: `sysml` carries the SysML to OXSTS transformation time and counters of the input model.
-- `results.csv` has one row per cell: the median, minimum and maximum of each time over the measured repetitions, the model sizes and the frontend columns.
+- `results.jsonl` holds one record per run: the cell, the repetition, whether it was a warmup, the outcome (`Completed`, `TimedOut`, `Errored` or `Unavailable`), the verdict, the expected verdict, `asExpected` (false for a wrong decisive verdict, absent when the verdict is not decisive or nothing is expected), the falsification flag, the engine that decided, wall time, CPU time of the JVM and the backend processes together and of the backends alone, the totals runexec measured when it ran (CPU time, wall time, peak memory), the verifier's metrics from `report.json` (phase durations, per-pass optimizer statistics, model sizes at input, inlined and flattened level), and what a frontend adds: `sysml` carries the SysML to OXSTS transformation time and counters of the input model.
+- `results.csv` has one row per cell: the median, minimum and maximum of each time over the measured repetitions, the peak memory, the model sizes and the frontend columns.
 - `summary.md` aggregates the cells along every axis, and is also printed at the end of the run.
 - `engines.json` lists, for every case in the results, the engines that decided it correctly in this campaign. The corpus manifest is not updated from it.
 

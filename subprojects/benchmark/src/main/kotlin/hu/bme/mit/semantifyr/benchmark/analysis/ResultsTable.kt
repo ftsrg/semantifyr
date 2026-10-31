@@ -27,6 +27,7 @@ object ResultsTable {
             "decided_by",
             "repetitions",
         ) + statisticColumns("wall") + statisticColumns("cpu") + statisticColumns("backend_cpu") +
+            statisticColumns("runexec_cpu") + listOf("peak_memory_bytes") +
             statisticColumns("compilation") + statisticColumns("optimization") + statisticColumns("backend") +
             sizeColumns("input") + sizeColumns("inlined") + sizeColumns("flattened") + extensionColumns
         val rows = summaries.map { summary ->
@@ -41,6 +42,7 @@ object ResultsTable {
                 summary.decidedBy.joinToString("|"),
                 summary.repetitions.toString(),
             ) + statisticValues(summary.wallTime) + statisticValues(summary.cpuTime) + statisticValues(summary.backendCpuTime) +
+                statisticValues(summary.runexecCpuTime) + listOf(summary.peakMemory?.toString().orEmpty()) +
                 statisticValues(summary.compilationTime) + statisticValues(summary.optimizationTime) + statisticValues(summary.backendTime) +
                 sizeValues(summary.inputSize) + sizeValues(summary.inlinedSize) + sizeValues(summary.flattenedSize) +
                 extensionColumns.map {

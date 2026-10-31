@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.benchmark
 
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.execution.Runexec
 import hu.bme.mit.semantifyr.benchmark.analysis.CellSummary
 import hu.bme.mit.semantifyr.benchmark.analysis.EnginesReport
 import hu.bme.mit.semantifyr.benchmark.analysis.Reference
@@ -51,7 +52,7 @@ class BenchmarkOptions(
     }
 
     companion object {
-        private val FLAGS = setOf("fresh")
+        private val FLAGS = setOf("fresh", "no-runexec")
 
         fun parse(arguments: List<String>): BenchmarkOptions {
             require(arguments.size >= 2) { "usage: benchmark <run|reference> <campaign> [--option value]..." }
@@ -113,7 +114,7 @@ object Benchmark {
         if (options.flag("fresh")) {
             store.clear()
         }
-        val action = VerificationCellAction(injector, campaign.timeout, ExecutionEnvironment.builder().build(), store.directory.resolve("models"))
+        val action = VerificationCellAction(injector, campaign.timeout, ExecutionEnvironment.builder().build(), store.directory.resolve("models"), runexecOptions(options))
         val records = CampaignRunner(campaign, store, action).run()
         val summaries = analyze(campaign.name, records, store)
 
@@ -150,6 +151,21 @@ object Benchmark {
         return 0
     }
 
+    private fun runexecOptions(options: BenchmarkOptions): List<String>? {
+        if (options.flag("no-runexec")) {
+            return null
+        }
+        val runexecOptions = (options.value("runexec-options") ?: DEFAULT_RUNEXEC_OPTIONS).split(' ').filter {
+            it.isNotBlank()
+        }
+        if (!Runexec(runexecOptions).isUsable()) {
+            logger.info { "runexec is not installed or cannot run commands here, the backends run without it" }
+            return null
+        }
+        logger.info { "The backends run under runexec ${runexecOptions.joinToString(" ")}" }
+        return runexecOptions
+    }
+
     private fun analyze(
         campaign: String,
         records: List<BenchmarkRecord>,
@@ -170,6 +186,8 @@ object Benchmark {
 
     private const val DEFAULT_TIME_TOLERANCE = 0.2
 
+    // container mode would discard what the backends write into their working directories
+    private const val DEFAULT_RUNEXEC_OPTIONS = "--no-container"
 }
 
 suspend fun main(arguments: Array<String>) {
