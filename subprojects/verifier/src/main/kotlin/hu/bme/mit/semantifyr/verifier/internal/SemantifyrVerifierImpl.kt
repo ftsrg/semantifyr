@@ -18,11 +18,13 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.context.FlatteningInfo
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.Trace
@@ -44,6 +46,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import org.eclipse.emf.ecore.EObject
 import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.createDirectories
@@ -218,12 +221,21 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         val request = BackendVerificationRequest(
             inlinedOxsts = inlinedOxsts,
             artifactOutputPath = caseDirectoryFor(case.qualifiedName),
+            sourceElementOf = {
+                sourceElementOf(it, compilation.flatteningInfo)
+            },
         )
 
         val (result, duration) = measureTimedValue {
             semantifyrVerifierConfiguration.portfolio.verify(semantifyrVerifierConfiguration.injector, request, gate, semantifyrVerifierConfiguration.environment, progress)
         }
         return BackendOutcomeWithDuration(result, duration)
+    }
+
+    private fun sourceElementOf(element: EObject, flatteningInfo: FlatteningInfo): EObject {
+        val variable = element as? VariableDeclaration ?: return element
+        val holder = flatteningInfo.variableHolders[variable] ?: return element
+        return flatteningInfo.resolveOriginalVariable(holder, variable)
     }
 
     private fun backAnnotateWitness(

@@ -21,6 +21,10 @@ abstract class NuxmvTransformationTestBase {
         }
     }
 
+    protected fun capabilityChecker(): NuxmvCapabilityChecker {
+        return childInjector.getInstance(NuxmvCapabilityChecker::class.java)
+    }
+
     protected fun parse(source: String, vararg packages: String): InlinedOxsts {
         return models.parse(source, *packages)
     }

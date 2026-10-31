@@ -21,8 +21,10 @@ import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
+import hu.bme.mit.semantifyr.oxsts.lang.utils.SourceLocation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
@@ -34,6 +36,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.eclipse.emf.ecore.EObject
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
@@ -83,6 +86,23 @@ class SemantifyrVerifierImplTest {
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
         assertThat(result.message).contains("Timeout").contains("exceeded")
         assertThat(result.metadata.backendId).isNull()
+    }
+
+    @Test
+    suspend fun `the request maps flattened variables to their source declarations`(@TempDir output: Path) {
+        var sourceElements = emptyList<EObject>()
+        val portfolio = ScriptedPortfolio { request, _ ->
+            sourceElements = request.inlinedOxsts.variables.map {
+                request.sourceElementOf(it)
+            }
+            decisiveResult(VerificationVerdict.Passed)
+        }
+
+        build(portfolio, output, timeout = 5.seconds).verify(loadFirstCase())
+
+        val source = sourceElements.single() as VariableDeclaration
+        assertThat(source.name).isEqualTo("x")
+        assertThat(SourceLocation.prefixFor(source)).isEqualTo("simple.oxsts:12: ")
     }
 
     @Test

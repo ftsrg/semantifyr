@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.oxsts.lang.utils.SourceLocation
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.Duration
@@ -24,6 +25,8 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
 
     protected abstract val executor: BackendExecutor
 
+    protected open val capabilityChecker: BackendCapabilityChecker = BackendCapabilityChecker.Unlimited
+
     suspend fun execute(): BackendVerificationResult {
         val metadata = VerificationMetadata(
             backendId = backendId,
@@ -33,8 +36,13 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
         logger.info { "[$backendId] starting verification (output=${request.artifactOutputPath})" }
 
         return try {
-            executor.prepare()
-            runVerification(metadata)
+            val unsupported = capabilityChecker.check(request.inlinedOxsts)
+            if (unsupported.isEmpty()) {
+                executor.prepare()
+                runVerification(metadata)
+            } else {
+                notSupported(metadata, unsupported)
+            }
         } catch (c: CancellationException) {
             logger.debug { "[$backendId] cancelled" }
             throw c
@@ -55,6 +63,21 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
                 message = e.message ?: e::class.simpleName ?: "unknown error",
             )
         }
+    }
+
+    private fun notSupported(
+        metadata: VerificationMetadata,
+        unsupported: List<UnsupportedConstruct>,
+    ): BackendVerificationResult {
+        val constructs = unsupported.joinToString("; ") {
+            "${SourceLocation.prefixFor(request.sourceElementOf(it.element))}${it.description}"
+        }
+        logger.info { "[$backendId] verification not supported: $constructs" }
+        return BackendVerificationResult(
+            verdict = VerificationVerdict.NotSupported,
+            metadata = metadata,
+            message = "$backendId does not support $constructs",
+        )
     }
 
     private suspend fun runVerification(metadata: VerificationMetadata): BackendVerificationResult {

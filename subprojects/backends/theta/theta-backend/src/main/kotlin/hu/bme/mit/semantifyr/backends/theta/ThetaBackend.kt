@@ -28,6 +28,7 @@ import hu.bme.mit.semantifyr.backends.theta.backannotation.InlinedWitnessTransfo
 import hu.bme.mit.semantifyr.backends.theta.backannotation.XstsWitnessTransformer
 import hu.bme.mit.semantifyr.backends.theta.trace.ThetaLogVerdictParser
 import hu.bme.mit.semantifyr.backends.theta.trace.ThetaVerdict
+import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaCapabilityChecker
 import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaModelTransformer
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
@@ -71,6 +72,7 @@ class ThetaVerificationContext @AssistedInject constructor(
     @param:Assisted private val config: ThetaConfig,
     @param:Assisted override val executor: ThetaXstsExecutor,
     @Assisted request: BackendVerificationRequest,
+    override val capabilityChecker: ThetaCapabilityChecker,
     private val thetaModelTransformer: ThetaModelTransformer,
     private val thetaLogVerdictParser: ThetaLogVerdictParser,
     private val cexReader: CexReader,
