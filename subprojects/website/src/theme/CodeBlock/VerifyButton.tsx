@@ -9,10 +9,11 @@ import { useEffect, useRef, useState } from 'react';
 import {
   discoverVerificationCases,
   verifyCase,
+  type FlavorInfo,
   type LspClient,
   type VerificationStatus,
 } from '@semantifyr/editor-common';
-import { isLiveServerUp, normalizeBaseUrl, useLiveBackendUrl } from '@site/src/lib/live';
+import { fetchLiveSetup, normalizeBaseUrl, useLiveBackendUrl, type LiveSetup } from '@site/src/lib/live';
 import styles from './styles.module.css';
 
 interface Props {
@@ -45,14 +46,7 @@ interface ProgressParams {
   value: { kind: 'begin' | 'report' | 'end'; title?: string; message?: string };
 }
 
-interface InitializeResult {
-  capabilities?: { executeCommandProvider?: { commands?: string[] } };
-}
-
 const TIMEOUT_MS = 5 * 60 * 1000;
-
-// live requires a portfolio per verification; this is its editor's default
-const PORTFOLIO = 'smart-full';
 
 class LiveConnection implements LspClient {
   private readonly socket: WebSocket;
@@ -168,31 +162,26 @@ class LiveConnection implements LspClient {
 
 async function verifySnippet(
   connection: LiveConnection,
-  language: string,
+  flavor: FlavorInfo,
+  portfolio: string,
   code: string,
   onStep: (step: string) => void,
 ): Promise<CaseOutcome[]> {
-  const uri = `file:///workspace/snippet.${language}`;
-  const discoveryCommand = `${language}.case.discover`;
-  const verificationCommand = `${language}.case.verify`;
+  const uri = `file:///workspace/${flavor.fileName}`;
 
   onStep('Starting the language server');
-  const initialized = (await connection.sendRequest('initialize', {
+  await connection.sendRequest('initialize', {
     processId: null,
     rootUri: 'file:///workspace/',
     capabilities: { window: { workDoneProgress: true } },
-  })) as InitializeResult;
-  const commands = initialized.capabilities?.executeCommandProvider?.commands ?? [];
-  if (!commands.includes(discoveryCommand) || !commands.includes(verificationCommand)) {
-    throw new Error(`The live server cannot verify ${language} snippets`);
-  }
+  });
   connection.sendNotification('initialized', {});
   connection.sendNotification('textDocument/didOpen', {
-    textDocument: { uri, languageId: language, version: 1, text: code },
+    textDocument: { uri, languageId: flavor.languageId, version: 1, text: code },
   });
 
   onStep('Discovering verification cases');
-  const cases = await discoverVerificationCases(connection, discoveryCommand, uri);
+  const cases = await discoverVerificationCases(connection, flavor.discoveryCommand, uri);
   if (cases.length === 0) {
     throw new Error('No verification cases found in this snippet');
   }
@@ -202,9 +191,9 @@ async function verifySnippet(
     onStep(`Verifying ${verificationCase.label} (${index + 1}/${cases.length})`);
     const result = await verifyCase(
       connection,
-      verificationCommand,
+      flavor.verificationCommand,
       { uri, range: verificationCase.location.range },
-      { portfolio: PORTFOLIO },
+      { portfolio },
     );
     outcomes.push({
       label: verificationCase.label,
@@ -217,17 +206,24 @@ async function verifySnippet(
 
 export default function VerifyButton({ language, code }: Props): React.JSX.Element | null {
   const liveBackendUrl = useLiveBackendUrl();
-  const [online, setOnline] = useState<boolean | null>(null);
+  const [setup, setSetup] = useState<LiveSetup | 'checking' | 'unavailable'>('checking');
   const [state, setState] = useState<State>({ phase: 'idle' });
   const connectionRef = useRef<LiveConnection | null>(null);
 
   useEffect(() => {
     let active = true;
-    void isLiveServerUp(liveBackendUrl).then((up) => {
-      if (active) {
-        setOnline(up);
-      }
-    });
+    fetchLiveSetup(liveBackendUrl).then(
+      (fetched) => {
+        if (active) {
+          setSetup(fetched);
+        }
+      },
+      () => {
+        if (active) {
+          setSetup('unavailable');
+        }
+      },
+    );
     return () => {
       active = false;
     };
@@ -239,16 +235,21 @@ export default function VerifyButton({ language, code }: Props): React.JSX.Eleme
     };
   }, []);
 
-  if (online === null) {
+  if (setup === 'checking') {
     return null;
   }
-  if (!online) {
+  if (setup === 'unavailable') {
     return (
       <div className={styles.verifyContainer}>
         <span className={styles.verifyOffline}>Verification server is currently unavailable</span>
       </div>
     );
   }
+  const flavor = setup.flavors.find((candidate) => candidate.id === language);
+  if (flavor === undefined) {
+    return null;
+  }
+  const { defaultPortfolio } = setup;
 
   const start = async (): Promise<void> => {
     setState({ phase: 'running', step: 'Connecting to the live server', progress: null });
@@ -257,12 +258,12 @@ export default function VerifyButton({ language, code }: Props): React.JSX.Eleme
       connection?.abort(new Error('Verification timed out'));
     }, TIMEOUT_MS);
     try {
-      const url = `${normalizeBaseUrl(liveBackendUrl).ws}/ws/lsp/${encodeURIComponent(language)}`;
+      const url = `${normalizeBaseUrl(liveBackendUrl).ws}/ws/lsp/${encodeURIComponent(flavor.id)}`;
       connection = await LiveConnection.open(url, (progress) => {
         setState((previous) => (previous.phase === 'running' ? { ...previous, progress } : previous));
       });
       connectionRef.current = connection;
-      const cases = await verifySnippet(connection, language, code, (step) => {
+      const cases = await verifySnippet(connection, flavor, defaultPortfolio, code, (step) => {
         setState({ phase: 'running', step, progress: null });
       });
       setState({ phase: 'done', cases });

@@ -5,6 +5,7 @@
  */
 
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import type { FlavorInfo, FlavorsResponse, PortfoliosResponse } from '@semantifyr/editor-common';
 
 export interface LiveUrls {
   ws: string;
@@ -25,14 +26,27 @@ export function useLiveBackendUrl(): string {
   return siteConfig.customFields?.liveBackendUrl as string;
 }
 
-// Only /api/health answers cross-origin requests.
-export async function isLiveServerUp(liveBackendUrl: string): Promise<boolean> {
-  try {
-    const response = await fetch(`${normalizeBaseUrl(liveBackendUrl).http}/api/health`);
-    return response.ok;
-  } catch {
-    return false;
+export interface LiveSetup {
+  flavors: FlavorInfo[];
+  defaultPortfolio: string;
+}
+
+async function fetchJson<T>(url: string): Promise<T> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`${url} answered ${response.status}`);
   }
+  return (await response.json()) as T;
+}
+
+// Rejects when the live server is unreachable.
+export async function fetchLiveSetup(liveBackendUrl: string): Promise<LiveSetup> {
+  const base = normalizeBaseUrl(liveBackendUrl).http;
+  const [flavors, portfolios] = await Promise.all([
+    fetchJson<FlavorsResponse>(`${base}/api/flavors`),
+    fetchJson<PortfoliosResponse>(`${base}/api/portfolios`),
+  ]);
+  return { flavors: flavors.flavors, defaultPortfolio: portfolios.defaultPortfolio };
 }
 
 // Live decodes ?code= as base64url(gzip(text)).

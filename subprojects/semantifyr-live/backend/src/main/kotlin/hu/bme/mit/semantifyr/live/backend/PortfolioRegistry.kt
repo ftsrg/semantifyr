@@ -16,6 +16,8 @@ object PortfolioRegistry {
 
     data class Entry(val displayName: String, val portfolio: VerificationPortfolio)
 
+    val defaultPortfolio = Portfolios.SmartFull
+
     val entries = listOf(
         Entry("Auto", Portfolios.SmartFull),
         Entry("All agree", Portfolios.AllAgree),
