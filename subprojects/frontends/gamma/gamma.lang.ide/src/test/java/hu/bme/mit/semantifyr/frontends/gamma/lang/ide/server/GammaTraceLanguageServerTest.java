@@ -11,13 +11,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.ide.GammaIdeSetup;
-import hu.bme.mit.semantifyr.lang.ide.server.ServerSettings;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationStatus;
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup;
+import hu.bme.mit.semantifyr.portfolios.Portfolios;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -158,7 +158,7 @@ class GammaTraceLanguageServerTest {
         assertThat(result.status()).isEqualTo(WitnessValidationStatus.ERRORED);
         assertThat(result.verdict()).isNull();
         assertThat(result.message()).isEqualTo("Case Crossroads.ACanBeGreen has no witness yet, verify it first");
-        assertThat(result.portfolioId()).isEqualTo(ServerSettings.DEFAULT_PORTFOLIO_ID);
+        assertThat(result.portfolioId()).isEqualTo(Portfolios.INSTANCE.getDefault().getId());
     }
 
     private Object executeCommand(String command, Object argument) throws Exception {
