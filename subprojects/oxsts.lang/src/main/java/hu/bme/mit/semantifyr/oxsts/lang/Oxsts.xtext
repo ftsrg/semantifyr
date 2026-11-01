@@ -408,13 +408,33 @@ EF:
     'EF' body=BooleanOperator
 ;
 
-enum BooleanOp:
-    AND='&&' | OR='||' | XOR='^^' // | IFF='<->' | imply='->'
+enum OrOp returns BooleanOp:
+    OR='||' // | IFF='<->' | imply='->'
+;
+
+enum XorOp returns BooleanOp:
+    XOR='^^'
+;
+
+enum AndOp returns BooleanOp:
+    AND='&&'
 ;
 
 BooleanOperator returns Expression:
+    XorOperator -> (
+        {BooleanOperator.left=current} op=OrOp right=XorOperator
+    )*
+;
+
+XorOperator returns Expression:
+    AndOperator -> (
+        {BooleanOperator.left=current} op=XorOp right=AndOperator
+    )*
+;
+
+AndOperator returns Expression:
     ComparisonOperator -> (
-        {BooleanOperator.left=current} op=BooleanOp right=ComparisonOperator
+        {BooleanOperator.left=current} op=AndOp right=ComparisonOperator
     )*
 ;
 
