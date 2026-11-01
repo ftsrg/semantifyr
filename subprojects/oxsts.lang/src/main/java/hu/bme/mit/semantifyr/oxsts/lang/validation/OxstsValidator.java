@@ -33,6 +33,9 @@ import java.util.stream.Collectors;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.xtext.EcoreUtil2;
+import org.eclipse.xtext.Keyword;
+import org.eclipse.xtext.nodemodel.ICompositeNode;
+import org.eclipse.xtext.nodemodel.util.NodeModelUtils;
 import org.eclipse.xtext.resource.ILocationInFileProvider;
 import org.eclipse.xtext.validation.Check;
 import org.slf4j.Logger;
@@ -100,6 +103,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String MULTIPLE_INHERITANCE = ISSUE_PREFIX + "MULTIPLE_INHERITANCE";
     public static final String REDEFINITION_SIGNATURE_MISMATCH = ISSUE_PREFIX + "REDEFINITION_SIGNATURE_MISMATCH";
     public static final String RECURSIVE_RECORD = ISSUE_PREFIX + "RECURSIVE_RECORD";
+    public static final String MIXED_BOOLEAN_OPERATORS = ISSUE_PREFIX + "MIXED_BOOLEAN_OPERATORS";
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
@@ -1053,6 +1057,76 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public void checkBooleanOperandTypes(BooleanOperator operator) {
         requireBoolean(operator.getLeft(), "left boolean operand must be boolean");
         requireBoolean(operator.getRight(), "right boolean operand must be boolean");
+    }
+
+    // Temporary, for one release: until 2026-11-01 the three operators shared one level and read left to right.
+    @Check
+    public void checkMixedBooleanOperators(BooleanOperator operator) {
+        var leftNode = NodeModelUtils.findActualNodeFor(operator.getLeft());
+        var rightNode = NodeModelUtils.findActualNodeFor(operator.getRight());
+        if (leftNode == null || rightNode == null) {
+            return;
+        }
+        var leftMixed = isMixedWithoutParentheses(operator.getLeft(), leftNode, operator.getOp());
+        var rightMixed = isMixedWithoutParentheses(operator.getRight(), rightNode, operator.getOp());
+        if (!leftMixed && !rightMixed) {
+            return;
+        }
+        var reading = operandText(leftNode, leftMixed)
+                + " "
+                + operatorText(operator.getOp())
+                + " "
+                + operandText(rightNode, rightMixed);
+        acceptWarning(
+                "`&&` binds tighter than `^^`, which binds tighter than `||`, so this reads as `"
+                        + reading
+                        + "`; until November 2026 the three read left to right. Add parentheses to say which reading you mean.",
+                operator,
+                OxstsPackage.Literals.BOOLEAN_OPERATOR__OP,
+                -1,
+                MIXED_BOOLEAN_OPERATORS);
+    }
+
+    private static boolean isMixedWithoutParentheses(Expression operand, ICompositeNode node, BooleanOp op) {
+        return operand instanceof BooleanOperator child && child.getOp() != op && !isWrappedInParentheses(node);
+    }
+
+    private static boolean isWrappedInParentheses(ICompositeNode node) {
+        var depth = 0;
+        var first = true;
+        for (var leaf : node.getLeafNodes()) {
+            if (leaf.isHidden()) {
+                continue;
+            }
+            var keyword = leaf.getGrammarElement() instanceof Keyword k ? k.getValue() : null;
+            if (first) {
+                if (!"(".equals(keyword)) {
+                    return false;
+                }
+                first = false;
+            } else if (depth == 0) {
+                return false;
+            }
+            if ("(".equals(keyword)) {
+                depth++;
+            } else if (")".equals(keyword)) {
+                depth--;
+            }
+        }
+        return !first;
+    }
+
+    private static String operandText(ICompositeNode node, boolean parenthesize) {
+        var text = NodeModelUtils.getTokenText(node);
+        return parenthesize ? "(" + text + ")" : text;
+    }
+
+    private static String operatorText(BooleanOp op) {
+        return switch (op) {
+            case AND -> "&&";
+            case OR -> "||";
+            case XOR -> "^^";
+        };
     }
 
     @Check
