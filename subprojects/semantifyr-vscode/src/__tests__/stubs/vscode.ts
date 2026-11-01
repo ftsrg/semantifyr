@@ -139,7 +139,7 @@ export const TestRunProfileKind = { Run: 1, Debug: 2, Coverage: 3 } as const;
 
 export const ViewColumn = { Active: -1, Beside: -2, One: 1, Two: 2, Three: 3 } as const;
 
-export class TestItemCollection implements Iterable<[string, TestItem]> {
+class TestItemCollection implements Iterable<[string, TestItem]> {
     private readonly items = new Map<string, TestItem>();
 
     get size(): number {
@@ -184,11 +184,11 @@ export class TestItem {
     }
 }
 
-export type TestRunEvent =
+type TestRunEvent =
     | { kind: 'enqueued' | 'started' | 'passed' | 'skipped'; item: TestItem }
     | { kind: 'failed' | 'errored'; item: TestItem; message: TestMessage };
 
-export class TestRun {
+class TestRun {
     readonly events: TestRunEvent[] = [];
     ended = false;
 
@@ -225,7 +225,7 @@ export class TestRun {
     }
 }
 
-export interface TestRunProfile {
+interface TestRunProfile {
     label: string;
     kind: number;
     runHandler: (request: { include?: TestItem[]; exclude?: TestItem[] }, token: unknown) => Promise<void>;
@@ -266,7 +266,7 @@ export class TestController {
     dispose() {}
 }
 
-export class FileSystemWatcher {
+class FileSystemWatcher {
     readonly changed = new EventEmitter<Uri>();
     readonly created = new EventEmitter<Uri>();
     readonly deleted = new EventEmitter<Uri>();
@@ -282,13 +282,13 @@ export class FileSystemWatcher {
     dispose() {}
 }
 
-export interface TextDocument {
+interface TextDocument {
     uri: Uri;
     languageId: string;
     getText(): string;
 }
 
-export interface TextEditor {
+interface TextEditor {
     document: TextDocument;
     viewColumn: number;
 }
