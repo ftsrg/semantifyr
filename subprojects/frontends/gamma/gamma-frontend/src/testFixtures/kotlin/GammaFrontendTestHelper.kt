@@ -7,6 +7,8 @@
 package hu.bme.mit.semantifyr.frontends.gamma.testing
 
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
+import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.frontends.gamma.GammaFrontend
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVariant
@@ -15,12 +17,16 @@ import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationResult
 import hu.bme.mit.semantifyr.frontends.gamma.GammaWitness
 import hu.bme.mit.semantifyr.frontends.gamma.discovery.GammaVerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.frontends.gamma.lang.GammaStandaloneSetup
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EF
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ExecutionTrace
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
+import hu.bme.mit.semantifyr.portfolios.Portfolios
+import hu.bme.mit.semantifyr.verifier.hostRequiredBackends
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Named
 import org.junit.jupiter.params.provider.Arguments
 import java.io.File
@@ -30,6 +36,15 @@ import kotlin.io.path.Path
 import kotlin.streams.asStream
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+
+enum class GammaTestEngine(
+    val portfolio: VerificationPortfolio,
+) {
+    Theta(Portfolios.ThetaBoundedKInduction),
+    Nuxmv(Portfolios.NuxmvIc3Invar),
+    Spin(Portfolios.SpinSafeDfs),
+    Uppaal(Portfolios.UppaalDefault),
+}
 
 class GammaFrontendTestHelper {
 
@@ -41,6 +56,22 @@ class GammaFrontendTestHelper {
     fun discover(sourcePath: Path): List<GammaVerificationCase> {
         val gammaModel = gammaReader.readGammaFile(sourcePath.toFile())
         return gammaDiscoverer.discover(gammaModel)
+    }
+
+    fun discoverWitnessCases(): List<GammaVerificationCase> {
+        return EXAMPLES.flatMap {
+            discover(Path("build", "test-models", it))
+        }.filter {
+            it.declaration.expression is EF
+        }
+    }
+
+    fun witnessCasesOnEveryEngine(): Stream<Arguments> {
+        return discoverWitnessCases().asSequence().flatMap { gammaVerificationCase ->
+            GammaTestEngine.entries.asSequence().map {
+                Arguments.of(Named.of(gammaVerificationCase.qualifiedName, gammaVerificationCase), it)
+            }
+        }.asStream()
     }
 
     fun readGammaTrace(
@@ -90,6 +121,47 @@ class GammaFrontendTestHelper {
         return result
     }
 
+    suspend fun checkVerificationCaseOn(
+        engine: GammaTestEngine,
+        gammaVerificationCase: GammaVerificationCase,
+        outputDirectory: Path,
+        timeout: Duration,
+        validationPortfolio: VerificationPortfolio? = null,
+    ): GammaVerificationResult {
+        val portfolio = engine.portfolio
+        val required = portfolio.executorKeys.any {
+            it.name in hostRequiredBackends
+        }
+        val availability = portfolio.availability(ExecutionEnvironment.Empty)
+        if (availability is AvailabilityReport.Unavailable) {
+            check(!required) {
+                "Portfolio ${portfolio.id} is required on this host: ${availability.reason}"
+            }
+            Assumptions.abort<Unit>("${availability.reason}, skipping")
+        }
+
+        val frontend = buildFrontend(portfolio, outputDirectory.resolve(engine.name.lowercase()), timeout = timeout)
+        val result = frontend.verify(gammaVerificationCase)
+        val verdict = result.verification.verdict
+        val description = "${portfolio.id} reports $verdict for ${gammaVerificationCase.qualifiedName}: ${result.verification.message ?: "no message"}"
+        Assumptions.assumeFalse(verdict == VerificationVerdict.Timeout, description)
+        if (!verdict.isDecisive) {
+            Assumptions.assumeTrue(required || verdict == VerificationVerdict.Errored, description)
+        }
+        Assertions.assertEquals(VerificationVerdict.Passed, verdict, description)
+
+        val witness = result.witness
+        if (validationPortfolio != null && witness != null) {
+            val outcome = frontend.validateWitness(gammaVerificationCase, witness, validationPortfolio)
+            assertThat(outcome.isValid)
+                .describedAs(
+                    "Witness of ${portfolio.id} for ${gammaVerificationCase.qualifiedName} must re-verify Passed via ${validationPortfolio.id} but got ${outcome.verification.verdict} (${outcome.verification.message ?: "no message"})",
+                )
+                .isTrue()
+        }
+        return result
+    }
+
     suspend fun checkConformance(
         frontend: GammaFrontend,
         gammaVerificationCase: GammaVerificationCase,
@@ -109,6 +181,8 @@ class GammaFrontendTestHelper {
     }
 
     companion object {
+        private val EXAMPLES = listOf("Simple.gamma", "Crossroads.gamma", "Spacecraft.gamma")
+
         @JvmStatic
         fun testArtifactRoot(testClass: Class<*>): Path {
             return Path("build", "test-artifacts", testClass.simpleName)

@@ -6,22 +6,20 @@
 
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationCase
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ActiveStateAssertion
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EF
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Expression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.FiredTransitionAssertion
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Step
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableValueAssertion
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaFrontendTestHelper
-import hu.bme.mit.semantifyr.portfolios.Portfolios
+import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaTestEngine
 import hu.bme.mit.semantifyr.verifier.witness.WitnessStateStep
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
-import org.junit.jupiter.api.Named
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
-import kotlin.io.path.Path
-import kotlin.streams.asStream
+import kotlin.time.Duration.Companion.minutes
 
 class GammaTraceTests {
 
@@ -29,28 +27,16 @@ class GammaTraceTests {
         private val helper = GammaFrontendTestHelper()
         private val artifactRoot = GammaFrontendTestHelper.testArtifactRoot(GammaTraceTests::class.java)
 
-        private val MODELS = listOf("Simple.gamma", "Crossroads.gamma", "Spacecraft.gamma")
-
         @JvmStatic
         fun `Generated Traces Agree With The Witness`(): Stream<Arguments> {
-            return MODELS.asSequence().flatMap {
-                helper.discover(Path("build", "test-models", it))
-            }.filter {
-                it.declaration.expression is EF
-            }.map {
-                Arguments.of(Named.of(it.qualifiedName, it))
-            }.asStream()
+            return helper.witnessCasesOnEveryEngine()
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{0} on {1}")
     @MethodSource
-    suspend fun `Generated Traces Agree With The Witness`(gammaVerificationCase: GammaVerificationCase) {
-        val frontend = helper.buildFrontend(
-            portfolio = Portfolios.ThetaBoundedKInduction,
-            outputDirectory = artifactRoot,
-        )
-        val witness = helper.checkVerificationCase(frontend, gammaVerificationCase).witness
+    suspend fun `Generated Traces Agree With The Witness`(gammaVerificationCase: GammaVerificationCase, engine: GammaTestEngine) {
+        val witness = helper.checkVerificationCaseOn(engine, gammaVerificationCase, artifactRoot, timeout = 5.minutes).witness
 
         assertThat(witness).describedAs("An EF case that passes has a witness").isNotNull()
         val gammaTrace = helper.readGammaTrace(gammaVerificationCase, witness!!)
@@ -59,6 +45,9 @@ class GammaTraceTests {
         assertThat(gammaTrace.steps).hasSameSizeAs(witnessSteps)
 
         for ((index, step) in gammaTrace.steps.withIndex()) {
+            if (index > 0) {
+                assertFiredTransitionsMoveTheState(step, assertedStates(gammaTrace.steps[index - 1]), "step $index of ${gammaVerificationCase.qualifiedName}")
+            }
             val witnessStep = witnessSteps[index] ?: continue
             assertThat(assertedStates(step))
                 .describedAs("Active states in step $index of ${gammaVerificationCase.qualifiedName}")
@@ -74,6 +63,32 @@ class GammaTraceTests {
                     .containsExactly(value)
             }
         }
+    }
+
+    private fun assertFiredTransitionsMoveTheState(
+        step: Step,
+        previousStates: Set<String>,
+        description: String,
+    ) {
+        val currentStates = assertedStates(step)
+        for (transition in step.asserts.filterIsInstance<FiredTransitionAssertion>()) {
+            val source = instancePath(transition.from)
+            val target = "${source.substringBeforeLast('.')}.${transition.to.name}"
+            assertThat(previousStates)
+                .describedAs("The source of the transition $source to ${transition.to.name} is active before $description")
+                .anyMatch {
+                    isWithin(it, source)
+                }
+            assertThat(currentStates)
+                .describedAs("The target of the transition $source to ${transition.to.name} is active after $description")
+                .anyMatch {
+                    isWithin(it, target)
+                }
+        }
+    }
+
+    private fun isWithin(leafState: String, state: String): Boolean {
+        return leafState == state || leafState.startsWith("$state.")
     }
 
     private fun assertedStates(step: Step): Set<String> {
