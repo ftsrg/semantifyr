@@ -7,7 +7,8 @@
     "types": ["node", "vscode"],
     "allowJs": true,
     "checkJs": true,
-    "noEmit": true
+    "noEmit": true,
+    "allowImportingTsExtensions": true
   },
   "include": ["src/**/*", "esbuild.mjs", "vitest.config.ts"],
   "exclude": ["dist", "node_modules", "bin", "build"]

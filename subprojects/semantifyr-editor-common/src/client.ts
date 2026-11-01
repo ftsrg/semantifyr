@@ -9,7 +9,7 @@ import type {
     VerificationCaseRequest,
     VerificationCaseResult,
     VerificationCaseSpecification,
-} from "./wire.js";
+} from "./wire.ts";
 
 export interface CancellationToken {
     readonly isCancellationRequested: boolean;

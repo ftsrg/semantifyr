@@ -16,7 +16,7 @@ tasks.npmInstall {
     workingDir = rootProject.projectDir
 }
 
-fun NpmTask.configureSharedInputs() {
+val npmCheck = tasks.register<NpmTask>("npmCheck") {
     inputs.dir(project.layout.projectDirectory.dir("src"))
     inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
     inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
@@ -26,18 +26,6 @@ fun NpmTask.configureSharedInputs() {
     inputs.file(rootProject.layout.projectDirectory.file("package.json"))
     inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
     inputs.files(tasks.npmInstall)
-}
-
-val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
-    configureSharedInputs()
-
-    outputs.dir(project.layout.projectDirectory.dir("dist"))
-
-    npmCommand.set(listOf("run", "assemble"))
-}
-
-val npmCheck = tasks.register<NpmTask>("npmCheck") {
-    configureSharedInputs()
 
     npmCommand.set(listOf("run", "check"))
 
@@ -46,19 +34,9 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
 
 configurations.consumable("npmPackageElements") {
     attributes(semantifyrArtifact("npm-package"))
-    outgoing.artifact(project.layout.projectDirectory.dir("dist")) {
-        builtBy(npmAssemble)
-    }
-}
-
-tasks.assemble {
-    dependsOn(npmAssemble)
+    outgoing.artifact(project.layout.projectDirectory.dir("src"))
 }
 
 tasks.check {
     dependsOn(npmCheck)
-}
-
-tasks.clean {
-    delete("dist")
 }
