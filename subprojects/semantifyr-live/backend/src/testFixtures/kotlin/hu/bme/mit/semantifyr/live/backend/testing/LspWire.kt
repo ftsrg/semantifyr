@@ -212,16 +212,18 @@ suspend fun DefaultClientWebSocketSession.awaitResponseFor(
 suspend fun DefaultClientWebSocketSession.awaitPublishDiagnostics(
     uri: String,
     timeout: Duration = 30.seconds,
-) {
-    withTimeout(timeout) {
+): JsonObject {
+    return withTimeout(timeout) {
         while (true) {
             val frame = incoming.receive() as? Frame.Text ?: continue
             val obj = gson.fromJson(frame.readText(), JsonObject::class.java)
             if (obj.publishDiagnosticsUri() == uri) {
-                return@withTimeout
+                return@withTimeout obj
             }
             ackIfRequest(obj)
         }
+        @Suppress("UNREACHABLE_CODE")
+        error("unreachable")
     }
 }
 
