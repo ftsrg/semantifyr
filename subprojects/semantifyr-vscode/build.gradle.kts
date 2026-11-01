@@ -24,11 +24,19 @@ val editorCommonFiles = configurations.resolvable("editorCommonFiles") {
     attributes(semantifyrArtifact("npm-package"))
 }
 
+val theta = configurations.dependencyScope("theta")
+val thetaFiles = configurations.resolvable("thetaFiles") {
+    extendsFrom(theta.get())
+    attributes(semantifyrArtifact("theta-xsts-cli"))
+}
+
 dependencies {
     languageServers(project(":oxsts.lang.ide"))
     languageServers(project(":gamma.lang.ide"))
 
     editorCommon(project(":semantifyr-editor-common"))
+
+    theta(project(":theta-executor"))
 }
 
 val cloneDistribution = tasks.register<Sync>("cloneDistribution") {
@@ -70,6 +78,35 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
     npmCommand.set(listOf("run", "check"))
 
     stampOnSuccess()
+}
+
+val thetaDirectory = layout.buildDirectory.dir("theta-xsts-cli")
+
+val cloneTheta = tasks.register<Sync>("cloneTheta") {
+    from(thetaFiles)
+    into(thetaDirectory)
+}
+
+val npmIntegrationTest = tasks.register<NpmTask>("npmIntegrationTest") {
+    group = "verification"
+
+    configureSharedInputs()
+    inputs.files(cloneDistribution)
+    inputs.files(npmAssemble)
+    inputs.files(cloneTheta)
+    inputs.file(rootProject.layout.projectDirectory.file("oxsts-test-models/smoke/smoke.oxsts"))
+
+    npmCommand.set(listOf("run", "test:integration"))
+    environment.put("PATH", thetaDirectory.zip(providers.environmentVariable("PATH")) { directory, path ->
+        "${directory.asFile.absolutePath}${File.pathSeparator}$path"
+    })
+
+    stampOnSuccess()
+}
+
+tasks.register("integrationTest") {
+    group = "verification"
+    dependsOn(npmIntegrationTest)
 }
 
 val vsixFile = project.layout.buildDirectory.file("semantifyr-${project.version}.vsix")

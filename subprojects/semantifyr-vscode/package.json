@@ -247,6 +247,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:integration": "node src/__integration__/run.mjs",
     "check": "npm run typecheck && npm run lint && npm run test",
     "assemble": "node esbuild.mjs",
     "assemble:watch": "node esbuild.mjs --watch",
@@ -262,6 +263,7 @@
   "devDependencies": {
     "@types/node": "^20.17.19",
     "@types/vscode": "~1.109.0",
+    "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^3.2.2",
     "concurrently": "^9.0.0",
     "esbuild": "^0.25.0",
