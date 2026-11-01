@@ -75,7 +75,7 @@ class ConeOfInfluenceComputation(
         }
 
         for (assumption in inlinedOxsts.eAllOfType<AssumptionOperation>()) {
-            for (variable in variablesReadsIn(assumption.expression)) {
+            for (variable in variablesReadsIn(assumption.expression) + guardVariablesFor(assumption)) {
                 if (relevantVariables.add(variable)) {
                     variableWorklist.add(variable)
                 }
