@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.frontends.gamma.trace
 
+import com.google.inject.Inject
+import com.google.inject.Provider
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Act
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Assertion
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.BooleanType
@@ -27,10 +29,19 @@ import hu.bme.mit.semantifyr.verifier.witness.CallTraceStep
 import hu.bme.mit.semantifyr.verifier.witness.TraceEntry
 import hu.bme.mit.semantifyr.verifier.witness.WitnessState
 import hu.bme.mit.semantifyr.verifier.witness.WitnessStateStep
+import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.util.EcoreUtil
+import org.eclipse.xtext.resource.IResourceDescription
+import org.eclipse.xtext.resource.IResourceFactory
+import org.eclipse.xtext.resource.XtextResourceSet
+import org.eclipse.xtext.resource.impl.ResourceDescriptionsData
 
-class GammaTraceGenerator {
+class GammaTraceGenerator @Inject constructor(
+    private val resourceSetProvider: Provider<XtextResourceSet>,
+    private val resourceFactory: IResourceFactory,
+    private val resourceDescriptionManager: IResourceDescription.Manager,
+) {
 
     private val factory = GammaFactory.eINSTANCE
 
@@ -54,10 +65,21 @@ class GammaTraceGenerator {
             }
         }
 
-        return factory.createGammaModelPackage().also {
+        val gammaTrace = factory.createGammaModelPackage().also {
             it.name = (verificationCase.eContainer() as GammaModelPackage).name
             it.traces += executionTrace
         }
+        addToResource(gammaTrace, verificationCase)
+        return gammaTrace
+    }
+
+    private fun addToResource(gammaTrace: GammaModelPackage, verificationCase: VerificationCaseDeclaration) {
+        val resourceSet = resourceSetProvider.get()
+        val modelDescription = resourceDescriptionManager.getResourceDescription(verificationCase.eResource())
+        ResourceDescriptionsData.ResourceSetAdapter.installResourceDescriptionsData(resourceSet, ResourceDescriptionsData(listOf(modelDescription)))
+        val resource = resourceFactory.createResource(URI.createURI(TRACE_RESOURCE_NAME))
+        resourceSet.resources += resource
+        resource.contents += gammaTrace
     }
 
     private fun createInitializationStep(
@@ -245,6 +267,7 @@ class GammaTraceGenerator {
     companion object {
         private const val ROOT_FEATURE = "root"
         private const val TIME_ADVANCE_SECONDS = 1
+        private const val TRACE_RESOURCE_NAME = "trace.gamma"
         private const val RAISE_INPUT_EVENT = "semantifyr::gamma::ports::Port::raiseInputEvent"
         private const val SET_OUTPUT_EVENT = "semantifyr::gamma::ports::Port::setOutputEvent"
 
