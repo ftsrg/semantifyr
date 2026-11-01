@@ -43,7 +43,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       # one value for every Gradle step, since it is a test input and a change reruns all tests
-      REQUIRED_BACKENDS: ${{ matrix.os == 'ubuntu-latest' && 'theta,spin,docker' || 'theta' }}
+      REQUIRED_BACKENDS: ${{ matrix.os == 'ubuntu-latest' && 'theta,spin' || 'theta' }}
       # only the ubuntu leg uploads the website
       WEBSITE_API_DOCS: ${{ matrix.os == 'ubuntu-latest' }}
     steps:
@@ -76,7 +76,7 @@ jobs:
         run: ./gradlew build --continue -Ptests.requiredBackends=$REQUIRED_BACKENDS -Pwebsite.apiDocs=$WEBSITE_API_DOCS
       - name: Run integration tests
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: ./gradlew integrationTest --continue -Ptests.requiredBackends=$REQUIRED_BACKENDS
+        run: ./gradlew integrationTest --continue -Ptests.requiredBackends=$REQUIRED_BACKENDS -Ptests.requireDocker=true
       - name: Merge coverage reports
         if: ${{ matrix.os == 'ubuntu-latest' }}
         shell: bash
