@@ -9,6 +9,7 @@ import step2 from '@oxsts-test-models/tutorial/advanced-step2.oxsts';
 import step3 from '@oxsts-test-models/tutorial/advanced-step3.oxsts';
 import step4 from '@oxsts-test-models/tutorial/advanced-step4.oxsts';
 import step5 from '@oxsts-test-models/tutorial/advanced-step5.oxsts';
+import advanced from '@oxsts-test-models/tutorial/advanced.oxsts';
 
 # Advanced Tutorial
 
@@ -19,7 +20,7 @@ This is the third tutorial in the Traffic Light series. It extends the small `St
 A browser is enough. As in the previous tutorials, every step ends in a complete model that the **Open this step in the editor** button loads into a live editor embedded in this page; the [Direct Modeling](direct-modeling.md#the-live-editor) tutorial describes the editor. See [Getting Started](../../getting-started.md) for the other ways to run Semantifyr.
 
 :::tip Finished example
-The completed model is at the end of this page under [Snapshot](#snapshot).
+The completed model is at the end of this page under [Snapshot](#snapshot). The standalone live editor also offers it in its model picker as *Tutorial: Advanced*.
 :::
 
 The tutorial starts from the final model of Building a Library. Each step is a separate file with its own package below `example::trafficlight::advanced`:
@@ -163,4 +164,4 @@ The production libraries build on the same patterns: Gamma's `Statecharts.oxsts`
 
 The complete final model:
 
-<LiveEmbed code={step5} />
+<LiveEmbed code={advanced} />

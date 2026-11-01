@@ -80,6 +80,12 @@ const TUTORIAL_OXSTS: readonly ImportedDescriptor[] = [
     description:
       'Final state from the "Building a Library" tutorial.',
   },
+  {
+    id: 'advanced',
+    label: 'Tutorial: Advanced',
+    description:
+      'Final state from the "Advanced Tutorial".',
+  },
 ];
 
 const SYSMLV2_IMPORTED: readonly ImportedDescriptor[] = Object.values(importedSysmlv2Manifest).flatMap((manifest) =>

@@ -58,6 +58,7 @@ describe('LIVE_FLAVORS registry', () => {
     const ids = oxsts.examples.map((e) => e.id);
     expect(ids).toContain('basics');
     expect(ids).toContain('intermediate');
+    expect(ids).toContain('advanced');
   });
 
   it('the trafficlight snapshots contain code that mentions a verification case', () => {
