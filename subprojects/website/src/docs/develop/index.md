@@ -67,6 +67,18 @@ The repository is organized under `subprojects/`:
 
 [SysML v2 traces](sysml-trace.md) describes the form of a SysML v2 counterexample written as a SysML v2 model, and [Gamma traces](gamma-trace.md) the form of a Gamma witness written as a Gamma execution trace.
 
+## Load testing the live editor
+
+Before a class uses a live instance, simulate the class against it from a checkout, through npm (Node.js 22.18 or later) or Gradle:
+
+```bash
+npm ci
+npm run load-test -w @ftsrg/semantifyr-live-frontend -- --students 30 --ramp 60
+./gradlew :semantifyr-live-frontend:loadTest -PloadTest.args="--students 30 --ramp 60"
+```
+
+Each student opens a tutorial step model over the language server socket, verifies its cases, edits the model, verifies again and disconnects. `--url` selects the instance (staging by default) and `--help` lists the other options. The run stops when `/api/health` fails three times in a row, writes its measurements as JSON to `subprojects/semantifyr-live/frontend/build/load-test/`, and exits non-zero on an unexpected verdict, an error, or a p95 verification time above `--max-verify-p95`. Staging shares its machine with production: run a class-sized test there once, not in a loop.
+
 ## Contributing a change
 
 1. Create a branch on your fork.
