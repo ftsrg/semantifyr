@@ -3,9 +3,6 @@ title: Datatypes
 sidebar_position: 2
 ---
 
-import { Planned } from '@site/src/components/Constructs';
-import constructs from '@oxsts-test-models/constructs/constructs.tsv';
-
 # Datatypes
 
 This page describes the **data values** Semantifyr can represent: primitives, enumerations and records.
@@ -80,17 +77,18 @@ class Plotter {
 }
 ```
 
-The compiler flattens a record variable into one variable per field, nested records recursively, and the witness shows the state field by field, such as `root.pen.x`. The validator rejects arrays of records, array fields, fields of class or feature type, record-typed features, recursive records (`OXSTS.RECURSIVE_RECORD`) and ordering comparisons such as `<` on records.
-
-<Planned table={constructs} construct="Record literal `Point { x = 0 }`">
-
-A record literal lists the fields by name inside curly braces. The parser rejects it today; a record value comes from the field defaults, from another record or from `havoc`.
+A record literal names the record and gives fields by name. An omitted field takes its default, so a literal must give every field that has none (`OXSTS.INCOMPLETE_RECORD_LITERAL` otherwise) and names at least one field: `Point {}` is not a literal. The values may read the state, literals nest, and the whole value is read before the target is written, so a literal can swap fields. A literal can be assigned, initialize a variable, be compared with `==` and `!=`, and be passed as an argument; it cannot be written or havoced.
 
 ```oxsts
-var origin: Point := Point {
-  x = 0,
-  y = 0
+var origin: Point := Point { x = 0, y = 0 }
+
+redefine tran {
+  pen := Point { x = pen.y, y = pen.x }
+  stroke := Segment {
+    from = origin,
+    to = Point { x = pen.x + 1 }
+  }
 }
 ```
 
-</Planned>
+The compiler flattens a record variable into one variable per field, nested records recursively, and the witness shows the state field by field, such as `root.pen.x`. The validator rejects arrays of records, array fields, fields of class or feature type, record-typed features, recursive records (`OXSTS.RECURSIVE_RECORD`), ordering comparisons such as `<` on records, and a record literal in a position evaluated at compile time, such as an `inline if` guard.

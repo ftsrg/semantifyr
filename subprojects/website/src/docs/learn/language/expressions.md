@@ -3,7 +3,7 @@ title: Expressions
 sidebar_position: 4
 ---
 
-import { ConstructStatus, Planned } from '@site/src/components/Constructs';
+import { Planned } from '@site/src/components/Constructs';
 import constructs from '@oxsts-test-models/constructs/constructs.tsv';
 
 # Expressions
@@ -21,7 +21,7 @@ Expressions compute values. They appear in [property](properties.md) bodies, on 
 | Nothing | `nothing` |
 | Infinity | `*` |
 | Array | `[a, b, c]`, `[]` |
-| Record literal (<ConstructStatus table={constructs} construct="Record literal `Point { x = 0 }`" />, see [Records](datatypes.md#records)) | `Point { x = 0, y = 0 }` |
+| Record (see [Records](datatypes.md#records)) | `Point { x = 0, y = 0 }` |
 
 See [Datatypes](datatypes.md) for the corresponding types.
 
