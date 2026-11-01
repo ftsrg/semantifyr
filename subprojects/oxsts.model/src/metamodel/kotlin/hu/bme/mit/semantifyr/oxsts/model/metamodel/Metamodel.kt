@@ -11,6 +11,7 @@ import org.eclipse.emf.common.util.Diagnostic
 import org.eclipse.emf.ecore.EClass
 import org.eclipse.emf.ecore.EClassifier
 import org.eclipse.emf.ecore.EDataType
+import org.eclipse.emf.ecore.EEnum
 import org.eclipse.emf.ecore.ENamedElement
 import org.eclipse.emf.ecore.EPackage
 import org.eclipse.emf.ecore.EStructuralFeature
@@ -156,7 +157,11 @@ class MetamodelBuilder internal constructor(private val ePackage: EPackage) {
             attribute.defaultValueLiteral = default
             add(attribute, name, bounds)
             links += {
-                attribute.eType = resolve<EDataType>(type, "${eClass.name}.$name")
+                val dataType = resolve<EDataType>(type, "${eClass.name}.$name")
+                if (dataType is EEnum && default != null) {
+                    checkNotNull(dataType.getEEnumLiteral(default)) { "unknown literal $default in ${eClass.name}.$name" }
+                }
+                attribute.eType = dataType
             }
         }
 
