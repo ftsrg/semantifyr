@@ -25,7 +25,7 @@ class ServerSettingsTest {
         ServerSettings settings = new ServerSettings();
         assertThat(settings.resolveTimeout()).isEqualTo(Duration.ofSeconds(300));
         assertThat(settings.resolveMaxConcurrencyOrNull()).isNull();
-        assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("theta-full");
+        assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("smart-full");
         assertThat(settings.resolveArtifactConfig()).isEqualTo(ArtifactConfig.ALL);
         assertThat(settings.resolveOptimizationConfig()).isSameAs(OptimizationConfig.Companion.getALL());
     }
@@ -35,7 +35,7 @@ class ServerSettingsTest {
         ServerSettings settings = new ServerSettings();
         settings.apply(JsonParser.parseString("""
                 {
-                  "portfolio": "smart-full",
+                  "portfolio": "theta-full",
                   "timeoutSeconds": 42,
                   "maxConcurrency": 3,
                   "theta": {"executor": "docker", "dockerImage": "example:1"},
@@ -45,7 +45,7 @@ class ServerSettingsTest {
                 """));
         assertThat(settings.resolveTimeout()).isEqualTo(Duration.ofSeconds(42));
         assertThat(settings.resolveMaxConcurrencyOrNull()).isEqualTo(3);
-        assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("smart-full");
+        assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("theta-full");
         assertThat(settings.resolveArtifactConfig()).isEqualTo(ArtifactConfig.DEBUG);
         assertThat(settings.resolveOptimizationConfig()).isSameAs(OptimizationConfig.Companion.getNONE());
     }
@@ -56,7 +56,7 @@ class ServerSettingsTest {
         settings.apply(JsonParser.parseString("{\"timeoutSeconds\": 7}"));
         assertThat(settings.resolveTimeout()).isEqualTo(Duration.ofSeconds(7));
         // not part of the partial update, so still the default
-        assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("theta-full");
+        assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("smart-full");
     }
 
     @Test
@@ -94,9 +94,9 @@ class ServerSettingsTest {
     @Test
     void aTypedPayloadAppliesDirectly() {
         ServerSettings settings = new ServerSettings();
-        settings.apply(new ServerSettingsPayload("smart-full", 99L, null, null, null, null));
+        settings.apply(new ServerSettingsPayload("theta-full", 99L, null, null, null, null));
         assertThat(settings.resolveTimeout()).isEqualTo(Duration.ofSeconds(99));
-        assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("smart-full");
+        assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("theta-full");
         // fields the payload leaves null fall back to the built-in defaults
         assertThat(settings.resolveMaxConcurrencyOrNull()).isNull();
     }
@@ -104,10 +104,10 @@ class ServerSettingsTest {
     @Test
     void applyingAPayloadReplacesAllSettings() {
         ServerSettings settings = new ServerSettings();
-        settings.apply(new ServerSettingsPayload("smart-full", 99L, null, null, null, null));
+        settings.apply(new ServerSettingsPayload("theta-full", 99L, null, null, null, null));
         settings.apply(ServerSettingsPayload.withArtifactsLocation(ArtifactsLocation.WORKSPACE));
         // the second apply omits the portfolio / timeout, so they are back to the defaults
-        assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("theta-full");
+        assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("smart-full");
         assertThat(settings.resolveTimeout()).isEqualTo(Duration.ofSeconds(300));
     }
 }

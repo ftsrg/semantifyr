@@ -18,6 +18,7 @@ import hu.bme.mit.semantifyr.live.backend.data.HealthResponse
 import hu.bme.mit.semantifyr.live.backend.data.InfoResponse
 import hu.bme.mit.semantifyr.live.backend.data.PortfoliosResponse
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionManager
+import hu.bme.mit.semantifyr.portfolios.Portfolios
 import io.ktor.server.application.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.response.*
@@ -60,7 +61,7 @@ class ApiRoutesHandler @Inject constructor(
                 call.respond(
                     PortfoliosResponse(
                         portfolios = PortfolioRegistry.snapshot(),
-                        defaultPortfolio = PortfolioRegistry.defaultPortfolio.id,
+                        defaultPortfolio = Portfolios.Default.id,
                     ),
                 )
             }

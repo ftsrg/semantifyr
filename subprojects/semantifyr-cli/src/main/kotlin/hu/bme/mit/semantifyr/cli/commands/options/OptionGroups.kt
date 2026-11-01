@@ -113,8 +113,6 @@ class ArtifactOptionGroup : OptionGroup("Artifact options") {
 
 enum class ThetaExecutor { Auto, Shell, Docker }
 
-const val DEFAULT_PORTFOLIO_ID = "theta-full"
-
 class BackendOptionGroup(
     private val portfolios: () -> List<VerificationPortfolio>,
 ) : OptionGroup("Backend options") {
@@ -123,9 +121,9 @@ class BackendOptionGroup(
             portfolios().firstOrNull { it.id == id } ?: fail("unknown portfolio '$id'")
         }
         .defaultLazy {
-            portfolios().first { it.id == DEFAULT_PORTFOLIO_ID }
+            portfolios().first { it.id == Portfolios.Default.id }
         }
-        .help("Portfolio id. Default: '$DEFAULT_PORTFOLIO_ID'. Options: ${Portfolios.all.joinToString(", ") { it.id }}")
+        .help("Portfolio id. Default: '${Portfolios.Default.id}'. Options: ${Portfolios.all.joinToString(", ") { it.id }}")
 
     val thetaExecutor by option("--theta-executor")
         .enum<ThetaExecutor>(ignoreCase = true)

@@ -42,7 +42,8 @@ public class ServerSettings {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerSettings.class);
     private static final Gson GSON = new Gson();
 
-    public static final String DEFAULT_PORTFOLIO_ID = "theta-full";
+    private static final String DEFAULT_PORTFOLIO_ID =
+            Portfolios.INSTANCE.getDefault().getId();
     private static final String WORKSPACE_ARTIFACTS_SUBDIRECTORY = ".artifacts";
 
     private static final ServerSettingsPayload DEFAULTS = new ServerSettingsPayload(
