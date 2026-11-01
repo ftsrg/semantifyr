@@ -62,4 +62,25 @@ class SysMLCampaignTest {
         assertThat(sysml.verificationCases).isEqualTo(9)
         assertThat(sysml.transformationDuration).isGreaterThan(Duration.ZERO)
     }
+
+    @Test
+    suspend fun `a top-down model is verified with its variant's library`(@TempDir directory: Path) {
+        val source = SysMLCorpusSource(injector, Path("../frontends/sysml/models/examples"))
+        val campaign = campaign("topdown") {
+            axis(VerificationAxes.model, listOf(source.model("topdowntransition.sysml")))
+            axis(VerificationAxes.case) {
+                it[VerificationAxes.model].cases.filter { case -> case.name == "InnerTransitionNeverFiresTestCase" }
+            }
+            axis(VerificationAxes.backendConfig, listOf(Portfolios.ThetaCegarExpl))
+            axis(VerificationAxes.optimization, listOf(OptimizationLevel.All))
+            repetitions = 1
+            warmups = 0
+            timeout = 2.minutes
+        }
+        val action = VerificationCellAction(injector, campaign.timeout, ExecutionEnvironment.builder().build(), directory.resolve("models"))
+
+        val measurement = CampaignRunner(campaign, ResultStore(directory), action).run().single().measurement
+
+        assertThat(measurement.verdict).isEqualTo(VerificationVerdict.Passed)
+    }
 }
