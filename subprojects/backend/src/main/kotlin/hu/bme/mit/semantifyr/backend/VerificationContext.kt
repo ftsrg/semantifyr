@@ -80,9 +80,9 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
         metadata: VerificationMetadata,
         unsupported: List<UnsupportedConstruct>,
     ): BackendVerificationResult {
-        val constructs = unsupported.joinToString("; ") {
+        val constructs = unsupported.map {
             describe(it)
-        }
+        }.distinct().joinToString("; ")
         logger.info { "[$backendId] verification not supported: $constructs" }
         return BackendVerificationResult(
             verdict = VerificationVerdict.NotSupported,
@@ -103,6 +103,12 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
     private fun sourceElementOf(element: EObject): EObject {
         val flatteningInfo = request.flatteningInfo ?: return element
         val variable = element as? VariableDeclaration ?: return element
+        flatteningInfo.arraySlots[variable]?.let {
+            return it.arrayVariable
+        }
+        flatteningInfo.recordFields[variable]?.let {
+            return it.recordVariable
+        }
         val holder = flatteningInfo.variableHolders[variable] ?: return element
         return flatteningInfo.resolveOriginalVariable(holder, variable)
     }

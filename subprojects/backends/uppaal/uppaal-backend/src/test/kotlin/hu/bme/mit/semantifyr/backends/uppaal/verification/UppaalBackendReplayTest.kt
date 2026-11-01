@@ -73,7 +73,7 @@ class UppaalBackendReplayTest {
 
     @Test
     suspend fun `a violated invariant fails with a witness through the violating states`() {
-        val result = verify("CounterExceedsBound", models.parse(BackendTestModels.COUNTER_EXCEEDS_BOUND))
+        val result = verify("CounterExceedsBound", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
@@ -122,5 +122,13 @@ class UppaalBackendReplayTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
         assertThat(result.message).matches("uppaal:default does not support \\S+:2: variables of type real \\(r\\)")
+    }
+
+    @Test
+    suspend fun `an unbounded integer the property depends on is NotSupported before dispatch`() {
+        val result = verify("UnboundedCounter", models.parse(BackendTestModels.COUNTER_EXCEEDS_BOUND))
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
+        assertThat(result.message).matches("uppaal:default does not support \\S+:2: unbounded integer variables \\(x\\)")
     }
 }

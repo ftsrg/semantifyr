@@ -94,11 +94,16 @@ class SemantifyrVerifierTestHelperTest {
     }
 
     @Test
-    suspend fun `an engine-limited case is skipped before dispatch`() {
-        val portfolio = FixedPortfolio(VerificationVerdict.Passed)
-        assertThat(check(portfolio, requiredFake, "engine-limit:other,fake"))
-            .isInstanceOf(TestAbortedException::class.java)
-        assertThat(portfolio.invocations.get()).isZero()
+    suspend fun `an engine-limited case passes when its engines report NotSupported`() {
+        val portfolio = FixedPortfolio(VerificationVerdict.NotSupported)
+        assertThat(check(portfolio, requiredFake, "engine-limit:other,fake")).isNull()
+        assertThat(portfolio.invocations.get()).isOne()
+    }
+
+    @Test
+    suspend fun `an engine-limited case that its engines decide fails as a stale tag`() {
+        assertThat(check(FixedPortfolio(VerificationVerdict.Passed), requiredFake, "engine-limit:other,fake"))
+            .isInstanceOf(AssertionFailedError::class.java)
     }
 
     @Test

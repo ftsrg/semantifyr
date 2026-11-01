@@ -18,7 +18,9 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
 
     private fun unsupported(body: String): List<String> {
         val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors)
-        return capabilityChecker().check(inlinedOxsts).map {
+        return withCapabilityChecker {
+            it.check(inlinedOxsts)
+        }.map {
             it.description
         }
     }
@@ -60,5 +62,20 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
             "havoc on clocks",
             "for-operations",
         )
+    }
+
+    @Test
+    fun `an unbounded integer is reported only when the property depends on it`() {
+        val unsupported = unsupported(
+            """
+                var counted : int := 0
+                var ignored : int := 0
+                init { }
+                tran { counted := counted + 1 ignored := ignored + 1 }
+                prop { AG counted >= 0 }
+            """,
+        )
+
+        assertThat(unsupported).containsExactly("unbounded integer variables")
     }
 }

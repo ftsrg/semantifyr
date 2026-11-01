@@ -19,7 +19,7 @@ The `semantifyr` package is implicitly available in every Semantifyr file. It de
 
 ## Backend Support
 
-All four backends (Theta, nuXmv, Spin and Uppaal) support variables of type `int`, `bool` and enumerations. No backend supports `real` or `string` variables yet. The `any` type is a structural feature of the language and works regardless of backend. A backend reports a model it cannot translate as not supported before it runs, naming each construct and its source line: besides these types, runtime [`for`](operations.md#for) runs only on Theta and only over a range, and Spin cannot evaluate an if-then-else expression of a non-boolean type inside a property.
+All four backends (Theta, nuXmv, Spin and Uppaal) support variables of type `int`, `bool` and enumerations. No backend supports `real` or `string` variables yet. The `any` type is a structural feature of the language and works regardless of backend. A backend reports a model it cannot translate as not supported before it runs, naming each construct and its source line: besides these types, runtime [`for`](operations.md#for) runs only on Theta and only over a range, and Spin cannot evaluate an if-then-else expression of a non-boolean type inside a property. Spin and Uppaal compute with 32-bit integers that wrap, so they also report a case as not supported when an `int` variable the property depends on has no static bound within 32 bits, naming the variable: a counter needs a guard such as `if (x < 10) { x := x + 1 }`. Theta and nuXmv use unbounded integers.
 
 ## The `Anything` Class
 
@@ -50,7 +50,7 @@ Marks a class as a verification target. The optional `summary` parameter describ
 annotation Tag(category: string)
 ```
 
-Categorizes verification cases. For example, `@Tag(category = "slow")` marks long-running cases. The repository's conformance suites read `@Tag("expect-pass")` and `@Tag("expect-fail")` on a case as its expected verdict, and `@Tag("engine-limit:spin,uppaal")` as the engines that cannot decide it: an Inconclusive or Not supported verdict from those engines passes, a decisive one must still match.
+Categorizes verification cases. For example, `@Tag(category = "slow")` marks long-running cases. The repository's conformance suites read `@Tag("expect-pass")` and `@Tag("expect-fail")` on a case as its expected verdict, and `@Tag("engine-limit:spin,uppaal")` as the engines that cannot decide it: those engines must report the case Not supported, so a tag that no longer applies fails, and the other engines' verdict must match.
 
 ### `@Control`
 

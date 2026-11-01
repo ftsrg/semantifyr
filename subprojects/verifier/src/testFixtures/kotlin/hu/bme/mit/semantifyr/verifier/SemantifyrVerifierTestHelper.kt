@@ -207,9 +207,6 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         val engineLimited = verificationPortfolio.executorKeys.isNotEmpty() && verificationPortfolio.executorKeys.all {
             it.name in limitedEngines
         }
-        if (engineLimited) {
-            Assumptions.abort<Unit>("${case.qualifiedName} is tagged $ENGINE_LIMIT_TAG_PREFIX${limitedEngines.joinToString(",")}, skipping it on ${verificationPortfolio.id}")
-        }
         val required = verificationPortfolio.executorKeys.any {
             it.name in requiredBackends
         }
@@ -222,6 +219,12 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         }
 
         val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment)
+        if (engineLimited) {
+            Assertions.assertEquals(VerificationVerdict.NotSupported, result.verdict) {
+                "${case.qualifiedName} is tagged $ENGINE_LIMIT_TAG_PREFIX${limitedEngines.joinToString(",")}, so ${verificationPortfolio.id} must report NotSupported, got ${result.verdict} (${result.message ?: "no message"})"
+            }
+            return
+        }
         Assumptions.assumeFalse(
             result.verdict == VerificationVerdict.Timeout,
             "Portfolio ${verificationPortfolio.id} timed out on ${case.qualifiedName} within $timeout: ${result.message ?: "no message"}",
