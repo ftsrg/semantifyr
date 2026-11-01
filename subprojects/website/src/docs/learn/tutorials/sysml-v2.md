@@ -13,11 +13,11 @@ Semantifyr verifies SysML v2 models by translating them into OXSTS on top of a s
 
 ## Requirements
 
-- Git, and a Java 25 runtime found through `JAVA_HOME` or `PATH`.
+- A Java 25 runtime found through `JAVA_HOME` or `PATH`.
 - Node.js 22 or newer on `PATH`: the SysML v2 front end, a fork of SysIDE, runs on Node.js.
-- The `semantifyr` command-line interface, which carries the translator from SysML v2 to OXSTS and the SysML v2 semantic library.
+- The `semantifyr` command-line interface ([Getting Started](../getting-started.md#option-d-install-the-command-line-interface-for-scripts-and-ci)). Its distribution carries the translator from SysML v2 to OXSTS and the SysML v2 semantic library, so Node.js is the only prerequisite SysML v2 adds.
 
-Build the command-line interface (the first build downloads its dependencies, the SysIDE fork among them, and takes several minutes):
+To build the distribution from a clone of the repository, which needs Git (the first build downloads its dependencies, the SysIDE fork among them, and takes several minutes):
 
 ```bash
 git clone https://github.com/ftsrg/semantifyr.git
