@@ -26,7 +26,7 @@ fun oxsts() = metamodel(
     eClass("TransitionDeclaration", "ParametricDeclaration", "RedefinableDeclaration") {
         contains("branches", "SequenceOperation", MANY)
         attribute("kind", "TransitionKind", ONE)
-        attribute("abstract", "Boolean", ONE, default = "false")
+        attribute("abstract", "EBoolean", ONE, default = "false")
     }
 
     eClass("SequenceOperation", "Namespace", "Operation") {
@@ -59,7 +59,7 @@ fun oxsts() = metamodel(
 
     eClass("ClassDeclaration", "TopLevelDeclaration", "Namespace", "TypeDeclaration") {
         refers("superTypes", "ClassDeclaration", MANY)
-        attribute("abstract", "Boolean", ONE, default = "false")
+        attribute("abstract", "EBoolean", ONE, default = "false")
         contains("members", "Declaration", MANY)
     }
 
@@ -71,11 +71,11 @@ fun oxsts() = metamodel(
     abstractEClass("LiteralExpression", "Expression")
 
     eClass("LiteralInteger", "LiteralExpression") {
-        attribute("value", "Int", ONE)
+        attribute("value", "EInt", ONE)
     }
 
     eClass("LiteralBoolean", "LiteralExpression") {
-        attribute("value", "Boolean", ONE)
+        attribute("value", "EBoolean", ONE)
     }
 
     eClass("LiteralNothing", "LiteralExpression")
@@ -119,7 +119,7 @@ fun oxsts() = metamodel(
 
     eClass("PropertyDeclaration", "ParametricDeclaration", "RedefinableDeclaration") {
         contains("expression", "Expression")
-        attribute("abstract", "Boolean", ONE, default = "false")
+        attribute("abstract", "EBoolean", ONE, default = "false")
         contains("returnType", "TypeSpecification")
     }
 
@@ -193,7 +193,7 @@ fun oxsts() = metamodel(
 
     eClass("NavigationSuffixExpression", "PostfixUnaryExpression") {
         refers("member", "NamedElement", ONE)
-        attribute("optional", "Boolean", ONE, default = "false")
+        attribute("optional", "EBoolean", ONE, default = "false")
     }
 
     eClass("IndexingSuffixExpression", "PostfixUnaryExpression") {
@@ -214,7 +214,7 @@ fun oxsts() = metamodel(
     }
 
     eClass("LiteralReal", "LiteralExpression") {
-        attribute("value", "Double", ONE)
+        attribute("value", "EDouble", ONE)
     }
 
     eClass("FunctionDeclaration", "ParametricDeclaration", "TopLevelDeclaration") {
@@ -247,7 +247,7 @@ fun oxsts() = metamodel(
     eEnum("FeatureKind", "REFERENCE", "CONTAINMENT", "CONTAINER", "DERIVED", "FEATURE")
 
     eClass("LiteralString", "LiteralExpression") {
-        attribute("value", "String", ONE)
+        attribute("value", "EString", ONE)
     }
 
     eClass("DataTypeDeclaration", "TopLevelDeclaration", "TypeDeclaration")
@@ -276,13 +276,13 @@ fun oxsts() = metamodel(
     }
 
     eClass("RangeExpression", "BinaryOperator") {
-        attribute("exclusive", "Boolean", ONE, default = "false")
+        attribute("exclusive", "EBoolean", ONE, default = "false")
     }
 
     eClass("LiteralInfinity", "LiteralExpression")
 
     eClass("RedefinableDeclaration", "Declaration") {
-        attribute("redefine", "Boolean", default = "false")
+        attribute("redefine", "EBoolean", default = "false")
         refers("redefined", "RedefinableDeclaration")
     }
 
@@ -293,7 +293,7 @@ fun oxsts() = metamodel(
         contains("variables", "VariableDeclaration", MANY)
         refers("classDeclaration", "ClassDeclaration", ONE)
         contains("rootFeature", "FeatureDeclaration")
-        attribute("witness", "Boolean", ONE, default = "false")
+        attribute("witness", "EBoolean", ONE, default = "false")
     }
 
     eClass("TypeSpecification") {

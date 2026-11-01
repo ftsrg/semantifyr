@@ -20,7 +20,6 @@ import org.eclipse.emf.ecore.EcoreFactory
 import org.eclipse.emf.ecore.EcorePackage
 import org.eclipse.emf.ecore.util.Diagnostician
 import org.eclipse.emf.ecore.util.EcoreUtil
-import org.eclipse.emf.ecore.xml.type.XMLTypePackage
 
 enum class Bounds(val lower: Int, val upper: Int) {
     OPTIONAL(0, 1),
@@ -31,7 +30,7 @@ enum class Bounds(val lower: Int, val upper: Int) {
 
 private val factory = EcoreFactory.eINSTANCE
 
-private val dataTypes = (XMLTypePackage.eINSTANCE.eClassifiers + EcorePackage.eINSTANCE.eClassifiers).filterIsInstance<EDataType>().associateBy { it.name }
+private val dataTypes = EcorePackage.eINSTANCE.eClassifiers.filterIsInstance<EDataType>().associateBy { it.name }
 
 fun metamodel(
     name: String,
