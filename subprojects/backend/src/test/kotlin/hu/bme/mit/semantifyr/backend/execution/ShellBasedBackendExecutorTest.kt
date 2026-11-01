@@ -151,10 +151,9 @@ class ShellBasedBackendExecutorTest {
     }
 
     @Test
-    @DisabledOnOs(OS.WINDOWS, disabledReason = "CreateProcess rejects a working directory over 260 characters, roadmap: Windows path length")
-    suspend fun `the tool runs in a working directory as deep as a witness validation directory`() {
-        val case = "semantifyr.sysml.examples.spacecraft.SpacecraftDataCanReachGroundStationWithinTwentyStepsViolated"
-        val workingDirectory = workingDirectory(case, "validation", case, "theta-cegar-expl-pred-combined")
+    @DisabledOnOs(OS.WINDOWS, disabledReason = "CreateProcess rejects a working directory over 260 characters, which the verifier's short case directory names avoid")
+    suspend fun `the tool runs in a working directory over 260 characters`() {
+        val workingDirectory = workingDirectory("a".repeat(100), "b".repeat(100), "c".repeat(100))
         assertThat(workingDirectory.absolutePath.length).isGreaterThan(260)
         val logFile = workingDirectory.resolve("tool.out")
 
