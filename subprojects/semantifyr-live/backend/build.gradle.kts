@@ -161,6 +161,7 @@ tasks.register<JavaExec>("runDev") {
 
     classpath = sourceSets["main"].runtimeClasspath
     mainClass = application.mainClass
+    jvmArgs(application.applicationDefaultJvmArgs)
 
     inputs.files(cloneSemanticLibraries)
     inputs.files(cloneTheta)

@@ -44,6 +44,7 @@ fun cliReferenceTask(name: String, vararg arguments: String) = tasks.register<Ja
     val outputFile = cliReferenceDir.map { it.file("$name.txt") }
     classpath = cliDistributionFiles.get().asFileTree.matching { include("*/lib/*.jar") }
     mainClass = "hu.bme.mit.semantifyr.cli.SemantifyrCliKt"
+    jvmArgs("--enable-native-access=ALL-UNNAMED", "-Dguice_bytecode_gen_option=DISABLED")
     args(*arguments)
     outputs.file(outputFile)
     outputs.cacheIf { true }

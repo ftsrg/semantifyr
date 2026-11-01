@@ -25,8 +25,6 @@ dependencies {
 application {
     mainClass = "hu.bme.mit.semantifyr.cli.SemantifyrCliKt"
     applicationName = "semantifyr"
-    // Mordant loads its terminal library natively, Guice's bytecode generation calls sun.misc.Unsafe; both warn on every run
-    applicationDefaultJvmArgs = listOf("--enable-native-access=ALL-UNNAMED", "-Dguice_bytecode_gen_option=DISABLED")
 }
 
 val rootDirectory = isolated.rootProject.projectDirectory

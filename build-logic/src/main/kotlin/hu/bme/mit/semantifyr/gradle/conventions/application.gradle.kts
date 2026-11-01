@@ -19,6 +19,11 @@ dependencies {
     runtimeOnly(libs.slf4j.log4j)
 }
 
+application {
+    // JNA (Mordant's terminal, docker-java's socket) loads native code, Guice's bytecode generation calls sun.misc.Unsafe; both warn on every run
+    applicationDefaultJvmArgs = listOf("--enable-native-access=ALL-UNNAMED", "-Dguice_bytecode_gen_option=DISABLED")
+}
+
 configurations.consumable("distributionElements") {
     attributes(semantifyrArtifact("application-distribution"))
     outgoing.artifact(layout.buildDirectory.dir("install")) {
