@@ -1,0 +1,61 @@
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+name: Load test
+on:
+  schedule:
+    # before the fured suites start at 01:00 on the VM staging runs on, so their load stays out of the numbers
+    - cron: '30 23 * * *'
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Live instance for the load test.
+        type: string
+        default: https://live-staging.semantifyr.org
+      students:
+        type: number
+        default: 10
+      ramp:
+        description: Seconds over which the students join.
+        type: number
+        default: 30
+permissions: {}
+jobs:
+  load-test:
+    name: Load test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    concurrency:
+      group: load-test
+      cancel-in-progress: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      - name: Load test
+        timeout-minutes: 20
+        env:
+          URL: ${{ inputs.url || 'https://live-staging.semantifyr.org' }}
+          STUDENTS: ${{ inputs.students || 10 }}
+          RAMP: ${{ inputs.ramp || 30 }}
+        # the live instances run main, whose /api/portfolios names no default portfolio yet
+        run: >-
+          npm run load-test -w @ftsrg/semantifyr-live-frontend --
+          --url "$URL" --students "$STUDENTS" --ramp "$RAMP" --max-verify-p95 120
+          --portfolio smart-full --output "$GITHUB_WORKSPACE/load-test.json"
+      - name: Upload the load test report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: load-test-report
+          path: load-test.json
+          retention-days: 30
