@@ -6,6 +6,7 @@
 
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.sysmlCorpusModels
+import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
     base
@@ -100,4 +101,23 @@ val prepareDockerBuild = tasks.register("prepareDockerBuild") {
 
 tasks.assemble {
     dependsOn(prepareDockerBuild)
+}
+
+val imageTest = tasks.register<Exec>("imageTest") {
+    group = "verification"
+    dependsOn(prepareDockerBuild)
+    onlyIf("the image test needs a POSIX shell") {
+        !Os.isFamily(Os.FAMILY_WINDOWS)
+    }
+
+    val dockerRequired = providers.gradleProperty("tests.requiredBackends").getOrElse("").split(',').map {
+        it.trim()
+    }.contains("docker")
+
+    commandLine("./image-test.sh", "semantifyr-vscode-server:test", dockerRequired.toString())
+}
+
+tasks.register("integrationTest") {
+    group = "verification"
+    dependsOn(imageTest)
 }
