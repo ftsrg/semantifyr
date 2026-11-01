@@ -107,7 +107,11 @@ data class IntegerRange(
         }
     }
 
-    private fun exactOrNull(first: Long?, second: Long?, operation: (Long, Long) -> Long): Long? {
+    private fun exactOrNull(
+        first: Long?,
+        second: Long?,
+        operation: (Long, Long) -> Long,
+    ): Long? {
         if (first == null || second == null) {
             return null
         }

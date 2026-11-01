@@ -257,7 +257,11 @@ class VariableBoundsComputation(
         return state
     }
 
-    private fun refine(state: MutableMap<VariableDeclaration, IntegerRange>, guard: Expression, polarity: Boolean): MutableMap<VariableDeclaration, IntegerRange>? {
+    private fun refine(
+        state: MutableMap<VariableDeclaration, IntegerRange>,
+        guard: Expression,
+        polarity: Boolean,
+    ): MutableMap<VariableDeclaration, IntegerRange>? {
         return when {
             guard is LiteralBoolean -> state.takeIf { guard.isValue == polarity }
             guard is NegationOperator -> refine(state, guard.body, !polarity)
@@ -281,7 +285,11 @@ class VariableBoundsComputation(
         }
     }
 
-    private fun refineComparison(state: MutableMap<VariableDeclaration, IntegerRange>, comparison: ComparisonOperator, polarity: Boolean): MutableMap<VariableDeclaration, IntegerRange>? {
+    private fun refineComparison(
+        state: MutableMap<VariableDeclaration, IntegerRange>,
+        comparison: ComparisonOperator,
+        polarity: Boolean,
+    ): MutableMap<VariableDeclaration, IntegerRange>? {
         val op = if (polarity) comparison.op else negate(comparison.op)
         val left = evaluate(comparison.left, state)
         val right = evaluate(comparison.right, state)
@@ -298,7 +306,11 @@ class VariableBoundsComputation(
     }
 
     // the values of range that stand in relation op to some value of bound
-    private fun constrain(range: IntegerRange, op: ComparisonOp, bound: IntegerRange): IntegerRange? {
+    private fun constrain(
+        range: IntegerRange,
+        op: ComparisonOp,
+        bound: IntegerRange,
+    ): IntegerRange? {
         val constraint = when (op) {
             ComparisonOp.LESS -> IntegerRange(null, bound.upper?.let { it - 1 })
             ComparisonOp.LESS_EQ -> IntegerRange(null, bound.upper)
@@ -317,7 +329,11 @@ class VariableBoundsComputation(
         return range.intersect(constraint)
     }
 
-    private fun isSatisfiable(left: IntegerRange, op: ComparisonOp, right: IntegerRange): Boolean {
+    private fun isSatisfiable(
+        left: IntegerRange,
+        op: ComparisonOp,
+        right: IntegerRange,
+    ): Boolean {
         return when (op) {
             ComparisonOp.LESS -> left.lower == null || right.upper == null || left.lower < right.upper
             ComparisonOp.LESS_EQ -> left.lower == null || right.upper == null || left.lower <= right.upper
@@ -399,7 +415,11 @@ class VariableBoundsComputation(
         }
     }
 
-    private fun write(state: MutableMap<VariableDeclaration, IntegerRange>, variable: VariableDeclaration, range: IntegerRange) {
+    private fun write(
+        state: MutableMap<VariableDeclaration, IntegerRange>,
+        variable: VariableDeclaration,
+        range: IntegerRange,
+    ) {
         state[variable] = range
         if (recording) {
             variableRanges[variable] = variableRanges[variable]?.join(range) ?: range
