@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import vscode, { type CancellationToken, type ExtensionContext, Position, Range, RelativePattern, type TestController, type TestItem, TestMessage, TestRunProfileKind, type TestRun, type TestRunRequest, type TextDocument, type Uri, type WorkspaceFolder, type WorkspaceFoldersChangeEvent } from "vscode";
+import vscode, { type CancellationToken, type ExtensionContext, Location, Position, Range, RelativePattern, type TestController, type TestItem, TestMessage, TestRunProfileKind, type TestRun, type TestRunRequest, type TextDocument, type Uri, type WorkspaceFolder, type WorkspaceFoldersChangeEvent } from "vscode";
 import type { LanguageClient } from "vscode-languageclient/node";
 import {
     discoverVerificationCases,
@@ -12,6 +12,7 @@ import {
     VerificationStatus,
     type VerificationCaseSpecification,
 } from "@semantifyr/editor-common";
+import { witnessMessageContext, type WitnessView } from "../witness.js";
 
 export interface VerificationTestControllerConfig {
     languageId: string;
@@ -26,11 +27,13 @@ export class VerificationTestController {
 
     protected readonly client: LanguageClient;
     protected readonly config: VerificationTestControllerConfig;
+    protected readonly witnesses: WitnessView;
     protected controller!: TestController;
 
-    constructor(client: LanguageClient, config: VerificationTestControllerConfig) {
+    constructor(client: LanguageClient, config: VerificationTestControllerConfig, witnesses: WitnessView) {
         this.client = client;
         this.config = config;
+        this.witnesses = witnesses;
     }
 
     registerTestProvider(context: ExtensionContext) {
@@ -220,13 +223,21 @@ export class VerificationTestController {
                 return;
             }
 
+            this.witnesses.record(testItem, result);
+
             switch (result.status) {
                 case VerificationStatus.Passed:
                     run.passed(testItem);
                     break;
-                case VerificationStatus.Failed:
-                    run.failed(testItem, new TestMessage(result.message ?? 'Failed'));
+                case VerificationStatus.Failed: {
+                    const message = new TestMessage(result.message ?? 'Failed');
+                    message.location = new Location(testItem.uri, range);
+                    if (result.trace) {
+                        message.contextValue = witnessMessageContext;
+                    }
+                    run.failed(testItem, message);
                     break;
+                }
                 case VerificationStatus.Inconclusive:
                     run.errored(testItem, new TestMessage(`Inconclusive: ${result.message ?? 'no message'}`));
                     break;

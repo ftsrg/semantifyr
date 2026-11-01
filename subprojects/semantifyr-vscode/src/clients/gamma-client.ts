@@ -10,10 +10,11 @@ import { ExecuteCommandRequest, type LanguageClient } from "vscode-languageclien
 import { executablePostfix } from "../runner-utils.js";
 import { createLspClient, createRemoteLspClient, registerSemantifyrSettingsSync } from "./client-utils.js";
 import { VerificationTestController } from "./verification-test-controller.js";
+import type { WitnessView } from "../witness.js";
 
 let client: LanguageClient;
 
-export async function startGammaClient(context: ExtensionContext) {
+export async function startGammaClient(context: ExtensionContext, witnesses: WitnessView) {
     const gammaIdeExecutable = path.join(context.extensionPath, 'bin', 'gamma.lang.ide', 'bin', `gamma.lang.ide${executablePostfix}`);
 
     if (process.env.DEBUG_GAMMA_LSP) {
@@ -35,7 +36,7 @@ export async function startGammaClient(context: ExtensionContext) {
         controllerLabel: 'Gamma Verification Cases',
         discoverCommand: 'gamma.case.discover',
         verifyCommand: 'gamma.case.verify',
-    });
+    }, witnesses);
     gammaTestController.registerTestProvider(context);
     await gammaTestController.refreshWorkspaceTests();
 

@@ -61,6 +61,11 @@
         "command": "semantifyr.gamma.compile",
         "title": "Compile Gamma File",
         "category": "Semantifyr"
+      },
+      {
+        "command": "semantifyr.witness.show",
+        "title": "Show Witness",
+        "category": "Semantifyr"
       }
     ],
     "menus": {
@@ -69,6 +74,30 @@
           "command": "semantifyr.gamma.compile",
           "when": "resourceExtname == .gamma",
           "group": "semantifyr"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "semantifyr.witness.show",
+          "when": "false"
+        }
+      ],
+      "testing/item/context": [
+        {
+          "command": "semantifyr.witness.show",
+          "when": "controllerId == oxsts.verification || controllerId == gamma.verification"
+        }
+      ],
+      "testing/message/content": [
+        {
+          "command": "semantifyr.witness.show",
+          "when": "testMessage == semantifyr.witness"
+        }
+      ],
+      "testing/message/context": [
+        {
+          "command": "semantifyr.witness.show",
+          "when": "testMessage == semantifyr.witness"
         }
       ]
     },

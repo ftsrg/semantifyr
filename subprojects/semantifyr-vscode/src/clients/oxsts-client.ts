@@ -10,6 +10,7 @@ import type { LanguageClient} from "vscode-languageclient/node";
 import { createRemoteLspClient, createLspClient, registerSemantifyrSettingsSync } from "./client-utils.js";
 import { executablePostfix } from "../runner-utils.js";
 import { VerificationTestController } from "./verification-test-controller.js";
+import type { WitnessView } from "../witness.js";
 
 interface NavigateToParams {
     locations: Location[]
@@ -17,7 +18,7 @@ interface NavigateToParams {
 
 let client: LanguageClient;
 
-export async function startOxstsClient(context: ExtensionContext) {
+export async function startOxstsClient(context: ExtensionContext, witnesses: WitnessView) {
     const oxstsIdeExecutable = path.join(context.extensionPath, 'bin', 'oxsts.lang.ide', 'bin', `oxsts.lang.ide${executablePostfix}`);
 
     if (process.env.DEBUG_OXSTS_LSP) {
@@ -43,7 +44,7 @@ export async function startOxstsClient(context: ExtensionContext) {
         controllerLabel: 'Semantifyr Verification Cases',
         discoverCommand: 'oxsts.case.discover',
         verifyCommand: 'oxsts.case.verify',
-    });
+    }, witnesses);
     oxstsTestController.registerTestProvider(context);
     await oxstsTestController.refreshWorkspaceTests();
 }
