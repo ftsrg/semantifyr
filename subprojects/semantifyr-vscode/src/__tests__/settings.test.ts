@@ -53,6 +53,10 @@ describe('readSemantifyrSettings', () => {
         ]);
     });
 
+    it('falls back to the contributed defaults', () => {
+        expect(readSemantifyrSettings()).toEqual(contributedDefaults());
+    });
+
     it('reads the configured values', () => {
         state.configuration.set('semantifyr.portfolio', 'smart-full');
         state.configuration.set('semantifyr.theta.executor', 'docker');

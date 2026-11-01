@@ -21,7 +21,7 @@ export function readSemantifyrSettings(): ServerSettings {
         maxConcurrency: config.get<number>("maxConcurrency", 0),
         theta: {
             executor: config.get<ThetaExecutor>("theta.executor", "auto"),
-            dockerImage: config.get<string>("theta.dockerImage", "ftsrg/theta-xsts-cli:latest"),
+            dockerImage: config.get<string>("theta.dockerImage", "ftsrg/theta-xsts-cli:8.6.0"),
         },
         artifacts: {
             location: config.get<ArtifactsLocation>("artifacts.location", "temporary"),
