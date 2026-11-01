@@ -36,7 +36,9 @@ dependencies {
             jacocoAggregation(project(subproject.path))
         }
         subproject.plugins.withId("org.jetbrains.kotlin.jvm") {
-            dokka(project(subproject.path))
+            if (subproject.name !in javadocModules) {
+                dokka(project(subproject.path))
+            }
         }
     }
     javadocModules.forEach {

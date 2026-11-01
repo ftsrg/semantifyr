@@ -10,6 +10,7 @@ mockito = "5.24.0"
 mockitoKotlin = "6.4.0"
 mwe2 = "2.27.0"
 mweUtils = "1.21.0"
+reload4j = "1.2.26"
 slf4j = "2.0.20"
 log4j = "2.26.1"
 xtext = "2.44.0"
@@ -42,6 +43,7 @@ mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", versio
 mwe-utils = { group = "org.eclipse.emf", name = "org.eclipse.emf.mwe.utils", version.ref = "mweUtils" }
 mwe2-launch = { group = "org.eclipse.emf", name = "org.eclipse.emf.mwe2.launch", version.ref = "mwe2" }
 mwe2-lib = { group = "org.eclipse.emf", name = "org.eclipse.emf.mwe2.lib", version.ref = "mwe2" }
+reload4j = { group = "ch.qos.reload4j", name = "reload4j", version.ref = "reload4j" }
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
 slf4j-log4j = { group = "org.apache.logging.log4j", name = "log4j-slf4j2-impl", version.ref = "log4j" }
 xtext-bom = { group = "org.eclipse.xtext", name = "xtext-dev-bom", version.ref = "xtext" }
