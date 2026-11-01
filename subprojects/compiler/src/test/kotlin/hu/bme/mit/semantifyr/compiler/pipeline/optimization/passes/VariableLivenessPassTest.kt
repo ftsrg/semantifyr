@@ -188,7 +188,7 @@ class VariableLivenessPassTest : PassTestBase() {
             init { }
             tran {
                 var s : int := a
-                for (i in 0 .. 2) {
+                for (i in 0..2) {
                     seen := s
                     a := a + i
                 }
@@ -202,7 +202,7 @@ class VariableLivenessPassTest : PassTestBase() {
             init { }
             tran {
                 var s : int := a
-                for (i in 0 .. 2) {
+                for (i in 0..2) {
                     seen := s
                     a := a + i
                 }
@@ -249,7 +249,7 @@ class VariableLivenessPassTest : PassTestBase() {
             var x : int := 0
             init { }
             tran {
-                for (i in 0 .. 2) {
+                for (i in 0..2) {
                     x := x + 1
                 }
             }
@@ -260,7 +260,7 @@ class VariableLivenessPassTest : PassTestBase() {
             var x : int := 0
             init { }
             tran {
-                for (i in 0 .. 2) {
+                for (i in 0..2) {
                     x := x + 1
                 }
             }
@@ -277,7 +277,7 @@ class VariableLivenessPassTest : PassTestBase() {
             var x : int := 0
             init { }
             tran {
-                for (i in 0 .. 2) { }
+                for (i in 0..2) { }
                 x := 1
             }
             prop { AG (x <= 1) }
@@ -287,7 +287,7 @@ class VariableLivenessPassTest : PassTestBase() {
             var x : int := 0
             init { }
             tran {
-                for (i in 0 .. 2) { }
+                for (i in 0..2) { }
                 x := 1
             }
             prop { AG (x <= 1) }

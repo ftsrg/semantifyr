@@ -48,7 +48,7 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
                 @semantifyr::Clock var e : test::colors::Color := test::colors::Color::Red
                 var x : int := 0
                 init { }
-                tran { c := 0 c := 5 havoc(c) for (i in 0 .. 2) { x := x + i } }
+                tran { c := 0 c := 5 havoc(c) for (i in 0..2) { x := x + i } }
                 prop { AG true }
             """,
         )

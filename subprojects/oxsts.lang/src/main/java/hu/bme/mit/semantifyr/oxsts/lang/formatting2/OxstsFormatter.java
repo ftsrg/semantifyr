@@ -159,6 +159,8 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         if (typeSpecification.getMultiplicity() != null) {
             document.set(previousHiddenRegion(typeSpecification.getMultiplicity()), this::noSpace);
         }
+
+        document.format(typeSpecification.getMultiplicity());
     }
 
     protected void format(VariableDeclaration variableDeclaration, IFormattableDocument document) {

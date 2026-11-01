@@ -124,7 +124,7 @@ class RedundancyPatternsTest : PatternTestBase() {
             init { }
             tran {
                 a := 1
-                for (i in 0 .. 5) { }
+                for (i in 0..5) { }
             }
             prop { AG true }
         """,

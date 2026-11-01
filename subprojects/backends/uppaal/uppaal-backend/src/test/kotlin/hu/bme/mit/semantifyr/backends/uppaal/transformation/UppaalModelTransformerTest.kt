@@ -388,7 +388,7 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
                 """
                     var x : int := 0
                     init { }
-                    tran { for (i in 0 .. 2) { x := x + i } }
+                    tran { for (i in 0..2) { x := x + i } }
                     prop { AG true }
                 """,
             )

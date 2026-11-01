@@ -411,7 +411,7 @@ class CopyPropagationPassTest : PassTestBase() {
             init { }
             tran {
                 q := p
-                for (i in 0 .. 2) {
+                for (i in 0..2) {
                     assume (q == 0)
                     p := p + 1
                 }
@@ -425,7 +425,7 @@ class CopyPropagationPassTest : PassTestBase() {
             init { }
             tran {
                 q := p
-                for (i in 0 .. 2) {
+                for (i in 0..2) {
                     assume (q == 0)
                     p := p + 1
                 }

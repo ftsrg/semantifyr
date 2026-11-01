@@ -7,7 +7,7 @@
 package semantifyr::verification::lang::runtime_for
 
 // A runtime for-operation iterates its whole range within one step:
-// `a .. b` includes b, `a ..< b` stops before it. Summing the loop
+// `a..b` includes b, `a..<b` stops before it. Summing the loop
 // variable distinguishes every off-by-one.
 
 @VerificationCase
@@ -18,7 +18,7 @@ class InclusiveRangeReach {
 
     redefine tran {
         assume(x == 0)
-        for (i in 0 .. 2) {
+        for (i in 0..2) {
             x := x + i
         }
     }
@@ -36,7 +36,7 @@ class InclusiveRangeBound {
 
     redefine tran {
         assume(x == 0)
-        for (i in 0 .. 2) {
+        for (i in 0..2) {
             x := x + i
         }
     }
@@ -54,7 +54,7 @@ class ExclusiveRangeReach {
 
     redefine tran {
         assume(x == 0)
-        for (i in 0 ..< 3) {
+        for (i in 0..<3) {
             x := x + i
         }
     }
@@ -72,7 +72,7 @@ class ExclusiveRangeBound {
 
     redefine tran {
         assume(x == 0)
-        for (i in 0 ..< 3) {
+        for (i in 0..<3) {
             x := x + i
         }
     }
@@ -92,7 +92,7 @@ class UnreadLoopVariableReach {
 
     redefine tran {
         assume(x == 0)
-        for (i in 0 .. 2) {
+        for (i in 0..2) {
             x := x + 1
         }
     }
@@ -110,7 +110,7 @@ class UnreadLoopVariableBound {
 
     redefine tran {
         assume(x == 0)
-        for (i in 0 .. 2) {
+        for (i in 0..2) {
             x := x + 1
         }
     }

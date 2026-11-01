@@ -257,7 +257,7 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                 var sum : int := 0
                 init { }
                 tran {
-                    for (x in 0 .. n) {
+                    for (x in 0..n) {
                         sum := sum + x
                     }
                 }
