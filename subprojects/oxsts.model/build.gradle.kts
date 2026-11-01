@@ -6,10 +6,19 @@
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.mwe2")
+    kotlin("jvm")
 }
+
+sourceSets.create("metamodel")
 
 dependencies {
     api(libs.ecore)
+
+    "metamodelImplementation"(libs.ecore)
+    "metamodelImplementation"(libs.ecore.codegen)
+    "metamodelImplementation"(libs.mwe2.lib)
+    "metamodelRuntimeOnly"(libs.mwe.utils)
+    "metamodelRuntimeOnly"(libs.reload4j)
 
     mwe2(libs.ecore.codegen)
     mwe2(libs.mwe.utils)
@@ -38,6 +47,10 @@ tasks {
     }
 
     compileJava {
+        inputs.files(generateEPackage)
+    }
+
+    compileKotlin {
         inputs.files(generateEPackage)
     }
 
