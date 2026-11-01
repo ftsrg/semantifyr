@@ -32,17 +32,22 @@ enum class Bounds(val lower: Int, val upper: Int) {
 
 private val factory = EcoreFactory.eINSTANCE
 
-class MetaPackage(
+abstract class MetaPackage(
     private val name: String,
     private val nsUri: String,
     private val basePackage: String,
     private val complianceLevel: String,
-    private val classifiers: List<MetaClassifier>,
 ) {
     fun toEPackage(): EPackage {
-        val duplicates = classifiers.groupBy { it }.filterValues { it.size > 1 }.keys
-        check(duplicates.isEmpty()) {
-            "$duplicates listed twice"
+        val classifiers = javaClass.declaredClasses.sortedBy { it.simpleName }.map { nested ->
+            val classifier = if (nested.isEnum) {
+                nested.declaredFields.singleOrNull {
+                    MetaEnum::class.java.isAssignableFrom(it.type)
+                }?.get(null) as? MetaEnum<*>
+            } else {
+                nested.declaredFields.singleOrNull { it.name == "INSTANCE" }?.get(null) as? MetaClass
+            }
+            classifier ?: error("${nested.simpleName} in $name is neither a MetaClass object nor an enum with a MetaEnum companion")
         }
         val ePackage = factory.createEPackage()
         ePackage.name = name
@@ -54,7 +59,7 @@ class MetaPackage(
         ePackage.eClassifiers += eClassifiers.values
         classifiers.filterIsInstance<MetaClass>().forEach {
             it.link(eClassifiers.getValue(it) as EClass) { classifier, owner ->
-                eClassifiers[classifier] ?: error("$classifier in $owner is not in the package")
+                eClassifiers[classifier] ?: error("$classifier in $owner is not nested in $name")
             }
         }
         val errors = Diagnostician.INSTANCE.validate(ePackage).children.filter { it.severity == Diagnostic.ERROR }
