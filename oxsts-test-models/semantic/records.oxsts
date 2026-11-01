@@ -6,9 +6,7 @@
 
 package semantifyr::verification::lang::records
 
-// Records are values: the compiler flattens each record variable into one
-// scalar variable per field, nested records recursively. Assignment copies
-// every field and comparison is by value.
+// Records are values: the compiler flattens each record variable into one scalar variable per field, nested records recursively. Assignment copies every field and comparison is by value. A record literal lists fields by name; an omitted field takes its default.
 
 enum Light { Off, On }
 
@@ -25,6 +23,11 @@ record Reading {
 record Cell {
     var position: Point
     var light: Light := Light::Off
+}
+
+record Line {
+    var from: Point := Point { x = 1, y = 1 }
+    var to: Point
 }
 
 // --- field read and write ---
@@ -272,5 +275,218 @@ class ContainedRecordReach {
 
     prop {
         return EF robot.position.x == 3
+    }
+}
+
+// --- record literals ---
+
+// Reachable: a literal assigns every field at once, so the swap reads the fields before it writes them.
+@VerificationCase
+@Tag("expect-pass")
+class RecordLiteralAssignReach {
+    var p: Point
+
+    redefine tran {
+        choice {
+            assume(p.x == 0)
+            p := Point { x = 2, y = 3 }
+        } or {
+            p := Point { x = p.y, y = p.x }
+        }
+    }
+
+    prop {
+        return EF p == Point { x = 3, y = 2 }
+    }
+}
+
+// Violated: the swapped point is neither on the diagonal nor the assigned literal.
+@VerificationCase
+@Tag("expect-fail")
+class RecordLiteralAssignBound {
+    var p: Point
+
+    redefine tran {
+        choice {
+            assume(p.x == 0)
+            p := Point { x = 2, y = 3 }
+        } or {
+            p := Point { x = p.y, y = p.x }
+        }
+    }
+
+    prop {
+        return AG (p.x == p.y || p == Point { x = 2, y = 3 })
+    }
+}
+
+// Holds: an omitted field takes its default, not its old value, so x and y are never both non-zero.
+@VerificationCase
+@Tag("expect-pass")
+class RecordLiteralDefaultBound {
+    var p: Point := Point { y = 5 }
+
+    redefine tran {
+        assume(p.x < 3)
+        p := Point { x = p.x + 1 }
+    }
+
+    prop {
+        return AG (p.x == 0 || p.y == 0)
+    }
+}
+
+// Violated: the next literal resets y to its default.
+@VerificationCase
+@Tag("expect-fail")
+class RecordLiteralDefaultViolated {
+    var p: Point := Point { y = 5 }
+
+    redefine tran {
+        assume(p.x < 3)
+        p := Point { x = p.x + 1 }
+    }
+
+    prop {
+        return AG p.y == 5
+    }
+}
+
+// Reachable: a local literal reads the state and an `if` compares with a literal.
+@VerificationCase
+@Tag("expect-pass")
+class LocalRecordLiteralReach {
+    var p: Point
+    var hits: int := 0
+
+    redefine tran {
+        var next: Point := Point { x = p.x + 1, y = p.x }
+        assume(next.x <= 3)
+        if (next == Point { x = 2, y = 1 }) {
+            hits := hits + 1
+        }
+        p := next
+    }
+
+    prop {
+        return EF (hits == 1 && p == Point { x = 3, y = 2 })
+    }
+}
+
+// Holds: a literal argument is copied into the parameter, and a field of the parameter reads the literal.
+@VerificationCase
+@Tag("expect-pass")
+class RecordLiteralArgumentBound {
+    var p: Point
+    var lastX: int := 0
+
+    tran moveTo(target: Point) {
+        p := target
+        lastX := target.x
+    }
+
+    redefine tran {
+        assume(p.y < 3)
+        inline moveTo(Point { x = 2, y = p.y + 1 })
+    }
+
+    prop {
+        return AG (p.x == lastX && p.y <= 3)
+    }
+}
+
+// Reachable: a literal argument of a property call.
+@VerificationCase
+@Tag("expect-pass")
+class RecordLiteralArgumentReach {
+    var p: Point
+
+    prop isAt(point: Point): bool {
+        return p == point
+    }
+
+    redefine tran {
+        assume(p.y < 3)
+        p := Point { x = 2, y = p.y + 1 }
+    }
+
+    prop {
+        return EF isAt(Point { x = 2, y = 3 })
+    }
+}
+
+// Violated: the literal argument moves y to 3.
+@VerificationCase
+@Tag("expect-fail")
+class RecordLiteralArgumentViolated {
+    var p: Point
+
+    tran moveTo(target: Point) {
+        p := target
+    }
+
+    redefine tran {
+        assume(p.y < 3)
+        inline moveTo(Point { x = 2, y = p.y + 1 })
+    }
+
+    prop {
+        return AG p.y <= 2
+    }
+}
+
+// Holds: a record-typed field without an initializer in the variable takes the field's literal default.
+@VerificationCase
+@Tag("expect-pass")
+class RecordFieldLiteralDefaultBound {
+    var l: Line
+
+    redefine tran {
+        assume(l.to.x < 2)
+        l.to.x := l.to.x + 1
+    }
+
+    prop {
+        return AG l.from == Point { x = 1, y = 1 }
+    }
+}
+
+// Reachable: a nested literal reads the state, and the omitted `from` takes its literal default again.
+@VerificationCase
+@Tag("expect-pass")
+class NestedRecordLiteralReach {
+    var l: Line
+
+    redefine tran {
+        choice {
+            l.from := Point { x = 0 }
+        } or {
+            assume(l.to.x < 2)
+            l := Line { to = Point { x = l.to.x + 1, y = l.from.x } }
+        }
+    }
+
+    prop {
+        return EF (l.to == Point { x = 2, y = 1 } && l.from.x == 1)
+    }
+}
+
+// Violated: the nested literal copies the default `from.x` into `to.y`.
+@VerificationCase
+@Tag("expect-fail")
+class NestedRecordLiteralViolated {
+    var l: Line
+
+    redefine tran {
+        choice {
+            l.from := Point { x = 0 }
+        } or {
+            assume(l.to.x < 2)
+            l := Line { to = Point { x = l.to.x + 1, y = l.from.x } }
+        }
+    }
+
+    prop {
+        return AG l.to.y == 0
     }
 }
