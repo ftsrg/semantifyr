@@ -79,6 +79,8 @@ npm run load-test -w @ftsrg/semantifyr-live-frontend -- --students 30 --ramp 60
 
 Each student opens a tutorial step model over the language server socket, verifies its cases, edits the model, verifies again and disconnects. `--url` selects the instance (staging by default) and `--help` lists the other options. The run stops when `/api/health` fails three times in a row, writes its measurements as JSON to `subprojects/semantifyr-live/frontend/build/load-test/`, and exits non-zero on an unexpected verdict, an error, or a p95 verification time above `--max-verify-p95`. Staging shares its machine with production: run a class-sized test there once, not in a loop.
 
+The Nightly workflow runs it every night from a GitHub runner against staging with 10 students joining over 30 s, fails on an unexpected verdict, an error, an unreachable instance or a p95 above 120 s, and keeps the JSON report as an artifact for 30 days. Dispatching the workflow by hand, which also starts the suites on fured, takes `url`, `students` and `ramp` for a run against production or a larger class.
+
 ## Contributing a change
 
 1. Create a branch on your fork.
