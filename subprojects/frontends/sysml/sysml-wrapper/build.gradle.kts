@@ -185,6 +185,7 @@ tasks.test {
         examplesSourceDir.file("crossroads.sysml"),
         examplesSourceDir.file("Verification.sysml"),
         layout.projectDirectory.file("../models/etc/crossroads-green.trace.sysml"),
+        layout.projectDirectory.file("../models/etc/crossroads-green.trace.json"),
         layout.projectDirectory.file("../models/etc/crossroads-green.witness.oxsts"),
     ).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/libraries/default")).withPathSensitivity(PathSensitivity.RELATIVE)

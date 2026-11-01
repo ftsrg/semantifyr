@@ -39,7 +39,7 @@ class SysMLv2Compiler(
         if (Files.isRegularFile(entry)) {
             logger.info { "Reusing cached OXSTS '$entry' for SysMLv2 source '$sourcePath'" }
         } else {
-            runCli(sourcePath, entry)
+            compileIntoCache(sourcePath, entry)
         }
 
         Files.createDirectories(outputPath.toAbsolutePath().parent)
@@ -69,40 +69,78 @@ class SysMLv2Compiler(
             .resolve("${sourcePath.fileName}-${sha256Hex(files)}.oxsts")
     }
 
-    private fun runCli(sourcePath: Path, entry: Path) {
+    // the trace command validates the trace in the model's workspace and writes nothing when it does not validate
+    fun trace(
+        sourcePath: Path,
+        tracePath: Path,
+        caseName: String,
+        outputPath: Path,
+    ): Path {
+        require(Files.isRegularFile(sourcePath)) {
+            "SysMLv2 source does not exist or is not a regular file: $sourcePath"
+        }
+        require(Files.isRegularFile(tracePath)) {
+            "Trace does not exist or is not a regular file: $tracePath"
+        }
+
+        logger.info { "Generating the SysMLv2 trace of '$caseName' from '$tracePath' via bundled CLI '$cliPath'" }
+
+        Files.createDirectories(outputPath.toAbsolutePath().parent)
+        val temporary = outputPath.resolveSibling(".tmp-${UUID.randomUUID()}.sysml")
+        try {
+            runCli(
+                "SysMLv2 trace generation of '$caseName'",
+                "trace",
+                sourcePath.toString(),
+                sysmlLibraryPath.toString(),
+                tracePath.toString(),
+                caseName,
+                "-o",
+                temporary.toString(),
+            )
+            Files.move(temporary, outputPath, StandardCopyOption.ATOMIC_MOVE)
+        } finally {
+            runCatching { Files.deleteIfExists(temporary) }
+        }
+        return outputPath
+    }
+
+    private fun compileIntoCache(sourcePath: Path, entry: Path) {
         logger.info { "Compiling SysMLv2 source '$sourcePath' via bundled CLI '$cliPath'" }
 
         Files.createDirectories(entry.parent)
         val temporary = entry.resolveSibling(".tmp-${UUID.randomUUID()}.oxsts")
         try {
-            val builder = ProcessBuilder(
-                "node",
-                cliPath.toString(),
+            runCli(
+                "SysMLv2 compilation of '$sourcePath'",
                 "compile",
                 sourcePath.toString(),
                 sysmlLibraryPath.toString(),
                 "-o",
                 temporary.toString(),
-            ).redirectErrorStream(true)
-
-            val process = try {
-                builder.start()
-            } catch (ex: IOException) {
-                throw IllegalStateException(
-                    "Failed to launch the SysMLv2 node CLI ($cliPath). Ensure `node` is installed and on PATH.",
-                    ex,
-                )
-            }
-
-            val cliOutput = process.inputStream.bufferedReader().readText()
-            val exitCode = process.waitFor()
-            check(exitCode == 0) {
-                "SysMLv2 compilation of '$sourcePath' failed with exit code $exitCode:\n$cliOutput"
-            }
-
+            )
             moveIntoPlace(temporary, entry)
         } finally {
             runCatching { Files.deleteIfExists(temporary) }
+        }
+    }
+
+    private fun runCli(description: String, vararg arguments: String) {
+        val builder = ProcessBuilder(listOf("node", cliPath.toString()) + arguments).redirectErrorStream(true)
+
+        val process = try {
+            builder.start()
+        } catch (ex: IOException) {
+            throw IllegalStateException(
+                "Failed to launch the SysMLv2 node CLI ($cliPath). Ensure `node` is installed and on PATH.",
+                ex,
+            )
+        }
+
+        val cliOutput = process.inputStream.bufferedReader().readText()
+        val exitCode = process.waitFor()
+        check(exitCode == 0) {
+            "$description failed with exit code $exitCode:\n$cliOutput"
         }
     }
 

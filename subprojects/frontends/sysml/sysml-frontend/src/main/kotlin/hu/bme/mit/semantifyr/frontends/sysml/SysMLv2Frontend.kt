@@ -15,16 +15,20 @@ import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.frontends.sysml.wrapper.SysMLv2Compiler
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.lang.library.ClasspathBasedOxstsLibrary
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.VerificationResult
 import hu.bme.mit.semantifyr.verifier.VerificationResultDto
+import hu.bme.mit.semantifyr.verifier.caseDirectoryName
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import hu.bme.mit.semantifyr.verifier.toJavaDto
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.readText
@@ -87,11 +91,40 @@ class SysMLv2Frontend private constructor(
         case: VerificationCase,
         progress: ProgressContext = ProgressContext.NoOp,
     ): VerificationResult {
-        val verifier = buildVerifier(sysmlConfig.outputDirectory.resolve("verification"))
+        val verifier = buildVerifier(sysmlConfig.outputDirectory)
         logger.info { "Verifying SysMLv2 case '${case.qualifiedName}' (variant=${variant.name})" }
         val result = verifier.verify(case, progress)
         logger.info { "SysMLv2 case '${case.qualifiedName}' -> ${result.verdict}" }
+        if (result.trace != null) {
+            withContext(Dispatchers.IO) {
+                writeSysMLTrace(case)
+            }
+        }
         return result
+    }
+
+    fun sysmlTracePath(case: VerificationCase): Path {
+        return caseDirectory(case).resolve("trace.sysml")
+    }
+
+    private fun caseDirectory(case: VerificationCase): Path {
+        return sysmlConfig.outputDirectory.resolve(caseDirectoryName(case))
+    }
+
+    // a witness the generator cannot express keeps its verdict, as an artifact the verifier fails to write does
+    private fun writeSysMLTrace(case: VerificationCase) {
+        val tracePath = sysmlTracePath(case)
+        try {
+            sharedSysMLv2Compiler.trace(
+                sourcePath = sysmlConfig.sourcePath,
+                tracePath = caseDirectory(case).resolve("trace.json"),
+                caseName = case.qualifiedName.substringAfterLast("::"),
+                outputPath = tracePath,
+            )
+            logger.info { "SysMLv2 case '${case.qualifiedName}' wrote its SysML trace to '$tracePath'" }
+        } catch (exception: Exception) {
+            logger.warn(exception) { "SysMLv2 case '${case.qualifiedName}' has no SysML trace" }
+        }
     }
 
     fun verifyBlocking(
