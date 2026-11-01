@@ -30,9 +30,9 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
+import hu.bme.mit.semantifyr.verifier.caseDirectoryName
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
-import hu.bme.mit.semantifyr.verifier.qualifiedNameToDirectoryName
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlin.coroutines.cancellation.CancellationException
@@ -126,7 +126,7 @@ class VerifyCommand @Inject constructor(
         }
         val exitCode = ExitCode.of(result.verdict)
         val report = artifactOptions.resolvedOutputDirectory
-            .resolve(qualifiedNameToDirectoryName(case.qualifiedName))
+            .resolve(caseDirectoryName(case))
             .resolve("report.json")
             .toAbsolutePath()
             .normalize()
