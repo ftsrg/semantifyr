@@ -1,0 +1,17 @@
+\begin{tabular}{lrrrrrrrrrrrrrr}
+\toprule
+Level & Variables & Operations & Expressions & Var. ratio & Expr. ratio & Unfolding (s) & Unf. ratio & Checking (s) & Chk. ratio & Pass (s) & Firings & Timeouts & Errors & Wrong \\
+\midrule
+all & 2835 & 15789 & 43023 & 1.000 & 1.000 & 27.548 & 1.000 & 264.646 & 1.000 & 0.000 & 0 & 0 & 0 & 0 \\
+without-expression-simplification & 3313 & 18262 & 55925 & 1.169 & 1.300 & 25.797 & 0.936 & 266.301 & 1.006 & 0.642 & 132 & 0 & 0 & 0 \\
+without-operation-flattening & 2835 & 16963 & 43023 & 1.000 & 1.000 & 25.748 & 0.935 & 257.264 & 0.972 & 0.510 & 78 & 0 & 0 & 0 \\
+without-redundant-operation-removal & 2836 & 16735 & 43877 & 1.000 & 1.020 & 22.983 & 0.834 & 253.480 & 0.958 & 0.228 & 48 & 0 & 0 & 0 \\
+without-assume-false-propagation & 3312 & 20124 & 47859 & 1.168 & 1.112 & 27.623 & 1.003 & 269.326 & 1.018 & 0.238 & 73 & 0 & 0 & 0 \\
+without-constant-variable-substitution & 2840 & 15794 & 43054 & 1.002 & 1.001 & 25.583 & 0.929 & 263.646 & 0.996 & 0.511 & 5 & 0 & 0 & 0 \\
+without-copy-propagation & 2839 & 15812 & 43064 & 1.001 & 1.001 & 26.315 & 0.955 & 270.537 & 1.022 & 3.055 & 7 & 0 & 0 & 0 \\
+without-dead-store-elimination & 2835 & 15791 & 43026 & 1.000 & 1.000 & 23.821 & 0.865 & 257.158 & 0.972 & 0.077 & 63 & 0 & 0 & 0 \\
+without-dead-code-removal & 2836 & 15790 & 43028 & 1.000 & 1.000 & 21.862 & 0.794 & 257.703 & 0.974 & 1.008 & 1 & 0 & 0 & 0 \\
+without-variable-liveness & 3811 & 15830 & 44993 & 1.344 & 1.046 & 23.450 & 0.851 & 266.724 & 1.008 & 0.817 & 96 & 0 & 0 & 0 \\
+none & 4287 & 24912 & 62063 & 1.512 & 1.443 & 17.875 & 0.649 & 281.244 & 1.063 & 7.087 & 503 & 0 & 0 & 0 \\
+\bottomrule
+\end{tabular}
