@@ -177,6 +177,21 @@ tasks.register<NpmTask>("runDev") {
     npmCommand.set(listOf("run", "dev"))
 }
 
+tasks.register<NpmTask>("loadTest") {
+    group = "verification"
+
+    inputs.files(tasks.npmInstall)
+
+    npmCommand.set(listOf("run", "load-test", "--"))
+    args.set(
+        providers.gradleProperty("loadTest.args").map { value ->
+            value.split(" ").filter {
+                it.isNotBlank()
+            }
+        }.orElse(emptyList()),
+    )
+}
+
 tasks {
     assemble {
         dependsOn(npmAssemble)
