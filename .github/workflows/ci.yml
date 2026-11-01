@@ -113,13 +113,21 @@ jobs:
           tar -czf live-image-context.tar.gz -C subprojects/semantifyr-live/backend \
             Dockerfile build/install build/staging build/theta-xsts-cli
           mkdir distributions
-          cp subprojects/semantifyr-vscode/build/semantifyr-*.vsix subprojects/semantifyr-cli/build/distributions/semantifyr-*.zip distributions/
+          cp subprojects/semantifyr-vscode/build/semantifyr-*.vsix subprojects/semantifyr-cli/build/distributions/semantifyr-*.zip \
+            subprojects/benchmark/build/distributions/semantifyr-benchmark-*.zip distributions/
       - name: Smoke test the CLI distribution
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
           version=$(sed -n 's/^version=//p' gradle.properties)
           unzip -q "distributions/semantifyr-$version.zip" -d cli
           "cli/semantifyr-$version/bin/semantifyr" verify --theta-executor shell "cli/semantifyr-$version/models/smoke"
+      - name: Smoke test the benchmark package
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          version=$(sed -n 's/^version=//p' gradle.properties)
+          unzip -q "distributions/semantifyr-benchmark-$version.zip" -d benchmark
+          cd "benchmark/semantifyr-benchmark-$version"
+          PATH="$GITHUB_WORKSPACE/cli/semantifyr-$version/theta-xsts-cli:$PATH" bin/semantifyr-benchmark run smoke --no-runexec
       - name: Upload the distributions
         if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: actions/upload-artifact@v7

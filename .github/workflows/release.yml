@@ -65,6 +65,16 @@ jobs:
             "$IMAGE:$SNAPSHOT"
           digest=$(docker buildx imagetools inspect "$IMAGE:$VERSION" --format '{{.Manifest.Digest}}')
           echo "digest=$digest" >> "$GITHUB_OUTPUT"
+      - name: Write the image digest into the benchmark package
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          DIGEST: ${{ steps.image.outputs.digest }}
+        run: |
+          package="semantifyr-benchmark-$VERSION"
+          unzip -q "distributions/$package.zip" "$package/README.md" -d benchmark
+          sed -i "s|@LIVE_IMAGE@|$IMAGE@$DIGEST|" "benchmark/$package/README.md"
+          grep -q "$IMAGE@$DIGEST" "benchmark/$package/README.md"
+          (cd benchmark && zip -q "../distributions/$package.zip" "$package/README.md")
       - name: Publish the extension to the marketplace
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}

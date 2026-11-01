@@ -7,7 +7,7 @@
 import hu.bme.mit.semantifyr.gradle.conventions.registerVerificationTestService
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
+    id("hu.bme.mit.semantifyr.gradle.conventions.application")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
     id("hu.bme.mit.semantifyr.gradle.conventions.verification")
     id("hu.bme.mit.semantifyr.gradle.conventions.integration")
@@ -25,10 +25,13 @@ dependencies {
     implementation(testFixtures(project(":sysml-frontend")))
     implementation(libs.kotlinx.coroutines.core)
 
-    runtimeOnly(libs.slf4j.log4j)
-
     testImplementation(testFixtures(project(":verifier")))
     testImplementation(libs.kotlinx.coroutines.core)
+}
+
+application {
+    mainClass = "hu.bme.mit.semantifyr.benchmark.BenchmarkMainKt"
+    applicationName = "semantifyr-benchmark"
 }
 
 val rootDirectory = isolated.rootProject.projectDirectory
@@ -37,7 +40,7 @@ tasks.register<JavaExec>("campaign") {
     group = "benchmark"
     description = "Runs or resumes the campaign named by -Pcampaign, analyses its results and compares them with its reference."
     classpath = sourceSets.main.get().runtimeClasspath
-    mainClass = "hu.bme.mit.semantifyr.benchmark.BenchmarkMainKt"
+    mainClass = application.mainClass
     outputs.upToDateWhen { false }
     usesService(gradle.sharedServices.registerVerificationTestService())
     inputs.files(tasks.named("cloneTheta"))
@@ -74,7 +77,7 @@ tasks.register<JavaExec>("campaignReference") {
     group = "benchmark"
     description = "Rewrites the committed reference results and analysis of the campaign named by -Pcampaign from its latest results."
     classpath = sourceSets.main.get().runtimeClasspath
-    mainClass = "hu.bme.mit.semantifyr.benchmark.BenchmarkMainKt"
+    mainClass = application.mainClass
     outputs.upToDateWhen { false }
 
     val campaign = providers.gradleProperty("campaign")
@@ -92,7 +95,7 @@ tasks.register<JavaExec>("campaignAnalysis") {
     group = "benchmark"
     description = "Analyses the results of the campaign named by -Pcampaign, or of the directory -Pbenchmark.results, into -Pbenchmark.analysis (default: analysis/ next to the results)."
     classpath = sourceSets.main.get().runtimeClasspath
-    mainClass = "hu.bme.mit.semantifyr.benchmark.BenchmarkMainKt"
+    mainClass = application.mainClass
     outputs.upToDateWhen { false }
 
     val campaign = providers.gradleProperty("campaign")
@@ -107,4 +110,34 @@ tasks.register<JavaExec>("campaignAnalysis") {
             listOf("analyze", resultsDirectory, analysis.orNull ?: "$resultsDirectory/analysis")
         },
     )
+}
+
+distributions.main {
+    contents {
+        from(rootDirectory.dir("subprojects/frontends/sysml/models/examples")) {
+            into("models/sysml")
+        }
+        from(rootDirectory.dir("oxsts-test-models/semantic")) {
+            into("models/semantic")
+        }
+        from(rootDirectory.dir("oxsts-test-models/smoke")) {
+            into("models/smoke")
+        }
+        from(layout.projectDirectory.file("src/main/kotlin/hu/bme/mit/semantifyr/benchmark/campaigns/Campaigns.kt")) {
+            into("campaigns")
+        }
+        from(layout.projectDirectory.dir("reference")) {
+            into("reference")
+        }
+        // cmd.exe would reject the Windows launcher's expanded classpath, as it did the CLI's
+        exclude("**/*.bat")
+        val version = project.version.toString()
+        filesMatching("README.md") {
+            filter { it.replace("@VERSION@", version) }
+        }
+    }
+}
+
+tasks.distTar {
+    enabled = false
 }
