@@ -9,8 +9,9 @@ import { type CancellationToken, ResponseError } from 'vscode-jsonrpc';
 import { LSPErrorCodes } from 'vscode-languageserver-protocol';
 import type { VerificationCaseResult, VerificationCaseSpecification } from '@semantifyr/editor-common';
 import { VerificationTestController } from '../clients/verification-test-controller.js';
-import { modelUri, reachableCase, result, safeCase } from './fixtures.js';
-import { CancellationTokenSource, createExtensionContext, resetVscode, state, type TestController, type TestItem, Uri } from './stubs/vscode.js';
+import { WitnessView } from '../witness.js';
+import { counterexample, modelUri, reachableCase, result, safeCase } from './fixtures.js';
+import { CancellationTokenSource, createExtensionContext, resetVscode, state, type TestController, type TestItem, Uri, window } from './stubs/vscode.js';
 import { LanguageClient } from './stubs/vscode-languageclient-node.js';
 
 interface ExecuteCommandParams {
@@ -24,6 +25,7 @@ let cases: VerificationCaseSpecification[] | null;
 let verify: VerifyHandler;
 let requests: { method: string; params: unknown }[];
 let controller: TestController;
+let witnesses: WitnessView;
 
 async function setUp() {
     const client = new LanguageClient('oxstsLSP', 'OXSTS Language Server', undefined, {});
@@ -36,6 +38,8 @@ async function setUp() {
         return verify((params as ExecuteCommandParams).arguments[0], token);
     });
     const context = createExtensionContext('/extension');
+    witnesses = new WitnessView();
+    witnesses.register(context as never);
     const testController = new VerificationTestController(client as never, {
         languageId: 'oxsts',
         fileGlob: '**/*.oxsts',
@@ -43,7 +47,7 @@ async function setUp() {
         controllerLabel: 'Semantifyr Verification Cases',
         discoverCommand: 'oxsts.case.discover',
         verifyCommand: 'oxsts.case.verify',
-    });
+    }, witnesses);
     testController.registerTestProvider(context as never);
     await testController.refreshWorkspaceTests();
     controller = state.controllers[0]!;
@@ -126,7 +130,6 @@ describe('verification', () => {
 
     it.each([
         ['passed', 'passed', undefined],
-        ['failed', 'failed', 'bound reached'],
         ['inconclusive', 'errored', 'Inconclusive: bound reached'],
         ['timeout', 'errored', 'Timed out: bound reached'],
         ['not_supported', 'errored', 'Not supported by the chosen portfolio: bound reached'],
@@ -142,13 +145,30 @@ describe('verification', () => {
         expect('message' in event ? event.message.message : undefined).toBe(message);
     });
 
-    it('reports a failed verdict without a message as failed', async () => {
+    it('reports a failed verdict at the case with a witness action', async () => {
+        await setUp();
+        verify = () => result('failed', counterexample, 'property violated');
+
+        const testRun = await run([caseItem('lamp::Safe')]);
+
+        const event = testRun.events.at(-1)!;
+        expect(event.kind).toBe('failed');
+        const message = (event as { message: { message: string; contextValue?: string; location?: { uri: Uri; range: unknown } } }).message;
+        expect(message.message).toBe('property violated');
+        expect(message.contextValue).toBe('semantifyr.witness');
+        expect(message.location?.uri.toString()).toBe(modelUri);
+        expect(message.location?.range).toEqual(safeCase.location.range);
+    });
+
+    it('offers no witness action on a failed verdict without a trace', async () => {
         await setUp();
         verify = () => result('failed');
 
         const testRun = await run([caseItem('lamp::Safe')]);
 
-        expect(testRun.events.at(-1)).toMatchObject({ kind: 'failed', message: { message: 'Failed' } });
+        const event = testRun.events.at(-1) as { message: { message: string; contextValue?: string } };
+        expect(event.message.message).toBe('Failed');
+        expect(event.message.contextValue).toBeUndefined();
     });
 
     it('reports an error when the server returns no result', async () => {
@@ -167,6 +187,21 @@ describe('verification', () => {
         const testRun = await run([caseItem('lamp::Safe')]);
 
         expect(testRun.events.at(-1)).toMatchObject({ kind: 'errored', message: { message: 'compilation failed' } });
+    });
+
+    it('records the witness of each result and forgets it when a rerun has none', async () => {
+        await setUp();
+        const showWitness = state.commands.get('semantifyr.witness.show')!;
+
+        verify = () => result('passed', counterexample);
+        await run([caseItem('lamp::Reachable')]);
+        await showWitness(caseItem('lamp::Reachable'));
+        expect((window.showTextDocument.mock.calls[0]![0] as Uri).toString()).toBe('file:///tmp/semantifyr/lamp.Safe/witness.oxsts');
+
+        verify = () => result('passed');
+        await run([caseItem('lamp::Reachable')]);
+        await showWitness(caseItem('lamp::Reachable'));
+        expect(window.showInformationMessage).toHaveBeenLastCalledWith('No witness recorded for Reachable.');
     });
 });
 

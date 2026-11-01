@@ -51,7 +51,7 @@ describe('activate', () => {
         expect(client('gammaLSP').clientOptions.documentSelector).toEqual([{ scheme: 'file', language: 'gamma' }]);
     });
 
-    it('registers the output channel, the test controllers and the commands', async () => {
+    it('registers the output channel, the test controllers, the commands and the trace documents', async () => {
         const context = createExtensionContext('/extension');
 
         await activate(context as never);
@@ -62,7 +62,8 @@ describe('activate', () => {
             ['gamma.verification', 'Gamma Verification Cases'],
         ]);
         expect(state.controllers.map((controller) => controller.profiles.map((profile) => [profile.label, profile.isDefault]))).toEqual([[['Run', true]], [['Run', true]]]);
-        expect([...state.commands.keys()]).toEqual(['semantifyr.gamma.compile']);
+        expect([...state.commands.keys()].sort()).toEqual(['semantifyr.gamma.compile', 'semantifyr.witness.show']);
+        expect(state.contentProviders.has('semantifyr-trace')).toBe(true);
         expect(context.subscriptions.length).toBeGreaterThan(0);
     });
 

@@ -5,12 +5,15 @@
  */
 
 import type { ExtensionContext } from "vscode";
-import { startGammaClient as startGammaClient, stopGammaClient as stopGammaClient } from "./gamma-client.js";
+import { startGammaClient, stopGammaClient } from "./gamma-client.js";
 import { startOxstsClient, stopOxstsClient } from "./oxsts-client.js";
+import { WitnessView } from "../witness.js";
 
 export async function startClients(context: ExtensionContext) {
-    await startOxstsClient(context);
-    await startGammaClient(context);
+    const witnesses = new WitnessView();
+    witnesses.register(context);
+    await startOxstsClient(context, witnesses);
+    await startGammaClient(context, witnesses);
 }
 
 export async function stopClients() {
