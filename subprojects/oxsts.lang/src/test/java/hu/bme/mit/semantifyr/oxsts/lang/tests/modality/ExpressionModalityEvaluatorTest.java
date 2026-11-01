@@ -63,6 +63,31 @@ public class ExpressionModalityEvaluatorTest {
     }
 
     @Test
+    void recordLiteralOfConstants_isConstant() {
+        var expression = firstInitializerOf("""
+            package test
+            record Point { var x: int var y: int }
+            class C { var p: Point := Point { x = 1, y = -1 } }
+            """, "C", "p");
+
+        assertThat(modalityEvaluatorProvider.evaluate(expression)).isEqualTo(Modality.CONSTANT);
+    }
+
+    @Test
+    void recordLiteralReadingAVariable_isRuntime() {
+        var expression = firstInitializerOf("""
+            package test
+            record Point { var x: int var y: int }
+            class C {
+                var n: int := 0
+                var p: Point := Point { x = 1, y = n }
+            }
+            """, "C", "p");
+
+        assertThat(modalityEvaluatorProvider.evaluate(expression)).isEqualTo(Modality.RUNTIME);
+    }
+
+    @Test
     void featureReferenceInFeatureBound_isCompileTime() {
         var pkg = parse("""
             package test

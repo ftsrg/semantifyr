@@ -521,7 +521,8 @@ PostfixUnaryExpression returns Expression:
 ;
 
 PrimaryExpression returns Expression:
-    DirectReferenceExpression
+    RecordLiteral
+    | DirectReferenceExpression
     | LiteralExpression
     | -> '(' Expression ')'
 ;
@@ -572,6 +573,16 @@ LiteralString:
 
 ArrayLiteral:
     {ArrayLiteral} '[' (values+=Expression (',' values+=Expression)* ','?)? ']'
+;
+
+// `x := p` followed by a sequence `{ y := 1 }` starts the same way; a sequence step never uses `=`
+RecordLiteral:
+    =>(record=[RecordDeclaration|QualifiedIdentifier] '{' fields+=FieldAssignment)
+    (',' fields+=FieldAssignment)* ','? '}'
+;
+
+FieldAssignment:
+    field=[VariableDeclaration|Identifier] '=' expression=Expression
 ;
 
 // Reference expressions

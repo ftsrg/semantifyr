@@ -155,6 +155,11 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
     }
 
     @Override
+    protected ExpressionEvaluation visit(RecordLiteral expression) {
+        throw EvaluationFailureException.at(expression, "Record literals are not compile-time values!");
+    }
+
+    @Override
     protected ExpressionEvaluation visit(LiteralInfinity expression) {
         return InfinityEvaluation.INSTANCE;
     }

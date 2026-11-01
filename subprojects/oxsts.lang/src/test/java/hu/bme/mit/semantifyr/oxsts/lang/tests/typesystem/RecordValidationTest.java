@@ -15,6 +15,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.WrappedOxstsPackage;
 import hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator;
 import org.eclipse.xtext.diagnostics.Severity;
 import org.eclipse.xtext.validation.CheckMode;
+import org.eclipse.xtext.validation.Issue;
 import org.junit.jupiter.api.Test;
 
 @InjectWithOxsts
@@ -258,6 +259,217 @@ public class RecordValidationTest {
 
         pkg.assertNoResourceErrors();
         assertOnlyErrorsAreUnsupported(pkg, "Record-typed features");
+    }
+
+    @Test
+    void recordLiteralsAreAcceptedWhereRecordValuesAre() {
+        var pkg = parseHelper.parse(RECORDS + """
+            record Box {
+                var corner: Point := Point { x = 1 }
+                var size: int := 1
+            }
+            class C {
+                var p: Point := Point { x = 1 }
+                var s: Segment := Segment { from = Point { x = 0, y = 1 }, to = Point { x = 2 } }
+                var b: Box
+                tran move(target: Point) {
+                    p := target
+                }
+                prop isAt(point: Point): bool {
+                    return p == point
+                }
+                redefine tran {
+                    p := Point { x = p.x + 1, y = p.y }
+                    var local: Point := Point { x = s.to.x }
+                    inline move(Point { x = local.y })
+                    s := Segment { from = p, to = local, color = Color::Green }
+                    b := Box { size = 2 }
+                    p := if p.x > 3 then Point { x = 0 } else p
+                }
+                prop {
+                    return EF (p != Point { x = 3, y = 0 } && isAt(Point { x = 1 }) && Point { x = 1 }.x == 1)
+                }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        pkg.assertNoValidationErrors();
+    }
+
+    @Test
+    void fieldAssignedTwiceIsRejected() {
+        var pkg = parseHelper.parse(RECORDS + """
+            class C {
+                var p: Point := Point { x = 1, x = 2 }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        pkg.assertHasValidationIssue(OxstsValidator.DUPLICATE_NAME_ISSUE, "'x' is assigned more than once");
+    }
+
+    @Test
+    void omittedFieldWithoutDefaultIsRejected() {
+        var pkg = parseHelper.parse(RECORDS + """
+            class C {
+                var p: Point := Point { y = 1 }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        assertOnlyErrorsAre(pkg, OxstsValidator.INCOMPLETE_RECORD_LITERAL, "leaves 'x' without a value");
+    }
+
+    @Test
+    void omittedRecordFieldWhoseRecordLacksADefaultIsRejected() {
+        var pkg = parseHelper.parse(RECORDS + """
+            class C {
+                var s: Segment := Segment { from = Point { x = 1 } }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        assertOnlyErrorsAre(pkg, OxstsValidator.INCOMPLETE_RECORD_LITERAL, "leaves 'to' without a value");
+    }
+
+    @Test
+    void fieldOfAnotherRecordDoesNotResolve() {
+        var pkg = parseHelper.parse(RECORDS + """
+            class C {
+                var p: Point := Point { x = 1, color = Color::Red }
+            }
+            """, CheckMode.ALL);
+
+        assertThat(pkg.getResourceErrors())
+                .singleElement()
+                .satisfies(error -> assertThat(error.getMessage()).contains("'color'"));
+    }
+
+    @Test
+    void literalOfAClassDoesNotResolve() {
+        var pkg = parseHelper.parse(RECORDS + """
+            class Worker {
+                var x: int
+            }
+            class C {
+                var p: Point := Worker { x = 1 }
+            }
+            """, CheckMode.ALL);
+
+        assertThat(pkg.getResourceErrors()).isNotEmpty();
+    }
+
+    @Test
+    void fieldValueOfAnotherTypeIsRejected() {
+        var pkg = parseHelper.parse(RECORDS + """
+            class C {
+                var p: Point := Point { x = true }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        assertOnlyErrorsAre(pkg, OxstsValidator.TYPE_MISMATCH, "not assignable to field 'x'");
+    }
+
+    @Test
+    void literalOfAnotherRecordIsRejected() {
+        var pkg = parseHelper.parse(RECORDS + """
+            class C {
+                var p: Point
+                redefine tran { p := Segment { from = p, to = p } }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        assertOnlyErrorsAre(pkg, OxstsValidator.TYPE_MISMATCH, "Cannot assign");
+    }
+
+    @Test
+    void classLevelLiteralOfRuntimeValuesIsRejected() {
+        var pkg = parseHelper.parse(RECORDS + """
+            class C {
+                var n: int := 0
+                var p: Point := Point { x = n }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        assertOnlyErrorsAre(pkg, OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "RUNTIME");
+    }
+
+    @Test
+    void literalIsNoWriteTarget() {
+        var pkg = parseHelper.parse(RECORDS + """
+            class C {
+                var p: Point
+                redefine tran {
+                    havoc(Point { x = 1 })
+                    Point { x = 1 } := p
+                    Point { x = 1 }.x := 2
+                }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        assertThat(pkg.getIssues())
+                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .hasSize(3)
+                .allSatisfy(issue -> assertThat(issue.getCode()).isEqualTo(OxstsValidator.INCORRECT_ASSIGNMENT));
+    }
+
+    @Test
+    void literalEvaluatedAtCompileTimeIsRejected() {
+        var pkg = parseHelper.parse(RECORDS + """
+            class C {
+                refers same: bool = Point { x = 1 } == Point { x = 1 }
+                redefine tran {
+                    inline if (Point { x = 1 } != Point { x = 2 }) { }
+                }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        assertOnlyErrorsAre(pkg, OxstsValidator.UNSUPPORTED_FEATURE, "not yet evaluated at compile time");
+        assertThat(pkg.getIssues())
+                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .extracting(Issue::getMessage)
+                .anySatisfy(message -> assertThat(message).contains("a feature binding"))
+                .anySatisfy(message -> assertThat(message).contains("an `inline if` guard"));
+    }
+
+    @Test
+    void orderingComparisonWithLiteralIsRejected() {
+        var pkg = parseHelper.parse(RECORDS + """
+            class C {
+                var p: Point
+                prop { return EF p < Point { x = 1 } }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "only be compared with == and !=");
+    }
+
+    @Test
+    void recordNameIsNoValue() {
+        var pkg = parseHelper.parse(RECORDS + """
+            class C {
+                var p: Point
+                redefine tran { p := Point {} }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        assertOnlyErrorsAre(pkg, OxstsValidator.TYPE_MISMATCH, "'Point' is a record type, not a value");
+    }
+
+    private static void assertOnlyErrorsAre(WrappedOxstsPackage pkg, String code, String messageSubstring) {
+        assertThat(pkg.getIssues())
+                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .isNotEmpty()
+                .allSatisfy(issue -> {
+                    assertThat(issue.getCode()).isEqualTo(code);
+                    assertThat(issue.getMessage()).contains(messageSubstring);
+                });
     }
 
     private static void assertOnlyErrorsAreUnsupported(WrappedOxstsPackage pkg, String messageSubstring) {

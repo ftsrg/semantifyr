@@ -61,6 +61,11 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         hrf.setNewLines(0, 0, 1);
     }
 
+    protected void spaceOrNewLine(IHiddenRegionFormatter hrf) {
+        hrf.setNewLines(0, 0, 1);
+        hrf.oneSpace();
+    }
+
     protected void format(OxstsModelPackage _package, IFormattableDocument document) {
         _package.getImports().forEach(document::format);
         _package.getDeclarations().forEach(document::format);
@@ -448,6 +453,24 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.prepend(regionFor(arrayLiteral).keyword("]"), this::noSpace);
 
         arrayLiteral.getValues().forEach(document::format);
+    }
+
+    protected void format(RecordLiteral recordLiteral, IFormattableDocument document) {
+        var open = regionFor(recordLiteral).keyword("{");
+        var close = regionFor(recordLiteral).keyword("}");
+        document.prepend(open, this::oneSpace);
+        document.prepend(close, this::spaceOrNewLine);
+        document.interior(open, close, this::indent);
+        document.prepend(allRegionsFor(recordLiteral).keyword(","), this::noSpace);
+
+        recordLiteral.getFields().forEach(document::format);
+    }
+
+    protected void format(FieldAssignment fieldAssignment, IFormattableDocument document) {
+        document.set(previousHiddenRegion(fieldAssignment), this::spaceOrNewLine);
+        document.surround(regionFor(fieldAssignment).keyword("="), this::oneSpace);
+
+        document.format(fieldAssignment.getExpression());
     }
 
     protected void format(SelfReference selfReference, IFormattableDocument document) {

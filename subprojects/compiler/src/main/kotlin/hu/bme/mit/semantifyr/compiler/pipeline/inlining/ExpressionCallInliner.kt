@@ -38,6 +38,8 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 import org.eclipse.xtext.EcoreUtil2
 
@@ -105,6 +107,12 @@ class ExpressionCallInliner @AssistedInject constructor(
         }
     }
 
+    override fun visit(expression: RecordLiteral) {
+        for (index in expression.fields.indices.reversed()) {
+            processorQueue.addFirst(expression.fields[index].expression)
+        }
+    }
+
     override fun visit(expression: LiteralInfinity) {
         // NO-OP
     }
@@ -138,6 +146,10 @@ class ExpressionCallInliner @AssistedInject constructor(
     }
 
     override fun visit(expression: NavigationSuffixExpression) {
+        if (expression.member.eContainer() is RecordDeclaration) {
+            processorQueue.addFirst(expression.primary)
+            return
+        }
         rewriteFeatureReference(expression)
     }
 

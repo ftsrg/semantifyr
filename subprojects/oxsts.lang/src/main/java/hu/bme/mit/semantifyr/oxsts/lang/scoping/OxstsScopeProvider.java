@@ -102,6 +102,16 @@ public class OxstsScopeProvider extends AbstractOxstsScopeProvider {
             return IScope.NULLSCOPE;
         }
 
+        if (reference == OxstsPackage.Literals.FIELD_ASSIGNMENT__FIELD) {
+            var recordLiteral = EcoreUtil2.getContainerOfType(context, RecordLiteral.class);
+            // an unresolved record carries its own linking diagnostic
+            var record = recordLiteral == null ? null : recordLiteral.getRecord();
+            if (record == null || record.eIsProxy()) {
+                return IScope.NULLSCOPE;
+            }
+            return scopeFor(reference, domainMemberCollectionProvider.getMembers(record));
+        }
+
         if (context instanceof NavigationSuffixExpression navigationSuffixExpression) {
             var primary = navigationSuffixExpression.getPrimary();
             var primaryEvaluation = expressionTypeEvaluatorProvider.evaluate(primary);

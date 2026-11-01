@@ -144,6 +144,15 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
     }
 
     @Override
+    protected TypeEvaluation visit(RecordLiteral expression) {
+        var record = expression.getRecord();
+        if (record == null || record.eIsProxy()) {
+            return InvalidTypeEvaluation.Instance;
+        }
+        return new ImmutableTypeEvaluation(record);
+    }
+
+    @Override
     protected TypeEvaluation visit(LiteralInfinity expression) {
         return new ImmutableTypeEvaluation(builtinSymbolResolver.anyDatatype(expression));
     }
