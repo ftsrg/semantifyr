@@ -168,6 +168,8 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         val result = VerificationResult(
             metadata = backendResult.metadata.copy(startedAt = startedAt),
             verdict = backendResult.verdict,
+            soundness = backendResult.soundness,
+            isTrusted = backendResult.isTrusted,
             metrics = VerificationMetrics(
                 totalDuration = totalDuration,
                 backend = backendResult.metrics.takeIf { backendResult.metadata.backendId != null },

@@ -37,7 +37,9 @@ import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.eclipse.emf.ecore.EObject
@@ -202,6 +204,25 @@ class SemantifyrVerifierImplTest {
             "flattenedSize",
         )
         assertThat(result.metrics.verifier.compilationDuration).isEqualTo(result.metrics.verifier.compilation.unfoldingDuration)
+    }
+
+    @Test
+    suspend fun `report json carries the verdict's soundness direction and whether it is trusted`(@TempDir output: Path) {
+        val portfolio = ScriptedPortfolio { _, _ ->
+            decisiveResult(VerificationVerdict.Passed).copy(
+                soundness = SoundnessDirection.UnderApproximating,
+                isTrusted = false,
+            )
+        }
+        val case = loadFirstCase()
+
+        build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(case)
+
+        val report = Json.parseToJsonElement(output.resolve(case.qualifiedName.replace("::", ".")).resolve("report.json").readText())
+        val result = report.jsonObject.getValue("result").jsonObject
+        assertThat(result.getValue("verdict").jsonPrimitive.content).isEqualTo("Passed")
+        assertThat(result.getValue("soundness").jsonPrimitive.content).isEqualTo("UnderApproximating")
+        assertThat(result.getValue("isTrusted").jsonPrimitive.boolean).isFalse
     }
 
     private fun build(

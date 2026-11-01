@@ -19,7 +19,6 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import kotlinx.coroutines.delay
 import org.mockito.kotlin.mock
@@ -44,7 +43,11 @@ val noopGate: ConcurrencyGate = object : ConcurrencyGate {
 
 fun fakeRequest(): BackendVerificationRequest {
     return BackendVerificationRequest(
-        inlinedOxsts = mock<InlinedOxsts>(),
+        inlinedOxsts = OxstsFactory.createInlinedOxsts().also {
+            it.property = OxstsFactory.createPropertyDeclaration().also { declaration ->
+                declaration.expression = OxstsFactory.createAG()
+            }
+        },
         artifactOutputPath = Paths.get(System.getProperty("java.io.tmpdir")),
     )
 }

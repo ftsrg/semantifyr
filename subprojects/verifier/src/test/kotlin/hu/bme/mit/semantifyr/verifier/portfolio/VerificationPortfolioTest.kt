@@ -456,6 +456,30 @@ class VerificationPortfolioTest {
     }
 
     @Test
+    suspend fun `a single-backend portfolio keeps a verdict its leg does not trust and says so`() {
+        val backend = FakeBackend.verdict("spin", VerificationVerdict.Passed, SoundnessDirection.UnderApproximating)
+        val single = SingleBackendPortfolio(backend, FakeConfig(soundness = SoundnessDirection.UnderApproximating))
+
+        val result = single.verify(parentInjector, request, noopGate, env, ProgressContext.NoOp)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(result.isTrusted).isFalse
+        assertThat(result.message).isEqualTo("spin's Passed on an AG property is not trusted: the leg is under-approximating")
+    }
+
+    @Test
+    suspend fun `a single-backend portfolio reports a trusted verdict without a note`() {
+        val backend = FakeBackend.verdict("spin", VerificationVerdict.Failed, SoundnessDirection.UnderApproximating)
+        val single = SingleBackendPortfolio(backend, FakeConfig(soundness = SoundnessDirection.UnderApproximating))
+
+        val result = single.verify(parentInjector, request, noopGate, env, ProgressContext.NoOp)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        assertThat(result.isTrusted).isTrue
+        assertThat(result.message).isNull()
+    }
+
+    @Test
     fun `firstDecisive reports progress for every incoming result`() = runTest {
         val a = FakeBackend.delayed("a", 5, VerificationVerdict.Inconclusive)
         val b = FakeBackend.delayed("b", 20, VerificationVerdict.Passed)
