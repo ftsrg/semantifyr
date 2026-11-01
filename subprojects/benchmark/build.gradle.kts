@@ -34,8 +34,6 @@ application {
     applicationName = "semantifyr-benchmark"
 }
 
-val rootDirectory = isolated.rootProject.projectDirectory
-
 tasks.register<JavaExec>("campaign") {
     group = "benchmark"
     description = "Runs or resumes the campaign named by -Pcampaign, analyses its results and compares them with its reference."
@@ -45,6 +43,7 @@ tasks.register<JavaExec>("campaign") {
     usesService(gradle.sharedServices.registerVerificationTestService())
     inputs.files(tasks.named("cloneTheta"))
 
+    val rootDirectory = isolated.rootProject.projectDirectory
     val campaign = providers.gradleProperty("campaign")
     val fresh = providers.gradleProperty("benchmark.fresh").map { it.toBoolean() }.orElse(false)
     val baseline = providers.gradleProperty("benchmark.baseline").map { rootDirectory.dir(it).asFile.absolutePath }
@@ -98,6 +97,7 @@ tasks.register<JavaExec>("campaignAnalysis") {
     mainClass = application.mainClass
     outputs.upToDateWhen { false }
 
+    val rootDirectory = isolated.rootProject.projectDirectory
     val campaign = providers.gradleProperty("campaign")
     val results = providers.gradleProperty("benchmark.results").map { rootDirectory.dir(it).asFile.absolutePath }
     val analysis = providers.gradleProperty("benchmark.analysis").map { rootDirectory.dir(it).asFile.absolutePath }
@@ -114,6 +114,7 @@ tasks.register<JavaExec>("campaignAnalysis") {
 
 distributions.main {
     contents {
+        val rootDirectory = isolated.rootProject.projectDirectory
         from(rootDirectory.dir("subprojects/frontends/sysml/models/examples")) {
             into("models/sysml")
         }
