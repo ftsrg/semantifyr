@@ -38,7 +38,7 @@ The Semantifyr VS Code extension bundles the language servers and the compiler. 
 1. Build the extension from a clone of the [repository](https://github.com/ftsrg/semantifyr) with `./gradlew :semantifyr-vscode:bundleExtension`, which writes `subprojects/semantifyr-vscode/build/semantifyr-<version>.vsix`. The build needs Git and a Java 25 runtime and downloads everything else. Once a release is published, you can download the `.vsix` from the [latest release](https://github.com/ftsrg/semantifyr/releases/latest) instead.
 2. In VS Code, run **Extensions: Install from VSIX...** from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and select the `.vsix` file.
 3. Open any folder containing a `.oxsts` or `.gamma` file. The extension activates automatically and provides syntax highlighting, diagnostics, and the verification cases in the *Testing* view.
-4. Run a case from the *Testing* view. When the verdict comes with a witness (the counterexample of a violated invariant, or the path to a reachable state), **Show Witness** on the failure message or in the case's context menu opens the back-annotated witness read-only beside the model, and next to it the trace: the calls and the state changes of each step.
+4. Run a case from the *Testing* view. When the verdict comes with a witness (the counterexample of a violated invariant, or the path to a reachable state), **Show Witness** on the failure message or in the case's context menu opens the back-annotated witness (for a Gamma case, the witness as a Gamma execution trace) read-only beside the model, and next to it the trace: the calls and the state changes of each step.
 
 :::info[Planned]
 Publication on the Visual Studio Marketplace is planned.
