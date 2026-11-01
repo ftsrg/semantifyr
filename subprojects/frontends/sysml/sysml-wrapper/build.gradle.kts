@@ -24,7 +24,7 @@ dependencies {
     testImplementation(testFixtures(project(":compiler")))
 }
 
-val sysmlCommit = "404a677f2c505ca0e48eefd0d7f5810753b487b1" // fix: copied the licenses the 2026-09 sysml release ships
+val sysmlCommit = "8b6ec65997a928374f7476ae444b75673e0dfd8a" // feat: validated the generated trace in the trace command before writing it
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
