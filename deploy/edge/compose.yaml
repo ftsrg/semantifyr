@@ -13,8 +13,55 @@ services:
       - no-new-privileges:true
     networks:
       edge:
-        # the live backends trust the client address header from this address only
+        # Caddy trusts CF-Connecting-IP from this address only
         ipv4_address: 172.30.0.2
+
+  caddy:
+    image: caddy:2.11.7
+    user: "65534:65534"
+    restart: unless-stopped
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    mem_limit: 256m
+    pids_limit: 256
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # the caddy binary carries this file capability, and exec fails when the bounding set lacks it
+    cap_add:
+      - NET_BIND_SERVICE
+    networks:
+      edge:
+        # trusted by the live backends and Grafana; Docker hands out the lowest free address, so the top of the subnet stays free
+        ipv4_address: 172.30.0.254
+
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.5
+    command:
+      - --provider=github
+      - --github-user=${GITHUB_USERS:?GITHUB_USERS is not set}
+      - --email-domain=*
+      - --http-address=0.0.0.0:4180
+      - --redirect-url=https://auth.semantifyr.org/oauth2/callback
+      - --cookie-domain=.semantifyr.org
+      - --whitelist-domain=.semantifyr.org
+      - --cookie-samesite=lax
+      - --set-xauthrequest=true
+      - --upstream=static://202
+    environment:
+      OAUTH2_PROXY_CLIENT_ID: ${GITHUB_CLIENT_ID:?GITHUB_CLIENT_ID is not set}
+      OAUTH2_PROXY_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:?GITHUB_CLIENT_SECRET is not set}
+      OAUTH2_PROXY_COOKIE_SECRET: ${COOKIE_SECRET:?COOKIE_SECRET is not set}
+    restart: unless-stopped
+    mem_limit: 128m
+    pids_limit: 256
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks:
+      - edge
 
 networks:
   edge:
