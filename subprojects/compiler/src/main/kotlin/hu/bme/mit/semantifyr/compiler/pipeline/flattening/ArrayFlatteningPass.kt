@@ -7,10 +7,12 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.flattening
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.LocalVariableManager
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException
@@ -19,6 +21,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
@@ -38,6 +41,8 @@ import org.eclipse.xtext.EcoreUtil2
 class ArrayFlatteningPass @Inject constructor(
     private val multiplicityRangeEvaluator: MultiplicityRangeEvaluator,
     private val constantExpressionEvaluatorProvider: ConstantExpressionEvaluatorProvider,
+    private val localVariableManager: LocalVariableManager,
+    private val builtinSymbolResolver: BuiltinSymbolResolver,
 ) {
 
     fun flattenArrays(inlinedOxsts: InlinedOxsts): Map<VariableDeclaration, List<VariableDeclaration>> {
@@ -86,15 +91,7 @@ class ArrayFlatteningPass @Inject constructor(
         }
         for (assignment in inlinedOxsts.eAllOfType<AssignmentOperation>().toList()) {
             val array = arrayOf(assignment.reference) ?: continue
-            replaceInSequence(
-                assignment,
-                (0 until slotCounts.getValue(array)).map { index ->
-                    OxstsFactory.createAssignmentOperation().also {
-                        it.reference = slotOf(assignment.reference, index)
-                        it.expression = slotOf(assignment.expression, index)
-                    }
-                },
-            )
+            replaceInSequence(assignment, assignSlots(assignment, array, slotCounts.getValue(array)))
         }
         for (havoc in inlinedOxsts.eAllOfType<HavocOperation>().toList()) {
             val array = arrayOf(havoc.reference) ?: continue
@@ -116,6 +113,50 @@ class ArrayFlatteningPass @Inject constructor(
                     }
                 }
             }
+        }
+    }
+
+    // the whole value is read before any slot is written, so a value that may read a slot written before it is saved first
+    private fun assignSlots(assignment: AssignmentOperation, array: VariableDeclaration, slotCount: Int): List<Operation> {
+        val elementDomain = array.typeSpecification.domain
+        // a class- or feature-typed slot holds an instance id, and the flattener types only the slots themselves as int
+        val savedDomain = if (elementDomain is ClassDeclaration) {
+            builtinSymbolResolver.intDatatype(array)
+        } else {
+            elementDomain
+        }
+        val saved = mutableListOf<Operation>()
+        val assignments = (0 until slotCount).map { index ->
+            val value = slotOf(assignment.expression, index)
+            val source = if (readsSlotBefore(value, array, index)) {
+                val temporary = OxstsFactory.createLocalVarDeclarationOperation().also {
+                    it.name = "${array.name}_$index"
+                    it.typeSpecification = OxstsFactory.createTypeSpecification().also { typeSpecification ->
+                        typeSpecification.domain = savedDomain
+                    }
+                    it.expression = value
+                }
+                temporary.name = localVariableManager.allocateInlinedName(temporary)
+                saved += temporary
+                OxstsFactory.createElementReference(temporary)
+            } else {
+                value
+            }
+            OxstsFactory.createAssignmentOperation().also {
+                it.reference = slotOf(assignment.reference, index)
+                it.expression = source
+            }
+        }
+        return saved + assignments
+    }
+
+    // a read at a runtime index, or of the whole array, may read slot 0, the first one written
+    private fun readsSlotBefore(expression: Expression, array: VariableDeclaration, slot: Int): Boolean {
+        return expression.eAllOfType<Expression>().any {
+            val indexing = (it.eContainer() as? IndexingSuffixExpression)?.takeIf { indexing ->
+                indexing.primary === it
+            }
+            referencesArrayVariable(it, array) && (evaluateConstantInteger(indexing?.index) ?: 0) < slot
         }
     }
 
