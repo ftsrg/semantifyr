@@ -13,19 +13,18 @@
                         "value": "root.system.trafficLightA.lightControl.interface.yellow"
                     }
                 ],
-                "innerTraces": [
+                "innerTraces": null
+            },
+            {
+                "self": "root.system.trafficLightB.lightControl",
+                "calledTransition": "semantifyr::gamma::ports::Port::setOutputEvent",
+                "arguments": [
                     {
-                        "self": "root.system.trafficLightB.lightControl",
-                        "calledTransition": "semantifyr::gamma::ports::Port::setOutputEvent",
-                        "arguments": [
-                            {
-                                "parameter": "event",
-                                "value": "root.system.trafficLightA.lightControl.interface.yellow"
-                            }
-                        ],
-                        "innerTraces": null
+                        "parameter": "event",
+                        "value": "root.system.trafficLightA.lightControl.interface.yellow"
                     }
-                ]
+                ],
+                "innerTraces": null
             }
         ]
     },
@@ -56,19 +55,18 @@
                                     "value": "root.system.controller.control.interface.toggle"
                                 }
                             ],
-                            "innerTraces": [
+                            "innerTraces": null
+                        },
+                        {
+                            "self": "root.system.controller.controlB",
+                            "calledTransition": "semantifyr::gamma::ports::Port::setOutputEvent",
+                            "arguments": [
                                 {
-                                    "self": "root.system.controller.controlB",
-                                    "calledTransition": "semantifyr::gamma::ports::Port::setOutputEvent",
-                                    "arguments": [
-                                        {
-                                            "parameter": "event",
-                                            "value": "root.system.controller.control.interface.toggle"
-                                        }
-                                    ],
-                                    "innerTraces": null
+                                    "parameter": "event",
+                                    "value": "root.system.controller.control.interface.toggle"
                                 }
-                            ]
+                            ],
+                            "innerTraces": null
                         }
                     ]
                 },
