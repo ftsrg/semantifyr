@@ -53,7 +53,7 @@ class MetricsHandler @Inject constructor(
             }
         }
         routing {
-            // the tunnel reaches only server.port, so the public hostname never routes here
+            // the edge proxy reaches only server.port, so the public hostname never routes here
             localPort(metricsPort) {
                 get("/metrics") {
                     call.respondText(registry.scrape(), prometheusTextFormat)

@@ -12,7 +12,7 @@ services:
       SEMANTIFYR_LIVE_TRUSTED_PROXIES: ${TRUSTED_PROXIES:?TRUSTED_PROXIES is not set}
       SEMANTIFYR_LIVE_CLIENT_ADDRESS_HEADER: X-Forwarded-For
       SEMANTIFYR_LIVE_USER_HEADER: X-Auth-Request-User
-      # Prometheus scrapes this port on the edge network; the tunnel routes only to 8080
+      # Prometheus scrapes this port on the edge network; Caddy routes only to 8080
       SEMANTIFYR_LIVE_METRICS_PORT: 8081
       THETA_JAVA_OPTS: ${THETA_JAVA_OPTS:?THETA_JAVA_OPTS is not set}
     mem_limit: ${MEMORY_LIMIT:?MEMORY_LIMIT is not set}
