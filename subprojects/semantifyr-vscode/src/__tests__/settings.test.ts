@@ -58,13 +58,13 @@ describe('readSemantifyrSettings', () => {
     });
 
     it('reads the configured values', () => {
-        state.configuration.set('semantifyr.portfolio', 'smart-full');
+        state.configuration.set('semantifyr.portfolio', 'theta-full');
         state.configuration.set('semantifyr.theta.executor', 'docker');
         state.configuration.set('semantifyr.theta.dockerImage', 'example/theta:1.0');
 
         expect(readSemantifyrSettings()).toEqual({
             ...contributedDefaults(),
-            portfolio: 'smart-full',
+            portfolio: 'theta-full',
             theta: { executor: 'docker', dockerImage: 'example/theta:1.0' },
         });
     });
@@ -72,13 +72,13 @@ describe('readSemantifyrSettings', () => {
 
 describe('settings reaching the server', () => {
     it('passes the settings as initialization options', () => {
-        state.configuration.set('semantifyr.portfolio', 'smart-full');
+        state.configuration.set('semantifyr.portfolio', 'theta-full');
         state.configuration.set('semantifyr.theta.dockerImage', 'example/theta:1.0');
 
         const client = createLspClient('/extension/bin/oxsts.lang.ide', 'oxsts') as unknown as LanguageClient;
 
         expect(client.clientOptions.initializationOptions).toEqual({
-            semantifyr: { ...contributedDefaults(), portfolio: 'smart-full', theta: { executor: 'auto', dockerImage: 'example/theta:1.0' } },
+            semantifyr: { ...contributedDefaults(), portfolio: 'theta-full', theta: { executor: 'auto', dockerImage: 'example/theta:1.0' } },
         });
         expect(client.clientOptions.documentSelector).toEqual([{ scheme: 'file', language: 'oxsts' }]);
     });
@@ -91,16 +91,16 @@ describe('settings reaching the server', () => {
         });
 
         const subscription = registerSemantifyrSettingsSync(client as never);
-        await expect.poll(() => received).toEqual(['theta-full']);
+        await expect.poll(() => received).toEqual(['smart-full']);
 
-        state.configuration.set('semantifyr.portfolio', 'smart-full');
+        state.configuration.set('semantifyr.portfolio', 'theta-full');
         state.configurationChanged.fire({ affectsConfiguration: (section) => section === 'semantifyr' });
-        await expect.poll(() => received).toEqual(['theta-full', 'smart-full']);
+        await expect.poll(() => received).toEqual(['smart-full', 'theta-full']);
 
         state.configurationChanged.fire({ affectsConfiguration: (section) => section === 'editor' });
         subscription.dispose();
         state.configurationChanged.fire({ affectsConfiguration: () => true });
         await new Promise((resolve) => setTimeout(resolve, 20));
-        expect(received).toEqual(['theta-full', 'smart-full']);
+        expect(received).toEqual(['smart-full', 'theta-full']);
     });
 });
