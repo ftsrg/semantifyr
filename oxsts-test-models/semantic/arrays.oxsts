@@ -197,6 +197,36 @@ class ArrayWholeHavocBound {
     }
 }
 
+// Reachable: a whole-array assignment reads every slot before it writes one, so a swap exchanges the values.
+@VerificationCase
+@Tag("expect-pass")
+class ArraySwapReach {
+    var slots: int[2] := [1, 2]
+
+    redefine tran {
+        slots := [slots[1], slots[0]]
+    }
+
+    prop {
+        return EF (slots[0] == 2 && slots[1] == 1)
+    }
+}
+
+// Violated: the swap moves the first value into the second slot.
+@VerificationCase
+@Tag("expect-fail")
+class ArraySwapBound {
+    var slots: int[2] := [1, 2]
+
+    redefine tran {
+        slots := [slots[1], slots[0]]
+    }
+
+    prop {
+        return AG slots[1] == 2
+    }
+}
+
 // --- local arrays ---
 
 // Reachable: a local array is initialized every step and read at a runtime index.
