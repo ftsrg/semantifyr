@@ -31,6 +31,8 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.core)
 }
 
+val rootDirectory = isolated.rootProject.projectDirectory
+
 tasks.register<JavaExec>("campaign") {
     group = "benchmark"
     description = "Runs or resumes the campaign named by -Pcampaign, analyses its results and compares them with its reference."
@@ -40,7 +42,6 @@ tasks.register<JavaExec>("campaign") {
     usesService(gradle.sharedServices.registerVerificationTestService())
     inputs.files(tasks.named("cloneTheta"))
 
-    val rootDirectory = isolated.rootProject.projectDirectory
     val campaign = providers.gradleProperty("campaign")
     val fresh = providers.gradleProperty("benchmark.fresh").map { it.toBoolean() }.orElse(false)
     val baseline = providers.gradleProperty("benchmark.baseline").map { rootDirectory.dir(it).asFile.absolutePath }
@@ -71,7 +72,7 @@ tasks.register<JavaExec>("campaign") {
 
 tasks.register<JavaExec>("campaignReference") {
     group = "benchmark"
-    description = "Rewrites the committed reference results of the campaign named by -Pcampaign from its latest results."
+    description = "Rewrites the committed reference results and analysis of the campaign named by -Pcampaign from its latest results."
     classpath = sourceSets.main.get().runtimeClasspath
     mainClass = "hu.bme.mit.semantifyr.benchmark.BenchmarkMainKt"
     outputs.upToDateWhen { false }
@@ -83,6 +84,27 @@ tasks.register<JavaExec>("campaignReference") {
         CommandLineArgumentProvider {
             val name = campaign.orNull ?: throw GradleException("Name the campaign with -Pcampaign=<name>")
             listOf("reference", name, "--output", outputDirectory.get(), "--reference", referenceDirectory)
+        },
+    )
+}
+
+tasks.register<JavaExec>("campaignAnalysis") {
+    group = "benchmark"
+    description = "Analyses the results of the campaign named by -Pcampaign, or of the directory -Pbenchmark.results, into -Pbenchmark.analysis (default: analysis/ next to the results)."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass = "hu.bme.mit.semantifyr.benchmark.BenchmarkMainKt"
+    outputs.upToDateWhen { false }
+
+    val campaign = providers.gradleProperty("campaign")
+    val results = providers.gradleProperty("benchmark.results").map { rootDirectory.dir(it).asFile.absolutePath }
+    val analysis = providers.gradleProperty("benchmark.analysis").map { rootDirectory.dir(it).asFile.absolutePath }
+    val outputDirectory = layout.buildDirectory.dir("benchmark").map { it.asFile.absolutePath }
+    argumentProviders.add(
+        CommandLineArgumentProvider {
+            val resultsDirectory = results.orNull
+                ?: campaign.orNull?.let { "${outputDirectory.get()}/$it" }
+                ?: throw GradleException("Name the campaign with -Pcampaign=<name> or its results with -Pbenchmark.results=<directory>")
+            listOf("analyze", resultsDirectory, analysis.orNull ?: "$resultsDirectory/analysis")
         },
     )
 }

@@ -52,6 +52,7 @@ data class Measurement(
     val message: String? = null,
     val metrics: VerificationMetrics? = null,
     val extensions: Map<String, JsonElement> = emptyMap(),
+    val loadAverage: Double? = null,
 ) {
     companion object {
         // an undecided verdict is not a wrong answer, so it is not judged

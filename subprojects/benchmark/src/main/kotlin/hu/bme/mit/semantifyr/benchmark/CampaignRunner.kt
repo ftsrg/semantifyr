@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import java.lang.management.ManagementFactory
 import java.nio.file.Path
 import java.util.UUID
 import kotlin.io.path.createDirectories
@@ -85,12 +86,13 @@ class CampaignRunner(
 
     private suspend fun measure(cell: Cell): Measurement {
         val workDirectory = workRoot.resolve(UUID.randomUUID().toString()).createDirectories()
+        val loadAverage = ManagementFactory.getOperatingSystemMXBean().systemLoadAverage.takeIf { it >= 0 }
         try {
-            return action.run(cell, workDirectory)
+            return action.run(cell, workDirectory).copy(loadAverage = loadAverage)
         } catch (exception: Throwable) {
             currentCoroutineContext().ensureActive()
             logger.warn(exception) { "$cell errored" }
-            return Measurement(Outcome.Errored, message = "${exception.javaClass.simpleName}: ${exception.message.orEmpty()}")
+            return Measurement(Outcome.Errored, message = "${exception.javaClass.simpleName}: ${exception.message.orEmpty()}", loadAverage = loadAverage)
         } finally {
             workDirectory.toFile().deleteRecursively()
         }
