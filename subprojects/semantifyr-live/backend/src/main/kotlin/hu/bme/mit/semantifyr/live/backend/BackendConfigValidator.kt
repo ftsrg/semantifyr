@@ -108,5 +108,12 @@ object BackendConfigValidator {
         if (!config.server.wsHandshakeRatePeriod.isPositive()) {
             problems += "server.wsHandshakeRatePeriod must be positive (got ${config.server.wsHandshakeRatePeriod})"
         }
+        val metricsPort = config.server.metricsPort
+        if (metricsPort != null && metricsPort !in 1..65535) {
+            problems += "server.metricsPort must be between 1 and 65535 (got $metricsPort)"
+        }
+        if (metricsPort == config.server.port) {
+            problems += "server.metricsPort must differ from server.port (got $metricsPort)"
+        }
     }
 }

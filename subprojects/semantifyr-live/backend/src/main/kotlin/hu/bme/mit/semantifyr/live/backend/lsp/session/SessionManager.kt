@@ -23,6 +23,9 @@ import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import io.ktor.server.websocket.WebSocketServerSession
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.Gauge
+import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.sync.Semaphore
@@ -35,6 +38,7 @@ import java.util.concurrent.ConcurrentHashMap
 class SessionManager @Inject constructor(
     private val backendConfig: BackendConfig,
     private val languageServiceRegistry: LanguageServiceRegistry,
+    registry: MeterRegistry,
 ) : AutoCloseable {
 
     private val logger by loggerFactory()
@@ -46,6 +50,17 @@ class SessionManager @Inject constructor(
         get() = backendConfig.sessionManager.maxSessionsGlobal - globalGate.availablePermits
 
     val maxSessions = backendConfig.sessionManager.maxSessionsGlobal
+
+    private val rejectedSessions = Counter.builder("semantifyr.live.sessions.rejected").register(registry)
+
+    init {
+        Gauge.builder("semantifyr.live.sessions.active") {
+            activeSessionsCount
+        }.register(registry)
+        Gauge.builder("semantifyr.live.sessions.limit") {
+            maxSessions
+        }.register(registry)
+    }
 
     fun getSessionInfos(): List<SessionInfo> {
         return activeSessions.values.map {
@@ -59,6 +74,7 @@ class SessionManager @Inject constructor(
         flavor: Flavor,
     ) {
         if (!globalGate.tryAcquire()) {
+            rejectedSessions.increment()
             logger.warn { "Global session limit reached (active=$activeSessionsCount, max=$maxSessions)" }
             throw SessionLimitReachedException("Global session limit reached, please try again later.")
         }

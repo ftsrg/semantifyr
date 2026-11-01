@@ -11,6 +11,9 @@ import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServiceRegistry
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LiveLanguageServiceRegistry
 import hu.bme.mit.semantifyr.live.backend.lsp.session.LiveVerificationExecutor
 import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationExecutor
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.prometheusmetrics.PrometheusConfig
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 
 class BackendModule(
     private val config: BackendConfig,
@@ -21,5 +24,7 @@ class BackendModule(
         bind(BackendConfig::class.java).toInstance(config)
         bind(LanguageServiceRegistry::class.java).to(LiveLanguageServiceRegistry::class.java)
         bind(VerificationExecutor::class.java).to(LiveVerificationExecutor::class.java)
+        bind(PrometheusMeterRegistry::class.java).toInstance(PrometheusMeterRegistry(PrometheusConfig.DEFAULT))
+        bind(MeterRegistry::class.java).to(PrometheusMeterRegistry::class.java)
     }
 }

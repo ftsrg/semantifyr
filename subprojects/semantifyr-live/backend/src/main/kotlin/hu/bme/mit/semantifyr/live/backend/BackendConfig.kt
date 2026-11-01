@@ -47,6 +47,7 @@ data class BackendConfig(
 @Serializable
 data class ServerConfig(
     val port: Int = 8080,
+    val metricsPort: Int? = null,
     val pingPeriod: Duration = 30.seconds,
     val pingTimeout: Duration = 15.seconds,
     val webRootDirectory: String? = null,
@@ -60,6 +61,7 @@ data class ServerConfig(
 ) {
     fun withEnv(env: Map<String, String?>) = copy(
         port = env["SEMANTIFYR_LIVE_PORT"]?.toIntOrNull() ?: port,
+        metricsPort = env["SEMANTIFYR_LIVE_METRICS_PORT"]?.toIntOrNull() ?: metricsPort,
         pingPeriod = env["SEMANTIFYR_LIVE_PING_PERIOD_SECONDS"]?.toLongOrNull()?.seconds ?: pingPeriod,
         webRootDirectory = env["SEMANTIFYR_LIVE_WEB_ROOT_DIR"] ?: webRootDirectory,
         adminPassword = env["SEMANTIFYR_LIVE_ADMIN_PASSWORD"] ?: adminPassword,

@@ -36,6 +36,7 @@ val sysmlCompiledExamplesFiles = configurations.resolvable("sysmlCompiledExample
 
 dependencies {
     implementation(libs.bundles.ktor.server)
+    implementation(libs.micrometer.registry.prometheus)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.lsp4j)
@@ -148,6 +149,7 @@ tasks.named<JavaExec>("run") {
     environment("SEMANTIFYR_LIVE_SEMANTIC_LIBRARIES_DIR", stagingDir.resolve("semantic-libraries").absolutePath)
     environment("SEMANTIFYR_LIVE_WEB_ROOT_DIR", stagingDir.resolve("web").absolutePath)
     environment("SEMANTIFYR_LIVE_PORT", "18080")
+    environment("SEMANTIFYR_LIVE_METRICS_PORT", "18081")
     environment("SEMANTIFYR_LIVE_ROOT_WORK_DIR", workDir.absolutePath)
     environment("SEMANTIFYR_LIVE_ADMIN_PASSWORD", "testing")
 
@@ -175,6 +177,7 @@ tasks.register<JavaExec>("runDev") {
 
     environment("SEMANTIFYR_LIVE_SEMANTIC_LIBRARIES_DIR", stagingDir.resolve("semantic-libraries").absolutePath)
     environment("SEMANTIFYR_LIVE_PORT", "18080")
+    environment("SEMANTIFYR_LIVE_METRICS_PORT", "18081")
     environment("SEMANTIFYR_LIVE_ROOT_WORK_DIR", workDir.absolutePath)
     environment("SEMANTIFYR_LIVE_ADMIN_PASSWORD", "testing")
 

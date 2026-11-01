@@ -29,6 +29,7 @@ import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
 import io.ktor.server.testing.testApplication
 import io.ktor.websocket.Frame
+import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -247,10 +248,12 @@ class WebSocketSessionTest {
     }
 
     @Test
-    fun `a session past the global limit is closed with code 4429`(@TempDir tmp: Path) = testApplication {
+    fun `a session past the global limit is closed with code 4429 and counted as rejected`(@TempDir tmp: Path) = testApplication {
         val limitedConfig = config(tmp).run { copy(sessionManager = sessionManager.copy(maxSessionsGlobal = 1)) }
+        val injector = testInjector(limitedConfig)
+        val registry = injector.getInstance(MeterRegistry::class.java)
         installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(testInjector(limitedConfig))
+            installSemantifyrLiveBackend(injector)
         }
         val client = jsonClient(webSockets = true)
         val firstReady = CompletableDeferred<Unit>()
@@ -271,6 +274,9 @@ class WebSocketSessionTest {
                     assertThat(reason?.code).isEqualTo(4429.toShort())
                 }
             }
+            assertThat(registry.get("semantifyr.live.sessions.active").gauge().value()).isEqualTo(1.0)
+            assertThat(registry.get("semantifyr.live.sessions.limit").gauge().value()).isEqualTo(1.0)
+            assertThat(registry.get("semantifyr.live.sessions.rejected").counter().count()).isEqualTo(1.0)
             releaseFirst.complete(Unit)
             first.join()
         }

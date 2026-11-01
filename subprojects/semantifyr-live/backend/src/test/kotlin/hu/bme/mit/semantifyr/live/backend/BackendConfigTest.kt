@@ -65,6 +65,13 @@ class BackendConfigTest {
     }
 
     @Test
+    fun `the metrics port comes from env and is off by default`() {
+        assertThat(BackendConfig().server.metricsPort).isNull()
+        val config = BackendConfig().withEnv(mapOf("SEMANTIFYR_LIVE_METRICS_PORT" to "8081"))
+        assertThat(config.server.metricsPort).isEqualTo(8081)
+    }
+
+    @Test
     fun `client address forwarding is off by default`() {
         val config = BackendConfig()
         assertThat(config.server.clientAddressHeader).isNull()

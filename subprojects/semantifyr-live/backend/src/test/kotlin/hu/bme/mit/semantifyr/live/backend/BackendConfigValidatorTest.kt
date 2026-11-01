@@ -84,6 +84,20 @@ class BackendConfigValidatorTest {
     }
 
     @Test
+    fun `a metrics port equal to the application port or out of range is rejected`(@TempDir tmp: Path) {
+        for (metricsPort in listOf(8080, 0, 70000)) {
+            val config = baseConfig(tmp).run {
+                copy(server = server.copy(port = 8080, metricsPort = metricsPort))
+            }
+            assertThatThrownBy {
+                BackendConfigValidator.validate(config, flavors = emptyList())
+            }.`as`("metricsPort $metricsPort")
+                .isInstanceOf(InvalidConfigurationException::class.java)
+                .hasMessageContaining("metricsPort")
+        }
+    }
+
+    @Test
     fun `httpsOnlyCookies must be true in production`(@TempDir tmp: Path) {
         val config = baseConfig(tmp).run {
             copy(server = server.copy(httpsOnlyCookies = false))

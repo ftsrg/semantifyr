@@ -29,6 +29,7 @@ ktlint = "1.8.0"
 palantirJavaFormat = "2.103.0"
 sonarqube = "7.5.0.8588"
 ktor = "3.6.1"
+micrometer = "1.17.2"
 dokka = "2.2.0"
 
 [libraries]
@@ -72,11 +73,13 @@ ktor-server-cors = { group = "io.ktor", name = "ktor-server-cors", version.ref =
 ktor-server-host-common = { group = "io.ktor", name = "ktor-server-host-common", version.ref = "ktor" }
 ktor-server-content-negotiation = { group = "io.ktor", name = "ktor-server-content-negotiation", version.ref = "ktor" }
 ktor-server-rate-limit = { group = "io.ktor", name = "ktor-server-rate-limit", version.ref = "ktor" }
+ktor-server-metrics-micrometer = { group = "io.ktor", name = "ktor-server-metrics-micrometer", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
 ktor-client-websockets = { group = "io.ktor", name = "ktor-client-websockets", version.ref = "ktor" }
 ktor-server-test-host = { group = "io.ktor", name = "ktor-server-test-host", version.ref = "ktor" }
+micrometer-registry-prometheus = { group = "io.micrometer", name = "micrometer-registry-prometheus", version.ref = "micrometer" }
 node-plugin = { group = "com.github.node-gradle", name = "gradle-node-plugin", version.ref = "node" }
 spotless-plugin = { group = "com.diffplug.spotless", name = "spotless-plugin-gradle", version.ref = "spotless" }
 sonarqube-plugin = { group = "org.sonarqube", name = "org.sonarqube.gradle.plugin", version.ref = "sonarqube" }
@@ -95,6 +98,7 @@ ktor-server = [
     "ktor-server-host-common",
     "ktor-server-content-negotiation",
     "ktor-server-rate-limit",
+    "ktor-server-metrics-micrometer",
     "ktor-serialization-kotlinx-json",
 ]
 ktor-client-test = [
