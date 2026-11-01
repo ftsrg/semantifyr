@@ -6,13 +6,13 @@
 
 package semantifyr::verification::lang::boundedness
 
-// Spin and Uppaal compute in 32-bit integers that wrap: Spin needs a static bound within 32 bits on every integer the property depends on, Uppaal on the arithmetic over them; Theta and nuXmv decide every case here.
+// Spin and Uppaal compute in 32-bit integers that wrap: Spin needs a static bound within 32 bits on every integer the property depends on; Uppaal declares an integer without one with a 31-bit range and stops when a value leaves it; Theta and nuXmv decide every case here.
 
-// --- unbounded counters: Spin and Uppaal report NotSupported before dispatch ---
+// --- unbounded counters: Spin reports NotSupported before dispatch, Uppaal decides or stops at its range ---
 
 @VerificationCase
 @Tag("expect-pass")
-@Tag("engine-limit:spin,uppaal")
+@Tag("engine-limit:spin")
 class UnboundedCounterReach {
     var x: int := 0
 
@@ -25,9 +25,10 @@ class UnboundedCounterReach {
     }
 }
 
+// Uppaal counts up to its 31-bit range before it stops, which takes longer than the suite's timeout.
 @VerificationCase
 @Tag("expect-pass")
-@Tag("engine-limit:spin,uppaal")
+@Tag("engine-limit:spin")
 class UnboundedCounterBound {
     var x: int := 0
 
@@ -40,7 +41,7 @@ class UnboundedCounterBound {
     }
 }
 
-// Spin's 32-bit int wraps after 31 doublings, which made Spin report this Failed.
+// Spin's 32-bit int wraps after 31 doublings, which made Spin report this Failed; Uppaal stops when a doubling leaves its 31-bit range.
 @VerificationCase
 @Tag("expect-pass")
 @Tag("engine-limit:spin,uppaal")
@@ -56,7 +57,7 @@ class DoublingStaysPositive {
     }
 }
 
-// Spin's wrapped value made this reachable and Spin report it Passed.
+// Spin's wrapped value made this reachable and Spin report it Passed; Uppaal stops when a doubling leaves its 31-bit range.
 @VerificationCase
 @Tag("expect-fail")
 @Tag("engine-limit:spin,uppaal")
@@ -75,7 +76,7 @@ class DoublingReachesNegative {
 // An unbounded counter that only decides whether an assumption blocks is still in the cone of influence.
 @VerificationCase
 @Tag("expect-fail")
-@Tag("engine-limit:spin,uppaal")
+@Tag("engine-limit:spin")
 class UnboundedGuardAroundAssumption {
     var x: int := 0
     var y: int := 0

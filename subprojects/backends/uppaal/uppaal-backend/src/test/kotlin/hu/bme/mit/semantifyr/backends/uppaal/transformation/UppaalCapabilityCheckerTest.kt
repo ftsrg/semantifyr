@@ -68,15 +68,30 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
     fun `arithmetic over an unbounded integer is reported only when the property depends on it`() {
         val unsupported = unsupported(
             """
-                var counted : int := 0
-                var ignored : int := 0
+                var counted : int := 1
+                var ignored : int := 1
                 init { }
-                tran { counted := counted + 1 ignored := ignored + 1 }
-                prop { AG counted >= 0 }
+                tran { counted := counted * 3 ignored := ignored * 3 }
+                prop { AG counted > 0 }
             """,
         )
 
         assertThat(unsupported).containsExactly("arithmetic that may leave the 32-bit range")
+    }
+
+    @Test
+    fun `incrementing or doubling an unbounded integer stays within 32 bits under the 31-bit range`() {
+        val unsupported = unsupported(
+            """
+                var counted : int := 0
+                var doubled : int := 1
+                init { }
+                tran { counted := counted + 1 doubled := doubled * 2 }
+                prop { AG (counted >= 0 && doubled > 0) }
+            """,
+        )
+
+        assertThat(unsupported).isEmpty()
     }
 
     @Test

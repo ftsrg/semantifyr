@@ -20,8 +20,6 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpress
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
-private val INT_RANGE = IntegerRange(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong())
-
 // Spin and Uppaal compute in 32-bit integers that wrap, so every integer the property depends on must stay within 32 bits
 @VerificationScoped
 class IntegerRangeChecker @Inject constructor(
@@ -39,10 +37,10 @@ class IntegerRangeChecker @Inject constructor(
         }
     }
 
-    fun declaredRangeOf(variable: VariableDeclaration, inlinedOxsts: InlinedOxsts): IntegerRange {
+    fun rangeOf(variable: VariableDeclaration, inlinedOxsts: InlinedOxsts): IntegerRange? {
         return boundsOf(inlinedOxsts).variableRanges[variable]?.takeIf {
             it.fitsInt()
-        } ?: INT_RANGE
+        }
     }
 
     fun check(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
@@ -64,10 +62,8 @@ class IntegerRangeChecker @Inject constructor(
     }
 
     // Uppaal stops on an assignment outside a variable's declared range, so only its arithmetic can wrap
-    fun checkArithmetic(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
-        val bounds = computeBounds(inlinedOxsts) {
-            declaredRangeOf(it, inlinedOxsts)
-        }
+    fun checkArithmetic(inlinedOxsts: InlinedOxsts, declaredRange: (VariableDeclaration) -> IntegerRange): List<UnsupportedConstruct> {
+        val bounds = computeBounds(inlinedOxsts, declaredRange)
         return leavingArithmetic(bounds, coneOf(inlinedOxsts), emptySet())
     }
 

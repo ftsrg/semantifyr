@@ -31,10 +31,13 @@ class UppaalCapabilityChecker @Inject constructor(
     private val builtinSymbolResolver: BuiltinSymbolResolver,
     private val builtinAnnotationHandler: BuiltinAnnotationHandler,
     private val integerRangeChecker: IntegerRangeChecker,
+    private val uppaalDeclarationsBuilder: UppaalDeclarationsBuilder,
 ) : BackendCapabilityChecker() {
 
     override fun checkModel(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
-        return integerRangeChecker.checkArithmetic(inlinedOxsts)
+        return integerRangeChecker.checkArithmetic(inlinedOxsts) {
+            uppaalDeclarationsBuilder.declaredRangeOf(it, inlinedOxsts)
+        }
     }
 
     override fun describeUnsupported(element: EObject): String? {

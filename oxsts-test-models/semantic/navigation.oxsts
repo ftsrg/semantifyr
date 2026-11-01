@@ -56,7 +56,7 @@ class OptionalNavDropReach {
 
 @VerificationCase
 @Tag("expect-pass")
-@Tag("engine-limit:spin,uppaal")
+@Tag("engine-limit:spin")
 class OptionalNavPresentReach {
     contains leaf: Leaf[1]
 

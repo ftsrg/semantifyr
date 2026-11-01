@@ -96,9 +96,10 @@ class LocalVarHavocBound {
 // Each step resets the local to its initializer; even after setting a
 // local to 9 in one step, the next step reads 0 again. If the compiler
 // accidentally promoted the local to a class variable this would fail.
+// Uppaal counts up to its 31-bit range before it stops, which takes longer than the suite's timeout.
 @VerificationCase
 @Tag("expect-pass")
-@Tag("engine-limit:spin,uppaal")
+@Tag("engine-limit:spin")
 class LocalVarNotPersistedBound {
     var total: int := 0
 

@@ -10,10 +10,14 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.transformation.IntegerRangeChecker
 import hu.bme.mit.semantifyr.backends.uppaal.ir.UppaalDeclarations
 import hu.bme.mit.semantifyr.backends.uppaal.ir.UppaalVariableDecl
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.IntegerRange
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
+
+// 31 bits, so that x + 1 or x * 2 cannot wrap Uppaal's 32-bit arithmetic before its range check stops the run
+private val HEADROOM_RANGE = IntegerRange(-(1L shl 30), (1L shl 30) - 1)
 
 class UppaalDeclarationsBuilder @Inject constructor(
     private val uppaalVariableTransformer: UppaalVariableTransformer,
@@ -32,6 +36,10 @@ class UppaalDeclarationsBuilder @Inject constructor(
             variableDeclarations += renderVariable(inlinedOxsts, variable)
         }
         return UppaalDeclarations(typedefs, variableDeclarations)
+    }
+
+    fun declaredRangeOf(variable: VariableDeclaration, inlinedOxsts: InlinedOxsts): IntegerRange {
+        return integerRangeChecker.rangeOf(variable, inlinedOxsts) ?: HEADROOM_RANGE
     }
 
     private fun renderVariable(inlinedOxsts: InlinedOxsts, variable: VariableDeclaration): UppaalVariableDecl {
@@ -53,7 +61,7 @@ class UppaalDeclarationsBuilder @Inject constructor(
         return when (kind) {
             UppaalVariableKind.Clock -> "clock"
             // a declared range lifts the default 16-bit bound, and Uppaal reports an assignment outside it instead of a verdict
-            UppaalVariableKind.Integer -> integerRangeChecker.declaredRangeOf(variable, inlinedOxsts).let {
+            UppaalVariableKind.Integer -> declaredRangeOf(variable, inlinedOxsts).let {
                 "int[${it.lower},${it.upper}]"
             }
             UppaalVariableKind.Boolean -> "bool"

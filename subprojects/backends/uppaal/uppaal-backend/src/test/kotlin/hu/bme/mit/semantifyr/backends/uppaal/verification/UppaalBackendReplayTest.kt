@@ -129,7 +129,18 @@ class UppaalBackendReplayTest {
 
     @Test
     suspend fun `arithmetic that may leave 32 bits under the declared ranges is NotSupported before dispatch`() {
-        val result = verify("UnboundedCounter", models.parse(BackendTestModels.COUNTER_EXCEEDS_BOUND))
+        val result = verify(
+            "UnboundedTripling",
+            models.parse(
+                """
+                    inlined oxsts of semantifyr::Anything
+                    var x : int := 1
+                    init { }
+                    tran { x := x * 3 }
+                    prop { AG x > 0 }
+                """,
+            ),
+        )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
         assertThat(result.message).matches("uppaal:default does not support \\S+:2: arithmetic that may leave the 32-bit range \\(x\\)")

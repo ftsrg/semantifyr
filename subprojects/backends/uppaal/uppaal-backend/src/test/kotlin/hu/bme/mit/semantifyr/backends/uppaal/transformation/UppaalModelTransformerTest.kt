@@ -86,7 +86,7 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     }
 
     @Test
-    suspend fun `an integer is declared with its range when the analysis bounds it within 32 bits and with the 32-bit range otherwise`() {
+    suspend fun `an integer is declared with its range when the analysis bounds it within 32 bits and with the 31-bit range otherwise`() {
         val declarations = nta(
             """
                 var bounded : int := 0
@@ -107,8 +107,8 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
         assertThat(declarations.variables).containsExactly(
             UppaalVariableDecl("int[0,3]", "bounded", "0"),
             UppaalVariableDecl("int[0,124999]", "large", "0"),
-            UppaalVariableDecl("int[-2147483648,2147483647]", "huge", "1"),
-            UppaalVariableDecl("int[-2147483648,2147483647]", "unbounded", "0"),
+            UppaalVariableDecl("int[-1073741824,1073741823]", "huge", "1"),
+            UppaalVariableDecl("int[-1073741824,1073741823]", "unbounded", "0"),
         )
     }
 
