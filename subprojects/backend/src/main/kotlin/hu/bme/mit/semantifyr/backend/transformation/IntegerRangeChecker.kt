@@ -38,6 +38,12 @@ class IntegerRangeChecker @Inject constructor(
         }
     }
 
+    fun rangeOf(variable: VariableDeclaration, inlinedOxsts: InlinedOxsts): IntegerRange? {
+        return boundsOf(inlinedOxsts).variableRanges[variable]?.takeIf {
+            it.fitsInt()
+        }
+    }
+
     fun check(inlinedOxsts: InlinedOxsts, isChecked: (VariableDeclaration) -> Boolean): List<UnsupportedConstruct> {
         val bounds = boundsOf(inlinedOxsts)
         val evaluator = MetaConstantExpressionEvaluator()

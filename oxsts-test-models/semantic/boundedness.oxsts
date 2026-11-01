@@ -155,6 +155,39 @@ class TimerCountdownBound {
     }
 }
 
+// Beyond Uppaal's default 16-bit int, which Uppaal decides through the declared range.
+@VerificationCase
+@Tag("expect-pass")
+class BeyondSixteenBitsReach {
+    var x: int := 0
+
+    redefine tran {
+        if (x < 100000) {
+            x := x + 25000
+        }
+    }
+
+    prop {
+        return EF x == 100000
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class BeyondSixteenBitsBound {
+    var x: int := 0
+
+    redefine tran {
+        if (x < 100000) {
+            x := x + 25000
+        }
+    }
+
+    prop {
+        return AG x <= 100000
+    }
+}
+
 // An unbounded counter the property does not depend on does not limit any engine.
 @VerificationCase
 @Tag("expect-pass")
