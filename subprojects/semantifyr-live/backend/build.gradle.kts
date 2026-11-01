@@ -151,7 +151,6 @@ tasks.named<JavaExec>("run") {
     environment("SEMANTIFYR_LIVE_PORT", "18080")
     environment("SEMANTIFYR_LIVE_METRICS_PORT", "18081")
     environment("SEMANTIFYR_LIVE_ROOT_WORK_DIR", workDir.absolutePath)
-    environment("SEMANTIFYR_LIVE_ADMIN_PASSWORD", "testing")
 
     doFirst {
         environment("PATH", "${thetaCliDir.get()}${File.pathSeparator}${System.getenv("PATH")}")
@@ -179,7 +178,6 @@ tasks.register<JavaExec>("runDev") {
     environment("SEMANTIFYR_LIVE_PORT", "18080")
     environment("SEMANTIFYR_LIVE_METRICS_PORT", "18081")
     environment("SEMANTIFYR_LIVE_ROOT_WORK_DIR", workDir.absolutePath)
-    environment("SEMANTIFYR_LIVE_ADMIN_PASSWORD", "testing")
 
     doFirst {
         environment("PATH", "${thetaCliDir.get()}${File.pathSeparator}${System.getenv("PATH")}")

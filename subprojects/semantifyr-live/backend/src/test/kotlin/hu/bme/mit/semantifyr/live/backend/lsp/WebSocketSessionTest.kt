@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.live.backend.SessionManagerConfig
 import hu.bme.mit.semantifyr.live.backend.data.AdminStatusResponse
 import hu.bme.mit.semantifyr.live.backend.data.SessionInfo
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SemantifyrLiveMethods
+import hu.bme.mit.semantifyr.live.backend.server.ProxyUserResolver
 import hu.bme.mit.semantifyr.live.backend.testing.LspWire
 import hu.bme.mit.semantifyr.live.backend.testing.awaitResponseFor
 import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrApp
@@ -25,8 +26,6 @@ import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.client.request.get
-import io.ktor.client.request.header
-import io.ktor.http.HttpHeaders
 import io.ktor.server.testing.testApplication
 import io.ktor.websocket.Frame
 import io.micrometer.core.instrument.MeterRegistry
@@ -42,14 +41,14 @@ import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.SemanticTokens
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.Base64
 import kotlin.time.Duration.Companion.seconds
 
 class WebSocketSessionTest {
-
-    private val adminPassword = "test-admin-password"
 
     private val modelWithCase = """
         package test
@@ -62,13 +61,9 @@ class WebSocketSessionTest {
 
     private fun config(tmp: Path): BackendConfig {
         return BackendConfig(
-            server = ServerConfig(adminPassword = adminPassword, wsHandshakesPerPeriod = 10_000),
+            server = ServerConfig(wsHandshakesPerPeriod = 10_000),
             sessionManager = SessionManagerConfig(rootWorkDirectory = tmp.toString(), maxSessionsGlobal = 16),
         )
-    }
-
-    private fun adminAuthHeader(): String {
-        return "Basic " + Base64.getEncoder().encodeToString("admin:$adminPassword".toByteArray())
     }
 
     private suspend fun DefaultClientWebSocketSession.openWith(uri: String, text: String = modelWithCase) {
@@ -116,17 +111,22 @@ class WebSocketSessionTest {
 
     @Test
     fun `admin status reports the live session while connected`(@TempDir tmp: Path) = testApplication {
+        val signedIn = mock<ProxyUserResolver> {
+            on { resolve(any(), any()) } doReturn "octocat"
+        }
         installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(testInjector(config(tmp)))
+            installSemantifyrLiveBackend(
+                testInjector(config(tmp)) {
+                    bind(ProxyUserResolver::class.java).toInstance(signedIn)
+                },
+            )
         }
         val client = jsonClient(webSockets = true)
         client.webSocket("/ws/lsp/oxsts") {
             send(Frame.Text(LspWire.initializeRequest()))
             awaitResponseFor(id = 1)
 
-            val status = client.get("/api/admin/status") {
-                header(HttpHeaders.Authorization, adminAuthHeader())
-            }.body<AdminStatusResponse>()
+            val status = client.get("/api/admin/status").body<AdminStatusResponse>()
             assertThat(status.sessions).hasSize(1)
             assertThat(status.sessions[0].flavorId).isEqualTo("oxsts")
         }

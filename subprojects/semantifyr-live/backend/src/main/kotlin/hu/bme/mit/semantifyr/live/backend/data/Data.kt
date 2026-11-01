@@ -110,8 +110,12 @@ data class SessionInfo(
 )
 
 @Serializable
+data class AdminWhoamiResponse(
+    val user: String,
+)
+
+@Serializable
 data class AdminConfigResponse(
-    val development: Boolean,
     val server: AdminServerConfigResponse,
     val sessionManager: AdminSessionManagerConfigResponse,
     val verification: AdminVerificationConfigResponse,
@@ -123,11 +127,9 @@ data class AdminServerConfigResponse(
     val pingPeriod: Duration,
     val pingTimeout: Duration,
     val webRootDirectory: String?,
-    val adminPasswordSet: Boolean,
     val wsHandshakesPerPeriod: Int,
     val wsHandshakeRatePeriod: Duration,
     val maxWsFrameSize: Long,
-    val httpsOnlyCookies: Boolean,
 )
 
 @Serializable

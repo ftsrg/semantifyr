@@ -23,7 +23,6 @@ class BackendConfigTest {
         assertThat(config.server.pingPeriod).isEqualTo(30.seconds)
         assertThat(config.server.pingTimeout).isEqualTo(15.seconds)
         assertThat(config.server.webRootDirectory).isNull()
-        assertThat(config.server.adminPassword).isNull()
         assertThat(config.sessionManager.maxSessionsGlobal).isEqualTo(256)
         assertThat(config.sessionManager.rootWorkDirectory).isEqualTo("/var/lib/semantifyr-live")
         assertThat(config.verification.concurrency).isEqualTo(4)
@@ -40,12 +39,10 @@ class BackendConfigTest {
                 "SEMANTIFYR_LIVE_ROOT_WORK_DIR" to "/tmp/sessions",
                 "SEMANTIFYR_LIVE_VERIFY_CONCURRENCY" to "2",
                 "SEMANTIFYR_LIVE_VERIFY_TIMEOUT_SECONDS" to "180",
-                "SEMANTIFYR_LIVE_ADMIN_PASSWORD" to "secret123",
             ),
         )
         assertThat(config.server.port).isEqualTo(9090)
         assertThat(config.server.pingPeriod).isEqualTo(60.seconds)
-        assertThat(config.server.adminPassword).isEqualTo("secret123")
         assertThat(config.sessionManager.maxSessionsGlobal).isEqualTo(64)
         assertThat(config.sessionManager.rootWorkDirectory).isEqualTo("/tmp/sessions")
         assertThat(config.verification.concurrency).isEqualTo(2)
@@ -53,15 +50,17 @@ class BackendConfigTest {
     }
 
     @Test
-    fun `client address settings come from env`() {
+    fun `trusted proxy settings come from env`() {
         val config = BackendConfig().withEnv(
             mapOf(
-                "SEMANTIFYR_LIVE_CLIENT_ADDRESS_HEADER" to "CF-Connecting-IP",
-                "SEMANTIFYR_LIVE_TRUSTED_PROXIES" to "172.30.0.2/32, 10.0.0.0/8,",
+                "SEMANTIFYR_LIVE_CLIENT_ADDRESS_HEADER" to "X-Forwarded-For",
+                "SEMANTIFYR_LIVE_USER_HEADER" to "X-Auth-Request-User",
+                "SEMANTIFYR_LIVE_TRUSTED_PROXIES" to "172.30.0.254/32, 10.0.0.0/8,",
             ),
         )
-        assertThat(config.server.clientAddressHeader).isEqualTo("CF-Connecting-IP")
-        assertThat(config.server.trustedProxies).containsExactly("172.30.0.2/32", "10.0.0.0/8")
+        assertThat(config.server.clientAddressHeader).isEqualTo("X-Forwarded-For")
+        assertThat(config.server.userHeader).isEqualTo("X-Auth-Request-User")
+        assertThat(config.server.trustedProxies).containsExactly("172.30.0.254/32", "10.0.0.0/8")
     }
 
     @Test
@@ -72,9 +71,10 @@ class BackendConfigTest {
     }
 
     @Test
-    fun `client address forwarding is off by default`() {
+    fun `trusted proxies are off by default`() {
         val config = BackendConfig()
         assertThat(config.server.clientAddressHeader).isNull()
+        assertThat(config.server.userHeader).isNull()
         assertThat(config.server.trustedProxies).isEmpty()
     }
 

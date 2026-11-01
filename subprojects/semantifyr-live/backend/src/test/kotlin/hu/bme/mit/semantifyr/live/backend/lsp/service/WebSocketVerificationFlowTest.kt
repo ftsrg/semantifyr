@@ -50,7 +50,7 @@ class WebSocketVerificationFlowTest {
 
     private fun config(tmp: Path): BackendConfig {
         return BackendConfig(
-            server = ServerConfig(adminPassword = "test", wsHandshakesPerPeriod = 10_000),
+            server = ServerConfig(wsHandshakesPerPeriod = 10_000),
             sessionManager = SessionManagerConfig(rootWorkDirectory = tmp.toString(), maxSessionsGlobal = 8),
         )
     }

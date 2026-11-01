@@ -209,14 +209,14 @@ jobs:
         env:
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          docker run -d --name live -p 8080:8080 --cap-drop ALL --security-opt no-new-privileges:true \
-            -e SEMANTIFYR_LIVE_ADMIN_PASSWORD=smoke "$IMAGE:$TAG"
+          docker run -d --name live -p 8080:8080 --cap-drop ALL --security-opt no-new-privileges:true "$IMAGE:$TAG"
           for _ in $(seq 60); do
             curl -fsS http://localhost:8080/api/health > /dev/null && break
             sleep 3
           done
           curl -fsS http://localhost:8080/api/health
           curl -fsS http://localhost:8080/ > /dev/null
+          test "$(curl -s -o /dev/null -w '%{http_code}' -H 'X-Auth-Request-User: smoke' http://localhost:8080/api/admin/status)" = 403
           docker exec live theta-xsts-cli --version
       - name: Show the container log
         if: ${{ failure() }}
