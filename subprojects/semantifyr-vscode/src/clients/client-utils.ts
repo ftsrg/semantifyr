@@ -72,12 +72,17 @@ export function createLspClient(lspExecutable: string, language: string): Langua
                 return;
             }
             const port = address.port;
-            const child = spawn(lspExecutable, [`--socket=${String(port)}`], {
-                shell: true,
+            // Node runs a .bat only through the shell, which splits an unquoted path at its spaces
+            const windows = process.platform === "win32";
+            const child = spawn(windows ? `"${lspExecutable}"` : lspExecutable, [`--socket=${String(port)}`], {
+                shell: windows,
                 stdio: ["ignore", "inherit", "inherit"],
             });
             child.on("error", reject);
-            child.on("exit", () => server.close());
+            child.on("exit", (code) => {
+                server.close();
+                reject(new Error(`The ${language} language server exited with code ${String(code)} before connecting`));
+            });
         });
     });
 
