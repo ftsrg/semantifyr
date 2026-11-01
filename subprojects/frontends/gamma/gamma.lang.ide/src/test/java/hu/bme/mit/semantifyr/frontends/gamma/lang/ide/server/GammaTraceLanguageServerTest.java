@@ -158,7 +158,8 @@ class GammaTraceLanguageServerTest {
         assertThat(result.status()).isEqualTo(WitnessValidationStatus.ERRORED);
         assertThat(result.verdict()).isNull();
         assertThat(result.message()).isEqualTo("Case Crossroads.ACanBeGreen has no witness yet, verify it first");
-        assertThat(result.portfolioId()).isEqualTo(Portfolios.INSTANCE.getDefault().getId());
+        assertThat(result.portfolioId())
+                .isEqualTo(Portfolios.INSTANCE.getDefault().getId());
     }
 
     private Object executeCommand(String command, Object argument) throws Exception {
