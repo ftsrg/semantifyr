@@ -33,8 +33,26 @@ run() {
     wait_healthy "$(docker compose config --images)" || return 1
 }
 
+# the other instance shares the image store, so an image any container uses stays as well
+prune() {
+    repository=$(docker compose config --images) && [ -n "$repository" ] || return 1
+    repository=${repository%:*}
+    repository=${repository#docker.io/}
+    in_use=$(docker ps -a --format '{{.Image}}') || return 1
+    for image in $(docker image ls --format '{{.Repository}}:{{.Tag}}' | sed 's|^docker\.io/||'); do
+        case "$image" in
+            "$repository:$tag" | "$repository:$previous" | *:"<none>") ;;
+            "$repository":*)
+                printf '%s\n' "$in_use" | sed 's|^docker\.io/||' | grep -Fqx "$image" && continue
+                if docker image rm "$image" > /dev/null; then echo "removed $image"; fi
+                ;;
+        esac
+    done
+}
+
 if run "$tag"; then
     echo "deployed $tag"
+    prune || echo "pruning the old local images failed" >&2
     exit 0
 fi
 
