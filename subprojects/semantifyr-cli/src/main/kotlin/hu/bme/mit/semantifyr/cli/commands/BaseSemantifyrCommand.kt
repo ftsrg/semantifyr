@@ -34,12 +34,14 @@ import kotlin.io.path.walk
 abstract class BaseSemantifyrCommand(
     name: String,
     private val semantifyrLoader: SemantifyrLoader,
+    private val modelFileSuffixes: List<String> = listOf(OxstsLibrary.FILE_NAME_SUFFIX),
+    modelHelp: String = "OXSTS model file (must end in .oxsts) or directory (walked recursively for .oxsts files).",
 ) : SuspendingCliktCommand(name) {
     override val printHelpOnEmptyArgs = true
 
     val model by argument("model path")
         .path()
-        .help("OXSTS model file (must end in .oxsts) or directory (walked recursively for .oxsts files).")
+        .help(modelHelp)
 
     val libraries by option("-l", "--library")
         .path()
@@ -47,9 +49,9 @@ abstract class BaseSemantifyrCommand(
         .help("Library file (must end in .oxsts) or directory (walked recursively). Repeat the flag to add multiple.")
 
     fun checkInputs() {
-        checkInput("Model", model)
+        checkInput("Model", model, modelFileSuffixes)
         for (library in libraries) {
-            checkInput("Library", library)
+            checkInput("Library", library, listOf(OxstsLibrary.FILE_NAME_SUFFIX))
         }
     }
 
@@ -77,7 +79,11 @@ abstract class BaseSemantifyrCommand(
         }
     }
 
-    private fun checkInput(kind: String, path: Path) {
+    private fun checkInput(
+        kind: String,
+        path: Path,
+        fileSuffixes: List<String>,
+    ) {
         if (!path.exists()) {
             throw CommandExit(ExitCode.Input, "$kind path '$path' does not exist.")
         }
@@ -85,8 +91,8 @@ abstract class BaseSemantifyrCommand(
             throw CommandExit(ExitCode.Input, "$kind path '$path' is not readable.")
         }
         if (!path.isDirectory()) {
-            if (!path.name.endsWith(OxstsLibrary.FILE_NAME_SUFFIX)) {
-                throw CommandExit(ExitCode.Input, "$kind path '$path' is neither an ${OxstsLibrary.FILE_NAME_SUFFIX} file nor a directory.")
+            if (fileSuffixes.none { path.name.endsWith(it) }) {
+                throw CommandExit(ExitCode.Input, "$kind path '$path' is neither a directory nor a file ending in ${fileSuffixes.joinToString(" or ")}.")
             }
             return
         }
