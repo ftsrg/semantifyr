@@ -31,6 +31,10 @@ class BenchmarkSources(
     val oxstsSemantic by lazy {
         OxstsModelSource(injector, oxstsModels.resolve("semantic"))
     }
+
+    val oxstsSmoke by lazy {
+        OxstsModelSource(injector, oxstsModels.resolve("smoke"))
+    }
 }
 
 class CampaignDefinition(
@@ -54,20 +58,14 @@ object Campaigns {
     )
 
     val crossroads = CampaignDefinition("crossroads") { sources ->
-        axis(VerificationAxes.model, listOf(sources.sysml.model("crossroads.sysml")) + sources.oxstsSemantic.models)
-        axis(VerificationAxes.case) {
-            it[VerificationAxes.model].cases
-        }
-        axis(VerificationAxes.engine, listOf(Engine.Theta))
-        // the semantic models keep the configuration their conformance suite runs
-        axis(VerificationAxes.backendConfig) {
-            if (it[VerificationAxes.model] in sources.oxstsSemantic.models) {
-                listOf(Portfolios.ThetaCegarExplPredCombined)
-            } else {
-                listOf(defaultPortfolios.getValue(it[VerificationAxes.engine]))
-            }
-        }
+        crossroadsAndSemanticModels(sources)
         axis(VerificationAxes.optimization, listOf(OptimizationLevel.All))
+    }
+
+    val optimizerPasses = CampaignDefinition("optimizer-passes") { sources ->
+        crossroadsAndSemanticModels(sources)
+        axis(VerificationAxes.optimization, OptimizationLevel.leaveOneOut)
+        timeout = 2.minutes
     }
 
     val sysmlCorpus = CampaignDefinition("sysml-corpus") { sources ->
@@ -103,7 +101,50 @@ object Campaigns {
         timeout = 10.minutes
     }
 
-    val all = listOf(crossroads, sysmlCorpus, spacecraft)
+    val backends = CampaignDefinition("backends") { sources ->
+        axis(VerificationAxes.model, sources.sysml.models.filter { it.name != "spacecraft.sysml" })
+        axis(VerificationAxes.case) {
+            it[VerificationAxes.model].cases
+        }
+        axis(VerificationAxes.engine, Engine.entries)
+        axis(VerificationAxes.backendConfig) {
+            listOf(defaultPortfolios.getValue(it[VerificationAxes.engine]))
+        }
+        axis(VerificationAxes.optimization, listOf(OptimizationLevel.All))
+    }
+
+    val smoke = CampaignDefinition("smoke") { sources ->
+        axis(VerificationAxes.model, sources.oxstsSmoke.models)
+        axis(VerificationAxes.case) {
+            it[VerificationAxes.model].cases
+        }
+        axis(VerificationAxes.engine, listOf(Engine.Theta))
+        axis(VerificationAxes.backendConfig) {
+            listOf(defaultPortfolios.getValue(it[VerificationAxes.engine]))
+        }
+        axis(VerificationAxes.optimization, listOf(OptimizationLevel.All))
+        repetitions = 1
+        warmups = 0
+        timeout = 1.minutes
+    }
+
+    val all = listOf(crossroads, optimizerPasses, sysmlCorpus, spacecraft, backends, smoke)
+
+    private fun CampaignBuilder.crossroadsAndSemanticModels(sources: BenchmarkSources) {
+        axis(VerificationAxes.model, listOf(sources.sysml.model("crossroads.sysml")) + sources.oxstsSemantic.models)
+        axis(VerificationAxes.case) {
+            it[VerificationAxes.model].cases
+        }
+        axis(VerificationAxes.engine, listOf(Engine.Theta))
+        // the semantic models keep the configuration their conformance suite runs
+        axis(VerificationAxes.backendConfig) {
+            if (it[VerificationAxes.model] in sources.oxstsSemantic.models) {
+                listOf(Portfolios.ThetaCegarExplPredCombined)
+            } else {
+                listOf(defaultPortfolios.getValue(it[VerificationAxes.engine]))
+            }
+        }
+    }
 
     fun byName(name: String): CampaignDefinition {
         return all.firstOrNull {

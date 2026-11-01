@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.backends.theta.ThetaExecutorKey
 import hu.bme.mit.semantifyr.backends.uppaal.UppaalExecutorKey
 import hu.bme.mit.semantifyr.benchmark.Axis
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPass
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
@@ -42,9 +43,27 @@ class OptimizationLevel(
     val name: String,
     val config: OptimizationConfig,
 ) {
+    val disabled: List<OptimizationPass>
+        get() = OptimizationPass.entries.filter {
+            !config.isEnabled(it)
+        }
+
     companion object {
         val None = OptimizationLevel("none", OptimizationConfig.NONE)
         val All = OptimizationLevel("all", OptimizationConfig.ALL)
+
+        fun without(pass: OptimizationPass): OptimizationLevel {
+            val label = pass.name.replace(Regex("(?<=[a-z])(?=[A-Z])"), "-").lowercase()
+            return OptimizationLevel("without-$label", OptimizationConfig(enabled = OptimizationConfig.ALL.enabled - pass))
+        }
+
+        val leaveOneOut = listOf(All) + OptimizationPass.entries.map { without(it) } + listOf(None)
+
+        fun byName(name: String): OptimizationLevel? {
+            return leaveOneOut.firstOrNull {
+                it.name == name
+            }
+        }
     }
 }
 
