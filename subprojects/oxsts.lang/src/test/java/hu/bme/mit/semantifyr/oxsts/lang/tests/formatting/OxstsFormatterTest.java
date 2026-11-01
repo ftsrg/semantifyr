@@ -42,7 +42,8 @@ public class OxstsFormatterTest {
             """.formatted(operator));
         pkg.assertNoResourceErrors();
 
-        var formatted = serializer.serialize(pkg.getOxstsPackage(), SaveOptions.newBuilder().format().getOptions());
+        var options = SaveOptions.newBuilder().format().getOptions();
+        var formatted = serializer.serialize(pkg.getOxstsPackage(), options);
 
         assertThat(formatted).contains("C[0" + operator + "2]", "in 0" + operator + "2)");
     }
