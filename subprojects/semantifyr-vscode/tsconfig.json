@@ -9,6 +9,6 @@
     "checkJs": true,
     "noEmit": true
   },
-  "include": ["src/**/*", "esbuild.mjs"],
+  "include": ["src/**/*", "esbuild.mjs", "vitest.config.ts"],
   "exclude": ["dist", "node_modules", "bin", "build"]
 }

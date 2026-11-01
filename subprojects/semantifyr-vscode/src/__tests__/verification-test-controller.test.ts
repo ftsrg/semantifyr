@@ -1,0 +1,207 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { type CancellationToken, ResponseError } from 'vscode-jsonrpc';
+import { LSPErrorCodes } from 'vscode-languageserver-protocol';
+import type { VerificationCaseResult, VerificationCaseSpecification } from '@semantifyr/editor-common';
+import { VerificationTestController } from '../clients/verification-test-controller.js';
+import { modelUri, reachableCase, result, safeCase } from './fixtures.js';
+import { CancellationTokenSource, createExtensionContext, resetVscode, state, type TestController, type TestItem, Uri } from './stubs/vscode.js';
+import { LanguageClient } from './stubs/vscode-languageclient-node.js';
+
+interface ExecuteCommandParams {
+    command: string;
+    arguments: unknown[];
+}
+
+type VerifyHandler = (params: unknown, token: CancellationToken) => Promise<VerificationCaseResult | ResponseError | null> | VerificationCaseResult | ResponseError | null;
+
+let cases: VerificationCaseSpecification[] | null;
+let verify: VerifyHandler;
+let requests: { method: string; params: unknown }[];
+let controller: TestController;
+
+async function setUp() {
+    const client = new LanguageClient('oxstsLSP', 'OXSTS Language Server', undefined, {});
+    client.server.onRequest((method, params, token) => {
+        requests.push({ method, params });
+        const command = (params as ExecuteCommandParams).command;
+        if (command === 'oxsts.case.discover') {
+            return cases;
+        }
+        return verify((params as ExecuteCommandParams).arguments[0], token);
+    });
+    const context = createExtensionContext('/extension');
+    const testController = new VerificationTestController(client as never, {
+        languageId: 'oxsts',
+        fileGlob: '**/*.oxsts',
+        controllerId: 'oxsts.verification',
+        controllerLabel: 'Semantifyr Verification Cases',
+        discoverCommand: 'oxsts.case.discover',
+        verifyCommand: 'oxsts.case.verify',
+    });
+    testController.registerTestProvider(context as never);
+    await testController.refreshWorkspaceTests();
+    controller = state.controllers[0]!;
+}
+
+function caseItem(id: string): TestItem {
+    return controller.items.get(modelUri)!.children.get(id)!;
+}
+
+async function run(items: TestItem[], token = new CancellationTokenSource().token) {
+    await controller.profiles[0]!.runHandler({ include: items }, token);
+    return controller.runs.at(-1)!;
+}
+
+beforeEach(() => {
+    resetVscode();
+    state.files = [Uri.parse(modelUri)];
+    cases = [safeCase, reachableCase];
+    verify = () => result('passed');
+    requests = [];
+});
+
+afterEach(() => {
+    LanguageClient.disposeAll();
+});
+
+describe('discovery', () => {
+    it('asks the server for the cases of each workspace file', async () => {
+        await setUp();
+
+        expect(requests).toEqual([{ method: 'workspace/executeCommand', params: { command: 'oxsts.case.discover', arguments: [modelUri] } }]);
+        const fileItem = controller.items.get(modelUri)!;
+        expect(fileItem.label).toBe('lamp.oxsts');
+        expect([...fileItem.children].map(([id]) => id)).toEqual(['lamp::Safe', 'lamp::Reachable']);
+        expect(caseItem('lamp::Reachable').range).toEqual({ start: { line: 9, character: 0 }, end: { line: 12, character: 1 } });
+    });
+
+    it('drops cases the server no longer reports, and the file once it has none', async () => {
+        await setUp();
+
+        cases = [reachableCase];
+        await controller.refreshHandler!();
+        expect([...controller.items.get(modelUri)!.children].map(([id]) => id)).toEqual(['lamp::Reachable']);
+
+        cases = null;
+        await controller.refreshHandler!();
+        expect(controller.items.get(modelUri)).toBeUndefined();
+    });
+
+    it('rediscovers a file when it changes on disk', async () => {
+        await setUp();
+
+        cases = [safeCase];
+        state.watchers.find((watcher) => watcher.glob === '**/*.oxsts')!.changed.fire(Uri.parse(modelUri));
+        await expect.poll(() => controller.items.get(modelUri)?.children.size).toBe(1);
+    });
+});
+
+describe('verification', () => {
+    it('sends the case location as a single named parameter', async () => {
+        await setUp();
+
+        await run([caseItem('lamp::Safe')]);
+
+        expect(requests.at(-1)).toEqual({
+            method: 'workspace/executeCommand',
+            params: { command: 'oxsts.case.verify', arguments: [{ uri: modelUri, range: safeCase.location.range }] },
+        });
+    });
+
+    it('runs every case of a file when the file is selected', async () => {
+        await setUp();
+
+        const testRun = await run([controller.items.get(modelUri)!]);
+
+        expect(testRun.outcome(caseItem('lamp::Safe'))).toBe('passed');
+        expect(testRun.outcome(caseItem('lamp::Reachable'))).toBe('passed');
+        expect(testRun.ended).toBe(true);
+    });
+
+    it.each([
+        ['passed', 'passed', undefined],
+        ['failed', 'failed', 'bound reached'],
+        ['inconclusive', 'errored', 'Inconclusive: bound reached'],
+        ['timeout', 'errored', 'Timed out: bound reached'],
+        ['not_supported', 'errored', 'Not supported by the chosen portfolio: bound reached'],
+        ['errored', 'errored', 'bound reached'],
+    ] as const)('reports a %s verdict as %s', async (status, outcome, message) => {
+        await setUp();
+        verify = () => result(status, null, 'bound reached');
+
+        const testRun = await run([caseItem('lamp::Safe')]);
+
+        const event = testRun.events.at(-1)!;
+        expect(event.kind).toBe(outcome);
+        expect('message' in event ? event.message.message : undefined).toBe(message);
+    });
+
+    it('reports a failed verdict without a message as failed', async () => {
+        await setUp();
+        verify = () => result('failed');
+
+        const testRun = await run([caseItem('lamp::Safe')]);
+
+        expect(testRun.events.at(-1)).toMatchObject({ kind: 'failed', message: { message: 'Failed' } });
+    });
+
+    it('reports an error when the server returns no result', async () => {
+        await setUp();
+        verify = () => null;
+
+        const testRun = await run([caseItem('lamp::Safe')]);
+
+        expect(testRun.events.at(-1)).toMatchObject({ kind: 'errored', message: { message: 'The language server returned no result' } });
+    });
+
+    it('reports the server error of a failed request', async () => {
+        await setUp();
+        verify = () => new ResponseError(-32603, 'compilation failed');
+
+        const testRun = await run([caseItem('lamp::Safe')]);
+
+        expect(testRun.events.at(-1)).toMatchObject({ kind: 'errored', message: { message: 'compilation failed' } });
+    });
+});
+
+describe('cancellation', () => {
+    it('skips every case when the run is cancelled before it starts', async () => {
+        await setUp();
+        const source = new CancellationTokenSource();
+        source.cancel();
+
+        const testRun = await run([caseItem('lamp::Safe'), caseItem('lamp::Reachable')], source.token);
+
+        expect(testRun.outcome(caseItem('lamp::Safe'))).toBe('skipped');
+        expect(testRun.outcome(caseItem('lamp::Reachable'))).toBe('skipped');
+        expect(requests.filter((request) => (request.params as ExecuteCommandParams).command === 'oxsts.case.verify')).toEqual([]);
+        expect(testRun.ended).toBe(true);
+    });
+
+    it('cancels the running request on the server and skips the rest', async () => {
+        await setUp();
+        const source = new CancellationTokenSource();
+        let serverCancelled = false;
+        verify = (_params, token) => new Promise((resolve) => {
+            token.onCancellationRequested(() => {
+                serverCancelled = true;
+                resolve(new ResponseError(LSPErrorCodes.RequestCancelled, 'cancelled'));
+            });
+            source.cancel();
+        });
+
+        const testRun = await run([caseItem('lamp::Safe'), caseItem('lamp::Reachable')], source.token);
+
+        expect(serverCancelled).toBe(true);
+        expect(testRun.outcome(caseItem('lamp::Safe'))).toBe('skipped');
+        expect(testRun.outcome(caseItem('lamp::Reachable'))).toBe('skipped');
+        expect(requests.filter((request) => (request.params as ExecuteCommandParams).command === 'oxsts.case.verify')).toHaveLength(1);
+        expect(testRun.ended).toBe(true);
+    });
+});
