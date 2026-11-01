@@ -27,6 +27,7 @@ dependencies {
     testFixturesApi(project(":gamma.lang"))
     testFixturesApi(testFixtures(project(":gamma.lang")))
     testFixturesApi(testFixtures(project(":verifier")))
+    testFixturesApi(project(":portfolios"))
 }
 
 val syncGammaLibrary = tasks.register<Sync>("syncGammaLibrary") {
