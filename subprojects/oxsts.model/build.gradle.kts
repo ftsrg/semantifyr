@@ -16,11 +16,11 @@ val metamodel = sourceSets.create("metamodel")
 dependencies {
     api(libs.ecore)
 
-    "metamodelImplementation"(libs.ecore)
-    "metamodelImplementation"(libs.ecore.codegen)
-    "metamodelImplementation"(libs.mwe2.lib)
-    "metamodelRuntimeOnly"(libs.mwe.utils)
-    "metamodelRuntimeOnly"(libs.reload4j)
+    add(metamodel.implementationConfigurationName, libs.ecore)
+    add(metamodel.implementationConfigurationName, libs.ecore.codegen)
+    add(metamodel.implementationConfigurationName, libs.mwe2.lib)
+    add(metamodel.runtimeOnlyConfigurationName, libs.mwe.utils)
+    add(metamodel.runtimeOnlyConfigurationName, libs.reload4j)
 }
 
 val emfGenDirectory = layout.projectDirectory.dir("src/main/emf-gen")
