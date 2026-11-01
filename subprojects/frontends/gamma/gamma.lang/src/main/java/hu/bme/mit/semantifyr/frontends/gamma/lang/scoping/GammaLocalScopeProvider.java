@@ -17,6 +17,9 @@ import org.eclipse.xtext.scoping.IScope;
 import org.eclipse.xtext.scoping.Scopes;
 import org.eclipse.xtext.scoping.impl.AbstractGlobalScopeDelegatingScopeProvider;
 import org.eclipse.xtext.scoping.impl.GlobalResourceDescriptionProvider;
+import org.eclipse.xtext.scoping.impl.ImportNormalizer;
+import org.eclipse.xtext.scoping.impl.ImportScope;
+import org.eclipse.xtext.scoping.impl.ScopeBasedSelectable;
 import org.eclipse.xtext.scoping.impl.SelectableBasedScope;
 
 public class GammaLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeProvider {
@@ -46,19 +49,24 @@ public class GammaLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
 
     protected IScope getGammaModelScope(GammaModelPackage gammaModelPackage, EReference reference) {
         var resource = gammaModelPackage.eResource();
+        var type = reference.getEReferenceType();
+        var ignoreCase = isIgnoreCase(reference);
         var globalScope = getGlobalScope(resource, reference);
 
         var packageName = qualifiedNameProvider.getFullyQualifiedName(gammaModelPackage);
-        // a package spans files, so a trace file sees the model it witnesses
-        var packageSelectable =
-                new TrimPrefixSelectable(resourceDescriptionsProvider.getResourceDescriptions(resource), packageName);
-        var packageScope = SelectableBasedScope.createScope(
-                globalScope, packageSelectable, reference.getEReferenceType(), isIgnoreCase(reference));
+        // a package spans files, and lookups through wrap relink a trace when its model changes
+        var indexScope = wrap(SelectableBasedScope.createScope(
+                IScope.NULLSCOPE, resourceDescriptionsProvider.getResourceDescriptions(resource), type, ignoreCase));
+        var packageScope = new ImportScope(
+                List.of(new ImportNormalizer(packageName, true, ignoreCase)),
+                globalScope,
+                new ScopeBasedSelectable(indexScope),
+                type,
+                ignoreCase);
 
         var resourceDescription = globalResourceDescriptionProvider.getResourceDescription(resource);
         var resourceSelectable = new TrimPrefixSelectable(resourceDescription, packageName);
-        return SelectableBasedScope.createScope(
-                packageScope, resourceSelectable, reference.getEReferenceType(), isIgnoreCase(reference));
+        return SelectableBasedScope.createScope(packageScope, resourceSelectable, type, ignoreCase);
     }
 
     protected IScope getLocalScope(IScope containerScope, EObject context) {
