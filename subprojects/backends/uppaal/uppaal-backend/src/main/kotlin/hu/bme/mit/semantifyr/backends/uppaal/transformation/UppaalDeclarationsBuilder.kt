@@ -45,7 +45,11 @@ class UppaalDeclarationsBuilder @Inject constructor(
         return UppaalVariableDecl(typeName, described.name, initialValue)
     }
 
-    private fun renderTypeName(inlinedOxsts: InlinedOxsts, variable: VariableDeclaration, kind: UppaalVariableKind): String {
+    private fun renderTypeName(
+        inlinedOxsts: InlinedOxsts,
+        variable: VariableDeclaration,
+        kind: UppaalVariableKind,
+    ): String {
         return when (kind) {
             UppaalVariableKind.Clock -> "clock"
             // a declared range lifts the default 16-bit bound, and Uppaal reports an assignment outside it instead of a verdict
