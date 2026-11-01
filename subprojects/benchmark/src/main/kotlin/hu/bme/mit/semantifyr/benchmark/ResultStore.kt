@@ -18,6 +18,7 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
 import kotlin.io.path.readLines
+import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 class ResultStore(
@@ -26,6 +27,8 @@ class ResultStore(
     private val logger by loggerFactory()
 
     val resultsFile: Path = directory.resolve("results.jsonl")
+
+    val environmentFile: Path = directory.resolve("run.json")
 
     fun load(): List<BenchmarkRecord> {
         if (!resultsFile.exists()) {
@@ -70,6 +73,19 @@ class ResultStore(
 
     fun clear() {
         resultsFile.deleteIfExists()
+        environmentFile.deleteIfExists()
+    }
+
+    fun writeEnvironment(environment: RunEnvironment) {
+        directory.createDirectories()
+        environmentFile.writeText(json.encodeToString(environment))
+    }
+
+    fun loadEnvironment(): RunEnvironment? {
+        if (!environmentFile.exists()) {
+            return null
+        }
+        return json.decodeFromString<RunEnvironment>(environmentFile.readText())
     }
 
     companion object {

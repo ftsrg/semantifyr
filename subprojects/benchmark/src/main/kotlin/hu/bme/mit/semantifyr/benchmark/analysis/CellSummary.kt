@@ -41,6 +41,11 @@ data class Statistic(
     }
 }
 
+data class PassSummary(
+    val time: Statistic,
+    val firings: Int,
+)
+
 data class CellSummary(
     val cell: Map<String, String>,
     val outcome: Outcome,
@@ -61,6 +66,7 @@ data class CellSummary(
     val inputSize: ModelSize?,
     val inlinedSize: ModelSize?,
     val flattenedSize: ModelSize?,
+    val passes: Map<String, PassSummary>,
     val extensions: Map<String, String>,
 ) {
     val verdict: VerificationVerdict?
@@ -107,8 +113,21 @@ fun summarize(records: List<BenchmarkRecord>): List<CellSummary> {
             inputSize = sized?.inputSize,
             inlinedSize = sized?.inlinedSize,
             flattenedSize = sized?.flattenedSize,
+            passes = summarizePasses(measured),
             extensions = flattenExtensions((measured.firstOrNull() ?: last).extensions),
         )
+    }
+}
+
+private fun summarizePasses(measurements: List<Measurement>): Map<String, PassSummary> {
+    return measurements.mapNotNull {
+        it.metrics?.verifier?.compilation
+    }.flatMap {
+        (it.inliningOptimization + it.flatteningOptimization).passes
+    }.groupBy {
+        it.name
+    }.mapValues { (_, passes) ->
+        PassSummary(Statistic.of(passes.map { it.duration })!!, passes.first().firings)
     }
 }
 

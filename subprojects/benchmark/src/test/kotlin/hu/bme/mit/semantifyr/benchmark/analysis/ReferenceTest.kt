@@ -44,6 +44,7 @@ class ReferenceTest {
             inputSize = ModelSize(40, 30, 200),
             inlinedSize = ModelSize(20, 25, 150),
             flattenedSize = ModelSize(flattenedVariables, 20, 100),
+            passes = emptyMap(),
             extensions = emptyMap(),
         )
     }
