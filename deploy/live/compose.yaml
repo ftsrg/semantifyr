@@ -12,6 +12,8 @@ services:
       SEMANTIFYR_LIVE_VERIFY_TIMEOUT_SECONDS: ${VERIFY_TIMEOUT_SECONDS:?VERIFY_TIMEOUT_SECONDS is not set}
       SEMANTIFYR_LIVE_CLIENT_ADDRESS_HEADER: CF-Connecting-IP
       SEMANTIFYR_LIVE_TRUSTED_PROXIES: 172.30.0.2/32
+      # Prometheus scrapes this port on the edge network; the tunnel routes only to 8080
+      SEMANTIFYR_LIVE_METRICS_PORT: 8081
       THETA_JAVA_OPTS: ${THETA_JAVA_OPTS:?THETA_JAVA_OPTS is not set}
     mem_limit: ${MEMORY_LIMIT:?MEMORY_LIMIT is not set}
     cpus: ${CPUS:?CPUS is not set}

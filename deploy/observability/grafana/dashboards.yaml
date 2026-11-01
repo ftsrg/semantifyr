@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+apiVersion: 1
+
+providers:
+  - name: semantifyr
+    folder: Semantifyr
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/dashboards
