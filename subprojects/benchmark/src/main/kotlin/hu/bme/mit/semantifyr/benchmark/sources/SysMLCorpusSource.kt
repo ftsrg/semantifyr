@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.benchmark.verification.BenchmarkModel
 import hu.bme.mit.semantifyr.benchmark.verification.PreparedModel
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.frontends.sysml.SysMLv2Frontend
+import hu.bme.mit.semantifyr.frontends.sysml.SysMLv2Variant
 import hu.bme.mit.semantifyr.frontends.sysml.testing.CorpusModel
 import hu.bme.mit.semantifyr.frontends.sysml.testing.CorpusTier
 import hu.bme.mit.semantifyr.frontends.sysml.testing.CorpusVerdict
@@ -24,6 +25,7 @@ import kotlinx.serialization.Serializable
 import java.nio.file.Path
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.readText
+import kotlin.io.path.writeText
 import kotlin.time.Duration
 import kotlin.time.measureTimedValue
 
@@ -64,6 +66,9 @@ class SysMLCorpusSource(
     private val injector: Injector,
     private val examplesDirectory: Path,
 ) {
+    // SysMLv2Variant keeps its importedPackage internal to the frontend
+    private val variantPackages = mapOf(SysMLv2Variant.TopDown to "semantifyr::sysml::topdown")
+
     val corpus: SysMLCorpus by lazy {
         SysMLCorpus.load(examplesDirectory.resolve("manifest.json"))
     }
@@ -105,6 +110,9 @@ class SysMLCorpusSource(
             val (compiled, transformationDuration) = measureTimedValue {
                 compiler.compile(source, workDirectory.resolve("${source.nameWithoutExtension}.oxsts"))
             }
+            variantPackages[model.variant]?.let {
+                importVariant(compiled, it)
+            }
             // the frontend only loads the compiled model here, every cell builds its own verifier
             val frontend = SysMLv2Frontend.builder()
                 .source(source)
@@ -122,6 +130,13 @@ class SysMLCorpusSource(
                 cases = verificationCases,
                 extensions = mapOf(SysMLMeasurement.extension.entry(SysMLMeasurement.count(source.readText(), transformationDuration))),
             )
+        }
+
+        // the frontend adds the variant's import only to a model it compiles itself, as the first import that declares a name wins
+        private fun importVariant(compiled: Path, variantPackage: String) {
+            val text = compiled.readText()
+            val packageDeclaration = Regex("^package .*$", RegexOption.MULTILINE).find(text) ?: error("Compiled OXSTS '$compiled' declares no package")
+            compiled.writeText(text.replaceRange(packageDeclaration.range, "${packageDeclaration.value}\n\nimport $variantPackage"))
         }
     }
 }
