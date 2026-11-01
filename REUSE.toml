@@ -7,6 +7,8 @@ version = 1
 [[annotations]]
 path = [
     "subprojects/frontends/*/models/**",
+    "subprojects/benchmark/reference/**",
+    "subprojects/benchmark/src/main/dist/**",
     "subprojects/website/src/docs/**",
     "subprojects/website/static/**",
     "subprojects/backends/theta/*/src/main/java/**/*.java",
