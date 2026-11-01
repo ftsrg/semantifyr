@@ -43,7 +43,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       # one value for every Gradle step, since it is a test input and a change reruns all tests
-      REQUIRED_BACKENDS: ${{ matrix.os == 'ubuntu-latest' && 'theta,spin' || 'theta' }}
+      REQUIRED_BACKENDS: ${{ matrix.os == 'ubuntu-latest' && 'theta,spin,docker' || 'theta' }}
       # only the ubuntu leg uploads the website
       WEBSITE_API_DOCS: ${{ matrix.os == 'ubuntu-latest' }}
     steps:
