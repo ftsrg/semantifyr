@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.flattening
 
+import com.google.inject.Inject
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.LocalVariableManager
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
@@ -23,11 +25,14 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.xtext.EcoreUtil2
 
-class RecordFlatteningPass {
+class RecordFlatteningPass @Inject constructor(
+    private val localVariableManager: LocalVariableManager,
+) {
 
     companion object {
         const val FIELD_SEPARATOR = "$"
@@ -37,14 +42,14 @@ class RecordFlatteningPass {
         val recordVariables = inlinedOxsts.eAllOfType<VariableDeclaration>().filter {
             it.typeSpecification?.domain is RecordDeclaration
         }.toList()
-        if (recordVariables.isEmpty()) {
+        if (recordVariables.isEmpty() && inlinedOxsts.eAllOfType<RecordLiteral>().none()) {
             return emptyMap()
         }
 
         val fieldVariables = recordVariables.associateWith {
             createFieldVariables(it)
         }
-        RecordRewriting(fieldVariables).rewrite(inlinedOxsts)
+        RecordRewriting(fieldVariables, localVariableManager).rewrite(inlinedOxsts)
         return fieldVariables
     }
 
@@ -74,8 +79,12 @@ class RecordFlatteningPass {
 
 }
 
+private fun recordFields(record: RecordDeclaration): List<VariableDeclaration> {
+    return record.members.filterIsInstance<VariableDeclaration>()
+}
+
 private fun leafPaths(record: RecordDeclaration): List<List<VariableDeclaration>> {
-    return record.members.filterIsInstance<VariableDeclaration>().flatMap { field ->
+    return recordFields(record).flatMap { field ->
         val fieldRecord = field.typeSpecification.domain as? RecordDeclaration
         if (fieldRecord == null) {
             listOf(listOf(field))
@@ -91,12 +100,14 @@ private fun isRecordField(element: Any?): Boolean {
     return element is VariableDeclaration && element.eContainer() is RecordDeclaration
 }
 
+// every list of field expressions follows the leaf order of `leafPaths`
 private class RecordRewriting(
     private val fieldVariables: Map<VariableDeclaration, Map<List<VariableDeclaration>, VariableDeclaration>>,
+    private val localVariableManager: LocalVariableManager,
 ) {
 
     fun rewrite(inlinedOxsts: InlinedOxsts) {
-        rewriteFieldAccesses(inlinedOxsts)
+        rewriteFieldReads(inlinedOxsts)
 
         for (comparison in inlinedOxsts.eAllOfType<ComparisonOperator>().toList().asReversed()) {
             if (recordTypeOf(comparison.left) != null || recordTypeOf(comparison.right) != null) {
@@ -133,25 +144,21 @@ private class RecordRewriting(
         if (leftover != null) {
             sourceError(leftover, "A record value can only be read field by field, assigned, compared with == or !=, or havoced.")
         }
+        val leftoverLiteral = inlinedOxsts.eAllOfType<RecordLiteral>().firstOrNull()
+        if (leftoverLiteral != null) {
+            sourceError(leftoverLiteral, "A record literal can only be read field by field, assigned or compared with == or !=.")
+        }
     }
 
-    private fun rewriteFieldAccesses(inlinedOxsts: InlinedOxsts) {
-        val references = inlinedOxsts.eAllOfType<ElementReference>().filter {
-            it.element in fieldVariables
-        }.toList()
-        for (reference in references) {
-            var access: Expression = reference
-            while (true) {
-                val parent = access.eContainer()
-                if (parent !is NavigationSuffixExpression || parent.primary !== access || !isRecordField(parent.member)) {
-                    break
-                }
-                access = parent
-            }
-            if (recordTypeOf(access) == null) {
-                val (recordVariable, path) = recordPathOf(access)
-                EcoreUtil2.replace(access, OxstsFactory.createElementReference(fieldVariables.getValue(recordVariable).getValue(path)))
-            }
+    // descendants first, so a read inside another read's record value is already a scalar when that value is copied
+    private fun rewriteFieldReads(inlinedOxsts: InlinedOxsts) {
+        val reads = inlinedOxsts.eAllOfType<NavigationSuffixExpression>().filter {
+            isRecordField(it.member) && recordTypeOf(it) == null
+        }.toList().asReversed()
+        for (read in reads) {
+            val record = recordTypeOf(read.primary) ?: sourceError(read, "Expected a record value.")
+            val index = leafPaths(record).indexOf(listOf(read.member as VariableDeclaration))
+            EcoreUtil2.replace(read, fieldExpressions(read.primary)[index])
         }
     }
 
@@ -164,36 +171,65 @@ private class RecordRewriting(
                 isRecordField(it)
             }?.typeSpecification?.domain as? RecordDeclaration
             is IfThenElse -> recordTypeOf(expression.then)
+            is RecordLiteral -> expression.record
             else -> null
         }
     }
 
-    private fun recordPathOf(expression: Expression): Pair<VariableDeclaration, List<VariableDeclaration>> {
-        return when (expression) {
-            is ElementReference -> (expression.element as VariableDeclaration) to emptyList()
-            is NavigationSuffixExpression -> {
-                val (recordVariable, path) = recordPathOf(expression.primary)
-                recordVariable to path + (expression.member as VariableDeclaration)
-            }
-            else -> sourceError(expression, "Expected a record variable or one of its fields.")
-        }
-    }
-
     private fun fieldExpressions(expression: Expression): List<Expression> {
-        if (expression is IfThenElse) {
-            return fieldExpressions(expression.then).zip(fieldExpressions(expression.`else`)) { then, otherwise ->
+        return when (expression) {
+            is IfThenElse -> fieldExpressions(expression.then).zip(fieldExpressions(expression.`else`)) { then, otherwise ->
                 OxstsFactory.createIfThenElse().also {
                     it.guard = expression.guard.copy()
                     it.then = then
                     it.`else` = otherwise
                 }
             }
+            is RecordLiteral -> literalFieldExpressions(expression)
+            is ElementReference -> {
+                val fields = fieldVariables[expression.element] ?: sourceError(expression, "Expected a record value.")
+                fields.values.map {
+                    OxstsFactory.createElementReference(it)
+                }
+            }
+            is NavigationSuffixExpression -> {
+                val record = recordTypeOf(expression.primary) ?: sourceError(expression, "Expected a record value.")
+                val paths = leafPaths(record)
+                fieldExpressions(expression.primary).filterIndexed { index, _ ->
+                    paths[index].first() == expression.member
+                }
+            }
+            else -> sourceError(expression, "Expected a record value.")
         }
-        val record = recordTypeOf(expression) ?: sourceError(expression, "Expected a record value.")
-        val (recordVariable, prefix) = recordPathOf(expression)
-        val fields = fieldVariables.getValue(recordVariable)
-        return leafPaths(record).map {
-            OxstsFactory.createElementReference(fields.getValue(prefix + it))
+    }
+
+    private fun literalFieldExpressions(literal: RecordLiteral): List<Expression> {
+        return recordFields(literal.record).flatMap { field ->
+            val value = literal.fields.firstOrNull {
+                it.field == field
+            }?.expression ?: field.expression
+            val fieldRecord = field.typeSpecification.domain as? RecordDeclaration
+            when {
+                value == null && fieldRecord != null -> defaultValues(fieldRecord).map {
+                    it ?: sourceError(literal, "The record literal leaves a field of '${field.name}' without a value.")
+                }
+                value == null -> sourceError(literal, "The record literal leaves '${field.name}' without a value.")
+                fieldRecord != null -> fieldExpressions(value)
+                else -> listOf(value.copy())
+            }
+        }
+    }
+
+    // a field without a default is null, and the variable that holds it is havoced
+    private fun defaultValues(record: RecordDeclaration): List<Expression?> {
+        return recordFields(record).flatMap { field ->
+            val fieldRecord = field.typeSpecification.domain as? RecordDeclaration
+            val default = field.expression
+            when {
+                fieldRecord == null -> listOf(default?.copy())
+                default != null -> fieldExpressions(default)
+                else -> defaultValues(fieldRecord)
+            }
         }
     }
 
@@ -216,12 +252,39 @@ private class RecordRewriting(
         }
     }
 
+    // the whole value is read before any field is written, so a value that reads a field written before it is saved first
     private fun assignFields(assignment: AssignmentOperation): List<Operation> {
-        return fieldExpressions(assignment.reference).zip(fieldExpressions(assignment.expression)) { target, value ->
+        val written = mutableSetOf<VariableDeclaration>()
+        val saved = mutableListOf<Operation>()
+        val assignments = fieldExpressions(assignment.reference).zip(fieldExpressions(assignment.expression)) { target, value ->
+            val field = (target as ElementReference).element as VariableDeclaration
+            val source = if (readsAny(value, written)) {
+                val temporary = OxstsFactory.createLocalVarDeclarationOperation().also {
+                    it.name = field.name
+                    it.typeSpecification = field.typeSpecification.copy()
+                    it.expression = value
+                }
+                temporary.name = localVariableManager.allocateInlinedName(temporary)
+                saved += temporary
+                OxstsFactory.createElementReference(temporary)
+            } else {
+                value
+            }
+            written += field
             OxstsFactory.createAssignmentOperation().also {
                 it.reference = target
-                it.expression = value
+                it.expression = source
             }
+        }
+        return saved + assignments
+    }
+
+    private fun readsAny(expression: Expression, variables: Set<VariableDeclaration>): Boolean {
+        if (expression is ElementReference && expression.element in variables) {
+            return true
+        }
+        return expression.eAllOfType<ElementReference>().any {
+            it.element in variables
         }
     }
 
@@ -243,12 +306,11 @@ private class RecordRewriting(
         recordVariable: VariableDeclaration,
         fields: Map<List<VariableDeclaration>, VariableDeclaration>,
     ): List<VariableDeclaration> {
-        val initializer = recordVariable.expression
-        val values = initializer?.let {
+        val values = recordVariable.expression?.let {
             fieldExpressions(it)
-        }
-        return fields.entries.mapIndexed { index, (path, fieldVariable) ->
-            fieldVariable.expression = values?.get(index) ?: path.last().expression?.copy()
+        } ?: defaultValues(recordVariable.typeSpecification.domain as RecordDeclaration)
+        return fields.values.mapIndexed { index, fieldVariable ->
+            fieldVariable.expression = values[index]
             fieldVariable
         }
     }
