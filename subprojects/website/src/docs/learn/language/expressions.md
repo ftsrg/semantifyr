@@ -46,15 +46,21 @@ From **lowest** to **highest** precedence:
 | Level | Category | Operators |
 |-------|----------|-----------|
 | 1 | Temporal (top of expression only) | `AG`, `EF` |
-| 1 | Boolean | `&&`, `\|\|`, `^^` |
-| 2 | Comparison | `<`, `<=`, `>`, `>=`, `==`, `!=` |
-| 3 | Range | `..`, `..<` |
-| 4 | Additive | `+`, `-` |
-| 5 | Multiplicative | `*`, `/` |
-| 6 | Unary | `!`, unary `+`, unary `-` |
-| 7 | Postfix / member | `.`, `?.`, `[ ]`, `( )` |
+| 2 | Boolean OR | `\|\|` |
+| 3 | Boolean XOR | `^^` |
+| 4 | Boolean AND | `&&` |
+| 5 | Comparison | `<`, `<=`, `>`, `>=`, `==`, `!=` |
+| 6 | Range | `..`, `..<` |
+| 7 | Additive | `+`, `-` |
+| 8 | Multiplicative | `*`, `/` |
+| 9 | Unary | `!`, unary `+`, unary `-` |
+| 10 | Postfix / member | `.`, `?.`, `[ ]`, `( )` |
 
-The boolean operators `&&`, `||`, and `^^` share one precedence level and are left-associative: `a && b || c` parses as `(a && b) || c`.
+As in Java, `&&` binds tighter than `^^`, which binds tighter than `||`, and each is left-associative: `a || b && c` parses as `a || (b && c)`.
+
+:::note
+Until November 2026 the three boolean operators shared one level and read left to right, so `a || b && c` meant `(a || b) && c`. For one release the validator warns on an expression that mixes them without parentheses and names the reading it has now.
+:::
 
 ## Boolean Operators
 
