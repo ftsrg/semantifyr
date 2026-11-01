@@ -17,7 +17,6 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.tests.InjectWithGamma
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
 import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaNameStore
 import hu.bme.mit.semantifyr.frontends.gamma.trace.GammaTraceGenerator
-import hu.bme.mit.semantifyr.frontends.gamma.trace.GammaTraceSerializer
 import hu.bme.mit.semantifyr.verifier.witness.CallTrace
 import hu.bme.mit.semantifyr.verifier.witness.TraceEntry
 import hu.bme.mit.semantifyr.verifier.witness.WitnessState
@@ -48,9 +47,6 @@ class GammaReferenceTraceTest {
     private lateinit var gammaTraceGenerator: GammaTraceGenerator
 
     @Inject
-    private lateinit var gammaTraceSerializer: GammaTraceSerializer
-
-    @Inject
     private lateinit var serializer: ISerializer
 
     @TempDir
@@ -75,23 +71,18 @@ class GammaReferenceTraceTest {
     }
 
     @Test
-    fun `the trace generated from the reference trace json equals the hand-written trace`() {
-        val crossroads = read(CROSSROADS).single()
-        val nameStore = gammaCompiler.compile(crossroads, temporaryDirectory.resolve("model.oxsts"))
-        val callTrace = Json.decodeFromString<CallTrace>(REFERENCE_TRACE_JSON.readText())
-        val witnessState = Json.decodeFromString<WitnessState>(REFERENCE_WITNESS_JSON.readText())
-        val verificationCase = crossroads.verificationCases.single {
-            it.name == "ACanBeGreen"
-        }
+    fun `the trace generated from the reference trace json serializes to the hand-written trace`() {
+        val (verificationCase, nameStore) = compileReferenceCase()
 
-        val generatedText = gammaTraceSerializer.serialize(gammaTraceGenerator.generate(verificationCase, callTrace, witnessState, nameStore))
+        val generated = gammaTraceGenerator.generate(verificationCase, referenceCallTrace(), referenceWitnessState(), nameStore)
+        val generatedText = serializer.serialize(generated, SaveOptions.newBuilder().format().options)
         val generatedTrace = temporaryDirectory.resolve("trace.gamma")
         generatedTrace.writeText(generatedText)
 
-        val (_, reference, generated) = read(CROSSROADS, REFERENCE_TRACE, generatedTrace)
+        val (_, reference, reparsed) = read(CROSSROADS, REFERENCE_TRACE, generatedTrace)
 
-        assertThat(EcoreUtil.equals(reference, generated)).isTrue()
-        assertThat(serializer.serialize(generated, SaveOptions.newBuilder().format().options)).isEqualTo(generatedText)
+        assertThat(EcoreUtil.equals(reference, reparsed)).isTrue()
+        assertThat(generatedText).isEqualTo(REFERENCE_TRACE.readText().substringAfter("*/").trimStart())
     }
 
     @Test
