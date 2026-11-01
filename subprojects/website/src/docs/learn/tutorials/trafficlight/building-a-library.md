@@ -139,7 +139,7 @@ This tutorial refactored a one-class traffic light into a small reusable `Statec
 
 For deeper details on any of these constructs, see the [language reference](../../language/index.md).
 
-The [Advanced Tutorial](advanced-tutorial.md) is planned to extend this small library with the patterns real semantic libraries use.
+The next tutorial in the series, the [Advanced Tutorial](advanced-tutorial.md), extends this small library with the patterns real semantic libraries use.
 
 ## Snapshot
 

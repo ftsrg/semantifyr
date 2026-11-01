@@ -5,7 +5,7 @@ sidebar_position: 0
 
 # Traffic Light
 
-This tutorial series explores how to model the same example system, a small traffic-light intersection, in three different ways. Each tutorial builds the same model with the same verification cases, but uses progressively more abstract Semantifyr features to do so. The goal is to show how Semantifyr supports a smooth migration path from a directly-encoded model to a library-based one.
+This tutorial series models the same example system, a small traffic-light intersection, with progressively more abstract Semantifyr features. The first two tutorials build the same model with the same verification cases, once directly and once on top of a small library, to show how Semantifyr supports a smooth migration path from a directly-encoded model to a library-based one. The third extends that library with the patterns real semantic libraries use.
 
 The tutorials share the same example so you can compare the encodings side by side. They are designed to be read in order, but each one is self-contained and starts from a fresh file.
 
@@ -23,6 +23,6 @@ The first tutorial encodes the traffic light directly: a single class with an en
 
 The second tutorial refactors the traffic light into a small reusable library: a `Statechart` base class with first-class `State` and `Transition` instances. The concrete traffic light becomes a thin specialization of `Statechart`. This tutorial introduces inheritance, the container-opposite pattern, the `subsets` modifier, feature-typed variables, the `nothing` literal, `inline for choice`, and the init-chain pattern.
 
-### 3. [Advanced Tutorial](advanced-tutorial.md) *(coming soon)*
+### 3. [Advanced Tutorial](advanced-tutorial.md)
 
-The third tutorial extends the small library with patterns that real semantic libraries use: hierarchical states, entry actions, events with triggers, and a global emergency override. Each pattern adds one capability to the existing `State`, `Transition`, or `TrafficLight` class without disturbing the others. The page is currently a placeholder while the content is being written.
+The third tutorial extends the small library with patterns that real semantic libraries use: hierarchical states, entry actions, and events with triggers, followed by a global emergency override. Hierarchy and entry actions extend `State`, triggers extend `Transition`, and the emergency override lives in the intersection, which pre-empts the traffic lights without changing their definition. This tutorial introduces composite states, `inline if`, `State` subclasses for per-state behavior, `redefine contains`, `havoc` for modeling the environment, and global features.
