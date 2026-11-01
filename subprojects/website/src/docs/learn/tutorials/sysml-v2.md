@@ -15,19 +15,18 @@ Semantifyr verifies SysML v2 models by translating them into OXSTS on top of a s
 
 - Git, and a Java 25 runtime found through `JAVA_HOME` or `PATH`.
 - Node.js 22 or newer on `PATH`: the SysML v2 front end, a fork of SysIDE, runs on Node.js.
-- A local build of Semantifyr. The release zip carries the `semantifyr` command and the SysML v2 semantic library, but not the translator from SysML v2 to OXSTS, so the translator is built from source in any case.
+- The `semantifyr` command-line interface, which carries the translator from SysML v2 to OXSTS and the SysML v2 semantic library.
 
-Build the command-line interface and the translator (the first build downloads its dependencies and takes several minutes):
+Build the command-line interface (the first build downloads its dependencies, the SysIDE fork among them, and takes several minutes):
 
 ```bash
 git clone https://github.com/ftsrg/semantifyr.git
 cd semantifyr
-./gradlew :semantifyr-cli:installDist :sysml-wrapper:bundleCli
+./gradlew :semantifyr-cli:installDist
 export SEMANTIFYR_HOME="$PWD/subprojects/semantifyr-cli/build/install/semantifyr"
-export SYSIDE="$PWD/subprojects/frontends/sysml/sysml-wrapper/build/cli-bundle"
 ```
 
-`SEMANTIFYR_HOME` now holds the same layout as the release zip: the launcher in `bin/`, Theta in `theta-xsts-cli/` and the semantic libraries in `libraries/`. If you use the [release zip](../getting-started.md#option-d-install-the-command-line-interface-for-scripts-and-ci) instead, point `SEMANTIFYR_HOME` at the unzipped `semantifyr-<version>` directory. `SYSIDE` holds the translator `cli.cjs` and the SysML v2 standard library it resolves against. The commands on this page are written for Linux and macOS shells; on Windows, use `bin\semantifyr.bat` and put `theta-xsts-cli` on `PATH` yourself.
+`SEMANTIFYR_HOME` now holds the same layout as the release zip: the launcher in `bin/`, Theta in `theta-xsts-cli/` and the semantic libraries in `libraries/`. If you use the [release zip](../getting-started.md#option-d-install-the-command-line-interface-for-scripts-and-ci) instead, point `SEMANTIFYR_HOME` at the unzipped `semantifyr-<version>` directory. The commands on this page are written for Linux and macOS shells; on Windows, use `bin\semantifyr.bat` and put `theta-xsts-cli` on `PATH` yourself.
 
 ## The Model
 
@@ -81,36 +80,34 @@ Create an empty directory and save the complete model in it as `room.sysml`. The
 
 ## Verifying
 
-In the directory of `room.sysml`, translate the model to OXSTS, then verify it:
+In the directory of `room.sysml`, verify the model:
 
 ```bash
-node "$SYSIDE/cli.cjs" compile room.sysml "$SYSIDE/sysml.library" -o out/room.oxsts
-"$SEMANTIFYR_HOME/bin/semantifyr" verify out --library "$SEMANTIFYR_HOME/libraries/sysmlv2" --artifact-directory artifacts
+"$SEMANTIFYR_HOME/bin/semantifyr" verify room.sysml --artifact-directory ../room-artifacts
 ```
 
-The translation takes about a minute and writes `out/room.oxsts`, an OXSTS model that instantiates the classes of the SysML v2 semantic library. The `verify` command loads the library given with `--library`, finds the three verification cases in `out` and verifies each with the default `theta-full` portfolio.
+The `verify` command translates `room.sysml` to OXSTS, an OXSTS model that instantiates the classes of the SysML v2 semantic library, which takes about a minute. It then finds the three verification cases and verifies each with the default `theta-full` portfolio. The artifacts go outside the model's directory, since the translator reads every `.sysml` file below it and the run writes SysML v2 traces.
 
 For each case, the command prints its name, `PASSED` or `FAILED` with the time it took, and the path of its `report.json`, and it exits with status 5 when a case fails (the [exit codes](../cli/index.mdx#exit-codes)). Expect `LampLitReachable` to pass and both `Violated` cases to fail. The case names start with `semantifyr::sysml::model`, the package the translator gives every model.
 
 ## Reading the Witness
 
-`--artifact-directory artifacts` keeps the artifacts of every case in a directory named after the model file and the case, shortened with a hash when longer than 64 characters. Next to the backend's working files, the compiler's intermediate models (`pipeline/`) and the run's measurements (`report.json`), a case with a witness has three files:
+`--artifact-directory ../room-artifacts` keeps the translated model in `compiled/default/room.oxsts` and the artifacts of every case in a directory named after the model file and the case, shortened with a hash when longer than 64 characters. Next to the backend's working files, the compiler's intermediate models (`pipeline/`) and the run's measurements (`report.json`), a case with a witness has four files:
 
 - `witness.json`: the values of the model's state in every step of the witness: `initialStep` before initialization, `initializedStep` after it, then one entry per step. State names are paths from the verified instance, `root`.
 - `trace.json`: per step, the traced calls of the semantic library: the transitions that fired and the items that were sent.
 - `witness.oxsts`: the witness as an OXSTS model that replays exactly this execution.
+- `trace.sysml`: the witness as a SysML v2 model, a part definition `<case>Trace` that specializes the verified part definition and declares the states, transitions and sends of this execution in time order ([SysML v2 traces](../../develop/sysml-trace.md)). SysIDE validates it against `room.sysml` before it is written; a witness the generator cannot express gets no `trace.sysml` and a warning in the log.
 
-A failed `mustAlways` requirement has a counterexample. Open `trace.json` and `witness.json` in `artifacts/room.LampLitOnlyWhileSwitchOnViolated/`. The shortest counterexample has two steps:
+A failed `mustAlways` requirement has a counterexample. Open `trace.json` and `witness.json` in `../room-artifacts/room.LampLitOnlyWhileSwitchOnViolated/`. The shortest counterexample has two steps:
 
 1. The button is pressed: `root.system.switch.Behaviour.turnOn` fires and the switch's output sends a `Toggle`. Afterwards the switch is `On`, the lamp is still `Dark`, and the toggle waits on `root.system.lamp.input`.
 2. The button is pressed again: `turnOff` fires and sends a second `Toggle`, while the lamp accepts the first one and `root.system.lamp.Behaviour.lightUp` fires. Afterwards the switch is `Off` and the lamp is `Lit`.
 
 The requirement fails because the parts communicate asynchronously: the lamp follows the switch one step later. Whether that is a defect of the design or of the requirement is for the engineer to decide.
 
+`trace.sysml` in the same directory tells the same story in SysML v2: `LampLitOnlyWhileSwitchOnViolatedTrace` specializes `Room`, its `switch` and `lamp` redefine the room's parts, and their exhibited states hold the occurred states and the fired transitions: `turnOn1` and `turnOff1` with the toggles they send, and `lightUp1`. Snapshots order the reactions, `step1` and `step2`, and time slices the second after each, `dwell1` and `dwell2`. Since the trace refines `Room`, any SysML v2 tool reads it next to `room.sysml`.
+
 The verifier finds a witness for `LampLitReachable` the same way: an execution in which the lamp lights up. A passing `mustAlways` requirement or a failing `eventually` requirement has no witness, since no single execution proves it.
 
-:::info[Planned]
-A SysML v2 trace, `trace.sysml`, that expresses the witness as a SysML v2 model of the execution. Its generator exists in the SysIDE fork but is not part of the verification flow yet.
-:::
-
-You can also browse a witness in the standalone [live editor](https://live.semantifyr.org): pick *Semantifyr with SysML v2 library* in its model picker, replace the example with the content of `out/room.oxsts`, and verify the cases there. The *State* view of the *Witness* tab shows the same values as `witness.json`.
+You can also browse a witness in the standalone [live editor](https://live.semantifyr.org): pick *Semantifyr with SysML v2 library* in its model picker, replace the example with the content of `../room-artifacts/compiled/default/room.oxsts`, and verify the cases there. The *State* view of the *Witness* tab shows the same values as `witness.json`.
