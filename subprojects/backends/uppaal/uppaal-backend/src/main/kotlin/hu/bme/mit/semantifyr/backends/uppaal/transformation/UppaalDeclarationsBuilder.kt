@@ -7,32 +7,36 @@
 package hu.bme.mit.semantifyr.backends.uppaal.transformation
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.transformation.IntegerRangeChecker
 import hu.bme.mit.semantifyr.backends.uppaal.ir.UppaalDeclarations
 import hu.bme.mit.semantifyr.backends.uppaal.ir.UppaalVariableDecl
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
 class UppaalDeclarationsBuilder @Inject constructor(
     private val uppaalVariableTransformer: UppaalVariableTransformer,
     private val uppaalExpressionTransformer: UppaalExpressionTransformer,
+    private val integerRangeChecker: IntegerRangeChecker,
 ) {
 
     fun build(
+        inlinedOxsts: InlinedOxsts,
         variables: List<VariableDeclaration>,
         enums: List<EnumDeclaration>,
     ): UppaalDeclarations {
         val typedefs = buildEnumLiteralConstants(enums)
         val variableDeclarations = mutableListOf<UppaalVariableDecl>()
         for (variable in variables) {
-            variableDeclarations += renderVariable(variable)
+            variableDeclarations += renderVariable(inlinedOxsts, variable)
         }
         return UppaalDeclarations(typedefs, variableDeclarations)
     }
 
-    private fun renderVariable(variable: VariableDeclaration): UppaalVariableDecl {
+    private fun renderVariable(inlinedOxsts: InlinedOxsts, variable: VariableDeclaration): UppaalVariableDecl {
         val described = uppaalVariableTransformer.describe(variable)
-        val typeName = renderTypeName(described.kind)
+        val typeName = renderTypeName(inlinedOxsts, variable, described.kind)
         val initialValue = if (described.kind == UppaalVariableKind.Clock) {
             null
         } else {
@@ -41,10 +45,13 @@ class UppaalDeclarationsBuilder @Inject constructor(
         return UppaalVariableDecl(typeName, described.name, initialValue)
     }
 
-    private fun renderTypeName(kind: UppaalVariableKind): String {
+    private fun renderTypeName(inlinedOxsts: InlinedOxsts, variable: VariableDeclaration, kind: UppaalVariableKind): String {
         return when (kind) {
             UppaalVariableKind.Clock -> "clock"
-            UppaalVariableKind.Integer -> "int"
+            // a declared range lifts the default 16-bit bound, and Uppaal reports an assignment outside it instead of a verdict
+            UppaalVariableKind.Integer -> integerRangeChecker.rangeOf(variable, inlinedOxsts)?.let {
+                "int[${it.lower},${it.upper}]"
+            } ?: "int"
             UppaalVariableKind.Boolean -> "bool"
             // Enum literals are emitted as const-int aliases above; the var itself stores an int.
             UppaalVariableKind.Enum -> "int"

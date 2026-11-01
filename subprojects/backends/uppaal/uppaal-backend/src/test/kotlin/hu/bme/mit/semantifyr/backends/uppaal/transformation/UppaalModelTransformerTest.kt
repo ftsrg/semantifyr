@@ -79,9 +79,33 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
 
         assertThat(declarations.typedefs).containsExactly("// enum Color", "const int Red = 0;", "const int Green = 1;")
         assertThat(declarations.variables).containsExactly(
-            UppaalVariableDecl("int", "x", "2"),
+            UppaalVariableDecl("int[2,2]", "x", "2"),
             UppaalVariableDecl("bool", "b", "true"),
             UppaalVariableDecl("int", "c", "Green"),
+        )
+    }
+
+    @Test
+    suspend fun `an integer is declared with its range when the analysis bounds it within 32 bits`() {
+        val declarations = nta(
+            """
+                var bounded : int := 0
+                var large : int := 0
+                var unbounded : int := 0
+                init { }
+                tran {
+                    if (bounded < 3) { bounded := bounded + 1 }
+                    if (large < 100000) { large := large + 25000 }
+                    unbounded := unbounded + 1
+                }
+                prop { AG bounded <= 3 }
+            """,
+        ).globalDeclarations
+
+        assertThat(declarations.variables).containsExactly(
+            UppaalVariableDecl("int[0,3]", "bounded", "0"),
+            UppaalVariableDecl("int[0,124999]", "large", "0"),
+            UppaalVariableDecl("int", "unbounded", "0"),
         )
     }
 

@@ -38,7 +38,7 @@ class UppaalModelTransformer @Inject constructor(
         val locals = collectLocalVariables(inlinedOxsts)
         val allVariables = inlinedOxsts.variables + locals
         val enums = collectEnumDeclarations(allVariables)
-        val declarations = uppaalDeclarationsBuilder.build(allVariables, enums)
+        val declarations = uppaalDeclarationsBuilder.build(inlinedOxsts, allVariables, enums)
         val template = uppaalTemplateBuilder.build(inlinedOxsts)
         return UppaalNta(declarations, listOf(template))
     }
