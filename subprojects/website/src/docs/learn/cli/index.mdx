@@ -17,7 +17,7 @@ The `semantifyr` command lists, compiles, measures and verifies the verification
 
 <CodeBlock language="text">{help}</CodeBlock>
 
-A model or library path is an `.oxsts` file or a directory, which is searched recursively for `.oxsts` files.
+A model or library path is an `.oxsts` file or a directory, which is searched recursively for `.oxsts` files. `verify` also takes a SysML v2 model file (`.sysml`): it translates the model with the bundled SysIDE fork, which needs Node.js on `PATH` and reads every `.sysml` file below the model's directory, verifies its cases, and writes `trace.sysml` next to each witness ([SysML v2 on the Command Line](../tutorials/sysml-v2.md)).
 
 ## `verify`
 
@@ -66,8 +66,8 @@ The portfolio ids are listed under [Portfolios](portfolios.mdx).
 | 0 | Every selected case passed, or the command completed. |
 | 1 | Internal error: an unexpected exception, or the launcher could not start Java. |
 | 2 | Usage error: an unknown command or option, a missing or invalid value, conflicting options, an unknown portfolio. |
-| 3 | Input error: a model or library path does not exist, is not readable, or is neither an `.oxsts` file nor a directory holding one, or the case selection names or matches no case. |
-| 4 | Compilation error: the model does not parse or validate, or a case does not compile. |
+| 3 | Input error: a model or library path does not exist, is not readable, or is neither an `.oxsts` file (or, for `verify`, a `.sysml` file) nor a directory holding one, or the case selection names or matches no case. |
+| 4 | Compilation error: the model does not parse, validate or translate, or a case does not compile. |
 | 5 | Failed: a property does not hold. |
 | 6 | Inconclusive or NotSupported: a backend could not decide a case. |
 | 7 | Timeout. |
