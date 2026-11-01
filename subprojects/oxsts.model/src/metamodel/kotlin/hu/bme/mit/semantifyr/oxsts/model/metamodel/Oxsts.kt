@@ -10,311 +10,473 @@ import hu.bme.mit.semantifyr.oxsts.model.metamodel.Bounds.MANY
 import hu.bme.mit.semantifyr.oxsts.model.metamodel.Bounds.ONE
 import hu.bme.mit.semantifyr.oxsts.model.metamodel.Bounds.ONE_OR_MORE
 
-fun oxsts() = metamodel(
+val oxsts = MetaPackage(
     name = "oxsts",
     nsUri = "http://www.bme.hu/mit/2023/oxsts",
     basePackage = "hu.bme.mit.semantifyr.oxsts.model",
     complianceLevel = "17.0",
-) {
-    abstractEClass("Element")
-
-    eClass("OxstsModelPackage", "Namespace") {
-        contains("imports", "ImportStatement", MANY)
-        contains("declarations", "Declaration", MANY)
-    }
-
-    eClass("TransitionDeclaration", "ParametricDeclaration", "RedefinableDeclaration") {
-        contains("branches", "SequenceOperation", MANY)
-        attribute("kind", "TransitionKind", ONE)
-        attribute("abstract", "EBoolean", ONE, default = "false")
-    }
-
-    eClass("SequenceOperation", "Namespace", "Operation") {
-        contains("steps", "Operation", MANY)
-    }
-
-    abstractEClass("Operation", "Element")
-
-    eClass("HavocOperation", "Operation") {
-        contains("reference", "Expression", ONE)
-    }
-
-    eClass("AssignmentOperation", "Operation") {
-        contains("reference", "Expression", ONE)
-        contains("expression", "Expression", ONE)
-    }
-
-    eClass("ChoiceOperation", "Operation") {
-        contains("branches", "SequenceOperation", ONE_OR_MORE)
-    }
-
-    eClass("FeatureDeclaration", "DomainDeclaration", "Namespace", "RedefinableDeclaration") {
-        refers("superset", "FeatureDeclaration")
-        refers("opposite", "FeatureDeclaration")
-        contains("expression", "Expression")
-        attribute("kind", "FeatureKind", ONE, default = "REFERENCE")
-        contains("innerFeatures", "FeatureDeclaration", MANY)
-        contains("typeSpecification", "TypeSpecification")
-    }
-
-    eClass("ClassDeclaration", "TopLevelDeclaration", "Namespace", "TypeDeclaration") {
-        refers("superTypes", "ClassDeclaration", MANY)
-        attribute("abstract", "EBoolean", ONE, default = "false")
-        contains("members", "Declaration", MANY)
-    }
-
-    eClass("InlineCall", "InlineOperation") {
-        contains("callExpression", "Expression")
-    }
-
-    abstractEClass("Expression", "Element")
-    abstractEClass("LiteralExpression", "Expression")
-
-    eClass("LiteralInteger", "LiteralExpression") {
-        attribute("value", "EInt", ONE)
-    }
-
-    eClass("LiteralBoolean", "LiteralExpression") {
-        attribute("value", "EBoolean", ONE)
-    }
-
-    eClass("LiteralNothing", "LiteralExpression")
-    abstractEClass("ReferenceExpression", "Expression")
-    abstractEClass("OperatorExpression", "Expression")
-
-    eClass("AssumptionOperation", "Operation") {
-        contains("expression", "Expression", ONE)
-    }
-
-    abstractEClass("Multiplicity", "Element")
-
-    eClass("SelfReference", "DirectReferenceExpression") {
-        refers("class", "ClassDeclaration")
-    }
-
-    eClass("ElementReference", "DirectReferenceExpression") {
-        refers("element", "NamedElement", ONE)
-    }
-
-    abstractEClass("InlineOperation", "Operation")
-    abstractEClass("Namespace", "NamedElement")
-
-    eClass("IfOperation", "Operation") {
-        contains("guard", "Expression", ONE)
-        contains("body", "SequenceOperation", ONE)
-        contains("else", "SequenceOperation")
-    }
-
-    eClass("InlineIfOperation", "InlineOperation") {
-        contains("guard", "Expression")
-        contains("body", "SequenceOperation", ONE)
-        contains("else", "SequenceOperation")
-    }
-
-    eClass("EnumLiteral", "NamedElement")
-
-    eClass("EnumDeclaration", "Namespace", "TopLevelDeclaration", "TypeDeclaration") {
-        contains("literals", "EnumLiteral", ONE_OR_MORE)
-    }
-
-    eClass("PropertyDeclaration", "ParametricDeclaration", "RedefinableDeclaration") {
-        contains("expression", "Expression")
-        attribute("abstract", "EBoolean", ONE, default = "false")
-        contains("returnType", "TypeSpecification")
-    }
+    classifiers = listOf(
+        Element,
+        OxstsModelPackage,
+        TransitionDeclaration,
+        SequenceOperation,
+        Operation,
+        HavocOperation,
+        AssignmentOperation,
+        ChoiceOperation,
+        FeatureDeclaration,
+        ClassDeclaration,
+        InlineCall,
+        Expression,
+        LiteralExpression,
+        LiteralInteger,
+        LiteralBoolean,
+        LiteralNothing,
+        ReferenceExpression,
+        OperatorExpression,
+        AssumptionOperation,
+        Multiplicity,
+        SelfReference,
+        ElementReference,
+        InlineOperation,
+        Namespace,
+        IfOperation,
+        InlineIfOperation,
+        EnumLiteral,
+        EnumDeclaration,
+        PropertyDeclaration,
+        VariableDeclaration,
+        TargetDeclaration,
+        RecordDeclaration,
+        ImportStatement,
+        PatternDeclaration,
+        Conjunction,
+        TransitiveClosureKind,
+        ParameterDeclaration,
+        BinaryOperator,
+        UnaryOperator,
+        UnaryOp,
+        ArithmeticOp,
+        ComparisonOperator,
+        ArithmeticBinaryOperator,
+        ArithmeticUnaryOperator,
+        NegationOperator,
+        ComparisonOp,
+        UnboundedMultiplicity,
+        DefiniteMultiplicity,
+        NamedElement,
+        BooleanOperator,
+        BooleanOp,
+        NavigationSuffixExpression,
+        IndexingSuffixExpression,
+        CallSuffixExpression,
+        ArrayLiteral,
+        Argument,
+        LiteralReal,
+        FunctionDeclaration,
+        ParametricDeclaration,
+        TopLevelDeclaration,
+        Declaration,
+        AnnotationDeclaration,
+        Annotation,
+        TransitionKind,
+        AnnotationContainer,
+        AnnotatedElement,
+        FeatureKind,
+        LiteralString,
+        DataTypeDeclaration,
+        TypeDeclaration,
+        DomainDeclaration,
+        DirectReferenceExpression,
+        PostfixUnaryExpression,
+        InlineSeqFor,
+        InlineChoiceFor,
+        AbstractForOperation,
+        LocalVarDeclarationOperation,
+        ForOperation,
+        InlineForOperation,
+        RangeExpression,
+        LiteralInfinity,
+        RedefinableDeclaration,
+        InlinedOxsts,
+        TypeSpecification,
+        TemporalOperator,
+        AG,
+        EF,
+        CastExpression,
+        IfThenElse,
+    ),
+)
+
+object Element : AbstractMetaClass()
+
+object OxstsModelPackage : MetaClass(Namespace) {
+    val imports by contains(MANY) { ImportStatement }
+    val declarations by contains(MANY) { Declaration }
+}
+
+object TransitionDeclaration : MetaClass(ParametricDeclaration, RedefinableDeclaration) {
+    val branches by contains(MANY) { SequenceOperation }
+    val kind by attribute(TransitionKind, ONE)
+    val abstract by attribute(EBoolean, ONE, default = false)
+}
 
-    eClass("VariableDeclaration", "Declaration") {
-        contains("expression", "Expression")
-        contains("typeSpecification", "TypeSpecification")
-    }
+object SequenceOperation : MetaClass(Namespace, Operation) {
+    val steps by contains(MANY) { Operation }
+}
 
-    eClass("TargetDeclaration", "ClassDeclaration")
+object Operation : AbstractMetaClass(Element)
 
-    eClass("RecordDeclaration", "Namespace", "TopLevelDeclaration", "TypeDeclaration") {
-        contains("members", "Declaration", MANY)
-    }
-
-    eClass("ImportStatement", "Element") {
-        refers("importedPackage", "OxstsModelPackage", ONE)
-    }
+object HavocOperation : MetaClass(Operation) {
+    val reference by contains(ONE) { Expression }
+}
 
-    eClass("PatternDeclaration", "Namespace", "TopLevelDeclaration", "ParametricDeclaration") {
-        contains("bodies", "Conjunction", MANY)
-    }
+object AssignmentOperation : MetaClass(Operation) {
+    val reference by contains(ONE) { Expression }
+    val expression by contains(ONE) { Expression }
+}
 
-    eClass("Conjunction", "Element")
-    eEnum("TransitiveClosureKind", "None", "WithoutSelf", "IncludeSelf")
+object ChoiceOperation : MetaClass(Operation) {
+    val branches by contains(ONE_OR_MORE) { SequenceOperation }
+}
 
-    eClass("ParameterDeclaration", "NamedElement") {
-        contains("typeSpecification", "TypeSpecification")
-    }
+object FeatureDeclaration : MetaClass(DomainDeclaration, Namespace, RedefinableDeclaration) {
+    val superset by refers { FeatureDeclaration }
+    val opposite by refers { FeatureDeclaration }
+    val expression by contains { Expression }
+    val kind by attribute(FeatureKind, ONE, default = FeatureKind.REFERENCE)
+    val innerFeatures by contains(MANY) { FeatureDeclaration }
+    val typeSpecification by contains { TypeSpecification }
+}
 
-    abstractEClass("BinaryOperator", "OperatorExpression") {
-        contains("left", "Expression", ONE)
-        contains("right", "Expression", ONE)
-    }
+object ClassDeclaration : MetaClass(TopLevelDeclaration, Namespace, TypeDeclaration) {
+    val superTypes by refers(MANY) { ClassDeclaration }
+    val abstract by attribute(EBoolean, ONE, default = false)
+    val members by contains(MANY) { Declaration }
+}
 
-    abstractEClass("UnaryOperator", "OperatorExpression") {
-        contains("body", "Expression", ONE)
-    }
+object InlineCall : MetaClass(InlineOperation) {
+    val callExpression by contains { Expression }
+}
 
-    eEnum("UnaryOp", "PLUS", "MINUS")
-    eEnum("ArithmeticOp", "ADD", "SUB", "MUL", "DIV")
+object Expression : AbstractMetaClass(Element)
 
-    eClass("ComparisonOperator", "BinaryOperator") {
-        attribute("op", "ComparisonOp", ONE)
-    }
+object LiteralExpression : AbstractMetaClass(Expression)
 
-    eClass("ArithmeticBinaryOperator", "BinaryOperator") {
-        attribute("op", "ArithmeticOp", ONE)
-    }
+object LiteralInteger : MetaClass(LiteralExpression) {
+    val value by attribute(EInt, ONE)
+}
 
-    eClass("ArithmeticUnaryOperator", "UnaryOperator") {
-        attribute("op", "UnaryOp", ONE)
-    }
+object LiteralBoolean : MetaClass(LiteralExpression) {
+    val value by attribute(EBoolean, ONE)
+}
 
-    eClass("NegationOperator", "UnaryOperator")
-    eEnum("ComparisonOp", "LESS", "LESS_EQ", "GREATER", "GREATER_EQ", "EQ", "NOT_EQ")
-    eClass("UnboundedMultiplicity", "Multiplicity")
+object LiteralNothing : MetaClass(LiteralExpression)
 
-    eClass("DefiniteMultiplicity", "Multiplicity") {
-        contains("expression", "Expression")
-    }
+object ReferenceExpression : AbstractMetaClass(Expression)
 
-    abstractEClass("NamedElement", "Element") {
-        attribute("name", "EString")
-    }
+object OperatorExpression : AbstractMetaClass(Expression)
+
+object AssumptionOperation : MetaClass(Operation) {
+    val expression by contains(ONE) { Expression }
+}
 
-    eClass("BooleanOperator", "BinaryOperator") {
-        attribute("op", "BooleanOp", ONE)
-    }
+object Multiplicity : AbstractMetaClass(Element)
 
-    eEnum("BooleanOp", "AND" to 4, "OR" to 5, "XOR" to 6)
+object SelfReference : MetaClass(DirectReferenceExpression) {
+    val `class` by refers { ClassDeclaration }
+}
 
-    eClass("NavigationSuffixExpression", "PostfixUnaryExpression") {
-        refers("member", "NamedElement", ONE)
-        attribute("optional", "EBoolean", ONE, default = "false")
-    }
-
-    eClass("IndexingSuffixExpression", "PostfixUnaryExpression") {
-        contains("index", "Expression", ONE)
-    }
-
-    eClass("CallSuffixExpression", "PostfixUnaryExpression") {
-        contains("arguments", "Argument", MANY)
-    }
-
-    eClass("ArrayLiteral", "LiteralExpression") {
-        contains("values", "Expression", MANY)
-    }
-
-    eClass("Argument") {
-        refers("parameter", "ParameterDeclaration")
-        contains("expression", "Expression", ONE)
-    }
-
-    eClass("LiteralReal", "LiteralExpression") {
-        attribute("value", "EDouble", ONE)
-    }
-
-    eClass("FunctionDeclaration", "ParametricDeclaration", "TopLevelDeclaration") {
-        refers("returnType", "TypeDeclaration")
-    }
-
-    abstractEClass("ParametricDeclaration", "Declaration", "Namespace") {
-        contains("parameters", "ParameterDeclaration", MANY)
-    }
-
-    abstractEClass("TopLevelDeclaration", "Declaration")
-    abstractEClass("Declaration", "NamedElement", "AnnotatedElement")
-    eClass("AnnotationDeclaration", "TopLevelDeclaration", "ParametricDeclaration")
-
-    eClass("Annotation") {
-        refers("declaration", "AnnotationDeclaration", ONE)
-        contains("arguments", "Argument", MANY)
-    }
-
-    eEnum("TransitionKind", "TRAN", "ENV", "INIT", "HAVOC")
-
-    eClass("AnnotationContainer", "Declaration") {
-        contains("annotations", "Annotation", MANY)
-    }
-
-    abstractEClass("AnnotatedElement", "NamedElement") {
-        contains("annotation", "AnnotationContainer")
-    }
-
-    eEnum("FeatureKind", "REFERENCE", "CONTAINMENT", "CONTAINER", "DERIVED", "FEATURE")
-
-    eClass("LiteralString", "LiteralExpression") {
-        attribute("value", "EString", ONE)
-    }
-
-    eClass("DataTypeDeclaration", "TopLevelDeclaration", "TypeDeclaration")
-    abstractEClass("TypeDeclaration", "Declaration", "DomainDeclaration")
-    abstractEClass("DomainDeclaration", "Declaration")
-    abstractEClass("DirectReferenceExpression", "ReferenceExpression")
-
-    abstractEClass("PostfixUnaryExpression", "ReferenceExpression") {
-        contains("primary", "Expression", ONE)
-    }
-
-    eClass("InlineSeqFor", "InlineForOperation")
-    eClass("InlineChoiceFor", "InlineForOperation")
-
-    abstractEClass("AbstractForOperation", "Operation", "Namespace") {
-        contains("loopVariable", "VariableDeclaration")
-        contains("rangeExpression", "Expression", ONE)
-        contains("body", "SequenceOperation", ONE)
-    }
-
-    eClass("LocalVarDeclarationOperation", "VariableDeclaration", "Operation")
-    eClass("ForOperation", "AbstractForOperation")
-
-    abstractEClass("InlineForOperation", "AbstractForOperation", "InlineOperation") {
-        contains("else", "SequenceOperation")
-    }
-
-    eClass("RangeExpression", "BinaryOperator") {
-        attribute("exclusive", "EBoolean", ONE, default = "false")
-    }
-
-    eClass("LiteralInfinity", "LiteralExpression")
-
-    eClass("RedefinableDeclaration", "Declaration") {
-        attribute("redefine", "EBoolean", default = "false")
-        refers("redefined", "RedefinableDeclaration")
-    }
-
-    eClass("InlinedOxsts", "DomainDeclaration") {
-        contains("initTransition", "TransitionDeclaration", ONE)
-        contains("mainTransition", "TransitionDeclaration", ONE)
-        contains("property", "PropertyDeclaration", ONE)
-        contains("variables", "VariableDeclaration", MANY)
-        refers("classDeclaration", "ClassDeclaration", ONE)
-        contains("rootFeature", "FeatureDeclaration")
-        attribute("witness", "EBoolean", ONE, default = "false")
-    }
-
-    eClass("TypeSpecification") {
-        contains("multiplicity", "Multiplicity")
-        refers("domain", "DomainDeclaration")
-    }
-
-    abstractEClass("TemporalOperator", "OperatorExpression") {
-        contains("body", "Expression", ONE)
-    }
-
-    eClass("AG", "TemporalOperator")
-    eClass("EF", "TemporalOperator")
-
-    eClass("CastExpression", "UnaryOperator") {
-        contains("typespecification", "TypeSpecification", ONE)
-    }
-
-    eClass("IfThenElse", "OperatorExpression") {
-        contains("guard", "Expression", ONE)
-        contains("then", "Expression", ONE)
-        contains("else", "Expression", ONE)
-    }
+object ElementReference : MetaClass(DirectReferenceExpression) {
+    val element by refers(ONE) { NamedElement }
+}
+
+object InlineOperation : AbstractMetaClass(Operation)
+
+object Namespace : AbstractMetaClass(NamedElement)
+
+object IfOperation : MetaClass(Operation) {
+    val guard by contains(ONE) { Expression }
+    val body by contains(ONE) { SequenceOperation }
+    val `else` by contains { SequenceOperation }
+}
+
+object InlineIfOperation : MetaClass(InlineOperation) {
+    val guard by contains { Expression }
+    val body by contains(ONE) { SequenceOperation }
+    val `else` by contains { SequenceOperation }
+}
+
+object EnumLiteral : MetaClass(NamedElement)
+
+object EnumDeclaration : MetaClass(Namespace, TopLevelDeclaration, TypeDeclaration) {
+    val literals by contains(ONE_OR_MORE) { EnumLiteral }
+}
+
+object PropertyDeclaration : MetaClass(ParametricDeclaration, RedefinableDeclaration) {
+    val expression by contains { Expression }
+    val abstract by attribute(EBoolean, ONE, default = false)
+    val returnType by contains { TypeSpecification }
+}
+
+object VariableDeclaration : MetaClass(Declaration) {
+    val expression by contains { Expression }
+    val typeSpecification by contains { TypeSpecification }
+}
+
+object TargetDeclaration : MetaClass(ClassDeclaration)
+
+object RecordDeclaration : MetaClass(Namespace, TopLevelDeclaration, TypeDeclaration) {
+    val members by contains(MANY) { Declaration }
+}
+
+object ImportStatement : MetaClass(Element) {
+    val importedPackage by refers(ONE) { OxstsModelPackage }
+}
+
+object PatternDeclaration : MetaClass(Namespace, TopLevelDeclaration, ParametricDeclaration) {
+    val bodies by contains(MANY) { Conjunction }
+}
+
+object Conjunction : MetaClass(Element)
+
+enum class TransitiveClosureKind {
+    None,
+    WithoutSelf,
+    IncludeSelf,
+    ;
+
+    companion object : MetaEnum<TransitiveClosureKind>(entries)
+}
+
+object ParameterDeclaration : MetaClass(NamedElement) {
+    val typeSpecification by contains { TypeSpecification }
+}
+
+object BinaryOperator : AbstractMetaClass(OperatorExpression) {
+    val left by contains(ONE) { Expression }
+    val right by contains(ONE) { Expression }
+}
+
+object UnaryOperator : AbstractMetaClass(OperatorExpression) {
+    val body by contains(ONE) { Expression }
+}
+
+enum class UnaryOp {
+    PLUS,
+    MINUS,
+    ;
+
+    companion object : MetaEnum<UnaryOp>(entries)
+}
+
+enum class ArithmeticOp {
+    ADD,
+    SUB,
+    MUL,
+    DIV,
+    ;
+
+    companion object : MetaEnum<ArithmeticOp>(entries)
+}
+
+object ComparisonOperator : MetaClass(BinaryOperator) {
+    val op by attribute(ComparisonOp, ONE)
+}
+
+object ArithmeticBinaryOperator : MetaClass(BinaryOperator) {
+    val op by attribute(ArithmeticOp, ONE)
+}
+
+object ArithmeticUnaryOperator : MetaClass(UnaryOperator) {
+    val op by attribute(UnaryOp, ONE)
+}
+
+object NegationOperator : MetaClass(UnaryOperator)
+
+enum class ComparisonOp {
+    LESS,
+    LESS_EQ,
+    GREATER,
+    GREATER_EQ,
+    EQ,
+    NOT_EQ,
+    ;
+
+    companion object : MetaEnum<ComparisonOp>(entries)
+}
+
+object UnboundedMultiplicity : MetaClass(Multiplicity)
+
+object DefiniteMultiplicity : MetaClass(Multiplicity) {
+    val expression by contains { Expression }
+}
+
+object NamedElement : AbstractMetaClass(Element) {
+    val name by attribute(EString)
+}
+
+object BooleanOperator : MetaClass(BinaryOperator) {
+    val op by attribute(BooleanOp, ONE)
+}
+
+enum class BooleanOp(val value: Int) {
+    AND(4),
+    OR(5),
+    XOR(6),
+    ;
+
+    companion object : MetaEnum<BooleanOp>(entries, BooleanOp::value)
+}
+
+object NavigationSuffixExpression : MetaClass(PostfixUnaryExpression) {
+    val member by refers(ONE) { NamedElement }
+    val optional by attribute(EBoolean, ONE, default = false)
+}
+
+object IndexingSuffixExpression : MetaClass(PostfixUnaryExpression) {
+    val index by contains(ONE) { Expression }
+}
+
+object CallSuffixExpression : MetaClass(PostfixUnaryExpression) {
+    val arguments by contains(MANY) { Argument }
+}
+
+object ArrayLiteral : MetaClass(LiteralExpression) {
+    val values by contains(MANY) { Expression }
+}
+
+object Argument : MetaClass() {
+    val parameter by refers { ParameterDeclaration }
+    val expression by contains(ONE) { Expression }
+}
+
+object LiteralReal : MetaClass(LiteralExpression) {
+    val value by attribute(EDouble, ONE)
+}
+
+object FunctionDeclaration : MetaClass(ParametricDeclaration, TopLevelDeclaration) {
+    val returnType by refers { TypeDeclaration }
+}
+
+object ParametricDeclaration : AbstractMetaClass(Declaration, Namespace) {
+    val parameters by contains(MANY) { ParameterDeclaration }
+}
+
+object TopLevelDeclaration : AbstractMetaClass(Declaration)
+
+object Declaration : AbstractMetaClass(NamedElement, AnnotatedElement)
+
+object AnnotationDeclaration : MetaClass(TopLevelDeclaration, ParametricDeclaration)
+
+object Annotation : MetaClass() {
+    val declaration by refers(ONE) { AnnotationDeclaration }
+    val arguments by contains(MANY) { Argument }
+}
+
+enum class TransitionKind {
+    TRAN,
+    ENV,
+    INIT,
+    HAVOC,
+    ;
+
+    companion object : MetaEnum<TransitionKind>(entries)
+}
+
+object AnnotationContainer : MetaClass(Declaration) {
+    val annotations by contains(MANY) { Annotation }
+}
+
+object AnnotatedElement : AbstractMetaClass(NamedElement) {
+    val annotation by contains { AnnotationContainer }
+}
+
+enum class FeatureKind {
+    REFERENCE,
+    CONTAINMENT,
+    CONTAINER,
+    DERIVED,
+    FEATURE,
+    ;
+
+    companion object : MetaEnum<FeatureKind>(entries)
+}
+
+object LiteralString : MetaClass(LiteralExpression) {
+    val value by attribute(EString, ONE)
+}
+
+object DataTypeDeclaration : MetaClass(TopLevelDeclaration, TypeDeclaration)
+
+object TypeDeclaration : AbstractMetaClass(Declaration, DomainDeclaration)
+
+object DomainDeclaration : AbstractMetaClass(Declaration)
+
+object DirectReferenceExpression : AbstractMetaClass(ReferenceExpression)
+
+object PostfixUnaryExpression : AbstractMetaClass(ReferenceExpression) {
+    val primary by contains(ONE) { Expression }
+}
+
+object InlineSeqFor : MetaClass(InlineForOperation)
+
+object InlineChoiceFor : MetaClass(InlineForOperation)
+
+object AbstractForOperation : AbstractMetaClass(Operation, Namespace) {
+    val loopVariable by contains { VariableDeclaration }
+    val rangeExpression by contains(ONE) { Expression }
+    val body by contains(ONE) { SequenceOperation }
+}
+
+object LocalVarDeclarationOperation : MetaClass(VariableDeclaration, Operation)
+
+object ForOperation : MetaClass(AbstractForOperation)
+
+object InlineForOperation : AbstractMetaClass(AbstractForOperation, InlineOperation) {
+    val `else` by contains { SequenceOperation }
+}
+
+object RangeExpression : MetaClass(BinaryOperator) {
+    val exclusive by attribute(EBoolean, ONE, default = false)
+}
+
+object LiteralInfinity : MetaClass(LiteralExpression)
+
+object RedefinableDeclaration : MetaClass(Declaration) {
+    val redefine by attribute(EBoolean, default = false)
+    val redefined by refers { RedefinableDeclaration }
+}
+
+object InlinedOxsts : MetaClass(DomainDeclaration) {
+    val initTransition by contains(ONE) { TransitionDeclaration }
+    val mainTransition by contains(ONE) { TransitionDeclaration }
+    val property by contains(ONE) { PropertyDeclaration }
+    val variables by contains(MANY) { VariableDeclaration }
+    val classDeclaration by refers(ONE) { ClassDeclaration }
+    val rootFeature by contains { FeatureDeclaration }
+    val witness by attribute(EBoolean, ONE, default = false)
+}
+
+object TypeSpecification : MetaClass() {
+    val multiplicity by contains { Multiplicity }
+    val domain by refers { DomainDeclaration }
+}
+
+object TemporalOperator : AbstractMetaClass(OperatorExpression) {
+    val body by contains(ONE) { Expression }
+}
+
+object AG : MetaClass(TemporalOperator)
+
+object EF : MetaClass(TemporalOperator)
+
+object CastExpression : MetaClass(UnaryOperator) {
+    val typespecification by contains(ONE) { TypeSpecification }
+}
+
+object IfThenElse : MetaClass(OperatorExpression) {
+    val guard by contains(ONE) { Expression }
+    val then by contains(ONE) { Expression }
+    val `else` by contains(ONE) { Expression }
 }

@@ -17,7 +17,7 @@ import java.io.File
 fun main(args: Array<String>) {
     val sourceDirectory = File(args[0]).absoluteFile
     val modelDirectory = File(args[1]).absoluteFile
-    val ePackage = oxsts()
+    val ePackage = oxsts.toEPackage()
 
     EcorePlugin.getPlatformResourceMap()["emf-gen"] = URI.createFileURI("$sourceDirectory/")
     val resourceSet = ResourceSetImpl()

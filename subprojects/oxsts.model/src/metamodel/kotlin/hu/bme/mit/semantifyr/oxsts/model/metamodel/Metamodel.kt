@@ -20,6 +20,8 @@ import org.eclipse.emf.ecore.EcoreFactory
 import org.eclipse.emf.ecore.EcorePackage
 import org.eclipse.emf.ecore.util.Diagnostician
 import org.eclipse.emf.ecore.util.EcoreUtil
+import kotlin.enums.EnumEntries
+import kotlin.reflect.KProperty
 
 enum class Bounds(val lower: Int, val upper: Int) {
     OPTIONAL(0, 1),
@@ -30,163 +32,172 @@ enum class Bounds(val lower: Int, val upper: Int) {
 
 private val factory = EcoreFactory.eINSTANCE
 
-private val dataTypes = EcorePackage.eINSTANCE.eClassifiers.filterIsInstance<EDataType>().associateBy { it.name }
-
-fun metamodel(
-    name: String,
-    nsUri: String,
-    basePackage: String,
-    complianceLevel: String,
-    body: MetamodelBuilder.() -> Unit,
-): EPackage {
-    val ePackage = factory.createEPackage()
-    ePackage.name = name
-    ePackage.nsURI = nsUri
-    ePackage.nsPrefix = name
-    EcoreUtil.setAnnotation(ePackage, GenModelPackage.eNS_URI, "basePackage", basePackage)
-    EcoreUtil.setAnnotation(ePackage, GenModelPackage.eNS_URI, "complianceLevel", complianceLevel)
-    MetamodelBuilder(ePackage).apply(body).link()
-    val errors = Diagnostician.INSTANCE.validate(ePackage).children.filter { it.severity == Diagnostic.ERROR }
-    check(errors.isEmpty()) {
-        errors.joinToString("\n") { "${label(it.data.first())}: ${it.message}" }
+class MetaPackage(
+    private val name: String,
+    private val nsUri: String,
+    private val basePackage: String,
+    private val complianceLevel: String,
+    private val classifiers: List<MetaClassifier>,
+) {
+    fun toEPackage(): EPackage {
+        val duplicates = classifiers.groupBy { it }.filterValues { it.size > 1 }.keys
+        check(duplicates.isEmpty()) {
+            "$duplicates listed twice"
+        }
+        val ePackage = factory.createEPackage()
+        ePackage.name = name
+        ePackage.nsURI = nsUri
+        ePackage.nsPrefix = name
+        EcoreUtil.setAnnotation(ePackage, GenModelPackage.eNS_URI, "basePackage", basePackage)
+        EcoreUtil.setAnnotation(ePackage, GenModelPackage.eNS_URI, "complianceLevel", complianceLevel)
+        val eClassifiers = classifiers.associateWith { it.create() }
+        ePackage.eClassifiers += eClassifiers.values
+        classifiers.filterIsInstance<MetaClass>().forEach {
+            it.link(eClassifiers.getValue(it) as EClass) { classifier, owner ->
+                eClassifiers[classifier] ?: error("$classifier in $owner is not in the package")
+            }
+        }
+        val errors = Diagnostician.INSTANCE.validate(ePackage).children.filter { it.severity == Diagnostic.ERROR }
+        check(errors.isEmpty()) {
+            errors.joinToString("\n") {
+                "${label(it.data.first())}: ${it.message}"
+            }
+        }
+        return ePackage
     }
-    return ePackage
+
+    private fun label(element: Any?): String {
+        return when (element) {
+            is EStructuralFeature -> "${element.eContainingClass.name}.${element.name}"
+            is ENamedElement -> element.name
+            else -> element.toString()
+        }
+    }
 }
 
-private fun label(element: Any?): String {
-    return when (element) {
-        is EStructuralFeature -> "${element.eContainingClass.name}.${element.name}"
-        is ENamedElement -> element.name
-        else -> element.toString()
-    }
+sealed class MetaClassifier {
+    internal abstract fun create(): EClassifier
 }
 
-class MetamodelBuilder internal constructor(private val ePackage: EPackage) {
-    private val classifiers = mutableMapOf<String, EClassifier>()
-    private val links = mutableListOf<() -> Unit>()
+sealed interface MetaDataType<T>
 
-    fun eClass(
-        name: String,
-        vararg supertypes: String,
-        body: ClassBuilder.() -> Unit = {},
-    ) {
-        declareClass(name, supertypes, false, body)
-    }
+abstract class EcoreDataType<T> internal constructor(internal val eDataType: EDataType) : MetaDataType<T>
 
-    fun abstractEClass(
-        name: String,
-        vararg supertypes: String,
-        body: ClassBuilder.() -> Unit = {},
-    ) {
-        declareClass(name, supertypes, true, body)
-    }
+object EString : EcoreDataType<String>(EcorePackage.Literals.ESTRING)
 
-    fun eEnum(name: String, vararg literals: String) {
-        eEnum(name, *literals.mapIndexed { index, literal -> literal to index }.toTypedArray())
-    }
+object EInt : EcoreDataType<Int>(EcorePackage.Literals.EINT)
 
-    fun eEnum(name: String, vararg literals: Pair<String, Int>) {
+object EBoolean : EcoreDataType<Boolean>(EcorePackage.Literals.EBOOLEAN)
+
+object EDouble : EcoreDataType<Double>(EcorePackage.Literals.EDOUBLE)
+
+abstract class MetaEnum<E : Enum<E>>(
+    private val entries: EnumEntries<E>,
+    private val value: (E) -> Int = { it.ordinal },
+) : MetaClassifier(),
+    MetaDataType<E> {
+    override fun create(): EEnum {
         val eEnum = factory.createEEnum()
-        eEnum.name = name
-        literals.forEach { (literalName, value) ->
+        eEnum.name = toString()
+        entries.forEach {
             val literal = factory.createEEnumLiteral()
-            literal.name = literalName
-            literal.value = value
+            literal.name = it.name
+            literal.value = value(it)
             eEnum.eLiterals += literal
         }
-        declare(eEnum)
+        return eEnum
     }
 
-    internal fun link() {
-        links.forEach { it() }
-    }
-
-    private fun declareClass(
-        name: String,
-        supertypes: Array<out String>,
-        abstract: Boolean,
-        body: ClassBuilder.() -> Unit,
-    ) {
-        val eClass = factory.createEClass()
-        eClass.name = name
-        eClass.isAbstract = abstract
-        declare(eClass)
-        supertypes.forEach { supertype ->
-            links += {
-                eClass.eSuperTypes += resolve<EClass>(supertype, "the supertypes of $name")
-            }
-        }
-        ClassBuilder(eClass).apply(body)
-    }
-
-    private fun declare(classifier: EClassifier) {
-        check(classifiers.putIfAbsent(classifier.name, classifier) == null) { "${classifier.name} is declared twice" }
-        ePackage.eClassifiers += classifier
-    }
-
-    private inline fun <reified T : EClassifier> resolve(name: String, owner: String): T {
-        val classifier = classifiers[name] ?: dataTypes[name] ?: error("unknown type $name in $owner")
-        return classifier as? T ?: error("$name in $owner is not an ${T::class.java.simpleName}")
-    }
-
-    inner class ClassBuilder internal constructor(private val eClass: EClass) {
-        fun contains(
-            name: String,
-            type: String,
-            bounds: Bounds = Bounds.OPTIONAL,
-        ) {
-            reference(name, type, bounds, true)
-        }
-
-        fun refers(
-            name: String,
-            type: String,
-            bounds: Bounds = Bounds.OPTIONAL,
-        ) {
-            reference(name, type, bounds, false)
-        }
-
-        fun attribute(
-            name: String,
-            type: String,
-            bounds: Bounds = Bounds.OPTIONAL,
-            default: String? = null,
-        ) {
-            val attribute = factory.createEAttribute()
-            attribute.defaultValueLiteral = default
-            add(attribute, name, bounds)
-            links += {
-                val dataType = resolve<EDataType>(type, "${eClass.name}.$name")
-                if (dataType is EEnum && default != null) {
-                    checkNotNull(dataType.getEEnumLiteral(default)) { "unknown literal $default in ${eClass.name}.$name" }
-                }
-                attribute.eType = dataType
-            }
-        }
-
-        private fun reference(
-            name: String,
-            type: String,
-            bounds: Bounds,
-            containment: Boolean,
-        ) {
-            val reference = factory.createEReference()
-            reference.isContainment = containment
-            add(reference, name, bounds)
-            links += {
-                reference.eType = resolve<EClass>(type, "${eClass.name}.$name")
-            }
-        }
-
-        private fun add(
-            feature: EStructuralFeature,
-            name: String,
-            bounds: Bounds,
-        ) {
-            feature.name = name
-            feature.lowerBound = bounds.lower
-            feature.upperBound = bounds.upper
-            eClass.eStructuralFeatures += feature
-        }
+    override fun toString(): String {
+        return entries.first().declaringJavaClass.simpleName
     }
 }
+
+abstract class MetaClass(private vararg val supertypes: MetaClass) : MetaClassifier() {
+    private val features = mutableMapOf<String, MetaFeature>()
+
+    protected fun contains(bounds: Bounds = Bounds.OPTIONAL, type: () -> MetaClass): MetaFeature {
+        return MetaReference(bounds, true, type)
+    }
+
+    protected fun refers(bounds: Bounds = Bounds.OPTIONAL, type: () -> MetaClass): MetaFeature {
+        return MetaReference(bounds, false, type)
+    }
+
+    protected fun <T> attribute(
+        type: MetaDataType<T>,
+        bounds: Bounds = Bounds.OPTIONAL,
+        default: T? = null,
+    ): MetaFeature {
+        return MetaAttribute(bounds, type, default?.toString())
+    }
+
+    internal fun declare(name: String, feature: MetaFeature) {
+        features[name] = feature
+    }
+
+    override fun create(): EClass {
+        val eClass = factory.createEClass()
+        eClass.name = toString()
+        eClass.isAbstract = this is AbstractMetaClass
+        return eClass
+    }
+
+    internal fun link(eClass: EClass, resolve: (MetaClassifier, String) -> EClassifier) {
+        supertypes.forEach {
+            eClass.eSuperTypes += resolve(it, "the supertypes of $this") as EClass
+        }
+        features.forEach { (name, feature) ->
+            val eFeature = when (feature) {
+                is MetaReference -> {
+                    val reference = factory.createEReference()
+                    reference.isContainment = feature.containment
+                    reference.eType = resolve(feature.type(), "$this.$name")
+                    reference
+                }
+                is MetaAttribute -> {
+                    val attribute = factory.createEAttribute()
+                    attribute.eType = when (val type = feature.type) {
+                        is EcoreDataType<*> -> type.eDataType
+                        is MetaEnum<*> -> resolve(type, "$this.$name")
+                    }
+                    attribute.defaultValueLiteral = feature.default
+                    attribute
+                }
+            }
+            eFeature.name = name
+            eFeature.lowerBound = feature.bounds.lower
+            eFeature.upperBound = feature.bounds.upper
+            eClass.eStructuralFeatures += eFeature
+        }
+    }
+
+    override fun toString(): String {
+        return javaClass.simpleName
+    }
+}
+
+abstract class AbstractMetaClass(vararg supertypes: MetaClass) : MetaClass(*supertypes)
+
+sealed class MetaFeature(internal val bounds: Bounds) {
+    operator fun provideDelegate(owner: MetaClass, property: KProperty<*>): MetaFeature {
+        owner.declare(property.name, this)
+        return this
+    }
+
+    operator fun getValue(owner: MetaClass, property: KProperty<*>): MetaFeature {
+        return this
+    }
+}
+
+class MetaReference internal constructor(
+    bounds: Bounds,
+    internal val containment: Boolean,
+    internal val type: () -> MetaClass,
+) : MetaFeature(bounds)
+
+class MetaAttribute internal constructor(
+    bounds: Bounds,
+    internal val type: MetaDataType<*>,
+    internal val default: String?,
+) : MetaFeature(bounds)
