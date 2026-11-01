@@ -54,16 +54,6 @@ class BackendTestModels @Inject constructor(
             prop { EF x == 5 }
         """
 
-        const val ONE_OF_SEVERAL_CHANGES = """
-            inlined oxsts of semantifyr::Anything
-            var y : int := 0
-            var x : int := 5
-            var b : bool := true
-            init { }
-            tran { y := y + 1 }
-            prop { AG y < 2 }
-        """
-
         const val SATURATING_ONE_OF_SEVERAL_CHANGES = """
             inlined oxsts of semantifyr::Anything
             var y : int := 0
