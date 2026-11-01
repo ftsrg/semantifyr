@@ -37,6 +37,8 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.copyTo
+import kotlin.io.path.createDirectory
 import kotlin.io.path.createFile
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
@@ -134,7 +136,7 @@ class VerifyCommandTest {
     }
 
     @Test
-    suspend fun `a case that fails to compile stops the run with the compilation code`(@TempDir directory: Path) {
+    suspend fun `a case that fails to compile does not stop the run and exits with the compilation code`(@TempDir directory: Path) {
         val model = directory.resolve("untemporal.oxsts")
         model.writeText(
             """
@@ -173,12 +175,55 @@ class VerifyCommandTest {
         val result = runCli("verify", "--json", "--portfolio", portfolio.id, "-d", directory.resolve("artifacts").toString(), model.toString(), portfolios = listOf(portfolio))
 
         assertThat(result.statusCode).isEqualTo(4)
-        val line = jsonLines(result.stdout).single()
-        assertThat(line.getValue("case").jsonPrimitive.content).isEqualTo("untemporal::Untemporal")
-        assertThat(line.getValue("exitCode").jsonPrimitive.int).isEqualTo(4)
-        assertThat(line.getValue("error").jsonPrimitive.content).contains("temporal operator")
-        assertThat(result.stderr).contains("untemporal::Untemporal")
-        assertThat(backend.invocations.get()).isZero()
+        val lines = jsonLines(result.stdout)
+        assertThat(lines).hasSize(2)
+        val (failing, passing) = lines
+        assertThat(failing.keys).containsExactlyInAnyOrder("case", "exitCode", "error")
+        assertThat(failing.getValue("case").jsonPrimitive.content).isEqualTo("untemporal::Untemporal")
+        assertThat(failing.getValue("exitCode").jsonPrimitive.int).isEqualTo(4)
+        assertThat(failing.getValue("error").jsonPrimitive.content).contains("temporal operator")
+        assertThat(passing.getValue("case").jsonPrimitive.content).isEqualTo("untemporal::Temporal")
+        assertThat(passing.getValue("exitCode").jsonPrimitive.int).isZero()
+        assertThat(Path(passing.getValue("report").jsonPrimitive.content)).exists()
+        assertThat(result.stderr).contains("Compiling untemporal::Untemporal failed").contains("temporal operator")
+        assertThat(backend.invocations.get()).isEqualTo(1)
+    }
+
+    @Test
+    suspend fun `a directory with a model that fails to compile verifies the other models`(@TempDir directory: Path) {
+        val models = directory.resolve("models").createDirectory()
+        models.resolve("untemporal.oxsts").writeText(
+            """
+            package untemporal
+
+            @VerificationCase
+            class Untemporal {
+                var x: int := 0
+
+                redefine tran {
+                    x := 1
+                }
+
+                prop {
+                    return x == 1
+                }
+            }
+            """.trimIndent(),
+        )
+        smokeModel.copyTo(models.resolve("smoke.oxsts"))
+        val backend = FakeBackend.verdict("counted", VerificationVerdict.Passed)
+        val portfolio = SingleBackendPortfolio(backend, FakeConfig("counted"))
+
+        val result = runCli("verify", "--portfolio", portfolio.id, "-d", directory.resolve("artifacts").toString(), models.toString(), portfolios = listOf(portfolio))
+
+        assertThat(result.statusCode).describedAs(result.output).isEqualTo(4)
+        val lines = result.stdout.lines()
+        assertThat(lines).containsSequence("Verifying untemporal::Untemporal ...", "  COMPILATION_ERROR")
+        val smokeLine = lines.indexOf("Verifying $SMOKE_CASE ...")
+        assertThat(smokeLine).isNotNegative()
+        assertThat(lines[smokeLine + 1]).startsWith("  PASSED (")
+        assertThat(result.stderr).contains("Compiling untemporal::Untemporal failed")
+        assertThat(backend.invocations.get()).isEqualTo(1)
     }
 
     @Test

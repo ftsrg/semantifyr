@@ -113,16 +113,25 @@ class VerifyCommand @Inject constructor(
             throw exception
         } catch (exception: Exception) {
             val message = exception.message ?: exception::class.simpleName
-            if (output == VerifyOutput.Json) {
-                echo(
-                    buildJsonObject {
-                        put("case", case.qualifiedName)
-                        put("exitCode", ExitCode.Compilation.code)
-                        put("error", message)
-                    },
-                )
+            when (output) {
+                VerifyOutput.Text -> {
+                    echo("  COMPILATION_ERROR")
+                }
+                VerifyOutput.Quiet -> {
+                    echo("COMPILATION_ERROR")
+                }
+                VerifyOutput.Json -> {
+                    echo(
+                        buildJsonObject {
+                            put("case", case.qualifiedName)
+                            put("exitCode", ExitCode.Compilation.code)
+                            put("error", message)
+                        },
+                    )
+                }
             }
-            throw CommandExit(ExitCode.Compilation, "Compiling ${case.qualifiedName} failed: $message")
+            echo("Compiling ${case.qualifiedName} failed: $message", err = true)
+            return ExitCode.Compilation
         }
         val exitCode = ExitCode.of(result.verdict)
         val report = artifactOptions.resolvedOutputDirectory

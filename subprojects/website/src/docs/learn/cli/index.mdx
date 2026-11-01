@@ -23,7 +23,7 @@ A model or library path is an `.oxsts` file or a directory, which is searched re
 
 <CodeBlock language="text">{verify}</CodeBlock>
 
-For each case, `verify` prints `Verifying <case> ...`, then the verdict with the time it took, then the path of the `report.json` it wrote for the case. With `--quiet` it prints only the verdict of each case, one per line: `PASSED`, `FAILED`, `INCONCLUSIVE`, `NOT_SUPPORTED`, `TIMEOUT` or `ERRORED`.
+For each case, `verify` prints `Verifying <case> ...`, then the verdict with the time it took, then the path of the `report.json` it wrote for the case. A case that does not compile gets `COMPILATION_ERROR` in place of the verdict and no report, and the compiler's message goes to standard error. With `--quiet` it prints only the verdict of each case, one per line: `PASSED`, `FAILED`, `INCONCLUSIVE`, `NOT_SUPPORTED`, `TIMEOUT`, `ERRORED` or `COMPILATION_ERROR`.
 
 With `--json` it prints one JSON object per case and line, as each case finishes:
 
@@ -31,7 +31,7 @@ With `--json` it prints one JSON object per case and line, as each case finishes
 {"case":"semantifyr::verification::smoke::CounterReachesThree","exitCode":0,"report":"/tmp/semantifyr-123/semantifyr.verification.smoke.CounterReachesThree/report.json"}
 ```
 
-`case` is the qualified name of the case, `exitCode` its [exit code](#exit-codes) and `report` the absolute path of its `report.json`. A case that does not compile has `error`, the compiler's message, instead of `report`, and ends the run. `report.json` holds the rest: `verificationCase`, `portfolioId`, `optimization`, `timeout` and `result`, whose `verdict` is `Passed`, `Failed`, `Inconclusive`, `NotSupported`, `Timeout` or `Errored`, with the `message` of the backend, `metadata.backendId`, the backend configuration that answered, and `metrics`: the durations of the run, of the backend and of the compiler's phases, the optimizer's statistics and the model sizes.
+`case` is the qualified name of the case, `exitCode` its [exit code](#exit-codes) and `report` the absolute path of its `report.json`. A case that does not compile has `error`, the compiler's message, instead of `report`. `report.json` holds the rest: `verificationCase`, `portfolioId`, `optimization`, `timeout` and `result`, whose `verdict` is `Passed`, `Failed`, `Inconclusive`, `NotSupported`, `Timeout` or `Errored`, with the `message` of the backend, `metadata.backendId`, the backend configuration that answered, and `metrics`: the durations of the run, of the backend and of the compiler's phases, the optimizer's statistics and the model sizes.
 
 ## `compile`
 
@@ -73,4 +73,4 @@ The portfolio ids are listed under [Portfolios](portfolios.mdx).
 | 7 | Timeout. |
 | 8 | Errored: a backend failed, or the portfolio has no available backend. |
 
-Codes 2 to 4 and an unavailable portfolio stop the command before it verifies anything, or at the case that does not compile. When `verify` runs several cases, it runs all of them and exits with the highest of their codes: 0 means every case passed, 5 that every case was decided and at least one failed.
+Codes 2 to 4 and an unavailable portfolio stop the command before it verifies anything, or, in `compile` and `metrics`, at the case that does not compile. `verify` runs every case, including those after a case that does not compile, and exits with the highest of their codes: 0 means every case passed, 4 that some case did not compile and the rest passed, 5 that some case failed and the rest passed, failed or did not compile.
