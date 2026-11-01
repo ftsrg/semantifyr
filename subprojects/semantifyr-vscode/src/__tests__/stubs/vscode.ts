@@ -190,7 +190,12 @@ type TestRunEvent =
 
 class TestRun {
     readonly events: TestRunEvent[] = [];
+    readonly output: { text: string; location: Location | undefined; item: TestItem | undefined }[] = [];
     ended = false;
+
+    appendOutput(text: string, location?: Location, item?: TestItem) {
+        this.output.push({ text, location, item });
+    }
 
     enqueued(item: TestItem) {
         this.events.push({ kind: 'enqueued', item });

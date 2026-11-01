@@ -227,6 +227,9 @@ export class VerificationTestController {
 
             switch (result.status) {
                 case VerificationStatus.Passed:
+                    if (result.message) {
+                        run.appendOutput(`${result.message}\r\n`, new Location(testItem.uri, range), testItem);
+                    }
                     run.passed(testItem);
                     break;
                 case VerificationStatus.Failed: {

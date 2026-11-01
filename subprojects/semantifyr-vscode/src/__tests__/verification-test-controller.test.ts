@@ -10,7 +10,7 @@ import { LSPErrorCodes } from 'vscode-languageserver-protocol';
 import type { VerificationCaseResult, VerificationCaseSpecification } from '@semantifyr/editor-common';
 import { VerificationTestController } from '../clients/verification-test-controller.js';
 import { WitnessView } from '../witness.js';
-import { counterexample, modelUri, reachableCase, result, safeCase } from './fixtures.js';
+import { counterexample, modelUri, reachableCase, result, safeCase, untrustedNote } from './fixtures.js';
 import { CancellationTokenSource, createExtensionContext, resetVscode, state, type TestController, type TestItem, Uri, window } from './stubs/vscode.js';
 import { LanguageClient } from './stubs/vscode-languageclient-node.js';
 
@@ -143,6 +143,31 @@ describe('verification', () => {
         const event = testRun.events.at(-1)!;
         expect(event.kind).toBe(outcome);
         expect('message' in event ? event.message.message : undefined).toBe(message);
+    });
+
+    it('shows the message of a passed verdict at the case and still passes it', async () => {
+        await setUp();
+        verify = () => result('passed', null, untrustedNote);
+
+        const testRun = await run([caseItem('lamp::Safe')]);
+
+        expect(testRun.outcome(caseItem('lamp::Safe'))).toBe('passed');
+        expect(testRun.output).toHaveLength(1);
+        const [output] = testRun.output;
+        expect(output!.text).toBe(`${untrustedNote}\r\n`);
+        expect(output!.item).toBe(caseItem('lamp::Safe'));
+        expect(output!.location?.uri.toString()).toBe(modelUri);
+        expect(output!.location?.range).toEqual(safeCase.location.range);
+    });
+
+    it.each([null, ''])('shows nothing extra for a passed verdict with the message %j', async (message) => {
+        await setUp();
+        verify = () => result('passed', null, message);
+
+        const testRun = await run([caseItem('lamp::Safe')]);
+
+        expect(testRun.outcome(caseItem('lamp::Safe'))).toBe('passed');
+        expect(testRun.output).toEqual([]);
     });
 
     it('reports a failed verdict at the case with a witness action', async () => {

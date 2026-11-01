@@ -10,6 +10,8 @@ export const modelUri = 'file:///workspace/lamp.oxsts';
 
 export const witnessUri = 'file:/tmp/semantifyr/lamp.Safe/witness.oxsts';
 
+export const untrustedNote = "spin's Passed on an AG property is not trusted: the leg is under-approximating";
+
 export const safeCase: VerificationCaseSpecification = {
     id: 'lamp::Safe',
     label: 'Safe',

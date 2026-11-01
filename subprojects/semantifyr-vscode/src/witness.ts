@@ -81,7 +81,8 @@ export class WitnessView implements TextDocumentContentProvider {
 }
 
 export function renderTrace(label: string, result: VerificationCaseResult, trace: VerificationTrace): string {
-    const lines = [`# ${label}`, "", `Verdict: ${result.status}${renderOrigin(result)}`];
+    const message = result.message ? ` - ${result.message}` : "";
+    const lines = [`# ${label}`, "", `Verdict: ${result.status}${renderOrigin(result)}${message}`];
     if (trace.witnessUri !== null) {
         lines.push("", `Witness: ${trace.witnessUri}`);
     }
