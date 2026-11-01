@@ -24,6 +24,7 @@ export interface FlavorInfo {
     verificationCommand: string;
     discoveryCommand: string;
     validateWitnessCommand: string | null;
+    validateWitnessByCase: boolean;
     peekCompiledOutput: boolean;
 }
 

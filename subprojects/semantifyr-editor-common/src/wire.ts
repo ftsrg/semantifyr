@@ -139,6 +139,17 @@ export interface VerificationCaseResult {
     trace: VerificationTrace | null;
 }
 
+export type WitnessValidationStatus = "valid" | "invalid" | "inconclusive" | "errored";
+
+export interface WitnessValidationResult {
+    status: WitnessValidationStatus;
+    verdict: VerificationStatus | null;
+    message: string | null;
+    backendId: string | null;
+    portfolioId: string | null;
+    metrics: VerificationMetrics | null;
+}
+
 export type ThetaExecutor = "auto" | "shell" | "docker";
 
 export type ArtifactsLocation = "temporary" | "workspace";

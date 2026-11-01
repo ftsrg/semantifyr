@@ -121,9 +121,11 @@ class ApiRoutesHandlerTest {
         val oxsts = flavors.flavors.first { it.id == "oxsts" }
         assertThat(oxsts.verificationCommand).isEqualTo("oxsts.case.verify")
         assertThat(oxsts.validateWitnessCommand).isEqualTo("oxsts.case.validateWitness")
+        assertThat(oxsts.validateWitnessByCase).isFalse()
 
         val gamma = flavors.flavors.first { it.id == "gamma" }
-        assertThat(gamma.validateWitnessCommand).isNull()
+        assertThat(gamma.validateWitnessCommand).isEqualTo("gamma.witness.validate")
+        assertThat(gamma.validateWitnessByCase).isTrue()
     }
 
     @Test

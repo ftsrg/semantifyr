@@ -29,6 +29,7 @@ data class Flavor(
     val workspaceLayout: WorkspaceLayout,
     val verificationCommand: String,
     val validateWitnessCommand: String? = null,
+    val validateWitnessByCase: Boolean = false,
     val discoveryCommand: String,
     val peekCompiledOutput: Boolean = false,
 )
@@ -81,6 +82,8 @@ object FlavorRegistry {
                 workspaceTargetName = "Library",
             ),
             verificationCommand = "gamma.case.verify",
+            validateWitnessCommand = "gamma.witness.validate",
+            validateWitnessByCase = true,
             discoveryCommand = "gamma.case.discover",
             peekCompiledOutput = true,
         ),

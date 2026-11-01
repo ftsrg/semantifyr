@@ -19,6 +19,7 @@ import { ICON_SIZE } from '../../lib/util/theme';
 
 interface Props {
   status: WitnessValidationStatus | undefined
+  message?: string | undefined
   busy: boolean
   disabled?: boolean
   onRevalidate: () => void
@@ -71,11 +72,11 @@ function chipDescriptor(status: WitnessValidationStatus | undefined): Descriptor
   }
 }
 
-export default function ValidationChip({ status, busy, disabled, onRevalidate }: Props): React.JSX.Element {
+export default function ValidationChip({ status, message, busy, disabled, onRevalidate }: Props): React.JSX.Element {
   const descriptor = chipDescriptor(status)
   return (
     <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.25 }}>
-      <Tooltip title={descriptor.tooltip}>
+      <Tooltip title={message ? `${descriptor.tooltip} ${message}` : descriptor.tooltip}>
         <Chip
           icon={busy ? <CircularProgress size={12} sx={{ color: descriptor.color }} /> : descriptor.icon}
           label={busy ? 'Validating...' : descriptor.label}

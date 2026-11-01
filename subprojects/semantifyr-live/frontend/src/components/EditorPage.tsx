@@ -404,6 +404,7 @@ export default function EditorPage({
             caseInfo={witnessCaseState.caseInfo}
             trace={witnessCaseState.trace}
             validation={witnessValidation}
+            validationMessage={witnessCaseState.validationMessage}
             validating={witnessCaseState.validating ?? false}
             canRevalidate={status === 'connected' && !!flavorInfo?.validateWitnessCommand}
             onRevalidate={handleRevalidateWitness}
@@ -574,6 +575,7 @@ export default function EditorPage({
               verificationCommand={flavorInfo.verificationCommand}
               discoveryCommand={flavorInfo.discoveryCommand}
               validateWitnessCommand={flavorInfo.validateWitnessCommand ?? undefined}
+              validateWitnessByCase={flavorInfo.validateWitnessByCase}
               connected={status === 'connected'}
               portfolioId={portfolioId}
               validationPortfolioId={validationPortfolioId}

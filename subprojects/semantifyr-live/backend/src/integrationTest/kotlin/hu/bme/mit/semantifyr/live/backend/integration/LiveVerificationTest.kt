@@ -139,6 +139,41 @@ class LiveVerificationTest {
     }
 
     @Test
+    suspend fun `gamma witness validation re-verifies the witness of the verified case`(@TempDir tmp: Path) {
+        StagedTestSupport.assumeStaged()
+        val documentUri = "file:///workspace/snippet.gamma"
+        val modelSource = stagedModel(StagedTestSupport.gammaTestModelsDirectory, "semantifyr.live.gammaTestModels", "Simple.gamma")
+        withRealServer(config(tmp)) { client, port ->
+            client.webSocket("ws://localhost:$port/ws/lsp/gamma") {
+                send(Frame.Text(LspWire.initializeRequest()))
+                awaitResponseFor(id = 1)
+                send(Frame.Text(LspWire.initializedNotification()))
+                send(Frame.Text(LspWire.didOpenNotification(uri = documentUri, languageId = "gamma", text = modelSource)))
+
+                val cases = discoverCases(id = 2, command = "gamma.case.discover", documentUri = documentUri, flavor = "gamma")
+                val request = VerificationCaseRequest(documentUri, cases.pickByLabel("LeaderStatechartIdleReachable").location().range, "smart-full")
+
+                send(Frame.Text(LspWire.executeCommandRequest(id = 3, command = "gamma.witness.validate", arguments = listOf(request))))
+                val missing = awaitResponseFor(id = 3).resultAs(WitnessValidationResult::class.java)
+                assertThat(missing.status()).isEqualTo(WitnessValidationStatus.ERRORED)
+                assertThat(missing.message()).endsWith("has no witness yet, verify it first")
+
+                send(Frame.Text(LspWire.executeCommandRequest(id = 4, command = "gamma.case.verify", arguments = listOf(request))))
+                val verifyResult = awaitResponseFor(id = 4, timeout = 2.minutes).resultAs(VerificationCaseResult::class.java)
+                assertThat(verifyResult.status()).isEqualTo("passed")
+
+                send(Frame.Text(LspWire.executeCommandRequest(id = 5, command = "gamma.witness.validate", arguments = listOf(request))))
+                val validation = awaitResponseFor(id = 5, timeout = 2.minutes).resultAs(WitnessValidationResult::class.java)
+                assertThat(validation.status())
+                    .describedAs("witness validation: $validation")
+                    .isEqualTo(WitnessValidationStatus.VALID)
+                assertThat(validation.verdict()).isEqualTo("passed")
+                assertThat(validation.portfolioId()).isEqualTo("smart-full")
+            }
+        }
+    }
+
+    @Test
     suspend fun `oxsts-with-gamma-library verifies a compiled gamma example`(@TempDir tmp: Path) {
         verifyFirstCase(
             tmp = tmp,
