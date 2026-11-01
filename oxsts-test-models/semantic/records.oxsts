@@ -353,8 +353,10 @@ class RecordLiteralDefaultViolated {
 }
 
 // Reachable: a local literal reads the state and an `if` compares with a literal.
+// Spin's range analysis cannot bound `p` and `hits`, so Spin reports the case unsupported.
 @VerificationCase
 @Tag("expect-pass")
+@Tag("engine-limit:spin")
 class LocalRecordLiteralReach {
     var p: Point
     var hits: int := 0
