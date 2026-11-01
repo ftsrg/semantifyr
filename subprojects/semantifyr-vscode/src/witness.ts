@@ -84,7 +84,7 @@ export function renderTrace(label: string, result: VerificationCaseResult, trace
     const message = result.message ? ` - ${result.message}` : "";
     const lines = [`# ${label}`, "", `Verdict: ${result.status}${renderOrigin(result)}${message}`];
     if (trace.witnessUri !== null) {
-        lines.push("", `Witness: ${trace.witnessUri}`);
+        lines.push("", `${witnessLabel(trace.witnessUri)}: ${trace.witnessUri}`);
     }
 
     const callSteps = [trace.callTrace.initialStep, trace.callTrace.initializedStep, ...trace.callTrace.steps];
@@ -99,6 +99,10 @@ export function renderTrace(label: string, result: VerificationCaseResult, trace
         lines.push("", `## ${stepLabel(index)}`, "", ...renderCalls(calls), "", ...renderChanges(index === 0, values, state));
     }
     return `${lines.join("\n")}\n`;
+}
+
+function witnessLabel(witnessUri: string): string {
+    return witnessUri.endsWith(".gamma") ? "Gamma trace" : "Witness";
 }
 
 function renderOrigin(result: VerificationCaseResult): string {

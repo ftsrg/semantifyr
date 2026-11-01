@@ -55,6 +55,15 @@ describe('renderTrace', () => {
         ].join('\n'));
     });
 
+    it.each([
+        ['file:/tmp/semantifyr/lamp.Safe/witness.oxsts', 'Witness'],
+        ['file:/tmp/semantifyr/crossroads.Green/trace.gamma', 'Gamma trace'],
+    ])('labels the opened file %s as %s', (uri, label) => {
+        const trace = { ...counterexample, witnessUri: uri };
+
+        expect(renderTrace('Safe', result('failed', trace), trace).split('\n')[4]).toBe(`${label}: ${uri}`);
+    });
+
     it('appends the message of a passed verdict to the verdict line', () => {
         const document = renderTrace('Safe', result('passed', counterexample, untrustedNote), counterexample);
 
