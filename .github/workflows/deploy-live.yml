@@ -52,6 +52,9 @@ jobs:
           TAG: ${{ inputs.tag }}
         run: |
           tag=${TAG:-$(ssh live status semantifyr-live-staging)}
+          image=$(sed -n 's/^liveImage=//p' gradle.properties)
+          sed -i "s|@LIVE_IMAGE@|${image:?}|" deploy/live/compose.yaml
+          grep -Fq "image: \"$image:" deploy/live/compose.yaml
           tar -C deploy/live -cz compose.yaml deploy.sh | ssh live deploy "$INSTANCE" "$tag"
 
   smoke-test:

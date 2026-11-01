@@ -168,8 +168,6 @@ jobs:
       contents: read
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
-    env:
-      IMAGE: docker.io/ftsrgbot/semantifyr-live
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -181,9 +179,10 @@ jobs:
         run: |
           mkdir context
           tar -xzf live-image-context.tar.gz -C context
-      - name: Compute the tag
+      - name: Compute the image and tag
         id: tag
         run: |
+          echo "IMAGE=$(sed -n 's/^liveImage=//p' gradle.properties)" >> "$GITHUB_ENV"
           version=$(sed -n 's/^version=//p' gradle.properties)
           echo "tag=$version-dev.${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
       - name: Set up Buildx
@@ -223,7 +222,7 @@ jobs:
         if: ${{ inputs.publish }}
         uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
-          username: ftsrgbot
+          username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Push
         if: ${{ inputs.publish }}
