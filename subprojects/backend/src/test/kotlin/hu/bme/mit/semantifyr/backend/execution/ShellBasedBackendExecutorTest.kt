@@ -6,11 +6,13 @@
 
 package hu.bme.mit.semantifyr.backend.execution
 
-import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.condition.DisabledOnOs
 import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.io.TempDir
@@ -52,7 +54,10 @@ class ShellBasedBackendExecutorTest {
                     """
                         @echo off
                         if "%~1"=="-V" exit /b 0
-                        if "%~1"=="--sleep" ping -n 30 127.0.0.1 > nul
+                        if "%~1"=="--sleep" (
+                            echo sleeping> sleeping.txt
+                            ping -n 30 127.0.0.1 > nul
+                        )
                         echo cwd=%CD%
                         :next
                         if "%~1"=="" goto done
@@ -72,7 +77,7 @@ class ShellBasedBackendExecutorTest {
                     """
                         #!/bin/sh
                         if [ "${'$'}1" = "-V" ]; then exit 0; fi
-                        if [ "${'$'}1" = "--sleep" ]; then sleep 30; fi
+                        if [ "${'$'}1" = "--sleep" ]; then echo sleeping > sleeping.txt; sleep 30; fi
                         echo "cwd=${'$'}(pwd -P)"
                         for argument in "${'$'}@"; do echo "arg=${'$'}argument"; done
                         echo "stub error" >&2
@@ -166,15 +171,24 @@ class ShellBasedBackendExecutorTest {
     @Test
     suspend fun `cancellation destroys the running tool`() {
         val workingDirectory = workingDirectory()
-        val mark = TimeSource.Monotonic.markNow()
 
-        assertThrows<TimeoutCancellationException> {
-            withTimeout(500.milliseconds) {
+        coroutineScope {
+            val run = async {
                 stub().run(listOf("--sleep"), workingDirectory)
             }
+            withTimeout(10.seconds) {
+                while (!workingDirectory.resolve("sleeping.txt").exists()) {
+                    delay(10.milliseconds)
+                }
+            }
+            val mark = TimeSource.Monotonic.markNow()
+
+            run.cancelAndJoin()
+
+            assertThat(mark.elapsedNow()).isLessThan(10.seconds)
+            assertThat(run.isCancelled).isTrue()
         }
 
-        assertThat(mark.elapsedNow()).isLessThan(10.seconds)
         assertThat(workingDirectory.resolve("produced.txt")).doesNotExist()
     }
 
