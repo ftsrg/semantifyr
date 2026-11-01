@@ -32,9 +32,19 @@ val sysmlCorpus = CampaignDefinition("sysml-corpus") { sources ->
 - The verification axes are `model`, `case`, `engine`, `backend` (a portfolio) and `optimization`. An axis given a lambda takes its values from the cell built so far, like the cases of a model.
 - `filter` keeps a cell when it returns true; every filter must agree. This is how a long model runs on a selected subset, as the `spacecraft` campaign does.
 - `repetitions` (default 3) are measured after `warmups` (default 1) discarded runs. `timeout` (default 5 minutes) bounds each run.
-- `sources.sysml` reads the SysML corpus through `subprojects/frontends/sysml/models/examples/manifest.json`: the expected verdict (none for `Unknown`), the falsification flag and whether the case is nightly-only. `sources.oxstsSemantic` reads `oxsts-test-models/semantic`, with the expected verdict from the `expect-pass` and `expect-fail` tags.
+- `sources.sysml` reads the SysML corpus through `subprojects/frontends/sysml/models/examples/manifest.json`: the expected verdict (none for `Unknown`), the falsification flag and whether the case is nightly-only. `sources.oxstsSemantic` reads `oxsts-test-models/semantic`, with the expected verdict from the `expect-pass` and `expect-fail` tags, and `sources.oxstsSmoke` the smoke model.
+- `OptimizationLevel.leaveOneOut` is `all`, one `without-<pass>` level per optional optimizer pass, and `none`.
 
-Add the definition to `Campaigns.all` to make it runnable.
+Add the definition to `Campaigns.all` to make it runnable. The defined campaigns:
+
+| Campaign | Cells |
+| --- | --- |
+| `smoke` | the smoke model on Theta, one run |
+| `crossroads` | the SysML crossroads model and the OXSTS semantic models on Theta |
+| `optimizer-passes` | the cells of `crossroads` at every leave-one-out optimization level |
+| `sysml-corpus` | the corpus cases that are not nightly-only, on Theta |
+| `backends` | the corpus except the full spacecraft on all four engines |
+| `spacecraft` | the full spacecraft on nuXmv and Uppaal, its falsification cases on Theta |
 
 ## Running a campaign
 
@@ -60,10 +70,33 @@ When BenchExec's `runexec` is on `PATH` and can run a command, every backend pro
 
 The output is in `subprojects/benchmark/build/benchmark/<campaign>/`:
 
-- `results.jsonl` holds one record per run: the cell, the repetition, whether it was a warmup, the outcome (`Completed`, `TimedOut`, `Errored` or `Unavailable`), the verdict, the expected verdict, `asExpected` (false for a wrong decisive verdict, absent when the verdict is not decisive or nothing is expected), the falsification flag, the engine that decided, wall time, CPU time of the JVM and the backend processes together and of the backends alone, the totals runexec measured when it ran (CPU time, wall time, peak memory), the verifier's metrics from `report.json` (phase durations, per-pass optimizer statistics, model sizes at input, inlined and flattened level), and what a frontend adds: `sysml` carries the SysML to OXSTS transformation time and counters of the input model.
+- `run.json` records the campaign's repetitions, warmups and timeout, the Semantifyr version, the host's processors, operating system and Java, and whether runexec was used, as of the latest run.
+- `results.jsonl` holds one record per run: the cell, the repetition, whether it was a warmup, the outcome (`Completed`, `TimedOut`, `Errored` or `Unavailable`), the verdict, the expected verdict, `asExpected` (false for a wrong decisive verdict, absent when the verdict is not decisive or nothing is expected), the falsification flag, the engine that decided, wall time, CPU time of the JVM and the backend processes together and of the backends alone, the totals runexec measured when it ran (CPU time, wall time, peak memory), the verifier's metrics from `report.json` (phase durations, per-pass optimizer statistics, model sizes at input, inlined and flattened level), the host's load average when the run started, and what a frontend adds: `sysml` carries the SysML to OXSTS transformation time and counters of the input model.
 - `results.csv` has one row per cell: the median, minimum and maximum of each time over the measured repetitions, the peak memory, the model sizes and the frontend columns.
 - `summary.md` aggregates the cells along every axis, and is also printed at the end of the run.
 - `engines.json` lists, for every case in the results, the engines that decided it correctly in this campaign. The corpus manifest is not updated from it.
+- `analysis/` holds the analysis below.
+
+## Analysis
+
+Every run ends by analysing its results into `analysis/`. To analyse results again, or results copied from another host:
+
+```bash
+./gradlew :benchmark:campaignAnalysis -Pcampaign=crossroads
+./gradlew :benchmark:campaignAnalysis -Pbenchmark.results=<results directory> -Pbenchmark.analysis=<output directory>
+```
+
+The analysis writes pgfplots data (`.dat`, whitespace-separated with a header row, `nan` for a missing value), LaTeX tables (`.tex`, a booktabs `tabular` without a float) and `analysis.md`, which renders every table with the run's host, load and settings:
+
+| File | Content |
+| --- | --- |
+| `correctness.tex`, `verdicts.tex` | expected against obtained verdicts, per model and as a matrix |
+| `unfolding.dat`, `unfolding.tex` | per cell, unfolding and model checking time with median, minimum and maximum, and the verdict; per model, their sums and the SysML transformation time |
+| `sizes.dat`, `sizes.tex` | per case, variables, operations and expressions of the input, inlined and flattened model; per model, the medians |
+| `optimizer-passes.dat`, `optimizer-passes.tex` | per optimization level, flattened size and times relative to `all`, the disabled passes' own time and firings, timeouts, errors and wrong verdicts; only for a campaign with several levels |
+| `backends.dat`, `backends-cactus.dat`, `backends.tex` | per case, each backend's model checking time and whether the decisive verdicts agree; each backend's sorted times; per backend, its verdicts; only when a case runs on several backends |
+
+Times are medians over the measured repetitions. A cell that timed out, errored or was unavailable has no times and is counted by its outcome, never averaged into a sum. Where the campaign also varies the optimization level, unfolding and sizes are those of `all`.
 
 ## Reference results
 
@@ -74,3 +107,9 @@ After a change that is meant to change verdicts or sizes, run the campaign and r
 ```bash
 ./gradlew :benchmark:campaignReference -Pcampaign=crossroads
 ```
+
+The task also writes the run's analysis to `subprojects/benchmark/reference/<campaign>/`, so the figures of the reference run stay in the repository.
+
+## Reproducibility package
+
+`./gradlew :benchmark:distZip` builds `subprojects/benchmark/build/distributions/semantifyr-benchmark-<version>.zip`, which every release carries next to the CLI distribution. It holds the campaign runner and analysis (`bin/semantifyr-benchmark run <campaign>` and `analyze <results directory> <output directory>`, with the arguments of the Gradle tasks), the SysML corpus with its manifest, the OXSTS semantic and smoke models, `Campaigns.kt`, the reference results and their analysis, and a README with the setup and commands. Theta comes from the CLI distribution of the same version. The release workflow writes the digest of the release's live image into the README, and CI runs the `smoke` campaign from the unpacked package.
