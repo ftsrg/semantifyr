@@ -12,7 +12,8 @@ import IconButton from '@mui/material/IconButton';
 import Collapse from '@mui/material/Collapse';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
-import type { WitnessState, WitnessStateStep, WitnessStateValue } from '../../lib/verification';
+import { type WitnessStateChange, witnessStateChanges } from '@semantifyr/editor-common';
+import type { WitnessState, WitnessStateValue } from '../../lib/verification';
 import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
 
 const monoSx = {
@@ -20,35 +21,10 @@ const monoSx = {
   fontSize: FONT_SIZE.md,
 } as const;
 
-interface ChangedBinding {
-  variable: string;
-  value: string;
-  previous: string | undefined;
-}
-
-function diffBindings(step: WitnessStateStep, previousValues: Map<string, string>): ChangedBinding[] {
-  const changed: ChangedBinding[] = [];
-  for (const v of step.values) {
-    const prev = previousValues.get(v.variable);
-    if (prev !== v.value) {
-      changed.push({ variable: v.variable, value: v.value, previous: prev });
-    }
-  }
-  return changed;
-}
-
-function valuesAfter(step: WitnessStateStep, base: Map<string, string>): Map<string, string> {
-  const next = new Map(base);
-  for (const v of step.values) {
-    next.set(v.variable, v.value);
-  }
-  return next;
-}
-
 interface StateStepRowProps {
   label: string;
   initial: boolean;
-  changed: ChangedBinding[];
+  changed: WitnessStateChange[];
   allValues: WitnessStateValue[];
 }
 
@@ -129,13 +105,8 @@ interface Props {
 
 export default function WitnessStateView({ trace }: Props): React.JSX.Element {
   const rows: React.JSX.Element[] = [];
-  let previousValues = new Map<string, string>();
+  const [initialChanged = [], initializedChanged = [], ...stepsChanged] = witnessStateChanges(trace);
 
-  const initialChanged = trace.initialStep.values.map((v) => ({
-    variable: v.variable,
-    value: v.value,
-    previous: undefined,
-  }));
   rows.push(
     <StateStepRow
       key="initial"
@@ -145,7 +116,6 @@ export default function WitnessStateView({ trace }: Props): React.JSX.Element {
       allValues={trace.initialStep.values}
     />,
   );
-  previousValues = valuesAfter(trace.initialStep, previousValues);
 
   const initialized = trace.initializedStep;
   if (initialized) {
@@ -154,25 +124,22 @@ export default function WitnessStateView({ trace }: Props): React.JSX.Element {
         key="initialized"
         label="After init"
         initial={false}
-        changed={diffBindings(initialized, previousValues)}
+        changed={initializedChanged}
         allValues={initialized.values}
       />,
     );
-    previousValues = valuesAfter(initialized, previousValues);
   }
 
   trace.steps.forEach((step, i) => {
-    const changed = diffBindings(step, previousValues);
     rows.push(
       <StateStepRow
         key={`step-${i}`}
         label={`Step ${i + 1}`}
         initial={false}
-        changed={changed}
+        changed={stepsChanged[i] ?? []}
         allValues={step.values}
       />,
     );
-    previousValues = valuesAfter(step, previousValues);
   });
 
   return <Box sx={{ overflowY: 'auto', height: '100%' }}>{rows}</Box>;

@@ -5,7 +5,7 @@
  */
 
 import { commands, EventEmitter, type ExtensionContext, type TestItem, type TextDocumentContentProvider, Uri, ViewColumn, window, workspace } from "vscode";
-import type { CallTraceStep, TraceEntry, VerificationCaseResult, VerificationTrace, WitnessStateStep } from "@semantifyr/editor-common";
+import { type CallTraceStep, type TraceEntry, type VerificationCaseResult, type VerificationTrace, type WitnessStateChange, witnessStateChanges } from "@semantifyr/editor-common";
 import { writeErrorMessage } from "./outputChannel.js";
 
 export const witnessMessageContext = "semantifyr.witness";
@@ -88,15 +88,13 @@ export function renderTrace(label: string, result: VerificationCaseResult, trace
     }
 
     const callSteps = [trace.callTrace.initialStep, trace.callTrace.initializedStep, ...trace.callTrace.steps];
-    const stateSteps = [trace.witnessState.initialStep, trace.witnessState.initializedStep, ...trace.witnessState.steps];
-    const state = new Map<string, string>();
-    for (let index = 0; index < Math.max(callSteps.length, stateSteps.length); index++) {
+    const stateChanges = witnessStateChanges(trace.witnessState);
+    for (let index = 0; index < Math.max(callSteps.length, stateChanges.length); index++) {
         const calls = callSteps[index];
-        const values = stateSteps[index];
-        if (index === 1 && !calls && !values) {
+        if (index === 1 && !calls && !trace.witnessState.initializedStep) {
             continue;
         }
-        lines.push("", `## ${stepLabel(index)}`, "", ...renderCalls(calls), "", ...renderChanges(index === 0, values, state));
+        lines.push("", `## ${stepLabel(index)}`, "", ...renderCalls(calls), "", ...renderChanges(index === 0, stateChanges[index] ?? []));
     }
     return `${lines.join("\n")}\n`;
 }
@@ -137,11 +135,7 @@ function renderCall(entry: TraceEntry, indent: string): string[] {
     return [`${indent}- \`${entry.self}.${entry.calledTransition}(${argumentList})\``, ...inner];
 }
 
-function renderChanges(initial: boolean, step: WitnessStateStep | null | undefined, state: Map<string, string>): string[] {
-    const changes = (step?.values ?? []).filter((value) => state.get(value.variable) !== value.value);
-    for (const change of changes) {
-        state.set(change.variable, change.value);
-    }
+function renderChanges(initial: boolean, changes: WitnessStateChange[]): string[] {
     if (changes.length === 0) {
         return [initial ? "No state." : "No changes."];
     }
