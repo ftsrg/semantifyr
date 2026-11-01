@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendTestModels
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
+import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalBackendModule
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -27,8 +28,10 @@ abstract class UppaalTransformationTestBase {
         oxstsInjector.createChildInjector(UppaalBackendModule())
     }
 
-    protected fun capabilityChecker(): UppaalCapabilityChecker {
-        return childInjector.getInstance(UppaalCapabilityChecker::class.java)
+    protected fun <T> withCapabilityChecker(block: (UppaalCapabilityChecker) -> T): T {
+        return withVerificationScopeBlocking {
+            block(childInjector.getInstance(UppaalCapabilityChecker::class.java))
+        }
     }
 
     protected fun parse(source: String, vararg packages: String): InlinedOxsts {

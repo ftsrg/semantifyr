@@ -7,29 +7,29 @@ Never claim moves to line 4	[(1)]
 		__semantifyr_stable = 1
   5:	proc  0 (:init::1) model.pml:15 (state 5)	[semantifyr_stable = 0]
 		__semantifyr_stable = 0
-  5:	proc  0 (:init::1) model.pml:16 (state 6)	[y = (y+1)]
+  6:	proc  0 (:init::1) model.pml:17 (state 6)	[((y<3))]
+  6:	proc  0 (:init::1) model.pml:18 (state 7)	[y = (y+1)]
 		y = 1
-		__semantifyr_stable = 0
-  5:	proc  0 (:init::1) model.pml:17 (state 7)	[semantifyr_stable = 1]
+  6:	proc  0 (:init::1) model.pml:21 (state 12)	[semantifyr_stable = 1]
 		y = 1
 		__semantifyr_stable = 1
-  7:	proc  0 (:init::1) model.pml:15 (state 5)	[semantifyr_stable = 0]
+  8:	proc  0 (:init::1) model.pml:15 (state 5)	[semantifyr_stable = 0]
 		__semantifyr_stable = 0
-  7:	proc  0 (:init::1) model.pml:16 (state 6)	[y = (y+1)]
+  9:	proc  0 (:init::1) model.pml:17 (state 6)	[((y<3))]
+  9:	proc  0 (:init::1) model.pml:18 (state 7)	[y = (y+1)]
 		y = 2
-		__semantifyr_stable = 0
-  7:	proc  0 (:init::1) model.pml:17 (state 7)	[semantifyr_stable = 1]
+  9:	proc  0 (:init::1) model.pml:21 (state 12)	[semantifyr_stable = 1]
 		y = 2
 		__semantifyr_stable = 1
 spin: _spin_nvr.tmp:3, Error: assertion violated
 spin: text of failed assertion: assert(!(!((!(semantifyr_stable)||(y<2)))))
 Never claim moves to line 3	[assert(!(!((!(semantifyr_stable)||(y<2)))))]
-spin: trail ends after 8 steps
+spin: trail ends after 10 steps
 #processes: 1
 		y = 2
 		x = 5
 		b = 1
 		__semantifyr_stable = 1
-  8:	proc  0 (:init::1) model.pml:13 (state 9)
-  8:	proc  - (p:1) _spin_nvr.tmp:2 (state 6)
+ 10:	proc  0 (:init::1) model.pml:13 (state 14)
+ 10:	proc  - (p:1) _spin_nvr.tmp:2 (state 6)
 1 processes created
