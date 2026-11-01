@@ -67,7 +67,7 @@ class SmartFullPortfolioTest {
             timeout = 5.seconds,
             theta = SlowBackend("theta", delayMillis = 200, verdict = VerificationVerdict.Failed),
             uppaal = PassingBackend("uppaal"),
-            nuxmv = PassingBackend("nuxmv"),
+            nuxmv = NotSupportedBackend("nuxmv"),
             spin = PassingBackend("spin"),
         )
 
@@ -75,6 +75,24 @@ class SmartFullPortfolioTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.metadata.backendId).isEqualTo("theta")
+    }
+
+    @Test
+    suspend fun `a nuXmv leg races and decides when no other leg can`(
+        @TempDir output: Path,
+    ) {
+        val portfolio = SmartFullPortfolio(
+            timeout = 5.seconds,
+            theta = NotSupportedBackend("theta"),
+            uppaal = NotSupportedBackend("uppaal"),
+            nuxmv = PassingBackend("nuxmv"),
+            spin = NotSupportedBackend("spin"),
+        )
+
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(result.metadata.backendId).isEqualTo("nuxmv")
     }
 
     @Test

@@ -45,11 +45,11 @@ class SmartFullPortfolio(
     override val description: String = "Races representative configurations of every backend in parallel and takes the first verdict its leg's soundness direction trusts."
 
     private val tasks: List<PortfolioTask<*>> = listOf(
-//        PortfolioTask(nuxmv, NuxmvConfig.BmcInvar, "nuxmv-bmc"),
+        PortfolioTask(nuxmv, NuxmvConfig.BmcInvar, "nuxmv-bmc"),
         PortfolioTask(theta, ThetaConfig.BoundedBmc, "theta-bmc"),
         PortfolioTask(spin, SpinConfig.SafeDfs, "spin-safe-dfs"),
         PortfolioTask(uppaal, UppaalConfig.Default, "uppaal-default"),
-//        PortfolioTask(nuxmv, NuxmvConfig.Ic3Invar, "nuxmv-ic3"),
+        PortfolioTask(nuxmv, NuxmvConfig.Ic3Invar, "nuxmv-ic3"),
         PortfolioTask(theta, ThetaConfig.CegarExplPredCombined, "theta-cegar-combined"),
         PortfolioTask(theta, ThetaConfig.BoundedKInduction, "theta-kinduction"),
         PortfolioTask(theta, ThetaConfig.Ic3, "theta-ic3"),
