@@ -101,14 +101,12 @@ class GammaTraceGenerator {
     }
 
     private fun createInputAct(entry: TraceEntry, paths: InstancePaths): Act? {
-        val receiver = paths.resolve(entry.self)
-        val port = receiver.lastOrNull() as? PortDeclaration ?: return null
-        val event = resolveEvent(entry, paths)
-        if (!GammaUtils.isInputEvent(port, event)) {
+        if (entry.calledTransition != RAISE_INPUT_EVENT) {
             return null
         }
+        val receiver = paths.resolve(entry.self)
         return factory.createRaiseEventAct().also {
-            it.event = createPath(receiver + event)
+            it.event = createPath(receiver + resolveEvent(entry, paths))
         }
     }
 
@@ -124,13 +122,12 @@ class GammaTraceGenerator {
             null -> null
             is StateTransition -> createFiredTransitionAssertion(receiver.dropLast(1), element)
             is PortDeclaration -> {
-                val event = resolveEvent(entry, paths)
-                if (GammaUtils.isInputEvent(element, event)) {
-                    null
-                } else {
-                    factory.createRaisedEventAssertion().also {
-                        it.event = createPath(receiver + event)
+                when (entry.calledTransition) {
+                    RAISE_INPUT_EVENT -> null
+                    SET_OUTPUT_EVENT -> factory.createRaisedEventAssertion().also {
+                        it.event = createPath(receiver + resolveEvent(entry, paths))
                     }
+                    else -> error("Traced call '${entry.calledTransition}' on port '${entry.self}' is not an event raise")
                 }
             }
             else -> error("Traced call on '${entry.self}' is not a transition firing, an event raise or the time advance")
@@ -248,6 +245,8 @@ class GammaTraceGenerator {
     companion object {
         private const val ROOT_FEATURE = "root"
         private const val TIME_ADVANCE_SECONDS = 1
+        private const val RAISE_INPUT_EVENT = "semantifyr::gamma::ports::Port::raiseInputEvent"
+        private const val SET_OUTPUT_EVENT = "semantifyr::gamma::ports::Port::setOutputEvent"
 
         private val MODEL_ORDER = Comparator<List<EObject>> { left, right ->
             val leftIndices = left.map {
