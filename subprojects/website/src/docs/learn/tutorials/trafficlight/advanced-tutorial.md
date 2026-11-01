@@ -20,7 +20,7 @@ This is the third tutorial in the Traffic Light series. It extends the small `St
 A browser is enough. As in the previous tutorials, every step ends in a complete model that the **Open this step in the editor** button loads into a live editor embedded in this page; the [Direct Modeling](direct-modeling.md#the-live-editor) tutorial describes the editor. See [Getting Started](../../getting-started.md) for the other ways to run Semantifyr.
 
 :::tip Finished example
-The completed model is at the end of this page under [Snapshot](#snapshot). The standalone live editor also offers it in its model picker as *Tutorial: Advanced*.
+The completed model is at the end of this page under [Snapshot](#snapshot), where **Edit and verify here** opens it in the embedded editor. The standalone live editor also offers it in its model picker as *Tutorial: Advanced*.
 :::
 
 The tutorial starts from the final model of Building a Library. Each step is a separate file with its own package below `example::trafficlight::advanced`:
@@ -141,7 +141,7 @@ Add a case that lets the emergency start and end at any step:
 
 <LiveEmbed code={step5} show={['EmergencyStopsTraffic']} />
 
-Mind the parentheses around the conjunction: `&&` and `||` share one [precedence level](../../language/expressions.md#operator-precedence) and associate to the left, so without them the property would read `(!emergency.active || ...) && ...` and fail.
+The parentheses around the conjunction only make the grouping visible: as in Java, `&&` binds tighter than `||` ([operator precedence](../../language/expressions.md#operator-precedence)), so the property reads the same without them, although for one release the validator warns on a mix of the two without parentheses.
 
 **Task:** Open the step and verify all cases.
 

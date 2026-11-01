@@ -26,7 +26,7 @@ cd semantifyr
 export SEMANTIFYR_HOME="$PWD/subprojects/semantifyr-cli/build/install/semantifyr"
 ```
 
-`SEMANTIFYR_HOME` now holds the same layout as the release zip: the launcher in `bin/`, Theta in `theta-xsts-cli/` and the semantic libraries in `libraries/`. If you use the [release zip](../getting-started.md#option-d-install-the-command-line-interface-for-scripts-and-ci) instead, point `SEMANTIFYR_HOME` at the unzipped `semantifyr-<version>` directory. The commands on this page are written for Linux and macOS shells; on Windows, use `bin\semantifyr.bat` and put `theta-xsts-cli` on `PATH` yourself.
+`SEMANTIFYR_HOME` now holds the same layout as the release zip: the launcher in `bin/`, Theta in `theta-xsts-cli/` and the semantic libraries in `libraries/`. If you use the [release zip](../getting-started.md#option-d-install-the-command-line-interface-for-scripts-and-ci) instead, point `SEMANTIFYR_HOME` at the unzipped `semantifyr-<version>` directory. The commands on this page are written for Linux and macOS shells; on Windows, use `bin\semantifyr.bat`.
 
 ## The Model
 
