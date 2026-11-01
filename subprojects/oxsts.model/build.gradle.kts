@@ -4,12 +4,14 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
+
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.mwe2")
+    id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
     kotlin("jvm")
 }
 
-sourceSets.create("metamodel")
+val metamodel = sourceSets.create("metamodel")
 
 dependencies {
     api(libs.ecore)
@@ -19,42 +21,32 @@ dependencies {
     "metamodelImplementation"(libs.mwe2.lib)
     "metamodelRuntimeOnly"(libs.mwe.utils)
     "metamodelRuntimeOnly"(libs.reload4j)
+}
 
-    mwe2(libs.ecore.codegen)
-    mwe2(libs.mwe.utils)
-    mwe2(libs.mwe2.lib)
-    mwe2(libs.xtext.core)
-    mwe2(libs.xtext.xbase)
+val emfGenDirectory = layout.projectDirectory.dir("src/main/emf-gen")
+val modelDirectory = layout.buildDirectory.dir("model")
+
+val generateEPackage = tasks.register<JavaExec>("generateEPackage") {
+    classpath(metamodel.runtimeClasspath)
+    mainClass.set("hu.bme.mit.semantifyr.oxsts.model.metamodel.GenerateModelKt")
+
+    outputs.dir(emfGenDirectory)
+    outputs.dir(modelDirectory)
+
+    args(emfGenDirectory.asFile.path, modelDirectory.get().asFile.path)
 }
 
 sourceSets.main {
-    java.srcDir("src/main/emf-gen")
+    java.srcDir(files(emfGenDirectory).builtBy(generateEPackage))
 }
 
-tasks {
-    val generateEPackage = register<JavaExec>("generateEPackage") {
-        mainClass.set("org.eclipse.emf.mwe2.launch.runtime.Mwe2Launcher")
-
-        classpath(configurations.named("mwe2Classpath"))
-
-        inputs.file("./GenerateModel.mwe2")
-        inputs.file("model/oxsts.ecore")
-        inputs.file("model/oxsts.genmodel")
-
-        outputs.dir("src/main/emf-gen")
-
-        args("./GenerateModel.mwe2", "-p", "rootPath=/$projectDir")
+configurations.consumable("metamodelElements") {
+    attributes(semantifyrArtifact("metamodel"))
+    outgoing.artifact(modelDirectory) {
+        builtBy(generateEPackage)
     }
+}
 
-    compileJava {
-        inputs.files(generateEPackage)
-    }
-
-    compileKotlin {
-        inputs.files(generateEPackage)
-    }
-
-    clean {
-        delete("src/main/emf-gen")
-    }
+tasks.clean {
+    delete(emfGenDirectory)
 }

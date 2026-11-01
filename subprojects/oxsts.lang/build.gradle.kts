@@ -4,8 +4,16 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
+
 plugins {
     id("hu.bme.mit.semantifyr.gradle.xtext")
+}
+
+val metamodel = configurations.dependencyScope("metamodel")
+val metamodelFiles = configurations.resolvable("metamodelFiles") {
+    extendsFrom(metamodel.get())
+    attributes(semantifyrArtifact("metamodel"))
 }
 
 dependencies {
@@ -13,6 +21,8 @@ dependencies {
     implementation(project(":utils"))
 
     testRuntimeOnly(libs.slf4j.log4j)
+
+    metamodel(project(":oxsts.model"))
 }
 
 xtext {
@@ -21,7 +31,7 @@ xtext {
 }
 
 val syncModel = tasks.register<Sync>("syncModel") {
-    from("../oxsts.model/model")
+    from(metamodelFiles)
     into("model")
 }
 
