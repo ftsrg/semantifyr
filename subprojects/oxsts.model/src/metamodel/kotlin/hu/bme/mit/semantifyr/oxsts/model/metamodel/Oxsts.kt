@@ -254,6 +254,16 @@ object Oxsts : MetaPackage(
         val values by contains(MANY) { Expression }
     }
 
+    object RecordLiteral : MetaClass(LiteralExpression) {
+        val record by refers(ONE) { RecordDeclaration }
+        val fields by contains(MANY) { FieldAssignment }
+    }
+
+    object FieldAssignment : MetaClass(Element) {
+        val field by refers(ONE) { VariableDeclaration }
+        val expression by contains(ONE) { Expression }
+    }
+
     object Argument : MetaClass() {
         val parameter by refers { ParameterDeclaration }
         val expression by contains(ONE) { Expression }
