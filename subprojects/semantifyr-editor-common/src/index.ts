@@ -4,6 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-export * from "./wire.js";
-export * from "./client.js";
-export * from "./live.js";
+export * from "./wire.ts";
+export * from "./client.ts";
+export * from "./live.ts";
