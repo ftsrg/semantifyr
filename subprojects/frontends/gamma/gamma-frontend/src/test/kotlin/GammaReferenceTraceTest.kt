@@ -6,18 +6,28 @@
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.frontends.gamma.GammaCompiler
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ElementReferenceExpression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Expression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.NavigationSuffixExpression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RaiseEventAct
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RaisedEventAssertion
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.tests.InjectWithGamma
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
+import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaNameStore
 import hu.bme.mit.semantifyr.frontends.gamma.trace.GammaTraceGenerator
 import hu.bme.mit.semantifyr.frontends.gamma.trace.GammaTraceSerializer
 import hu.bme.mit.semantifyr.verifier.witness.CallTrace
+import hu.bme.mit.semantifyr.verifier.witness.TraceEntry
 import hu.bme.mit.semantifyr.verifier.witness.WitnessState
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
+import org.eclipse.xtext.util.SimpleAttributeResolver
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
@@ -84,6 +94,79 @@ class GammaReferenceTraceTest {
         assertThat(serializer.serialize(generated, SaveOptions.newBuilder().format().options)).isEqualTo(generatedText)
     }
 
+    @Test
+    fun `the called transition decides whether a traced raise is an act or an assertion`() {
+        val (verificationCase, nameStore) = compileReferenceCase()
+        val callTrace = referenceCallTrace().withCalledTransition(RAISE_INPUT_EVENT, SET_OUTPUT_EVENT)
+
+        val generated = gammaTraceGenerator.generate(verificationCase, callTrace, referenceWitnessState(), nameStore)
+
+        val lastStep = generated.traces.single().steps.last()
+        assertThat(lastStep.acts).noneMatch {
+            it is RaiseEventAct
+        }
+        assertThat(
+            lastStep.asserts.filterIsInstance<RaisedEventAssertion>().map {
+                names(it.event)
+            },
+        ).contains(listOf("system", "controller", "control", "toggle"))
+    }
+
+    @Test
+    fun `a traced port call that raises no event is rejected`() {
+        val (verificationCase, nameStore) = compileReferenceCase()
+        val callTrace = referenceCallTrace().withCalledTransition(RAISE_INPUT_EVENT, "semantifyr::gamma::ports::Port::setInputEvent")
+
+        assertThatThrownBy {
+            gammaTraceGenerator.generate(verificationCase, callTrace, referenceWitnessState(), nameStore)
+        }.hasMessageContaining("is not an event raise")
+    }
+
+    private fun compileReferenceCase(): Pair<VerificationCaseDeclaration, GammaNameStore> {
+        val crossroads = read(CROSSROADS).single()
+        val nameStore = gammaCompiler.compile(crossroads, temporaryDirectory.resolve("model.oxsts"))
+        val verificationCase = crossroads.verificationCases.single {
+            it.name == "ACanBeGreen"
+        }
+        return verificationCase to nameStore
+    }
+
+    private fun referenceCallTrace(): CallTrace {
+        return Json.decodeFromString<CallTrace>(REFERENCE_TRACE_JSON.readText())
+    }
+
+    private fun referenceWitnessState(): WitnessState {
+        return Json.decodeFromString<WitnessState>(REFERENCE_WITNESS_JSON.readText())
+    }
+
+    private fun CallTrace.withCalledTransition(from: String, to: String): CallTrace {
+        fun TraceEntry.replaced(): TraceEntry {
+            return copy(
+                calledTransition = calledTransition.takeUnless { it == from } ?: to,
+                innerTraces = innerTraces?.map {
+                    it.replaced()
+                },
+            )
+        }
+        return copy(
+            steps = steps.map { step ->
+                step.copy(
+                    traces = step.traces.map {
+                        it.replaced()
+                    },
+                )
+            },
+        )
+    }
+
+    private fun names(path: Expression): List<String> {
+        return when (path) {
+            is ElementReferenceExpression -> listOf(SimpleAttributeResolver.NAME_RESOLVER.apply(path.element))
+            is NavigationSuffixExpression -> names(path.primary) + SimpleAttributeResolver.NAME_RESOLVER.apply(path.member)
+            else -> error("Unknown path: $path")
+        }
+    }
+
     private fun read(vararg paths: Path): List<GammaModelPackage> {
         return gammaReader.readGammaFiles(
             paths.map {
@@ -98,5 +181,7 @@ class GammaReferenceTraceTest {
         private val REFERENCE_TRACE = PAIR.resolve("crossroads-ACanBeGreen.trace.gamma")
         private val REFERENCE_TRACE_JSON = PAIR.resolve("crossroads-ACanBeGreen.trace.json")
         private val REFERENCE_WITNESS_JSON = PAIR.resolve("crossroads-ACanBeGreen.witness.json")
+        private const val RAISE_INPUT_EVENT = "semantifyr::gamma::ports::Port::raiseInputEvent"
+        private const val SET_OUTPUT_EVENT = "semantifyr::gamma::ports::Port::setOutputEvent"
     }
 }
