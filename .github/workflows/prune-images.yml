@@ -1,0 +1,31 @@
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+name: Prune Images
+on:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+permissions: {}
+jobs:
+  prune:
+    name: Prune Live Snapshots
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Delete dev tags older than 90 days, keeping the newest 10
+        env:
+          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          ARMED: ${{ vars.PRUNE_IMAGES_ARMED == 'true' }}
+        run: |
+          image=$(sed -n 's/^liveImage=//p' gradle.properties)
+          if [ "$ARMED" = true ]; then
+            .github/scripts/prune-images.sh "$image"
+          else
+            .github/scripts/prune-images.sh --dry-run "$image"
+          fi
