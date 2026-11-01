@@ -65,7 +65,7 @@ The repository is organized under `subprojects/`:
 | Live editor | `subprojects/semantifyr-live/` | The browser-based editor frontend and backend |
 | Website | `subprojects/website/` | This documentation site |
 
-[SysML v2 traces](sysml-trace.md) describes the form of a SysML v2 counterexample written as a SysML v2 model.
+[SysML v2 traces](sysml-trace.md) describes the form of a SysML v2 counterexample written as a SysML v2 model, and [Gamma traces](gamma-trace.md) the form of a Gamma witness written as a Gamma execution trace.
 
 ## Contributing a change
 
