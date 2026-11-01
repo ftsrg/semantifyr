@@ -374,14 +374,12 @@ object Annotation : MetaClass() {
     val arguments by contains(MANY) { Argument }
 }
 
-enum class TransitionKind {
-    TRAN,
-    ENV,
-    INIT,
-    HAVOC,
+enum class TransitionKind(val value: Int) {
+    TRAN(0),
+    INIT(2),
     ;
 
-    companion object : MetaEnum<TransitionKind>(entries)
+    companion object : MetaEnum<TransitionKind>(entries, TransitionKind::value)
 }
 
 object AnnotationContainer : MetaClass(Declaration) {
