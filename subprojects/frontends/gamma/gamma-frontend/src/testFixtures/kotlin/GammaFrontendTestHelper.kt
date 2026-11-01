@@ -162,24 +162,6 @@ class GammaFrontendTestHelper {
         return result
     }
 
-    suspend fun checkConformance(
-        frontend: GammaFrontend,
-        gammaVerificationCase: GammaVerificationCase,
-        validationPortfolio: VerificationPortfolio,
-        expectedVerdict: VerificationVerdict = VerificationVerdict.Passed,
-    ): GammaVerificationResult {
-        val result = checkVerificationCase(frontend, gammaVerificationCase, expectedVerdict)
-        val witness = result.witness ?: return result
-
-        val outcome = frontend.validateWitness(gammaVerificationCase, witness, validationPortfolio)
-        assertThat(outcome.isValid)
-            .describedAs(
-                "Witness for ${gammaVerificationCase.qualifiedName} must re-verify Passed via ${validationPortfolio.id} but got ${outcome.verification.verdict} (${outcome.verification.message ?: "no message"})",
-            )
-            .isTrue()
-        return result
-    }
-
     companion object {
         private val EXAMPLES = listOf("Simple.gamma", "Crossroads.gamma", "Spacecraft.gamma")
 
