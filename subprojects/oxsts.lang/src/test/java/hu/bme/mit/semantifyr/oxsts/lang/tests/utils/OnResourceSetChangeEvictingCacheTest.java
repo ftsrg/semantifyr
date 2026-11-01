@@ -11,6 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache;
+import hu.bme.mit.semantifyr.oxsts.lang.utils.SelfContainedResource;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsFactory;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
@@ -54,11 +55,13 @@ public class OnResourceSetChangeEvictingCacheTest {
             tran { }
             prop { AG true }
             """, library.eResource().getResourceSet());
-        lookUp();
     }
 
     @Test
-    void editOfTheInlinedModelEvictsOnlyItsOwnEntries() {
+    void editOfASelfContainedResourceEvictsOnlyItsOwnEntries() {
+        SelfContainedResource.mark(inlined.eResource());
+        lookUp();
+
         inlined.getVariables().add(OxstsFactory.eINSTANCE.createVariableDeclaration());
         lookUp();
 
@@ -67,7 +70,21 @@ public class OnResourceSetChangeEvictingCacheTest {
     }
 
     @Test
+    void editOfAnUnmarkedResourceEvictsEveryEntry() {
+        lookUp();
+
+        inlined.getVariables().add(OxstsFactory.eINSTANCE.createVariableDeclaration());
+        lookUp();
+
+        assertThat(libraryComputations).hasValue(2);
+        assertThat(inlinedComputations).hasValue(2);
+    }
+
+    @Test
     void editOfAPackageEvictsEveryEntry() {
+        SelfContainedResource.mark(inlined.eResource());
+        lookUp();
+
         library.getDeclarations().add(OxstsFactory.eINSTANCE.createClassDeclaration());
         lookUp();
 
@@ -77,6 +94,9 @@ public class OnResourceSetChangeEvictingCacheTest {
 
     @Test
     void newResourceEvictsEveryEntry() throws Exception {
+        SelfContainedResource.mark(inlined.eResource());
+        lookUp();
+
         packageParseHelper.parse("package other", library.eResource().getResourceSet());
         lookUp();
 

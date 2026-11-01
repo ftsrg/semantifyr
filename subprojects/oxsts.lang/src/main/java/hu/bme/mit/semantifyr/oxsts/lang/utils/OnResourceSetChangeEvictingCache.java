@@ -8,7 +8,6 @@ package hu.bme.mit.semantifyr.oxsts.lang.utils;
 
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,8 +24,7 @@ import org.eclipse.xtext.util.NonRecursiveEContentAdapter;
 import org.eclipse.xtext.util.concurrent.IUnitOfWork;
 
 /**
- * A cache implementation that stores its values in the scope of a resource set. The values will be
- * discarded as soon as the contents of the resource set changes.
+ * A cache implementation that stores its values in the scope of a resource set. The values will be discarded as soon as the contents of the resource set changes, except that a change inside a {@link SelfContainedResource} discards only that resource's values.
  */
 @Singleton
 public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
@@ -177,28 +175,13 @@ public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
         public void notifyChanged(Notification notification) {
             super.notifyChanged(notification);
             if (ignoreNotificationCounter.get() == 0 && isSemanticStateChange(notification)) {
-                var inlinedResource = changedInlinedResource(notification);
-                if (inlinedResource != null) {
-                    values.remove(inlinedResource);
+                if (notification.getNotifier() instanceof EObject object
+                        && SelfContainedResource.isMarked(object.eResource())) {
+                    values.remove(object.eResource());
                 } else {
                     clearValues();
                 }
             }
-        }
-
-        // an inlined model exports no name and nothing imports it, so only its own entries can go stale
-        private static Resource changedInlinedResource(Notification notification) {
-            if (!(notification.getNotifier() instanceof EObject root)) {
-                return null;
-            }
-            var resource = root.eResource();
-            if (resource == null || resource.getContents().isEmpty()) {
-                return null;
-            }
-            if (resource.getContents().getFirst() instanceof InlinedOxsts) {
-                return resource;
-            }
-            return null;
         }
 
         public void clearValues() {
