@@ -82,7 +82,7 @@ class GammaReferenceTraceTest {
         val (_, reference, reparsed) = read(CROSSROADS, REFERENCE_TRACE, generatedTrace)
 
         assertThat(EcoreUtil.equals(reference, reparsed)).isTrue()
-        assertThat(generatedText).isEqualTo(REFERENCE_TRACE.readText().substringAfter("*/").trimStart())
+        assertThat(generatedText).isEqualTo(REFERENCE_TRACE.readText().replace("\r\n", "\n").substringAfter("*/").trimStart())
     }
 
     @Test
