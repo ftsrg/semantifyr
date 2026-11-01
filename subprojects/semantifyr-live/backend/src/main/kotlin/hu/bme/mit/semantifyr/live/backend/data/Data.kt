@@ -36,6 +36,7 @@ data class FlavorResponse(
     val verificationCommand: String,
     val discoveryCommand: String,
     val validateWitnessCommand: String?,
+    val validateWitnessByCase: Boolean,
     val peekCompiledOutput: Boolean,
 ) {
     companion object {
@@ -47,6 +48,7 @@ data class FlavorResponse(
             verificationCommand = flavor.verificationCommand,
             discoveryCommand = flavor.discoveryCommand,
             validateWitnessCommand = flavor.validateWitnessCommand,
+            validateWitnessByCase = flavor.validateWitnessByCase,
             peekCompiledOutput = flavor.peekCompiledOutput,
         )
     }
@@ -63,6 +65,7 @@ data class PortfolioResponse(
 @Serializable
 data class PortfoliosResponse(
     val portfolios: List<PortfolioResponse>,
+    val defaultPortfolio: String,
 )
 
 @Serializable
@@ -107,8 +110,12 @@ data class SessionInfo(
 )
 
 @Serializable
+data class AdminWhoamiResponse(
+    val user: String,
+)
+
+@Serializable
 data class AdminConfigResponse(
-    val development: Boolean,
     val server: AdminServerConfigResponse,
     val sessionManager: AdminSessionManagerConfigResponse,
     val verification: AdminVerificationConfigResponse,
@@ -120,11 +127,9 @@ data class AdminServerConfigResponse(
     val pingPeriod: Duration,
     val pingTimeout: Duration,
     val webRootDirectory: String?,
-    val adminPasswordSet: Boolean,
     val wsHandshakesPerPeriod: Int,
     val wsHandshakeRatePeriod: Duration,
     val maxWsFrameSize: Long,
-    val httpsOnlyCookies: Boolean,
 )
 
 @Serializable

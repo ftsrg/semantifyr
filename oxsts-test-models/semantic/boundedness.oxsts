@@ -1,0 +1,209 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::lang::boundedness
+
+// Spin and Uppaal compute in 32-bit integers that wrap: Spin needs a static bound within 32 bits on every integer the property depends on; Uppaal declares an integer without one with a 31-bit range and stops when a value leaves it; Theta and nuXmv decide every case here.
+
+// --- unbounded counters: Spin reports NotSupported before dispatch, Uppaal decides or stops at its range ---
+
+@VerificationCase
+@Tag("expect-pass")
+@Tag("engine-limit:spin")
+class UnboundedCounterReach {
+    var x: int := 0
+
+    redefine tran {
+        x := x + 1
+    }
+
+    prop {
+        return EF x == 5
+    }
+}
+
+// Uppaal counts up to its 31-bit range before it stops, which takes longer than the suite's timeout.
+@VerificationCase
+@Tag("expect-pass")
+@Tag("engine-limit:spin")
+class UnboundedCounterBound {
+    var x: int := 0
+
+    redefine tran {
+        x := x + 1
+    }
+
+    prop {
+        return AG x >= 0
+    }
+}
+
+// Spin's 32-bit int wraps after 31 doublings, which made Spin report this Failed; Uppaal stops when a doubling leaves its 31-bit range.
+@VerificationCase
+@Tag("expect-pass")
+@Tag("engine-limit:spin,uppaal")
+class DoublingStaysPositive {
+    var x: int := 1
+
+    redefine tran {
+        x := x * 2
+    }
+
+    prop {
+        return AG x > 0
+    }
+}
+
+// Spin's wrapped value made this reachable and Spin report it Passed; Uppaal stops when a doubling leaves its 31-bit range.
+@VerificationCase
+@Tag("expect-fail")
+@Tag("engine-limit:spin,uppaal")
+class DoublingReachesNegative {
+    var x: int := 1
+
+    redefine tran {
+        x := x * 2
+    }
+
+    prop {
+        return EF x < 0
+    }
+}
+
+// An unbounded counter that only decides whether an assumption blocks is still in the cone of influence.
+@VerificationCase
+@Tag("expect-fail")
+@Tag("engine-limit:spin")
+class UnboundedGuardAroundAssumption {
+    var x: int := 0
+    var y: int := 0
+
+    redefine tran {
+        choice {
+            x := x + 1
+        } or {
+            if (x <= 5) {
+                assume(false)
+            }
+            y := 1
+        }
+    }
+
+    prop {
+        return AG y == 0
+    }
+}
+
+// --- bounded integers: every engine decides ---
+
+@VerificationCase
+@Tag("expect-pass")
+class SaturatingCounterReach {
+    var x: int := 0
+
+    redefine tran {
+        if (x < 10) {
+            x := x + 1
+        }
+    }
+
+    prop {
+        return EF x == 10
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class SaturatingCounterBound {
+    var x: int := 0
+
+    redefine tran {
+        if (x < 10) {
+            x := x + 1
+        }
+    }
+
+    prop {
+        return AG x <= 10
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class TimerCountdownBound {
+    var t: int := 0
+
+    redefine init {
+        t := 3
+    }
+
+    redefine tran {
+        choice {
+            if (t > 0) {
+                t := t - 1
+            }
+        } or {
+            assume(t == 0)
+            t := 3
+        }
+    }
+
+    prop {
+        return AG (t >= 0 && t <= 3)
+    }
+}
+
+// Beyond Uppaal's default 16-bit int, which Uppaal decides through the declared range.
+@VerificationCase
+@Tag("expect-pass")
+class BeyondSixteenBitsReach {
+    var x: int := 0
+
+    redefine tran {
+        if (x < 100000) {
+            x := x + 25000
+        }
+    }
+
+    prop {
+        return EF x == 100000
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class BeyondSixteenBitsBound {
+    var x: int := 0
+
+    redefine tran {
+        if (x < 100000) {
+            x := x + 25000
+        }
+    }
+
+    prop {
+        return AG x <= 100000
+    }
+}
+
+// An unbounded counter the property does not depend on does not limit any engine.
+@VerificationCase
+@Tag("expect-pass")
+class UnboundedCounterOutsideCone {
+    var steps: int := 0
+    var x: int := 0
+
+    redefine tran {
+        steps := steps + 1
+        if (x < 3) {
+            x := x + 1
+        }
+    }
+
+    prop {
+        return AG x <= 3
+    }
+}

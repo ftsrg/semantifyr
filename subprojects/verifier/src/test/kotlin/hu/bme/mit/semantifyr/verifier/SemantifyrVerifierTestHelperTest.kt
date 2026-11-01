@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
+import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.io.TempDir
 import org.opentest4j.AssertionFailedError
 import org.opentest4j.TestAbortedException
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.Path
 
 private val OtherExecutorKey = ExecutorKey("other") {
@@ -92,32 +94,16 @@ class SemantifyrVerifierTestHelperTest {
     }
 
     @Test
-    suspend fun `Inconclusive on an engine-limited engine passes`() {
-        assertThat(check(FixedPortfolio(VerificationVerdict.Inconclusive), requiredFake, "engine-limit:other,fake")).isNull()
+    suspend fun `an engine-limited case passes when its engines report NotSupported`() {
+        val portfolio = FixedPortfolio(VerificationVerdict.NotSupported)
+        assertThat(check(portfolio, requiredFake, "engine-limit:other,fake")).isNull()
+        assertThat(portfolio.invocations.get()).isOne()
     }
 
     @Test
-    suspend fun `NotSupported on an engine-limited engine passes`() {
-        assertThat(check(FixedPortfolio(VerificationVerdict.NotSupported), requiredFake, "engine-limit:fake")).isNull()
-    }
-
-    @Test
-    suspend fun `wrong decisive verdict on an engine-limited engine fails`() {
-        assertThat(check(FixedPortfolio(VerificationVerdict.Failed), requiredFake, "engine-limit:fake"))
+    suspend fun `an engine-limited case that its engines decide fails as a stale tag`() {
+        assertThat(check(FixedPortfolio(VerificationVerdict.Passed), requiredFake, "engine-limit:other,fake"))
             .isInstanceOf(AssertionFailedError::class.java)
-    }
-
-    @Test
-    suspend fun `correct decisive verdict on an engine-limited engine passes`() {
-        assertThat(check(FixedPortfolio(VerificationVerdict.Passed), requiredFake, "engine-limit:fake")).isNull()
-    }
-
-    @Test
-    suspend fun `Errored and Timeout on an engine-limited engine keep their outcome`() {
-        assertThat(check(FixedPortfolio(VerificationVerdict.Errored), requiredFake, "engine-limit:fake"))
-            .isInstanceOf(AssertionFailedError::class.java)
-        assertThat(check(FixedPortfolio(VerificationVerdict.Timeout), requiredFake, "engine-limit:fake"))
-            .isInstanceOf(TestAbortedException::class.java)
     }
 
     @Test
@@ -161,6 +147,9 @@ class SemantifyrVerifierTestHelperTest {
         override val id: String = "fixed"
         override val displayName: String = id
         override val description: String = "test-only"
+        override val legs: List<PortfolioLeg> = emptyList()
+
+        val invocations = AtomicInteger()
 
         override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
             return if (available) {
@@ -177,6 +166,7 @@ class SemantifyrVerifierTestHelperTest {
             environment: ExecutionEnvironment,
             progress: ProgressContext,
         ): BackendVerificationResult {
+            invocations.incrementAndGet()
             return BackendVerificationResult(verdict = verdict, metadata = fakeMetadata(FakeExecutorKey.name))
         }
     }

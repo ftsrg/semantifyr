@@ -45,7 +45,7 @@ This runs the unit tests and the verification smoke tests, and assembles every a
 ./gradlew nightlyTest       # long-running cases and witness re-checks on all backends
 ```
 
-Pass `-Ptests.requiredBackends=theta,spin` to fail instead of skip when a listed backend is missing. A listed backend that returns Inconclusive or Not supported also fails the case, unless the case names it in `@Tag("engine-limit:...")`; a Timeout skips.
+Pass `-Ptests.requiredBackends=theta,spin` to fail instead of skip when a listed backend is missing. A listed backend that returns Inconclusive or Not supported also fails the case; a Timeout skips. A case whose `@Tag("engine-limit:...")` names every engine of the portfolio must come back Not supported; any other verdict fails it.
 
 ## Where to start
 
@@ -64,6 +64,22 @@ The repository is organized under `subprojects/`:
 | VS Code extension | `subprojects/semantifyr-vscode/` | Extension packaging and launch configs |
 | Live editor | `subprojects/semantifyr-live/` | The browser-based editor frontend and backend |
 | Website | `subprojects/website/` | This documentation site |
+
+[SysML v2 traces](sysml-trace.md) describes the form of a SysML v2 counterexample written as a SysML v2 model, and [Gamma traces](gamma-trace.md) the form of a Gamma witness written as a Gamma execution trace.
+
+## Load testing the live editor
+
+Before a class uses a live instance, simulate the class against it from a checkout, through npm (Node.js 22.18 or later) or Gradle:
+
+```bash
+npm ci
+npm run load-test -w @ftsrg/semantifyr-live-frontend -- --students 30 --ramp 60
+./gradlew :semantifyr-live-frontend:loadTest -PloadTest.args="--students 30 --ramp 60"
+```
+
+Each student opens a tutorial step model over the language server socket, verifies its cases, edits the model, verifies again and disconnects. `--url` selects the instance (staging by default) and `--help` lists the other options. The run stops when `/api/health` fails three times in a row, writes its measurements as JSON to `subprojects/semantifyr-live/frontend/build/load-test/`, and exits non-zero on an unexpected verdict, an error, or a p95 verification time above `--max-verify-p95`. Staging shares its machine with production: run a class-sized test there once, not in a loop.
+
+The Load test workflow runs it every night at 23:30 UTC from a GitHub runner against staging with 10 students joining over 30 s, fails on an unexpected verdict, an error, an unreachable instance or a p95 above 120 s, and keeps the JSON report as an artifact for 30 days. Dispatching the workflow by hand takes `url`, `students` and `ramp` for a run against production or a larger class.
 
 ## Contributing a change
 

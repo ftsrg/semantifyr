@@ -25,6 +25,7 @@ interface Props {
   caseInfo: VerificationCaseSpecification
   trace: VerificationTrace
   validation: WitnessValidationStatus | undefined
+  validationMessage?: string | undefined
   validating: boolean
   canRevalidate: boolean
   onRevalidate: () => void
@@ -125,6 +126,7 @@ export default function WitnessTab({
   caseInfo,
   trace,
   validation,
+  validationMessage,
   validating,
   canRevalidate,
   onRevalidate,
@@ -159,6 +161,7 @@ export default function WitnessTab({
           )}
           <ValidationChip
             status={validation}
+            message={validationMessage}
             busy={validating}
             disabled={!canRevalidate}
             onRevalidate={onRevalidate}

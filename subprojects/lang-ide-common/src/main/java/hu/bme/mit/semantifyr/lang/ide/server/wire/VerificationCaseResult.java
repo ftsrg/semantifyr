@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.lang.ide.server.wire;
 
-import hu.bme.mit.semantifyr.backend.VerificationVerdict;
 import hu.bme.mit.semantifyr.verifier.VerificationResultDto;
 
 public record VerificationCaseResult(
@@ -33,22 +32,11 @@ public record VerificationCaseResult(
     private static VerificationCaseResult build(
             VerificationResultDto dto, String portfolioId, VerificationTrace trace) {
         return new VerificationCaseResult(
-                statusOf(dto.getVerdict()),
+                VerificationStatus.of(dto.getVerdict()),
                 dto.getMessage(),
                 dto.getMetadata().getBackendId(),
                 portfolioId,
                 VerificationMetrics.fromDto(dto.getMetrics()),
                 trace);
-    }
-
-    private static String statusOf(VerificationVerdict verdict) {
-        return switch (verdict) {
-            case Passed -> VerificationStatus.PASSED;
-            case Failed -> VerificationStatus.FAILED;
-            case Inconclusive -> VerificationStatus.INCONCLUSIVE;
-            case Timeout -> VerificationStatus.TIMEOUT;
-            case NotSupported -> VerificationStatus.NOT_SUPPORTED;
-            case Errored -> VerificationStatus.ERRORED;
-        };
     }
 }

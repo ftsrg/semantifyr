@@ -15,18 +15,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.log4j.Logger;
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.common.util.WrappedException;
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.xtext.util.IResourceScopeCache;
 import org.eclipse.xtext.util.NonRecursiveEContentAdapter;
-import org.eclipse.xtext.util.Pair;
-import org.eclipse.xtext.util.Tuples;
 import org.eclipse.xtext.util.concurrent.IUnitOfWork;
 
 /**
- * A cache implementation that stores its values in the scope of a resource set. The values will be
- * discarded as soon as the contents of the resource set changes.
+ * A cache implementation that stores its values in the scope of a resource set. The values will be discarded as soon as the contents of the resource set changes, except that a change inside a {@link SelfContainedResource} discards only that resource's values.
  */
 @Singleton
 public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
@@ -110,7 +108,7 @@ public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
 
         private static final Object EMPTY_VALUE = new Object();
 
-        private final Map<Pair<Resource, Object>, Object> values;
+        private final Map<Resource, Map<Object, Object>> values;
 
         private final AtomicInteger ignoreNotificationCounter = new AtomicInteger(0);
 
@@ -129,13 +127,10 @@ public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
             values = new ConcurrentHashMap<>(initialCapacity);
         }
 
-        protected Pair<Resource, Object> getRealKey(Resource resource, Object key) {
-            return Tuples.create(resource, key);
-        }
-
         public void set(Resource resource, Object key, Object value) {
             empty = false;
-            values.put(getRealKey(resource, key), Objects.requireNonNullElse(value, EMPTY_VALUE));
+            values.computeIfAbsent(resource, ignored -> new ConcurrentHashMap<>())
+                    .put(key, Objects.requireNonNullElse(value, EMPTY_VALUE));
         }
 
         protected void cacheMiss() {
@@ -160,8 +155,12 @@ public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
             if (empty) {
                 return null;
             }
+            var resourceValues = values.get(resource);
+            if (resourceValues == null) {
+                return null;
+            }
             //noinspection unchecked
-            return (T) this.values.get(getRealKey(resource, key));
+            return (T) resourceValues.get(key);
         }
 
         public <T> T get(Resource resource, Object key) {
@@ -176,7 +175,12 @@ public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
         public void notifyChanged(Notification notification) {
             super.notifyChanged(notification);
             if (ignoreNotificationCounter.get() == 0 && isSemanticStateChange(notification)) {
-                clearValues();
+                if (notification.getNotifier() instanceof EObject object
+                        && SelfContainedResource.isMarked(object.eResource())) {
+                    values.remove(object.eResource());
+                } else {
+                    clearValues();
+                }
             }
         }
 
@@ -194,14 +198,14 @@ public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
                 return false;
             }
             if (notification.getNotifier() instanceof Resource) {
-                switch (notification.getFeatureID(Resource.class)) {
-                    case Resource.RESOURCE__IS_MODIFIED:
-                    case Resource.RESOURCE__IS_TRACKING_MODIFICATION:
-                    case Resource.RESOURCE__TIME_STAMP:
-                    case Resource.RESOURCE__ERRORS:
-                    case Resource.RESOURCE__WARNINGS:
-                        return false;
-                }
+                return switch (notification.getFeatureID(Resource.class)) {
+                    case Resource.RESOURCE__IS_MODIFIED,
+                            Resource.RESOURCE__IS_TRACKING_MODIFICATION,
+                            Resource.RESOURCE__TIME_STAMP,
+                            Resource.RESOURCE__ERRORS,
+                            Resource.RESOURCE__WARNINGS -> false;
+                    default -> true;
+                };
             }
             return true;
         }

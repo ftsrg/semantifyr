@@ -18,6 +18,7 @@ import hu.bme.mit.semantifyr.live.backend.data.HealthResponse
 import hu.bme.mit.semantifyr.live.backend.data.InfoResponse
 import hu.bme.mit.semantifyr.live.backend.data.PortfoliosResponse
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionManager
+import hu.bme.mit.semantifyr.portfolios.Portfolios
 import io.ktor.server.application.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.response.*
@@ -31,14 +32,8 @@ class ApiRoutesHandler @Inject constructor(
 
     fun Application.configure() {
         routing {
-            route("/api/health") {
-                install(CORS) {
-                    anyHost()
-                    anyMethod()
-                }
-                get {
-                    call.respond(HealthResponse(status = "ok"))
-                }
+            crossOriginGet("/api/health") {
+                call.respond(HealthResponse(status = "ok"))
             }
             get("/api/info") {
                 call.respond(
@@ -53,7 +48,7 @@ class ApiRoutesHandler @Inject constructor(
                     ),
                 )
             }
-            get("/api/flavors") {
+            crossOriginGet("/api/flavors") {
                 call.respond(
                     FlavorsResponse(
                         flavors = FlavorRegistry.flavors.map {
@@ -62,9 +57,23 @@ class ApiRoutesHandler @Inject constructor(
                     ),
                 )
             }
-            get("/api/portfolios") {
-                call.respond(PortfoliosResponse(portfolios = PortfolioRegistry.snapshot()))
+            crossOriginGet("/api/portfolios") {
+                call.respond(
+                    PortfoliosResponse(
+                        portfolios = PortfolioRegistry.snapshot(),
+                        defaultPortfolio = Portfolios.Default.id,
+                    ),
+                )
             }
+        }
+    }
+
+    private fun Route.crossOriginGet(path: String, body: RoutingHandler) {
+        route(path) {
+            install(CORS) {
+                anyHost()
+            }
+            get(body)
         }
     }
 }

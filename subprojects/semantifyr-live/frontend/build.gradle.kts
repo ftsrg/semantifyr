@@ -7,6 +7,7 @@
 import com.github.gradle.node.npm.task.NpmTask
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
+import hu.bme.mit.semantifyr.gradle.conventions.sysmlCorpusModels
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
@@ -51,13 +52,17 @@ val cloneGammaTestModels = tasks.register<Sync>("cloneGammaTestModels") {
     into(importedSnippetsDir.dir("gamma"))
 }
 
+val sysmlCorpusDir = rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/examples")
+
 val cloneSysmlv2TestModels = tasks.register<Sync>("cloneSysmlv2TestModels") {
-    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/examples")) {
+    from(sysmlCorpusDir) {
+        include("manifest.json")
         include(
-            "compressedspacecraft.sysml",
-            "crossroads.sysml",
-            "door_access.sysml",
-            "orion_protocol.sysml",
+            sysmlCorpusModels(sysmlCorpusDir).filter {
+                it.isExample
+            }.map {
+                it.file
+            },
         )
     }
     from(sysmlCompiledExamplesFiles) {
@@ -170,6 +175,21 @@ tasks.register<NpmTask>("runDev") {
     configureSharedInputs()
 
     npmCommand.set(listOf("run", "dev"))
+}
+
+tasks.register<NpmTask>("loadTest") {
+    group = "verification"
+
+    inputs.files(tasks.npmInstall)
+
+    npmCommand.set(listOf("run", "load-test", "--"))
+    args.set(
+        providers.gradleProperty("loadTest.args").map { value ->
+            value.split(" ").filter {
+                it.isNotBlank()
+            }
+        }.orElse(emptyList()),
+    )
 }
 
 tasks {

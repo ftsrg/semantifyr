@@ -74,9 +74,19 @@ jobs:
       - name: Gradle build
         shell: bash
         run: ./gradlew build --continue -Ptests.requiredBackends=$REQUIRED_BACKENDS -Pwebsite.apiDocs=$WEBSITE_API_DOCS
+      - name: Read the VS Code version of the integration test
+        id: vscode
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: echo "version=$(jq -r '.engines.vscode | ltrimstr("^")' subprojects/semantifyr-vscode/package.json)" >> "$GITHUB_OUTPUT"
+      - name: Cache the VS Code download
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        uses: actions/cache@v6
+        with:
+          path: subprojects/semantifyr-vscode/.vscode-test/vscode-*
+          key: vscode-${{ runner.os }}-${{ steps.vscode.outputs.version }}
       - name: Run integration tests
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: ./gradlew integrationTest --continue -Ptests.requiredBackends=$REQUIRED_BACKENDS
+        run: ./gradlew integrationTest --continue -Ptests.requiredBackends=$REQUIRED_BACKENDS -Ptests.requireDocker=true
       - name: Merge coverage reports
         if: ${{ matrix.os == 'ubuntu-latest' }}
         shell: bash
@@ -199,14 +209,14 @@ jobs:
         env:
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          docker run -d --name live -p 8080:8080 --cap-drop ALL --security-opt no-new-privileges:true \
-            -e SEMANTIFYR_LIVE_ADMIN_PASSWORD=smoke "$IMAGE:$TAG"
+          docker run -d --name live -p 8080:8080 --cap-drop ALL --security-opt no-new-privileges:true "$IMAGE:$TAG"
           for _ in $(seq 60); do
             curl -fsS http://localhost:8080/api/health > /dev/null && break
             sleep 3
           done
           curl -fsS http://localhost:8080/api/health
           curl -fsS http://localhost:8080/ > /dev/null
+          test "$(curl -s -o /dev/null -w '%{http_code}' -H 'X-Auth-Request-User: smoke' http://localhost:8080/api/admin/status)" = 403
           docker exec live theta-xsts-cli --version
       - name: Show the container log
         if: ${{ failure() }}

@@ -1,0 +1,313 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package example::trafficlight::advanced::step5
+
+class State : Statechart {
+    container parent: Statechart opposite states
+    refers initial: State[0..1]
+
+    redefine prop isActive(): bool {
+        return parent.activeState == self && parent.isActive()
+    }
+
+    tran entry() {
+    }
+
+    tran activate() {
+        parent.activeState := self
+        inline entry()
+        inline if (initial != nothing) {
+            inline initial.activate()
+        }
+    }
+}
+
+class Event {
+    container parent: Statechart opposite events
+
+    prop isPresent(): bool {
+        return parent.event == self
+    }
+}
+
+class Trigger {
+    prop isTriggered(): bool {
+        return true
+    }
+}
+
+class EventTrigger : Trigger {
+    refers event: Event
+
+    redefine prop isTriggered(): bool {
+        return event.isPresent()
+    }
+}
+
+class Transition {
+    refers from: State
+    refers to: State
+    contains trigger: Trigger
+
+    prop isEnabled(): bool {
+        return from.isActive() && trigger.isTriggered()
+    }
+
+    redefine tran {
+        assume (isEnabled())
+        inline to.activate()
+    }
+}
+
+class Statechart {
+    contains states: State[0..*] opposite parent
+    contains transitions: Transition[0..*]
+    contains events: Event[0..*] opposite parent
+
+    @Control
+    var activeState: states[0..1] := nothing
+
+    var event: events[0..1] := nothing
+
+    prop isActive(): bool {
+        return true
+    }
+
+    redefine tran {
+        inline for choice (transition in transitions) {
+            inline transition.main()
+        }
+    }
+}
+
+enum LightColor {
+    Off,
+    Red,
+    Yellow,
+    Green
+}
+
+class Lamp {
+    var color: LightColor := LightColor::Off
+}
+
+class LampState : State {
+    refers output: Lamp
+    refers color: LightColor
+
+    redefine tran entry() {
+        output.color := color
+    }
+}
+
+class TrafficLight : Statechart {
+    contains lamp: Lamp
+
+    contains pause: Event subsets events
+    contains resume: Event subsets events
+
+    contains operating: State subsets states {
+        contains red: LampState subsets states {
+            redefine refers output: Lamp = lamp
+            redefine refers color: LightColor = LightColor::Red
+        }
+        contains yellow: LampState subsets states {
+            redefine refers output: Lamp = lamp
+            redefine refers color: LightColor = LightColor::Yellow
+        }
+        contains green: LampState subsets states {
+            redefine refers output: Lamp = lamp
+            redefine refers color: LightColor = LightColor::Green
+        }
+
+        redefine refers initial: State[0..1] = red
+    }
+    contains standby: LampState subsets states {
+        redefine refers output: Lamp = lamp
+        redefine refers color: LightColor = LightColor::Yellow
+    }
+
+    contains redToGreen: Transition subsets transitions {
+        redefine refers from: State[1] = operating.red
+        redefine refers to: State[1] = operating.green
+    }
+    contains greenToYellow: Transition subsets transitions {
+        redefine refers from: State[1] = operating.green
+        redefine refers to: State[1] = operating.yellow
+    }
+    contains yellowToRed: Transition subsets transitions {
+        redefine refers from: State[1] = operating.yellow
+        redefine refers to: State[1] = operating.red
+    }
+    contains operatingToStandby: Transition subsets transitions {
+        redefine refers from: State[1] = operating
+        redefine refers to: State[1] = standby
+        redefine contains trigger: EventTrigger {
+            redefine refers event: Event = pause
+        }
+    }
+    contains standbyToOperating: Transition subsets transitions {
+        redefine refers from: State[1] = standby
+        redefine refers to: State[1] = operating
+        redefine contains trigger: EventTrigger {
+            redefine refers event: Event = resume
+        }
+    }
+
+    redefine init {
+        inline operating.activate()
+    }
+}
+
+class Emergency {
+    var active: bool := false
+}
+
+global containment emergency: Emergency[1]
+
+class Intersection {
+    contains north: TrafficLight
+    contains east: TrafficLight
+
+    redefine init {
+        inline north.init()
+        inline east.init()
+    }
+
+    redefine tran {
+        if (emergency.active) {
+            inline north.operating.activate()
+            inline east.operating.activate()
+        } else {
+            choice {
+                assume (!east.operating.green.isActive())
+                inline north.main()
+            } or {
+                assume (!north.operating.green.isActive())
+                inline east.main()
+            }
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class GreenColorIsReachable {
+    contains light: TrafficLight[1]
+
+    redefine init {
+        inline light.init()
+    }
+
+    redefine tran {
+        havoc (light.event)
+        inline light.main()
+    }
+
+    prop {
+        return EF light.operating.green.isActive()
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class IntersectionNeverBothGreen {
+    contains intersection: Intersection
+
+    redefine init {
+        inline intersection.init()
+    }
+
+    redefine tran {
+        havoc (intersection.north.event)
+        havoc (intersection.east.event)
+        inline intersection.main()
+    }
+
+    prop {
+        return AG !(intersection.north.operating.green.isActive() && intersection.east.operating.green.isActive())
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class NeverGreenInStandby {
+    contains light: TrafficLight[1]
+
+    redefine init {
+        inline light.init()
+    }
+
+    redefine tran {
+        havoc (light.event)
+        inline light.main()
+    }
+
+    prop {
+        return AG !(light.standby.isActive() && light.operating.green.isActive())
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class GreenLampOnlyInGreen {
+    contains light: TrafficLight[1]
+
+    redefine init {
+        inline light.init()
+    }
+
+    redefine tran {
+        havoc (light.event)
+        inline light.main()
+    }
+
+    prop {
+        return AG !(light.lamp.color == LightColor::Green && !light.operating.green.isActive())
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class NoStandbyWithoutPause {
+    contains light: TrafficLight[1]
+
+    redefine init {
+        inline light.init()
+    }
+
+    redefine tran {
+        havoc (light.event)
+        assume (light.event != light.pause)
+        inline light.main()
+    }
+
+    prop {
+        return AG !light.standby.isActive()
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class EmergencyStopsTraffic {
+    contains intersection: Intersection
+
+    redefine init {
+        inline intersection.init()
+    }
+
+    redefine tran {
+        havoc (emergency.active)
+        havoc (intersection.north.event)
+        havoc (intersection.east.event)
+        inline intersection.main()
+    }
+
+    prop {
+        return AG (!emergency.active || (intersection.north.lamp.color == LightColor::Red && intersection.east.lamp.color == LightColor::Red))
+    }
+}

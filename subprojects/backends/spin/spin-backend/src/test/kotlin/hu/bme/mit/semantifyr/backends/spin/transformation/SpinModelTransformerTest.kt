@@ -201,6 +201,21 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
     }
 
     @Test
+    suspend fun `a choice option starting with an if starts with skip so the if's else does not guard the option`() {
+        val lines = promelaLines(
+            """
+                var x : int := 0
+                init { }
+                tran { choice { if (x < 3) { x := 1 } } or { if (x > 5) { x := 2 } } }
+                prop { AG true }
+            """,
+        )
+
+        assertThat(lines).containsSequence("if", ":: atomic {", "skip;", "if", ":: ((x < 3)) ->")
+        assertThat(lines).containsSequence(":: atomic {", "skip;", "if", ":: ((x > 5)) ->")
+    }
+
+    @Test
     suspend fun `an if with an else renders both guarded options`() {
         val lines = promelaLines(
             """
@@ -486,7 +501,7 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
                 """
                     var x : int := 0
                     init { }
-                    tran { for (i in 0 .. 2) { x := x + i } }
+                    tran { for (i in 0..2) { x := x + i } }
                     prop { AG true }
                 """,
             )

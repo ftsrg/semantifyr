@@ -18,11 +18,13 @@ import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceTree
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.scopes.withCompilationScopeBlocking
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.InlinedOxstsParseHelper
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import java.nio.file.Files
 
 @InjectWithOxsts
@@ -92,6 +94,23 @@ abstract class AnalysisTestBase {
     protected fun runConeOfInfluence(source: String): Pair<InlinedOxsts, ConeOfInfluenceInfo> {
         return withCompiled(source) { (inlined, evaluator) ->
             inlined to ConeOfInfluenceComputation(inlined, evaluator).compute()
+        }
+    }
+
+    protected fun runVariableBounds(
+        source: String,
+        havocRange: (VariableDeclaration) -> IntegerRange = { IntegerRange.UNBOUNDED },
+        limit: (VariableDeclaration) -> IntegerRange = { IntegerRange.UNBOUNDED },
+    ): Pair<InlinedOxsts, VariableBoundsInfo> {
+        return withCompiled(source) { (inlined, evaluator, child) ->
+            val result = VariableBoundsComputation(
+                inlined,
+                evaluator,
+                child.getInstance(BuiltinSymbolResolver::class.java),
+                havocRange,
+                limit,
+            ).compute()
+            inlined to result
         }
     }
 

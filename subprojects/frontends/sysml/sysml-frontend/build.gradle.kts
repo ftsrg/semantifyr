@@ -23,6 +23,7 @@ dependencies {
 
     testFixturesApi(project(":portfolios"))
     testFixturesApi(testFixtures(project(":verifier")))
+    testFixturesImplementation(project(":logging"))
     testFixturesImplementation(libs.kotlinx.serialization.json)
 }
 
@@ -43,4 +44,5 @@ tasks.processResources {
 tasks.withType<Test>().configureEach {
     inputs.files(syncSysmlTestModels)
     inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir(layout.projectDirectory.dir("../models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
 }

@@ -75,12 +75,30 @@ class ThetaBackendReplayTest {
 
     @Test
     suspend fun `a violated invariant fails with a witness through the violating states`() {
-        val result = verify("CounterExceedsBound", models.parse(BackendTestModels.COUNTER_EXCEEDS_BOUND))
+        val result = verify("CounterExceedsBound", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
         val states = listOfNotNull(witness.initializedState) + witness.transitionStates
         assertThat(states.map { it.valuesByName()["x"] }).containsExactly(0, 1, 2)
+    }
+
+    @Test
+    suspend fun `witness values keep the declaration order`() {
+        val result = verify("OneOfSeveralChanges", models.parse(BackendTestModels.SATURATING_ONE_OF_SEVERAL_CHANGES))
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        val witness = result.inlinedWitness!!
+        val states = listOfNotNull(witness.initializedState) + witness.transitionStates
+        assertThat(states.map { state -> state.values.map { it.variable.name } }).containsOnly(listOf("y", "x", "b"))
+    }
+
+    @Test
+    suspend fun `a model without state variables fails with an empty witness`() {
+        val result = verify("StatelessViolation", models.parse(BackendTestModels.STATELESS_VIOLATION))
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        assertThat(result.inlinedWitness!!.initialState.values).isEmpty()
     }
 
     @Test

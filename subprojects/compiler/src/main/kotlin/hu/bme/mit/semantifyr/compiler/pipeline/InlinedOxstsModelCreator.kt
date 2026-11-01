@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.RedefinitionAwareRefer
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
+import hu.bme.mit.semantifyr.oxsts.lang.utils.SelfContainedResource
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -32,7 +33,10 @@ class InlinedOxstsModelCreator @Inject constructor(
         val inlinedOxsts = OxstsFactory.createInlinedOxsts()
         inlinedOxsts.classDeclaration = classDeclaration
 
-        resourceSet.createResource(uri).contents += inlinedOxsts
+        val resource = resourceSet.createResource(uri)
+        // an inlined model exports no name and nothing imports it, so only its own cache entries can go stale
+        SelfContainedResource.mark(resource)
+        resource.contents += inlinedOxsts
 
         initializeInlinedOxstsModel(inlinedOxsts)
 

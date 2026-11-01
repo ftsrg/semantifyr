@@ -104,6 +104,35 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
     }
 
     @Test
+    fun `guard of an if enclosing an assumption is relevant`() {
+        val (inlined, result) = runConeOfInfluence(
+            """
+                inlined oxsts of semantifyr::Anything
+                var x : int := 0
+                var y : int := 0
+                init { }
+                tran {
+                    choice {
+                        x := x + 1
+                    } or {
+                        if (x <= 5) {
+                            assume(false)
+                        }
+                        y := 1
+                    }
+                }
+                prop { AG (y == 0) }
+            """,
+        )
+
+        val x = inlined.varNamed("x")
+        assertThat(result.isRelevant(x))
+            .`as`("'x' decides whether the assumption blocks the write of 'y'")
+            .isTrue
+        assertThat(result.isRelevant(inlined.assignmentsTo(x).single())).isTrue
+    }
+
+    @Test
     fun `transitive data dependence pulls the feeder variable into the cone`() {
         val (inlined, result) = runConeOfInfluence(
             """
@@ -257,7 +286,7 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                 var sum : int := 0
                 init { }
                 tran {
-                    for (x in 0 .. n) {
+                    for (x in 0..n) {
                         sum := sum + x
                     }
                 }
@@ -463,6 +492,54 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         assertThat(result.isRelevant(siblingGuard))
             .`as`("under atomic commit, sibling assume variables are control deps")
             .isTrue
+    }
+
+    @Test
+    fun `a local initializer's reads are in the cone of whatever reads the local`() {
+        val (inlined, result) = runConeOfInfluence(
+            """
+                inlined oxsts of semantifyr::Anything
+                var a : int := 0
+                var seen : int := 0
+                init { }
+                tran {
+                    a := 1 - a
+                    var s : int := a
+                    seen := s
+                }
+                prop { EF (seen == 1) }
+            """,
+        )
+
+        val a = inlined.varNamed("a")
+        assertThat(result.isRelevant(a))
+            .`as`("'a' feeds the local 's' through its initializer, and 's' feeds the property")
+            .isTrue
+        assertThat(result.isRelevant(inlined.assignmentsTo(a).single())).isTrue
+    }
+
+    @Test
+    fun `a local initializer's reads stay out of the cone when nothing relevant reads the local`() {
+        val (inlined, result) = runConeOfInfluence(
+            """
+                inlined oxsts of semantifyr::Anything
+                var a : int := 0
+                var seen : int := 0
+                var other : int := 0
+                init { }
+                tran {
+                    a := 1 - a
+                    var s : int := a
+                    other := s
+                    seen := 1
+                }
+                prop { EF (seen == 1) }
+            """,
+        )
+
+        val a = inlined.varNamed("a")
+        assertThat(result.isRelevant(a)).isFalse
+        assertThat(result.isRelevant(inlined.assignmentsTo(a).single())).isFalse
     }
 
     private fun InlinedOxsts.varNamed(name: String): VariableDeclaration {

@@ -12,15 +12,21 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.RedefinitionAwareReferenceResolver
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
+import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceCollector
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.parentSequence
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineCall
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineChoiceFor
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineIfOperation
@@ -40,19 +46,22 @@ class InlineOperationExpander @Inject constructor(
     private val transitionCallTraceTransformer: TransitionCallTraceTransformer,
     private val callTargetResolver: CallTargetResolver,
     private val localVariableManager: LocalVariableManager,
+    private val instanceCollector: InstanceCollector,
 ) {
 
     fun expand(
         operation: InlineOperation,
         instance: Instance,
     ): Operation {
-        return when (operation) {
+        val expansion = when (operation) {
             is InlineCall -> expandCall(operation, instance)
             is InlineIfOperation -> expandIf(operation, instance)
             is InlineSeqFor -> expandSeqFor(operation, instance)
             is InlineChoiceFor -> expandChoiceFor(operation, instance)
             else -> sourceError(operation, "Unknown inline operation kind: ${operation::class.simpleName}")
         }
+        transitionCallTraceTransformer.inheritEnclosingTrace(operation, expansion)
+        return expansion
     }
 
     private fun expandCall(
@@ -153,7 +162,7 @@ class InlineOperationExpander @Inject constructor(
             }
         }
 
-        rewriteLocalVariables(inlined)
+        rewriteLocalVariables(inlined, containerInstance)
 
         val body = if (inlined.branches.size == 1) {
             inlined.branches.single()
@@ -170,6 +179,7 @@ class InlineOperationExpander @Inject constructor(
             containerInstance,
             actualTransition,
             callExpression,
+            body,
         )
 
         return OxstsFactory.createSequenceOperation().also {
@@ -178,10 +188,27 @@ class InlineOperationExpander @Inject constructor(
         }
     }
 
-    private fun rewriteLocalVariables(operation: Operation) {
+    private fun rewriteLocalVariables(operation: Operation, containerInstance: Instance) {
         val localVars = operation.eAllOfType<LocalVarDeclarationOperation>().toList()
         for (localVar in localVars) {
             localVar.name = localVariableManager.allocateInlinedName(localVar)
+            val domain = localVar.typeSpecification?.domain
+            val instances = instanceDomainOf(domain, containerInstance) ?: continue
+            localVariableManager.registerInstanceDomain(localVar, instances)
+            if (domain is FeatureDeclaration) {
+                // the inlined model cannot name a feature of the declaring class, the registered instances keep the narrower domain
+                localVar.typeSpecification.domain = domain.typeSpecification.domain
+            }
+        }
+    }
+
+    private fun instanceDomainOf(domain: DomainDeclaration?, holder: Instance): Set<Instance>? {
+        return when {
+            domain is ClassDeclaration -> instanceCollector.instancesOfType(holder.parentSequence().last(), domain)
+            domain is FeatureDeclaration && OxstsUtils.isInstanceFeature(domain) -> {
+                compileTimeExpressionEvaluatorProvider.getEvaluator(holder).evaluateInstances(OxstsFactory.createElementReference(domain))
+            }
+            else -> null
         }
     }
 

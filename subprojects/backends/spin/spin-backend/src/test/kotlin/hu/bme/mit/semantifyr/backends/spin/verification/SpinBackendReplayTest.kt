@@ -73,12 +73,26 @@ class SpinBackendReplayTest {
 
     @Test
     suspend fun `a violated invariant fails with a witness through the violating states`() {
-        val result = verify("CounterExceedsBound", models.parse(BackendTestModels.COUNTER_EXCEEDS_BOUND))
+        val result = verify("CounterExceedsBound", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
         val states = listOfNotNull(witness.initializedState) + witness.transitionStates
-        assertThat(states.map { it.valuesByName()["x"] }).hasSize(3).endsWith(1, 2)
+        assertThat(states.map { it.valuesByName()["x"] }).containsExactly(0, 1, 2)
+    }
+
+    @Test
+    suspend fun `unchanged values carry over from the declarations and the previous state`() {
+        val result = verify("OneOfSeveralChanges", models.parse(BackendTestModels.SATURATING_ONE_OF_SEVERAL_CHANGES))
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        val witness = result.inlinedWitness!!
+        val states = listOfNotNull(witness.initializedState) + witness.transitionStates
+        assertThat(states.map { it.valuesByName() }).containsExactly(
+            mapOf("y" to 0, "x" to 5, "b" to true),
+            mapOf("y" to 1, "x" to 5, "b" to true),
+            mapOf("y" to 2, "x" to 5, "b" to true),
+        )
     }
 
     @Test
@@ -122,5 +136,27 @@ class SpinBackendReplayTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
         assertThat(result.message).matches("spin:safe-dfs does not support \\S+:2: variables of type real \\(r\\); \\S+:2: real literals")
+    }
+
+    @Test
+    suspend fun `an unbounded integer the property depends on is NotSupported before dispatch`() {
+        val result = verify("UnboundedCounter", models.parse(BackendTestModels.COUNTER_EXCEEDS_BOUND))
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
+        assertThat(result.message).matches("spin:safe-dfs does not support \\S+:2: unbounded integer variables \\(x\\)")
+    }
+
+    @Test
+    suspend fun `an unbounded array names its declaration once for all its slots`() {
+        val artifactDirectory = cleanArtifactDirectory("UnboundedArraySlots")
+        val compilation = models.compileFlattened("arrays", "ArraySlotIndependenceReach", artifactDirectory)
+        val environment = ExecutionEnvironment.builder().put(SpinExecutorKey) {
+            ReplayingSpinExecutor("UnboundedArraySlots")
+        }.build()
+        val request = BackendVerificationRequest(compilation.inlinedOxsts, artifactDirectory, compilation.flatteningInfo)
+        val result = SpinBackend().verify(injector, SpinConfig.SafeDfs, request, environment)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
+        assertThat(result.message).matches("spin:safe-dfs does not support arrays.oxsts:\\d+: unbounded integer variables \\(slots\\)")
     }
 }

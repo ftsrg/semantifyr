@@ -1,0 +1,62 @@
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+{
+	admin off
+	auto_https off
+	servers {
+		trusted_proxies static 172.30.0.2/32
+		client_ip_headers CF-Connecting-IP
+	}
+}
+
+(sign_in) {
+	forward_auth {args[0]} oauth2-proxy:4180 {
+		uri /oauth2/auth
+		copy_headers X-Auth-Request-User
+		@signed_out status 401
+		handle_response @signed_out {
+			redir https://auth.semantifyr.org/oauth2/start?rd=https://{host}{uri}
+		}
+	}
+}
+
+(upstream) {
+	# the upstreams trust a single address in X-Forwarded-For, so it replaces whatever the client sent
+	reverse_proxy {args[0]} {
+		header_up X-Forwarded-For {client_ip}
+	}
+}
+
+(live) {
+	route {
+		# only forward_auth may set the user header, the upstreams trust it from this proxy
+		request_header -X-Auth-Request-User
+		import sign_in /admin*
+		forward_auth /api/admin/* oauth2-proxy:4180 {
+			uri /oauth2/auth
+			copy_headers X-Auth-Request-User
+		}
+		import upstream {args[0]}
+	}
+}
+
+http://live.semantifyr.org {
+	import live semantifyr-live:8080
+}
+
+http://live-staging.semantifyr.org {
+	import live semantifyr-live-staging:8080
+}
+
+http://grafana.semantifyr.org {
+	route {
+		request_header -X-Auth-Request-User
+		import sign_in *
+		import upstream grafana:3000
+	}
+}
+
+http://auth.semantifyr.org {
+	import upstream oauth2-proxy:4180
+}

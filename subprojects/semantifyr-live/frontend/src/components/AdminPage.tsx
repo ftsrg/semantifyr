@@ -8,8 +8,6 @@ import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import IconButton from '@mui/material/IconButton';
@@ -19,7 +17,7 @@ import Tabs from '@mui/material/Tabs';
 import Tooltip from '@mui/material/Tooltip';
 import PauseCircleOutlinedIcon from '@mui/icons-material/PauseCircleOutlined';
 import PlayCircleOutlinedIcon from '@mui/icons-material/PlayCircleOutlined';
-import LogoutIcon from '@mui/icons-material/Logout';
+import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import type { ColorModePreference, ResolvedColorMode } from '../lib/util/colorMode';
 import AppHeader from './shell/AppHeader';
 import ColorModeToggle from './shell/ColorModeToggle';
@@ -43,20 +41,20 @@ const REFRESH_INTERVAL_MS = 1000;
 type AdminTab = 'sessions' | 'config';
 
 interface AdminHeaderProps {
+  user: string | null;
   lastRefreshAt: number | null;
   paused?: boolean;
   onTogglePause?: () => void;
-  onLogout?: () => void;
   preference: ColorModePreference;
   colorMode: ResolvedColorMode;
   onToggleColorMode: () => void;
 }
 
 function AdminHeader({
+  user,
   lastRefreshAt,
   paused,
   onTogglePause,
-  onLogout,
   preference,
   colorMode,
   onToggleColorMode,
@@ -94,59 +92,15 @@ function AdminHeader({
         </Tooltip>
       )}
       <ColorModeToggle preference={preference} onToggle={onToggleColorMode} />
-      {onLogout && (
-        <Tooltip title="Sign out">
-          <IconButton size="small" onClick={onLogout} aria-label="Sign out" sx={{ color: 'text.secondary' }}>
-            <LogoutIcon sx={{ fontSize: ICON_SIZE.lg }} />
-          </IconButton>
+      {user !== null && (
+        <Tooltip title={`Signed in as ${user}`}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
+            <AccountCircleOutlinedIcon sx={{ fontSize: ICON_SIZE.lg }} />
+            <Typography sx={{ fontSize: FONT_SIZE.xs }}>{user}</Typography>
+          </Box>
         </Tooltip>
       )}
     </AppHeader>
-  );
-}
-
-function LoginForm({ onLogin, error }: { onLogin: (password: string) => void; error: boolean }): React.JSX.Element {
-  const [password, setPassword] = useState('');
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100dvh',
-        bgcolor: 'var(--page-bg)',
-        gap: 2,
-      }}
-    >
-      <Typography variant="h5" sx={{ mb: 1 }}>Semantifyr Admin</Typography>
-      {error && <Alert severity="error">Invalid password</Alert>}
-      <Box
-        component="form"
-        onSubmit={(e: React.SyntheticEvent) => {
-          e.preventDefault();
-          onLogin(password);
-        }}
-        sx={{ display: 'flex', gap: 1 }}
-      >
-        <TextField
-          type="password"
-          label="Admin password"
-          size="small"
-          value={password}
-          onChange={(e) => { setPassword(e.target.value); }}
-          autoFocus
-          sx={{
-            '& .MuiInputBase-root': { color: 'text.primary', bgcolor: 'var(--surface-bg)' },
-            '& .MuiInputLabel-root': { color: 'text.secondary' },
-            '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--surface-border)' },
-          }}
-        />
-        <Button type="submit" variant="contained" color="primary">
-          Login
-        </Button>
-      </Box>
-    </Box>
   );
 }
 
@@ -163,13 +117,13 @@ interface ToastState {
 
 interface DashboardProps {
   api: LiveServerApi;
-  onLogout: () => void;
   preference: ColorModePreference;
   colorMode: ResolvedColorMode;
   onToggleColorMode: () => void;
 }
 
-function Dashboard({ api, onLogout, preference, colorMode, onToggleColorMode }: DashboardProps): React.JSX.Element {
+function Dashboard({ api, preference, colorMode, onToggleColorMode }: DashboardProps): React.JSX.Element {
+  const [user, setUser] = useState<string | null>(null);
   const [data, setData] = useState<DashboardData | null>(null);
   const [portfolios, setPortfolios] = useState<readonly PortfolioInfo[]>([]);
   const [flavors, setFlavors] = useState<readonly FlavorInfo[]>([]);
@@ -201,7 +155,8 @@ function Dashboard({ api, onLogout, preference, colorMode, onToggleColorMode }: 
 
   useEffect(() => {
     void refresh();
-    void api.fetchPortfolios().then(setPortfolios).catch(() => { setPortfolios([]); });
+    void api.fetchAdminUser().then(setUser).catch(() => { setUser(null); });
+    void api.fetchPortfolios().then((response) => { setPortfolios(response.portfolios); }).catch(() => { setPortfolios([]); });
     void api.fetchFlavors().then(setFlavors).catch(() => { setFlavors([]); });
   }, [refresh, api]);
 
@@ -257,6 +212,7 @@ function Dashboard({ api, onLogout, preference, colorMode, onToggleColorMode }: 
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100dvh', bgcolor: 'var(--page-bg)' }}>
         <AdminHeader
+          user={user}
           lastRefreshAt={null}
           preference={preference}
           colorMode={colorMode}
@@ -272,10 +228,10 @@ function Dashboard({ api, onLogout, preference, colorMode, onToggleColorMode }: 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100dvh', bgcolor: 'var(--page-bg)' }}>
       <AdminHeader
+        user={user}
         lastRefreshAt={lastRefreshAt}
         paused={paused}
         onTogglePause={() => { setPaused((p) => !p); }}
-        onLogout={onLogout}
         preference={preference}
         colorMode={colorMode}
         onToggleColorMode={onToggleColorMode}
@@ -366,64 +322,9 @@ interface AdminPageProps {
 
 export default function AdminPage({ colorModePreference, colorMode, onToggleColorMode }: AdminPageProps): React.JSX.Element {
   const api = useMemo(() => createApi(resolveBackendUrl()), []);
-
-  const [authState, setAuthState] = useState<'checking' | 'unauthenticated' | 'authenticated'>('checking');
-  const [authError, setAuthError] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    void api.checkAdminAuth()
-      .then((ok) => {
-        if (cancelled) return;
-        setAuthState(ok ? 'authenticated' : 'unauthenticated');
-      })
-      .catch(() => {
-        // Surface the login screen on network failure rather than spinning forever.
-        if (cancelled) return;
-        setAuthState('unauthenticated');
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [api]);
-
-  const handleLogin = useCallback(async (pw: string) => {
-    try {
-      const ok = await api.loginAdmin(pw);
-      setAuthError(!ok);
-      if (ok) {
-        setAuthState('authenticated');
-      }
-    } catch {
-      setAuthError(true);
-    }
-  }, [api]);
-
-  const handleLogout = useCallback(async () => {
-    try {
-      await api.logoutAdmin();
-    } catch {
-      /* The user clearly wants to leave; flip local state regardless of network outcome. */
-    }
-    setAuthState('unauthenticated');
-  }, [api]);
-
-  if (authState === 'checking') {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100dvh', bgcolor: 'var(--page-bg)' }}>
-        <CircularProgress sx={{ color: 'text.secondary' }} />
-      </Box>
-    );
-  }
-
-  if (authState === 'unauthenticated') {
-    return <LoginForm onLogin={(pw) => void handleLogin(pw)} error={authError} />;
-  }
-
   return (
     <Dashboard
       api={api}
-      onLogout={() => void handleLogout()}
       preference={colorModePreference}
       colorMode={colorMode}
       onToggleColorMode={onToggleColorMode}

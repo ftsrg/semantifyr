@@ -143,7 +143,6 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
 
   let editorApp: EditorApp | null = null
   let languageClient: LanguageClientWrapper | null = null
-  let languageClientSocket: WebSocket | null = null
   let fsOverlay: { dispose: () => void } | null = null
   let cancelled = false
   let started = false
@@ -219,23 +218,18 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
     }
   }
 
-  const tearDownLanguageClient = async (
-    wrapper: LanguageClientWrapper,
-    socket: WebSocket | null,
-  ): Promise<void> => {
+  const tearDownLanguageClient = async (wrapper: LanguageClientWrapper): Promise<void> => {
     try {
       await wrapper.dispose()
     } catch {
       /* ignore */
     }
-    socket?.close()
   }
 
   const doConnect = async (): Promise<void> => {
     if (languageClient) {
-      await tearDownLanguageClient(languageClient, languageClientSocket)
+      await tearDownLanguageClient(languageClient)
       languageClient = null
-      languageClientSocket = null
     }
     metricsClient = null
     metricsRawClient = null
@@ -256,12 +250,11 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
       },
     )
     if (cancelled) {
-      await tearDownLanguageClient(connected.wrapper, connected.webSocket)
+      await tearDownLanguageClient(connected)
       return
     }
-    languageClient = connected.wrapper
-    languageClientSocket = connected.webSocket
-    attachNotificationHandlers(connected.wrapper)
+    languageClient = connected
+    attachNotificationHandlers(connected)
 
     // Force a repaint once semantic tokens have likely landed; Monaco won't repaint
     // already-painted lines on its own until they re-enter the viewport.
@@ -386,7 +379,7 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
     }
     verifyDiagnostics = null
     if (languageClient) {
-      await tearDownLanguageClient(languageClient, languageClientSocket)
+      await tearDownLanguageClient(languageClient)
     }
     try {
       await editorApp?.dispose()
@@ -399,7 +392,6 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
       /* ignore */
     }
     languageClient = null
-    languageClientSocket = null
     editorApp = null
     fsOverlay = null
     metricsClient = null
@@ -433,13 +425,11 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
     cancelled = true
     reconnectController.cancel()
     const wrapper = languageClient
-    const socket = languageClientSocket
     languageClient = null
-    languageClientSocket = null
     metricsClient = null
     metricsRawClient = null
     reportStatus('disconnected')
-    await tearDownLanguageClient(wrapper, socket)
+    await tearDownLanguageClient(wrapper)
   }
 
   const getLspClient = (): LspClient | undefined => {

@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.verifier.portfolio
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
@@ -32,6 +33,7 @@ private class TestPortfolio(
     override val displayName = id
     override val description = "test portfolio"
     override val executorKeys: Set<ExecutorKey<*>> = emptySet()
+    override val legs: List<PortfolioLeg> = emptyList()
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
         return AvailabilityReport.Available
@@ -172,6 +174,88 @@ class VerificationPortfolioTest {
     }
 
     @Test
+    fun `firstDecisive waits past a Passed from an under-approximating leg`() = runTest {
+        val underApproximating = FakeBackend.delayed("under", 10, VerificationVerdict.Passed, SoundnessDirection.UnderApproximating)
+        val exact = FakeBackend.delayed("exact", 50, VerificationVerdict.Failed)
+
+        val outcome = portfolio.runFirstDecisive(noopGate, timeout = 2.seconds) {
+            enqueue(underApproximating)
+            enqueue(exact)
+        }
+
+        val result = outcome.orFail("expected the exact leg to decide")
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        assertThat(result.metadata.backendId).isEqualTo("exact")
+    }
+
+    @Test
+    fun `firstDecisive waits past a Failed from an over-approximating leg`() = runTest {
+        val overApproximating = FakeBackend.delayed("over", 10, VerificationVerdict.Failed, SoundnessDirection.OverApproximating)
+        val exact = FakeBackend.delayed("exact", 50, VerificationVerdict.Passed)
+
+        val outcome = portfolio.runFirstDecisive(noopGate, timeout = 2.seconds) {
+            enqueue(overApproximating)
+            enqueue(exact)
+        }
+
+        assertThat(outcome.orFail("expected the exact leg to decide").metadata.backendId).isEqualTo("exact")
+    }
+
+    @Test
+    suspend fun `firstDecisive settles on a Failed from an under-approximating leg`() {
+        val underApproximating = FakeBackend.verdict("under", VerificationVerdict.Failed, SoundnessDirection.UnderApproximating)
+
+        val outcome = portfolio.runFirstDecisive(noopGate) {
+            enqueue(underApproximating)
+        }
+
+        assertThat(outcome.orFail("expected a trusted Failed").verdict).isEqualTo(VerificationVerdict.Failed)
+    }
+
+    @Test
+    suspend fun `firstDecisive reports Inconclusive with every leg's verdict when no verdict is trusted`() {
+        val underApproximating = FakeBackend.verdict("under", VerificationVerdict.Passed, SoundnessDirection.UnderApproximating)
+        val undecided = FakeBackend.verdict("undecided", VerificationVerdict.Inconclusive)
+
+        val outcome = portfolio.runFirstDecisive(noopGate) {
+            enqueue(underApproximating)
+            enqueue(undecided)
+        }
+
+        assertThat(outcome).isInstanceOf(PortfolioOutcome.NoDecision::class.java)
+        val result = outcome.toBackendVerificationResult(Clock.System.now())
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
+        assertThat(result.message).contains("under=Passed (not trusted, UnderApproximating)", "undecided=Inconclusive")
+    }
+
+    @Test
+    suspend fun `firstDecisive keeps Timeout when a leg timed out and no verdict is trusted`() {
+        val underApproximating = FakeBackend.verdict("under", VerificationVerdict.Passed, SoundnessDirection.UnderApproximating)
+        val timedOut = FakeBackend.verdict("timed-out", VerificationVerdict.Timeout)
+
+        val outcome = portfolio.runFirstDecisive(noopGate) {
+            enqueue(underApproximating)
+            enqueue(timedOut)
+        }
+
+        assertThat(outcome).isInstanceOf(PortfolioOutcome.TimedOut::class.java)
+        assertThat((outcome as PortfolioOutcome.TimedOut).reason).contains("timed-out", "under=Passed (not trusted, UnderApproximating)")
+    }
+
+    @Test
+    fun `firstNDecisive counts only trusted verdicts`() = runTest {
+        val underApproximating = FakeBackend.delayed("under", 10, VerificationVerdict.Passed, SoundnessDirection.UnderApproximating)
+        val exact = FakeBackend.delayed("exact", 50, VerificationVerdict.Failed)
+
+        val outcome = portfolio.runFirstNDecisive(count = 1, noopGate) {
+            enqueue(underApproximating)
+            enqueue(exact)
+        }
+
+        assertThat(outcome.orFail("expected the exact leg to decide").metadata.backendId).isEqualTo("exact")
+    }
+
+    @Test
     fun `all times out when nothing is decisive and a job is pending at the timeout`() = runTest {
         val fastInconclusive = FakeBackend.delayed("fast", 10, VerificationVerdict.Inconclusive)
         val slow = FakeBackend.delayed("slow", 10_000, VerificationVerdict.Passed)
@@ -290,6 +374,48 @@ class VerificationPortfolioTest {
     }
 
     @Test
+    suspend fun `firstDecisive is Errored when every job returns or throws Errored`() {
+        val returned = FakeBackend.verdict("returned", VerificationVerdict.Errored)
+        val thrown = FakeBackend.throwing("thrown", IllegalStateException("broken"))
+
+        val outcome = portfolio.runFirstDecisive(noopGate) {
+            enqueue(returned)
+            enqueue(thrown)
+        }
+
+        assertThat(outcome).isInstanceOf(PortfolioOutcome.AllErrored::class.java)
+        val result = outcome.toBackendVerificationResult(Clock.System.now())
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.message).contains("All portfolio jobs errored", "(+1 more)")
+    }
+
+    @Test
+    suspend fun `all is Errored when every job returns Errored`() {
+        val a = FakeBackend.verdict("a", VerificationVerdict.Errored)
+        val b = FakeBackend.verdict("b", VerificationVerdict.Errored)
+
+        val outcome = portfolio.runAll(noopGate) {
+            enqueue(a)
+            enqueue(b)
+        }
+
+        assertThat(outcome).isInstanceOf(PortfolioOutcome.AllErrored::class.java)
+    }
+
+    @Test
+    suspend fun `firstDecisive is Inconclusive when an Errored job has an Inconclusive sibling`() {
+        val errored = FakeBackend.verdict("errored", VerificationVerdict.Errored)
+        val inconclusive = FakeBackend.verdict("inconclusive", VerificationVerdict.Inconclusive)
+
+        val outcome = portfolio.runFirstDecisive(noopGate) {
+            enqueue(errored)
+            enqueue(inconclusive)
+        }
+
+        assertThat(outcome).isInstanceOf(PortfolioOutcome.NoDecision::class.java)
+    }
+
+    @Test
     suspend fun `empty combinator block is rejected`() {
         val exception = runCatching {
             portfolio.runFirstDecisive(noopGate) {}
@@ -326,9 +452,9 @@ class VerificationPortfolioTest {
     }
 
     @Test
-    suspend fun `all maps disagreeing decisive verdicts to Inconclusive with a disagreement message`() {
+    suspend fun `all reports Errored naming both legs when trusted verdicts disagree`() {
         val pass = FakeBackend.verdict("pass", VerificationVerdict.Passed)
-        val fail = FakeBackend.verdict("fail", VerificationVerdict.Failed)
+        val fail = FakeBackend.verdict("fail", VerificationVerdict.Failed, SoundnessDirection.UnderApproximating)
 
         val outcome = portfolio.runAll(noopGate) {
             enqueue(pass)
@@ -336,8 +462,63 @@ class VerificationPortfolioTest {
         }
 
         val result = outcome.orFail("expected aggregated result")
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.message).contains("pass=Passed (Exact)", "fail=Failed (UnderApproximating)")
+    }
+
+    @Test
+    suspend fun `all resolves a disagreement explained by the directions in favour of the trusted leg`() {
+        val trusted = FakeBackend.verdict("trusted", VerificationVerdict.Failed)
+        val untrusted = FakeBackend.verdict("untrusted", VerificationVerdict.Passed, SoundnessDirection.UnderApproximating)
+
+        val outcome = portfolio.runAll(noopGate) {
+            enqueue(trusted)
+            enqueue(untrusted)
+        }
+
+        val result = outcome.orFail("expected the trusted verdict")
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        assertThat(result.metadata.backendId).isEqualTo("trusted")
+        assertThat(result.message).contains("untrusted=Passed (not trusted, UnderApproximating)")
+    }
+
+    @Test
+    suspend fun `all reports Inconclusive with every leg's verdict when no verdict is trusted`() {
+        val untrusted = FakeBackend.verdict("untrusted", VerificationVerdict.Passed, SoundnessDirection.UnderApproximating)
+        val undecided = FakeBackend.verdict("undecided", VerificationVerdict.Inconclusive)
+
+        val outcome = portfolio.runAll(noopGate) {
+            enqueue(untrusted)
+            enqueue(undecided)
+        }
+
+        val result = outcome.toBackendVerificationResult(Clock.System.now())
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
-        assertThat(result.message).contains("disagreeing")
+        assertThat(result.message).contains("untrusted=Passed (not trusted, UnderApproximating)", "undecided=Inconclusive")
+    }
+
+    @Test
+    suspend fun `a single-backend portfolio keeps a verdict its leg does not trust and says so`() {
+        val backend = FakeBackend.verdict("spin", VerificationVerdict.Passed, SoundnessDirection.UnderApproximating)
+        val single = SingleBackendPortfolio(backend, FakeConfig(soundness = SoundnessDirection.UnderApproximating))
+
+        val result = single.verify(parentInjector, request, noopGate, env, ProgressContext.NoOp)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(result.isTrusted).isFalse
+        assertThat(result.message).isEqualTo("spin's Passed on an AG property is not trusted: the leg is under-approximating")
+    }
+
+    @Test
+    suspend fun `a single-backend portfolio reports a trusted verdict without a note`() {
+        val backend = FakeBackend.verdict("spin", VerificationVerdict.Failed, SoundnessDirection.UnderApproximating)
+        val single = SingleBackendPortfolio(backend, FakeConfig(soundness = SoundnessDirection.UnderApproximating))
+
+        val result = single.verify(parentInjector, request, noopGate, env, ProgressContext.NoOp)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        assertThat(result.isTrusted).isTrue
+        assertThat(result.message).isNull()
     }
 
     @Test

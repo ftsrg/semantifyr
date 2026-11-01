@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.portfolios
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.portfolio.LimitedConcurrencyGate
 import org.assertj.core.api.Assertions.assertThat
@@ -41,7 +42,7 @@ class AllAgreeFullPortfolioTest {
     }
 
     @Test
-    suspend fun `disagreement among decisive backends yields Inconclusive`(
+    suspend fun `trusted backends that disagree yield Errored naming them`(
         @TempDir output: Path,
     ) {
         val portfolio = AllAgreeFullPortfolio(
@@ -54,8 +55,44 @@ class AllAgreeFullPortfolioTest {
 
         val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
 
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
-        assertThat(result.message).contains("disagreeing")
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.message).contains("theta=Passed (Exact)", "spin=Failed (UnderApproximating)")
+    }
+
+    @Test
+    suspend fun `a disagreement explained by the directions resolves to the trusted side`(
+        @TempDir output: Path,
+    ) {
+        val portfolio = AllAgreeFullPortfolio(
+            timeout = 5.seconds,
+            theta = FailingBackend("theta"),
+            nuxmv = FailingBackend("nuxmv"),
+            uppaal = PassingBackend("uppaal"),
+            spin = PassingBackend("spin"),
+        )
+
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        assertThat(result.message).contains("uppaal=Passed (not trusted, UnderApproximating)", "spin=Passed (not trusted, UnderApproximating)")
+    }
+
+    @Test
+    suspend fun `a witness that every backend replays validates`(
+        @TempDir output: Path,
+    ) {
+        val portfolio = AllAgreeFullPortfolio(
+            timeout = 5.seconds,
+            theta = PassingBackend("theta"),
+            nuxmv = PassingBackend("nuxmv"),
+            uppaal = PassingBackend("uppaal"),
+            spin = PassingBackend("spin"),
+        )
+
+        val result = portfolio.verify(parentInjector, stubRequest(output, OxstsFactory.createEF()), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(result.message).isNull()
     }
 
     @Test

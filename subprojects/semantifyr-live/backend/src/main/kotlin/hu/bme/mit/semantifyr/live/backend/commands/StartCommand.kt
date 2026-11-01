@@ -31,9 +31,6 @@ class StartCommand : CliktCommand("start") {
         } ?: BackendConfig.fromEnvironment()
 
         logger.info { "Starting Semantifyr Live backend with config: $config" }
-        if (config.development) {
-            logger.warn { "Running in DEVELOPMENT mode: production config checks are skipped" }
-        }
 
         BackendConfigValidator.validate(config)
         sweepOrphanSessionDirectories(config)

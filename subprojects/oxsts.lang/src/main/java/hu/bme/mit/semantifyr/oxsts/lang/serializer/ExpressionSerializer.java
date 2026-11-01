@@ -106,6 +106,18 @@ public class ExpressionSerializer extends ExpressionVisitor<String> {
     }
 
     @Override
+    protected String visit(RecordLiteral expression) {
+        var fields = expression.getFields().stream()
+                .map(f -> NamingUtil.getName(f.getField()) + " = " + visit(f.getExpression()))
+                .toList();
+
+        return oxstsQualifiedNameProvider.getFullyQualifiedNameString(expression.getRecord())
+                + " { "
+                + String.join(", ", fields)
+                + " }";
+    }
+
+    @Override
     protected String visit(LiteralInfinity expression) {
         return "*";
     }

@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import vscode, { type CancellationToken, type ExtensionContext, Position, Range, RelativePattern, type TestController, type TestItem, TestMessage, TestRunProfileKind, type TestRunRequest, type TextDocument, type Uri, type WorkspaceFolder, type WorkspaceFoldersChangeEvent } from "vscode";
-import type { LanguageClient } from "vscode-languageclient/node.js";
-import { ExecuteCommandRequest } from "vscode-languageclient";
+import vscode, { type CancellationToken, type ExtensionContext, Location, Position, Range, RelativePattern, type TestController, type TestItem, TestMessage, TestRunProfileKind, type TestRun, type TestRunRequest, type TextDocument, type Uri, type WorkspaceFolder, type WorkspaceFoldersChangeEvent } from "vscode";
+import type { LanguageClient } from "vscode-languageclient/node";
 import {
+    discoverVerificationCases,
+    verifyCase,
     VerificationStatus,
-    type VerificationCaseRequest,
-    type VerificationCaseResult,
     type VerificationCaseSpecification,
 } from "@semantifyr/editor-common";
+import { witnessMessageContext, type WitnessView } from "../witness.js";
 
 export interface VerificationTestControllerConfig {
     languageId: string;
@@ -27,11 +27,13 @@ export class VerificationTestController {
 
     protected readonly client: LanguageClient;
     protected readonly config: VerificationTestControllerConfig;
+    protected readonly witnesses: WitnessView;
     protected controller!: TestController;
 
-    constructor(client: LanguageClient, config: VerificationTestControllerConfig) {
+    constructor(client: LanguageClient, config: VerificationTestControllerConfig, witnesses: WitnessView) {
         this.client = client;
         this.config = config;
+        this.witnesses = witnesses;
     }
 
     registerTestProvider(context: ExtensionContext) {
@@ -121,10 +123,7 @@ export class VerificationTestController {
     protected async refreshDocumentUriTests(uri: Uri) {
         const documentTestItem = this.getDocumentTestItem(uri);
 
-        const verificationCases = await this.client.sendRequest(ExecuteCommandRequest.type, {
-            command: this.config.discoverCommand,
-            arguments: [uri.toString()]
-        }) as VerificationCaseSpecification[];
+        const verificationCases = await discoverVerificationCases(this.client, this.config.discoverCommand, uri.toString());
 
         const seen = new Set<string>();
 
@@ -192,55 +191,76 @@ export class VerificationTestController {
 
         for (const testItem of testItems) {
             if (token.isCancellationRequested) {
-                break;
-            }
-
-            run.started(testItem);
-
-            try {
-                if (!testItem.range || !testItem.uri) {
-                    run.skipped(testItem);
-                    continue;
-                }
-                const range = testItem.range;
-                const request: VerificationCaseRequest = {
-                    uri: testItem.uri.toString(),
-                    range: {
-                        start: { line: range.start.line, character: range.start.character },
-                        end: { line: range.end.line, character: range.end.character },
-                    },
-                };
-                const result = await this.client.sendRequest(ExecuteCommandRequest.type, {
-                    command: this.config.verifyCommand,
-                    arguments: [request],
-                }, token) as VerificationCaseResult;
-
-                switch (result.status) {
-                    case VerificationStatus.Passed:
-                        run.passed(testItem);
-                        break;
-                    case VerificationStatus.Failed:
-                        run.failed(testItem, new TestMessage(result.message ?? 'Failed'));
-                        break;
-                    case VerificationStatus.Inconclusive:
-                        run.errored(testItem, new TestMessage(`Inconclusive: ${result.message ?? 'no message'}`));
-                        break;
-                    case VerificationStatus.Timeout:
-                        run.errored(testItem, new TestMessage(`Timed out: ${result.message ?? 'no message'}`));
-                        break;
-                    case VerificationStatus.NotSupported:
-                        run.errored(testItem, new TestMessage(`Not supported by the chosen portfolio: ${result.message ?? 'no message'}`));
-                        break;
-                    case VerificationStatus.Errored:
-                    default:
-                        run.errored(testItem, new TestMessage(result.message ?? 'Test run failed'));
-                        break;
-                }
-            } catch (e: unknown) {
-                run.errored(testItem, new TestMessage(e instanceof Error ? e.message : 'Test run failed'));
+                run.skipped(testItem);
+            } else {
+                await this.runTest(run, testItem, token);
             }
         }
 
         run.end();
+    }
+
+    protected async runTest(run: TestRun, testItem: TestItem, token: CancellationToken) {
+        run.started(testItem);
+
+        if (!testItem.range || !testItem.uri) {
+            run.skipped(testItem);
+            return;
+        }
+        const range = testItem.range;
+
+        try {
+            const result = await verifyCase(this.client, this.config.verifyCommand, {
+                uri: testItem.uri.toString(),
+                range: {
+                    start: { line: range.start.line, character: range.start.character },
+                    end: { line: range.end.line, character: range.end.character },
+                },
+            }, { token });
+
+            if (result === null) {
+                run.errored(testItem, new TestMessage('The language server returned no result'));
+                return;
+            }
+
+            this.witnesses.record(testItem, result);
+
+            switch (result.status) {
+                case VerificationStatus.Passed:
+                    if (result.message) {
+                        run.appendOutput(`${result.message}\r\n`, new Location(testItem.uri, range), testItem);
+                    }
+                    run.passed(testItem);
+                    break;
+                case VerificationStatus.Failed: {
+                    const message = new TestMessage(result.message ?? 'Failed');
+                    message.location = new Location(testItem.uri, range);
+                    if (result.trace) {
+                        message.contextValue = witnessMessageContext;
+                    }
+                    run.failed(testItem, message);
+                    break;
+                }
+                case VerificationStatus.Inconclusive:
+                    run.errored(testItem, new TestMessage(`Inconclusive: ${result.message ?? 'no message'}`));
+                    break;
+                case VerificationStatus.Timeout:
+                    run.errored(testItem, new TestMessage(`Timed out: ${result.message ?? 'no message'}`));
+                    break;
+                case VerificationStatus.NotSupported:
+                    run.errored(testItem, new TestMessage(`Not supported by the chosen portfolio: ${result.message ?? 'no message'}`));
+                    break;
+                case VerificationStatus.Errored:
+                default:
+                    run.errored(testItem, new TestMessage(result.message ?? 'Test run failed'));
+                    break;
+            }
+        } catch (e: unknown) {
+            if (token.isCancellationRequested) {
+                run.skipped(testItem);
+            } else {
+                run.errored(testItem, new TestMessage(e instanceof Error ? e.message : 'Test run failed'));
+            }
+        }
     }
 }

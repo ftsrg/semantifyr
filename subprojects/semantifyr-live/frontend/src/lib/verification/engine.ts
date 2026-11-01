@@ -11,6 +11,8 @@ import {
   type VerificationCaseSpecification,
   type VerificationMetrics,
   type VerificationTrace,
+  type WitnessValidationResult,
+  type WitnessValidationStatus,
 } from '@semantifyr/editor-common'
 import {
   CancellationTokenSource as VscodeCancellationTokenSource,
@@ -34,6 +36,7 @@ export type {
   WitnessState,
   WitnessStateStep,
   WitnessStateValue,
+  WitnessValidationStatus,
 } from '@semantifyr/editor-common'
 
 export type VerificationCaseStatus =
@@ -46,18 +49,13 @@ export type VerificationCaseStatus =
   | 'not_supported'
   | 'errored'
 
-export type WitnessValidationStatus =
-  | 'valid'
-  | 'invalid'
-  | 'inconclusive'
-  | 'errored'
-
 export interface VerificationCaseState {
   caseInfo: VerificationCaseSpecification
   status: VerificationCaseStatus
   message?: string
   trace?: VerificationTrace
   witnessValidation?: WitnessValidationStatus
+  validationMessage?: string | undefined
   // True between the trace arriving and the follow-up validateWitness resolving.
   validating?: boolean
   metrics?: VerificationMetrics
@@ -130,16 +128,7 @@ function parseResultStatus(response: VerificationCaseResult | null): Verificatio
   }
 }
 
-// Wire shape from oxsts.case.validateWitness; see lang-ide-common WitnessValidationResult.
-interface WitnessValidationResultResponse {
-  status?: string
-  message?: string | null
-  metrics?: VerificationMetrics | null
-  backendId?: string | null
-  portfolioId?: string | null
-}
-
-function parseValidationStatus(response: WitnessValidationResultResponse | null): WitnessValidationStatus {
+function parseValidationStatus(response: WitnessValidationResult | null): WitnessValidationStatus {
   switch (response?.status) {
     case 'valid':
     case 'invalid':
@@ -159,6 +148,7 @@ export interface RunVerificationHandle {
 export interface AutoValidateRequest {
   command: string
   portfolioId?: string | undefined
+  byCase?: boolean | undefined
 }
 
 export interface RunVerificationOptions {
@@ -251,7 +241,8 @@ function maybeDispatchAutoValidation(
   if (!validate) {
     return
   }
-  dispatchAutoValidation(client, validate.command, caseInfo.id, witnessUri, setState, {
+  const location = witnessValidationLocation(caseInfo, witnessUri, validate.byCase ?? false)
+  dispatchAutoValidation(client, validate.command, caseInfo.id, location, setState, {
     validationPortfolioId: validate.portfolioId,
     caseLabel: caseInfo.label,
   })
@@ -515,6 +506,21 @@ export interface ValidateWitnessLocation {
   }
 }
 
+// gamma.witness.validate takes the case, oxsts.case.validateWitness the witness model
+export function witnessValidationLocation(
+  caseInfo: VerificationCaseSpecification,
+  witnessUri: string,
+  byCase: boolean,
+): ValidateWitnessLocation {
+  if (byCase) {
+    return caseInfo.location
+  }
+  return {
+    uri: witnessUri,
+    range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
+  }
+}
+
 export interface WitnessValidationOutcome {
   status: WitnessValidationStatus
   message?: string
@@ -542,7 +548,7 @@ export async function validateWitness(
   }
   try {
     const params = { command: validateCommand, arguments: [args] }
-    const response = (await client.sendRequest('workspace/executeCommand', params, token)) as WitnessValidationResultResponse | null
+    const response = (await client.sendRequest('workspace/executeCommand', params, token)) as WitnessValidationResult | null
     return toValidationOutcome(response)
   } catch (error) {
     return {
@@ -552,7 +558,7 @@ export async function validateWitness(
   }
 }
 
-function toValidationOutcome(response: WitnessValidationResultResponse | null): WitnessValidationOutcome {
+function toValidationOutcome(response: WitnessValidationResult | null): WitnessValidationOutcome {
   return {
     status: parseValidationStatus(response),
     ...(response?.message != null ? { message: response.message } : {}),
@@ -570,6 +576,7 @@ function applyValidationOutcome(
     ...cs,
     validating: false,
     witnessValidation: outcome.status,
+    validationMessage: outcome.message,
     ...(outcome.metrics ? { validationMetrics: outcome.metrics } : {}),
     ...(outcome.backendId ? { validationBackendId: outcome.backendId } : {}),
     ...(outcome.portfolioId ? { validationPortfolioIdUsed: outcome.portfolioId } : {}),
@@ -580,7 +587,7 @@ export function dispatchAutoValidation(
   client: LspClient,
   validateCommand: string,
   caseId: string,
-  witnessUri: string,
+  location: ValidateWitnessLocation,
   setState: StateUpdater,
   options: { validationPortfolioId?: string | undefined; caseLabel?: string | undefined } = {},
 ): void {
@@ -593,10 +600,7 @@ export function dispatchAutoValidation(
   void validateWitness(
     client,
     validateCommand,
-    {
-      uri: witnessUri,
-      range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
-    },
+    location,
     {
       ...(options.validationPortfolioId ? { portfolioId: options.validationPortfolioId } : {}),
       ...(options.caseLabel ? { caseLabel: options.caseLabel } : {}),

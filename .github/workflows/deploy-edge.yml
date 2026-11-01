@@ -1,0 +1,71 @@
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+name: Deploy Edge
+on:
+  push:
+    branches: [ "main" ]
+    paths: [ "deploy/edge/**" ]
+  workflow_dispatch:
+permissions: {}
+jobs:
+  deploy:
+    name: Deploy Edge
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    concurrency:
+      group: deploy-edge
+      cancel-in-progress: false
+    environment: live-fured
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Configure SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          printf 'Host live\n  HostName %s\n  Port %s\n  User %s\n  IdentityFile ~/.ssh/deploy\n' \
+            "$DEPLOY_HOST" "$DEPLOY_PORT" "$DEPLOY_USER" > ~/.ssh/config
+      - name: Deploy
+        run: tar -C deploy/edge --exclude env.example -cz . | ssh live edge
+
+  smoke-test:
+    name: Smoke test ${{ matrix.url }}
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        url: [ "https://live.semantifyr.org", "https://live-staging.semantifyr.org" ]
+    env:
+      SEMANTIFYR_LIVE_URL: ${{ matrix.url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      # cloudflared has no health gate, so the tunnel may still be reconnecting after the restart
+      - name: Wait for the hostname
+        timeout-minutes: 3
+        run: curl -fsS -o /dev/null --max-time 10 --retry 20 --retry-delay 5 --retry-max-time 120 --retry-all-errors "$SEMANTIFYR_LIVE_URL/api/health"
+      - name: Smoke test
+        timeout-minutes: 5
+        run: npm run smoke -w @ftsrg/semantifyr-live-frontend

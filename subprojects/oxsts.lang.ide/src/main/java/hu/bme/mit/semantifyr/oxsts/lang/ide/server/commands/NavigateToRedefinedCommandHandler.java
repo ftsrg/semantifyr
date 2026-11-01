@@ -56,9 +56,11 @@ public class NavigateToRedefinedCommandHandler extends AbstractCommandHandler<Lo
 
         var redefined = redefinitionHandler.getRedefinedDeclaration(arguments);
 
-        var location = getLocation(redefined);
+        if (redefined != null) {
+            var location = getLocation(redefined);
 
-        client.navigateTo(new NavigateToParams(List.of(location)));
+            client.navigateTo(new NavigateToParams(List.of(location)));
+        }
 
         return null;
     }

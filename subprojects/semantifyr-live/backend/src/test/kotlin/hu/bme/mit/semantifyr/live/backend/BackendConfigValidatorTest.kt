@@ -17,7 +17,6 @@ import java.nio.file.Path
 class BackendConfigValidatorTest {
 
     private fun baseConfig(tmp: Path) = BackendConfig(
-        server = ServerConfig(adminPassword = "secret", httpsOnlyCookies = true),
         sessionManager = SessionManagerConfig(rootWorkDirectory = tmp.toString()),
     )
 
@@ -32,39 +31,16 @@ class BackendConfigValidatorTest {
     )
 
     @Test
-    fun `a fully specified production config passes`(@TempDir tmp: Path) {
+    fun `a fully specified config passes`(@TempDir tmp: Path) {
         assertThatCode {
             BackendConfigValidator.validate(baseConfig(tmp), flavors = emptyList())
         }.doesNotThrowAnyException()
     }
 
     @Test
-    fun `a production config without an admin password is rejected`(@TempDir tmp: Path) {
-        val config = baseConfig(tmp).run {
-            copy(server = server.copy(adminPassword = null))
-        }
-        assertThatThrownBy {
-            BackendConfigValidator.validate(config, flavors = emptyList())
-        }.isInstanceOf(InvalidConfigurationException::class.java)
-            .hasMessageContaining("adminPassword")
-    }
-
-    @Test
-    fun `development mode skips production posture checks`(@TempDir tmp: Path) {
-        val config = BackendConfig(
-            development = true,
-            server = ServerConfig(adminPassword = null, httpsOnlyCookies = false),
-            sessionManager = SessionManagerConfig(rootWorkDirectory = tmp.toString()),
-        )
-        assertThatCode {
-            BackendConfigValidator.validate(config, flavors = emptyList())
-        }.doesNotThrowAnyException()
-    }
-
-    @Test
     fun `a client address header without trusted proxies is rejected`(@TempDir tmp: Path) {
         val config = baseConfig(tmp).run {
-            copy(server = server.copy(clientAddressHeader = "CF-Connecting-IP"))
+            copy(server = server.copy(clientAddressHeader = "X-Forwarded-For"))
         }
         assertThatThrownBy {
             BackendConfigValidator.validate(config, flavors = emptyList())
@@ -73,25 +49,49 @@ class BackendConfigValidatorTest {
     }
 
     @Test
-    fun `a malformed trusted proxy is rejected`(@TempDir tmp: Path) {
+    fun `a user header without trusted proxies is rejected`(@TempDir tmp: Path) {
         val config = baseConfig(tmp).run {
-            copy(server = server.copy(clientAddressHeader = "CF-Connecting-IP", trustedProxies = listOf("cloudflared")))
+            copy(server = server.copy(userHeader = "X-Auth-Request-User"))
         }
         assertThatThrownBy {
             BackendConfigValidator.validate(config, flavors = emptyList())
         }.isInstanceOf(InvalidConfigurationException::class.java)
-            .hasMessageContaining("cloudflared")
+            .hasMessageContaining("server.userHeader")
     }
 
     @Test
-    fun `httpsOnlyCookies must be true in production`(@TempDir tmp: Path) {
+    fun `the proxy settings of the deployment pass`(@TempDir tmp: Path) {
         val config = baseConfig(tmp).run {
-            copy(server = server.copy(httpsOnlyCookies = false))
+            copy(server = server.copy(clientAddressHeader = "X-Forwarded-For", userHeader = "X-Auth-Request-User", trustedProxies = listOf("172.30.0.254/32")))
+        }
+        assertThatCode {
+            BackendConfigValidator.validate(config, flavors = emptyList())
+        }.doesNotThrowAnyException()
+    }
+
+    @Test
+    fun `a malformed trusted proxy is rejected`(@TempDir tmp: Path) {
+        val config = baseConfig(tmp).run {
+            copy(server = server.copy(clientAddressHeader = "X-Forwarded-For", trustedProxies = listOf("caddy")))
         }
         assertThatThrownBy {
             BackendConfigValidator.validate(config, flavors = emptyList())
         }.isInstanceOf(InvalidConfigurationException::class.java)
-            .hasMessageContaining("httpsOnlyCookies")
+            .hasMessageContaining("caddy")
+    }
+
+    @Test
+    fun `a metrics port equal to the application port or out of range is rejected`(@TempDir tmp: Path) {
+        for (metricsPort in listOf(8080, 0, 70000)) {
+            val config = baseConfig(tmp).run {
+                copy(server = server.copy(port = 8080, metricsPort = metricsPort))
+            }
+            assertThatThrownBy {
+                BackendConfigValidator.validate(config, flavors = emptyList())
+            }.`as`("metricsPort $metricsPort")
+                .isInstanceOf(InvalidConfigurationException::class.java)
+                .hasMessageContaining("metricsPort")
+        }
     }
 
     @Test

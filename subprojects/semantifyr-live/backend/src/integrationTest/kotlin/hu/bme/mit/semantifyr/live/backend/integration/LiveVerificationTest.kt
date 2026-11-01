@@ -10,13 +10,19 @@ import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationStatus
+import hu.bme.mit.semantifyr.live.backend.lsp.service.ReadDocumentParams
+import hu.bme.mit.semantifyr.live.backend.lsp.service.ReadDocumentResult
+import hu.bme.mit.semantifyr.live.backend.lsp.service.SemantifyrLiveMethods
 import hu.bme.mit.semantifyr.live.backend.testing.LspWire
 import hu.bme.mit.semantifyr.live.backend.testing.StagedTestSupport
 import hu.bme.mit.semantifyr.live.backend.testing.StagedTestSupport.config
 import hu.bme.mit.semantifyr.live.backend.testing.StagedTestSupport.stagedModel
 import hu.bme.mit.semantifyr.live.backend.testing.acceptAnyKnownStatus
+import hu.bme.mit.semantifyr.live.backend.testing.awaitPublishDiagnostics
 import hu.bme.mit.semantifyr.live.backend.testing.awaitResponseFor
 import hu.bme.mit.semantifyr.live.backend.testing.discoverCases
+import hu.bme.mit.semantifyr.live.backend.testing.paramsAs
+import hu.bme.mit.semantifyr.live.backend.testing.pickByLabel
 import hu.bme.mit.semantifyr.live.backend.testing.pickByLabelSuffix
 import hu.bme.mit.semantifyr.live.backend.testing.resultAs
 import hu.bme.mit.semantifyr.live.backend.testing.verifyEndToEnd
@@ -24,6 +30,8 @@ import hu.bme.mit.semantifyr.live.backend.testing.withRealServer
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.websocket.Frame
 import org.assertj.core.api.Assertions.assertThat
+import org.eclipse.lsp4j.DiagnosticSeverity
+import org.eclipse.lsp4j.PublishDiagnosticsParams
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
@@ -81,6 +89,86 @@ class LiveVerificationTest {
                 assertThat(validation.status())
                     .describedAs("witness validation: $validation")
                     .isEqualTo(WitnessValidationStatus.VALID)
+            }
+        }
+    }
+
+    @Test
+    suspend fun `gamma verification returns the generated gamma trace, which opens without errors`(@TempDir tmp: Path) {
+        StagedTestSupport.assumeStaged()
+        val documentUri = "file:///workspace/snippet.gamma"
+        val modelSource = stagedModel(StagedTestSupport.gammaTestModelsDirectory, "semantifyr.live.gammaTestModels", "Simple.gamma")
+        withRealServer(config(tmp)) { client, port ->
+            client.webSocket("ws://localhost:$port/ws/lsp/gamma") {
+                send(Frame.Text(LspWire.initializeRequest()))
+                awaitResponseFor(id = 1)
+                send(Frame.Text(LspWire.initializedNotification()))
+                send(Frame.Text(LspWire.didOpenNotification(uri = documentUri, languageId = "gamma", text = modelSource)))
+
+                val cases = discoverCases(id = 2, command = "gamma.case.discover", documentUri = documentUri, flavor = "gamma")
+                val selectedCase = cases.pickByLabel("LeaderStatechartIdleReachable")
+
+                send(
+                    Frame.Text(
+                        LspWire.executeCommandRequest(
+                            id = 3,
+                            command = "gamma.case.verify",
+                            arguments = listOf(
+                                VerificationCaseRequest(documentUri, selectedCase.location().range, "smart-full"),
+                            ),
+                        ),
+                    ),
+                )
+                val verifyResult = awaitResponseFor(id = 3, timeout = 2.minutes).resultAs(VerificationCaseResult::class.java)
+                assertThat(verifyResult.status()).isEqualTo("passed")
+                val traceUri = verifyResult.trace()?.witnessUri()
+                    ?: error("verify produced no trace URI: $verifyResult")
+                assertThat(traceUri).startsWith("file:///workspace/").endsWith("/trace.gamma")
+
+                send(Frame.Text(LspWire.request(id = 4, method = SemantifyrLiveMethods.READ_DOCUMENT, params = ReadDocumentParams(traceUri))))
+                val traceText = awaitResponseFor(id = 4).resultAs(ReadDocumentResult::class.java).text
+                assertThat(traceText).contains("trace LeaderStatechartIdleReachableTrace of LeaderStatechartIdleReachable")
+
+                send(Frame.Text(LspWire.didOpenNotification(uri = traceUri, languageId = "gamma", text = checkNotNull(traceText))))
+                val diagnostics = awaitPublishDiagnostics(traceUri).paramsAs(PublishDiagnosticsParams::class.java).diagnostics
+                assertThat(diagnostics).noneMatch {
+                    it.severity == DiagnosticSeverity.Error
+                }
+            }
+        }
+    }
+
+    @Test
+    suspend fun `gamma witness validation re-verifies the witness of the verified case`(@TempDir tmp: Path) {
+        StagedTestSupport.assumeStaged()
+        val documentUri = "file:///workspace/snippet.gamma"
+        val modelSource = stagedModel(StagedTestSupport.gammaTestModelsDirectory, "semantifyr.live.gammaTestModels", "Simple.gamma")
+        withRealServer(config(tmp)) { client, port ->
+            client.webSocket("ws://localhost:$port/ws/lsp/gamma") {
+                send(Frame.Text(LspWire.initializeRequest()))
+                awaitResponseFor(id = 1)
+                send(Frame.Text(LspWire.initializedNotification()))
+                send(Frame.Text(LspWire.didOpenNotification(uri = documentUri, languageId = "gamma", text = modelSource)))
+
+                val cases = discoverCases(id = 2, command = "gamma.case.discover", documentUri = documentUri, flavor = "gamma")
+                val request = VerificationCaseRequest(documentUri, cases.pickByLabel("LeaderStatechartIdleReachable").location().range, "smart-full")
+
+                send(Frame.Text(LspWire.executeCommandRequest(id = 3, command = "gamma.witness.validate", arguments = listOf(request))))
+                val missing = awaitResponseFor(id = 3).resultAs(WitnessValidationResult::class.java)
+                assertThat(missing.status()).isEqualTo(WitnessValidationStatus.ERRORED)
+                assertThat(missing.message()).endsWith("has no witness yet, verify it first")
+
+                send(Frame.Text(LspWire.executeCommandRequest(id = 4, command = "gamma.case.verify", arguments = listOf(request))))
+                val verifyResult = awaitResponseFor(id = 4, timeout = 2.minutes).resultAs(VerificationCaseResult::class.java)
+                assertThat(verifyResult.status()).isEqualTo("passed")
+
+                send(Frame.Text(LspWire.executeCommandRequest(id = 5, command = "gamma.witness.validate", arguments = listOf(request))))
+                val validation = awaitResponseFor(id = 5, timeout = 2.minutes).resultAs(WitnessValidationResult::class.java)
+                assertThat(validation.status())
+                    .describedAs("witness validation: $validation")
+                    .isEqualTo(WitnessValidationStatus.VALID)
+                assertThat(validation.verdict()).isEqualTo("passed")
+                assertThat(validation.portfolioId()).isEqualTo("smart-full")
             }
         }
     }

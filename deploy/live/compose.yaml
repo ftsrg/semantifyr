@@ -7,11 +7,13 @@ services:
     image: docker.io/ftsrgbot/semantifyr-live:${IMAGE_TAG:?IMAGE_TAG is not set}
     restart: unless-stopped
     environment:
-      SEMANTIFYR_LIVE_ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD is not set}
       SEMANTIFYR_LIVE_VERIFY_CONCURRENCY: ${VERIFY_CONCURRENCY:?VERIFY_CONCURRENCY is not set}
       SEMANTIFYR_LIVE_VERIFY_TIMEOUT_SECONDS: ${VERIFY_TIMEOUT_SECONDS:?VERIFY_TIMEOUT_SECONDS is not set}
-      SEMANTIFYR_LIVE_CLIENT_ADDRESS_HEADER: CF-Connecting-IP
-      SEMANTIFYR_LIVE_TRUSTED_PROXIES: 172.30.0.2/32
+      SEMANTIFYR_LIVE_TRUSTED_PROXIES: ${TRUSTED_PROXIES:?TRUSTED_PROXIES is not set}
+      SEMANTIFYR_LIVE_CLIENT_ADDRESS_HEADER: X-Forwarded-For
+      SEMANTIFYR_LIVE_USER_HEADER: X-Auth-Request-User
+      # Prometheus scrapes this port on the edge network; Caddy routes only to 8080
+      SEMANTIFYR_LIVE_METRICS_PORT: 8081
       THETA_JAVA_OPTS: ${THETA_JAVA_OPTS:?THETA_JAVA_OPTS is not set}
     mem_limit: ${MEMORY_LIMIT:?MEMORY_LIMIT is not set}
     cpus: ${CPUS:?CPUS is not set}

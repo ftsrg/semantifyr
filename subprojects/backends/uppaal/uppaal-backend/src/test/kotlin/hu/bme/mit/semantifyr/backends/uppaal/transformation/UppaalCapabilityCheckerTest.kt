@@ -18,7 +18,9 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
 
     private fun unsupported(body: String): List<String> {
         val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors)
-        return capabilityChecker().check(inlinedOxsts).map {
+        return withCapabilityChecker {
+            it.check(inlinedOxsts)
+        }.map {
             it.description
         }
     }
@@ -48,7 +50,7 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
                 @semantifyr::Clock var e : test::colors::Color := test::colors::Color::Red
                 var x : int := 0
                 init { }
-                tran { c := 0 c := 5 havoc(c) for (i in 0 .. 2) { x := x + i } }
+                tran { c := 0 c := 5 havoc(c) for (i in 0..2) { x := x + i } }
                 prop { AG true }
             """,
         )
@@ -60,5 +62,66 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
             "havoc on clocks",
             "for-operations",
         )
+    }
+
+    @Test
+    fun `arithmetic over an unbounded integer is reported only when the property depends on it`() {
+        val unsupported = unsupported(
+            """
+                var counted : int := 1
+                var ignored : int := 1
+                init { }
+                tran { counted := counted * 3 ignored := ignored * 3 }
+                prop { AG counted > 0 }
+            """,
+        )
+
+        assertThat(unsupported).containsExactly("arithmetic that may leave the 32-bit range")
+    }
+
+    @Test
+    fun `incrementing or doubling an unbounded integer stays within 32 bits under the 31-bit range`() {
+        val unsupported = unsupported(
+            """
+                var counted : int := 0
+                var doubled : int := 1
+                init { }
+                tran { counted := counted + 1 doubled := doubled * 2 }
+                prop { AG (counted >= 0 && doubled > 0) }
+            """,
+        )
+
+        assertThat(unsupported).isEmpty()
+    }
+
+    @Test
+    fun `an unbounded integer without arithmetic that may leave 32 bits is not reported`() {
+        val unsupported = unsupported(
+            """
+                var x : int := 0
+                var y : int := 0
+                init { }
+                tran { if (x < 100) { x := x + 1 } y := y / 2 + x }
+                prop { AG y >= 0 }
+            """,
+        )
+
+        assertThat(unsupported).isEmpty()
+    }
+
+    @Test
+    fun `arithmetic is reported only when it may leave 32 bits under the declared ranges`() {
+        val unsupported = unsupported(
+            """
+                var x : int := 1
+                var doubled : int := 2
+                var scaled : int := 100000
+                init { }
+                tran { if (x < 32767) { x := x + 1 } doubled := x * 2 scaled := x * 100000 }
+                prop { AG (doubled > 0 && scaled > 0) }
+            """,
+        )
+
+        assertThat(unsupported).containsExactly("arithmetic that may leave the 32-bit range")
     }
 }

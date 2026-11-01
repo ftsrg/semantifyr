@@ -29,6 +29,7 @@ import {
   discoverVerificationCases,
   runAllVerifications,
   verifySingleCase,
+  witnessValidationLocation,
   type VerificationCaseLocation,
   type VerificationCaseState,
   type VerificationState,
@@ -60,6 +61,7 @@ interface Props {
   verificationCommand: string;
   discoveryCommand: string;
   validateWitnessCommand?: string | undefined;
+  validateWitnessByCase?: boolean | undefined;
   connected: boolean;
   portfolioId: string;
   validationPortfolioId: string;
@@ -129,6 +131,7 @@ function VerificationPanelInner(
     verificationCommand,
     discoveryCommand,
     validateWitnessCommand,
+    validateWitnessByCase = false,
     connected,
     portfolioId,
     validationPortfolioId,
@@ -212,15 +215,15 @@ function VerificationPanelInner(
   }, [connected, editorHandle, handleRefreshCases]);
 
   // Ref so the runner picks up mid-batch toggles to auto-validate / portfolio.
-  const autoValidateOptionsRef = useRef({ autoValidate, validateWitnessCommand, validationPortfolioId });
+  const autoValidateOptionsRef = useRef({ autoValidate, validateWitnessCommand, validateWitnessByCase, validationPortfolioId });
   useEffect(() => {
-    autoValidateOptionsRef.current = { autoValidate, validateWitnessCommand, validationPortfolioId };
-  }, [autoValidate, validateWitnessCommand, validationPortfolioId]);
+    autoValidateOptionsRef.current = { autoValidate, validateWitnessCommand, validateWitnessByCase, validationPortfolioId };
+  }, [autoValidate, validateWitnessCommand, validateWitnessByCase, validationPortfolioId]);
 
   const getAutoValidateRequest = useCallback(() => {
-    const { autoValidate: live, validateWitnessCommand: cmd, validationPortfolioId: pid } = autoValidateOptionsRef.current;
+    const { autoValidate: live, validateWitnessCommand: cmd, validateWitnessByCase: byCase, validationPortfolioId: pid } = autoValidateOptionsRef.current;
     if (!live || !cmd) return null;
-    return { command: cmd, ...(pid ? { portfolioId: pid } : {}) };
+    return { command: cmd, byCase, ...(pid ? { portfolioId: pid } : {}) };
   }, []);
 
   const handleVerifyAll = useCallback(() => {
@@ -281,12 +284,13 @@ function VerificationPanelInner(
       const target = verifyStateRef.current.cases.find((cs) => cs.caseInfo.id === caseId);
       const witnessUri = target?.trace?.witnessUri;
       if (!witnessUri) return;
-      dispatchAutoValidation(client, validateWitnessCommand, caseId, witnessUri, stateUpdater, {
+      const location = witnessValidationLocation(target.caseInfo, witnessUri, validateWitnessByCase);
+      dispatchAutoValidation(client, validateWitnessCommand, caseId, location, stateUpdater, {
         validationPortfolioId,
         caseLabel: target.caseInfo.label,
       });
     },
-  }), [editorHandle, validateWitnessCommand, stateUpdater, validationPortfolioId]);
+  }), [editorHandle, validateWitnessCommand, validateWitnessByCase, stateUpdater, validationPortfolioId]);
 
   const { phase, cases } = verifyState;
   const verifyBusy = phase === 'running';

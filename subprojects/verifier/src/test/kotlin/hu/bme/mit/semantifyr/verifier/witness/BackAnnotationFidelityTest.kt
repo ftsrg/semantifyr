@@ -18,6 +18,7 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
+import hu.bme.mit.semantifyr.compiler.pipeline.flattening.RecordFlatteningPass
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceNames
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
@@ -25,13 +26,15 @@ import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
+import hu.bme.mit.semantifyr.verifier.caseDirectoryName
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
+import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
-import hu.bme.mit.semantifyr.verifier.qualifiedNameToDirectoryName
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -58,6 +61,8 @@ class BackAnnotationFidelityTest {
 
     private val tracingCase = "semantifyr::verification::lang::tracing::TracedChoiceBranchReach"
     private val arraysCase = "semantifyr::verification::lang::arrays::ArraySlotIndependenceReach"
+    private val recordsCase = "semantifyr::verification::lang::records::ContainedRecordReach"
+    private val classTypedArraysCase = "semantifyr::verification::lang::arrays::ClassTypedArrayDispatchReach"
 
     private val kitchenOn = flattenedName("root", "kitchen", "lamp", "on")
     private val hallOn = flattenedName("root", "hall", "lamp", "on")
@@ -154,6 +159,49 @@ class BackAnnotationFidelityTest {
     }
 
     @Test
+    suspend fun `record field values reach the witness state and the back-annotated witness by field path`(@TempDir output: Path) {
+        val case = loadCase("records.oxsts", recordsCase)
+        val positionX = flattenedName("root", "robot", "position") + "${RecordFlatteningPass.FIELD_SEPARATOR}x"
+
+        verifyWithWitness(case, output) { model ->
+            thetaShapedWitness(
+                model,
+                model.state(positionX to 0),
+                model.state(positionX to 0),
+                model.state(positionX to 1),
+            )
+        }
+
+        assertThat(readWitnessState(output, case).steps.single().values).containsExactly(
+            WitnessStateValue("root.robot.position.x", "1"),
+        )
+        assertThat(readWitnessModel(output, case)).contains("root.robot.position.x == 1")
+    }
+
+    @Test
+    suspend fun `class-typed array slots back-annotate to the instance path they hold`(@TempDir output: Path) {
+        val case = loadCase("arrays.oxsts", classTypedArraysCase)
+        val slots = (0..1).map {
+            flattenedName("root", "queue_$it")
+        }
+
+        verifyWithWitness(case, output) { model ->
+            val secondId = (model.variables.single { it.name == slots[1] }.expression as LiteralInteger).value
+            thetaShapedWitness(
+                model,
+                model.state(slots[0] to secondId, slots[1] to secondId),
+                model.state(slots[0] to secondId, slots[1] to secondId),
+            )
+        }
+
+        assertThat(readWitnessState(output, case).initialStep.values).contains(
+            WitnessStateValue("root.queue[0]", "root.second"),
+            WitnessStateValue("root.queue[1]", "root.second"),
+        )
+        assertThat(readWitnessModel(output, case)).contains("root.queue[0] == root.second")
+    }
+
+    @Test
     suspend fun `state after init is the initialized step for a witness without a pre-init state`(@TempDir output: Path) {
         val case = loadCase("tracing.oxsts", tracingCase)
 
@@ -243,7 +291,7 @@ class BackAnnotationFidelityTest {
     }
 
     private fun caseDirectory(output: Path, case: VerificationCase): Path {
-        return output.resolve(qualifiedNameToDirectoryName(case.qualifiedName))
+        return output.resolve(caseDirectoryName(case))
     }
 
     private fun readCallTrace(output: Path, case: VerificationCase): CallTrace {
@@ -265,6 +313,7 @@ class BackAnnotationFidelityTest {
         override val displayName = "witness"
         override val description = "test-only"
         override val executorKeys: Set<ExecutorKey<*>> = emptySet()
+        override val legs: List<PortfolioLeg> = emptyList()
 
         override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
             return AvailabilityReport.Available

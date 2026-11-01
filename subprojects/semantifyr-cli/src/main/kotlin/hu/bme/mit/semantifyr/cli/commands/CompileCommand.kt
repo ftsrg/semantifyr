@@ -13,6 +13,8 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path
 import com.google.inject.Inject
 import com.google.inject.Injector
+import hu.bme.mit.semantifyr.cli.CommandExit
+import hu.bme.mit.semantifyr.cli.ExitCode
 import hu.bme.mit.semantifyr.cli.commands.options.ArtifactOptionGroup
 import hu.bme.mit.semantifyr.cli.commands.options.CompilationOptionGroup
 import hu.bme.mit.semantifyr.cli.commands.options.VerificationCaseSpecificationOptionGroup
@@ -22,15 +24,14 @@ import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.VerificationCase
+import hu.bme.mit.semantifyr.verifier.caseDirectoryName
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
-import hu.bme.mit.semantifyr.verifier.qualifiedNameToDirectoryName
 import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.bufferedWriter
 import kotlin.io.path.nameWithoutExtension
-import kotlin.system.exitProcess
 
 class CompileCommand @Inject constructor(
     semantifyrLoader: SemantifyrLoader,
@@ -55,12 +56,9 @@ class CompileCommand @Inject constructor(
     override suspend fun run() {
         logger.info { "compile model=$model libraries=$libraries" }
 
+        checkInputs()
         val semantifyrModelContext = readModelContext()
         val cases = caseSpecificationOptions.collectVerificationCases(semantifyrModelContext)
-        if (cases.isEmpty()) {
-            echo("No verification cases match the given filter.", err = true)
-            exitProcess(1)
-        }
 
         if (cases.size == 1) {
             val target = validateSingleCaseOutput()
@@ -74,8 +72,7 @@ class CompileCommand @Inject constructor(
     private fun validateSingleCaseOutput(): Path {
         val target = outputPath ?: model.resolveSibling("${model.nameWithoutExtension}.inlined.oxsts")
         if (Files.isDirectory(target)) {
-            echo("--output '$target' is a directory, but only one case is selected. Provide a file path or omit the flag.", err = true)
-            exitProcess(2)
+            throw CommandExit(ExitCode.Usage, "--output '$target' is a directory, but only one case is selected. Provide a file path or omit the flag.")
         }
         return target
     }
@@ -83,8 +80,7 @@ class CompileCommand @Inject constructor(
     private fun validateMultipleCasesOutput(caseCount: Int): Path {
         val directory = outputPath ?: model.resolveSibling("${model.nameWithoutExtension}.inlined")
         if (Files.exists(directory) && !Files.isDirectory(directory)) {
-            echo("--output '$directory' is a file, but $caseCount cases are selected. Provide a directory or omit the flag.", err = true)
-            exitProcess(2)
+            throw CommandExit(ExitCode.Usage, "--output '$directory' is a file, but $caseCount cases are selected. Provide a directory or omit the flag.")
         }
         Files.createDirectories(directory)
         return directory
@@ -96,8 +92,8 @@ class CompileCommand @Inject constructor(
     ) {
         runCompiler { compiler ->
             echo("Compiling ${case.qualifiedName} to $target")
-            val caseDirectory = artifactOptions.resolvedOutputDirectory.resolve(qualifiedNameToDirectoryName(case.qualifiedName))
-            val compiled = compiler.compile(case.classDeclaration, caseDirectory)
+            val caseDirectory = artifactOptions.resolvedOutputDirectory.resolve(caseDirectoryName(case))
+            val compiled = compileCase(compiler, case, caseDirectory)
             writeInlinedOxsts(compiled.inlinedOxsts, target)
         }
     }
@@ -110,8 +106,8 @@ class CompileCommand @Inject constructor(
             for (case in cases) {
                 val target = directory.resolve("${case.qualifiedName}.oxsts")
                 echo("Compiling ${case.qualifiedName} to $target")
-                val caseDirectory = artifactOptions.resolvedOutputDirectory.resolve(qualifiedNameToDirectoryName(case.qualifiedName))
-                val compiled = compiler.compile(case.classDeclaration, caseDirectory)
+                val caseDirectory = artifactOptions.resolvedOutputDirectory.resolve(caseDirectoryName(case))
+                val compiled = compileCase(compiler, case, caseDirectory)
                 writeInlinedOxsts(compiled.inlinedOxsts, target)
             }
         }
@@ -126,7 +122,7 @@ class CompileCommand @Inject constructor(
         inlinedOxsts: InlinedOxsts,
         target: Path,
     ) {
-        Files.createDirectories(target.parent)
+        Files.createDirectories(target.toAbsolutePath().parent)
         target.bufferedWriter().use {
             serializer.serialize(inlinedOxsts, it, SaveOptions.defaultOptions())
         }

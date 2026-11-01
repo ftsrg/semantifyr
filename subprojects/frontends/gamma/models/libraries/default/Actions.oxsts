@@ -12,7 +12,6 @@ import semantifyr::gamma::events
 import semantifyr::gamma::ports
 
 abstract class Action {
-    //@Trace
     redefine tran { }
 }
 

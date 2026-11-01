@@ -6,10 +6,14 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.typesystem;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils;
 import hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger;
 import org.eclipse.xtext.validation.CheckMode;
 import org.junit.jupiter.api.Test;
 
@@ -193,5 +197,51 @@ public class ParameterBindingTest {
             """, CheckMode.ALL);
 
         pkg.assertHasValidationIssue(OxstsValidator.INVALID_CALL_ARGUMENTS_COUND, "cannot follow optional parameter");
+    }
+
+    @Test
+    void annotationPositionalArgumentAfterNamed_bindsTheParameterAtItsPosition() {
+        var pkg = parseHelper.parse("""
+            package test
+            annotation Pair(first: int, second: bool)
+            @Pair(first = 1, true)
+            class C { }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        pkg.assertNoValidationErrors();
+    }
+
+    @Test
+    void annotationNamedArgument_bindsTheParameterOfThatName() {
+        var pkg = parseHelper.parse("""
+            package test
+            annotation Pair(first: int, second: int[0..1])
+            @Pair(second = 2)
+            class C { }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        pkg.assertNoValidationErrors();
+        var annotation =
+                pkg.classByName("C").eObject().getAnnotation().getAnnotations().getFirst();
+        var parameters = annotation.getDeclaration().getParameters();
+        assertThat(OxstsUtils.getAnnotationValue(annotation, parameters.get(0))).isNull();
+        assertThat(OxstsUtils.getAnnotationValue(annotation, parameters.get(1)))
+                .isInstanceOfSatisfying(
+                        LiteralInteger.class,
+                        value -> assertThat(value.getValue()).isEqualTo(2));
+    }
+
+    @Test
+    void annotationNamedArgumentOfWrongType_isRejected() {
+        var pkg = parseHelper.parse("""
+            package test
+            annotation Pair(first: int, second: bool)
+            @Pair(second = 1, first = 2)
+            class C { }
+            """, CheckMode.ALL);
+
+        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "parameter 'second'");
     }
 }

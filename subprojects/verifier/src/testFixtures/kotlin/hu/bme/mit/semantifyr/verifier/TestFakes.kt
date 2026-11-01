@@ -10,14 +10,15 @@ import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendConfig
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import kotlinx.coroutines.delay
 import org.mockito.kotlin.mock
@@ -42,7 +43,11 @@ val noopGate: ConcurrencyGate = object : ConcurrencyGate {
 
 fun fakeRequest(): BackendVerificationRequest {
     return BackendVerificationRequest(
-        inlinedOxsts = mock<InlinedOxsts>(),
+        inlinedOxsts = OxstsFactory.createInlinedOxsts().also {
+            it.property = OxstsFactory.createPropertyDeclaration().also { declaration ->
+                declaration.expression = OxstsFactory.createAG()
+            }
+        },
         artifactOutputPath = Paths.get(System.getProperty("java.io.tmpdir")),
     )
 }
@@ -78,7 +83,10 @@ val FakeExecutorKey = ExecutorKey<AlwaysAvailableExecutor>(name = "fake") {
     AlwaysAvailableExecutor()
 }
 
-data class FakeConfig(override val id: String = "fake") : BackendConfig
+data class FakeConfig(
+    override val id: String = "fake",
+    override val soundness: SoundnessDirection = SoundnessDirection.Exact,
+) : BackendConfig
 
 class FakeBackend(
     override val id: String,
@@ -105,9 +113,15 @@ class FakeBackend(
     }
 
     companion object {
-        fun verdict(id: String, verdict: VerificationVerdict): FakeBackend {
+        private val invariant = OxstsFactory.createAG()
+
+        fun verdict(
+            id: String,
+            verdict: VerificationVerdict,
+            soundness: SoundnessDirection = SoundnessDirection.Exact,
+        ): FakeBackend {
             return FakeBackend(id) {
-                BackendVerificationResult(verdict = verdict, metadata = fakeMetadata(id))
+                result(id, verdict, soundness)
             }
         }
 
@@ -115,11 +129,25 @@ class FakeBackend(
             id: String,
             delayMillis: Long,
             verdict: VerificationVerdict,
+            soundness: SoundnessDirection = SoundnessDirection.Exact,
         ): FakeBackend {
             return FakeBackend(id) {
                 delay(delayMillis)
-                BackendVerificationResult(verdict = verdict, metadata = fakeMetadata(id))
+                result(id, verdict, soundness)
             }
+        }
+
+        private fun result(
+            id: String,
+            verdict: VerificationVerdict,
+            soundness: SoundnessDirection,
+        ): BackendVerificationResult {
+            return BackendVerificationResult(
+                verdict = verdict,
+                metadata = fakeMetadata(id),
+                soundness = soundness,
+                isTrusted = soundness.trusts(verdict, invariant),
+            )
         }
 
         fun throwing(id: String, throwable: Throwable): FakeBackend {

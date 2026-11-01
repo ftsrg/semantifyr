@@ -62,10 +62,17 @@ data class CorpusCase(
 }
 
 @Serializable
+data class CorpusExample(
+    val label: String,
+    val description: String,
+)
+
+@Serializable
 data class CorpusModel(
     val file: String,
     val variant: SysMLv2Variant = SysMLv2Variant.Default,
     val conformance: Boolean = false,
+    val example: CorpusExample? = null,
     val cases: List<CorpusCase>,
 )
 

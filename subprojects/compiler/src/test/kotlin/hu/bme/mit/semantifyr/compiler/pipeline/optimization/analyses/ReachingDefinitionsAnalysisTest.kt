@@ -310,6 +310,32 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         }
     }
 
+    @Test
+    fun `init read after a write on one branch also sees the declaration`() {
+        val (inlined, result) = runReachingDefinitions(
+            """
+                inlined oxsts of semantifyr::Anything
+                var c : bool := false
+                var a : int := 0
+                var b : int := 0
+                init {
+                    if (c) {
+                        a := 1
+                    }
+                    b := a
+                }
+                tran { }
+                prop { AG true }
+            """,
+        )
+
+        val a = inlined.varNamed("a")
+        val defs = result.definitionsOf[inlined.tranReadOf(a, "b")]!!
+
+        val initWrite = inlined.assignmentsTo(a).single()
+        assertThat(defs).containsExactlyInAnyOrder(initWrite as EObject, a as EObject)
+    }
+
     private fun InlinedOxsts.varNamed(name: String): VariableDeclaration {
         return eAllOfType<VariableDeclaration>().firstOrNull {
             it.name == name

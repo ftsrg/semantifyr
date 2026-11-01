@@ -6,23 +6,7 @@
 
 import type { Location } from '@semantifyr/editor-common'
 
-export interface PortfolioInfo {
-  id: string
-  displayName: string
-  description: string
-  available: boolean
-}
-
-export interface FlavorInfo {
-  id: string
-  displayName: string
-  languageId: string
-  fileName: string
-  verificationCommand: string | null
-  discoveryCommand: string | null
-  validateWitnessCommand: string | null
-  peekCompiledOutput: boolean
-}
+export type { FlavorInfo, PortfolioInfo, PortfoliosResponse } from '@semantifyr/editor-common'
 
 export interface InfoResponse {
   uptime: string
@@ -69,11 +53,9 @@ export interface AdminServerConfigResponse {
   pingPeriod: string
   pingTimeout: string
   webRootDirectory: string | null
-  adminPasswordSet: boolean
   wsHandshakesPerPeriod: number
   wsHandshakeRatePeriod: string
   maxWsFrameSize: number
-  httpsOnlyCookies: boolean
 }
 
 export interface AdminSessionManagerConfigResponse {
@@ -87,8 +69,11 @@ export interface AdminVerificationConfigResponse {
   timeout: string
 }
 
+export interface AdminWhoamiResponse {
+  user: string
+}
+
 export interface AdminConfigResponse {
-  development: boolean
   server: AdminServerConfigResponse
   sessionManager: AdminSessionManagerConfigResponse
   verification: AdminVerificationConfigResponse

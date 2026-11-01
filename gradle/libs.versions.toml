@@ -10,6 +10,7 @@ mockito = "5.24.0"
 mockitoKotlin = "6.4.0"
 mwe2 = "2.27.0"
 mweUtils = "1.21.0"
+reload4j = "1.2.26"
 slf4j = "2.0.20"
 log4j = "2.26.1"
 xtext = "2.44.0"
@@ -28,6 +29,7 @@ ktlint = "1.8.0"
 palantirJavaFormat = "2.103.0"
 sonarqube = "7.5.0.8588"
 ktor = "3.6.1"
+micrometer = "1.17.2"
 dokka = "2.2.0"
 
 [libraries]
@@ -42,6 +44,7 @@ mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", versio
 mwe-utils = { group = "org.eclipse.emf", name = "org.eclipse.emf.mwe.utils", version.ref = "mweUtils" }
 mwe2-launch = { group = "org.eclipse.emf", name = "org.eclipse.emf.mwe2.launch", version.ref = "mwe2" }
 mwe2-lib = { group = "org.eclipse.emf", name = "org.eclipse.emf.mwe2.lib", version.ref = "mwe2" }
+reload4j = { group = "ch.qos.reload4j", name = "reload4j", version.ref = "reload4j" }
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
 slf4j-log4j = { group = "org.apache.logging.log4j", name = "log4j-slf4j2-impl", version.ref = "log4j" }
 xtext-bom = { group = "org.eclipse.xtext", name = "xtext-dev-bom", version.ref = "xtext" }
@@ -65,16 +68,17 @@ ktor-server-core = { group = "io.ktor", name = "ktor-server-core", version.ref =
 ktor-server-netty = { group = "io.ktor", name = "ktor-server-netty", version.ref = "ktor" }
 ktor-server-websockets = { group = "io.ktor", name = "ktor-server-websockets", version.ref = "ktor" }
 ktor-server-auth = { group = "io.ktor", name = "ktor-server-auth", version.ref = "ktor" }
-ktor-server-sessions = { group = "io.ktor", name = "ktor-server-sessions", version.ref = "ktor" }
 ktor-server-cors = { group = "io.ktor", name = "ktor-server-cors", version.ref = "ktor" }
 ktor-server-host-common = { group = "io.ktor", name = "ktor-server-host-common", version.ref = "ktor" }
 ktor-server-content-negotiation = { group = "io.ktor", name = "ktor-server-content-negotiation", version.ref = "ktor" }
 ktor-server-rate-limit = { group = "io.ktor", name = "ktor-server-rate-limit", version.ref = "ktor" }
+ktor-server-metrics-micrometer = { group = "io.ktor", name = "ktor-server-metrics-micrometer", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
 ktor-client-websockets = { group = "io.ktor", name = "ktor-client-websockets", version.ref = "ktor" }
 ktor-server-test-host = { group = "io.ktor", name = "ktor-server-test-host", version.ref = "ktor" }
+micrometer-registry-prometheus = { group = "io.micrometer", name = "micrometer-registry-prometheus", version.ref = "micrometer" }
 node-plugin = { group = "com.github.node-gradle", name = "gradle-node-plugin", version.ref = "node" }
 spotless-plugin = { group = "com.diffplug.spotless", name = "spotless-plugin-gradle", version.ref = "spotless" }
 sonarqube-plugin = { group = "org.sonarqube", name = "org.sonarqube.gradle.plugin", version.ref = "sonarqube" }
@@ -88,11 +92,11 @@ ktor-server = [
     "ktor-server-netty",
     "ktor-server-websockets",
     "ktor-server-auth",
-    "ktor-server-sessions",
     "ktor-server-cors",
     "ktor-server-host-common",
     "ktor-server-content-negotiation",
     "ktor-server-rate-limit",
+    "ktor-server-metrics-micrometer",
     "ktor-serialization-kotlinx-json",
 ]
 ktor-client-test = [

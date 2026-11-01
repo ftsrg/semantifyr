@@ -16,6 +16,8 @@ import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtext.EcoreUtil2
 
 class IfThenElseConstantGuardPattern : OptimizationPattern {
+    override val rootTypes = setOf(IfThenElse::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is IfThenElse) {
             return false
@@ -38,6 +40,8 @@ class IfThenElseConstantGuardPattern : OptimizationPattern {
 }
 
 class IfThenElseIdenticalBranchesPattern : OptimizationPattern {
+    override val rootTypes = setOf(IfThenElse::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is IfThenElse) {
             return false

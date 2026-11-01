@@ -57,7 +57,6 @@ const DEFAULT_EXAMPLE: LiveExample = (() => {
   }
   return first;
 })();
-const DEFAULT_PORTFOLIO_ID = 'smart-full';
 const RIGHT_PANE_WIDTH_KEY = 'semantifyr-right-pane-width';
 const DEFAULT_RIGHT_PANE_WIDTH = 480;
 const MIN_LEFT_WIDTH = 320;
@@ -93,6 +92,8 @@ interface UrlState {
   flavor: LiveFlavor;
   example: LiveExample;
   code: string;
+  // code from a link that names no example
+  shared: boolean;
 }
 
 async function resolveInitialState(search: string): Promise<UrlState> {
@@ -109,10 +110,10 @@ async function resolveInitialState(search: string): Promise<UrlState> {
   }
   if (exampleParam) {
     const example = findExample(flavor, exampleParam) ?? fallback;
-    return { flavor, example, code: decodedCode ?? example.code };
+    return { flavor, example, code: decodedCode ?? example.code, shared: false };
   }
 
-  return { flavor, example: fallback, code: decodedCode ?? fallback.code };
+  return { flavor, example: fallback, code: decodedCode ?? fallback.code, shared: decodedCode !== null };
 }
 
 function deriveConnectionMessage(status: LiveEditorStatus, statusInfo: string | null): string {
@@ -135,6 +136,7 @@ export default function EditorPage({
   const [flavor, setFlavor] = useState<LiveFlavor>(DEFAULT_FLAVOR);
   const [example, setExample] = useState<LiveExample>(DEFAULT_EXAMPLE);
   const [code, setCode] = useState<string>(DEFAULT_EXAMPLE.code);
+  const [shared, setShared] = useState(false);
   const [copyConfirmation, setCopyConfirmation] = useState<string | null>(null);
   const [pendingSwitch, setPendingSwitch] = useState<(() => void) | null>(null);
 
@@ -147,7 +149,7 @@ export default function EditorPage({
   const [connectedSince, setConnectedSince] = useState<number | null>(null);
   const [reconnectCount, setReconnectCount] = useState(0);
   const [portfolios, setPortfolios] = useState<PortfolioInfo[]>([]);
-  const [portfolioId, setPortfolioId] = useState<string>(DEFAULT_PORTFOLIO_ID);
+  const [portfolioId, setPortfolioId] = useState<string>('');
   const [validationPortfolioId, handleValidationPortfolioChange] = usePersistedState(
     VALIDATION_PORTFOLIO_KEY,
     DEFAULT_VALIDATION_PORTFOLIO_ID,
@@ -195,6 +197,7 @@ export default function EditorPage({
       setFlavor(initial.flavor);
       setExample(initial.example);
       setCode(initial.code);
+      setShared(initial.shared);
     });
     return () => {
       cancelled = true;
@@ -205,9 +208,10 @@ export default function EditorPage({
     const api = createApi(backendUrl);
     let cancelled = false;
     void api.fetchPortfolios()
-      .then((list) => {
+      .then((response) => {
         if (cancelled) return;
-        setPortfolios(list);
+        setPortfolios(response.portfolios);
+        setPortfolioId((current) => current || response.defaultPortfolio);
       })
       .catch(() => { /* non-fatal */ });
     return () => {
@@ -240,6 +244,7 @@ export default function EditorPage({
       setFlavor(nextFlavor);
       setExample(nextExample);
       setCode(nextExample.code);
+      setShared(false);
       setSelectedWitnessCaseId(null);
       if (flavorChanged) {
         setVerificationCases([]);
@@ -278,12 +283,14 @@ export default function EditorPage({
     if (typeof window === 'undefined') return;
     const url = await buildShareableUrl(
       `${window.location.origin}${window.location.pathname}`,
-      {
-        flavorId: flavor.id,
-        exampleId: example.id,
-        code: currentEditorContent(),
-        exampleCode: example.code,
-      },
+      shared
+        ? { flavorId: flavor.id, code: currentEditorContent() }
+        : {
+            flavorId: flavor.id,
+            exampleId: example.id,
+            code: currentEditorContent(),
+            exampleCode: example.code,
+          },
     );
     try {
       await navigator.clipboard.writeText(url);
@@ -291,7 +298,7 @@ export default function EditorPage({
     } catch {
       flashCopyConfirmation('Copy failed');
     }
-  }, [flavor.id, example.id, example.code, currentEditorContent, flashCopyConfirmation]);
+  }, [shared, flavor.id, example.id, example.code, currentEditorContent, flashCopyConfirmation]);
 
   const editorKey = useMemo(() => `${flavor.id}:${example.id}`, [flavor.id, example.id]);
 
@@ -323,11 +330,11 @@ export default function EditorPage({
       return;
     }
     const previous = document.title;
-    document.title = `${example.label} - Semantifyr Live`;
+    document.title = `${shared ? 'Shared model' : example.label} - Semantifyr Live`;
     return () => {
       document.title = previous;
     };
-  }, [embedded, example.label]);
+  }, [embedded, shared, example.label]);
 
   // Only auto-retry from `errored`; a manual disconnect must stay off.
   useEffect(() => {
@@ -397,6 +404,7 @@ export default function EditorPage({
             caseInfo={witnessCaseState.caseInfo}
             trace={witnessCaseState.trace}
             validation={witnessValidation}
+            validationMessage={witnessCaseState.validationMessage}
             validating={witnessCaseState.validating ?? false}
             canRevalidate={status === 'connected' && !!flavorInfo?.validateWitnessCommand}
             onRevalidate={handleRevalidateWitness}
@@ -567,6 +575,7 @@ export default function EditorPage({
               verificationCommand={flavorInfo.verificationCommand}
               discoveryCommand={flavorInfo.discoveryCommand}
               validateWitnessCommand={flavorInfo.validateWitnessCommand ?? undefined}
+              validateWitnessByCase={flavorInfo.validateWitnessByCase}
               connected={status === 'connected'}
               portfolioId={portfolioId}
               validationPortfolioId={validationPortfolioId}

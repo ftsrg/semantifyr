@@ -61,6 +61,11 @@
         "command": "semantifyr.gamma.compile",
         "title": "Compile Gamma File",
         "category": "Semantifyr"
+      },
+      {
+        "command": "semantifyr.witness.show",
+        "title": "Show Witness",
+        "category": "Semantifyr"
       }
     ],
     "menus": {
@@ -69,6 +74,30 @@
           "command": "semantifyr.gamma.compile",
           "when": "resourceExtname == .gamma",
           "group": "semantifyr"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "semantifyr.witness.show",
+          "when": "false"
+        }
+      ],
+      "testing/item/context": [
+        {
+          "command": "semantifyr.witness.show",
+          "when": "controllerId == oxsts.verification || controllerId == gamma.verification"
+        }
+      ],
+      "testing/message/content": [
+        {
+          "command": "semantifyr.witness.show",
+          "when": "testMessage == semantifyr.witness"
+        }
+      ],
+      "testing/message/context": [
+        {
+          "command": "semantifyr.witness.show",
+          "when": "testMessage == semantifyr.witness"
         }
       ]
     },
@@ -121,7 +150,7 @@
       "properties": {
         "semantifyr.portfolio": {
           "type": "string",
-          "default": "theta-full",
+          "default": "smart-full",
           "enum": [
             "smart-full",
             "all-agree-full",
@@ -152,7 +181,7 @@
             "spin-bitstate",
             "spin-hash-compact"
           ],
-          "markdownDescription": "Backend portfolio used when running verification. `smart-full` is the recommended general-purpose pick; `all-agree-full` is the cross-backend cross-check used by witness validation. The remaining entries pin one backend / configuration."
+          "markdownDescription": "Backend portfolio used when running verification. The default `smart-full` races every installed backend, so one is enough; `all-agree-full` is the cross-backend cross-check used by witness validation. The remaining entries pin one backend / configuration."
         },
         "semantifyr.timeoutSeconds": {
           "type": "number",
@@ -178,7 +207,7 @@
         },
         "semantifyr.theta.dockerImage": {
           "type": "string",
-          "default": "ftsrg/theta-xsts-cli:6.28.1",
+          "default": "ftsrg/theta-xsts-cli:8.6.0",
           "markdownDescription": "Docker image reference (repository:tag or @digest) for the Theta image. Only used when `semantifyr.theta.executor` is `docker`."
         },
         "semantifyr.artifacts.location": {
@@ -216,7 +245,10 @@
     "typecheck": "tsc",
     "typecheck:watch": "tsc --watch",
     "lint": "eslint",
-    "check": "npm run typecheck && npm run lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "node src/__integration__/run.mjs",
+    "check": "npm run typecheck && npm run lint && npm run test",
     "assemble": "node esbuild.mjs",
     "assemble:watch": "node esbuild.mjs --watch",
     "assemble:production": "node esbuild.mjs --minify",
@@ -226,13 +258,17 @@
   },
   "dependencies": {
     "@semantifyr/editor-common": "*",
-    "vscode-languageclient": "^9.0.1"
+    "vscode-languageclient": "^11.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.17.19",
     "@types/vscode": "~1.109.0",
+    "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^3.2.2",
     "concurrently": "^9.0.0",
-    "esbuild": "^0.25.0"
+    "esbuild": "^0.25.0",
+    "vitest": "^5.0.5",
+    "vscode-jsonrpc": "^10.0.0",
+    "vscode-languageserver-protocol": "^3.18.5"
   }
 }

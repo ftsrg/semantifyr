@@ -10,6 +10,8 @@ import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.compiler.pipeline.context.CompilationMetrics
+import hu.bme.mit.semantifyr.compiler.pipeline.context.ModelSize
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationStats
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.witness.CallTrace
 import hu.bme.mit.semantifyr.verifier.witness.CallTraceStep
@@ -53,11 +55,49 @@ data class BackendMetricsDto(
     }
 }
 
+data class PassStatsDto(
+    val name: String,
+    val duration: Duration,
+    val runs: Int,
+    val firings: Int,
+)
+
+data class AnalysisStatsDto(
+    val name: String,
+    val duration: Duration,
+    val computations: Int,
+)
+
+data class OptimizationStatsDto(
+    val duration: Duration,
+    val passes: List<PassStatsDto>,
+    val analyses: List<AnalysisStatsDto>,
+) {
+    companion object {
+        fun fromStats(stats: OptimizationStats): OptimizationStatsDto {
+            return OptimizationStatsDto(
+                duration = stats.duration.toJavaDuration(),
+                passes = stats.passes.map {
+                    PassStatsDto(it.name, it.duration.toJavaDuration(), it.runs, it.firings)
+                },
+                analyses = stats.analyses.map {
+                    AnalysisStatsDto(it.name, it.duration.toJavaDuration(), it.computations)
+                },
+            )
+        }
+    }
+}
+
 data class CompilationMetricsDto(
     val createDuration: Duration,
     val instantiationDuration: Duration,
     val inliningDuration: Duration,
     val flatteningDuration: Duration,
+    val inliningOptimization: OptimizationStatsDto,
+    val flatteningOptimization: OptimizationStatsDto,
+    val inputSize: ModelSize,
+    val inlinedSize: ModelSize,
+    val flattenedSize: ModelSize,
 ) {
     companion object {
         fun fromMetrics(metrics: CompilationMetrics): CompilationMetricsDto {
@@ -66,6 +106,11 @@ data class CompilationMetricsDto(
                 instantiationDuration = metrics.instantiationDuration.toJavaDuration(),
                 inliningDuration = metrics.inliningDuration.toJavaDuration(),
                 flatteningDuration = metrics.flatteningDuration.toJavaDuration(),
+                inliningOptimization = OptimizationStatsDto.fromStats(metrics.inliningOptimization),
+                flatteningOptimization = OptimizationStatsDto.fromStats(metrics.flatteningOptimization),
+                inputSize = metrics.inputSize,
+                inlinedSize = metrics.inlinedSize,
+                flattenedSize = metrics.flattenedSize,
             )
         }
     }

@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationContext
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
@@ -30,12 +31,16 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
+import hu.bme.mit.semantifyr.verifier.caseReportPath
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
+import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.eclipse.emf.ecore.EObject
@@ -168,13 +173,13 @@ class SemantifyrVerifierImplTest {
     }
 
     @Test
-    suspend fun `report json is written to the per-case output directory`(@TempDir output: Path) {
+    suspend fun `report json is written to a directory named after the model file and the case`(@TempDir output: Path) {
         val portfolio = ScriptedPortfolio { _, _ -> decisiveResult(VerificationVerdict.Passed) }
         val case = loadFirstCase()
 
         build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(case)
 
-        val caseDir = output.resolve(case.qualifiedName.replace("::", "."))
+        val caseDir = output.resolve("simple.${case.classDeclaration.name}")
         val reportFile = caseDir.resolve("report.json")
         assertThat(reportFile.exists()).isTrue
     }
@@ -186,7 +191,7 @@ class SemantifyrVerifierImplTest {
 
         val result = build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(case)
 
-        val report = Json.parseToJsonElement(output.resolve(case.qualifiedName.replace("::", ".")).resolve("report.json").readText())
+        val report = Json.parseToJsonElement(caseReportPath(output, case).readText())
         val verifier = report.jsonObject.getValue("result").jsonObject.getValue("metrics").jsonObject.getValue("verifier").jsonObject
         assertThat(verifier.getValue("compilation").jsonObject.keys).contains(
             "createDuration",
@@ -200,6 +205,25 @@ class SemantifyrVerifierImplTest {
             "flattenedSize",
         )
         assertThat(result.metrics.verifier.compilationDuration).isEqualTo(result.metrics.verifier.compilation.unfoldingDuration)
+    }
+
+    @Test
+    suspend fun `report json carries the verdict's soundness direction and whether it is trusted`(@TempDir output: Path) {
+        val portfolio = ScriptedPortfolio { _, _ ->
+            decisiveResult(VerificationVerdict.Passed).copy(
+                soundness = SoundnessDirection.UnderApproximating,
+                isTrusted = false,
+            )
+        }
+        val case = loadFirstCase()
+
+        build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(case)
+
+        val report = Json.parseToJsonElement(caseReportPath(output, case).readText())
+        val result = report.jsonObject.getValue("result").jsonObject
+        assertThat(result.getValue("verdict").jsonPrimitive.content).isEqualTo("Passed")
+        assertThat(result.getValue("soundness").jsonPrimitive.content).isEqualTo("UnderApproximating")
+        assertThat(result.getValue("isTrusted").jsonPrimitive.boolean).isFalse
     }
 
     private fun build(
@@ -245,7 +269,7 @@ class SemantifyrVerifierImplTest {
 
     private class RejectingVariablesContext(
         request: BackendVerificationRequest,
-    ) : VerificationContext<Unit, Unit>("scripted", request) {
+    ) : VerificationContext<Unit, Unit>("scripted", SoundnessDirection.Exact, request) {
         override val executor = object : BackendExecutor {
             override fun isAvailable(): Boolean {
                 return true
@@ -280,6 +304,7 @@ class SemantifyrVerifierImplTest {
         override val displayName: String = "scripted"
         override val description: String = "test-only"
         override val executorKeys: Set<ExecutorKey<*>> = emptySet()
+        override val legs: List<PortfolioLeg> = emptyList()
 
         var invocations: Int = 0
             private set

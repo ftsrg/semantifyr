@@ -141,7 +141,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
     }
 
     private fun assertWitnessFilesPersisted(artifactsRoot: Path, case: VerificationCase) {
-        val caseDir = artifactsRoot.resolve(qualifiedNameToDirectoryName(case.qualifiedName))
+        val caseDir = artifactsRoot.resolve(caseDirectoryName(case))
         val witnessFile = caseDir.resolve("witness.oxsts")
         val traceFile = caseDir.resolve("trace.json")
 
@@ -203,12 +203,12 @@ class SemantifyrVerifierTestHelper @Inject constructor(
     ) {
         logger.info { "Checking test case $case (artifacts at $outputDirectory)" }
 
-        val required = verificationPortfolio.executorKeys.any {
-            it.name in requiredBackends
-        }
         val limitedEngines = engineLimitsFromTags(case)
         val engineLimited = verificationPortfolio.executorKeys.isNotEmpty() && verificationPortfolio.executorKeys.all {
             it.name in limitedEngines
+        }
+        val required = verificationPortfolio.executorKeys.any {
+            it.name in requiredBackends
         }
         val availability = verificationPortfolio.availability(environment)
         if (availability is AvailabilityReport.Unavailable) {
@@ -219,15 +219,17 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         }
 
         val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment)
+        if (engineLimited) {
+            Assertions.assertEquals(VerificationVerdict.NotSupported, result.verdict) {
+                "${case.qualifiedName} is tagged $ENGINE_LIMIT_TAG_PREFIX${limitedEngines.joinToString(",")}, so ${verificationPortfolio.id} must report NotSupported, got ${result.verdict} (${result.message ?: "no message"})"
+            }
+            return
+        }
         Assumptions.assumeFalse(
             result.verdict == VerificationVerdict.Timeout,
             "Portfolio ${verificationPortfolio.id} timed out on ${case.qualifiedName} within $timeout: ${result.message ?: "no message"}",
         )
         if (!result.verdict.isDecisive) {
-            if (engineLimited && result.verdict != VerificationVerdict.Errored) {
-                logger.info { "${case.qualifiedName} is tagged $ENGINE_LIMIT_TAG_PREFIX${limitedEngines.joinToString(",")}, accepting ${result.verdict} from ${verificationPortfolio.id}" }
-                return
-            }
             Assumptions.assumeTrue(
                 required || result.verdict == VerificationVerdict.Errored,
                 "Portfolio ${verificationPortfolio.id} reports ${result.verdict} for ${case.qualifiedName} and none of its engines is required: ${result.message ?: "no message"}",
@@ -243,10 +245,6 @@ class SemantifyrVerifierTestHelper @Inject constructor(
             "Expected ${case.qualifiedName} verdict $expectedVerdict, got ${result.verdict} " +
                 "(${result.message ?: "no message"}).${backendDiagnostics(outputDirectory, case)}"
         }
-        if (engineLimited) {
-            logger.info { "${case.qualifiedName} is tagged $ENGINE_LIMIT_TAG_PREFIX${limitedEngines.joinToString(",")} but ${verificationPortfolio.id} decided it, the tag is stale" }
-        }
-
         logger.info { "Result: ${result.verdict}" }
 
         val trace = result.trace ?: return
@@ -269,7 +267,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
             "Expected ${case.qualifiedName} verdict ${expectedVerdictFromTags(case)}, got ${result.verdict} (${result.message ?: "no message"})"
         }
 
-        val witnessPath = outputDirectory.resolve(qualifiedNameToDirectoryName(case.qualifiedName)).resolve("witness.oxsts")
+        val witnessPath = outputDirectory.resolve(caseDirectoryName(case)).resolve("witness.oxsts")
         assertThat(witnessPath.exists())
             .describedAs("witness.oxsts must be written for ${case.qualifiedName} at $witnessPath")
             .isTrue()
@@ -280,7 +278,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
             .buildAndResolve()
         val witness = reparsedContext.modelResources.last().contents.filterIsInstance<InlinedOxsts>().single()
 
-        val validationDirectory = outputDirectory.resolve(qualifiedNameToDirectoryName(case.qualifiedName)).resolve("reparsed-validation")
+        val validationDirectory = outputDirectory.resolve("reparsed-validation")
         val verifier = buildVerifier(verificationPortfolio, timeout, validationDirectory, environment)
         val outcome = WitnessValidator().validate(verifier, witness)
         assertThat(outcome.isValid)
@@ -307,7 +305,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
 
         logger.info { "Validating returned witness" }
 
-        val validationDirectory = outputDirectory.resolve(qualifiedNameToDirectoryName(case.qualifiedName)).resolve("validation")
+        val validationDirectory = outputDirectory.resolve("validation")
         val verifier = buildVerifier(validation, timeout, validationDirectory, environment)
         val outcome = WitnessValidator().validate(verifier, trace)
         assertThat(outcome.isValid)
@@ -316,7 +314,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
     }
 
     private fun backendDiagnostics(outputDirectory: Path, case: VerificationCase): String {
-        val caseDir = outputDirectory.resolve(qualifiedNameToDirectoryName(case.qualifiedName)).toFile()
+        val caseDir = outputDirectory.resolve(caseDirectoryName(case)).toFile()
         if (!caseDir.exists()) {
             return ""
         }

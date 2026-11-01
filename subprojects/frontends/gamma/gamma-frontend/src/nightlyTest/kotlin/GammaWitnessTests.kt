@@ -6,12 +6,13 @@
 
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationCase
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaFrontendTestHelper
+import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaTestEngine
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
-import kotlin.io.path.Path
+import kotlin.time.Duration.Companion.minutes
 
 class GammaWitnessTests {
 
@@ -19,23 +20,15 @@ class GammaWitnessTests {
         private val helper = GammaFrontendTestHelper()
         private val artifactRoot = GammaFrontendTestHelper.testArtifactRoot(GammaWitnessTests::class.java)
 
-        private val MODELS = listOf("Simple.gamma", "Crossroads.gamma", "Spacecraft.gamma")
-
         @JvmStatic
         fun `Witnesses Re-verify Through All Backends`(): Stream<Arguments> {
-            return MODELS.stream().flatMap {
-                helper.discoverAsArguments(Path("build", "test-models", it))
-            }
+            return helper.witnessCasesOnEveryEngine()
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{0} on {1}")
     @MethodSource
-    suspend fun `Witnesses Re-verify Through All Backends`(gammaVerificationCase: GammaVerificationCase) {
-        val frontend = helper.buildFrontend(
-            portfolio = Portfolios.SmartFull,
-            outputDirectory = artifactRoot,
-        )
-        helper.checkConformance(frontend, gammaVerificationCase, Portfolios.AllAgree)
+    suspend fun `Witnesses Re-verify Through All Backends`(gammaVerificationCase: GammaVerificationCase, engine: GammaTestEngine) {
+        helper.checkVerificationCaseOn(engine, gammaVerificationCase, artifactRoot, timeout = 30.minutes, validationPortfolio = Portfolios.AllAgree)
     }
 }

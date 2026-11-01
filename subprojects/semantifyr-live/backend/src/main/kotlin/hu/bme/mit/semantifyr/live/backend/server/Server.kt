@@ -17,6 +17,7 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.install
 import io.ktor.server.engine.EmbeddedServer
+import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.netty.NettyApplicationEngine
@@ -35,6 +36,7 @@ class Server @Inject constructor(
     private val webSocketHandler: WebSocketHandler,
     private val adminHandler: AdminHandler,
     private val staticFilesHandler: StaticFilesHandler,
+    private val metricsHandler: MetricsHandler,
 ) : AutoCloseable {
 
     private val logger by loggerFactory()
@@ -67,7 +69,22 @@ class Server @Inject constructor(
     }
 
     private fun createKtorServer(): EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration> {
-        return embeddedServer(Netty, port = config.server.port) {
+        return embeddedServer(
+            Netty,
+            configure = {
+                connector {
+                    port = config.server.port
+                }
+                config.server.metricsPort?.let {
+                    connector {
+                        port = it
+                    }
+                }
+            },
+        ) {
+            with(metricsHandler) {
+                configure()
+            }
             install(ContentNegotiation) {
                 json()
             }

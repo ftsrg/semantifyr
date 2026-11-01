@@ -18,6 +18,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralNothing
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 
 abstract class BackendExpressionVisitor<T> : ExpressionVisitor<T>() {
@@ -64,5 +65,9 @@ abstract class BackendExpressionVisitor<T> : ExpressionVisitor<T>() {
 
     override fun visit(expression: ArrayLiteral): T {
         throw BackendUnsupportedException("Backend does not support array literals")
+    }
+
+    override fun visit(expression: RecordLiteral): T {
+        error("Unexpected record literal")
     }
 }

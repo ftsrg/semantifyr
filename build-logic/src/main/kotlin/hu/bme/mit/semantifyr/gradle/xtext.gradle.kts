@@ -27,7 +27,7 @@ dependencies {
     testFixturesApi(libs.xtext.testing)
 
     mwe2(libs.xtext.generator)
-    "mwe2"(libs.xtext.generator.antlr)
+    mwe2(libs.xtext.generator.antlr)
 }
 
 val extension = extensions.create<XtextPluginConfiguration>("xtext").apply {

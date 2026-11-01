@@ -21,12 +21,15 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PassResult
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.mayWriteBetween
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableReadExpressions
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableWrites
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
+import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.xtext.EcoreUtil2
@@ -88,7 +91,7 @@ class VariableLivenessComputation(
         }
 
         val allVariables = inlinedOxsts.eAllOfType<VariableDeclaration>().filterNot {
-            builtinAnnotationHandler.isNonOptimizable(it)
+            builtinAnnotationHandler.isNonOptimizable(it) || OxstsUtils.isLoopVariable(it)
         }.toSet()
 
         for (it in allVariables - variableReads.keys) {
@@ -137,6 +140,9 @@ class VariableLivenessComputation(
     private fun substituteUnassignedInitialized(variable: VariableDeclaration): Boolean {
         val constantExpression = variable.expression
         val reads = variableReads[variable] ?: return false
+        if (variable is LocalVarDeclarationOperation && reads.any { mayChangeBefore(variable, it) }) {
+            return false
+        }
         for (readExpression in reads) {
             val substitute = constantExpression.copy()
             EcoreUtil2.replace(readExpression, substitute)
@@ -146,6 +152,13 @@ class VariableLivenessComputation(
         worklist.add(WorkItem.Unread(variable))
         compilationArtifactManager.commitStep(CompilationPass.UnusedVariableElimination)
         return true
+    }
+
+    private fun mayChangeBefore(local: LocalVarDeclarationOperation, read: Expression): Boolean {
+        val sourceWrites = local.expression.variableReadExpressions(evaluator).flatMap {
+            assignedValues[evaluator.evaluateTyped(VariableDeclaration::class.java, it)].orEmpty()
+        }.toList()
+        return mayWriteBetween(local, read, sourceWrites)
     }
 
     private fun trackReadsIn(expression: Expression) {

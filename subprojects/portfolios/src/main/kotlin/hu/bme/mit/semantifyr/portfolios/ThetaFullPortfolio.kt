@@ -33,7 +33,7 @@ class ThetaFullPortfolio(
 ) : VerificationPortfolio() {
     override val id: String = "theta-full"
     override val displayName: String = "Theta full portfolio"
-    override val description: String = "Races all Theta configurations in parallel."
+    override val description: String = "Races the Theta CEGAR and k-induction configurations in parallel and takes the first verdict."
 
     private val tasks: List<PortfolioTask<ThetaConfig>> = listOf(
         PortfolioTask(theta, ThetaConfig.CegarExpl, "cegarexpl"),
@@ -43,6 +43,7 @@ class ThetaFullPortfolio(
     )
 
     override val executorKeys: Set<ExecutorKey<*>> = tasks.map { it.executorKey }.toSet()
+    override val legs = tasks.map { it.leg }
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
         val anyAvailable = tasks.any {

@@ -12,13 +12,17 @@ This extension brings the Semantifyr toolchain into VS Code, including a languag
 
 ## Requirements
 
-- Visual Studio Code `1.93.0` or newer.
+- Visual Studio Code `1.109.0` or newer.
 - JVM 25 or newer.
 - The used verification backends.
 
+## Verification
+
+The verification cases of the open workspace appear in the *Testing* view. When a verdict comes with a witness, **Show Witness** on the failure message or in the case's context menu opens the back-annotated witness (for a Gamma case, the witness as a Gamma execution trace) read-only beside the model, and next to it the trace with the calls and the state changes of each step.
+
 ## Extension settings
 
-This extension does not contribute any user-facing settings yet.
+The `semantifyr.*` settings choose the portfolio, the timeout, the concurrency, the Theta executor and image, the artifacts and the optimization level. The default portfolio, `smart-full`, races every installed backend, so one of Theta, nuXmv, Spin or Uppaal is enough.
 
 ## Known issues
 

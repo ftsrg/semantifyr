@@ -19,6 +19,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordDeclaration
 
 inline fun <reified T : A, A> ExpressionEvaluator<A>.evaluateTypedOrNull(
     clazz: Class<T>,
@@ -58,10 +59,14 @@ class MetaCompileTimeExpressionEvaluator @AssistedInject constructor(
             sourceError(expression, "Element reference could not be resolved (unresolved proxy)")
         }
 
-        return redefinitionAwareReferenceResolver.resolve(instance.domain, expression.element)
+        return redefinitionAwareReferenceResolver.resolve(instance, expression.element)
     }
 
     override fun visit(expression: NavigationSuffixExpression): NamedElement {
+        if (expression.member.eContainer() is RecordDeclaration) {
+            return expression.member
+        }
+
         val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instance)
         val context = evaluator.evaluateSingleInstanceOrNull(expression.primary)
 
@@ -72,7 +77,7 @@ class MetaCompileTimeExpressionEvaluator @AssistedInject constructor(
             return expression.member
         }
 
-        return redefinitionAwareReferenceResolver.resolve(context.domain, expression.member)
+        return redefinitionAwareReferenceResolver.resolve(context, expression.member)
     }
 
     interface Factory {

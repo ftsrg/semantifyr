@@ -51,6 +51,17 @@ public class ExpressionModalityEvaluator extends ExpressionEvaluator<Modality> {
     }
 
     @Override
+    protected Modality visit(RecordLiteral expression) {
+        Modality result = Modality.CONSTANT;
+        for (FieldAssignment field : expression.getFields()) {
+            if (field.getExpression() != null) {
+                result = result.leastUpperBound(evaluate(field.getExpression()));
+            }
+        }
+        return result;
+    }
+
+    @Override
     protected Modality visit(RangeExpression expression) {
         return evaluate(expression.getLeft()).leastUpperBound(evaluate(expression.getRight()));
     }

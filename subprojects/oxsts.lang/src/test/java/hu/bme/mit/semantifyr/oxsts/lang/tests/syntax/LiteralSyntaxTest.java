@@ -12,12 +12,18 @@ import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.FieldAssignment;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInfinity;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralNothing;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralReal;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordDeclaration;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordLiteral;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation;
 import org.eclipse.xtext.EcoreUtil2;
 import org.junit.jupiter.api.Test;
 
@@ -159,5 +165,87 @@ public class LiteralSyntaxTest {
         assertThat(init.getValues()).hasSize(3);
         assertThat(init.getValues().stream().map(e -> ((LiteralInteger) e).getValue()))
                 .containsExactly(1, 2, 3);
+    }
+
+    private static final String RECORDS = """
+            package test
+            record Point {
+                var x: int
+                var y: int := 0
+            }
+            record Line {
+                var from: Point
+                var to: Point
+            }
+            """;
+
+    @Test
+    void recordLiteral() {
+        var pkg = parseHelper.parse(RECORDS + """
+            class C { var p: Point := Point { x = 1, y = 2 } }
+            """);
+        pkg.assertNoResourceErrors();
+        var init = (RecordLiteral) pkg.classByName("C").variableByName("p").initializer();
+        assertThat(init.getRecord().getName()).isEqualTo("Point");
+        assertThat(init.getFields()).extracting(f -> f.getField().getName()).containsExactly("x", "y");
+        assertThat(init.getFields())
+                .extracting(f -> ((LiteralInteger) f.getExpression()).getValue())
+                .containsExactly(1, 2);
+    }
+
+    @Test
+    void recordLiteralWithQualifiedRecordAndTrailingComma() {
+        var pkg = parseHelper.parse(RECORDS + """
+            class C { var p: Point := test::Point { y = 2, } }
+            """);
+        pkg.assertNoResourceErrors();
+        var init = (RecordLiteral) pkg.classByName("C").variableByName("p").initializer();
+        assertThat(init.getRecord().getName()).isEqualTo("Point");
+        assertThat(init.getFields()).extracting(f -> f.getField().getName()).containsExactly("y");
+    }
+
+    @Test
+    void nestedRecordLiteral() {
+        var pkg = parseHelper.parse(RECORDS + """
+            class C { var l: Line := Line { from = Point { x = 1 }, to = Point { x = 2, y = 3 } } }
+            """);
+        pkg.assertNoResourceErrors();
+        var init = (RecordLiteral) pkg.classByName("C").variableByName("l").initializer();
+        assertThat(init.getFields()).extracting(f -> f.getField().getName()).containsExactly("from", "to");
+        var from = (RecordLiteral) init.getFields().getFirst().getExpression();
+        assertThat(from.getRecord().getName()).isEqualTo("Point");
+        assertThat(((RecordDeclaration) from.getFields().getFirst().getField().eContainer()).getName())
+                .isEqualTo("Point");
+    }
+
+    @Test
+    void assignmentFollowedBySequenceIsNoRecordLiteral() {
+        var pkg = parseHelper.parse(RECORDS + """
+            class C {
+                var p: Point
+                var q: Point
+                var n: int := 0
+                redefine tran { p := q { n := 1 } }
+            }
+            """);
+        pkg.assertNoResourceErrors();
+        var steps = pkg.classByName("C").anonymousMain().branches().getFirst().getSteps();
+        assertThat(steps).hasSize(2);
+        assertThat(((AssignmentOperation) steps.get(0)).getExpression()).isInstanceOf(ElementReference.class);
+        assertThat(steps.get(1)).isInstanceOf(SequenceOperation.class);
+    }
+
+    @Test
+    void recordNameWithEmptyBracesIsNoRecordLiteral() {
+        var pkg = parseHelper.parse(RECORDS + """
+            class C {
+                var p: Point
+                redefine tran { p := Point {} }
+            }
+            """);
+        pkg.assertNoResourceErrors();
+        var main = pkg.classByName("C").anonymousMain().eObject();
+        assertThat(EcoreUtil2.eAllOfType(main, RecordLiteral.class)).isEmpty();
+        assertThat(EcoreUtil2.eAllOfType(main, FieldAssignment.class)).isEmpty();
     }
 }

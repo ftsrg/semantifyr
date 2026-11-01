@@ -19,11 +19,14 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Pass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.PassResult
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ReachingDefinitionsAnalysis
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.mayWriteBetween
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableWrites
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.xtext.EcoreUtil2
 
@@ -40,6 +43,9 @@ class CopyPropagationPass @Inject constructor(
 
         val reachingDefinitions = analysisManager.get(ReachingDefinitionsAnalysis::class.java, input)
         val evaluator = metaCompileTimeExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
+        val variableWrites by lazy {
+            input.inlinedOxsts.variableWrites(evaluator)
+        }
 
         val substitutions = buildList {
             for ((read, definitions) in reachingDefinitions.definitionsOf) {
@@ -54,6 +60,13 @@ class CopyPropagationPass @Inject constructor(
                 val rhsVariable = evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, candidate)
                 if (readVariable != null && rhsVariable == readVariable) {
                     continue
+                }
+
+                if (rhsVariable != null) {
+                    val sourceWrites = variableWrites[rhsVariable].orEmpty() + listOfNotNull(rhsVariable as? LocalVarDeclarationOperation)
+                    if (mayWriteBetween(definition, read, sourceWrites)) {
+                        continue
+                    }
                 }
 
                 add(read to candidate)

@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.serializeFormatted
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordLiteral
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -218,6 +219,37 @@ class PackageInliningExpressionTest : InliningTestBase() {
             inlineAll(it)
             assertNoPropertyCallsInProperty(it)
             assertPropertyContains(it, "root.y - 1")
+        }
+    }
+
+    @Test
+    fun `a record literal survives inlining with its calls and arguments inlined`() {
+        prepare(
+            "Host",
+            """
+                package inlining::tests::record_literal
+                record Point {
+                    var x: int
+                    var y: int := 0
+                }
+                @VerificationCase
+                class Host {
+                    var p: Point
+                    prop next(): int { return p.x + 1 }
+                    tran moveTo(target: Point) { p := target }
+                    redefine tran { inline moveTo(Point { x = next() }) }
+                    prop { return AG p != Point { x = next(), y = 2 } }
+                }
+            """,
+        ) {
+            inlineAll(it)
+            assertNoPropertyCallsInProperty(it)
+            val main = it.inlinedOxsts.mainTransition
+            assertThat(main.eAllOfType<CallSuffixExpression>().toList()).isEmpty()
+            assertThat(main.eAllOfType<RecordLiteral>().toList()).hasSize(1)
+            val mainText = serializer.serializeFormatted(main)
+            assertThat(mainText).contains(":= inlining::tests::record_literal::Point { x = root.p.x + 1 }")
+            assertPropertyContains(it, ", y = 2 }")
         }
     }
 

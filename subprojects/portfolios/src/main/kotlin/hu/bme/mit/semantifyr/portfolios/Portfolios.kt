@@ -25,6 +25,7 @@ object Portfolios {
 
     val SmartFull: VerificationPortfolio = SmartFullPortfolio()
     val AllAgree: VerificationPortfolio = AllAgreeFullPortfolio()
+    val Default: VerificationPortfolio = SmartFull
 
     val ThetaFull: VerificationPortfolio = ThetaFullPortfolio()
     val ThetaCegarExpl: VerificationPortfolio = SingleBackendPortfolio(ThetaBackend(), ThetaConfig.CegarExpl)

@@ -95,7 +95,7 @@ class CompileTimeExpressionEvaluator @AssistedInject constructor(
         }
 
         val context = instance.single()
-        val resolvedMember = redefinitionAwareReferenceResolver.resolve(context.domain, expression.member)
+        val resolvedMember = redefinitionAwareReferenceResolver.resolve(context, expression.member)
 
         val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(context)
         return evaluator.evaluateElement(resolvedMember)
@@ -118,7 +118,7 @@ class CompileTimeExpressionEvaluator @AssistedInject constructor(
         }
 
         for (candidate in instance.parentSequence()) {
-            val resolvedElement = redefinitionAwareReferenceResolver.resolveOrNull(candidate.domain, element)
+            val resolvedElement = redefinitionAwareReferenceResolver.resolveOrNull(candidate, element)
             if (resolvedElement != null) {
                 val candidateEvaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(candidate)
                 return candidateEvaluator.evaluateElement(resolvedElement)

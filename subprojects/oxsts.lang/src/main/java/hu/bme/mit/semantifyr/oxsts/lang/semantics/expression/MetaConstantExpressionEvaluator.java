@@ -59,6 +59,11 @@ public class MetaConstantExpressionEvaluator extends ExpressionEvaluator<NamedEl
     }
 
     @Override
+    protected NamedElement visit(RecordLiteral expression) {
+        throw EvaluationFailureException.at(expression, NOT_META);
+    }
+
+    @Override
     protected NamedElement visit(LiteralInfinity expression) {
         throw EvaluationFailureException.at(expression, NOT_META);
     }

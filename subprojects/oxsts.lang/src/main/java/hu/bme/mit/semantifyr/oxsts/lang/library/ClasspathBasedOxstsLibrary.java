@@ -46,6 +46,6 @@ public class ClasspathBasedOxstsLibrary extends PathBasedOxstsLibrary {
     }
 
     private static String stripSlashes(String prefix) {
-        return prefix.replaceAll("^/+|/+$", "");
+        return prefix.replaceAll("(?:^/+)|(?:/+$)", "");
     }
 }

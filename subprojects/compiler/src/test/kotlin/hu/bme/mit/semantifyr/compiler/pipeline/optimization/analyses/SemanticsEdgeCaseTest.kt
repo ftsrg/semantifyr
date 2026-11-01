@@ -213,7 +213,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
 
         val defs = result.definitionsOf[initRead]!!
         assertThat(defs).doesNotContain(bWriteInTran as EObject)
-        assertThat(defs).isEmpty()
+        assertThat(defs).containsExactly(b as EObject)
     }
 
     @Test

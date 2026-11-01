@@ -112,22 +112,6 @@ function renderOptional(value: string | null): React.ReactNode {
   return value;
 }
 
-function renderBool(value: boolean): React.ReactNode {
-  return (
-    <Chip
-      label={value ? 'yes' : 'no'}
-      size="small"
-      sx={{
-        height: 20,
-        fontWeight: 600,
-        fontSize: FONT_SIZE.xs,
-        bgcolor: value ? 'var(--success-soft-bg, rgba(74,222,128,0.16))' : 'var(--surface-panel-bg)',
-        color: value ? 'var(--success)' : 'text.secondary',
-      }}
-    />
-  );
-}
-
 export default function ConfigTab({
   info,
   config,
@@ -162,10 +146,7 @@ export default function ConfigTab({
 
       <Grid size={{ xs: 12, md: 6 }}>
         <Card title="Server">
-          <Row label="Development mode" value={renderBool(config.development)} />
           <Row label="Port" value={String(config.server.port)} />
-          <Row label="Admin password set" value={renderBool(config.server.adminPasswordSet)} />
-          <Row label="HTTPS-only cookies" value={renderBool(config.server.httpsOnlyCookies)} />
           <Row label="Ping period" value={formatIsoDuration(config.server.pingPeriod)} />
           <Row label="Ping timeout" value={formatIsoDuration(config.server.pingTimeout)} />
           <Row

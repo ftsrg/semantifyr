@@ -47,3 +47,11 @@ class AddressRange private constructor(
         }
     }
 }
+
+fun parseAddressOrNull(literal: String): InetAddress? {
+    return try {
+        InetAddress.ofLiteral(literal)
+    } catch (_: IllegalArgumentException) {
+        null
+    }
+}

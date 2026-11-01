@@ -14,24 +14,30 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.OppositeHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.PropertyTypeHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.ExpressionModalityEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.Modality;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.InvalidTypeEvaluation;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.NothingTypeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.TypeCompatibility;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.TypeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.xtext.EcoreUtil2;
+import org.eclipse.xtext.Keyword;
+import org.eclipse.xtext.nodemodel.ICompositeNode;
+import org.eclipse.xtext.nodemodel.util.NodeModelUtils;
 import org.eclipse.xtext.resource.ILocationInFileProvider;
 import org.eclipse.xtext.validation.Check;
 import org.slf4j.Logger;
@@ -98,6 +104,9 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String INVALID_CAST = ISSUE_PREFIX + "INVALID_CAST";
     public static final String MULTIPLE_INHERITANCE = ISSUE_PREFIX + "MULTIPLE_INHERITANCE";
     public static final String REDEFINITION_SIGNATURE_MISMATCH = ISSUE_PREFIX + "REDEFINITION_SIGNATURE_MISMATCH";
+    public static final String RECURSIVE_RECORD = ISSUE_PREFIX + "RECURSIVE_RECORD";
+    public static final String MIXED_BOOLEAN_OPERATORS = ISSUE_PREFIX + "MIXED_BOOLEAN_OPERATORS";
+    public static final String INCOMPLETE_RECORD_LITERAL = ISSUE_PREFIX + "INCOMPLETE_RECORD_LITERAL";
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
@@ -325,22 +334,227 @@ public class OxstsValidator extends AbstractOxstsValidator {
     }
 
     @Check
-    public void checkRecordDeclarationNotYetSupported(RecordDeclaration recordDeclaration) {
-        acceptError(
-                "Record types are not yet supported by the compiler. Use a class or a primitive type instead.",
-                recordDeclaration,
-                OxstsPackage.Literals.NAMED_ELEMENT__NAME,
-                0,
-                UNSUPPORTED_FEATURE);
+    public void checkRecordNotRecursive(RecordDeclaration recordDeclaration) {
+        if (containsRecord(recordDeclaration, recordDeclaration, new LinkedHashSet<>())) {
+            acceptError(
+                    "Record '" + recordDeclaration.getName() + "' contains itself, so it has no finite value.",
+                    recordDeclaration,
+                    OxstsPackage.Literals.NAMED_ELEMENT__NAME,
+                    0,
+                    RECURSIVE_RECORD);
+        }
+    }
+
+    private static boolean containsRecord(
+            RecordDeclaration holder, RecordDeclaration target, Set<RecordDeclaration> visited) {
+        if (!visited.add(holder)) {
+            return false;
+        }
+        for (var member : holder.getMembers()) {
+            if (member instanceof VariableDeclaration field
+                    && field.getTypeSpecification() != null
+                    && field.getTypeSpecification().getDomain() instanceof RecordDeclaration fieldRecord
+                    && (fieldRecord == target || containsRecord(fieldRecord, target, visited))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Check
-    public void checkTransitionKindSupported(TransitionDeclaration transitionDeclaration) {
-        var kind = transitionDeclaration.getKind();
-        if (kind == TransitionKind.ENV || kind == TransitionKind.HAVOC) {
+    public void checkRecordFieldSupported(VariableDeclaration variableDeclaration) {
+        var typeSpecification = variableDeclaration.getTypeSpecification();
+        if (!(variableDeclaration.eContainer() instanceof RecordDeclaration) || typeSpecification == null) {
+            return;
+        }
+        var domain = typeSpecification.getDomain();
+        if (!(domain instanceof DataTypeDeclaration
+                || domain instanceof EnumDeclaration
+                || domain instanceof RecordDeclaration)) {
             acceptError(
-                    "Transition kind `" + kind.getLiteral() + "` is not yet supported by the compiler.",
-                    transitionDeclaration,
+                    "Record fields must have a data, enum or record type; '"
+                            + variableDeclaration.getName()
+                            + "' has type '"
+                            + NamingUtil.getName(domain)
+                            + "'.",
+                    variableDeclaration,
+                    OxstsPackage.Literals.VARIABLE_DECLARATION__TYPE_SPECIFICATION,
+                    0,
+                    UNSUPPORTED_FEATURE);
+        } else if (!(domain instanceof RecordDeclaration) && isFixedSizeArray(typeSpecification)) {
+            acceptError(
+                    "Array fields in records are not yet supported by the compiler; '"
+                            + variableDeclaration.getName()
+                            + "' is an array.",
+                    variableDeclaration,
+                    OxstsPackage.Literals.VARIABLE_DECLARATION__TYPE_SPECIFICATION,
+                    0,
+                    UNSUPPORTED_FEATURE);
+        }
+    }
+
+    @Check
+    public void checkRecordMultiplicity(TypeSpecification typeSpecification) {
+        if (!(typeSpecification.getDomain() instanceof RecordDeclaration record)
+                || typeSpecification.getMultiplicity() == null) {
+            return;
+        }
+        RangeEvaluation range;
+        try {
+            range = multiplicityRangeEvaluator.evaluate(typeSpecification);
+        } catch (RuntimeException e) {
+            return;
+        }
+        if (range.getLowerBound() == 1 && range.getUpperBound() == 1) {
+            return;
+        }
+        var message = isFixedSizeArray(typeSpecification)
+                ? "Arrays of records are not yet supported by the compiler."
+                : "A value of record type '" + record.getName() + "' must hold exactly one record.";
+        acceptError(message, typeSpecification, UNSUPPORTED_FEATURE);
+    }
+
+    @Check
+    public void checkRecordLiteralFields(RecordLiteral recordLiteral) {
+        var record = recordLiteral.getRecord();
+        if (record == null || record.eIsProxy()) {
+            return;
+        }
+        var assigned = new LinkedHashSet<VariableDeclaration>();
+        for (var fieldAssignment : recordLiteral.getFields()) {
+            var field = fieldAssignment.getField();
+            if (field != null && !field.eIsProxy() && !assigned.add(field)) {
+                acceptError(
+                        "Field '" + field.getName() + "' is assigned more than once.",
+                        fieldAssignment,
+                        OxstsPackage.Literals.FIELD_ASSIGNMENT__FIELD,
+                        0,
+                        DUPLICATE_NAME_ISSUE);
+            }
+        }
+        var missing = recordFields(record).stream()
+                .filter(field -> !assigned.contains(field) && !hasDefault(field, new LinkedHashSet<>()))
+                .map(field -> "'" + field.getName() + "'")
+                .toList();
+        if (!missing.isEmpty()) {
+            acceptError(
+                    "Record literal of '"
+                            + record.getName()
+                            + "' leaves "
+                            + String.join(", ", missing)
+                            + " without a value; assign the field or give it a default in the record.",
+                    recordLiteral,
+                    OxstsPackage.Literals.RECORD_LITERAL__RECORD,
+                    0,
+                    INCOMPLETE_RECORD_LITERAL);
+        }
+    }
+
+    private static List<VariableDeclaration> recordFields(RecordDeclaration record) {
+        return record.getMembers().stream()
+                .filter(VariableDeclaration.class::isInstance)
+                .map(VariableDeclaration.class::cast)
+                .toList();
+    }
+
+    // a record-typed field without an initializer is covered when every field of its record is
+    private static boolean hasDefault(VariableDeclaration field, Set<RecordDeclaration> visited) {
+        if (field.getExpression() != null) {
+            return true;
+        }
+        var typeSpecification = field.getTypeSpecification();
+        if (typeSpecification == null || !(typeSpecification.getDomain() instanceof RecordDeclaration fieldRecord)) {
+            return false;
+        }
+        if (!visited.add(fieldRecord)) {
+            return false;
+        }
+        var covered = recordFields(fieldRecord).stream().allMatch(f -> hasDefault(f, visited));
+        visited.remove(fieldRecord);
+        return covered;
+    }
+
+    @Check
+    public void checkFieldAssignmentType(FieldAssignment fieldAssignment) {
+        var field = fieldAssignment.getField();
+        var expression = fieldAssignment.getExpression();
+        if (field == null || field.eIsProxy() || field.getTypeSpecification() == null || expression == null) {
+            return;
+        }
+        var declared = typeEvaluatorProvider.getEvaluator(field).fromTypeSpecification(field.getTypeSpecification());
+        var actual = evaluateTypeSafely(expression);
+        if (actual == null) {
+            return;
+        }
+        if (!typeCompatibility.isAssignable(declared, actual, fieldAssignment)) {
+            acceptError(
+                    "Value of type "
+                            + formatType(actual)
+                            + " is not assignable to field '"
+                            + field.getName()
+                            + "' of type "
+                            + formatType(declared)
+                            + ".",
+                    fieldAssignment,
+                    OxstsPackage.Literals.FIELD_ASSIGNMENT__EXPRESSION,
+                    0,
+                    TYPE_MISMATCH);
+        }
+    }
+
+    @Check
+    public void checkRecordLiteralNotEvaluatedAtCompileTime(RecordLiteral recordLiteral) {
+        EObject current = recordLiteral;
+        while (current.eContainer() instanceof Expression
+                || current.eContainer() instanceof FieldAssignment
+                || (current.eContainer() instanceof Argument argument
+                        && argument.eContainer() instanceof CallSuffixExpression)) {
+            current = current.eContainer();
+        }
+        var position = switch (current.eContainer()) {
+            case InlineIfOperation ignored -> "an `inline if` guard";
+            case InlineForOperation ignored -> "an `inline for` range";
+            case FeatureDeclaration ignored -> "a feature binding";
+            case DefiniteMultiplicity ignored -> "a multiplicity";
+            case Argument ignored -> "an annotation argument";
+            case null, default -> null;
+        };
+        if (position != null) {
+            acceptError(
+                    "Record literals are not yet evaluated at compile time, so one cannot appear in " + position + ".",
+                    recordLiteral,
+                    UNSUPPORTED_FEATURE);
+        }
+    }
+
+    // `p := Point {}` parses as `p := Point` followed by an empty sequence
+    @Check
+    public void checkRecordNameNotUsedAsValue(ElementReference reference) {
+        if (reference.getElement() instanceof RecordDeclaration record
+                && !record.eIsProxy()
+                && !(reference.eContainer() instanceof CallSuffixExpression call && call.getPrimary() == reference)) {
+            acceptError(
+                    "'"
+                            + record.getName()
+                            + "' is a record type, not a value; write a literal that names at least one field, such as '"
+                            + record.getName()
+                            + " { ... }'.",
+                    reference,
+                    TYPE_MISMATCH);
+        }
+    }
+
+    @Check
+    public void checkFeatureNotRecordTyped(FeatureDeclaration featureDeclaration) {
+        var typeSpecification = featureDeclaration.getTypeSpecification();
+        if (typeSpecification != null && typeSpecification.getDomain() instanceof RecordDeclaration) {
+            acceptError(
+                    "Record-typed features are not yet supported by the compiler; declare '"
+                            + featureDeclaration.getName()
+                            + "' as a variable.",
+                    featureDeclaration,
+                    OxstsPackage.Literals.FEATURE_DECLARATION__TYPE_SPECIFICATION,
+                    0,
                     UNSUPPORTED_FEATURE);
         }
     }
@@ -476,13 +690,10 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
         var parameters = declaration.getParameters();
         var arguments = annotation.getArguments();
-        int positional = 0;
-        for (var argument : arguments) {
-            if (argument.getParameter() != null) {
-                checkArgumentAssignableToParameter(argument, argument.getParameter());
-            } else if (positional < parameters.size()) {
-                checkArgumentAssignableToParameter(argument, parameters.get(positional));
-                positional++;
+        for (int i = 0; i < parameters.size(); i++) {
+            var argument = OxstsUtils.getArgumentFor(arguments, parameters.get(i), i);
+            if (argument != null) {
+                checkArgumentAssignableToParameter(argument, parameters.get(i));
             }
         }
     }
@@ -533,8 +744,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (reference == null) {
             return;
         }
-        var target = metaConstantExpressionEvaluatorProvider.evaluate(reference);
-        if (!(target instanceof VariableDeclaration)) {
+        if (!(evaluateWriteTarget(reference) instanceof VariableDeclaration)) {
             acceptError(
                     "havoc target must be a variable reference.",
                     havocOperation,
@@ -748,15 +958,23 @@ public class OxstsValidator extends AbstractOxstsValidator {
         // can't reduce an indexing expression on its own, so resolve down to the array variable
         // first. Same for navigation chains - we want the leaf reference's element.
         var reference = unwrapAssignmentTarget(assignmentOperation.getReference());
-        var assigned = metaConstantExpressionEvaluatorProvider.evaluate(reference);
 
-        if (!(assigned instanceof VariableDeclaration)) {
+        if (!(evaluateWriteTarget(reference) instanceof VariableDeclaration)) {
             acceptError(
                     "Only variables can be assigned to!",
                     assignmentOperation,
                     OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE,
                     0,
                     INCORRECT_ASSIGNMENT);
+        }
+    }
+
+    // a literal or another value that names no declaration is not a write target
+    private NamedElement evaluateWriteTarget(Expression target) {
+        try {
+            return metaConstantExpressionEvaluatorProvider.evaluate(target);
+        } catch (EvaluationFailureException e) {
+            return null;
         }
     }
 
@@ -772,6 +990,48 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public void checkHavocTargetIsRuntime(HavocOperation havocOperation) {
         checkWriteTargetIsRuntime(
                 havocOperation.getReference(), havocOperation, OxstsPackage.Literals.HAVOC_OPERATION__REFERENCE);
+    }
+
+    @Check
+    public void checkNoFieldWriteThroughParameter(AssignmentOperation assignmentOperation) {
+        rejectFieldWriteThroughValue(
+                assignmentOperation.getReference(),
+                assignmentOperation,
+                OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE);
+    }
+
+    @Check
+    public void checkNoFieldHavocThroughParameter(HavocOperation havocOperation) {
+        rejectFieldWriteThroughValue(
+                havocOperation.getReference(), havocOperation, OxstsPackage.Literals.HAVOC_OPERATION__REFERENCE);
+    }
+
+    private void rejectFieldWriteThroughValue(Expression target, EObject host, EStructuralFeature feature) {
+        var current = target;
+        while (current instanceof NavigationSuffixExpression navigation
+                && navigation.getMember() instanceof VariableDeclaration member
+                && member.eContainer() instanceof RecordDeclaration) {
+            current = navigation.getPrimary();
+        }
+        if (current == target) {
+            return;
+        }
+        if (current instanceof ElementReference reference
+                && reference.getElement() instanceof ParameterDeclaration parameter) {
+            acceptError(
+                    "Cannot write a field of parameter '" + parameter.getName() + "': parameters are passed by value.",
+                    host,
+                    feature,
+                    0,
+                    INCORRECT_ASSIGNMENT);
+        } else if (!(current instanceof ElementReference || current instanceof NavigationSuffixExpression)) {
+            acceptError(
+                    "Cannot write a field of a record value, only a field of a record variable.",
+                    host,
+                    feature,
+                    0,
+                    INCORRECT_ASSIGNMENT);
+        }
     }
 
     // The right-hand side is at most RUNTIME, so it always fits a runtime target.
@@ -948,6 +1208,76 @@ public class OxstsValidator extends AbstractOxstsValidator {
         requireBoolean(operator.getRight(), "right boolean operand must be boolean");
     }
 
+    // Temporary, for one release: until 2026-11-01 the three operators shared one level and read left to right.
+    @Check
+    public void checkMixedBooleanOperators(BooleanOperator operator) {
+        var leftNode = NodeModelUtils.findActualNodeFor(operator.getLeft());
+        var rightNode = NodeModelUtils.findActualNodeFor(operator.getRight());
+        if (leftNode == null || rightNode == null) {
+            return;
+        }
+        var leftMixed = isMixedWithoutParentheses(operator.getLeft(), leftNode, operator.getOp());
+        var rightMixed = isMixedWithoutParentheses(operator.getRight(), rightNode, operator.getOp());
+        if (!leftMixed && !rightMixed) {
+            return;
+        }
+        var reading = operandText(leftNode, leftMixed)
+                + " "
+                + operatorText(operator.getOp())
+                + " "
+                + operandText(rightNode, rightMixed);
+        acceptWarning(
+                "`&&` binds tighter than `^^`, which binds tighter than `||`, so this reads as `"
+                        + reading
+                        + "`; until November 2026 the three read left to right. Add parentheses to say which reading you mean.",
+                operator,
+                OxstsPackage.Literals.BOOLEAN_OPERATOR__OP,
+                -1,
+                MIXED_BOOLEAN_OPERATORS);
+    }
+
+    private static boolean isMixedWithoutParentheses(Expression operand, ICompositeNode node, BooleanOp op) {
+        return operand instanceof BooleanOperator child && child.getOp() != op && !isWrappedInParentheses(node);
+    }
+
+    private static boolean isWrappedInParentheses(ICompositeNode node) {
+        var depth = 0;
+        var first = true;
+        for (var leaf : node.getLeafNodes()) {
+            if (leaf.isHidden()) {
+                continue;
+            }
+            var keyword = leaf.getGrammarElement() instanceof Keyword k ? k.getValue() : null;
+            if (first) {
+                if (!"(".equals(keyword)) {
+                    return false;
+                }
+                first = false;
+            } else if (depth == 0) {
+                return false;
+            }
+            if ("(".equals(keyword)) {
+                depth++;
+            } else if (")".equals(keyword)) {
+                depth--;
+            }
+        }
+        return !first;
+    }
+
+    private static String operandText(ICompositeNode node, boolean parenthesize) {
+        var text = NodeModelUtils.getTokenText(node);
+        return parenthesize ? "(" + text + ")" : text;
+    }
+
+    private static String operatorText(BooleanOp op) {
+        return switch (op) {
+            case AND -> "&&";
+            case OR -> "||";
+            case XOR -> "^^";
+        };
+    }
+
     @Check
     public void checkComparisonOperandTypes(ComparisonOperator operator) {
         var left = operator.getLeft();
@@ -965,7 +1295,34 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     "Cannot compare values of type " + formatType(leftType) + " and " + formatType(rightType) + ".",
                     operator,
                     TYPE_MISMATCH);
+        } else if ((leftType.getDomain() instanceof RecordDeclaration
+                        || rightType.getDomain() instanceof RecordDeclaration)
+                && (leftType instanceof NothingTypeEvaluation
+                        || rightType instanceof NothingTypeEvaluation
+                        || (operator.getOp() != ComparisonOp.EQ && operator.getOp() != ComparisonOp.NOT_EQ))) {
+            acceptError(
+                    "Records can only be compared with == and != to a record of the same type.",
+                    operator,
+                    TYPE_MISMATCH);
+        } else if ((isFixedSizeArray(leftType) || isFixedSizeArray(rightType))
+                && (!isFixedSizeArray(leftType)
+                        || !isFixedSizeArray(rightType)
+                        || leftType.getRange().getUpperBound()
+                                != rightType.getRange().getUpperBound()
+                        || (operator.getOp() != ComparisonOp.EQ && operator.getOp() != ComparisonOp.NOT_EQ))) {
+            acceptError(
+                    "Arrays can only be compared with == and != to an array of the same size.",
+                    operator,
+                    TYPE_MISMATCH);
         }
+    }
+
+    private static boolean isFixedSizeArray(TypeEvaluation type) {
+        var range = type.getRange();
+        return range != null
+                && range.getUpperBound() != RangeEvaluation.INFINITY
+                && range.getUpperBound() > 1
+                && !(type.getDomain() instanceof ClassDeclaration || type.getDomain() instanceof FeatureDeclaration);
     }
 
     @Check
@@ -1038,38 +1395,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
     }
 
     @Check
-    public void checkArrayVariableSupported(VariableDeclaration variableDeclaration) {
-        var typeSpecification = variableDeclaration.getTypeSpecification();
-        if (typeSpecification == null || !isFixedSizeArray(typeSpecification)) {
-            return;
-        }
-        if (OxstsUtils.isLocalVariable(variableDeclaration)) {
-            acceptError(
-                    "Local array variables are not yet supported by the compiler; declare '"
-                            + variableDeclaration.getName()
-                            + "' as a class variable.",
-                    variableDeclaration,
-                    OxstsPackage.Literals.VARIABLE_DECLARATION__TYPE_SPECIFICATION,
-                    0,
-                    UNSUPPORTED_FEATURE);
-            return;
-        }
-        var domain = typeSpecification.getDomain();
-        if (domain instanceof ClassDeclaration || domain instanceof FeatureDeclaration) {
-            acceptError(
-                    "Arrays of class or feature type are not yet supported by the compiler; '"
-                            + variableDeclaration.getName()
-                            + "' has element type '"
-                            + NamingUtil.getName(domain)
-                            + "'.",
-                    variableDeclaration,
-                    OxstsPackage.Literals.VARIABLE_DECLARATION__TYPE_SPECIFICATION,
-                    0,
-                    UNSUPPORTED_FEATURE);
-        }
-    }
-
-    @Check
     public void checkParameterNotArray(ParameterDeclaration parameterDeclaration) {
         var typeSpecification = parameterDeclaration.getTypeSpecification();
         if (typeSpecification != null && isFixedSizeArray(typeSpecification)) {
@@ -1089,10 +1414,14 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (expression.eContainer() instanceof CallSuffixExpression call && call.getPrimary() == expression) {
             return;
         }
+        if (expression.getMember() instanceof VariableDeclaration member
+                && member.eContainer() instanceof RecordDeclaration) {
+            return;
+        }
         EObject holder;
         Modality holderModality;
         try {
-            holder = metaConstantExpressionEvaluatorProvider.evaluate(expression.getPrimary());
+            holder = metaConstantExpressionEvaluatorProvider.evaluate(unwrapAssignmentTarget(expression.getPrimary()));
             holderModality = modalityEvaluatorProvider.evaluate(expression.getPrimary());
         } catch (RuntimeException e) {
             return;

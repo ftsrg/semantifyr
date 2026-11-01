@@ -8,7 +8,6 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
-import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluator
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
@@ -16,6 +15,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableReadExpressions
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableWrites
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AbstractForOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
@@ -24,9 +24,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
-import org.eclipse.emf.ecore.EObject
 
 /**
  * Variable reads and writes that are relevant to the 'prop' expression
@@ -59,7 +57,7 @@ class ConeOfInfluenceAnalysis @Inject constructor(
 
 class ConeOfInfluenceComputation(
     private val inlinedOxsts: InlinedOxsts,
-    private val evaluator: MetaCompileTimeExpressionEvaluator,
+    private val evaluator: MetaConstantExpressionEvaluator,
 ) {
 
     fun compute(): ConeOfInfluenceInfo {
@@ -77,7 +75,7 @@ class ConeOfInfluenceComputation(
         }
 
         for (assumption in inlinedOxsts.eAllOfType<AssumptionOperation>()) {
-            for (variable in variablesReadsIn(assumption.expression)) {
+            for (variable in variablesReadsIn(assumption.expression) + guardVariablesFor(assumption)) {
                 if (relevantVariables.add(variable)) {
                     variableWorklist.add(variable)
                 }
@@ -87,6 +85,15 @@ class ConeOfInfluenceComputation(
         while (variableWorklist.isNotEmpty()) {
             val variable = variableWorklist.pop()
             val assignments = variableAssignments[variable] ?: emptyList()
+
+            val initializerReads = variable.expression?.let {
+                variablesReadsIn(it)
+            }.orEmpty()
+            for (read in initializerReads) {
+                if (relevantVariables.add(read)) {
+                    variableWorklist.add(read)
+                }
+            }
 
             for (assignment in assignments) {
                 if (!relevantAssignments.add(assignment)) {
@@ -138,27 +145,7 @@ class ConeOfInfluenceComputation(
             current = current.eContainer()
         }
 
-        val transitionBody = transitionBodyContaining(operation) ?: return result
-        for (assumption in transitionBody.eAllOfType<AssumptionOperation>()) {
-            if (assumption === operation) {
-                continue
-            }
-            result += variablesReadsIn(assumption.expression)
-        }
         return result
-    }
-
-    private fun transitionBodyContaining(operation: Operation): EObject? {
-        var child = operation as EObject
-        var current = operation.eContainer()
-        while (current != null) {
-            if (current is TransitionDeclaration) {
-                return child
-            }
-            child = current
-            current = current.eContainer()
-        }
-        return null
     }
 
 }

@@ -21,10 +21,7 @@ object BackendConfigValidator {
         validateRootWorkDirectory(config, problems)
         validateSemanticLibraries(config, flavors, problems)
         validateLimits(config, problems)
-        validateClientAddress(config, problems)
-        if (!config.development) {
-            validateProductionPosture(config, problems)
-        }
+        validateTrustedProxies(config, problems)
 
         if (problems.isNotEmpty()) {
             throw InvalidConfigurationException(
@@ -33,16 +30,7 @@ object BackendConfigValidator {
         }
     }
 
-    private fun validateProductionPosture(config: BackendConfig, problems: MutableList<String>) {
-        if (config.server.adminPassword.isNullOrBlank()) {
-            problems += "server.adminPassword must be set in production (env: SEMANTIFYR_LIVE_ADMIN_PASSWORD), or run with development=true"
-        }
-        if (!config.server.httpsOnlyCookies) {
-            problems += "server.httpsOnlyCookies must be true in production, or run with development=true"
-        }
-    }
-
-    private fun validateClientAddress(config: BackendConfig, problems: MutableList<String>) {
+    private fun validateTrustedProxies(config: BackendConfig, problems: MutableList<String>) {
         for (range in config.server.trustedProxies) {
             try {
                 AddressRange.parse(range)
@@ -52,6 +40,9 @@ object BackendConfigValidator {
         }
         if (config.server.clientAddressHeader != null && config.server.trustedProxies.isEmpty()) {
             problems += "server.trustedProxies must be set when server.clientAddressHeader is (env: SEMANTIFYR_LIVE_TRUSTED_PROXIES)"
+        }
+        if (config.server.userHeader != null && config.server.trustedProxies.isEmpty()) {
+            problems += "server.trustedProxies must be set when server.userHeader is (env: SEMANTIFYR_LIVE_TRUSTED_PROXIES)"
         }
     }
 
@@ -107,6 +98,13 @@ object BackendConfigValidator {
         }
         if (!config.server.wsHandshakeRatePeriod.isPositive()) {
             problems += "server.wsHandshakeRatePeriod must be positive (got ${config.server.wsHandshakeRatePeriod})"
+        }
+        val metricsPort = config.server.metricsPort
+        if (metricsPort != null && metricsPort !in 1..65535) {
+            problems += "server.metricsPort must be between 1 and 65535 (got $metricsPort)"
+        }
+        if (metricsPort == config.server.port) {
+            problems += "server.metricsPort must differ from server.port (got $metricsPort)"
         }
     }
 }

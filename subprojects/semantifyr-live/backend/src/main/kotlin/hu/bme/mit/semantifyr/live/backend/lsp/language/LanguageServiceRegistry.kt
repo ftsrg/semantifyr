@@ -18,6 +18,7 @@ import hu.bme.mit.semantifyr.live.backend.lsp.service.SharedExecutorProvider
 import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationExecutor
 import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationManager
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
+import io.micrometer.core.instrument.MeterRegistry
 
 interface LanguageServiceRegistry {
     fun forFlavor(flavor: Flavor): LanguageServices
@@ -30,6 +31,7 @@ class LiveLanguageServiceRegistry @Inject constructor(
     verificationManager: VerificationManager,
     verificationExecutor: VerificationExecutor,
     sharedExecutorProvider: SharedExecutorProvider,
+    registry: MeterRegistry,
 ) : LanguageServiceRegistry {
 
     private val globalsModule: Module = object : AbstractModule() {
@@ -38,6 +40,7 @@ class LiveLanguageServiceRegistry @Inject constructor(
             bind(VerificationManager::class.java).toInstance(verificationManager)
             bind(VerificationExecutor::class.java).toInstance(verificationExecutor)
             bind(SharedExecutorProvider::class.java).toInstance(sharedExecutorProvider)
+            bind(MeterRegistry::class.java).toInstance(registry)
         }
     }
 

@@ -59,6 +59,21 @@ class UppaalLogVerdictParserTest {
     }
 
     @Test
+    fun `an out-of-range assignment names its variable and value`() {
+        val assignment = parser.parseOutOfRangeAssignment(
+            sequenceOf("model.xml:/nta/template[1]/transition[3]/label[1]:1: [error] Assignment of value '-32769' to variable 'x' is out of range."),
+        )
+
+        assertThat(assignment!!.variable).isEqualTo("x")
+        assertThat(assignment.value).isEqualTo("-32769")
+    }
+
+    @Test
+    fun `an out-of-range initial value is no out-of-range assignment`() {
+        assertThat(parser.parseOutOfRangeAssignment(sequenceOf("model.xml:/nta/declaration:1: [error] Initial value out of range."))).isNull()
+    }
+
+    @Test
     fun `case-insensitive match`() {
         val verdict = parser.parse(sequenceOf("FORMULA IS SATISFIED"))
         assertThat(verdict).isEqualTo(UppaalVerdict.Satisfied)

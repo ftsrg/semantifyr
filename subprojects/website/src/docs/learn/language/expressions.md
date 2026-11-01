@@ -3,6 +3,9 @@ title: Expressions
 sidebar_position: 4
 ---
 
+import { Planned } from '@site/src/components/Constructs';
+import constructs from '@oxsts-test-models/constructs/constructs.tsv';
+
 # Expressions
 
 Expressions compute values. They appear in [property](properties.md) bodies, on the right-hand side of assignments, in [operation](operations.md) guards, in feature multiplicities, and in feature bindings.
@@ -18,7 +21,7 @@ Expressions compute values. They appear in [property](properties.md) bodies, on 
 | Nothing | `nothing` |
 | Infinity | `*` |
 | Array | `[a, b, c]`, `[]` |
-| Record (planned, see [Records](datatypes.md#records)) | `Point { x = 0, y = 0 }` |
+| Record (see [Records](datatypes.md#records)) | `Point { x = 0, y = 0 }` |
 
 See [Datatypes](datatypes.md) for the corresponding types.
 
@@ -43,15 +46,21 @@ From **lowest** to **highest** precedence:
 | Level | Category | Operators |
 |-------|----------|-----------|
 | 1 | Temporal (top of expression only) | `AG`, `EF` |
-| 1 | Boolean | `&&`, `\|\|`, `^^` |
-| 2 | Comparison | `<`, `<=`, `>`, `>=`, `==`, `!=` |
-| 3 | Range | `..`, `..<` |
-| 4 | Additive | `+`, `-` |
-| 5 | Multiplicative | `*`, `/` |
-| 6 | Unary | `!`, unary `+`, unary `-` |
-| 7 | Postfix / member | `.`, `?.`, `[ ]`, `( )` |
+| 2 | Boolean OR | `\|\|` |
+| 3 | Boolean XOR | `^^` |
+| 4 | Boolean AND | `&&` |
+| 5 | Comparison | `<`, `<=`, `>`, `>=`, `==`, `!=` |
+| 6 | Range | `..`, `..<` |
+| 7 | Additive | `+`, `-` |
+| 8 | Multiplicative | `*`, `/` |
+| 9 | Unary | `!`, unary `+`, unary `-` |
+| 10 | Postfix / member | `.`, `?.`, `[ ]`, `( )` |
 
-The boolean operators `&&`, `||`, and `^^` share one precedence level and are left-associative: `a && b || c` parses as `(a && b) || c`.
+As in Java, `&&` binds tighter than `^^`, which binds tighter than `||`, and each is left-associative: `a || b && c` parses as `a || (b && c)`.
+
+:::note
+Until November 2026 the three boolean operators shared one level and read left to right, so `a || b && c` meant `(a || b) && c`. For one release the validator warns on an expression that mixes them without parentheses and names the reading it has now.
+:::
 
 ## Boolean Operators
 
@@ -142,7 +151,8 @@ prop {
 }
 ```
 
-:::info[Planned]
+<Planned table={constructs} construct="AF, EG, AX, EX temporal operators">
+
 More temporal operators are planned: `AF expr` (`expr` eventually holds on every execution), `EG expr` (`expr` always holds on some execution), `AX expr` and `EX expr` (`expr` holds in every or in some next state). The parser rejects them today; only `AG` and `EF` parse.
 
 ```oxsts
@@ -150,4 +160,5 @@ prop {
   return AF counter.value == 100
 }
 ```
-:::
+
+</Planned>

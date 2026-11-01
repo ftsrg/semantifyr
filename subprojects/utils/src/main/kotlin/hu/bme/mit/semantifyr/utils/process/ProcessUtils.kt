@@ -6,14 +6,16 @@
 
 package hu.bme.mit.semantifyr.utils.process
 
+// a script whose child dies first runs its next command, so the root goes first and its descendants after
 fun Process.destroyTree() {
     val handle = toHandle()
-    handle.descendants().forEach {
+    val descendants = handle.descendants().toList()
+    handle.destroy()
+    descendants.forEach {
         try {
             it.destroy()
         } catch (_: IllegalStateException) {
             it.destroyForcibly()
         }
     }
-    handle.destroy()
 }

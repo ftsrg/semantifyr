@@ -58,6 +58,13 @@ tasks.withType<Test>().configureEach {
     testLogging.exceptionFormat = TestExceptionFormat.FULL
     workingDir = layout.projectDirectory.asFile
     systemProperty("semantifyr.tests.requiredBackends", providers.gradleProperty("tests.requiredBackends").getOrElse(""))
+    // the JVM warnings the application convention silences
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
+    systemProperty("guice_bytecode_gen_option", "DISABLED")
+}
+
+tasks.withType<JavaExec>().configureEach {
+    systemProperty("guice_bytecode_gen_option", "DISABLED")
 }
 
 plugins.withId("org.jetbrains.kotlin.jvm") {

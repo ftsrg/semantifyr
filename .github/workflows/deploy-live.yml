@@ -70,9 +70,7 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - name: Install dependencies
-        run: npm ci
-      - name: Build editor-common
-        run: npm run assemble -w @semantifyr/editor-common
+        run: npm ci --ignore-scripts
       - name: Smoke test
         timeout-minutes: 5
         env:

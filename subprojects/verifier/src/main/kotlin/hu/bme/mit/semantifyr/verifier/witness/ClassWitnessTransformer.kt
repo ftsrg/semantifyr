@@ -53,20 +53,27 @@ class ClassWitnessTransformer @Inject constructor(
             val holder = compilation.flatteningInfo.variableHolders[variableValue.variable]
                 ?: error("Witness value references variable '${variableValue.variable.name}' with no holder instance in flatteningInfo.variableHolders. Synthetic root-level variables should be filtered out before reaching transform(WitnessStateValue).")
             val arraySlot = compilation.flatteningInfo.arraySlots[variableValue.variable]
+            val recordField = compilation.flatteningInfo.recordFields[variableValue.variable]
             val originalVariable = arraySlot?.arrayVariable
+                ?: recordField?.recordVariable
                 ?: compilation.flatteningInfo.resolveOriginalVariable(holder, variableValue.variable)
             val holderReference = instanceReferenceProvider.getReference(holder)
             val memberReference = OxstsFactory.createNavigationSuffixExpression().also {
                 it.primary = holderReference
                 it.member = originalVariable
             }
-            val variableReference = if (arraySlot == null) {
-                memberReference
-            } else {
-                OxstsFactory.createIndexingSuffixExpression().also {
+            val variableReference = when {
+                arraySlot != null -> OxstsFactory.createIndexingSuffixExpression().also {
                     it.primary = memberReference
                     it.index = OxstsFactory.createLiteralInteger(arraySlot.index)
                 }
+                recordField != null -> recordField.fields.fold<VariableDeclaration, Expression>(memberReference) { primary, field ->
+                    OxstsFactory.createNavigationSuffixExpression().also {
+                        it.primary = primary
+                        it.member = field
+                    }
+                }
+                else -> memberReference
             }
 
             return ClassWitnessStateValue(

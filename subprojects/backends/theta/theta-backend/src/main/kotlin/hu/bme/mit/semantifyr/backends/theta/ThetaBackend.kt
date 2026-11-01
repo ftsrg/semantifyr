@@ -83,6 +83,7 @@ class ThetaVerificationContext @AssistedInject constructor(
     private val inlinedWitnessTransformer: InlinedWitnessTransformer,
 ) : VerificationContext<XstsModel, ThetaVerdict>(
     backendId = "theta:${config.id}",
+    soundness = config.soundness,
     request = request,
 ) {
 

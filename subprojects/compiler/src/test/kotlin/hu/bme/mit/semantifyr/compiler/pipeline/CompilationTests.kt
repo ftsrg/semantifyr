@@ -98,6 +98,26 @@ class CompilationTests {
     }
 
     @Test
+    fun `local variable without an initializer`() {
+        assertCompiles(
+            classToCompile = "UninitializedLocal",
+            source = """
+                package compilation::tests::uninitialized_local
+                @VerificationCase
+                class UninitializedLocal {
+                    var x: int := 0
+                    redefine tran {
+                        var delta: int
+                        assume(delta >= 1 && delta <= 3)
+                        x := delta
+                    }
+                    prop { return EF x == 3 }
+                }
+            """,
+        )
+    }
+
+    @Test
     fun `if operation inside transition`() {
         assertCompiles(
             classToCompile = "IfStep",

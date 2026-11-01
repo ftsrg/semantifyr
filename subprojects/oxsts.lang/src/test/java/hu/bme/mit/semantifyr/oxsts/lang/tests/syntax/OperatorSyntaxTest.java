@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.tests.syntax;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.Inject;
+import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
@@ -17,17 +18,22 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticBinaryOperator;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticOp;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOperator;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfThenElse;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp;
 import org.eclipse.xtext.EcoreUtil2;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 @InjectWithOxsts
 public class OperatorSyntaxTest {
@@ -125,6 +131,46 @@ public class OperatorSyntaxTest {
         var ops = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), BooleanOperator.class);
         assertThat(ops).isNotEmpty();
         assertThat(ops.getFirst().getOp()).isEqualTo(expectedOp);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "a || b && c, (a || (b && c))",
+        "a && b || c, ((a && b) || c)",
+        "a ^^ b && c, (a ^^ (b && c))",
+        "a || b ^^ c, (a || (b ^^ c))",
+        "a ^^ b || c, ((a ^^ b) || c)",
+        "a || b || c, ((a || b) || c)",
+        "a && b && c, ((a && b) && c)",
+        "(a || b) && c, ((a || b) && c)",
+    })
+    void booleanOperatorsBindAndThenXorThenOr(String expression, String expectedReading) {
+        var pkg = parseHelper.parse("""
+            package test
+            class C {
+                var a: bool := false
+                var b: bool := false
+                var c: bool := false
+                redefine tran { assume(%s) }
+            }
+            """.formatted(expression));
+        pkg.assertNoResourceErrors();
+        var assumption = EcoreUtil2.eAllOfType(
+                        pkg.classByName("C").anonymousMain().eObject(), AssumptionOperation.class)
+                .getFirst();
+        assertThat(parenthesize(assumption.getExpression())).isEqualTo(expectedReading);
+    }
+
+    private static String parenthesize(Expression expression) {
+        if (expression instanceof BooleanOperator operator) {
+            var op = switch (operator.getOp()) {
+                case AND -> "&&";
+                case OR -> "||";
+                case XOR -> "^^";
+            };
+            return "(" + parenthesize(operator.getLeft()) + " " + op + " " + parenthesize(operator.getRight()) + ")";
+        }
+        return NamingUtil.getName(((ElementReference) expression).getElement());
     }
 
     @Test

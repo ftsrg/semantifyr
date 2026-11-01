@@ -15,8 +15,6 @@ import java.nio.file.Path
 
 object StagedTestSupport {
 
-    const val ADMIN_PASSWORD = "integration-admin-password"
-
     val semanticLibrariesDirectory = systemPropertyPath("semantifyr.live.semanticLibraries")
     val oxstsTestModelsDirectory = systemPropertyPath("semantifyr.live.oxstsTestModels")
     val gammaTestModelsDirectory = systemPropertyPath("semantifyr.live.gammaTestModels")
@@ -38,7 +36,7 @@ object StagedTestSupport {
             "semantifyr.live.semanticLibraries must point to the staged semantic libraries directory"
         }
         return BackendConfig(
-            server = ServerConfig(adminPassword = ADMIN_PASSWORD, wsHandshakesPerPeriod = 100_000),
+            server = ServerConfig(wsHandshakesPerPeriod = 100_000),
             sessionManager = SessionManagerConfig(
                 rootWorkDirectory = rootWorkDirectory.toString(),
                 semanticLibrariesDirectory = libraries.toString(),

@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -94,6 +95,35 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
         )
 
         assertThat(lines).containsSequence("type Color : { Red, Green", "}", "var x: integer", "var b: boolean = true", "var c: Color = Color.Green")
+    }
+
+    @Test
+    suspend fun `a variable annotated Control is a control variable`() {
+        val lines = xstsLines(
+            """
+                @Control
+                var x : int := 0
+                init { }
+                tran { x := x + 1 }
+                prop { AG true }
+            """,
+        )
+
+        assertThat(lines).contains("ctrl var x: integer = 0")
+    }
+
+    @Test
+    suspend fun `tracers are declared outside the control set`() {
+        val xsts = withTransformer {
+            it.transform(compile("tracing", "TracedChoiceBranchReach"), testXstsUri)
+        }
+
+        val tracers = xsts.variableDeclarations.filter {
+            TransitionTracerNames.isTracerName(it.name)
+        }
+        assertThat(tracers).isNotEmpty.noneMatch {
+            it.isControl
+        }
     }
 
     @Test
@@ -264,7 +294,7 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
             """
                 var x : int := 0
                 init { }
-                tran { for (i in 0 .. 2) { x := x + i } }
+                tran { for (i in 0..2) { x := x + i } }
                 prop { AG true }
             """,
         )
@@ -278,7 +308,7 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
             """
                 var x : int := 0
                 init { }
-                tran { for (i in 0 ..< 3) { x := x + i } }
+                tran { for (i in 0..<3) { x := x + i } }
                 prop { AG true }
             """,
         )

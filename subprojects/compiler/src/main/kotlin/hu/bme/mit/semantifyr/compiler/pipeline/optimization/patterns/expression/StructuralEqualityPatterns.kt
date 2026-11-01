@@ -28,6 +28,8 @@ internal fun Expression.isPure(): Boolean {
 }
 
 class SelfArithmeticPattern : OptimizationPattern {
+    override val rootTypes = setOf(ArithmeticBinaryOperator::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is ArithmeticBinaryOperator) {
             return false
@@ -50,6 +52,8 @@ class SelfArithmeticPattern : OptimizationPattern {
 }
 
 class SelfComparisonPattern : OptimizationPattern {
+    override val rootTypes = setOf(ComparisonOperator::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is ComparisonOperator) {
             return false

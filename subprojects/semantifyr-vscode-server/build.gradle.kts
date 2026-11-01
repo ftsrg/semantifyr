@@ -5,6 +5,8 @@
  */
 
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.conventions.sysmlCorpusModels
+import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
     base
@@ -64,9 +66,17 @@ val cloneGammaTestModels = tasks.register<Sync>("cloneGammaTestModels") {
     into("examples/gamma/TestModels")
 }
 
+val sysmlCorpusDir = rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/examples")
+
 val cloneSysMLTestModels = tasks.register<Sync>("cloneSysMLTestModels") {
-    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/examples")) {
-        include("*.sysml")
+    from(sysmlCorpusDir) {
+        // the corpus models share its isStateActive and eventually
+        include("Verification.sysml")
+        include(
+            sysmlCorpusModels(sysmlCorpusDir).map {
+                it.file
+            },
+        )
     }
     into("examples/sysml/TestModels")
 }
@@ -91,4 +101,19 @@ val prepareDockerBuild = tasks.register("prepareDockerBuild") {
 
 tasks.assemble {
     dependsOn(prepareDockerBuild)
+}
+
+val imageTest = tasks.register<Exec>("imageTest") {
+    group = "verification"
+    dependsOn(prepareDockerBuild)
+    onlyIf("the image test needs a POSIX shell") {
+        !Os.isFamily(Os.FAMILY_WINDOWS)
+    }
+
+    commandLine("./image-test.sh", "semantifyr-vscode-server:test", providers.gradleProperty("tests.requireDocker").getOrElse("false"))
+}
+
+tasks.register("integrationTest") {
+    group = "verification"
+    dependsOn(imageTest)
 }

@@ -9,12 +9,18 @@ package hu.bme.mit.semantifyr.lang.ide.server.wire;
 import hu.bme.mit.semantifyr.verifier.WitnessValidationResultDto;
 
 public record WitnessValidationResult(
-        String status, String message, String backendId, String portfolioId, VerificationMetrics metrics) {
+        String status,
+        String verdict,
+        String message,
+        String backendId,
+        String portfolioId,
+        VerificationMetrics metrics) {
 
     public static WitnessValidationResult fromDto(WitnessValidationResultDto dto, String portfolioId) {
         var verification = dto.getVerification();
         return new WitnessValidationResult(
                 statusOf(dto),
+                VerificationStatus.of(verification.getVerdict()),
                 verification.getMessage(),
                 verification.getMetadata().getBackendId(),
                 portfolioId,
@@ -22,7 +28,7 @@ public record WitnessValidationResult(
     }
 
     public static WitnessValidationResult errored(String message, String portfolioId) {
-        return new WitnessValidationResult(WitnessValidationStatus.ERRORED, message, null, portfolioId, null);
+        return new WitnessValidationResult(WitnessValidationStatus.ERRORED, null, message, null, portfolioId, null);
     }
 
     private static String statusOf(WitnessValidationResultDto dto) {

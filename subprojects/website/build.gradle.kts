@@ -44,6 +44,7 @@ fun cliReferenceTask(name: String, vararg arguments: String) = tasks.register<Ja
     val outputFile = cliReferenceDir.map { it.file("$name.txt") }
     classpath = cliDistributionFiles.get().asFileTree.matching { include("*/lib/*.jar") }
     mainClass = "hu.bme.mit.semantifyr.cli.SemantifyrCliKt"
+    jvmArgs("--enable-native-access=ALL-UNNAMED", "-Dguice_bytecode_gen_option=DISABLED")
     args(*arguments)
     outputs.file(outputFile)
     outputs.cacheIf { true }
@@ -62,6 +63,7 @@ val cliReference = listOf(
     cliReferenceTask("verify", "verify", "--help"),
     cliReferenceTask("compile", "compile", "--help"),
     cliReferenceTask("list", "list", "--help"),
+    cliReferenceTask("metrics", "metrics", "--help"),
     cliReferenceTask("portfolios-help", "portfolios", "--help"),
     cliReferenceTask("portfolios", "portfolios"),
 )
@@ -129,6 +131,8 @@ fun NpmTask.configureSharedInputs() {
     inputs.file(rootProject.layout.projectDirectory.file("package.json"))
     inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
     inputs.dir(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial"))
+    inputs.file(rootProject.layout.projectDirectory.file("oxsts-test-models/constructs/constructs.tsv"))
+    inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/tutorial"))
     inputs.files(tasks.npmInstall)
     inputs.files(cloneBrandingAssets)
     inputs.files(editorCommonFiles)

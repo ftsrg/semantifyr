@@ -31,9 +31,8 @@ class VerificationArtifactWriter @Inject constructor(
         encodeDefaults = true
     }
 
-    fun writeReport(caseArtifactPath: Path, report: VerificationReport) {
-        val reportPath = caseArtifactPath.resolve("report.json")
-        caseArtifactPath.createDirectories()
+    fun writeReport(reportPath: Path, report: VerificationReport) {
+        reportPath.parent.createDirectories()
         reportPath.writeText(json.encodeToString(report))
     }
 

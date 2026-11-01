@@ -156,6 +156,36 @@ describe('runAllVerifications', () => {
     expect(states.at(-1)!.cases[0]!.validationBackendId).toBe('theta-cegar');
   });
 
+  it('sends the case location instead of the witness location when the command validates by case', async () => {
+    const gammaCase = { ...sampleCase('a'), location: { uri: 'file:///workspace/snippet.gamma', range: { start: { line: 4, character: 0 }, end: { line: 6, character: 1 } } } };
+    const sendRequest = vi.fn<LspClient['sendRequest']>(async (_method, params) => {
+      if ((params as { command?: string }).command === 'gamma.case.verify') {
+        return failedResult;
+      }
+      return { status: 'valid', verdict: 'passed', message: null, backendId: null, portfolioId: 'smart-full', metrics: null };
+    });
+    const client: LspClient = { sendRequest, sendNotification: () => {} };
+
+    const { states, setState } = captureStates();
+    runAllVerifications(
+      client,
+      'gamma.case.verify',
+      'file:///workspace/snippet.gamma',
+      [gammaCase],
+      setState,
+      noopProgress,
+      { getAutoValidateRequest: () => ({ command: 'gamma.witness.validate', byCase: true }) },
+    );
+
+    await vi.waitFor(() => {
+      expect(states.at(-1)!.cases[0]!.witnessValidation).toBe('valid');
+    });
+    const params = sendRequest.mock.calls[1]![1] as { command: string; arguments: { uri: string; range: unknown }[] };
+    expect(params.command).toBe('gamma.witness.validate');
+    expect(params.arguments[0]!.uri).toBe(gammaCase.location.uri);
+    expect(params.arguments[0]!.range).toEqual(gammaCase.location.range);
+  });
+
   it('skips auto-validation when the trace has no witnessUri', async () => {
     const noWitnessFail: VerificationCaseResult = { ...failedResult, trace: { ...sampleTrace, witnessUri: null } };
     const sendRequest = vi.fn<LspClient['sendRequest']>(async () => noWitnessFail);
@@ -255,7 +285,7 @@ describe('dispatchAutoValidation', () => {
       client,
       'oxsts.case.validateWitness',
       'a',
-      'inmemory:///workspace/snippet.witness.oxsts',
+      { uri: 'inmemory:///workspace/snippet.witness.oxsts', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } },
       setState,
       { validationPortfolioId: 'smart-full', caseLabel: 'Case a' },
     );

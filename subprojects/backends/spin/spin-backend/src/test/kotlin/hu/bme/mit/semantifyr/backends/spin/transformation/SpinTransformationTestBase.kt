@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendTestModels
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
+import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
 import hu.bme.mit.semantifyr.backends.spin.verification.SpinBackendModule
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -27,8 +28,10 @@ abstract class SpinTransformationTestBase {
         oxstsInjector.createChildInjector(SpinBackendModule())
     }
 
-    protected fun capabilityChecker(): SpinCapabilityChecker {
-        return childInjector.getInstance(SpinCapabilityChecker::class.java)
+    protected fun <T> withCapabilityChecker(block: (SpinCapabilityChecker) -> T): T {
+        return withVerificationScopeBlocking {
+            block(childInjector.getInstance(SpinCapabilityChecker::class.java))
+        }
     }
 
     protected fun parse(source: String, vararg packages: String): InlinedOxsts {

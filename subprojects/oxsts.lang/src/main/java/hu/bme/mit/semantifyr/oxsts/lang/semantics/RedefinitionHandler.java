@@ -42,17 +42,18 @@ public class RedefinitionHandler {
             return redefined;
         }
 
-        if (declaration.isRedefine()) {
+        var name = NamingUtil.getName(declaration);
+        if (declaration.isRedefine() && name != null) {
             // find the other RedefinableDeclaration in the parent domain with the same name
             var surroundingFeature = (DomainDeclaration) declaration.eContainer();
             var parentDomain = domainMemberCollectionProvider.getParentCollection(surroundingFeature);
             var found = parentDomain
                     .getMemberSelectable()
-                    .getExportedObjects(
-                            declaration.eClass(), QualifiedName.create(NamingUtil.getName(declaration)), false);
+                    .getExportedObjects(declaration.eClass(), QualifiedName.create(name), false);
 
-            for (var element : found) {
-                var toReturn = (RedefinableDeclaration) element.getEObjectOrProxy();
+            var iterator = found.iterator();
+            if (iterator.hasNext()) {
+                var toReturn = (RedefinableDeclaration) iterator.next().getEObjectOrProxy();
                 if (toReturn.eIsProxy()) {
                     return null;
                 }

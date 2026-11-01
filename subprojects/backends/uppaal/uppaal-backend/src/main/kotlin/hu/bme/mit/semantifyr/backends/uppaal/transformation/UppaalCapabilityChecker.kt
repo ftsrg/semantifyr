@@ -8,6 +8,8 @@ package hu.bme.mit.semantifyr.backends.uppaal.transformation
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
+import hu.bme.mit.semantifyr.backend.UnsupportedConstruct
+import hu.bme.mit.semantifyr.backend.transformation.IntegerRangeChecker
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
@@ -19,6 +21,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
@@ -27,7 +30,15 @@ import org.eclipse.emf.ecore.EObject
 class UppaalCapabilityChecker @Inject constructor(
     private val builtinSymbolResolver: BuiltinSymbolResolver,
     private val builtinAnnotationHandler: BuiltinAnnotationHandler,
+    private val integerRangeChecker: IntegerRangeChecker,
+    private val uppaalDeclarationsBuilder: UppaalDeclarationsBuilder,
 ) : BackendCapabilityChecker() {
+
+    override fun checkModel(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
+        return integerRangeChecker.checkArithmetic(inlinedOxsts) {
+            uppaalDeclarationsBuilder.declaredRangeOf(it, inlinedOxsts)
+        }
+    }
 
     override fun describeUnsupported(element: EObject): String? {
         return when (element) {

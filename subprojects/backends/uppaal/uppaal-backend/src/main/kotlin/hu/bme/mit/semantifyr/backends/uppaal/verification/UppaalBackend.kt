@@ -14,6 +14,7 @@ import com.google.inject.assistedinject.FactoryModuleBuilder
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
+import hu.bme.mit.semantifyr.backend.UnsupportedConstruct
 import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.VerificationContext
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
@@ -34,6 +35,7 @@ import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalArtifacts
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalCapabilityChecker
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalModelTransformer
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalOperationVisitor
+import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalVariableTransformer
 import hu.bme.mit.semantifyr.logging.info
 
 class UppaalBackend : VerificationBackend<UppaalConfig>() {
@@ -77,8 +79,10 @@ class UppaalVerificationContext @AssistedInject constructor(
     private val uppaalTraceParser: UppaalTraceParser,
     private val uppaalLogVerdictParser: UppaalLogVerdictParser,
     private val uppaalInlinedOxstsWitnessTransformer: UppaalInlinedOxstsWitnessTransformer,
+    private val uppaalVariableTransformer: UppaalVariableTransformer,
 ) : VerificationContext<UppaalArtifacts, UppaalVerdict>(
     backendId = "uppaal:${config.id}",
+    soundness = config.soundness,
     request = request,
 ) {
 
@@ -122,18 +126,16 @@ class UppaalVerificationContext @AssistedInject constructor(
     }
 
     private fun detectOutOfRangeError() {
-        val offending = artifactManager.errorFile.takeIf {
+        val assignment = artifactManager.errorFile.takeIf {
             it.exists()
-        }?.useLines { lines ->
-            lines.firstOrNull {
-                it.contains("is out of range", ignoreCase = true)
-            }
+        }?.useLines {
+            uppaalLogVerdictParser.parseOutOfRangeAssignment(it)
         } ?: return
-        throw BackendUnsupportedException(
-            "Uppaal cannot represent the OXSTS model: $offending. " +
-                "Uppaal's bounded `int` cannot hold a value the model assigns, and no faithful " +
-                "backend encoding is available without a tighter source bound.",
-        )
+        val description = "an assignment of ${assignment.value} outside the declared range"
+        val construct = uppaalVariableTransformer.variableOf(assignment.variable)?.let {
+            describe(UnsupportedConstruct(it, description))
+        } ?: "$description (${assignment.variable})"
+        throw BackendUnsupportedException("$backendId does not support $construct")
     }
 
     override fun interpret(rawVerdict: UppaalVerdict?, artifacts: UppaalArtifacts): VerificationVerdict {

@@ -79,6 +79,7 @@ public abstract class ExpressionVisitor<T> {
     protected T visit(LiteralExpression expression) {
         return switch (expression) {
             case ArrayLiteral arrayLiteral -> visit(arrayLiteral);
+            case RecordLiteral recordLiteral -> visit(recordLiteral);
             case LiteralInfinity literalInfinity -> visit(literalInfinity);
             case LiteralReal literalReal -> visit(literalReal);
             case LiteralInteger literalInteger -> visit(literalInteger);
@@ -90,6 +91,8 @@ public abstract class ExpressionVisitor<T> {
     }
 
     protected abstract T visit(ArrayLiteral expression);
+
+    protected abstract T visit(RecordLiteral expression);
 
     protected abstract T visit(LiteralInfinity expression);
 

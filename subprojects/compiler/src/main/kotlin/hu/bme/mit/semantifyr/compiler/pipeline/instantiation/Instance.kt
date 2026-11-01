@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.instantiation
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 
 class Instance(
     val domain: DomainDeclaration,
@@ -16,6 +17,8 @@ class Instance(
 ) {
 
     private val slots = mutableMapOf<FeatureDeclaration, MutableSet<Instance>>()
+
+    internal val resolvedMembers = HashMap<NamedElement, NamedElement?>()
 
     private val mutableChildren = mutableListOf<Instance>()
     val children: List<Instance>

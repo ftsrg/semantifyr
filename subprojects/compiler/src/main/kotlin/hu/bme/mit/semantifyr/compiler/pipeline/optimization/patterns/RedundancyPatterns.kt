@@ -33,6 +33,8 @@ class RedundancyPatterns : CompositeOptimizationPattern() {
 }
 
 class ConstantGuardIfPattern : OptimizationPattern {
+    override val rootTypes = setOf(IfOperation::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is IfOperation) {
             return false
@@ -59,6 +61,8 @@ class ConstantGuardIfPattern : OptimizationPattern {
 }
 
 class RemoveConstantTrueAssumptionPattern : OptimizationPattern {
+    override val rootTypes = setOf(AssumptionOperation::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is AssumptionOperation) {
             return false
@@ -74,6 +78,8 @@ class RemoveConstantTrueAssumptionPattern : OptimizationPattern {
 }
 
 class RemoveEmptyForPattern : OptimizationPattern {
+    override val rootTypes = setOf(ForOperation::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is ForOperation) {
             return false
@@ -89,6 +95,8 @@ class RemoveEmptyForPattern : OptimizationPattern {
 }
 
 class RemoveEmptyIfBodyPattern : OptimizationPattern {
+    override val rootTypes = setOf(IfOperation::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is IfOperation) {
             return false
@@ -112,6 +120,8 @@ class RemoveEmptyIfBodyPattern : OptimizationPattern {
 }
 
 class RemoveEmptyIfElsePattern : OptimizationPattern {
+    override val rootTypes = setOf(IfOperation::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is IfOperation) {
             return false
@@ -126,6 +136,8 @@ class RemoveEmptyIfElsePattern : OptimizationPattern {
 }
 
 class RemoveRedundantEmptyChoiceBranchPattern : OptimizationPattern {
+    override val rootTypes = setOf(ChoiceOperation::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is ChoiceOperation) {
             return false

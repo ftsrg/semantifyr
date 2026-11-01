@@ -7,11 +7,22 @@
 set -euf
 
 usage() {
-    echo "usage: deploy <instance> <tag> < files.tar.gz | status <instance>" >&2
+    echo "usage: deploy <instance> <tag> < files.tar.gz | status <instance> | edge < files.tar.gz" >&2
     exit 64
 }
 
 set -- ${SSH_ORIGINAL_COMMAND:-}
+
+if [ "${1:-}" = edge ]; then
+    [ $# -eq 1 ] || usage
+    unpacked=$(mktemp -d)
+    trap 'rm -rf "$unpacked"' EXIT
+    tar -xzf - -C "$unpacked"
+    install -m 750 "$unpacked/deploy.sh" /srv/edge/deploy.sh
+    /srv/edge/deploy.sh "$unpacked"
+    exit 0
+fi
+
 [ $# -ge 2 ] || usage
 
 action=$1

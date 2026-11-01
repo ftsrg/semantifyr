@@ -21,6 +21,7 @@ import kotlin.time.measureTimedValue
 
 abstract class VerificationContext<TArtifacts, TRawVerdict>(
     protected val backendId: String,
+    private val soundness: SoundnessDirection,
     protected val request: BackendVerificationRequest,
 ) {
     protected val logger by loggerFactory()
@@ -71,9 +72,9 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
         metadata: VerificationMetadata,
         unsupported: List<UnsupportedConstruct>,
     ): BackendVerificationResult {
-        val constructs = unsupported.joinToString("; ") {
+        val constructs = unsupported.map {
             describe(it)
-        }
+        }.distinct().joinToString("; ")
         logger.info { "[$backendId] verification not supported: $constructs" }
         return BackendVerificationResult(
             verdict = VerificationVerdict.NotSupported,
@@ -82,7 +83,7 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
         )
     }
 
-    private fun describe(construct: UnsupportedConstruct): String {
+    protected fun describe(construct: UnsupportedConstruct): String {
         val source = sourceElementOf(construct.element)
         val location = SourceLocation.prefixFor(source)
         if (source is VariableDeclaration) {
@@ -94,6 +95,12 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
     private fun sourceElementOf(element: EObject): EObject {
         val flatteningInfo = request.flatteningInfo ?: return element
         val variable = element as? VariableDeclaration ?: return element
+        flatteningInfo.arraySlots[variable]?.let {
+            return it.arrayVariable
+        }
+        flatteningInfo.recordFields[variable]?.let {
+            return it.recordVariable
+        }
         val holder = flatteningInfo.variableHolders[variable] ?: return element
         return flatteningInfo.resolveOriginalVariable(holder, variable)
     }
@@ -130,6 +137,8 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
                 backAnnotationDuration = backAnnotationDuration,
             ),
             inlinedWitness = witness,
+            soundness = soundness,
+            isTrusted = soundness.trusts(verdict, request.inlinedOxsts.property.expression),
         )
     }
 

@@ -16,6 +16,8 @@ import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
 
 class BubbleNotAGPattern : OptimizationPattern {
+    override val rootTypes = setOf(NegationOperator::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is NegationOperator) {
             return false
@@ -36,6 +38,8 @@ class BubbleNotAGPattern : OptimizationPattern {
 }
 
 class BubbleNotEFPattern : OptimizationPattern {
+    override val rootTypes = setOf(NegationOperator::class.java)
+
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         if (element !is NegationOperator) {
             return false

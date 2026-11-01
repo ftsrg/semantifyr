@@ -61,6 +61,11 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         hrf.setNewLines(0, 0, 1);
     }
 
+    protected void spaceOrNewLine(IHiddenRegionFormatter hrf) {
+        hrf.setNewLines(0, 0, 1);
+        hrf.oneSpace();
+    }
+
     protected void format(OxstsModelPackage _package, IFormattableDocument document) {
         _package.getImports().forEach(document::format);
         _package.getDeclarations().forEach(document::format);
@@ -159,6 +164,8 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         if (typeSpecification.getMultiplicity() != null) {
             document.set(previousHiddenRegion(typeSpecification.getMultiplicity()), this::noSpace);
         }
+
+        document.format(typeSpecification.getMultiplicity());
     }
 
     protected void format(VariableDeclaration variableDeclaration, IFormattableDocument document) {
@@ -194,8 +201,6 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.append(regionFor(transitionDeclaration).keyword("redefine"), this::oneSpace);
         document.append(regionFor(transitionDeclaration).keyword("tran"), this::oneSpace);
         document.append(regionFor(transitionDeclaration).keyword("init"), this::oneSpace);
-        document.append(regionFor(transitionDeclaration).keyword("env"), this::oneSpace);
-        document.append(regionFor(transitionDeclaration).keyword("havoc"), this::oneSpace);
 
         document.format(transitionDeclaration.getAnnotation());
 
@@ -448,6 +453,24 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.prepend(regionFor(arrayLiteral).keyword("]"), this::noSpace);
 
         arrayLiteral.getValues().forEach(document::format);
+    }
+
+    protected void format(RecordLiteral recordLiteral, IFormattableDocument document) {
+        var open = regionFor(recordLiteral).keyword("{");
+        var close = regionFor(recordLiteral).keyword("}");
+        document.prepend(open, this::oneSpace);
+        document.prepend(close, this::spaceOrNewLine);
+        document.interior(open, close, this::indent);
+        document.prepend(allRegionsFor(recordLiteral).keyword(","), this::noSpace);
+
+        recordLiteral.getFields().forEach(document::format);
+    }
+
+    protected void format(FieldAssignment fieldAssignment, IFormattableDocument document) {
+        document.set(previousHiddenRegion(fieldAssignment), this::spaceOrNewLine);
+        document.surround(regionFor(fieldAssignment).keyword("="), this::oneSpace);
+
+        document.format(fieldAssignment.getExpression());
     }
 
     protected void format(SelfReference selfReference, IFormattableDocument document) {

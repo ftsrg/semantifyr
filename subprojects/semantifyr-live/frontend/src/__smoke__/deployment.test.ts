@@ -6,8 +6,8 @@
 
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { CancellationTokenSource } from 'vscode-jsonrpc';
-import { ConsoleLogger, createWebSocketConnection, toSocket } from 'vscode-ws-jsonrpc';
+import { createMessageConnection } from 'vscode-jsonrpc/node';
+import { ConsoleLogger, toSocket, WebSocketMessageReader, WebSocketMessageWriter } from 'vscode-ws-jsonrpc';
 import { discoverVerificationCases, verifyCase } from '@semantifyr/editor-common';
 import { createApi, normalizeBaseUrl } from '../lib/api';
 
@@ -24,7 +24,9 @@ async function connect(flavorId: string) {
     webSocket.onopen = resolve;
     webSocket.onerror = reject;
   });
-  const connection = createWebSocketConnection(toSocket(webSocket), new ConsoleLogger());
+  const socket = toSocket(webSocket);
+  // vscode-ws-jsonrpc's createWebSocketConnection uses a vscode-jsonrpc copy with no Node runtime installed, so it never dispatches a response
+  const connection = createMessageConnection(new WebSocketMessageReader(socket), new WebSocketMessageWriter(socket), new ConsoleLogger());
   // the server blocks on its own requests, such as window/workDoneProgress/create, until answered
   connection.onRequest(() => null);
   connection.listen();
@@ -66,8 +68,7 @@ describe(`live deployment at ${url}`, () => {
           connection,
           flavor.verificationCommand,
           { uri, range: verificationCase.location.range },
-          // vscode-jsonrpc sends a trailing undefined token as a second parameter
-          { portfolio: 'smart-full', token: new CancellationTokenSource().token },
+          { portfolio: 'smart-full' },
         );
         expect(result?.status, verificationCase.label).toBe('passed');
       }

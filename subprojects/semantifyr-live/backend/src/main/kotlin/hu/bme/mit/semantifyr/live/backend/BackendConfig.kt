@@ -16,13 +16,11 @@ import kotlin.time.Duration.Companion.seconds
 
 @Serializable
 data class BackendConfig(
-    val development: Boolean = false,
     val server: ServerConfig = ServerConfig(),
     val sessionManager: SessionManagerConfig = SessionManagerConfig(),
     val verification: VerificationConfig = VerificationConfig(),
 ) {
     fun withEnv(env: Map<String, String?> = System.getenv()): BackendConfig = copy(
-        development = env["SEMANTIFYR_LIVE_DEVELOPMENT"]?.toBooleanStrictOrNull() ?: development,
         server = server.withEnv(env),
         sessionManager = sessionManager.withEnv(env),
         verification = verification.withEnv(env),
@@ -47,27 +45,27 @@ data class BackendConfig(
 @Serializable
 data class ServerConfig(
     val port: Int = 8080,
+    val metricsPort: Int? = null,
     val pingPeriod: Duration = 30.seconds,
     val pingTimeout: Duration = 15.seconds,
     val webRootDirectory: String? = null,
-    val adminPassword: String? = null,
     val wsHandshakesPerPeriod: Int = 120,
     val wsHandshakeRatePeriod: Duration = 1.minutes,
     val maxWsFrameSize: Long = 4 * 1024 * 1024,
-    val httpsOnlyCookies: Boolean = true,
     val clientAddressHeader: String? = null,
+    val userHeader: String? = null,
     val trustedProxies: List<String> = emptyList(),
 ) {
     fun withEnv(env: Map<String, String?>) = copy(
         port = env["SEMANTIFYR_LIVE_PORT"]?.toIntOrNull() ?: port,
+        metricsPort = env["SEMANTIFYR_LIVE_METRICS_PORT"]?.toIntOrNull() ?: metricsPort,
         pingPeriod = env["SEMANTIFYR_LIVE_PING_PERIOD_SECONDS"]?.toLongOrNull()?.seconds ?: pingPeriod,
         webRootDirectory = env["SEMANTIFYR_LIVE_WEB_ROOT_DIR"] ?: webRootDirectory,
-        adminPassword = env["SEMANTIFYR_LIVE_ADMIN_PASSWORD"] ?: adminPassword,
         wsHandshakesPerPeriod = env["SEMANTIFYR_LIVE_WS_HANDSHAKES_PER_PERIOD"]?.toIntOrNull() ?: wsHandshakesPerPeriod,
         wsHandshakeRatePeriod = env["SEMANTIFYR_LIVE_WS_HANDSHAKE_RATE_PERIOD_SECONDS"]?.toLongOrNull()?.seconds ?: wsHandshakeRatePeriod,
         maxWsFrameSize = env["SEMANTIFYR_LIVE_MAX_WS_FRAME_SIZE"]?.toLongOrNull() ?: maxWsFrameSize,
-        httpsOnlyCookies = env["SEMANTIFYR_LIVE_HTTPS_ONLY_COOKIES"]?.toBooleanStrictOrNull() ?: httpsOnlyCookies,
         clientAddressHeader = env["SEMANTIFYR_LIVE_CLIENT_ADDRESS_HEADER"] ?: clientAddressHeader,
+        userHeader = env["SEMANTIFYR_LIVE_USER_HEADER"] ?: userHeader,
         trustedProxies = env["SEMANTIFYR_LIVE_TRUSTED_PROXIES"]?.split(',')?.map {
             it.trim()
         }?.filter {

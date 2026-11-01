@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationStatus
+import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
 import hu.bme.mit.semantifyr.live.backend.data.VerificationState
@@ -22,6 +23,9 @@ import hu.bme.mit.semantifyr.logging.error
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.Timer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
@@ -30,10 +34,25 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.eclipse.lsp4j.Location
+import java.time.Duration
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.TimeSource
+import kotlin.time.toJavaDuration
+
+private val durationBuckets = arrayOf(
+    Duration.ofMillis(100),
+    Duration.ofMillis(500),
+    Duration.ofSeconds(1),
+    Duration.ofSeconds(2),
+    Duration.ofSeconds(5),
+    Duration.ofSeconds(10),
+    Duration.ofSeconds(30),
+    Duration.ofSeconds(60),
+    Duration.ofSeconds(120),
+    Duration.ofSeconds(300),
+)
 
 @SessionScoped
 class SessionVerificationManager @Inject constructor(
@@ -42,6 +61,7 @@ class SessionVerificationManager @Inject constructor(
     private val sessionContext: SessionContext,
     private val sessionRunContext: SessionRunContext,
     private val sessionClient: SessionClient,
+    private val registry: MeterRegistry,
 ) {
 
     private val logger by loggerFactory()
@@ -55,6 +75,8 @@ class SessionVerificationManager @Inject constructor(
         val job: Job,
         @Volatile
         var state: VerificationState = VerificationState.Queued,
+        @Volatile
+        var runningSince: TimeSource.Monotonic.ValueTimeMark? = null,
     )
 
     private val verifications = ConcurrentHashMap<String, Entry>()
@@ -84,24 +106,33 @@ class SessionVerificationManager @Inject constructor(
                 verifications[verificationId] = entry
                 notifyActiveChanged()
                 try {
-                    verificationManager.withPermit {
+                    val result = verificationManager.withPermit {
                         entry.state = VerificationState.Running
+                        entry.runningSince = TimeSource.Monotonic.markNow()
+                        recordQueueWait(entry)
                         notifyActiveChanged()
                         withTimeout(backendConfig.verification.timeout) {
                             work()
                         }
                     }
+                    recordFinished(entry, result)
+                    result
                 } catch (e: TimeoutCancellationException) {
                     val message = "Verification timed out after ${backendConfig.verification.timeout}"
                     logger.warn(e) { message }
-                    erroredResult(portfolioId, message)
+                    VerificationCaseResult(VerificationStatus.TIMEOUT, message, null, portfolioId, null, null).also {
+                        recordFinished(entry, it)
+                    }
                 } catch (e: CancellationException) {
                     logger.info(e) { "Verification cancelled" }
+                    recordCancelled(entry)
                     null
                 } catch (e: Throwable) {
                     val message = "Verification failed: ${e.message ?: e::class.simpleName}"
                     logger.error(e) { message }
-                    erroredResult(portfolioId, message)
+                    erroredResult(portfolioId, message).also {
+                        recordFinished(entry, it)
+                    }
                 } finally {
                     verifications.remove(verificationId)
                     notifyActiveChanged()
@@ -140,6 +171,37 @@ class SessionVerificationManager @Inject constructor(
             state = state,
             elapsed = startedAt.elapsedNow(),
         )
+    }
+
+    private fun recordQueueWait(entry: Entry) {
+        Timer.builder("semantifyr.live.verification.queue")
+            .tag("kind", entry.kind.name.lowercase())
+            .serviceLevelObjectives(*durationBuckets)
+            .register(registry)
+            .record(entry.startedAt.elapsedNow().toJavaDuration())
+    }
+
+    private fun recordFinished(entry: Entry, result: Any?) {
+        val (backendId, verdict) = when (result) {
+            is VerificationCaseResult -> result.backendId() to result.status()
+            is WitnessValidationResult -> result.backendId() to result.status()
+            else -> null to null
+        }
+        Timer.builder("semantifyr.live.verification")
+            .tag("kind", entry.kind.name.lowercase())
+            .tag("backend", backendId ?: "none")
+            .tag("verdict", verdict ?: "unknown")
+            .serviceLevelObjectives(*durationBuckets)
+            .register(registry)
+            .record((entry.runningSince ?: entry.startedAt).elapsedNow().toJavaDuration())
+    }
+
+    private fun recordCancelled(entry: Entry) {
+        Counter.builder("semantifyr.live.verification.cancellations")
+            .tag("kind", entry.kind.name.lowercase())
+            .tag("state", entry.state.name.lowercase())
+            .register(registry)
+            .increment()
     }
 
     private fun erroredResult(portfolioId: String, message: String): VerificationCaseResult {

@@ -16,12 +16,12 @@ import type {
 export function readSemantifyrSettings(): ServerSettings {
     const config = workspace.getConfiguration("semantifyr");
     return {
-        portfolio: config.get<string>("portfolio", "theta-full"),
+        portfolio: config.get<string>("portfolio", "smart-full"),
         timeoutSeconds: config.get<number>("timeoutSeconds", 300),
         maxConcurrency: config.get<number>("maxConcurrency", 0),
         theta: {
             executor: config.get<ThetaExecutor>("theta.executor", "auto"),
-            dockerImage: config.get<string>("theta.dockerImage", "ftsrg/theta-xsts-cli:latest"),
+            dockerImage: config.get<string>("theta.dockerImage", "ftsrg/theta-xsts-cli:8.6.0"),
         },
         artifacts: {
             location: config.get<ArtifactsLocation>("artifacts.location", "temporary"),

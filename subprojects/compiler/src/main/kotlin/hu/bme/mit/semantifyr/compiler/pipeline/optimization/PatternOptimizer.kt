@@ -8,7 +8,6 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization
 
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import org.eclipse.emf.ecore.EObject
@@ -36,12 +35,18 @@ class Worklist<T> {
 }
 
 interface OptimizationPattern {
+    val rootTypes: Set<Class<out EObject>>
+        get() = setOf(EObject::class.java)
+
     fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean
 }
 
 abstract class CompositeOptimizationPattern : OptimizationPattern {
 
     protected abstract val patterns: Collection<OptimizationPattern>
+
+    override val rootTypes: Set<Class<out EObject>>
+        get() = patterns.flatMapTo(mutableSetOf()) { it.rootTypes }
 
     override fun tryApply(element: EObject, worklist: Worklist<EObject>): Boolean {
         for (pattern in patterns) {
@@ -63,6 +68,16 @@ class PatternOptimizer(
 
     private val logger by loggerFactory()
 
+    private val patternsByType = HashMap<Class<out EObject>, List<OptimizationPattern>>()
+
+    private fun patternsFor(element: EObject): List<OptimizationPattern> {
+        return patternsByType.getOrPut(element.javaClass) {
+            patterns.filter { pattern ->
+                pattern.rootTypes.any { it.isInstance(element) }
+            }
+        }
+    }
+
     override fun optimize(input: EObject): OptimizationStats {
         if (patterns.isEmpty()) {
             return OptimizationStats()
@@ -72,8 +87,10 @@ class PatternOptimizer(
 
         val worklist = Worklist<EObject>()
         worklist.add(input)
-        input.eAllOfType<EObject>().forEach {
-            worklist.add(it)
+        input.eAllContents().forEach {
+            if (patternsFor(it).isNotEmpty()) {
+                worklist.add(it)
+            }
         }
         val seedElapsed = totalMark.elapsedNow()
 
@@ -82,10 +99,14 @@ class PatternOptimizer(
         while (worklist.isNotEmpty()) {
             val current = worklist.pop()
             pops++
+            val candidates = patternsFor(current)
+            if (candidates.isEmpty()) {
+                continue
+            }
             if (current !== input && current.eResource() == null) {
                 continue
             }
-            for (pattern in patterns) {
+            for (pattern in candidates) {
                 if (pattern.tryApply(current, worklist)) {
                     applications++
                     artifactManager.commitStep(pass)
