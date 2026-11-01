@@ -26,6 +26,7 @@ import hu.bme.mit.semantifyr.verifier.Trace
 import hu.bme.mit.semantifyr.verifier.TraceDto
 import hu.bme.mit.semantifyr.verifier.VerificationResult
 import hu.bme.mit.semantifyr.verifier.VerificationResultDto
+import hu.bme.mit.semantifyr.verifier.WitnessValidationResultDto
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import hu.bme.mit.semantifyr.verifier.toJavaDto
@@ -35,8 +36,10 @@ import kotlinx.coroutines.runBlocking
 import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
-import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.writeText
 import kotlin.time.Duration
 import kotlin.time.toKotlinDuration
@@ -138,7 +141,7 @@ class GammaFrontend @Inject private constructor(
         progress: ProgressContext = ProgressContext.NoOp,
     ): GammaVerificationResult {
         val qualifiedName = gammaVerificationCase.qualifiedName
-        val baseDirectory = gammaFrontendConfig.outputDirectory.resolve(qualifiedName)
+        val baseDirectory = caseDirectory(gammaVerificationCase)
         val outputPath = baseDirectory.resolve("model.oxsts")
         val gammaModel = EcoreUtil2.getContainerOfType(gammaVerificationCase.declaration, GammaModelPackage::class.java)
 
@@ -194,19 +197,32 @@ class GammaFrontend @Inject private constructor(
         }
     }
 
+    // a verify run puts its one case's artifacts, the witness among them, in a single directory under verification/
+    fun findWitness(gammaVerificationCase: GammaVerificationCase): Path? {
+        val verificationDirectory = caseDirectory(gammaVerificationCase).resolve("verification")
+        if (!verificationDirectory.isDirectory()) {
+            return null
+        }
+        return verificationDirectory.listDirectoryEntries().map {
+            it.resolve("witness.oxsts")
+        }.singleOrNull {
+            it.isRegularFile()
+        }
+    }
+
     suspend fun validateWitness(
         gammaVerificationCase: GammaVerificationCase,
-        witness: GammaWitness,
+        witnessPath: Path,
         portfolio: VerificationPortfolio = gammaFrontendConfig.portfolio,
         progress: ProgressContext = ProgressContext.NoOp,
     ): WitnessValidationResult {
         val qualifiedName = gammaVerificationCase.qualifiedName
-        val baseDirectory = gammaFrontendConfig.outputDirectory.resolve(qualifiedName)
+        val baseDirectory = caseDirectory(gammaVerificationCase)
         val verifier = buildVerifier(baseDirectory.resolve("witness-validation"), portfolio)
 
-        logger.info { "Validating witness for Gamma case '$qualifiedName' from '${witness.witnessPath}'" }
+        logger.info { "Validating witness for Gamma case '$qualifiedName' from '$witnessPath'" }
 
-        val backAnnotatedModel = loadWitnessModel(witness)
+        val backAnnotatedModel = loadWitnessModel(witnessPath, baseDirectory.resolve("model.oxsts"))
         val result = WitnessValidator().validate(verifier, backAnnotatedModel, progress)
         logger.info {
             "Witness validation for Gamma case '$qualifiedName' -> ${result.verification.verdict} (${result::class.simpleName})"
@@ -214,18 +230,18 @@ class GammaFrontend @Inject private constructor(
         return result
     }
 
-    private fun loadWitnessModel(witness: GammaWitness): InlinedOxsts {
-        require(Files.isRegularFile(witness.witnessPath)) {
-            "Witness file does not exist: '${witness.witnessPath}'"
+    private fun loadWitnessModel(witnessPath: Path, compiledModelPath: Path): InlinedOxsts {
+        require(witnessPath.isRegularFile()) {
+            "Witness file does not exist: '$witnessPath'"
         }
-        require(Files.isRegularFile(witness.compiledModelPath)) {
-            "Compiled OXSTS model does not exist: '${witness.compiledModelPath}'"
+        require(compiledModelPath.isRegularFile()) {
+            "Compiled OXSTS model does not exist: '$compiledModelPath'"
         }
 
         val context = semantifyrLoader.startContext()
             .loadLibraryPaths(gammaFrontendConfig.libraryPaths)
-            .loadModel(witness.compiledModelPath)
-            .loadModel(witness.witnessPath)
+            .loadModel(compiledModelPath)
+            .loadModel(witnessPath)
             .buildAndResolve()
 
         return context.modelResources
@@ -233,17 +249,21 @@ class GammaFrontend @Inject private constructor(
             .flatMap { it.contents.asSequence() }
             .filterIsInstance<InlinedOxsts>()
             .firstOrNull()
-            ?: error("Witness file '${witness.witnessPath}' did not contain an InlinedOxsts")
+            ?: error("Witness file '$witnessPath' did not contain an InlinedOxsts")
     }
 
     fun validateWitnessBlocking(
         gammaVerificationCase: GammaVerificationCase,
-        witness: GammaWitness,
+        witnessPath: Path,
         progress: ProgressContext = ProgressContext.NoOp,
-    ): WitnessValidationResult {
+    ): WitnessValidationResultDto {
         return runBlocking {
-            validateWitness(gammaVerificationCase, witness, progress = progress)
+            validateWitness(gammaVerificationCase, witnessPath, progress = progress).toJavaDto()
         }
+    }
+
+    private fun caseDirectory(gammaVerificationCase: GammaVerificationCase): Path {
+        return gammaFrontendConfig.outputDirectory.resolve(gammaVerificationCase.qualifiedName)
     }
 
     private fun buildVerifier(

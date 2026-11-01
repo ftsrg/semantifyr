@@ -8,7 +8,15 @@ package hu.bme.mit.semantifyr.frontends.gamma.lang.ide.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.ide.GammaIdeSetup;
+import hu.bme.mit.semantifyr.lang.ide.server.ServerSettings;
+import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson;
+import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
+import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification;
+import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult;
+import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationStatus;
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup;
 import java.net.URI;
 import java.nio.file.Files;
@@ -21,19 +29,25 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
+import org.eclipse.lsp4j.ExecuteCommandCapabilities;
+import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializedParams;
 import org.eclipse.lsp4j.MessageActionItem;
 import org.eclipse.lsp4j.MessageParams;
+import org.eclipse.lsp4j.ProgressParams;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.ShowMessageRequestParams;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.TextDocumentItem;
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
+import org.eclipse.lsp4j.WorkDoneProgressCreateParams;
+import org.eclipse.lsp4j.WorkspaceClientCapabilities;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.xtext.ide.server.LanguageServerImpl;
 import org.junit.jupiter.api.AfterEach;
@@ -124,9 +138,42 @@ class GammaTraceLanguageServerTest {
         assertThat(errors(client.awaitDiagnostics(trace))).isNotEmpty();
     }
 
+    @Test
+    void validatingTheWitnessOfACaseNotVerifiedYetReturnsAnErroredResult() throws Exception {
+        var model = copy(MODELS.resolve("examples/Crossroads.gamma"), "Crossroads.gamma");
+        initialize();
+        client.awaitDiagnostics(model);
+        var cases = (List<?>) executeCommand("gamma.case.discover", new JsonPrimitive(uri(model)));
+        var location = cases.stream()
+                .map(VerificationCaseSpecification.class::cast)
+                .filter(it -> it.label().equals("ACanBeGreen"))
+                .findFirst()
+                .orElseThrow()
+                .location();
+
+        var result = (WitnessValidationResult) executeCommand(
+                "gamma.witness.validate",
+                CommandGson.INSTANCE.toJsonTree(VerificationCaseRequest.fromLocation(location, null)));
+
+        assertThat(result.status()).isEqualTo(WitnessValidationStatus.ERRORED);
+        assertThat(result.verdict()).isNull();
+        assertThat(result.message()).isEqualTo("Case Crossroads.ACanBeGreen has no witness yet, verify it first");
+        assertThat(result.portfolioId()).isEqualTo(ServerSettings.DEFAULT_PORTFOLIO_ID);
+    }
+
+    private Object executeCommand(String command, Object argument) throws Exception {
+        return languageServer
+                .executeCommand(new ExecuteCommandParams(command, List.of(argument)))
+                .get(1, TimeUnit.MINUTES);
+    }
+
     private void initialize() throws Exception {
         var params = new InitializeParams();
         params.setRootUri(uri(workspace));
+        params.setInitializationOptions(JsonParser.parseString("{\"artifacts\": {\"location\": \"workspace\"}}"));
+        var workspaceCapabilities = new WorkspaceClientCapabilities();
+        workspaceCapabilities.setExecuteCommand(new ExecuteCommandCapabilities());
+        params.setCapabilities(new ClientCapabilities(workspaceCapabilities, null, null));
         languageServer.initialize(params).get(1, TimeUnit.MINUTES);
         languageServer.initialized(new InitializedParams());
     }
@@ -194,5 +241,13 @@ class GammaTraceLanguageServerTest {
 
         @Override
         public void logMessage(MessageParams message) {}
+
+        @Override
+        public CompletableFuture<Void> createProgress(WorkDoneProgressCreateParams params) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        @Override
+        public void notifyProgress(ProgressParams params) {}
     }
 }
