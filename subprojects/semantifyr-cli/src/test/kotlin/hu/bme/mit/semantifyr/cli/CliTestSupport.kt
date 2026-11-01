@@ -27,6 +27,7 @@ val testModels = Path("../../oxsts-test-models")
 val smokeDirectory = testModels.resolve("smoke")
 val smokeModel = smokeDirectory.resolve("smoke.oxsts")
 const val SMOKE_CASE = "semantifyr::verification::smoke::CounterReachesThree"
+val sysmlTutorialModel = Path("../frontends/sysml/models/tutorial/room.sysml")
 
 private val injector by lazy {
     OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()

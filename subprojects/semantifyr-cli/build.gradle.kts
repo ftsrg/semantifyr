@@ -14,6 +14,7 @@ plugins {
 dependencies {
     implementation(project(":logging"))
     implementation(project(":portfolios"))
+    implementation(project(":sysml-frontend"))
 
     implementation(libs.clikt)
     implementation(libs.kotlinx.coroutines.core)
@@ -34,6 +35,9 @@ val rootDirectory = isolated.rootProject.projectDirectory
 tasks.named("test") {
     inputs.dir(rootDirectory.dir("oxsts-test-models"))
         .withPropertyName("oxstsTestModels")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir(rootDirectory.dir("subprojects/frontends/sysml/models/tutorial"))
+        .withPropertyName("sysmlTutorialModels")
         .withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
