@@ -34,7 +34,13 @@ services:
     environment:
       GF_SERVER_ROOT_URL: https://grafana.semantifyr.org/
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD is not set}
-      # nobody signs in until the GitHub SSO puts Grafana behind auth.proxy
+      # Caddy in the edge project signs users in through GitHub, the only way in
+      GF_AUTH_PROXY_ENABLED: "true"
+      GF_AUTH_PROXY_HEADER_NAME: X-Auth-Request-User
+      GF_AUTH_PROXY_HEADER_PROPERTY: username
+      GF_AUTH_PROXY_AUTO_SIGN_UP: "true"
+      GF_AUTH_PROXY_WHITELIST: ${TRUSTED_PROXIES:?TRUSTED_PROXIES is not set}
+      GF_USERS_AUTO_ASSIGN_ORG_ROLE: Admin
       GF_AUTH_DISABLE_LOGIN_FORM: "true"
       GF_AUTH_BASIC_ENABLED: "false"
       GF_AUTH_ANONYMOUS_ENABLED: "false"
