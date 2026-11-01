@@ -53,9 +53,9 @@ class UppaalDeclarationsBuilder @Inject constructor(
         return when (kind) {
             UppaalVariableKind.Clock -> "clock"
             // a declared range lifts the default 16-bit bound, and Uppaal reports an assignment outside it instead of a verdict
-            UppaalVariableKind.Integer -> integerRangeChecker.rangeOf(variable, inlinedOxsts)?.let {
+            UppaalVariableKind.Integer -> integerRangeChecker.declaredRangeOf(variable, inlinedOxsts).let {
                 "int[${it.lower},${it.upper}]"
-            } ?: "int"
+            }
             UppaalVariableKind.Boolean -> "bool"
             // Enum literals are emitted as const-int aliases above; the var itself stores an int.
             UppaalVariableKind.Enum -> "int"

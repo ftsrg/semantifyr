@@ -33,9 +33,7 @@ class SpinCapabilityChecker @Inject constructor(
 ) : BackendCapabilityChecker() {
 
     override fun checkModel(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
-        return integerRangeChecker.check(inlinedOxsts) {
-            true
-        }
+        return integerRangeChecker.check(inlinedOxsts)
     }
 
     override fun describeUnsupported(element: EObject): String? {

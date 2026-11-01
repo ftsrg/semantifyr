@@ -51,6 +51,7 @@ class VariableBoundsComputation(
     private val evaluator: MetaConstantExpressionEvaluator,
     builtinSymbolResolver: BuiltinSymbolResolver,
     private val havocRange: (VariableDeclaration) -> IntegerRange = { IntegerRange.UNBOUNDED },
+    private val limit: (VariableDeclaration) -> IntegerRange = { IntegerRange.UNBOUNDED },
 ) {
 
     private val intDatatype = builtinSymbolResolver.intDatatype(inlinedOxsts)
@@ -420,10 +421,17 @@ class VariableBoundsComputation(
         variable: VariableDeclaration,
         range: IntegerRange,
     ) {
-        state[variable] = range
+        val value = limited(variable, range)
+        state[variable] = value
         if (recording) {
-            variableRanges[variable] = variableRanges[variable]?.join(range) ?: range
+            variableRanges[variable] = variableRanges[variable]?.join(value) ?: value
         }
+    }
+
+    // an engine that stops on a value outside a variable's limit goes on only with values within it
+    private fun limited(variable: VariableDeclaration, range: IntegerRange): IntegerRange {
+        val bound = limit(variable)
+        return range.intersect(bound) ?: bound
     }
 
     private fun record(expression: Expression, range: IntegerRange): IntegerRange {
@@ -457,10 +465,11 @@ class VariableBoundsComputation(
     private fun widen(previous: Map<VariableDeclaration, IntegerRange>, next: Map<VariableDeclaration, IntegerRange>): MutableMap<VariableDeclaration, IntegerRange> {
         return next.mapValuesTo(HashMap()) { (variable, range) ->
             val old = previous[variable] ?: return@mapValuesTo range
-            IntegerRange(
+            val widened = IntegerRange(
                 lower = if (range.lower == old.lower) range.lower else range.lower?.let { thresholds.floor(it) },
                 upper = if (range.upper == old.upper) range.upper else range.upper?.let { thresholds.ceiling(it) },
             )
+            limited(variable, widened)
         }
     }
 

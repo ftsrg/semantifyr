@@ -83,7 +83,7 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
         )
     }
 
-    private fun describe(construct: UnsupportedConstruct): String {
+    protected fun describe(construct: UnsupportedConstruct): String {
         val source = sourceElementOf(construct.element)
         val location = SourceLocation.prefixFor(source)
         if (source is VariableDeclaration) {

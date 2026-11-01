@@ -6,7 +6,7 @@
 
 package semantifyr::verification::lang::boundedness
 
-// Integers the property depends on must have a static bound within 32 bits for Spin and Uppaal, whose integers wrap; Theta and nuXmv decide every case here.
+// Spin and Uppaal compute in 32-bit integers that wrap: Spin needs a static bound within 32 bits on every integer the property depends on, Uppaal on the arithmetic over them; Theta and nuXmv decide every case here.
 
 // --- unbounded counters: Spin and Uppaal report NotSupported before dispatch ---
 

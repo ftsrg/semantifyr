@@ -100,6 +100,7 @@ abstract class AnalysisTestBase {
     protected fun runVariableBounds(
         source: String,
         havocRange: (VariableDeclaration) -> IntegerRange = { IntegerRange.UNBOUNDED },
+        limit: (VariableDeclaration) -> IntegerRange = { IntegerRange.UNBOUNDED },
     ): Pair<InlinedOxsts, VariableBoundsInfo> {
         return withCompiled(source) { (inlined, evaluator, child) ->
             val result = VariableBoundsComputation(
@@ -107,6 +108,7 @@ abstract class AnalysisTestBase {
                 evaluator,
                 child.getInstance(BuiltinSymbolResolver::class.java),
                 havocRange,
+                limit,
             ).compute()
             inlined to result
         }

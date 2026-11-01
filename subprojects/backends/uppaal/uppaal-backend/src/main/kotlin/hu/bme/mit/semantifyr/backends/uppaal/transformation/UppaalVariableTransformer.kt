@@ -43,6 +43,10 @@ class UppaalVariableTransformer @Inject constructor(
         return mangler.nameOf(variableDeclaration)
     }
 
+    fun variableOf(name: String): VariableDeclaration? {
+        return mangler.variableOf(name)
+    }
+
     fun isClock(variableDeclaration: VariableDeclaration): Boolean {
         return builtinAnnotationHandler.isClockVariable(variableDeclaration)
     }

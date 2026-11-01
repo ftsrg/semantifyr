@@ -79,7 +79,7 @@ class Reaches10 {
 
 When the class is verified, the model checker checks that the body expression holds in every reachable state.
 
-The verdict is **Passed** when the property holds and **Failed** when it does not. Otherwise it is **Inconclusive** when the backends finished without a verdict the portfolio trusts (see [soundness directions](../cli/portfolios.mdx#soundness-directions)), **Timeout** when the time limit ran out before a backend decided, **Not supported** when the chosen backend cannot translate a construct of the model, or Spin or Uppaal meet an integer without a static bound (the message names each construct or variable and its source line), or **Errored** when a backend run failed or trusted backends disagreed.
+The verdict is **Passed** when the property holds and **Failed** when it does not. Otherwise it is **Inconclusive** when the backends finished without a verdict the portfolio trusts (see [soundness directions](../cli/portfolios.mdx#soundness-directions)), **Timeout** when the time limit ran out before a backend decided, **Not supported** when the chosen backend cannot translate a construct of the model, Spin meets an integer without a static bound, or Spin or Uppaal meet arithmetic that may leave 32 bits (the message names each construct or variable and its source line), or **Errored** when a backend run failed or trusted backends disagreed.
 
 ## Properties vs Transitions
 

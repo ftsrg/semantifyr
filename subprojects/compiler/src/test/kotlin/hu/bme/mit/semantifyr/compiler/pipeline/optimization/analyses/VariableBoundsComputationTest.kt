@@ -201,6 +201,33 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
     }
 
     @Test
+    fun `a limit bounds every value but not the arithmetic that leaves it`() {
+        val (inlined, result) = runVariableBounds(
+            """
+                inlined oxsts of semantifyr::Anything
+                var x : int := 0
+                var y : int := 0
+                init { }
+                tran {
+                    x := x + 1
+                    y := x / 2
+                }
+                prop { AG (y >= 0) }
+            """,
+            limit = {
+                IntegerRange(-100, 100)
+            },
+        )
+
+        val increment = inlined.eAllOfType<ArithmeticBinaryOperator>().single {
+            it.op == ArithmeticOp.ADD
+        }
+        assertThat(result.variableRanges[inlined.varNamed("x")]).isEqualTo(IntegerRange(0, 100))
+        assertThat(result.variableRanges[inlined.varNamed("y")]).isEqualTo(IntegerRange(0, 50))
+        assertThat(result.arithmeticRanges[increment]).isEqualTo(IntegerRange(1, 101))
+    }
+
+    @Test
     fun `an uninitialized variable is unbounded before init writes it`() {
         val (inlined, result) = runVariableBounds(
             """

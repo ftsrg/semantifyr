@@ -34,9 +34,7 @@ class UppaalCapabilityChecker @Inject constructor(
 ) : BackendCapabilityChecker() {
 
     override fun checkModel(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
-        return integerRangeChecker.check(inlinedOxsts) {
-            !builtinAnnotationHandler.isClockVariable(it)
-        }
+        return integerRangeChecker.checkArithmetic(inlinedOxsts)
     }
 
     override fun describeUnsupported(element: EObject): String? {
