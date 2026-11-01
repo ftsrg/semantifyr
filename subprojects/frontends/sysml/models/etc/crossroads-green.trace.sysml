@@ -10,12 +10,12 @@ part def TrafficLightABehaviorNormalGreenUnreachableViolatedTrace :> CrossroadSy
             state operating1[1] :> Operating {
                 state bothYellow1[1] :> BothYellow;
                 action toBothRed1[1] :> stateTransitions {
-                    action sendToggleA1[1] send new Toggle() via controlA;
-                    action sendToggleB1[1] send new Toggle() via controlB;
+                    action sendToggle1[1] send new Toggle() via controlA;
+                    action sendToggle2[1] send new Toggle() via controlB;
                 }
                 state bothRed1[1] :> BothRed;
                 action toTrafficOnA1[1] :> stateTransitions {
-                    action sendToggleA2[1] send new Toggle() via controlA;
+                    action sendToggle1[1] send new Toggle() via controlA;
                 }
                 state trafficOnA1[1] :> TrafficOnA;
             }
@@ -24,18 +24,18 @@ part def TrafficLightABehaviorNormalGreenUnreachableViolatedTrace :> CrossroadSy
 
     part trafficLightA :>> trafficLightA {
         action startup[1] {
-            action sendYellow1[1] send new YellowL() via lightControl;
+            action sendYellowL1[1] send new YellowL() via lightControl;
         }
 
         exhibit state Behaviour[1] :>> Behaviour {
             state normal1[1] :> Normal {
                 state yellow1[1] :> Yellow;
                 action toRed1[1] :> stateTransitions {
-                    action sendRed1[1] send new RedL() via lightControl;
+                    action sendRedL1[1] send new RedL() via lightControl;
                 }
                 state red1[1] :> Red;
                 action toGreen1[1] :> stateTransitions {
-                    action sendGreen1[1] send new GreenL() via lightControl;
+                    action sendGreenL1[1] send new GreenL() via lightControl;
                 }
                 state green1[1] :> Green;
             }
@@ -44,14 +44,14 @@ part def TrafficLightABehaviorNormalGreenUnreachableViolatedTrace :> CrossroadSy
 
     part trafficLightB :>> trafficLightB {
         action startup[1] {
-            action sendYellow1[1] send new YellowL() via lightControl;
+            action sendYellowL1[1] send new YellowL() via lightControl;
         }
 
         exhibit state Behaviour[1] :>> Behaviour {
             state normal1[1] :> Normal {
                 state yellow1[1] :> Yellow;
                 action toRed1[1] :> stateTransitions {
-                    action sendRed1[1] send new RedL() via lightControl;
+                    action sendRedL1[1] send new RedL() via lightControl;
                 }
                 state red1[1] :> Red;
             }
