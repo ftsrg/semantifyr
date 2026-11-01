@@ -44,6 +44,7 @@ tasks.npmInstall {
 fun NpmTask.configureSharedInputs() {
     inputs.dir(project.layout.projectDirectory.dir("src"))
     inputs.file(project.layout.projectDirectory.file("esbuild.mjs"))
+    inputs.file(project.layout.projectDirectory.file("vitest.config.ts"))
     inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
     inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
     inputs.file(project.layout.projectDirectory.file("package.json"))
