@@ -117,7 +117,11 @@ class ArrayFlatteningPass @Inject constructor(
     }
 
     // the whole value is read before any slot is written, so a value that may read a slot written before it is saved first
-    private fun assignSlots(assignment: AssignmentOperation, array: VariableDeclaration, slotCount: Int): List<Operation> {
+    private fun assignSlots(
+        assignment: AssignmentOperation,
+        array: VariableDeclaration,
+        slotCount: Int,
+    ): List<Operation> {
         val elementDomain = array.typeSpecification.domain
         // a class- or feature-typed slot holds an instance id, and the flattener types only the slots themselves as int
         val savedDomain = if (elementDomain is ClassDeclaration) {
@@ -151,7 +155,11 @@ class ArrayFlatteningPass @Inject constructor(
     }
 
     // a read at a runtime index, or of the whole array, may read slot 0, the first one written
-    private fun readsSlotBefore(expression: Expression, array: VariableDeclaration, slot: Int): Boolean {
+    private fun readsSlotBefore(
+        expression: Expression,
+        array: VariableDeclaration,
+        slot: Int,
+    ): Boolean {
         return expression.eAllOfType<Expression>().any {
             val indexing = (it.eContainer() as? IndexingSuffixExpression)?.takeIf { indexing ->
                 indexing.primary === it
