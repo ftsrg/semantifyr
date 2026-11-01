@@ -18,7 +18,7 @@ This extension brings the Semantifyr toolchain into VS Code, including a languag
 
 ## Extension settings
 
-`semantifyr.portfolio` selects the backends that verify a case. The default, `smart-full`, races every installed backend, so one of Theta, nuXmv, Spin or Uppaal is enough.
+`semantifyr.portfolio` selects the backends that verify a case. The default, `smart-full`, races Theta, Spin and Uppaal, whichever are installed, so one of them is enough.
 
 ## Known issues
 

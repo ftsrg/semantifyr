@@ -152,7 +152,7 @@
             "spin-bitstate",
             "spin-hash-compact"
           ],
-          "markdownDescription": "Backend portfolio used when running verification. The default `smart-full` races every installed backend, so one is enough; `all-agree-full` is the cross-backend cross-check used by witness validation. The remaining entries pin one backend / configuration."
+          "markdownDescription": "Backend portfolio used when running verification. The default `smart-full` races Theta, Spin and Uppaal, whichever are installed; `all-agree-full` is the cross-backend cross-check used by witness validation. The remaining entries pin one backend / configuration."
         },
         "semantifyr.timeoutSeconds": {
           "type": "number",
