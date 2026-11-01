@@ -219,7 +219,7 @@ class SemantifyrVerifierImplTest {
 
         build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(case)
 
-        val report = Json.parseToJsonElement(output.resolve(case.qualifiedName.replace("::", ".")).resolve("report.json").readText())
+        val report = Json.parseToJsonElement(caseReportPath(output, case).readText())
         val result = report.jsonObject.getValue("result").jsonObject
         assertThat(result.getValue("verdict").jsonPrimitive.content).isEqualTo("Passed")
         assertThat(result.getValue("soundness").jsonPrimitive.content).isEqualTo("UnderApproximating")
