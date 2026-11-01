@@ -56,6 +56,10 @@ class SpinOperationVisitor @AssistedInject constructor(
         }
         builder.appendLine(":: atomic {")
         builder.indented {
+            // an option's first statement is its guard, and an if's else would become the option's else
+            if (branch.steps.first() is IfOperation) {
+                appendLine("skip;")
+            }
             visit(branch)
         }
         builder.appendLine("}")
