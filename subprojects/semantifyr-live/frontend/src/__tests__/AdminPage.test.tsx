@@ -5,16 +5,14 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 const fetchInfo = vi.fn();
 const fetchAdminStatus = vi.fn();
 const fetchAdminConfig = vi.fn();
 const fetchPortfolios = vi.fn();
-const checkAdminAuth = vi.fn();
-const loginAdmin = vi.fn();
-const logoutAdmin = vi.fn();
+const fetchAdminUser = vi.fn();
 const cancelSession = vi.fn();
 const cancelVerification = vi.fn();
 
@@ -27,9 +25,7 @@ vi.mock('../lib/api', () => ({
     fetchInfo,
     fetchAdminStatus,
     fetchAdminConfig,
-    checkAdminAuth,
-    loginAdmin,
-    logoutAdmin,
+    fetchAdminUser,
     cancelSession,
     cancelVerification,
   }),
@@ -48,17 +44,14 @@ const baseInfo = {
 };
 
 const baseConfig = {
-  development: false,
   server: {
     port: 8080,
     pingPeriod: 'PT30S',
     pingTimeout: 'PT15S',
     webRootDirectory: null,
-    adminPasswordSet: true,
     wsHandshakesPerPeriod: 120,
     wsHandshakeRatePeriod: 'PT1M',
     maxWsFrameSize: 4 * 1024 * 1024,
-    httpsOnlyCookies: true,
   },
   sessionManager: {
     maxSessionsGlobal: 32,
@@ -82,65 +75,36 @@ describe('AdminPage', () => {
     fetchAdminStatus.mockResolvedValue(baseStatus);
     fetchAdminConfig.mockResolvedValue(baseConfig);
     fetchPortfolios.mockResolvedValue({ portfolios: [], defaultPortfolio: 'smart-full' });
+    fetchAdminUser.mockResolvedValue('octocat');
   });
 
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it('shows the login form when whoami returns false', async () => {
-    checkAdminAuth.mockResolvedValueOnce(false);
+  it('opens the dashboard without a login form and names the signed-in user', async () => {
     render(<AdminPage colorModePreference="dark" colorMode="dark" onToggleColorMode={() => {}} />);
-    expect(await screen.findByText('Semantifyr Admin')).toBeInTheDocument();
-    expect(screen.getByLabelText('Admin password')).toBeInTheDocument();
+    expect(await screen.findByText('octocat')).toBeInTheDocument();
+    expect(screen.getByText('/ Admin')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Sessions (0)' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Admin password')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Sign out' })).not.toBeInTheDocument();
   });
 
-  it('falls back to the login form when whoami rejects (network failure)', async () => {
-    checkAdminAuth.mockRejectedValueOnce(new Error('offline'));
-    render(<AdminPage colorModePreference="dark" colorMode="dark" onToggleColorMode={() => {}} />);
-    expect(await screen.findByText('Semantifyr Admin')).toBeInTheDocument();
-  });
-
-  // fireEvent instead of user-event: its pointer and focus simulation on the MUI form took this past the timeout on a loaded machine
-  it('surfaces the error when login fails', async () => {
-    checkAdminAuth.mockResolvedValue(false);
-    loginAdmin.mockResolvedValueOnce(false);
+  it('shows why the admin API refused instead of a user', async () => {
+    const refused = new Error('Not signed in through the proxy');
+    fetchAdminUser.mockRejectedValue(refused);
+    fetchInfo.mockRejectedValue(refused);
+    fetchAdminStatus.mockRejectedValue(refused);
+    fetchAdminConfig.mockRejectedValue(refused);
 
     render(<AdminPage colorModePreference="dark" colorMode="dark" onToggleColorMode={() => {}} />);
-    fireEvent.change(await screen.findByLabelText('Admin password'), { target: { value: 'wrong' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Login' }));
-
-    expect(await screen.findByText('Invalid password')).toBeInTheDocument();
-    expect(loginAdmin).toHaveBeenCalledWith('wrong');
-  });
-
-  it('flips to authenticated when login succeeds', async () => {
-    checkAdminAuth.mockResolvedValue(false);
-    loginAdmin.mockResolvedValueOnce(true);
-
-    render(<AdminPage colorModePreference="dark" colorMode="dark" onToggleColorMode={() => {}} />);
-    fireEvent.change(await screen.findByLabelText('Admin password'), { target: { value: 'right' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Login' }));
-
-    expect(await screen.findByText('/ Admin')).toBeInTheDocument();
-    expect(loginAdmin).toHaveBeenCalledWith('right');
-  });
-
-  it('logout flips local state to unauthenticated even when the network call rejects', async () => {
-    checkAdminAuth.mockResolvedValue(true);
-    logoutAdmin.mockRejectedValueOnce(new Error('offline'));
-
-    const user = userEvent.setup();
-    render(<AdminPage colorModePreference="dark" colorMode="dark" onToggleColorMode={() => {}} />);
-    const signOut = await screen.findByRole('button', { name: 'Sign out' });
-    await user.click(signOut);
-    expect(logoutAdmin).toHaveBeenCalled();
-    await screen.findByText('Semantifyr Admin');
+    expect(await screen.findByText('Not signed in through the proxy')).toBeInTheDocument();
+    expect(screen.queryByText('octocat')).not.toBeInTheDocument();
   });
 
   it('toggling pause flips the icon button label and stops further refreshes', async () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
-    checkAdminAuth.mockResolvedValue(true);
 
     const user = userEvent.setup();
     render(<AdminPage colorModePreference="dark" colorMode="dark" onToggleColorMode={() => {}} />);

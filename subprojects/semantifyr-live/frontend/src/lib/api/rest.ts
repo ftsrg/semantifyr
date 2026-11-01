@@ -9,6 +9,7 @@ import { normalizeBaseUrl } from './urls'
 import type {
   AdminConfigResponse,
   AdminStatusResponse,
+  AdminWhoamiResponse,
   FlavorInfo,
   InfoResponse,
   PortfoliosResponse,
@@ -21,11 +22,7 @@ export interface LiveServerApi {
   fetchFlavors(): Promise<FlavorInfo[]>
   fetchFlavor(id: string): Promise<FlavorInfo | null>
   fetchInfo(): Promise<InfoResponse>
-
-  // Cookie-gated.
-  loginAdmin(password: string): Promise<boolean>
-  logoutAdmin(): Promise<void>
-  checkAdminAuth(): Promise<boolean>
+  fetchAdminUser(): Promise<string>
   fetchAdminConfig(): Promise<AdminConfigResponse>
   fetchAdminStatus(): Promise<AdminStatusResponse>
   cancelSession(sessionId: string): Promise<boolean>
@@ -38,7 +35,10 @@ function withBase(httpBase: string, path: string): string {
 
 async function expectOk<T>(response: Response): Promise<T> {
   if (response.status === 401) {
-    throw new Error('Unauthorized')
+    throw new Error('Signed out, reload to sign in')
+  }
+  if (response.status === 403) {
+    throw new Error('Not signed in through the proxy')
   }
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`)
@@ -78,22 +78,9 @@ export function createApi(rawBackendUrl: string): LiveServerApi {
       return expectOk<InfoResponse>(response)
     },
 
-    async loginAdmin(password) {
-      const response = await get('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
-      })
-      return response.ok
-    },
-
-    async logoutAdmin() {
-      await get('/api/admin/logout', { method: 'POST' })
-    },
-
-    async checkAdminAuth() {
+    async fetchAdminUser() {
       const response = await get('/api/admin/whoami')
-      return response.ok
+      return (await expectOk<AdminWhoamiResponse>(response)).user
     },
 
     async fetchAdminConfig() {
