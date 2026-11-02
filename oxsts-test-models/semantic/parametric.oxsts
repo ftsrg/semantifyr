@@ -178,3 +178,135 @@ class ParametricPropInitialState {
         return AG !equals(3)
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class ParametricTranViolated {
+    var x: int := 0
+
+    tran addN(n: int) {
+        assume(x < 9)
+        x := x + n
+    }
+
+    redefine tran {
+        inline addN(3)
+    }
+
+    prop {
+        return AG x <= 6
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ParametricPropUnreachable {
+    var x: int := 0
+
+    prop equals(n: int): bool {
+        return x == n
+    }
+
+    redefine tran {
+        assume(x < 3)
+        x := x + 1
+    }
+
+    prop {
+        return EF equals(4)
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class NamedArgumentsReach {
+    var a: int := 0
+    var b: int := 0
+
+    tran setBoth(first: int, second: int) {
+        a := first
+        b := second
+    }
+
+    redefine tran {
+        inline setBoth(second = 1, first = 2)
+    }
+
+    prop {
+        return EF (a == 2 && b == 1)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class NamedArgumentsUnreachable {
+    var a: int := 0
+    var b: int := 0
+
+    tran setBoth(first: int, second: int) {
+        a := first
+        b := second
+    }
+
+    redefine tran {
+        inline setBoth(second = 1, first = 2)
+    }
+
+    prop {
+        return EF (a == 1 && b == 2)
+    }
+}
+
+class Marker { }
+
+class Recorder {
+    var value: int := 0
+    var marked: bool := false
+
+    tran store(value: int, marker: Marker[0..1]) {
+        self.value := value
+        inline if (marker == nothing) {
+            marked := false
+        } else {
+            marked := true
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class OptionalArgumentReach {
+    contains recorder: Recorder[1]
+    contains marker: Marker[1]
+
+    redefine tran {
+        choice {
+            inline recorder.store(5)
+        } or {
+            inline recorder.store(7, marker)
+        }
+    }
+
+    prop {
+        return EF (recorder.value == 5 && !recorder.marked)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class OptionalArgumentUnreachable {
+    contains recorder: Recorder[1]
+    contains marker: Marker[1]
+
+    redefine tran {
+        choice {
+            inline recorder.store(5)
+        } or {
+            inline recorder.store(7, marker)
+        }
+    }
+
+    prop {
+        return EF (recorder.value == 5 && recorder.marked)
+    }
+}

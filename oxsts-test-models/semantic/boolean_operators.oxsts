@@ -217,3 +217,153 @@ class DoubleNegationMatchesInput {
         return AG (r == false || p == true)
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class AndWithFalseOperandUnreachable {
+    var p: bool := false
+    var q: bool := false
+    var r: bool := false
+
+    redefine tran {
+        havoc(p)
+        havoc(q)
+        r := p && q
+    }
+
+    prop {
+        return EF (r == true && q == false)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class OrWithTrueOperandViolated {
+    var p: bool := false
+    var q: bool := false
+    var r: bool := false
+
+    redefine tran {
+        havoc(p)
+        havoc(q)
+        r := p || q
+    }
+
+    prop {
+        return AG (r == false || p == true)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class XorOfEqualOperandsUnreachable {
+    var p: bool := false
+    var q: bool := false
+    var r: bool := false
+
+    redefine tran {
+        havoc(p)
+        havoc(q)
+        r := p ^^ q
+    }
+
+    prop {
+        return EF (r == true && p == q)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class NegationViolated {
+    var p: bool := true
+
+    redefine tran {
+        p := !p
+    }
+
+    prop {
+        return AG p == true
+    }
+}
+
+// `&&` binds tighter than `||`, and `^^` binds tighter than `||` (the validator warns about the mixed operators).
+
+@VerificationCase
+@Tag("expect-pass")
+class AndBindsTighterThanOrBound {
+    var p: bool := false
+    var q: bool := false
+    var s: bool := false
+    var r: bool := false
+
+    redefine tran {
+        havoc(p)
+        havoc(q)
+        havoc(s)
+        r := p || q && s
+    }
+
+    prop {
+        return AG r == (p || (q && s))
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class AndBindsTighterThanOrViolated {
+    var p: bool := false
+    var q: bool := false
+    var s: bool := false
+    var r: bool := false
+
+    redefine tran {
+        havoc(p)
+        havoc(q)
+        havoc(s)
+        r := p || q && s
+    }
+
+    prop {
+        return AG r == ((p || q) && s)
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class XorBindsTighterThanOrBound {
+    var p: bool := false
+    var q: bool := false
+    var s: bool := false
+    var r: bool := false
+
+    redefine tran {
+        havoc(p)
+        havoc(q)
+        havoc(s)
+        r := p ^^ q || s
+    }
+
+    prop {
+        return AG r == ((p ^^ q) || s)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class XorBindsTighterThanOrViolated {
+    var p: bool := false
+    var q: bool := false
+    var s: bool := false
+    var r: bool := false
+
+    redefine tran {
+        havoc(p)
+        havoc(q)
+        havoc(s)
+        r := p ^^ q || s
+    }
+
+    prop {
+        return AG r == (p ^^ (q || s))
+    }
+}

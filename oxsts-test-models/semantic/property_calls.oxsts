@@ -106,3 +106,36 @@ class PropNavigationCallInitialState {
         return AG !w.isDone()
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class PropSelfBareCallViolated {
+    var x: int := 0
+
+    prop isPositive(): bool {
+        return x > 0
+    }
+
+    redefine tran {
+        assume(x < 3)
+        x := x + 1
+    }
+
+    prop {
+        return AG !isPositive()
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class PropNavigationCallViolated {
+    contains w: PropWorker[1]
+
+    redefine tran {
+        w.done := true
+    }
+
+    prop {
+        return AG !w.isDone()
+    }
+}

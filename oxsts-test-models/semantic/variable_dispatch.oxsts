@@ -149,3 +149,100 @@ class ClassTypedDispatchDomainClosed {
         return AG (current == nothing || current == first || current == second)
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class FeatureDispatchUnreachable {
+    contains workers: DispatchWorker[0..*]
+    contains a: DispatchWorker[1] subsets workers
+    contains b: DispatchWorker[1] subsets workers
+    var current: workers[0..1] := nothing
+
+    redefine init {
+        current := a
+    }
+
+    redefine tran {
+        inline current.step()
+    }
+
+    prop {
+        return EF b.done == true
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ClassTypedDispatchViolated {
+    contains first: DispatchWorker[1]
+    contains second: DispatchWorker[1]
+    var current: DispatchWorker[0..1] := nothing
+
+    redefine init {
+        choice {
+            current := first
+        } or {
+            current := second
+        }
+    }
+
+    redefine tran {
+        inline current.step()
+    }
+
+    prop {
+        return AG (first.done == false && second.done == false)
+    }
+}
+
+// A feature-typed variable passed as an argument dispatches inside the callee.
+
+@VerificationCase
+@Tag("expect-pass")
+class VariableArgumentDispatchReach {
+    contains workers: DispatchWorker[0..*]
+    contains a: DispatchWorker[1] subsets workers
+    contains b: DispatchWorker[1] subsets workers
+    var current: workers[0..1] := nothing
+
+    tran run(worker: DispatchWorker[0..1]) {
+        inline worker.step()
+    }
+
+    redefine init {
+        current := a
+    }
+
+    redefine tran {
+        inline run(current)
+    }
+
+    prop {
+        return EF a.done == true
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class VariableArgumentDispatchUnreachable {
+    contains workers: DispatchWorker[0..*]
+    contains a: DispatchWorker[1] subsets workers
+    contains b: DispatchWorker[1] subsets workers
+    var current: workers[0..1] := nothing
+
+    tran run(worker: DispatchWorker[0..1]) {
+        inline worker.step()
+    }
+
+    redefine init {
+        current := a
+    }
+
+    redefine tran {
+        inline run(current)
+    }
+
+    prop {
+        return EF b.done == true
+    }
+}

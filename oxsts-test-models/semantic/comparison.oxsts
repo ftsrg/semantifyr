@@ -211,3 +211,103 @@ class NotEqTrueImpliesDiffer {
         return AG (r == false || x != y)
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class LessOfEqualOperandsUnreachable {
+    var x: int := 0
+    var y: int := 0
+    var r: bool := false
+
+    redefine tran {
+        havoc(x)
+        havoc(y)
+        assume(x >= 0 && x <= 3)
+        assume(y >= 0 && y <= 3)
+        r := x < y
+    }
+
+    prop {
+        return EF (r == true && x == y)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class LessEqOfGreaterOperandUnreachable {
+    var x: int := 0
+    var y: int := 0
+    var r: bool := false
+
+    redefine tran {
+        havoc(x)
+        havoc(y)
+        assume(x >= 0 && x <= 3)
+        assume(y >= 0 && y <= 3)
+        r := x <= y
+    }
+
+    prop {
+        return EF (r == true && x > y)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class GreaterEqOfLessOperandUnreachable {
+    var x: int := 0
+    var y: int := 0
+    var r: bool := false
+
+    redefine tran {
+        havoc(x)
+        havoc(y)
+        assume(x >= 0 && x <= 3)
+        assume(y >= 0 && y <= 3)
+        r := x >= y
+    }
+
+    prop {
+        return EF (r == true && x < y)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class NotEqOfEqualOperandsUnreachable {
+    var x: int := 0
+    var y: int := 0
+    var r: bool := false
+
+    redefine tran {
+        havoc(x)
+        havoc(y)
+        assume(x >= 0 && x <= 3)
+        assume(y >= 0 && y <= 3)
+        r := x != y
+    }
+
+    prop {
+        return EF (r == true && x == y)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class EqViolated {
+    var x: int := 0
+    var y: int := 0
+    var r: bool := false
+
+    redefine tran {
+        havoc(x)
+        havoc(y)
+        assume(x >= 0 && x <= 3)
+        assume(y >= 0 && y <= 3)
+        r := x == y
+    }
+
+    prop {
+        return AG r == false
+    }
+}

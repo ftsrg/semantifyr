@@ -490,3 +490,22 @@ class NestedRecordLiteralViolated {
         return AG l.to.y == 0
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class RecordParameterViolated {
+    var p: Point
+    var origin: Point := Point { x = 5 }
+
+    tran moveTo(target: Point) {
+        p := target
+    }
+
+    redefine tran {
+        inline moveTo(origin)
+    }
+
+    prop {
+        return AG p.x <= 1
+    }
+}

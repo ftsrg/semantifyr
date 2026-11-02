@@ -58,3 +58,86 @@ class NarrowIdentityInvariant {
         return AG (ref == nothing || ref == c)
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class NarrowIdentityViolated {
+    contains children: Base[0..*]
+    contains c: Child[1] subsets children
+    var ref: children[0..1] := nothing
+
+    redefine init {
+        ref := c
+    }
+
+    redefine tran {
+        var narrowed: Child[0..1] := nothing
+        narrowed := ref as Child
+    }
+
+    prop {
+        return AG ref == nothing
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class CastInPropertyBound {
+    contains children: Base[0..*]
+    contains c: Child[1] subsets children
+    var ref: children[0..1] := nothing
+
+    redefine init {
+        ref := c
+    }
+
+    prop {
+        return AG (ref == nothing || (ref as Child) == c)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class CastInPropertyViolated {
+    contains children: Base[0..*]
+    contains c: Child[1] subsets children
+    var ref: children[0..1] := nothing
+
+    redefine init {
+        ref := c
+    }
+
+    prop {
+        return AG (ref as Child) != c
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class CastAroundPropertyBound {
+    var x: int := 0
+
+    redefine tran {
+        assume(x < 2)
+        x := x + 1
+    }
+
+    prop {
+        return (AG x <= 2) as bool
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class CastAroundPropertyViolated {
+    var x: int := 0
+
+    redefine tran {
+        assume(x < 2)
+        x := x + 1
+    }
+
+    prop {
+        return (AG x <= 1) as bool
+    }
+}

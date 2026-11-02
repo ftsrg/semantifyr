@@ -155,3 +155,36 @@ class MultiNavigationCallBound {
         return AG mid.leaf.v <= 3
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class SelfBareCallViolated {
+    var x: int := 0
+
+    tran step() {
+        assume(x < 3)
+        x := x + 1
+    }
+
+    redefine tran {
+        inline step()
+    }
+
+    prop {
+        return AG x <= 2
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class MultiNavigationCallViolated {
+    contains mid: MidHolder[1]
+
+    redefine tran {
+        inline mid.leaf.bump()
+    }
+
+    prop {
+        return AG mid.leaf.v <= 2
+    }
+}

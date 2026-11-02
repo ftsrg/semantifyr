@@ -116,3 +116,32 @@ class BoundedDecrementBound {
         return AG (x >= 0 && x <= 5)
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class IntegerCounterViolated {
+    var x: int := 0
+
+    redefine tran {
+        assume(x < 10)
+        x := x + 1
+    }
+
+    prop {
+        return AG x <= 9
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class BooleanHavocViolated {
+    var b: bool := false
+
+    redefine tran {
+        havoc(b)
+    }
+
+    prop {
+        return AG b == false
+    }
+}

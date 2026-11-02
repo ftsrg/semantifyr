@@ -113,3 +113,20 @@ class UnreadLoopVariableBound {
         return AG x <= 3
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class InclusiveRangeViolated {
+    var x: int := 0
+
+    redefine tran {
+        assume(x == 0)
+        for (i in 0..2) {
+            x := x + i
+        }
+    }
+
+    prop {
+        return AG x <= 2
+    }
+}

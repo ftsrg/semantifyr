@@ -98,3 +98,34 @@ class IteInPropertyInitialFalse {
         return AG !(if flag then true else false)
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class IteViolated {
+    var n: int := 0
+    var result: int := 0
+
+    redefine tran {
+        havoc(n)
+        result := if n > 0 then 1 else -1
+    }
+
+    prop {
+        return AG result != -1
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class IteInPropertyUnreachable {
+    var n: int := 0
+
+    redefine tran {
+        assume(n < 5)
+        n := n + 1
+    }
+
+    prop {
+        return EF (if n > 5 then true else false)
+    }
+}

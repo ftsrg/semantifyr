@@ -195,3 +195,157 @@ class PrecedenceBound {
         return AG r != 20
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class AddViolated {
+    var r: int := 0
+
+    redefine tran {
+        r := 3 + 4
+    }
+
+    prop {
+        return AG (r == 0 || r == 8)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class SubViolated {
+    var r: int := 0
+
+    redefine tran {
+        r := 10 - 3
+    }
+
+    prop {
+        return AG (r == 0 || r == 13)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class MulViolated {
+    var r: int := 0
+
+    redefine tran {
+        r := 3 * 4
+    }
+
+    prop {
+        return AG (r == 0 || r == 7)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class DivViolated {
+    var r: int := 0
+
+    redefine tran {
+        r := 12 / 4
+    }
+
+    prop {
+        return AG (r == 0 || r == 48)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class UnaryMinusViolated {
+    var x: int := 5
+
+    redefine tran {
+        x := -x
+    }
+
+    prop {
+        return AG x > 0
+    }
+}
+
+// Left to right, `2 + 3 * 4` would be 20.
+
+@VerificationCase
+@Tag("expect-fail")
+class PrecedenceViolated {
+    var r: int := 0
+
+    redefine tran {
+        r := 2 + 3 * 4
+    }
+
+    prop {
+        return AG (r == 0 || r == 20)
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class RuntimeArithmeticBound {
+    var x: int := 0
+    var r: int := 0
+
+    redefine tran {
+        havoc(x)
+        assume(x >= 0 && x <= 3)
+        r := x * 2 + 1
+    }
+
+    prop {
+        return AG (r == 0 || r == 1 || r == 3 || r == 5 || r == 7)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class RuntimeArithmeticViolated {
+    var x: int := 0
+    var r: int := 0
+
+    redefine tran {
+        havoc(x)
+        assume(x >= 0 && x <= 3)
+        r := x * 2 + 1
+    }
+
+    prop {
+        return AG r != 7
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class RuntimeDivisionBound {
+    var x: int := 0
+    var r: int := 0
+
+    redefine tran {
+        havoc(x)
+        assume(x >= 0 && x <= 7)
+        r := x / 2
+    }
+
+    prop {
+        return AG (r >= 0 && r <= 3)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class RuntimeDivisionViolated {
+    var x: int := 0
+    var r: int := 0
+
+    redefine tran {
+        havoc(x)
+        assume(x >= 0 && x <= 7)
+        r := x / 2
+    }
+
+    prop {
+        return AG r <= 2
+    }
+}

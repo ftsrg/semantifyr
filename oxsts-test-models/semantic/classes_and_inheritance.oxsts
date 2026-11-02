@@ -215,3 +215,155 @@ class AbstractConcreteBound {
         return AG c.count <= 3
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class SingleContainmentViolated {
+    contains w: Worker[1]
+
+    redefine tran {
+        w.done := true
+    }
+
+    prop {
+        return AG w.done == false
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ChildRedefinitionViolated {
+    contains c: Child[1]
+
+    redefine tran {
+        inline c.act()
+    }
+
+    prop {
+        return AG c.x == 0
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class MultiLevelRedefinitionMidUnreachable {
+    contains leaf: LeafLevel[1]
+
+    redefine tran {
+        inline leaf.act()
+    }
+
+    prop {
+        return EF leaf.m == 1
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class PolymorphicDispatchViolated {
+    contains b: Base[0..*]
+    contains c: Child[1] subsets b
+
+    redefine tran {
+        inline b.act()
+    }
+
+    prop {
+        return AG c.x == 0
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class AbstractConcreteViolated {
+    contains c: ConcreteCounter[1]
+
+    redefine tran {
+        assume(c.count < 3)
+        inline c.tick()
+    }
+
+    prop {
+        return AG c.count <= 2
+    }
+}
+
+class Item {
+    var hits: int := 0
+
+    tran act() {
+        assume(hits < 1)
+        hits := hits + 1
+    }
+}
+
+class SpecialItem : Item {
+    var special: int := 0
+
+    redefine tran act() {
+        assume(special < 1)
+        special := special + 1
+    }
+}
+
+class Holder {
+    contains items: Item[0..*]
+    contains first: Item[1] subsets items
+}
+
+class RestatingHolder : Holder {
+    redefine contains first: SpecialItem[1] subsets items
+}
+
+// The redefinition names no superset, so it keeps the one of the feature it redefines.
+class OmittingHolder : Holder {
+    redefine contains first: SpecialItem[1]
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class RedefinitionRestatingSubsetsReach {
+    contains h: RestatingHolder[1]
+
+    redefine tran {
+        inline for (i in h.items) {
+            inline i.act()
+        }
+    }
+
+    prop {
+        return EF h.first.special == 1
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class RedefinitionUnderSubsettingReach {
+    contains h: OmittingHolder[1]
+
+    redefine tran {
+        inline for (i in h.items) {
+            inline i.act()
+        }
+    }
+
+    prop {
+        return EF h.first.special == 1
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class RedefinitionUnderSubsettingBaseUnreachable {
+    contains h: OmittingHolder[1]
+
+    redefine tran {
+        inline for (i in h.items) {
+            inline i.act()
+        }
+    }
+
+    prop {
+        return EF h.first.hits == 1
+    }
+}

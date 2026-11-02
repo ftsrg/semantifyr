@@ -54,3 +54,17 @@ class OppositeNavigateBound {
         return AG root.gen <= 3
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class OppositeNavigateViolated {
+    contains root: Parent[1]
+
+    redefine tran {
+        inline root.kid.bumpParent()
+    }
+
+    prop {
+        return AG root.gen <= 2
+    }
+}

@@ -273,3 +273,159 @@ class InlineForNegativeRangeBound {
         return AG total >= -3
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class InlineIfTrueViolated {
+    var taken: int := 0
+
+    redefine tran {
+        inline if (1 < 2) {
+            taken := 1
+        } else {
+            taken := 2
+        }
+    }
+
+    prop {
+        return AG taken != 1
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class InlineIfFalseUnreachable {
+    var taken: int := 0
+
+    redefine tran {
+        inline if (1 > 2) {
+            taken := 1
+        } else {
+            taken := 2
+        }
+    }
+
+    prop {
+        return EF taken == 1
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class InlineChoiceForUnreachable {
+    var chosen: int := 0
+
+    redefine tran {
+        inline for choice (n in 1..3) {
+            chosen := n
+        }
+    }
+
+    prop {
+        return EF chosen == 4
+    }
+}
+
+class Hit {
+    var hits: int := 0
+
+    tran act() {
+        assume(hits < 1)
+        hits := hits + 1
+    }
+}
+
+class HitPool {
+    contains items: Hit[0..*]
+    contains a: Hit[1] subsets items
+    contains b: Hit[1] subsets items
+    contains other: Hit[1]
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class InlineForInstancesReach {
+    contains pool: HitPool[1]
+
+    redefine tran {
+        inline for (i in pool.items) {
+            inline i.act()
+        }
+    }
+
+    prop {
+        return EF (pool.a.hits == 1 && pool.b.hits == 1)
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class InlineForInstancesSkipsOthers {
+    contains pool: HitPool[1]
+
+    redefine tran {
+        inline for (i in pool.items) {
+            inline i.act()
+        }
+    }
+
+    prop {
+        return AG pool.other.hits == 0
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class InlineForInstancesViolated {
+    contains pool: HitPool[1]
+
+    redefine tran {
+        inline for (i in pool.items) {
+            inline i.act()
+        }
+    }
+
+    prop {
+        return AG pool.b.hits == 0
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class InlineIfInstancesReach {
+    contains pool: HitPool[1]
+    refers chosen: Hit[1] = pool.b
+    var x: int := 0
+
+    redefine tran {
+        inline if (chosen == pool.a) {
+            x := 1
+        } else {
+            x := 2
+        }
+    }
+
+    prop {
+        return EF x == 2
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class InlineIfInstancesUnreachable {
+    contains pool: HitPool[1]
+    refers chosen: Hit[1] = pool.b
+    var x: int := 0
+
+    redefine tran {
+        inline if (chosen == pool.a) {
+            x := 1
+        } else {
+            x := 2
+        }
+    }
+
+    prop {
+        return EF x == 1
+    }
+}

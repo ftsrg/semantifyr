@@ -291,3 +291,19 @@ class LocalFeatureTypedArrayHavocBound {
         return AG (!pool.outside && !pool.spare.done)
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class LocalClassTypedHavocViolated {
+    contains first: Worker
+    contains second: Worker
+
+    redefine tran {
+        var picked: Worker
+        inline picked.finish()
+    }
+
+    prop {
+        return AG !second.done
+    }
+}

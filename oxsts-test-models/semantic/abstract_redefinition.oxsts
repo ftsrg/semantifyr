@@ -87,3 +87,31 @@ class AbstractTranBound {
         return AG s.count <= 3
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class AbstractPropViolated {
+    contains s: ThresholdSensor[1]
+
+    redefine tran {
+        inline s.tick()
+    }
+
+    prop {
+        return AG !s.threshold()
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class AbstractTranViolated {
+    contains s: ThresholdSensor[1]
+
+    redefine tran {
+        inline s.tick()
+    }
+
+    prop {
+        return AG s.count <= 2
+    }
+}

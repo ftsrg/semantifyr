@@ -202,3 +202,107 @@ class IfBound {
         return AG (taken == 0 || taken == 1 || taken == 2)
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class ChoiceUnreachable {
+    var x: int := 0
+
+    redefine tran {
+        choice {
+            x := 1
+        } or {
+            x := 2
+        }
+    }
+
+    prop {
+        return EF x == 3
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class AssumeViolated {
+    var x: int := 0
+
+    redefine tran {
+        assume(x < 3)
+        x := x + 1
+    }
+
+    prop {
+        return AG x <= 2
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class HavocNarrowedViolated {
+    var x: int := 0
+
+    redefine tran {
+        havoc(x)
+        assume(x >= 0 && x <= 5)
+    }
+
+    prop {
+        return AG x <= 4
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class IfViolated {
+    var taken: int := 0
+    var trigger: bool := false
+
+    redefine tran {
+        havoc(trigger)
+        if (trigger) {
+            taken := 1
+        } else {
+            taken := 2
+        }
+    }
+
+    prop {
+        return AG taken != 1
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class IfWithoutElseBound {
+    var taken: int := 0
+    var trigger: bool := false
+
+    redefine tran {
+        havoc(trigger)
+        if (trigger) {
+            taken := 1
+        }
+    }
+
+    prop {
+        return AG (taken == 0 || taken == 1)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class IfWithoutElseKeepsValueViolated {
+    var taken: int := 0
+    var trigger: bool := false
+
+    redefine tran {
+        havoc(trigger)
+        if (trigger) {
+            taken := 1
+        }
+    }
+
+    prop {
+        return AG taken == 0
+    }
+}

@@ -147,3 +147,21 @@ class LocalVarUninitializedBound {
         return AG x <= 1
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class LocalVarAccumulateViolated {
+    var total: int := 0
+
+    redefine tran {
+        assume(total < 3)
+        var part: int := 0
+        part := part + 1
+        part := part + 2
+        total := total + part
+    }
+
+    prop {
+        return AG total <= 2
+    }
+}

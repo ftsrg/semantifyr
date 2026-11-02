@@ -122,3 +122,23 @@ class EnumAnyDomainClosed {
         return AG (c == Color::Red || c == Color::Green || c == Color::Blue)
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class EnumStepViolated {
+    var c: Color := Color::Red
+
+    redefine tran {
+        choice {
+            assume(c == Color::Red)
+            c := Color::Green
+        } or {
+            assume(c == Color::Green)
+            c := Color::Blue
+        }
+    }
+
+    prop {
+        return AG c != Color::Blue
+    }
+}

@@ -131,3 +131,31 @@ class EFAGBound {
         return AG (x >= 0 && x <= 3)
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class AGViolated {
+    var x: int := 0
+
+    redefine tran {
+        x := 1 - x
+    }
+
+    prop {
+        return AG x == 0
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class EFUnreachable {
+    var x: int := 0
+
+    redefine tran {
+        x := 1 - x
+    }
+
+    prop {
+        return EF x == 2
+    }
+}

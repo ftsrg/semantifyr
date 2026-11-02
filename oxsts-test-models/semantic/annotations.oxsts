@@ -1,0 +1,130 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::lang::annotations
+
+// @Control and @NonOptimizable steer the engines and the optimizer, never the verdict.
+
+@VerificationCase
+@Tag("expect-pass")
+class ControlReach {
+    @Control
+    var phase: bool := false
+    var x: int := 0
+
+    redefine tran {
+        phase := !phase
+        if (phase) {
+            assume(x < 2)
+            x := x + 1
+        }
+    }
+
+    prop {
+        return EF x == 2
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ControlViolated {
+    @Control
+    var phase: bool := false
+    var x: int := 0
+
+    redefine tran {
+        phase := !phase
+        if (phase) {
+            assume(x < 2)
+            x := x + 1
+        }
+    }
+
+    prop {
+        return AG x <= 1
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class NonOptimizableBound {
+    @NonOptimizable
+    var marker: int := 0
+    var x: int := 0
+
+    redefine tran {
+        marker := 1
+        assume(x < 2)
+        x := x + 1
+    }
+
+    prop {
+        return AG x <= 2
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class NonOptimizableViolated {
+    @NonOptimizable
+    var marker: int := 0
+
+    redefine tran {
+        marker := 1
+    }
+
+    prop {
+        return AG marker == 0
+    }
+}
+
+annotation Note(text: string)
+
+annotation Weight(value: int)
+
+@VerificationCase
+@Tag("expect-pass")
+@Note("user annotations carry no semantics")
+class UserAnnotationBound {
+    @Weight(2)
+    var x: int := 0
+
+    @Note("a step")
+    tran step() {
+        assume(x < 2)
+        x := x + 1
+    }
+
+    redefine tran {
+        inline step()
+    }
+
+    prop {
+        return AG x <= 2
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+@Note("user annotations carry no semantics")
+class UserAnnotationViolated {
+    @Weight(2)
+    var x: int := 0
+
+    @Note("a step")
+    tran step() {
+        assume(x < 2)
+        x := x + 1
+    }
+
+    redefine tran {
+        inline step()
+    }
+
+    prop {
+        return AG x <= 1
+    }
+}

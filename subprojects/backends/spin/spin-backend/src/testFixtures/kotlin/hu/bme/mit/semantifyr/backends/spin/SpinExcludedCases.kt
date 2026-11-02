@@ -20,6 +20,7 @@ val spinExcludedCases = mapOf(
     "semantifyr::verification::lang::runtime_for::ExclusiveRangeReach" to "runtime for, which Spin does not translate",
     "semantifyr::verification::lang::runtime_for::InclusiveRangeBound" to "runtime for, which Spin does not translate",
     "semantifyr::verification::lang::runtime_for::InclusiveRangeReach" to "runtime for, which Spin does not translate",
+    "semantifyr::verification::lang::runtime_for::InclusiveRangeViolated" to "runtime for, which Spin does not translate",
     "semantifyr::verification::lang::runtime_for::UnreadLoopVariableBound" to "runtime for, which Spin does not translate",
     "semantifyr::verification::lang::runtime_for::UnreadLoopVariableReach" to "runtime for, which Spin does not translate",
 )

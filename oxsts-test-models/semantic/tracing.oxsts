@@ -65,3 +65,22 @@ class TracedChoiceBranchParity {
         return AG ((kitchen.lamp.on != hall.lamp.on) == odd)
     }
 }
+
+@VerificationCase
+@Tag("expect-fail")
+class TracedChoiceBranchViolated {
+    contains kitchen: Room
+    contains hall: Room
+
+    redefine tran {
+        choice {
+            inline kitchen.lamp.toggle(hall.lamp)
+        } or {
+            inline hall.lamp.toggle(kitchen.lamp)
+        }
+    }
+
+    prop {
+        return AG !kitchen.lamp.on
+    }
+}
