@@ -25,6 +25,7 @@ import hu.bme.mit.semantifyr.backends.theta.artifacts.ThetaArtifactManager
 import hu.bme.mit.semantifyr.backends.theta.backannotation.CexReader
 import hu.bme.mit.semantifyr.backends.theta.backannotation.CexWitnessTransformer
 import hu.bme.mit.semantifyr.backends.theta.backannotation.InlinedWitnessTransformer
+import hu.bme.mit.semantifyr.backends.theta.backannotation.UnrepresentableWitnessValueException
 import hu.bme.mit.semantifyr.backends.theta.backannotation.XstsWitnessTransformer
 import hu.bme.mit.semantifyr.backends.theta.trace.ThetaLogVerdictParser
 import hu.bme.mit.semantifyr.backends.theta.trace.ThetaVerdict
@@ -33,6 +34,7 @@ import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaModelTransf
 import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.XstsModelCreator
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
+import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
@@ -134,7 +136,12 @@ class ThetaVerificationContext @AssistedInject constructor(
         if (!artifactManager.cexFile.exists()) {
             return null
         }
-        return buildInlinedWitness(artifacts, artifactManager.cexFile.toPath())
+        return try {
+            buildInlinedWitness(artifacts, artifactManager.cexFile.toPath())
+        } catch (e: UnrepresentableWitnessValueException) {
+            logger.warn { "[$backendId] witness not produced: ${e.message}" }
+            null
+        }
     }
 
     private fun buildInlinedWitness(xsts: XstsModel, cexPath: Path): InlinedWitness {

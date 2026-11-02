@@ -38,9 +38,10 @@ class InlinedWitnessTransformer @Inject constructor(
         }
 
         private fun transform(variableValue: XstsWitnessStateVariableValue): WitnessStateValue {
+            val variable = resolveOxstsVariable(variableValue.variableDeclaration.name)
             return WitnessStateValue(
-                resolveOxstsVariable(variableValue.variableDeclaration.name),
-                xstsExpressionToOxstsExpressionTransformer.transform(variableValue.value),
+                variable,
+                xstsExpressionToOxstsExpressionTransformer.transform(variableValue.value, variable),
             )
         }
 

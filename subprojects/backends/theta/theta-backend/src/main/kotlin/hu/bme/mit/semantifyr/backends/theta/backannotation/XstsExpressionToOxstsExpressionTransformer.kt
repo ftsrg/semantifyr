@@ -9,7 +9,10 @@ package hu.bme.mit.semantifyr.backends.theta.backannotation
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaDomainTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.xsts.lang.utils.XstsExpressionVisitor
 import hu.bme.mit.semantifyr.xsts.lang.xsts.ArithmeticBinaryOperator
 import hu.bme.mit.semantifyr.xsts.lang.xsts.ArithmeticOp
@@ -28,150 +31,207 @@ import hu.bme.mit.semantifyr.xsts.lang.xsts.LiteralBoolean
 import hu.bme.mit.semantifyr.xsts.lang.xsts.LiteralInteger
 import hu.bme.mit.semantifyr.xsts.lang.xsts.NegationOperator
 import hu.bme.mit.semantifyr.xsts.lang.xsts.ReadIndexingSuffixExpression
+import hu.bme.mit.semantifyr.xsts.lang.xsts.Type
 import hu.bme.mit.semantifyr.xsts.lang.xsts.UnaryOp
 import hu.bme.mit.semantifyr.xsts.lang.xsts.WriteIndexingSuffixExpression
+import java.math.BigInteger
 
+private typealias XstsExpression = hu.bme.mit.semantifyr.xsts.lang.xsts.Expression
+
+private sealed interface XstsValue
+
+private data class IntegerValue(val value: BigInteger) : XstsValue
+
+private data class BooleanValue(val value: Boolean) : XstsValue
+
+private data class EnumValue(val literal: EnumLiteral) : XstsValue
+
+private data class ArrayValue(val elements: Map<BigInteger, XstsValue>, val default: XstsValue) : XstsValue
+
+// a witness value has no free variables, so it is evaluated as Theta evaluates it and written as a literal
 class XstsExpressionToOxstsExpressionTransformer @Inject constructor(
     private val thetaDomainTransformer: ThetaDomainTransformer,
-) : XstsExpressionVisitor<Expression>() {
+    private val multiplicityRangeEvaluator: MultiplicityRangeEvaluator,
+) {
 
-    fun transform(expression: hu.bme.mit.semantifyr.xsts.lang.xsts.Expression): Expression {
+    fun transform(expression: XstsExpression, variable: VariableDeclaration): Expression {
+        val value = XstsValueEvaluator.evaluate(expression)
+        if (value !is ArrayValue) {
+            return literal(value)
+        }
+        val typeSpecification = variable.typeSpecification?.takeIf {
+            it.multiplicity != null
+        } ?: error("Theta's counterexample holds an array for the variable ${variable.name}, which is not an array")
+        val slotCount = multiplicityRangeEvaluator.evaluate(typeSpecification).upperBound
+        if (slotCount == RangeEvaluation.INFINITY) {
+            throw UnrepresentableWitnessValueException("Theta's counterexample holds an array for ${variable.name}, whose size is unbounded")
+        }
+        return OxstsFactory.createArrayLiteral().also {
+            for (index in 0..<slotCount) {
+                it.values += literal(value.elements[index.toBigInteger()] ?: value.default)
+            }
+        }
+    }
+
+    private fun literal(value: XstsValue): Expression {
+        return when (value) {
+            is IntegerValue -> {
+                if (!value.value.fitsInt()) {
+                    throw UnrepresentableWitnessValueException("Theta's counterexample holds ${value.value}, beyond the 32-bit integers of OXSTS")
+                }
+                OxstsFactory.createLiteralInteger(value.value.toInt())
+            }
+            is BooleanValue -> OxstsFactory.createLiteralBoolean(value.value)
+            is EnumValue -> OxstsFactory.createElementReference(thetaDomainTransformer.getOriginal(value.literal))
+            is ArrayValue -> error("Theta's counterexample holds an array of arrays, which OXSTS has not")
+        }
+    }
+}
+
+private object XstsValueEvaluator : XstsExpressionVisitor<XstsValue>() {
+
+    fun evaluate(expression: XstsExpression): XstsValue {
         return visit(expression)
     }
 
-    private fun transform(op: ComparisonOp): hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp {
-        return when (op) {
-            ComparisonOp.LESS -> hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp.LESS
-            ComparisonOp.LESS_EQ -> hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp.LESS_EQ
-            ComparisonOp.GREATER -> hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp.GREATER
-            ComparisonOp.GREATER_EQ -> hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp.GREATER_EQ
-            ComparisonOp.EQ -> hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp.EQ
-            ComparisonOp.NOT_EQ -> hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp.NOT_EQ
+    private fun integer(expression: XstsExpression): BigInteger {
+        val value = visit(expression)
+        check(value is IntegerValue) {
+            "Expected an integer in Theta's counterexample, got $value"
+        }
+        return value.value
+    }
+
+    private fun boolean(expression: XstsExpression): Boolean {
+        val value = visit(expression)
+        check(value is BooleanValue) {
+            "Expected a boolean in Theta's counterexample, got $value"
+        }
+        return value.value
+    }
+
+    private fun array(expression: XstsExpression): ArrayValue {
+        val value = visit(expression)
+        check(value is ArrayValue) {
+            "Expected an array in Theta's counterexample, got $value"
+        }
+        return value
+    }
+
+    // Theta's integer division is Euclidean, mod is never negative and rem takes the sign of the divisor
+    override fun visit(expression: ArithmeticBinaryOperator): XstsValue {
+        val left = integer(expression.left)
+        val right = integer(expression.right)
+        val value = when (expression.op) {
+            ArithmeticOp.ADD -> left + right
+            ArithmeticOp.SUB -> left - right
+            ArithmeticOp.MUL -> left * right
+            ArithmeticOp.DIV -> (left - left.mod(right.abs())) / right
+            ArithmeticOp.MOD -> left.mod(right.abs())
+            ArithmeticOp.REM -> {
+                if (right.signum() < 0) {
+                    -left.mod(right.abs())
+                } else {
+                    left.mod(right.abs())
+                }
+            }
+        }
+        return IntegerValue(value)
+    }
+
+    override fun visit(expression: ArithmeticUnaryOperator): XstsValue {
+        val body = integer(expression.body)
+        return when (expression.op) {
+            UnaryOp.PLUS -> IntegerValue(body)
+            UnaryOp.MINUS -> IntegerValue(-body)
         }
     }
 
-    private fun transform(op: BooleanOp): hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp {
-        return when (op) {
-            BooleanOp.AND -> hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp.AND
-            BooleanOp.OR -> hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp.OR
-            BooleanOp.XOR -> hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp.XOR
-            BooleanOp.IFF -> error("Not yet supported")
-            BooleanOp.IMPLY -> error("Not yet supported")
+    override fun visit(expression: BooleanOperator): XstsValue {
+        val left = boolean(expression.left)
+        val right = boolean(expression.right)
+        val value = when (expression.op) {
+            BooleanOp.AND -> left && right
+            BooleanOp.OR -> left || right
+            BooleanOp.XOR -> left != right
+            BooleanOp.IFF -> left == right
+            BooleanOp.IMPLY -> !left || right
         }
+        return BooleanValue(value)
     }
 
-    private fun transform(op: UnaryOp): hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp {
-        return when (op) {
-            UnaryOp.PLUS -> hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp.PLUS
-            UnaryOp.MINUS -> hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp.MINUS
+    override fun visit(expression: ComparisonOperator): XstsValue {
+        val value = when (expression.op) {
+            ComparisonOp.EQ -> visit(expression.left) == visit(expression.right)
+            ComparisonOp.NOT_EQ -> visit(expression.left) != visit(expression.right)
+            ComparisonOp.LESS -> integer(expression.left) < integer(expression.right)
+            ComparisonOp.LESS_EQ -> integer(expression.left) <= integer(expression.right)
+            ComparisonOp.GREATER -> integer(expression.left) > integer(expression.right)
+            ComparisonOp.GREATER_EQ -> integer(expression.left) >= integer(expression.right)
         }
+        return BooleanValue(value)
     }
 
-    private fun transform(op: ArithmeticOp): hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticOp {
-        return when (op) {
-            ArithmeticOp.ADD -> hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticOp.ADD
-            ArithmeticOp.SUB -> hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticOp.SUB
-            ArithmeticOp.MUL -> hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticOp.MUL
-            ArithmeticOp.DIV -> hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticOp.DIV
-            ArithmeticOp.MOD -> error("Not yet supported")
-            ArithmeticOp.REM -> error("Not yet supported")
-        }
-    }
-
-    override fun visit(expression: ArithmeticBinaryOperator): Expression {
-        return OxstsFactory.createArithmeticBinaryOperator().also {
-            it.op = transform(expression.op)
-            it.left = transform(expression.left)
-            it.right = transform(expression.right)
-        }
-    }
-
-    override fun visit(expression: ArithmeticUnaryOperator): Expression {
-        return OxstsFactory.createArithmeticUnaryOperator().also {
-            it.op = transform(expression.op)
-            it.body = transform(expression.body)
-        }
-    }
-
-    override fun visit(expression: BooleanOperator): Expression {
-        return OxstsFactory.createBooleanOperator().also {
-            it.op = transform(expression.op)
-            it.left = transform(expression.left)
-            it.right = transform(expression.right)
-        }
-    }
-
-    override fun visit(expression: ComparisonOperator): Expression {
-        return OxstsFactory.createComparisonOperator().also {
-            it.op = transform(expression.op)
-            it.left = transform(expression.left)
-            it.right = transform(expression.right)
-        }
-    }
-
-    override fun visit(expression: ElementReferenceExpression): Expression {
+    override fun visit(expression: ElementReferenceExpression): XstsValue {
         val element = expression.element
-
-        require(element is EnumLiteral) {
-            "This class is supposed to transform Cex expressions to Oxsts, which must only refer to enum literals!"
+        check(element is EnumLiteral) {
+            "A value in Theta's counterexample refers to $element, not to an enum literal"
         }
-
-        val originalElement = thetaDomainTransformer.getOriginal(element)
-
-        return OxstsFactory.createElementReference(originalElement)
+        return EnumValue(element)
     }
 
-    override fun visit(expression: IfThenElseExpression): Expression {
-        error("IfThenElse Expressions are not supported in OXSTS")
-    }
-
-    override fun visit(expression: NegationOperator): Expression {
-        return OxstsFactory.createNegationOperator().also {
-            it.body = transform(expression.body)
+    override fun visit(expression: IfThenElseExpression): XstsValue {
+        return if (boolean(expression.guard)) {
+            visit(expression.then)
+        } else {
+            visit(expression.`else`)
         }
     }
 
-    override fun visit(expression: ReadIndexingSuffixExpression): Expression {
-        return OxstsFactory.createIndexingSuffixExpression().also {
-            it.primary = transform(expression.primary)
-            it.index = transform(expression.index)
-        }
+    override fun visit(expression: NegationOperator): XstsValue {
+        return BooleanValue(!boolean(expression.body))
     }
 
-    override fun visit(expression: WriteIndexingSuffixExpression): Expression {
-        error("Default literal arrays are not supported in OXSTS")
+    override fun visit(expression: ReadIndexingSuffixExpression): XstsValue {
+        return read(array(expression.primary), integer(expression.index))
     }
 
-    override fun visit(expression: LiteralBoolean): Expression {
-        return OxstsFactory.createLiteralBoolean(expression.isValue)
+    // the grammar parses a read a[i] as a write without a value
+    override fun visit(expression: WriteIndexingSuffixExpression): XstsValue {
+        val array = array(expression.primary)
+        val index = integer(expression.index)
+        val written = expression.expression ?: return read(array, index)
+        return array.copy(elements = array.elements + (index to visit(written)))
     }
 
-    override fun visit(expression: LiteralInteger): Expression {
-        return OxstsFactory.createLiteralInteger(expression.value)
+    private fun read(array: ArrayValue, index: BigInteger): XstsValue {
+        return array.elements[index] ?: array.default
     }
 
-    override fun visit(expression: ConcreteLiteralArray): Expression {
-        require(expression.elseExpression == null) {
-            "Else expressions are not allowed in Oxsts!"
-        }
-        require(expression.indexType is IntegerType) {
-            "Currently only integer index types are supported in array literals!"
-        }
-        for (i in expression.values.indices) {
-            val index = expression.values[i].index
-            require(index is LiteralInteger && index.value == i) {
-                "Array literal indexes must be tightly packed from 0 to the size of the array!"
-            }
-        }
-
-        return OxstsFactory.createArrayLiteral().also {
-            it.values += expression.values.map {
-                transform(it.value)
-            }
-        }
+    override fun visit(expression: LiteralBoolean): XstsValue {
+        return BooleanValue(expression.isValue)
     }
 
-    override fun visit(expression: DefaultLiteralArray): Expression {
-        error("DefaultLiteral arrays are not supported in OXSTS")
+    override fun visit(expression: LiteralInteger): XstsValue {
+        return IntegerValue(expression.value.toBigInteger())
+    }
+
+    override fun visit(expression: ConcreteLiteralArray): XstsValue {
+        checkIntegerIndexed(expression.indexType)
+        val elements = expression.values.associate {
+            integer(it.index) to visit(it.value)
+        }
+        return ArrayValue(elements, visit(expression.elseExpression))
+    }
+
+    override fun visit(expression: DefaultLiteralArray): XstsValue {
+        checkIntegerIndexed(expression.indexType)
+        return ArrayValue(emptyMap(), visit(expression.elseExpression))
+    }
+
+    private fun checkIntegerIndexed(indexType: Type?) {
+        check(indexType == null || indexType is IntegerType) {
+            "Theta's counterexample holds an array indexed by $indexType, OXSTS arrays are indexed by integers"
+        }
     }
 }
