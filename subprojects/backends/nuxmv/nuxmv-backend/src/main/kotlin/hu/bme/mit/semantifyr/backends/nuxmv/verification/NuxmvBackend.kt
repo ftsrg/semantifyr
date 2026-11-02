@@ -95,7 +95,10 @@ class NuxmvVerificationContext @AssistedInject constructor(
             parentFile?.mkdirs()
         }.writeText(artifacts.smv)
 
-        val checkCommand = """${config.checkCommand} "${artifacts.property.invariant}""""
+        val boundOption = config.bound?.let {
+            " -k $it"
+        } ?: ""
+        val checkCommand = """${config.checkCommand}$boundOption -p "${artifacts.property.invariant}""""
         val cmdScript = buildString {
             appendLine("set on_failure_script_quits")
             // mangled names start with "__", the default prefix nuXmv hides from printed traces

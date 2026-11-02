@@ -19,6 +19,7 @@ import hu.bme.mit.semantifyr.backends.nuxmv.ReplayingNuxmvExecutor
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -43,12 +44,13 @@ class NuxmvBackendReplayTest {
         case: String,
         inlinedOxsts: InlinedOxsts,
         artifactDirectory: Path = cleanArtifactDirectory(case),
+        config: NuxmvConfig = NuxmvConfig.Ic3Invar,
     ): BackendVerificationResult {
         val environment = ExecutionEnvironment.builder().put(NuxmvExecutorKey) {
             ReplayingNuxmvExecutor(case)
         }.build()
         val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory)
-        return NuxmvBackend().verify(injector, NuxmvConfig.Ic3Invar, request, environment)
+        return NuxmvBackend().verify(injector, config, request, environment)
     }
 
     private suspend fun verifyFixture(file: String, className: String): BackendVerificationResult {
@@ -72,6 +74,24 @@ class NuxmvBackendReplayTest {
         assertThat(result.inlinedWitness!!.transitionStates.last().valuesByName()).containsEntry("\$\$root\$\$x", 1)
         val commands = Path("build", "test-artifacts", "NuxmvBackendReplayTest", "ChoiceBranch1Reach", "commands.cmd").readText()
         assertThat(commands).contains("set traces_hiding_prefix \"~\"")
+    }
+
+    @Test
+    suspend fun `the bound of a configuration reaches the check command`() {
+        val artifactDirectory = cleanArtifactDirectory("ChoiceBound")
+        val inlinedOxsts = models.compile("control_flow", "ChoiceBound", artifactDirectory)
+
+        verify("ChoiceBound", inlinedOxsts, artifactDirectory, NuxmvConfig.BmcInvar.copy(bound = 50))
+
+        val commands = artifactDirectory.resolve("commands.cmd").readText()
+        assertThat(commands).contains("msat_check_invar_bmc -a een-sorensson -k 50 -p \"")
+    }
+
+    @Test
+    fun `a bound must be positive`() {
+        assertThatThrownBy {
+            NuxmvConfig.BmcInvar.copy(bound = 0)
+        }.isInstanceOf(IllegalArgumentException::class.java)
     }
 
     @Test

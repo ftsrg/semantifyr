@@ -16,6 +16,10 @@ data class SpinConfig(
 ) : BackendConfig {
     override val soundness = SoundnessDirection.UnderApproximating
 
+    init {
+        require(maxSearchDepth == null || maxSearchDepth > 0) { "maxSearchDepth must be positive, got $maxSearchDepth" }
+    }
+
     companion object {
         val ExhaustiveDfs = SpinConfig(
             id = "exhaustive-dfs",

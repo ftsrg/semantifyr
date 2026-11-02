@@ -55,16 +55,5 @@ data class UppaalConfig(
             id = "aggressive-inclusion",
             parameters = withTraceFlag("-S 2"),
         )
-
-        val Builtin: List<UppaalConfig> = listOf(
-            Default,
-            BreadthFirst,
-            DepthFirst,
-            RandomDepthFirst,
-            OverApproximation,
-            UnderApproximation,
-            UnderApproximationLarge,
-            AggressiveInclusion,
-        )
     }
 }
