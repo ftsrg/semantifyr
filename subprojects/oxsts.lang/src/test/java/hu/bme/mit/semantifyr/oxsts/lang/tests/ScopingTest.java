@@ -225,6 +225,26 @@ public class ScopingTest {
                 .anySatisfy(error -> assertThat(error.getMessage()).contains("member collection unavailable"));
     }
 
+    @Test
+    void navigationAfterAnUnresolvedMemberReportsOnlyTheUnresolvedReferences() {
+        var pkg = parseHelper.parse("""
+            package test
+            class Worker {
+                tran step() { }
+            }
+            class Host {
+                contains w: Worker
+                redefine tran { inline w.missing.step() }
+            }
+            """, CheckMode.ALL);
+
+        assertThat(pkg.getResourceErrors())
+                .isNotEmpty()
+                .allSatisfy(error -> assertThat(error.getMessage()).startsWith("Couldn't resolve reference"));
+        assertThat(pkg.getResourceErrors())
+                .anySatisfy(error -> assertThat(error.getMessage()).contains("'missing'"));
+    }
+
     public static class FailingDomainMemberCollectionProvider extends DomainMemberCollectionProvider {
         @Override
         public ISelectable getMembers(DomainDeclaration domain) {
