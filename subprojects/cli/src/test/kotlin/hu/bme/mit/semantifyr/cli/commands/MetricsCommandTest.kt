@@ -8,8 +8,8 @@ package hu.bme.mit.semantifyr.cli.commands
 
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.cli.SMOKE_CASE
-import hu.bme.mit.semantifyr.cli.fakePortfolio
-import hu.bme.mit.semantifyr.cli.jsonLines
+import hu.bme.mit.semantifyr.cli.common.fakePortfolio
+import hu.bme.mit.semantifyr.cli.common.jsonLines
 import hu.bme.mit.semantifyr.cli.runCli
 import hu.bme.mit.semantifyr.cli.smokeModel
 import hu.bme.mit.semantifyr.cli.testModels

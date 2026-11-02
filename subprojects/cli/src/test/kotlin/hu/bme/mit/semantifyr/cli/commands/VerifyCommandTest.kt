@@ -14,11 +14,10 @@ import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.cli.SMOKE_CASE
-import hu.bme.mit.semantifyr.cli.fakePortfolio
-import hu.bme.mit.semantifyr.cli.jsonLines
+import hu.bme.mit.semantifyr.cli.common.fakePortfolio
+import hu.bme.mit.semantifyr.cli.common.jsonLines
 import hu.bme.mit.semantifyr.cli.runCli
 import hu.bme.mit.semantifyr.cli.smokeModel
-import hu.bme.mit.semantifyr.cli.sysmlTutorialModel
 import hu.bme.mit.semantifyr.cli.testModels
 import hu.bme.mit.semantifyr.verifier.FakeBackend
 import hu.bme.mit.semantifyr.verifier.FakeConfig
@@ -39,7 +38,6 @@ import org.junit.jupiter.params.provider.CsvSource
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.copyTo
-import kotlin.io.path.createDirectories
 import kotlin.io.path.createDirectory
 import kotlin.io.path.createFile
 import kotlin.io.path.readText
@@ -229,34 +227,14 @@ class VerifyCommandTest {
     }
 
     @Test
-    suspend fun `a SysML model is translated and its cases verified`(@TempDir directory: Path) {
-        val model = sysmlTutorialModel.copyTo(directory.resolve("model").createDirectories().resolve("room.sysml"))
-        val artifacts = directory.resolve("artifacts")
-        val portfolio = fakePortfolio("fixed", VerificationVerdict.Passed, VerificationVerdict.Failed, VerificationVerdict.Failed)
+    suspend fun `a SysML model is an input error`(@TempDir directory: Path) {
+        val model = directory.resolve("room.sysml")
+        model.writeText("part def Room;\n")
 
-        val result = runCli("verify", "--json", "--portfolio", portfolio.id, "-d", artifacts.toString(), model.toString(), portfolios = listOf(portfolio))
+        val result = runCli("verify", model.toString())
 
-        assertThat(result.statusCode).describedAs(result.output).isEqualTo(5)
-        val lines = jsonLines(result.stdout)
-        assertThat(lines.map { it.getValue("case").jsonPrimitive.content }).containsExactly(
-            "semantifyr::sysml::model::LampLitReachable",
-            "semantifyr::sysml::model::LampNeverLitViolated",
-            "semantifyr::sysml::model::LampLitOnlyWhileSwitchOnViolated",
-        )
-        assertThat(Path(lines.first().getValue("report").jsonPrimitive.content))
-            .isEqualTo(artifacts.resolve("room.LampLitReachable").resolve("report.json").toAbsolutePath().normalize())
-            .exists()
-    }
-
-    @Test
-    suspend fun `a SysML model that does not translate is a compilation error`(@TempDir directory: Path) {
-        val model = directory.resolve("broken.sysml")
-        model.writeText("part def Broken {\n")
-        val portfolio = fakePortfolio("fixed")
-
-        val result = runCli("verify", "--portfolio", portfolio.id, "-d", directory.resolve("artifacts").toString(), model.toString(), portfolios = listOf(portfolio))
-
-        assertThat(result.statusCode).describedAs(result.output).isEqualTo(4)
+        assertThat(result.statusCode).isEqualTo(3)
+        assertThat(result.stderr).contains("room.sysml").contains(".oxsts")
     }
 
     @Test

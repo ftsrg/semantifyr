@@ -14,4 +14,8 @@ dependencies {
     api(libs.clikt)
 
     implementation(project(":logging"))
+    implementation(libs.kotlinx.serialization.json)
+
+    testFixturesApi(testFixtures(project(":verifier")))
+    testFixturesApi(libs.kotlinx.serialization.json)
 }

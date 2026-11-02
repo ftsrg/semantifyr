@@ -17,6 +17,7 @@ import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.long
 import com.github.ajalt.clikt.parameters.types.path
 import com.github.ajalt.clikt.parameters.types.restrictTo
+import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backends.theta.THETA_DEFAULT_IMAGE
 import hu.bme.mit.semantifyr.backends.theta.ThetaExecutorKey
@@ -153,6 +154,14 @@ class BackendOptionGroup(
             ThetaExecutor.Docker -> builder.put(ThetaExecutorKey) { ThetaXstsExecutor.docker(thetaDockerImage) }
         }
         builder.build()
+    }
+
+    fun checkAvailable() {
+        val availability = portfolio.availability(resolved)
+        if (availability is AvailabilityReport.Unavailable) {
+            val hints = availability.hints.joinToString("") { "\n  - $it" }
+            throw CommandExit(ExitCode.Errored, "Portfolio '${portfolio.id}' is unavailable: ${availability.reason}$hints")
+        }
     }
 }
 
