@@ -49,9 +49,9 @@ services:
       GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
       GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
     volumes:
-      - ./grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
-      - ./grafana/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
-      - ./grafana/semantifyr-live.json:/etc/grafana/dashboards/semantifyr-live.json:ro
+      - ./datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - ./dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
+      - ./semantifyr-live.json:/etc/grafana/dashboards/semantifyr-live.json:ro
       - grafana:/var/lib/grafana
     mem_limit: 512m
     pids_limit: 512
