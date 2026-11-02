@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem;
 
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.SubsetHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DataTypeDeclaration;
@@ -20,6 +21,9 @@ public class TypeCompatibility {
 
     @Inject
     private BuiltinSymbolResolver builtinSymbolResolver;
+
+    @Inject
+    private SubsetHandler subsetHandler;
 
     public boolean isEnumType(TypeEvaluation typeEvaluation) {
         return typeEvaluation != null && typeEvaluation.getDomain() instanceof EnumDeclaration;
@@ -208,10 +212,11 @@ public class TypeCompatibility {
         if (candidate == target) {
             return true;
         }
-        if (candidate.getSuperset() == null) {
+        var superset = subsetHandler.getSubsetFeature(candidate);
+        if (superset == null) {
             return false;
         }
-        return isFeatureSubsetOf(candidate.getSuperset(), target);
+        return isFeatureSubsetOf(superset, target);
     }
 
     private boolean isAnyDomain(DomainDeclaration domain, EObject context) {

@@ -17,6 +17,9 @@ public class SubsetHandler {
     @Inject
     private OnResourceSetChangeEvictingCache cache;
 
+    @Inject
+    private RedefinitionHandler redefinitionHandler;
+
     public FeatureDeclaration getSubsetFeature(FeatureDeclaration feature) {
         return cache.get(Tuples.create(CACHE_KEY, feature), feature.eResource(), () -> computeSubsetFeature(feature));
     }
@@ -24,10 +27,17 @@ public class SubsetHandler {
     protected FeatureDeclaration computeSubsetFeature(FeatureDeclaration feature) {
         var superSet = feature.getSuperset();
 
-        if (superSet != null && superSet.eIsProxy()) {
-            return null;
+        if (superSet != null) {
+            if (superSet.eIsProxy()) {
+                return null;
+            }
+            return superSet;
         }
 
-        return superSet;
+        if (redefinitionHandler.getRedefinedDeclaration(feature) instanceof FeatureDeclaration redefinedFeature) {
+            return getSubsetFeature(redefinedFeature);
+        }
+
+        return null;
     }
 }
