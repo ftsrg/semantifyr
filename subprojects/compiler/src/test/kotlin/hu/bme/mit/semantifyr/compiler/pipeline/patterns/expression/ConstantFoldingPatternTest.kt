@@ -85,6 +85,37 @@ class ConstantFoldingPatternTest : PatternTestBase() {
     )
 
     @Test
+    fun `the least integer does not re-collapse into itself`() = assertPatternDoesNotMatch(
+        pattern = pattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := - 2147483647 - 1
+            init { }
+            tran { }
+            prop { AG (a == 0) }
+        """,
+    )
+
+    @Test
+    fun `arithmetic that yields the least integer folds to its canonical form`() = assertPatternTransforms(
+        pattern = pattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := - 2147483646 - 2
+            init { }
+            tran { }
+            prop { AG (a == 0) }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var a : int := - 2147483647 - 1
+            init { }
+            tran { }
+            prop { AG (a == 0) }
+        """,
+    )
+
+    @Test
     fun `negative literal alone does not re-collapse into itself`() = assertPatternDoesNotMatch(
         pattern = pattern(),
         input = """

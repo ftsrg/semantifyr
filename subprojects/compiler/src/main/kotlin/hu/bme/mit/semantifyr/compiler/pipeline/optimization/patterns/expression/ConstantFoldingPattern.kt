@@ -21,6 +21,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralReal
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import org.eclipse.emf.ecore.EObject
+import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtext.EcoreUtil2
 
 class ConstantFoldingPattern(
@@ -46,6 +47,10 @@ class ConstantFoldingPattern(
 
         val evaluation = evaluator.evaluate(element)
         val constant = transformer.transformEvaluation(evaluation)
+        // the least int has no literal and folds back into its own -2147483647 - 1
+        if (EcoreUtil.equals(constant, element)) {
+            return false
+        }
         EcoreUtil2.replace(element, constant)
         worklist.add(parent)
         return true
