@@ -144,9 +144,8 @@ class GammaFrontendTestHelper {
         val result = frontend.verify(gammaVerificationCase)
         val verdict = result.verification.verdict
         val description = "${portfolio.id} reports $verdict for ${gammaVerificationCase.qualifiedName}: ${result.verification.message ?: "no message"}"
-        Assumptions.assumeFalse(verdict == VerificationVerdict.Timeout, description)
         if (!verdict.isDecisive) {
-            Assumptions.assumeTrue(required || verdict == VerificationVerdict.Errored, description)
+            Assumptions.assumeTrue(required || verdict == VerificationVerdict.Errored || verdict == VerificationVerdict.Timeout, description)
         }
         Assertions.assertEquals(VerificationVerdict.Passed, verdict, description)
 

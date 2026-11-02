@@ -56,9 +56,15 @@ class SemantifyrVerifierTestHelperTest {
     }
 
     @Test
-    suspend fun `Timeout on a required engine skips`() {
+    suspend fun `Timeout on a required engine fails`() {
         assertThat(check(FixedPortfolio(VerificationVerdict.Timeout), requiredFake))
-            .isInstanceOf(TestAbortedException::class.java)
+            .isInstanceOf(AssertionFailedError::class.java)
+    }
+
+    @Test
+    suspend fun `Timeout on an engine that is not required still fails`() {
+        assertThat(check(FixedPortfolio(VerificationVerdict.Timeout), emptySet()))
+            .isInstanceOf(AssertionFailedError::class.java)
     }
 
     @Test

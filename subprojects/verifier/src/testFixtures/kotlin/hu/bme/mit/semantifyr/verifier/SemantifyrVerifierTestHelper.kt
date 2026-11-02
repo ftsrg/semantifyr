@@ -215,17 +215,13 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         }
 
         val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment)
-        Assumptions.assumeFalse(
-            result.verdict == VerificationVerdict.Timeout,
-            "Portfolio ${verificationPortfolio.id} timed out on ${case.qualifiedName} within $timeout: ${result.message ?: "no message"}",
-        )
         if (!result.verdict.isDecisive) {
             Assumptions.assumeTrue(
-                required || result.verdict == VerificationVerdict.Errored,
+                required || result.verdict == VerificationVerdict.Errored || result.verdict == VerificationVerdict.Timeout,
                 "Portfolio ${verificationPortfolio.id} reports ${result.verdict} for ${case.qualifiedName} and none of its engines is required: ${result.message ?: "no message"}",
             )
             Assertions.fail<Unit>(
-                "Portfolio ${verificationPortfolio.id} did not produce a decisive verdict for ${case.qualifiedName} (got ${result.verdict}: ${result.message ?: "no message"}).${backendDiagnostics(outputDirectory, case)}",
+                "Portfolio ${verificationPortfolio.id} did not produce a decisive verdict for ${case.qualifiedName} within $timeout (got ${result.verdict}: ${result.message ?: "no message"}).${backendDiagnostics(outputDirectory, case)}",
             )
         }
         Assertions.assertEquals(

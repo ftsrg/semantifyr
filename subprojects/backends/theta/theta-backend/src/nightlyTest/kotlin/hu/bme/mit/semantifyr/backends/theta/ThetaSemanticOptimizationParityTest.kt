@@ -59,6 +59,8 @@ class ThetaSemanticOptimizationParityTest {
         val verdicts = "${verificationCase.qualifiedName}: ${describe(unoptimized)} at optimization none, ${describe(optimized)} at optimization all"
         Assertions.assertNotEquals(VerificationVerdict.Errored, unoptimized.verdict, verdicts)
         Assertions.assertNotEquals(VerificationVerdict.Errored, optimized.verdict, verdicts)
+        Assertions.assertNotEquals(VerificationVerdict.Timeout, unoptimized.verdict, verdicts)
+        Assertions.assertNotEquals(VerificationVerdict.Timeout, optimized.verdict, verdicts)
         Assertions.assertEquals(unoptimized.verdict, optimized.verdict, verdicts)
     }
 

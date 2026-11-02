@@ -45,7 +45,7 @@ This runs the unit tests and the verification smoke tests, and assembles every a
 ./gradlew nightlyTest       # long-running cases and witness re-checks on all backends
 ```
 
-Pass `-Ptests.requiredBackends=theta,spin` to fail instead of skip when a listed backend is missing. A listed backend that returns Inconclusive or Not supported also fails the case; a Timeout skips. Each backend's conformance suite leaves out the semantic cases that backend cannot decide, listed with their reasons in the backend's test fixtures (`SpinExcludedCases.kt` and its siblings); the models carry only the expected verdict.
+Pass `-Ptests.requiredBackends=theta,spin` to fail instead of skip when a listed backend is missing. A listed backend that returns Inconclusive or Not supported also fails the case; a Timeout fails it on every backend, listed or not. Each backend's conformance suite leaves out the semantic cases that backend cannot decide, listed with their reasons in the backend's test fixtures (`SpinExcludedCases.kt` and its siblings); the models carry only the expected verdict.
 
 ## Where to start
 
