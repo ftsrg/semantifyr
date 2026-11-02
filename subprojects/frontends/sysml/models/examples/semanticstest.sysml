@@ -370,7 +370,7 @@ verification def TimeoutTransitionFiresAfterDelayTestCase {
     }
 }
 
-// Waiting and Done are mutually exclusive — the system cannot be in both simultaneously.
+// Waiting and Done are mutually exclusive: the system cannot be in both simultaneously.
 verification def WaitingAndDoneAreMutuallyExclusiveTestCase {
     subject system : TimeoutTransitionModel;
     objective {
@@ -574,7 +574,7 @@ verification def CrossHierarchyEntryActionsFireAtAllLevelsTestCase {
     }
 }
 
-// Outer and Other are mutually exclusive — the cross-hierarchy transition is atomic.
+// Outer and Other are mutually exclusive: the cross-hierarchy transition is atomic.
 verification def OuterAndOtherAreMutuallyExclusiveTestCase {
     subject system : CrossHierarchyTransitionModel;
     objective {
@@ -842,7 +842,7 @@ verification def SequentialStateWithNestedParallelExitableTestCase {
     }
 }
 
-// Done and the nested parallel substates are mutually exclusive — all regions are deactivated on exit.
+// Done and the nested parallel substates are mutually exclusive: all regions are deactivated on exit.
 verification def DoneAndNestedParallelSubstatesAreMutuallyExclusiveTestCase {
     subject system : ParallelNestedInSequentialModel;
     objective {
@@ -952,6 +952,139 @@ verification def GuardedSpontaneousDoneNotReachableBeforeThresholdTestCase {
     objective {
         verify requirement {
             require constraint { mustAlways(not (isStateActive(system.Behaviour.Done) and system.counter < 3)) }
+        }
+    }
+}
+
+// ── 18. ParallelStateRegionExitModel ──────────────────────────────────────────────
+// A transition from a state inside one region of a parallel state to a state outside it leaves the whole parallel state, as the keep-alive timeouts of orion_protocol do.
+
+part def ParallelStateRegionExitModel {
+    attribute parallelExited : Boolean default false;
+    port input : PortE;
+
+    exhibit state Behaviour {
+        state Running parallel {
+            exit action { assign parallelExited := true; }
+            state R1 {
+                state A;
+                transition first start then A;
+                transition first A accept : EventE via input then Done;
+            }
+            state R2 {
+                state C;
+                transition first start then C;
+            }
+        }
+        state Done;
+        transition first start then Running;
+    }
+}
+
+// The parallel state's exit action fires although the transition is declared in a region.
+verification def RegionTransitionFiresParallelExitActionTestCase {
+    subject system : ParallelStateRegionExitModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(system.parallelExited == true) }
+        }
+    }
+}
+
+// The other region is left too, so its state is never active together with Done.
+verification def RegionTransitionLeavesEveryRegionTestCase {
+    subject system : ParallelStateRegionExitModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (isStateActive(system.Behaviour.Done) and isStateActive(system.Behaviour.Running.R2.C))) }
+        }
+    }
+}
+
+// ── 19. ParallelRegionExitActionModel ─────────────────────────────────────────────
+// Leaving a parallel state fires the exit actions of its regions, and leaving a state fires no exit action of a parallel substate that is not active.
+
+part def ParallelRegionExitActionModel {
+    attribute regionExited : Boolean default false;
+    attribute idleExited : Boolean default false;
+    port input : PortE;
+
+    exhibit state Behaviour {
+        state Running parallel {
+            state R1 {
+                exit action { assign regionExited := true; }
+                state A;
+                transition first start then A;
+            }
+            state R2 {
+                state C;
+                transition first start then C;
+            }
+        }
+        state Other {
+            state Idle parallel {
+                exit action { assign idleExited := true; }
+                state R3 {
+                    state E;
+                    transition first start then E;
+                }
+            }
+            state Busy;
+            transition first start then Busy;
+        }
+        state Done;
+        transition first start then Running;
+        transition first Running accept : EventE via input then Other;
+        transition first Other accept : EventE via input then Done;
+    }
+}
+
+verification def RegionExitActionFiresWhenParallelStateExitsTestCase {
+    subject system : ParallelRegionExitActionModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(system.regionExited == true) }
+        }
+    }
+}
+
+// Idle is never entered, so leaving Other never fires Idle's exit action.
+verification def InactiveParallelStateExitActionNeverFiresTestCase {
+    subject system : ParallelRegionExitActionModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(system.idleExited == false) }
+        }
+    }
+}
+
+// ── 20. ExhibitedStateEntryActionModel ────────────────────────────────────────────
+// The exhibited state is entered when its part starts, so its own entry action fires before its initial substate is entered.
+
+part def ExhibitedStateEntryActionModel {
+    attribute entered : Boolean default false;
+
+    exhibit state Behaviour {
+        entry action { assign entered := true; }
+        state S1;
+        transition first start then S1;
+    }
+}
+
+verification def ExhibitedStateEntryActionFiresTestCase {
+    subject system : ExhibitedStateEntryActionModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(system.entered == true) }
+        }
+    }
+}
+
+verification def ExhibitedStateEntryActionPrecedesSubstateTestCase {
+    subject system : ExhibitedStateEntryActionModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (isStateActive(system.Behaviour.S1) and system.entered == false)) }
         }
     }
 }

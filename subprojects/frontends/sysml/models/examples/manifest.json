@@ -56,7 +56,13 @@
                 { "name": "SpontaneousDoActionAlwaysFiredWhenTargetIsActiveTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["spin", "uppaal"] },
                 { "name": "GuardedSpontaneousTransitionReachesDoneTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta", "uppaal"] },
                 { "name": "GuardedSpontaneousCounterReachesThresholdTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta", "spin", "uppaal"] },
-                { "name": "GuardedSpontaneousDoneNotReachableBeforeThresholdTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta", "spin", "uppaal"] }
+                { "name": "GuardedSpontaneousDoneNotReachableBeforeThresholdTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta", "spin", "uppaal"] },
+                { "name": "RegionTransitionFiresParallelExitActionTestCase", "verdict": "Passed", "tier": "Integration" },
+                { "name": "RegionTransitionLeavesEveryRegionTestCase", "verdict": "Passed", "tier": "Integration" },
+                { "name": "RegionExitActionFiresWhenParallelStateExitsTestCase", "verdict": "Passed", "tier": "Integration" },
+                { "name": "InactiveParallelStateExitActionNeverFiresTestCase", "verdict": "Passed", "tier": "Integration" },
+                { "name": "ExhibitedStateEntryActionFiresTestCase", "verdict": "Passed", "tier": "Integration" },
+                { "name": "ExhibitedStateEntryActionPrecedesSubstateTestCase", "verdict": "Passed", "tier": "Integration" }
             ]
         },
         {
