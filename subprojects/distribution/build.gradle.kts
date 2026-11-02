@@ -21,6 +21,7 @@ val launcherFiles = configurations.resolvable("launcherFiles") {
 
 dependencies {
     launchers(project(":cli"))
+    launchers(project(":sysml-cli"))
 }
 
 val rootDirectory = isolated.rootProject.projectDirectory
@@ -79,6 +80,9 @@ testing {
                     inputs.files(unzipDistribution)
                     inputs.dir(rootDirectory.dir("oxsts-test-models"))
                         .withPropertyName("oxstsTestModels")
+                        .withPathSensitivity(PathSensitivity.RELATIVE)
+                    inputs.dir(rootDirectory.dir("subprojects/frontends/sysml/models/tutorial"))
+                        .withPropertyName("sysmlTutorialModels")
                         .withPathSensitivity(PathSensitivity.RELATIVE)
                 }
             }

@@ -13,6 +13,7 @@ import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -22,6 +23,8 @@ import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
+import kotlin.io.path.copyTo
+import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.isExecutable
 import kotlin.io.path.listDirectoryEntries
@@ -81,7 +84,7 @@ class DistributionTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["semantifyr"])
+    @ValueSource(strings = ["semantifyr", "semantifyr-sysml"])
     fun `each launcher prints its version without JVM warnings`(launcher: String) {
         val run = run(launcher, "--version")
 
@@ -137,6 +140,7 @@ class DistributionTest {
     fun `the process exits with the usage and input codes`() {
         assertThat(run("semantifyr", "verify", "--portfolio", "no-such-portfolio", "models").exitCode).isEqualTo(2)
         assertThat(run("semantifyr", "list", directory.resolve("absent.oxsts").toString()).exitCode).isEqualTo(3)
+        assertThat(run("semantifyr-sysml", "verify", directory.resolve("absent.sysml").toString()).exitCode).isEqualTo(3)
     }
 
     @Test
@@ -151,5 +155,24 @@ class DistributionTest {
         assertThat(verbose.exitCode).describedAs(verbose.stderr).isZero()
         assertThat(verbose.stderr).contains("[INFO ]").contains("list model=")
         assertThat(verbose.stdout).isEqualTo(quiet.stdout)
+    }
+
+    @Test
+    fun `the SysML launcher verifies a SysML model with the bundled Theta and writes its trace`() {
+        val node = runCatching {
+            ProcessBuilder("node", "--version").redirectErrorStream(true).start().waitFor() == 0
+        }.getOrDefault(false)
+        assumeTrue(node, "translating SysML v2 needs node on PATH")
+        val model = repository.resolve("subprojects/frontends/sysml/models/tutorial/room.sysml")
+            .copyTo(directory.resolve("model").createDirectories().resolve("room.sysml"))
+
+        val run = run(
+            "semantifyr-sysml", "verify", "--json", "--theta-executor", "shell", "--portfolio", "theta-bounded-bmc", "-d", "artifacts",
+            "--case-name", "semantifyr::sysml::model::LampLitOnlyWhileSwitchOnViolated",
+            model.toString(),
+        )
+
+        assertThat(run.exitCode).describedAs(run.stderr).isEqualTo(5)
+        assertThat(reportOf(run).resolveSibling("trace.sysml")).exists()
     }
 }
