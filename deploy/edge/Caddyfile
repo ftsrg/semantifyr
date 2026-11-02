@@ -5,7 +5,7 @@
 	admin off
 	auto_https off
 	servers {
-		trusted_proxies static 172.30.0.2/32
+		trusted_proxies static 172.30.0.253/32
 		client_ip_headers CF-Connecting-IP
 	}
 }
