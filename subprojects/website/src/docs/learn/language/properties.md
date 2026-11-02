@@ -37,7 +37,7 @@ abstract prop maximum(): int
 
 ## Redefining Properties
 
-Override an inherited property of the **same name** with `redefine`. The parameter and return-type signature must match.
+Override an inherited property of the **same name** with `redefine`. The redefinition takes as many parameters as the inherited property, and its return type must be assignable to the inherited one.
 
 ```oxsts
 redefine prop maximum(): int {
