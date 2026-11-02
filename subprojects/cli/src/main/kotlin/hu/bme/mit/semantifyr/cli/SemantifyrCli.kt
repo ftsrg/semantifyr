@@ -21,8 +21,9 @@ import hu.bme.mit.semantifyr.cli.commands.ListCommand
 import hu.bme.mit.semantifyr.cli.commands.MetricsCommand
 import hu.bme.mit.semantifyr.cli.commands.PortfoliosCommand
 import hu.bme.mit.semantifyr.cli.commands.VerifyCommand
-import hu.bme.mit.semantifyr.cli.commands.options.applyLogLevel
-import hu.bme.mit.semantifyr.cli.commands.options.logLevelOption
+import hu.bme.mit.semantifyr.cli.common.ExitCode
+import hu.bme.mit.semantifyr.cli.common.options.applyLogLevel
+import hu.bme.mit.semantifyr.cli.common.options.logLevelOption
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 
 class SemantifyrCommand @Inject constructor(

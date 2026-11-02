@@ -32,7 +32,7 @@ val apiDocsFiles = configurations.resolvable("apiDocsFiles") {
 
 dependencies {
     editorCommon(project(":semantifyr-editor-common"))
-    cliDistribution(project(":semantifyr-cli"))
+    cliDistribution(project(":cli"))
     if (providers.gradleProperty("website.apiDocs").getOrElse("false").toBoolean()) {
         apiDocs(project(":"))
     }

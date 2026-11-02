@@ -13,8 +13,8 @@ import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path
-import hu.bme.mit.semantifyr.cli.CommandExit
-import hu.bme.mit.semantifyr.cli.ExitCode
+import hu.bme.mit.semantifyr.cli.common.CommandExit
+import hu.bme.mit.semantifyr.cli.common.ExitCode
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader

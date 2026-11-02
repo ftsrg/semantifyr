@@ -123,7 +123,7 @@ jobs:
           tar -czf live-image-context.tar.gz -C subprojects/semantifyr-live/backend \
             Dockerfile build/install build/staging build/theta-xsts-cli
           mkdir distributions
-          cp subprojects/semantifyr-vscode/build/semantifyr-*.vsix subprojects/semantifyr-cli/build/distributions/semantifyr-*.zip distributions/
+          cp subprojects/semantifyr-vscode/build/semantifyr-*.vsix subprojects/cli/build/distributions/semantifyr-*.zip distributions/
       - name: Smoke test the CLI distribution
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |

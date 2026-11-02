@@ -13,8 +13,8 @@ import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import com.google.inject.Inject
 import com.google.inject.Injector
-import hu.bme.mit.semantifyr.cli.commands.options.CompilationOptionGroup
-import hu.bme.mit.semantifyr.cli.commands.options.VerificationCaseSpecificationOptionGroup
+import hu.bme.mit.semantifyr.cli.common.options.CompilationOptionGroup
+import hu.bme.mit.semantifyr.cli.common.options.VerificationCaseSpecificationOptionGroup
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.context.CompilationMetrics

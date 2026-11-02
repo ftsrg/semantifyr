@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.cli
+package hu.bme.mit.semantifyr.cli.common
 
 import com.github.ajalt.clikt.core.CliktError
 import hu.bme.mit.semantifyr.backend.VerificationVerdict

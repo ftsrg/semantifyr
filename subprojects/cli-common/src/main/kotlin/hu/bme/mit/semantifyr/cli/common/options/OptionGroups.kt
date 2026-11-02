@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.cli.commands.options
+package hu.bme.mit.semantifyr.cli.common.options
 
 import com.github.ajalt.clikt.parameters.groups.OptionGroup
 import com.github.ajalt.clikt.parameters.options.convert
@@ -21,8 +21,8 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backends.theta.THETA_DEFAULT_IMAGE
 import hu.bme.mit.semantifyr.backends.theta.ThetaExecutorKey
 import hu.bme.mit.semantifyr.backends.theta.ThetaXstsExecutor
-import hu.bme.mit.semantifyr.cli.CommandExit
-import hu.bme.mit.semantifyr.cli.ExitCode
+import hu.bme.mit.semantifyr.cli.common.CommandExit
+import hu.bme.mit.semantifyr.cli.common.ExitCode
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactKind
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig

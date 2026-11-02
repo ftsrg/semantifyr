@@ -12,6 +12,7 @@ plugins {
 }
 
 dependencies {
+    implementation(project(":cli-common"))
     implementation(project(":logging"))
     implementation(project(":portfolios"))
     implementation(project(":sysml-frontend"))

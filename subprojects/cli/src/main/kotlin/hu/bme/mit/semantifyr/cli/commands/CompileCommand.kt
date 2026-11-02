@@ -13,11 +13,11 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path
 import com.google.inject.Inject
 import com.google.inject.Injector
-import hu.bme.mit.semantifyr.cli.CommandExit
-import hu.bme.mit.semantifyr.cli.ExitCode
-import hu.bme.mit.semantifyr.cli.commands.options.ArtifactOptionGroup
-import hu.bme.mit.semantifyr.cli.commands.options.CompilationOptionGroup
-import hu.bme.mit.semantifyr.cli.commands.options.VerificationCaseSpecificationOptionGroup
+import hu.bme.mit.semantifyr.cli.common.CommandExit
+import hu.bme.mit.semantifyr.cli.common.ExitCode
+import hu.bme.mit.semantifyr.cli.common.options.ArtifactOptionGroup
+import hu.bme.mit.semantifyr.cli.common.options.CompilationOptionGroup
+import hu.bme.mit.semantifyr.cli.common.options.VerificationCaseSpecificationOptionGroup
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.logging.info
