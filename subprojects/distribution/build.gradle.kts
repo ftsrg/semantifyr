@@ -22,6 +22,7 @@ val launcherFiles = configurations.resolvable("launcherFiles") {
 dependencies {
     launchers(project(":cli"))
     launchers(project(":sysml-cli"))
+    launchers(project(":gamma-cli"))
 }
 
 val rootDirectory = isolated.rootProject.projectDirectory
@@ -83,6 +84,9 @@ testing {
                         .withPathSensitivity(PathSensitivity.RELATIVE)
                     inputs.dir(rootDirectory.dir("subprojects/frontends/sysml/models/tutorial"))
                         .withPropertyName("sysmlTutorialModels")
+                        .withPathSensitivity(PathSensitivity.RELATIVE)
+                    inputs.dir(rootDirectory.dir("subprojects/frontends/gamma/models/examples"))
+                        .withPropertyName("gammaExamples")
                         .withPathSensitivity(PathSensitivity.RELATIVE)
                 }
             }

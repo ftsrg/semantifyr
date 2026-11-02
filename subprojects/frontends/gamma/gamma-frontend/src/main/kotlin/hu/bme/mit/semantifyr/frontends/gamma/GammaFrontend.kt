@@ -27,6 +27,7 @@ import hu.bme.mit.semantifyr.verifier.TraceDto
 import hu.bme.mit.semantifyr.verifier.VerificationResult
 import hu.bme.mit.semantifyr.verifier.VerificationResultDto
 import hu.bme.mit.semantifyr.verifier.WitnessValidationResultDto
+import hu.bme.mit.semantifyr.verifier.caseReportPath
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import hu.bme.mit.semantifyr.verifier.toJavaDto
@@ -59,6 +60,7 @@ class GammaWitness(
 data class GammaVerificationResult(
     val verification: VerificationResult,
     val witness: GammaWitness?,
+    val reportPath: Path,
 )
 
 data class GammaWitnessDto(
@@ -157,7 +159,8 @@ class GammaFrontend @Inject private constructor(
         val oxstsVerificationCaseName = qualifiedName.replace(".", "::")
         val oxstsVerificationCase = verificationCaseDiscoverer.findByQualifiedName(context, oxstsVerificationCaseName)
 
-        val semantifyrVerifier = buildVerifier(baseDirectory.resolve("verification"))
+        val verificationDirectory = baseDirectory.resolve("verification")
+        val semantifyrVerifier = buildVerifier(verificationDirectory)
 
         val result = semantifyrVerifier.verify(oxstsVerificationCase, progress)
         val witness = result.trace?.let {
@@ -174,7 +177,7 @@ class GammaFrontend @Inject private constructor(
         if (witness != null) {
             logger.info { "Gamma case '$qualifiedName' produced witness at '${witness.witnessPath}'" }
         }
-        return GammaVerificationResult(result, witness)
+        return GammaVerificationResult(result, witness, caseReportPath(verificationDirectory, oxstsVerificationCase))
     }
 
     private fun writeGammaTrace(

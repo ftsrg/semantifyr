@@ -84,7 +84,7 @@ class DistributionTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["semantifyr", "semantifyr-sysml"])
+    @ValueSource(strings = ["semantifyr", "semantifyr-sysml", "semantifyr-gamma"])
     fun `each launcher prints its version without JVM warnings`(launcher: String) {
         val run = run(launcher, "--version")
 
@@ -141,6 +141,7 @@ class DistributionTest {
         assertThat(run("semantifyr", "verify", "--portfolio", "no-such-portfolio", "models").exitCode).isEqualTo(2)
         assertThat(run("semantifyr", "list", directory.resolve("absent.oxsts").toString()).exitCode).isEqualTo(3)
         assertThat(run("semantifyr-sysml", "verify", directory.resolve("absent.sysml").toString()).exitCode).isEqualTo(3)
+        assertThat(run("semantifyr-gamma", "verify", directory.resolve("Absent.gamma").toString()).exitCode).isEqualTo(3)
     }
 
     @Test
@@ -174,5 +175,17 @@ class DistributionTest {
 
         assertThat(run.exitCode).describedAs(run.stderr).isEqualTo(5)
         assertThat(reportOf(run).resolveSibling("trace.sysml")).exists()
+    }
+
+    @Test
+    fun `the Gamma launcher verifies a Gamma model with the bundled Theta and writes its trace`() {
+        val run = run(
+            "semantifyr-gamma", "verify", "--json", "--theta-executor", "shell", "--portfolio", "theta-bounded-bmc", "-d", "artifacts",
+            "--case-name", "Simple.WorkerStatechartOperationalReachable",
+            repository.resolve("subprojects/frontends/gamma/models/examples/Simple.gamma").toString(),
+        )
+
+        assertThat(run.exitCode).describedAs(run.stderr).isZero()
+        assertThat(reportOf(run).resolveSibling("trace.gamma")).exists()
     }
 }
