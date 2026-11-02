@@ -12,6 +12,9 @@ abstract class StateNode {
 
     abstract tran enter(commonState: StateNode)
     abstract tran exit(commonState: StateNode)
+
+    abstract tran performOutgoing(transition: Transition)
+    abstract tran findCommonState(transition: Transition, candidate: AbstractState[0..1])
 }
 
 abstract class AbstractState : StateNode {
@@ -25,8 +28,6 @@ abstract class AbstractState : StateNode {
         return parent?.isInnerStateActive(self)
     }
 
-    abstract prop getActiveState(): AbstractState[0..1]
-
     abstract prop isInnerStateActive(state: AbstractState): bool
 
     abstract tran fireTransitions()
@@ -36,9 +37,29 @@ abstract class AbstractState : StateNode {
     abstract tran passTime()
 
     abstract tran enterRecursive(commonState: StateNode)
-    abstract tran exitRecursive(commonState: StateNode)
+    abstract tran exitRecursive(commonState: StateNode, child: AbstractState[0..1])
+
+    abstract tran activate()
 
     abstract tran setActiveState(state: AbstractState[0..1])
+
+    // a transition exits and enters up to the closest common ancestor of its source and target, not up to the state declaring it
+    redefine tran performOutgoing(transition: Transition) {
+        inline transition.to.findCommonState(transition, parent)
+    }
+
+    redefine tran findCommonState(transition: Transition, candidate: AbstractState[0..1]) {
+        // an empty left side compares equal to any instance at compile time
+        inline if (candidate == parent) {
+            inline transition.performWithin(candidate as AbstractState)
+        } else {
+            inline if (parent == nothing) {
+                inline transition.to.findCommonState(transition, candidate.parent)
+            } else {
+                inline parent.findCommonState(transition, candidate)
+            }
+        }
+    }
 }
 
 class State : AbstractState {
@@ -50,10 +71,6 @@ class State : AbstractState {
 
     redefine prop isInnerStateActive(state: AbstractState): bool {
         return state == activeState
-    }
-
-    redefine prop getActiveState(): AbstractState[0..1] {
-        return activeState
     }
 
     redefine tran setActiveState(state: AbstractState) {
@@ -135,12 +152,12 @@ class State : AbstractState {
         inline activateRecursive()
     }
 
-    redefine tran exitRecursive(commonState: StateNode) {
+    redefine tran exitRecursive(commonState: StateNode, child: AbstractState[0..1]) {
         inline if (parent != nothing) {
             inline deactivate()
 
             inline if (commonState != parent) {
-                inline parent?.exitRecursive(commonState)
+                inline parent?.exitRecursive(commonState, self)
             }
         }
     }
@@ -149,8 +166,8 @@ class State : AbstractState {
         inline exitRecursive(commonState)
     }
 
-    tran activate() {
-        inline parent.setActiveState(self)
+    redefine tran activate() {
+        inline parent?.setActiveState(self)
 
         inline for (transition in outgoingTransitions) {
             inline transition.initialize()
@@ -160,7 +177,7 @@ class State : AbstractState {
     }
 
     tran deactivate() {
-        if (parent.getActiveState() == self) {
+        if (isActive()) {
             inline exitAction.main()
 
             inline parent.setActiveState(nothing)
@@ -193,9 +210,13 @@ class Transition {
     }
 
     tran performTransition() {
-        inline from.exit(parentState)
+        inline from.performOutgoing(self)
+    }
+
+    tran performWithin(commonState: StateNode) {
+        inline from.exit(commonState)
         inline action.main()
-        inline to.enter(parentState)
+        inline to.enter(commonState)
     }
 
     tran passTime() {
@@ -209,10 +230,6 @@ class Transition {
 
 class ParallelState : AbstractState {
     contains start: EntryState[1]
-
-    redefine prop getActiveState(): AbstractState[0..1] {
-        return nothing
-    }
 
     redefine tran setActiveState(state: AbstractState) {
     }
@@ -277,35 +294,39 @@ class ParallelState : AbstractState {
         inline activateRecursive()
     }
 
-    redefine tran exitRecursive(commonState: StateNode) {
+    // leaving one region leaves the whole parallel state
+    redefine tran exitRecursive(commonState: StateNode, child: AbstractState[0..1]) {
+        inline for (state in states) {
+            inline if (state != child) {
+                inline state.deactivateRecursive(true)
+            }
+        }
+
         inline deactivate()
 
         inline if (commonState != parent) {
-            inline parent?.exitRecursive(commonState)
+            inline parent?.exitRecursive(commonState, self)
         }
     }
     redefine tran exit(commonState: StateNode) {
-        inline deactivateRecursive(false)
         inline exitRecursive(commonState)
     }
 
-    tran activate() {
-        inline if (parent != nothing) {
-            inline parent.setActiveState(self)
+    redefine tran activate() {
+        inline parent?.setActiveState(self)
 
-            inline for (transition in outgoingTransitions) {
-                inline transition.initialize()
-            }
-
-            inline entryAction.main()
+        inline for (transition in outgoingTransitions) {
+            inline transition.initialize()
         }
+
+        inline entryAction.main()
     }
 
     tran deactivate() {
         inline if (parent != nothing) {
-            inline exitAction.main()
+            if (isActive()) {
+                inline exitAction.main()
 
-            if (parent.getActiveState() == self) {
                 inline parent.setActiveState(nothing)
             }
         }
@@ -326,6 +347,15 @@ class EntryState : StateNode {
 
     redefine tran exit(commonState: StateNode) {
     }
+
+    redefine tran performOutgoing(transition: Transition) {
+        inline transition.performWithin(transition.parentState)
+    }
+
+    redefine tran findCommonState(transition: Transition, candidate: AbstractState[0..1]) {
+
+    }
+
 }
 
 class IsStateActiveExpression : Expression {

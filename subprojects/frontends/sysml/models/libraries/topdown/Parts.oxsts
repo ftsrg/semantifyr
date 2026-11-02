@@ -52,6 +52,7 @@ class Part {
             inline attribute.init()
         }
 
+        inline exhibitState?.activate()
         inline exhibitState?.activateRecursive()
 
         inline for (part in parts) {
