@@ -11,6 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Key;
+import com.google.inject.Provider;
 import com.google.inject.TypeLiteral;
 import com.google.inject.util.Modules;
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsRuntimeModule;
@@ -27,6 +28,7 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.diagnostics.Severity;
 import org.eclipse.xtext.resource.ISelectable;
+import org.eclipse.xtext.resource.XtextResourceSet;
 import org.eclipse.xtext.testing.util.ParseHelper;
 import org.eclipse.xtext.validation.CheckMode;
 import org.junit.jupiter.api.Test;
@@ -36,6 +38,12 @@ public class ScopingTest {
 
     @Inject
     private OxstsPackageParseHelper parseHelper;
+
+    @Inject
+    private ParseHelper<OxstsModelPackage> packageParseHelper;
+
+    @Inject
+    private Provider<XtextResourceSet> resourceSetProvider;
 
     @Test
     void featureReferenceResolvesToDeclaredFeature() {
@@ -243,6 +251,50 @@ public class ScopingTest {
                 .allSatisfy(error -> assertThat(error.getMessage()).startsWith("Couldn't resolve reference"));
         assertThat(pkg.getResourceErrors())
                 .anySatisfy(error -> assertThat(error.getMessage()).contains("'missing'"));
+    }
+
+    @Test
+    void importedNamesResolveUnqualifiedAndOtherPackagesOnlyQualified() throws Exception {
+        var resourceSet = resourceSetProvider.get();
+        packageParseHelper.parse("""
+            package lib
+            class Lamp { var on: bool := false }
+            """, resourceSet);
+        packageParseHelper.parse("""
+            package other
+            enum Color { Red, Blue }
+            """, resourceSet);
+        var user = packageParseHelper.parse("""
+            package user
+            import lib
+            class Room {
+                contains lamp: Lamp
+                var color: other::Color := other::Color::Red
+            }
+            """, resourceSet);
+        EcoreUtil.resolveAll(resourceSet);
+
+        assertThat(user.eResource().getErrors()).isEmpty();
+    }
+
+    @Test
+    void nameOfAnUnimportedPackageDoesNotResolveUnqualified() throws Exception {
+        var resourceSet = resourceSetProvider.get();
+        packageParseHelper.parse("""
+            package lib
+            class Lamp { var on: bool := false }
+            """, resourceSet);
+        var user = packageParseHelper.parse("""
+            package user
+            class Room {
+                contains lamp: Lamp
+            }
+            """, resourceSet);
+        EcoreUtil.resolveAll(resourceSet);
+
+        assertThat(user.eResource().getErrors())
+                .singleElement()
+                .satisfies(error -> assertThat(error.getMessage()).contains("'Lamp'"));
     }
 
     public static class FailingDomainMemberCollectionProvider extends DomainMemberCollectionProvider {
