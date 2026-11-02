@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.oxsts.lang.validation;
 
 import com.google.inject.Inject;
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider;
@@ -83,6 +84,9 @@ public class OxstsValidator extends AbstractOxstsValidator {
     @Inject
     private MultiplicityRangeEvaluator multiplicityRangeEvaluator;
 
+    @Inject
+    private BuiltinAnnotationHandler builtinAnnotationHandler;
+
     private static final String ISSUE_PREFIX = "OXSTS.";
     public static final String DUPLICATE_NAME_ISSUE = ISSUE_PREFIX + "DUPLICATE_NAME";
     public static final String DATA_TYPE_NOT_IN_BUILTIN_ISSUE = ISSUE_PREFIX + "DATA_TYPE_NOT_IN_BUILTIN";
@@ -107,6 +111,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String RECURSIVE_RECORD = ISSUE_PREFIX + "RECURSIVE_RECORD";
     public static final String MIXED_BOOLEAN_OPERATORS = ISSUE_PREFIX + "MIXED_BOOLEAN_OPERATORS";
     public static final String INCOMPLETE_RECORD_LITERAL = ISSUE_PREFIX + "INCOMPLETE_RECORD_LITERAL";
+    public static final String ABSTRACT_VERIFICATION_CASE = ISSUE_PREFIX + "ABSTRACT_VERIFICATION_CASE";
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
@@ -189,6 +194,20 @@ public class OxstsValidator extends AbstractOxstsValidator {
                         0,
                         ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED);
             }
+        }
+    }
+
+    @Check
+    public void checkVerificationCaseNotAbstract(ClassDeclaration classDeclaration) {
+        if (classDeclaration.isAbstract() && builtinAnnotationHandler.isVerificationCase(classDeclaration)) {
+            acceptError(
+                    "Abstract class '"
+                            + NamingUtil.getName(classDeclaration)
+                            + "' cannot be a verification case, which is instantiated as the root.",
+                    classDeclaration,
+                    OxstsPackage.Literals.NAMED_ELEMENT__NAME,
+                    0,
+                    ABSTRACT_VERIFICATION_CASE);
         }
     }
 
