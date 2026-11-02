@@ -47,6 +47,7 @@ mwe2-lib = { group = "org.eclipse.emf", name = "org.eclipse.emf.mwe2.lib", versi
 reload4j = { group = "ch.qos.reload4j", name = "reload4j", version.ref = "reload4j" }
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
 slf4j-log4j = { group = "org.apache.logging.log4j", name = "log4j-slf4j2-impl", version.ref = "log4j" }
+log4j-core = { group = "org.apache.logging.log4j", name = "log4j-core", version.ref = "log4j" }
 xtext-bom = { group = "org.eclipse.xtext", name = "xtext-dev-bom", version.ref = "xtext" }
 xtext-core = { group = "org.eclipse.xtext", name = "org.eclipse.xtext", version.ref = "xtext" }
 xtext-ide = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.ide", version.ref = "xtext" }

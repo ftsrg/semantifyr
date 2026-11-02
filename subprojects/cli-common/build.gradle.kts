@@ -15,6 +15,7 @@ dependencies {
 
     implementation(project(":logging"))
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.log4j.core)
 
     testFixturesApi(testFixtures(project(":verifier")))
     testFixturesApi(libs.kotlinx.serialization.json)

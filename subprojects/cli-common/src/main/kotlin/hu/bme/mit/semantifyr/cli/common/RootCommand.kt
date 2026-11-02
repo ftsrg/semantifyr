@@ -18,6 +18,8 @@ import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.versionOption
 import com.github.ajalt.clikt.parameters.types.choice
+import org.apache.logging.log4j.Level
+import org.apache.logging.log4j.core.config.Configurator
 
 abstract class RootCommand(
     name: String,
@@ -25,8 +27,15 @@ abstract class RootCommand(
     subcommands: List<SuspendingCliktCommand>,
 ) : SuspendingCliktCommand(name) {
     private val logLevel by option("--log-level")
-        .choice("ERROR", "WARN", "INFO", "DEBUG", "TRACE", ignoreCase = true)
-        .default("WARN")
+        .choice(
+            "ERROR" to Level.ERROR,
+            "WARN" to Level.WARN,
+            "INFO" to Level.INFO,
+            "DEBUG" to Level.DEBUG,
+            "TRACE" to Level.TRACE,
+            ignoreCase = true,
+        )
+        .default(Level.WARN)
         .help("Root log level. Logs are written to stderr so stdout remains usable for piping. Default: WARN.")
 
     init {
@@ -38,8 +47,9 @@ abstract class RootCommand(
         return description
     }
 
+    // the logging configuration is loaded before the arguments are parsed
     override suspend fun run() {
-        System.setProperty("semantifyr.log.level", logLevel.uppercase())
+        Configurator.setRootLevel(logLevel)
     }
 }
 
