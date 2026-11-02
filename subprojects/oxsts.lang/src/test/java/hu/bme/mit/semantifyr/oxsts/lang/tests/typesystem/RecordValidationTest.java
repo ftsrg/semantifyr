@@ -72,6 +72,39 @@ public class RecordValidationTest {
     }
 
     @Test
+    void recordParameterTakesOnlyARecordOfItsType() {
+        var pkg = parseHelper.parse("""
+            package test
+            record Point {
+                var x: int := 0
+            }
+            record Size {
+                var x: int := 0
+            }
+            class C {
+                var p: Point := Point { x = 1 }
+                var s: Size := Size { x = 1 }
+                var sum: int := 0
+                tran add(q: Point) { sum := sum + q.x }
+                redefine tran {
+                    inline add(p)
+                    inline add(Point { x = 2 })
+                    inline add(s)
+                }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        assertThat(pkg.getIssues())
+                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .singleElement()
+                .satisfies(issue -> {
+                    assertThat(issue.getCode()).isEqualTo(OxstsValidator.TYPE_MISMATCH);
+                    assertThat(issue.getLineNumber()).isEqualTo(16);
+                });
+    }
+
+    @Test
     void writingAFieldOfARecordParameterIsRejected() {
         var pkg = parseHelper.parse(RECORDS + """
             class C {

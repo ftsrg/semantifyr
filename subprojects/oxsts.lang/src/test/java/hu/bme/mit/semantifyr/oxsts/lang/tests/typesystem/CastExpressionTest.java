@@ -230,4 +230,51 @@ public class CastExpressionTest {
         pkg.assertNoResourceErrors();
         pkg.assertNoValidationErrors();
     }
+
+    @Test
+    void narrowingCastInsideAPropertyIsAccepted() {
+        var pkg = parseHelper.parse("""
+            package test
+            class Base { }
+            class Child : Base { }
+            class Host {
+                contains items: Base[0..*]
+                contains c: Child[1] subsets items
+                var ref: items[0..1] := nothing
+                prop { return AG (ref == nothing || (ref as Child) == c) }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        pkg.assertNoValidationErrors();
+    }
+
+    @Test
+    void wideningCastInsideAPropertyIsRejected() {
+        var pkg = parseHelper.parse("""
+            package test
+            class Base { }
+            class Child : Base { }
+            class Host {
+                contains c: Child[1]
+                prop { return AG (c as Base) == c }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertHasValidationIssue(OxstsValidator.INVALID_CAST, "narrowing");
+    }
+
+    @Test
+    void castOfATemporalPropertyToBoolIsAccepted() {
+        var pkg = parseHelper.parse("""
+            package test
+            class Host {
+                var x: int := 0
+                prop { return (AG x == 0) as bool }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        pkg.assertNoValidationErrors();
+    }
 }

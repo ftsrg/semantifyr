@@ -329,6 +329,45 @@ public class TypeValidationTest {
     }
 
     @Test
+    void featureTypedVariableArgumentToOptionalClassParameter_passes() {
+        var pkg = parseHelper.parse("""
+            package test
+            class Worker {
+                tran step() { }
+            }
+            class C {
+                contains workers: Worker[0..*]
+                contains a: Worker[1] subsets workers
+                var current: workers[0..1] := nothing
+                tran run(w: Worker[0..1]) { inline w.step() }
+                redefine tran { inline run(current) }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertNoResourceErrors();
+        pkg.assertNoValidationErrors();
+    }
+
+    @Test
+    void optionalFeatureTypedVariableArgumentToRequiredParameter_isRejected() {
+        var pkg = parseHelper.parse("""
+            package test
+            class Worker {
+                tran step() { }
+            }
+            class C {
+                contains workers: Worker[0..*]
+                contains a: Worker[1] subsets workers
+                var current: workers[0..1] := nothing
+                tran run(w: Worker) { inline w.step() }
+                redefine tran { inline run(current) }
+            }
+            """, CheckMode.ALL);
+
+        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "not assignable to parameter 'w'");
+    }
+
+    @Test
     void annotationArgumentOfWrongType_isRejected() {
         var pkg = parseHelper.parse("""
             package test
