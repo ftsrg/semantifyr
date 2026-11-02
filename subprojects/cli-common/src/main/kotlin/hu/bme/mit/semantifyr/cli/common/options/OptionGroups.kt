@@ -141,7 +141,7 @@ class BackendOptionGroup(
         .long()
         .restrictTo(min = 1L)
         .default(300L)
-        .help("Total verification wall-clock timeout, in seconds. Default: 300 (5 minutes).")
+        .help("Wall-clock timeout per case, in seconds, covering its compilation, every backend run of the portfolio and the back-annotation of the witness. Default: 300 (5 minutes).")
 
     val timeout: Duration
         get() = timeoutSeconds.seconds
