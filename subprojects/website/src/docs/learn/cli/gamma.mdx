@@ -10,7 +10,7 @@ import compile from '@cli-reference/gamma-compile.txt';
 
 # Gamma on the Command Line
 
-`semantifyr-gamma` verifies Gamma models (`.gamma` files): statecharts, their composition and their verification cases. It compiles a model to OXSTS on top of the bundled Gamma semantic library, which the distribution also carries in `libraries/gamma`.
+`semantifyr-gamma` verifies Gamma models (`.gamma` files): statecharts, their composition and their verification cases. It compiles a model to OXSTS on top of the bundled Gamma semantic library. Its distribution, `semantifyr-gamma-<version>.zip`, carries Theta, the library in `libraries/gamma` and the example model `models/smoke/Simple.gamma`.
 
 <CodeBlock language="text">{help}</CodeBlock>
 
@@ -24,4 +24,4 @@ import compile from '@cli-reference/gamma-compile.txt';
 
 <CodeBlock language="text">{compile}</CodeBlock>
 
-`compile` writes the OXSTS model of a Gamma model. `semantifyr` verifies it together with the library: `semantifyr verify -l libraries/gamma Simple.oxsts`.
+`compile` writes the OXSTS model of a Gamma model. `semantifyr` verifies it together with that library: `semantifyr verify -l <semantifyr-gamma distribution>/libraries/gamma Simple.oxsts`.

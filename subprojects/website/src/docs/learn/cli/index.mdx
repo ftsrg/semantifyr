@@ -13,7 +13,7 @@ import portfolios from '@cli-reference/portfolios-help.txt';
 
 # Command Line
 
-The `semantifyr` command lists, compiles, measures and verifies the verification cases of OXSTS models. The distribution ships it side by side with `semantifyr-sysml` for [SysML v2 models](sysml.mdx) and `semantifyr-gamma` for [Gamma models](gamma.mdx), which share its verification options, output and exit codes. Install them from the release zip ([Getting Started](../getting-started.md#option-d-install-the-command-line-interface-for-scripts-and-ci)) or build them from source with `./gradlew :distribution:installDist`; the launchers are in `subprojects/distribution/build/install/semantifyr/bin/`. They need a Java 25 runtime and at least one verification backend.
+The `semantifyr` command lists, compiles, measures and verifies the verification cases of OXSTS models. `semantifyr-sysml` for [SysML v2 models](sysml.mdx) and `semantifyr-gamma` for [Gamma models](gamma.mdx) share its verification options, output and exit codes. Each launcher comes in a release zip of its own with the Theta backend ([Getting Started](../getting-started.md#option-d-install-the-command-line-interface-for-scripts-and-ci)), or builds from source with `./gradlew :cli:installDist`, `:sysml-cli:installDist` or `:gamma-cli:installDist`; `semantifyr` is then `subprojects/cli/build/install/semantifyr/bin/semantifyr`. They need a Java 25 runtime and at least one verification backend.
 
 <CodeBlock language="text">{help}</CodeBlock>
 
