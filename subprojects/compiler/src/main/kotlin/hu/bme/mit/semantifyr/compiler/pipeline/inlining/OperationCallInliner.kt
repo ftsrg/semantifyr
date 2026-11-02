@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationStats
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.NestedOperationOptimizer
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.checkInterrupted
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OperationVisitor
@@ -64,6 +65,7 @@ class OperationCallInliner @AssistedInject constructor(
 
     private fun processAll() {
         while (processorQueue.any()) {
+            checkInterrupted()
             val next = processorQueue.removeFirst()
             visit(next)
         }

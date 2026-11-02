@@ -24,6 +24,8 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 class FakeExecutor(private val available: Boolean) : BackendExecutor {
     override fun isAvailable(): Boolean {
@@ -149,6 +151,7 @@ private fun judgedResult(
 fun stubRequest(
     outputDirectory: Path,
     property: Expression = OxstsFactory.createAG(),
+    timeout: Duration = 5.seconds,
 ): BackendVerificationRequest {
     val inlinedOxsts = OxstsFactory.createInlinedOxsts().also {
         it.property = OxstsFactory.createPropertyDeclaration().also { declaration ->
@@ -158,5 +161,6 @@ fun stubRequest(
     return BackendVerificationRequest(
         inlinedOxsts = inlinedOxsts,
         artifactOutputPath = outputDirectory,
+        timeout = timeout,
     )
 }

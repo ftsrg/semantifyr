@@ -187,7 +187,7 @@
           "type": "number",
           "default": 300,
           "minimum": 1,
-          "markdownDescription": "Per-case wall-clock timeout, in seconds."
+          "markdownDescription": "Wall-clock timeout per case, in seconds. It covers the case's compilation, every backend run of the portfolio and the back-annotation of the witness."
         },
         "semantifyr.maxConcurrency": {
           "type": "number",

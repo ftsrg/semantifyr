@@ -30,11 +30,8 @@ import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import hu.bme.mit.semantifyr.verifier.portfolio.withSubPath
 import kotlin.time.Clock
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 
 class SmartFullPortfolio(
-    private val timeout: Duration = 25.minutes,
     private val theta: VerificationBackend<ThetaConfig> = ThetaBackend(),
     private val uppaal: VerificationBackend<UppaalConfig> = UppaalBackend(),
     private val nuxmv: VerificationBackend<NuxmvConfig> = NuxmvBackend(),
@@ -99,10 +96,10 @@ class SmartFullPortfolio(
                 message = "$id: no available backends",
             )
         }
-        logger.info { "$id: racing ${available.joinToString { it.subPath }} (timeout $timeout)" }
+        logger.info { "$id: racing ${available.joinToString { it.subPath }} (timeout ${request.timeout})" }
         progress.reportProgress("racing ${available.size} backend(s)")
 
-        val outcome = firstDecisive(gate, timeout, progress) {
+        val outcome = firstDecisive(gate, request.timeout, progress) {
             for (task in available) {
                 async {
                     gate.withPermit {

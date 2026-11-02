@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.lang.ide.server.concurrent.LockingRequestManager
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager
 import hu.bme.mit.semantifyr.lang.ide.server.wire.ArtifactsLocation
 import hu.bme.mit.semantifyr.lang.ide.server.wire.ServerSettingsPayload
+import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionRequestManager
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScope
@@ -37,9 +38,18 @@ class LiveLanguageServerModule : AbstractModule() {
 
     @Provides
     @Singleton
-    fun provideServerSettings(): ServerSettings {
+    fun provideServerSettings(config: BackendConfig): ServerSettings {
         return ServerSettings().apply {
-            apply(ServerSettingsPayload.withArtifactsLocation(ArtifactsLocation.WORKSPACE))
+            apply(
+                ServerSettingsPayload(
+                    null,
+                    config.verification.timeout.inWholeSeconds,
+                    null,
+                    null,
+                    ServerSettingsPayload.Artifacts(ArtifactsLocation.WORKSPACE, null),
+                    null,
+                ),
+            )
         }
     }
 }

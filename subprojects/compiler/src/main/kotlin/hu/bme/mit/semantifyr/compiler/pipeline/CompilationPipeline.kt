@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.context.ModelSize
 import hu.bme.mit.semantifyr.compiler.pipeline.flattening.OxstsFlattener
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.OxstsInliner
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.OxstsInstantiator
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.checkInterrupted
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -40,6 +41,7 @@ class CompilationPipeline @Inject constructor(
         val createDuration = instantiationStart - createMark
         logger.info { "Starting compilation of '${inlinedOxsts.classDeclaration.name}', created in $createDuration" }
 
+        checkInterrupted()
         logger.info { "Phase: instantiation" }
         val instantiatedContext = oxstsInstantiator.instantiate(CreatedCompilationContext(inlinedOxsts))
         compilationArtifactManager.commitInstantiated()
@@ -47,6 +49,7 @@ class CompilationPipeline @Inject constructor(
         val instantiationDuration = inliningStart - instantiationStart
         logger.info { "Phase: instantiation done in $instantiationDuration" }
 
+        checkInterrupted()
         logger.info { "Phase: inlining" }
         val inlinedContext = oxstsInliner.inline(instantiatedContext)
         compilationArtifactManager.commitInlined()
@@ -55,6 +58,7 @@ class CompilationPipeline @Inject constructor(
 
         val inlinedSize = modelSizeCounter.count(inlinedContext)
 
+        checkInterrupted()
         val flatteningStart = markNow()
         logger.info { "Phase: flattening" }
         val flattenedContext = oxstsFlattener.flatten(inlinedContext)

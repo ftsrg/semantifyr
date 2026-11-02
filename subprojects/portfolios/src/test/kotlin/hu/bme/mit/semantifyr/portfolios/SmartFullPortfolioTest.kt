@@ -19,7 +19,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.mockito.Mockito.mock
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.seconds
 
 class SmartFullPortfolioTest {
 
@@ -31,7 +30,6 @@ class SmartFullPortfolioTest {
         @TempDir output: Path,
     ) {
         val portfolio = SmartFullPortfolio(
-            timeout = 5.seconds,
             theta = PassingBackend("theta"),
             uppaal = PassingBackend("uppaal"),
             nuxmv = PassingBackend("nuxmv"),
@@ -48,7 +46,6 @@ class SmartFullPortfolioTest {
         @TempDir output: Path,
     ) {
         val portfolio = SmartFullPortfolio(
-            timeout = 5.seconds,
             theta = FailingBackend("theta"),
             uppaal = FailingBackend("uppaal"),
             nuxmv = FailingBackend("nuxmv"),
@@ -65,7 +62,6 @@ class SmartFullPortfolioTest {
         @TempDir output: Path,
     ) {
         val portfolio = SmartFullPortfolio(
-            timeout = 5.seconds,
             theta = SlowBackend("theta", delayMillis = 200, verdict = VerificationVerdict.Failed),
             uppaal = PassingBackend("uppaal"),
             nuxmv = NotSupportedBackend("nuxmv"),
@@ -83,7 +79,6 @@ class SmartFullPortfolioTest {
         @TempDir output: Path,
     ) {
         val portfolio = SmartFullPortfolio(
-            timeout = 5.seconds,
             theta = NotSupportedBackend("theta"),
             uppaal = NotSupportedBackend("uppaal"),
             nuxmv = PassingBackend("nuxmv"),
@@ -101,7 +96,6 @@ class SmartFullPortfolioTest {
         @TempDir output: Path,
     ) {
         val portfolio = SmartFullPortfolio(
-            timeout = 5.seconds,
             theta = NotSupportedBackend("theta"),
             uppaal = NotSupportedBackend("uppaal"),
             nuxmv = NotSupportedBackend("nuxmv"),
@@ -119,7 +113,6 @@ class SmartFullPortfolioTest {
         @TempDir output: Path,
     ) {
         val portfolio = SmartFullPortfolio(
-            timeout = 5.seconds,
             theta = NotSupportedBackend("theta"),
             uppaal = NotSupportedBackend("uppaal"),
             nuxmv = NotSupportedBackend("nuxmv"),
@@ -137,7 +130,6 @@ class SmartFullPortfolioTest {
         @TempDir output: Path,
     ) {
         val portfolio = SmartFullPortfolio(
-            timeout = 5.seconds,
             theta = NotSupportedBackend("theta"),
             uppaal = PassingBackend("uppaal"),
             nuxmv = NotSupportedBackend("nuxmv"),
@@ -155,7 +147,6 @@ class SmartFullPortfolioTest {
         @TempDir output: Path,
     ) {
         val portfolio = SmartFullPortfolio(
-            timeout = 5.seconds,
             theta = PassingBackend("theta", UnavailableKey),
             uppaal = PassingBackend("uppaal", UnavailableKey),
             nuxmv = PassingBackend("nuxmv", UnavailableKey),
@@ -173,7 +164,6 @@ class SmartFullPortfolioTest {
         @TempDir output: Path,
     ) {
         val portfolio = SmartFullPortfolio(
-            timeout = 5.seconds,
             theta = ErroringBackend("theta"),
             uppaal = ErroringBackend("uppaal"),
             nuxmv = ErroringBackend("nuxmv"),
@@ -191,7 +181,6 @@ class SmartFullPortfolioTest {
         @TempDir output: Path,
     ) {
         val portfolio = SmartFullPortfolio(
-            timeout = 5.seconds,
             theta = NotSupportedBackend("theta"),
             uppaal = NotSupportedBackend("uppaal"),
             nuxmv = NotSupportedBackend("nuxmv"),
@@ -207,7 +196,6 @@ class SmartFullPortfolioTest {
     suspend fun `a decisive backend cancels the slower siblings`(@TempDir output: Path) {
         val slowUppaal = SlowBackend<UppaalConfig>("uppaal")
         val portfolio = SmartFullPortfolio(
-            timeout = 5.seconds,
             theta = PassingBackend("theta"),
             uppaal = slowUppaal,
             nuxmv = PassingBackend("nuxmv"),

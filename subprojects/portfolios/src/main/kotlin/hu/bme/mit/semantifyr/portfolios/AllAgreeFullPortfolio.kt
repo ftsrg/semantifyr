@@ -30,11 +30,8 @@ import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import hu.bme.mit.semantifyr.verifier.portfolio.withSubPath
 import kotlin.time.Clock
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 
 class AllAgreeFullPortfolio(
-    private val timeout: Duration = 25.minutes,
     private val theta: VerificationBackend<ThetaConfig> = ThetaBackend(),
     private val nuxmv: VerificationBackend<NuxmvConfig> = NuxmvBackend(),
     private val uppaal: VerificationBackend<UppaalConfig> = UppaalBackend(),
@@ -93,10 +90,10 @@ class AllAgreeFullPortfolio(
                 message = "$id: no available backends",
             )
         }
-        logger.info { "$id: requiring agreement across ${available.joinToString { it.subPath }} (timeout $timeout)" }
+        logger.info { "$id: requiring agreement across ${available.joinToString { it.subPath }} (timeout ${request.timeout})" }
         progress.reportProgress("running ${available.size} backend(s)")
 
-        val outcome = all(gate, timeout, progress) {
+        val outcome = all(gate, request.timeout, progress) {
             available.forEach {
                 async {
                     gate.withPermit {

@@ -72,7 +72,7 @@ class SemantifyrVerifierImplTest {
         val backendResult = decisiveResult(VerificationVerdict.Passed, "fake-backend")
         val portfolio = ScriptedPortfolio { _, _ -> backendResult }
 
-        val result = build(portfolio, output, timeout = 5.seconds)
+        val result = build(portfolio, output)
             .verify(loadFirstCase())
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
@@ -96,12 +96,41 @@ class SemantifyrVerifierImplTest {
     }
 
     @Test
+    suspend fun `the portfolio gets the time the compilation left`(@TempDir output: Path) {
+        var portfolioTimeout: Duration? = null
+        val portfolio = ScriptedPortfolio { request, _ ->
+            portfolioTimeout = request.timeout
+            decisiveResult(VerificationVerdict.Passed)
+        }
+
+        build(portfolio, output).verify(loadFirstCase())
+
+        val timeout = portfolioTimeout!!
+        assertThat(timeout.isPositive() && timeout < 30.seconds).describedAs("$timeout").isTrue
+    }
+
+    @Test
+    suspend fun `a compilation that outlasts the timeout is a Timeout and runs no portfolio`(@TempDir output: Path) {
+        val portfolio = ScriptedPortfolio { _, _ ->
+            decisiveResult(VerificationVerdict.Passed)
+        }
+        val case = loadFirstCase()
+
+        val result = build(portfolio, output, timeout = 1.milliseconds).verify(case)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
+        assertThat(result.message).isEqualTo("Timeout (1ms) exceeded while compiling.")
+        assertThat(portfolio.invocations).isZero
+        assertThat(caseReportPath(output, case)).exists()
+    }
+
+    @Test
     suspend fun `NotSupported names a flattened variable as declared in the source`(@TempDir output: Path) {
         val portfolio = ScriptedPortfolio { request, _ ->
             RejectingVariablesContext(request).execute()
         }
 
-        val result = build(portfolio, output, timeout = 5.seconds).verify(loadFirstCase())
+        val result = build(portfolio, output).verify(loadFirstCase())
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
         assertThat(result.message).isEqualTo("scripted does not support simple.oxsts:12: variables of type int (x)")
@@ -141,7 +170,7 @@ class SemantifyrVerifierImplTest {
 
         assertThatThrownBy {
             kotlinx.coroutines.runBlocking {
-                build(portfolio, output, timeout = 5.seconds).verify(loadFirstCase())
+                build(portfolio, output).verify(loadFirstCase())
             }
         }.isInstanceOf(CancellationException::class.java)
     }
@@ -153,7 +182,7 @@ class SemantifyrVerifierImplTest {
             decisiveResult(VerificationVerdict.Passed)
         }
 
-        val result = build(portfolio, output, timeout = 5.seconds)
+        val result = build(portfolio, output)
             .verify(loadFirstCase())
 
         assertThat(result.metrics.totalDuration).isGreaterThan(Duration.ZERO)
@@ -229,7 +258,7 @@ class SemantifyrVerifierImplTest {
     private fun build(
         portfolio: VerificationPortfolio,
         output: Path,
-        timeout: Duration = 5.seconds,
+        timeout: Duration = 30.seconds,
         artifacts: ArtifactConfig = ArtifactConfig.NONE,
     ): SemantifyrVerifier {
         return SemantifyrVerifier.builder()
