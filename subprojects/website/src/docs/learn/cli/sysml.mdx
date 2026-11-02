@@ -1,0 +1,29 @@
+---
+title: SysML v2
+sidebar_position: 2
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import help from '@cli-reference/sysml-help.txt';
+import verify from '@cli-reference/sysml-verify.txt';
+import compile from '@cli-reference/sysml-compile.txt';
+
+# SysML v2 on the Command Line
+
+`semantifyr-sysml` verifies SysML v2 models. It translates a model to OXSTS with the bundled SysIDE fork, which runs on Node.js, so it needs `node` (22 or newer) on `PATH`; without it, translating fails with exit code 4 and a message naming `node`. The translator reads every `.sysml` and `.kerml` file below the model's directory as the model's workspace, so keep other models and the artifact directory out of that directory. Translations are cached under `~/.semantifyr/sysml-cache`, keyed by the model and its workspace. The [SysML v2 tutorial](../tutorials/sysml-v2.md) walks through a run.
+
+<CodeBlock language="text">{help}</CodeBlock>
+
+## `verify`
+
+<CodeBlock language="text">{verify}</CodeBlock>
+
+`verify` translates the model and verifies its cases with the options, output and [exit codes](index.mdx#exit-codes) of `semantifyr verify`. The case names start with `semantifyr::sysml::model`, the package the translator gives every model. The translated model stays in `compiled/default/<model>.oxsts` under the artifact directory. For each case with a witness, `verify` runs the translator's `trace` command, which writes the witness as a SysML v2 model, `trace.sysml`, next to the case's `report.json` ([SysML v2 traces](../../develop/sysml-trace.md)); a witness the generator cannot express keeps its verdict, gets no `trace.sysml` and a warning in the log.
+
+The translation is verified on top of the bundled SysML v2 semantic library, the state-level library that the distribution also carries in `libraries/sysmlv2`. `--library` loads OXSTS files in addition to it and does not replace it.
+
+## `compile`
+
+<CodeBlock language="text">{compile}</CodeBlock>
+
+`compile` writes the OXSTS translation of the model. `semantifyr` verifies it together with the library: `semantifyr verify -l libraries/sysmlv2 room.oxsts`.

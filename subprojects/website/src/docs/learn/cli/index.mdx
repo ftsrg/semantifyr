@@ -13,11 +13,11 @@ import portfolios from '@cli-reference/portfolios-help.txt';
 
 # Command Line
 
-The `semantifyr` command lists, compiles, measures and verifies the verification cases of OXSTS models. Install it from the release zip ([Getting Started](../getting-started.md#option-d-install-the-command-line-interface-for-scripts-and-ci)) or build it from source with `./gradlew :semantifyr-cli:installDist`; the launcher is `subprojects/semantifyr-cli/build/install/semantifyr/bin/semantifyr`. It needs a Java 25 runtime and at least one verification backend.
+The `semantifyr` command lists, compiles, measures and verifies the verification cases of OXSTS models. The distribution ships it side by side with `semantifyr-sysml` for [SysML v2 models](sysml.mdx) and `semantifyr-gamma` for [Gamma models](gamma.mdx), which share its verification options, output and exit codes. Install them from the release zip ([Getting Started](../getting-started.md#option-d-install-the-command-line-interface-for-scripts-and-ci)) or build them from source with `./gradlew :distribution:installDist`; the launchers are in `subprojects/distribution/build/install/semantifyr/bin/`. They need a Java 25 runtime and at least one verification backend.
 
 <CodeBlock language="text">{help}</CodeBlock>
 
-A model or library path is an `.oxsts` file or a directory, which is searched recursively for `.oxsts` files. `verify` also takes a SysML v2 model file (`.sysml`): it translates the model with the bundled SysIDE fork, which needs Node.js on `PATH` and reads every `.sysml` file below the model's directory, verifies its cases, and writes `trace.sysml` next to each witness ([SysML v2 on the Command Line](../tutorials/sysml-v2.md)).
+A model or library path is an `.oxsts` file or a directory, which is searched recursively for `.oxsts` files. `--log-level` before the command sets the level of the log on standard error, `WARN` by default.
 
 ## `verify`
 
@@ -36,6 +36,8 @@ With `--json` it prints one JSON object per case and line, as each case finishes
 ## `compile`
 
 <CodeBlock language="text">{compile}</CodeBlock>
+
+For each case, `compile` prints `Compiling <case> to <file>`, writes the inlined model to the file, and prints the directory holding the artifacts of the case, a temporary directory unless `--artifact-directory` names one.
 
 ## `list`
 
@@ -66,11 +68,11 @@ The portfolio ids are listed under [Portfolios](portfolios.mdx).
 | 0 | Every selected case passed, or the command completed. |
 | 1 | Internal error: an unexpected exception, or the launcher could not start Java. |
 | 2 | Usage error: an unknown command or option, a missing or invalid value, conflicting options, an unknown portfolio. |
-| 3 | Input error: a model or library path does not exist, is not readable, or is neither an `.oxsts` file (or, for `verify`, a `.sysml` file) nor a directory holding one, or the case selection names or matches no case. |
+| 3 | Input error: a model or library path does not exist, is not readable, or is not a model file of the launcher (`.oxsts`, `.sysml` or `.gamma`) or, where a directory is allowed, a directory holding one, or the case selection names or matches no case. |
 | 4 | Compilation error: the model does not parse, validate or translate, or a case does not compile. |
 | 5 | Failed: a property does not hold. |
 | 6 | Inconclusive or NotSupported: a backend could not decide a case. |
 | 7 | Timeout. |
 | 8 | Errored: a backend failed, or the portfolio has no available backend. |
 
-Codes 2 to 4 and an unavailable portfolio stop the command before it verifies anything, or, in `compile` and `metrics`, at the case that does not compile. `verify` runs every case, including those after a case that does not compile, and exits with the highest of their codes: 0 means every case passed, 4 that some case did not compile and the rest passed, 5 that some case failed and the rest passed, failed or did not compile.
+Codes 2 to 4 and an unavailable portfolio stop the command before it verifies anything, or, in `compile` and `metrics`, at the case that does not compile. Every launcher's `verify` runs every case, including those after a case that does not compile, and exits with the highest of their codes: 0 means every case passed, 4 that some case did not compile and the rest passed, 5 that some case failed and the rest passed, failed or did not compile.

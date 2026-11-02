@@ -1,0 +1,27 @@
+---
+title: Gamma
+sidebar_position: 3
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import help from '@cli-reference/gamma-help.txt';
+import verify from '@cli-reference/gamma-verify.txt';
+import compile from '@cli-reference/gamma-compile.txt';
+
+# Gamma on the Command Line
+
+`semantifyr-gamma` verifies Gamma models (`.gamma` files): statecharts, their composition and their verification cases. It compiles a model to OXSTS on top of the bundled Gamma semantic library, which the distribution also carries in `libraries/gamma`.
+
+<CodeBlock language="text">{help}</CodeBlock>
+
+## `verify`
+
+<CodeBlock language="text">{verify}</CodeBlock>
+
+`verify` compiles the model and verifies its cases with the options, output and [exit codes](index.mdx#exit-codes) of `semantifyr verify`. A case is named by its Gamma qualified name, such as `Simple.WorkerStatechartIdleReachable`. Under the artifact directory, each case gets a directory named after it, holding the compiled model `model.oxsts` and the verification artifacts under `verification/`. For each case with a witness, `verify` writes the witness as a Gamma execution trace, `trace.gamma`, next to the case's `report.json` ([Gamma traces](../../develop/gamma-trace.md)).
+
+## `compile`
+
+<CodeBlock language="text">{compile}</CodeBlock>
+
+`compile` writes the OXSTS model of a Gamma model. `semantifyr` verifies it together with the library: `semantifyr verify -l libraries/gamma Simple.oxsts`.

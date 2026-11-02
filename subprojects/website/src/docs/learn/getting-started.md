@@ -46,10 +46,10 @@ Publication on the Visual Studio Marketplace is planned.
 
 ## Option D: Install the command-line interface (for scripts and CI)
 
-The `semantifyr` command lists, compiles and verifies the verification cases of OXSTS models from a terminal. It needs a Java 25 runtime.
+The `semantifyr` command lists, compiles and verifies the verification cases of OXSTS models from a terminal; `semantifyr-sysml` verifies SysML v2 models and `semantifyr-gamma` Gamma models. They need a Java 25 runtime.
 
-1. Build the distribution from a clone of the [repository](https://github.com/ftsrg/semantifyr) with `./gradlew :semantifyr-cli:installDist`, which installs it to `subprojects/semantifyr-cli/build/install/semantifyr`; `./gradlew :semantifyr-cli:distZip` packs the same files into `subprojects/semantifyr-cli/build/distributions/semantifyr-<version>.zip`. Once a release is published, you can download `semantifyr-<version>.zip` from the [latest release](https://github.com/ftsrg/semantifyr/releases/latest) and unzip it instead.
-2. Run `bin/semantifyr` in the installed directory (`bin\semantifyr.bat` on Windows). The distribution bundles the Theta backend, which the launcher puts on `PATH`; install other backends as for the VS Code extension.
+1. Build the distribution from a clone of the [repository](https://github.com/ftsrg/semantifyr) with `./gradlew :distribution:installDist`, which installs it to `subprojects/distribution/build/install/semantifyr`; `./gradlew :distribution:distZip` packs the same files into `subprojects/distribution/build/distributions/semantifyr-<version>.zip`. Once a release is published, you can download `semantifyr-<version>.zip` from the [latest release](https://github.com/ftsrg/semantifyr/releases/latest) and unzip it instead.
+2. Run `bin/semantifyr` in the installed directory (`bin\semantifyr.bat` on Windows). The distribution bundles the Theta backend, which the launchers put on `PATH`; install other backends as for the VS Code extension.
 3. Verify the bundled smoke model from the installed directory: `bin/semantifyr verify models/smoke`.
 
-The distribution also carries the Gamma and SysML v2 semantic libraries under `libraries/`, and `verify` takes a SysML v2 model directly when Node.js is on `PATH`. See [Command Line](cli/index.mdx) for the commands and options, and the [SysML v2 tutorial](tutorials/sysml-v2.md) for verifying SysML v2 models.
+The distribution also carries the Gamma and SysML v2 semantic libraries under `libraries/`. `bin/semantifyr-sysml` translates SysML v2 models with the bundled SysIDE fork, which needs Node.js on `PATH`. See [Command Line](cli/index.mdx) for the commands and options, and the [SysML v2 tutorial](tutorials/sysml-v2.md) for verifying SysML v2 models.

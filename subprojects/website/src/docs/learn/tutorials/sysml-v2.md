@@ -15,18 +15,18 @@ Semantifyr verifies SysML v2 models by translating them into OXSTS on top of a s
 
 - A Java 25 runtime found through `JAVA_HOME` or `PATH`.
 - Node.js 22 or newer on `PATH`: the SysML v2 front end, a fork of SysIDE, runs on Node.js.
-- The `semantifyr` command-line interface ([Getting Started](../getting-started.md#option-d-install-the-command-line-interface-for-scripts-and-ci)). Its distribution carries the translator from SysML v2 to OXSTS and the SysML v2 semantic library, so Node.js is the only prerequisite SysML v2 adds.
+- The Semantifyr command-line distribution ([Getting Started](../getting-started.md#option-d-install-the-command-line-interface-for-scripts-and-ci)), whose `semantifyr-sysml` launcher verifies SysML v2 models ([reference](../cli/sysml.mdx)). The distribution carries the translator from SysML v2 to OXSTS and the SysML v2 semantic library, so Node.js is the only prerequisite SysML v2 adds.
 
 To build the distribution from a clone of the repository, which needs Git (the first build downloads its dependencies, the SysIDE fork among them, and takes several minutes):
 
 ```bash
 git clone https://github.com/ftsrg/semantifyr.git
 cd semantifyr
-./gradlew :semantifyr-cli:installDist
-export SEMANTIFYR_HOME="$PWD/subprojects/semantifyr-cli/build/install/semantifyr"
+./gradlew :distribution:installDist
+export SEMANTIFYR_HOME="$PWD/subprojects/distribution/build/install/semantifyr"
 ```
 
-`SEMANTIFYR_HOME` now holds the same layout as the release zip: the launcher in `bin/`, Theta in `theta-xsts-cli/` and the semantic libraries in `libraries/`. If you use the [release zip](../getting-started.md#option-d-install-the-command-line-interface-for-scripts-and-ci) instead, point `SEMANTIFYR_HOME` at the unzipped `semantifyr-<version>` directory. The commands on this page are written for Linux and macOS shells; on Windows, use `bin\semantifyr.bat`.
+`SEMANTIFYR_HOME` now holds the same layout as the release zip: the launchers in `bin/`, Theta in `theta-xsts-cli/` and the semantic libraries in `libraries/`. If you use the [release zip](../getting-started.md#option-d-install-the-command-line-interface-for-scripts-and-ci) instead, point `SEMANTIFYR_HOME` at the unzipped `semantifyr-<version>` directory. The commands on this page are written for Linux and macOS shells; on Windows, use `bin\semantifyr-sysml.bat`.
 
 ## The Model
 
@@ -83,7 +83,7 @@ Create an empty directory and save the complete model in it as `room.sysml`. The
 In the directory of `room.sysml`, verify the model:
 
 ```bash
-"$SEMANTIFYR_HOME/bin/semantifyr" verify room.sysml --artifact-directory ../room-artifacts
+"$SEMANTIFYR_HOME/bin/semantifyr-sysml" verify room.sysml --artifact-directory ../room-artifacts
 ```
 
 The `verify` command translates `room.sysml` to OXSTS, an OXSTS model that instantiates the classes of the SysML v2 semantic library, which takes about a minute. It then finds the three verification cases and verifies each with the default `smart-full` portfolio, which races every installed backend. The artifacts go outside the model's directory, since the translator reads every `.sysml` file below it and the run writes SysML v2 traces.
