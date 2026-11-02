@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.utils
 
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOperator
@@ -57,6 +58,15 @@ object OxstsFactory : OxstsFactoryImpl() {
         if (value >= 0) {
             return createLiteralInteger().also {
                 it.value = value
+            }
+        }
+
+        // the grammar has no negative literal, and 2147483648 does not fit an int
+        if (value == Int.MIN_VALUE) {
+            return createArithmeticBinaryOperator().also {
+                it.op = ArithmeticOp.SUB
+                it.left = createLiteralInteger(-Int.MAX_VALUE)
+                it.right = createLiteralInteger(1)
             }
         }
 
