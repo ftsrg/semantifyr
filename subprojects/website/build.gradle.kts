@@ -84,7 +84,7 @@ val cliReference = listOf(
 
 val backendLimitations = tasks.register<JavaExec>("backendLimitations") {
     val outputFile = layout.buildDirectory.file("backend-reference/limitations.tsv")
-    classpath = cliDistributionFiles.get().asFileTree.matching { include("*/lib/*.jar") }
+    classpath = cliDistributionFiles.get().asFileTree.matching { include("${semantifyr.name}/lib/*.jar") }
     mainClass = "hu.bme.mit.semantifyr.portfolios.BackendLimitationsKt"
     jvmArgs("--enable-native-access=ALL-UNNAMED", "-Dguice_bytecode_gen_option=DISABLED")
     args(outputFile.get().asFile.absolutePath)
