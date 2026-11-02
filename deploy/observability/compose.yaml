@@ -48,6 +48,7 @@ services:
       GF_ANALYTICS_REPORTING_ENABLED: "false"
       GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
       GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_PLUGINS_PREINSTALL_DISABLED: "true"
     volumes:
       - ./datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
       - ./dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
