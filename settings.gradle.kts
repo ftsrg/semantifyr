@@ -71,6 +71,7 @@ include(
     "lang-ide-common",
     "cli-common",
     "cli",
+    "distribution",
     "semantifyr-editor-common",
     "oxsts.model",
     "oxsts.lang",
