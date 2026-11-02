@@ -18,10 +18,7 @@ class ShellBasedSpinExecutor :
     override val binaryName = "spin"
 
     override suspend fun execute(specification: SpinExecutionSpecification): SpinExecutionResult {
-        val depthArguments = specification.maxSearchDepth?.let {
-            listOf("-m$it")
-        } ?: emptyList()
-        val args = listOf("-search") + depthArguments + specification.extraArguments + listOf(specification.modelFileName)
+        val args = searchArguments(specification)
         val exitCode = runProcess(
             args = args,
             workingDirectory = specification.workingDirectory,
@@ -29,6 +26,19 @@ class ShellBasedSpinExecutor :
             errorFile = specification.errorFile,
         )
         return SpinExecutionResult(exitCode)
+    }
+
+    // a Spin option such as -o3 goes before -search, which hands the options after it to the compiler and pan
+    fun searchArguments(specification: SpinExecutionSpecification): List<String> {
+        val mergingArguments = if (specification.statementMerging) {
+            emptyList()
+        } else {
+            listOf("-o3")
+        }
+        val depthArguments = specification.maxSearchDepth?.let {
+            listOf("-m$it")
+        } ?: emptyList()
+        return mergingArguments + listOf("-search") + depthArguments + specification.extraArguments + listOf(specification.modelFileName)
     }
 
     override suspend fun replayTrail(specification: SpinReplaySpecification): SpinExecutionResult {

@@ -36,6 +36,7 @@ import hu.bme.mit.semantifyr.backends.spin.transformation.SpinModelTransformer
 import hu.bme.mit.semantifyr.backends.spin.transformation.SpinOperationVisitor
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.warn
+import java.io.File
 
 class SpinBackend : VerificationBackend<SpinConfig>() {
     override val id = "spin"
@@ -96,23 +97,16 @@ class SpinVerificationContext @AssistedInject constructor(
     }
 
     override suspend fun run(artifacts: SpinArtifacts): SpinVerdict? {
-        val spec = SpinExecutionSpecification(
-            workingDirectory = artifactManager.modelFile.parentFile,
-            modelFileName = artifactManager.modelFile.name,
-            extraArguments = config.extraArguments,
-            logFile = artifactManager.logFile,
-            errorFile = artifactManager.errorFile,
-            maxSearchDepth = config.maxSearchDepth,
-        )
-
-        val result = executor.execute(spec)
-
-        // Spin returns 1 on counterexample; treat non-crash exits as valid and rely on output parsing.
-        if (result.exitCode != 0 && result.exitCode != 1) {
-            error("spin execution failed with exit code ${result.exitCode}")
+        search(statementMerging = true, artifactManager.logFile)
+        val logFile = if (exceedsMergeLimit(artifactManager.logFile) || exceedsMergeLimit(artifactManager.errorFile)) {
+            logger.info { "[$backendId] spin cannot merge the statements of a step (merge requires more than 256 bups), searching again without statement merging" }
+            search(statementMerging = false, artifactManager.unmergedLogFile)
+            artifactManager.unmergedLogFile
+        } else {
+            artifactManager.logFile
         }
 
-        val summary = artifactManager.logFile.takeIf {
+        val summary = logFile.takeIf {
             it.exists()
         }?.useLines {
             spinLogVerdictParser.summarize(it)
@@ -123,6 +117,34 @@ class SpinVerificationContext @AssistedInject constructor(
             logger.warn { "[$backendId] pan reported no errors but the search was not exhaustive, treating the run as inconclusive. SpinConfig.maxSearchDepth raises pan's depth bound." }
         }
         return verdict
+    }
+
+    private suspend fun search(statementMerging: Boolean, logFile: File) {
+        val spec = SpinExecutionSpecification(
+            workingDirectory = artifactManager.modelFile.parentFile,
+            modelFileName = artifactManager.modelFile.name,
+            extraArguments = config.extraArguments,
+            logFile = logFile,
+            errorFile = artifactManager.errorFile,
+            maxSearchDepth = config.maxSearchDepth,
+            statementMerging = statementMerging,
+        )
+
+        val result = executor.execute(spec)
+
+        // Spin returns 1 on counterexample; treat non-crash exits as valid and rely on output parsing.
+        if (result.exitCode != 0 && result.exitCode != 1) {
+            error("spin execution failed with exit code ${result.exitCode}")
+        }
+    }
+
+    private fun exceedsMergeLimit(file: File): Boolean {
+        if (!file.exists()) {
+            return false
+        }
+        return file.useLines {
+            spinLogVerdictParser.exceedsMergeLimit(it)
+        }
     }
 
     override fun interpret(rawVerdict: SpinVerdict?, artifacts: SpinArtifacts): VerificationVerdict {

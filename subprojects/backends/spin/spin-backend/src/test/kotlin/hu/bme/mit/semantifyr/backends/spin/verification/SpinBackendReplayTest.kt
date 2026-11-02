@@ -22,6 +22,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.readText
 
 @InjectWithOxsts
 class SpinBackendReplayTest {
@@ -101,6 +102,32 @@ class SpinBackendReplayTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.inlinedWitness).isNull()
+    }
+
+    @Test
+    suspend fun `a step too long for statement merging is searched again without merging`() {
+        val padding = (1..150).joinToString(" ") {
+            "y := y + 1 y := y - 1"
+        }
+        val result = verify(
+            "MergeLimit",
+            models.parse(
+                """
+                    inlined oxsts of semantifyr::Anything
+                    var x : int := 0
+                    var y : int := 0
+                    init { }
+                    tran { assume(x < 2) $padding x := x + 1 }
+                    prop { AG x < 2 }
+                """,
+            ),
+        )
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        val witness = result.inlinedWitness!!
+        val states = listOfNotNull(witness.initializedState) + witness.transitionStates
+        assertThat(states.map { it.valuesByName()["x"] }).containsExactly(0, 1, 2)
+        assertThat(Path("build", "test-artifacts", "SpinBackendReplayTest", "MergeLimit", "spin.out").readText()).contains("merge requires more than 256 bups")
     }
 
     @Test

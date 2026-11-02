@@ -39,6 +39,15 @@ class SpinLogVerdictParserTest {
     }
 
     @Test
+    fun `the merge limit is detected and yields no verdict`() {
+        val lines = sequenceOf("spin: model.pml:303, Error: merge requires more than 256 bups")
+
+        assertThat(parser.exceedsMergeLimit(lines)).isTrue
+        assertThat(parser.parse(lines)).isNull()
+        assertThat(parser.exceedsMergeLimit(sequenceOf("errors: 0"))).isFalse
+    }
+
+    @Test
     fun `LTL violated line yields False`() {
         val verdict = parser.parse(
             sequenceOf(
