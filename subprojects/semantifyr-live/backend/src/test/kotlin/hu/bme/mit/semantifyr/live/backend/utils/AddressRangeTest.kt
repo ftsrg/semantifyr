@@ -19,9 +19,9 @@ class AddressRangeTest {
 
     @Test
     fun `a single address without a prefix matches only itself`() {
-        val range = AddressRange.parse("172.30.0.2")
-        assertThat(range.contains(address("172.30.0.2"))).isTrue()
-        assertThat(range.contains(address("172.30.0.3"))).isFalse()
+        val range = AddressRange.parse("172.30.0.253")
+        assertThat(range.contains(address("172.30.0.253"))).isTrue()
+        assertThat(range.contains(address("172.30.0.254"))).isFalse()
     }
 
     @Test
@@ -43,7 +43,7 @@ class AddressRangeTest {
         val range = AddressRange.parse("2001:db8::/32")
         assertThat(range.contains(address("2001:db8:1::1"))).isTrue()
         assertThat(range.contains(address("2001:db9::1"))).isFalse()
-        assertThat(range.contains(address("172.30.0.2"))).isFalse()
+        assertThat(range.contains(address("172.30.0.253"))).isFalse()
     }
 
     @Test
@@ -52,10 +52,10 @@ class AddressRangeTest {
             AddressRange.parse("cloudflared/32")
         }.isInstanceOf(IllegalArgumentException::class.java)
         assertThatThrownBy {
-            AddressRange.parse("172.30.0.2/33")
+            AddressRange.parse("172.30.0.253/33")
         }.isInstanceOf(IllegalArgumentException::class.java)
         assertThatThrownBy {
-            AddressRange.parse("172.30.0.2/x")
+            AddressRange.parse("172.30.0.253/x")
         }.isInstanceOf(IllegalArgumentException::class.java)
     }
 }

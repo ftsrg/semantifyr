@@ -34,7 +34,7 @@ class ProxyUserResolverTest {
 
     @Test
     fun `the header is rejected from any other peer`() {
-        assertThat(resolver().resolve("172.30.0.2", user("octocat"))).isNull()
+        assertThat(resolver().resolve("172.30.0.253", user("octocat"))).isNull()
         assertThat(resolver().resolve("172.30.0.9", user("octocat"))).isNull()
         assertThat(resolver().resolve("203.0.113.7", user("octocat"))).isNull()
         assertThat(resolver().resolve("localhost", user("octocat"))).isNull()

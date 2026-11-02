@@ -41,8 +41,8 @@ class ClientAddressResolverTest {
 
     @Test
     fun `any other peer cannot spoof the client address`() {
-        assertThat(resolver().resolve("172.30.0.2", forwarded("203.0.113.7")))
-            .isEqualTo("172.30.0.2")
+        assertThat(resolver().resolve("172.30.0.253", forwarded("203.0.113.7")))
+            .isEqualTo("172.30.0.253")
         assertThat(resolver().resolve("172.30.0.9", forwarded("203.0.113.7")))
             .isEqualTo("172.30.0.9")
     }

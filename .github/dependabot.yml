@@ -38,6 +38,7 @@ updates:
   - package-ecosystem: "docker-compose"
     directories:
       - "/deploy/edge"
+      - "/deploy/observability"
     schedule:
       interval: "weekly"
     rebase-strategy: "disabled"
