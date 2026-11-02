@@ -203,10 +203,6 @@ class SemantifyrVerifierTestHelper @Inject constructor(
     ) {
         logger.info { "Checking test case $case (artifacts at $outputDirectory)" }
 
-        val limitedEngines = engineLimitsFromTags(case)
-        val engineLimited = verificationPortfolio.executorKeys.isNotEmpty() && verificationPortfolio.executorKeys.all {
-            it.name in limitedEngines
-        }
         val required = verificationPortfolio.executorKeys.any {
             it.name in requiredBackends
         }
@@ -219,12 +215,6 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         }
 
         val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment)
-        if (engineLimited) {
-            Assertions.assertEquals(VerificationVerdict.NotSupported, result.verdict) {
-                "${case.qualifiedName} is tagged $ENGINE_LIMIT_TAG_PREFIX${limitedEngines.joinToString(",")}, so ${verificationPortfolio.id} must report NotSupported, got ${result.verdict} (${result.message ?: "no message"})"
-            }
-            return
-        }
         Assumptions.assumeFalse(
             result.verdict == VerificationVerdict.Timeout,
             "Portfolio ${verificationPortfolio.id} timed out on ${case.qualifiedName} within $timeout: ${result.message ?: "no message"}",
@@ -334,16 +324,6 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         return "\n\nBackend diagnostics (last $tailLineLimit lines per file):\n${sections.joinToString("\n")}"
     }
 
-    private fun engineLimitsFromTags(case: VerificationCase): Set<String> {
-        return case.tags.filter {
-            it.startsWith(ENGINE_LIMIT_TAG_PREFIX)
-        }.flatMap {
-            it.removePrefix(ENGINE_LIMIT_TAG_PREFIX).split(',')
-        }.map {
-            it.trim()
-        }.toSet()
-    }
-
     private fun expectedVerdictFromTags(case: VerificationCase): VerificationVerdict {
         return when {
             "expect-pass" in case.tags -> VerificationVerdict.Passed
@@ -355,8 +335,6 @@ class SemantifyrVerifierTestHelper @Inject constructor(
     }
 
     companion object {
-        private const val ENGINE_LIMIT_TAG_PREFIX = "engine-limit:"
-
         @JvmStatic
         fun testArtifactRoot(testClass: Class<*>): Path {
             return Path("build", "test-artifacts", testClass.simpleName)

@@ -24,12 +24,7 @@ import org.junit.jupiter.api.io.TempDir
 import org.opentest4j.AssertionFailedError
 import org.opentest4j.TestAbortedException
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.Path
-
-private val OtherExecutorKey = ExecutorKey("other") {
-    AlwaysAvailableExecutor()
-}
 
 @InjectWithOxsts
 class SemantifyrVerifierTestHelperTest {
@@ -93,36 +88,9 @@ class SemantifyrVerifierTestHelperTest {
             .isInstanceOf(AssertionFailedError::class.java)
     }
 
-    @Test
-    suspend fun `an engine-limited case passes when its engines report NotSupported`() {
-        val portfolio = FixedPortfolio(VerificationVerdict.NotSupported)
-        assertThat(check(portfolio, requiredFake, "engine-limit:other,fake")).isNull()
-        assertThat(portfolio.invocations.get()).isOne()
-    }
-
-    @Test
-    suspend fun `an engine-limited case that its engines decide fails as a stale tag`() {
-        assertThat(check(FixedPortfolio(VerificationVerdict.Passed), requiredFake, "engine-limit:other,fake"))
-            .isInstanceOf(AssertionFailedError::class.java)
-    }
-
-    @Test
-    suspend fun `Inconclusive on an engine not named by engine-limit fails`() {
-        assertThat(check(FixedPortfolio(VerificationVerdict.Inconclusive), requiredFake, "engine-limit:spin,uppaal"))
-            .isInstanceOf(AssertionFailedError::class.java)
-    }
-
-    @Test
-    suspend fun `a portfolio with an unlisted engine is not engine-limited`() {
-        val mixed = FixedPortfolio(VerificationVerdict.Inconclusive, executorKeys = setOf(FakeExecutorKey, OtherExecutorKey))
-        assertThat(check(mixed, requiredFake, "engine-limit:fake"))
-            .isInstanceOf(AssertionFailedError::class.java)
-    }
-
     private suspend fun check(
         portfolio: VerificationPortfolio,
         requiredBackends: Set<String>,
-        vararg extraTags: String,
     ): Throwable? {
         val context = helper.semantifyrLoader.loadStandaloneModel(Path("../../oxsts-test-models/simple/simple.oxsts"))
         val case = helper.collectVerificationCases(context).first {
@@ -131,7 +99,7 @@ class SemantifyrVerifierTestHelperTest {
         return runCatching {
             helper.checkTestModel(
                 context = context,
-                case = case.copy(tags = case.tags + extraTags),
+                case = case,
                 verificationPortfolio = portfolio,
                 outputDirectory = output,
                 requiredBackends = requiredBackends,
@@ -142,14 +110,12 @@ class SemantifyrVerifierTestHelperTest {
     private class FixedPortfolio(
         private val verdict: VerificationVerdict,
         private val available: Boolean = true,
-        override val executorKeys: Set<ExecutorKey<*>> = setOf(FakeExecutorKey),
     ) : VerificationPortfolio() {
+        override val executorKeys: Set<ExecutorKey<*>> = setOf(FakeExecutorKey)
         override val id: String = "fixed"
         override val displayName: String = id
         override val description: String = "test-only"
         override val legs: List<PortfolioLeg> = emptyList()
-
-        val invocations = AtomicInteger()
 
         override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
             return if (available) {
@@ -166,7 +132,6 @@ class SemantifyrVerifierTestHelperTest {
             environment: ExecutionEnvironment,
             progress: ProgressContext,
         ): BackendVerificationResult {
-            invocations.incrementAndGet()
             return BackendVerificationResult(verdict = verdict, metadata = fakeMetadata(FakeExecutorKey.name))
         }
     }

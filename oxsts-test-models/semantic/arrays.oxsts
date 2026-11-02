@@ -63,7 +63,6 @@ class ArrayLiteralInitBound {
 // Reachable: independent writes land each in their own slot.
 @VerificationCase
 @Tag("expect-pass")
-@Tag("engine-limit:spin")
 class ArraySlotIndependenceReach {
     var slots: int[3] := [0, 0, 0]
 

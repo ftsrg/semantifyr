@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
+import hu.bme.mit.semantifyr.verifier.discovery.CaseFilter
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
@@ -43,7 +44,12 @@ class SpinSemanticConformanceTest {
 
         @JvmStatic
         fun corpusCases(): List<Arguments> {
-            return helper.collectVerificationCasesAsArguments(context)
+            return helper.collectVerificationCasesAsArguments(
+                context,
+                CaseFilter.Matching {
+                    it.qualifiedName !in spinExcludedCases
+                },
+            )
         }
     }
 

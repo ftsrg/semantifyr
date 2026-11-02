@@ -50,7 +50,7 @@ Marks a class as a verification target. The optional `summary` parameter describ
 annotation Tag(category: string)
 ```
 
-Categorizes verification cases. For example, `@Tag(category = "slow")` marks long-running cases. The repository's conformance suites read `@Tag("expect-pass")` and `@Tag("expect-fail")` on a case as its expected verdict, and `@Tag("engine-limit:spin,uppaal")` as the engines that cannot decide it: those engines must report the case Not supported, so a tag that no longer applies fails, and the other engines' verdict must match.
+Categorizes verification cases. For example, `@Tag(category = "slow")` marks long-running cases. The repository's conformance suites read `@Tag("expect-pass")` and `@Tag("expect-fail")` on a case as its expected verdict; which backends run a case is the suites' choice, not the model's.
 
 ### `@Control`
 

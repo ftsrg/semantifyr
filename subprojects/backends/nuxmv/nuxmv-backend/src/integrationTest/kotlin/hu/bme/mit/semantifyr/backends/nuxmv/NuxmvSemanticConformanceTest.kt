@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
+import hu.bme.mit.semantifyr.verifier.discovery.CaseFilter
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
@@ -41,7 +42,12 @@ class NuxmvSemanticConformanceTest {
 
         @JvmStatic
         fun `OXSTS Semantic Test Suite Passes`(): List<Arguments> {
-            return helper.collectVerificationCasesAsArguments(context)
+            return helper.collectVerificationCasesAsArguments(
+                context,
+                CaseFilter.Matching {
+                    it.qualifiedName !in nuxmvExcludedCases
+                },
+            )
         }
     }
 
