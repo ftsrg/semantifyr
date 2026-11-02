@@ -11,6 +11,7 @@ import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendTestModels
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.valuesByName
@@ -125,6 +126,38 @@ class UppaalBackendReplayTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
         assertThat(result.message).matches("uppaal:default does not support \\S+:2: variables of type real \\(r\\)")
+    }
+
+    @Test
+    suspend fun `the over-approximation is NotSupported before dispatch on a havoc its candidates under-approximate`() {
+        val artifactDirectory = cleanArtifactDirectory("OverApproximatedHavoc")
+        val environment = ExecutionEnvironment.builder().put(UppaalExecutorKey) {
+            ReplayingUppaalExecutor("OverApproximatedHavoc")
+        }.build()
+        val inlinedOxsts = models.parse(
+            """
+                inlined oxsts of semantifyr::Anything
+                var x : int := 0
+                var y : int := 0
+                init { }
+                tran { havoc(x) y := x + 1 }
+                prop { AG y < 5 }
+            """,
+        )
+        val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory)
+
+        val result = UppaalBackend().verify(injector, UppaalConfig.OverApproximation, request, environment)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
+        assertThat(result.message).matches("uppaal:over-approximation does not support \\S+:2: havoced integers read other than in comparisons with literals \\(x\\)")
+    }
+
+    @Test
+    fun `only the over-approximation configuration over-approximates`() {
+        assertThat(UppaalConfig.OverApproximation.soundness).isEqualTo(SoundnessDirection.OverApproximating)
+        for (config in listOf(UppaalConfig.Default, UppaalConfig.BreadthFirst, UppaalConfig.DepthFirst, UppaalConfig.RandomDepthFirst, UppaalConfig.UnderApproximation, UppaalConfig.UnderApproximationLarge, UppaalConfig.AggressiveInclusion)) {
+            assertThat(config.soundness).describedAs(config.id).isEqualTo(SoundnessDirection.UnderApproximating)
+        }
     }
 
     @Test

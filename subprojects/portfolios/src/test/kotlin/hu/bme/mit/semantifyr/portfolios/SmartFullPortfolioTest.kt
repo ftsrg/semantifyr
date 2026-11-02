@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.portfolios
 
 import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
@@ -120,7 +121,7 @@ class SmartFullPortfolioTest {
         val portfolio = SmartFullPortfolio(
             timeout = 5.seconds,
             theta = NotSupportedBackend("theta"),
-            uppaal = PassingBackend("uppaal"),
+            uppaal = NotSupportedBackend("uppaal"),
             nuxmv = NotSupportedBackend("nuxmv"),
             spin = PassingBackend("spin"),
         )
@@ -128,7 +129,25 @@ class SmartFullPortfolioTest {
         val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
-        assertThat(result.message).contains("spin=Passed (not trusted, UnderApproximating)", "uppaal=Passed (not trusted, UnderApproximating)", "theta=NotSupported")
+        assertThat(result.message).contains("spin=Passed (not trusted, UnderApproximating)", "uppaal=NotSupported", "theta=NotSupported")
+    }
+
+    @Test
+    suspend fun `a Passed invariant from Uppaal's over-approximation wins the race`(
+        @TempDir output: Path,
+    ) {
+        val portfolio = SmartFullPortfolio(
+            timeout = 5.seconds,
+            theta = NotSupportedBackend("theta"),
+            uppaal = PassingBackend("uppaal"),
+            nuxmv = NotSupportedBackend("nuxmv"),
+            spin = PassingBackend("spin"),
+        )
+
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(result.soundness).isEqualTo(SoundnessDirection.OverApproximating)
     }
 
     @Test

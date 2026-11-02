@@ -28,9 +28,12 @@ abstract class UppaalTransformationTestBase {
         oxstsInjector.createChildInjector(UppaalBackendModule())
     }
 
-    protected fun <T> withCapabilityChecker(block: (UppaalCapabilityChecker) -> T): T {
+    protected fun <T> withCapabilityChecker(
+        checkerClass: Class<out UppaalCapabilityChecker> = UppaalCapabilityChecker::class.java,
+        block: (UppaalCapabilityChecker) -> T,
+    ): T {
         return withVerificationScopeBlocking {
-            block(childInjector.getInstance(UppaalCapabilityChecker::class.java))
+            block(childInjector.getInstance(checkerClass))
         }
     }
 

@@ -27,9 +27,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
 
-class UppaalCapabilityChecker @Inject constructor(
-    private val builtinSymbolResolver: BuiltinSymbolResolver,
-    private val builtinAnnotationHandler: BuiltinAnnotationHandler,
+open class UppaalCapabilityChecker @Inject constructor(
+    protected val builtinSymbolResolver: BuiltinSymbolResolver,
+    protected val builtinAnnotationHandler: BuiltinAnnotationHandler,
     private val integerRangeChecker: IntegerRangeChecker,
     private val uppaalDeclarationsBuilder: UppaalDeclarationsBuilder,
 ) : BackendCapabilityChecker() {

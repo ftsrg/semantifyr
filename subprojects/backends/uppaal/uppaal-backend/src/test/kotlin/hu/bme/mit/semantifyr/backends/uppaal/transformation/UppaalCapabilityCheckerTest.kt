@@ -16,13 +16,63 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
         enum Color { Red, Green }
     """
 
-    private fun unsupported(body: String): List<String> {
+    private fun unsupported(
+        body: String,
+        checkerClass: Class<out UppaalCapabilityChecker> = UppaalCapabilityChecker::class.java,
+    ): List<String> {
         val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors)
-        return withCapabilityChecker {
+        return withCapabilityChecker(checkerClass) {
             it.check(inlinedOxsts)
         }.map {
             it.description
         }
+    }
+
+    private fun overApproximationUnsupported(body: String): List<String> {
+        return unsupported(body, UppaalOverApproximationCapabilityChecker::class.java)
+    }
+
+    @Test
+    fun `the over-approximation refuses a havoced integer read other than in comparisons with literals`() {
+        val havoc = """
+            var x : int := 0
+            var y : int := 0
+            init { }
+            tran { havoc(x) y := x + 1 }
+            prop { AG y < 5 }
+        """
+        val uninitialized = """
+            var x : int
+            init { }
+            tran { }
+            prop { AG x * 2 < 5 }
+        """
+        val local = """
+            var y : int := 0
+            init { }
+            tran { var l : int y := l }
+            prop { AG y < 5 }
+        """
+
+        assertThat(overApproximationUnsupported(havoc)).containsExactly(UppaalOverApproximationCapabilityChecker.UNDER_APPROXIMATED_HAVOC)
+        assertThat(overApproximationUnsupported(uninitialized)).contains(UppaalOverApproximationCapabilityChecker.UNDER_APPROXIMATED_HAVOC)
+        assertThat(overApproximationUnsupported(local)).containsExactly(UppaalOverApproximationCapabilityChecker.UNDER_APPROXIMATED_HAVOC)
+        assertThat(unsupported(havoc)).isEmpty()
+    }
+
+    @Test
+    fun `the over-approximation accepts havoced integers compared only with literals and havoced booleans`() {
+        val unsupported = overApproximationUnsupported(
+            """
+                var x : int
+                var b : bool
+                init { }
+                tran { havoc(x) havoc(b) }
+                prop { AG (x == 3 || x < 0 || b) }
+            """,
+        )
+
+        assertThat(unsupported).isEmpty()
     }
 
     @Test

@@ -14,6 +14,7 @@ import com.google.inject.assistedinject.FactoryModuleBuilder
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.UnsupportedConstruct
 import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.VerificationContext
@@ -35,6 +36,7 @@ import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalArtifacts
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalCapabilityChecker
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalModelTransformer
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalOperationVisitor
+import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalOverApproximationCapabilityChecker
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalVariableTransformer
 import hu.bme.mit.semantifyr.logging.info
 
@@ -74,7 +76,8 @@ class UppaalVerificationContext @AssistedInject constructor(
     @param:Assisted private val config: UppaalConfig,
     @param:Assisted override val executor: UppaalExecutor,
     @Assisted request: BackendVerificationRequest,
-    override val capabilityChecker: UppaalCapabilityChecker,
+    uppaalCapabilityChecker: UppaalCapabilityChecker,
+    overApproximationCapabilityChecker: UppaalOverApproximationCapabilityChecker,
     private val uppaalModelTransformer: UppaalModelTransformer,
     private val uppaalTraceParser: UppaalTraceParser,
     private val uppaalLogVerdictParser: UppaalLogVerdictParser,
@@ -85,6 +88,12 @@ class UppaalVerificationContext @AssistedInject constructor(
     soundness = config.soundness,
     request = request,
 ) {
+
+    override val capabilityChecker = if (config.soundness == SoundnessDirection.OverApproximating) {
+        overApproximationCapabilityChecker
+    } else {
+        uppaalCapabilityChecker
+    }
 
     private val artifactManager = UppaalArtifactManager(request.artifactOutputPath)
 

@@ -40,6 +40,20 @@ class SoundnessDirectionTest {
     }
 
     @Test
+    fun `an over-approximating and an under-approximating engine never trust the same verdict`() {
+        val decisive = VerificationVerdict.entries.filter {
+            it.isDecisive
+        }
+        for (property in listOf(invariant, reachability)) {
+            for (verdict in decisive) {
+                val over = SoundnessDirection.OverApproximating.trusts(verdict, property)
+                val under = SoundnessDirection.UnderApproximating.trusts(verdict, property)
+                assertThat(over != under).describedAs("$verdict on ${property::class.simpleName}").isTrue
+            }
+        }
+    }
+
+    @Test
     fun `no direction trusts an undecided verdict`() {
         val undecided = VerificationVerdict.entries.filter {
             !it.isDecisive
