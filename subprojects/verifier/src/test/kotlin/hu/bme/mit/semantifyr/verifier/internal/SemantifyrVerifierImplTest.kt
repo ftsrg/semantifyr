@@ -91,7 +91,7 @@ class SemantifyrVerifierImplTest {
             .verify(loadFirstCase())
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
-        assertThat(result.message).contains("Timeout").contains("exceeded")
+        assertThat(result.message).startsWith("Timeout").endsWith("exceeded.").doesNotContain("back-annotating")
         assertThat(result.metadata.backendId).isNull()
     }
 

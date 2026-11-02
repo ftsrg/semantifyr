@@ -15,6 +15,7 @@ import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
@@ -204,12 +205,17 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
 
         val backAnnotationMark = markNow()
         val (outcome, trace, verifierBackAnnotationDuration) = try {
-            val (trace, duration) = runInTimeout(progress, deadline) {
-                runInterruptible {
-                    backAnnotateWitness(backendResult, compilation, qualifiedName)
+            val witness = backendResult.inlinedWitness
+            if (witness == null) {
+                Triple(backendResult, null, Duration.ZERO)
+            } else {
+                val (trace, duration) = runInTimeout(progress, deadline) {
+                    runInterruptible {
+                        backAnnotateWitness(witness, backendResult, compilation, qualifiedName)
+                    }
                 }
+                Triple(backendResult, trace, duration)
             }
-            Triple(backendResult, trace, duration)
         } catch (_: TimeoutCancellationException) {
             logger.info { "Back-annotation of '$qualifiedName' timed out after ${semantifyrVerifierConfiguration.timeout}" }
             val timedOut = backendResult.copy(
@@ -293,12 +299,11 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
     }
 
     private fun backAnnotateWitness(
+        witness: InlinedWitness,
         backendResult: BackendVerificationResult,
         compilation: FlattenedCompilationContext,
         qualifiedName: String,
-    ): Pair<Trace?, Duration> {
-        val witness = backendResult.inlinedWitness ?: return null to Duration.ZERO
-
+    ): Pair<Trace, Duration> {
         logger.info { "[$qualifiedName] back-annotating witness from ${backendResult.metadata.backendId ?: "?"}" }
         val (trace, duration) = measureTimedValue {
             val classWitness = classWitnessTransformer.transform(witness, compilation)
