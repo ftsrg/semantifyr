@@ -40,18 +40,18 @@ if [ -n "$changed" ]; then
     done
 fi
 
-if docker compose up -d --remove-orphans ${recreate:+"$recreate"}; then
-    echo "edge deployed, changed:${changed:- nothing}"
+if docker compose up -d --wait --wait-timeout 180 --remove-orphans ${recreate:+"$recreate"}; then
+    echo "${PWD##*/} deployed, changed:${changed:- nothing}"
     exit 0
 fi
 
-echo "edge failed to start" >&2
+echo "${PWD##*/} failed to start" >&2
 docker compose logs --tail 50 >&2 || true
 
 if [ -n "$changed" ]; then
     cp -p previous/* .
-    if docker compose up -d --remove-orphans --force-recreate; then
-        echo "restored the previous edge" >&2
+    if docker compose up -d --wait --wait-timeout 180 --remove-orphans --force-recreate; then
+        echo "restored the previous ${PWD##*/}" >&2
         exit 70
     fi
 fi
