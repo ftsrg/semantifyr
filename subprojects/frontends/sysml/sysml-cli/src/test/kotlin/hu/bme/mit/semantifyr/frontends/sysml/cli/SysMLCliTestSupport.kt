@@ -12,7 +12,6 @@ import hu.bme.mit.semantifyr.cli.common.execute
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
-import org.junit.jupiter.api.Assumptions.assumeTrue
 import kotlin.io.path.Path
 
 val tutorialModel = Path("../models/tutorial/room.sysml")
@@ -31,12 +30,4 @@ suspend fun runSysMLCli(
     return command.test(arguments.toList()) {
         command.execute(it)
     }
-}
-
-// the bundled SysIDE CLI that translates a model runs on Node.js
-fun assumeNodeOnPath() {
-    val available = runCatching {
-        ProcessBuilder("node", "--version").redirectErrorStream(true).start().waitFor() == 0
-    }.getOrDefault(false)
-    assumeTrue(available, "translating SysML v2 needs node on PATH")
 }

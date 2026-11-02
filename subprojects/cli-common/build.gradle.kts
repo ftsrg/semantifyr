@@ -19,4 +19,5 @@ dependencies {
 
     testFixturesApi(testFixtures(project(":verifier")))
     testFixturesApi(libs.kotlinx.serialization.json)
+    testFixturesImplementation(project(":theta-executor"))
 }

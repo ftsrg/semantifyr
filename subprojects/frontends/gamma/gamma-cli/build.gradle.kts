@@ -22,6 +22,17 @@ application {
     applicationName = "semantifyr-gamma"
 }
 
+distributions.main {
+    contents {
+        from(layout.projectDirectory.dir("../models/libraries/default")) {
+            into("libraries/gamma")
+        }
+        from(layout.projectDirectory.file("../models/examples/Simple.gamma")) {
+            into("models/smoke")
+        }
+    }
+}
+
 tasks.named("test") {
     inputs.dir(layout.projectDirectory.dir("../models/examples"))
         .withPropertyName("gammaExamples")

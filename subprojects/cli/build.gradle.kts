@@ -25,8 +25,16 @@ application {
 
 val rootDirectory = isolated.rootProject.projectDirectory
 
-tasks.named("test") {
+tasks.withType<Test>().configureEach {
     inputs.dir(rootDirectory.dir("oxsts-test-models"))
         .withPropertyName("oxstsTestModels")
         .withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+distributions.main {
+    contents {
+        from(rootDirectory.dir("oxsts-test-models/smoke")) {
+            into("models/smoke")
+        }
+    }
 }

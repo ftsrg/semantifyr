@@ -8,6 +8,8 @@ package hu.bme.mit.semantifyr.gradle.conventions
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.application")
+    id("hu.bme.mit.semantifyr.gradle.conventions.theta")
+    id("hu.bme.mit.semantifyr.gradle.conventions.verification")
 }
 
 // cmd.exe rejects a line over 8191 characters, which the expanded jar list exceeds under a long install path
@@ -29,6 +31,13 @@ distributions.main {
     contents {
         from(windowsClasspathJar) {
             into("lib")
+        }
+        from(tasks.named("cloneTheta")) {
+            into("theta-xsts-cli")
+            // archives get fixed permissions, which drop the launcher's execute bit
+            filePermissions {
+                unix("rwxr-xr-x")
+            }
         }
     }
 }
@@ -56,18 +65,28 @@ tasks.startScripts {
     }
 }
 
-// the launchers ship together in :distribution's zip
-tasks.distZip {
-    enabled = false
-}
-
 tasks.distTar {
     enabled = false
 }
 
-configurations.consumable("launcherElements") {
-    attributes(semantifyrArtifact("launcher"))
-    outgoing.artifact(tasks.installDist.map { it.destinationDir }) {
-        builtBy(tasks.installDist)
+val unzipDistribution = tasks.register<Sync>("unzipDistribution") {
+    inputs.files(tasks.distZip)
+    from(zipTree(tasks.distZip.flatMap { it.archiveFile }))
+    into(layout.buildDirectory.dir("unzipped"))
+}
+
+testing {
+    suites {
+        named<JvmTestSuite>("verificationTest") {
+            dependencies {
+                implementation(testFixtures(project(":cli-common")))
+            }
+
+            targets.all {
+                testTask.configure {
+                    inputs.files(unzipDistribution)
+                }
+            }
+        }
     }
 }

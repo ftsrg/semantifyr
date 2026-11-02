@@ -25,6 +25,17 @@ application {
 
 val rootDirectory = isolated.rootProject.projectDirectory
 
+distributions.main {
+    contents {
+        from(layout.projectDirectory.dir("../models/libraries/default")) {
+            into("libraries/sysmlv2")
+        }
+        from(layout.projectDirectory.file("../models/tutorial/room.sysml")) {
+            into("models/smoke")
+        }
+    }
+}
+
 tasks.named("test") {
     inputs.dir(layout.projectDirectory.dir("../models/tutorial"))
         .withPropertyName("sysmlTutorialModels")
