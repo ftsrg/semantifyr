@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.backends.spin.transformation
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
+import hu.bme.mit.semantifyr.backend.BackendLimitation
 import hu.bme.mit.semantifyr.backend.UnsupportedConstruct
 import hu.bme.mit.semantifyr.backend.transformation.IntegerRangeChecker
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
@@ -66,5 +67,23 @@ class SpinCapabilityChecker @Inject constructor(
             return null
         }
         return "non-boolean if-then-else inside a property"
+    }
+
+    companion object {
+        private const val WRAPS = "Spin computes with 32-bit integers that wrap without notice, so a value beyond them would make a trace wrong"
+
+        val limitations = listOf(
+            BackendLimitation("variables of type real", "Promela has integer, boolean and mtype variables only"),
+            BackendLimitation("variables of type string", "Promela has integer, boolean and mtype variables only"),
+            BackendLimitation("for-operations", "the Promela translation has no loop"),
+            BackendLimitation("real literals", "Promela has no real numbers"),
+            BackendLimitation("string literals", "Promela has no strings"),
+            BackendLimitation("array literals", "the backend receives arrays split into one variable per slot and has no form for an array value"),
+            BackendLimitation("array indexing", "the backend receives arrays split into one variable per slot and has no form for indexing"),
+            BackendLimitation("non-boolean if-then-else inside a property", "an LTL formula has no conditional expression, and only a boolean one can be rewritten into logic"),
+            BackendLimitation("unbounded integer variables", "$WRAPS; the property depends on a variable without a static bound"),
+            BackendLimitation("integer variables beyond the 32-bit range", "$WRAPS; the property depends on a variable whose static bound exceeds them"),
+            BackendLimitation("arithmetic that may leave the 32-bit range", "$WRAPS; the property depends on the arithmetic"),
+        )
     }
 }

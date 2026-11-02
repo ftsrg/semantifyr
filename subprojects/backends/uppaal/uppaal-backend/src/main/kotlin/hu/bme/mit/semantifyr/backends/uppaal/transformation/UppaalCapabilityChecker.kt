@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.backends.uppaal.transformation
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
+import hu.bme.mit.semantifyr.backend.BackendLimitation
 import hu.bme.mit.semantifyr.backend.UnsupportedConstruct
 import hu.bme.mit.semantifyr.backend.transformation.IntegerRangeChecker
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
@@ -87,5 +88,25 @@ open class UppaalCapabilityChecker @Inject constructor(
     private fun isClockReference(reference: Expression): Boolean {
         val variable = (reference as? ElementReference)?.element as? VariableDeclaration ?: return false
         return builtinAnnotationHandler.isClockVariable(variable)
+    }
+
+    companion object {
+        val limitations = listOf(
+            BackendLimitation("variables of type real", "the Uppaal translation declares integer, boolean, enumeration and clock variables only"),
+            BackendLimitation("variables of type string", "the Uppaal translation declares integer, boolean, enumeration and clock variables only"),
+            BackendLimitation("@Clock on variables that are not data-typed", "a clock stands for a time value, which an enumeration cannot hold"),
+            BackendLimitation("clock resets to values other than 0", "the translation resets a clock to 0 only"),
+            BackendLimitation("havoc on clocks", "a clock cannot take an arbitrary value"),
+            BackendLimitation("for-operations", "the Uppaal translation has no loop"),
+            BackendLimitation("string literals", "Uppaal has no strings"),
+            BackendLimitation("array literals", "the backend receives arrays split into one variable per slot and has no form for an array value"),
+            BackendLimitation("array indexing", "the backend receives arrays split into one variable per slot and has no form for indexing"),
+            BackendLimitation("arithmetic that may leave the 32-bit range", "Uppaal's arithmetic wraps at 32 bits before its range check can stop the run; the property depends on the arithmetic"),
+            BackendLimitation(
+                UppaalOverApproximationCapabilityChecker.UNDER_APPROXIMATED_HAVOC,
+                "Uppaal chooses a havoced integer among candidate values, which under-approximates a variable read this way, and a run is never both over- and under-approximating",
+                configuration = "over-approximation",
+            ),
+        )
     }
 }

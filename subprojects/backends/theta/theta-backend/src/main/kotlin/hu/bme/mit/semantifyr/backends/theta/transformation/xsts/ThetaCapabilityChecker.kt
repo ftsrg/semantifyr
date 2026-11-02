@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
+import hu.bme.mit.semantifyr.backend.BackendLimitation
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DataTypeDeclaration
@@ -46,5 +47,16 @@ class ThetaCapabilityChecker @Inject constructor(
             return null
         }
         return "variables of type ${domain.name}"
+    }
+
+    companion object {
+        val limitations = listOf(
+            BackendLimitation("variables of type real", "XSTS has integer, boolean and enumeration variables only"),
+            BackendLimitation("variables of type string", "XSTS has integer, boolean and enumeration variables only"),
+            BackendLimitation("real literals", "XSTS has no real numbers"),
+            BackendLimitation("string literals", "XSTS has no strings"),
+            BackendLimitation("array literals", "the backend receives arrays split into one variable per slot and has no form for an array value"),
+            BackendLimitation("for-operations over anything but a range", "an XSTS loop runs over an integer range"),
+        )
     }
 }

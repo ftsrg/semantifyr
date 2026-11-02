@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.backends.nuxmv.transformation
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
+import hu.bme.mit.semantifyr.backend.BackendLimitation
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
@@ -38,5 +39,16 @@ class NuxmvCapabilityChecker @Inject constructor(
             return null
         }
         return "variables of type ${domain.name}"
+    }
+
+    companion object {
+        val limitations = listOf(
+            BackendLimitation("variables of type real", "the SMV translation declares integer, boolean and enumeration variables only"),
+            BackendLimitation("variables of type string", "the SMV translation declares integer, boolean and enumeration variables only"),
+            BackendLimitation("for-operations", "the SMV translation has no loop"),
+            BackendLimitation("string literals", "SMV has no strings"),
+            BackendLimitation("array literals", "the backend receives arrays split into one variable per slot and has no form for an array value"),
+            BackendLimitation("array indexing", "the backend receives arrays split into one variable per slot and has no form for indexing"),
+        )
     }
 }

@@ -14,6 +14,12 @@ class UnsupportedConstruct(
     val description: String,
 )
 
+class BackendLimitation(
+    val construct: String,
+    val reason: String,
+    val configuration: String? = null,
+)
+
 abstract class BackendCapabilityChecker {
 
     fun check(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {

@@ -18,11 +18,14 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
 
     private fun unsupported(body: String): List<String> {
         val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors)
-        return withCapabilityChecker {
+        val unsupported = withCapabilityChecker {
             it.check(inlinedOxsts)
         }.map {
             it.description
         }
+        // the limitations page lists what the checker reports
+        assertThat(SpinCapabilityChecker.limitations.map { it.construct }).containsAll(unsupported)
+        return unsupported
     }
 
     @Test

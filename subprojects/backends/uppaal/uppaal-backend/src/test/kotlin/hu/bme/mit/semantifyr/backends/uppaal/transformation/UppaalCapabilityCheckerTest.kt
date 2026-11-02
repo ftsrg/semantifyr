@@ -21,11 +21,14 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
         checkerClass: Class<out UppaalCapabilityChecker> = UppaalCapabilityChecker::class.java,
     ): List<String> {
         val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors)
-        return withCapabilityChecker(checkerClass) {
+        val unsupported = withCapabilityChecker(checkerClass) {
             it.check(inlinedOxsts)
         }.map {
             it.description
         }
+        // the limitations page lists what the checker reports
+        assertThat(UppaalCapabilityChecker.limitations.map { it.construct }).containsAll(unsupported)
+        return unsupported
     }
 
     private fun overApproximationUnsupported(body: String): List<String> {

@@ -82,6 +82,16 @@ val cliReference = listOf(
     cliReferenceTask("gamma-compile", semantifyrGamma, "compile", "--help"),
 )
 
+val backendLimitations = tasks.register<JavaExec>("backendLimitations") {
+    val outputFile = layout.buildDirectory.file("backend-reference/limitations.tsv")
+    classpath = cliDistributionFiles.get().asFileTree.matching { include("*/lib/*.jar") }
+    mainClass = "hu.bme.mit.semantifyr.portfolios.BackendLimitationsKt"
+    jvmArgs("--enable-native-access=ALL-UNNAMED", "-Dguice_bytecode_gen_option=DISABLED")
+    args(outputFile.get().asFile.absolutePath)
+    outputs.file(outputFile)
+    outputs.cacheIf { true }
+}
+
 tasks.npmInstall {
     workingDir = rootProject.projectDir
 }
@@ -156,6 +166,7 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     configureSharedInputs()
     inputs.property("liveBackendUrl", providers.environmentVariable("SEMANTIFYR_LIVE_URL").orElse(""))
     inputs.files(cliReference)
+    inputs.files(backendLimitations)
 
     npmCommand.set(listOf("run", "assemble"))
     inputs.files(cloneApiDocs)

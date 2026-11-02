@@ -18,9 +18,12 @@ class ThetaCapabilityCheckerTest : ThetaTransformationTestBase() {
 
     private fun unsupported(body: String): List<String> {
         val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors)
-        return capabilityChecker().check(inlinedOxsts).map {
+        val unsupported = capabilityChecker().check(inlinedOxsts).map {
             it.description
         }
+        // the limitations page lists what the checker reports
+        assertThat(ThetaCapabilityChecker.limitations.map { it.construct }).containsAll(unsupported)
+        return unsupported
     }
 
     @Test

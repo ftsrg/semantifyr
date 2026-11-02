@@ -1,0 +1,13 @@
+---
+title: Theta
+sidebar_position: 0
+---
+
+import BackendLimitations from '@site/src/components/BackendLimitations';
+import limitations from '@backend-reference/limitations.tsv';
+
+# Theta
+
+[Theta](https://github.com/ftsrg/theta) verifies the XSTS translation of a case with unbounded integers, and its verdicts are exact. Before it runs, it reports a case Not supported when the case holds a construct of the table, naming each construct and its source line. The table is generated from Theta's capability check, so it describes the current build.
+
+<BackendLimitations table={limitations} backend="theta" />

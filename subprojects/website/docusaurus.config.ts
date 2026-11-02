@@ -80,6 +80,8 @@ export default {
             '@sysml-tutorial-models': path.resolve(__dirname, '../frontends/sysml/models/tutorial'),
             // written by the cliReference_* Gradle tasks
             '@cli-reference': path.resolve(__dirname, 'build/cli-reference'),
+            // written by the backendLimitations Gradle task
+            '@backend-reference': path.resolve(__dirname, 'build/backend-reference'),
           },
         },
         module: {

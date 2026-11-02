@@ -1,0 +1,13 @@
+---
+title: nuXmv
+sidebar_position: 1
+---
+
+import BackendLimitations from '@site/src/components/BackendLimitations';
+import limitations from '@backend-reference/limitations.tsv';
+
+# nuXmv
+
+[nuXmv](https://nuxmv.fbk.eu/) verifies the SMV translation of a case with unbounded integers, and its verdicts are exact; its `bdd-invar` configuration needs bounded integers. Before it runs, it reports a case Not supported when the case holds a construct of the table, naming each construct and its source line. The table is generated from nuXmv's capability check, so it describes the current build.
+
+<BackendLimitations table={limitations} backend="nuxmv" />
