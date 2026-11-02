@@ -1,0 +1,43 @@
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+name: Deploy Observability
+on:
+  push:
+    branches: [ "main" ]
+    paths: [ "deploy/observability/**", "deploy/edge/deploy.sh" ]
+  workflow_dispatch:
+permissions: {}
+jobs:
+  deploy:
+    name: Deploy Observability
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    concurrency:
+      group: deploy-observability
+      cancel-in-progress: false
+    environment: live-fured
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      # Grafana skips a dashboard it cannot parse and stays healthy, so the deploy would not fail on it
+      - name: Check the dashboards
+        run: jq empty deploy/observability/*.json
+      - name: Configure SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          printf 'Host live\n  HostName %s\n  Port %s\n  User %s\n  IdentityFile ~/.ssh/deploy\n' \
+            "$DEPLOY_HOST" "$DEPLOY_PORT" "$DEPLOY_USER" > ~/.ssh/config
+      - name: Deploy
+        run: tar -C deploy/observability --exclude env.example -cz . -C ../edge deploy.sh | ssh live observability
