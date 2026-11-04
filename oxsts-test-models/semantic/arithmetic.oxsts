@@ -164,38 +164,6 @@ class UnaryMinusBound {
     }
 }
 
-// --- precedence: * / binds tighter than + - ---
-
-// Reachable: 2 + 3 * 4 = 14 (not (2 + 3) * 4 = 20).
-@VerificationCase
-@Tag("expect-pass")
-class PrecedenceReach {
-    var r: int := 0
-
-    redefine tran {
-        r := 2 + 3 * 4
-    }
-
-    prop {
-        return EF r == 14
-    }
-}
-
-// Dual: wrong-precedence outcome 20 is unreachable.
-@VerificationCase
-@Tag("expect-pass")
-class PrecedenceBound {
-    var r: int := 0
-
-    redefine tran {
-        r := 2 + 3 * 4
-    }
-
-    prop {
-        return AG r != 20
-    }
-}
-
 @VerificationCase
 @Tag("expect-fail")
 class AddViolated {
@@ -263,22 +231,6 @@ class UnaryMinusViolated {
 
     prop {
         return AG x > 0
-    }
-}
-
-// Left to right, `2 + 3 * 4` would be 20.
-
-@VerificationCase
-@Tag("expect-fail")
-class PrecedenceViolated {
-    var r: int := 0
-
-    redefine tran {
-        r := 2 + 3 * 4
-    }
-
-    prop {
-        return AG (r == 0 || r == 20)
     }
 }
 
