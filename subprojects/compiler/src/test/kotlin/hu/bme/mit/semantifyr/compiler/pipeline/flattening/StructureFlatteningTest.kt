@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.flattening
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
 class StructureFlatteningTest : FlatteningTestBase() {
@@ -84,6 +85,26 @@ class StructureFlatteningTest : FlatteningTestBase() {
                 }
             """,
         )
+    }
+
+    @Test
+    fun `a member read through an absent optional instance fails compilation`() {
+        assertThatThrownBy {
+            flatten(
+                "Host",
+                """
+                    package flattening::tests
+                    class Leaf {
+                        var count : int := 0
+                    }
+                    @VerificationCase
+                    class Host {
+                        contains leaf : Leaf[0..1]
+                        prop { return AG leaf?.count == 0 }
+                    }
+                """,
+            )
+        }.hasMessageContaining("This expression is not evaluable to a single instance!")
     }
 
     @Test
