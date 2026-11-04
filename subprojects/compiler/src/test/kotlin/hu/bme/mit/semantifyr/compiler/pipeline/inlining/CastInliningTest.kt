@@ -51,10 +51,10 @@ class CastInliningTest : InliningTestBase() {
                 package inlining::tests::cast_scalar
                 @VerificationCase
                 class Case {
-                    var a: any := 0
+                    var anything: any := 0
                     redefine tran {
-                        var n: int := 0
-                        n := a as int
+                        var number: int := 0
+                        number := anything as int
                     }
                     prop { return EF true }
                 }
@@ -68,6 +68,48 @@ class CastInliningTest : InliningTestBase() {
     }
 
     @Test
+    fun `a narrowing cast of an instance is erased in a transition and in a property`() {
+        assertInlinedModel(
+            "Case",
+            """
+                package inlining::tests::instance_cast
+                class Base { }
+                class Child : Base { }
+                @VerificationCase
+                class Case {
+                    contains children: Base[0..*]
+                    contains child: Child[1] subsets children
+                    var reference: children[0..1] := nothing
+                    redefine init {
+                        reference := child
+                    }
+                    redefine tran {
+                        var narrowed: Child[0..1] := nothing
+                        narrowed := reference as Child
+                    }
+                    prop {
+                        return AG (reference == nothing || (reference as Child) == child)
+                    }
+                }
+            """,
+            $$$$"""
+                init {
+                    root.reference := root.child
+                }
+
+                tran {
+                    var 'narrowed$$$local0' : inlining::tests::instance_cast::Child[0..1] := nothing
+                    'narrowed$$$local0' := root.reference
+                }
+
+                prop {
+                    AG root.reference == nothing || root.reference == root.child
+                }
+            """,
+        )
+    }
+
+    @Test
     fun `widening cast is rejected at inline time`() {
         prepare(
             "Case",
@@ -77,8 +119,8 @@ class CastInliningTest : InliningTestBase() {
                 class Case {
                     var x: int := 0
                     redefine tran {
-                        var a: any := 0
-                        a := x as any
+                        var anything: any := 0
+                        anything := x as any
                     }
                     prop { return EF true }
                 }
@@ -98,10 +140,10 @@ class CastInliningTest : InliningTestBase() {
                 package inlining::tests::narrowing_cast
                 @VerificationCase
                 class Case {
-                    var a: any := 0
+                    var anything: any := 0
                     redefine tran {
-                        var n: int := 0
-                        n := a as int
+                        var number: int := 0
+                        number := anything as int
                     }
                     prop { return EF true }
                 }
@@ -121,8 +163,8 @@ class CastInliningTest : InliningTestBase() {
                 class Case {
                     var x: int := 0
                     redefine tran {
-                        var a: real := 0.0
-                        x := a as int
+                        var measurement: real := 0.0
+                        x := measurement as int
                     }
                     prop { return EF true }
                 }
