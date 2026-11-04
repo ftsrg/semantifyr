@@ -21,6 +21,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineCall;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
@@ -47,53 +48,53 @@ public class ScopingTest {
 
     @Test
     void featureReferenceResolvesToDeclaredFeature() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Worker { var done: bool := false }
             class Host {
-                contains w: Worker[1]
+                contains worker: Worker[1]
             }
             """);
 
-        pkg.assertNoResourceErrors();
-        var worker = pkg.classByName("Worker");
-        var hostW = pkg.classByName("Host").featureByName("w");
+        parsedPackage.assertNoResourceErrors();
+        var worker = parsedPackage.classByName("Worker");
+        var hostWorker = parsedPackage.classByName("Host").featureByName("worker");
 
-        assertThat(hostW.typeDomain())
-                .as("feature w's type should resolve to the Worker class declaration")
+        assertThat(hostWorker.typeDomain())
+                .as("feature worker's type should resolve to the Worker class declaration")
                 .isSameAs(worker.eObject());
     }
 
     @Test
     void redefinedFeatureIsMarkedAsRedefine() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Worker { var done: bool := false }
             class BetterWorker : Worker { }
             class Base {
-                contains w: Worker[1]
+                contains worker: Worker[1]
             }
             class Child : Base {
-                redefine contains w: BetterWorker[1]
+                redefine contains worker: BetterWorker[1]
             }
             """);
 
-        pkg.assertNoResourceErrors();
+        parsedPackage.assertNoResourceErrors();
 
-        var redefinedW = pkg.classByName("Child").featureByName("w");
-        assertThat(redefinedW.isRedefine())
-                .as("Child's w should have `redefine` flag set")
+        var redefinedWorker = parsedPackage.classByName("Child").featureByName("worker");
+        assertThat(redefinedWorker.isRedefine())
+                .as("Child's worker should have `redefine` flag set")
                 .isTrue();
 
-        var betterWorker = pkg.classByName("BetterWorker");
-        assertThat(redefinedW.typeDomain())
-                .as("Child's redefined w should be typed BetterWorker, not Worker")
+        var betterWorker = parsedPackage.classByName("BetterWorker");
+        assertThat(redefinedWorker.typeDomain())
+                .as("Child's redefined worker should be typed BetterWorker, not Worker")
                 .isSameAs(betterWorker.eObject());
     }
 
     @Test
     void inlineCallTargetResolvesToNamedTransition() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Host {
                 var x: int := 0
@@ -102,51 +103,48 @@ public class ScopingTest {
             }
             """);
 
-        pkg.assertNoResourceErrors();
-        var host = pkg.classByName("Host");
-        var stepTran = host.namedTransition("step");
-        var mainTran = host.anonymousMain();
+        parsedPackage.assertNoResourceErrors();
+        var host = parsedPackage.classByName("Host");
+        var stepTransition = host.namedTransition("step");
+        var mainTransition = host.anonymousMain();
 
-        var inlineCall =
-                EcoreUtil2.eAllOfType(mainTran.eObject(), InlineCall.class).getFirst();
+        var inlineCall = EcoreUtil2.eAllOfType(mainTransition.eObject(), InlineCall.class)
+                .getFirst();
         var callExpression = (CallSuffixExpression) inlineCall.getCallExpression();
         var callPrimary = callExpression.getPrimary();
 
-        // The bare `step` reference in `inline step()` should resolve to the
-        // step transition declaration, not some dangling proxy.
         assertThat(callPrimary).isInstanceOf(ElementReference.class);
         assertThat(((ElementReference) callPrimary).getElement())
                 .as("inline call target must resolve to the step transition EObject")
-                .isSameAs(stepTran.eObject());
+                .isSameAs(stepTransition.eObject());
     }
 
     @Test
     void navigatedCallTargetResolvesToFeatureMember() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Worker {
                 var done: bool := false
                 tran finish() { done := true }
             }
             class Host {
-                contains w: Worker[1]
-                redefine tran { inline w.finish() }
+                contains worker: Worker[1]
+                redefine tran { inline worker.finish() }
             }
             """);
 
-        pkg.assertNoResourceErrors();
-        var workerFinish = pkg.classByName("Worker").namedTransition("finish");
-        var hostW = pkg.classByName("Host").featureByName("w");
-        var main = pkg.classByName("Host").anonymousMain();
+        parsedPackage.assertNoResourceErrors();
+        var workerFinish = parsedPackage.classByName("Worker").namedTransition("finish");
+        var hostWorker = parsedPackage.classByName("Host").featureByName("worker");
+        var main = parsedPackage.classByName("Host").anonymousMain();
 
         var inlineCall = EcoreUtil2.eAllOfType(main.eObject(), InlineCall.class).getFirst();
         var callExpression = (CallSuffixExpression) inlineCall.getCallExpression();
         var navigation = (NavigationSuffixExpression) callExpression.getPrimary();
 
-        // The primary of the navigation is `w`; the member is `finish`.
         assertThat(((ElementReference) navigation.getPrimary()).getElement())
-                .as("navigation's primary must resolve to host's w feature")
-                .isSameAs(hostW.eObject());
+                .as("navigation's primary must resolve to host's worker feature")
+                .isSameAs(hostWorker.eObject());
         assertThat(navigation.getMember())
                 .as("navigation's member must resolve to Worker's finish transition")
                 .isSameAs(workerFinish.eObject());
@@ -154,17 +152,18 @@ public class ScopingTest {
 
     @Test
     void enumLiteralReferenceResolvesAcrossTypes() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             enum Color { Red, Green, Blue }
-            class C {
-                var c: Color := Color::Red
+            class Lamp {
+                var color: Color := Color::Red
             }
             """);
 
-        pkg.assertNoResourceErrors();
-        var red = pkg.enumByName("Color").literalByName("Red");
-        var initializer = pkg.classByName("C").variableByName("c").initializer();
+        parsedPackage.assertNoResourceErrors();
+        var red = parsedPackage.enumByName("Color").literalByName("Red");
+        var initializer =
+                parsedPackage.classByName("Lamp").variableByName("color").initializer();
 
         var reference = (ElementReference) initializer;
         assertThat(reference.getElement())
@@ -174,7 +173,7 @@ public class ScopingTest {
 
     @Test
     void membersOfTheFirstSupertypeResolveUnderMultipleInheritance() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Left { var x: int := 0 }
             class Right { var y: int := 0 }
@@ -187,12 +186,12 @@ public class ScopingTest {
             }
             """);
 
-        pkg.assertNoResourceErrors();
+        parsedPackage.assertNoResourceErrors();
     }
 
     @Test
     void multipleInheritanceIsRejectedAtTheSecondSupertype() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Left { var x: int := 0 }
             class Right { var y: int := 0 }
@@ -201,9 +200,9 @@ public class ScopingTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertHasValidationIssue(OxstsValidator.MULTIPLE_INHERITANCE, "'Right'");
-        assertThat(pkg.getIssues())
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertHasValidationIssue(OxstsValidator.MULTIPLE_INHERITANCE, "'Right'");
+        assertThat(parsedPackage.getIssues())
                 .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
                 .allSatisfy(issue -> {
                     assertThat(issue.getCode()).isEqualTo(OxstsValidator.MULTIPLE_INHERITANCE);
@@ -223,8 +222,8 @@ public class ScopingTest {
             package test
             class Worker { var done: bool := false }
             class Host {
-                contains w: Worker
-                redefine tran { w.done := true }
+                contains worker: Worker
+                redefine tran { worker.done := true }
             }
             """);
         EcoreUtil.resolveAll(oxstsPackage);
@@ -235,21 +234,21 @@ public class ScopingTest {
 
     @Test
     void navigationAfterAnUnresolvedMemberReportsOnlyTheUnresolvedReferences() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Worker {
                 tran step() { }
             }
             class Host {
-                contains w: Worker
-                redefine tran { inline w.missing.step() }
+                contains worker: Worker
+                redefine tran { inline worker.missing.step() }
             }
             """, CheckMode.ALL);
 
-        assertThat(pkg.getResourceErrors())
+        assertThat(parsedPackage.getResourceErrors())
                 .isNotEmpty()
                 .allSatisfy(error -> assertThat(error.getMessage()).startsWith("Couldn't resolve reference"));
-        assertThat(pkg.getResourceErrors())
+        assertThat(parsedPackage.getResourceErrors())
                 .anySatisfy(error -> assertThat(error.getMessage()).contains("'missing'"));
     }
 
@@ -257,7 +256,7 @@ public class ScopingTest {
     void importedNamesResolveUnqualifiedAndOtherPackagesOnlyQualified() throws Exception {
         var resourceSet = resourceSetProvider.get();
         packageParseHelper.parse("""
-            package lib
+            package library
             class Lamp { var on: bool := false }
             """, resourceSet);
         packageParseHelper.parse("""
@@ -266,7 +265,7 @@ public class ScopingTest {
             """, resourceSet);
         var user = packageParseHelper.parse("""
             package user
-            import lib
+            import library
             class Room {
                 contains lamp: Lamp
                 var color: other::Color := other::Color::Red
@@ -278,10 +277,38 @@ public class ScopingTest {
     }
 
     @Test
+    void importedGlobalFeatureResolvesUnqualified() throws Exception {
+        var resourceSet = resourceSetProvider.get();
+        var library = packageParseHelper.parse("""
+            package library
+            class Counter { var tick: int := 0 }
+            global containment counter: Counter[1]
+            """, resourceSet);
+        var user = packageParseHelper.parse("""
+            package user
+            import library
+            class Ticker {
+                redefine tran { counter.tick := counter.tick + 1 }
+            }
+            """, resourceSet);
+        EcoreUtil.resolveAll(resourceSet);
+
+        assertThat(user.eResource().getErrors()).isEmpty();
+        var counter = library.getDeclarations().stream()
+                .filter(FeatureDeclaration.class::isInstance)
+                .findFirst()
+                .orElseThrow();
+        assertThat(EcoreUtil2.eAllOfType(user, NavigationSuffixExpression.class))
+                .isNotEmpty()
+                .allSatisfy(navigation -> assertThat(((ElementReference) navigation.getPrimary()).getElement())
+                        .isSameAs(counter));
+    }
+
+    @Test
     void nameOfAnUnimportedPackageDoesNotResolveUnqualified() throws Exception {
         var resourceSet = resourceSetProvider.get();
         packageParseHelper.parse("""
-            package lib
+            package library
             class Lamp { var on: bool := false }
             """, resourceSet);
         var user = packageParseHelper.parse("""
