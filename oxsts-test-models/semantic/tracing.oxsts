@@ -6,10 +6,6 @@
 
 package semantifyr::verification::lang::tracing
 
-// Traced transitions inside choice branches, called on two instances of
-// the same feature. Only the branch that fires may appear in a step of
-// the witness trace, named by its instance path.
-
 class Lamp {
     var on: bool := false
 
@@ -23,7 +19,6 @@ class Room {
     contains lamp: Lamp
 }
 
-// Reachable: only the kitchen lamp toggles.
 @VerificationCase
 @Tag("expect-pass")
 class TracedChoiceBranchReach {
@@ -43,8 +38,6 @@ class TracedChoiceBranchReach {
     }
 }
 
-// Dual: exactly one lamp toggles per step, so the lamps differ after
-// every odd step and agree after every even one.
 @VerificationCase
 @Tag("expect-pass")
 class TracedChoiceBranchParity {
