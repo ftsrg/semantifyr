@@ -6,12 +6,6 @@
 
 package semantifyr::verification::lang::temporal
 
-// Temporal operators AG / EF and their nesting. Each feature appears
-// in both a positive (holds) and a negative (dual) case.
-
-// --- EF ---
-
-// Target value is reachable from the initial state.
 @VerificationCase
 @Tag("expect-pass")
 class EFReach {
@@ -27,7 +21,6 @@ class EFReach {
     }
 }
 
-// Dual: EF does not lie - x cannot exceed the cap in the transition.
 @VerificationCase
 @Tag("expect-pass")
 class EFBoundedByGuard {
@@ -43,9 +36,6 @@ class EFBoundedByGuard {
     }
 }
 
-// --- AG ---
-
-// Flip-flop 0 <-> 1 - AG invariant on the reachable set.
 @VerificationCase
 @Tag("expect-pass")
 class AGInvariant {
@@ -60,7 +50,6 @@ class AGInvariant {
     }
 }
 
-// Dual: both endpoints are reachable.
 @VerificationCase
 @Tag("expect-pass")
 class AGEndpoint1Reach {
@@ -89,9 +78,6 @@ class AGEndpoint0Reach {
     }
 }
 
-// --- AG with a disjunction ---
-
-// AG holds across the enumerated branches.
 @VerificationCase
 @Tag("expect-pass")
 class AGDisjunction {
@@ -112,7 +98,6 @@ class AGDisjunction {
     }
 }
 
-// Dual: x never escapes [0, 3].
 @VerificationCase
 @Tag("expect-pass")
 class EFAGBound {
