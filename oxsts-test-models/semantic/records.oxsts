@@ -6,8 +6,6 @@
 
 package semantifyr::verification::lang::records
 
-// Records are values: the compiler flattens each record variable into one scalar variable per field, nested records recursively. Assignment copies every field and comparison is by value. A record literal lists fields by name; an omitted field takes its default.
-
 enum Light { Off, On }
 
 record Point {
@@ -30,183 +28,166 @@ record Line {
     var to: Point
 }
 
-// --- field read and write ---
-
-// Reachable: independent field writes reach (2, 1).
 @VerificationCase
 @Tag("expect-pass")
 class RecordFieldWriteReach {
-    var p: Point
+    var point: Point
 
     redefine tran {
         choice {
-            assume(p.x < 2)
-            p.x := p.x + 1
+            assume(point.x < 2)
+            point.x := point.x + 1
         } or {
-            assume(p.y < 1)
-            p.y := p.y + 1
+            assume(point.y < 1)
+            point.y := point.y + 1
         }
     }
 
     prop {
-        return EF (p.x == 2 && p.y == 1)
+        return EF (point.x == 2 && point.y == 1)
     }
 }
 
-// Violated: the fields leave the origin.
 @VerificationCase
 @Tag("expect-fail")
 class RecordFieldWriteBound {
-    var p: Point
+    var point: Point
 
     redefine tran {
         choice {
-            assume(p.x < 2)
-            p.x := p.x + 1
+            assume(point.x < 2)
+            point.x := point.x + 1
         } or {
-            assume(p.y < 1)
-            p.y := p.y + 1
+            assume(point.y < 1)
+            point.y := point.y + 1
         }
     }
 
     prop {
-        return AG p.x + p.y <= 2
+        return AG point.x + point.y <= 2
     }
 }
 
-// --- assignment copies, comparison by value ---
-
-// Holds: a copy taken after every write equals the original.
 @VerificationCase
 @Tag("expect-pass")
 class RecordCopyEqualityBound {
-    var p: Point
-    var q: Point
+    var point: Point
+    var copy: Point
 
     redefine tran {
         choice {
-            assume(p.x < 3)
-            p.x := p.x + 1
+            assume(point.x < 3)
+            point.x := point.x + 1
         } or {
-            assume(p.y < 3)
-            p.y := p.y + 1
+            assume(point.y < 3)
+            point.y := point.y + 1
         }
-        q := p
+        copy := point
     }
 
     prop {
-        return AG p == q
+        return AG point == copy
     }
 }
 
-// Violated: a copy does not alias, so writing the original after the copy leaves the copy behind.
 @VerificationCase
 @Tag("expect-fail")
 class RecordCopyIsNoAlias {
-    var p: Point
-    var q: Point
+    var point: Point
+    var copy: Point
     var copied: bool := false
 
     redefine tran {
         choice {
-            q := p
+            copy := point
             copied := true
         } or {
-            assume(p.x < 2)
-            p.x := p.x + 1
+            assume(point.x < 2)
+            point.x := point.x + 1
         }
     }
 
     prop {
-        return AG (!copied || p == q)
+        return AG (!copied || point == copy)
     }
 }
 
-// --- nested records ---
-
-// Reachable: a nested field write and an enum field travel together in a record copy.
 @VerificationCase
 @Tag("expect-pass")
 class NestedRecordReach {
-    var a: Cell
-    var b: Cell
+    var original: Cell
+    var copy: Cell
 
     redefine tran {
         choice {
-            assume(a.position.x < 2)
-            a.position.x := a.position.x + 1
+            assume(original.position.x < 2)
+            original.position.x := original.position.x + 1
         } or {
-            a.light := Light::On
+            original.light := Light::On
         } or {
-            b := a
+            copy := original
         }
     }
 
     prop {
-        return EF (b == a && b.light == Light::On && b.position.x == 2)
+        return EF (copy == original && copy.light == Light::On && copy.position.x == 2)
     }
 }
 
-// Violated: the light of a copied cell does not stay off.
 @VerificationCase
 @Tag("expect-fail")
 class NestedRecordBound {
-    var a: Cell
-    var b: Cell
+    var original: Cell
+    var copy: Cell
 
     redefine tran {
         choice {
-            a.light := Light::On
+            original.light := Light::On
         } or {
-            b.position := a.position
-            b.light := a.light
+            copy.position := original.position
+            copy.light := original.light
         }
     }
 
     prop {
-        return AG b.light == Light::Off
+        return AG copy.light == Light::Off
     }
 }
 
-// --- local records and havoc ---
-
-// Reachable: a havoced local record is copied into the state.
 @VerificationCase
 @Tag("expect-pass")
 class LocalRecordHavocReach {
-    var p: Point
+    var point: Point
 
     redefine tran {
         var next: Point
         havoc(next)
         assume(next.x >= 0 && next.x <= 3 && next.y == next.x)
-        p := next
+        point := next
     }
 
     prop {
-        return EF (p.x == 3 && p.y == 3)
+        return EF (point.x == 3 && point.y == 3)
     }
 }
 
-// Violated: the havoced local record reaches beyond 2.
 @VerificationCase
 @Tag("expect-fail")
 class LocalRecordHavocBound {
-    var p: Point
+    var point: Point
 
     redefine tran {
         var next: Point
         havoc(next)
         assume(next.x >= 0 && next.x <= 3 && next.y == next.x)
-        p := next
+        point := next
     }
 
     prop {
-        return AG p.x <= 2
+        return AG point.x <= 2
     }
 }
 
-// Holds: an uninitialized local record havocs only the fields without a default, so a copied reading stays invalid.
 @VerificationCase
 @Tag("expect-pass")
 class LocalRecordDefaultsBound {
@@ -228,29 +209,26 @@ class LocalRecordDefaultsBound {
     }
 }
 
-// --- record parameters and records in contained instances ---
-
-// Holds: a record argument is copied field by field.
 @VerificationCase
 @Tag("expect-pass")
 class RecordParameterBound {
-    var p: Point
+    var point: Point
     var origin: Point
 
     tran moveTo(target: Point) {
-        p := target
+        point := target
     }
 
     redefine tran {
         choice {
-            p.x := 1
+            point.x := 1
         } or {
             inline moveTo(origin)
         }
     }
 
     prop {
-        return AG (p.y == 0 && p.x <= 1)
+        return AG (point.y == 0 && point.x <= 1)
     }
 }
 
@@ -263,7 +241,6 @@ class Robot {
     }
 }
 
-// Reachable: a record variable of a contained instance.
 @VerificationCase
 @Tag("expect-pass")
 class ContainedRecordReach {
@@ -278,136 +255,127 @@ class ContainedRecordReach {
     }
 }
 
-// --- record literals ---
-
-// Reachable: a literal assigns every field at once, so the swap reads the fields before it writes them.
 @VerificationCase
 @Tag("expect-pass")
 class RecordLiteralAssignReach {
-    var p: Point
+    var point: Point
 
     redefine tran {
         choice {
-            assume(p.x == 0)
-            p := Point { x = 2, y = 3 }
+            assume(point.x == 0)
+            point := Point { x = 2, y = 3 }
         } or {
-            p := Point { x = p.y, y = p.x }
+            point := Point { x = point.y, y = point.x }
         }
     }
 
     prop {
-        return EF p == Point { x = 3, y = 2 }
+        return EF point == Point { x = 3, y = 2 }
     }
 }
 
-// Violated: the swapped point is neither on the diagonal nor the assigned literal.
 @VerificationCase
 @Tag("expect-fail")
 class RecordLiteralAssignBound {
-    var p: Point
+    var point: Point
 
     redefine tran {
         choice {
-            assume(p.x == 0)
-            p := Point { x = 2, y = 3 }
+            assume(point.x == 0)
+            point := Point { x = 2, y = 3 }
         } or {
-            p := Point { x = p.y, y = p.x }
+            point := Point { x = point.y, y = point.x }
         }
     }
 
     prop {
-        return AG (p.x == p.y || p == Point { x = 2, y = 3 })
+        return AG (point.x == point.y || point == Point { x = 2, y = 3 })
     }
 }
 
-// Holds: an omitted field takes its default, not its old value, so x and y are never both non-zero.
 @VerificationCase
 @Tag("expect-pass")
 class RecordLiteralDefaultBound {
-    var p: Point := Point { y = 5 }
+    var point: Point := Point { y = 5 }
 
     redefine tran {
-        assume(p.x < 3)
-        p := Point { x = p.x + 1 }
+        assume(point.x < 3)
+        point := Point { x = point.x + 1 }
     }
 
     prop {
-        return AG (p.x == 0 || p.y == 0)
+        return AG (point.x == 0 || point.y == 0)
     }
 }
 
-// Violated: the next literal resets y to its default.
 @VerificationCase
 @Tag("expect-fail")
 class RecordLiteralDefaultViolated {
-    var p: Point := Point { y = 5 }
+    var point: Point := Point { y = 5 }
 
     redefine tran {
-        assume(p.x < 3)
-        p := Point { x = p.x + 1 }
+        assume(point.x < 3)
+        point := Point { x = point.x + 1 }
     }
 
     prop {
-        return AG p.y == 5
+        return AG point.y == 5
     }
 }
 
-// Reachable: a local literal reads the state and an `if` compares with a literal.
 @VerificationCase
 @Tag("expect-pass")
 class LocalRecordLiteralReach {
-    var p: Point
+    var point: Point
     var hits: int := 0
 
     redefine tran {
-        var next: Point := Point { x = p.x + 1, y = p.x }
+        var next: Point := Point { x = point.x + 1, y = point.x }
         assume(next.x <= 3)
         if (next == Point { x = 2, y = 1 }) {
             hits := hits + 1
         }
-        p := next
+        point := next
     }
 
     prop {
-        return EF (hits == 1 && p == Point { x = 3, y = 2 })
+        return EF (hits == 1 && point == Point { x = 3, y = 2 })
     }
 }
 
-// Holds: a literal argument is copied into the parameter, and a field of the parameter reads the literal.
 @VerificationCase
 @Tag("expect-pass")
 class RecordLiteralArgumentBound {
-    var p: Point
+    var point: Point
     var lastX: int := 0
 
     tran moveTo(target: Point) {
-        p := target
+        point := target
         lastX := target.x
     }
 
     redefine tran {
-        assume(p.y < 3)
-        inline moveTo(Point { x = 2, y = p.y + 1 })
+        assume(point.y < 3)
+        inline moveTo(Point { x = 2, y = point.y + 1 })
     }
 
     prop {
-        return AG (p.x == lastX && p.y <= 3)
+        return AG (point.x == lastX && point.y <= 3)
     }
 }
 
-// Reachable: a literal argument of a property call.
 @VerificationCase
 @Tag("expect-pass")
 class RecordLiteralArgumentReach {
-    var p: Point
+    var point: Point
 
-    prop isAt(point: Point): bool {
-        return p == point
+    prop isAt(target: Point): bool {
+        return point == target
     }
 
     redefine tran {
-        assume(p.y < 3)
-        p := Point { x = 2, y = p.y + 1 }
+        assume(point.y < 3)
+        point := Point { x = 2, y = point.y + 1 }
     }
 
     prop {
@@ -415,90 +383,86 @@ class RecordLiteralArgumentReach {
     }
 }
 
-// Violated: the literal argument moves y to 3.
 @VerificationCase
 @Tag("expect-fail")
 class RecordLiteralArgumentViolated {
-    var p: Point
+    var point: Point
 
     tran moveTo(target: Point) {
-        p := target
+        point := target
     }
 
     redefine tran {
-        assume(p.y < 3)
-        inline moveTo(Point { x = 2, y = p.y + 1 })
+        assume(point.y < 3)
+        inline moveTo(Point { x = 2, y = point.y + 1 })
     }
 
     prop {
-        return AG p.y <= 2
+        return AG point.y <= 2
     }
 }
 
-// Holds: a record-typed field without an initializer in the variable takes the field's literal default.
 @VerificationCase
 @Tag("expect-pass")
 class RecordFieldLiteralDefaultBound {
-    var l: Line
+    var line: Line
 
     redefine tran {
-        assume(l.to.x < 2)
-        l.to.x := l.to.x + 1
+        assume(line.to.x < 2)
+        line.to.x := line.to.x + 1
     }
 
     prop {
-        return AG l.from == Point { x = 1, y = 1 }
+        return AG line.from == Point { x = 1, y = 1 }
     }
 }
 
-// Reachable: a nested literal reads the state, and the omitted `from` takes its literal default again.
 @VerificationCase
 @Tag("expect-pass")
 class NestedRecordLiteralReach {
-    var l: Line
+    var line: Line
 
     redefine tran {
         choice {
-            l.from := Point { x = 0 }
+            line.from := Point { x = 0 }
         } or {
-            assume(l.to.x < 2)
-            l := Line { to = Point { x = l.to.x + 1, y = l.from.x } }
+            assume(line.to.x < 2)
+            line := Line { to = Point { x = line.to.x + 1, y = line.from.x } }
         }
     }
 
     prop {
-        return EF (l.to == Point { x = 2, y = 1 } && l.from.x == 1)
+        return EF (line.to == Point { x = 2, y = 1 } && line.from.x == 1)
     }
 }
 
-// Violated: the nested literal copies the default `from.x` into `to.y`.
 @VerificationCase
 @Tag("expect-fail")
 class NestedRecordLiteralViolated {
-    var l: Line
+    var line: Line
 
     redefine tran {
         choice {
-            l.from := Point { x = 0 }
+            line.from := Point { x = 0 }
         } or {
-            assume(l.to.x < 2)
-            l := Line { to = Point { x = l.to.x + 1, y = l.from.x } }
+            assume(line.to.x < 2)
+            line := Line { to = Point { x = line.to.x + 1, y = line.from.x } }
         }
     }
 
     prop {
-        return AG l.to.y == 0
+        return AG line.to.y == 0
     }
 }
 
 @VerificationCase
 @Tag("expect-fail")
 class RecordParameterViolated {
-    var p: Point
+    var point: Point
     var origin: Point := Point { x = 5 }
 
     tran moveTo(target: Point) {
-        p := target
+        point := target
     }
 
     redefine tran {
@@ -506,6 +470,6 @@ class RecordParameterViolated {
     }
 
     prop {
-        return AG p.x <= 1
+        return AG point.x <= 1
     }
 }
