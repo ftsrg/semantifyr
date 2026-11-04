@@ -90,7 +90,13 @@ class ThetaBackendReplayTest {
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
         val states = listOfNotNull(witness.initializedState) + witness.transitionStates
-        assertThat(states.map { state -> state.values.map { it.variable.name } }).containsOnly(listOf("counter", "unchanged", "flag"))
+        assertThat(
+            states.map { state ->
+                state.values.map {
+                    it.variable.name
+                }
+            },
+        ).containsOnly(listOf("counter", "unchanged", "flag"))
     }
 
     @Test

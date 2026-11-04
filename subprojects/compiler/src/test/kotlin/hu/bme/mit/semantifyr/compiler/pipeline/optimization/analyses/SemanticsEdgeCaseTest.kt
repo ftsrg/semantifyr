@@ -164,7 +164,11 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
 
         assertThat(definitions)
             .`as`("after a choice, both branches' writes reach the downstream read")
-            .containsAll(sourceWrites.map { it as EObject })
+            .containsAll(
+                sourceWrites.map {
+                    it as EObject
+                },
+            )
     }
 
     @Test
@@ -188,7 +192,11 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val targetWrite = inlined.assignmentsTo(inlined.varNamed("target")).single()
         val sourceReadInTarget = targetWrite.expression as ElementReference
         val definitions = result.definitionsOf[sourceReadInTarget]!!
-        assertThat(definitions).containsAll(allSourceWrites.map { it as EObject })
+        assertThat(definitions).containsAll(
+            allSourceWrites.map {
+                it as EObject
+            },
+        )
     }
 
     @Test
@@ -329,7 +337,9 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
     }
 
     private fun InlinedOxsts.readsOfInInit(variable: VariableDeclaration): List<Expression> {
-        val initTransition = eAllOfType<TransitionDeclaration>().first { it.kind == TransitionKind.INIT }
+        val initTransition = eAllOfType<TransitionDeclaration>().first {
+            it.kind == TransitionKind.INIT
+        }
         return initTransition.eAllOfType<ElementReference>().filter {
             it.element === variable
         }.filterNot {

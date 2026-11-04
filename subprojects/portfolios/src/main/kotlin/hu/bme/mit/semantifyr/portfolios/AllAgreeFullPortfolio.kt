@@ -90,7 +90,12 @@ class AllAgreeFullPortfolio(
                 message = "$id: no available backends",
             )
         }
-        logger.info { "$id: requiring agreement across ${available.joinToString { it.subPath }} (timeout ${request.timeout})" }
+        logger.info {
+            val subPaths = available.joinToString {
+                it.subPath
+            }
+            "$id: requiring agreement across $subPaths (timeout ${request.timeout})"
+        }
         progress.reportProgress("running ${available.size} backend(s)")
 
         val outcome = all(gate, request.timeout, progress) {

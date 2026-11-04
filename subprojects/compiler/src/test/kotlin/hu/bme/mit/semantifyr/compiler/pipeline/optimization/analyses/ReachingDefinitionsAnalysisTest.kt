@@ -122,7 +122,11 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val definitions = result.definitionsOf[inlined.tranReadOf(current, "copy")]!!
 
         val writes = inlined.assignmentsTo(current)
-        assertThat(definitions).containsExactlyInAnyOrderElementsOf(writes.map { it as EObject })
+        assertThat(definitions).containsExactlyInAnyOrderElementsOf(
+            writes.map {
+                it as EObject
+            },
+        )
         assertThat(definitions).doesNotContain(current as EObject)
     }
 
@@ -225,7 +229,11 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val definitions = result.definitionsOf[inlined.tranReadOf(source, "copy")]!!
 
         val writes = inlined.assignmentsTo(source)
-        assertThat(definitions).containsExactlyInAnyOrderElementsOf(writes.map { it as EObject })
+        assertThat(definitions).containsExactlyInAnyOrderElementsOf(
+            writes.map {
+                it as EObject
+            },
+        )
         assertThat(definitions).doesNotContain(source as EObject)
     }
 

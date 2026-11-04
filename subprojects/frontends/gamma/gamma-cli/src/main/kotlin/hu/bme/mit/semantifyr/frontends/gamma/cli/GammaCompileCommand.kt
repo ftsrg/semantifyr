@@ -42,7 +42,9 @@ class GammaCompileCommand(
     }
 
     override suspend fun run() {
-        logger.info { "compile model=$model output=$outputPath" }
+        logger.info {
+            "compile model=$model output=$outputPath"
+        }
 
         checkInputFile("Model", model, GAMMA_FILE_SUFFIX)
         val target = outputPath ?: model.resolveSibling("${model.nameWithoutExtension}.oxsts")

@@ -50,7 +50,9 @@ val semantifyrGamma = Launcher("semantifyr-gamma", "hu.bme.mit.semantifyr.fronte
 
 fun cliReferenceTask(name: String, launcher: Launcher, vararg arguments: String) = tasks.register<JavaExec>("cliReference_$name") {
     val outputFile = cliReferenceDir.map { it.file("$name.txt") }
-    classpath = cliDistributionFiles.get().asFileTree.matching { include("${launcher.name}/lib/*.jar") }
+    classpath = cliDistributionFiles.get().asFileTree.matching {
+        include("${launcher.name}/lib/*.jar")
+    }
     mainClass = launcher.mainClass
     jvmArgs("--enable-native-access=ALL-UNNAMED", "-Dguice_bytecode_gen_option=DISABLED")
     args(*arguments)

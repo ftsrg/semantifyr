@@ -167,7 +167,9 @@ class BackendOptionGroup(
     fun checkAvailable() {
         val availability = portfolio.availability(resolved)
         if (availability is AvailabilityReport.Unavailable) {
-            val hints = availability.hints.joinToString("") { "\n  - $it" }
+            val hints = availability.hints.joinToString("") {
+                "\n  - $it"
+            }
             throw CommandExit(ExitCode.Errored, "Portfolio '${portfolio.id}' is unavailable: ${availability.reason}$hints")
         }
     }

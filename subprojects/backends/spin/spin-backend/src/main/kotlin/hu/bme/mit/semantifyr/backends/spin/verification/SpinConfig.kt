@@ -17,7 +17,9 @@ data class SpinConfig(
     override val soundness = SoundnessDirection.UnderApproximating
 
     init {
-        require(maxSearchDepth == null || maxSearchDepth > 0) { "maxSearchDepth must be positive, got $maxSearchDepth" }
+        require(maxSearchDepth == null || maxSearchDepth > 0) {
+            "maxSearchDepth must be positive, got $maxSearchDepth"
+        }
     }
 
     companion object {

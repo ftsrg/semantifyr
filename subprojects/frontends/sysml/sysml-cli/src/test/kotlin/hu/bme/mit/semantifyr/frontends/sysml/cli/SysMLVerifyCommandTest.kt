@@ -36,7 +36,11 @@ class SysMLVerifyCommandTest {
 
         assertThat(result.statusCode).describedAs(result.output).isEqualTo(5)
         val lines = jsonLines(result.stdout)
-        assertThat(lines.map { it.getValue("case").jsonPrimitive.content }).containsExactly(
+        assertThat(
+            lines.map {
+                it.getValue("case").jsonPrimitive.content
+            },
+        ).containsExactly(
             "semantifyr::sysml::model::LampLitReachable",
             "semantifyr::sysml::model::LampNeverLitViolated",
             "semantifyr::sysml::model::LampLitOnlyWhileSwitchOnViolated",

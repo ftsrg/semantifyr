@@ -69,7 +69,9 @@ suspend fun SuspendingCliktCommand.verifyCase(
     val report = outcome.report.toAbsolutePath().normalize()
     when (output) {
         VerifyOutput.Text -> {
-            val message = result.message?.let { " - $it" } ?: ""
+            val message = result.message?.let {
+                " - $it"
+            } ?: ""
             echo("  ${verdictTag(result.verdict)} (${result.metrics.totalDuration})$message")
             echo("  report: $report")
         }

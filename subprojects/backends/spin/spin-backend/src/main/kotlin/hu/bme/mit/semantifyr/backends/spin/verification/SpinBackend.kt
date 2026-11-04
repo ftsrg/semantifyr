@@ -99,7 +99,9 @@ class SpinVerificationContext @AssistedInject constructor(
     override suspend fun run(artifacts: SpinArtifacts): SpinVerdict? {
         search(statementMerging = true, artifactManager.logFile)
         val logFile = if (exceedsMergeLimit(artifactManager.logFile) || exceedsMergeLimit(artifactManager.errorFile)) {
-            logger.info { "[$backendId] spin cannot merge the statements of a step (merge requires more than 256 bups), searching again without statement merging" }
+            logger.info {
+                "[$backendId] spin cannot merge the statements of a step (merge requires more than 256 bups), searching again without statement merging"
+            }
             search(statementMerging = false, artifactManager.unmergedLogFile)
             artifactManager.unmergedLogFile
         } else {
@@ -114,7 +116,9 @@ class SpinVerificationContext @AssistedInject constructor(
 
         val verdict = summary.toVerdict()
         if (verdict == null && summary.reportedNoErrors) {
-            logger.warn { "[$backendId] pan reported no errors but the search was not exhaustive, treating the run as inconclusive. SpinConfig.maxSearchDepth raises pan's depth bound." }
+            logger.warn {
+                "[$backendId] pan reported no errors but the search was not exhaustive, treating the run as inconclusive. SpinConfig.maxSearchDepth raises pan's depth bound."
+            }
         }
         return verdict
     }

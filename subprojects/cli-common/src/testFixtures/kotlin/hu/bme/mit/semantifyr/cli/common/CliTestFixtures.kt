@@ -25,7 +25,9 @@ fun fakePortfolio(id: String, vararg verdicts: VerificationVerdict): SingleBacke
 }
 
 fun jsonLines(output: String): List<JsonObject> {
-    return output.lines().filter { it.isNotBlank() }.map {
+    return output.lines().filter {
+        it.isNotBlank()
+    }.map {
         Json.parseToJsonElement(it).jsonObject
     }
 }

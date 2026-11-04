@@ -135,7 +135,9 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
             if (exception !is TimeoutCancellationException && (exception is CancellationException || !deadline.hasPassedNow())) {
                 throw exception
             }
-            logger.info { "Compilation of '${case.qualifiedName}' timed out after ${semantifyrVerifierConfiguration.timeout}" }
+            logger.info {
+                "Compilation of '${case.qualifiedName}' timed out after ${semantifyrVerifierConfiguration.timeout}"
+            }
             val result = VerificationResult(
                 metadata = VerificationMetadata(backendId = null, startedAt = Clock.System.now()),
                 verdict = VerificationVerdict.Timeout,
@@ -216,7 +218,9 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
                 Triple(backendResult, trace, duration)
             }
         } catch (_: TimeoutCancellationException) {
-            logger.info { "Back-annotation of '$qualifiedName' timed out after ${semantifyrVerifierConfiguration.timeout}" }
+            logger.info {
+                "Back-annotation of '$qualifiedName' timed out after ${semantifyrVerifierConfiguration.timeout}"
+            }
             val timedOut = backendResult.copy(
                 verdict = VerificationVerdict.Timeout,
                 isTrusted = false,

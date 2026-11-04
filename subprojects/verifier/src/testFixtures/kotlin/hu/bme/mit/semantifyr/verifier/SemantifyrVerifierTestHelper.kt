@@ -101,7 +101,12 @@ class SemantifyrVerifierTestHelper @Inject constructor(
                 backendInjector.getInstance(capabilityChecker).check(inlinedOxsts)
             }
             if (unsupported.isNotEmpty()) {
-                logger.info { "Leaving out ${case.qualifiedName}: ${capabilityChecker.simpleName} refuses ${unsupported.map { it.description }.distinct().joinToString()}" }
+                logger.info {
+                    val refusals = unsupported.map {
+                        it.description
+                    }.distinct().joinToString()
+                    "Leaving out ${case.qualifiedName}: ${capabilityChecker.simpleName} refuses $refusals"
+                }
             }
             unsupported.isEmpty()
         }.map {

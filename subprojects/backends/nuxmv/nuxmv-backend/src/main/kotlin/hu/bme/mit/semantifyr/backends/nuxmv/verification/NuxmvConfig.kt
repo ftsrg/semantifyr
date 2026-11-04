@@ -17,7 +17,9 @@ data class NuxmvConfig(
     val bound: Int? = null,
 ) : BackendConfig {
     init {
-        require(bound == null || bound > 0) { "bound must be positive, got $bound" }
+        require(bound == null || bound > 0) {
+            "bound must be positive, got $bound"
+        }
     }
 
     companion object {

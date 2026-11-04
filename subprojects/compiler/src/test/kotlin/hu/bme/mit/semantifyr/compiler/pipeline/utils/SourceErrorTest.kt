@@ -33,7 +33,9 @@ class SourceErrorTest {
             """.trimIndent(),
         )
 
-        val secondVariable = inlined.eAllOfType<VariableDeclaration>().first { it.name == "second" }
+        val secondVariable = inlined.eAllOfType<VariableDeclaration>().first {
+            it.name == "second"
+        }
 
         assertThatThrownBy {
             sourceError(secondVariable, "boom")
@@ -54,8 +56,12 @@ class SourceErrorTest {
             """.trimIndent(),
         )
 
-        val firstVariable = inlined.eAllOfType<VariableDeclaration>().first { it.name == "first" }
-        val secondVariable = inlined.eAllOfType<VariableDeclaration>().first { it.name == "second" }
+        val firstVariable = inlined.eAllOfType<VariableDeclaration>().first {
+            it.name == "first"
+        }
+        val secondVariable = inlined.eAllOfType<VariableDeclaration>().first {
+            it.name == "second"
+        }
 
         val firstPrefix = SourceLocation.prefixFor(firstVariable)
         val secondPrefix = SourceLocation.prefixFor(secondVariable)

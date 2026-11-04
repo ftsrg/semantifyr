@@ -57,7 +57,9 @@ class SysMLVerifyCommand @Inject constructor(
         .help("OXSTS library file (must end in .oxsts) or directory (walked recursively), loaded in addition to the bundled SysML v2 semantic library. Repeat the flag to add multiple.")
 
     private val caseSpecificationOptions by VerificationCaseSpecificationOptionGroup(verificationCaseDiscoverer)
-    private val backendOptions by BackendOptionGroup { portfolios }
+    private val backendOptions by BackendOptionGroup {
+        portfolios
+    }
     private val compilationOptions by CompilationOptionGroup()
     private val artifactOptions by ArtifactOptionGroup()
     private val output by verifyOutputOption()

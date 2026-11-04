@@ -60,7 +60,11 @@ class ArrayFlatteningPassTest {
             it.name
         }
         assertThat(names).containsExactly("values_0", "values_1", "values_2")
-        assertThat(flattened.keys.map { it.name }).containsExactly("values")
+        assertThat(
+            flattened.keys.map {
+                it.name
+            },
+        ).containsExactly("values")
         assertThat(flattened.values.single()).containsExactlyElementsOf(inlined.variables)
     }
 
@@ -159,7 +163,11 @@ class ArrayFlatteningPassTest {
         val flattened = flattenArrays(inlined)
 
         assertThat(flattened).isEmpty()
-        assertThat(inlined.variables.map { it.name }).containsExactly("scalar")
+        assertThat(
+            inlined.variables.map {
+                it.name
+            },
+        ).containsExactly("scalar")
     }
 
     @Test
@@ -236,7 +244,11 @@ class ArrayFlatteningPassTest {
         flattenArrays(inlined)
 
         assertThat(inlined.eAllOfType<IndexingSuffixExpression>().toList()).isEmpty()
-        assertThat(inlined.variables.map { it.name }).containsExactly("result", "index")
+        assertThat(
+            inlined.variables.map {
+                it.name
+            },
+        ).containsExactly("result", "index")
         val serialized = serialize(inlined)
         assertThat(serialized).contains("var values_0 : int := 1", "var values_1 : int := 2", "var values_2 : int := result", "values_2 := values_0")
         assertThat(serialized).containsPattern("result := if index == 0 then values_0 else if index == 1 then values_1 else values_2")

@@ -96,7 +96,12 @@ class SmartFullPortfolio(
                 message = "$id: no available backends",
             )
         }
-        logger.info { "$id: racing ${available.joinToString { it.subPath }} (timeout ${request.timeout})" }
+        logger.info {
+            val subPaths = available.joinToString {
+                it.subPath
+            }
+            "$id: racing $subPaths (timeout ${request.timeout})"
+        }
         progress.reportProgress("racing ${available.size} backend(s)")
 
         val outcome = firstDecisive(gate, request.timeout, progress) {

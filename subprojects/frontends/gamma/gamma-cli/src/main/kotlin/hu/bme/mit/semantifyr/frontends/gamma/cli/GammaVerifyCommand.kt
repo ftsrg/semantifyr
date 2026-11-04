@@ -51,7 +51,9 @@ class GammaVerifyCommand(
         .multiple()
         .help("The qualified name of a verification case to verify, such as Simple.WorkerStatechartIdleReachable. Repeat the flag to add multiple. Default: every case of the model.")
 
-    private val backendOptions by BackendOptionGroup { portfolios }
+    private val backendOptions by BackendOptionGroup {
+        portfolios
+    }
     private val compilationOptions by CompilationOptionGroup()
     private val artifactOptions by ArtifactOptionGroup()
     private val output by verifyOutputOption()
@@ -97,8 +99,9 @@ class GammaVerifyCommand(
     private fun selectCases(cases: List<GammaVerificationCase>): List<GammaVerificationCase> {
         if (caseNames.isNotEmpty()) {
             return caseNames.map { name ->
-                cases.firstOrNull { it.qualifiedName == name }
-                    ?: throw CommandExit(ExitCode.Input, "No verification case is named '$name'.")
+                cases.firstOrNull {
+                    it.qualifiedName == name
+                } ?: throw CommandExit(ExitCode.Input, "No verification case is named '$name'.")
             }
         }
         if (cases.isEmpty()) {

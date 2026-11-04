@@ -47,7 +47,10 @@ class CompileCommandTest {
         val result = runCli("compile", "-o", directory.resolve("smoke.inlined.oxsts").toString(), smokeModel.toString())
 
         assertThat(result.statusCode).describedAs(result.output).isZero()
-        val caseDirectory = Path(result.stdout.lines().single { it.startsWith("  artifacts: ") }.removePrefix("  artifacts: "))
+        val artifactsLine = result.stdout.lines().single {
+            it.startsWith("  artifacts: ")
+        }
+        val caseDirectory = Path(artifactsLine.removePrefix("  artifacts: "))
         try {
             assertThat(caseDirectory).isDirectory()
             assertThat(caseDirectory.parent.fileName.toString()).startsWith("semantifyr-")

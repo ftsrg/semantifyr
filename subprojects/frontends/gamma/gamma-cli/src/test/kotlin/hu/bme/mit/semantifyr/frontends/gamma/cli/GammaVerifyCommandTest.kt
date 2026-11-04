@@ -25,7 +25,9 @@ class GammaVerifyCommandTest {
 
     @Test
     suspend fun `every case of the model is verified and the highest exit code wins`(@TempDir artifacts: Path) {
-        val verdicts = Array(8) { VerificationVerdict.Passed }
+        val verdicts = Array(8) {
+            VerificationVerdict.Passed
+        }
         verdicts[2] = VerificationVerdict.Failed
         val portfolio = fakePortfolio("fixed", *verdicts)
 
@@ -34,8 +36,18 @@ class GammaVerifyCommandTest {
         assertThat(result.statusCode).describedAs(result.output).isEqualTo(5)
         val lines = jsonLines(result.stdout)
         assertThat(lines).hasSize(8)
-        assertThat(lines.map { it.getValue("case").jsonPrimitive.content }).contains(SIMPLE_CASE).allMatch { it.startsWith("Simple.") }
-        assertThat(lines.map { it.getValue("exitCode").jsonPrimitive.int }).containsOnly(0, 5)
+        assertThat(
+            lines.map {
+                it.getValue("case").jsonPrimitive.content
+            },
+        ).contains(SIMPLE_CASE).allMatch {
+            it.startsWith("Simple.")
+        }
+        assertThat(
+            lines.map {
+                it.getValue("exitCode").jsonPrimitive.int
+            },
+        ).containsOnly(0, 5)
     }
 
     @Test

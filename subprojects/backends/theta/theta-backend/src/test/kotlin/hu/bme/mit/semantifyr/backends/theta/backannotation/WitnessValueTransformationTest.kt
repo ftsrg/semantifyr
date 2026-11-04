@@ -199,7 +199,11 @@ class WitnessValueTransformationTest {
 
         val literal = transform(written, "slots") as ArrayLiteral
 
-        assertThat(literal.values.map { integerValue(it) }).containsExactly(1, 5, 0)
+        assertThat(
+            literal.values.map {
+                integerValue(it)
+            },
+        ).containsExactly(1, 5, 0)
         assertThat(integerValue(transform(indexing(written, 2)))).isEqualTo(0)
         assertThat(integerValue(transform(indexing(written, 1)))).isEqualTo(5)
     }
@@ -208,7 +212,11 @@ class WitnessValueTransformationTest {
     suspend fun `a default-literal array fills every slot of the variable`() {
         val literal = transform(array(4), "slots") as ArrayLiteral
 
-        assertThat(literal.values.map { integerValue(it) }).containsExactly(4, 4, 4)
+        assertThat(
+            literal.values.map {
+                integerValue(it)
+            },
+        ).containsExactly(4, 4, 4)
     }
 
     @Test

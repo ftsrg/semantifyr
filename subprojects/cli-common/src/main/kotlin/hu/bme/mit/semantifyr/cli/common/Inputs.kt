@@ -49,7 +49,9 @@ fun checkInputPath(
     if (files.isEmpty()) {
         throw CommandExit(ExitCode.Input, "$kind directory '$path' contains no $fileSuffix file.")
     }
-    val unreadable = files.firstOrNull { !it.isReadable() }
+    val unreadable = files.firstOrNull {
+        !it.isReadable()
+    }
     if (unreadable != null) {
         throw CommandExit(ExitCode.Input, "$kind file '$unreadable' is not readable.")
     }

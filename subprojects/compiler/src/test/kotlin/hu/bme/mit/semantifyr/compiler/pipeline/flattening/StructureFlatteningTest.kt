@@ -41,8 +41,11 @@ class StructureFlatteningTest : FlatteningTestBase() {
             """,
         )
 
-        assertThat(flattened.inlinedOxsts.variables.map { it.name })
-            .hasSize(3)
+        assertThat(
+            flattened.inlinedOxsts.variables.map {
+                it.name
+            },
+        ).hasSize(3)
         assertThat(serialize(flattened.inlinedOxsts.property))
             .doesNotContain("secondUser")
     }

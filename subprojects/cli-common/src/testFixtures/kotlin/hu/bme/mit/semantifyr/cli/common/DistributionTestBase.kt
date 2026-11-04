@@ -69,7 +69,9 @@ abstract class DistributionTestBase(
                 environment()["PATH"] = (listOf(Path(javaHome, "bin").toString()) + path).joinToString(File.pathSeparator)
             }
             .start()
-        check(process.waitFor(10, TimeUnit.MINUTES)) { "$launcher ${arguments.joinToString(" ")} did not exit" }
+        check(process.waitFor(10, TimeUnit.MINUTES)) {
+            "$launcher ${arguments.joinToString(" ")} did not exit"
+        }
         return LauncherRun(process.exitValue(), stdout.readText(), stderr.readText())
     }
 
@@ -94,11 +96,15 @@ abstract class DistributionTestBase(
             osName.startsWith("Mac") -> "dylib"
             else -> "so"
         }
-        val libraries = home.resolve("theta-xsts-cli/lib").listDirectoryEntries().map { it.name }
+        val libraries = home.resolve("theta-xsts-cli/lib").listDirectoryEntries().map {
+            it.name
+        }
 
         assertThat(libraries)
             .contains("libz3.$extension", "libz3java.$extension", "libz3legacy.$extension", "libz3javalegacy.$extension")
-            .allMatch { it.endsWith(".$extension") }
+            .allMatch {
+                it.endsWith(".$extension")
+            }
         if (!windows) {
             assertThat(home.resolve("theta-xsts-cli/theta-xsts-cli")).isExecutable()
         }
