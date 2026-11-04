@@ -30,7 +30,7 @@ import java.nio.file.Path
 abstract class FlatteningTestBase {
 
     @TempDir
-    lateinit var tempDir: Path
+    lateinit var temporaryDirectory: Path
 
     @Inject
     private lateinit var parseHelper: OxstsPackageParseHelper
@@ -52,7 +52,7 @@ abstract class FlatteningTestBase {
         val classDeclaration = EcoreUtil2.eAllOfType(parsed.oxstsPackage, ClassDeclaration::class.java).single {
             it.name == className
         }
-        return SemantifyrCompiler(injector, ArtifactConfig.NONE, optimization).compile(classDeclaration, tempDir)
+        return SemantifyrCompiler(injector, ArtifactConfig.NONE, optimization).compile(classDeclaration, temporaryDirectory)
     }
 
     protected fun serialize(eObject: EObject): String {

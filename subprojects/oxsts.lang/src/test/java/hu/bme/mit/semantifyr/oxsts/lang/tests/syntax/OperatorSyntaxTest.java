@@ -47,25 +47,25 @@ public class OperatorSyntaxTest {
 
     @Test
     void arithmeticAdd() {
-        assertArithmeticBinaryOp("x + 1", ArithmeticOp.ADD);
+        assertArithmeticBinaryOperator("x + 1", ArithmeticOp.ADD);
     }
 
     @Test
-    void arithmeticSub() {
-        assertArithmeticBinaryOp("x - 1", ArithmeticOp.SUB);
+    void arithmeticSubtract() {
+        assertArithmeticBinaryOperator("x - 1", ArithmeticOp.SUB);
     }
 
     @Test
-    void arithmeticMul() {
-        assertArithmeticBinaryOp("x * 2", ArithmeticOp.MUL);
+    void arithmeticMultiply() {
+        assertArithmeticBinaryOperator("x * 2", ArithmeticOp.MUL);
     }
 
     @Test
-    void arithmeticDiv() {
-        assertArithmeticBinaryOp("x / 2", ArithmeticOp.DIV);
+    void arithmeticDivide() {
+        assertArithmeticBinaryOperator("x / 2", ArithmeticOp.DIV);
     }
 
-    private void assertArithmeticBinaryOp(String expression, ArithmeticOp expectedOperator) {
+    private void assertArithmeticBinaryOperator(String expression, ArithmeticOp expectedOperator) {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
@@ -82,15 +82,15 @@ public class OperatorSyntaxTest {
 
     @Test
     void arithmeticUnaryPlus() {
-        assertArithmeticUnaryOp("+x", UnaryOp.PLUS);
+        assertArithmeticUnaryOperator("+x", UnaryOp.PLUS);
     }
 
     @Test
     void arithmeticUnaryMinus() {
-        assertArithmeticUnaryOp("-x", UnaryOp.MINUS);
+        assertArithmeticUnaryOperator("-x", UnaryOp.MINUS);
     }
 
-    private void assertArithmeticUnaryOp(String expression, UnaryOp expectedOperator) {
+    private void assertArithmeticUnaryOperator(String expression, UnaryOp expectedOperator) {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
@@ -149,20 +149,20 @@ public class OperatorSyntaxTest {
 
     @Test
     void booleanAnd() {
-        assertBooleanOp("a && b", BooleanOp.AND);
+        assertBooleanOperator("a && b", BooleanOp.AND);
     }
 
     @Test
     void booleanOr() {
-        assertBooleanOp("a || b", BooleanOp.OR);
+        assertBooleanOperator("a || b", BooleanOp.OR);
     }
 
     @Test
     void booleanXor() {
-        assertBooleanOp("a ^^ b", BooleanOp.XOR);
+        assertBooleanOperator("a ^^ b", BooleanOp.XOR);
     }
 
-    private void assertBooleanOp(String expression, BooleanOp expectedOperator) {
+    private void assertBooleanOperator(String expression, BooleanOp expectedOperator) {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
@@ -221,35 +221,35 @@ public class OperatorSyntaxTest {
 
     @Test
     void comparisonLess() {
-        assertComparisonOp("x < 5", ComparisonOp.LESS);
+        assertComparisonOperator("x < 5", ComparisonOp.LESS);
     }
 
     @Test
-    void comparisonLessEq() {
-        assertComparisonOp("x <= 5", ComparisonOp.LESS_EQ);
+    void comparisonLessOrEqual() {
+        assertComparisonOperator("x <= 5", ComparisonOp.LESS_EQ);
     }
 
     @Test
     void comparisonGreater() {
-        assertComparisonOp("x > 5", ComparisonOp.GREATER);
+        assertComparisonOperator("x > 5", ComparisonOp.GREATER);
     }
 
     @Test
-    void comparisonGreaterEq() {
-        assertComparisonOp("x >= 5", ComparisonOp.GREATER_EQ);
+    void comparisonGreaterOrEqual() {
+        assertComparisonOperator("x >= 5", ComparisonOp.GREATER_EQ);
     }
 
     @Test
-    void comparisonEq() {
-        assertComparisonOp("x == 5", ComparisonOp.EQ);
+    void comparisonEqual() {
+        assertComparisonOperator("x == 5", ComparisonOp.EQ);
     }
 
     @Test
-    void comparisonNotEq() {
-        assertComparisonOp("x != 5", ComparisonOp.NOT_EQ);
+    void comparisonNotEqual() {
+        assertComparisonOperator("x != 5", ComparisonOp.NOT_EQ);
     }
 
-    private void assertComparisonOp(String expression, ComparisonOp expectedOperator) {
+    private void assertComparisonOperator(String expression, ComparisonOp expectedOperator) {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
