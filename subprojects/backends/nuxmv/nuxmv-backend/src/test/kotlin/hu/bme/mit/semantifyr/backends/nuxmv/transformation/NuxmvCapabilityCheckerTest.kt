@@ -27,12 +27,12 @@ class NuxmvCapabilityCheckerTest : NuxmvTransformationTestBase() {
     fun `a model of supported constructs passes`() {
         val unsupported = unsupported(
             """
-                var x : int := 0
-                var b : bool
-                var c : test::colors::Color := test::colors::Color::Red
-                init { havoc(b) }
-                tran { choice { assume(x < 3) x := x + 1 } or { if (b) { c := test::colors::Color::Green } } }
-                prop { AG (x <= 3 && (if b then true else c == test::colors::Color::Red)) }
+                var counter : int := 0
+                var flag : bool
+                var color : test::colors::Color := test::colors::Color::Red
+                init { havoc(flag) }
+                tran { choice { assume(counter < 3) counter := counter + 1 } or { if (flag) { color := test::colors::Color::Green } } }
+                prop { AG (counter <= 3 && (if flag then true else color == test::colors::Color::Red)) }
             """,
         )
 
@@ -43,12 +43,12 @@ class NuxmvCapabilityCheckerTest : NuxmvTransformationTestBase() {
     fun `every unsupported construct is reported`() {
         val unsupported = unsupported(
             """
-                var r : real := 0.5
-                var a : any := 0
-                var s : string
-                var x : int := 0
+                var ratio : real := 0.5
+                var anything : any := 0
+                var text : string
+                var counter : int := 0
                 init { }
-                tran { for (i in 0..2) { x := x + i } }
+                tran { for (index in 0..2) { counter := counter + index } }
                 prop { AG true }
             """,
         )

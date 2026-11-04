@@ -25,58 +25,58 @@ class HavocValueCollectorTest {
 
     @Test
     fun `an equality has a candidate on both sides of its literal`() {
-        val x = variable(
+        val havoced = variable(
             """
-                var x : int
+                var havoced : int
                 init { }
                 tran { }
-                prop { AG !(x == 3) || x > 3 }
+                prop { AG !(havoced == 3) || havoced > 3 }
             """,
         )
 
-        assertThat(HavocValueCollector().valuesFor(x)).contains(2, 3, 4)
+        assertThat(HavocValueCollector().valuesFor(havoced)).contains(2, 3, 4)
     }
 
     @Test
     fun `candidates are complete for an integer read only in comparisons with literals`() {
-        val x = variable(
+        val havoced = variable(
             """
-                var x : int
+                var havoced : int
                 init { }
-                tran { havoc(x) x := 4 }
-                prop { AG (x != 3 && x <= 7) }
+                tran { havoc(havoced) havoced := 4 }
+                prop { AG (havoced != 3 && havoced <= 7) }
             """,
         )
 
-        assertThat(HavocValueCollector().isComplete(x)).isTrue
+        assertThat(HavocValueCollector().isComplete(havoced)).isTrue
     }
 
     @Test
     fun `candidates are not complete for an integer read in arithmetic or compared with a variable`() {
         val arithmetic = variable(
             """
-                var x : int
+                var havoced : int
                 init { }
                 tran { }
-                prop { AG x + 1 < 5 }
+                prop { AG havoced + 1 < 5 }
             """,
         )
         val copied = variable(
             """
-                var x : int
-                var y : int := 0
+                var havoced : int
+                var copy : int := 0
                 init { }
-                tran { y := x }
-                prop { AG y < 5 }
+                tran { copy := havoced }
+                prop { AG copy < 5 }
             """,
         )
         val compared = variable(
             """
-                var x : int
-                var y : int := 0
+                var havoced : int
+                var bound : int := 0
                 init { }
                 tran { }
-                prop { AG x < y }
+                prop { AG havoced < bound }
             """,
         )
 

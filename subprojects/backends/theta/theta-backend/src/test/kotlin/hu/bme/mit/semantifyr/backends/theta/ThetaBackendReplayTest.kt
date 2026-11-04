@@ -80,7 +80,7 @@ class ThetaBackendReplayTest {
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
         val states = listOfNotNull(witness.initializedState) + witness.transitionStates
-        assertThat(states.map { it.valuesByName()["x"] }).containsExactly(0, 1, 2)
+        assertThat(states.map { it.valuesByName()["counter"] }).containsExactly(0, 1, 2)
     }
 
     @Test
@@ -90,7 +90,7 @@ class ThetaBackendReplayTest {
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
         val states = listOfNotNull(witness.initializedState) + witness.transitionStates
-        assertThat(states.map { state -> state.values.map { it.variable.name } }).containsOnly(listOf("y", "x", "b"))
+        assertThat(states.map { state -> state.values.map { it.variable.name } }).containsOnly(listOf("counter", "unchanged", "flag"))
     }
 
     @Test
@@ -132,7 +132,7 @@ class ThetaBackendReplayTest {
             models.parse(
                 """
                     inlined oxsts of semantifyr::Anything
-                    var r : real := 0.5
+                    var ratio : real := 0.5
                     init { }
                     tran { }
                     prop { AG true }
@@ -141,7 +141,7 @@ class ThetaBackendReplayTest {
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).matches("theta:cegar-expl does not support \\S+:2: variables of type real \\(r\\); \\S+:2: real literals")
+        assertThat(result.message).matches("theta:cegar-expl does not support \\S+:2: variables of type real \\(ratio\\); \\S+:2: real literals")
     }
 
     @Test

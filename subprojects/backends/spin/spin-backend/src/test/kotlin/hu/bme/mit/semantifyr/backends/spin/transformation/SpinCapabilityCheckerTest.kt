@@ -29,12 +29,12 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
     fun `a model of supported constructs passes`() {
         val unsupported = unsupported(
             """
-                var x : int := 0
-                var b : bool
-                var c : test::colors::Color := test::colors::Color::Red
-                init { havoc(b) }
-                tran { choice { assume(x < 3) x := x + 1 } or { if (b) { c := test::colors::Color::Green } } }
-                prop { AG (x <= 3 && (if b then true else c == test::colors::Color::Red)) }
+                var counter : int := 0
+                var flag : bool
+                var color : test::colors::Color := test::colors::Color::Red
+                init { havoc(flag) }
+                tran { choice { assume(counter < 3) counter := counter + 1 } or { if (flag) { color := test::colors::Color::Green } } }
+                prop { AG (counter <= 3 && (if flag then true else color == test::colors::Color::Red)) }
             """,
         )
 
@@ -45,13 +45,13 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
     fun `every unsupported construct is reported`() {
         val unsupported = unsupported(
             """
-                var r : real := 0.5
-                var a : any := 0
-                var s : string
-                var x : int := 0
+                var ratio : real := 0.5
+                var anything : any := 0
+                var text : string
+                var counter : int := 0
                 init { }
-                tran { for (i in 0..2) { x := x + i } }
-                prop { AG (if x < 3 then 1 else 0) == 1 }
+                tran { for (index in 0..2) { counter := counter + index } }
+                prop { AG (if counter < 3 then 1 else 0) == 1 }
             """,
         )
 
@@ -85,11 +85,11 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
     fun `an unbounded integer that guards an assumption is reported`() {
         val unsupported = unsupported(
             """
-                var x : int := 0
-                var y : int := 0
+                var counter : int := 0
+                var observed : int := 0
                 init { }
-                tran { choice { x := x + 1 } or { if (x <= 5) { assume(false) } y := 1 } }
-                prop { AG y == 0 }
+                tran { choice { counter := counter + 1 } or { if (counter <= 5) { assume(false) } observed := 1 } }
+                prop { AG observed == 0 }
             """,
         )
 
@@ -100,10 +100,10 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
     fun `a bounded integer beyond 32 bits is reported`() {
         val unsupported = unsupported(
             """
-                var x : int := 1
+                var counter : int := 1
                 init { }
-                tran { if (x < 100000) { x := x * 100000 } }
-                prop { AG x > 0 }
+                tran { if (counter < 100000) { counter := counter * 100000 } }
+                prop { AG counter > 0 }
             """,
         )
 
@@ -114,11 +114,11 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
     fun `arithmetic beyond 32 bits over bounded integers is reported`() {
         val unsupported = unsupported(
             """
-                var x : int := 0
-                var y : int := 0
+                var counter : int := 0
+                var scaled : int := 0
                 init { }
-                tran { if (x < 5000) { x := x + 1 } y := (x * 1000000) / 1000000 }
-                prop { AG y <= 5000 }
+                tran { if (counter < 5000) { counter := counter + 1 } scaled := (counter * 1000000) / 1000000 }
+                prop { AG scaled <= 5000 }
             """,
         )
 
@@ -129,10 +129,10 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
     fun `an integer chosen among havoc candidates is bounded by them`() {
         val unsupported = unsupported(
             """
-                var x : int
+                var counter : int
                 init { }
-                tran { havoc(x) }
-                prop { AG x < 5 }
+                tran { havoc(counter) }
+                prop { AG counter < 5 }
             """,
         )
 

@@ -32,36 +32,36 @@ class BackendTestModels @Inject constructor(
     companion object {
         const val COUNTER_EXCEEDS_BOUND = """
             inlined oxsts of semantifyr::Anything
-            var x : int := 0
+            var counter : int := 0
             init { }
-            tran { x := x + 1 }
-            prop { AG x < 2 }
+            tran { counter := counter + 1 }
+            prop { AG counter < 2 }
         """
 
         const val SATURATING_COUNTER_EXCEEDS_BOUND = """
             inlined oxsts of semantifyr::Anything
-            var x : int := 0
+            var counter : int := 0
             init { }
-            tran { if (x < 3) { x := x + 1 } }
-            prop { AG x < 2 }
+            tran { if (counter < 3) { counter := counter + 1 } }
+            prop { AG counter < 2 }
         """
 
         const val UNREACHABLE_TARGET = """
             inlined oxsts of semantifyr::Anything
-            var x : int := 0
+            var counter : int := 0
             init { }
-            tran { assume(x < 3) x := x + 1 }
-            prop { EF x == 5 }
+            tran { assume(counter < 3) counter := counter + 1 }
+            prop { EF counter == 5 }
         """
 
         const val SATURATING_ONE_OF_SEVERAL_CHANGES = """
             inlined oxsts of semantifyr::Anything
-            var y : int := 0
-            var x : int := 5
-            var b : bool := true
+            var counter : int := 0
+            var unchanged : int := 5
+            var flag : bool := true
             init { }
-            tran { if (y < 3) { y := y + 1 } }
-            prop { AG y < 2 }
+            tran { if (counter < 3) { counter := counter + 1 } }
+            prop { AG counter < 2 }
         """
 
         const val STATELESS_VIOLATION = """

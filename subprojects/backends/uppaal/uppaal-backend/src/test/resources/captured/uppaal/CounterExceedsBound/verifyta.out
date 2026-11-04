@@ -2,7 +2,7 @@ Options for the verification:
   Generating shortest trace
   Search order is breadth first
   Using conservative space optimisation
-  Seed is 1793495760
+  Seed is 1793818523
   State space representation uses minimal constraint systems with future testing
   Using HashMap + Compress integers for discrete state storage
 [2K
@@ -12,39 +12,39 @@ Verifying formula 1 at model.q:1
 
 State:
 ( Model.Start )
-x=0
+counter=0
 
 Transition:
   Model.Start->Model.Running { 1, tau, 1 }
 
 State:
 ( Model.Running )
-x=0
+counter=0
 
 Transition:
-  Model.Running->Model.then_loc_0 { x < 3, tau, 1 }
+  Model.Running->Model.then_loc_0 { counter < 3, tau, 1 }
 
 State:
 ( Model.then_loc_0 )
-x=0
+counter=0
 
 Transition:
-  Model.then_loc_0->Model.Running { 1, tau, x := x + 1 }
+  Model.then_loc_0->Model.Running { 1, tau, counter := counter + 1 }
 
 State:
 ( Model.Running )
-x=1
+counter=1
 
 Transition:
-  Model.Running->Model.then_loc_0 { x < 3, tau, 1 }
+  Model.Running->Model.then_loc_0 { counter < 3, tau, 1 }
 
 State:
 ( Model.then_loc_0 )
-x=1
+counter=1
 
 Transition:
-  Model.then_loc_0->Model.Running { 1, tau, x := x + 1 }
+  Model.then_loc_0->Model.Running { 1, tau, counter := counter + 1 }
 
 State:
 ( Model.Running )
-x=2
+counter=2

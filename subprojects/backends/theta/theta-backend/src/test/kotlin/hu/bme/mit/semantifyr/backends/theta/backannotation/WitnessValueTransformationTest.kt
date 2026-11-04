@@ -45,8 +45,8 @@ class WitnessValueTransformationTest {
         models.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int := 0
-                var b : bool := false
+                var number : int := 0
+                var flag : bool := false
                 var slots : int[3] := [0, 0, 0]
                 init { }
                 tran { }
@@ -55,7 +55,7 @@ class WitnessValueTransformationTest {
         )
     }
 
-    private suspend fun transform(expression: XstsExpression, variableName: String = "x"): Expression {
+    private suspend fun transform(expression: XstsExpression, variableName: String = "number"): Expression {
         val variable = model.variables.single {
             it.name == variableName
         }
@@ -80,24 +80,24 @@ class WitnessValueTransformationTest {
 
     private fun arithmetic(
         left: Int,
-        op: ArithmeticOp,
+        operator: ArithmeticOp,
         right: Int,
     ): XstsExpression {
         return XstsFactory.createArithmeticBinaryOperator().also {
             it.left = integer(left)
-            it.op = op
+            it.op = operator
             it.right = integer(right)
         }
     }
 
     private fun logic(
         left: Boolean,
-        op: BooleanOp,
+        operator: BooleanOp,
         right: Boolean,
     ): XstsExpression {
         return XstsFactory.createBooleanOperator().also {
             it.left = boolean(left)
-            it.op = op
+            it.op = operator
             it.right = boolean(right)
         }
     }
@@ -152,18 +152,18 @@ class WitnessValueTransformationTest {
 
     @Test
     suspend fun `iff is equality of booleans`() {
-        assertThat(booleanValue(transform(logic(true, BooleanOp.IFF, false), "b"))).isFalse
-        assertThat(booleanValue(transform(logic(false, BooleanOp.IFF, false), "b"))).isTrue
+        assertThat(booleanValue(transform(logic(true, BooleanOp.IFF, false), "flag"))).isFalse
+        assertThat(booleanValue(transform(logic(false, BooleanOp.IFF, false), "flag"))).isTrue
     }
 
     @Test
     suspend fun `imply holds unless its premise holds and its conclusion does not`() {
-        assertThat(booleanValue(transform(logic(false, BooleanOp.IMPLY, false), "b"))).isTrue
-        assertThat(booleanValue(transform(logic(true, BooleanOp.IMPLY, false), "b"))).isFalse
+        assertThat(booleanValue(transform(logic(false, BooleanOp.IMPLY, false), "flag"))).isTrue
+        assertThat(booleanValue(transform(logic(true, BooleanOp.IMPLY, false), "flag"))).isFalse
     }
 
     @Test
-    suspend fun `mod is never negative`() {
+    suspend fun `modulo is never negative`() {
         assertThat(integerValue(transform(arithmetic(-5, ArithmeticOp.MOD, 3)))).isEqualTo(1)
         assertThat(integerValue(transform(arithmetic(5, ArithmeticOp.MOD, -3)))).isEqualTo(2)
         assertThat(integerValue(transform(arithmetic(-5, ArithmeticOp.MOD, -3)))).isEqualTo(1)
@@ -230,7 +230,7 @@ class WitnessValueTransformationTest {
     @Test
     fun `counterexample values are read whole`(@TempDir directory: Path) {
         val cexFile = directory.resolve("out.cex")
-        cexFile.writeText("(XstsStateSequence (XstsState pre_init last_env (ExplState (x -2147483648) (y 3000000000))))")
+        cexFile.writeText("(XstsStateSequence (XstsState pre_init last_env (ExplState (number -2147483648) (y 3000000000))))")
 
         val values = CexWitnessTransformer().transform(CexReader().loadCexModel(cexFile)).initialState.variableValues
         val transformer = CexExpressionToXstsExpressionTransformer(XstsFactory.createXstsModel())

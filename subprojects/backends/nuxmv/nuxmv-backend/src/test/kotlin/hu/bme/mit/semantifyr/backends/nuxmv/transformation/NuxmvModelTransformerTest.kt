@@ -34,10 +34,10 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
     suspend fun `a model renders the variables, their seeds, the init and the transition relation`() {
         val artifacts = transform(
             """
-                var x : int := 0
+                var counter : int := 0
                 init { }
-                tran { x := x + 1 }
-                prop { AG x < 3 }
+                tran { counter := counter + 1 }
+                prop { AG counter < 3 }
             """,
         )
 
@@ -45,84 +45,84 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
             """
                 |MODULE main
                 |VAR
-                |    x : integer;
-                |    x__init_b0_seed : integer;
-                |    x__tran_b0_1 : integer;
+                |    counter : integer;
+                |    counter__init_b0_seed : integer;
+                |    counter__tran_b0_1 : integer;
                 |INIT
                 |    (
-                |          (x__init_b0_seed = 0)
-                |        & (x = x__init_b0_seed)
+                |          (counter__init_b0_seed = 0)
+                |        & (counter = counter__init_b0_seed)
                 |    )
                 |TRANS
                 |    (
-                |          (x__tran_b0_1 = (x + 1))
-                |        & (next(x) = x__tran_b0_1)
+                |          (counter__tran_b0_1 = (counter + 1))
+                |        & (next(counter) = counter__tran_b0_1)
                 |    )
                 |
             """.trimMargin(),
         )
-        assertThat(artifacts.property.invariant).isEqualTo("(x < 3)")
+        assertThat(artifacts.property.invariant).isEqualTo("(counter < 3)")
     }
 
     @Test
     suspend fun `a variable without an initializer starts unconstrained`() {
         val lines = smvLines(
             """
-                var x : int
+                var counter : int
                 init { }
                 tran { }
-                prop { AG x == 0 }
+                prop { AG counter == 0 }
             """,
         )
 
-        assertThat(lines).containsSequence("INIT", "(", "(x = x__init_b0_seed)", ")")
+        assertThat(lines).containsSequence("INIT", "(", "(counter = counter__init_b0_seed)", ")")
     }
 
     @Test
     suspend fun `boolean and enum variables get their domains`() {
         val lines = smvLines(
             """
-                var b : bool := true
-                var c : test::colors::Color := test::colors::Color::Green
+                var flag : bool := true
+                var color : test::colors::Color := test::colors::Color::Green
                 init { }
                 tran { }
-                prop { AG c == test::colors::Color::Red }
+                prop { AG color == test::colors::Color::Red }
             """,
         )
 
-        assertThat(lines).contains("b : boolean;", "c : { Red, Green };", "(b__init_b0_seed = TRUE)", "& (c__init_b0_seed = Green)")
+        assertThat(lines).contains("flag : boolean;", "color : { Red, Green };", "(flag__init_b0_seed = TRUE)", "& (color__init_b0_seed = Green)")
     }
 
     @Test
     suspend fun `an assumption constrains the step`() {
         val lines = smvLines(
             """
-                var x : int := 0
+                var counter : int := 0
                 init { }
-                tran { assume(x < 3) }
+                tran { assume(counter < 3) }
                 prop { AG true }
             """,
         )
 
-        assertThat(lines).containsSequence("TRANS", "(", "((x < 3))", "& (next(x) = x)", ")")
+        assertThat(lines).containsSequence("TRANS", "(", "((counter < 3))", "& (next(counter) = counter)", ")")
     }
 
     @Test
     suspend fun `a choice selects its branch with an input variable`() {
         val lines = smvLines(
             """
-                var x : int := 0
+                var counter : int := 0
                 init { }
-                tran { choice { x := 1 } or { } }
+                tran { choice { counter := 1 } or { } }
                 prop { AG true }
             """,
         )
 
         assertThat(lines).containsSequence("IVAR", "nondet_tran_b0_0 : 0..1;")
         assertThat(lines).containsSequence(
-            "(case nondet_tran_b0_0 = 0 : (x__tran_b0_1 = 1); nondet_tran_b0_0 = 1 : TRUE; esac)",
-            "& (x__tran_b0_2 = case nondet_tran_b0_0 = 0 : x__tran_b0_1; nondet_tran_b0_0 = 1 : x; esac)",
-            "& (next(x) = x__tran_b0_2)",
+            "(case nondet_tran_b0_0 = 0 : (counter__tran_b0_1 = 1); nondet_tran_b0_0 = 1 : TRUE; esac)",
+            "& (counter__tran_b0_2 = case nondet_tran_b0_0 = 0 : counter__tran_b0_1; nondet_tran_b0_0 = 1 : counter; esac)",
+            "& (next(counter) = counter__tran_b0_2)",
         )
     }
 
@@ -130,8 +130,8 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
     suspend fun `a choice in init selects its branch with a frozen variable`() {
         val lines = smvLines(
             """
-                var x : int := 0
-                init { choice { x := 1 } or { x := 2 } }
+                var counter : int := 0
+                init { choice { counter := 1 } or { counter := 2 } }
                 tran { }
                 prop { AG true }
             """,
@@ -145,17 +145,17 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
     suspend fun `an if merges both branches by its guard`() {
         val lines = smvLines(
             """
-                var x : int := 0
+                var counter : int := 0
                 init { }
-                tran { if (x < 3) { x := 1 } else { x := 2 } }
+                tran { if (counter < 3) { counter := 1 } else { counter := 2 } }
                 prop { AG true }
             """,
         )
 
         assertThat(lines).containsSequence(
-            "(case (x < 3) : (x__tran_b0_1 = 1); TRUE : (x__tran_b0_2 = 2); esac)",
-            "& (x__tran_b0_3 = case (x < 3) : x__tran_b0_1; TRUE : x__tran_b0_2; esac)",
-            "& (next(x) = x__tran_b0_3)",
+            "(case (counter < 3) : (counter__tran_b0_1 = 1); TRUE : (counter__tran_b0_2 = 2); esac)",
+            "& (counter__tran_b0_3 = case (counter < 3) : counter__tran_b0_1; TRUE : counter__tran_b0_2; esac)",
+            "& (next(counter) = counter__tran_b0_3)",
         )
     }
 
@@ -163,16 +163,16 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
     suspend fun `an if without an else keeps the value on the else branch`() {
         val lines = smvLines(
             """
-                var x : int := 0
+                var counter : int := 0
                 init { }
-                tran { if (x < 3) { x := 1 } }
+                tran { if (counter < 3) { counter := 1 } }
                 prop { AG true }
             """,
         )
 
         assertThat(lines).containsSequence(
-            "(case (x < 3) : (x__tran_b0_1 = 1); TRUE : TRUE; esac)",
-            "& (x__tran_b0_2 = case (x < 3) : x__tran_b0_1; TRUE : x; esac)",
+            "(case (counter < 3) : (counter__tran_b0_1 = 1); TRUE : TRUE; esac)",
+            "& (counter__tran_b0_2 = case (counter < 3) : counter__tran_b0_1; TRUE : counter; esac)",
         )
     }
 
@@ -180,11 +180,11 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
     suspend fun `a havoc binds the next value to an unconstrained prime`() {
         val lines = smvLines(
             """
-                var x : int := 0
-                var b : bool := false
-                var c : test::colors::Color := test::colors::Color::Red
+                var counter : int := 0
+                var flag : bool := false
+                var color : test::colors::Color := test::colors::Color::Red
                 init { }
-                tran { havoc(x) havoc(b) havoc(c) }
+                tran { havoc(counter) havoc(flag) havoc(color) }
                 prop { AG true }
             """,
         )
@@ -192,9 +192,9 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
         assertThat(lines).containsSequence(
             "TRANS",
             "(",
-            "(next(x) = x__tran_b0_1)",
-            "& (next(b) = b__tran_b0_1)",
-            "& (next(c) = c__tran_b0_1)",
+            "(next(counter) = counter__tran_b0_1)",
+            "& (next(flag) = flag__tran_b0_1)",
+            "& (next(color) = color__tran_b0_1)",
             ")",
         )
     }
@@ -203,39 +203,39 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
     suspend fun `a local variable becomes a primed value of the step`() {
         val smv = transform(
             """
-                var x : int := 0
+                var counter : int := 0
                 init { }
-                tran { var d : int := 2 x := x + d }
+                tran { var delta : int := 2 counter := counter + delta }
                 prop { AG true }
             """,
         ).smv
 
-        val local = Regex("\\((d_\\d+)__tran_b0_1 = 2\\)").find(smv)
+        val local = Regex("\\((delta_\\d+)__tran_b0_1 = 2\\)").find(smv)
         assertThat(local).isNotNull()
-        assertThat(smv).contains("(x__tran_b0_1 = (x + ${local!!.groupValues[1]}__tran_b0_1))")
+        assertThat(smv).contains("(counter__tran_b0_1 = (counter + ${local!!.groupValues[1]}__tran_b0_1))")
     }
 
     @Test
     suspend fun `arithmetic, boolean and comparison operators render in SMV syntax`() {
         val lines = smvLines(
             """
-                var x : int := 0
-                var a : bool := false
-                var b : bool := true
+                var counter : int := 0
+                var left : bool := false
+                var right : bool := true
                 init { }
                 tran {
-                    x := ((x + 1) - (2 * x)) / 3
-                    a := (a && b) || !(a ^^ b)
-                    assume(x < 1 && x <= 2 && x > -3 && x >= -4 && x == 0 && x != 5)
+                    counter := ((counter + 1) - (2 * counter)) / 3
+                    left := (left && right) || !(left ^^ right)
+                    assume(counter < 1 && counter <= 2 && counter > -3 && counter >= -4 && counter == 0 && counter != 5)
                 }
-                prop { AG x == -x }
+                prop { AG counter == -counter }
             """,
         )
 
         assertThat(lines).contains(
-            "(x__tran_b0_1 = (((x + 1) - (2 * x)) / 3))",
-            "& (a__tran_b0_1 = ((a & b) | !((a xor b))))",
-            "& (((((((x__tran_b0_1 < 1) & (x__tran_b0_1 <= 2)) & (x__tran_b0_1 > (-3))) & (x__tran_b0_1 >= (-4))) & (x__tran_b0_1 = 0)) & (x__tran_b0_1 != 5)))",
+            "(counter__tran_b0_1 = (((counter + 1) - (2 * counter)) / 3))",
+            "& (left__tran_b0_1 = ((left & right) | !((left xor right))))",
+            "& (((((((counter__tran_b0_1 < 1) & (counter__tran_b0_1 <= 2)) & (counter__tran_b0_1 > (-3))) & (counter__tran_b0_1 >= (-4))) & (counter__tran_b0_1 = 0)) & (counter__tran_b0_1 != 5)))",
         )
     }
 
@@ -243,24 +243,24 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
     suspend fun `an if-then-else expression is a case expression`() {
         val artifacts = transform(
             """
-                var x : int := 0
+                var counter : int := 0
                 init { }
-                tran { x := if x < 3 then x + 1 else 0 }
-                prop { AG (if x < 3 then x == 0 else x == 1) }
+                tran { counter := if counter < 3 then counter + 1 else 0 }
+                prop { AG (if counter < 3 then counter == 0 else counter == 1) }
             """,
         )
 
-        assertThat(artifacts.smv).contains("(x__tran_b0_1 = case (x < 3) : (x + 1); TRUE : 0; esac)")
-        assertThat(artifacts.property.invariant).isEqualTo("case (x < 3) : (x = 0); TRUE : (x = 1); esac")
+        assertThat(artifacts.smv).contains("(counter__tran_b0_1 = case (counter < 3) : (counter + 1); TRUE : 0; esac)")
+        assertThat(artifacts.property.invariant).isEqualTo("case (counter < 3) : (counter = 0); TRUE : (counter = 1); esac")
     }
 
     @Test
     suspend fun `several transition branches become a disjunction`() {
         val lines = smvLines(
             """
-                var x : int := 0
+                var counter : int := 0
                 init { }
-                tran { x := 1 } or { x := 2 }
+                tran { counter := 1 } or { counter := 2 }
                 prop { AG true }
             """,
         )
@@ -268,12 +268,12 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
         assertThat(lines).containsSequence(
             "TRANS",
             "(",
-            "(x__tran_b0_1 = 1)",
-            "& (next(x) = x__tran_b0_1)",
+            "(counter__tran_b0_1 = 1)",
+            "& (next(counter) = counter__tran_b0_1)",
             ")",
             "| (",
-            "(x__tran_b1_1 = 2)",
-            "& (next(x) = x__tran_b1_1)",
+            "(counter__tran_b1_1 = 2)",
+            "& (next(counter) = counter__tran_b1_1)",
             ")",
         )
     }
@@ -298,13 +298,13 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
     suspend fun `choices in several transition branches get distinct input variables`() {
         val smv = transform(
             """
-                var x : int := 0
+                var counter : int := 0
                 var step : int := 0
                 init { }
                 tran {
-                    assume(step == 0) choice { x := 1 } or { x := 2 } step := 1
+                    assume(step == 0) choice { counter := 1 } or { counter := 2 } step := 1
                 } or {
-                    assume(step == 1) choice { x := 3 } or { x := 4 } step := 2
+                    assume(step == 1) choice { counter := 3 } or { counter := 4 } step := 2
                 }
                 prop { AG true }
             """,
@@ -318,8 +318,8 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
     suspend fun `several init branches get distinct seeds and frozen variables`() {
         val smv = transform(
             """
-                var x : int := 0
-                init { choice { x := 1 } or { x := 2 } } or { choice { x := 3 } or { x := 4 } }
+                var counter : int := 0
+                init { choice { counter := 1 } or { counter := 2 } } or { choice { counter := 3 } or { counter := 4 } }
                 tran { }
                 prop { AG true }
             """,
@@ -333,30 +333,30 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
     suspend fun `an AG property keeps the verdict and the body`() {
         val property = transform(
             """
-                var x : int := 0
+                var counter : int := 0
                 init { }
                 tran { }
-                prop { AG x == 5 }
+                prop { AG counter == 5 }
             """,
         ).property
 
         assertThat(property.invertVerdict).isFalse()
-        assertThat(property.invariant).isEqualTo("(x = 5)")
+        assertThat(property.invariant).isEqualTo("(counter = 5)")
     }
 
     @Test
     suspend fun `an EF property is checked as the negated invariant with an inverted verdict`() {
         val property = transform(
             """
-                var x : int := 0
+                var counter : int := 0
                 init { }
                 tran { }
-                prop { EF x == 5 }
+                prop { EF counter == 5 }
             """,
         ).property
 
         assertThat(property.invertVerdict).isTrue()
-        assertThat(property.invariant).isEqualTo("!((x = 5))")
+        assertThat(property.invariant).isEqualTo("!((counter = 5))")
     }
 
     @Test
@@ -364,7 +364,7 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
         val exception = assertThrows<BackendUnsupportedException> {
             transform(
                 """
-                    var r : real := 0.5
+                    var ratio : real := 0.5
                     init { }
                     tran { }
                     prop { AG true }
@@ -372,7 +372,7 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
             )
         }
 
-        assertThat(exception.message).isEqualTo("nuXmv does not support variables of type real (r)")
+        assertThat(exception.message).isEqualTo("nuXmv does not support variables of type real (ratio)")
     }
 
     @Test
@@ -380,9 +380,9 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
         val exception = assertThrows<BackendUnsupportedException> {
             transform(
                 """
-                    var x : int := 0
+                    var counter : int := 0
                     init { }
-                    tran { for (i in 0..2) { x := x + i } }
+                    tran { for (index in 0..2) { counter := counter + index } }
                     prop { AG true }
                 """,
             )

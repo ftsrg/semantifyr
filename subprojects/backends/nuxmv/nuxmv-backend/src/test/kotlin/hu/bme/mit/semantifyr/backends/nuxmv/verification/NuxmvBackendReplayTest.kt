@@ -101,21 +101,21 @@ class NuxmvBackendReplayTest {
             models.parse(
                 """
                     inlined oxsts of semantifyr::Anything
-                    var x : int := 0
+                    var chosen : int := 0
                     var step : int := 0
                     init { }
                     tran {
-                        assume(step == 0) choice { x := 1 } or { x := 2 } step := 1
+                        assume(step == 0) choice { chosen := 1 } or { chosen := 2 } step := 1
                     } or {
-                        assume(step == 1) choice { x := 3 } or { x := 4 } step := 2
+                        assume(step == 1) choice { chosen := 3 } or { chosen := 4 } step := 2
                     }
-                    prop { EF x == 4 }
+                    prop { EF chosen == 4 }
                 """,
             ),
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
-        assertThat(result.inlinedWitness!!.transitionStates.last().valuesByName()).containsEntry("x", 4)
+        assertThat(result.inlinedWitness!!.transitionStates.last().valuesByName()).containsEntry("chosen", 4)
     }
 
     @Test
@@ -125,7 +125,7 @@ class NuxmvBackendReplayTest {
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
         val states = listOfNotNull(witness.initializedState) + witness.transitionStates
-        assertThat(states.map { it.valuesByName()["x"] }).containsExactly(0, 1, 2)
+        assertThat(states.map { it.valuesByName()["counter"] }).containsExactly(0, 1, 2)
     }
 
     @Test
@@ -159,7 +159,7 @@ class NuxmvBackendReplayTest {
             models.parse(
                 """
                     inlined oxsts of semantifyr::Anything
-                    var r : real := 0.5
+                    var ratio : real := 0.5
                     init { }
                     tran { }
                     prop { AG true }
@@ -168,6 +168,6 @@ class NuxmvBackendReplayTest {
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).matches("nuxmv:ic3-invar does not support \\S+:2: variables of type real \\(r\\)")
+        assertThat(result.message).matches("nuxmv:ic3-invar does not support \\S+:2: variables of type real \\(ratio\\)")
     }
 }

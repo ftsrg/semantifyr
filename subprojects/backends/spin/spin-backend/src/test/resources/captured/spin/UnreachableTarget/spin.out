@@ -31,4 +31,4 @@ unreached in claim p
 	(1 of 10 states)
 
 pan: elapsed time 0 seconds
-ltl p: [] (! ((__semantifyr_stable) && ((x==5))))
+ltl p: [] (! ((__semantifyr_stable) && ((counter==5))))

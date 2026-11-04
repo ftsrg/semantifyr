@@ -43,7 +43,7 @@ class UppaalIrSerializerTest {
     fun `committed location emits committed marker`() {
         val nta = minimalNtaWith(
             listOf(
-                UppaalLocation(id = "c", name = "Committed", kind = UppaalLocationKind.Committed),
+                UppaalLocation(id = "committed", name = "Committed", kind = UppaalLocationKind.Committed),
             ),
         )
         val xml = serializer.serialize(nta)
@@ -54,7 +54,7 @@ class UppaalIrSerializerTest {
     fun `urgent location emits urgent marker`() {
         val nta = minimalNtaWith(
             listOf(
-                UppaalLocation(id = "u", name = "Urgent", kind = UppaalLocationKind.Urgent),
+                UppaalLocation(id = "urgent", name = "Urgent", kind = UppaalLocationKind.Urgent),
             ),
         )
         val xml = serializer.serialize(nta)
@@ -69,29 +69,29 @@ class UppaalIrSerializerTest {
                 UppaalTemplate(
                     name = "Model",
                     locations = listOf(
-                        UppaalLocation("a", "A"),
-                        UppaalLocation("b", "B"),
+                        UppaalLocation("source", "Source"),
+                        UppaalLocation("target", "Target"),
                     ),
-                    initialLocationId = "a",
+                    initialLocationId = "source",
                     edges = listOf(
                         UppaalEdge(
-                            sourceId = "a",
-                            targetId = "b",
-                            select = "i : int[0,3]",
-                            guard = "x > 0",
-                            assignment = "x = i",
+                            sourceId = "source",
+                            targetId = "target",
+                            select = "choice : int[0,3]",
+                            guard = "counter > 0",
+                            assignment = "counter = choice",
                         ),
                     ),
                 ),
             ),
         )
         val xml = serializer.serialize(nta)
-        val selectIdx = xml.indexOf("kind=\"select\"")
-        val guardIdx = xml.indexOf("kind=\"guard\"")
-        val assignIdx = xml.indexOf("kind=\"assignment\"")
-        assertThat(selectIdx).isGreaterThanOrEqualTo(0)
-        assertThat(guardIdx).isGreaterThan(selectIdx)
-        assertThat(assignIdx).isGreaterThan(guardIdx)
+        val selectIndex = xml.indexOf("kind=\"select\"")
+        val guardIndex = xml.indexOf("kind=\"guard\"")
+        val assignmentIndex = xml.indexOf("kind=\"assignment\"")
+        assertThat(selectIndex).isGreaterThanOrEqualTo(0)
+        assertThat(guardIndex).isGreaterThan(selectIndex)
+        assertThat(assignmentIndex).isGreaterThan(guardIndex)
     }
 
     @Test
@@ -100,9 +100,9 @@ class UppaalIrSerializerTest {
             globalDeclarations = UppaalDeclarations(
                 typedefs = listOf("typedef int[0,2] Color;"),
                 variables = listOf(
-                    UppaalVariableDecl(typeName = "int", name = "x", initialValue = "0"),
-                    UppaalVariableDecl(typeName = "bool", name = "b"),
-                    UppaalVariableDecl(typeName = "clock", name = "c"),
+                    UppaalVariableDecl(typeName = "int", name = "counter", initialValue = "0"),
+                    UppaalVariableDecl(typeName = "bool", name = "flag"),
+                    UppaalVariableDecl(typeName = "clock", name = "elapsed"),
                 ),
             ),
             templates = listOf(
@@ -117,9 +117,9 @@ class UppaalIrSerializerTest {
         val xml = serializer.serialize(nta)
         // Typedefs and vars all inside one <declaration> block.
         assertThat(xml).contains("<declaration>typedef int[0,2] Color;")
-        assertThat(xml).contains("int x = 0;")
-        assertThat(xml).contains("bool b;")
-        assertThat(xml).contains("clock c;")
+        assertThat(xml).contains("int counter = 0;")
+        assertThat(xml).contains("bool flag;")
+        assertThat(xml).contains("clock elapsed;")
     }
 
     @Test
@@ -137,18 +137,18 @@ class UppaalIrSerializerTest {
                 UppaalTemplate(
                     name = "Model",
                     locations = listOf(
-                        UppaalLocation("a", "A"),
-                        UppaalLocation("b", "B"),
+                        UppaalLocation("source", "Source"),
+                        UppaalLocation("target", "Target"),
                     ),
-                    initialLocationId = "a",
+                    initialLocationId = "source",
                     edges = listOf(
-                        UppaalEdge(sourceId = "a", targetId = "b", guard = "x < 5 && y > 0"),
+                        UppaalEdge(sourceId = "source", targetId = "target", guard = "counter < 5 && limit > 0"),
                     ),
                 ),
             ),
         )
         val xml = serializer.serialize(nta)
-        assertThat(xml).contains("x &lt; 5 &amp;&amp; y &gt; 0")
+        assertThat(xml).contains("counter &lt; 5 &amp;&amp; limit &gt; 0")
     }
 
     private fun minimalNtaWith(locations: List<UppaalLocation>): UppaalNta {

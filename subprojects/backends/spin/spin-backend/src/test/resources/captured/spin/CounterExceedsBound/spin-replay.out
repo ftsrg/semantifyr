@@ -1,4 +1,5 @@
-ltl p: [] ((! (__semantifyr_stable)) || ((x<2)))
+ltl p: [] ((! (__semantifyr_stable)) || ((counter<2)))
+spin: warning, "model.pml" is newer than model.pml.trail
 starting claim 1
 Never claim moves to line 4	[(1)]
   2:	proc  0 (:init::1) model.pml:7 (state 1)	[semantifyr_stable = 0]
@@ -7,26 +8,26 @@ Never claim moves to line 4	[(1)]
 		__semantifyr_stable = 1
   5:	proc  0 (:init::1) model.pml:13 (state 5)	[semantifyr_stable = 0]
 		__semantifyr_stable = 0
-  6:	proc  0 (:init::1) model.pml:15 (state 6)	[((x<3))]
-  6:	proc  0 (:init::1) model.pml:16 (state 7)	[x = (x+1)]
-		x = 1
+  6:	proc  0 (:init::1) model.pml:15 (state 6)	[((counter<3))]
+  6:	proc  0 (:init::1) model.pml:16 (state 7)	[counter = (counter+1)]
+		counter = 1
   6:	proc  0 (:init::1) model.pml:19 (state 12)	[semantifyr_stable = 1]
-		x = 1
+		counter = 1
 		__semantifyr_stable = 1
   8:	proc  0 (:init::1) model.pml:13 (state 5)	[semantifyr_stable = 0]
 		__semantifyr_stable = 0
-  9:	proc  0 (:init::1) model.pml:15 (state 6)	[((x<3))]
-  9:	proc  0 (:init::1) model.pml:16 (state 7)	[x = (x+1)]
-		x = 2
+  9:	proc  0 (:init::1) model.pml:15 (state 6)	[((counter<3))]
+  9:	proc  0 (:init::1) model.pml:16 (state 7)	[counter = (counter+1)]
+		counter = 2
   9:	proc  0 (:init::1) model.pml:19 (state 12)	[semantifyr_stable = 1]
-		x = 2
+		counter = 2
 		__semantifyr_stable = 1
 spin: _spin_nvr.tmp:3, Error: assertion violated
-spin: text of failed assertion: assert(!(!((!(semantifyr_stable)||(x<2)))))
-Never claim moves to line 3	[assert(!(!((!(semantifyr_stable)||(x<2)))))]
+spin: text of failed assertion: assert(!(!((!(semantifyr_stable)||(counter<2)))))
+Never claim moves to line 3	[assert(!(!((!(semantifyr_stable)||(counter<2)))))]
 spin: trail ends after 10 steps
 #processes: 1
-		x = 2
+		counter = 2
 		__semantifyr_stable = 1
  10:	proc  0 (:init::1) model.pml:11 (state 14)
  10:	proc  - (p:1) _spin_nvr.tmp:2 (state 6)

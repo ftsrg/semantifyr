@@ -58,10 +58,10 @@ class ShellBasedBackendExecutorTest {
                             echo sleeping> sleeping.txt
                             ping -n 30 127.0.0.1 > nul
                         )
-                        echo cwd=%CD%
+                        echo workingDirectory=%CD%
                         :next
                         if "%~1"=="" goto done
-                        echo arg=%~1
+                        echo argument=%~1
                         shift
                         goto next
                         :done
@@ -78,8 +78,8 @@ class ShellBasedBackendExecutorTest {
                         #!/bin/sh
                         if [ "${'$'}1" = "-V" ]; then exit 0; fi
                         if [ "${'$'}1" = "--sleep" ]; then echo sleeping > sleeping.txt; sleep 30; fi
-                        echo "cwd=${'$'}(pwd -P)"
-                        for argument in "${'$'}@"; do echo "arg=${'$'}argument"; done
+                        echo "workingDirectory=${'$'}(pwd -P)"
+                        for argument in "${'$'}@"; do echo "argument=${'$'}argument"; done
                         echo "stub error" >&2
                         echo produced > produced.txt
                         exit 3
@@ -100,8 +100,8 @@ class ShellBasedBackendExecutorTest {
     }
 
     private fun assertPrintedWorkingDirectory(line: String, workingDirectory: File) {
-        assertThat(line).startsWith("cwd=")
-        assertThat(Path.of(line.removePrefix("cwd=")).toRealPath()).isEqualTo(workingDirectory.toPath().toRealPath())
+        assertThat(line).startsWith("workingDirectory=")
+        assertThat(Path.of(line.removePrefix("workingDirectory=")).toRealPath()).isEqualTo(workingDirectory.toPath().toRealPath())
     }
 
     @Test
@@ -115,9 +115,9 @@ class ShellBasedBackendExecutorTest {
         val lines = logFile.readLines().map { it.trim() }
         assertPrintedWorkingDirectory(lines.first(), workingDirectory)
         assertThat(lines.drop(1)).containsExactly(
-            "arg=-search",
-            "arg=two words",
-            "arg=model.pml",
+            "argument=-search",
+            "argument=two words",
+            "argument=model.pml",
         )
         assertThat(workingDirectory.resolve("produced.txt")).exists()
     }

@@ -1,2 +1,2 @@
-ltl p: [] ((! (__semantifyr_stable)) || ((x<2)))
+ltl p: [] ((! (__semantifyr_stable)) || ((counter<2)))
 spin: model.pml:15, Error: merge requires more than 256 bups

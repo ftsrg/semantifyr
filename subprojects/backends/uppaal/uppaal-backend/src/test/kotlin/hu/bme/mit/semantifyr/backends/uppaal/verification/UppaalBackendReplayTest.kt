@@ -82,7 +82,7 @@ class UppaalBackendReplayTest {
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
         val states = listOfNotNull(witness.initializedState) + witness.transitionStates
-        assertThat(states.map { it.valuesByName()["x"] }).containsExactly(0, 1, 2)
+        assertThat(states.map { it.valuesByName()["counter"] }).containsExactly(0, 1, 2)
     }
 
     @Test
@@ -116,7 +116,7 @@ class UppaalBackendReplayTest {
             models.parse(
                 """
                     inlined oxsts of semantifyr::Anything
-                    var r : real := 0.5
+                    var ratio : real := 0.5
                     init { }
                     tran { }
                     prop { AG true }
@@ -125,7 +125,7 @@ class UppaalBackendReplayTest {
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).matches("uppaal:default does not support \\S+:2: variables of type real \\(r\\)")
+        assertThat(result.message).matches("uppaal:default does not support \\S+:2: variables of type real \\(ratio\\)")
     }
 
     @Test
@@ -137,11 +137,11 @@ class UppaalBackendReplayTest {
         val inlinedOxsts = models.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int := 0
-                var y : int := 0
+                var havoced : int := 0
+                var copy : int := 0
                 init { }
-                tran { havoc(x) y := x + 1 }
-                prop { AG y < 5 }
+                tran { havoc(havoced) copy := havoced + 1 }
+                prop { AG copy < 5 }
             """,
         )
         val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory)
@@ -149,7 +149,7 @@ class UppaalBackendReplayTest {
         val result = UppaalBackend().verify(injector, UppaalConfig.OverApproximation, request, environment)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).matches("uppaal:over-approximation does not support \\S+:2: havoced integers read other than in comparisons with literals \\(x\\)")
+        assertThat(result.message).matches("uppaal:over-approximation does not support \\S+:2: havoced integers read other than in comparisons with literals \\(havoced\\)")
     }
 
     @Test
@@ -176,16 +176,16 @@ class UppaalBackendReplayTest {
             models.parse(
                 """
                     inlined oxsts of semantifyr::Anything
-                    var x : int := 1
+                    var counter : int := 1
                     init { }
-                    tran { x := x * 3 }
-                    prop { AG x > 0 }
+                    tran { counter := counter * 3 }
+                    prop { AG counter > 0 }
                 """,
             ),
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).matches("uppaal:default does not support \\S+:2: arithmetic that may leave the 32-bit range \\(x\\)")
+        assertThat(result.message).matches("uppaal:default does not support \\S+:2: arithmetic that may leave the 32-bit range \\(counter\\)")
     }
 
     @Test
@@ -200,7 +200,7 @@ class UppaalBackendReplayTest {
                 override suspend fun execute(uppaalExecutionSpecification: UppaalExecutionSpecification): UppaalExecutionResult {
                     uppaalExecutionSpecification.logFile!!.writeText(" -- Aborted.\n")
                     uppaalExecutionSpecification.errorFile!!.writeText(
-                        "model.xml:/nta/template[1]/transition[3]/label[1]:1: [error] Assignment of value '3' to variable 'x' is out of range.\n",
+                        "model.xml:/nta/template[1]/transition[3]/label[1]:1: [error] Assignment of value '3' to variable 'counter' is out of range.\n",
                     )
                     return UppaalExecutionResult(1)
                 }
@@ -210,6 +210,6 @@ class UppaalBackendReplayTest {
         val result = UppaalBackend().verify(injector, UppaalConfig.Default, request, environment)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).matches("uppaal:default does not support \\S+:2: an assignment of 3 outside the declared range \\(x\\)")
+        assertThat(result.message).matches("uppaal:default does not support \\S+:2: an assignment of 3 outside the declared range \\(counter\\)")
     }
 }
