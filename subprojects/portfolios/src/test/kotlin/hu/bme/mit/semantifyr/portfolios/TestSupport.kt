@@ -125,9 +125,9 @@ class SlowBackend<T : BackendConfig>(
         invocations.incrementAndGet()
         try {
             delay(delayMillis)
-        } catch (c: CancellationException) {
+        } catch (cancellation: CancellationException) {
             cancellations.incrementAndGet()
-            throw c
+            throw cancellation
         }
         return judgedResult(id, verdict, config, request)
     }

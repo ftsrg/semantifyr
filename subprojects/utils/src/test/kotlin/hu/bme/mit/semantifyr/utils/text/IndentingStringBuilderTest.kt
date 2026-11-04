@@ -102,17 +102,17 @@ class IndentingStringBuilderTest {
     @Test
     fun `nested block stacks indent levels`() {
         val text = buildIndented("  ") {
-            appendIndent("class X") {
-                appendIndent("fun y") {
-                    appendLine("z")
+            appendIndent("class Holder") {
+                appendIndent("fun step") {
+                    appendLine("body")
                 }
             }
         }
         assertThat(text).isEqualTo(
             """
-            class X {
-              fun y {
-                z
+            class Holder {
+              fun step {
+                body
               }
             }
 

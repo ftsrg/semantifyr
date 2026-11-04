@@ -60,9 +60,9 @@ class ScopeContextTest {
     suspend fun `withScope - within one activation successive resolves return the same instance`() {
         val injector = Guice.createInjector(ScopeBindingModule())
         testContext.withScope {
-            val a = injector.getInstance(TestScopedService::class.java)
-            val b = injector.getInstance(TestScopedService::class.java)
-            assertThat(a).isSameAs(b)
+            val first = injector.getInstance(TestScopedService::class.java)
+            val second = injector.getInstance(TestScopedService::class.java)
+            assertThat(first).isSameAs(second)
         }
     }
 
@@ -85,20 +85,20 @@ class ScopeContextTest {
         coroutineScope {
             val firstJob = async {
                 testContext.withScope {
-                    val a = injector.getInstance(TestScopedService::class.java)
+                    val first = injector.getInstance(TestScopedService::class.java)
                     yield()
-                    val b = injector.getInstance(TestScopedService::class.java)
-                    assertThat(a).isSameAs(b)
-                    a
+                    val second = injector.getInstance(TestScopedService::class.java)
+                    assertThat(first).isSameAs(second)
+                    first
                 }
             }
             val secondJob = async {
                 testContext.withScope {
-                    val a = injector.getInstance(TestScopedService::class.java)
+                    val first = injector.getInstance(TestScopedService::class.java)
                     yield()
-                    val b = injector.getInstance(TestScopedService::class.java)
-                    assertThat(a).isSameAs(b)
-                    a
+                    val second = injector.getInstance(TestScopedService::class.java)
+                    assertThat(first).isSameAs(second)
+                    first
                 }
             }
             val first = firstJob.await()
@@ -124,9 +124,9 @@ class ScopeContextTest {
     fun `withScopeBlocking - within one activation successive resolves return the same instance`() {
         val injector = Guice.createInjector(ScopeBindingModule())
         testContext.withScopeBlocking {
-            val a = injector.getInstance(TestScopedService::class.java)
-            val b = injector.getInstance(TestScopedService::class.java)
-            assertThat(a).isSameAs(b)
+            val first = injector.getInstance(TestScopedService::class.java)
+            val second = injector.getInstance(TestScopedService::class.java)
+            assertThat(first).isSameAs(second)
         }
     }
 
