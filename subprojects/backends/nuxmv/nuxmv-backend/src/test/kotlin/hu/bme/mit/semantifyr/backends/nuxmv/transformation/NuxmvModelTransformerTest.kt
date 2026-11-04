@@ -51,23 +51,23 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
 
         assertThat(artifacts.smv).isEqualTo(
             """
-                |MODULE main
-                |VAR
-                |    counter : integer;
-                |    counter__init_b0_seed : integer;
-                |    counter__tran_b0_1 : integer;
-                |INIT
-                |    (
-                |          (counter__init_b0_seed = 0)
-                |        & (counter = counter__init_b0_seed)
-                |    )
-                |TRANS
-                |    (
-                |          (counter__tran_b0_1 = (counter + 1))
-                |        & (next(counter) = counter__tran_b0_1)
-                |    )
-                |
-            """.trimMargin(),
+                MODULE main
+                VAR
+                    counter : integer;
+                    counter__init_b0_seed : integer;
+                    counter__tran_b0_1 : integer;
+                INIT
+                    (
+                          (counter__init_b0_seed = 0)
+                        & (counter = counter__init_b0_seed)
+                    )
+                TRANS
+                    (
+                          (counter__tran_b0_1 = (counter + 1))
+                        & (next(counter) = counter__tran_b0_1)
+                    )
+
+            """.trimIndent(),
         )
         assertThat(artifacts.property.invariant).isEqualTo("(counter < 3)")
     }

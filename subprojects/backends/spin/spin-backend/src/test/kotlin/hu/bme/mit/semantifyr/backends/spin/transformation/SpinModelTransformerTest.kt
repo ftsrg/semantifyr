@@ -51,28 +51,28 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
 
         assertThat(artifacts.promela).isEqualTo(
             """
-                |int counter = 0;
-                |
-                |bool $SPIN_STABLE_FLAG = false;
-                |
-                |init {
-                |    atomic {
-                |        $SPIN_STABLE_FLAG = false;
-                |        skip;
-                |        $SPIN_STABLE_FLAG = true;
-                |    }
-                |    do
-                |    :: atomic {
-                |        $SPIN_STABLE_FLAG = false;
-                |        counter = (counter + 1);
-                |        $SPIN_STABLE_FLAG = true;
-                |    }
-                |    od;
-                |}
-                |
-                |ltl p { [] (!$SPIN_STABLE_FLAG || ((counter < 3))) }
-                |
-            """.trimMargin(),
+                int counter = 0;
+
+                bool $SPIN_STABLE_FLAG = false;
+
+                init {
+                    atomic {
+                        $SPIN_STABLE_FLAG = false;
+                        skip;
+                        $SPIN_STABLE_FLAG = true;
+                    }
+                    do
+                    :: atomic {
+                        $SPIN_STABLE_FLAG = false;
+                        counter = (counter + 1);
+                        $SPIN_STABLE_FLAG = true;
+                    }
+                    od;
+                }
+
+                ltl p { [] (!$SPIN_STABLE_FLAG || ((counter < 3))) }
+
+            """.trimIndent(),
         )
     }
 

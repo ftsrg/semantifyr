@@ -55,20 +55,20 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
 
         assertThat(xsts).isEqualTo(
             """
-                |
-                |var counter: integer = 0
-                |trans {
-                |	counter := counter + 1;
-                |}
-                |init {
-                |	counter := 1;
-                |}
-                |env {
-                |}
-                |prop { counter < 3
-                |}
-                |
-            """.trimMargin(),
+
+                var counter: integer = 0
+                trans {
+                	counter := counter + 1;
+                }
+                init {
+                	counter := 1;
+                }
+                env {
+                }
+                prop { counter < 3
+                }
+
+            """.trimIndent(),
         )
     }
 
