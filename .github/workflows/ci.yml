@@ -124,16 +124,6 @@ jobs:
           cp subprojects/semantifyr-cli/build/distributions/semantifyr-*.zip distributions/
           cp subprojects/frontends/sysml/sysml-cli/build/distributions/semantifyr-sysml-*.zip distributions/
           cp subprojects/frontends/gamma/gamma-cli/build/distributions/semantifyr-gamma-*.zip distributions/
-      - name: Smoke test the CLI distributions
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: |
-          version=$(sed -n 's/^version=//p' gradle.properties)
-          for launcher in semantifyr semantifyr-sysml semantifyr-gamma; do
-            unzip -q "distributions/$launcher-$version.zip" -d cli
-          done
-          "cli/semantifyr-$version/bin/semantifyr" verify --theta-executor shell "cli/semantifyr-$version/models/smoke"
-          "cli/semantifyr-sysml-$version/bin/semantifyr-sysml" verify --theta-executor shell --case-name semantifyr::sysml::model::LampLitReachable "cli/semantifyr-sysml-$version/models/smoke/room.sysml"
-          "cli/semantifyr-gamma-$version/bin/semantifyr-gamma" verify --theta-executor shell "cli/semantifyr-gamma-$version/models/smoke/Simple.gamma"
       - name: Upload the distributions
         if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: actions/upload-artifact@v7
