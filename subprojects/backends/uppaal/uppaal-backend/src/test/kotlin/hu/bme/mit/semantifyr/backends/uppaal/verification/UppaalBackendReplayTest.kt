@@ -155,7 +155,16 @@ class UppaalBackendReplayTest {
     @Test
     fun `only the over-approximation configuration over-approximates`() {
         assertThat(UppaalConfig.OverApproximation.soundness).isEqualTo(SoundnessDirection.OverApproximating)
-        for (config in listOf(UppaalConfig.Default, UppaalConfig.BreadthFirst, UppaalConfig.DepthFirst, UppaalConfig.RandomDepthFirst, UppaalConfig.UnderApproximation, UppaalConfig.UnderApproximationLarge, UppaalConfig.AggressiveInclusion)) {
+        val underApproximating = listOf(
+            UppaalConfig.Default,
+            UppaalConfig.BreadthFirst,
+            UppaalConfig.DepthFirst,
+            UppaalConfig.RandomDepthFirst,
+            UppaalConfig.UnderApproximation,
+            UppaalConfig.UnderApproximationLarge,
+            UppaalConfig.AggressiveInclusion,
+        )
+        for (config in underApproximating) {
             assertThat(config.soundness).describedAs(config.id).isEqualTo(SoundnessDirection.UnderApproximating)
         }
     }

@@ -20,7 +20,11 @@ import kotlinx.serialization.json.put
 import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
 
-enum class VerifyOutput { Text, Quiet, Json }
+enum class VerifyOutput {
+    Text,
+    Quiet,
+    Json,
+}
 
 fun SuspendingCliktCommand.verifyOutputOption() = mutuallyExclusiveOptions(
     option().switch("-q" to VerifyOutput.Quiet, "--quiet" to VerifyOutput.Quiet)

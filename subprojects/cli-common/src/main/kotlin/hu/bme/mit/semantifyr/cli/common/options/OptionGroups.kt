@@ -73,7 +73,11 @@ class VerificationCaseSpecificationOptionGroup(
     }
 }
 
-enum class ArtifactPreset { None, All, Debug }
+enum class ArtifactPreset {
+    None,
+    All,
+    Debug,
+}
 
 class ArtifactOptionGroup : OptionGroup("Artifact options") {
     val artifactDirectory by option("-d", "--artifact-directory")
@@ -112,7 +116,11 @@ class ArtifactOptionGroup : OptionGroup("Artifact options") {
     }
 }
 
-enum class ThetaExecutor { Auto, Shell, Docker }
+enum class ThetaExecutor {
+    Auto,
+    Shell,
+    Docker,
+}
 
 class BackendOptionGroup(
     private val portfolios: () -> List<VerificationPortfolio>,
@@ -165,7 +173,10 @@ class BackendOptionGroup(
     }
 }
 
-enum class OptimizationPreset { None, All }
+enum class OptimizationPreset {
+    None,
+    All,
+}
 
 class CompilationOptionGroup : OptionGroup("Compilation options") {
     val optimizationPreset by option("--optimization")
