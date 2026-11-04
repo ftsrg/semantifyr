@@ -114,7 +114,11 @@ abstract class InliningTestBase {
     ) {
         val actual = prepare(className, source, OptimizationConfig.NONE) {
             val inlined = inlineAll(it).inlinedOxsts
-            listOf(inlined.initTransition, inlined.mainTransition, inlined.property).joinToString("\n\n") { element ->
+            listOf(
+                inlined.initTransition,
+                inlined.mainTransition,
+                inlined.property,
+            ).joinToString("\n\n") { element ->
                 serializer.serializeFormatted(element).trim().replace("\t", "    ")
             }
         }

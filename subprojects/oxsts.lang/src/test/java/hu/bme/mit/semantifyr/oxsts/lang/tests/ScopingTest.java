@@ -154,7 +154,11 @@ public class ScopingTest {
     void enumLiteralReferenceResolvesAcrossTypes() {
         var parsedPackage = parseHelper.parse("""
             package test
-            enum Color { Red, Green, Blue }
+            enum Color {
+                Red,
+                Green,
+                Blue,
+            }
             class Lamp {
                 var color: Color := Color::Red
             }
@@ -261,7 +265,10 @@ public class ScopingTest {
             """, resourceSet);
         packageParseHelper.parse("""
             package other
-            enum Color { Red, Blue }
+            enum Color {
+                Red,
+                Blue,
+            }
             """, resourceSet);
         var user = packageParseHelper.parse("""
             package user

@@ -65,7 +65,11 @@ abstract class FlatteningTestBase {
         expected: String,
     ) {
         val inlinedOxsts = flatten(className, source).inlinedOxsts
-        val actual = listOf(inlinedOxsts.initTransition, inlinedOxsts.mainTransition, inlinedOxsts.property).joinToString("\n\n") {
+        val actual = listOf(
+            inlinedOxsts.initTransition,
+            inlinedOxsts.mainTransition,
+            inlinedOxsts.property,
+        ).joinToString("\n\n") {
             serialize(it).trim().replace("\t", "    ")
         }
         assertThat(actual).isEqualTo(expected.trimIndent())

@@ -55,7 +55,11 @@ public class TopLevelSyntaxTest {
     void enumWithLiterals() {
         var parsedPackage = parseHelper.parse("""
             package test
-            enum Color { Red, Green, Blue }
+            enum Color {
+                Red,
+                Green,
+                Blue,
+            }
             """);
         parsedPackage.assertNoResourceErrors();
         var colorEnum = parsedPackage.enumByName("Color");
@@ -206,7 +210,10 @@ public class TopLevelSyntaxTest {
     void multipleTopLevelDeclarations() {
         var parsedPackage = parseHelper.parse("""
             package test
-            enum Color { Red, Green }
+            enum Color {
+                Red,
+                Green,
+            }
             annotation Marker
             class Left { }
             class Right { }
