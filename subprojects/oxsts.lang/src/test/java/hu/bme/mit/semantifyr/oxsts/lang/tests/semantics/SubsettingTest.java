@@ -45,10 +45,10 @@ public class SubsettingTest {
 
     @Test
     void subsettersAreTheFeaturesThatNameTheSuperset() {
-        var pkg = parseHelper.parse(HOLDERS, CheckMode.ALL);
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
-        var holder = pkg.classByName("Holder");
+        var parsedPackage = parseHelper.parse(HOLDERS, CheckMode.ALL);
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
+        var holder = parsedPackage.classByName("Holder");
 
         assertThat(featureSubSettersFinder.getSubSetters(
                         holder.eObject(), holder.featureByName("items").eObject()))
@@ -58,44 +58,50 @@ public class SubsettingTest {
 
     @Test
     void aRedefinitionThatRestatesTheSupersetStaysASubsetter() {
-        var pkg = parseHelper.parse(HOLDERS, CheckMode.ALL);
-        var items = pkg.classByName("Holder").featureByName("items").eObject();
-        var restated = pkg.classByName("Restated");
+        var parsedPackage = parseHelper.parse(HOLDERS, CheckMode.ALL);
+        var items = parsedPackage.classByName("Holder").featureByName("items").eObject();
+        var restated = parsedPackage.classByName("Restated");
 
         assertThat(featureSubSettersFinder.getSubSetters(restated.eObject(), items))
                 .containsExactlyInAnyOrder(
                         restated.featureByName("first").eObject(),
-                        pkg.classByName("Holder").featureByName("second").eObject());
+                        parsedPackage
+                                .classByName("Holder")
+                                .featureByName("second")
+                                .eObject());
     }
 
     @Test
     void aRedefinitionWithoutSubsetsKeepsTheSupersetOfTheRedefinedFeature() {
-        var pkg = parseHelper.parse(HOLDERS, CheckMode.ALL);
-        var items = pkg.classByName("Holder").featureByName("items").eObject();
-        var omitted = pkg.classByName("Omitted");
+        var parsedPackage = parseHelper.parse(HOLDERS, CheckMode.ALL);
+        var items = parsedPackage.classByName("Holder").featureByName("items").eObject();
+        var omitted = parsedPackage.classByName("Omitted");
 
         assertThat(featureSubSettersFinder.getSubSetters(omitted.eObject(), items))
                 .containsExactlyInAnyOrder(
                         omitted.featureByName("first").eObject(),
-                        pkg.classByName("Holder").featureByName("second").eObject());
+                        parsedPackage
+                                .classByName("Holder")
+                                .featureByName("second")
+                                .eObject());
     }
 
     @Test
     void aValueOfARedefinitionWithoutSubsetsIsAssignableToTheSuperset() {
-        var pkg = parseHelper.parse(HOLDERS + """
+        var parsedPackage = parseHelper.parse(HOLDERS + """
             class User : Omitted {
                 var pick: items[0..1] := nothing
                 redefine init { pick := first }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void aValueOfAnUnrelatedFeatureIsNotAssignableToTheSuperset() {
-        var pkg = parseHelper.parse(HOLDERS + """
+        var parsedPackage = parseHelper.parse(HOLDERS + """
             class User : Omitted {
                 contains other: Item
                 var pick: items[0..1] := nothing
@@ -103,6 +109,6 @@ public class SubsettingTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "assign");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "assign");
     }
 }

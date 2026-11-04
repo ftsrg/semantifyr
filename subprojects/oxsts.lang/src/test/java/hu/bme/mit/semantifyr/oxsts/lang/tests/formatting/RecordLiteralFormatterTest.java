@@ -35,19 +35,19 @@ public class RecordLiteralFormatterTest {
     @Test
     void literalOnOneLineGetsSpaces() {
         var formatted = format(RECORDS + """
-            class C {
-                var p: Point := Point{x=1,y=2}
+            class Marker {
+                var position: Point := Point{x=1,y=2}
             }
             """);
 
-        assertThat(formatted).contains("var p: Point := Point { x = 1, y = 2 }");
+        assertThat(formatted).contains("var position: Point := Point { x = 1, y = 2 }");
     }
 
     @Test
     void literalOverSeveralLinesKeepsOneFieldPerLine() {
         var formatted = format(RECORDS + """
-            class C {
-                var p: Point := Point {
+            class Marker {
+                var position: Point := Point {
                 x = 1,
 
                 y = 2
@@ -55,13 +55,14 @@ public class RecordLiteralFormatterTest {
             }
             """);
 
-        assertThat(formatted).contains("\tvar p: Point := Point {\n\t\tx = 1,\n\t\ty = 2\n\t}\n");
+        assertThat(formatted).contains("\tvar position: Point := Point {\n\t\tx = 1,\n\t\ty = 2\n\t}\n");
     }
 
     private String format(String source) {
-        var pkg = parseHelper.parse(source);
-        pkg.assertNoResourceErrors();
+        var parsedPackage = parseHelper.parse(source);
+        parsedPackage.assertNoResourceErrors();
         return serializer.serialize(
-                pkg.getOxstsPackage(), SaveOptions.newBuilder().format().getOptions());
+                parsedPackage.getOxstsPackage(),
+                SaveOptions.newBuilder().format().getOptions());
     }
 }

@@ -35,8 +35,8 @@ public class ExpressionModalityEvaluatorTest {
     void literalInteger_isConstant() {
         var expression = firstInitializerOf("""
             package test
-            class C { var x: int := 42 }
-            """, "C", "x");
+            class Holder { var value: int := 42 }
+            """, "Holder", "value");
 
         assertThat(modalityEvaluatorProvider.evaluate(expression)).isEqualTo(Modality.CONSTANT);
     }
@@ -45,8 +45,8 @@ public class ExpressionModalityEvaluatorTest {
     void literalBoolean_isConstant() {
         var expression = firstInitializerOf("""
             package test
-            class C { var x: bool := true }
-            """, "C", "x");
+            class Holder { var value: bool := true }
+            """, "Holder", "value");
 
         assertThat(modalityEvaluatorProvider.evaluate(expression)).isEqualTo(Modality.CONSTANT);
     }
@@ -56,8 +56,8 @@ public class ExpressionModalityEvaluatorTest {
         var expression = firstInitializerOf("""
             package test
             enum Color { Red, Green, Blue }
-            class C { var c: Color := Color::Red }
-            """, "C", "c");
+            class Holder { var color: Color := Color::Red }
+            """, "Holder", "color");
 
         assertThat(modalityEvaluatorProvider.evaluate(expression)).isEqualTo(Modality.CONSTANT);
     }
@@ -67,8 +67,8 @@ public class ExpressionModalityEvaluatorTest {
         var expression = firstInitializerOf("""
             package test
             record Point { var x: int var y: int }
-            class C { var p: Point := Point { x = 1, y = -1 } }
-            """, "C", "p");
+            class Holder { var position: Point := Point { x = 1, y = -1 } }
+            """, "Holder", "position");
 
         assertThat(modalityEvaluatorProvider.evaluate(expression)).isEqualTo(Modality.CONSTANT);
     }
@@ -78,76 +78,78 @@ public class ExpressionModalityEvaluatorTest {
         var expression = firstInitializerOf("""
             package test
             record Point { var x: int var y: int }
-            class C {
-                var n: int := 0
-                var p: Point := Point { x = 1, y = n }
+            class Holder {
+                var level: int := 0
+                var position: Point := Point { x = 1, y = level }
             }
-            """, "C", "p");
+            """, "Holder", "position");
 
         assertThat(modalityEvaluatorProvider.evaluate(expression)).isEqualTo(Modality.RUNTIME);
     }
 
     @Test
     void featureReferenceInFeatureBound_isCompileTime() {
-        var pkg = parse("""
+        var parsedPackage = parse("""
             package test
-            class C {
+            class Holder {
                 refers size: int = 3
                 refers twiceSize: int = size * 2
             }
             """);
-        var expression = pkg.classByName("C").featureByName("twiceSize").expression();
+        var expression =
+                parsedPackage.classByName("Holder").featureByName("twiceSize").expression();
 
         assertThat(modalityEvaluatorProvider.evaluate(expression)).isEqualTo(Modality.COMPILE_TIME);
     }
 
     @Test
     void bareSelfReference_isCompileTime() {
-        var pkg = parse("""
+        var parsedPackage = parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine tran { self.x := 1 }
+            class Holder {
+                var value: int := 0
+                redefine tran { self.value := 1 }
             }
             """);
-        var assignmentLhs = EcoreUtil2.eAllOfType(
-                        pkg.classByName("C").anonymousMain().eObject(), AssignmentOperation.class)
+        var assignmentTarget = EcoreUtil2.eAllOfType(
+                        parsedPackage.classByName("Holder").anonymousMain().eObject(), AssignmentOperation.class)
                 .getFirst()
                 .getReference();
-        var bareSelf = EcoreUtil2.eAllOfType(assignmentLhs, SelfReference.class).getFirst();
+        var bareSelf =
+                EcoreUtil2.eAllOfType(assignmentTarget, SelfReference.class).getFirst();
 
         assertThat(modalityEvaluatorProvider.evaluate(bareSelf)).isEqualTo(Modality.COMPILE_TIME);
     }
 
     @Test
     void navigationToVariablePropagatesRuntime() {
-        var pkg = parse("""
+        var parsedPackage = parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine tran { self.x := 1 }
+            class Holder {
+                var value: int := 0
+                redefine tran { self.value := 1 }
             }
             """);
-        var assignmentLhs = EcoreUtil2.eAllOfType(
-                        pkg.classByName("C").anonymousMain().eObject(), AssignmentOperation.class)
+        var assignmentTarget = EcoreUtil2.eAllOfType(
+                        parsedPackage.classByName("Holder").anonymousMain().eObject(), AssignmentOperation.class)
                 .getFirst()
                 .getReference();
-        var navigation = (NavigationSuffixExpression) assignmentLhs;
+        var navigation = (NavigationSuffixExpression) assignmentTarget;
 
         assertThat(modalityEvaluatorProvider.evaluate(navigation)).isEqualTo(Modality.RUNTIME);
     }
 
     @Test
     void variableReference_isRuntime() {
-        var pkg = parse("""
+        var parsedPackage = parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine tran { x := x + 1 }
+            class Holder {
+                var value: int := 0
+                redefine tran { value := value + 1 }
             }
             """);
         var assignment = EcoreUtil2.eAllOfType(
-                        pkg.classByName("C").anonymousMain().eObject(), AssignmentOperation.class)
+                        parsedPackage.classByName("Holder").anonymousMain().eObject(), AssignmentOperation.class)
                 .getFirst();
 
         assertThat(modalityEvaluatorProvider.evaluate(assignment.getExpression()))
@@ -156,89 +158,91 @@ public class ExpressionModalityEvaluatorTest {
 
     @Test
     void booleanCombinatorPropagatesRuntime() {
-        var pkg = parse("""
+        var parsedPackage = parse("""
             package test
-            class C {
-                var x: int := 0
-                var b: bool := false
+            class Holder {
+                var value: int := 0
+                var flag: bool := false
                 redefine tran { }
-                prop { return AG (x > 0 && b) }
+                prop { return AG (value > 0 && flag) }
             }
             """);
-        var ag = pkg.classByName("C").anonymousProperty().expression();
+        var property = parsedPackage.classByName("Holder").anonymousProperty().expression();
 
-        assertThat(modalityEvaluatorProvider.evaluate(ag)).isEqualTo(Modality.RUNTIME);
+        assertThat(modalityEvaluatorProvider.evaluate(property)).isEqualTo(Modality.RUNTIME);
     }
 
     @Test
     void constantLiteralInInitValueIsConstant() {
         var expression = firstInitializerOf("""
             package test
-            class C { var x: int := 0 }
-            """, "C", "x");
+            class Holder { var value: int := 0 }
+            """, "Holder", "value");
 
         assertThat(modalityEvaluatorProvider.evaluate(expression)).isEqualTo(Modality.CONSTANT);
     }
 
     @Test
     void temporalOperatorIsRuntime() {
-        var pkg = parse("""
+        var parsedPackage = parse("""
             package test
-            class C {
+            class Holder {
                 redefine tran { }
                 prop { return AG true }
             }
             """);
-        var expression = pkg.classByName("C").anonymousProperty().expression();
+        var expression = parsedPackage.classByName("Holder").anonymousProperty().expression();
 
         assertThat(modalityEvaluatorProvider.evaluate(expression)).isEqualTo(Modality.RUNTIME);
     }
 
     @Test
     void ifThenElseWithConstantParts_isConstant() {
-        var pkg = parse("""
+        var parsedPackage = parse("""
             package test
-            class C {
+            class Holder {
                 redefine tran {
                     var result: int := 0
                     result := if true then 1 else 2
                 }
             }
             """);
-        var ite = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), IfThenElse.class)
+        var ifThenElse = EcoreUtil2.eAllOfType(
+                        parsedPackage.classByName("Holder").anonymousMain().eObject(), IfThenElse.class)
                 .getFirst();
 
-        assertThat(modalityEvaluatorProvider.evaluate(ite)).isEqualTo(Modality.CONSTANT);
+        assertThat(modalityEvaluatorProvider.evaluate(ifThenElse)).isEqualTo(Modality.CONSTANT);
     }
 
     @Test
     void ifThenElseWithRuntimeGuard_isRuntime() {
-        var pkg = parse("""
+        var parsedPackage = parse("""
             package test
-            class C {
-                var n: int := 0
+            class Holder {
+                var level: int := 0
                 redefine tran {
                     var result: int := 0
-                    result := if n > 0 then 1 else -1
+                    result := if level > 0 then 1 else -1
                 }
             }
             """);
-        var ite = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), IfThenElse.class)
+        var ifThenElse = EcoreUtil2.eAllOfType(
+                        parsedPackage.classByName("Holder").anonymousMain().eObject(), IfThenElse.class)
                 .getFirst();
 
-        assertThat(modalityEvaluatorProvider.evaluate(ite)).isEqualTo(Modality.RUNTIME);
+        assertThat(modalityEvaluatorProvider.evaluate(ifThenElse)).isEqualTo(Modality.RUNTIME);
     }
 
     private WrappedOxstsPackage parse(String source) {
-        var pkg = parseHelper.parse(source);
-        pkg.assertNoResourceErrors();
-        return pkg;
+        var parsedPackage = parseHelper.parse(source);
+        parsedPackage.assertNoResourceErrors();
+        return parsedPackage;
     }
 
     private Expression firstInitializerOf(String source, String className, String variableName) {
-        var pkg = parse(source);
-        var cls = pkg.classByName(className);
-        var initializer = cls.variableByName(variableName).initializer();
+        var parsedPackage = parse(source);
+        var wrappedClass = parsedPackage.classByName(className);
+        var initializer = wrappedClass.variableByName(variableName).initializer();
         assertThat(initializer)
                 .as("variable '" + variableName + "' must have an initializer")
                 .isNotNull();

@@ -25,10 +25,10 @@ public class ClassMemberSyntaxTest {
     void variableWithTypeAndInitializer() {
         var parsedPackage = parseHelper.parse("""
             package test
-            class Host { var x: int := 5 }
+            class Host { var counter: int := 5 }
             """);
         parsedPackage.assertNoResourceErrors();
-        var variable = parsedPackage.classByName("Host").variableByName("x");
+        var variable = parsedPackage.classByName("Host").variableByName("counter");
         assertThat(variable.typeSpecification()).isNotNull();
         assertThat(variable.initializer()).isNotNull();
     }
@@ -37,10 +37,10 @@ public class ClassMemberSyntaxTest {
     void variableWithTypeOnly() {
         var parsedPackage = parseHelper.parse("""
             package test
-            class Host { var x: int }
+            class Host { var counter: int }
             """);
         parsedPackage.assertNoResourceErrors();
-        var variable = parsedPackage.classByName("Host").variableByName("x");
+        var variable = parsedPackage.classByName("Host").variableByName("counter");
         assertThat(variable.typeSpecification()).isNotNull();
         assertThat(variable.initializer()).isNull();
     }
@@ -49,10 +49,10 @@ public class ClassMemberSyntaxTest {
     void variableWithInitializerOnly() {
         var parsedPackage = parseHelper.parse("""
             package test
-            class Host { var x := 5 }
+            class Host { var counter := 5 }
             """);
         parsedPackage.assertNoResourceErrors();
-        var variable = parsedPackage.classByName("Host").variableByName("x");
+        var variable = parsedPackage.classByName("Host").variableByName("counter");
         assertThat(variable.typeSpecification()).isNull();
         assertThat(variable.initializer()).isNotNull();
     }
@@ -61,9 +61,9 @@ public class ClassMemberSyntaxTest {
     void redefinedVariableIsAParseError() {
         var parsedPackage = parseHelper.parse("""
             package test
-            class Base { var x: int := 0 }
+            class Base { var counter: int := 0 }
             class Child : Base {
-                redefine var x: int := 1
+                redefine var counter: int := 1
             }
             """);
         assertThat(parsedPackage.getResourceErrors())
@@ -75,8 +75,8 @@ public class ClassMemberSyntaxTest {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
-                var x: int := 0
-                redefine tran { x := 1 }
+                var counter: int := 0
+                redefine tran { counter := 1 }
             }
             """);
         parsedPackage.assertNoResourceErrors();
@@ -91,8 +91,8 @@ public class ClassMemberSyntaxTest {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
-                var x: int := 0
-                redefine init { x := 1 }
+                var counter: int := 0
+                redefine init { counter := 1 }
             }
             """);
         parsedPackage.assertNoResourceErrors();
@@ -104,8 +104,8 @@ public class ClassMemberSyntaxTest {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
-                var x: int := 0
-                tran step() { x := x + 1 }
+                var counter: int := 0
+                tran step() { counter := counter + 1 }
             }
             """);
         parsedPackage.assertNoResourceErrors();
@@ -120,8 +120,8 @@ public class ClassMemberSyntaxTest {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
-                var x: int := 0
-                tran addBy(amount: int) { x := x + amount }
+                var counter: int := 0
+                tran addBy(amount: int) { counter := counter + amount }
             }
             """);
         parsedPackage.assertNoResourceErrors();
@@ -136,8 +136,8 @@ public class ClassMemberSyntaxTest {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
-                var x: int := 0
-                tran setBy(first: int, second: int) { x := first + second }
+                var counter: int := 0
+                tran setBy(first: int, second: int) { counter := first + second }
             }
             """);
         parsedPackage.assertNoResourceErrors();
@@ -178,9 +178,9 @@ public class ClassMemberSyntaxTest {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
-                var x: int := 0
-                redefine tran { x := x + 1 }
-                prop { return AG (x >= 0) }
+                var counter: int := 0
+                redefine tran { counter := counter + 1 }
+                prop { return AG (counter >= 0) }
             }
             """);
         parsedPackage.assertNoResourceErrors();
@@ -194,8 +194,8 @@ public class ClassMemberSyntaxTest {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
-                var x: int := 0
-                prop equals(value: int): bool { return x == value }
+                var counter: int := 0
+                prop equals(value: int): bool { return counter == value }
             }
             """);
         parsedPackage.assertNoResourceErrors();
@@ -241,10 +241,10 @@ public class ClassMemberSyntaxTest {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
-                var x: int := 0
+                var counter: int := 0
                 contains other: Host[0..1]
-                tran step() { x := x + 1 }
-                prop positive(): bool { return x > 0 }
+                tran step() { counter := counter + 1 }
+                prop positive(): bool { return counter > 0 }
             }
             """);
         parsedPackage.assertNoResourceErrors();

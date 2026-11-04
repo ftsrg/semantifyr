@@ -36,13 +36,13 @@ public record WrappedOxstsPackage(OxstsModelPackage oxstsModelPackage, List<Issu
     public List<WrappedClass> classes() {
         return oxstsModelPackage.getDeclarations().stream()
                 .filter(ClassDeclaration.class::isInstance)
-                .map(d -> new WrappedClass((ClassDeclaration) d))
+                .map(declaration -> new WrappedClass((ClassDeclaration) declaration))
                 .toList();
     }
 
     public WrappedClass classByName(String name) {
         return classes().stream()
-                .filter(c -> name.equals(c.name()))
+                .filter(wrappedClass -> name.equals(wrappedClass.name()))
                 .findFirst()
                 .orElseThrow(() ->
                         new AssertionError("No class named '" + name + "' in package " + oxstsModelPackage.getName()));
@@ -51,13 +51,13 @@ public record WrappedOxstsPackage(OxstsModelPackage oxstsModelPackage, List<Issu
     public List<WrappedEnum> enums() {
         return oxstsModelPackage.getDeclarations().stream()
                 .filter(EnumDeclaration.class::isInstance)
-                .map(d -> new WrappedEnum((EnumDeclaration) d))
+                .map(declaration -> new WrappedEnum((EnumDeclaration) declaration))
                 .toList();
     }
 
     public WrappedEnum enumByName(String name) {
         return enums().stream()
-                .filter(e -> name.equals(e.name()))
+                .filter(wrappedEnum -> name.equals(wrappedEnum.name()))
                 .findFirst()
                 .orElseThrow(() ->
                         new AssertionError("No enum named '" + name + "' in package " + oxstsModelPackage.getName()));
@@ -66,13 +66,13 @@ public record WrappedOxstsPackage(OxstsModelPackage oxstsModelPackage, List<Issu
     public List<WrappedFeature> globalFeatures() {
         return oxstsModelPackage.getDeclarations().stream()
                 .filter(FeatureDeclaration.class::isInstance)
-                .map(d -> new WrappedFeature((FeatureDeclaration) d))
+                .map(declaration -> new WrappedFeature((FeatureDeclaration) declaration))
                 .toList();
     }
 
     public WrappedFeature globalFeatureByName(String name) {
         return globalFeatures().stream()
-                .filter(f -> name.equals(f.name()))
+                .filter(feature -> name.equals(feature.name()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError(
                         "No global feature named '" + name + "' in package " + oxstsModelPackage.getName()));
@@ -81,7 +81,7 @@ public record WrappedOxstsPackage(OxstsModelPackage oxstsModelPackage, List<Issu
     public List<WrappedDataType> externDatatypes() {
         return oxstsModelPackage.getDeclarations().stream()
                 .filter(DataTypeDeclaration.class::isInstance)
-                .map(d -> new WrappedDataType((DataTypeDeclaration) d))
+                .map(declaration -> new WrappedDataType((DataTypeDeclaration) declaration))
                 .toList();
     }
 
@@ -98,8 +98,9 @@ public record WrappedOxstsPackage(OxstsModelPackage oxstsModelPackage, List<Issu
     }
 
     public void assertNoValidationErrors() {
-        List<Issue> errors =
-                issues.stream().filter(i -> i.getSeverity() == Severity.ERROR).toList();
+        List<Issue> errors = issues.stream()
+                .filter(issue -> issue.getSeverity() == Severity.ERROR)
+                .toList();
         assertThat(errors)
                 .as("package should have no validation errors: "
                         + errors.stream().map(Issue::getMessage).collect(Collectors.joining("\n  ")))
@@ -112,9 +113,9 @@ public record WrappedOxstsPackage(OxstsModelPackage oxstsModelPackage, List<Issu
 
     public void assertHasValidationIssue(String issueCode, String messageSubstring) {
         List<Issue> matching = issues.stream()
-                .filter(i -> issueCode.equals(i.getCode()))
-                .filter(i -> messageSubstring == null
-                        || (i.getMessage() != null && i.getMessage().contains(messageSubstring)))
+                .filter(issue -> issueCode.equals(issue.getCode()))
+                .filter(issue -> messageSubstring == null
+                        || (issue.getMessage() != null && issue.getMessage().contains(messageSubstring)))
                 .toList();
         assertThat(matching)
                 .as("expected at least one issue with code '"
@@ -128,13 +129,14 @@ public record WrappedOxstsPackage(OxstsModelPackage oxstsModelPackage, List<Issu
 
     private String summariseResourceErrors() {
         return getResourceErrors().stream()
-                .map(d -> d.getLocation() + ":" + d.getLine() + ": " + d.getMessage())
+                .map(diagnostic ->
+                        diagnostic.getLocation() + ":" + diagnostic.getLine() + ": " + diagnostic.getMessage())
                 .collect(Collectors.joining("\n  ", "\n  ", ""));
     }
 
     private String summariseIssues() {
         return issues.stream()
-                .map(i -> i.getSeverity() + " " + i.getCode() + ": " + i.getMessage())
+                .map(issue -> issue.getSeverity() + " " + issue.getCode() + ": " + issue.getMessage())
                 .collect(Collectors.joining("\n  ", "\n  ", ""));
     }
 }

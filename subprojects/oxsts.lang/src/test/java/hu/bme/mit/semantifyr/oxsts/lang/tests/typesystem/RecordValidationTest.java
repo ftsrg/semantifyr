@@ -40,40 +40,40 @@ public class RecordValidationTest {
 
     @Test
     void recordFieldsAreReadWrittenComparedAndHavoced() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
-                var p: Point
-                var q: Point
-                var s: Segment
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
+                var position: Point
+                var previous: Point
+                var segment: Segment
                 tran move(target: Point) {
-                    p := target
+                    position := target
                 }
                 prop isOrigin(point: Point): bool {
                     return point.x == 0 && point.y == 0
                 }
                 redefine tran {
-                    p.x := p.x + 1
-                    q := p
-                    s.from.y := s.to.y
-                    s.to := q
-                    havoc(q)
-                    var local: Point := p
+                    position.x := position.x + 1
+                    previous := position
+                    segment.from.y := segment.to.y
+                    segment.to := previous
+                    havoc(previous)
+                    var local: Point := position
                     local.y := 2
                     inline move(local)
                 }
                 prop {
-                    return EF (p == q && s.from != s.to && isOrigin(s.from) && s.color == Color::Green)
+                    return EF (position == previous && segment.from != segment.to && isOrigin(segment.from) && segment.color == Color::Green)
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void recordParameterTakesOnlyARecordOfItsType() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             record Point {
                 var x: int := 0
@@ -81,21 +81,21 @@ public class RecordValidationTest {
             record Size {
                 var x: int := 0
             }
-            class C {
-                var p: Point := Point { x = 1 }
-                var s: Size := Size { x = 1 }
+            class Holder {
+                var position: Point := Point { x = 1 }
+                var size: Size := Size { x = 1 }
                 var sum: int := 0
-                tran add(q: Point) { sum := sum + q.x }
+                tran add(point: Point) { sum := sum + point.x }
                 redefine tran {
-                    inline add(p)
+                    inline add(position)
                     inline add(Point { x = 2 })
-                    inline add(s)
+                    inline add(size)
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        assertThat(pkg.getIssues())
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.getIssues())
                 .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
                 .singleElement()
                 .satisfies(issue -> {
@@ -106,8 +106,8 @@ public class RecordValidationTest {
 
     @Test
     void writingAFieldOfARecordParameterIsRejected() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
                 tran reset(target: Point) {
                     target.x := 0
                     havoc(target.y)
@@ -115,8 +115,8 @@ public class RecordValidationTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        assertThat(pkg.getIssues())
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.getIssues())
                 .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
                 .hasSize(2)
                 .allSatisfy(issue -> {
@@ -127,7 +127,7 @@ public class RecordValidationTest {
 
     @Test
     void recursiveRecordIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             record Node {
                 var value: int
@@ -135,13 +135,13 @@ public class RecordValidationTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertHasValidationIssue(OxstsValidator.RECURSIVE_RECORD, "'Node'");
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertHasValidationIssue(OxstsValidator.RECURSIVE_RECORD, "'Node'");
     }
 
     @Test
     void mutuallyRecursiveRecordsAreRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             record Left {
                 var right: Right
@@ -151,126 +151,126 @@ public class RecordValidationTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        assertThat(pkg.getIssues())
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.getIssues())
                 .filteredOn(issue -> OxstsValidator.RECURSIVE_RECORD.equals(issue.getCode()))
                 .hasSize(2);
     }
 
     @Test
     void orderingComparisonOfRecordsIsRejected() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
-                var p: Point
-                var q: Point
-                prop { return EF p < q }
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
+                var position: Point
+                var previous: Point
+                prop { return EF position < previous }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "only be compared with == and !=");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "only be compared with == and !=");
     }
 
     @Test
     void recordComparedWithNothingIsRejected() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
-                var p: Point
-                prop { return EF p != nothing }
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
+                var position: Point
+                prop { return EF position != nothing }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "only be compared with == and !=");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "only be compared with == and !=");
     }
 
     @Test
     void recordComparedWithIntegerIsRejected() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
-                var p: Point
-                prop { return EF p == 1 }
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
+                var position: Point
+                prop { return EF position == 1 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "Cannot compare");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "Cannot compare");
     }
 
     @Test
     void recordAssignedFromOtherRecordTypeIsRejected() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
-                var p: Point
-                var s: Segment
-                redefine tran { p := s }
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
+                var position: Point
+                var segment: Segment
+                redefine tran { position := segment }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "Cannot assign");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "Cannot assign");
     }
 
     @Test
     void classLevelRecordInitializedFromVariableIsRejected() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
-                var p: Point
-                var q: Point := p
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
+                var position: Point
+                var previous: Point := position
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH);
+        parsedPackage.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH);
     }
 
     @Test
     void recordConstructedByCallIsRejected() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
-                var p: Point
-                redefine tran { p := Point(1, 2) }
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
+                var position: Point
+                redefine tran { position := Point(1, 2) }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.INCORRECT_CALLED_ELEMENT, "not callable");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.INCORRECT_CALLED_ELEMENT, "not callable");
     }
 
     @Test
     void arrayOfRecordsIsRejected() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
                 var points: Point[2]
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        assertOnlyErrorsAreUnsupported(pkg, "Arrays of records");
+        parsedPackage.assertNoResourceErrors();
+        assertOnlyErrorsAreUnsupported(parsedPackage, "Arrays of records");
     }
 
     @Test
     void optionalRecordIsRejected() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
-                var p: Point[0..1]
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
+                var position: Point[0..1]
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        assertOnlyErrorsAreUnsupported(pkg, "exactly one");
+        parsedPackage.assertNoResourceErrors();
+        assertOnlyErrorsAreUnsupported(parsedPackage, "exactly one");
     }
 
     @Test
     void arrayFieldInRecordIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             record Samples {
                 var values: int[3]
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        assertOnlyErrorsAreUnsupported(pkg, "Array fields");
+        parsedPackage.assertNoResourceErrors();
+        assertOnlyErrorsAreUnsupported(parsedPackage, "Array fields");
     }
 
     @Test
     void classTypedRecordFieldIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Worker { }
             record Assignment {
@@ -278,173 +278,173 @@ public class RecordValidationTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        assertOnlyErrorsAreUnsupported(pkg, "data, enum or record type");
+        parsedPackage.assertNoResourceErrors();
+        assertOnlyErrorsAreUnsupported(parsedPackage, "data, enum or record type");
     }
 
     @Test
     void recordTypedFeatureIsRejected() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
                 refers origin: Point
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        assertOnlyErrorsAreUnsupported(pkg, "Record-typed features");
+        parsedPackage.assertNoResourceErrors();
+        assertOnlyErrorsAreUnsupported(parsedPackage, "Record-typed features");
     }
 
     @Test
     void recordLiteralsAreAcceptedWhereRecordValuesAre() {
-        var pkg = parseHelper.parse(RECORDS + """
+        var parsedPackage = parseHelper.parse(RECORDS + """
             record Box {
                 var corner: Point := Point { x = 1 }
                 var size: int := 1
             }
-            class C {
-                var p: Point := Point { x = 1 }
-                var s: Segment := Segment { from = Point { x = 0, y = 1 }, to = Point { x = 2 } }
-                var b: Box
+            class Holder {
+                var position: Point := Point { x = 1 }
+                var segment: Segment := Segment { from = Point { x = 0, y = 1 }, to = Point { x = 2 } }
+                var box: Box
                 tran move(target: Point) {
-                    p := target
+                    position := target
                 }
                 prop isAt(point: Point): bool {
-                    return p == point
+                    return position == point
                 }
                 redefine tran {
-                    p := Point { x = p.x + 1, y = p.y }
-                    var local: Point := Point { x = s.to.x }
+                    position := Point { x = position.x + 1, y = position.y }
+                    var local: Point := Point { x = segment.to.x }
                     inline move(Point { x = local.y })
-                    s := Segment { from = p, to = local, color = Color::Green }
-                    b := Box { size = 2 }
-                    p := if p.x > 3 then Point { x = 0 } else p
+                    segment := Segment { from = position, to = local, color = Color::Green }
+                    box := Box { size = 2 }
+                    position := if position.x > 3 then Point { x = 0 } else position
                 }
                 prop {
-                    return EF (p != Point { x = 3, y = 0 } && isAt(Point { x = 1 }) && Point { x = 1 }.x == 1)
+                    return EF (position != Point { x = 3, y = 0 } && isAt(Point { x = 1 }) && Point { x = 1 }.x == 1)
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void fieldAssignedTwiceIsRejected() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
-                var p: Point := Point { x = 1, x = 2 }
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
+                var position: Point := Point { x = 1, x = 2 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertHasValidationIssue(OxstsValidator.DUPLICATE_NAME_ISSUE, "'x' is assigned more than once");
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertHasValidationIssue(OxstsValidator.DUPLICATE_NAME_ISSUE, "'x' is assigned more than once");
     }
 
     @Test
     void omittedFieldWithoutDefaultIsRejected() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
-                var p: Point := Point { y = 1 }
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
+                var position: Point := Point { y = 1 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        assertOnlyErrorsAre(pkg, OxstsValidator.INCOMPLETE_RECORD_LITERAL, "leaves 'x' without a value");
+        parsedPackage.assertNoResourceErrors();
+        assertOnlyErrorsAre(parsedPackage, OxstsValidator.INCOMPLETE_RECORD_LITERAL, "leaves 'x' without a value");
     }
 
     @Test
     void omittedRecordFieldWhoseRecordLacksADefaultIsRejected() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
-                var s: Segment := Segment { from = Point { x = 1 } }
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
+                var segment: Segment := Segment { from = Point { x = 1 } }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        assertOnlyErrorsAre(pkg, OxstsValidator.INCOMPLETE_RECORD_LITERAL, "leaves 'to' without a value");
+        parsedPackage.assertNoResourceErrors();
+        assertOnlyErrorsAre(parsedPackage, OxstsValidator.INCOMPLETE_RECORD_LITERAL, "leaves 'to' without a value");
     }
 
     @Test
     void fieldOfAnotherRecordDoesNotResolve() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
-                var p: Point := Point { x = 1, color = Color::Red }
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
+                var position: Point := Point { x = 1, color = Color::Red }
             }
             """, CheckMode.ALL);
 
-        assertThat(pkg.getResourceErrors())
+        assertThat(parsedPackage.getResourceErrors())
                 .singleElement()
                 .satisfies(error -> assertThat(error.getMessage()).contains("'color'"));
     }
 
     @Test
     void literalOfAClassDoesNotResolve() {
-        var pkg = parseHelper.parse(RECORDS + """
+        var parsedPackage = parseHelper.parse(RECORDS + """
             class Worker {
                 var x: int
             }
-            class C {
-                var p: Point := Worker { x = 1 }
+            class Holder {
+                var position: Point := Worker { x = 1 }
             }
             """, CheckMode.ALL);
 
-        assertThat(pkg.getResourceErrors()).isNotEmpty();
+        assertThat(parsedPackage.getResourceErrors()).isNotEmpty();
     }
 
     @Test
     void fieldValueOfAnotherTypeIsRejected() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
-                var p: Point := Point { x = true }
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
+                var position: Point := Point { x = true }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        assertOnlyErrorsAre(pkg, OxstsValidator.TYPE_MISMATCH, "not assignable to field 'x'");
+        parsedPackage.assertNoResourceErrors();
+        assertOnlyErrorsAre(parsedPackage, OxstsValidator.TYPE_MISMATCH, "not assignable to field 'x'");
     }
 
     @Test
     void literalOfAnotherRecordIsRejected() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
-                var p: Point
-                redefine tran { p := Segment { from = p, to = p } }
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
+                var position: Point
+                redefine tran { position := Segment { from = position, to = position } }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        assertOnlyErrorsAre(pkg, OxstsValidator.TYPE_MISMATCH, "Cannot assign");
+        parsedPackage.assertNoResourceErrors();
+        assertOnlyErrorsAre(parsedPackage, OxstsValidator.TYPE_MISMATCH, "Cannot assign");
     }
 
     @Test
     void classLevelLiteralOfRuntimeValuesIsRejected() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
-                var n: int := 0
-                var p: Point := Point { x = n }
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
+                var offset: int := 0
+                var position: Point := Point { x = offset }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        assertOnlyErrorsAre(pkg, OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "RUNTIME");
+        parsedPackage.assertNoResourceErrors();
+        assertOnlyErrorsAre(parsedPackage, OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "RUNTIME");
     }
 
     @Test
     void literalIsNoWriteTarget() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
-                var p: Point
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
+                var position: Point
                 redefine tran {
                     havoc(Point { x = 1 })
-                    Point { x = 1 } := p
+                    Point { x = 1 } := position
                     Point { x = 1 }.x := 2
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        assertThat(pkg.getIssues())
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.getIssues())
                 .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
                 .hasSize(3)
                 .allSatisfy(issue -> assertThat(issue.getCode()).isEqualTo(OxstsValidator.INCORRECT_ASSIGNMENT));
@@ -452,8 +452,8 @@ public class RecordValidationTest {
 
     @Test
     void literalEvaluatedAtCompileTimeIsRejected() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
                 refers same: bool = Point { x = 1 } == Point { x = 1 }
                 redefine tran {
                     inline if (Point { x = 1 } != Point { x = 2 }) { }
@@ -461,9 +461,9 @@ public class RecordValidationTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        assertOnlyErrorsAre(pkg, OxstsValidator.UNSUPPORTED_FEATURE, "not yet evaluated at compile time");
-        assertThat(pkg.getIssues())
+        parsedPackage.assertNoResourceErrors();
+        assertOnlyErrorsAre(parsedPackage, OxstsValidator.UNSUPPORTED_FEATURE, "not yet evaluated at compile time");
+        assertThat(parsedPackage.getIssues())
                 .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
                 .extracting(Issue::getMessage)
                 .anySatisfy(message -> assertThat(message).contains("a feature binding"))
@@ -472,31 +472,31 @@ public class RecordValidationTest {
 
     @Test
     void orderingComparisonWithLiteralIsRejected() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
-                var p: Point
-                prop { return EF p < Point { x = 1 } }
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
+                var position: Point
+                prop { return EF position < Point { x = 1 } }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "only be compared with == and !=");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "only be compared with == and !=");
     }
 
     @Test
     void recordNameIsNoValue() {
-        var pkg = parseHelper.parse(RECORDS + """
-            class C {
-                var p: Point
-                redefine tran { p := Point {} }
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
+                var position: Point
+                redefine tran { position := Point {} }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        assertOnlyErrorsAre(pkg, OxstsValidator.TYPE_MISMATCH, "'Point' is a record type, not a value");
+        parsedPackage.assertNoResourceErrors();
+        assertOnlyErrorsAre(parsedPackage, OxstsValidator.TYPE_MISMATCH, "'Point' is a record type, not a value");
     }
 
-    private static void assertOnlyErrorsAre(WrappedOxstsPackage pkg, String code, String messageSubstring) {
-        assertThat(pkg.getIssues())
+    private static void assertOnlyErrorsAre(WrappedOxstsPackage parsedPackage, String code, String messageSubstring) {
+        assertThat(parsedPackage.getIssues())
                 .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
                 .isNotEmpty()
                 .allSatisfy(issue -> {
@@ -505,8 +505,8 @@ public class RecordValidationTest {
                 });
     }
 
-    private static void assertOnlyErrorsAreUnsupported(WrappedOxstsPackage pkg, String messageSubstring) {
-        assertThat(pkg.getIssues())
+    private static void assertOnlyErrorsAreUnsupported(WrappedOxstsPackage parsedPackage, String messageSubstring) {
+        assertThat(parsedPackage.getIssues())
                 .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
                 .isNotEmpty()
                 .allSatisfy(issue -> {

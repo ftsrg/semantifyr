@@ -28,23 +28,23 @@ public class OxstsFormatterTest {
     @ParameterizedTest
     @ValueSource(strings = {"..", "..<"})
     void rangeOperatorHasNoSpaces(String operator) {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                contains children: C[0  %1$s  2]
-                var x: int := 0
+            class Node {
+                contains children: Node[0  %1$s  2]
+                var sum: int := 0
                 redefine tran {
-                    for (i in 0  %1$s  2) {
-                        x := x + i
+                    for (index in 0  %1$s  2) {
+                        sum := sum + index
                     }
                 }
             }
             """.formatted(operator));
-        pkg.assertNoResourceErrors();
+        parsedPackage.assertNoResourceErrors();
 
         var options = SaveOptions.newBuilder().format().getOptions();
-        var formatted = serializer.serialize(pkg.getOxstsPackage(), options);
+        var formatted = serializer.serialize(parsedPackage.getOxstsPackage(), options);
 
-        assertThat(formatted).contains("C[0" + operator + "2]", "in 0" + operator + "2)");
+        assertThat(formatted).contains("Node[0" + operator + "2]", "in 0" + operator + "2)");
     }
 }

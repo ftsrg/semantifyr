@@ -33,13 +33,13 @@ public class MultiplicitySyntaxTest {
     @Test
     void implicitMultiplicityIsOne() {
         // No explicit multiplicity -> default ONE (i.e. [1..1]).
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Leaf { }
             class Host { contains leaf: Leaf }
             """);
-        pkg.assertNoResourceErrors();
-        var typeSpec = pkg.classByName("Host").featureByName("leaf").typeSpecification();
+        parsedPackage.assertNoResourceErrors();
+        var typeSpec = parsedPackage.classByName("Host").featureByName("leaf").typeSpecification();
         assertThat(typeSpec.getMultiplicity()).isNull();
         var range = multiplicityRangeEvaluator.evaluate(typeSpec);
         assertThat(range.getLowerBound()).isEqualTo(1);
@@ -48,13 +48,13 @@ public class MultiplicitySyntaxTest {
 
     @Test
     void singleIntegerMultiplicity() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Leaf { }
             class Host { contains leaves: Leaf[3] }
             """);
-        pkg.assertNoResourceErrors();
-        var typeSpec = pkg.classByName("Host").featureByName("leaves").typeSpecification();
+        parsedPackage.assertNoResourceErrors();
+        var typeSpec = parsedPackage.classByName("Host").featureByName("leaves").typeSpecification();
         assertThat(typeSpec.getMultiplicity()).isInstanceOf(DefiniteMultiplicity.class);
         var range = multiplicityRangeEvaluator.evaluate(typeSpec);
         assertThat(range.getLowerBound()).isEqualTo(3);
@@ -63,13 +63,13 @@ public class MultiplicitySyntaxTest {
 
     @Test
     void rangeMultiplicity() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Leaf { }
             class Host { contains leaves: Leaf[2..4] }
             """);
-        pkg.assertNoResourceErrors();
-        var typeSpec = pkg.classByName("Host").featureByName("leaves").typeSpecification();
+        parsedPackage.assertNoResourceErrors();
+        var typeSpec = parsedPackage.classByName("Host").featureByName("leaves").typeSpecification();
         var multiplicity = (DefiniteMultiplicity) typeSpec.getMultiplicity();
         assertThat(multiplicity.getExpression()).isInstanceOf(RangeExpression.class);
         var range = multiplicityRangeEvaluator.evaluate(typeSpec);
@@ -79,13 +79,13 @@ public class MultiplicitySyntaxTest {
 
     @Test
     void exclusiveRangeMultiplicityExcludesUpperBound() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Leaf { }
             class Host { contains leaves: Leaf[0..<3] }
             """);
-        pkg.assertNoResourceErrors();
-        var typeSpec = pkg.classByName("Host").featureByName("leaves").typeSpecification();
+        parsedPackage.assertNoResourceErrors();
+        var typeSpec = parsedPackage.classByName("Host").featureByName("leaves").typeSpecification();
         var range = multiplicityRangeEvaluator.evaluate(typeSpec);
         assertThat(range.getLowerBound()).isEqualTo(0);
         assertThat(range.getUpperBound()).isEqualTo(2);
@@ -93,13 +93,13 @@ public class MultiplicitySyntaxTest {
 
     @Test
     void rangeMultiplicityWithInfinityUpper() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Leaf { }
             class Host { contains leaves: Leaf[0..*] }
             """);
-        pkg.assertNoResourceErrors();
-        var typeSpec = pkg.classByName("Host").featureByName("leaves").typeSpecification();
+        parsedPackage.assertNoResourceErrors();
+        var typeSpec = parsedPackage.classByName("Host").featureByName("leaves").typeSpecification();
         var range = multiplicityRangeEvaluator.evaluate(typeSpec);
         assertThat(range.getLowerBound()).isEqualTo(0);
         assertThat(range.getUpperBound()).isEqualTo(RangeEvaluation.INFINITY);
@@ -107,32 +107,32 @@ public class MultiplicitySyntaxTest {
 
     @Test
     void bareInfinityMultiplicityIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Leaf { }
             class Host { contains leaves: Leaf[*] }
             """, CheckMode.ALL);
-        pkg.assertHasValidationIssue("OXSTS.TYPE_MISMATCH", "`[*]` is not a valid multiplicity");
-        var typeSpec = pkg.classByName("Host").featureByName("leaves").typeSpecification();
+        parsedPackage.assertHasValidationIssue("OXSTS.TYPE_MISMATCH", "`[*]` is not a valid multiplicity");
+        var typeSpec = parsedPackage.classByName("Host").featureByName("leaves").typeSpecification();
         var multiplicity = (DefiniteMultiplicity) typeSpec.getMultiplicity();
         assertThat(multiplicity.getExpression()).isInstanceOf(LiteralInfinity.class);
     }
 
     @Test
     void unboundedMultiplicityBrackets() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Leaf { }
             class Host { contains leaves: Leaf[] }
             """);
-        pkg.assertNoResourceErrors();
-        var typeSpec = pkg.classByName("Host").featureByName("leaves").typeSpecification();
+        parsedPackage.assertNoResourceErrors();
+        var typeSpec = parsedPackage.classByName("Host").featureByName("leaves").typeSpecification();
         assertThat(typeSpec.getMultiplicity()).isInstanceOf(UnboundedMultiplicity.class);
     }
 
     @Test
     void multiplicityFromElementReference() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Leaf { }
             class Host {
@@ -140,8 +140,8 @@ public class MultiplicitySyntaxTest {
                 contains leaves: Leaf[size]
             }
             """);
-        pkg.assertNoResourceErrors();
-        var typeSpec = pkg.classByName("Host").featureByName("leaves").typeSpecification();
+        parsedPackage.assertNoResourceErrors();
+        var typeSpec = parsedPackage.classByName("Host").featureByName("leaves").typeSpecification();
         var multiplicity = (DefiniteMultiplicity) typeSpec.getMultiplicity();
         assertThat(multiplicity.getExpression()).isInstanceOf(ElementReference.class);
     }

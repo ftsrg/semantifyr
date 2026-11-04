@@ -39,61 +39,61 @@ public class UnsupportedFeatureTest {
 
     @Test
     void localArrayPasses() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                var i: int := 0
+            class Holder {
+                var value: int := 0
+                var position: int := 0
                 redefine tran {
-                    var values: int[2] := [1, x]
+                    var values: int[2] := [1, value]
                     var scratch: int[3]
-                    scratch[i] := values[1]
-                    x := scratch[i]
+                    scratch[position] := values[1]
+                    value := scratch[position]
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void localFeatureTypedArrayIsAccepted() {
-        var pkg = parseHelper.parse(WORKERS + """
-            class C {
+        var parsedPackage = parseHelper.parse(WORKERS + """
+            class Holder {
                 contains workers: Worker[0..*]
-                contains a: Worker subsets workers
+                contains lead: Worker subsets workers
                 redefine tran {
                     var slots: workers[2]
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void parameterArrayIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
+            class Holder {
+                var value: int := 0
                 tran set(values: int[2]) {
-                    x := values[1]
+                    value := values[1]
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "Array parameter");
-        assertOnlyErrorsAreUnsupportedAtLine(pkg, 4);
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "Array parameter");
+        assertOnlyErrorsAreUnsupportedAtLine(parsedPackage, 4);
     }
 
     @Test
     void optionalAndUnboundedParametersAreNotArrays() {
-        var pkg = parseHelper.parse(WORKERS + """
-            class C {
+        var parsedPackage = parseHelper.parse(WORKERS + """
+            class Team {
                 contains workers: Worker[0..*]
                 tran stepAll(all: Worker[0..*]) {
                     inline for (worker in all) {
@@ -104,89 +104,89 @@ public class UnsupportedFeatureTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void readThroughClassTypedVariableIsRejected() {
-        var pkg = parseHelper.parse(WORKERS + """
-            class C {
-                contains a: Worker
+        var parsedPackage = parseHelper.parse(WORKERS + """
+            class Team {
+                contains lead: Worker
                 var current: Worker[0..1] := nothing
                 prop { return EF current.done }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'current'");
-        assertOnlyErrorsAreUnsupportedAtLine(pkg, 15);
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'current'");
+        assertOnlyErrorsAreUnsupportedAtLine(parsedPackage, 15);
     }
 
     @Test
     void writeThroughFeatureTypedVariableIsRejected() {
-        var pkg = parseHelper.parse(WORKERS + """
-            class C {
+        var parsedPackage = parseHelper.parse(WORKERS + """
+            class Team {
                 contains workers: Worker[0..*]
-                contains a: Worker subsets workers
+                contains lead: Worker subsets workers
                 var current: workers[0..1] := nothing
                 redefine tran { current.done := true }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'current'");
-        assertOnlyErrorsAreUnsupportedAtLine(pkg, 16);
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'current'");
+        assertOnlyErrorsAreUnsupportedAtLine(parsedPackage, 16);
     }
 
     @Test
     void optionalNavigationThroughVariableIsRejected() {
-        var pkg = parseHelper.parse(WORKERS + """
-            class C {
-                contains a: Worker
+        var parsedPackage = parseHelper.parse(WORKERS + """
+            class Team {
+                contains lead: Worker
                 var current: Worker[0..1] := nothing
                 prop { return EF current?.done }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'current'");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'current'");
     }
 
     @Test
     void featureAccessThroughVariableIsRejectedEvenWhenCalled() {
-        var pkg = parseHelper.parse(WORKERS + """
-            class C {
-                contains a: Worker
-                var current: Worker[0..1] := a
+        var parsedPackage = parseHelper.parse(WORKERS + """
+            class Team {
+                contains lead: Worker
+                var current: Worker[0..1] := lead
                 redefine tran { inline current.part.step() }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'current'");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'current'");
     }
 
     @Test
     void accessThroughLocalVariableIsRejected() {
-        var pkg = parseHelper.parse(WORKERS + """
-            class C {
-                contains a: Worker
+        var parsedPackage = parseHelper.parse(WORKERS + """
+            class Team {
+                contains lead: Worker
                 var seen: bool := false
                 redefine tran {
-                    var current: Worker[0..1] := a
+                    var current: Worker[0..1] := lead
                     seen := current.done
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'current'");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'current'");
     }
 
     @Test
     void accessThroughRuntimeForLoopVariableIsRejected() {
-        var pkg = parseHelper.parse(WORKERS + """
-            class C {
+        var parsedPackage = parseHelper.parse(WORKERS + """
+            class Team {
                 contains workers: Worker[0..*]
-                contains a: Worker subsets workers
+                contains lead: Worker subsets workers
                 redefine tran {
                     for (worker in workers) {
                         worker.done := true
@@ -195,15 +195,15 @@ public class UnsupportedFeatureTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'worker'");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'worker'");
     }
 
     @Test
     void callsThroughVariablesPass() {
-        var pkg = parseHelper.parse(WORKERS + """
-            class C {
+        var parsedPackage = parseHelper.parse(WORKERS + """
+            class Team {
                 contains workers: Worker[0..*]
-                contains a: Worker subsets workers
+                contains lead: Worker subsets workers
                 var current: Worker[0..1] := nothing
                 redefine tran {
                     havoc(current)
@@ -216,16 +216,16 @@ public class UnsupportedFeatureTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void accessThroughInlineForLoopVariablePasses() {
-        var pkg = parseHelper.parse(WORKERS + """
-            class C {
+        var parsedPackage = parseHelper.parse(WORKERS + """
+            class Team {
                 contains workers: Worker[0..*]
-                contains a: Worker subsets workers
+                contains lead: Worker subsets workers
                 redefine tran {
                     inline for (worker in workers) {
                         worker.done := true
@@ -235,12 +235,12 @@ public class UnsupportedFeatureTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
-    private static void assertOnlyErrorsAreUnsupportedAtLine(WrappedOxstsPackage pkg, int line) {
-        assertThat(pkg.getIssues())
+    private static void assertOnlyErrorsAreUnsupportedAtLine(WrappedOxstsPackage parsedPackage, int line) {
+        assertThat(parsedPackage.getIssues())
                 .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
                 .isNotEmpty()
                 .allSatisfy(issue -> {

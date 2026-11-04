@@ -31,13 +31,13 @@ public record WrappedClass(ClassDeclaration eObject) {
     public List<WrappedFeature> features() {
         return eObject.getMembers().stream()
                 .filter(FeatureDeclaration.class::isInstance)
-                .map(m -> new WrappedFeature((FeatureDeclaration) m))
+                .map(member -> new WrappedFeature((FeatureDeclaration) member))
                 .toList();
     }
 
     public WrappedFeature featureByName(String name) {
         return features().stream()
-                .filter(f -> name.equals(f.name()))
+                .filter(feature -> name.equals(feature.name()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("No feature named '" + name + "' in class '" + name() + "'"));
     }
@@ -45,13 +45,13 @@ public record WrappedClass(ClassDeclaration eObject) {
     public List<WrappedVariable> variables() {
         return eObject.getMembers().stream()
                 .filter(VariableDeclaration.class::isInstance)
-                .map(m -> new WrappedVariable((VariableDeclaration) m))
+                .map(member -> new WrappedVariable((VariableDeclaration) member))
                 .toList();
     }
 
     public WrappedVariable variableByName(String name) {
         return variables().stream()
-                .filter(v -> name.equals(v.name()))
+                .filter(variable -> name.equals(variable.name()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("No variable named '" + name + "' in class '" + name() + "'"));
     }
@@ -59,13 +59,13 @@ public record WrappedClass(ClassDeclaration eObject) {
     public List<WrappedTransition> transitions() {
         return eObject.getMembers().stream()
                 .filter(TransitionDeclaration.class::isInstance)
-                .map(m -> new WrappedTransition((TransitionDeclaration) m))
+                .map(member -> new WrappedTransition((TransitionDeclaration) member))
                 .toList();
     }
 
     public WrappedTransition namedTransition(String name) {
         return transitions().stream()
-                .filter(t -> name.equals(t.name()))
+                .filter(transition -> name.equals(transition.name()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("No named transition '" + name + "' in class '" + name() + "'"));
     }
@@ -80,8 +80,8 @@ public record WrappedClass(ClassDeclaration eObject) {
 
     private WrappedTransition anonymousTransitionOfKind(TransitionKind kind) {
         return transitions().stream()
-                .filter(t -> t.eObject().getName() == null)
-                .filter(t -> t.eObject().getKind() == kind)
+                .filter(transition -> transition.eObject().getName() == null)
+                .filter(transition -> transition.eObject().getKind() == kind)
                 .findFirst()
                 .orElseThrow(
                         () -> new AssertionError("No anonymous " + kind + " transition in class '" + name() + "'"));
@@ -90,20 +90,20 @@ public record WrappedClass(ClassDeclaration eObject) {
     public List<WrappedProperty> properties() {
         return eObject.getMembers().stream()
                 .filter(PropertyDeclaration.class::isInstance)
-                .map(m -> new WrappedProperty((PropertyDeclaration) m))
+                .map(member -> new WrappedProperty((PropertyDeclaration) member))
                 .toList();
     }
 
     public WrappedProperty anonymousProperty() {
         return properties().stream()
-                .filter(p -> p.eObject().getName() == null)
+                .filter(property -> property.eObject().getName() == null)
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("No anonymous prop in class '" + name() + "'"));
     }
 
     public WrappedProperty namedProperty(String name) {
         return properties().stream()
-                .filter(p -> name.equals(p.name()))
+                .filter(property -> name.equals(property.name()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("No named property '" + name + "' in class '" + name() + "'"));
     }

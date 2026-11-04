@@ -26,7 +26,7 @@ public record WrappedEnum(EnumDeclaration eObject) {
 
     public EnumLiteral literalByName(String name) {
         return literals().stream()
-                .filter(l -> name.equals(l.getName()))
+                .filter(literal -> name.equals(literal.getName()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("No literal named '" + name + "' in enum '" + name() + "'"));
     }

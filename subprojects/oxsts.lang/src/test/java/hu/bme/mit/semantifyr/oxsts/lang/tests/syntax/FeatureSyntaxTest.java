@@ -23,12 +23,12 @@ public class FeatureSyntaxTest {
 
     @Test
     void containmentKind() {
-        assertFeatureKind("contains x: Leaf[0..*]", FeatureKind.CONTAINMENT);
+        assertFeatureKind("contains leaves: Leaf[0..*]", FeatureKind.CONTAINMENT);
     }
 
     @Test
     void containerKind() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Leaf {
                 container parent: Host[0..1] opposite children
@@ -37,8 +37,9 @@ public class FeatureSyntaxTest {
                 contains children: Leaf[0..*] opposite parent
             }
             """);
-        pkg.assertNoResourceErrors();
-        assertThat(pkg.classByName("Leaf").featureByName("parent").kind()).isEqualTo(FeatureKind.CONTAINER);
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.classByName("Leaf").featureByName("parent").kind())
+                .isEqualTo(FeatureKind.CONTAINER);
     }
 
     @Test
@@ -48,7 +49,7 @@ public class FeatureSyntaxTest {
 
     @Test
     void derivedReferenceKind() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Leaf {
                 refers home: Host[0..1]
@@ -57,8 +58,12 @@ public class FeatureSyntaxTest {
                 derived refers inhabitants: Leaf[0..*] opposite home
             }
             """);
-        pkg.assertNoResourceErrors();
-        assertThat(pkg.classByName("Host").featureByName("inhabitants").kind()).isEqualTo(FeatureKind.DERIVED);
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage
+                        .classByName("Host")
+                        .featureByName("inhabitants")
+                        .kind())
+                .isEqualTo(FeatureKind.DERIVED);
     }
 
     @Test
@@ -67,31 +72,31 @@ public class FeatureSyntaxTest {
     }
 
     private void assertFeatureKind(String declaration, FeatureKind expectedKind) {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Leaf { }
             class Host { %s }
             """.formatted(declaration));
-        pkg.assertNoResourceErrors();
-        var features = pkg.classByName("Host").features();
+        parsedPackage.assertNoResourceErrors();
+        var features = parsedPackage.classByName("Host").features();
         assertThat(features).hasSize(1);
         assertThat(features.getFirst().kind()).isEqualTo(expectedKind);
     }
 
     @Test
     void featureWithInlineExpressionInitializer() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C { refers size: int = 3 }
+            class Buffer { refers size: int = 3 }
             """);
-        pkg.assertNoResourceErrors();
-        var size = pkg.classByName("C").featureByName("size");
+        parsedPackage.assertNoResourceErrors();
+        var size = parsedPackage.classByName("Buffer").featureByName("size");
         assertThat(size.expression()).isInstanceOf(LiteralInteger.class);
     }
 
     @Test
     void featureWithSubsets() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Item { }
             class Holder {
@@ -99,23 +104,23 @@ public class FeatureSyntaxTest {
                 contains priority: Item[0..*] subsets all
             }
             """);
-        pkg.assertNoResourceErrors();
-        var priority = pkg.classByName("Holder").featureByName("priority");
+        parsedPackage.assertNoResourceErrors();
+        var priority = parsedPackage.classByName("Holder").featureByName("priority");
         assertThat(priority.superset()).isNotNull();
         assertThat(priority.superset().name()).isEqualTo("all");
     }
 
     @Test
     void featureWithOpposite() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Node {
                 container parent: Node[0..1] opposite children
                 contains children: Node[0..*] opposite parent
             }
             """);
-        pkg.assertNoResourceErrors();
-        var node = pkg.classByName("Node");
+        parsedPackage.assertNoResourceErrors();
+        var node = parsedPackage.classByName("Node");
         assertThat(node.featureByName("parent").opposite()).isNotNull();
         assertThat(node.featureByName("parent").opposite().name()).isEqualTo("children");
         assertThat(node.featureByName("children").opposite().name()).isEqualTo("parent");
@@ -123,7 +128,7 @@ public class FeatureSyntaxTest {
 
     @Test
     void featureWithNestedBlock() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Leaf {
                 refers tag: int = 0
@@ -134,8 +139,8 @@ public class FeatureSyntaxTest {
                 }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var leaf = pkg.classByName("Host").featureByName("leaf");
+        parsedPackage.assertNoResourceErrors();
+        var leaf = parsedPackage.classByName("Host").featureByName("leaf");
         assertThat(leaf.innerFeatures()).hasSize(1);
         assertThat(leaf.innerFeatures().getFirst().name()).isEqualTo("tag");
         assertThat(leaf.innerFeatures().getFirst().isRedefine()).isTrue();
@@ -143,21 +148,22 @@ public class FeatureSyntaxTest {
 
     @Test
     void featureWithRedefineFlag() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Worker { }
-            class Base { contains w: Worker[0..*] }
+            class Base { contains workers: Worker[0..*] }
             class Child : Base {
-                redefine contains w: Worker[1]
+                redefine contains workers: Worker[1]
             }
             """);
-        pkg.assertNoResourceErrors();
-        assertThat(pkg.classByName("Child").featureByName("w").isRedefine()).isTrue();
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.classByName("Child").featureByName("workers").isRedefine())
+                .isTrue();
     }
 
     @Test
     void featureWithAllThreeModifiers() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Item { }
             class Base {
@@ -172,8 +178,8 @@ public class FeatureSyntaxTest {
                 redefine contains priority: Item[0..*] subsets items redefines priority
             }
             """);
-        pkg.assertNoResourceErrors();
-        var priority = pkg.classByName("Derived").featureByName("priority");
+        parsedPackage.assertNoResourceErrors();
+        var priority = parsedPackage.classByName("Derived").featureByName("priority");
         assertThat(priority.isRedefine()).isTrue();
         assertThat(priority.superset()).isNotNull();
         assertThat(priority.superset().name()).isEqualTo("items");

@@ -24,7 +24,7 @@ public class RedefinitionSignatureTest {
 
     @Test
     void transitionRedefinitionWithSameSignaturePasses() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Node { }
             abstract class Base {
@@ -35,13 +35,13 @@ public class RedefinitionSignatureTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationIssues();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationIssues();
     }
 
     @Test
     void transitionRedefinitionWithFewerParametersIsFlagged() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Node { }
             abstract class Base {
@@ -52,13 +52,13 @@ public class RedefinitionSignatureTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertHasValidationIssue(OxstsValidator.REDEFINITION_SIGNATURE_MISMATCH, "1 parameter");
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertHasValidationIssue(OxstsValidator.REDEFINITION_SIGNATURE_MISMATCH, "1 parameter");
     }
 
     @Test
     void propertyRedefinitionWithMoreParametersIsFlagged() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             abstract class Base {
                 abstract prop check(): bool
@@ -68,12 +68,12 @@ public class RedefinitionSignatureTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.REDEFINITION_SIGNATURE_MISMATCH, "0 parameters");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.REDEFINITION_SIGNATURE_MISMATCH, "0 parameters");
     }
 
     @Test
     void signatureMismatchIsAnError() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Node { }
             abstract class Base {
@@ -84,7 +84,7 @@ public class RedefinitionSignatureTest {
             }
             """, CheckMode.ALL);
 
-        assertThat(pkg.getIssues())
+        assertThat(parsedPackage.getIssues())
                 .filteredOn(issue -> OxstsValidator.REDEFINITION_SIGNATURE_MISMATCH.equals(issue.getCode()))
                 .extracting(issue -> issue.getSeverity())
                 .containsOnly(Severity.ERROR);

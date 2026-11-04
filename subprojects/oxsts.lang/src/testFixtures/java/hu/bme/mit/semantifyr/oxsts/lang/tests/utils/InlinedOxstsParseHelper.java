@@ -26,8 +26,8 @@ public class InlinedOxstsParseHelper {
             var inlined = parseHelper.parse(text);
             EcoreUtil.resolveAll(inlined);
             return inlined;
-        } catch (Exception e) {
-            throw new AssertionError("Unexpected exception while parsing InlinedOxsts", e);
+        } catch (Exception exception) {
+            throw new AssertionError("Unexpected exception while parsing InlinedOxsts", exception);
         }
     }
 }

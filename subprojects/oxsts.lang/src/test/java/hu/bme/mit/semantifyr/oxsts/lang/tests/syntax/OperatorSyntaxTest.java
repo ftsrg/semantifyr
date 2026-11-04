@@ -46,30 +46,30 @@ public class OperatorSyntaxTest {
 
     @Test
     void arithmeticAdd() {
-        assertArithmeticBinaryOperator("x + 1", ArithmeticOp.ADD);
+        assertArithmeticBinaryOperator("value + 1", ArithmeticOp.ADD);
     }
 
     @Test
     void arithmeticSubtract() {
-        assertArithmeticBinaryOperator("x - 1", ArithmeticOp.SUB);
+        assertArithmeticBinaryOperator("value - 1", ArithmeticOp.SUB);
     }
 
     @Test
     void arithmeticMultiply() {
-        assertArithmeticBinaryOperator("x * 2", ArithmeticOp.MUL);
+        assertArithmeticBinaryOperator("value * 2", ArithmeticOp.MUL);
     }
 
     @Test
     void arithmeticDivide() {
-        assertArithmeticBinaryOperator("x / 2", ArithmeticOp.DIV);
+        assertArithmeticBinaryOperator("value / 2", ArithmeticOp.DIV);
     }
 
     private void assertArithmeticBinaryOperator(String expression, ArithmeticOp expectedOperator) {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
-                var x: int := 0
-                redefine tran { x := %s }
+                var value: int := 0
+                redefine tran { value := %s }
             }
             """.formatted(expression));
         parsedPackage.assertNoResourceErrors();
@@ -81,21 +81,21 @@ public class OperatorSyntaxTest {
 
     @Test
     void arithmeticUnaryPlus() {
-        assertArithmeticUnaryOperator("+x", UnaryOp.PLUS);
+        assertArithmeticUnaryOperator("+operand", UnaryOp.PLUS);
     }
 
     @Test
     void arithmeticUnaryMinus() {
-        assertArithmeticUnaryOperator("-x", UnaryOp.MINUS);
+        assertArithmeticUnaryOperator("-operand", UnaryOp.MINUS);
     }
 
     private void assertArithmeticUnaryOperator(String expression, UnaryOp expectedOperator) {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
-                var x: int := 0
-                var y: int := 0
-                redefine tran { y := %s }
+                var operand: int := 0
+                var result: int := 0
+                redefine tran { result := %s }
             }
             """.formatted(expression));
         parsedPackage.assertNoResourceErrors();
@@ -107,25 +107,25 @@ public class OperatorSyntaxTest {
 
     @ParameterizedTest
     @CsvSource({
-        "x + y * z, (x + (y * z))",
-        "x * y + z, ((x * y) + z)",
-        "x - y / z, (x - (y / z))",
-        "x - y - z, ((x - y) - z)",
-        "x / y * z, ((x / y) * z)",
-        "(x + y) * z, ((x + y) * z)",
-        "-x * y, ((-x) * y)",
-        "x..y + z, (x..(y + z))",
-        "x + y < z, ((x + y) < z)",
-        "x < y && y <= z, ((x < y) && (y <= z))",
-        "x == y || !(y != z), ((x == y) || (!(y != z)))",
+        "left + middle * right, (left + (middle * right))",
+        "left * middle + right, ((left * middle) + right)",
+        "left - middle / right, (left - (middle / right))",
+        "left - middle - right, ((left - middle) - right)",
+        "left / middle * right, ((left / middle) * right)",
+        "(left + middle) * right, ((left + middle) * right)",
+        "-left * middle, ((-left) * middle)",
+        "left..middle + right, (left..(middle + right))",
+        "left + middle < right, ((left + middle) < right)",
+        "left < middle && middle <= right, ((left < middle) && (middle <= right))",
+        "left == middle || !(middle != right), ((left == middle) || (!(middle != right)))",
     })
     void operatorsBindByTheirPrecedenceLevel(String expression, String expectedReading) {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
-                var x: int := 0
-                var y: int := 0
-                var z: int := 0
+                var left: int := 0
+                var middle: int := 0
+                var right: int := 0
                 redefine tran { assume(%s) }
             }
             """.formatted(expression));
@@ -138,25 +138,25 @@ public class OperatorSyntaxTest {
 
     @Test
     void booleanAnd() {
-        assertBooleanOperator("a && b", BooleanOp.AND);
+        assertBooleanOperator("left && right", BooleanOp.AND);
     }
 
     @Test
     void booleanOr() {
-        assertBooleanOperator("a || b", BooleanOp.OR);
+        assertBooleanOperator("left || right", BooleanOp.OR);
     }
 
     @Test
     void booleanXor() {
-        assertBooleanOperator("a ^^ b", BooleanOp.XOR);
+        assertBooleanOperator("left ^^ right", BooleanOp.XOR);
     }
 
     private void assertBooleanOperator(String expression, BooleanOp expectedOperator) {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
-                var a: bool := false
-                var b: bool := false
+                var left: bool := false
+                var right: bool := false
                 redefine tran { assume(%s) }
             }
             """.formatted(expression));
@@ -169,22 +169,22 @@ public class OperatorSyntaxTest {
 
     @ParameterizedTest
     @CsvSource({
-        "a || b && c, (a || (b && c))",
-        "a && b || c, ((a && b) || c)",
-        "a ^^ b && c, (a ^^ (b && c))",
-        "a || b ^^ c, (a || (b ^^ c))",
-        "a ^^ b || c, ((a ^^ b) || c)",
-        "a || b || c, ((a || b) || c)",
-        "a && b && c, ((a && b) && c)",
-        "(a || b) && c, ((a || b) && c)",
+        "left || middle && right, (left || (middle && right))",
+        "left && middle || right, ((left && middle) || right)",
+        "left ^^ middle && right, (left ^^ (middle && right))",
+        "left || middle ^^ right, (left || (middle ^^ right))",
+        "left ^^ middle || right, ((left ^^ middle) || right)",
+        "left || middle || right, ((left || middle) || right)",
+        "left && middle && right, ((left && middle) && right)",
+        "(left || middle) && right, ((left || middle) && right)",
     })
     void booleanOperatorsBindAndThenXorThenOr(String expression, String expectedReading) {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
-                var a: bool := false
-                var b: bool := false
-                var c: bool := false
+                var left: bool := false
+                var middle: bool := false
+                var right: bool := false
                 redefine tran { assume(%s) }
             }
             """.formatted(expression));
@@ -246,39 +246,39 @@ public class OperatorSyntaxTest {
 
     @Test
     void comparisonLess() {
-        assertComparisonOperator("x < 5", ComparisonOp.LESS);
+        assertComparisonOperator("value < 5", ComparisonOp.LESS);
     }
 
     @Test
     void comparisonLessOrEqual() {
-        assertComparisonOperator("x <= 5", ComparisonOp.LESS_EQ);
+        assertComparisonOperator("value <= 5", ComparisonOp.LESS_EQ);
     }
 
     @Test
     void comparisonGreater() {
-        assertComparisonOperator("x > 5", ComparisonOp.GREATER);
+        assertComparisonOperator("value > 5", ComparisonOp.GREATER);
     }
 
     @Test
     void comparisonGreaterOrEqual() {
-        assertComparisonOperator("x >= 5", ComparisonOp.GREATER_EQ);
+        assertComparisonOperator("value >= 5", ComparisonOp.GREATER_EQ);
     }
 
     @Test
     void comparisonEqual() {
-        assertComparisonOperator("x == 5", ComparisonOp.EQ);
+        assertComparisonOperator("value == 5", ComparisonOp.EQ);
     }
 
     @Test
     void comparisonNotEqual() {
-        assertComparisonOperator("x != 5", ComparisonOp.NOT_EQ);
+        assertComparisonOperator("value != 5", ComparisonOp.NOT_EQ);
     }
 
     private void assertComparisonOperator(String expression, ComparisonOp expectedOperator) {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
-                var x: int := 0
+                var value: int := 0
                 redefine tran { assume(%s) }
             }
             """.formatted(expression));
@@ -387,9 +387,9 @@ public class OperatorSyntaxTest {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
-                var x: int := 0
-                redefine tran { x := 1 }
-                prop { return AG (x >= 0) }
+                var counter: int := 0
+                redefine tran { counter := 1 }
+                prop { return AG (counter >= 0) }
             }
             """);
         parsedPackage.assertNoResourceErrors();
@@ -404,9 +404,9 @@ public class OperatorSyntaxTest {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
-                var x: int := 0
-                redefine tran { x := x + 1 }
-                prop { return EF (x == 5) }
+                var counter: int := 0
+                redefine tran { counter := counter + 1 }
+                prop { return EF (counter == 5) }
             }
             """);
         parsedPackage.assertNoResourceErrors();
@@ -443,8 +443,8 @@ public class OperatorSyntaxTest {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
-                var x: int := 0
-                redefine tran { x := (x + 1) * 2 }
+                var counter: int := 0
+                redefine tran { counter := (counter + 1) * 2 }
             }
             """);
         parsedPackage.assertNoResourceErrors();

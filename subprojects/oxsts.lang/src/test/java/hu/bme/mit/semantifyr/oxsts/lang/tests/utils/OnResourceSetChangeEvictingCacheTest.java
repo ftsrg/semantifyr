@@ -44,13 +44,13 @@ public class OnResourceSetChangeEvictingCacheTest {
     @BeforeEach
     void parseLibraryAndInlinedModel() throws Exception {
         library = packageParseHelper.parse("""
-            package lib
+            package library
             class Host {
-                var x: int := 0
+                var counter: int := 0
             }
             """);
         inlined = inlinedParseHelper.parse("""
-            inlined oxsts of lib::Host
+            inlined oxsts of library::Host
             init { }
             tran { }
             prop { AG true }

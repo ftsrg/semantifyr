@@ -97,8 +97,8 @@ public class ScopingTest {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
-                var x: int := 0
-                tran step() { x := x + 1 }
+                var counter: int := 0
+                tran step() { counter := counter + 1 }
                 redefine tran { inline step() }
             }
             """);
@@ -179,14 +179,14 @@ public class ScopingTest {
     void membersOfTheFirstSupertypeResolveUnderMultipleInheritance() {
         var parsedPackage = parseHelper.parse("""
             package test
-            class Left { var x: int := 0 }
-            class Right { var y: int := 0 }
+            class Left { var leftValue: int := 0 }
+            class Right { var rightValue: int := 0 }
             class Both : Left, Right {
-                redefine tran { x := 1 }
+                redefine tran { leftValue := 1 }
             }
             class User {
                 contains both: Both
-                redefine tran { both.x := 2 }
+                redefine tran { both.leftValue := 2 }
             }
             """);
 
@@ -197,10 +197,10 @@ public class ScopingTest {
     void multipleInheritanceIsRejectedAtTheSecondSupertype() {
         var parsedPackage = parseHelper.parse("""
             package test
-            class Left { var x: int := 0 }
-            class Right { var y: int := 0 }
+            class Left { var leftValue: int := 0 }
+            class Right { var rightValue: int := 0 }
             class Both : Left, Right {
-                redefine tran { x := 1 }
+                redefine tran { leftValue := 1 }
             }
             """, CheckMode.ALL);
 

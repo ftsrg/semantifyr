@@ -25,9 +25,9 @@ public class ArrayTypeTest {
 
     @Test
     void indexingWithIntConstantPasses() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Buffer {
                 var values: int[3] := [0, 0, 0]
                 redefine tran {
                     values[0] := 1
@@ -35,32 +35,32 @@ public class ArrayTypeTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void indexingWithIntVariablePasses() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Buffer {
                 var values: int[3] := [0, 0, 0]
-                var i: int := 0
+                var index: int := 0
                 redefine tran {
-                    values[i] := 1
+                    values[index] := 1
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void wholeArrayOperationsPass() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Buffer {
                 var values: int[2] := [0, 0]
                 var backup: int[2] := [0, 0]
                 var same: bool := false
@@ -73,159 +73,159 @@ public class ArrayTypeTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void comparingArraysOfDifferentSizesIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Buffer {
                 var pair: int[2] := [0, 0]
                 var triple: int[3] := [0, 0, 0]
                 prop { return AG pair == triple }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "array of the same size");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "array of the same size");
     }
 
     @Test
     void comparingAnArrayWithAScalarIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Buffer {
                 var pair: int[2] := [0, 0]
                 prop { return AG pair != 1 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "array of the same size");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "array of the same size");
     }
 
     @Test
     void orderingArraysIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Buffer {
                 var pair: int[2] := [0, 0]
                 var other: int[2] := [0, 0]
                 prop { return AG pair < other }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "array of the same size");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "array of the same size");
     }
 
     @Test
     void indexingWithBoolIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Buffer {
                 var values: int[3] := [0, 0, 0]
-                var b: bool := false
+                var flag: bool := false
                 redefine tran {
-                    values[b] := 1
+                    values[flag] := 1
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "numeric");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "numeric");
     }
 
     @Test
     void arrayLiteralWithHomogeneousElementsPasses() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Buffer {
                 var values: int[3] := [1, 2, 3]
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void arrayLiteralWithMixedTypesIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Buffer {
                 var values: int[2] := [1, true]
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "common type");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "common type");
     }
 
     @Test
     void variableWithUnboundedArrayIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Buffer {
                 var buffer: int[*] := [0]
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "compile-time upper bound");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "compile-time upper bound");
     }
 
     @Test
     void classAndFeatureTypedArraysPass() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Worker {
                 var done: bool := false
                 tran step() { done := true }
                 prop isDone(): bool { return done }
             }
-            class C {
+            class Team {
                 contains workers: Worker[0..*]
                 contains first: Worker subsets workers
                 contains second: Worker subsets workers
                 var queue: Worker[2] := [first, second]
                 var picks: workers[1..2]
-                var i: int := 0
+                var index: int := 0
                 redefine tran {
-                    queue[i] := second
+                    queue[index] := second
                     picks := queue
                     havoc(picks)
-                    inline queue[i].step()
+                    inline queue[index].step()
                 }
                 prop { return EF (picks[0] == first && queue[1].isDone()) }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void memberAccessThroughAnArraySlotIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Worker {
                 var done: bool := false
             }
-            class C {
+            class Team {
                 contains first: Worker
                 var queue: Worker[2] := [first, first]
                 prop { return EF queue[0].done }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'queue'");
-        assertOnlyErrorsAreUnsupportedAtLine(pkg, 8);
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'queue'");
+        assertOnlyErrorsAreUnsupportedAtLine(parsedPackage, 8);
     }
 
     @Test
     void localClassTypedArrayIsAccepted() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Worker { }
-            class C {
+            class Team {
                 contains worker: Worker
                 redefine tran {
                     var slots: Worker[2]
@@ -233,41 +233,41 @@ public class ArrayTypeTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void optionalClassTypedVariableIsNotAnArray() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Worker { }
-            class C {
+            class Team {
                 contains worker: Worker
                 var current: Worker[0..1] := nothing
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void enumTypedArrayPasses() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             enum Color { Red, Green }
-            class C {
+            class Buffer {
                 var colors: Color[2] := [Color::Red, Color::Green]
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
-    private static void assertOnlyErrorsAreUnsupportedAtLine(WrappedOxstsPackage pkg, int line) {
-        assertThat(pkg.getIssues())
+    private static void assertOnlyErrorsAreUnsupportedAtLine(WrappedOxstsPackage parsedPackage, int line) {
+        assertThat(parsedPackage.getIssues())
                 .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
                 .isNotEmpty()
                 .allSatisfy(issue -> {
@@ -281,9 +281,9 @@ public class ArrayTypeTest {
         // Assignment of `values[0]` (int element) to an int variable works.
         // If we didn't reduce the array's multiplicity to ONE on indexing,
         // this would flag a multiplicity mismatch.
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Buffer {
                 var values: int[3] := [1, 2, 3]
                 var first: int := 0
                 redefine tran {
@@ -292,15 +292,15 @@ public class ArrayTypeTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void indexingIntoScalarIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Buffer {
                 var scalar: int := 0
                 redefine tran {
                     scalar[0] := 1
@@ -308,6 +308,6 @@ public class ArrayTypeTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "non-array");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "non-array");
     }
 }
