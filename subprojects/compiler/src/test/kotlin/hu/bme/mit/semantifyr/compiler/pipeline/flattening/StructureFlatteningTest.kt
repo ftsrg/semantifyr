@@ -28,14 +28,14 @@ class StructureFlatteningTest : FlatteningTestBase() {
                 }
                 @VerificationCase
                 class Host {
-                    contains u1 : User[1]
-                    contains u2 : User[1]
+                    contains firstUser : User[1]
+                    contains secondUser : User[1]
                     redefine tran {
-                        u1.counter.count := 1
-                        u1.own.count := 1
-                        u2.own.count := 2
+                        firstUser.counter.count := 1
+                        firstUser.own.count := 1
+                        secondUser.own.count := 2
                     }
-                    prop { return AG (u2.counter.count == 0 || u2.counter.count == 1) }
+                    prop { return AG (secondUser.counter.count == 0 || secondUser.counter.count == 1) }
                 }
             """,
         )
@@ -43,7 +43,47 @@ class StructureFlatteningTest : FlatteningTestBase() {
         assertThat(flattened.inlinedOxsts.variables.map { it.name })
             .hasSize(3)
         assertThat(serialize(flattened.inlinedOxsts.property))
-            .doesNotContain("u2")
+            .doesNotContain("secondUser")
+    }
+
+    @Test
+    fun `a container feature navigates to the instance that contains it`() {
+        assertFlattenedModel(
+            "Host",
+            """
+                package flattening::tests
+                class Parent {
+                    contains child : Offspring[1] opposite parent
+                    var generation : int := 0
+                }
+                class Offspring {
+                    container parent : Parent[1] opposite child
+                    tran bumpParent() {
+                        assume(parent.generation < 3)
+                        parent.generation := parent.generation + 1
+                    }
+                }
+                @VerificationCase
+                class Host {
+                    contains parent : Parent[1]
+                    redefine tran { inline parent.child.bumpParent() }
+                    prop { return EF parent.generation == 3 }
+                }
+            """,
+            $$$$"""
+                init {
+                }
+
+                tran {
+                    assume ('$$root$$parent$$generation' < 3)
+                    '$$root$$parent$$generation' := '$$root$$parent$$generation' + 1
+                }
+
+                prop {
+                    EF '$$root$$parent$$generation' == 3
+                }
+            """,
+        )
     }
 
     @Test

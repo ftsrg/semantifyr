@@ -24,12 +24,12 @@ class FeatureInliningTest : InliningTestBase() {
                 @VerificationCase
                 class Host {
                     contains items : Item[0..*]
-                    contains a : Item[1] subsets items
-                    contains b : Item[1] subsets items
+                    contains first : Item[1] subsets items
+                    contains second : Item[1] subsets items
                     contains other : Item[1]
                     redefine tran {
-                        inline for (i in items) {
-                            inline i.act()
+                        inline for (item in items) {
+                            inline item.act()
                         }
                     }
                     prop { return AG true }
@@ -38,8 +38,8 @@ class FeatureInliningTest : InliningTestBase() {
         )
 
         assertThat(main)
-            .contains("root.a.hits := root.a.hits + 1")
-            .contains("root.b.hits := root.b.hits + 1")
+            .contains("root.first.hits := root.first.hits + 1")
+            .contains("root.second.hits := root.second.hits + 1")
             .doesNotContain("root.other.hits")
     }
 
@@ -66,10 +66,10 @@ class FeatureInliningTest : InliningTestBase() {
                 }
                 @VerificationCase
                 class Host {
-                    contains h : SpecialHolder[1]
+                    contains holder : SpecialHolder[1]
                     redefine tran {
-                        inline for (i in h.items) {
-                            inline i.act()
+                        inline for (item in holder.items) {
+                            inline item.act()
                         }
                     }
                     prop { return AG true }
@@ -77,7 +77,7 @@ class FeatureInliningTest : InliningTestBase() {
             """,
         )
 
-        assertThat(main).contains("root.h.first.special := root.h.first.special + 1")
+        assertThat(main).contains("root.holder.first.special := root.holder.first.special + 1")
     }
 
     @Test
@@ -95,24 +95,56 @@ class FeatureInliningTest : InliningTestBase() {
                     redefine tran act() { special := special + 1 }
                 }
                 class Pair {
-                    contains a : Item[1]
-                    tran run() { inline a.act() }
+                    contains original : Item[1]
+                    tran run() { inline original.act() }
                 }
                 class RenamedPair : Pair {
-                    contains newA : SpecialItem[1] redefines a
+                    contains replacement : SpecialItem[1] redefines original
                 }
                 @VerificationCase
                 class Host {
-                    contains p : RenamedPair[1]
-                    redefine tran { inline p.run() }
+                    contains pair : RenamedPair[1]
+                    redefine tran { inline pair.run() }
                     prop { return AG true }
                 }
             """,
         )
 
         assertThat(main)
-            .contains("root.p.newA.special := root.p.newA.special + 1")
+            .contains("root.pair.replacement.special := root.pair.replacement.special + 1")
             .doesNotContain("hits")
+    }
+
+    @Test
+    fun `a reference bound in a nested block reaches the bound instance`() {
+        val main = inlinedMain(
+            "Host",
+            """
+                package inlining::tests
+                class Lamp {
+                    var on : bool := false
+                    tran switchOn() { on := true }
+                }
+                class Switch {
+                    refers lamp : Lamp[1]
+                    tran press() { inline lamp.switchOn() }
+                }
+                @VerificationCase
+                class Host {
+                    contains kitchen : Lamp[1]
+                    contains hall : Lamp[1]
+                    contains button : Switch[1] {
+                        redefine refers lamp : Lamp[1] = kitchen
+                    }
+                    redefine tran { inline button.press() }
+                    prop { return AG true }
+                }
+            """,
+        )
+
+        assertThat(main)
+            .contains("root.kitchen.on := true")
+            .doesNotContain("root.hall.on")
     }
 
     @Test
@@ -165,20 +197,20 @@ class FeatureInliningTest : InliningTestBase() {
                 }
                 @VerificationCase
                 class Host {
-                    contains n1 : Node[1]
-                    contains n2 : Node[1]
-                    contains e1 : Edge[1] {
-                        redefine refers to : Node[1] = n2
+                    contains firstNode : Node[1]
+                    contains secondNode : Node[1]
+                    contains firstEdge : Edge[1] {
+                        redefine refers to : Node[1] = secondNode
                     }
-                    contains e2 : Edge[1] {
-                        redefine refers to : Node[1] = n2
+                    contains secondEdge : Edge[1] {
+                        redefine refers to : Node[1] = secondNode
                     }
-                    contains e3 : Edge[1] {
-                        redefine refers to : Node[1] = n1
+                    contains thirdEdge : Edge[1] {
+                        redefine refers to : Node[1] = firstNode
                     }
                     redefine tran {
-                        inline for (e in n2.incoming) {
-                            e.used := true
+                        inline for (edge in secondNode.incoming) {
+                            edge.used := true
                         }
                     }
                     prop { return AG true }
@@ -187,9 +219,9 @@ class FeatureInliningTest : InliningTestBase() {
         )
 
         assertThat(main)
-            .contains("root.e1.used := true")
-            .contains("root.e2.used := true")
-            .doesNotContain("root.e3.used")
+            .contains("root.firstEdge.used := true")
+            .contains("root.secondEdge.used := true")
+            .doesNotContain("root.thirdEdge.used")
     }
 
     @Test
@@ -211,14 +243,14 @@ class FeatureInliningTest : InliningTestBase() {
                 }
                 @VerificationCase
                 class Host {
-                    contains s : FilledSlot[1]
-                    redefine tran { inline s.run() }
+                    contains slot : FilledSlot[1]
+                    redefine tran { inline slot.run() }
                     prop { return AG true }
                 }
             """,
         )
 
-        assertThat(main).contains("root.s.payload.hits := root.s.payload.hits + 1")
+        assertThat(main).contains("root.slot.payload.hits := root.slot.payload.hits + 1")
     }
 
     @Test
@@ -255,12 +287,12 @@ class FeatureInliningTest : InliningTestBase() {
                 class Item { }
                 @VerificationCase
                 class Host {
-                    contains a : Item[1]
-                    contains b : Item[1]
-                    refers chosen : Item[1] = b
+                    contains first : Item[1]
+                    contains second : Item[1]
+                    refers chosen : Item[1] = second
                     var x : int := 0
                     redefine tran {
-                        inline if (chosen == a) {
+                        inline if (chosen == first) {
                             x := 1
                         } else {
                             x := 2
