@@ -262,11 +262,11 @@
   },
   "devDependencies": {
     "@types/node": "^20.17.19",
-    "@types/vscode": "~1.109.0",
+    "@types/vscode": "~1.144.0",
     "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^3.2.2",
     "concurrently": "^9.0.0",
-    "esbuild": "^0.25.0",
+    "esbuild": "^0.28.2",
     "vitest": "^5.0.5",
     "vscode-jsonrpc": "^10.0.0",
     "vscode-languageserver-protocol": "^3.18.5"
