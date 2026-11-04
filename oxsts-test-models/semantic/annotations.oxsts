@@ -6,8 +6,6 @@
 
 package semantifyr::verification::lang::annotations
 
-// @Control and @NonOptimizable steer the engines and the optimizer, never the verdict.
-
 @VerificationCase
 @Tag("expect-pass")
 class ControlReach {
