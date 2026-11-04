@@ -18,6 +18,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
+import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.serializer.ISerializer
@@ -56,6 +57,18 @@ abstract class FlatteningTestBase {
 
     protected fun serialize(eObject: EObject): String {
         return serializer.serializeFormatted(eObject)
+    }
+
+    protected fun assertFlattenedModel(
+        className: String,
+        source: String,
+        expected: String,
+    ) {
+        val inlinedOxsts = flatten(className, source).inlinedOxsts
+        val actual = listOf(inlinedOxsts.initTransition, inlinedOxsts.mainTransition, inlinedOxsts.property).joinToString("\n\n") {
+            serialize(it).trim().replace("\t", "    ")
+        }
+        assertThat(actual).isEqualTo(expected.trimIndent())
     }
 
     protected fun FlattenedCompilationContext.variableNamed(name: String): VariableDeclaration {
