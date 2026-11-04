@@ -12,8 +12,10 @@ import hu.bme.mit.semantifyr.backend.BackendTestModels
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.boolean
+import hu.bme.mit.semantifyr.backend.enumeration
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.valuesByName
+import hu.bme.mit.semantifyr.backend.integer
 import hu.bme.mit.semantifyr.backends.spin.ReplayingSpinExecutor
 import hu.bme.mit.semantifyr.backends.spin.SpinExecutorKey
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
@@ -69,7 +71,7 @@ class SpinBackendReplayTest {
         val result = verifyFixture("control_flow", "ChoiceBranch1Reach")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
-        assertThat(result.inlinedWitness!!.transitionStates.last().valuesByName()).containsEntry("\$\$root\$\$x", 1)
+        assertThat(result.inlinedWitness!!.transitionStates.last().integer("\$\$root\$\$x")).isEqualTo(1)
     }
 
     @Test
@@ -79,7 +81,11 @@ class SpinBackendReplayTest {
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
         val states = listOfNotNull(witness.initializedState) + witness.transitionStates
-        assertThat(states.map { it.valuesByName()["counter"] }).containsExactly(0, 1, 2)
+        assertThat(
+            states.map {
+                it.integer("counter")
+            },
+        ).containsExactly(0, 1, 2)
     }
 
     @Test
@@ -89,11 +95,21 @@ class SpinBackendReplayTest {
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
         val states = listOfNotNull(witness.initializedState) + witness.transitionStates
-        assertThat(states.map { it.valuesByName() }).containsExactly(
-            mapOf("counter" to 0, "unchanged" to 5, "flag" to true),
-            mapOf("counter" to 1, "unchanged" to 5, "flag" to true),
-            mapOf("counter" to 2, "unchanged" to 5, "flag" to true),
-        )
+        assertThat(
+            states.map {
+                it.integer("counter")
+            },
+        ).containsExactly(0, 1, 2)
+        assertThat(
+            states.map {
+                it.integer("unchanged")
+            },
+        ).containsExactly(5, 5, 5)
+        assertThat(
+            states.map {
+                it.boolean("flag")
+            },
+        ).containsExactly(true, true, true)
     }
 
     @Test
@@ -132,7 +148,11 @@ class SpinBackendReplayTest {
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
         val states = listOfNotNull(witness.initializedState) + witness.transitionStates
-        assertThat(states.map { it.valuesByName()["counter"] }).containsExactly(0, 1, 2)
+        assertThat(
+            states.map {
+                it.integer("counter")
+            },
+        ).containsExactly(0, 1, 2)
         assertThat(Path("build", "test-artifacts", "SpinBackendReplayTest", "MergeLimit", "spin.out").readText()).contains("merge requires more than 256 bups")
     }
 
@@ -141,7 +161,7 @@ class SpinBackendReplayTest {
         val result = verifyFixture("initial_values", "UninitializedIntegerBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
-        assertThat(result.inlinedWitness!!.initializedState!!.valuesByName()["\$\$root\$\$x"]).isNotNull().isNotEqualTo(0)
+        assertThat(result.inlinedWitness!!.initializedState!!.integer("\$\$root\$\$x")).isNotEqualTo(0)
     }
 
     @Test
@@ -149,7 +169,7 @@ class SpinBackendReplayTest {
         val result = verifyFixture("initial_values", "UninitializedEnumBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
-        assertThat(result.inlinedWitness!!.initializedState!!.valuesByName()["\$\$root\$\$light"]).isEqualTo("On")
+        assertThat(result.inlinedWitness!!.initializedState!!.enumeration("\$\$root\$\$light")).isEqualTo("On")
     }
 
     @Test

@@ -13,8 +13,9 @@ import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.enumeration
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.valuesByName
+import hu.bme.mit.semantifyr.backend.integer
 import hu.bme.mit.semantifyr.backends.uppaal.ReplayingUppaalExecutor
 import hu.bme.mit.semantifyr.backends.uppaal.UppaalExecutionResult
 import hu.bme.mit.semantifyr.backends.uppaal.UppaalExecutionSpecification
@@ -72,7 +73,7 @@ class UppaalBackendReplayTest {
         val result = verifyFixture("control_flow", "ChoiceBranch1Reach")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
-        assertThat(result.inlinedWitness!!.transitionStates.last().valuesByName()).containsEntry("\$\$root\$\$x", 1)
+        assertThat(result.inlinedWitness!!.transitionStates.last().integer("\$\$root\$\$x")).isEqualTo(1)
     }
 
     @Test
@@ -82,7 +83,11 @@ class UppaalBackendReplayTest {
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
         val states = listOfNotNull(witness.initializedState) + witness.transitionStates
-        assertThat(states.map { it.valuesByName()["counter"] }).containsExactly(0, 1, 2)
+        assertThat(
+            states.map {
+                it.integer("counter")
+            },
+        ).containsExactly(0, 1, 2)
     }
 
     @Test
@@ -98,7 +103,7 @@ class UppaalBackendReplayTest {
         val result = verifyFixture("initial_values", "UninitializedIntegerBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
-        assertThat(result.inlinedWitness!!.initializedState!!.valuesByName()["\$\$root\$\$x"]).isNotNull().isNotEqualTo(0)
+        assertThat(result.inlinedWitness!!.initializedState!!.integer("\$\$root\$\$x")).isNotEqualTo(0)
     }
 
     @Test
@@ -106,7 +111,7 @@ class UppaalBackendReplayTest {
         val result = verifyFixture("initial_values", "UninitializedEnumBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
-        assertThat(result.inlinedWitness!!.initializedState!!.valuesByName()["\$\$root\$\$light"]).isEqualTo("On")
+        assertThat(result.inlinedWitness!!.initializedState!!.enumeration("\$\$root\$\$light")).isEqualTo("On")
     }
 
     @Test
