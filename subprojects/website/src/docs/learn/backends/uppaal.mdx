@@ -3,11 +3,19 @@ title: Uppaal
 sidebar_position: 3
 ---
 
-import BackendLimitations from '@site/src/components/BackendLimitations';
-import limitations from '@backend-reference/limitations.tsv';
-
 # Uppaal
 
-[Uppaal](https://uppaal.org/) verifies the timed-automaton translation of a case and is the only backend that honours `@Clock`. It havocs an integer only among candidate values, so its configurations are under-approximating, except `over-approximation`, which over-approximates the clock zones. It declares every integer with its static bound, or with a 31-bit range when it has none within 32 bits, and stops a run as Not supported, naming the variable, when a value leaves the declared range; a proof over a counter without a guard counts through that whole range and does not finish in practice. Before it runs, it reports a case Not supported when the case holds a construct of the table, naming each construct, or the variable it concerns, and its source line. The table is generated from Uppaal's capability check, so it describes the current build.
+[Uppaal](https://uppaal.org/) verifies the timed-automaton translation of a case and is the only backend that honours `@Clock`. It havocs an integer only among candidate values, so its configurations are under-approximating, except `over-approximation`, which over-approximates the clock zones. It declares every integer with its static bound, or with a 31-bit range when it has none within 32 bits, and stops a run as Not supported, naming the variable, when a value leaves the declared range; a proof over a counter without a guard counts through that whole range and does not finish in practice. Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct, or the variable it concerns, and its source line.
 
-<BackendLimitations table={limitations} backend="uppaal" />
+## What the backend refuses
+
+- Variables of type `real`, `string` or `any`: the Uppaal translation declares integer, boolean, enumeration and clock variables only.
+- `@Clock` on variables that are not data-typed: a clock stands for a time value, which an enumeration cannot hold.
+- Clock resets to values other than 0: the translation resets a clock to 0 only.
+- Havoc on clocks: a clock cannot take an arbitrary value.
+- For-operations: the Uppaal translation has no loop.
+- String literals: Uppaal has no strings.
+- Array literals: the backend receives arrays split into one variable per slot and has no form for an array value.
+- Array indexing: the backend receives arrays split into one variable per slot and has no form for indexing.
+- Arithmetic that may leave the 32-bit range: Uppaal's arithmetic wraps at 32 bits before its range check can stop the run; the property depends on the arithmetic.
+- In the `over-approximation` configuration, havoced integers read other than in comparisons with literals: Uppaal chooses a havoced integer among candidate values, which under-approximates a variable read this way, and a run is never both over- and under-approximating.

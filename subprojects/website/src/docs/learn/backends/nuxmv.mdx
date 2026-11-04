@@ -3,11 +3,14 @@ title: nuXmv
 sidebar_position: 1
 ---
 
-import BackendLimitations from '@site/src/components/BackendLimitations';
-import limitations from '@backend-reference/limitations.tsv';
-
 # nuXmv
 
-[nuXmv](https://nuxmv.fbk.eu/) verifies the SMV translation of a case with unbounded integers, and its verdicts are exact; its `bdd-invar` configuration needs bounded integers. Before it runs, it reports a case Not supported when the case holds a construct of the table, naming each construct and its source line. The table is generated from nuXmv's capability check, so it describes the current build.
+[nuXmv](https://nuxmv.fbk.eu/) verifies the SMV translation of a case with unbounded integers, and its verdicts are exact; its `bdd-invar` configuration needs bounded integers. Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct and its source line.
 
-<BackendLimitations table={limitations} backend="nuxmv" />
+## What the backend refuses
+
+- Variables of type `real`, `string` or `any`: the SMV translation declares integer, boolean and enumeration variables only.
+- For-operations: the SMV translation has no loop.
+- String literals: SMV has no strings.
+- Array literals: the backend receives arrays split into one variable per slot and has no form for an array value.
+- Array indexing: the backend receives arrays split into one variable per slot and has no form for indexing.

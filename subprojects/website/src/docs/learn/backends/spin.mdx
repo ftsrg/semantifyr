@@ -3,11 +3,19 @@ title: Spin
 sidebar_position: 2
 ---
 
-import BackendLimitations from '@site/src/components/BackendLimitations';
-import limitations from '@backend-reference/limitations.tsv';
-
 # Spin
 
-[Spin](https://spinroot.com/) verifies the Promela translation of a case. It computes with 32-bit integers and havocs an integer only among candidate values, so it is under-approximating: a trace it finds is trusted, a proof is not. Before it runs, it reports a case Not supported when the case holds a construct of the table, naming each construct, or the variable it concerns, and its source line. The table is generated from Spin's capability check, so it describes the current build.
+[Spin](https://spinroot.com/) verifies the Promela translation of a case. It computes with 32-bit integers and havocs an integer only among candidate values, so it is under-approximating: a trace it finds is trusted, a proof is not. Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct, or the variable it concerns, and its source line.
 
-<BackendLimitations table={limitations} backend="spin" />
+## What the backend refuses
+
+- Variables of type `real`, `string` or `any`: Promela has integer, boolean and mtype variables only.
+- For-operations: the Promela translation has no loop.
+- Real literals: Promela has no real numbers.
+- String literals: Promela has no strings.
+- Array literals: the backend receives arrays split into one variable per slot and has no form for an array value.
+- Array indexing: the backend receives arrays split into one variable per slot and has no form for indexing.
+- Non-boolean if-then-else inside a property: an LTL formula has no conditional expression, and only a boolean one can be rewritten into logic.
+- Unbounded integer variables: Spin computes with 32-bit integers that wrap without notice, so a value beyond them would make a trace wrong; the property depends on a variable without a static bound.
+- Integer variables beyond the 32-bit range: Spin computes with 32-bit integers that wrap without notice, so a value beyond them would make a trace wrong; the property depends on a variable whose static bound exceeds them.
+- Arithmetic that may leave the 32-bit range: Spin computes with 32-bit integers that wrap without notice, so a value beyond them would make a trace wrong; the property depends on the arithmetic.
