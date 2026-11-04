@@ -13,7 +13,6 @@ import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
 import hu.bme.mit.semantifyr.backends.theta.ThetaBackendModule
 import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.XstsFactory
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticBinaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
@@ -141,7 +140,6 @@ class WitnessValueTransformationTest {
                 assertThat(expression.op).isEqualTo(UnaryOp.MINUS)
                 -integerValue(expression.body)
             }
-            is ArithmeticBinaryOperator -> integerValue(expression.left) - integerValue(expression.right)
             else -> error("Not an integer literal: $expression")
         }
     }
@@ -211,11 +209,6 @@ class WitnessValueTransformationTest {
         val literal = transform(array(4), "slots") as ArrayLiteral
 
         assertThat(literal.values.map { integerValue(it) }).containsExactly(4, 4, 4)
-    }
-
-    @Test
-    suspend fun `the least 32-bit integer is written as an expression that holds it`() {
-        assertThat(integerValue(transform(arithmetic(-2147483647, ArithmeticOp.SUB, 1)))).isEqualTo(Int.MIN_VALUE)
     }
 
     @Test

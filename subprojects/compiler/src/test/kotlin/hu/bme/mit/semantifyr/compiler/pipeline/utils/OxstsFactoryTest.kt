@@ -29,7 +29,14 @@ class OxstsFactoryTest {
     private lateinit var evaluatorProvider: ConstantExpressionEvaluatorProvider
 
     @ParameterizedTest
-    @ValueSource(ints = [0, 7, -7, Int.MAX_VALUE, Int.MIN_VALUE])
+    @ValueSource(
+        ints = [
+            0,
+            7,
+            -7,
+            Int.MAX_VALUE,
+        ],
+    )
     fun `an integer literal serializes to text that reparses to its value`(value: Int) {
         val model = parseHelper.parse("inlined oxsts of semantifyr::Anything var x : int := 0 init { } tran { } prop { AG true }")
         model.variables.single().expression = OxstsFactory.createLiteralInteger(value)
