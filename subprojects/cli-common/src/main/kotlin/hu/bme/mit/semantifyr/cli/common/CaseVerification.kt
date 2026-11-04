@@ -15,8 +15,6 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.switch
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.verifier.VerificationResult
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -60,13 +58,7 @@ suspend fun SuspendingCliktCommand.verifyCase(
                 echo("COMPILATION_ERROR")
             }
             VerifyOutput.Json -> {
-                echo(
-                    buildJsonObject {
-                        put("case", caseName)
-                        put("exitCode", ExitCode.Compilation.code)
-                        put("error", message)
-                    },
-                )
+                echo(jsonLineFormat.encodeToString(CompilationFailureLine(caseName, ExitCode.Compilation.code, message)))
             }
         }
         echo("Compiling $caseName failed: $message", err = true)
@@ -85,13 +77,7 @@ suspend fun SuspendingCliktCommand.verifyCase(
             echo(verdictTag(result.verdict))
         }
         VerifyOutput.Json -> {
-            echo(
-                buildJsonObject {
-                    put("case", caseName)
-                    put("exitCode", exitCode.code)
-                    put("report", report.toString())
-                },
-            )
+            echo(jsonLineFormat.encodeToString(VerifyOutcomeLine(caseName, exitCode.code, report.toString())))
         }
     }
     return exitCode

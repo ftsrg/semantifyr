@@ -13,21 +13,18 @@ import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import com.google.inject.Inject
 import com.google.inject.Injector
+import hu.bme.mit.semantifyr.cli.common.MetricsLine
+import hu.bme.mit.semantifyr.cli.common.jsonLineFormat
 import hu.bme.mit.semantifyr.cli.common.options.CompilationOptionGroup
 import hu.bme.mit.semantifyr.cli.common.options.VerificationCaseSpecificationOptionGroup
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
-import hu.bme.mit.semantifyr.compiler.pipeline.context.CompilationMetrics
 import hu.bme.mit.semantifyr.compiler.pipeline.context.ModelSize
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.verifier.caseDirectoryName
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.encodeToJsonElement
-import kotlinx.serialization.json.put
 import kotlin.io.path.createTempDirectory
 
 class MetricsCommand @Inject constructor(
@@ -61,7 +58,7 @@ class MetricsCommand @Inject constructor(
             for (case in cases) {
                 val metrics = compileCase(compiler, case, outputDirectory.resolve(caseDirectoryName(case))).compilationMetrics
                 if (json) {
-                    echo(jsonLine(case.qualifiedName, metrics))
+                    echo(jsonLineFormat.encodeToString(MetricsLine(case.qualifiedName, metrics.inputSize, metrics.inlinedSize, metrics.flattenedSize)))
                 } else {
                     echo(case.qualifiedName)
                     echo("  input      ${sizeColumns(metrics.inputSize)}")
@@ -76,14 +73,5 @@ class MetricsCommand @Inject constructor(
 
     private fun sizeColumns(size: ModelSize): String {
         return "variables ${size.variables}  operations ${size.operations}  expressions ${size.expressions}"
-    }
-
-    private fun jsonLine(qualifiedName: String, metrics: CompilationMetrics): String {
-        return buildJsonObject {
-            put("case", qualifiedName)
-            put("inputSize", Json.encodeToJsonElement(metrics.inputSize))
-            put("inlinedSize", Json.encodeToJsonElement(metrics.inlinedSize))
-            put("flattenedSize", Json.encodeToJsonElement(metrics.flattenedSize))
-        }.toString()
     }
 }

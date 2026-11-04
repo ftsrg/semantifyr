@@ -7,6 +7,7 @@
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
     kotlin("jvm")
+    kotlin("plugin.serialization")
 }
 
 dependencies {
