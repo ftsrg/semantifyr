@@ -6,16 +6,10 @@
 
 package semantifyr::verification::lang::initial_values
 
-// A variable without an initializer starts at any value of its type. The
-// expect-fail cases hold only on a backend that fixes the initial value,
-// e.g. by zero-initializing it.
-
 enum Light {
     Off,
     On
 }
-
-// --- integer ---
 
 @VerificationCase
 @Tag("expect-fail")
@@ -37,29 +31,25 @@ class UninitializedIntegerReach {
     }
 }
 
-// --- boolean ---
-
 @VerificationCase
 @Tag("expect-fail")
 class UninitializedBooleanBound {
-    var b: bool
+    var flag: bool
 
     prop {
-        return AG b == false
+        return AG flag == false
     }
 }
 
 @VerificationCase
 @Tag("expect-pass")
 class UninitializedBooleanReach {
-    var b: bool
+    var flag: bool
 
     prop {
-        return EF b == true
+        return EF flag == true
     }
 }
-
-// --- enum ---
 
 @VerificationCase
 @Tag("expect-fail")
@@ -81,9 +71,7 @@ class UninitializedEnumReach {
     }
 }
 
-// --- init runs after the initial choice ---
-
-// The init transition overwrites the arbitrary initial value. The property is also checked in the pre-init state, so it holds there through the guard.
+// Theta's CEGAR configurations also check the state before init, which the guard covers.
 @VerificationCase
 @Tag("expect-pass")
 class InitOverwritesUninitialized {
@@ -100,7 +88,6 @@ class InitOverwritesUninitialized {
     }
 }
 
-// A conditional init write keeps the arbitrary initial value on the branch that skips it.
 @VerificationCase
 @Tag("expect-fail")
 class ConditionalInitKeepsUninitialized {
