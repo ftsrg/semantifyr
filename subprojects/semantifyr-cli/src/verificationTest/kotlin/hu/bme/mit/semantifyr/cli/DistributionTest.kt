@@ -33,7 +33,7 @@ class DistributionTest : DistributionTestBase("semantifyr") {
     fun `a violated property exits with the failed code and names its report`() {
         val run = run(
             "verify", "--json", "--theta-executor", "shell", "--portfolio", "theta-cegar-expl-pred-combined", "-d", "artifacts",
-            "--case-name", "semantifyr::verification::lang::local_vars::LocalVarUninitializedBound",
+            "--case-name", "semantifyr::verification::lang::local_vars::LocalVariableUninitializedBound",
             testModels.resolve("semantic/local_vars.oxsts").toString(),
         )
 
