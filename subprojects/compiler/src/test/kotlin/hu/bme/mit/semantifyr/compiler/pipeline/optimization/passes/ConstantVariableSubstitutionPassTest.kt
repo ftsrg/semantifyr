@@ -15,16 +15,26 @@ class ConstantVariableSubstitutionPassTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             var value : int := 7
-            init { value := 7 }
-            tran { }
-            prop { AG (value == 7) }
+            init {
+                value := 7
+            }
+            tran {
+            }
+            prop {
+                AG (value == 7)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var value : int := 7
-            init { value := 7 }
-            tran { }
-            prop { AG (7 == 7) }
+            init {
+                value := 7
+            }
+            tran {
+            }
+            prop {
+                AG (7 == 7)
+            }
         """,
         analysisClasses = listOf(ConstantValueAnalysis::class.java),
     ) {
@@ -36,22 +46,28 @@ class ConstantVariableSubstitutionPassTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { }
+            init {
+            }
             tran {
                 havoc(value)
                 value := 7
             }
-            prop { AG (value == 7) }
+            prop {
+                AG (value == 7)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { }
+            init {
+            }
             tran {
                 havoc(value)
                 value := 7
             }
-            prop { AG (value == 7) }
+            prop {
+                AG (value == 7)
+            }
         """,
         analysisClasses = listOf(ConstantValueAnalysis::class.java),
     ) {
@@ -63,20 +79,34 @@ class ConstantVariableSubstitutionPassTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { }
-            tran {
-                choice { value := 1 } or { value := 2 }
+            init {
             }
-            prop { AG (value != 3) }
+            tran {
+                choice {
+                    value := 1
+                } or {
+                    value := 2
+                }
+            }
+            prop {
+                AG (value != 3)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { }
-            tran {
-                choice { value := 1 } or { value := 2 }
+            init {
             }
-            prop { AG (value != 3) }
+            tran {
+                choice {
+                    value := 1
+                } or {
+                    value := 2
+                }
+            }
+            prop {
+                AG (value != 3)
+            }
         """,
         analysisClasses = listOf(ConstantValueAnalysis::class.java),
     ) {

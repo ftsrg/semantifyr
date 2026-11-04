@@ -21,7 +21,9 @@ class RuntimeForDispatchTest : InliningTestBase() {
                 package inlining::tests::runtime_for_dispatch
                 class Worker {
                     var done: bool := false
-                    tran step() { done := true }
+                    tran step() {
+                        done := true
+                    }
                 }
                 @VerificationCase
                 class Host {
@@ -35,7 +37,9 @@ class RuntimeForDispatchTest : InliningTestBase() {
                         }
                     }
     
-                    prop { return EF (first.done && second.done) }
+                    prop {
+                        return EF (first.done && second.done)
+                    }
                 }
             """.trimIndent(),
         ) {

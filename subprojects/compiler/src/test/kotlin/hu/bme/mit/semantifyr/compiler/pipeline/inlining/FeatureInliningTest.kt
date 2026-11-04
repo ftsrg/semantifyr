@@ -19,7 +19,9 @@ class FeatureInliningTest : InliningTestBase() {
                 package inlining::tests
                 class Item {
                     var hits : int := 0
-                    tran act() { hits := hits + 1 }
+                    tran act() {
+                        hits := hits + 1
+                    }
                 }
                 @VerificationCase
                 class Host {
@@ -32,7 +34,9 @@ class FeatureInliningTest : InliningTestBase() {
                             inline item.act()
                         }
                     }
-                    prop { return AG true }
+                    prop {
+                        return AG true
+                    }
                 }
             """,
         )
@@ -51,11 +55,15 @@ class FeatureInliningTest : InliningTestBase() {
                 package inlining::tests
                 class Item {
                     var hits : int := 0
-                    tran act() { hits := hits + 1 }
+                    tran act() {
+                        hits := hits + 1
+                    }
                 }
                 class SpecialItem : Item {
                     var special : int := 0
-                    redefine tran act() { special := special + 1 }
+                    redefine tran act() {
+                        special := special + 1
+                    }
                 }
                 class Holder {
                     contains items : Item[0..*]
@@ -72,7 +80,9 @@ class FeatureInliningTest : InliningTestBase() {
                             inline item.act()
                         }
                     }
-                    prop { return AG true }
+                    prop {
+                        return AG true
+                    }
                 }
             """,
         )
@@ -88,15 +98,21 @@ class FeatureInliningTest : InliningTestBase() {
                 package inlining::tests
                 class Item {
                     var hits : int := 0
-                    tran act() { hits := hits + 1 }
+                    tran act() {
+                        hits := hits + 1
+                    }
                 }
                 class SpecialItem : Item {
                     var special : int := 0
-                    redefine tran act() { special := special + 1 }
+                    redefine tran act() {
+                        special := special + 1
+                    }
                 }
                 class Pair {
                     contains original : Item[1]
-                    tran run() { inline original.act() }
+                    tran run() {
+                        inline original.act()
+                    }
                 }
                 class RenamedPair : Pair {
                     contains replacement : SpecialItem[1] redefines original
@@ -104,8 +120,12 @@ class FeatureInliningTest : InliningTestBase() {
                 @VerificationCase
                 class Host {
                     contains pair : RenamedPair[1]
-                    redefine tran { inline pair.run() }
-                    prop { return AG true }
+                    redefine tran {
+                        inline pair.run()
+                    }
+                    prop {
+                        return AG true
+                    }
                 }
             """,
         )
@@ -123,11 +143,15 @@ class FeatureInliningTest : InliningTestBase() {
                 package inlining::tests
                 class Lamp {
                     var on : bool := false
-                    tran switchOn() { on := true }
+                    tran switchOn() {
+                        on := true
+                    }
                 }
                 class Switch {
                     refers lamp : Lamp[1]
-                    tran press() { inline lamp.switchOn() }
+                    tran press() {
+                        inline lamp.switchOn()
+                    }
                 }
                 @VerificationCase
                 class Host {
@@ -136,8 +160,12 @@ class FeatureInliningTest : InliningTestBase() {
                     contains button : Switch[1] {
                         redefine refers lamp : Lamp[1] = kitchen
                     }
-                    redefine tran { inline button.press() }
-                    prop { return AG true }
+                    redefine tran {
+                        inline button.press()
+                    }
+                    prop {
+                        return AG true
+                    }
                 }
             """,
         )
@@ -171,7 +199,9 @@ class FeatureInliningTest : InliningTestBase() {
                         inline plain.step()
                         inline raised.step()
                     }
-                    prop { return AG true }
+                    prop {
+                        return AG true
+                    }
                 }
             """,
         )
@@ -213,7 +243,9 @@ class FeatureInliningTest : InliningTestBase() {
                             edge.used := true
                         }
                     }
-                    prop { return AG true }
+                    prop {
+                        return AG true
+                    }
                 }
             """,
         )
@@ -232,11 +264,15 @@ class FeatureInliningTest : InliningTestBase() {
                 package inlining::tests
                 class Item {
                     var hits : int := 0
-                    tran act() { hits := hits + 1 }
+                    tran act() {
+                        hits := hits + 1
+                    }
                 }
                 abstract class Slot {
                     features payload : Item
-                    tran run() { inline payload.act() }
+                    tran run() {
+                        inline payload.act()
+                    }
                 }
                 class FilledSlot : Slot {
                     redefine contains payload : Item[1]
@@ -244,8 +280,12 @@ class FeatureInliningTest : InliningTestBase() {
                 @VerificationCase
                 class Host {
                     contains slot : FilledSlot[1]
-                    redefine tran { inline slot.run() }
-                    prop { return AG true }
+                    redefine tran {
+                        inline slot.run()
+                    }
+                    prop {
+                        return AG true
+                    }
                 }
             """,
         )
@@ -261,14 +301,20 @@ class FeatureInliningTest : InliningTestBase() {
                 package inlining::tests
                 class Worker {
                     var done : bool := false
-                    tran step() { done := true }
+                    tran step() {
+                        done := true
+                    }
                 }
                 global containment worker : Worker[1]
                 global reference alias : Worker[1] = worker
                 @VerificationCase
                 class Host {
-                    redefine tran { inline alias.step() }
-                    prop { return AG true }
+                    redefine tran {
+                        inline alias.step()
+                    }
+                    prop {
+                        return AG true
+                    }
                 }
             """,
         )
@@ -284,7 +330,8 @@ class FeatureInliningTest : InliningTestBase() {
             "Host",
             """
                 package inlining::tests
-                class Item { }
+                class Item {
+                }
                 @VerificationCase
                 class Host {
                     contains first : Item[1]
@@ -298,7 +345,9 @@ class FeatureInliningTest : InliningTestBase() {
                             counter := 2
                         }
                     }
-                    prop { return AG true }
+                    prop {
+                        return AG true
+                    }
                 }
             """,
         )

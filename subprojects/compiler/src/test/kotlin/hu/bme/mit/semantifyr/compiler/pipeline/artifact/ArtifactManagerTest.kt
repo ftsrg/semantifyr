@@ -28,9 +28,13 @@ class ArtifactManagerTest {
         parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                init {}
-                tran {}
-                prop { AG true }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
     }

@@ -22,12 +22,15 @@ class LocalVariableSemanticsTest : AnalysisTestBase() {
         val (inlined, result) = runLiveness(
             """
                 inlined oxsts of semantifyr::Anything
-                init { }
+                init {
+                }
                 tran {
                     var local : int := 5
                     assume(local == 5)
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
         val local: VariableDeclaration = inlined.localVarNamed("local")
@@ -39,12 +42,15 @@ class LocalVariableSemanticsTest : AnalysisTestBase() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                init { }
+                init {
+                }
                 tran {
                     var local : int := 5
                     assume(local == 5)
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
         val local: VariableDeclaration = inlined.localVarNamed("local")
@@ -57,13 +63,16 @@ class LocalVariableSemanticsTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var copy : int := 0
-                init { }
+                init {
+                }
                 tran {
                     var local : int := 5
                     local := 10
                     copy := local
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
         val local = inlined.localVarNamed("local")
@@ -82,13 +91,16 @@ class LocalVariableSemanticsTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var copy : int := 0
-                init { }
+                init {
+                }
                 tran {
                     var local : int := 5
                     copy := local
                     local := 10
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
         val local = inlined.localVarNamed("local")

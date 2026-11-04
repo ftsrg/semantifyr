@@ -33,25 +33,43 @@ class BackendTestModels @Inject constructor(
         const val COUNTER_EXCEEDS_BOUND = """
             inlined oxsts of semantifyr::Anything
             var counter : int := 0
-            init { }
-            tran { counter := counter + 1 }
-            prop { AG counter < 2 }
+            init {
+            }
+            tran {
+                counter := counter + 1
+            }
+            prop {
+                AG counter < 2
+            }
         """
 
         const val SATURATING_COUNTER_EXCEEDS_BOUND = """
             inlined oxsts of semantifyr::Anything
             var counter : int := 0
-            init { }
-            tran { if (counter < 3) { counter := counter + 1 } }
-            prop { AG counter < 2 }
+            init {
+            }
+            tran {
+                if (counter < 3) {
+                    counter := counter + 1
+                }
+            }
+            prop {
+                AG counter < 2
+            }
         """
 
         const val UNREACHABLE_TARGET = """
             inlined oxsts of semantifyr::Anything
             var counter : int := 0
-            init { }
-            tran { assume(counter < 3) counter := counter + 1 }
-            prop { EF counter == 5 }
+            init {
+            }
+            tran {
+                assume(counter < 3)
+                counter := counter + 1
+            }
+            prop {
+                EF counter == 5
+            }
         """
 
         const val SATURATING_ONE_OF_SEVERAL_CHANGES = """
@@ -59,16 +77,31 @@ class BackendTestModels @Inject constructor(
             var counter : int := 0
             var unchanged : int := 5
             var flag : bool := true
-            init { }
-            tran { if (counter < 3) { counter := counter + 1 } }
-            prop { AG counter < 2 }
+            init {
+            }
+            tran {
+                if (counter < 3) {
+                    counter := counter + 1
+                }
+            }
+            prop {
+                AG counter < 2
+            }
         """
 
         const val STATELESS_VIOLATION = """
             inlined oxsts of semantifyr::Anything
-            init { }
-            tran { choice { } or { assume (true) } }
-            prop { AG false }
+            init {
+            }
+            tran {
+                choice {
+                } or {
+                    assume (true)
+                }
+            }
+            prop {
+                AG false
+            }
         """
     }
 

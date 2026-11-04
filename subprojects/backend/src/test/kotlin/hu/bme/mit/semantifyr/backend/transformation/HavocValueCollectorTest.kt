@@ -28,9 +28,13 @@ class HavocValueCollectorTest {
         val havoced = variable(
             """
                 var havoced : int
-                init { }
-                tran { }
-                prop { AG !(havoced == 3) || havoced > 3 }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG !(havoced == 3) || havoced > 3
+                }
             """,
         )
 
@@ -42,9 +46,15 @@ class HavocValueCollectorTest {
         val havoced = variable(
             """
                 var havoced : int
-                init { }
-                tran { havoc(havoced) havoced := 4 }
-                prop { AG (havoced != 3 && havoced <= 7) }
+                init {
+                }
+                tran {
+                    havoc(havoced)
+                    havoced := 4
+                }
+                prop {
+                    AG (havoced != 3 && havoced <= 7)
+                }
             """,
         )
 
@@ -56,27 +66,40 @@ class HavocValueCollectorTest {
         val arithmetic = variable(
             """
                 var havoced : int
-                init { }
-                tran { }
-                prop { AG havoced + 1 < 5 }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG havoced + 1 < 5
+                }
             """,
         )
         val copied = variable(
             """
                 var havoced : int
                 var copy : int := 0
-                init { }
-                tran { copy := havoced }
-                prop { AG copy < 5 }
+                init {
+                }
+                tran {
+                    copy := havoced
+                }
+                prop {
+                    AG copy < 5
+                }
             """,
         )
         val compared = variable(
             """
                 var havoced : int
                 var bound : int := 0
-                init { }
-                tran { }
-                prop { AG havoced < bound }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG havoced < bound
+                }
             """,
         )
 

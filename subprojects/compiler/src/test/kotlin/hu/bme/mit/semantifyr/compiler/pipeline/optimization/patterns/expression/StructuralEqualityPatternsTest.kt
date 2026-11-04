@@ -16,16 +16,24 @@ class StructuralEqualityPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var operand : int := 0
-            init { }
-            tran { }
-            prop { AG (operand - operand == 0) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand - operand == 0)
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var operand : int := 0
-            init { }
-            tran { }
-            prop { AG (0 == 0) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (0 == 0)
+            }
         """,
     )
 
@@ -35,16 +43,24 @@ class StructuralEqualityPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var operand : int := 0
-            init { }
-            tran { }
-            prop { AG (operand == operand) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand == operand)
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var operand : int := 0
-            init { }
-            tran { }
-            prop { AG true }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -54,16 +70,24 @@ class StructuralEqualityPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var operand : int := 0
-            init { }
-            tran { }
-            prop { AG (operand < operand) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand < operand)
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var operand : int := 0
-            init { }
-            tran { }
-            prop { AG false }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG false
+            }
         """,
     )
 }

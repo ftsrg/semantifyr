@@ -16,20 +16,28 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             var observed : int := 0
             var unread : int := 0
-            init { }
+            init {
+            }
             tran {
                 observed := 1
                 unread := 2
             }
-            prop { AG (observed == 1) }
+            prop {
+                AG (observed == 1)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var observed : int := 0
             var unread : int := 0
-            init { }
-            tran { observed := 1 }
-            prop { AG (observed == 1) }
+            init {
+            }
+            tran {
+                observed := 1
+            }
+            prop {
+                AG (observed == 1)
+            }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
     ) {
@@ -42,23 +50,29 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             var observed : int := 0
             var feeder : int := 0
-            init { }
+            init {
+            }
             tran {
                 feeder := 5
                 observed := feeder
             }
-            prop { AG (observed == 5) }
+            prop {
+                AG (observed == 5)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var observed : int := 0
             var feeder : int := 0
-            init { }
+            init {
+            }
             tran {
                 feeder := 5
                 observed := feeder
             }
-            prop { AG (observed == 5) }
+            prop {
+                AG (observed == 5)
+            }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
     ) {
@@ -71,7 +85,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             var observed : int := 0
             var guard : int := 0
-            init { }
+            init {
+            }
             tran {
                 choice {
                     assume(guard == 0)
@@ -81,13 +96,16 @@ class DeadCodeRemovalPassTest : PassTestBase() {
                     observed := 2
                 }
             }
-            prop { AG (observed == 1) }
+            prop {
+                AG (observed == 1)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var observed : int := 0
             var guard : int := 0
-            init { }
+            init {
+            }
             tran {
                 choice {
                     assume(guard == 0)
@@ -97,7 +115,9 @@ class DeadCodeRemovalPassTest : PassTestBase() {
                     observed := 2
                 }
             }
-            prop { AG (observed == 1) }
+            prop {
+                AG (observed == 1)
+            }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
     ) {
@@ -110,21 +130,35 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             var observed : int := 0
             var guard : int := 0
-            init { }
-            tran {
-                if (guard == 0) { observed := 1 } else { observed := 2 }
+            init {
             }
-            prop { AG (observed == 1) }
+            tran {
+                if (guard == 0) {
+                    observed := 1
+                } else {
+                    observed := 2
+                }
+            }
+            prop {
+                AG (observed == 1)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var observed : int := 0
             var guard : int := 0
-            init { }
-            tran {
-                if (guard == 0) { observed := 1 } else { observed := 2 }
+            init {
             }
-            prop { AG (observed == 1) }
+            tran {
+                if (guard == 0) {
+                    observed := 1
+                } else {
+                    observed := 2
+                }
+            }
+            prop {
+                AG (observed == 1)
+            }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
     ) {
@@ -136,22 +170,28 @@ class DeadCodeRemovalPassTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             var observed : int := 0
-            init { }
+            init {
+            }
             tran {
                 havoc(observed)
                 observed := 1
             }
-            prop { AG (observed == 1) }
+            prop {
+                AG (observed == 1)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var observed : int := 0
-            init { }
+            init {
+            }
             tran {
                 havoc(observed)
                 observed := 1
             }
-            prop { AG (observed == 1) }
+            prop {
+                AG (observed == 1)
+            }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
     ) {
@@ -164,7 +204,9 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             var activeState : int := -1
             var inputEvent : int := 0
-            init { activeState := 0 }
+            init {
+                activeState := 0
+            }
             tran {
                 havoc(inputEvent)
                 choice {
@@ -175,13 +217,17 @@ class DeadCodeRemovalPassTest : PassTestBase() {
                     activeState := 0
                 }
             }
-            prop { AG (activeState != 25) }
+            prop {
+                AG (activeState != 25)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var activeState : int := -1
             var inputEvent : int := 0
-            init { activeState := 0 }
+            init {
+                activeState := 0
+            }
             tran {
                 havoc(inputEvent)
                 choice {
@@ -192,7 +238,9 @@ class DeadCodeRemovalPassTest : PassTestBase() {
                     activeState := 0
                 }
             }
-            prop { AG (activeState != 25) }
+            prop {
+                AG (activeState != 25)
+            }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
     ) {
@@ -206,7 +254,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             var stateA : int := 0
             var stateB : int := 0
             var event : int := 0
-            init { }
+            init {
+            }
             tran {
                 havoc(event)
                 choice {
@@ -217,14 +266,17 @@ class DeadCodeRemovalPassTest : PassTestBase() {
                     stateB := 1
                 }
             }
-            prop { AG (stateA != 1) }
+            prop {
+                AG (stateA != 1)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var stateA : int := 0
             var stateB : int := 0
             var event : int := 0
-            init { }
+            init {
+            }
             tran {
                 havoc(event)
                 choice {
@@ -234,7 +286,9 @@ class DeadCodeRemovalPassTest : PassTestBase() {
                     assume(event == 2)
                 }
             }
-            prop { AG (stateA != 1) }
+            prop {
+                AG (stateA != 1)
+            }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
     ) {
@@ -248,26 +302,32 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             var observed : int := 0
             var middle : int := 0
             var feeder : int := 0
-            init { }
+            init {
+            }
             tran {
                 middle := feeder
                 observed := middle
                 feeder := 99
             }
-            prop { AG (observed != 99) }
+            prop {
+                AG (observed != 99)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var observed : int := 0
             var middle : int := 0
             var feeder : int := 0
-            init { }
+            init {
+            }
             tran {
                 middle := feeder
                 observed := middle
                 feeder := 99
             }
-            prop { AG (observed != 99) }
+            prop {
+                AG (observed != 99)
+            }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
     ) {
@@ -282,7 +342,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             var outerGuard : int := 0
             var middleGuard : int := 0
             var innerGuard : int := 0
-            init { }
+            init {
+            }
             tran {
                 if (outerGuard == 0) {
                     if (middleGuard == 1) {
@@ -292,7 +353,9 @@ class DeadCodeRemovalPassTest : PassTestBase() {
                     }
                 }
             }
-            prop { AG (state != 42) }
+            prop {
+                AG (state != 42)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
@@ -300,7 +363,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             var outerGuard : int := 0
             var middleGuard : int := 0
             var innerGuard : int := 0
-            init { }
+            init {
+            }
             tran {
                 if (outerGuard == 0) {
                     if (middleGuard == 1) {
@@ -310,7 +374,9 @@ class DeadCodeRemovalPassTest : PassTestBase() {
                     }
                 }
             }
-            prop { AG (state != 42) }
+            prop {
+                AG (state != 42)
+            }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
     ) {
@@ -322,16 +388,26 @@ class DeadCodeRemovalPassTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             var observed : int := 0
-            init { }
-            tran { havoc(observed) }
-            prop { AG (observed != 42) }
+            init {
+            }
+            tran {
+                havoc(observed)
+            }
+            prop {
+                AG (observed != 42)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var observed : int := 0
-            init { }
-            tran { havoc(observed) }
-            prop { AG (observed != 42) }
+            init {
+            }
+            tran {
+                havoc(observed)
+            }
+            prop {
+                AG (observed != 42)
+            }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
     ) {
@@ -344,22 +420,28 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             var observed : int := 0
             var unread : int := 0
-            init { }
+            init {
+            }
             tran {
                 havoc(unread)
                 observed := 5
             }
-            prop { AG (observed != 5) }
+            prop {
+                AG (observed != 5)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var observed : int := 0
             var unread : int := 0
-            init { }
+            init {
+            }
             tran {
                 observed := 5
             }
-            prop { AG (observed != 5) }
+            prop {
+                AG (observed != 5)
+            }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
     ) {
@@ -371,24 +453,32 @@ class DeadCodeRemovalPassTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             var state : int := -1
-            init { state := 0 }
+            init {
+                state := 0
+            }
             tran {
                 assume(state == 0)
                 state := -1
                 state := 25
             }
-            prop { AG (state != 25) }
+            prop {
+                AG (state != 25)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var state : int := -1
-            init { state := 0 }
+            init {
+                state := 0
+            }
             tran {
                 assume(state == 0)
                 state := -1
                 state := 25
             }
-            prop { AG (state != 25) }
+            prop {
+                AG (state != 25)
+            }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
     ) {
@@ -401,17 +491,27 @@ class DeadCodeRemovalPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             @NonOptimizable
             var tracer : bool := false
-            init { }
-            tran { tracer := true }
-            prop { AG true }
+            init {
+            }
+            tran {
+                tracer := true
+            }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             @NonOptimizable
             var tracer : bool := false
-            init { }
-            tran { tracer := true }
-            prop { AG true }
+            init {
+            }
+            tran {
+                tracer := true
+            }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
     ) {
@@ -423,7 +523,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             var state : int := 0
-            init { }
+            init {
+            }
             tran {
                 var anyRegionExecuted : bool := false
                 choice {
@@ -437,12 +538,15 @@ class DeadCodeRemovalPassTest : PassTestBase() {
                 }
                 assume(anyRegionExecuted)
             }
-            prop { AG (state != 1) }
+            prop {
+                AG (state != 1)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var state : int := 0
-            init { }
+            init {
+            }
             tran {
                 var anyRegionExecuted : bool := false
                 choice {
@@ -456,7 +560,9 @@ class DeadCodeRemovalPassTest : PassTestBase() {
                 }
                 assume(anyRegionExecuted)
             }
-            prop { AG (state != 1) }
+            prop {
+                AG (state != 1)
+            }
         """,
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
     ) {

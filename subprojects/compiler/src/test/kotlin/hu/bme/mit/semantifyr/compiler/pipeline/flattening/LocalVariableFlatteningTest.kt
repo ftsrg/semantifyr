@@ -30,7 +30,9 @@ class LocalVariableFlatteningTest : FlatteningTestBase() {
                         assume(delta > 0)
                         counter := delta
                     }
-                    prop { return EF counter == 1 }
+                    prop {
+                        return EF counter == 1
+                    }
                 }
             """,
         )

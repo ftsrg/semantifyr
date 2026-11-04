@@ -27,9 +27,14 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var value : int := 0
-                init { value := 1 }
-                tran { }
-                prop { AG (value != 27) }
+                init {
+                    value := 1
+                }
+                tran {
+                }
+                prop {
+                    AG (value != 27)
+                }
             """,
         )
 
@@ -47,12 +52,16 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var value : int := 0
-                init { value := 1 }
+                init {
+                    value := 1
+                }
                 tran {
                     value := 2
                     value := 3
                 }
-                prop { AG (value != 27) }
+                prop {
+                    AG (value != 27)
+                }
             """,
         )
 
@@ -75,12 +84,15 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var source : int := 0
                 var copy : int := 0
-                init { }
+                init {
+                }
                 tran {
                     source := 5
                     copy := source
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -114,7 +126,9 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
                 tran {
                     copy := current
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -140,12 +154,15 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
                 init {
                     choice {
                         current := 0
-                    } or { }
+                    } or {
+                    }
                 }
                 tran {
                     copy := current
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -162,11 +179,14 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var done : bool
-                init { }
+                init {
+                }
                 tran {
                     done := true
                 }
-                prop { AG (done == true) }
+                prop {
+                    AG (done == true)
+                }
             """,
         )
 
@@ -193,7 +213,9 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
                 tran {
                     copy := source
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -221,7 +243,9 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
                 tran {
                     copy := source
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -243,11 +267,14 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var value : int := 0
-                init { }
+                init {
+                }
                 tran {
                     havoc(value)
                 }
-                prop { AG (value != 27) }
+                prop {
+                    AG (value != 27)
+                }
             """,
         )
 
@@ -266,13 +293,16 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var source : int := 0
                 var other : int := 0
-                init { }
+                init {
+                }
                 tran {
                     source := 5
                     assume(source == 5)
                     other := 1
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -293,7 +323,9 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var activeState : int := -1
-                init { activeState := 0 }
+                init {
+                    activeState := 0
+                }
                 tran {
                     choice {
                         assume(activeState == 0)
@@ -301,7 +333,9 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
                         activeState := 25
                     }
                 }
-                prop { AG (activeState != 25) }
+                prop {
+                    AG (activeState != 25)
+                }
             """,
         )
 
@@ -332,8 +366,11 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
                     }
                     copy := source
                 }
-                tran { }
-                prop { AG true }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 

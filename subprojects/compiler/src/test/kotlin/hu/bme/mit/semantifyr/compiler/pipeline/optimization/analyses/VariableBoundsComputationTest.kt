@@ -23,9 +23,14 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var counter : int := 0
-                init { }
-                tran { counter := counter + 1 }
-                prop { AG (counter >= 0) }
+                init {
+                }
+                tran {
+                    counter := counter + 1
+                }
+                prop {
+                    AG (counter >= 0)
+                }
             """,
         )
 
@@ -38,9 +43,16 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var counter : int := 0
-                init { }
-                tran { if (counter < 10) { counter := counter + 1 } }
-                prop { AG (counter <= 10) }
+                init {
+                }
+                tran {
+                    if (counter < 10) {
+                        counter := counter + 1
+                    }
+                }
+                prop {
+                    AG (counter <= 10)
+                }
             """,
         )
 
@@ -53,12 +65,15 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var counter : int := 0
-                init { }
+                init {
+                }
                 tran {
                     assume(counter < 5)
                     counter := counter + 1
                 }
-                prop { AG (counter <= 5) }
+                prop {
+                    AG (counter <= 5)
+                }
             """,
         )
 
@@ -71,15 +86,21 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var timer : int := 0
-                init { timer := 3 }
+                init {
+                    timer := 3
+                }
                 tran {
                     choice {
-                        if (timer > 0) { timer := timer - 1 }
+                        if (timer > 0) {
+                            timer := timer - 1
+                        }
                     } or {
                         timer := 3
                     }
                 }
-                prop { AG (timer >= 0) }
+                prop {
+                    AG (timer >= 0)
+                }
             """,
         )
 
@@ -92,11 +113,18 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var counter : int := 0
-                init { }
-                tran {
-                    if (!(counter >= 4)) { counter := counter + 2 } else { counter := 0 }
+                init {
                 }
-                prop { AG (counter <= 5) }
+                tran {
+                    if (!(counter >= 4)) {
+                        counter := counter + 2
+                    } else {
+                        counter := 0
+                    }
+                }
+                prop {
+                    AG (counter <= 5)
+                }
             """,
         )
 
@@ -109,12 +137,17 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var counter : int := 0
-                init { }
+                init {
+                }
                 tran {
                     assume(counter == 0)
-                    for (index in 0 .. 2) { counter := counter + index }
+                    for (index in 0 .. 2) {
+                        counter := counter + index
+                    }
                 }
-                prop { AG (counter <= 3) }
+                prop {
+                    AG (counter <= 3)
+                }
             """,
         )
 
@@ -129,13 +162,22 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var bound : int := 0
                 var last : int := 0
-                init { }
-                tran {
-                    choice { bound := 4 } or { bound := 7 }
-                    last := 0
-                    for (index in 1 ..< bound) { last := index }
+                init {
                 }
-                prop { AG (last < 7) }
+                tran {
+                    choice {
+                        bound := 4
+                    } or {
+                        bound := 7
+                    }
+                    last := 0
+                    for (index in 1 ..< bound) {
+                        last := index
+                    }
+                }
+                prop {
+                    AG (last < 7)
+                }
             """,
         )
 
@@ -149,11 +191,20 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var current : int := -1
-                init { }
-                tran {
-                    choice { current := 0 } or { current := 2 } or { current := -1 }
+                init {
                 }
-                prop { AG (current != 1) }
+                tran {
+                    choice {
+                        current := 0
+                    } or {
+                        current := 2
+                    } or {
+                        current := -1
+                    }
+                }
+                prop {
+                    AG (current != 1)
+                }
             """,
         )
 
@@ -166,9 +217,14 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var flag : bool := false
-                init { }
-                tran { flag := !flag }
-                prop { AG (flag || !flag) }
+                init {
+                }
+                tran {
+                    flag := !flag
+                }
+                prop {
+                    AG (flag || !flag)
+                }
             """,
         )
 
@@ -181,13 +237,16 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
             inlined oxsts of semantifyr::Anything
             var chosen : int := 0
             var copy : int := 0
-            init { }
+            init {
+            }
             tran {
                 havoc(chosen)
                 assume(chosen >= 1 && chosen <= 3)
                 copy := chosen
             }
-            prop { AG (copy <= 3) }
+            prop {
+                AG (copy <= 3)
+            }
         """
 
         val (inlined, unbounded) = runVariableBounds(source)
@@ -207,12 +266,15 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var counter : int := 0
                 var half : int := 0
-                init { }
+                init {
+                }
                 tran {
                     counter := counter + 1
                     half := counter / 2
                 }
-                prop { AG (half >= 0) }
+                prop {
+                    AG (half >= 0)
+                }
             """,
             limit = {
                 IntegerRange(-100, 100)
@@ -233,9 +295,17 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var counter : int
-                init { counter := 0 }
-                tran { if (counter < 2) { counter := counter + 1 } }
-                prop { AG (counter <= 2) }
+                init {
+                    counter := 0
+                }
+                tran {
+                    if (counter < 2) {
+                        counter := counter + 1
+                    }
+                }
+                prop {
+                    AG (counter <= 2)
+                }
             """,
         )
 
@@ -248,12 +318,17 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var counter : int := 0
-                init { }
+                init {
+                }
                 tran {
                     var step : int := 2
-                    if (counter < 6) { counter := counter + step }
+                    if (counter < 6) {
+                        counter := counter + step
+                    }
                 }
-                prop { AG (counter <= 7) }
+                prop {
+                    AG (counter <= 7)
+                }
             """,
         )
 
@@ -268,12 +343,17 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var counter : int := 0
                 var scaled : int := 0
-                init { }
+                init {
+                }
                 tran {
-                    if (counter < 5000) { counter := counter + 1 }
+                    if (counter < 5000) {
+                        counter := counter + 1
+                    }
                     scaled := (counter * 1000000) / 1000000
                 }
-                prop { AG (scaled <= 5000) }
+                prop {
+                    AG (scaled <= 5000)
+                }
             """,
         )
 
@@ -291,12 +371,19 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var divisor : int := 0
                 var quotient : int := 0
-                init { }
+                init {
+                }
                 tran {
-                    choice { divisor := 0 } or { divisor := 2 }
+                    choice {
+                        divisor := 0
+                    } or {
+                        divisor := 2
+                    }
                     quotient := 10 / divisor
                 }
-                prop { AG (quotient <= 10) }
+                prop {
+                    AG (quotient <= 10)
+                }
             """,
         )
 
@@ -309,12 +396,15 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var counter : int := 0
-                init { }
+                init {
+                }
                 tran {
                     assume(counter > 0)
                     counter := counter * 2
                 }
-                prop { AG (counter == 0) }
+                prop {
+                    AG (counter == 0)
+                }
             """,
         )
 
@@ -329,12 +419,19 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var counter : int := 0
                 var doubled : int := 0
-                init { }
+                init {
+                }
                 tran {
-                    if (counter < 10) { counter := counter + 1 } else { counter := 0 }
+                    if (counter < 10) {
+                        counter := counter + 1
+                    } else {
+                        counter := 0
+                    }
                     doubled := counter * 2
                 }
-                prop { AG (doubled <= 20) }
+                prop {
+                    AG (doubled <= 20)
+                }
             """,
         )
 

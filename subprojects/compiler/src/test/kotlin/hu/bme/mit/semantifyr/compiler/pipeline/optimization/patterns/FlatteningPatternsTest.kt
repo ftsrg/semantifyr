@@ -15,18 +15,30 @@ class FlatteningPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var first : int := 0
-            init { }
-            tran {
-                choice { first := 1 }
+            init {
             }
-            prop { AG true }
+            tran {
+                choice {
+                    first := 1
+                }
+            }
+            prop {
+                AG true
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var first : int := 0
-            init { }
-            tran { { first := 1 } }
-            prop { AG true }
+            init {
+            }
+            tran {
+                {
+                    first := 1
+                }
+            }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -37,7 +49,8 @@ class FlatteningPatternsTest : PatternTestBase() {
             inlined oxsts of semantifyr::Anything
             var first : int := 0
             var second : int := 0
-            init { }
+            init {
+            }
             tran {
                 first := 1
                 {
@@ -46,20 +59,25 @@ class FlatteningPatternsTest : PatternTestBase() {
                 }
                 second := 4
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var first : int := 0
             var second : int := 0
-            init { }
+            init {
+            }
             tran {
                 first := 1
                 second := 2
                 first := 3
                 second := 4
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -69,22 +87,40 @@ class FlatteningPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var first : int := 0
-            init { }
+            init {
+            }
             tran {
                 choice {
-                    choice { first := 1 } or { first := 2 }
-                } or { first := 3 }
+                    choice {
+                        first := 1
+                    } or {
+                        first := 2
+                    }
+                } or {
+                    first := 3
+                }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var first : int := 0
-            init { }
-            tran {
-                choice { first := 3 } or { first := 1 } or { first := 2 }
+            init {
             }
-            prop { AG true }
+            tran {
+                choice {
+                    first := 3
+                } or {
+                    first := 1
+                } or {
+                    first := 2
+                }
+            }
+            prop {
+                AG true
+            }
         """,
     )
 }

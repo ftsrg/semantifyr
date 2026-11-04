@@ -49,9 +49,15 @@ class CompilationTests {
                 @VerificationCase
                 class Incrementing {
                     var counter: int := 0
-                    redefine init { counter := 1 }
-                    redefine tran { counter := counter + 1 }
-                    prop { return EF counter == 5 }
+                    redefine init {
+                        counter := 1
+                    }
+                    redefine tran {
+                        counter := counter + 1
+                    }
+                    prop {
+                        return EF counter == 5
+                    }
                 }
             """,
         )
@@ -66,8 +72,12 @@ class CompilationTests {
                 @VerificationCase
                 class HavocBool {
                     var flag: bool := false
-                    redefine tran { havoc(flag) }
-                    prop { return EF flag == true }
+                    redefine tran {
+                        havoc(flag)
+                    }
+                    prop {
+                        return EF flag == true
+                    }
                 }
             """,
         )
@@ -91,7 +101,9 @@ class CompilationTests {
                             counter := 3
                         }
                     }
-                    prop { return EF counter == 2 }
+                    prop {
+                        return EF counter == 2
+                    }
                 }
             """,
         )
@@ -111,7 +123,9 @@ class CompilationTests {
                         assume(delta >= 1 && delta <= 3)
                         counter := delta
                     }
-                    prop { return EF counter == 3 }
+                    prop {
+                        return EF counter == 3
+                    }
                 }
             """,
         )
@@ -133,7 +147,9 @@ class CompilationTests {
                             counter := 0
                         }
                     }
-                    prop { return EF counter == 3 }
+                    prop {
+                        return EF counter == 3
+                    }
                 }
             """,
         )
@@ -154,7 +170,9 @@ class CompilationTests {
                         assume(guard > 0)
                         counter := guard
                     }
-                    prop { return EF counter == 5 }
+                    prop {
+                        return EF counter == 5
+                    }
                 }
             """,
         )
@@ -173,7 +191,9 @@ class CompilationTests {
                         var step: int := 2
                         counter := counter + step
                     }
-                    prop { return EF counter == 6 }
+                    prop {
+                        return EF counter == 6
+                    }
                 }
             """,
         )
@@ -193,7 +213,9 @@ class CompilationTests {
                             counter := counter + index
                         }
                     }
-                    prop { return EF counter == 6 }
+                    prop {
+                        return EF counter == 6
+                    }
                 }
             """,
         )
@@ -213,7 +235,9 @@ class CompilationTests {
                             counter := index
                         }
                     }
-                    prop { return EF counter == 2 }
+                    prop {
+                        return EF counter == 2
+                    }
                 }
             """,
         )
@@ -235,7 +259,9 @@ class CompilationTests {
                             counter := -1
                         }
                     }
-                    prop { return EF counter == 1 }
+                    prop {
+                        return EF counter == 1
+                    }
                 }
             """,
         )
@@ -259,7 +285,9 @@ class CompilationTests {
                         inline addBy(2)
                     }
 
-                    prop { return EF counter == 6 }
+                    prop {
+                        return EF counter == 6
+                    }
                 }
             """,
         )
@@ -273,13 +301,19 @@ class CompilationTests {
                 package compilation::tests::inheritance
                 class Base {
                     var counter: int := 0
-                    redefine tran { counter := counter + 1 }
+                    redefine tran {
+                        counter := counter + 1
+                    }
                 }
 
                 @VerificationCase
                 class Child : Base {
-                    redefine tran { counter := counter + 2 }
-                    prop { return EF counter == 6 }
+                    redefine tran {
+                        counter := counter + 2
+                    }
+                    prop {
+                        return EF counter == 6
+                    }
                 }
             """,
         )
@@ -298,9 +332,15 @@ class CompilationTests {
 
                 @VerificationCase
                 class Concrete : Base {
-                    redefine tran step() { counter := counter + 1 }
-                    redefine tran { inline step() }
-                    prop { return EF counter == 3 }
+                    redefine tran step() {
+                        counter := counter + 1
+                    }
+                    redefine tran {
+                        inline step()
+                    }
+                    prop {
+                        return EF counter == 3
+                    }
                 }
             """,
         )
@@ -314,14 +354,20 @@ class CompilationTests {
                 package compilation::tests::containment
                 class Leaf {
                     var value: int := 0
-                    redefine tran { value := value + 1 }
+                    redefine tran {
+                        value := value + 1
+                    }
                 }
 
                 @VerificationCase
                 class Parent {
                     contains leaf: Leaf[1]
-                    redefine tran { inline leaf.main() }
-                    prop { return EF leaf.value == 3 }
+                    redefine tran {
+                        inline leaf.main()
+                    }
+                    prop {
+                        return EF leaf.value == 3
+                    }
                 }
             """,
         )
@@ -344,7 +390,9 @@ class CompilationTests {
                     redefine tran {
                         havoc(slot)
                     }
-                    prop { return EF slot == nothing }
+                    prop {
+                        return EF slot == nothing
+                    }
                 }
             """,
         )
@@ -359,7 +407,9 @@ class CompilationTests {
                 class Child {
                     container parent: Parent opposite children
                     var value: int := 0
-                    redefine tran { value := value + 1 }
+                    redefine tran {
+                        value := value + 1
+                    }
                 }
 
                 @VerificationCase
@@ -367,8 +417,12 @@ class CompilationTests {
                     contains children: Child[1..*] opposite parent
                     contains only: Child[1] subsets children
 
-                    redefine tran { inline only.main() }
-                    prop { return EF only.value == 2 }
+                    redefine tran {
+                        inline only.main()
+                    }
+                    prop {
+                        return EF only.value == 2
+                    }
                 }
             """,
         )
@@ -380,7 +434,11 @@ class CompilationTests {
             classToCompile = "LightCycle",
             source = """
                 package compilation::tests::enums
-                enum Color { Red, Green, Blue }
+                enum Color {
+                    Red,
+                    Green,
+                    Blue,
+                }
 
                 @VerificationCase
                 class LightCycle {
@@ -397,7 +455,9 @@ class CompilationTests {
                             color := Color::Red
                         }
                     }
-                    prop { return EF color == Color::Blue }
+                    prop {
+                        return EF color == Color::Blue
+                    }
                 }
             """,
         )
@@ -414,9 +474,15 @@ class CompilationTests {
                     var first: int := 0
                     var second: int := 0
                     redefine tran {
-                        choice { first := 1 } or { second := 1 }
+                        choice {
+                            first := 1
+                        } or {
+                            second := 1
+                        }
                     }
-                    prop { return AG !(first == 1 && second == 1) }
+                    prop {
+                        return AG !(first == 1 && second == 1)
+                    }
                 }
             """,
         )
@@ -431,7 +497,9 @@ class CompilationTests {
                 class Node {
                     refers peer: Node
                     var value: int := 0
-                    redefine tran { value := peer.value + 1 }
+                    redefine tran {
+                        value := peer.value + 1
+                    }
                 }
 
                 @VerificationCase
@@ -445,7 +513,9 @@ class CompilationTests {
                     redefine tran {
                         inline left.main()
                     }
-                    prop { return EF left.value == 1 }
+                    prop {
+                        return EF left.value == 1
+                    }
                 }
             """,
         )
@@ -460,13 +530,17 @@ class CompilationTests {
                 @VerificationCase
                 class ParametricProp {
                     var counter: int := 0
-                    redefine tran { counter := counter + 1 }
+                    redefine tran {
+                        counter := counter + 1
+                    }
 
                     prop equals(expected: int): bool {
                         return counter == expected
                     }
 
-                    prop { return EF equals(3) }
+                    prop {
+                        return EF equals(3)
+                    }
                 }
             """,
         )
@@ -480,18 +554,26 @@ class CompilationTests {
                 package compilation::tests::nested_nav
                 class Deep {
                     var value: int := 0
-                    tran step() { value := value + 1 }
+                    tran step() {
+                        value := value + 1
+                    }
                 }
                 class Middle {
                     contains deep: Deep[1]
-                    tran step() { inline deep.step() }
+                    tran step() {
+                        inline deep.step()
+                    }
                 }
 
                 @VerificationCase
                 class Outer {
                     contains middle: Middle[1]
-                    redefine tran { inline middle.step() }
-                    prop { return EF middle.deep.value == 2 }
+                    redefine tran {
+                        inline middle.step()
+                    }
+                    prop {
+                        return EF middle.deep.value == 2
+                    }
                 }
             """,
         )
@@ -511,7 +593,9 @@ class CompilationTests {
                         flag := !flag
                         number := -number
                     }
-                    prop { return EF (!flag && number == -1) }
+                    prop {
+                        return EF (!flag && number == -1)
+                    }
                 }
             """,
         )
@@ -533,8 +617,11 @@ class CompilationTests {
                     } or {
                         counter := 3
                     }
-                    redefine tran { }
-                    prop { return EF counter == 2 }
+                    redefine tran {
+                    }
+                    prop {
+                        return EF counter == 2
+                    }
                 }
             """,
         )
@@ -549,8 +636,12 @@ class CompilationTests {
                 @VerificationCase
                 class Trivial {
                     var counter: int := 0
-                    redefine tran { counter := counter + 1 }
-                    prop { return true }
+                    redefine tran {
+                        counter := counter + 1
+                    }
+                    prop {
+                        return true
+                    }
                 }
             """,
             messageContains = "temporal operator",
@@ -566,8 +657,12 @@ class CompilationTests {
                 @VerificationCase
                 class NoInit {
                     var counter: int
-                    redefine tran { counter := counter + 1 }
-                    prop { return EF counter > 0 }
+                    redefine tran {
+                        counter := counter + 1
+                    }
+                    prop {
+                        return EF counter > 0
+                    }
                 }
             """,
         )
@@ -582,9 +677,15 @@ class CompilationTests {
                 @VerificationCase
                 class SelfUse {
                     var counter: int := 0
-                    tran step() { self.counter := self.counter + 1 }
-                    redefine tran { inline self.step() }
-                    prop { return EF self.counter == 3 }
+                    tran step() {
+                        self.counter := self.counter + 1
+                    }
+                    redefine tran {
+                        inline self.step()
+                    }
+                    prop {
+                        return EF self.counter == 3
+                    }
                 }
             """,
         )
@@ -600,9 +701,15 @@ class CompilationTests {
                 class Ordering {
                     var counter: int := 0
                     redefine tran {
-                        choice { counter := counter + 1 } or { counter := counter - 1 }
+                        choice {
+                            counter := counter + 1
+                        } or {
+                            counter := counter - 1
+                        }
                     }
-                    prop { return AG (counter >= -10 && counter <= 10 && !(counter < -100) && !(counter > 100)) }
+                    prop {
+                        return AG (counter >= -10 && counter <= 10 && !(counter < -100) && !(counter > 100))
+                    }
                 }
             """,
         )
@@ -616,7 +723,9 @@ class CompilationTests {
                 package compilation::tests::variable_dispatch
                 class Worker {
                     var done: bool := false
-                    tran step() { done := true }
+                    tran step() {
+                        done := true
+                    }
                 }
 
                 @VerificationCase
@@ -626,12 +735,18 @@ class CompilationTests {
                     contains second: Worker[1] subsets workers
                     var current: workers[0..1] := nothing
                     redefine init {
-                        choice { current := first } or { current := second }
+                        choice {
+                            current := first
+                        } or {
+                            current := second
+                        }
                     }
                     redefine tran {
                         inline current.step()
                     }
-                    prop { return EF (first.done && second.done) }
+                    prop {
+                        return EF (first.done && second.done)
+                    }
                 }
             """,
         )
@@ -654,8 +769,12 @@ class CompilationTests {
                     contains node: Node[1] {
                         redefine refers ownedBy: Graph[1] = graph
                     }
-                    redefine tran { node.value := node.value + 1 }
-                    prop { return EF node.value == 1 }
+                    redefine tran {
+                        node.value := node.value + 1
+                    }
+                    prop {
+                        return EF node.value == 1
+                    }
                 }
 
                 class Graph {
@@ -679,8 +798,12 @@ class CompilationTests {
 
                 @VerificationCase
                 class Consumer {
-                    redefine tran { sharedInstance.flag := true }
-                    prop { return EF sharedInstance.flag }
+                    redefine tran {
+                        sharedInstance.flag := true
+                    }
+                    prop {
+                        return EF sharedInstance.flag
+                    }
                 }
             """,
         )
@@ -702,8 +825,12 @@ class CompilationTests {
                     redefine prop predicate(): bool {
                         return counter > 0
                     }
-                    redefine tran { counter := counter + 1 }
-                    prop { return EF predicate() }
+                    redefine tran {
+                        counter := counter + 1
+                    }
+                    prop {
+                        return EF predicate()
+                    }
                 }
             """,
         )
@@ -717,14 +844,20 @@ class CompilationTests {
                 package compilation::tests::optional_nav
                 class Leaf {
                     var value: int := 0
-                    tran bump() { value := value + 1 }
+                    tran bump() {
+                        value := value + 1
+                    }
                 }
 
                 @VerificationCase
                 class Parent {
                     contains leaf: Leaf[0..1]
-                    redefine tran { inline leaf?.bump() }
-                    prop { return AG true }
+                    redefine tran {
+                        inline leaf?.bump()
+                    }
+                    prop {
+                        return AG true
+                    }
                 }
             """,
         )
@@ -741,9 +874,15 @@ class CompilationTests {
                     var left: bool := false
                     var right: bool := false
                     redefine tran {
-                        choice { left := !left } or { right := !right }
+                        choice {
+                            left := !left
+                        } or {
+                            right := !right
+                        }
                     }
-                    prop { return AG !(!(left || right) && (left || right)) }
+                    prop {
+                        return AG !(!(left || right) && (left || right))
+                    }
                 }
             """,
         )
@@ -768,7 +907,9 @@ class CompilationTests {
                         inline addBy(base + 2)
                     }
 
-                    prop { return EF counter == 5 }
+                    prop {
+                        return EF counter == 5
+                    }
                 }
             """,
         )
@@ -780,7 +921,10 @@ class CompilationTests {
             classToCompile = "Dispatcher",
             source = """
                 package compilation::tests::enum_arg
-                enum Command { Increment, Decrement }
+                enum Command {
+                    Increment,
+                    Decrement,
+                }
 
                 @VerificationCase
                 class Dispatcher {
@@ -800,7 +944,9 @@ class CompilationTests {
                         inline apply(Command::Increment)
                     }
 
-                    prop { return EF counter == 3 }
+                    prop {
+                        return EF counter == 3
+                    }
                 }
             """,
         )
@@ -814,7 +960,9 @@ class CompilationTests {
                 package compilation::tests::runtime_for
                 class Worker {
                     var value: int := 0
-                    tran bump() { value := value + 1 }
+                    tran bump() {
+                        value := value + 1
+                    }
                 }
 
                 @VerificationCase
@@ -827,7 +975,9 @@ class CompilationTests {
                             inline worker.bump()
                         }
                     }
-                    prop { return EF (first.value == 1 && second.value == 1) }
+                    prop {
+                        return EF (first.value == 1 && second.value == 1)
+                    }
                 }
             """,
         )
@@ -845,7 +995,9 @@ class CompilationTests {
                     redefine tran {
                         slots[0] := slots[0] + 1
                     }
-                    prop { return EF slots[0] == 11 }
+                    prop {
+                        return EF slots[0] == 11
+                    }
                 }
             """,
         )
@@ -863,7 +1015,9 @@ class CompilationTests {
                     redefine tran {
                         values[0] := values[1] + values[2]
                     }
-                    prop { return AG values[3] == 0 }
+                    prop {
+                        return AG values[3] == 0
+                    }
                 }
             """,
         )
@@ -883,8 +1037,12 @@ class CompilationTests {
                 @VerificationCase
                 class RealLiteral {
                     var counter: int := 0
-                    redefine tran { counter := counter + 1 }
-                    prop { return EF counter > 3.14 }
+                    redefine tran {
+                        counter := counter + 1
+                    }
+                    prop {
+                        return EF counter > 3.14
+                    }
                 }
             """,
         )
@@ -900,8 +1058,12 @@ class CompilationTests {
                 @VerificationCase
                 class StringLiteral {
                     var counter: int := 0
-                    redefine tran { counter := counter + 1 }
-                    prop { return EF counter == "hi" }
+                    redefine tran {
+                        counter := counter + 1
+                    }
+                    prop {
+                        return EF counter == "hi"
+                    }
                 }
             """,
         )
@@ -926,7 +1088,9 @@ class CompilationTests {
                         values[index] := values[index] + 1
                         seen := values[index]
                     }
-                    prop { return EF seen == 1 }
+                    prop {
+                        return EF seen == 1
+                    }
                 }
             """,
         )
@@ -944,7 +1108,9 @@ class CompilationTests {
                     redefine tran {
                         counter := [1, 2, 3][1]
                     }
-                    prop { return EF counter == 2 }
+                    prop {
+                        return EF counter == 2
+                    }
                 }
             """,
         )
@@ -964,7 +1130,9 @@ class CompilationTests {
                             total := total + index
                         }
                     }
-                    prop { return EF total == 6 }
+                    prop {
+                        return EF total == 6
+                    }
                 }
             """,
         )
@@ -984,8 +1152,12 @@ class CompilationTests {
                 class Host {
                     features sensors: Sensor
                     contains sensor: Sensor[1] subsets sensors
-                    redefine tran { sensor.fired := true }
-                    prop { return EF sensor.fired }
+                    redefine tran {
+                        sensor.fired := true
+                    }
+                    prop {
+                        return EF sensor.fired
+                    }
                 }
             """,
         )
@@ -1005,7 +1177,9 @@ class CompilationTests {
                         number := number + 1
                         result := if number > 0 then 1 else -1
                     }
-                    prop { return EF result == 1 }
+                    prop {
+                        return EF result == 1
+                    }
                 }
             """,
         )
@@ -1020,8 +1194,12 @@ class CompilationTests {
                 @VerificationCase
                 class IfThenElseProp {
                     var number: int := 0
-                    redefine tran { number := number + 1 }
-                    prop { return EF (if number > 0 then true else false) }
+                    redefine tran {
+                        number := number + 1
+                    }
+                    prop {
+                        return EF (if number > 0 then true else false)
+                    }
                 }
             """,
         )
@@ -1033,19 +1211,25 @@ class CompilationTests {
             classToCompile = "CastNarrow",
             source = """
                 package compilation::tests::cast_narrow
-                class Base { }
-                class Child : Base { }
+                class Base {
+                }
+                class Child : Base {
+                }
                 @VerificationCase
                 class CastNarrow {
                     contains children: Base[0..*]
                     contains child: Child[1] subsets children
                     var selected: children[0..1] := nothing
-                    redefine init { selected := child }
+                    redefine init {
+                        selected := child
+                    }
                     redefine tran {
                         var narrowed: Child[0..1] := nothing
                         narrowed := selected as Child
                     }
-                    prop { return EF selected == child }
+                    prop {
+                        return EF selected == child
+                    }
                 }
             """,
         )
@@ -1060,15 +1244,23 @@ class CompilationTests {
                 @VerificationCase
                 class FirstCase {
                     var counter: int := 0
-                    redefine tran { counter := counter + 1 }
-                    prop { return EF counter == 1 }
+                    redefine tran {
+                        counter := counter + 1
+                    }
+                    prop {
+                        return EF counter == 1
+                    }
                 }
 
                 @VerificationCase
                 class SecondCase {
                     var countdown: int := 10
-                    redefine tran { countdown := countdown - 1 }
-                    prop { return EF countdown == 5 }
+                    redefine tran {
+                        countdown := countdown - 1
+                    }
+                    prop {
+                        return EF countdown == 5
+                    }
                 }
             """,
         )

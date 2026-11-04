@@ -15,18 +15,32 @@ class RedundancyPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { }
-            tran {
-                if (true) { value := 1 } else { value := 2 }
+            init {
             }
-            prop { AG true }
+            tran {
+                if (true) {
+                    value := 1
+                } else {
+                    value := 2
+                }
+            }
+            prop {
+                AG true
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { }
-            tran { { value := 1 } }
-            prop { AG true }
+            init {
+            }
+            tran {
+                {
+                    value := 1
+                }
+            }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -36,19 +50,29 @@ class RedundancyPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { }
+            init {
+            }
             tran {
                 value := 0
-                if (false) { value := 1 }
+                if (false) {
+                    value := 1
+                }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { }
-            tran { value := 0 }
-            prop { AG true }
+            init {
+            }
+            tran {
+                value := 0
+            }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -58,19 +82,27 @@ class RedundancyPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { }
+            init {
+            }
             tran {
                 assume(true)
                 value := 1
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { }
-            tran { value := 1 }
-            prop { AG true }
+            init {
+            }
+            tran {
+                value := 1
+            }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -80,19 +112,28 @@ class RedundancyPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { }
+            init {
+            }
             tran {
                 value := 0
-                if (value == 0) { }
+                if (value == 0) {
+                }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { }
-            tran { value := 0 }
-            prop { AG true }
+            init {
+            }
+            tran {
+                value := 0
+            }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -102,16 +143,31 @@ class RedundancyPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { }
-            tran { if (value == 0) { value := 1 } else { } }
-            prop { AG true }
+            init {
+            }
+            tran {
+                if (value == 0) {
+                    value := 1
+                } else {
+                }
+            }
+            prop {
+                AG true
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { }
-            tran { if (value == 0) { value := 1 } }
-            prop { AG true }
+            init {
+            }
+            tran {
+                if (value == 0) {
+                    value := 1
+                }
+            }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -121,19 +177,28 @@ class RedundancyPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { }
+            init {
+            }
             tran {
                 value := 1
-                for (index in 0..5) { }
+                for (index in 0..5) {
+                }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { }
-            tran { value := 1 }
-            prop { AG true }
+            init {
+            }
+            tran {
+                value := 1
+            }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -143,20 +208,33 @@ class RedundancyPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { }
-            tran {
-                choice { } or { } or { value := 1 }
+            init {
             }
-            prop { AG true }
+            tran {
+                choice {
+                } or {
+                } or {
+                    value := 1
+                }
+            }
+            prop {
+                AG true
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { }
-            tran {
-                choice { } or { value := 1 }
+            init {
             }
-            prop { AG true }
+            tran {
+                choice {
+                } or {
+                    value := 1
+                }
+            }
+            prop {
+                AG true
+            }
         """,
     )
 }

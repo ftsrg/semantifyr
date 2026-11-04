@@ -103,9 +103,14 @@ class PatternOptimizationPassTest {
             """
                 inlined oxsts of semantifyr::Anything
                 var value : int := 0
-                init { }
-                tran { value := 1 }
-                prop { AG (value == 1) }
+                init {
+                }
+                tran {
+                    value := 1
+                }
+                prop {
+                    AG (value == 1)
+                }
             """.trimIndent(),
         )
         val classDeclaration = inlined.classDeclaration

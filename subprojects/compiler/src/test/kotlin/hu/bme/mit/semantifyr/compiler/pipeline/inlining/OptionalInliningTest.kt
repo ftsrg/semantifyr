@@ -92,7 +92,8 @@ class OptionalInliningTest : InliningTestBase() {
             "Host",
             """
                 package inlining::tests
-                class Marker { }
+                class Marker {
+                }
                 class Recorder {
                     var value: int := 0
                     var marked: bool := false

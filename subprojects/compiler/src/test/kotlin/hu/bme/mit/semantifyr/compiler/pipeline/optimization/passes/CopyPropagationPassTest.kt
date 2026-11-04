@@ -16,23 +16,29 @@ class CopyPropagationPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var copy : int := 0
-            init { }
+            init {
+            }
             tran {
                 source := 7
                 copy := source
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var copy : int := 0
-            init { }
+            init {
+            }
             tran {
                 source := 7
                 copy := 7
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -44,16 +50,26 @@ class CopyPropagationPassTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { value := 1 }
-            tran { }
-            prop { AG (value == 1) }
+            init {
+                value := 1
+            }
+            tran {
+            }
+            prop {
+                AG (value == 1)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { value := 1 }
-            tran { }
-            prop { AG (value == 1) }
+            init {
+                value := 1
+            }
+            tran {
+            }
+            prop {
+                AG (value == 1)
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -66,23 +82,37 @@ class CopyPropagationPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var copy : int := 0
-            init { }
+            init {
+            }
             tran {
-                choice { source := 1 } or { source := 2 }
+                choice {
+                    source := 1
+                } or {
+                    source := 2
+                }
                 copy := source
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var copy : int := 0
-            init { }
+            init {
+            }
             tran {
-                choice { source := 1 } or { source := 2 }
+                choice {
+                    source := 1
+                } or {
+                    source := 2
+                }
                 copy := source
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -95,23 +125,29 @@ class CopyPropagationPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var copy : int := 0
-            init { }
+            init {
+            }
             tran {
                 havoc(source)
                 copy := source
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var copy : int := 0
-            init { }
+            init {
+            }
             tran {
                 havoc(source)
                 copy := source
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -125,24 +161,30 @@ class CopyPropagationPassTest : PassTestBase() {
             var sum : int := 0
             var operand : int := 0
             var copy : int := 0
-            init { }
+            init {
+            }
             tran {
                 sum := operand + 1
                 copy := sum
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var sum : int := 0
             var operand : int := 0
             var copy : int := 0
-            init { }
+            init {
+            }
             tran {
                 sum := operand + 1
                 copy := sum
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -155,23 +197,29 @@ class CopyPropagationPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             var left : int := 0
             var right : int := 0
-            init { }
+            init {
+            }
             tran {
                 right := left
                 left := right
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var left : int := 0
             var right : int := 0
-            init { }
+            init {
+            }
             tran {
                 right := left
                 left := left
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -187,8 +235,11 @@ class CopyPropagationPassTest : PassTestBase() {
                 assume (step == -1)
                 step := 0
             }
-            tran { }
-            prop { AG true }
+            tran {
+            }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
@@ -197,8 +248,11 @@ class CopyPropagationPassTest : PassTestBase() {
                 assume (step == -1)
                 step := 0
             }
-            tran { }
-            prop { AG true }
+            tran {
+            }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -210,20 +264,26 @@ class CopyPropagationPassTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             var done : bool := false
-            init { }
+            init {
+            }
             tran {
                 done := true
             }
-            prop { AG (done == true) }
+            prop {
+                AG (done == true)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var done : bool := false
-            init { }
+            init {
+            }
             tran {
                 done := true
             }
-            prop { AG (done == true) }
+            prop {
+                AG (done == true)
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -236,21 +296,29 @@ class CopyPropagationPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var copy : int := 0
-            init { source := 1 }
+            init {
+                source := 1
+            }
             tran {
                 copy := source
             }
-            prop { AG (copy != 99) }
+            prop {
+                AG (copy != 99)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var copy : int := 0
-            init { source := 1 }
+            init {
+                source := 1
+            }
             tran {
                 copy := 1
             }
-            prop { AG (copy != 99) }
+            prop {
+                AG (copy != 99)
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -265,10 +333,14 @@ class CopyPropagationPassTest : PassTestBase() {
             init {
                 choice {
                     current := 0
-                } or { }
+                } or {
+                }
             }
-            tran { }
-            prop { AG (current != 99) }
+            tran {
+            }
+            prop {
+                AG (current != 99)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
@@ -276,10 +348,14 @@ class CopyPropagationPassTest : PassTestBase() {
             init {
                 choice {
                     current := 0
-                } or { }
+                } or {
+                }
             }
-            tran { }
-            prop { AG (current != 99) }
+            tran {
+            }
+            prop {
+                AG (current != 99)
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -291,16 +367,26 @@ class CopyPropagationPassTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { havoc(value) }
-            tran { }
-            prop { AG (value != 99) }
+            init {
+                havoc(value)
+            }
+            tran {
+            }
+            prop {
+                AG (value != 99)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { havoc(value) }
-            tran { }
-            prop { AG (value != 99) }
+            init {
+                havoc(value)
+            }
+            tran {
+            }
+            prop {
+                AG (value != 99)
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -314,26 +400,32 @@ class CopyPropagationPassTest : PassTestBase() {
             var head : int := 0
             var middle : int := 0
             var tail : int := 0
-            init { }
+            init {
+            }
             tran {
                 head := 5
                 middle := head
                 tail := middle
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var head : int := 0
             var middle : int := 0
             var tail : int := 0
-            init { }
+            init {
+            }
             tran {
                 head := 5
                 middle := 5
                 tail := head
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -346,25 +438,31 @@ class CopyPropagationPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var copy : int := 0
-            init { }
+            init {
+            }
             tran {
                 copy := source
                 source := source + 1
                 assume (copy == 0)
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var copy : int := 0
-            init { }
+            init {
+            }
             tran {
                 copy := source
                 source := source + 1
                 assume (copy == 0)
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -377,25 +475,37 @@ class CopyPropagationPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var copy : int := 0
-            init { }
+            init {
+            }
             tran {
                 copy := source
-                choice { source := 1 } or { }
+                choice {
+                    source := 1
+                } or {
+                }
                 assume (copy == 0)
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var copy : int := 0
-            init { }
+            init {
+            }
             tran {
                 copy := source
-                choice { source := 1 } or { }
+                choice {
+                    source := 1
+                } or {
+                }
                 assume (copy == 0)
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -408,7 +518,8 @@ class CopyPropagationPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var copy : int := 0
-            init { }
+            init {
+            }
             tran {
                 copy := source
                 for (index in 0..2) {
@@ -416,13 +527,16 @@ class CopyPropagationPassTest : PassTestBase() {
                     source := source + 1
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var copy : int := 0
-            init { }
+            init {
+            }
             tran {
                 copy := source
                 for (index in 0..2) {
@@ -430,7 +544,9 @@ class CopyPropagationPassTest : PassTestBase() {
                     source := source + 1
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -443,23 +559,31 @@ class CopyPropagationPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var copy : int := 0
-            init { copy := source }
+            init {
+                copy := source
+            }
             tran {
                 source := source + 1
                 assume (copy == 0)
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var copy : int := 0
-            init { copy := source }
+            init {
+                copy := source
+            }
             tran {
                 source := source + 1
                 assume (copy == 0)
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -472,25 +596,31 @@ class CopyPropagationPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var copy : int := 0
-            init { }
+            init {
+            }
             tran {
                 copy := source
                 assume (copy == 0)
                 source := source + 1
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var copy : int := 0
-            init { }
+            init {
+            }
             tran {
                 copy := source
                 assume (source == 0)
                 source := source + 1
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -503,21 +633,29 @@ class CopyPropagationPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var copy : int := 0
-            init { copy := source }
+            init {
+                copy := source
+            }
             tran {
                 assume (copy == 0)
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var copy : int := 0
-            init { copy := source }
+            init {
+                copy := source
+            }
             tran {
                 assume (source == 0)
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -537,8 +675,11 @@ class CopyPropagationPassTest : PassTestBase() {
                 }
                 copy := source
             }
-            tran { }
-            prop { AG true }
+            tran {
+            }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
@@ -551,8 +692,11 @@ class CopyPropagationPassTest : PassTestBase() {
                 }
                 copy := source
             }
-            tran { }
-            prop { AG true }
+            tran {
+            }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {

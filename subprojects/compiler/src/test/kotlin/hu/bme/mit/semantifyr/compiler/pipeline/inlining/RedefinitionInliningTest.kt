@@ -13,7 +13,8 @@ class RedefinitionInliningTest : InliningTestBase() {
     private val hierarchy = """
         package inlining::tests
         class Base {
-            tran act() { }
+            tran act() {
+            }
         }
         class Child : Base {
             var count: int := 0

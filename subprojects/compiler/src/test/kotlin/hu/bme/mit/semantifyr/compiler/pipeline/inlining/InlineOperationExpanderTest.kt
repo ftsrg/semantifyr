@@ -18,7 +18,8 @@ class InlineOperationExpanderTest : InliningTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var taken : int := 0
-            init { }
+            init {
+            }
             tran {
                 inline if (1 < 2) {
                     taken := 1
@@ -26,18 +27,23 @@ class InlineOperationExpanderTest : InliningTestBase() {
                     taken := 2
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var taken : int := 0
-            init { }
+            init {
+            }
             tran {
                 {
                     taken := 1
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -46,7 +52,8 @@ class InlineOperationExpanderTest : InliningTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var taken : int := 0
-            init { }
+            init {
+            }
             tran {
                 inline if (1 > 2) {
                     taken := 1
@@ -54,18 +61,23 @@ class InlineOperationExpanderTest : InliningTestBase() {
                     taken := 2
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var taken : int := 0
-            init { }
+            init {
+            }
             tran {
                 {
                     taken := 2
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -74,22 +86,29 @@ class InlineOperationExpanderTest : InliningTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var taken : int := 0
-            init { }
+            init {
+            }
             tran {
                 inline if (1 > 2) {
                     taken := 1
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var taken : int := 0
-            init { }
-            tran {
-                { }
+            init {
             }
-            prop { AG true }
+            tran {
+                {
+                }
+            }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -98,18 +117,22 @@ class InlineOperationExpanderTest : InliningTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var total : int := 0
-            init { }
+            init {
+            }
             tran {
                 inline for (index in 1..3) {
                     total := total + index
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var total : int := 0
-            init { }
+            init {
+            }
             tran {
                 {
                     {
@@ -123,7 +146,9 @@ class InlineOperationExpanderTest : InliningTestBase() {
                     }
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -132,18 +157,22 @@ class InlineOperationExpanderTest : InliningTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var chosen : int := 0
-            init { }
+            init {
+            }
             tran {
                 inline for choice (index in 1..3) {
                     chosen := index
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var chosen : int := 0
-            init { }
+            init {
+            }
             tran {
                 choice {
                     chosen := 1
@@ -153,7 +182,9 @@ class InlineOperationExpanderTest : InliningTestBase() {
                     chosen := 3
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -162,18 +193,22 @@ class InlineOperationExpanderTest : InliningTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var total : int := 0
-            init { }
+            init {
+            }
             tran {
                 inline for (index in 1..<3) {
                     total := total + index
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var total : int := 0
-            init { }
+            init {
+            }
             tran {
                 {
                     {
@@ -184,7 +219,9 @@ class InlineOperationExpanderTest : InliningTestBase() {
                     }
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -193,18 +230,22 @@ class InlineOperationExpanderTest : InliningTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var chosen : int := 0
-            init { }
+            init {
+            }
             tran {
                 inline for choice (index in 0..<2) {
                     chosen := index
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var chosen : int := 0
-            init { }
+            init {
+            }
             tran {
                 choice {
                     chosen := 0
@@ -212,7 +253,9 @@ class InlineOperationExpanderTest : InliningTestBase() {
                     chosen := 1
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -221,7 +264,8 @@ class InlineOperationExpanderTest : InliningTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var total : int := 0
-            init { }
+            init {
+            }
             tran {
                 inline for (index in 3..<3) {
                     total := total + index
@@ -229,18 +273,23 @@ class InlineOperationExpanderTest : InliningTestBase() {
                     total := 7
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var total : int := 0
-            init { }
+            init {
+            }
             tran {
                 {
                     total := 7
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -249,22 +298,29 @@ class InlineOperationExpanderTest : InliningTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var total : int := 0
-            init { }
+            init {
+            }
             tran {
                 inline for (index in 5..3) {
                     total := total + index
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var total : int := 0
-            init { }
-            tran {
-                { }
+            init {
             }
-            prop { AG true }
+            tran {
+                {
+                }
+            }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -273,18 +329,22 @@ class InlineOperationExpanderTest : InliningTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var total : int := 0
-            init { }
+            init {
+            }
             tran {
                 inline for (index in -2..0) {
                     total := total + index
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var total : int := 0
-            init { }
+            init {
+            }
             tran {
                 {
                     {
@@ -298,7 +358,9 @@ class InlineOperationExpanderTest : InliningTestBase() {
                     }
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -308,13 +370,16 @@ class InlineOperationExpanderTest : InliningTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var total : int := 0
-                init { }
+                init {
+                }
                 tran {
                     inline for (index in 0..*) {
                         total := total + index
                     }
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         ) {
             val expander = it.compilationInjector.getInstance(InlineOperationExpander::class.java)

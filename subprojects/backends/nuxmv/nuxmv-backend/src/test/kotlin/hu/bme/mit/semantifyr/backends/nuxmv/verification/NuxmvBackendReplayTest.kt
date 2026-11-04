@@ -103,13 +103,28 @@ class NuxmvBackendReplayTest {
                     inlined oxsts of semantifyr::Anything
                     var chosen : int := 0
                     var step : int := 0
-                    init { }
-                    tran {
-                        assume(step == 0) choice { chosen := 1 } or { chosen := 2 } step := 1
-                    } or {
-                        assume(step == 1) choice { chosen := 3 } or { chosen := 4 } step := 2
+                    init {
                     }
-                    prop { EF chosen == 4 }
+                    tran {
+                        assume(step == 0)
+                        choice {
+                            chosen := 1
+                        } or {
+                            chosen := 2
+                        }
+                        step := 1
+                    } or {
+                        assume(step == 1)
+                        choice {
+                            chosen := 3
+                        } or {
+                            chosen := 4
+                        }
+                        step := 2
+                    }
+                    prop {
+                        EF chosen == 4
+                    }
                 """,
             ),
         )
@@ -160,9 +175,13 @@ class NuxmvBackendReplayTest {
                 """
                     inlined oxsts of semantifyr::Anything
                     var ratio : real := 0.5
-                    init { }
-                    tran { }
-                    prop { AG true }
+                    init {
+                    }
+                    tran {
+                    }
+                    prop {
+                        AG true
+                    }
                 """,
             ),
         )

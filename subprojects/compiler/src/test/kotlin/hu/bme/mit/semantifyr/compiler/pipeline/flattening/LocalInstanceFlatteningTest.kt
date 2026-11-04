@@ -14,11 +14,15 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
         package flattening::local_instances
         class Worker {
             var done : bool := false
-            tran finish() { done := true }
+            tran finish() {
+                done := true
+            }
         }
         class Other {
             var done : bool := false
-            tran finish() { done := true }
+            tran finish() {
+                done := true
+            }
         }
         class Pool {
             contains workers : Worker[0..*]
@@ -51,7 +55,9 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                         var picked : Worker
                         inline picked.finish()
                     }
-                    prop { return AG !other.done }
+                    prop {
+                        return AG !other.done
+                    }
                 }
             """,
             $$$$"""
@@ -99,7 +105,9 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                             outside := true
                         }
                     }
-                    prop { return AG !outside }
+                    prop {
+                        return AG !outside
+                    }
                 }
             """,
             $$$$"""
@@ -141,7 +149,9 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                             empty := true
                         }
                     }
-                    prop { return EF empty }
+                    prop {
+                        return EF empty
+                    }
                 }
             """,
             $$$$"""
@@ -189,7 +199,9 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                         flip := true
                         inline picked.finish()
                     }
-                    prop { return EF second.done }
+                    prop {
+                        return EF second.done
+                    }
                 }
             """,
             $$$$"""
@@ -226,8 +238,12 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                 @VerificationCase
                 class Host {
                     contains pool : Pool
-                    redefine tran { inline pool.pickOne() }
-                    prop { return AG !pool.spare.done }
+                    redefine tran {
+                        inline pool.pickOne()
+                    }
+                    prop {
+                        return AG !pool.spare.done
+                    }
                 }
             """,
             $$$$"""
@@ -270,7 +286,9 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                         var queue : Worker[2] := [first, second]
                         inline queue[1].finish()
                     }
-                    prop { return EF second.done }
+                    prop {
+                        return EF second.done
+                    }
                 }
             """,
             $$$$"""
@@ -304,8 +322,12 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                 @VerificationCase
                 class Host {
                     contains pool : Pool
-                    redefine tran { inline pool.pickTwo() }
-                    prop { return AG !pool.spare.done }
+                    redefine tran {
+                        inline pool.pickTwo()
+                    }
+                    prop {
+                        return AG !pool.spare.done
+                    }
                 }
             """,
             $$$$"""

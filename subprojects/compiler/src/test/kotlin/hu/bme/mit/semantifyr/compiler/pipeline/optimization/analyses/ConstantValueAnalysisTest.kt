@@ -19,9 +19,14 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var value : int := 7
-                init { value := 7 }
-                tran { }
-                prop { AG (value == 7) }
+                init {
+                    value := 7
+                }
+                tran {
+                }
+                prop {
+                    AG (value == 7)
+                }
             """,
         )
 
@@ -35,11 +40,18 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var value : int := 0
-                init { }
-                tran {
-                    choice { value := 1 } or { value := 2 }
+                init {
                 }
-                prop { AG (value != 3) }
+                tran {
+                    choice {
+                        value := 1
+                    } or {
+                        value := 2
+                    }
+                }
+                prop {
+                    AG (value != 3)
+                }
             """,
         )
 
@@ -53,9 +65,15 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var value : int := 7
-                init { value := 7 }
-                tran { havoc(value) }
-                prop { AG (value == 7) }
+                init {
+                    value := 7
+                }
+                tran {
+                    havoc(value)
+                }
+                prop {
+                    AG (value == 7)
+                }
             """,
         )
 
@@ -71,9 +89,13 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var value : int := 7
-                init { }
-                tran { }
-                prop { AG (value == 7) }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG (value == 7)
+                }
             """,
         )
 
@@ -87,9 +109,14 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var uninitialized : int
-                init { uninitialized := 3 }
-                tran { }
-                prop { AG (uninitialized == 3) }
+                init {
+                    uninitialized := 3
+                }
+                tran {
+                }
+                prop {
+                    AG (uninitialized == 3)
+                }
             """,
         )
 
@@ -106,10 +133,17 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
                 var uninitialized : int
                 var copy : int := 3
                 init {
-                    choice { uninitialized := 3 } or { }
+                    choice {
+                        uninitialized := 3
+                    } or {
+                    }
                 }
-                tran { copy := uninitialized }
-                prop { AG (copy == 3) }
+                tran {
+                    copy := uninitialized
+                }
+                prop {
+                    AG (copy == 3)
+                }
             """,
         )
 
@@ -123,12 +157,15 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var uninitialized : int
                 var copy : int := 3
-                init { }
+                init {
+                }
                 tran {
                     copy := uninitialized
                     uninitialized := 3
                 }
-                prop { AG (copy == 3) }
+                prop {
+                    AG (copy == 3)
+                }
             """,
         )
 
@@ -146,8 +183,11 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
                     copy := uninitialized
                     uninitialized := 3
                 }
-                tran { }
-                prop { AG (copy == 3) }
+                tran {
+                }
+                prop {
+                    AG (copy == 3)
+                }
             """,
         )
 
@@ -162,10 +202,18 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
                 var uninitialized : int
                 var copy : int := 3
                 init {
-                    choice { uninitialized := 3 } or { uninitialized := 3 }
+                    choice {
+                        uninitialized := 3
+                    } or {
+                        uninitialized := 3
+                    }
                 }
-                tran { copy := uninitialized }
-                prop { AG (copy == 3) }
+                tran {
+                    copy := uninitialized
+                }
+                prop {
+                    AG (copy == 3)
+                }
             """,
         )
 

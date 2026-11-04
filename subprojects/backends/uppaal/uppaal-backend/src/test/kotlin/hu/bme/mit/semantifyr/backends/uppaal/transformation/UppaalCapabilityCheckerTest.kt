@@ -13,7 +13,10 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
 
     private val colors = """
         package test::colors
-        enum Color { Red, Green }
+        enum Color {
+            Red,
+            Green,
+        }
     """
 
     private fun unsupported(
@@ -37,21 +40,37 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
         val havoc = """
             var counter : int := 0
             var copy : int := 0
-            init { }
-            tran { havoc(counter) copy := counter + 1 }
-            prop { AG copy < 5 }
+            init {
+            }
+            tran {
+                havoc(counter)
+                copy := counter + 1
+            }
+            prop {
+                AG copy < 5
+            }
         """
         val uninitialized = """
             var counter : int
-            init { }
-            tran { }
-            prop { AG counter * 2 < 5 }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG counter * 2 < 5
+            }
         """
         val local = """
             var copy : int := 0
-            init { }
-            tran { var temporary : int copy := temporary }
-            prop { AG copy < 5 }
+            init {
+            }
+            tran {
+                var temporary : int
+                copy := temporary
+            }
+            prop {
+                AG copy < 5
+            }
         """
 
         assertThat(overApproximationUnsupported(havoc)).containsExactly("havoced integers read other than in comparisons with literals")
@@ -66,9 +85,15 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
             """
                 var counter : int
                 var flag : bool
-                init { }
-                tran { havoc(counter) havoc(flag) }
-                prop { AG (counter == 3 || counter < 0 || flag) }
+                init {
+                }
+                tran {
+                    havoc(counter)
+                    havoc(flag)
+                }
+                prop {
+                    AG (counter == 3 || counter < 0 || flag)
+                }
             """,
         )
 
@@ -82,9 +107,22 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
                 var counter : int := 0
                 var flag : bool
                 var color : test::colors::Color := test::colors::Color::Red
-                init { havoc(flag) }
-                tran { choice { assume(counter < 3) counter := counter + 1 } or { if (flag) { color := test::colors::Color::Green } } }
-                prop { AG (counter <= 3 && (if flag then true else color == test::colors::Color::Red)) }
+                init {
+                    havoc(flag)
+                }
+                tran {
+                    choice {
+                        assume(counter < 3)
+                        counter := counter + 1
+                    } or {
+                        if (flag) {
+                            color := test::colors::Color::Green
+                        }
+                    }
+                }
+                prop {
+                    AG (counter <= 3 && (if flag then true else color == test::colors::Color::Red))
+                }
             """,
         )
 
@@ -97,12 +135,24 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
             """
                 var ratio : real := 0.5
                 var anything : any := 0
-                @semantifyr::Clock var elapsed : int := 0
-                @semantifyr::Clock var clockColor : test::colors::Color := test::colors::Color::Red
+                @semantifyr::Clock
+                var elapsed : int := 0
+                @semantifyr::Clock
+                var clockColor : test::colors::Color := test::colors::Color::Red
                 var counter : int := 0
-                init { }
-                tran { elapsed := 0 elapsed := 5 havoc(elapsed) for (index in 0..2) { counter := counter + index } }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    elapsed := 0
+                    elapsed := 5
+                    havoc(elapsed)
+                    for (index in 0..2) {
+                        counter := counter + index
+                    }
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -122,9 +172,15 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
             """
                 var counted : int := 1
                 var ignored : int := 1
-                init { }
-                tran { counted := counted * 3 ignored := ignored * 3 }
-                prop { AG counted > 0 }
+                init {
+                }
+                tran {
+                    counted := counted * 3
+                    ignored := ignored * 3
+                }
+                prop {
+                    AG counted > 0
+                }
             """,
         )
 
@@ -137,9 +193,15 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
             """
                 var counted : int := 0
                 var doubled : int := 1
-                init { }
-                tran { counted := counted + 1 doubled := doubled * 2 }
-                prop { AG (counted >= 0 && doubled > 0) }
+                init {
+                }
+                tran {
+                    counted := counted + 1
+                    doubled := doubled * 2
+                }
+                prop {
+                    AG (counted >= 0 && doubled > 0)
+                }
             """,
         )
 
@@ -152,9 +214,17 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
             """
                 var counter : int := 0
                 var combined : int := 0
-                init { }
-                tran { if (counter < 100) { counter := counter + 1 } combined := combined / 2 + counter }
-                prop { AG combined >= 0 }
+                init {
+                }
+                tran {
+                    if (counter < 100) {
+                        counter := counter + 1
+                    }
+                    combined := combined / 2 + counter
+                }
+                prop {
+                    AG combined >= 0
+                }
             """,
         )
 
@@ -168,9 +238,18 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
                 var counter : int := 1
                 var doubled : int := 2
                 var scaled : int := 100000
-                init { }
-                tran { if (counter < 32767) { counter := counter + 1 } doubled := counter * 2 scaled := counter * 100000 }
-                prop { AG (doubled > 0 && scaled > 0) }
+                init {
+                }
+                tran {
+                    if (counter < 32767) {
+                        counter := counter + 1
+                    }
+                    doubled := counter * 2
+                    scaled := counter * 100000
+                }
+                prop {
+                    AG (doubled > 0 && scaled > 0)
+                }
             """,
         )
 

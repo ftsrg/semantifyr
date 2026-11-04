@@ -27,9 +27,14 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var value : int := 0
-                init { value := 1 }
-                tran { }
-                prop { AG (value != 27) }
+                init {
+                    value := 1
+                }
+                tran {
+                }
+                prop {
+                    AG (value != 27)
+                }
             """,
         )
         val value = inlined.varNamed("value")
@@ -43,9 +48,14 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var value : int
-                init { }
-                tran { value := 5 }
-                prop { AG (value != 27) }
+                init {
+                }
+                tran {
+                    value := 5
+                }
+                prop {
+                    AG (value != 27)
+                }
             """,
         )
         val value = inlined.varNamed("value")
@@ -62,13 +72,16 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var source : int := 0
                 var target : int := 0
-                init { }
+                init {
+                }
                 tran {
                     source := 1
                     havoc(source)
                     target := source
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
         val source = inlined.varNamed("source")
@@ -85,12 +98,16 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var value : int := 7
-                init { value := 7 }
+                init {
+                    value := 7
+                }
                 tran {
                     havoc(value)
                     value := 7
                 }
-                prop { AG (value == 7) }
+                prop {
+                    AG (value == 7)
+                }
             """,
         )
         val value = inlined.varNamed("value")
@@ -104,13 +121,16 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var source : int := 0
                 var target : int := 0
-                init { }
+                init {
+                }
                 tran {
                     source := 5
                     assume(source == 5)
                     target := source
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
         val source = inlined.varNamed("source")
@@ -127,12 +147,15 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var value : int := 0
-                init { }
+                init {
+                }
                 tran {
                     assume(false)
                     value := 5
                 }
-                prop { AG (value != 5) }
+                prop {
+                    AG (value != 5)
+                }
             """,
         )
         val value = inlined.varNamed("value")
@@ -148,12 +171,19 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var source : int := 0
                 var target : int := 0
-                init { }
+                init {
+                }
                 tran {
-                    choice { source := 1 } or { source := 2 }
+                    choice {
+                        source := 1
+                    } or {
+                        source := 2
+                    }
                     target := source
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
         val source = inlined.varNamed("source")
@@ -178,13 +208,18 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var source : int := 0
                 var target : int := 0
-                init { }
+                init {
+                }
                 tran {
                     source := 1
-                    if (target == 0) { source := 2 }
+                    if (target == 0) {
+                        source := 2
+                    }
                     target := source
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
         val source = inlined.varNamed("source")
@@ -212,7 +247,9 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
                 tran {
                     source := 99
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
         val source = inlined.varNamed("source")
@@ -231,12 +268,15 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var source : int := 0
                 var target : int := 0
-                init { }
+                init {
+                }
                 tran {
                     target := source
                     source := 5
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
         val source = inlined.varNamed("source")
@@ -256,9 +296,14 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var observed : int := 0
                 var unread : int := 0
-                init { }
-                tran { unread := 1 }
-                prop { AG (observed == 0) }
+                init {
+                }
+                tran {
+                    unread := 1
+                }
+                prop {
+                    AG (observed == 0)
+                }
             """,
         )
         val unread = inlined.varNamed("unread")
@@ -275,7 +320,8 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
                 var value : int := 0
                 var outerGuard : int := 0
                 var innerGuard : int := 0
-                init { }
+                init {
+                }
                 tran {
                     if (outerGuard == 0) {
                         if (innerGuard == 0) {
@@ -283,7 +329,9 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
                         }
                     }
                 }
-                prop { AG (value != 1) }
+                prop {
+                    AG (value != 1)
+                }
             """,
         )
         val value = inlined.varNamed("value")
@@ -304,9 +352,14 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var value : int := 0
-                init { }
-                tran { havoc(value) }
-                prop { AG (value != 42) }
+                init {
+                }
+                tran {
+                    havoc(value)
+                }
+                prop {
+                    AG (value != 42)
+                }
             """,
         )
         val value = inlined.varNamed("value")

@@ -38,7 +38,19 @@ class OxstsFactoryTest {
         ],
     )
     fun `an integer literal serializes to text that reparses to its value`(value: Int) {
-        val model = parseHelper.parse("inlined oxsts of semantifyr::Anything var x : int := 0 init { } tran { } prop { AG true }")
+        val model = parseHelper.parse(
+            """
+                inlined oxsts of semantifyr::Anything
+                var x : int := 0
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
+            """.trimIndent(),
+        )
         model.variables.single().expression = OxstsFactory.createLiteralInteger(value)
 
         val reparsed = parseHelper.parse(serializer.serialize(model))

@@ -28,12 +28,15 @@ class FeatureTypedNothingComparisonPatternTest : InliningTestBase() {
         val folded = runPattern(
             """
                 package optimization::tests::feature_nothing_eq
-                class Leaf { }
+                class Leaf {
+                }
                 @VerificationCase
                 class Host {
                     contains leaf : Leaf[1]
                     var slot : leaf[1] := nothing
-                    prop { return EF slot == nothing }
+                    prop {
+                        return EF slot == nothing
+                    }
                 }
             """,
             className = "Host",
@@ -48,12 +51,15 @@ class FeatureTypedNothingComparisonPatternTest : InliningTestBase() {
         val folded = runPattern(
             """
                 package optimization::tests::feature_nothing_neq
-                class Leaf { }
+                class Leaf {
+                }
                 @VerificationCase
                 class Host {
                     contains leaf : Leaf[1]
                     var slot : leaf[1] := nothing
-                    prop { return EF slot != nothing }
+                    prop {
+                        return EF slot != nothing
+                    }
                 }
             """,
             className = "Host",
@@ -68,12 +74,15 @@ class FeatureTypedNothingComparisonPatternTest : InliningTestBase() {
         val beforeAndAfter = runPattern(
             """
                 package optimization::tests::feature_nothing_optional
-                class Leaf { }
+                class Leaf {
+                }
                 @VerificationCase
                 class Host {
                     contains leaf : Leaf[0..1]
                     var slot : leaf[0..1] := nothing
-                    prop { return EF slot == nothing }
+                    prop {
+                        return EF slot == nothing
+                    }
                 }
             """,
             className = "Host",
@@ -89,12 +98,15 @@ class FeatureTypedNothingComparisonPatternTest : InliningTestBase() {
         val folded = runPattern(
             """
                 package optimization::tests::feature_nothing_left
-                class Leaf { }
+                class Leaf {
+                }
                 @VerificationCase
                 class Host {
                     contains leaf : Leaf[1]
                     var slot : leaf[1] := nothing
-                    prop { return EF nothing == slot }
+                    prop {
+                        return EF nothing == slot
+                    }
                 }
             """,
             className = "Host",

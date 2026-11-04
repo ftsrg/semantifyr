@@ -19,9 +19,13 @@ class LivenessAnalysisTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var observed : int := 0
-                init { }
-                tran { }
-                prop { AG (observed == 1) }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG (observed == 1)
+                }
             """,
         )
 
@@ -36,9 +40,14 @@ class LivenessAnalysisTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var observed : int := 0
                 var written : int := 0
-                init { }
-                tran { written := 1 }
-                prop { AG (observed == 1) }
+                init {
+                }
+                tran {
+                    written := 1
+                }
+                prop {
+                    AG (observed == 1)
+                }
             """,
         )
 
@@ -53,12 +62,15 @@ class LivenessAnalysisTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var value : int := 0
-                init { }
+                init {
+                }
                 tran {
                     havoc(value)
                     value := 1
                 }
-                prop { AG (value == 1) }
+                prop {
+                    AG (value == 1)
+                }
             """,
         )
 
@@ -75,12 +87,15 @@ class LivenessAnalysisTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var guard : int := 0
                 var written : int := 0
-                init { }
+                init {
+                }
                 tran {
                     assume(guard == 0)
                     written := 1
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
 

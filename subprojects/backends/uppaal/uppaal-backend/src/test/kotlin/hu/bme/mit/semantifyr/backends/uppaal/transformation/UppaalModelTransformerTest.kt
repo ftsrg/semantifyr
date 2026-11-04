@@ -20,7 +20,10 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
 
     private val colors = """
         package test::colors
-        enum Color { Red, Green }
+        enum Color {
+            Red,
+            Green,
+        }
     """
 
     private val startToRunning = UppaalEdge("start", "running")
@@ -46,9 +49,14 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
         val template = nta(
             """
                 var counter : int := 0
-                init { }
-                tran { counter := counter + 1 }
-                prop { AG counter < 3 }
+                init {
+                }
+                tran {
+                    counter := counter + 1
+                }
+                prop {
+                    AG counter < 3
+                }
             """,
         ).templates.single()
 
@@ -71,9 +79,13 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
                 var counter : int := 2
                 var flag : bool := true
                 var color : test::colors::Color := test::colors::Color::Green
-                init { }
-                tran { }
-                prop { AG true }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """,
         ).globalDeclarations
 
@@ -93,14 +105,23 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
                 var large : int := 0
                 var huge : int := 1
                 var unbounded : int := 0
-                init { }
+                init {
+                }
                 tran {
-                    if (bounded < 3) { bounded := bounded + 1 }
-                    if (large < 100000) { large := large + 25000 }
-                    if (huge < 100000) { huge := huge * 100000 }
+                    if (bounded < 3) {
+                        bounded := bounded + 1
+                    }
+                    if (large < 100000) {
+                        large := large + 25000
+                    }
+                    if (huge < 100000) {
+                        huge := huge * 100000
+                    }
                     unbounded := unbounded + 1
                 }
-                prop { AG bounded <= 3 }
+                prop {
+                    AG bounded <= 3
+                }
             """,
         ).globalDeclarations
 
@@ -119,9 +140,14 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
                 var counter : int
                 var flag : bool
                 var color : test::colors::Color
-                init { counter := counter + 1 }
-                tran { }
-                prop { AG counter < 5 }
+                init {
+                    counter := counter + 1
+                }
+                tran {
+                }
+                prop {
+                    AG counter < 5
+                }
             """,
         ).templates.single()
 
@@ -143,9 +169,13 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
         val template = nta(
             """
                 var counter : int := 0
-                init { }
-                tran { }
-                prop { AG counter < 5 }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG counter < 5
+                }
             """,
         ).templates.single()
 
@@ -158,9 +188,15 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
         val model = nta(
             """
                 var counter : int := 0
-                init { }
-                tran { var delta : int counter := delta }
-                prop { AG counter < 3 }
+                init {
+                }
+                tran {
+                    var delta : int
+                    counter := delta
+                }
+                prop {
+                    AG counter < 3
+                }
             """,
         )
 
@@ -178,9 +214,14 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
         val edges = edges(
             """
                 var counter : int := 0
-                init { }
-                tran { assume(counter < 3) }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    assume(counter < 3)
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -192,9 +233,15 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
         val model = nta(
             """
                 var counter : int := 0
-                init { }
-                tran { assume(counter < 3) counter := counter + 1 }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    assume(counter < 3)
+                    counter := counter + 1
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -212,9 +259,17 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
         val edges = edges(
             """
                 var counter : int := 0
-                init { }
-                tran { choice { counter := 1 } or { } }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    choice {
+                        counter := 1
+                    } or {
+                    }
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -230,9 +285,16 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
         val edges = edges(
             """
                 var counter : int := 0
-                init { }
-                tran { if (counter < 3) { counter := 1 } }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    if (counter < 3) {
+                        counter := 1
+                    }
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -250,9 +312,14 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
         val edges = edges(
             """
                 var counter : int := 0
-                init { }
-                tran { havoc(counter) }
-                prop { AG counter < 5 }
+                init {
+                }
+                tran {
+                    havoc(counter)
+                }
+                prop {
+                    AG counter < 5
+                }
             """,
         )
 
@@ -270,9 +337,15 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
             """
                 var flag : bool := false
                 var color : test::colors::Color := test::colors::Color::Red
-                init { }
-                tran { havoc(flag) havoc(color) }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    havoc(flag)
+                    havoc(color)
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -288,9 +361,15 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
         val model = nta(
             """
                 var counter : int := 0
-                init { }
-                tran { var delta : int := 2 counter := counter + delta }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    var delta : int := 2
+                    counter := counter + delta
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -311,17 +390,22 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
                 var counter : int := 0
                 var left : bool := false
                 var right : bool := true
-                init { }
-                tran { choice {
-                    counter := ((counter + 1) - (2 * counter)) / 3
-                } or {
-                    left := (left && right) || !(left ^^ right)
-                } or {
-                    assume(counter < 1 && counter <= 2 && counter > -3 && counter >= -4 && counter == 0 && counter != 5)
-                } or {
-                    counter := if counter < 3 then counter + 1 else 0
-                } }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    choice {
+                        counter := ((counter + 1) - (2 * counter)) / 3
+                    } or {
+                        left := (left && right) || !(left ^^ right)
+                    } or {
+                        assume(counter < 1 && counter <= 2 && counter > -3 && counter >= -4 && counter == 0 && counter != 5)
+                    } or {
+                        counter := if counter < 3 then counter + 1 else 0
+                    }
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -339,9 +423,19 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
         val edges = edges(
             """
                 var counter : int := 0
-                init { counter := 1 } or { counter := 2 }
-                tran { counter := 3 } or { counter := 4 }
-                prop { AG true }
+                init {
+                    counter := 1
+                } or {
+                    counter := 2
+                }
+                tran {
+                    counter := 3
+                } or {
+                    counter := 4
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -359,14 +453,33 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
             """
                 var counter : int
                 var flag : bool := false
-                init { choice { counter := 1 } or { havoc(flag) } } or { counter := 2 }
+                init {
+                    choice {
+                        counter := 1
+                    } or {
+                        havoc(flag)
+                    }
+                } or {
+                    counter := 2
+                }
                 tran {
                     assume(counter < 5)
-                    if (flag) { choice { counter := counter + 1 } or { var delta : int := 1 counter := counter - delta } } else { havoc(counter) }
+                    if (flag) {
+                        choice {
+                            counter := counter + 1
+                        } or {
+                            var delta : int := 1
+                            counter := counter - delta
+                        }
+                    } else {
+                        havoc(counter)
+                    }
                 } or {
                     flag := !flag
                 }
-                prop { AG counter < 5 }
+                prop {
+                    AG counter < 5
+                }
             """,
         ).templates.single()
 
@@ -385,9 +498,13 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
         val query = query(
             """
                 var counter : int := 0
-                init { }
-                tran { }
-                prop { AG counter == 5 }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG counter == 5
+                }
             """,
         )
 
@@ -399,9 +516,13 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
         val query = query(
             """
                 var color : test::colors::Color := test::colors::Color::Red
-                init { }
-                tran { }
-                prop { EF color == test::colors::Color::Green }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    EF color == test::colors::Color::Green
+                }
             """,
         )
 
@@ -414,9 +535,16 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
             nta(
                 """
                     var counter : int := 0
-                    init { }
-                    tran { for (index in 0..2) { counter := counter + index } }
-                    prop { AG true }
+                    init {
+                    }
+                    tran {
+                        for (index in 0..2) {
+                            counter := counter + index
+                        }
+                    }
+                    prop {
+                        AG true
+                    }
                 """,
             )
         }
@@ -433,9 +561,13 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
         val message = unsupportedMessage(
             """
                 var ratio : real := 0.5
-                init { }
-                tran { }
-                prop { AG true }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -446,10 +578,15 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `a clock must be data-typed`() {
         val message = unsupportedMessage(
             """
-                @semantifyr::Clock var elapsed : test::colors::Color := test::colors::Color::Red
-                init { }
-                tran { }
-                prop { AG true }
+                @semantifyr::Clock
+                var elapsed : test::colors::Color := test::colors::Color::Red
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -460,10 +597,16 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `a clock is reset only to zero`() {
         val message = unsupportedMessage(
             """
-                @semantifyr::Clock var elapsed : int := 0
-                init { }
-                tran { elapsed := 5 }
-                prop { AG true }
+                @semantifyr::Clock
+                var elapsed : int := 0
+                init {
+                }
+                tran {
+                    elapsed := 5
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -474,11 +617,17 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `a clock is not reset to an expression`() {
         val message = unsupportedMessage(
             """
-                @semantifyr::Clock var elapsed : int := 0
+                @semantifyr::Clock
+                var elapsed : int := 0
                 var counter : int := 0
-                init { }
-                tran { elapsed := counter }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    elapsed := counter
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -489,10 +638,16 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `a clock is not havoced`() {
         val message = unsupportedMessage(
             """
-                @semantifyr::Clock var elapsed : int := 0
-                init { }
-                tran { havoc(elapsed) }
-                prop { AG true }
+                @semantifyr::Clock
+                var elapsed : int := 0
+                init {
+                }
+                tran {
+                    havoc(elapsed)
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -503,10 +658,16 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `a clock is reset to zero`() {
         val edges = edges(
             """
-                @semantifyr::Clock var elapsed : int := 0
-                init { }
-                tran { elapsed := 0 }
-                prop { AG true }
+                @semantifyr::Clock
+                var elapsed : int := 0
+                init {
+                }
+                tran {
+                    elapsed := 0
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 

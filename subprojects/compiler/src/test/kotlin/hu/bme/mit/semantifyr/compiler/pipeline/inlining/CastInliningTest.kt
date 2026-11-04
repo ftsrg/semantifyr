@@ -24,8 +24,12 @@ class CastInliningTest : InliningTestBase() {
                 @VerificationCase
                 class Case {
                     var counter: int := 0
-                    redefine tran { counter := counter + 1 }
-                    prop { return (EF counter == 5) as bool }
+                    redefine tran {
+                        counter := counter + 1
+                    }
+                    prop {
+                        return (EF counter == 5) as bool
+                    }
                 }
             """,
         ) {
@@ -56,7 +60,9 @@ class CastInliningTest : InliningTestBase() {
                         var number: int := 0
                         number := anything as int
                     }
-                    prop { return EF true }
+                    prop {
+                        return EF true
+                    }
                 }
             """,
         ) {
@@ -73,8 +79,10 @@ class CastInliningTest : InliningTestBase() {
             "Case",
             """
                 package inlining::tests::instance_cast
-                class Base { }
-                class Child : Base { }
+                class Base {
+                }
+                class Child : Base {
+                }
                 @VerificationCase
                 class Case {
                     contains children: Base[0..*]
@@ -122,7 +130,9 @@ class CastInliningTest : InliningTestBase() {
                         var anything: any := 0
                         anything := counter as any
                     }
-                    prop { return EF true }
+                    prop {
+                        return EF true
+                    }
                 }
             """,
         ) {
@@ -145,7 +155,9 @@ class CastInliningTest : InliningTestBase() {
                         var number: int := 0
                         number := anything as int
                     }
-                    prop { return EF true }
+                    prop {
+                        return EF true
+                    }
                 }
             """,
         ) {
@@ -166,7 +178,9 @@ class CastInliningTest : InliningTestBase() {
                         var measurement: real := 0.0
                         counter := measurement as int
                     }
-                    prop { return EF true }
+                    prop {
+                        return EF true
+                    }
                 }
             """,
         ) {

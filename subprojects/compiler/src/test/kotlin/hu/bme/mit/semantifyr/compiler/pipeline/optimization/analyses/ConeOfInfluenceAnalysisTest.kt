@@ -21,9 +21,13 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var observed : int := 0
-                init { }
-                tran { }
-                prop { AG (observed == 1) }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG (observed == 1)
+                }
             """,
         )
 
@@ -38,9 +42,14 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var observed : int := 0
                 var unrelated : int := 0
-                init { }
-                tran { unrelated := 2 }
-                prop { AG (observed == 1) }
+                init {
+                }
+                tran {
+                    unrelated := 2
+                }
+                prop {
+                    AG (observed == 1)
+                }
             """,
         )
 
@@ -56,12 +65,16 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var observed : int := 0
-                init { observed := 1 }
+                init {
+                    observed := 1
+                }
                 tran {
                     observed := 2
                     observed := 3
                 }
-                prop { AG (observed == 1) }
+                prop {
+                    AG (observed == 1)
+                }
             """,
         )
 
@@ -81,7 +94,8 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var observed : int := 0
                 var guard : int := 0
-                init { }
+                init {
+                }
                 tran {
                     choice {
                         assume(guard == 0)
@@ -91,7 +105,9 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                         observed := 2
                     }
                 }
-                prop { AG (observed == 1) }
+                prop {
+                    AG (observed == 1)
+                }
             """,
         )
 
@@ -110,7 +126,8 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var counter : int := 0
                 var observed : int := 0
-                init { }
+                init {
+                }
                 tran {
                     choice {
                         counter := counter + 1
@@ -121,7 +138,9 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                         observed := 1
                     }
                 }
-                prop { AG (observed == 0) }
+                prop {
+                    AG (observed == 0)
+                }
             """,
         )
 
@@ -139,12 +158,15 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var observed : int := 0
                 var feeder : int := 0
-                init { }
+                init {
+                }
                 tran {
                     feeder := 5
                     observed := feeder
                 }
-                prop { AG (observed == 5) }
+                prop {
+                    AG (observed == 5)
+                }
             """,
         )
 
@@ -166,7 +188,9 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var activeState : int := -1
-                init { activeState := 0 }
+                init {
+                    activeState := 0
+                }
                 tran {
                     choice {
                         assume(activeState == 0)
@@ -174,7 +198,9 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                         activeState := 25
                     }
                 }
-                prop { AG (activeState != 25) }
+                prop {
+                    AG (activeState != 25)
+                }
             """,
         )
 
@@ -196,7 +222,9 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var activeState : int := -1
                 var inputEvent : int := 0
-                init { activeState := 0 }
+                init {
+                    activeState := 0
+                }
                 tran {
                     choice {
                         assume(activeState == 0 && inputEvent == 1)
@@ -206,7 +234,9 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                         activeState := 0
                     }
                 }
-                prop { AG (activeState != 25) }
+                prop {
+                    AG (activeState != 25)
+                }
             """,
         )
 
@@ -232,7 +262,8 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                 var outerGuard : int := 0
                 var ifGuard : int := 0
                 var innerGuard : int := 0
-                init { }
+                init {
+                }
                 tran {
                     choice {
                         assume(outerGuard == 0)
@@ -252,7 +283,9 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                         observed := 4
                     }
                 }
-                prop { AG (observed == 1) }
+                prop {
+                    AG (observed == 1)
+                }
             """,
         )
 
@@ -284,13 +317,16 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var bound : int := 5
                 var sum : int := 0
-                init { }
+                init {
+                }
                 tran {
                     for (index in 0..bound) {
                         sum := sum + index
                     }
                 }
-                prop { AG (sum != 999) }
+                prop {
+                    AG (sum != 999)
+                }
             """,
         )
 
@@ -308,12 +344,16 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var step : int := -1
-                init { step := 1 }
+                init {
+                    step := 1
+                }
                 tran {
                     assume(step == 1)
                     step := 2
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -337,8 +377,11 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                 init {
                     assume(seed == 7)
                 }
-                tran { }
-                prop { AG true }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -361,7 +404,9 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                     assume(value == 5)
                     value := 6
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -390,7 +435,9 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                 tran {
                     assume(first == 1 && second == 2)
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -418,7 +465,9 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                 tran {
                     assume(selected == 7)
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -437,7 +486,8 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var observed : int := 0
                 var guard : int := 0
-                init { }
+                init {
+                }
                 tran {
                     assume(guard == 1)
                     choice {
@@ -446,7 +496,9 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                         observed := 2
                     }
                 }
-                prop { AG (observed == 1) }
+                prop {
+                    AG (observed == 1)
+                }
             """,
         )
 
@@ -464,7 +516,8 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                 var observed : int := 0
                 var unrelated : int := 0
                 var siblingGuard : int := 0
-                init { }
+                init {
+                }
                 tran {
                     choice {
                         observed := 1
@@ -473,7 +526,9 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                         unrelated := 5
                     }
                 }
-                prop { AG (observed == 1) }
+                prop {
+                    AG (observed == 1)
+                }
             """,
         )
 
@@ -526,14 +581,17 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                 var toggled : int := 0
                 var seen : int := 0
                 var other : int := 0
-                init { }
+                init {
+                }
                 tran {
                     toggled := 1 - toggled
                     var local : int := toggled
                     other := local
                     seen := 1
                 }
-                prop { EF (seen == 1) }
+                prop {
+                    EF (seen == 1)
+                }
             """,
         )
 

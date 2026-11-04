@@ -47,9 +47,13 @@ class WitnessValueTransformationTest {
                 var number : int := 0
                 var flag : bool := false
                 var slots : int[3] := [0, 0, 0]
-                init { }
-                tran { }
-                prop { AG true }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """,
         )
     }

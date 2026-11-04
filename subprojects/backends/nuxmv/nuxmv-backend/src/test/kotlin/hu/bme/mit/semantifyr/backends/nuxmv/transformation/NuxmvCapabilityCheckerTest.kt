@@ -13,7 +13,10 @@ class NuxmvCapabilityCheckerTest : NuxmvTransformationTestBase() {
 
     private val colors = """
         package test::colors
-        enum Color { Red, Green }
+        enum Color {
+            Red,
+            Green,
+        }
     """
 
     private fun unsupported(body: String): List<String> {
@@ -30,9 +33,22 @@ class NuxmvCapabilityCheckerTest : NuxmvTransformationTestBase() {
                 var counter : int := 0
                 var flag : bool
                 var color : test::colors::Color := test::colors::Color::Red
-                init { havoc(flag) }
-                tran { choice { assume(counter < 3) counter := counter + 1 } or { if (flag) { color := test::colors::Color::Green } } }
-                prop { AG (counter <= 3 && (if flag then true else color == test::colors::Color::Red)) }
+                init {
+                    havoc(flag)
+                }
+                tran {
+                    choice {
+                        assume(counter < 3)
+                        counter := counter + 1
+                    } or {
+                        if (flag) {
+                            color := test::colors::Color::Green
+                        }
+                    }
+                }
+                prop {
+                    AG (counter <= 3 && (if flag then true else color == test::colors::Color::Red))
+                }
             """,
         )
 
@@ -47,9 +63,16 @@ class NuxmvCapabilityCheckerTest : NuxmvTransformationTestBase() {
                 var anything : any := 0
                 var text : string
                 var counter : int := 0
-                init { }
-                tran { for (index in 0..2) { counter := counter + index } }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    for (index in 0..2) {
+                        counter := counter + index
+                    }
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 

@@ -23,9 +23,15 @@ class PackageInliningExpressionTest : InliningTestBase() {
                 @VerificationCase
                 class Host {
                     var counter : int := 0
-                    prop isPositive() : bool { return counter > 0 }
-                    prop { return EF isPositive() }
-                    redefine tran { counter := counter + 1 }
+                    prop isPositive() : bool {
+                        return counter > 0
+                    }
+                    prop {
+                        return EF isPositive()
+                    }
+                    redefine tran {
+                        counter := counter + 1
+                    }
                 }
             """,
         ) {
@@ -44,9 +50,15 @@ class PackageInliningExpressionTest : InliningTestBase() {
                 @VerificationCase
                 class Host {
                     var counter : int := 0
-                    prop isPositive() : bool { return counter > 0 }
-                    prop { return EF self.isPositive() }
-                    redefine tran { counter := counter + 1 }
+                    prop isPositive() : bool {
+                        return counter > 0
+                    }
+                    prop {
+                        return EF self.isPositive()
+                    }
+                    redefine tran {
+                        counter := counter + 1
+                    }
                 }
             """,
         ) {
@@ -64,13 +76,19 @@ class PackageInliningExpressionTest : InliningTestBase() {
                 package inlining::tests::expr_single_nav
                 class Worker {
                     var done : bool := false
-                    prop isDone() : bool { return done }
+                    prop isDone() : bool {
+                        return done
+                    }
                 }
                 @VerificationCase
                 class Host {
                     contains worker : Worker[1]
-                    redefine tran { worker.done := true }
-                    prop { return EF worker.isDone() }
+                    redefine tran {
+                        worker.done := true
+                    }
+                    prop {
+                        return EF worker.isDone()
+                    }
                 }
             """,
         ) {
@@ -87,7 +105,9 @@ class PackageInliningExpressionTest : InliningTestBase() {
                 package inlining::tests::expr_multi_nav
                 class Leaf {
                     var value : int := 0
-                    prop isBig() : bool { return value > 10 }
+                    prop isBig() : bool {
+                        return value > 10
+                    }
                 }
                 class Middle {
                     contains leaf : Leaf[1]
@@ -95,8 +115,12 @@ class PackageInliningExpressionTest : InliningTestBase() {
                 @VerificationCase
                 class Host {
                     contains middle : Middle[1]
-                    redefine tran { middle.leaf.value := middle.leaf.value + 1 }
-                    prop { return EF middle.leaf.isBig() }
+                    redefine tran {
+                        middle.leaf.value := middle.leaf.value + 1
+                    }
+                    prop {
+                        return EF middle.leaf.isBig()
+                    }
                 }
             """,
         ) {
@@ -112,18 +136,26 @@ class PackageInliningExpressionTest : InliningTestBase() {
             """
                 package inlining::tests::expr_poly
                 class Base {
-                    prop marker() : bool { return false }
+                    prop marker() : bool {
+                        return false
+                    }
                 }
                 class Child : Base {
                     var counter : int := 0
-                    redefine prop marker() : bool { return counter == 10 }
+                    redefine prop marker() : bool {
+                        return counter == 10
+                    }
                 }
                 @VerificationCase
                 class Testing {
                     contains bases : Base[0..*]
                     contains child : Child[1] subsets bases
-                    redefine tran { child.counter := 10 }
-                    prop { return EF bases.marker() }
+                    redefine tran {
+                        child.counter := 10
+                    }
+                    prop {
+                        return EF bases.marker()
+                    }
                 }
             """,
         ) {
@@ -140,22 +172,32 @@ class PackageInliningExpressionTest : InliningTestBase() {
             """
                 package inlining::tests::expr_multi_inheritance
                 class Base {
-                    prop marker() : bool { return false }
+                    prop marker() : bool {
+                        return false
+                    }
                 }
                 class Middle : Base {
                     var middleValue : int := 0
-                    redefine prop marker() : bool { return middleValue == 1 }
+                    redefine prop marker() : bool {
+                        return middleValue == 1
+                    }
                 }
                 class Leaf : Middle {
                     var leafValue : int := 0
-                    redefine prop marker() : bool { return leafValue == 2 }
+                    redefine prop marker() : bool {
+                        return leafValue == 2
+                    }
                 }
                 @VerificationCase
                 class Testing {
                     contains bases : Base[0..*]
                     contains leaf : Leaf[1] subsets bases
-                    redefine tran { leaf.leafValue := 2 }
-                    prop { return EF bases.marker() }
+                    redefine tran {
+                        leaf.leafValue := 2
+                    }
+                    prop {
+                        return EF bases.marker()
+                    }
                 }
             """,
         ) {
@@ -173,7 +215,9 @@ class PackageInliningExpressionTest : InliningTestBase() {
                 package inlining::tests::expr_variable_dispatch
                 class Worker {
                     var done : bool := false
-                    prop isDone() : bool { return done }
+                    prop isDone() : bool {
+                        return done
+                    }
                 }
                 @VerificationCase
                 class Dispatcher {
@@ -182,10 +226,18 @@ class PackageInliningExpressionTest : InliningTestBase() {
                     contains second : Worker[1] subsets workers
                     var current : workers[0..1] := nothing
                     redefine init {
-                        choice { current := first } or { current := second }
+                        choice {
+                            current := first
+                        } or {
+                            current := second
+                        }
                     }
-                    redefine tran { first.done := true }
-                    prop { return EF current.isDone() }
+                    redefine tran {
+                        first.done := true
+                    }
+                    prop {
+                        return EF current.isDone()
+                    }
                 }
             """,
         ) {
@@ -212,7 +264,9 @@ class PackageInliningExpressionTest : InliningTestBase() {
                     prop difference(minuend : int, subtrahend : int) : int {
                         return minuend - subtrahend
                     }
-                    prop { return EF expected == difference(subtrahend = 1, minuend = measured) }
+                    prop {
+                        return EF expected == difference(subtrahend = 1, minuend = measured)
+                    }
                 }
             """,
         ) {
@@ -235,10 +289,18 @@ class PackageInliningExpressionTest : InliningTestBase() {
                 @VerificationCase
                 class Host {
                     var position: Point
-                    prop next(): int { return position.x + 1 }
-                    tran moveTo(target: Point) { position := target }
-                    redefine tran { inline moveTo(Point { x = next() }) }
-                    prop { return AG position != Point { x = next(), y = 2 } }
+                    prop next(): int {
+                        return position.x + 1
+                    }
+                    tran moveTo(target: Point) {
+                        position := target
+                    }
+                    redefine tran {
+                        inline moveTo(Point { x = next() })
+                    }
+                    prop {
+                        return AG position != Point { x = next(), y = 2 }
+                    }
                 }
             """,
         ) {

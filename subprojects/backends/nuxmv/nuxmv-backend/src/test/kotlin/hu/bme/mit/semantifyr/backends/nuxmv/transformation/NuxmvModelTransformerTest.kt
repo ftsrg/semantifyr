@@ -15,7 +15,10 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
 
     private val colors = """
         package test::colors
-        enum Color { Red, Green }
+        enum Color {
+            Red,
+            Green,
+        }
     """
 
     private suspend fun transform(body: String): NuxmvArtifacts {
@@ -35,9 +38,14 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
         val artifacts = transform(
             """
                 var counter : int := 0
-                init { }
-                tran { counter := counter + 1 }
-                prop { AG counter < 3 }
+                init {
+                }
+                tran {
+                    counter := counter + 1
+                }
+                prop {
+                    AG counter < 3
+                }
             """,
         )
 
@@ -69,9 +77,13 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
         val lines = smvLines(
             """
                 var counter : int
-                init { }
-                tran { }
-                prop { AG counter == 0 }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG counter == 0
+                }
             """,
         )
 
@@ -84,9 +96,13 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
             """
                 var flag : bool := true
                 var color : test::colors::Color := test::colors::Color::Green
-                init { }
-                tran { }
-                prop { AG color == test::colors::Color::Red }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG color == test::colors::Color::Red
+                }
             """,
         )
 
@@ -98,9 +114,14 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
         val lines = smvLines(
             """
                 var counter : int := 0
-                init { }
-                tran { assume(counter < 3) }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    assume(counter < 3)
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -112,9 +133,17 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
         val lines = smvLines(
             """
                 var counter : int := 0
-                init { }
-                tran { choice { counter := 1 } or { } }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    choice {
+                        counter := 1
+                    } or {
+                    }
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -131,9 +160,18 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
         val lines = smvLines(
             """
                 var counter : int := 0
-                init { choice { counter := 1 } or { counter := 2 } }
-                tran { }
-                prop { AG true }
+                init {
+                    choice {
+                        counter := 1
+                    } or {
+                        counter := 2
+                    }
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -146,9 +184,18 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
         val lines = smvLines(
             """
                 var counter : int := 0
-                init { }
-                tran { if (counter < 3) { counter := 1 } else { counter := 2 } }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    if (counter < 3) {
+                        counter := 1
+                    } else {
+                        counter := 2
+                    }
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -164,9 +211,16 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
         val lines = smvLines(
             """
                 var counter : int := 0
-                init { }
-                tran { if (counter < 3) { counter := 1 } }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    if (counter < 3) {
+                        counter := 1
+                    }
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -183,9 +237,16 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
                 var counter : int := 0
                 var flag : bool := false
                 var color : test::colors::Color := test::colors::Color::Red
-                init { }
-                tran { havoc(counter) havoc(flag) havoc(color) }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    havoc(counter)
+                    havoc(flag)
+                    havoc(color)
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -204,9 +265,15 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
         val smv = transform(
             """
                 var counter : int := 0
-                init { }
-                tran { var delta : int := 2 counter := counter + delta }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    var delta : int := 2
+                    counter := counter + delta
+                }
+                prop {
+                    AG true
+                }
             """,
         ).smv
 
@@ -222,13 +289,16 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
                 var counter : int := 0
                 var left : bool := false
                 var right : bool := true
-                init { }
+                init {
+                }
                 tran {
                     counter := ((counter + 1) - (2 * counter)) / 3
                     left := (left && right) || !(left ^^ right)
                     assume(counter < 1 && counter <= 2 && counter > -3 && counter >= -4 && counter == 0 && counter != 5)
                 }
-                prop { AG counter == -counter }
+                prop {
+                    AG counter == -counter
+                }
             """,
         )
 
@@ -244,9 +314,14 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
         val artifacts = transform(
             """
                 var counter : int := 0
-                init { }
-                tran { counter := if counter < 3 then counter + 1 else 0 }
-                prop { AG (if counter < 3 then counter == 0 else counter == 1) }
+                init {
+                }
+                tran {
+                    counter := if counter < 3 then counter + 1 else 0
+                }
+                prop {
+                    AG (if counter < 3 then counter == 0 else counter == 1)
+                }
             """,
         )
 
@@ -259,9 +334,16 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
         val lines = smvLines(
             """
                 var counter : int := 0
-                init { }
-                tran { counter := 1 } or { counter := 2 }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    counter := 1
+                } or {
+                    counter := 2
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -300,13 +382,28 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
             """
                 var counter : int := 0
                 var step : int := 0
-                init { }
-                tran {
-                    assume(step == 0) choice { counter := 1 } or { counter := 2 } step := 1
-                } or {
-                    assume(step == 1) choice { counter := 3 } or { counter := 4 } step := 2
+                init {
                 }
-                prop { AG true }
+                tran {
+                    assume(step == 0)
+                    choice {
+                        counter := 1
+                    } or {
+                        counter := 2
+                    }
+                    step := 1
+                } or {
+                    assume(step == 1)
+                    choice {
+                        counter := 3
+                    } or {
+                        counter := 4
+                    }
+                    step := 2
+                }
+                prop {
+                    AG true
+                }
             """,
         ).smv
 
@@ -319,9 +416,24 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
         val smv = transform(
             """
                 var counter : int := 0
-                init { choice { counter := 1 } or { counter := 2 } } or { choice { counter := 3 } or { counter := 4 } }
-                tran { }
-                prop { AG true }
+                init {
+                    choice {
+                        counter := 1
+                    } or {
+                        counter := 2
+                    }
+                } or {
+                    choice {
+                        counter := 3
+                    } or {
+                        counter := 4
+                    }
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """,
         ).smv
 
@@ -334,9 +446,13 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
         val property = transform(
             """
                 var counter : int := 0
-                init { }
-                tran { }
-                prop { AG counter == 5 }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG counter == 5
+                }
             """,
         ).property
 
@@ -349,9 +465,13 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
         val property = transform(
             """
                 var counter : int := 0
-                init { }
-                tran { }
-                prop { EF counter == 5 }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    EF counter == 5
+                }
             """,
         ).property
 
@@ -365,9 +485,13 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
             transform(
                 """
                     var ratio : real := 0.5
-                    init { }
-                    tran { }
-                    prop { AG true }
+                    init {
+                    }
+                    tran {
+                    }
+                    prop {
+                        AG true
+                    }
                 """,
             )
         }
@@ -381,9 +505,16 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
             transform(
                 """
                     var counter : int := 0
-                    init { }
-                    tran { for (index in 0..2) { counter := counter + index } }
-                    prop { AG true }
+                    init {
+                    }
+                    tran {
+                        for (index in 0..2) {
+                            counter := counter + index
+                        }
+                    }
+                    prop {
+                        AG true
+                    }
                 """,
             )
         }

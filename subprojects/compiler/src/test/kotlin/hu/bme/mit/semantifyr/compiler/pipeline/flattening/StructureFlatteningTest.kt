@@ -36,7 +36,9 @@ class StructureFlatteningTest : FlatteningTestBase() {
                         firstUser.own.count := 1
                         secondUser.own.count := 2
                     }
-                    prop { return AG (secondUser.counter.count == 0 || secondUser.counter.count == 1) }
+                    prop {
+                        return AG (secondUser.counter.count == 0 || secondUser.counter.count == 1)
+                    }
                 }
             """,
         )
@@ -70,8 +72,12 @@ class StructureFlatteningTest : FlatteningTestBase() {
                 @VerificationCase
                 class Host {
                     contains parent : Parent[1]
-                    redefine tran { inline parent.child.bumpParent() }
-                    prop { return EF parent.generation == 3 }
+                    redefine tran {
+                        inline parent.child.bumpParent()
+                    }
+                    prop {
+                        return EF parent.generation == 3
+                    }
                 }
             """,
             $$$$"""
@@ -103,7 +109,9 @@ class StructureFlatteningTest : FlatteningTestBase() {
                     @VerificationCase
                     class Host {
                         contains leaf : Leaf[0..1]
-                        prop { return AG leaf?.count == 0 }
+                        prop {
+                            return AG leaf?.count == 0
+                        }
                     }
                 """,
             )
@@ -129,7 +137,9 @@ class StructureFlatteningTest : FlatteningTestBase() {
                     } or {
                         counter := counter - 1
                     }
-                    prop { return AG true }
+                    prop {
+                        return AG true
+                    }
                 }
             """,
         )

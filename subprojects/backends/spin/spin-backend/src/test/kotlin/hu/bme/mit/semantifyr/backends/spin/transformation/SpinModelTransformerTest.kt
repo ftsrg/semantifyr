@@ -15,7 +15,10 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
 
     private val colors = """
         package test::colors
-        enum Color { Red, Green }
+        enum Color {
+            Red,
+            Green,
+        }
     """
 
     private suspend fun transform(body: String): SpinArtifacts {
@@ -35,9 +38,14 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         val artifacts = transform(
             """
                 var counter : int := 0
-                init { }
-                tran { counter := counter + 1 }
-                prop { AG counter < 3 }
+                init {
+                }
+                tran {
+                    counter := counter + 1
+                }
+                prop {
+                    AG counter < 3
+                }
             """,
         )
 
@@ -74,9 +82,13 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
             """
                 var counter : int := 2
                 var flag : bool := true
-                init { }
-                tran { }
-                prop { AG true }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -90,9 +102,14 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
                 var counter : int
                 var flag : bool
                 var color : test::colors::Color
-                init { counter := counter + 1 }
-                tran { }
-                prop { AG counter < 5 }
+                init {
+                    counter := counter + 1
+                }
+                tran {
+                }
+                prop {
+                    AG counter < 5
+                }
             """,
         )
 
@@ -126,9 +143,13 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         val lines = promelaLines(
             """
                 var counter : int := 0
-                init { }
-                tran { }
-                prop { AG counter < 5 }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG counter < 5
+                }
             """,
         )
 
@@ -140,9 +161,15 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         val promela = transform(
             """
                 var counter : int := 0
-                init { }
-                tran { var delta : int counter := delta }
-                prop { AG counter < 3 }
+                init {
+                }
+                tran {
+                    var delta : int
+                    counter := delta
+                }
+                prop {
+                    AG counter < 3
+                }
             """,
         ).promela
 
@@ -162,9 +189,13 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         val lines = promelaLines(
             """
                 var color : test::colors::Color := test::colors::Color::Green
-                init { }
-                tran { }
-                prop { AG color == test::colors::Color::Red }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG color == test::colors::Color::Red
+                }
             """,
         )
 
@@ -177,9 +208,14 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         val lines = promelaLines(
             """
                 var counter : int := 0
-                init { }
-                tran { assume(counter < 3) }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    assume(counter < 3)
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -191,9 +227,17 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         val lines = promelaLines(
             """
                 var counter : int := 0
-                init { }
-                tran { choice { counter := 1 } or { } }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    choice {
+                        counter := 1
+                    } or {
+                    }
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 

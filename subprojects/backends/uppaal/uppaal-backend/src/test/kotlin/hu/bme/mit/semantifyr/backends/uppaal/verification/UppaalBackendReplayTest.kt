@@ -117,9 +117,13 @@ class UppaalBackendReplayTest {
                 """
                     inlined oxsts of semantifyr::Anything
                     var ratio : real := 0.5
-                    init { }
-                    tran { }
-                    prop { AG true }
+                    init {
+                    }
+                    tran {
+                    }
+                    prop {
+                        AG true
+                    }
                 """,
             ),
         )
@@ -139,9 +143,15 @@ class UppaalBackendReplayTest {
                 inlined oxsts of semantifyr::Anything
                 var havoced : int := 0
                 var copy : int := 0
-                init { }
-                tran { havoc(havoced) copy := havoced + 1 }
-                prop { AG copy < 5 }
+                init {
+                }
+                tran {
+                    havoc(havoced)
+                    copy := havoced + 1
+                }
+                prop {
+                    AG copy < 5
+                }
             """,
         )
         val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory)
@@ -177,9 +187,14 @@ class UppaalBackendReplayTest {
                 """
                     inlined oxsts of semantifyr::Anything
                     var counter : int := 1
-                    init { }
-                    tran { counter := counter * 3 }
-                    prop { AG counter > 0 }
+                    init {
+                    }
+                    tran {
+                        counter := counter * 3
+                    }
+                    prop {
+                        AG counter > 0
+                    }
                 """,
             ),
         )

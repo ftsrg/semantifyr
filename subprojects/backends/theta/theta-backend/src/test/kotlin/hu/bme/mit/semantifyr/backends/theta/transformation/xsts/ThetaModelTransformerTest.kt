@@ -16,7 +16,10 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
 
     private val colors = """
         package test::colors
-        enum Color { Red, Green }
+        enum Color {
+            Red,
+            Green,
+        }
     """
 
     private suspend fun xsts(body: String): String {
@@ -38,9 +41,15 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
         val xsts = xsts(
             """
                 var counter : int := 0
-                init { counter := 1 }
-                tran { counter := counter + 1 }
-                prop { AG counter < 3 }
+                init {
+                    counter := 1
+                }
+                tran {
+                    counter := counter + 1
+                }
+                prop {
+                    AG counter < 3
+                }
             """,
         )
 
@@ -69,12 +78,24 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
             """
                 var counter : int := 0
                 var color : test::colors::Color := test::colors::Color::Red
-                init { counter := 1 }
-                tran {
-                    choice { counter := 1 } or { color := test::colors::Color::Green }
-                    if (counter < 3) { counter := 1 } else { counter := 2 }
+                init {
+                    counter := 1
                 }
-                prop { AG counter < 3 }
+                tran {
+                    choice {
+                        counter := 1
+                    } or {
+                        color := test::colors::Color::Green
+                    }
+                    if (counter < 3) {
+                        counter := 1
+                    } else {
+                        counter := 2
+                    }
+                }
+                prop {
+                    AG counter < 3
+                }
             """,
         )
 
@@ -88,9 +109,13 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
                 var counter : int
                 var flag : bool := true
                 var color : test::colors::Color := test::colors::Color::Green
-                init { }
-                tran { }
-                prop { AG true }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -103,9 +128,14 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
             """
                 @Control
                 var counter : int := 0
-                init { }
-                tran { counter := counter + 1 }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    counter := counter + 1
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -131,14 +161,26 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
         val lines = xstsLines(
             """
                 var counter : int := 0
-                init { }
+                init {
+                }
                 tran {
                     assume(counter < 3)
-                    choice { counter := 1 } or { }
-                    if (counter < 3) { counter := 1 } else { counter := 2 }
-                    if (counter > 3) { counter := 3 }
+                    choice {
+                        counter := 1
+                    } or {
+                    }
+                    if (counter < 3) {
+                        counter := 1
+                    } else {
+                        counter := 2
+                    }
+                    if (counter > 3) {
+                        counter := 3
+                    }
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -168,9 +210,16 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
                 var counter : int := 0
                 var flag : bool := false
                 var color : test::colors::Color := test::colors::Color::Red
-                init { }
-                tran { havoc(counter) havoc(flag) havoc(color) }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    havoc(counter)
+                    havoc(flag)
+                    havoc(color)
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -182,9 +231,16 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
         val lines = xstsLines(
             """
                 var counter : int := 0
-                init { }
-                tran { var delta : int := 2 var extra : int counter := counter + delta + extra }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    var delta : int := 2
+                    var extra : int
+                    counter := counter + delta + extra
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -198,7 +254,8 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
                 var counter : int := 0
                 var left : bool := false
                 var right : bool := true
-                init { }
+                init {
+                }
                 tran {
                     counter := ((counter + 1) - (2 * counter)) / 3
                     counter := counter - (1 - counter)
@@ -211,7 +268,9 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
                     assume(counter < 1 && counter <= 2 && counter > -3 && counter >= -4 && counter == 0 && counter != 5)
                     counter := if counter < 3 then counter + 1 else 0
                 }
-                prop { AG counter == -(counter + 1) }
+                prop {
+                    AG counter == -(counter + 1)
+                }
             """,
         )
 
@@ -235,9 +294,16 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
         val lines = xstsLines(
             """
                 var counter : int := 0
-                init { }
-                tran { counter := 1 } or { counter := 2 }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    counter := 1
+                } or {
+                    counter := 2
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -249,9 +315,13 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
         val lines = xstsLines(
             """
                 var counter : int := 0
-                init { }
-                tran { }
-                prop { AG counter == 5 }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG counter == 5
+                }
             """,
         )
 
@@ -263,9 +333,13 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
         val lines = xstsLines(
             """
                 var color : test::colors::Color := test::colors::Color::Red
-                init { }
-                tran { }
-                prop { EF color == test::colors::Color::Green }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    EF color == test::colors::Color::Green
+                }
             """,
         )
 
@@ -278,9 +352,13 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
             xsts(
                 """
                     var ratio : real := 0.5
-                    init { }
-                    tran { }
-                    prop { AG true }
+                    init {
+                    }
+                    tran {
+                    }
+                    prop {
+                        AG true
+                    }
                 """,
             )
         }
@@ -293,9 +371,16 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
         val lines = xstsLines(
             """
                 var counter : int := 0
-                init { }
-                tran { for (index in 0..2) { counter := counter + index } }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    for (index in 0..2) {
+                        counter := counter + index
+                    }
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -307,9 +392,16 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
         val lines = xstsLines(
             """
                 var counter : int := 0
-                init { }
-                tran { for (index in 0..<3) { counter := counter + index } }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    for (index in 0..<3) {
+                        counter := counter + index
+                    }
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -322,9 +414,14 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
             xsts(
                 """
                     var flag : bool := false
-                    init { }
-                    tran { flag := 1.5 > 1.0 }
-                    prop { AG true }
+                    init {
+                    }
+                    tran {
+                        flag := 1.5 > 1.0
+                    }
+                    prop {
+                        AG true
+                    }
                 """,
             )
         }

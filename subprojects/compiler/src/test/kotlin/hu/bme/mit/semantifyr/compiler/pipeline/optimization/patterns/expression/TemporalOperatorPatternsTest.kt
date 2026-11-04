@@ -16,16 +16,24 @@ class TemporalOperatorPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var flag : bool := false
-            init { }
-            tran { }
-            prop { !(AG flag) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                !(AG flag)
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var flag : bool := false
-            init { }
-            tran { }
-            prop { EF !flag }
+            init {
+            }
+            tran {
+            }
+            prop {
+                EF !flag
+            }
         """,
     )
 
@@ -35,16 +43,24 @@ class TemporalOperatorPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var flag : bool := false
-            init { }
-            tran { }
-            prop { !(EF flag) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                !(EF flag)
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var flag : bool := false
-            init { }
-            tran { }
-            prop { AG !flag }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG !flag
+            }
         """,
     )
 }

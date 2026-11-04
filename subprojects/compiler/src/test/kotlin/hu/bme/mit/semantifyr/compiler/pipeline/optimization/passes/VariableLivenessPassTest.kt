@@ -15,19 +15,27 @@ class VariableLivenessPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             var observed : int := 0
             var unread : int := 0
-            init { }
+            init {
+            }
             tran {
                 observed := 1
                 unread := 2
             }
-            prop { AG (observed == 1) }
+            prop {
+                AG (observed == 1)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var observed : int := 0
-            init { }
-            tran { observed := 1 }
-            prop { AG (observed == 1) }
+            init {
+            }
+            tran {
+                observed := 1
+            }
+            prop {
+                AG (observed == 1)
+            }
         """,
     ) {
         it.getInstance(VariableLivenessPass::class.java)
@@ -38,15 +46,23 @@ class VariableLivenessPassTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             var constant : int := 7
-            init { }
-            tran { }
-            prop { AG (constant == 7) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (constant == 7)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            init { }
-            tran { }
-            prop { AG (7 == 7) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (7 == 7)
+            }
         """,
     ) {
         it.getInstance(VariableLivenessPass::class.java)
@@ -57,15 +73,23 @@ class VariableLivenessPassTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             var dummy : int := 0
-            init { }
-            tran { }
-            prop { AG true }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            init { }
-            tran { }
-            prop { AG true }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG true
+            }
         """,
     ) {
         it.getInstance(VariableLivenessPass::class.java)
@@ -76,22 +100,28 @@ class VariableLivenessPassTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { }
+            init {
+            }
             tran {
                 havoc(value)
                 value := 1
             }
-            prop { AG (value == 1) }
+            prop {
+                AG (value == 1)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { }
+            init {
+            }
             tran {
                 havoc(value)
                 value := 1
             }
-            prop { AG (value == 1) }
+            prop {
+                AG (value == 1)
+            }
         """,
     ) {
         it.getInstance(VariableLivenessPass::class.java)
@@ -103,17 +133,27 @@ class VariableLivenessPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             @NonOptimizable
             var tracer : bool := false
-            init { }
-            tran { tracer := true }
-            prop { AG true }
+            init {
+            }
+            tran {
+                tracer := true
+            }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             @NonOptimizable
             var tracer : bool := false
-            init { }
-            tran { tracer := true }
-            prop { AG true }
+            init {
+            }
+            tran {
+                tracer := true
+            }
+            prop {
+                AG true
+            }
         """,
     ) {
         it.getInstance(VariableLivenessPass::class.java)
@@ -155,25 +195,37 @@ class VariableLivenessPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var seen : int := 0
-            init { }
+            init {
+            }
             tran {
                 var snapshot : int := source
-                choice { source := 1 } or { }
+                choice {
+                    source := 1
+                } or {
+                }
                 seen := snapshot
             }
-            prop { AG (seen != source) }
+            prop {
+                AG (seen != source)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var seen : int := 0
-            init { }
+            init {
+            }
             tran {
                 var snapshot : int := source
-                choice { source := 1 } or { }
+                choice {
+                    source := 1
+                } or {
+                }
                 seen := snapshot
             }
-            prop { AG (seen != source) }
+            prop {
+                AG (seen != source)
+            }
         """,
     ) {
         it.getInstance(VariableLivenessPass::class.java)
@@ -219,24 +271,30 @@ class VariableLivenessPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var seen : int := 0
-            init { }
+            init {
+            }
             tran {
                 var snapshot : int := source
                 seen := snapshot
                 source := source + 1
             }
-            prop { AG (seen != source) }
+            prop {
+                AG (seen != source)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var source : int := 0
             var seen : int := 0
-            init { }
+            init {
+            }
             tran {
                 seen := source
                 source := source + 1
             }
-            prop { AG (seen != source) }
+            prop {
+                AG (seen != source)
+            }
         """,
     ) {
         it.getInstance(VariableLivenessPass::class.java)
@@ -247,24 +305,30 @@ class VariableLivenessPassTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             var counter : int := 0
-            init { }
+            init {
+            }
             tran {
                 for (index in 0..2) {
                     counter := counter + 1
                 }
             }
-            prop { AG (counter <= 3) }
+            prop {
+                AG (counter <= 3)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var counter : int := 0
-            init { }
+            init {
+            }
             tran {
                 for (index in 0..2) {
                     counter := counter + 1
                 }
             }
-            prop { AG (counter <= 3) }
+            prop {
+                AG (counter <= 3)
+            }
         """,
     ) {
         it.getInstance(VariableLivenessPass::class.java)
@@ -275,22 +339,30 @@ class VariableLivenessPassTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             var counter : int := 0
-            init { }
+            init {
+            }
             tran {
-                for (index in 0..2) { }
+                for (index in 0..2) {
+                }
                 counter := 1
             }
-            prop { AG (counter <= 1) }
+            prop {
+                AG (counter <= 1)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var counter : int := 0
-            init { }
+            init {
+            }
             tran {
-                for (index in 0..2) { }
+                for (index in 0..2) {
+                }
                 counter := 1
             }
-            prop { AG (counter <= 1) }
+            prop {
+                AG (counter <= 1)
+            }
         """,
     ) {
         it.getInstance(VariableLivenessPass::class.java)

@@ -116,9 +116,15 @@ class SpinBackendReplayTest {
                     inlined oxsts of semantifyr::Anything
                     var counter : int := 0
                     var filler : int := 0
-                    init { }
-                    tran { assume(counter < 2) $padding counter := counter + 1 }
-                    prop { AG counter < 2 }
+                    init {
+                    }
+                    tran {
+                        assume(counter < 2) $padding
+                        counter := counter + 1
+                    }
+                    prop {
+                        AG counter < 2
+                    }
                 """,
             ),
         )
@@ -154,9 +160,13 @@ class SpinBackendReplayTest {
                 """
                     inlined oxsts of semantifyr::Anything
                     var ratio : real := 0.5
-                    init { }
-                    tran { }
-                    prop { AG true }
+                    init {
+                    }
+                    tran {
+                    }
+                    prop {
+                        AG true
+                    }
                 """,
             ),
         )

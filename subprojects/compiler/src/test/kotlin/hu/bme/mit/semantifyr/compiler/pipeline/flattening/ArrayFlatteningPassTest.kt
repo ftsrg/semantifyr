@@ -48,9 +48,13 @@ class ArrayFlatteningPassTest {
             """
                 inlined oxsts of semantifyr::Anything
                 var values : int[3] := [10, 20, 30]
-                init { }
-                tran { }
-                prop { AG true }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
 
@@ -74,9 +78,13 @@ class ArrayFlatteningPassTest {
             """
                 inlined oxsts of semantifyr::Anything
                 var values : int[3] := [10, 20, 30]
-                init { }
-                tran { }
-                prop { AG true }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
 
@@ -94,9 +102,13 @@ class ArrayFlatteningPassTest {
             """
                 inlined oxsts of semantifyr::Anything
                 var values : int[2]
-                init { }
-                tran { }
-                prop { AG true }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
 
@@ -116,9 +128,14 @@ class ArrayFlatteningPassTest {
                 inlined oxsts of semantifyr::Anything
                 var values : int[3] := [10, 20, 30]
                 var result : int := 0
-                init { }
-                tran { result := values[1] }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    result := values[1]
+                }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
 
@@ -136,9 +153,14 @@ class ArrayFlatteningPassTest {
             """
                 inlined oxsts of semantifyr::Anything
                 var values : int[3] := [0, 0, 0]
-                init { }
-                tran { values[2] := 42 }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    values[2] := 42
+                }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
 
@@ -154,9 +176,14 @@ class ArrayFlatteningPassTest {
             """
                 inlined oxsts of semantifyr::Anything
                 var scalar : int := 0
-                init { }
-                tran { scalar := 1 }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    scalar := 1
+                }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
 
@@ -178,9 +205,14 @@ class ArrayFlatteningPassTest {
                 var values : int[3] := [10, 20, 30]
                 var index : int := 0
                 var seen : int := 0
-                init { }
-                tran { seen := values[index] }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    seen := values[index]
+                }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
 
@@ -206,9 +238,14 @@ class ArrayFlatteningPassTest {
                 inlined oxsts of semantifyr::Anything
                 var values : int[3] := [0, 0, 0]
                 var index : int := 0
-                init { }
-                tran { values[index] := 42 }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    values[index] := 42
+                }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
 
@@ -231,13 +268,16 @@ class ArrayFlatteningPassTest {
                 inlined oxsts of semantifyr::Anything
                 var result : int := 0
                 var index : int := 0
-                init { }
+                init {
+                }
                 tran {
                     var values : int[3] := [1, 2, result]
                     result := values[index]
                     values[2] := values[0]
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
 
@@ -260,12 +300,15 @@ class ArrayFlatteningPassTest {
             """
                 inlined oxsts of semantifyr::Anything
                 var result : int := 0
-                init { }
+                init {
+                }
                 tran {
                     var values : int[2]
                     result := values[1]
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
 
@@ -284,14 +327,17 @@ class ArrayFlatteningPassTest {
                 var values : int[2] := [1, 2]
                 var others : int[2] := [3, 4]
                 var same : bool := false
-                init { }
+                init {
+                }
                 tran {
                     values := others
                     others := [5, 6]
                     havoc(values)
                     same := values == others
                 }
-                prop { AG values != others }
+                prop {
+                    AG values != others
+                }
             """.trimIndent(),
         )
 
@@ -309,13 +355,16 @@ class ArrayFlatteningPassTest {
                 inlined oxsts of semantifyr::Anything
                 var values : int[2] := [1, 2]
                 var result : int := 0
-                init { }
+                init {
+                }
                 tran {
                     var copy : int[2] := values
                     values[0] := 9
                     result := copy[0]
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
 
@@ -331,9 +380,14 @@ class ArrayFlatteningPassTest {
             """
                 inlined oxsts of semantifyr::Anything
                 var values : int[3] := [0, 0, 0]
-                init { }
-                tran { values[5] := 1 }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    values[5] := 1
+                }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
 
@@ -348,9 +402,13 @@ class ArrayFlatteningPassTest {
             """
                 inlined oxsts of semantifyr::Anything
                 var values : int[4] := [10, 20]
-                init { }
-                tran { }
-                prop { AG true }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
 
@@ -372,9 +430,13 @@ class ArrayFlatteningPassTest {
             """
                 inlined oxsts of semantifyr::Anything
                 var values : int[2] := [1, 2, 3]
-                init { }
-                tran { }
-                prop { AG true }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
 
@@ -389,9 +451,13 @@ class ArrayFlatteningPassTest {
             """
                 inlined oxsts of semantifyr::Anything
                 var flags : bool[2] := [true, false]
-                init { }
-                tran { }
-                prop { AG true }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
 
@@ -412,12 +478,15 @@ class ArrayFlatteningPassTest {
                 inlined oxsts of semantifyr::Anything
                 var values : int[2] := [1, 2]
                 var others : int[2] := [3, 4]
-                init { }
+                init {
+                }
                 tran {
                     values := [values[1], values[0]]
                     others := [if others[0] > 0 then values[0] else others[0], if others[0] > 0 then values[1] else others[1]]
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
 
@@ -436,12 +505,15 @@ class ArrayFlatteningPassTest {
                 var values : int[2] := [1, 2]
                 var others : int[2] := [3, 4]
                 var index : int := 0
-                init { }
+                init {
+                }
                 tran {
                     values := [values[0] + 1, values[1] + 1]
                     others := [0, others[index]]
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
 

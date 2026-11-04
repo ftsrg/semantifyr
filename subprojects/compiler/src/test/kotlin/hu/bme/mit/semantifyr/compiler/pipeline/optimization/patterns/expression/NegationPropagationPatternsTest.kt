@@ -16,16 +16,24 @@ class NegationPropagationPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var operand : bool := false
-            init { }
-            tran { }
-            prop { AG !(!operand) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG !(!operand)
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var operand : bool := false
-            init { }
-            tran { }
-            prop { AG operand }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG operand
+            }
         """,
     )
 
@@ -35,16 +43,24 @@ class NegationPropagationPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var operand : int := 0
-            init { }
-            tran { }
-            prop { AG !(operand == 0) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG !(operand == 0)
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var operand : int := 0
-            init { }
-            tran { }
-            prop { AG (operand != 0) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand != 0)
+            }
         """,
     )
 
@@ -54,16 +70,24 @@ class NegationPropagationPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var operand : int := 0
-            init { }
-            tran { }
-            prop { AG !(operand < 0) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG !(operand < 0)
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var operand : int := 0
-            init { }
-            tran { }
-            prop { AG (operand >= 0) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand >= 0)
+            }
         """,
     )
 
@@ -74,17 +98,25 @@ class NegationPropagationPatternsTest : PatternTestBase() {
             inlined oxsts of semantifyr::Anything
             var left : bool := false
             var right : bool := false
-            init { }
-            tran { }
-            prop { AG !(left && right) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG !(left && right)
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var left : bool := false
             var right : bool := false
-            init { }
-            tran { }
-            prop { AG (!left || !right) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (!left || !right)
+            }
         """,
     )
 
@@ -95,17 +127,25 @@ class NegationPropagationPatternsTest : PatternTestBase() {
             inlined oxsts of semantifyr::Anything
             var left : bool := false
             var right : bool := false
-            init { }
-            tran { }
-            prop { AG !(left || right) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG !(left || right)
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var left : bool := false
             var right : bool := false
-            init { }
-            tran { }
-            prop { AG (!left && !right) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (!left && !right)
+            }
         """,
     )
 }

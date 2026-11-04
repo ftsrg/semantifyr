@@ -139,9 +139,13 @@ class ThetaBackendReplayTest {
                 """
                     inlined oxsts of semantifyr::Anything
                     var ratio : real := 0.5
-                    init { }
-                    tran { }
-                    prop { AG true }
+                    init {
+                    }
+                    tran {
+                    }
+                    prop {
+                        AG true
+                    }
                 """,
             ),
         )

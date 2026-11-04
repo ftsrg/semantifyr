@@ -13,7 +13,10 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
 
     private val colors = """
         package test::colors
-        enum Color { Red, Green }
+        enum Color {
+            Red,
+            Green,
+        }
     """
 
     private fun unsupported(body: String): List<String> {
@@ -32,9 +35,22 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
                 var counter : int := 0
                 var flag : bool
                 var color : test::colors::Color := test::colors::Color::Red
-                init { havoc(flag) }
-                tran { choice { assume(counter < 3) counter := counter + 1 } or { if (flag) { color := test::colors::Color::Green } } }
-                prop { AG (counter <= 3 && (if flag then true else color == test::colors::Color::Red)) }
+                init {
+                    havoc(flag)
+                }
+                tran {
+                    choice {
+                        assume(counter < 3)
+                        counter := counter + 1
+                    } or {
+                        if (flag) {
+                            color := test::colors::Color::Green
+                        }
+                    }
+                }
+                prop {
+                    AG (counter <= 3 && (if flag then true else color == test::colors::Color::Red))
+                }
             """,
         )
 
@@ -49,9 +65,16 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
                 var anything : any := 0
                 var text : string
                 var counter : int := 0
-                init { }
-                tran { for (index in 0..2) { counter := counter + index } }
-                prop { AG (if counter < 3 then 1 else 0) == 1 }
+                init {
+                }
+                tran {
+                    for (index in 0..2) {
+                        counter := counter + index
+                    }
+                }
+                prop {
+                    AG (if counter < 3 then 1 else 0) == 1
+                }
             """,
         )
 
@@ -72,9 +95,15 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
             """
                 var counted : int := 0
                 var ignored : int := 0
-                init { }
-                tran { counted := counted + 1 ignored := ignored + 1 }
-                prop { AG counted >= 0 }
+                init {
+                }
+                tran {
+                    counted := counted + 1
+                    ignored := ignored + 1
+                }
+                prop {
+                    AG counted >= 0
+                }
             """,
         )
 
@@ -87,9 +116,21 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
             """
                 var counter : int := 0
                 var observed : int := 0
-                init { }
-                tran { choice { counter := counter + 1 } or { if (counter <= 5) { assume(false) } observed := 1 } }
-                prop { AG observed == 0 }
+                init {
+                }
+                tran {
+                    choice {
+                        counter := counter + 1
+                    } or {
+                        if (counter <= 5) {
+                            assume(false)
+                        }
+                        observed := 1
+                    }
+                }
+                prop {
+                    AG observed == 0
+                }
             """,
         )
 
@@ -101,9 +142,16 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
         val unsupported = unsupported(
             """
                 var counter : int := 1
-                init { }
-                tran { if (counter < 100000) { counter := counter * 100000 } }
-                prop { AG counter > 0 }
+                init {
+                }
+                tran {
+                    if (counter < 100000) {
+                        counter := counter * 100000
+                    }
+                }
+                prop {
+                    AG counter > 0
+                }
             """,
         )
 
@@ -116,9 +164,17 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
             """
                 var counter : int := 0
                 var scaled : int := 0
-                init { }
-                tran { if (counter < 5000) { counter := counter + 1 } scaled := (counter * 1000000) / 1000000 }
-                prop { AG scaled <= 5000 }
+                init {
+                }
+                tran {
+                    if (counter < 5000) {
+                        counter := counter + 1
+                    }
+                    scaled := (counter * 1000000) / 1000000
+                }
+                prop {
+                    AG scaled <= 5000
+                }
             """,
         )
 
@@ -130,9 +186,14 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
         val unsupported = unsupported(
             """
                 var counter : int
-                init { }
-                tran { havoc(counter) }
-                prop { AG counter < 5 }
+                init {
+                }
+                tran {
+                    havoc(counter)
+                }
+                prop {
+                    AG counter < 5
+                }
             """,
         )
 

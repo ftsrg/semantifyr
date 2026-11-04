@@ -27,9 +27,13 @@ class SourceErrorTest {
                 inlined oxsts of semantifyr::Anything
                 var first : int := 0
                 var second : int := 0
-                init { }
-                tran { }
-                prop { AG true }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
 
@@ -50,9 +54,13 @@ class SourceErrorTest {
                 inlined oxsts of semantifyr::Anything
                 var first : int := 0
                 var second : int := 0
-                init { }
-                tran { }
-                prop { AG true }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
 

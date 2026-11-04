@@ -18,16 +18,24 @@ class AlgebraicPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var operand : int := 0
-            init { }
-            tran { }
-            prop { AG (0 + operand == 0) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (0 + operand == 0)
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var operand : int := 0
-            init { }
-            tran { }
-            prop { AG (operand == 0) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand == 0)
+            }
         """,
     )
 
@@ -37,16 +45,24 @@ class AlgebraicPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var operand : int := 0
-            init { }
-            tran { }
-            prop { AG (operand * 0 == 0) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand * 0 == 0)
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var operand : int := 0
-            init { }
-            tran { }
-            prop { AG (0 == 0) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (0 == 0)
+            }
         """,
     )
 
@@ -56,16 +72,24 @@ class AlgebraicPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var operand : int := 0
-            init { }
-            tran { }
-            prop { AG (1 * operand == 0) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (1 * operand == 0)
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var operand : int := 0
-            init { }
-            tran { }
-            prop { AG (operand == 0) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand == 0)
+            }
         """,
     )
 
@@ -75,16 +99,24 @@ class AlgebraicPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var operand : int := 0
-            init { }
-            tran { }
-            prop { AG (operand / 1 == 0) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand / 1 == 0)
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var operand : int := 0
-            init { }
-            tran { }
-            prop { AG (operand == 0) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand == 0)
+            }
         """,
     )
 
@@ -94,16 +126,24 @@ class AlgebraicPatternsTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var operand : int := 0
-            init { }
-            tran { }
-            prop { AG (-(-operand) == 0) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (-(-operand) == 0)
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
             var operand : int := 0
-            init { }
-            tran { }
-            prop { AG (operand == 0) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand == 0)
+            }
         """,
     )
 }

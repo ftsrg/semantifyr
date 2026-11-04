@@ -26,15 +26,23 @@ class ConstantFoldingPatternTest : PatternTestBase() {
         pattern = pattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            init { }
-            tran { }
-            prop { AG (1 + 2 == 3) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (1 + 2 == 3)
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            init { }
-            tran { }
-            prop { AG true }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -44,9 +52,13 @@ class ConstantFoldingPatternTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
-            init { }
-            tran { }
-            prop { AG (value + 1 == 0) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (value + 1 == 0)
+            }
         """,
     )
 
@@ -55,15 +67,25 @@ class ConstantFoldingPatternTest : PatternTestBase() {
         pattern = pattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            init { }
-            tran { assume (- 1 == 3) }
-            prop { AG true }
+            init {
+            }
+            tran {
+                assume (- 1 == 3)
+            }
+            prop {
+                AG true
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            init { }
-            tran { assume false }
-            prop { AG true }
+            init {
+            }
+            tran {
+                assume false
+            }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -72,15 +94,23 @@ class ConstantFoldingPatternTest : PatternTestBase() {
         pattern = pattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            init { }
-            tran { }
-            prop { AG (- 1 + 2 == 1) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (- 1 + 2 == 1)
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            init { }
-            tran { }
-            prop { AG true }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -90,9 +120,13 @@ class ConstantFoldingPatternTest : PatternTestBase() {
         input = """
             inlined oxsts of semantifyr::Anything
             var value : int := - 1
-            init { }
-            tran { }
-            prop { AG (value == 0) }
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (value == 0)
+            }
         """,
     )
 }
