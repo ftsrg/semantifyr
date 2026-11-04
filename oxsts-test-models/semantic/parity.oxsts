@@ -6,16 +6,9 @@
 
 package semantifyr::verification::lang::parity
 
-// Backend parity cases: a minimal, universally-supported subset of the
-// language that every production backend (Theta, nuXmv, Spin, Uppaal)
-// must be able to verify. Each feature appears with both a reachability
-// (EF) and a safety (AG) claim so compilation drift in any backend's
-// transform is caught on one side or the other.
-
-// --- integer counter: reachability ---
 @VerificationCase
 @Tag("expect-pass")
-class IntCounterReach {
+class IntegerCounterReach {
     var x: int := 0
 
     redefine tran {
@@ -28,10 +21,9 @@ class IntCounterReach {
     }
 }
 
-// --- integer counter: safety bound ---
 @VerificationCase
 @Tag("expect-pass")
-class IntCounterBound {
+class IntegerCounterBound {
     var x: int := 0
 
     redefine tran {
@@ -44,10 +36,9 @@ class IntCounterBound {
     }
 }
 
-// --- boolean havoc: true reachable ---
 @VerificationCase
 @Tag("expect-pass")
-class BoolHavocTrue {
+class BooleanHavocTrue {
     var flag: bool := false
 
     redefine tran {
@@ -59,10 +50,9 @@ class BoolHavocTrue {
     }
 }
 
-// --- boolean havoc: false reachable ---
 @VerificationCase
 @Tag("expect-pass")
-class BoolHavocFalse {
+class BooleanHavocFalse {
     var flag: bool := true
 
     redefine tran {
@@ -74,7 +64,6 @@ class BoolHavocFalse {
     }
 }
 
-// --- choice + assume: only enumerated branches are reachable ---
 @VerificationCase
 @Tag("expect-pass")
 class ChoiceBound {
@@ -93,7 +82,6 @@ class ChoiceBound {
     }
 }
 
-// --- choice + assume: each branch is individually reachable ---
 @VerificationCase
 @Tag("expect-pass")
 class ChoiceBranchReach {
