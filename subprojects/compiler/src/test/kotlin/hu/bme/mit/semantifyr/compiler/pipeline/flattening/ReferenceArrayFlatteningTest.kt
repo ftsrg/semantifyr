@@ -55,11 +55,11 @@ class ReferenceArrayFlatteningTest : FlatteningTestBase() {
                     contains first: Job
                     contains second: Job
                     var queue: Job[2] := [first, second]
-                    var i: int := 0
+                    var index: int := 0
                     redefine tran {
                         havoc(queue)
-                        queue[i] := second
-                        inline queue[i].finish()
+                        queue[index] := second
+                        inline queue[index].finish()
                     }
                     prop { return EF queue[0] == second }
                 }

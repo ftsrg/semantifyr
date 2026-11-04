@@ -24,7 +24,7 @@ import java.nio.file.Path
 
 class CompilationArtifactManagerTest {
     @TempDir
-    lateinit var tempDir: Path
+    lateinit var temporaryDirectory: Path
 
     private val serializer: ISerializer = mock()
     private val inlinedOxsts: InlinedOxsts = mock()
@@ -44,12 +44,12 @@ class CompilationArtifactManagerTest {
             @Suppress("UNCHECKED_CAST")
             val block = it.arguments[1] as (File) -> Unit
             if (config.isEnabled(kind)) {
-                val target = tempDir.resolve("${kind.name}.out").toFile()
+                val target = temporaryDirectory.resolve("${kind.name}.out").toFile()
                 target.parentFile?.mkdirs()
                 block(target)
             }
         }
-        val request = CompilationRequest(inlinedOxsts = inlinedOxsts, outputDirectory = tempDir)
+        val request = CompilationRequest(inlinedOxsts = inlinedOxsts, outputDirectory = temporaryDirectory)
         return CompilationArtifactManager(serializer, artifactManager, config, request)
     }
 

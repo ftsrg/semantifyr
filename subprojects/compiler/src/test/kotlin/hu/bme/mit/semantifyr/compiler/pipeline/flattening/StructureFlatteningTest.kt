@@ -115,16 +115,16 @@ class StructureFlatteningTest : FlatteningTestBase() {
                 package flattening::tests
                 @VerificationCase
                 class Host {
-                    var x : int := 0
+                    var counter : int := 0
                     redefine init {
-                        x := 1
+                        counter := 1
                     } or {
-                        x := 2
+                        counter := 2
                     }
                     redefine tran {
-                        x := x + 1
+                        counter := counter + 1
                     } or {
-                        x := x - 1
+                        counter := counter - 1
                     }
                     prop { return AG true }
                 }

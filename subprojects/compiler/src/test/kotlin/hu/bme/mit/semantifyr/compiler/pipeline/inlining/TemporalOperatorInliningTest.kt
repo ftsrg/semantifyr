@@ -19,9 +19,9 @@ class TemporalOperatorInliningTest : InliningTestBase() {
                 package inlining::tests
                 @VerificationCase
                 class Host {
-                    var x: int := 0
+                    var counter: int := 0
                     prop {
-                        return AG (EF x == 0)
+                        return AG (EF counter == 0)
                     }
                 }
             """,

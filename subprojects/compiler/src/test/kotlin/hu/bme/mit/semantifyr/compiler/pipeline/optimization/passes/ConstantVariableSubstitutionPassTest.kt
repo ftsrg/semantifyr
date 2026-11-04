@@ -14,15 +14,15 @@ class ConstantVariableSubstitutionPassTest : PassTestBase() {
     fun `variable whose initializer and only assignment agree is substituted`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 7
-            init { a := 7 }
+            var value : int := 7
+            init { value := 7 }
             tran { }
-            prop { AG (a == 7) }
+            prop { AG (value == 7) }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 7
-            init { a := 7 }
+            var value : int := 7
+            init { value := 7 }
             tran { }
             prop { AG (7 == 7) }
         """,
@@ -35,23 +35,23 @@ class ConstantVariableSubstitutionPassTest : PassTestBase() {
     fun `havoced variable is not treated as constant`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
             tran {
-                havoc(a)
-                a := 7
+                havoc(value)
+                value := 7
             }
-            prop { AG (a == 7) }
+            prop { AG (value == 7) }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
             tran {
-                havoc(a)
-                a := 7
+                havoc(value)
+                value := 7
             }
-            prop { AG (a == 7) }
+            prop { AG (value == 7) }
         """,
         analysisClasses = listOf(ConstantValueAnalysis::class.java),
     ) {
@@ -62,21 +62,21 @@ class ConstantVariableSubstitutionPassTest : PassTestBase() {
     fun `variable with differing writes is not treated as constant`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
             tran {
-                choice { a := 1 } or { a := 2 }
+                choice { value := 1 } or { value := 2 }
             }
-            prop { AG (a != 3) }
+            prop { AG (value != 3) }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
             tran {
-                choice { a := 1 } or { a := 2 }
+                choice { value := 1 } or { value := 2 }
             }
-            prop { AG (a != 3) }
+            prop { AG (value != 3) }
         """,
         analysisClasses = listOf(ConstantValueAnalysis::class.java),
     ) {

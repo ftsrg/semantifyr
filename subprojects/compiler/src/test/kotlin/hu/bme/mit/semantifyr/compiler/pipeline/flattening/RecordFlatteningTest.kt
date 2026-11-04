@@ -53,26 +53,26 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var p: Point
-                    var s: Segment
-                    prop { return AG p.x == s.from.x }
+                    var position: Point
+                    var segment: Segment
+                    prop { return AG position.x == segment.from.x }
                 }
             """,
         )
 
         assertThat(flattened.inlinedOxsts.variables.map { it.name }).containsExactly(
-            field("p", "x"),
-            field("p", "y"),
-            field("s", "from", "x"),
-            field("s", "from", "y"),
-            field("s", "to", "x"),
-            field("s", "to", "y"),
-            field("s", "color"),
+            field("position", "x"),
+            field("position", "y"),
+            field("segment", "from", "x"),
+            field("segment", "from", "y"),
+            field("segment", "to", "x"),
+            field("segment", "to", "y"),
+            field("segment", "color"),
         )
-        assertThat(flattened.variableNamed(field("p", "x")).expression).isNull()
-        assertThat(serialize(flattened.variableNamed(field("p", "y")))).contains(":= 7")
-        assertThat(serialize(flattened.variableNamed(field("s", "color")))).contains("Color::Green")
-        assertThat(serialize(flattened.inlinedOxsts.property)).contains("${quoted(field("p", "x"))} == ${quoted(field("s", "from", "x"))}")
+        assertThat(flattened.variableNamed(field("position", "x")).expression).isNull()
+        assertThat(serialize(flattened.variableNamed(field("position", "y")))).contains(":= 7")
+        assertThat(serialize(flattened.variableNamed(field("segment", "color")))).contains("Color::Green")
+        assertThat(serialize(flattened.inlinedOxsts.property)).contains("${quoted(field("position", "x"))} == ${quoted(field("segment", "from", "x"))}")
     }
 
     @Test
@@ -82,25 +82,25 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var p: Point
-                    var q: Point
+                    var position: Point
+                    var previous: Point
                     redefine tran {
-                        p.x := p.x + 1
-                        q := p
-                        havoc(p)
+                        position.x := position.x + 1
+                        previous := position
+                        havoc(position)
                     }
-                    prop { return AG p != q }
+                    prop { return AG position != previous }
                 }
             """,
         )
 
-        val px = quoted(field("p", "x"))
-        val py = quoted(field("p", "y"))
-        val qx = quoted(field("q", "x"))
-        val qy = quoted(field("q", "y"))
+        val positionX = quoted(field("position", "x"))
+        val positionY = quoted(field("position", "y"))
+        val previousX = quoted(field("previous", "x"))
+        val previousY = quoted(field("previous", "y"))
         val main = serialize(flattened.inlinedOxsts.mainTransition)
-        assertThat(main).contains("$px := $px + 1", "$qx := $px", "$qy := $py", "havoc ($px)", "havoc ($py)")
-        assertThat(serialize(flattened.inlinedOxsts.property)).contains("$px != $qx || $py != $qy")
+        assertThat(main).contains("$positionX := $positionX + 1", "$previousX := $positionX", "$previousY := $positionY", "havoc ($positionX)", "havoc ($positionY)")
+        assertThat(serialize(flattened.inlinedOxsts.property)).contains("$positionX != $previousX || $positionY != $previousY")
     }
 
     @Test
@@ -110,16 +110,16 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var s: Segment
-                    var t: Segment
-                    prop { return AG s == t }
+                    var segment: Segment
+                    var otherSegment: Segment
+                    prop { return AG segment == otherSegment }
                 }
             """,
         )
 
         val property = serialize(flattened.inlinedOxsts.property)
         for (path in listOf(listOf("from", "x"), listOf("from", "y"), listOf("to", "x"), listOf("to", "y"), listOf("color"))) {
-            assertThat(property).contains("${quoted(field("s", *path.toTypedArray()))} == ${quoted(field("t", *path.toTypedArray()))}")
+            assertThat(property).contains("${quoted(field("segment", *path.toTypedArray()))} == ${quoted(field("otherSegment", *path.toTypedArray()))}")
         }
     }
 
@@ -130,23 +130,23 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var p: Point
+                    var position: Point
                     redefine tran {
-                        var copy: Point := p
+                        var copy: Point := position
                         copy.x := copy.x + 1
-                        p := copy
+                        position := copy
                     }
-                    prop { return AG p.x >= 0 }
+                    prop { return AG position.x >= 0 }
                 }
             """,
         )
 
-        val px = Regex.escape(quoted(field("p", "x")))
-        val py = Regex.escape(quoted(field("p", "y")))
+        val positionX = Regex.escape(quoted(field("position", "x")))
+        val positionY = Regex.escape(quoted(field("position", "y")))
         val main = serialize(flattened.inlinedOxsts.mainTransition)
-        assertThat(main).containsPattern("var ${localField("copy", "x")} : int := $px")
-        assertThat(main).containsPattern("var ${localField("copy", "y")} : int := $py")
-        assertThat(main).containsPattern("$px := ${localField("copy", "x")}")
+        assertThat(main).containsPattern("var ${localField("copy", "x")} : int := $positionX")
+        assertThat(main).containsPattern("var ${localField("copy", "y")} : int := $positionY")
+        assertThat(main).containsPattern("$positionX := ${localField("copy", "x")}")
     }
 
     @Test
@@ -156,12 +156,12 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var p: Point
+                    var position: Point
                     redefine tran {
                         var fresh: Point
-                        p := fresh
+                        position := fresh
                     }
-                    prop { return AG p.y == 7 }
+                    prop { return AG position.y == 7 }
                 }
             """,
         )
@@ -179,14 +179,14 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var p: Point
-                    var q: Point
+                    var position: Point
+                    var previous: Point
                     var flag: bool := false
                     tran move(target: Point) {
-                        p := if flag then target else p
+                        position := if flag then target else position
                     }
-                    redefine tran { inline move(q) }
-                    prop { return AG p == q }
+                    redefine tran { inline move(previous) }
+                    prop { return AG position == previous }
                 }
             """,
         )
@@ -194,9 +194,9 @@ class RecordFlatteningTest : FlatteningTestBase() {
         val flag = quoted(field("flag"))
         val main = serialize(flattened.inlinedOxsts.mainTransition)
         for (name in listOf("x", "y")) {
-            val p = quoted(field("p", name))
-            val q = quoted(field("q", name))
-            assertThat(main).contains("$p := if $flag then $q else $p")
+            val position = quoted(field("position", name))
+            val previous = quoted(field("previous", name))
+            assertThat(main).contains("$position := if $flag then $previous else $position")
         }
     }
 
@@ -207,15 +207,15 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var s: Segment
-                    prop { return AG s.to.y == 7 }
+                    var segment: Segment
+                    prop { return AG segment.to.y == 7 }
                 }
             """,
         )
 
-        val leaf = flattened.variableNamed(field("s", "to", "y"))
+        val leaf = flattened.variableNamed(field("segment", "to", "y"))
         val recordField = flattened.flatteningInfo.recordFields.getValue(leaf)
-        assertThat(recordField.recordVariable.name).isEqualTo("s")
+        assertThat(recordField.recordVariable.name).isEqualTo("segment")
         assertThat(recordField.fields.map { it.name }).containsExactly("to", "y")
         assertThat(flattened.flatteningInfo.variableHolders).containsKey(leaf)
     }
@@ -227,21 +227,21 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var p: Point
-                    var n: int := 0
+                    var position: Point
+                    var offset: int := 0
                     redefine tran {
-                        p := Point { x = n + 1 }
+                        position := Point { x = offset + 1 }
                     }
-                    prop { return AG p.x >= 0 }
+                    prop { return AG position.x >= 0 }
                 }
             """,
         )
 
-        val px = quoted(field("p", "x"))
-        val py = quoted(field("p", "y"))
-        val n = quoted(field("n"))
+        val positionX = quoted(field("position", "x"))
+        val positionY = quoted(field("position", "y"))
+        val offset = quoted(field("offset"))
         val main = serialize(flattened.inlinedOxsts.mainTransition)
-        assertThat(main).contains("$px := $n + 1", "$py := 7")
+        assertThat(main).contains("$positionX := $offset + 1", "$positionY := 7")
         assertThat(main).doesNotContain("Point")
     }
 
@@ -252,21 +252,21 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var p: Point := Point { x = 1, y = 2 }
+                    var position: Point := Point { x = 1, y = 2 }
                     redefine tran {
-                        var local: Point := Point { x = p.y }
-                        p := local
+                        var local: Point := Point { x = position.y }
+                        position := local
                     }
-                    prop { return AG p.x >= 0 }
+                    prop { return AG position.x >= 0 }
                 }
             """,
         )
 
-        assertThat(serialize(flattened.variableNamed(field("p", "x")))).contains(":= 1")
-        assertThat(serialize(flattened.variableNamed(field("p", "y")))).contains(":= 2")
-        val py = Regex.escape(quoted(field("p", "y")))
+        assertThat(serialize(flattened.variableNamed(field("position", "x")))).contains(":= 1")
+        assertThat(serialize(flattened.variableNamed(field("position", "y")))).contains(":= 2")
+        val positionY = Regex.escape(quoted(field("position", "y")))
         val main = serialize(flattened.inlinedOxsts.mainTransition)
-        assertThat(main).containsPattern("var ${localField("local", "x")} : int := $py")
+        assertThat(main).containsPattern("var ${localField("local", "x")} : int := $positionY")
         assertThat(main).containsPattern("var ${localField("local", "y")} : int := 7")
     }
 
@@ -277,23 +277,23 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var p: Point
-                    var s: Segment
-                    prop { return AG (p != Point { x = 1, y = 2 } || s == Segment { from = p, to = Point { x = 3 } }) }
+                    var position: Point
+                    var segment: Segment
+                    prop { return AG (position != Point { x = 1, y = 2 } || segment == Segment { from = position, to = Point { x = 3 } }) }
                 }
             """,
         )
 
-        val px = quoted(field("p", "x"))
-        val py = quoted(field("p", "y"))
+        val positionX = quoted(field("position", "x"))
+        val positionY = quoted(field("position", "y"))
         val property = serialize(flattened.inlinedOxsts.property)
-        assertThat(property).contains("$px != 1 || $py != 2")
+        assertThat(property).contains("$positionX != 1 || $positionY != 2")
         assertThat(property).contains(
-            "${quoted(field("s", "from", "x"))} == $px",
-            "${quoted(field("s", "from", "y"))} == $py",
-            "${quoted(field("s", "to", "x"))} == 3",
-            "${quoted(field("s", "to", "y"))} == 7",
-            "${quoted(field("s", "color"))} == ",
+            "${quoted(field("segment", "from", "x"))} == $positionX",
+            "${quoted(field("segment", "from", "y"))} == $positionY",
+            "${quoted(field("segment", "to", "x"))} == 3",
+            "${quoted(field("segment", "to", "y"))} == 7",
+            "${quoted(field("segment", "color"))} == ",
         )
     }
 
@@ -308,20 +308,20 @@ class RecordFlatteningTest : FlatteningTestBase() {
                 }
                 @VerificationCase
                 class Host {
-                    var l: Line
-                    var m: Line := Line { to = Point { x = 3 } }
-                    prop { return AG l.from.x == m.to.x }
+                    var defaultLine: Line
+                    var initializedLine: Line := Line { to = Point { x = 3 } }
+                    prop { return AG defaultLine.from.x == initializedLine.to.x }
                 }
             """,
         )
 
-        assertThat(serialize(flattened.variableNamed(field("l", "from", "x")))).contains(":= 1")
-        assertThat(serialize(flattened.variableNamed(field("l", "from", "y")))).contains(":= 1")
-        assertThat(flattened.variableNamed(field("l", "to", "x")).expression).isNull()
-        assertThat(serialize(flattened.variableNamed(field("l", "to", "y")))).contains(":= 7")
-        assertThat(serialize(flattened.variableNamed(field("m", "from", "x")))).contains(":= 1")
-        assertThat(serialize(flattened.variableNamed(field("m", "to", "x")))).contains(":= 3")
-        assertThat(serialize(flattened.variableNamed(field("m", "to", "y")))).contains(":= 7")
+        assertThat(serialize(flattened.variableNamed(field("defaultLine", "from", "x")))).contains(":= 1")
+        assertThat(serialize(flattened.variableNamed(field("defaultLine", "from", "y")))).contains(":= 1")
+        assertThat(flattened.variableNamed(field("defaultLine", "to", "x")).expression).isNull()
+        assertThat(serialize(flattened.variableNamed(field("defaultLine", "to", "y")))).contains(":= 7")
+        assertThat(serialize(flattened.variableNamed(field("initializedLine", "from", "x")))).contains(":= 1")
+        assertThat(serialize(flattened.variableNamed(field("initializedLine", "to", "x")))).contains(":= 3")
+        assertThat(serialize(flattened.variableNamed(field("initializedLine", "to", "y")))).contains(":= 7")
     }
 
     @Test
@@ -331,25 +331,25 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var p: Point
+                    var position: Point
                     var last: int := 0
                     tran moveTo(target: Point) {
-                        p := target
+                        position := target
                         last := target.x
                     }
                     redefine tran {
                         inline moveTo(Point { x = last + 1 })
                     }
-                    prop { return AG p.x == last }
+                    prop { return AG position.x == last }
                 }
             """,
         )
 
-        val px = quoted(field("p", "x"))
-        val py = quoted(field("p", "y"))
+        val positionX = quoted(field("position", "x"))
+        val positionY = quoted(field("position", "y"))
         val last = quoted(field("last"))
         val main = serialize(flattened.inlinedOxsts.mainTransition)
-        assertThat(main).contains("$px := $last + 1", "$py := 7", "$last := $last + 1")
+        assertThat(main).contains("$positionX := $last + 1", "$positionY := 7", "$last := $last + 1")
     }
 
     @Test
@@ -359,21 +359,21 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var p: Point
+                    var position: Point
                     var flag: bool := false
                     redefine tran {
-                        p := if flag then Point { x = 1 } else p
+                        position := if flag then Point { x = 1 } else position
                     }
-                    prop { return AG p.x >= 0 }
+                    prop { return AG position.x >= 0 }
                 }
             """,
         )
 
-        val px = quoted(field("p", "x"))
-        val py = quoted(field("p", "y"))
+        val positionX = quoted(field("position", "x"))
+        val positionY = quoted(field("position", "y"))
         val flag = quoted(field("flag"))
         val main = serialize(flattened.inlinedOxsts.mainTransition)
-        assertThat(main).contains("$px := if $flag then 1 else $px", "$py := if $flag then 7 else $py")
+        assertThat(main).contains("$positionX := if $flag then 1 else $positionX", "$positionY := if $flag then 7 else $positionY")
     }
 
     @Test
@@ -383,20 +383,20 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var p: Point
-                    prop next(): int { return p.x + 1 }
+                    var position: Point
+                    prop next(): int { return position.x + 1 }
                     redefine tran {
-                        p := Point { x = next(), y = Point { x = next() }.x }
+                        position := Point { x = next(), y = Point { x = next() }.x }
                     }
-                    prop { return AG p.x >= 0 }
+                    prop { return AG position.x >= 0 }
                 }
             """,
         )
 
-        val px = Regex.escape(quoted(field("p", "x")))
-        val py = Regex.escape(quoted(field("p", "y")))
+        val positionX = Regex.escape(quoted(field("position", "x")))
+        val positionY = Regex.escape(quoted(field("position", "y")))
         val main = serialize(flattened.inlinedOxsts.mainTransition)
-        assertThat(main).containsPattern("var ${saved(field("p", "y"))} : int := $px \\+ 1\\s+$px := $px \\+ 1\\s+$py := ${saved(field("p", "y"))}")
+        assertThat(main).containsPattern("var ${saved(field("position", "y"))} : int := $positionX \\+ 1\\s+$positionX := $positionX \\+ 1\\s+$positionY := ${saved(field("position", "y"))}")
     }
 
     @Test
@@ -406,25 +406,25 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var p: Point
-                    var q: Point
+                    var position: Point
+                    var previous: Point
                     redefine tran {
-                        p := Point { x = p.y, y = p.x }
-                        q := if q.x > 0 then p else q
+                        position := Point { x = position.y, y = position.x }
+                        previous := if previous.x > 0 then position else previous
                     }
-                    prop { return AG p.x >= 0 }
+                    prop { return AG position.x >= 0 }
                 }
             """,
         )
 
-        val px = Regex.escape(quoted(field("p", "x")))
-        val py = Regex.escape(quoted(field("p", "y")))
-        val qx = Regex.escape(quoted(field("q", "x")))
-        val qy = Regex.escape(quoted(field("q", "y")))
-        val savedPy = saved(field("p", "y"))
-        val savedGuard = saved(field("q", "y"))
+        val positionX = Regex.escape(quoted(field("position", "x")))
+        val positionY = Regex.escape(quoted(field("position", "y")))
+        val previousX = Regex.escape(quoted(field("previous", "x")))
+        val previousY = Regex.escape(quoted(field("previous", "y")))
+        val savedPy = saved(field("position", "y"))
+        val savedGuard = saved(field("previous", "y"))
         val main = serialize(flattened.inlinedOxsts.mainTransition)
-        assertThat(main).containsPattern("var $savedPy : int := $px\\s+$px := $py\\s+$py := $savedPy")
-        assertThat(main).containsPattern("var $savedGuard : int := if $qx > 0 then $py else $qy\\s+$qx := if $qx > 0 then $px else $qx\\s+$qy := $savedGuard")
+        assertThat(main).containsPattern("var $savedPy : int := $positionX\\s+$positionX := $positionY\\s+$positionY := $savedPy")
+        assertThat(main).containsPattern("var $savedGuard : int := if $previousX > 0 then $positionY else $previousY\\s+$previousX := if $previousX > 0 then $positionX else $previousX\\s+$previousY := $savedGuard")
     }
 }

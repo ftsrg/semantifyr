@@ -49,7 +49,7 @@ class CompilationMetricsTest {
     private lateinit var loader: SemantifyrLoader
 
     @TempDir
-    lateinit var tempDir: Path
+    lateinit var temporaryDirectory: Path
 
     @Test
     fun `model sizes count the smoke case at every level`() {
@@ -123,7 +123,7 @@ class CompilationMetricsTest {
             it.declarations
         }.filterIsInstance<ClassDeclaration>().single()
         val compiler = SemantifyrCompiler(injector, ArtifactConfig.NONE, optimization)
-        return compiler.compile(classDeclaration, tempDir).compilationMetrics
+        return compiler.compile(classDeclaration, temporaryDirectory).compilationMetrics
     }
 
     private fun CompilationMetrics.withoutDurations(): CompilationMetrics {

@@ -100,8 +100,8 @@ class InlineOperationExpanderTest : InliningTestBase() {
             var total : int := 0
             init { }
             tran {
-                inline for (n in 1..3) {
-                    total := total + n
+                inline for (index in 1..3) {
+                    total := total + index
                 }
             }
             prop { AG true }
@@ -134,8 +134,8 @@ class InlineOperationExpanderTest : InliningTestBase() {
             var chosen : int := 0
             init { }
             tran {
-                inline for choice (n in 1..3) {
-                    chosen := n
+                inline for choice (index in 1..3) {
+                    chosen := index
                 }
             }
             prop { AG true }
@@ -164,8 +164,8 @@ class InlineOperationExpanderTest : InliningTestBase() {
             var total : int := 0
             init { }
             tran {
-                inline for (n in 1..<3) {
-                    total := total + n
+                inline for (index in 1..<3) {
+                    total := total + index
                 }
             }
             prop { AG true }
@@ -195,8 +195,8 @@ class InlineOperationExpanderTest : InliningTestBase() {
             var chosen : int := 0
             init { }
             tran {
-                inline for choice (n in 0..<2) {
-                    chosen := n
+                inline for choice (index in 0..<2) {
+                    chosen := index
                 }
             }
             prop { AG true }
@@ -223,8 +223,8 @@ class InlineOperationExpanderTest : InliningTestBase() {
             var total : int := 0
             init { }
             tran {
-                inline for (n in 3..<3) {
-                    total := total + n
+                inline for (index in 3..<3) {
+                    total := total + index
                 } else {
                     total := 7
                 }
@@ -251,8 +251,8 @@ class InlineOperationExpanderTest : InliningTestBase() {
             var total : int := 0
             init { }
             tran {
-                inline for (n in 5..3) {
-                    total := total + n
+                inline for (index in 5..3) {
+                    total := total + index
                 }
             }
             prop { AG true }
@@ -275,8 +275,8 @@ class InlineOperationExpanderTest : InliningTestBase() {
             var total : int := 0
             init { }
             tran {
-                inline for (n in -2..0) {
-                    total := total + n
+                inline for (index in -2..0) {
+                    total := total + index
                 }
             }
             prop { AG true }
@@ -310,8 +310,8 @@ class InlineOperationExpanderTest : InliningTestBase() {
                 var total : int := 0
                 init { }
                 tran {
-                    inline for (n in 0..*) {
-                        total := total + n
+                    inline for (index in 0..*) {
+                        total := total + index
                     }
                 }
                 prop { AG true }

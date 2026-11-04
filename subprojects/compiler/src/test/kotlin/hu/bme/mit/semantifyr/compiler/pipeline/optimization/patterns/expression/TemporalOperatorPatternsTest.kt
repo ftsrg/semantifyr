@@ -15,17 +15,17 @@ class TemporalOperatorPatternsTest : PatternTestBase() {
         pattern = BubbleNotAGPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : bool := false
+            var flag : bool := false
             init { }
             tran { }
-            prop { !(AG a) }
+            prop { !(AG flag) }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : bool := false
+            var flag : bool := false
             init { }
             tran { }
-            prop { EF !a }
+            prop { EF !flag }
         """,
     )
 
@@ -34,17 +34,17 @@ class TemporalOperatorPatternsTest : PatternTestBase() {
         pattern = BubbleNotEFPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : bool := false
+            var flag : bool := false
             init { }
             tran { }
-            prop { !(EF a) }
+            prop { !(EF flag) }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : bool := false
+            var flag : bool := false
             init { }
             tran { }
-            prop { AG !a }
+            prop { AG !flag }
         """,
     )
 }

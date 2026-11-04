@@ -19,18 +19,18 @@ class AssumeFalsePropagationPatternsTest : PatternTestBase() {
         pattern = PropagateConstantFalseInSequencePattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
             tran {
-                a := 1
+                value := 1
                 assume(false)
-                a := 2
+                value := 2
             }
             prop { AG true }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
             tran { assume(false) }
             prop { AG true }
@@ -42,16 +42,16 @@ class AssumeFalsePropagationPatternsTest : PatternTestBase() {
         pattern = PropagateBothBranchesConstantFalsePattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
             tran {
-                if (a == 0) { assume(false) } else { assume(false) }
+                if (value == 0) { assume(false) } else { assume(false) }
             }
             prop { AG true }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
             tran { { assume(false) } }
             prop { AG true }
@@ -63,7 +63,7 @@ class AssumeFalsePropagationPatternsTest : PatternTestBase() {
         pattern = PropagateSingleBranchConstantFalsePattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
             tran {
                 choice { assume(false) }
@@ -72,7 +72,7 @@ class AssumeFalsePropagationPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
             tran { assume(false) }
             prop { AG true }
@@ -84,19 +84,19 @@ class AssumeFalsePropagationPatternsTest : PatternTestBase() {
         pattern = RemoveConstantFalseChoiceBranchPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
             tran {
-                choice { assume(false) } or { a := 1 }
+                choice { assume(false) } or { value := 1 }
             }
             prop { AG true }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
             tran {
-                choice { a := 1 }
+                choice { value := 1 }
             }
             prop { AG true }
         """,

@@ -22,14 +22,14 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int := 0
+                var counter : int := 0
                 init { }
-                tran { x := x + 1 }
-                prop { AG (x >= 0) }
+                tran { counter := counter + 1 }
+                prop { AG (counter >= 0) }
             """,
         )
 
-        assertThat(result.variableRanges[inlined.varNamed("x")]).isEqualTo(IntegerRange(0, null))
+        assertThat(result.variableRanges[inlined.varNamed("counter")]).isEqualTo(IntegerRange(0, null))
     }
 
     @Test
@@ -37,14 +37,14 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int := 0
+                var counter : int := 0
                 init { }
-                tran { if (x < 10) { x := x + 1 } }
-                prop { AG (x <= 10) }
+                tran { if (counter < 10) { counter := counter + 1 } }
+                prop { AG (counter <= 10) }
             """,
         )
 
-        assertThat(result.variableRanges[inlined.varNamed("x")]).isEqualTo(IntegerRange(0, 10))
+        assertThat(result.variableRanges[inlined.varNamed("counter")]).isEqualTo(IntegerRange(0, 10))
     }
 
     @Test
@@ -52,17 +52,17 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int := 0
+                var counter : int := 0
                 init { }
                 tran {
-                    assume(x < 5)
-                    x := x + 1
+                    assume(counter < 5)
+                    counter := counter + 1
                 }
-                prop { AG (x <= 5) }
+                prop { AG (counter <= 5) }
             """,
         )
 
-        assertThat(result.variableRanges[inlined.varNamed("x")]).isEqualTo(IntegerRange(0, 5))
+        assertThat(result.variableRanges[inlined.varNamed("counter")]).isEqualTo(IntegerRange(0, 5))
     }
 
     @Test
@@ -70,20 +70,20 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var t : int := 0
-                init { t := 3 }
+                var timer : int := 0
+                init { timer := 3 }
                 tran {
                     choice {
-                        if (t > 0) { t := t - 1 }
+                        if (timer > 0) { timer := timer - 1 }
                     } or {
-                        t := 3
+                        timer := 3
                     }
                 }
-                prop { AG (t >= 0) }
+                prop { AG (timer >= 0) }
             """,
         )
 
-        assertThat(result.variableRanges[inlined.varNamed("t")]).isEqualTo(IntegerRange(0, 3))
+        assertThat(result.variableRanges[inlined.varNamed("timer")]).isEqualTo(IntegerRange(0, 3))
     }
 
     @Test
@@ -91,16 +91,16 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int := 0
+                var counter : int := 0
                 init { }
                 tran {
-                    if (!(x >= 4)) { x := x + 2 } else { x := 0 }
+                    if (!(counter >= 4)) { counter := counter + 2 } else { counter := 0 }
                 }
-                prop { AG (x <= 5) }
+                prop { AG (counter <= 5) }
             """,
         )
 
-        assertThat(result.variableRanges[inlined.varNamed("x")]).isEqualTo(IntegerRange(0, 5))
+        assertThat(result.variableRanges[inlined.varNamed("counter")]).isEqualTo(IntegerRange(0, 5))
     }
 
     @Test
@@ -108,18 +108,18 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int := 0
+                var counter : int := 0
                 init { }
                 tran {
-                    assume(x == 0)
-                    for (i in 0 .. 2) { x := x + i }
+                    assume(counter == 0)
+                    for (index in 0 .. 2) { counter := counter + index }
                 }
-                prop { AG (x <= 3) }
+                prop { AG (counter <= 3) }
             """,
         )
 
         assertThat(result.variableRanges[inlined.loopVariable()]).isEqualTo(IntegerRange(0, 2))
-        assertThat(result.variableRanges[inlined.varNamed("x")]).isEqualTo(IntegerRange(0, 3))
+        assertThat(result.variableRanges[inlined.varNamed("counter")]).isEqualTo(IntegerRange(0, 3))
     }
 
     @Test
@@ -127,20 +127,20 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var n : int := 0
-                var x : int := 0
+                var bound : int := 0
+                var last : int := 0
                 init { }
                 tran {
-                    choice { n := 4 } or { n := 7 }
-                    x := 0
-                    for (i in 1 ..< n) { x := i }
+                    choice { bound := 4 } or { bound := 7 }
+                    last := 0
+                    for (index in 1 ..< bound) { last := index }
                 }
-                prop { AG (x < 7) }
+                prop { AG (last < 7) }
             """,
         )
 
         assertThat(result.variableRanges[inlined.loopVariable()]).isEqualTo(IntegerRange(1, 6))
-        assertThat(result.variableRanges[inlined.varNamed("x")]).isEqualTo(IntegerRange(0, 6))
+        assertThat(result.variableRanges[inlined.varNamed("last")]).isEqualTo(IntegerRange(0, 6))
     }
 
     @Test
@@ -165,39 +165,39 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var b : bool := false
+                var flag : bool := false
                 init { }
-                tran { b := !b }
-                prop { AG (b || !b) }
+                tran { flag := !flag }
+                prop { AG (flag || !flag) }
             """,
         )
 
-        assertThat(result.variableRanges).doesNotContainKey(inlined.varNamed("b"))
+        assertThat(result.variableRanges).doesNotContainKey(inlined.varNamed("flag"))
     }
 
     @Test
     fun `a havoc is unbounded unless a havoc range is given`() {
         val source = """
             inlined oxsts of semantifyr::Anything
-            var x : int := 0
-            var y : int := 0
+            var chosen : int := 0
+            var copy : int := 0
             init { }
             tran {
-                havoc(x)
-                assume(x >= 1 && x <= 3)
-                y := x
+                havoc(chosen)
+                assume(chosen >= 1 && chosen <= 3)
+                copy := chosen
             }
-            prop { AG (y <= 3) }
+            prop { AG (copy <= 3) }
         """
 
         val (inlined, unbounded) = runVariableBounds(source)
-        assertThat(unbounded.variableRanges[inlined.varNamed("x")]).isEqualTo(IntegerRange.UNBOUNDED)
-        assertThat(unbounded.variableRanges[inlined.varNamed("y")]).isEqualTo(IntegerRange(0, 3))
+        assertThat(unbounded.variableRanges[inlined.varNamed("chosen")]).isEqualTo(IntegerRange.UNBOUNDED)
+        assertThat(unbounded.variableRanges[inlined.varNamed("copy")]).isEqualTo(IntegerRange(0, 3))
 
         val (candidates, bounded) = runVariableBounds(source) {
             IntegerRange(0, 4)
         }
-        assertThat(bounded.variableRanges[candidates.varNamed("x")]).isEqualTo(IntegerRange(0, 4))
+        assertThat(bounded.variableRanges[candidates.varNamed("chosen")]).isEqualTo(IntegerRange(0, 4))
     }
 
     @Test
@@ -205,14 +205,14 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int := 0
-                var y : int := 0
+                var counter : int := 0
+                var half : int := 0
                 init { }
                 tran {
-                    x := x + 1
-                    y := x / 2
+                    counter := counter + 1
+                    half := counter / 2
                 }
-                prop { AG (y >= 0) }
+                prop { AG (half >= 0) }
             """,
             limit = {
                 IntegerRange(-100, 100)
@@ -222,8 +222,8 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val increment = inlined.eAllOfType<ArithmeticBinaryOperator>().single {
             it.op == ArithmeticOp.ADD
         }
-        assertThat(result.variableRanges[inlined.varNamed("x")]).isEqualTo(IntegerRange(0, 100))
-        assertThat(result.variableRanges[inlined.varNamed("y")]).isEqualTo(IntegerRange(0, 50))
+        assertThat(result.variableRanges[inlined.varNamed("counter")]).isEqualTo(IntegerRange(0, 100))
+        assertThat(result.variableRanges[inlined.varNamed("half")]).isEqualTo(IntegerRange(0, 50))
         assertThat(result.arithmeticRanges[increment]).isEqualTo(IntegerRange(1, 101))
     }
 
@@ -232,14 +232,14 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int
-                init { x := 0 }
-                tran { if (x < 2) { x := x + 1 } }
-                prop { AG (x <= 2) }
+                var counter : int
+                init { counter := 0 }
+                tran { if (counter < 2) { counter := counter + 1 } }
+                prop { AG (counter <= 2) }
             """,
         )
 
-        assertThat(result.variableRanges[inlined.varNamed("x")]).isEqualTo(IntegerRange.UNBOUNDED)
+        assertThat(result.variableRanges[inlined.varNamed("counter")]).isEqualTo(IntegerRange.UNBOUNDED)
     }
 
     @Test
@@ -247,18 +247,18 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int := 0
+                var counter : int := 0
                 init { }
                 tran {
                     var step : int := 2
-                    if (x < 6) { x := x + step }
+                    if (counter < 6) { counter := counter + step }
                 }
-                prop { AG (x <= 7) }
+                prop { AG (counter <= 7) }
             """,
         )
 
         assertThat(result.variableRanges[inlined.varNamed("step")]).isEqualTo(IntegerRange(2, 2))
-        assertThat(result.variableRanges[inlined.varNamed("x")]).isEqualTo(IntegerRange(0, 7))
+        assertThat(result.variableRanges[inlined.varNamed("counter")]).isEqualTo(IntegerRange(0, 7))
     }
 
     @Test
@@ -266,21 +266,21 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int := 0
-                var y : int := 0
+                var counter : int := 0
+                var scaled : int := 0
                 init { }
                 tran {
-                    if (x < 5000) { x := x + 1 }
-                    y := (x * 1000000) / 1000000
+                    if (counter < 5000) { counter := counter + 1 }
+                    scaled := (counter * 1000000) / 1000000
                 }
-                prop { AG (y <= 5000) }
+                prop { AG (scaled <= 5000) }
             """,
         )
 
         val product = inlined.eAllOfType<ArithmeticBinaryOperator>().single {
             it.op == ArithmeticOp.MUL
         }
-        assertThat(result.variableRanges[inlined.varNamed("y")]).isEqualTo(IntegerRange(0, 5000))
+        assertThat(result.variableRanges[inlined.varNamed("scaled")]).isEqualTo(IntegerRange(0, 5000))
         assertThat(result.arithmeticRanges[product]).isEqualTo(IntegerRange(1_000_000, 5_000_000_000))
     }
 
@@ -289,18 +289,18 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var d : int := 0
-                var q : int := 0
+                var divisor : int := 0
+                var quotient : int := 0
                 init { }
                 tran {
-                    choice { d := 0 } or { d := 2 }
-                    q := 10 / d
+                    choice { divisor := 0 } or { divisor := 2 }
+                    quotient := 10 / divisor
                 }
-                prop { AG (q <= 10) }
+                prop { AG (quotient <= 10) }
             """,
         )
 
-        assertThat(result.variableRanges[inlined.varNamed("q")]).isEqualTo(IntegerRange.UNBOUNDED)
+        assertThat(result.variableRanges[inlined.varNamed("quotient")]).isEqualTo(IntegerRange.UNBOUNDED)
     }
 
     @Test
@@ -308,17 +308,17 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int := 0
+                var counter : int := 0
                 init { }
                 tran {
-                    assume(x > 0)
-                    x := x * 2
+                    assume(counter > 0)
+                    counter := counter * 2
                 }
-                prop { AG (x == 0) }
+                prop { AG (counter == 0) }
             """,
         )
 
-        assertThat(result.variableRanges[inlined.varNamed("x")]).isEqualTo(IntegerRange(0, 0))
+        assertThat(result.variableRanges[inlined.varNamed("counter")]).isEqualTo(IntegerRange(0, 0))
         assertThat(result.arithmeticRanges).isEmpty()
     }
 
@@ -327,18 +327,18 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int := 0
-                var y : int := 0
+                var counter : int := 0
+                var doubled : int := 0
                 init { }
                 tran {
-                    if (x < 10) { x := x + 1 } else { x := 0 }
-                    y := x * 2
+                    if (counter < 10) { counter := counter + 1 } else { counter := 0 }
+                    doubled := counter * 2
                 }
-                prop { AG (y <= 20) }
+                prop { AG (doubled <= 20) }
             """,
         )
 
-        assertThat(result.variableRanges[inlined.varNamed("y")]).isEqualTo(IntegerRange(0, 20))
+        assertThat(result.variableRanges[inlined.varNamed("doubled")]).isEqualTo(IntegerRange(0, 20))
     }
 
     private fun InlinedOxsts.varNamed(name: String): VariableDeclaration {

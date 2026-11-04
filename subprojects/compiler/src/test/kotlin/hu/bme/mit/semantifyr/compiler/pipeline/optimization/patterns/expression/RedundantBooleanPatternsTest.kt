@@ -15,17 +15,17 @@ class RedundantBooleanPatternsTest : PatternTestBase() {
         pattern = RedundantAndPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : bool := false
+            var operand : bool := false
             init { }
             tran { }
-            prop { AG (true && a) }
+            prop { AG (true && operand) }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : bool := false
+            var operand : bool := false
             init { }
             tran { }
-            prop { AG a }
+            prop { AG operand }
         """,
     )
 
@@ -34,17 +34,17 @@ class RedundantBooleanPatternsTest : PatternTestBase() {
         pattern = RedundantAndPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : bool := false
+            var operand : bool := false
             init { }
             tran { }
-            prop { AG (a && true) }
+            prop { AG (operand && true) }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : bool := false
+            var operand : bool := false
             init { }
             tran { }
-            prop { AG a }
+            prop { AG operand }
         """,
     )
 
@@ -53,17 +53,17 @@ class RedundantBooleanPatternsTest : PatternTestBase() {
         pattern = RedundantOrPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : bool := false
+            var operand : bool := false
             init { }
             tran { }
-            prop { AG (false || a) }
+            prop { AG (false || operand) }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : bool := false
+            var operand : bool := false
             init { }
             tran { }
-            prop { AG a }
+            prop { AG operand }
         """,
     )
 
@@ -72,14 +72,14 @@ class RedundantBooleanPatternsTest : PatternTestBase() {
         pattern = ConstantFalseAndPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : bool := false
+            var operand : bool := false
             init { }
             tran { }
-            prop { AG (false && a) }
+            prop { AG (false && operand) }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : bool := false
+            var operand : bool := false
             init { }
             tran { }
             prop { AG false }
@@ -91,14 +91,14 @@ class RedundantBooleanPatternsTest : PatternTestBase() {
         pattern = ConstantTrueOrPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : bool := false
+            var operand : bool := false
             init { }
             tran { }
-            prop { AG (true || a) }
+            prop { AG (true || operand) }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : bool := false
+            var operand : bool := false
             init { }
             tran { }
             prop { AG true }
@@ -110,17 +110,17 @@ class RedundantBooleanPatternsTest : PatternTestBase() {
         pattern = IdempotentBooleanPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : bool := false
+            var operand : bool := false
             init { }
             tran { }
-            prop { AG (a && a) }
+            prop { AG (operand && operand) }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : bool := false
+            var operand : bool := false
             init { }
             tran { }
-            prop { AG a }
+            prop { AG operand }
         """,
     )
 
@@ -129,11 +129,11 @@ class RedundantBooleanPatternsTest : PatternTestBase() {
         pattern = RedundantAndPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : bool := false
-            var b : bool := false
+            var left : bool := false
+            var right : bool := false
             init { }
             tran { }
-            prop { AG (a && b) }
+            prop { AG (left && right) }
         """,
     )
 }

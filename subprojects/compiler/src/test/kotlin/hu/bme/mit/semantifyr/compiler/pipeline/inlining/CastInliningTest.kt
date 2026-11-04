@@ -23,9 +23,9 @@ class CastInliningTest : InliningTestBase() {
                 package inlining::tests::cast_in_property
                 @VerificationCase
                 class Case {
-                    var x: int := 0
-                    redefine tran { x := x + 1 }
-                    prop { return (EF x == 5) as bool }
+                    var counter: int := 0
+                    redefine tran { counter := counter + 1 }
+                    prop { return (EF counter == 5) as bool }
                 }
             """,
         ) {
@@ -117,10 +117,10 @@ class CastInliningTest : InliningTestBase() {
                 package inlining::tests::widening_cast
                 @VerificationCase
                 class Case {
-                    var x: int := 0
+                    var counter: int := 0
                     redefine tran {
                         var anything: any := 0
-                        anything := x as any
+                        anything := counter as any
                     }
                     prop { return EF true }
                 }
@@ -161,10 +161,10 @@ class CastInliningTest : InliningTestBase() {
                 package inlining::tests::widening_cast
                 @VerificationCase
                 class Case {
-                    var x: int := 0
+                    var counter: int := 0
                     redefine tran {
                         var measurement: real := 0.0
-                        x := measurement as int
+                        counter := measurement as int
                     }
                     prop { return EF true }
                 }

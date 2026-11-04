@@ -13,21 +13,21 @@ class VariableLivenessPassTest : PassTestBase() {
     fun `unread variable and its assignments are removed`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            var b : int := 0
+            var observed : int := 0
+            var unread : int := 0
             init { }
             tran {
-                a := 1
-                b := 2
+                observed := 1
+                unread := 2
             }
-            prop { AG (a == 1) }
+            prop { AG (observed == 1) }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var observed : int := 0
             init { }
-            tran { a := 1 }
-            prop { AG (a == 1) }
+            tran { observed := 1 }
+            prop { AG (observed == 1) }
         """,
     ) {
         it.getInstance(VariableLivenessPass::class.java)
@@ -37,10 +37,10 @@ class VariableLivenessPassTest : PassTestBase() {
     fun `initializer-only variable is substituted into its reads`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 7
+            var constant : int := 7
             init { }
             tran { }
-            prop { AG (a == 7) }
+            prop { AG (constant == 7) }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
@@ -75,23 +75,23 @@ class VariableLivenessPassTest : PassTestBase() {
     fun `variable with both havoc and assignment is left alone when read`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
             tran {
-                havoc(a)
-                a := 1
+                havoc(value)
+                value := 1
             }
-            prop { AG (a == 1) }
+            prop { AG (value == 1) }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
             tran {
-                havoc(a)
-                a := 1
+                havoc(value)
+                value := 1
             }
-            prop { AG (a == 1) }
+            prop { AG (value == 1) }
         """,
     ) {
         it.getInstance(VariableLivenessPass::class.java)
@@ -123,27 +123,27 @@ class VariableLivenessPassTest : PassTestBase() {
     fun `a local's initializer is not moved past a later write of its source`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var source : int := 0
             var seen : int := 0
             init { }
             tran {
-                var s : int := a
-                a := a + 1
-                seen := s
+                var snapshot : int := source
+                source := source + 1
+                seen := snapshot
             }
-            prop { AG (seen != a) }
+            prop { AG (seen != source) }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var source : int := 0
             var seen : int := 0
             init { }
             tran {
-                var s : int := a
-                a := a + 1
-                seen := s
+                var snapshot : int := source
+                source := source + 1
+                seen := snapshot
             }
-            prop { AG (seen != a) }
+            prop { AG (seen != source) }
         """,
     ) {
         it.getInstance(VariableLivenessPass::class.java)
@@ -153,27 +153,27 @@ class VariableLivenessPassTest : PassTestBase() {
     fun `a local's initializer is not moved past a write of its source on one branch`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var source : int := 0
             var seen : int := 0
             init { }
             tran {
-                var s : int := a
-                choice { a := 1 } or { }
-                seen := s
+                var snapshot : int := source
+                choice { source := 1 } or { }
+                seen := snapshot
             }
-            prop { AG (seen != a) }
+            prop { AG (seen != source) }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var source : int := 0
             var seen : int := 0
             init { }
             tran {
-                var s : int := a
-                choice { a := 1 } or { }
-                seen := s
+                var snapshot : int := source
+                choice { source := 1 } or { }
+                seen := snapshot
             }
-            prop { AG (seen != a) }
+            prop { AG (seen != source) }
         """,
     ) {
         it.getInstance(VariableLivenessPass::class.java)
@@ -183,31 +183,31 @@ class VariableLivenessPassTest : PassTestBase() {
     fun `a local's initializer is not moved into a loop whose body writes its source`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var source : int := 0
             var seen : int := 0
             init { }
             tran {
-                var s : int := a
-                for (i in 0..2) {
-                    seen := s
-                    a := a + i
+                var snapshot : int := source
+                for (index in 0..2) {
+                    seen := snapshot
+                    source := source + index
                 }
             }
-            prop { AG (seen != a) }
+            prop { AG (seen != source) }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var source : int := 0
             var seen : int := 0
             init { }
             tran {
-                var s : int := a
-                for (i in 0..2) {
-                    seen := s
-                    a := a + i
+                var snapshot : int := source
+                for (index in 0..2) {
+                    seen := snapshot
+                    source := source + index
                 }
             }
-            prop { AG (seen != a) }
+            prop { AG (seen != source) }
         """,
     ) {
         it.getInstance(VariableLivenessPass::class.java)
@@ -217,26 +217,26 @@ class VariableLivenessPassTest : PassTestBase() {
     fun `a local's initializer is substituted when its source is written only after the reads`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var source : int := 0
             var seen : int := 0
             init { }
             tran {
-                var s : int := a
-                seen := s
-                a := a + 1
+                var snapshot : int := source
+                seen := snapshot
+                source := source + 1
             }
-            prop { AG (seen != a) }
+            prop { AG (seen != source) }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var source : int := 0
             var seen : int := 0
             init { }
             tran {
-                seen := a
-                a := a + 1
+                seen := source
+                source := source + 1
             }
-            prop { AG (seen != a) }
+            prop { AG (seen != source) }
         """,
     ) {
         it.getInstance(VariableLivenessPass::class.java)
@@ -246,25 +246,25 @@ class VariableLivenessPassTest : PassTestBase() {
     fun `an unread runtime loop variable is kept`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var x : int := 0
+            var counter : int := 0
             init { }
             tran {
-                for (i in 0..2) {
-                    x := x + 1
+                for (index in 0..2) {
+                    counter := counter + 1
                 }
             }
-            prop { AG (x <= 3) }
+            prop { AG (counter <= 3) }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var x : int := 0
+            var counter : int := 0
             init { }
             tran {
-                for (i in 0..2) {
-                    x := x + 1
+                for (index in 0..2) {
+                    counter := counter + 1
                 }
             }
-            prop { AG (x <= 3) }
+            prop { AG (counter <= 3) }
         """,
     ) {
         it.getInstance(VariableLivenessPass::class.java)
@@ -274,23 +274,23 @@ class VariableLivenessPassTest : PassTestBase() {
     fun `an unread runtime loop variable is kept when the loop body is empty`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var x : int := 0
+            var counter : int := 0
             init { }
             tran {
-                for (i in 0..2) { }
-                x := 1
+                for (index in 0..2) { }
+                counter := 1
             }
-            prop { AG (x <= 1) }
+            prop { AG (counter <= 1) }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var x : int := 0
+            var counter : int := 0
             init { }
             tran {
-                for (i in 0..2) { }
-                x := 1
+                for (index in 0..2) { }
+                counter := 1
             }
-            prop { AG (x <= 1) }
+            prop { AG (counter <= 1) }
         """,
     ) {
         it.getInstance(VariableLivenessPass::class.java)

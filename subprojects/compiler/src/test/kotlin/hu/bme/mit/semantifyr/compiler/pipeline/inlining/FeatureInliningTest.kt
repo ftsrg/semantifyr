@@ -290,12 +290,12 @@ class FeatureInliningTest : InliningTestBase() {
                     contains first : Item[1]
                     contains second : Item[1]
                     refers chosen : Item[1] = second
-                    var x : int := 0
+                    var counter : int := 0
                     redefine tran {
                         inline if (chosen == first) {
-                            x := 1
+                            counter := 1
                         } else {
-                            x := 2
+                            counter := 2
                         }
                     }
                     prop { return AG true }
@@ -304,8 +304,8 @@ class FeatureInliningTest : InliningTestBase() {
         )
 
         assertThat(main)
-            .contains("root.x := 2")
-            .doesNotContain("root.x := 1")
+            .contains("root.counter := 2")
+            .doesNotContain("root.counter := 1")
     }
 
     private fun inlinedMain(

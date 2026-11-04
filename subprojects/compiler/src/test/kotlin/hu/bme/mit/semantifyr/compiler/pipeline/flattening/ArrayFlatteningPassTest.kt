@@ -31,7 +31,7 @@ import java.nio.file.Path
 @InjectWithOxsts
 class ArrayFlatteningPassTest {
     @TempDir
-    lateinit var tempDir: Path
+    lateinit var temporaryDirectory: Path
 
     @Inject
     private lateinit var parseHelper: InlinedOxstsParseHelper
@@ -47,7 +47,7 @@ class ArrayFlatteningPassTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int[3] := [10, 20, 30]
+                var values : int[3] := [10, 20, 30]
                 init { }
                 tran { }
                 prop { AG true }
@@ -59,8 +59,8 @@ class ArrayFlatteningPassTest {
         val names = inlined.variables.map {
             it.name
         }
-        assertThat(names).containsExactly("a_0", "a_1", "a_2")
-        assertThat(flattened.keys.map { it.name }).containsExactly("a")
+        assertThat(names).containsExactly("values_0", "values_1", "values_2")
+        assertThat(flattened.keys.map { it.name }).containsExactly("values")
         assertThat(flattened.values.single()).containsExactlyElementsOf(inlined.variables)
     }
 
@@ -69,7 +69,7 @@ class ArrayFlatteningPassTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int[3] := [10, 20, 30]
+                var values : int[3] := [10, 20, 30]
                 init { }
                 tran { }
                 prop { AG true }
@@ -79,9 +79,9 @@ class ArrayFlatteningPassTest {
         flattenArrays(inlined)
 
         val serialized = serialize(inlined)
-        assertThat(serialized).contains("a_0 : int := 10")
-        assertThat(serialized).contains("a_1 : int := 20")
-        assertThat(serialized).contains("a_2 : int := 30")
+        assertThat(serialized).contains("values_0 : int := 10")
+        assertThat(serialized).contains("values_1 : int := 20")
+        assertThat(serialized).contains("values_2 : int := 30")
     }
 
     @Test
@@ -89,7 +89,7 @@ class ArrayFlatteningPassTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int[2]
+                var values : int[2]
                 init { }
                 tran { }
                 prop { AG true }
@@ -99,7 +99,7 @@ class ArrayFlatteningPassTest {
         flattenArrays(inlined)
 
         val slots = inlined.variables.filter {
-            it.name.startsWith("a_")
+            it.name.startsWith("values_")
         }
         assertThat(slots).hasSize(2)
         assertThat(slots.all { it.expression == null }).isTrue()
@@ -110,10 +110,10 @@ class ArrayFlatteningPassTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int[3] := [10, 20, 30]
+                var values : int[3] := [10, 20, 30]
                 var result : int := 0
                 init { }
-                tran { result := a[1] }
+                tran { result := values[1] }
                 prop { AG true }
             """.trimIndent(),
         )
@@ -123,7 +123,7 @@ class ArrayFlatteningPassTest {
         assertThat(inlined.eAllOfType<IndexingSuffixExpression>().toList())
             .`as`("all indexings on the array variable should have been rewritten")
             .isEmpty()
-        assertThat(serialize(inlined)).contains("result := a_1")
+        assertThat(serialize(inlined)).contains("result := values_1")
     }
 
     @Test
@@ -131,9 +131,9 @@ class ArrayFlatteningPassTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int[3] := [0, 0, 0]
+                var values : int[3] := [0, 0, 0]
                 init { }
-                tran { a[2] := 42 }
+                tran { values[2] := 42 }
                 prop { AG true }
             """.trimIndent(),
         )
@@ -141,7 +141,7 @@ class ArrayFlatteningPassTest {
         flattenArrays(inlined)
 
         assertThat(inlined.eAllOfType<IndexingSuffixExpression>().toList()).isEmpty()
-        assertThat(serialize(inlined)).contains("a_2 := 42")
+        assertThat(serialize(inlined)).contains("values_2 := 42")
     }
 
     @Test
@@ -149,9 +149,9 @@ class ArrayFlatteningPassTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int := 0
+                var scalar : int := 0
                 init { }
-                tran { x := 1 }
+                tran { scalar := 1 }
                 prop { AG true }
             """.trimIndent(),
         )
@@ -159,7 +159,7 @@ class ArrayFlatteningPassTest {
         val flattened = flattenArrays(inlined)
 
         assertThat(flattened).isEmpty()
-        assertThat(inlined.variables.map { it.name }).containsExactly("x")
+        assertThat(inlined.variables.map { it.name }).containsExactly("scalar")
     }
 
     @Test
@@ -167,11 +167,11 @@ class ArrayFlatteningPassTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int[3] := [10, 20, 30]
-                var idx : int := 0
+                var values : int[3] := [10, 20, 30]
+                var index : int := 0
                 var seen : int := 0
                 init { }
-                tran { seen := a[idx] }
+                tran { seen := values[index] }
                 prop { AG true }
             """.trimIndent(),
         )
@@ -183,9 +183,9 @@ class ArrayFlatteningPassTest {
             .isEmpty()
         val serialized = serialize(inlined)
 
-        assertThat(serialized).contains("a_0")
-        assertThat(serialized).contains("a_1")
-        assertThat(serialized).contains("a_2")
+        assertThat(serialized).contains("values_0")
+        assertThat(serialized).contains("values_1")
+        assertThat(serialized).contains("values_2")
         assertThat(serialized).contains("if")
         assertThat(serialized).contains("then")
         assertThat(serialized).contains("else")
@@ -196,10 +196,10 @@ class ArrayFlatteningPassTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int[3] := [0, 0, 0]
-                var idx : int := 0
+                var values : int[3] := [0, 0, 0]
+                var index : int := 0
                 init { }
-                tran { a[idx] := 42 }
+                tran { values[index] := 42 }
                 prop { AG true }
             """.trimIndent(),
         )
@@ -210,9 +210,9 @@ class ArrayFlatteningPassTest {
             .`as`("runtime-index write should have been rewritten to an if-chain")
             .isEmpty()
         val serialized = serialize(inlined)
-        assertThat(serialized).contains("a_0 := 42")
-        assertThat(serialized).contains("a_1 := 42")
-        assertThat(serialized).contains("a_2 := 42")
+        assertThat(serialized).contains("values_0 := 42")
+        assertThat(serialized).contains("values_1 := 42")
+        assertThat(serialized).contains("values_2 := 42")
         assertThat(serialized).contains("if")
     }
 
@@ -221,13 +221,13 @@ class ArrayFlatteningPassTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int := 0
-                var i : int := 0
+                var result : int := 0
+                var index : int := 0
                 init { }
                 tran {
-                    var a : int[3] := [1, 2, x]
-                    x := a[i]
-                    a[2] := a[0]
+                    var values : int[3] := [1, 2, result]
+                    result := values[index]
+                    values[2] := values[0]
                 }
                 prop { AG true }
             """.trimIndent(),
@@ -236,10 +236,10 @@ class ArrayFlatteningPassTest {
         flattenArrays(inlined)
 
         assertThat(inlined.eAllOfType<IndexingSuffixExpression>().toList()).isEmpty()
-        assertThat(inlined.variables.map { it.name }).containsExactly("x", "i")
+        assertThat(inlined.variables.map { it.name }).containsExactly("result", "index")
         val serialized = serialize(inlined)
-        assertThat(serialized).contains("var a_0 : int := 1", "var a_1 : int := 2", "var a_2 : int := x", "a_2 := a_0")
-        assertThat(serialized).containsPattern("x := if i == 0 then a_0 else if i == 1 then a_1 else a_2")
+        assertThat(serialized).contains("var values_0 : int := 1", "var values_1 : int := 2", "var values_2 : int := result", "values_2 := values_0")
+        assertThat(serialized).containsPattern("result := if index == 0 then values_0 else if index == 1 then values_1 else values_2")
     }
 
     @Test
@@ -247,11 +247,11 @@ class ArrayFlatteningPassTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int := 0
+                var result : int := 0
                 init { }
                 tran {
-                    var a : int[2]
-                    x := a[1]
+                    var values : int[2]
+                    result := values[1]
                 }
                 prop { AG true }
             """.trimIndent(),
@@ -260,7 +260,7 @@ class ArrayFlatteningPassTest {
         flattenArrays(inlined)
 
         val serialized = serialize(inlined)
-        assertThat(serialized).contains("var a_0 : int", "var a_1 : int", "x := a_1")
+        assertThat(serialized).contains("var values_0 : int", "var values_1 : int", "result := values_1")
         assertThat(serialized).doesNotContain(":= [")
     }
 
@@ -269,25 +269,25 @@ class ArrayFlatteningPassTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int[2] := [1, 2]
-                var b : int[2] := [3, 4]
+                var values : int[2] := [1, 2]
+                var others : int[2] := [3, 4]
                 var same : bool := false
                 init { }
                 tran {
-                    a := b
-                    b := [5, 6]
-                    havoc(a)
-                    same := a == b
+                    values := others
+                    others := [5, 6]
+                    havoc(values)
+                    same := values == others
                 }
-                prop { AG a != b }
+                prop { AG values != others }
             """.trimIndent(),
         )
 
         flattenArrays(inlined)
 
         val serialized = serialize(inlined)
-        assertThat(serialized).contains("a_0 := b_0", "a_1 := b_1", "b_0 := 5", "b_1 := 6", "havoc (a_0)", "havoc (a_1)")
-        assertThat(serialized).contains("same := a_0 == b_0 && a_1 == b_1", "AG a_0 != b_0 || a_1 != b_1")
+        assertThat(serialized).contains("values_0 := others_0", "values_1 := others_1", "others_0 := 5", "others_1 := 6", "havoc (values_0)", "havoc (values_1)")
+        assertThat(serialized).contains("same := values_0 == others_0 && values_1 == others_1", "AG values_0 != others_0 || values_1 != others_1")
     }
 
     @Test
@@ -295,13 +295,13 @@ class ArrayFlatteningPassTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int[2] := [1, 2]
-                var x : int := 0
+                var values : int[2] := [1, 2]
+                var result : int := 0
                 init { }
                 tran {
-                    var copy : int[2] := a
-                    a[0] := 9
-                    x := copy[0]
+                    var copy : int[2] := values
+                    values[0] := 9
+                    result := copy[0]
                 }
                 prop { AG true }
             """.trimIndent(),
@@ -310,7 +310,7 @@ class ArrayFlatteningPassTest {
         flattenArrays(inlined)
 
         val serialized = serialize(inlined)
-        assertThat(serialized).contains("var copy_0 : int := a_0", "var copy_1 : int := a_1", "a_0 := 9", "x := copy_0")
+        assertThat(serialized).contains("var copy_0 : int := values_0", "var copy_1 : int := values_1", "values_0 := 9", "result := copy_0")
     }
 
     @Test
@@ -318,9 +318,9 @@ class ArrayFlatteningPassTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int[3] := [0, 0, 0]
+                var values : int[3] := [0, 0, 0]
                 init { }
-                tran { a[5] := 1 }
+                tran { values[5] := 1 }
                 prop { AG true }
             """.trimIndent(),
         )
@@ -335,7 +335,7 @@ class ArrayFlatteningPassTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int[4] := [10, 20]
+                var values : int[4] := [10, 20]
                 init { }
                 tran { }
                 prop { AG true }
@@ -345,7 +345,7 @@ class ArrayFlatteningPassTest {
         flattenArrays(inlined)
 
         val slots = inlined.variables.filter {
-            it.name.startsWith("a_")
+            it.name.startsWith("values_")
         }
         assertThat(slots).hasSize(4)
         assertThat(slots[0].expression).isNotNull
@@ -359,7 +359,7 @@ class ArrayFlatteningPassTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int[2] := [1, 2, 3]
+                var values : int[2] := [1, 2, 3]
                 init { }
                 tran { }
                 prop { AG true }
@@ -398,12 +398,12 @@ class ArrayFlatteningPassTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int[2] := [1, 2]
-                var b : int[2] := [3, 4]
+                var values : int[2] := [1, 2]
+                var others : int[2] := [3, 4]
                 init { }
                 tran {
-                    a := [a[1], a[0]]
-                    b := [if b[0] > 0 then a[0] else b[0], if b[0] > 0 then a[1] else b[1]]
+                    values := [values[1], values[0]]
+                    others := [if others[0] > 0 then values[0] else others[0], if others[0] > 0 then values[1] else others[1]]
                 }
                 prop { AG true }
             """.trimIndent(),
@@ -412,8 +412,8 @@ class ArrayFlatteningPassTest {
         flattenArrays(inlined)
 
         val serialized = serialize(inlined)
-        assertThat(serialized).containsPattern("var ${saved("a_1")} : int := a_0\\s+a_0 := a_1\\s+a_1 := ${saved("a_1")}")
-        assertThat(serialized).containsPattern("var ${saved("b_1")} : int := if b_0 > 0 then a_1 else b_1\\s+b_0 := if b_0 > 0 then a_0 else b_0\\s+b_1 := ${saved("b_1")}")
+        assertThat(serialized).containsPattern("var ${saved("values_1")} : int := values_0\\s+values_0 := values_1\\s+values_1 := ${saved("values_1")}")
+        assertThat(serialized).containsPattern("var ${saved("others_1")} : int := if others_0 > 0 then values_1 else others_1\\s+others_0 := if others_0 > 0 then values_0 else others_0\\s+others_1 := ${saved("others_1")}")
     }
 
     @Test
@@ -421,13 +421,13 @@ class ArrayFlatteningPassTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int[2] := [1, 2]
-                var b : int[2] := [3, 4]
-                var i : int := 0
+                var values : int[2] := [1, 2]
+                var others : int[2] := [3, 4]
+                var index : int := 0
                 init { }
                 tran {
-                    a := [a[0] + 1, a[1] + 1]
-                    b := [0, b[i]]
+                    values := [values[0] + 1, values[1] + 1]
+                    others := [0, others[index]]
                 }
                 prop { AG true }
             """.trimIndent(),
@@ -436,9 +436,9 @@ class ArrayFlatteningPassTest {
         flattenArrays(inlined)
 
         val serialized = serialize(inlined)
-        assertThat(serialized).contains("a_0 := a_0 + 1", "a_1 := a_1 + 1")
-        assertThat(serialized).doesNotContainPattern(saved("a_\\d"))
-        assertThat(serialized).containsPattern("var ${saved("b_1")} : int := if i == 0 then b_0 else b_1\\s+b_0 := 0\\s+b_1 := ${saved("b_1")}")
+        assertThat(serialized).contains("values_0 := values_0 + 1", "values_1 := values_1 + 1")
+        assertThat(serialized).doesNotContainPattern(saved("values_\\d"))
+        assertThat(serialized).containsPattern("var ${saved("others_1")} : int := if index == 0 then others_0 else others_1\\s+others_0 := 0\\s+others_1 := ${saved("others_1")}")
     }
 
     private fun saved(slot: String): String {
@@ -447,7 +447,7 @@ class ArrayFlatteningPassTest {
 
     private fun flattenArrays(inlined: InlinedOxsts): Map<VariableDeclaration, List<VariableDeclaration>> {
         val child = injector.createChildInjector(CompilationModule(ArtifactConfig.NONE, OptimizationConfig.NONE))
-        return withCompilationScopeBlocking(CompilationRequest(inlined, tempDir)) {
+        return withCompilationScopeBlocking(CompilationRequest(inlined, temporaryDirectory)) {
             child.getInstance(ArrayFlatteningPass::class.java).flattenArrays(inlined)
         }
     }

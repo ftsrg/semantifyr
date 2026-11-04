@@ -18,15 +18,15 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 7
-                init { a := 7 }
+                var value : int := 7
+                init { value := 7 }
                 tran { }
-                prop { AG (a == 7) }
+                prop { AG (value == 7) }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        assertThat(result.isConstant(a)).isTrue
+        val value = inlined.varNamed("value")
+        assertThat(result.isConstant(value)).isTrue
     }
 
     @Test
@@ -34,17 +34,17 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
+                var value : int := 0
                 init { }
                 tran {
-                    choice { a := 1 } or { a := 2 }
+                    choice { value := 1 } or { value := 2 }
                 }
-                prop { AG (a != 3) }
+                prop { AG (value != 3) }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        assertThat(result.isConstant(a)).isFalse
+        val value = inlined.varNamed("value")
+        assertThat(result.isConstant(value)).isFalse
     }
 
     @Test
@@ -52,15 +52,15 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 7
-                init { a := 7 }
-                tran { havoc(a) }
-                prop { AG (a == 7) }
+                var value : int := 7
+                init { value := 7 }
+                tran { havoc(value) }
+                prop { AG (value == 7) }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        assertThat(result.isConstant(a))
+        val value = inlined.varNamed("value")
+        assertThat(result.isConstant(value))
             .`as`("havoc introduces non-determinism - variable is not constant")
             .isFalse
     }
@@ -70,15 +70,15 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 7
+                var value : int := 7
                 init { }
                 tran { }
-                prop { AG (a == 7) }
+                prop { AG (value == 7) }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        assertThat(result.isConstant(a)).isFalse
+        val value = inlined.varNamed("value")
+        assertThat(result.isConstant(value)).isFalse
     }
 
     @Test
@@ -86,15 +86,15 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int
-                init { x := 3 }
+                var uninitialized : int
+                init { uninitialized := 3 }
                 tran { }
-                prop { AG (x == 3) }
+                prop { AG (uninitialized == 3) }
             """,
         )
 
-        assertThat(result.isConstant(inlined.varNamed("x")))
-            .`as`("the property is checked in the pre-init state, where x is havoced")
+        assertThat(result.isConstant(inlined.varNamed("uninitialized")))
+            .`as`("the property is checked in the pre-init state, where uninitialized is havoced")
             .isFalse
     }
 
@@ -103,17 +103,17 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int
-                var y : int := 3
+                var uninitialized : int
+                var copy : int := 3
                 init {
-                    choice { x := 3 } or { }
+                    choice { uninitialized := 3 } or { }
                 }
-                tran { y := x }
-                prop { AG (y == 3) }
+                tran { copy := uninitialized }
+                prop { AG (copy == 3) }
             """,
         )
 
-        assertThat(result.isConstant(inlined.varNamed("x"))).isFalse
+        assertThat(result.isConstant(inlined.varNamed("uninitialized"))).isFalse
     }
 
     @Test
@@ -121,18 +121,18 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int
-                var y : int := 3
+                var uninitialized : int
+                var copy : int := 3
                 init { }
                 tran {
-                    y := x
-                    x := 3
+                    copy := uninitialized
+                    uninitialized := 3
                 }
-                prop { AG (y == 3) }
+                prop { AG (copy == 3) }
             """,
         )
 
-        assertThat(result.isConstant(inlined.varNamed("x"))).isFalse
+        assertThat(result.isConstant(inlined.varNamed("uninitialized"))).isFalse
     }
 
     @Test
@@ -140,18 +140,18 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int
-                var y : int := 3
+                var uninitialized : int
+                var copy : int := 3
                 init {
-                    y := x
-                    x := 3
+                    copy := uninitialized
+                    uninitialized := 3
                 }
                 tran { }
-                prop { AG (y == 3) }
+                prop { AG (copy == 3) }
             """,
         )
 
-        assertThat(result.isConstant(inlined.varNamed("x"))).isFalse
+        assertThat(result.isConstant(inlined.varNamed("uninitialized"))).isFalse
     }
 
     @Test
@@ -159,17 +159,17 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int
-                var y : int := 3
+                var uninitialized : int
+                var copy : int := 3
                 init {
-                    choice { x := 3 } or { x := 3 }
+                    choice { uninitialized := 3 } or { uninitialized := 3 }
                 }
-                tran { y := x }
-                prop { AG (y == 3) }
+                tran { copy := uninitialized }
+                prop { AG (copy == 3) }
             """,
         )
 
-        assertThat(result.isConstant(inlined.varNamed("x"))).isTrue
+        assertThat(result.isConstant(inlined.varNamed("uninitialized"))).isTrue
     }
 
     private fun InlinedOxsts.varNamed(name: String): VariableDeclaration {

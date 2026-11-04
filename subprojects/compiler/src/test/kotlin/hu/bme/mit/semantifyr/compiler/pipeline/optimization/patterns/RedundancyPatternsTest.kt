@@ -14,18 +14,18 @@ class RedundancyPatternsTest : PatternTestBase() {
         pattern = ConstantGuardIfPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
             tran {
-                if (true) { a := 1 } else { a := 2 }
+                if (true) { value := 1 } else { value := 2 }
             }
             prop { AG true }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
-            tran { { a := 1 } }
+            tran { { value := 1 } }
             prop { AG true }
         """,
     )
@@ -35,19 +35,19 @@ class RedundancyPatternsTest : PatternTestBase() {
         pattern = ConstantGuardIfPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
             tran {
-                a := 0
-                if (false) { a := 1 }
+                value := 0
+                if (false) { value := 1 }
             }
             prop { AG true }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
-            tran { a := 0 }
+            tran { value := 0 }
             prop { AG true }
         """,
     )
@@ -57,19 +57,19 @@ class RedundancyPatternsTest : PatternTestBase() {
         pattern = RemoveConstantTrueAssumptionPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
             tran {
                 assume(true)
-                a := 1
+                value := 1
             }
             prop { AG true }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
-            tran { a := 1 }
+            tran { value := 1 }
             prop { AG true }
         """,
     )
@@ -79,19 +79,19 @@ class RedundancyPatternsTest : PatternTestBase() {
         pattern = RemoveEmptyIfBodyPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
             tran {
-                a := 0
-                if (a == 0) { }
+                value := 0
+                if (value == 0) { }
             }
             prop { AG true }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
-            tran { a := 0 }
+            tran { value := 0 }
             prop { AG true }
         """,
     )
@@ -101,16 +101,16 @@ class RedundancyPatternsTest : PatternTestBase() {
         pattern = RemoveEmptyIfElsePattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
-            tran { if (a == 0) { a := 1 } else { } }
+            tran { if (value == 0) { value := 1 } else { } }
             prop { AG true }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
-            tran { if (a == 0) { a := 1 } }
+            tran { if (value == 0) { value := 1 } }
             prop { AG true }
         """,
     )
@@ -120,19 +120,19 @@ class RedundancyPatternsTest : PatternTestBase() {
         pattern = RemoveEmptyForPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
             tran {
-                a := 1
-                for (i in 0..5) { }
+                value := 1
+                for (index in 0..5) { }
             }
             prop { AG true }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
-            tran { a := 1 }
+            tran { value := 1 }
             prop { AG true }
         """,
     )
@@ -142,19 +142,19 @@ class RedundancyPatternsTest : PatternTestBase() {
         pattern = RemoveRedundantEmptyChoiceBranchPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
             tran {
-                choice { } or { } or { a := 1 }
+                choice { } or { } or { value := 1 }
             }
             prop { AG true }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             init { }
             tran {
-                choice { } or { a := 1 }
+                choice { } or { value := 1 }
             }
             prop { AG true }
         """,

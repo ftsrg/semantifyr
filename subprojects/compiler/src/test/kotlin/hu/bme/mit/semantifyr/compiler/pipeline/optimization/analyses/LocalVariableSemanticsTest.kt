@@ -16,88 +16,88 @@ import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.emf.ecore.EObject
 import org.junit.jupiter.api.Test
 
-class LocalVarSemanticsTest : AnalysisTestBase() {
+class LocalVariableSemanticsTest : AnalysisTestBase() {
     @Test
-    fun `local var declaration is recognized as a variable`() {
+    fun `local variable declaration is recognized as a variable`() {
         val (inlined, result) = runLiveness(
             """
                 inlined oxsts of semantifyr::Anything
                 init { }
                 tran {
-                    var x : int := 5
-                    assume(x == 5)
+                    var local : int := 5
+                    assume(local == 5)
                 }
                 prop { AG true }
             """,
         )
-        val local: VariableDeclaration = inlined.localVarNamed("x")
+        val local: VariableDeclaration = inlined.localVarNamed("local")
         assertThat(result.isRead(local)).isTrue
     }
 
     @Test
-    fun `local var with only an initializer is not seen as constant here`() {
+    fun `local variable with only an initializer is not seen as constant here`() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
                 init { }
                 tran {
-                    var x : int := 5
-                    assume(x == 5)
+                    var local : int := 5
+                    assume(local == 5)
                 }
                 prop { AG true }
             """,
         )
-        val local: VariableDeclaration = inlined.localVarNamed("x")
+        val local: VariableDeclaration = inlined.localVarNamed("local")
         assertThat(result.isConstant(local)).isFalse
     }
 
     @Test
-    fun `local var assignment after declaration kills the declaration as reaching def`() {
+    fun `local variable assignment after declaration kills the declaration as reaching definition`() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var y : int := 0
+                var copy : int := 0
                 init { }
                 tran {
-                    var x : int := 5
-                    x := 10
-                    y := x
+                    var local : int := 5
+                    local := 10
+                    copy := local
                 }
                 prop { AG true }
             """,
         )
-        val x = inlined.localVarNamed("x")
-        val y = inlined.varNamed("y")
+        val local = inlined.localVarNamed("local")
+        val copy = inlined.varNamed("copy")
 
-        val xWrite = inlined.assignmentsTo(x).single()
-        val yWrite = inlined.assignmentsTo(y).single()
-        val xReadInYRhs = yWrite.expression as ElementReference
+        val localWrite = inlined.assignmentsTo(local).single()
+        val copyWrite = inlined.assignmentsTo(copy).single()
+        val localReadInCopy = copyWrite.expression as ElementReference
 
-        assertThat(result.definitionsOf[xReadInYRhs]!!).containsExactly(xWrite as EObject)
+        assertThat(result.definitionsOf[localReadInCopy]!!).containsExactly(localWrite as EObject)
     }
 
     @Test
-    fun `local var read right after declaration sees only the declaration`() {
+    fun `local variable read right after declaration sees only the declaration`() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var y : int := 0
+                var copy : int := 0
                 init { }
                 tran {
-                    var x : int := 5
-                    y := x
-                    x := 10
+                    var local : int := 5
+                    copy := local
+                    local := 10
                 }
                 prop { AG true }
             """,
         )
-        val x = inlined.localVarNamed("x")
-        val y = inlined.varNamed("y")
-        val yWrite = inlined.assignmentsTo(y).single()
-        val xReadInYRhs = yWrite.expression as ElementReference
+        val local = inlined.localVarNamed("local")
+        val copy = inlined.varNamed("copy")
+        val copyWrite = inlined.assignmentsTo(copy).single()
+        val localReadInCopy = copyWrite.expression as ElementReference
 
-        val defs = result.definitionsOf[xReadInYRhs]!!
-        assertThat(defs).containsExactly(x as EObject)
+        val definitions = result.definitionsOf[localReadInCopy]!!
+        assertThat(definitions).containsExactly(local as EObject)
     }
 
     @Test
@@ -145,39 +145,39 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
     }
 
     @Test
-    fun `local var with no assignments - only its declaration contributes a def`() {
+    fun `local variable with no assignments - only its declaration contributes a definition`() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var y : int := 0
+                var copy : int := 0
                 init { }
                 tran {
-                    var x : int := 5
-                    y := x
+                    var local : int := 5
+                    copy := local
                 }
                 prop { AG true }
             """,
         )
-        val x = inlined.localVarNamed("x")
-        val yWrite = inlined.assignmentsTo(inlined.varNamed("y")).single()
-        val xRead = yWrite.expression as ElementReference
+        val local = inlined.localVarNamed("local")
+        val copyWrite = inlined.assignmentsTo(inlined.varNamed("copy")).single()
+        val localRead = copyWrite.expression as ElementReference
 
-        assertThat(result.definitionsOf[xRead]!!).containsExactly(x as EObject)
+        assertThat(result.definitionsOf[localRead]!!).containsExactly(local as EObject)
     }
 
     @Test
-    fun `two separately-declared local vars with the same name are different variables`() {
+    fun `two separately-declared local variables with the same name are different variables`() {
         val (inlined, result) = runLiveness(
             """
                 inlined oxsts of semantifyr::Anything
                 init { }
                 tran {
                     choice {
-                        var x : int := 1
-                        assume(x == 1)
+                        var local : int := 1
+                        assume(local == 1)
                     } or {
-                        var x : int := 2
-                        assume(x == 2)
+                        var local : int := 2
+                        assume(local == 2)
                     }
                 }
                 prop { AG true }
@@ -206,8 +206,8 @@ class LocalVarSemanticsTest : AnalysisTestBase() {
 
     private fun InlinedOxsts.assignmentsTo(variable: VariableDeclaration): List<AssignmentOperation> {
         return eAllOfType<AssignmentOperation>().filter {
-            val ref = it.reference
-            ref is ElementReference && ref.element === variable
+            val reference = it.reference
+            reference is ElementReference && reference.element === variable
         }.toList()
     }
 }
