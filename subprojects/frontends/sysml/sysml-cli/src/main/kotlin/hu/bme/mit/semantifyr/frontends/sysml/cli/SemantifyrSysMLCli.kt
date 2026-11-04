@@ -14,14 +14,14 @@ import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 
 internal const val SYSML_FILE_SUFFIX = ".sysml"
 
-internal const val MODEL_HELP = "SysML v2 model file (must end in .sysml). Every .sysml and .kerml file below its directory is read with it as its workspace."
+internal const val MODEL_HELP = "SysML v2 model file."
 
 class SemantifyrSysMLCommand @Inject constructor(
     verifyCommand: SysMLVerifyCommand,
     compileCommand: SysMLCompileCommand,
 ) : RootCommand(
     "semantifyr-sysml",
-    "The Semantifyr command-line interface for SysML v2 models. Translating a model needs Node.js on PATH. See --help for more details.",
+    "Semantifyr for SysML v2 models.",
     listOf(
         verifyCommand,
         compileCommand,

@@ -25,7 +25,7 @@ class SemantifyrCommand @Inject constructor(
     portfoliosCommand: PortfoliosCommand,
 ) : RootCommand(
     "semantifyr",
-    "The Semantifyr command-line interface for OXSTS models. See --help for more details.",
+    "Semantifyr for OXSTS models.",
     listOf(
         verifyCommand,
         compileCommand,

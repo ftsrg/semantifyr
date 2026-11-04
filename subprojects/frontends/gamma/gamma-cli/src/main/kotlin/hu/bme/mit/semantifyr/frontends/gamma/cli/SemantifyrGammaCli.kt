@@ -25,7 +25,7 @@ class SemantifyrGammaCommand(
     oxstsInjector: Injector,
 ) : RootCommand(
     "semantifyr-gamma",
-    "The Semantifyr command-line interface for Gamma models. See --help for more details.",
+    "Semantifyr for Gamma models.",
     listOf(
         GammaVerifyCommand(gammaInjector, oxstsInjector),
         GammaCompileCommand(gammaInjector),

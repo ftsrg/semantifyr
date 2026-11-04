@@ -45,11 +45,11 @@ class GammaVerifyCommand(
 
     private val model by argument("model path")
         .path()
-        .help("Gamma model file (must end in .gamma).")
+        .help("Gamma model file.")
 
     private val caseNames by option("--case-name")
         .multiple()
-        .help("The qualified name of a verification case to verify, such as Simple.WorkerStatechartIdleReachable. Repeat the flag to add multiple. Default: every case of the model.")
+        .help("Qualified name of a case, repeatable.")
 
     private val backendOptions by BackendOptionGroup {
         portfolios
@@ -59,7 +59,7 @@ class GammaVerifyCommand(
     private val output by verifyOutputOption()
 
     override fun help(context: Context): String {
-        return "Compile a Gamma model to OXSTS, verify one or more of its verification cases with the chosen backend preset, and write the Gamma trace of each witness as trace.gamma next to its report.json."
+        return "Verify the cases of a Gamma model."
     }
 
     override suspend fun run() {

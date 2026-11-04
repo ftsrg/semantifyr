@@ -24,7 +24,7 @@ class ListCommand @Inject constructor(
     private val caseSpecificationOptions by VerificationCaseSpecificationOptionGroup(verificationCaseDiscoverer)
 
     override fun help(context: Context): String {
-        return "List the verification cases declared in the given OXSTS model."
+        return "List the cases of an OXSTS model."
     }
 
     override suspend fun run() {

@@ -43,17 +43,15 @@ class VerificationCaseSpecificationOptionGroup(
 ) : OptionGroup("Verification case specification") {
     val caseNames by option("--case-name")
         .multiple()
-        .help(
-            "The fully qualified name(s) of the verification case to be verified. Repeat the flag to add multiple. Overrides tag filters when set.",
-        )
+        .help("Qualified name of a case, repeatable.")
 
     val includeTags by option("--include-tag")
         .multiple()
-        .help("Specifies tag inclusion filters.")
+        .help("Select the cases with this tag, repeatable.")
 
     val excludeTags by option("--exclude-tag")
         .multiple()
-        .help("Specifies tag exclusion filters.")
+        .help("Skip the cases with this tag, repeatable.")
 
     fun collectVerificationCases(context: SemantifyrModelContext): List<VerificationCase> {
         if (caseNames.isNotEmpty()) {
@@ -82,24 +80,22 @@ enum class ArtifactPreset {
 class ArtifactOptionGroup : OptionGroup("Artifact options") {
     val artifactDirectory by option("-d", "--artifact-directory")
         .path(canBeFile = false, canBeDir = true)
-        .help("Write artifacts under this directory. Defaults to a temporary directory.")
+        .help("Directory of the artifacts.")
 
     val artifactPreset by option("--artifacts")
         .enum<ArtifactPreset>(ignoreCase = true)
         .default(ArtifactPreset.All)
-        .help(
-            "Artifact preset. Default: 'all'. Use 'debug' to also write per-pass step dumps (slow; only for bisecting compiler regressions).",
-        )
+        .help("Artifact preset.")
 
     val enableArtifacts by option("--enable-artifact")
         .enum<ArtifactKind>(ignoreCase = true)
         .multiple()
-        .help("Enable a specific artifact kind (can be repeated).")
+        .help("Artifact kind to write, repeatable.")
 
     val disableArtifacts by option("--disable-artifact")
         .enum<ArtifactKind>(ignoreCase = true)
         .multiple()
-        .help("Disable a specific artifact kind (can be repeated).")
+        .help("Artifact kind to skip, repeatable.")
 
     val resolvedOutputDirectory by lazy {
         artifactDirectory ?: Files.createTempDirectory("semantifyr-")
@@ -129,27 +125,27 @@ class BackendOptionGroup(
         .convert("text") { id ->
             portfolios().firstOrNull { it.id == id } ?: fail("unknown portfolio '$id'")
         }
-        .defaultLazy {
-            portfolios().first { it.id == Portfolios.Default.id }
+        .defaultLazy(defaultForHelp = Portfolios.Default.id) {
+            portfolios().first {
+                it.id == Portfolios.Default.id
+            }
         }
-        .help("Portfolio id. Default: '${Portfolios.Default.id}'. Options: ${Portfolios.all.joinToString(", ") { it.id }}")
+        .help("Portfolio id.")
 
     val thetaExecutor by option("--theta-executor")
         .enum<ThetaExecutor>(ignoreCase = true)
         .default(ThetaExecutor.Auto)
-        .help("Which Theta executor to use. Default: 'auto'. Options: auto, shell, docker")
+        .help("How to run Theta.")
 
     val thetaDockerImage by option("--theta-docker-image")
         .default(THETA_DEFAULT_IMAGE)
-        .help(
-            "Theta docker image reference (repository:tag or @digest), used when --theta-executor=docker. Default: '$THETA_DEFAULT_IMAGE'.",
-        )
+        .help("Theta Docker image.")
 
     val timeoutSeconds by option("-t", "--timeout-seconds")
         .long()
         .restrictTo(min = 1L)
         .default(300L)
-        .help("Wall-clock timeout per case, in seconds, covering its compilation, every backend run of the portfolio and the back-annotation of the witness. Default: 300 (5 minutes).")
+        .help("Timeout per case, in seconds.")
 
     val timeout: Duration
         get() = timeoutSeconds.seconds
@@ -184,17 +180,17 @@ class CompilationOptionGroup : OptionGroup("Compilation options") {
     val optimizationPreset by option("--optimization")
         .enum<OptimizationPreset>(ignoreCase = true)
         .default(OptimizationPreset.All)
-        .help("Optimization preset. Default: 'all'.")
+        .help("Optimization preset.")
 
     val enableOptimizations by option("--enable-optimization")
         .enum<OptimizationPass>(ignoreCase = true)
         .multiple()
-        .help("Enable a specific optimization pass (can be repeated).")
+        .help("Optimization pass to run, repeatable.")
 
     val disableOptimizations by option("--disable-optimization")
         .enum<OptimizationPass>(ignoreCase = true)
         .multiple()
-        .help("Disable a specific optimization pass (can be repeated).")
+        .help("Optimization pass to skip, repeatable.")
 
     val resolved by lazy {
         val base = when (optimizationPreset) {

@@ -31,14 +31,14 @@ class GammaCompileCommand(
 
     private val model by argument("model path")
         .path()
-        .help("Gamma model file (must end in .gamma).")
+        .help("Gamma model file.")
 
     private val outputPath by option("-o", "--output")
         .path(canBeDir = false)
-        .help("Where to write the OXSTS model. Defaults to a sibling of the input model with the .oxsts extension.")
+        .help("Output file.")
 
     override fun help(context: Context): String {
-        return "Compile a Gamma model to an OXSTS model over the Gamma semantic library."
+        return "Compile a Gamma model to OXSTS."
     }
 
     override suspend fun run() {

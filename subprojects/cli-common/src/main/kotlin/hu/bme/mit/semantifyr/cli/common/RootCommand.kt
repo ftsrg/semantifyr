@@ -12,7 +12,9 @@ import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.PrintHelpMessage
 import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.core.UsageError
+import com.github.ajalt.clikt.core.context
 import com.github.ajalt.clikt.core.subcommands
+import com.github.ajalt.clikt.output.MordantHelpFormatter
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
@@ -36,11 +38,16 @@ abstract class RootCommand(
             ignoreCase = true,
         )
         .default(Level.WARN)
-        .help("Root log level. Logs are written to stderr so stdout remains usable for piping. Default: WARN.")
+        .help("Root log level.")
 
     init {
         versionOption(javaClass.`package`.implementationVersion ?: "unknown")
         subcommands(subcommands)
+        context {
+            helpFormatter = {
+                MordantHelpFormatter(it, showDefaultValues = true)
+            }
+        }
     }
 
     override fun help(context: Context): String {

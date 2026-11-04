@@ -26,4 +26,4 @@ The translation is verified on top of the bundled SysML v2 semantic library, the
 
 <CodeBlock language="text">{compile}</CodeBlock>
 
-`compile` writes the OXSTS translation of the model. `semantifyr` verifies it together with that library: `semantifyr verify -l <semantifyr-sysml distribution>/libraries/sysmlv2 room.oxsts`.
+`compile` writes the OXSTS translation of the model to `--output`, by default next to the model with the `.oxsts` extension. `semantifyr` verifies it together with that library: `semantifyr verify -l <semantifyr-sysml distribution>/libraries/sysmlv2 room.oxsts`.

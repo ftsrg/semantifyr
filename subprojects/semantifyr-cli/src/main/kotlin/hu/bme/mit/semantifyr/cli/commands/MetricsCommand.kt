@@ -39,10 +39,10 @@ class MetricsCommand @Inject constructor(
 
     private val json by option("--json")
         .flag()
-        .help("Print one JSON object per case, one per line, with the sizes under the keys report.json uses.")
+        .help("One JSON object per case, one per line.")
 
     override fun help(context: Context): String {
-        return "Compile one or more verification cases and print their model sizes at input, inlined and flattened level."
+        return "Print the model sizes of cases."
     }
 
     override suspend fun run() {

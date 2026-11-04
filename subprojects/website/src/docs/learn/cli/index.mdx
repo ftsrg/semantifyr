@@ -19,9 +19,13 @@ The `semantifyr` command lists, compiles, measures and verifies the verification
 
 A model or library path is an `.oxsts` file or a directory, which is searched recursively for `.oxsts` files. `--log-level` before the command sets the level of the log on standard error, `WARN` by default.
 
+`--case-name` selects cases by qualified name and overrides the tag filters. Without it, a command takes the cases that carry one of the `--include-tag` tags, or every case when none is given, except those that carry an `--exclude-tag` tag. `--artifacts debug` also writes the model after every compiler pass, which is slow and meant for bisecting compiler regressions.
+
 ## `verify`
 
 <CodeBlock language="text">{verify}</CodeBlock>
+
+`--timeout-seconds` bounds each case as a whole: its compilation, every backend run of the portfolio and the back-annotation of the witness. `--theta-executor` runs Theta from `PATH` (`shell`), in Docker (`docker`), or from `PATH` when it is there and in Docker otherwise (`auto`); `--theta-docker-image` is the image Docker runs, a `repository:tag` or `@digest` reference.
 
 For each case, `verify` prints `Verifying <case> ...`, then the verdict with the time it took, then the path of the `report.json` it wrote for the case. A case that does not compile gets `COMPILATION_ERROR` in place of the verdict and no report, and the compiler's message goes to standard error. With `--quiet` it prints only the verdict of each case, one per line: `PASSED`, `FAILED`, `INCONCLUSIVE`, `NOT_SUPPORTED`, `TIMEOUT`, `ERRORED` or `COMPILATION_ERROR`.
 
@@ -37,7 +41,7 @@ With `--json` it prints one JSON object per case and line, as each case finishes
 
 <CodeBlock language="text">{compile}</CodeBlock>
 
-For each case, `compile` prints `Compiling <case> to <file>`, writes the inlined model to the file, and prints the directory holding the artifacts of the case, a temporary directory unless `--artifact-directory` names one.
+For each case, `compile` prints `Compiling <case> to <file>`, writes the inlined model to the file, and prints the directory holding the artifacts of the case, a temporary directory unless `--artifact-directory` names one. With one selected case, `--output` is the file, `<model>.inlined.oxsts` next to the model by default; with several, it is a directory, `<model>.inlined` next to the model by default, holding `<case qualified name>.oxsts` for each case.
 
 ## `list`
 

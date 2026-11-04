@@ -44,7 +44,7 @@ class VerifyCommand @Inject constructor(
     private val output by verifyOutputOption()
 
     override fun help(context: Context): String {
-        return "Verify one or more verification cases of an OXSTS model with the chosen backend preset."
+        return "Verify the cases of an OXSTS model."
     }
 
     override suspend fun run() {

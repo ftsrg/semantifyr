@@ -32,10 +32,10 @@ class SysMLCompileCommand : SuspendingCliktCommand("compile") {
 
     private val outputPath by option("-o", "--output")
         .path(canBeDir = false)
-        .help("Where to write the OXSTS model. Defaults to a sibling of the input model with the .oxsts extension.")
+        .help("Output file.")
 
     override fun help(context: Context): String {
-        return "Translate a SysML v2 model to an OXSTS model over the SysML v2 semantic library."
+        return "Translate a SysML v2 model to OXSTS."
     }
 
     override suspend fun run() {

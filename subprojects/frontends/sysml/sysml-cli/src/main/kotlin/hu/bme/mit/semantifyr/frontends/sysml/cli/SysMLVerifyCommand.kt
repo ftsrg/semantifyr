@@ -54,7 +54,7 @@ class SysMLVerifyCommand @Inject constructor(
     private val libraries by option("-l", "--library")
         .path()
         .multiple()
-        .help("OXSTS library file (must end in .oxsts) or directory (walked recursively), loaded in addition to the bundled SysML v2 semantic library. Repeat the flag to add multiple.")
+        .help("OXSTS library file or directory, repeatable.")
 
     private val caseSpecificationOptions by VerificationCaseSpecificationOptionGroup(verificationCaseDiscoverer)
     private val backendOptions by BackendOptionGroup {
@@ -65,7 +65,7 @@ class SysMLVerifyCommand @Inject constructor(
     private val output by verifyOutputOption()
 
     override fun help(context: Context): String {
-        return "Translate a SysML v2 model to OXSTS, verify one or more of its verification cases with the chosen backend preset, and write the SysML v2 trace of each witness as trace.sysml next to its report.json."
+        return "Verify the cases of a SysML v2 model."
     }
 
     override suspend fun run() {

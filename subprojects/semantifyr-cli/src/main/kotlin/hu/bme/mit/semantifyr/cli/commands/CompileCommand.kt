@@ -48,10 +48,10 @@ class CompileCommand @Inject constructor(
 
     private val outputPath by option("-o", "--output")
         .path(mustExist = false, canBeFile = true, canBeDir = true)
-        .help("Where to write the inlined OXSTS. With a single selected case: a file path; with multiple: a directory holding `<case-qualified-name>.oxsts`. Defaults to a sibling of the input model.")
+        .help("Output file, or directory for several cases.")
 
     override fun help(context: Context): String {
-        return "Run the inlining pipeline for one or more verification cases and write the inlined OXSTS."
+        return "Compile cases to inlined OXSTS."
     }
 
     override suspend fun run() {

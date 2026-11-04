@@ -26,9 +26,9 @@ enum class VerifyOutput {
 
 fun SuspendingCliktCommand.verifyOutputOption() = mutuallyExclusiveOptions(
     option().switch("-q" to VerifyOutput.Quiet, "--quiet" to VerifyOutput.Quiet)
-        .help("Print only the verdict of each case, one per line."),
+        .help("Only the verdict of each case."),
     option().switch("--json" to VerifyOutput.Json)
-        .help("Print one JSON object per case, one per line, with the path of its report.json."),
+        .help("One JSON object per case, one per line."),
 ).single().default(VerifyOutput.Text)
 
 class CaseOutcome(
