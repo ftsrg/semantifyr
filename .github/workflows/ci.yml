@@ -67,6 +67,9 @@ jobs:
       - name: Install Spin
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: sudo apt-get update && sudo apt-get install -y spin
+      - name: Check the engines
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: .github/scripts/check-engines.sh spin docker
       - name: Gradle build
         shell: bash
         run: ./gradlew build --continue -Pwebsite.apiDocs=$WEBSITE_API_DOCS
