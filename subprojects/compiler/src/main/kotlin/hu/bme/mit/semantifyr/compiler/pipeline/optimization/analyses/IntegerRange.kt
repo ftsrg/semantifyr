@@ -30,8 +30,16 @@ data class IntegerRange(
 
     infix fun join(other: IntegerRange): IntegerRange {
         return IntegerRange(
-            lower = if (lower == null || other.lower == null) null else minOf(lower, other.lower),
-            upper = if (upper == null || other.upper == null) null else maxOf(upper, other.upper),
+            lower = if (lower == null || other.lower == null) {
+                null
+            } else {
+                minOf(lower, other.lower)
+            },
+            upper = if (upper == null || other.upper == null) {
+                null
+            } else {
+                maxOf(upper, other.upper)
+            },
         )
     }
 

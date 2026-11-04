@@ -114,7 +114,11 @@ class SysMLv2FrontendTestHelper {
             file = source.name,
             cases = frontend.verificationCases().map {
                 val name = it.qualifiedName.substringAfterLast("::")
-                val verdict = if (name.endsWith("Violated")) CorpusVerdict.Failed else CorpusVerdict.Passed
+                val verdict = if (name.endsWith("Violated")) {
+                    CorpusVerdict.Failed
+                } else {
+                    CorpusVerdict.Passed
+                }
                 CorpusCase(name, verdict, CorpusTier.Integration)
             },
         )

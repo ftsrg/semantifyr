@@ -18,7 +18,11 @@ data class UppaalConfig(
         private const val TRACE_FLAG = "-t 1"
 
         private fun withTraceFlag(parameters: String): String {
-            return if (parameters.isBlank()) TRACE_FLAG else "$TRACE_FLAG $parameters"
+            return if (parameters.isBlank()) {
+                TRACE_FLAG
+            } else {
+                "$TRACE_FLAG $parameters"
+            }
         }
 
         val Default = UppaalConfig(

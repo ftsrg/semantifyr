@@ -89,7 +89,11 @@ class VariableBoundsComputation(
             if (isWithin(next, states)) {
                 break
             }
-            states = if (round < WIDENING_DELAY) next else widen(states, next)
+            states = if (round < WIDENING_DELAY) {
+                next
+            } else {
+                widen(states, next)
+            }
             round++
         }
 
@@ -205,7 +209,11 @@ class VariableBoundsComputation(
         val iterations = if (rangeExpression is RangeExpression) {
             val first = evaluate(rangeExpression.left, state)
             val end = evaluate(rangeExpression.right, state)
-            val last = if (rangeExpression.isExclusive) end - IntegerRange.of(1) else end
+            val last = if (rangeExpression.isExclusive) {
+                end - IntegerRange.of(1)
+            } else {
+                end
+            }
             IntegerRange(first.lower, last.upper) to constantIterations(first, last)
         } else {
             evaluate(rangeExpression, state)
@@ -232,7 +240,11 @@ class VariableBoundsComputation(
             if (isWithin(next, head)) {
                 return head
             }
-            head = if (round < WIDENING_DELAY) next else widen(head, next)
+            head = if (round < WIDENING_DELAY) {
+                next
+            } else {
+                widen(head, next)
+            }
             round++
         }
     }
@@ -291,7 +303,11 @@ class VariableBoundsComputation(
         comparison: ComparisonOperator,
         polarity: Boolean,
     ): MutableMap<VariableDeclaration, IntegerRange>? {
-        val op = if (polarity) comparison.op else negate(comparison.op)
+        val op = if (polarity) {
+            comparison.op
+        } else {
+            negate(comparison.op)
+        }
         val left = evaluate(comparison.left, state)
         val right = evaluate(comparison.right, state)
         if (!isSatisfiable(left, op, right)) {
@@ -466,8 +482,20 @@ class VariableBoundsComputation(
         return next.mapValuesTo(HashMap()) { (variable, range) ->
             val old = previous[variable] ?: return@mapValuesTo range
             val widened = IntegerRange(
-                lower = if (range.lower == old.lower) range.lower else range.lower?.let { thresholds.floor(it) },
-                upper = if (range.upper == old.upper) range.upper else range.upper?.let { thresholds.ceiling(it) },
+                lower = if (range.lower == old.lower) {
+                    range.lower
+                } else {
+                    range.lower?.let {
+                        thresholds.floor(it)
+                    }
+                },
+                upper = if (range.upper == old.upper) {
+                    range.upper
+                } else {
+                    range.upper?.let {
+                        thresholds.ceiling(it)
+                    }
+                },
             )
             limited(variable, widened)
         }

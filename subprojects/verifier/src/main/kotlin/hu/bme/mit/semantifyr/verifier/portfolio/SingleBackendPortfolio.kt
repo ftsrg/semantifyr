@@ -52,7 +52,11 @@ class SingleBackendPortfolio<T : BackendConfig>(
         if (!result.isDecisive || result.isTrusted) {
             return result
         }
-        val property = if (request.inlinedOxsts.property.expression is EF) "EF" else "AG"
+        val property = if (request.inlinedOxsts.property.expression is EF) {
+            "EF"
+        } else {
+            "AG"
+        }
         val direction = when (result.soundness) {
             SoundnessDirection.Exact -> "exact"
             SoundnessDirection.OverApproximating -> "over-approximating"
