@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
@@ -55,24 +56,31 @@ abstract class DistributionTestBase(
             listOf(home.resolve("bin/$launcher").toString())
         }
         val javaHome = System.getProperty("java.home")
-        val path = System.getenv("PATH").split(File.pathSeparator).filterNot {
-            runCatching { Path(it).resolve("theta-xsts-cli").exists() }.getOrDefault(false)
-        }
         val stdout = directory.resolve("stdout.txt")
         val stderr = directory.resolve("stderr.txt")
-        val process = ProcessBuilder(command + arguments)
+        val processBuilder = ProcessBuilder(command + arguments)
             .directory(directory.toFile())
             .redirectOutput(stdout.toFile())
             .redirectError(stderr.toFile())
-            .apply {
-                environment()["JAVA_HOME"] = javaHome
-                environment()["PATH"] = (listOf(Path(javaHome, "bin").toString()) + path).joinToString(File.pathSeparator)
-            }
-            .start()
+        val environment = processBuilder.environment()
+        environment["JAVA_HOME"] = javaHome
+        environment["PATH"] = pathWithoutTheta(javaHome)
+        val process = processBuilder.start()
         check(process.waitFor(10, TimeUnit.MINUTES)) {
             "$launcher ${arguments.joinToString(" ")} did not exit"
         }
         return LauncherRun(process.exitValue(), stdout.readText(), stderr.readText())
+    }
+
+    private fun pathWithoutTheta(javaHome: String): String {
+        val hostEntries = System.getenv("PATH").split(File.pathSeparator).filterNot {
+            try {
+                Path(it).resolve("theta-xsts-cli").exists()
+            } catch (_: InvalidPathException) {
+                false
+            }
+        }
+        return (listOf(Path(javaHome, "bin").toString()) + hostEntries).joinToString(File.pathSeparator)
     }
 
     protected fun reportOf(run: LauncherRun): Path {
