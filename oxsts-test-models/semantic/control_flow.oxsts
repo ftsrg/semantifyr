@@ -281,3 +281,37 @@ class IfWithoutElseKeepsValueViolated {
         return AG taken == 0
     }
 }
+
+@VerificationCase
+@Tag("expect-pass")
+class AssumeAfterWriteBound {
+    var x: int := 0
+    var y: int := 0
+
+    redefine tran {
+        havoc(y)
+        x := 5
+        assume(y == 1)
+    }
+
+    prop {
+        return AG (x == 0 || y == 1)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class AssumeAfterWriteViolated {
+    var x: int := 0
+    var y: int := 0
+
+    redefine tran {
+        havoc(y)
+        x := 5
+        assume(y == 1)
+    }
+
+    prop {
+        return AG x == 0
+    }
+}
