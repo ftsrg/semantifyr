@@ -6,20 +6,18 @@
 
 package semantifyr::verification::lang::optimizer_soundness
 
-// Models the optimizer once decided wrongly; each case names the rewrite it guards.
-
-// Copy propagation: q keeps the value p had at the copy, not the value p has at the read.
+// Copy propagation: the copy keeps the value the source had at the copy, not the value it has at the read.
 @VerificationCase
 @Tag("expect-pass")
 class CopyAcrossSourceWrite {
-    var p: int := 0
-    var q: int := 0
+    var source: int := 0
+    var copy: int := 0
     var seen: bool := false
 
     redefine tran {
-        q := p
-        p := 1 - p
-        assume(q == 0)
+        copy := source
+        source := 1 - source
+        assume(copy == 0)
         seen := true
     }
 
@@ -32,17 +30,17 @@ class CopyAcrossSourceWrite {
 @VerificationCase
 @Tag("expect-pass")
 class CopyFromInitAcrossSourceWrite {
-    var p: int := 0
-    var q: int := 0
+    var source: int := 0
+    var copy: int := 0
     var seen: bool := false
 
     redefine init {
-        q := p
+        copy := source
     }
 
     redefine tran {
-        p := 1 - p
-        assume(q == 0)
+        source := 1 - source
+        assume(copy == 0)
         seen := true
     }
 
@@ -55,31 +53,31 @@ class CopyFromInitAcrossSourceWrite {
 @VerificationCase
 @Tag("expect-pass")
 class LocalInitializerBeforeSourceWrite {
-    var a: int := 0
+    var source: int := 0
     var seen: int := 0
 
     redefine tran {
-        var s: int := a
-        a := 1 - a
-        seen := s
+        var snapshot: int := source
+        source := 1 - source
+        seen := snapshot
     }
 
     prop {
-        return EF (a == 1 && seen == 0)
+        return EF (source == 1 && seen == 0)
     }
 }
 
-// Cone of influence: the writes to a stay live because the local's initializer reads it.
+// Cone of influence: the writes to the source stay live because the local's initializer reads it.
 @VerificationCase
 @Tag("expect-pass")
 class LocalInitializerSourceInCone {
-    var a: int := 0
+    var source: int := 0
     var seen: int := 0
 
     redefine tran {
-        a := 1 - a
-        var s: int := a
-        seen := s
+        source := 1 - source
+        var snapshot: int := source
+        seen := snapshot
     }
 
     prop {
@@ -91,20 +89,20 @@ class LocalInitializerSourceInCone {
 @VerificationCase
 @Tag("expect-pass")
 class InitCopyOnOneBranch {
-    var c: bool := false
-    var q: int := 0
-    var r: int := 9
+    var branch: bool := false
+    var source: int := 0
+    var copy: int := 9
 
     redefine init {
-        havoc(c)
-        if (c) {
-            q := 5
+        havoc(branch)
+        if (branch) {
+            source := 5
         }
-        r := q
+        copy := source
     }
 
     prop {
-        return EF r == 0
+        return EF copy == 0
     }
 }
 
