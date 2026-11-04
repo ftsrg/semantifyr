@@ -117,11 +117,8 @@ jobs:
       - name: Stage the distributions and the live image context
         if: ${{ matrix.os == 'ubuntu-latest' }}
         shell: bash
-        # a tarball, because upload-artifact drops the execute bits the launchers need
         run: |
-          ./gradlew :semantifyr-vscode:bundleExtension :semantifyr-live-backend:prepareDockerBuild
-          tar -czf live-image-context.tar.gz -C subprojects/semantifyr-live/backend \
-            Dockerfile build/install build/staging build/theta-xsts-cli
+          ./gradlew :semantifyr-vscode:bundleExtension :semantifyr-live-backend:liveImageContext
           mkdir distributions
           cp subprojects/semantifyr-vscode/build/semantifyr-*.vsix distributions/
           cp subprojects/semantifyr-cli/build/distributions/semantifyr-*.zip distributions/
@@ -149,9 +146,10 @@ jobs:
       - name: Upload the live image context
         if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: actions/upload-artifact@v7
+        # a tarball, because upload-artifact drops the execute bits the image needs
         with:
           name: live-image-context
-          path: live-image-context.tar.gz
+          path: subprojects/semantifyr-live/backend/build/distributions/live-image-context.tar.gz
           compression-level: 0
           retention-days: 1
 
