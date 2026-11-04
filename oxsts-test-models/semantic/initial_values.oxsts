@@ -8,7 +8,7 @@ package semantifyr::verification::lang::initial_values
 
 enum Light {
     Off,
-    On
+    On,
 }
 
 @VerificationCase

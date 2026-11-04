@@ -6,7 +6,10 @@
 
 package semantifyr::verification::lang::records
 
-enum Light { Off, On }
+enum Light {
+    Off,
+    On,
+}
 
 record Point {
     var x: int := 0

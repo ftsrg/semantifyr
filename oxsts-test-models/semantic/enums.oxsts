@@ -9,7 +9,7 @@ package semantifyr::verification::lang::enums
 enum Color {
     Red,
     Green,
-    Blue
+    Blue,
 }
 
 @VerificationCase
