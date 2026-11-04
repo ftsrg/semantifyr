@@ -6,10 +6,6 @@
 
 package semantifyr::verification::lang::runtime_for
 
-// A runtime for-operation iterates its whole range within one step:
-// `a..b` includes b, `a..<b` stops before it. Summing the loop
-// variable distinguishes every off-by-one.
-
 @VerificationCase
 @Tag("expect-pass")
 class InclusiveRangeReach {
@@ -17,8 +13,8 @@ class InclusiveRangeReach {
 
     redefine tran {
         assume(x == 0)
-        for (i in 0..2) {
-            x := x + i
+        for (index in 0..2) {
+            x := x + index
         }
     }
 
@@ -34,8 +30,8 @@ class InclusiveRangeBound {
 
     redefine tran {
         assume(x == 0)
-        for (i in 0..2) {
-            x := x + i
+        for (index in 0..2) {
+            x := x + index
         }
     }
 
@@ -51,8 +47,8 @@ class ExclusiveRangeReach {
 
     redefine tran {
         assume(x == 0)
-        for (i in 0..<3) {
-            x := x + i
+        for (index in 0..<3) {
+            x := x + index
         }
     }
 
@@ -68,8 +64,8 @@ class ExclusiveRangeBound {
 
     redefine tran {
         assume(x == 0)
-        for (i in 0..<3) {
-            x := x + i
+        for (index in 0..<3) {
+            x := x + index
         }
     }
 
@@ -78,8 +74,6 @@ class ExclusiveRangeBound {
     }
 }
 
-// A loop variable the body never reads still drives the iteration count.
-
 @VerificationCase
 @Tag("expect-pass")
 class UnreadLoopVariableReach {
@@ -87,7 +81,7 @@ class UnreadLoopVariableReach {
 
     redefine tran {
         assume(x == 0)
-        for (i in 0..2) {
+        for (index in 0..2) {
             x := x + 1
         }
     }
@@ -104,7 +98,7 @@ class UnreadLoopVariableBound {
 
     redefine tran {
         assume(x == 0)
-        for (i in 0..2) {
+        for (index in 0..2) {
             x := x + 1
         }
     }
@@ -121,8 +115,8 @@ class InclusiveRangeViolated {
 
     redefine tran {
         assume(x == 0)
-        for (i in 0..2) {
-            x := x + i
+        for (index in 0..2) {
+            x := x + index
         }
     }
 
