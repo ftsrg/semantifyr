@@ -68,9 +68,7 @@ jobs:
           cache-dependency-path: package-lock.json
       - name: Install Spin
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y spin
+        run: sudo apt-get update && sudo apt-get install -y spin
       - name: Gradle build
         shell: bash
         run: ./gradlew build --continue -Ptests.requiredBackends=$REQUIRED_BACKENDS -Pwebsite.apiDocs=$WEBSITE_API_DOCS
@@ -104,10 +102,7 @@ jobs:
         shell: bash
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          if [ -n "$SONAR_TOKEN" ]; then
-            ./gradlew sonar -Ptests.requiredBackends=$REQUIRED_BACKENDS
-          fi
+        run: .github/scripts/sonar.sh "$REQUIRED_BACKENDS"
       - name: Upload GitHub Pages artifact
         if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: actions/upload-pages-artifact@v5
@@ -195,14 +190,10 @@ jobs:
         with:
           name: live-image-context
       - name: Unpack the live image context
-        run: |
-          mkdir context
-          tar -xzf live-image-context.tar.gz -C context
+        run: mkdir context && tar -xzf live-image-context.tar.gz -C context
       - name: Compute the tag
         id: tag
-        run: |
-          version=$(sed -n 's/^version=//p' gradle.properties)
-          echo "tag=$version-dev.${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+        run: echo "tag=$(sed -n 's/^version=//p' gradle.properties)-dev.${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
       - name: Set up Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - name: Build
@@ -223,16 +214,7 @@ jobs:
       - name: Smoke test
         env:
           TAG: ${{ steps.tag.outputs.tag }}
-        run: |
-          docker run -d --name live -p 8080:8080 --cap-drop ALL --security-opt no-new-privileges:true "$IMAGE:$TAG"
-          for _ in $(seq 60); do
-            curl -fsS http://localhost:8080/api/health > /dev/null && break
-            sleep 3
-          done
-          curl -fsS http://localhost:8080/api/health
-          curl -fsS http://localhost:8080/ > /dev/null
-          test "$(curl -s -o /dev/null -w '%{http_code}' -H 'X-Auth-Request-User: smoke' http://localhost:8080/api/admin/status)" = 403
-          docker exec live theta-xsts-cli --version
+        run: .github/scripts/smoke-test-live-image.sh live "$IMAGE:$TAG"
       - name: Show the container log
         if: ${{ failure() }}
         run: docker logs live
@@ -246,6 +228,4 @@ jobs:
         if: ${{ inputs.publish }}
         env:
           TAG: ${{ steps.tag.outputs.tag }}
-        run: |
-          docker push "$IMAGE:$TAG"
-          docker push "$IMAGE:snapshot"
+        run: docker push "$IMAGE:$TAG" && docker push "$IMAGE:snapshot"
