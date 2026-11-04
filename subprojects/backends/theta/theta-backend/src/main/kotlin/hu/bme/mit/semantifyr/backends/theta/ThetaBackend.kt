@@ -138,9 +138,9 @@ class ThetaVerificationContext @AssistedInject constructor(
         }
         return try {
             buildInlinedWitness(artifacts, artifactManager.cexFile.toPath())
-        } catch (e: UnrepresentableWitnessValueException) {
+        } catch (exception: UnrepresentableWitnessValueException) {
             logger.warn {
-                "[$backendId] witness not produced: ${e.message}"
+                "[$backendId] witness not produced: ${exception.message}"
             }
             null
         }
