@@ -36,6 +36,7 @@ class NuxmvCapabilityChecker @Inject constructor(
         return when (variable.typeSpecification?.domain) {
             builtinSymbolResolver.realDatatype(variable) -> Limitation.RealVariables
             builtinSymbolResolver.stringDatatype(variable) -> Limitation.StringVariables
+            builtinSymbolResolver.anyDatatype(variable) -> Limitation.AnyVariables
             else -> null
         }
     }
@@ -46,6 +47,7 @@ class NuxmvCapabilityChecker @Inject constructor(
     ) : BackendLimitation {
         RealVariables("variables of type real", "the SMV translation declares integer, boolean and enumeration variables only"),
         StringVariables("variables of type string", "the SMV translation declares integer, boolean and enumeration variables only"),
+        AnyVariables("variables of type any", "the SMV translation declares integer, boolean and enumeration variables only"),
         ForOperations("for-operations", "the SMV translation has no loop"),
         StringLiterals("string literals", "SMV has no strings"),
         ArrayLiterals("array literals", "the backend receives arrays split into one variable per slot and has no form for an array value"),

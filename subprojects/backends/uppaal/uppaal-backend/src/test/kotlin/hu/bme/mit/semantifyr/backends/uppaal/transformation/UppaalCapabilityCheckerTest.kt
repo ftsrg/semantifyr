@@ -98,6 +98,7 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
         val unsupported = unsupported(
             """
                 var r : real := 0.5
+                var a : any := 0
                 @semantifyr::Clock var c : int := 0
                 @semantifyr::Clock var e : test::colors::Color := test::colors::Color::Red
                 var x : int := 0
@@ -109,6 +110,7 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
 
         assertThat(unsupported).containsExactlyInAnyOrder(
             Limitation.RealVariables,
+            Limitation.AnyVariables,
             Limitation.NonDataTypedClocks,
             Limitation.NonZeroClockResets,
             Limitation.ClockHavocs,

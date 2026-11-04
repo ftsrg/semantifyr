@@ -64,6 +64,7 @@ open class UppaalCapabilityChecker @Inject constructor(
         return when (domain) {
             builtinSymbolResolver.realDatatype(variable) -> Limitation.RealVariables
             builtinSymbolResolver.stringDatatype(variable) -> Limitation.StringVariables
+            builtinSymbolResolver.anyDatatype(variable) -> Limitation.AnyVariables
             else -> null
         }
     }
@@ -96,6 +97,7 @@ open class UppaalCapabilityChecker @Inject constructor(
     ) : BackendLimitation {
         RealVariables("variables of type real", "the Uppaal translation declares integer, boolean, enumeration and clock variables only"),
         StringVariables("variables of type string", "the Uppaal translation declares integer, boolean, enumeration and clock variables only"),
+        AnyVariables("variables of type any", "the Uppaal translation declares integer, boolean, enumeration and clock variables only"),
         NonDataTypedClocks("@Clock on variables that are not data-typed", "a clock stands for a time value, which an enumeration cannot hold"),
         NonZeroClockResets("clock resets to values other than 0", "the translation resets a clock to 0 only"),
         ClockHavocs("havoc on clocks", "a clock cannot take an arbitrary value"),

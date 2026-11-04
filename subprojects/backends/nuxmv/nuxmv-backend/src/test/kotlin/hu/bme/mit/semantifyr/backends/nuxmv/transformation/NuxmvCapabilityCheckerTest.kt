@@ -46,6 +46,7 @@ class NuxmvCapabilityCheckerTest : NuxmvTransformationTestBase() {
         val unsupported = unsupported(
             """
                 var r : real := 0.5
+                var a : any := 0
                 var s : string
                 var x : int := 0
                 init { }
@@ -56,6 +57,7 @@ class NuxmvCapabilityCheckerTest : NuxmvTransformationTestBase() {
 
         assertThat(unsupported).containsExactlyInAnyOrder(
             Limitation.RealVariables,
+            Limitation.AnyVariables,
             Limitation.StringVariables,
             Limitation.ForOperations,
         )

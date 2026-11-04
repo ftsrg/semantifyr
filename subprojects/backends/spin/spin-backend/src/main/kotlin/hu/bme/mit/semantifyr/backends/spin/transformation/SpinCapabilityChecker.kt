@@ -60,6 +60,7 @@ class SpinCapabilityChecker @Inject constructor(
         return when (variable.typeSpecification?.domain) {
             builtinSymbolResolver.realDatatype(variable) -> Limitation.RealVariables
             builtinSymbolResolver.stringDatatype(variable) -> Limitation.StringVariables
+            builtinSymbolResolver.anyDatatype(variable) -> Limitation.AnyVariables
             else -> null
         }
     }
@@ -81,6 +82,7 @@ class SpinCapabilityChecker @Inject constructor(
     ) : BackendLimitation {
         RealVariables("variables of type real", "Promela has integer, boolean and mtype variables only"),
         StringVariables("variables of type string", "Promela has integer, boolean and mtype variables only"),
+        AnyVariables("variables of type any", "Promela has integer, boolean and mtype variables only"),
         ForOperations("for-operations", "the Promela translation has no loop"),
         RealLiterals("real literals", "Promela has no real numbers"),
         StringLiterals("string literals", "Promela has no strings"),

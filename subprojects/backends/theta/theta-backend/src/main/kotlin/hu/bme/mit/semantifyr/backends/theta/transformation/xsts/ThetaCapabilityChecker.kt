@@ -44,6 +44,7 @@ class ThetaCapabilityChecker @Inject constructor(
         return when (variable.typeSpecification?.domain) {
             builtinSymbolResolver.realDatatype(variable) -> Limitation.RealVariables
             builtinSymbolResolver.stringDatatype(variable) -> Limitation.StringVariables
+            builtinSymbolResolver.anyDatatype(variable) -> Limitation.AnyVariables
             else -> null
         }
     }
@@ -54,6 +55,7 @@ class ThetaCapabilityChecker @Inject constructor(
     ) : BackendLimitation {
         RealVariables("variables of type real", "XSTS has integer, boolean and enumeration variables only"),
         StringVariables("variables of type string", "XSTS has integer, boolean and enumeration variables only"),
+        AnyVariables("variables of type any", "XSTS has integer, boolean and enumeration variables only"),
         RealLiterals("real literals", "XSTS has no real numbers"),
         StringLiterals("string literals", "XSTS has no strings"),
         ArrayLiterals("array literals", "the backend receives arrays split into one variable per slot and has no form for an array value"),
