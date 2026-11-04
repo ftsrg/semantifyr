@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.backends.nuxmv.transformation
 
+import hu.bme.mit.semantifyr.backend.BackendLimitation
+import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvCapabilityChecker.Limitation
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -16,14 +18,11 @@ class NuxmvCapabilityCheckerTest : NuxmvTransformationTestBase() {
         enum Color { Red, Green }
     """
 
-    private fun unsupported(body: String): List<String> {
+    private fun unsupported(body: String): List<BackendLimitation> {
         val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors)
-        val unsupported = capabilityChecker().check(inlinedOxsts).map {
-            it.description
+        return capabilityChecker().check(inlinedOxsts).map {
+            it.limitation
         }
-        // the limitations page lists what the checker reports
-        assertThat(NuxmvCapabilityChecker.limitations.map { it.construct }).containsAll(unsupported)
-        return unsupported
     }
 
     @Test
@@ -56,9 +55,9 @@ class NuxmvCapabilityCheckerTest : NuxmvTransformationTestBase() {
         )
 
         assertThat(unsupported).containsExactlyInAnyOrder(
-            "variables of type real",
-            "variables of type string",
-            "for-operations",
+            Limitation.RealVariables,
+            Limitation.StringVariables,
+            Limitation.ForOperations,
         )
     }
 }

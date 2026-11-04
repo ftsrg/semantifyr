@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.backends.uppaal.transformation
 
+import hu.bme.mit.semantifyr.backend.BackendLimitation
+import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalCapabilityChecker.Limitation
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -19,19 +21,16 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
     private fun unsupported(
         body: String,
         checkerClass: Class<out UppaalCapabilityChecker> = UppaalCapabilityChecker::class.java,
-    ): List<String> {
+    ): List<BackendLimitation> {
         val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors)
-        val unsupported = withCapabilityChecker(checkerClass) {
+        return withCapabilityChecker(checkerClass) {
             it.check(inlinedOxsts)
         }.map {
-            it.description
+            it.limitation
         }
-        // the limitations page lists what the checker reports
-        assertThat(UppaalCapabilityChecker.limitations.map { it.construct }).containsAll(unsupported)
-        return unsupported
     }
 
-    private fun overApproximationUnsupported(body: String): List<String> {
+    private fun overApproximationUnsupported(body: String): List<BackendLimitation> {
         return unsupported(body, UppaalOverApproximationCapabilityChecker::class.java)
     }
 
@@ -57,9 +56,9 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
             prop { AG y < 5 }
         """
 
-        assertThat(overApproximationUnsupported(havoc)).containsExactly(UppaalOverApproximationCapabilityChecker.UNDER_APPROXIMATED_HAVOC)
-        assertThat(overApproximationUnsupported(uninitialized)).contains(UppaalOverApproximationCapabilityChecker.UNDER_APPROXIMATED_HAVOC)
-        assertThat(overApproximationUnsupported(local)).containsExactly(UppaalOverApproximationCapabilityChecker.UNDER_APPROXIMATED_HAVOC)
+        assertThat(overApproximationUnsupported(havoc)).containsExactly(UppaalOverApproximationCapabilityChecker.Limitation.UnderApproximatedHavocs)
+        assertThat(overApproximationUnsupported(uninitialized)).contains(UppaalOverApproximationCapabilityChecker.Limitation.UnderApproximatedHavocs)
+        assertThat(overApproximationUnsupported(local)).containsExactly(UppaalOverApproximationCapabilityChecker.Limitation.UnderApproximatedHavocs)
         assertThat(unsupported(havoc)).isEmpty()
     }
 
@@ -109,11 +108,11 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
         )
 
         assertThat(unsupported).containsExactlyInAnyOrder(
-            "variables of type real",
-            "@Clock on variables that are not data-typed",
-            "clock resets to values other than 0",
-            "havoc on clocks",
-            "for-operations",
+            Limitation.RealVariables,
+            Limitation.NonDataTypedClocks,
+            Limitation.NonZeroClockResets,
+            Limitation.ClockHavocs,
+            Limitation.ForOperations,
         )
     }
 
@@ -129,7 +128,7 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
             """,
         )
 
-        assertThat(unsupported).containsExactly("arithmetic that may leave the 32-bit range")
+        assertThat(unsupported).containsExactly(Limitation.ArithmeticBeyond32Bits)
     }
 
     @Test
@@ -175,6 +174,6 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
             """,
         )
 
-        assertThat(unsupported).containsExactly("arithmetic that may leave the 32-bit range")
+        assertThat(unsupported).containsExactly(Limitation.ArithmeticBeyond32Bits)
     }
 }

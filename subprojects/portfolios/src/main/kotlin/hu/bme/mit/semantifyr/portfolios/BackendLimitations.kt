@@ -10,6 +10,7 @@ import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvCapabilityChecke
 import hu.bme.mit.semantifyr.backends.spin.transformation.SpinCapabilityChecker
 import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaCapabilityChecker
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalCapabilityChecker
+import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalOverApproximationCapabilityChecker
 import kotlin.io.path.Path
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.writeText
@@ -17,10 +18,10 @@ import kotlin.io.path.writeText
 // writes the website's limitations table: backend, configuration, construct and reason per line
 fun main(args: Array<String>) {
     val limitations = mapOf(
-        "theta" to ThetaCapabilityChecker.limitations,
-        "nuxmv" to NuxmvCapabilityChecker.limitations,
-        "spin" to SpinCapabilityChecker.limitations,
-        "uppaal" to UppaalCapabilityChecker.limitations,
+        "theta" to ThetaCapabilityChecker.Limitation.entries,
+        "nuxmv" to NuxmvCapabilityChecker.Limitation.entries,
+        "spin" to SpinCapabilityChecker.Limitation.entries,
+        "uppaal" to UppaalCapabilityChecker.Limitation.entries + UppaalOverApproximationCapabilityChecker.Limitation.entries,
     )
     val rows = limitations.flatMap { (backend, entries) ->
         entries.map {

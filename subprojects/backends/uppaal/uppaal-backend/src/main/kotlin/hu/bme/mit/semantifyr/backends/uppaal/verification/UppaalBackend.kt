@@ -15,7 +15,6 @@ import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.SoundnessDirection
-import hu.bme.mit.semantifyr.backend.UnsupportedConstruct
 import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.VerificationContext
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
@@ -142,7 +141,7 @@ class UppaalVerificationContext @AssistedInject constructor(
         } ?: return
         val description = "an assignment of ${assignment.value} outside the declared range"
         val construct = uppaalVariableTransformer.variableOf(assignment.variable)?.let {
-            describe(UnsupportedConstruct(it, description))
+            describe(it, description)
         } ?: "$description (${assignment.variable})"
         throw BackendUnsupportedException("$backendId does not support $construct")
     }
