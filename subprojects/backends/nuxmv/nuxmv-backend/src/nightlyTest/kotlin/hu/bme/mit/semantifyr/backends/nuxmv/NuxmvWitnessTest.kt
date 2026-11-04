@@ -6,14 +6,15 @@
 
 package hu.bme.mit.semantifyr.backends.nuxmv
 
+import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvCapabilityChecker
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackend
+import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackendModule
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
-import hu.bme.mit.semantifyr.verifier.discovery.CaseFilter
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
@@ -43,11 +44,11 @@ class NuxmvWitnessTest {
 
         @JvmStatic
         fun `Witnesses Re-verify Through All Backends`(): List<Arguments> {
-            return helper.collectVerificationCasesAsArguments(
+            return helper.collectAcceptedCasesAsArguments(
                 context,
-                CaseFilter.Matching {
-                    it.qualifiedName !in nuxmvExcludedCases
-                },
+                NuxmvBackendModule(),
+                NuxmvCapabilityChecker::class.java,
+                SemantifyrVerifierTestHelper.testArtifactRoot(NuxmvWitnessTest::class.java).resolve("capability-check"),
             )
         }
     }

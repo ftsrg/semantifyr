@@ -6,14 +6,15 @@
 
 package hu.bme.mit.semantifyr.backends.spin
 
+import hu.bme.mit.semantifyr.backends.spin.transformation.SpinCapabilityChecker
 import hu.bme.mit.semantifyr.backends.spin.verification.SpinBackend
+import hu.bme.mit.semantifyr.backends.spin.verification.SpinBackendModule
 import hu.bme.mit.semantifyr.backends.spin.verification.SpinConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
-import hu.bme.mit.semantifyr.verifier.discovery.CaseFilter
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
@@ -44,11 +45,11 @@ class SpinSemanticConformanceTest {
 
         @JvmStatic
         fun corpusCases(): List<Arguments> {
-            return helper.collectVerificationCasesAsArguments(
+            return helper.collectAcceptedCasesAsArguments(
                 context,
-                CaseFilter.Matching {
-                    it.qualifiedName !in spinExcludedCases
-                },
+                SpinBackendModule(),
+                SpinCapabilityChecker::class.java,
+                SemantifyrVerifierTestHelper.testArtifactRoot(SpinSemanticConformanceTest::class.java).resolve("capability-check"),
             )
         }
     }

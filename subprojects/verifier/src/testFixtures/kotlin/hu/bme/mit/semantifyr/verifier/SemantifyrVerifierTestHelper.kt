@@ -8,9 +8,13 @@ package hu.bme.mit.semantifyr.verifier
 
 import com.google.inject.Inject
 import com.google.inject.Injector
+import com.google.inject.Module
+import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
+import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
@@ -81,6 +85,29 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         filter: CaseFilter = CaseFilter.All,
     ): List<Arguments> {
         return collectVerificationCases(context, filter).map {
+            Arguments.of(Named.of(it.qualifiedName, it))
+        }
+    }
+
+    fun collectAcceptedCasesAsArguments(
+        context: SemantifyrModelContext,
+        backendModule: Module,
+        capabilityChecker: Class<out BackendCapabilityChecker>,
+        outputDirectory: Path,
+        filter: CaseFilter = CaseFilter.All,
+    ): List<Arguments> {
+        val backendInjector = injector.createChildInjector(backendModule)
+        val compiler = SemantifyrCompiler(injector, ArtifactConfig.NONE)
+        return collectVerificationCases(context, filter).filter { case ->
+            val inlinedOxsts = compiler.compile(case.classDeclaration, outputDirectory.resolve(caseDirectoryName(case))).inlinedOxsts
+            val unsupported = withVerificationScopeBlocking {
+                backendInjector.getInstance(capabilityChecker).check(inlinedOxsts)
+            }
+            if (unsupported.isNotEmpty()) {
+                logger.info { "Leaving out ${case.qualifiedName}: ${capabilityChecker.simpleName} refuses ${unsupported.map { it.limitation }.distinct().joinToString()}" }
+            }
+            unsupported.isEmpty()
+        }.map {
             Arguments.of(Named.of(it.qualifiedName, it))
         }
     }
