@@ -6,10 +6,6 @@
 
 package semantifyr::verification::lang::boundedness
 
-// Integers are unbounded: the counters and doublings below leave every fixed-width range and never wrap.
-
-// --- unbounded counters ---
-
 @VerificationCase
 @Tag("expect-pass")
 class UnboundedCounterReach {
@@ -38,7 +34,6 @@ class UnboundedCounterBound {
     }
 }
 
-// A doubling never wraps to a value that is not positive.
 @VerificationCase
 @Tag("expect-pass")
 class DoublingStaysPositive {
@@ -53,7 +48,6 @@ class DoublingStaysPositive {
     }
 }
 
-// A doubling never wraps to a negative value.
 @VerificationCase
 @Tag("expect-fail")
 class DoublingReachesNegative {
@@ -91,8 +85,6 @@ class UnboundedGuardAroundAssumption {
     }
 }
 
-// --- bounded integers ---
-
 @VerificationCase
 @Tag("expect-pass")
 class SaturatingCounterReach {
@@ -128,25 +120,25 @@ class SaturatingCounterBound {
 @VerificationCase
 @Tag("expect-pass")
 class TimerCountdownBound {
-    var t: int := 0
+    var timer: int := 0
 
     redefine init {
-        t := 3
+        timer := 3
     }
 
     redefine tran {
         choice {
-            if (t > 0) {
-                t := t - 1
+            if (timer > 0) {
+                timer := timer - 1
             }
         } or {
-            assume(t == 0)
-            t := 3
+            assume(timer == 0)
+            timer := 3
         }
     }
 
     prop {
-        return AG (t >= 0 && t <= 3)
+        return AG (timer >= 0 && timer <= 3)
     }
 }
 
