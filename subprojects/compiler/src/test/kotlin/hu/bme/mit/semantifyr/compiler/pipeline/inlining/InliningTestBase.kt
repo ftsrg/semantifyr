@@ -57,7 +57,7 @@ abstract class InliningTestBase {
         block: (Prepared) -> T,
     ): T {
         val inlined = parseHelper.parse(source.normalizedFixtureSource())
-        val compilationInjector = newCompilationInjector()
+        val compilationInjector = newCompilationInjector(OptimizationConfig.ALL)
         val request = CompilationRequest(
             inlinedOxsts = inlined,
             outputDirectory = Files.createTempDirectory("inlining-test-"),
@@ -72,10 +72,11 @@ abstract class InliningTestBase {
     protected fun <T> prepare(
         className: String,
         source: String,
+        optimization: OptimizationConfig = OptimizationConfig.ALL,
         block: (Prepared) -> T,
     ): T {
         val classDeclaration = parseClassFromPackage(className, source)
-        val compilationInjector = newCompilationInjector()
+        val compilationInjector = newCompilationInjector(optimization)
         val outputDirectory = Files.createTempDirectory("inlining-test-")
         val created = compilationInjector.getInstance(InlinedOxstsModelCreator::class.java).create(classDeclaration, outputDirectory)
         val request = CompilationRequest(
@@ -106,6 +107,20 @@ abstract class InliningTestBase {
             .isEqualTo(expectedText)
     }
 
+    protected fun assertInlinedModel(
+        className: String,
+        source: String,
+        expected: String,
+    ) {
+        val actual = prepare(className, source, OptimizationConfig.NONE) {
+            val inlined = inlineAll(it).inlinedOxsts
+            listOf(inlined.initTransition, inlined.mainTransition, inlined.property).joinToString("\n\n") { element ->
+                serializer.serializeFormatted(element).trim().replace("\t", "    ")
+            }
+        }
+        assertThat(actual).isEqualTo(expected.trimIndent())
+    }
+
     private fun parseClassFromPackage(
         className: String,
         source: String,
@@ -124,10 +139,10 @@ abstract class InliningTestBase {
             ?: error("Class '$className' not found in the test model")
     }
 
-    private fun newCompilationInjector(): Injector = injector.createChildInjector(
+    private fun newCompilationInjector(optimization: OptimizationConfig): Injector = injector.createChildInjector(
         CompilationModule(
             ArtifactConfig.NONE,
-            OptimizationConfig.ALL,
+            optimization,
         ),
     )
 }
