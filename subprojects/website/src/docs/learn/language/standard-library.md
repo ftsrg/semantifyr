@@ -58,7 +58,7 @@ Categorizes verification cases. For example, `@Tag(category = "slow")` marks lon
 annotation Control
 ```
 
-Signals that a variable is important to track during verification. May affect how the model checker reports counterexamples.
+Marks a variable that steers the model, such as a phase or state variable. Theta declares it a control variable, which some of its configurations put in their initial precision; the other backends ignore it. It changes neither the verdict nor the counterexample.
 
 ### `@Shared`
 
