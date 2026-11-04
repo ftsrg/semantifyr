@@ -70,7 +70,7 @@ include(
     "backend",
     "lang-ide-common",
     "cli-common",
-    "cli",
+    "semantifyr-cli",
     "semantifyr-editor-common",
     "oxsts.model",
     "oxsts.lang",

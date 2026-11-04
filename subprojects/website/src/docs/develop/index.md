@@ -60,7 +60,7 @@ The repository is organized under `subprojects/`:
 | Backends | `subprojects/backends/` | Theta, nuXmv, Spin and Uppaal integrations |
 | Portfolios | `subprojects/portfolios/` | Backend configurations raced or combined per case |
 | Frontends | `subprojects/frontends/` | Gamma and SysML v2 frontends |
-| CLI | `subprojects/cli/`, `subprojects/cli-common/` | The `semantifyr` command-line interface and what the launchers share |
+| CLI | `subprojects/semantifyr-cli/`, `subprojects/cli-common/` | The `semantifyr` command-line interface and what the launchers share |
 | Frontend CLIs | `subprojects/frontends/sysml/sysml-cli/`, `subprojects/frontends/gamma/gamma-cli/` | The `semantifyr-sysml` and `semantifyr-gamma` launchers |
 | VS Code extension | `subprojects/semantifyr-vscode/` | Extension packaging and launch configs |
 | Live editor | `subprojects/semantifyr-live/` | The browser-based editor frontend and backend |
