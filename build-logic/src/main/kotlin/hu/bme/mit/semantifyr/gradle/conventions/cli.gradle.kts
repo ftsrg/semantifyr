@@ -42,7 +42,7 @@ distributions.main {
     }
 }
 
-// the launcher finds Theta on PATH; the Windows script keeps its setlocal scope until java exits, so PATH reaches java but not the caller
+// the Windows script keeps its setlocal scope until java exits, so PATH reaches java but not the caller
 tasks.startScripts {
     val script = unixScript
     val windowsScriptFile = windowsScript

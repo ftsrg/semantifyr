@@ -116,8 +116,6 @@ public class ParameterBindingTest {
 
     @Test
     void missingRequiredBeforeOptional_isRejected() {
-        // Required amount is missing; optional delta is present via named arg.
-        // Using positional-only for simplicity here: no arguments at all.
         var parsedPackage = parseHelper.parse("""
             package test
             class Counter {
@@ -147,9 +145,6 @@ public class ParameterBindingTest {
 
     @Test
     void requiredAfterOptional_isRejected() {
-        // `delta` is optional [0..1] but precedes the required `amount`.
-        // Positional calls would be ambiguous if `delta` is omitted, so
-        // the declaration itself is rejected.
         var parsedPackage = parseHelper.parse("""
             package test
             class Counter {

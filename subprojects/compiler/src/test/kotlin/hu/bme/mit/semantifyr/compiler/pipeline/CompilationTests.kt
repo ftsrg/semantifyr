@@ -1029,8 +1029,6 @@ class CompilationTests {
 
     @Test
     fun `cast expression narrows a base-typed reference to its child`() {
-        // Narrowing downcast: `selected` statically typed as Base is cast to Child
-        // where the programmer knows the concrete instance is a Child.
         assertCompiles(
             classToCompile = "CastNarrow",
             source = """

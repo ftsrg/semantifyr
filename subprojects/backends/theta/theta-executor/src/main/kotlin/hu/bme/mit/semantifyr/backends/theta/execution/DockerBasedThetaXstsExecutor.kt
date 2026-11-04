@@ -20,7 +20,7 @@ import hu.bme.mit.semantifyr.logging.info
 
 private const val DEFAULT_THETA_JAVA_OPTS = "-Xss512M -Xms1G -Xmx4G"
 
-// the launcher scripts' default and word splitting
+// the same default and word splitting as Theta's launcher scripts
 fun thetaJavaOptions(value: String?): List<String> {
     val options = value?.takeIf { it.isNotEmpty() } ?: DEFAULT_THETA_JAVA_OPTS
     return options.split(Regex("\\s+")).filter {

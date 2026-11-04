@@ -81,7 +81,6 @@ public class TypeCompatibilityTest {
         var car = typeOf(parsedPackage.classByName("Car").eObject());
         var sportsCar = typeOf(parsedPackage.classByName("SportsCar").eObject());
 
-        // SportsCar -> Car -> Vehicle : walking up the chain is allowed.
         assertThat(typeCompatibility.isAssignable(vehicle, car, context))
                 .as("Car should be assignable to Vehicle (direct supertype)")
                 .isTrue();

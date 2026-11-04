@@ -117,7 +117,6 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         }
     }
 
-    // the requested timeout bounds the whole case: compilation, the portfolio's legs and the back-annotation
     private suspend fun compileAndVerify(
         case: VerificationCase,
         progress: ProgressContext,
