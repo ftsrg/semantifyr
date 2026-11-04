@@ -6,139 +6,128 @@
 
 package semantifyr::verification::lang::enums
 
-// Enumerations - declaration, assignment, comparison in properties.
-// Tests pair a reachability claim with a safety claim on the enum's
-// value domain.
-
 enum Color {
     Red,
     Green,
     Blue
 }
 
-// --- sequential transitions between enum states ---
-
-// Reachable: Red -> Green -> Blue.
 @VerificationCase
 @Tag("expect-pass")
 class EnumStepReach {
-    var c: Color := Color::Red
+    var color: Color := Color::Red
 
     redefine tran {
         choice {
-            assume(c == Color::Red)
-            c := Color::Green
+            assume(color == Color::Red)
+            color := Color::Green
         } or {
-            assume(c == Color::Green)
-            c := Color::Blue
+            assume(color == Color::Green)
+            color := Color::Blue
         }
     }
 
     prop {
-        return EF c == Color::Blue
+        return EF color == Color::Blue
     }
 }
 
-// Dual: at every step c is one of the declared literals.
 @VerificationCase
 @Tag("expect-pass")
 class EnumStepDomainClosed {
-    var c: Color := Color::Red
+    var color: Color := Color::Red
 
     redefine tran {
         choice {
-            assume(c == Color::Red)
-            c := Color::Green
+            assume(color == Color::Red)
+            color := Color::Green
         } or {
-            assume(c == Color::Green)
-            c := Color::Blue
+            assume(color == Color::Green)
+            color := Color::Blue
         }
     }
 
     prop {
-        return AG (c == Color::Red || c == Color::Green || c == Color::Blue)
+        return AG (color == Color::Red || color == Color::Green || color == Color::Blue)
     }
 }
-
-// --- enum havoc (any literal reachable) ---
 
 @VerificationCase
 @Tag("expect-pass")
 class EnumAnyReachRed {
-    var c: Color := Color::Green
+    var color: Color := Color::Green
 
     redefine tran {
         choice {
-            c := Color::Red
+            color := Color::Red
         } or {
-            c := Color::Green
+            color := Color::Green
         } or {
-            c := Color::Blue
+            color := Color::Blue
         }
     }
 
     prop {
-        return EF c == Color::Red
+        return EF color == Color::Red
     }
 }
 
 @VerificationCase
 @Tag("expect-pass")
 class EnumAnyReachBlue {
-    var c: Color := Color::Red
+    var color: Color := Color::Red
 
     redefine tran {
         choice {
-            c := Color::Red
+            color := Color::Red
         } or {
-            c := Color::Green
+            color := Color::Green
         } or {
-            c := Color::Blue
+            color := Color::Blue
         }
     }
 
     prop {
-        return EF c == Color::Blue
+        return EF color == Color::Blue
     }
 }
 
-// Dual: no unrelated enum-ish value ever appears (domain closure).
 @VerificationCase
 @Tag("expect-pass")
 class EnumAnyDomainClosed {
-    var c: Color := Color::Red
+    var color: Color := Color::Red
 
     redefine tran {
         choice {
-            c := Color::Red
+            color := Color::Red
         } or {
-            c := Color::Green
+            color := Color::Green
         } or {
-            c := Color::Blue
+            color := Color::Blue
         }
     }
 
     prop {
-        return AG (c == Color::Red || c == Color::Green || c == Color::Blue)
+        return AG (color == Color::Red || color == Color::Green || color == Color::Blue)
     }
 }
 
 @VerificationCase
 @Tag("expect-fail")
 class EnumStepViolated {
-    var c: Color := Color::Red
+    var color: Color := Color::Red
 
     redefine tran {
         choice {
-            assume(c == Color::Red)
-            c := Color::Green
+            assume(color == Color::Red)
+            color := Color::Green
         } or {
-            assume(c == Color::Green)
-            c := Color::Blue
+            assume(color == Color::Green)
+            color := Color::Blue
         }
     }
 
     prop {
-        return AG c != Color::Blue
+        return AG color != Color::Blue
     }
 }
