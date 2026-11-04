@@ -18,7 +18,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticBinaryOperator;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticOp;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOperator;
@@ -114,37 +113,27 @@ public class OperatorSyntaxTest {
         "x - y - z, ((x - y) - z)",
         "x / y * z, ((x / y) * z)",
         "(x + y) * z, ((x + y) * z)",
+        "-x * y, ((-x) * y)",
+        "x..y + z, (x..(y + z))",
+        "x + y < z, ((x + y) < z)",
+        "x < y && y <= z, ((x < y) && (y <= z))",
+        "x == y || !(y != z), ((x == y) || (!(y != z)))",
     })
-    void multiplicativeOperatorsBindTighterThanAdditiveOnes(String expression, String expectedReading) {
+    void operatorsBindByTheirPrecedenceLevel(String expression, String expectedReading) {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
                 var x: int := 0
                 var y: int := 0
                 var z: int := 0
-                var result: int := 0
-                redefine tran { result := %s }
+                redefine tran { assume(%s) }
             }
             """.formatted(expression));
         parsedPackage.assertNoResourceErrors();
-        var assignment = EcoreUtil2.eAllOfType(
-                        parsedPackage.classByName("Host").anonymousMain().eObject(), AssignmentOperation.class)
+        var assumption = EcoreUtil2.eAllOfType(
+                        parsedPackage.classByName("Host").anonymousMain().eObject(), AssumptionOperation.class)
                 .getFirst();
-        assertThat(parenthesizeArithmetic(assignment.getExpression())).isEqualTo(expectedReading);
-    }
-
-    private static String parenthesizeArithmetic(Expression expression) {
-        if (expression instanceof ArithmeticBinaryOperator operator) {
-            var symbol = switch (operator.getOp()) {
-                case ADD -> "+";
-                case SUB -> "-";
-                case MUL -> "*";
-                case DIV -> "/";
-            };
-            return "(" + parenthesizeArithmetic(operator.getLeft()) + " " + symbol + " "
-                    + parenthesizeArithmetic(operator.getRight()) + ")";
-        }
-        return NamingUtil.getName(((ElementReference) expression).getElement());
+        assertThat(parenthesize(assumption.getExpression())).isEqualTo(expectedReading);
     }
 
     @Test
@@ -215,6 +204,42 @@ public class OperatorSyntaxTest {
             };
             return "(" + parenthesize(operator.getLeft()) + " " + symbol + " " + parenthesize(operator.getRight())
                     + ")";
+        }
+        if (expression instanceof ComparisonOperator operator) {
+            var symbol = switch (operator.getOp()) {
+                case LESS -> "<";
+                case LESS_EQ -> "<=";
+                case GREATER -> ">";
+                case GREATER_EQ -> ">=";
+                case EQ -> "==";
+                case NOT_EQ -> "!=";
+            };
+            return "(" + parenthesize(operator.getLeft()) + " " + symbol + " " + parenthesize(operator.getRight())
+                    + ")";
+        }
+        if (expression instanceof ArithmeticBinaryOperator operator) {
+            var symbol = switch (operator.getOp()) {
+                case ADD -> "+";
+                case SUB -> "-";
+                case MUL -> "*";
+                case DIV -> "/";
+            };
+            return "(" + parenthesize(operator.getLeft()) + " " + symbol + " " + parenthesize(operator.getRight())
+                    + ")";
+        }
+        if (expression instanceof RangeExpression range) {
+            return "(" + parenthesize(range.getLeft()) + (range.isExclusive() ? "..<" : "..")
+                    + parenthesize(range.getRight()) + ")";
+        }
+        if (expression instanceof ArithmeticUnaryOperator operator) {
+            var symbol = switch (operator.getOp()) {
+                case PLUS -> "+";
+                case MINUS -> "-";
+            };
+            return "(" + symbol + parenthesize(operator.getBody()) + ")";
+        }
+        if (expression instanceof NegationOperator operator) {
+            return "(!" + parenthesize(operator.getBody()) + ")";
         }
         return NamingUtil.getName(((ElementReference) expression).getElement());
     }
