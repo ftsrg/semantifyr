@@ -9,13 +9,8 @@
 set -eu
 
 IMAGE="$1"
-REQUIRED="$2"
 
 if [ "$(docker info --format '{{.OSType}}' 2> /dev/null)" != "linux" ]; then
-    if [ "$REQUIRED" = "true" ]; then
-        echo "Docker with Linux containers is required on this host" >&2
-        exit 1
-    fi
     echo "Docker with Linux containers is not available, skipping the image test"
     exit 0
 fi

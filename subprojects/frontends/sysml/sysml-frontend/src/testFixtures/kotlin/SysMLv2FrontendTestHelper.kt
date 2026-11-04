@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
+import hu.bme.mit.semantifyr.verifier.assertVerdict
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions
@@ -77,11 +78,7 @@ class SysMLv2FrontendTestHelper {
     ) {
         val case = verificationCase(frontend, entry)
         val result = frontend.verify(case)
-        Assertions.assertEquals(
-            entry.case.expectedVerdict,
-            result.verdict,
-            "Expected ${case.qualifiedName} verdict ${entry.case.expectedVerdict}, got ${result.verdict} (${result.message ?: "no message"})",
-        )
+        assertVerdict(case.qualifiedName, entry.case.expectedVerdict, result)
     }
 
     // the trace command writes a trace only after SysIDE validates it against the model, so its file is the check
@@ -91,11 +88,7 @@ class SysMLv2FrontendTestHelper {
     ): Path? {
         val case = verificationCase(frontend, entry)
         val result = frontend.verify(case)
-        Assertions.assertEquals(
-            entry.case.expectedVerdict,
-            result.verdict,
-            "Expected ${case.qualifiedName} verdict ${entry.case.expectedVerdict}, got ${result.verdict} (${result.message ?: "no message"})",
-        )
+        assertVerdict(case.qualifiedName, entry.case.expectedVerdict, result)
         val tracePath = frontend.sysmlTracePath(case)
         if (result.trace == null) {
             assertThat(tracePath).describedAs("SysML trace of $entry, which has no witness").doesNotExist()

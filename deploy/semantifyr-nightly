@@ -40,7 +40,7 @@ case "$action" in
         # sshd keeps a dropped session's command running, so the run ends itself before the job's 240 minutes; --foreground keeps a manual terminal run from stopping on SIGTTIN
         status=0
         timeout --foreground 225m nice -n 10 taskset -c 0-3 ./gradlew --no-daemon --continue integrationTest nightlyTest \
-            -x :semantifyr-vscode:integrationTest -Ptests.requiredBackends=theta,spin,nuxmv,uppaal || status=$?
+            -x :semantifyr-vscode:integrationTest || status=$?
         if [ "$status" -eq 124 ]; then
             echo "the nightly hit its 225 minute limit" >&2
         fi

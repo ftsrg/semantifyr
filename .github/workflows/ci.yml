@@ -42,8 +42,6 @@ jobs:
           - macos-latest
     runs-on: ${{ matrix.os }}
     env:
-      # one value for every Gradle step, since it is a test input and a change reruns all tests
-      REQUIRED_BACKENDS: ${{ matrix.os == 'ubuntu-latest' && 'theta,spin' || 'theta' }}
       # only the ubuntu leg uploads the website
       WEBSITE_API_DOCS: ${{ matrix.os == 'ubuntu-latest' }}
     steps:
@@ -71,7 +69,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y spin
       - name: Gradle build
         shell: bash
-        run: ./gradlew build --continue -Ptests.requiredBackends=$REQUIRED_BACKENDS -Pwebsite.apiDocs=$WEBSITE_API_DOCS
+        run: ./gradlew build --continue -Pwebsite.apiDocs=$WEBSITE_API_DOCS
       - name: Read the VS Code version of the integration test
         id: vscode
         if: ${{ matrix.os == 'ubuntu-latest' }}
@@ -84,11 +82,11 @@ jobs:
           key: vscode-${{ runner.os }}-${{ steps.vscode.outputs.version }}
       - name: Run integration tests
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: ./gradlew integrationTest --continue -Ptests.requiredBackends=$REQUIRED_BACKENDS -Ptests.requireDocker=true
+        run: ./gradlew integrationTest --continue
       - name: Merge coverage reports
         if: ${{ matrix.os == 'ubuntu-latest' }}
         shell: bash
-        run: ./gradlew mergedJacocoReport -Ptests.requiredBackends=$REQUIRED_BACKENDS
+        run: ./gradlew mergedJacocoReport
       - name: Upload coverage reports
         if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: actions/upload-artifact@v7
@@ -102,7 +100,7 @@ jobs:
         shell: bash
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: .github/scripts/sonar.sh "$REQUIRED_BACKENDS"
+        run: .github/scripts/sonar.sh
       - name: Upload GitHub Pages artifact
         if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: actions/upload-pages-artifact@v5

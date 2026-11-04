@@ -11,7 +11,6 @@ import com.google.inject.Injector
 import com.google.inject.Module
 import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
-import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
@@ -31,8 +30,6 @@ import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import hu.bme.mit.semantifyr.verifier.witness.WitnessValidator
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Named
 import org.junit.jupiter.params.provider.Arguments
 import java.nio.file.Path
@@ -124,11 +121,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         validationPortfolio: VerificationPortfolio? = null,
     ) {
         val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment, optimization = optimization)
-        Assertions.assertEquals(
-            expectedVerdict,
-            result.verdict,
-            "Expected ${case.qualifiedName} verdict $expectedVerdict, got ${result.verdict} (${result.message ?: "no message"})",
-        )
+        assertVerdict(case.qualifiedName, expectedVerdict, result)
 
         if (expectsWitness(case, expectedVerdict)) {
             assertThat(result.trace)
@@ -226,38 +219,12 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         validationTimeout: Duration = 1.minutes,
         environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
         expectedVerdict: VerificationVerdict = expectedVerdictFromTags(case),
-        requiredBackends: Set<String> = hostRequiredBackends,
     ) {
         logger.info { "Checking test case $case (artifacts at $outputDirectory)" }
 
-        val required = verificationPortfolio.executorKeys.any {
-            it.name in requiredBackends
-        }
-        val availability = verificationPortfolio.availability(environment)
-        if (availability is AvailabilityReport.Unavailable) {
-            if (required) {
-                Assertions.fail<Unit>("Portfolio ${verificationPortfolio.id} is required on this host: ${availability.reason}")
-            }
-            Assumptions.abort<Unit>("${availability.reason}, skipping")
-        }
-
+        assumePortfolioAvailable(verificationPortfolio, environment)
         val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment)
-        if (!result.verdict.isDecisive) {
-            Assumptions.assumeTrue(
-                required || result.verdict == VerificationVerdict.Errored || result.verdict == VerificationVerdict.Timeout,
-                "Portfolio ${verificationPortfolio.id} reports ${result.verdict} for ${case.qualifiedName} and none of its engines is required: ${result.message ?: "no message"}",
-            )
-            Assertions.fail<Unit>(
-                "Portfolio ${verificationPortfolio.id} did not produce a decisive verdict for ${case.qualifiedName} within $timeout (got ${result.verdict}: ${result.message ?: "no message"}).${backendDiagnostics(outputDirectory, case)}",
-            )
-        }
-        Assertions.assertEquals(
-            expectedVerdict,
-            result.verdict,
-        ) {
-            "Expected ${case.qualifiedName} verdict $expectedVerdict, got ${result.verdict} " +
-                "(${result.message ?: "no message"}).${backendDiagnostics(outputDirectory, case)}"
-        }
+        assertVerdict(case.qualifiedName, expectedVerdict, result, backendDiagnostics(outputDirectory, case))
         logger.info { "Result: ${result.verdict}" }
 
         val trace = result.trace ?: return
@@ -276,9 +243,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         val context = semantifyrLoader.loadStandaloneModel(modelPath)
         val case = verificationCaseDiscoverer.findByQualifiedName(context, qualifiedName)
         val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment)
-        Assertions.assertEquals(expectedVerdictFromTags(case), result.verdict) {
-            "Expected ${case.qualifiedName} verdict ${expectedVerdictFromTags(case)}, got ${result.verdict} (${result.message ?: "no message"})"
-        }
+        assertVerdict(case.qualifiedName, expectedVerdictFromTags(case), result)
 
         val witnessPath = outputDirectory.resolve(caseDirectoryName(case)).resolve("witness.oxsts")
         assertThat(witnessPath.exists())
@@ -310,11 +275,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         environment: ExecutionEnvironment,
         originalVerdict: VerificationVerdict,
     ) {
-        val report = validation.availability(environment)
-        Assumptions.assumeTrue(
-            report is AvailabilityReport.Available,
-            "Validation portfolio ${validation.id} is unavailable on this host. Skipping witness validation for ${case.qualifiedName}",
-        )
+        assumePortfolioAvailable(validation, environment)
 
         logger.info { "Validating returned witness" }
 

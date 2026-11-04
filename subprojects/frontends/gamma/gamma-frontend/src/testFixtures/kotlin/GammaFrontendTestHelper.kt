@@ -7,8 +7,6 @@
 package hu.bme.mit.semantifyr.frontends.gamma.testing
 
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
-import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
-import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.frontends.gamma.GammaFrontend
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVariant
@@ -22,11 +20,10 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ExecutionTrace
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.portfolios.Portfolios
-import hu.bme.mit.semantifyr.verifier.hostRequiredBackends
+import hu.bme.mit.semantifyr.verifier.assertVerdict
+import hu.bme.mit.semantifyr.verifier.assumePortfolioAvailable
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Named
 import org.junit.jupiter.params.provider.Arguments
 import java.io.File
@@ -113,11 +110,7 @@ class GammaFrontendTestHelper {
         expectedVerdict: VerificationVerdict = VerificationVerdict.Passed,
     ): GammaVerificationResult {
         val result = frontend.verify(gammaVerificationCase)
-        Assertions.assertEquals(
-            expectedVerdict,
-            result.verification.verdict,
-            "Expected ${gammaVerificationCase.qualifiedName} verdict $expectedVerdict, got ${result.verification.verdict} (${result.verification.message ?: "no message"})",
-        )
+        assertVerdict(gammaVerificationCase.qualifiedName, expectedVerdict, result.verification)
         return result
     }
 
@@ -129,25 +122,11 @@ class GammaFrontendTestHelper {
         validationPortfolio: VerificationPortfolio? = null,
     ): GammaVerificationResult {
         val portfolio = engine.portfolio
-        val required = portfolio.executorKeys.any {
-            it.name in hostRequiredBackends
-        }
-        val availability = portfolio.availability(ExecutionEnvironment.Empty)
-        if (availability is AvailabilityReport.Unavailable) {
-            check(!required) {
-                "Portfolio ${portfolio.id} is required on this host: ${availability.reason}"
-            }
-            Assumptions.abort<Unit>("${availability.reason}, skipping")
-        }
+        assumePortfolioAvailable(portfolio)
 
         val frontend = buildFrontend(portfolio, outputDirectory.resolve(engine.name.lowercase()), timeout = timeout)
         val result = frontend.verify(gammaVerificationCase)
-        val verdict = result.verification.verdict
-        val description = "${portfolio.id} reports $verdict for ${gammaVerificationCase.qualifiedName}: ${result.verification.message ?: "no message"}"
-        if (!verdict.isDecisive) {
-            Assumptions.assumeTrue(required || verdict == VerificationVerdict.Errored || verdict == VerificationVerdict.Timeout, description)
-        }
-        Assertions.assertEquals(VerificationVerdict.Passed, verdict, description)
+        assertVerdict(gammaVerificationCase.qualifiedName, VerificationVerdict.Passed, result.verification)
 
         val witness = result.witness
         if (validationPortfolio != null && witness != null) {

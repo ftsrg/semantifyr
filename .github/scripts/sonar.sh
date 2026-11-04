@@ -6,8 +6,6 @@
 
 set -eu
 
-required_backends=$1
-
 if [ -n "${SONAR_TOKEN:-}" ]; then
-    ./gradlew sonar -Ptests.requiredBackends="$required_backends"
+    ./gradlew sonar
 fi
