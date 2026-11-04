@@ -1,6 +1,6 @@
 construct	outcome	fixture	detail
 Exclusive range `a..<b`	pass	hu.bme.mit.semantifyr.compiler.pipeline.inlining.InlineOperationExpanderTest	inline seq for over an exclusive range stops before the upper bound
-Array literals `[a, b, c]`	pass	semantic/arrays.oxsts	ArrayLiteralInit0Reach
+Array literals `[a, b, c]`	pass	semantic/arrays.oxsts	ArrayLiteralInitializer0Reach
 Indexing `a[K]` (constant)	pass	semantic/arrays.oxsts	ArraySlotIndependenceReach
 Indexing `a[i]` (runtime)	pass	semantic/arrays.oxsts	ArrayRuntimeIndexReach
 Array `[lb..ub]` multiplicity	pass	semantic/arrays.oxsts	ArrayRangedMultiplicityReach
