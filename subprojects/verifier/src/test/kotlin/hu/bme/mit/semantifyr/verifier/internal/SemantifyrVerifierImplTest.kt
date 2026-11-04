@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.verifier.internal
 import com.google.inject.Inject
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
-import hu.bme.mit.semantifyr.backend.BackendLimitation
 import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
@@ -307,17 +306,12 @@ class SemantifyrVerifierImplTest {
         }
 
         override val capabilityChecker = object : BackendCapabilityChecker() {
-            override fun describeUnsupported(element: EObject): BackendLimitation? {
+            override fun describeUnsupported(element: EObject): String? {
                 if (element is VariableDeclaration) {
-                    return IntegerVariables
+                    return "variables of type int"
                 }
                 return null
             }
-        }
-
-        private object IntegerVariables : BackendLimitation {
-            override val construct = "variables of type int"
-            override val reason = "the test refuses every variable"
         }
 
         override suspend fun prepare() {

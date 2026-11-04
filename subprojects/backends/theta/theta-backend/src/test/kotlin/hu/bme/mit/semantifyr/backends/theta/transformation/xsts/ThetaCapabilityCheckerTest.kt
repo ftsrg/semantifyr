@@ -6,8 +6,6 @@
 
 package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
-import hu.bme.mit.semantifyr.backend.BackendLimitation
-import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaCapabilityChecker.Limitation
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -18,10 +16,10 @@ class ThetaCapabilityCheckerTest : ThetaTransformationTestBase() {
         enum Color { Red, Green }
     """
 
-    private fun unsupported(body: String): List<BackendLimitation> {
+    private fun unsupported(body: String): List<String> {
         val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors)
         return capabilityChecker().check(inlinedOxsts).map {
-            it.limitation
+            it.description
         }
     }
 
@@ -56,10 +54,10 @@ class ThetaCapabilityCheckerTest : ThetaTransformationTestBase() {
         )
 
         assertThat(unsupported).containsExactlyInAnyOrder(
-            Limitation.RealVariables,
-            Limitation.AnyVariables,
-            Limitation.RealLiterals,
-            Limitation.StringVariables,
+            "variables of type real",
+            "variables of type any",
+            "real literals",
+            "variables of type string",
         )
     }
 }

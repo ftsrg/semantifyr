@@ -7,11 +7,9 @@
 package hu.bme.mit.semantifyr.backends.uppaal.transformation
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backend.BackendLimitation
 import hu.bme.mit.semantifyr.backend.UnsupportedConstruct
 import hu.bme.mit.semantifyr.backend.transformation.HavocValueCollector
 import hu.bme.mit.semantifyr.backend.transformation.IntegerRangeChecker
-import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
@@ -41,23 +39,12 @@ class UppaalOverApproximationCapabilityChecker @Inject constructor(
         val underApproximated = havoced.distinct().filter {
             isInteger(it) && !havocValueCollector.isComplete(it)
         }.map {
-            UnsupportedConstruct(it, Limitation.UnderApproximatedHavocs)
+            UnsupportedConstruct(it, "havoced integers read other than in comparisons with literals")
         }
         return super.checkModel(inlinedOxsts) + underApproximated
     }
 
     private fun isInteger(variable: VariableDeclaration): Boolean {
         return variable.typeSpecification?.domain === builtinSymbolResolver.intDatatype(variable) && !builtinAnnotationHandler.isClockVariable(variable)
-    }
-
-    enum class Limitation(
-        override val construct: String,
-        override val reason: String,
-    ) : BackendLimitation {
-        UnderApproximatedHavocs("havoced integers read other than in comparisons with literals", "Uppaal chooses a havoced integer among candidate values, which under-approximates a variable read this way, and a run is never both over- and under-approximating"),
-        ;
-
-        override val configuration: String
-            get() = UppaalConfig.OverApproximation.id
     }
 }

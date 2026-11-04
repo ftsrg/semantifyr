@@ -73,7 +73,7 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
         unsupported: List<UnsupportedConstruct>,
     ): BackendVerificationResult {
         val constructs = unsupported.map {
-            describe(it.element, it.limitation.construct)
+            describe(it.element, it.description)
         }.distinct().joinToString("; ")
         logger.info { "[$backendId] verification not supported: $constructs" }
         return BackendVerificationResult(

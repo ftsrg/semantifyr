@@ -46,16 +46,11 @@ class VerificationContextTest {
     }
 
     private class RejectingVariables : BackendCapabilityChecker() {
-        override fun describeUnsupported(element: EObject): BackendLimitation? {
+        override fun describeUnsupported(element: EObject): String? {
             if (element is VariableDeclaration) {
-                return RealVariables
+                return "variables of type real"
             }
             return null
-        }
-
-        object RealVariables : BackendLimitation {
-            override val construct = "variables of type real"
-            override val reason = "the test refuses every variable"
         }
     }
 

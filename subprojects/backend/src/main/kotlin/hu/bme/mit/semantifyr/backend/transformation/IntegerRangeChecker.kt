@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.backend.transformation
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backend.BackendLimitation
 import hu.bme.mit.semantifyr.backend.UnsupportedConstruct
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ConeOfInfluenceComputation
@@ -44,12 +43,7 @@ class IntegerRangeChecker @Inject constructor(
         }
     }
 
-    fun check(
-        inlinedOxsts: InlinedOxsts,
-        unboundedVariables: BackendLimitation,
-        variablesBeyondRange: BackendLimitation,
-        arithmeticBeyondRange: BackendLimitation,
-    ): List<UnsupportedConstruct> {
+    fun check(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
         val bounds = boundsOf(inlinedOxsts)
         val cone = coneOf(inlinedOxsts)
 
@@ -57,24 +51,20 @@ class IntegerRangeChecker @Inject constructor(
             cone.isRelevant(variable) && !range.fitsInt()
         }
         val variables = outOfRange.map { (variable, range) ->
-            val limitation = if (range.isBounded) {
-                variablesBeyondRange
+            val description = if (range.isBounded) {
+                "integer variables beyond the 32-bit range"
             } else {
-                unboundedVariables
+                "unbounded integer variables"
             }
-            UnsupportedConstruct(variable, limitation)
+            UnsupportedConstruct(variable, description)
         }
-        return variables + leavingArithmetic(bounds, cone, outOfRange.keys, arithmeticBeyondRange)
+        return variables + leavingArithmetic(bounds, cone, outOfRange.keys)
     }
 
     // Uppaal stops on an assignment outside a variable's declared range, so only its arithmetic can wrap
-    fun checkArithmetic(
-        inlinedOxsts: InlinedOxsts,
-        arithmeticBeyondRange: BackendLimitation,
-        declaredRange: (VariableDeclaration) -> IntegerRange,
-    ): List<UnsupportedConstruct> {
+    fun checkArithmetic(inlinedOxsts: InlinedOxsts, declaredRange: (VariableDeclaration) -> IntegerRange): List<UnsupportedConstruct> {
         val bounds = computeBounds(inlinedOxsts, declaredRange)
-        return leavingArithmetic(bounds, coneOf(inlinedOxsts), emptySet(), arithmeticBeyondRange)
+        return leavingArithmetic(bounds, coneOf(inlinedOxsts), emptySet())
     }
 
     // the engines choose a havoced integer among HavocValueCollector's candidates, so the ranges hold for the engine's model
@@ -99,7 +89,6 @@ class IntegerRangeChecker @Inject constructor(
         bounds: VariableBoundsInfo,
         cone: ConeOfInfluenceInfo,
         refused: Set<VariableDeclaration>,
-        arithmeticBeyondRange: BackendLimitation,
     ): List<UnsupportedConstruct> {
         val evaluator = MetaConstantExpressionEvaluator()
         return bounds.arithmeticRanges.filterValues {
@@ -112,7 +101,7 @@ class IntegerRangeChecker @Inject constructor(
             when {
                 reads.any { it in refused } -> null
                 reads.isNotEmpty() && relevant == null -> null
-                else -> UnsupportedConstruct(relevant ?: expression, arithmeticBeyondRange)
+                else -> UnsupportedConstruct(relevant ?: expression, "arithmetic that may leave the 32-bit range")
             }
         }
     }

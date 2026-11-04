@@ -6,8 +6,6 @@
 
 package hu.bme.mit.semantifyr.backends.spin.transformation
 
-import hu.bme.mit.semantifyr.backend.BackendLimitation
-import hu.bme.mit.semantifyr.backends.spin.transformation.SpinCapabilityChecker.Limitation
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -18,12 +16,12 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
         enum Color { Red, Green }
     """
 
-    private fun unsupported(body: String): List<BackendLimitation> {
+    private fun unsupported(body: String): List<String> {
         val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors)
         return withCapabilityChecker {
             it.check(inlinedOxsts)
         }.map {
-            it.limitation
+            it.description
         }
     }
 
@@ -58,13 +56,13 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
         )
 
         assertThat(unsupported).containsExactlyInAnyOrder(
-            Limitation.RealVariables,
-            Limitation.AnyVariables,
-            Limitation.RealLiterals,
-            Limitation.StringVariables,
-            Limitation.ForOperations,
-            Limitation.NonBooleanConditionalsInProperties,
-            Limitation.UnboundedIntegerVariables,
+            "variables of type real",
+            "variables of type any",
+            "real literals",
+            "variables of type string",
+            "for-operations",
+            "non-boolean if-then-else inside a property",
+            "unbounded integer variables",
         )
     }
 
@@ -80,7 +78,7 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
             """,
         )
 
-        assertThat(unsupported).containsExactly(Limitation.UnboundedIntegerVariables)
+        assertThat(unsupported).containsExactly("unbounded integer variables")
     }
 
     @Test
@@ -95,7 +93,7 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
             """,
         )
 
-        assertThat(unsupported).containsExactly(Limitation.UnboundedIntegerVariables)
+        assertThat(unsupported).containsExactly("unbounded integer variables")
     }
 
     @Test
@@ -109,7 +107,7 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
             """,
         )
 
-        assertThat(unsupported).containsExactly(Limitation.IntegerVariablesBeyond32Bits)
+        assertThat(unsupported).containsExactly("integer variables beyond the 32-bit range")
     }
 
     @Test
@@ -124,7 +122,7 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
             """,
         )
 
-        assertThat(unsupported).containsExactly(Limitation.ArithmeticBeyond32Bits)
+        assertThat(unsupported).containsExactly("arithmetic that may leave the 32-bit range")
     }
 
     @Test

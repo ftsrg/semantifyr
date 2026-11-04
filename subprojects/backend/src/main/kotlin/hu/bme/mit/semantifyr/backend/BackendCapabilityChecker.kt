@@ -9,16 +9,9 @@ package hu.bme.mit.semantifyr.backend
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.eclipse.emf.ecore.EObject
 
-interface BackendLimitation {
-    val construct: String
-    val reason: String
-    val configuration: String?
-        get() = null
-}
-
 class UnsupportedConstruct(
     val element: EObject,
-    val limitation: BackendLimitation,
+    val description: String,
 )
 
 abstract class BackendCapabilityChecker {
@@ -32,14 +25,14 @@ abstract class BackendCapabilityChecker {
         return constructs + checkModel(inlinedOxsts)
     }
 
-    protected abstract fun describeUnsupported(element: EObject): BackendLimitation?
+    protected abstract fun describeUnsupported(element: EObject): String?
 
     protected open fun checkModel(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
         return emptyList()
     }
 
     object Unlimited : BackendCapabilityChecker() {
-        override fun describeUnsupported(element: EObject): BackendLimitation? {
+        override fun describeUnsupported(element: EObject): String? {
             return null
         }
     }
