@@ -17,10 +17,6 @@ The `semantifyr` package is implicitly available in every Semantifyr file. It de
 | `bool` | Boolean values |
 | `string` | Text values |
 
-## Backend Support
-
-All four backends (Theta, nuXmv, Spin and Uppaal) support variables of type `int`, `bool` and enumerations; the `any` type is a structural feature of the language and works regardless of backend. A backend reports a model it cannot translate as not supported before it runs, naming each construct and its source line; the pages of [Theta](../backends/theta.mdx), [nuXmv](../backends/nuxmv.mdx), [Spin](../backends/spin.mdx) and [Uppaal](../backends/uppaal.mdx) list what each refuses and why. Theta and nuXmv use unbounded integers, Spin and Uppaal 32-bit ones, so on those two a counter needs a guard such as `if (x < 10) { x := x + 1 }`.
-
 ## The `Anything` Class
 
 Implicit supertype of all classes. Provides empty base transitions:
@@ -82,7 +78,7 @@ Calls to `@Trace`-annotated transitions are recorded in the verification witness
 annotation Clock
 ```
 
-Marks a variable as a clock. Uppaal models it as a clock; the other backends treat it as an ordinary variable. Uppaal accepts `@Clock` only on data-typed variables, resets a clock only to `0` and cannot havoc it; it reports anything else as not supported.
+Marks a variable as a clock.
 
 ### `@NonOptimizable`
 

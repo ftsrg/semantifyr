@@ -94,7 +94,7 @@ if (value < maximum()) {
 
 ### `for`
 
-A runtime loop over a range. The loop variable takes each value in the range in turn. The expression can be any runtime expression. Only the Theta backend supports runtime `for`, and only over a range; the other backends report the case as not supported.
+A runtime loop over a range. The loop variable takes each value in the range in turn. The expression can be any runtime expression.
 
 ```oxsts
 for (i in 1..10) {

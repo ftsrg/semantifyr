@@ -18,8 +18,6 @@ The [standard library](standard-library.md) declares the following primitive dat
 | `real` | Real numbers |
 | `string` | Sequences of characters |
 
-Backend support varies. See [Standard Library / Backend support](standard-library.md#backend-support) for which primitives the backends handle.
-
 ## Enumerations
 
 An `enum` declares a type with a fixed set of named literals.
