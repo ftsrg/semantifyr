@@ -53,15 +53,17 @@ object LspWire {
         val params: Any,
     )
 
+    private object NoParameters
+
     fun request(
         id: Int,
         method: String,
-        params: Any = emptyMap<String, Any>(),
+        params: Any = NoParameters,
     ): String {
         return gson.toJson(JsonRpcRequest(id = id, method = method, params = params))
     }
 
-    fun notification(method: String, params: Any = emptyMap<String, Any>()): String {
+    fun notification(method: String, params: Any = NoParameters): String {
         return gson.toJson(JsonRpcNotification(method = method, params = params))
     }
 
