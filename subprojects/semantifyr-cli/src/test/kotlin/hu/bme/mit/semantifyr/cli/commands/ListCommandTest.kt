@@ -96,7 +96,15 @@ class ListCommandTest {
     @Test
     suspend fun `a model with a syntax error is a compilation error`(@TempDir directory: Path) {
         val model = directory.resolve("broken.oxsts")
-        model.writeText("package broken\n\nclass Broken {\n    var x: int :=\n}\n")
+        model.writeText(
+            """
+            package broken
+
+            class Broken {
+                var counter: int :=
+            }
+            """.trimIndent(),
+        )
 
         val result = runCli("list", model.toString())
 

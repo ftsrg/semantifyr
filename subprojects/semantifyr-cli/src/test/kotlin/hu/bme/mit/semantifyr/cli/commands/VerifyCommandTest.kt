@@ -131,7 +131,13 @@ class VerifyCommandTest {
     @Test
     suspend fun `an unavailable portfolio exits with the error code before loading the model`(@TempDir directory: Path) {
         val model = directory.resolve("broken.oxsts")
-        model.writeText("package broken\n\nclass {\n")
+        model.writeText(
+            """
+            package broken
+
+            class {
+            """.trimIndent(),
+        )
 
         val result = runCli("verify", "--portfolio", "absent", model.toString(), portfolios = listOf(UnavailablePortfolio))
 
@@ -148,27 +154,27 @@ class VerifyCommandTest {
 
             @VerificationCase
             class Untemporal {
-                var x: int := 0
+                var counter: int := 0
 
                 redefine tran {
-                    x := 1
+                    counter := 1
                 }
 
                 prop {
-                    return x == 1
+                    return counter == 1
                 }
             }
 
             @VerificationCase
             class Temporal {
-                var x: int := 0
+                var counter: int := 0
 
                 redefine tran {
-                    x := 1
+                    counter := 1
                 }
 
                 prop {
-                    return EF x == 1
+                    return EF counter == 1
                 }
             }
             """.trimIndent(),
@@ -204,14 +210,14 @@ class VerifyCommandTest {
 
             @VerificationCase
             class Untemporal {
-                var x: int := 0
+                var counter: int := 0
 
                 redefine tran {
-                    x := 1
+                    counter := 1
                 }
 
                 prop {
-                    return x == 1
+                    return counter == 1
                 }
             }
             """.trimIndent(),
