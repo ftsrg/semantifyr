@@ -88,14 +88,14 @@ private fun PortfolioOutcome.orFail(message: String): BackendVerificationResult 
 class VerificationPortfolioTest {
 
     private val portfolio = TestPortfolio()
-    private val env = ExecutionEnvironment.Empty
+    private val environment = ExecutionEnvironment.Empty
     private val request = fakeRequest()
     private val parentInjector = mock<Injector>()
 
     private fun PortfolioScope.enqueue(backend: FakeBackend) {
         async {
             gate.withPermit {
-                backend.verify(parentInjector, FakeConfig(), request, env)
+                backend.verify(parentInjector, FakeConfig(), request, environment)
             }
         }
     }
@@ -103,7 +103,7 @@ class VerificationPortfolioTest {
     @Test
     fun `firstDecisive returns the first decisive verdict`() = runTest {
         val slow = FakeBackend.delayed("slow", 200, VerificationVerdict.Passed)
-        val fastInconclusive = FakeBackend.delayed("fast-inconc", 10, VerificationVerdict.Inconclusive)
+        val fastInconclusive = FakeBackend.delayed("fast-inconclusive", 10, VerificationVerdict.Inconclusive)
         val midDecisive = FakeBackend.delayed("mid", 50, VerificationVerdict.Failed)
 
         val outcome = portfolio.runFirstDecisive(noopGate, timeout = 2.seconds) {
@@ -161,12 +161,12 @@ class VerificationPortfolioTest {
 
     @Test
     suspend fun `firstDecisive yields NoDecision when every job finished Inconclusive`() {
-        val a = FakeBackend.verdict("a", VerificationVerdict.Inconclusive)
-        val b = FakeBackend.verdict("b", VerificationVerdict.Inconclusive)
+        val first = FakeBackend.verdict("first", VerificationVerdict.Inconclusive)
+        val second = FakeBackend.verdict("second", VerificationVerdict.Inconclusive)
 
         val outcome = portfolio.runFirstDecisive(noopGate) {
-            enqueue(a)
-            enqueue(b)
+            enqueue(first)
+            enqueue(second)
         }
 
         assertThat(outcome).isInstanceOf(PortfolioOutcome.NoDecision::class.java)
@@ -283,14 +283,14 @@ class VerificationPortfolioTest {
 
     @Test
     suspend fun `firstNDecisive returns the agreed verdict when decisive results agree`() {
-        val a = FakeBackend.verdict("a", VerificationVerdict.Passed)
-        val b = FakeBackend.verdict("b", VerificationVerdict.Passed)
-        val c = FakeBackend.verdict("c", VerificationVerdict.Passed)
+        val first = FakeBackend.verdict("first", VerificationVerdict.Passed)
+        val second = FakeBackend.verdict("second", VerificationVerdict.Passed)
+        val third = FakeBackend.verdict("third", VerificationVerdict.Passed)
 
         val outcome = portfolio.runFirstNDecisive(count = 2, noopGate) {
-            enqueue(a)
-            enqueue(b)
-            enqueue(c)
+            enqueue(first)
+            enqueue(second)
+            enqueue(third)
         }
 
         val result = outcome.orFail("expected majority result")
@@ -299,12 +299,12 @@ class VerificationPortfolioTest {
 
     @Test
     suspend fun `firstNDecisive yields NoDecision when decisive results disagree`() {
-        val a = FakeBackend.verdict("a", VerificationVerdict.Passed)
-        val b = FakeBackend.verdict("b", VerificationVerdict.Failed)
+        val first = FakeBackend.verdict("first", VerificationVerdict.Passed)
+        val second = FakeBackend.verdict("second", VerificationVerdict.Failed)
 
         val outcome = portfolio.runFirstNDecisive(count = 2, noopGate) {
-            enqueue(a)
-            enqueue(b)
+            enqueue(first)
+            enqueue(second)
         }
 
         assertThat(outcome).isInstanceOf(PortfolioOutcome.NoDecision::class.java)
@@ -312,37 +312,37 @@ class VerificationPortfolioTest {
 
     @Test
     suspend fun `all runs every member and prefers a decisive consensus`() {
-        val a = FakeBackend.verdict("a", VerificationVerdict.Inconclusive)
-        val b = FakeBackend.verdict("b", VerificationVerdict.Passed)
-        val c = FakeBackend.verdict("c", VerificationVerdict.Errored)
+        val first = FakeBackend.verdict("first", VerificationVerdict.Inconclusive)
+        val second = FakeBackend.verdict("second", VerificationVerdict.Passed)
+        val third = FakeBackend.verdict("third", VerificationVerdict.Errored)
 
         val outcome = portfolio.runAll(noopGate) {
-            enqueue(a)
-            enqueue(b)
-            enqueue(c)
+            enqueue(first)
+            enqueue(second)
+            enqueue(third)
         }
 
         val result = outcome.orFail("expected any result")
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
-        assertThat(a.invocations.get()).isEqualTo(1)
-        assertThat(b.invocations.get()).isEqualTo(1)
-        assertThat(c.invocations.get()).isEqualTo(1)
+        assertThat(first.invocations.get()).isEqualTo(1)
+        assertThat(second.invocations.get()).isEqualTo(1)
+        assertThat(third.invocations.get()).isEqualTo(1)
     }
 
     @Test
     fun `a job that throws OutOfMemoryError does not kill sibling jobs`() = runTest {
         val healthy = FakeBackend.delayed("healthy", 10, VerificationVerdict.Passed)
-        val oomed = FakeBackend.throwing("oomed", OutOfMemoryError("fake heap blowup"))
+        val outOfMemory = FakeBackend.throwing("out-of-memory", OutOfMemoryError("fake heap blowup"))
 
         val outcome = portfolio.runFirstDecisive(noopGate) {
-            enqueue(oomed)
+            enqueue(outOfMemory)
             enqueue(healthy)
         }
 
         val result = outcome.orFail("healthy sibling should decide even when its peer OOMed")
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(result.metadata.backendId).isEqualTo("healthy")
-        assertThat(oomed.invocations.get()).isEqualTo(1)
+        assertThat(outOfMemory.invocations.get()).isEqualTo(1)
         assertThat(healthy.invocations.get()).isEqualTo(1)
     }
 
@@ -362,12 +362,12 @@ class VerificationPortfolioTest {
 
     @Test
     suspend fun `all jobs throwing fatal errors map to AllErrored outcome`() {
-        val a = FakeBackend.throwing("a", OutOfMemoryError("a"))
-        val b = FakeBackend.throwing("b", StackOverflowError("b"))
+        val first = FakeBackend.throwing("first", OutOfMemoryError("first"))
+        val second = FakeBackend.throwing("second", StackOverflowError("second"))
 
         val outcome = portfolio.runFirstDecisive(noopGate) {
-            enqueue(a)
-            enqueue(b)
+            enqueue(first)
+            enqueue(second)
         }
 
         assertThat(outcome).isInstanceOf(PortfolioOutcome.AllErrored::class.java)
@@ -391,12 +391,12 @@ class VerificationPortfolioTest {
 
     @Test
     suspend fun `all is Errored when every job returns Errored`() {
-        val a = FakeBackend.verdict("a", VerificationVerdict.Errored)
-        val b = FakeBackend.verdict("b", VerificationVerdict.Errored)
+        val first = FakeBackend.verdict("first", VerificationVerdict.Errored)
+        val second = FakeBackend.verdict("second", VerificationVerdict.Errored)
 
         val outcome = portfolio.runAll(noopGate) {
-            enqueue(a)
-            enqueue(b)
+            enqueue(first)
+            enqueue(second)
         }
 
         assertThat(outcome).isInstanceOf(PortfolioOutcome.AllErrored::class.java)
@@ -440,12 +440,12 @@ class VerificationPortfolioTest {
 
     @Test
     suspend fun `all reports AllNotSupported when every job is NotSupported`() {
-        val a = FakeBackend.verdict("a", VerificationVerdict.NotSupported)
-        val b = FakeBackend.verdict("b", VerificationVerdict.NotSupported)
+        val first = FakeBackend.verdict("first", VerificationVerdict.NotSupported)
+        val second = FakeBackend.verdict("second", VerificationVerdict.NotSupported)
 
         val outcome = portfolio.runAll(noopGate) {
-            enqueue(a)
-            enqueue(b)
+            enqueue(first)
+            enqueue(second)
         }
 
         assertThat(outcome).isInstanceOf(PortfolioOutcome.AllNotSupported::class.java)
@@ -502,7 +502,7 @@ class VerificationPortfolioTest {
         val backend = FakeBackend.verdict("spin", VerificationVerdict.Passed, SoundnessDirection.UnderApproximating)
         val single = SingleBackendPortfolio(backend, FakeConfig(soundness = SoundnessDirection.UnderApproximating))
 
-        val result = single.verify(parentInjector, request, noopGate, env, ProgressContext.NoOp)
+        val result = single.verify(parentInjector, request, noopGate, environment, ProgressContext.NoOp)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(result.isTrusted).isFalse
@@ -514,7 +514,7 @@ class VerificationPortfolioTest {
         val backend = FakeBackend.verdict("spin", VerificationVerdict.Failed, SoundnessDirection.UnderApproximating)
         val single = SingleBackendPortfolio(backend, FakeConfig(soundness = SoundnessDirection.UnderApproximating))
 
-        val result = single.verify(parentInjector, request, noopGate, env, ProgressContext.NoOp)
+        val result = single.verify(parentInjector, request, noopGate, environment, ProgressContext.NoOp)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.isTrusted).isTrue
@@ -523,8 +523,8 @@ class VerificationPortfolioTest {
 
     @Test
     fun `firstDecisive reports progress for every incoming result`() = runTest {
-        val a = FakeBackend.delayed("a", 5, VerificationVerdict.Inconclusive)
-        val b = FakeBackend.delayed("b", 20, VerificationVerdict.Passed)
+        val first = FakeBackend.delayed("first", 5, VerificationVerdict.Inconclusive)
+        val second = FakeBackend.delayed("second", 20, VerificationVerdict.Passed)
 
         val messages = mutableListOf<String>()
         val progress = object : ProgressContext {
@@ -535,8 +535,8 @@ class VerificationPortfolioTest {
         }
 
         val outcome = portfolio.runFirstDecisive(noopGate, progress = progress) {
-            enqueue(a)
-            enqueue(b)
+            enqueue(first)
+            enqueue(second)
         }
 
         val result = outcome.orFail("expected decisive")

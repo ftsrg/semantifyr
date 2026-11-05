@@ -21,14 +21,14 @@ import kotlin.time.Clock
 
 class SingleBackendPortfolio<T : BackendConfig>(
     val backend: VerificationBackend<T>,
-    val config: T,
+    val configuration: T,
 ) : VerificationPortfolio() {
 
-    override val id: String = "${backend.id}-${config.id}"
-    override val displayName: String = "${backend.id} ${config.id}"
-    override val description: String = "Single ${backend.id} configuration: ${config.id}"
+    override val id: String = "${backend.id}-${configuration.id}"
+    override val displayName: String = "${backend.id} ${configuration.id}"
+    override val description: String = "Single ${backend.id} configuration: ${configuration.id}"
     override val executorKeys: Set<ExecutorKey<*>> = setOf(backend.executorKey)
-    override val legs = listOf(PortfolioLeg("${backend.id}:${config.id}", config.soundness))
+    override val legs = listOf(PortfolioLeg("${backend.id}:${configuration.id}", configuration.soundness))
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
         return environment.availability(backend.executorKey)
@@ -43,7 +43,7 @@ class SingleBackendPortfolio<T : BackendConfig>(
     ): BackendVerificationResult {
         val startedAt = Clock.System.now()
         val backendResult = gate.withPermit {
-            backend.verify(parentInjector, config, request, environment)
+            backend.verify(parentInjector, configuration, request, environment)
         }
         return PortfolioOutcome.Decided(noteUntrusted(backendResult, request)).toBackendVerificationResult(startedAt)
     }

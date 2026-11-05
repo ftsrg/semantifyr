@@ -104,9 +104,9 @@ class TrivialVerdictTest {
                 package trivial::tests
                 @VerificationCase
                 class DispatchOnVar {
-                    var x: int := 0
+                    var counter: int := 0
                     prop {
-                        return AG (x >= 0)
+                        return AG (counter >= 0)
                     }
                 }
             """.trimIndent(),
@@ -121,12 +121,12 @@ class TrivialVerdictTest {
                 package trivial::tests
                 @VerificationCase
                 class DispatchOnInit {
-                    var x: int := 0
+                    var counter: int := 0
                     redefine init {
-                        x := 1
+                        counter := 1
                     }
                     prop {
-                        return AG (x >= 0)
+                        return AG (counter >= 0)
                     }
                 }
             """.trimIndent(),
@@ -141,12 +141,12 @@ class TrivialVerdictTest {
                 package trivial::tests
                 @VerificationCase
                 class DispatchOnTran {
-                    var x: int := 0
+                    var counter: int := 0
                     redefine tran {
-                        x := x + 1
+                        counter := counter + 1
                     }
                     prop {
-                        return AG (x >= 0)
+                        return AG (counter >= 0)
                     }
                 }
             """.trimIndent(),

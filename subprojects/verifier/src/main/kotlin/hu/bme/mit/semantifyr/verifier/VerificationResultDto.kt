@@ -74,13 +74,13 @@ data class OptimizationStatsDto(
     val analyses: List<AnalysisStatsDto>,
 ) {
     companion object {
-        fun fromStats(stats: OptimizationStats): OptimizationStatsDto {
+        fun fromStatistics(statistics: OptimizationStats): OptimizationStatsDto {
             return OptimizationStatsDto(
-                duration = stats.duration.toJavaDuration(),
-                passes = stats.passes.map {
+                duration = statistics.duration.toJavaDuration(),
+                passes = statistics.passes.map {
                     PassStatsDto(it.name, it.duration.toJavaDuration(), it.runs, it.firings)
                 },
-                analyses = stats.analyses.map {
+                analyses = statistics.analyses.map {
                     AnalysisStatsDto(it.name, it.duration.toJavaDuration(), it.computations)
                 },
             )
@@ -106,8 +106,8 @@ data class CompilationMetricsDto(
                 instantiationDuration = metrics.instantiationDuration.toJavaDuration(),
                 inliningDuration = metrics.inliningDuration.toJavaDuration(),
                 flatteningDuration = metrics.flatteningDuration.toJavaDuration(),
-                inliningOptimization = OptimizationStatsDto.fromStats(metrics.inliningOptimization),
-                flatteningOptimization = OptimizationStatsDto.fromStats(metrics.flatteningOptimization),
+                inliningOptimization = OptimizationStatsDto.fromStatistics(metrics.inliningOptimization),
+                flatteningOptimization = OptimizationStatsDto.fromStatistics(metrics.flatteningOptimization),
                 inputSize = metrics.inputSize,
                 inlinedSize = metrics.inlinedSize,
                 flattenedSize = metrics.flattenedSize,

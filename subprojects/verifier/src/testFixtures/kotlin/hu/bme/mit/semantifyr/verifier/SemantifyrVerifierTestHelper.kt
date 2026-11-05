@@ -155,10 +155,10 @@ class SemantifyrVerifierTestHelper @Inject constructor(
     }
 
     private fun expectsWitness(case: VerificationCase, verdict: VerificationVerdict): Boolean {
-        val prop = case.classDeclaration.eAllContents().asSequence().filterIsInstance<PropertyDeclaration>().firstOrNull {
+        val property = case.classDeclaration.eAllContents().asSequence().filterIsInstance<PropertyDeclaration>().firstOrNull {
             NamingUtil.getName(it) == "prop"
         } ?: return false
-        return when (prop.expression) {
+        return when (property.expression) {
             is AG -> verdict == VerificationVerdict.Failed
             is EF -> verdict == VerificationVerdict.Passed
             else -> false
@@ -166,9 +166,9 @@ class SemantifyrVerifierTestHelper @Inject constructor(
     }
 
     private fun assertWitnessFilesPersisted(artifactsRoot: Path, case: VerificationCase) {
-        val caseDir = artifactsRoot.resolve(caseDirectoryName(case))
-        val witnessFile = caseDir.resolve("witness.oxsts")
-        val traceFile = caseDir.resolve("trace.json")
+        val caseDirectory = artifactsRoot.resolve(caseDirectoryName(case))
+        val witnessFile = caseDirectory.resolve("witness.oxsts")
+        val traceFile = caseDirectory.resolve("trace.json")
 
         assertThat(witnessFile.exists())
             .describedAs("witness.oxsts must be written for ${case.qualifiedName} at $witnessFile")
@@ -187,14 +187,14 @@ class SemantifyrVerifierTestHelper @Inject constructor(
 
     fun <T> productAsArguments(
         cases: List<VerificationCase>,
-        configs: List<T>,
-        configName: (T) -> String,
+        configurations: List<T>,
+        configurationName: (T) -> String,
     ): List<Arguments> {
         return cases.flatMap { case ->
-            configs.map { config ->
+            configurations.map { configuration ->
                 Arguments.of(
                     Named.of(case.qualifiedName, case),
-                    Named.of(configName(config), config),
+                    Named.of(configurationName(configuration), configuration),
                 )
             }
         }
@@ -293,19 +293,19 @@ class SemantifyrVerifierTestHelper @Inject constructor(
     }
 
     private fun backendDiagnostics(outputDirectory: Path, case: VerificationCase): String {
-        val caseDir = outputDirectory.resolve(caseDirectoryName(case)).toFile()
-        if (!caseDir.exists()) {
+        val caseDirectory = outputDirectory.resolve(caseDirectoryName(case)).toFile()
+        if (!caseDirectory.exists()) {
             return ""
         }
         val tailLineLimit = 30
-        val sections = caseDir.walkTopDown().filter {
+        val sections = caseDirectory.walkTopDown().filter {
             it.isFile && it.length() > 0
         }.filter {
             it.name.endsWith(".err") || it.name.endsWith(".out") || it.name.endsWith(".log")
         }.map {
-            val rel = it.relativeTo(outputDirectory.toFile()).path
+            val relativePath = it.relativeTo(outputDirectory.toFile()).path
             val tail = it.readLines().takeLast(tailLineLimit).joinToString("\n")
-            "--- $rel ---\n$tail"
+            "--- $relativePath ---\n$tail"
         }.toList()
         if (sections.isEmpty()) {
             return ""

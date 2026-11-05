@@ -63,12 +63,12 @@ private val CANCEL_POLL_INTERVAL = 250.milliseconds
 class SemantifyrVerifierConfiguration(
     val injector: Injector,
     val portfolio: VerificationPortfolio,
-    val artifactConfig: ArtifactConfig,
+    val artifactConfiguration: ArtifactConfig,
     val outputDirectory: Path,
     val environment: ExecutionEnvironment,
     val timeout: Duration,
     val maxConcurrency: Int,
-    val optimizationConfig: OptimizationConfig,
+    val optimizationConfiguration: OptimizationConfig,
 )
 
 class SemantifyrVerifierImpl @AssistedInject constructor(
@@ -82,8 +82,8 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
 
     private val compiler = SemantifyrCompiler(
         semantifyrVerifierConfiguration.injector,
-        semantifyrVerifierConfiguration.artifactConfig,
-        semantifyrVerifierConfiguration.optimizationConfig,
+        semantifyrVerifierConfiguration.artifactConfiguration,
+        semantifyrVerifierConfiguration.optimizationConfiguration,
     )
 
     private val logger by loggerFactory()
@@ -267,7 +267,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         val report = VerificationReport(
             verificationCase = case.qualifiedName,
             portfolioId = semantifyrVerifierConfiguration.portfolio.id,
-            optimization = semantifyrVerifierConfiguration.optimizationConfig,
+            optimization = semantifyrVerifierConfiguration.optimizationConfiguration,
             timeout = semantifyrVerifierConfiguration.timeout,
             result = result,
         )
@@ -335,8 +335,8 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
                 delay(CANCEL_POLL_INTERVAL)
                 try {
                     progress.checkIsCancelled()
-                } catch (c: CancellationException) {
-                    mainWork.cancel(c)
+                } catch (cancellation: CancellationException) {
+                    mainWork.cancel(cancellation)
                     return@launch
                 }
             }

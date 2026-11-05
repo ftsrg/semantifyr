@@ -106,9 +106,9 @@ class FakeBackend(
         invocations.incrementAndGet()
         try {
             return behavior()
-        } catch (c: CancellationException) {
+        } catch (cancellation: CancellationException) {
             cancellations.incrementAndGet()
-            throw c
+            throw cancellation
         }
     }
 

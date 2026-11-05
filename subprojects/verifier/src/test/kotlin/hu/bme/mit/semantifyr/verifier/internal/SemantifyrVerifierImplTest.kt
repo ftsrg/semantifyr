@@ -206,8 +206,8 @@ class SemantifyrVerifierImplTest {
 
         build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(case)
 
-        val caseDir = output.resolve("simple.${case.classDeclaration.name}")
-        val reportFile = caseDir.resolve("report.json")
+        val caseDirectory = output.resolve("simple.${case.classDeclaration.name}")
+        val reportFile = caseDirectory.resolve("report.json")
         assertThat(reportFile.exists()).isTrue
     }
 
@@ -259,15 +259,15 @@ class SemantifyrVerifierImplTest {
 
     private fun loadFirstCase(): VerificationCase {
         val context = loader.loadStandaloneModel(modelPath)
-        val klass = context.modelResources.asSequence()
+        val classDeclaration = context.modelResources.asSequence()
             .flatMap { it.contents }
             .filterIsInstance<OxstsModelPackage>()
             .flatMap { it.declarations }
             .filterIsInstance<ClassDeclaration>()
             .first()
         return VerificationCase(
-            qualifiedName = "semantifyr::verification::simple::${klass.name}",
-            classDeclaration = klass,
+            qualifiedName = "semantifyr::verification::simple::${classDeclaration.name}",
+            classDeclaration = classDeclaration,
         )
     }
 

@@ -374,11 +374,11 @@ abstract class VerificationPortfolio {
             launch {
                 val outcome = try {
                     Result.success(deferred.await())
-                } catch (c: CancellationException) {
-                    throw c
-                } catch (t: Throwable) {
-                    logger.warn { "$id: job threw ${t::class.simpleName}: ${t.message ?: ""}" }
-                    Result.failure(t)
+                } catch (cancellation: CancellationException) {
+                    throw cancellation
+                } catch (throwable: Throwable) {
+                    logger.warn { "$id: job threw ${throwable::class.simpleName}: ${throwable.message ?: ""}" }
+                    Result.failure(throwable)
                 }
 
                 results.send(outcome)
