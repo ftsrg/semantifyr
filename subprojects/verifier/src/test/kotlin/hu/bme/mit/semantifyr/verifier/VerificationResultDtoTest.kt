@@ -36,8 +36,8 @@ class VerificationResultDtoTest {
         val compilation = metrics.toJavaDto().verifier.compilation
 
         assertThat(compilation.flatteningOptimization.duration).isEqualTo(Duration.ofMillis(5))
-        assertThat(compilation.flatteningOptimization.passes).containsExactly(PassStatsDto("CopyPropagationPass", Duration.ofMillis(3), 2, 1))
-        assertThat(compilation.flatteningOptimization.analyses).containsExactly(AnalysisStatsDto("ReachingDefinitionsAnalysis", Duration.ofMillis(1), 2))
+        assertThat(compilation.flatteningOptimization.passes).containsExactly(PassStatisticsDto("CopyPropagationPass", Duration.ofMillis(3), 2, 1))
+        assertThat(compilation.flatteningOptimization.analyses).containsExactly(AnalysisStatisticsDto("ReachingDefinitionsAnalysis", Duration.ofMillis(1), 2))
         assertThat(compilation.flattenedSize).isEqualTo(ModelSize(1, 5, 9))
     }
 }

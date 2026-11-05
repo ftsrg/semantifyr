@@ -10,10 +10,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import hu.bme.mit.semantifyr.compiler.pipeline.context.ModelSize;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson;
-import hu.bme.mit.semantifyr.verifier.AnalysisStatsDto;
+import hu.bme.mit.semantifyr.verifier.AnalysisStatisticsDto;
 import hu.bme.mit.semantifyr.verifier.CompilationMetricsDto;
-import hu.bme.mit.semantifyr.verifier.OptimizationStatsDto;
-import hu.bme.mit.semantifyr.verifier.PassStatsDto;
+import hu.bme.mit.semantifyr.verifier.OptimizationStatisticsDto;
+import hu.bme.mit.semantifyr.verifier.PassStatisticsDto;
 import hu.bme.mit.semantifyr.verifier.VerificationMetricsDto;
 import hu.bme.mit.semantifyr.verifier.VerifierMetricsDto;
 import java.time.Duration;
@@ -24,10 +24,10 @@ class VerificationMetricsTest {
 
     @Test
     void theWireMetricsCarryTheOptimizerStatsAndModelSizes() {
-        var optimization = new OptimizationStatsDto(
+        var optimization = new OptimizationStatisticsDto(
                 Duration.ofMillis(5),
-                List.of(new PassStatsDto("CopyPropagationPass", Duration.ofMillis(3), 2, 1)),
-                List.of(new AnalysisStatsDto("ReachingDefinitionsAnalysis", Duration.ofMillis(1), 2)));
+                List.of(new PassStatisticsDto("CopyPropagationPass", Duration.ofMillis(3), 2, 1)),
+                List.of(new AnalysisStatisticsDto("ReachingDefinitionsAnalysis", Duration.ofMillis(1), 2)));
         var compilation = new CompilationMetricsDto(
                 Duration.ofMillis(1),
                 Duration.ofMillis(2),

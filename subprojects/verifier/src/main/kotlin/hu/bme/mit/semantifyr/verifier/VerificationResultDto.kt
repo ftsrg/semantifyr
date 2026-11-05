@@ -55,33 +55,33 @@ data class BackendMetricsDto(
     }
 }
 
-data class PassStatsDto(
+data class PassStatisticsDto(
     val name: String,
     val duration: Duration,
     val runs: Int,
     val firings: Int,
 )
 
-data class AnalysisStatsDto(
+data class AnalysisStatisticsDto(
     val name: String,
     val duration: Duration,
     val computations: Int,
 )
 
-data class OptimizationStatsDto(
+data class OptimizationStatisticsDto(
     val duration: Duration,
-    val passes: List<PassStatsDto>,
-    val analyses: List<AnalysisStatsDto>,
+    val passes: List<PassStatisticsDto>,
+    val analyses: List<AnalysisStatisticsDto>,
 ) {
     companion object {
-        fun fromStatistics(statistics: OptimizationStats): OptimizationStatsDto {
-            return OptimizationStatsDto(
+        fun fromStatistics(statistics: OptimizationStats): OptimizationStatisticsDto {
+            return OptimizationStatisticsDto(
                 duration = statistics.duration.toJavaDuration(),
                 passes = statistics.passes.map {
-                    PassStatsDto(it.name, it.duration.toJavaDuration(), it.runs, it.firings)
+                    PassStatisticsDto(it.name, it.duration.toJavaDuration(), it.runs, it.firings)
                 },
                 analyses = statistics.analyses.map {
-                    AnalysisStatsDto(it.name, it.duration.toJavaDuration(), it.computations)
+                    AnalysisStatisticsDto(it.name, it.duration.toJavaDuration(), it.computations)
                 },
             )
         }
@@ -93,8 +93,8 @@ data class CompilationMetricsDto(
     val instantiationDuration: Duration,
     val inliningDuration: Duration,
     val flatteningDuration: Duration,
-    val inliningOptimization: OptimizationStatsDto,
-    val flatteningOptimization: OptimizationStatsDto,
+    val inliningOptimization: OptimizationStatisticsDto,
+    val flatteningOptimization: OptimizationStatisticsDto,
     val inputSize: ModelSize,
     val inlinedSize: ModelSize,
     val flattenedSize: ModelSize,
@@ -106,8 +106,8 @@ data class CompilationMetricsDto(
                 instantiationDuration = metrics.instantiationDuration.toJavaDuration(),
                 inliningDuration = metrics.inliningDuration.toJavaDuration(),
                 flatteningDuration = metrics.flatteningDuration.toJavaDuration(),
-                inliningOptimization = OptimizationStatsDto.fromStatistics(metrics.inliningOptimization),
-                flatteningOptimization = OptimizationStatsDto.fromStatistics(metrics.flatteningOptimization),
+                inliningOptimization = OptimizationStatisticsDto.fromStatistics(metrics.inliningOptimization),
+                flatteningOptimization = OptimizationStatisticsDto.fromStatistics(metrics.flatteningOptimization),
                 inputSize = metrics.inputSize,
                 inlinedSize = metrics.inlinedSize,
                 flattenedSize = metrics.flattenedSize,
