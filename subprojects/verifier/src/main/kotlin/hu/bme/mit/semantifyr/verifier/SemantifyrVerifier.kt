@@ -27,8 +27,8 @@ import kotlin.time.toKotlinDuration
  */
 interface SemantifyrVerifier {
 
-    suspend fun verify(verificationCase: VerificationCase, progressContext: ProgressContext = ProgressContext.NoOp): VerificationResult
-    suspend fun verify(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext = ProgressContext.NoOp): VerificationResult
+    suspend fun verify(verificationCase: VerificationCase, progressContext: ProgressContext = ProgressContext.Silent): VerificationResult
+    suspend fun verify(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext = ProgressContext.Silent): VerificationResult
 
     fun verifyBlocking(verificationCase: VerificationCase) = runBlocking {
         verify(verificationCase).toJavaDto()

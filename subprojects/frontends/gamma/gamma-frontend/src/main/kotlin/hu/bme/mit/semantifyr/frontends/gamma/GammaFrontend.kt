@@ -140,7 +140,7 @@ class GammaFrontend @Inject private constructor(
 
     suspend fun verify(
         gammaVerificationCase: GammaVerificationCase,
-        progress: ProgressContext = ProgressContext.NoOp,
+        progress: ProgressContext = ProgressContext.Silent,
     ): GammaVerificationResult {
         val qualifiedName = gammaVerificationCase.qualifiedName
         val baseDirectory = caseDirectory(gammaVerificationCase)
@@ -193,7 +193,7 @@ class GammaFrontend @Inject private constructor(
 
     fun verifyBlocking(
         case: GammaVerificationCase,
-        progress: ProgressContext = ProgressContext.NoOp,
+        progress: ProgressContext = ProgressContext.Silent,
     ): GammaVerificationResultDto {
         return runBlocking {
             verify(case, progress).toJavaDto()
@@ -217,7 +217,7 @@ class GammaFrontend @Inject private constructor(
         gammaVerificationCase: GammaVerificationCase,
         witnessPath: Path,
         portfolio: VerificationPortfolio = gammaFrontendConfiguration.portfolio,
-        progress: ProgressContext = ProgressContext.NoOp,
+        progress: ProgressContext = ProgressContext.Silent,
     ): WitnessValidationResult {
         val qualifiedName = gammaVerificationCase.qualifiedName
         val baseDirectory = caseDirectory(gammaVerificationCase)
@@ -258,7 +258,7 @@ class GammaFrontend @Inject private constructor(
     fun validateWitnessBlocking(
         gammaVerificationCase: GammaVerificationCase,
         witnessPath: Path,
-        progress: ProgressContext = ProgressContext.NoOp,
+        progress: ProgressContext = ProgressContext.Silent,
     ): WitnessValidationResultDto {
         return runBlocking {
             validateWitness(gammaVerificationCase, witnessPath, progress = progress).toJavaDto()

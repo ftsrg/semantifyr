@@ -87,7 +87,7 @@ class SysMLv2Frontend private constructor(
 
     suspend fun verify(
         case: VerificationCase,
-        progress: ProgressContext = ProgressContext.NoOp,
+        progress: ProgressContext = ProgressContext.Silent,
     ): VerificationResult {
         val verifier = buildVerifier(sysmlConfiguration.outputDirectory)
         logger.info { "Verifying SysMLv2 case '${case.qualifiedName}' (variant=${variant.name})" }
@@ -127,7 +127,7 @@ class SysMLv2Frontend private constructor(
 
     fun verifyBlocking(
         case: VerificationCase,
-        progress: ProgressContext = ProgressContext.NoOp,
+        progress: ProgressContext = ProgressContext.Silent,
     ): VerificationResultDto {
         return runBlocking {
             verify(case, progress).toJavaDto()

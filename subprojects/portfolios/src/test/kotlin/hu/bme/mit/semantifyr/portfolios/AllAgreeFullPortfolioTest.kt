@@ -34,7 +34,7 @@ class AllAgreeFullPortfolioTest {
             spin = PassingBackend("spin"),
         )
 
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
     }
@@ -50,7 +50,7 @@ class AllAgreeFullPortfolioTest {
             spin = FailingBackend("spin"),
         )
 
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.message).contains("theta=Passed (Exact)", "spin=Failed (UnderApproximating)")
@@ -67,7 +67,7 @@ class AllAgreeFullPortfolioTest {
             spin = PassingBackend("spin"),
         )
 
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.message).contains("uppaal=Passed (not trusted, UnderApproximating)", "spin=Passed (not trusted, UnderApproximating)")
@@ -84,7 +84,7 @@ class AllAgreeFullPortfolioTest {
             spin = PassingBackend("spin"),
         )
 
-        val result = portfolio.verify(parentInjector, stubRequest(output, OxstsFactory.createEF()), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+        val result = portfolio.verify(parentInjector, stubRequest(output, OxstsFactory.createEF()), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(result.message).isNull()
@@ -101,7 +101,7 @@ class AllAgreeFullPortfolioTest {
             spin = PassingBackend("spin", UnavailableKey),
         )
 
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
         assertThat(result.message).contains("no available backends")
@@ -118,7 +118,7 @@ class AllAgreeFullPortfolioTest {
             spin = ErroringBackend("spin"),
         )
 
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.message).contains("All portfolio jobs errored")
@@ -135,7 +135,7 @@ class AllAgreeFullPortfolioTest {
             spin = NotSupportedBackend("spin"),
         )
 
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
     }

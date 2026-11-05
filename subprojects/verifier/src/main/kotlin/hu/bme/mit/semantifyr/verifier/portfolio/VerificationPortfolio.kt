@@ -157,7 +157,7 @@ abstract class VerificationPortfolio {
     protected suspend fun firstDecisive(
         gate: ConcurrencyGate,
         timeout: Duration = Duration.INFINITE,
-        progress: ProgressContext = ProgressContext.NoOp,
+        progress: ProgressContext = ProgressContext.Silent,
         block: PortfolioScope.() -> Unit,
     ): PortfolioOutcome = supervisorScope {
         val scope = PortfolioScope(this, gate)
@@ -188,7 +188,7 @@ abstract class VerificationPortfolio {
         count: Int,
         gate: ConcurrencyGate,
         timeout: Duration = Duration.INFINITE,
-        progress: ProgressContext = ProgressContext.NoOp,
+        progress: ProgressContext = ProgressContext.Silent,
         block: PortfolioScope.() -> Unit,
     ): PortfolioOutcome = supervisorScope {
         val scope = PortfolioScope(this, gate)
@@ -236,7 +236,7 @@ abstract class VerificationPortfolio {
     protected suspend fun all(
         gate: ConcurrencyGate,
         timeout: Duration = Duration.INFINITE,
-        progress: ProgressContext = ProgressContext.NoOp,
+        progress: ProgressContext = ProgressContext.Silent,
         block: PortfolioScope.() -> Unit,
     ): PortfolioOutcome = supervisorScope {
         val scope = PortfolioScope(this, gate)

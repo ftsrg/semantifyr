@@ -52,7 +52,7 @@ private class TestPortfolio(
     suspend fun runFirstDecisive(
         gate: ConcurrencyGate,
         timeout: Duration = Duration.INFINITE,
-        progress: ProgressContext = ProgressContext.NoOp,
+        progress: ProgressContext = ProgressContext.Silent,
         block: PortfolioScope.() -> Unit,
     ): PortfolioOutcome {
         return firstDecisive(gate, timeout, progress, block)
@@ -62,7 +62,7 @@ private class TestPortfolio(
         count: Int,
         gate: ConcurrencyGate,
         timeout: Duration = Duration.INFINITE,
-        progress: ProgressContext = ProgressContext.NoOp,
+        progress: ProgressContext = ProgressContext.Silent,
         block: PortfolioScope.() -> Unit,
     ): PortfolioOutcome {
         return firstNDecisive(count, gate, timeout, progress, block)
@@ -71,7 +71,7 @@ private class TestPortfolio(
     suspend fun runAll(
         gate: ConcurrencyGate,
         timeout: Duration = Duration.INFINITE,
-        progress: ProgressContext = ProgressContext.NoOp,
+        progress: ProgressContext = ProgressContext.Silent,
         block: PortfolioScope.() -> Unit,
     ): PortfolioOutcome {
         return all(gate, timeout, progress, block)
@@ -502,7 +502,7 @@ class VerificationPortfolioTest {
         val backend = FakeBackend.verdict("spin", VerificationVerdict.Passed, SoundnessDirection.UnderApproximating)
         val single = SingleBackendPortfolio(backend, FakeConfig(soundness = SoundnessDirection.UnderApproximating))
 
-        val result = single.verify(parentInjector, request, noopGate, environment, ProgressContext.NoOp)
+        val result = single.verify(parentInjector, request, noopGate, environment, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(result.isTrusted).isFalse
@@ -514,7 +514,7 @@ class VerificationPortfolioTest {
         val backend = FakeBackend.verdict("spin", VerificationVerdict.Failed, SoundnessDirection.UnderApproximating)
         val single = SingleBackendPortfolio(backend, FakeConfig(soundness = SoundnessDirection.UnderApproximating))
 
-        val result = single.verify(parentInjector, request, noopGate, environment, ProgressContext.NoOp)
+        val result = single.verify(parentInjector, request, noopGate, environment, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.isTrusted).isTrue
